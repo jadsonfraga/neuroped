@@ -14,7 +14,10 @@ const portalFamilia = read("client/src/pages/portal-familia.tsx");
 const buildInfo = read("scripts/gen-build-info.mjs");
 const authContext = read("client/src/contexts/AuthContext.tsx");
 const cloudflareAuthShared = read("functions/api/auth/_shared.ts");
+const cloudflareLogin = read("functions/api/auth/login.ts");
+const cloudflareRateLimit = read("functions/api/auth/_rateLimit.ts");
 const visualStates = read("client/src/components/ui/VisualStates.tsx");
+const toastSystem = read("client/src/components/Toast.tsx");
 const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
 const serverCrypto = read("server/lib/crypto.ts");
 const pkg = JSON.parse(read("package.json"));
@@ -33,6 +36,10 @@ assert.match(filtro, /sessionStorage\.setItem\(FLASH_STORAGE_KEY/);
 assert.match(filtro, /sessionStorage\.removeItem\(FLASH_STORAGE_KEY/);
 assert.match(filtro, /if \(flashMode\) return;/);
 assert.match(publicRoutes, /"\/filtro-escalas"/);
+
+// A busca da Home hoje cobre páginas + escalas. Não deve prometer paciente sem consultar paciente.
+assert.match(home, /placeholder="Buscar escala ou página…"/);
+assert.doesNotMatch(home, /placeholder="[^"]*paciente[^"]*"/i);
 
 // Portal familiar não pode reintroduzir CPF-como-senha nem liberar documentos remotos anonimamente.
 assert.doesNotMatch(portalFamilia, /CPF\s+como\s+senha|senha\s*=\s*CPF/i);
@@ -78,11 +85,29 @@ assert.doesNotMatch(
   /const attempts = \(u\.failed_login_attempts \?\? 0\) \+ 1/,
 );
 
-// Toast: timer não deve reiniciar por mudança de callback nem chamar closure obsoleta.
+// Credential stuffing entre contas diferentes precisa de bucket distribuído no D1,
+// pseudonimizado por HMAC do IP — não depender só de memória por isolate.
+assert.match(cloudflareRateLimit, /CREATE TABLE IF NOT EXISTS auth_login_rate_limits/);
+assert.match(cloudflareRateLimit, /CF-Connecting-IP/);
+assert.match(cloudflareRateLimit, /name: "HMAC", hash: "SHA-256"/);
+assert.match(cloudflareRateLimit, /ON CONFLICT\(bucket_hash\) DO UPDATE SET/);
+assert.match(cloudflareRateLimit, /failed_attempts \+ 1 >= \?/);
+assert.doesNotMatch(cloudflareRateLimit, /INSERT[^]*CF-Connecting-IP/i);
+assert.match(cloudflareLogin, /enforceLoginAbuseLimit\(env, request, secret\)/);
+assert.ok(
+  (cloudflareLogin.match(/registerLoginAbuseFailure\(env, request, secret\)/g) ?? []).length >= 2,
+  "e-mail inexistente e senha incorreta devem alimentar o bucket distribuído",
+);
+
+// Toasts: callbacks novos não podem reiniciar timers existentes nem vazar texto no console.
 assert.match(visualStates, /const onDismissRef = useRef\(onDismiss\)/);
 assert.match(visualStates, /onDismissRef\.current = onDismiss/);
 assert.match(visualStates, /onDismissRef\.current\?\.\(\)/);
 assert.match(visualStates, /\}, \[durationMs\]\);/);
+assert.match(toastSystem, /const onDismissRef = useRef\(onDismiss\)/);
+assert.match(toastSystem, /setTimeout\(\(\) => onDismissRef\.current\(\), toast\.duration \?\? 3600\)/);
+assert.match(toastSystem, /\}, \[toast\.duration\]\);/);
+assert.doesNotMatch(toastSystem, /console\.(?:warn|error|log)\([^\n]*toast/i);
 
 // Cognitive Lab: AudioContext tem lifecycle próprio; o timer de encerramento não pode ser
 // registrado em `after`, pois clearTimers() roda entre trials e poderia cancelar ctx.close().
