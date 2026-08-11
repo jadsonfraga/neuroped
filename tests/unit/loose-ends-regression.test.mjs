@@ -13,6 +13,7 @@ const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const portalFamilia = read("client/src/pages/portal-familia.tsx");
 const buildInfo = read("scripts/gen-build-info.mjs");
 const authContext = read("client/src/contexts/AuthContext.tsx");
+const cloudflareAuthShared = read("functions/api/auth/_shared.ts");
 const visualStates = read("client/src/components/ui/VisualStates.tsx");
 const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
 const serverCrypto = read("server/lib/crypto.ts");
@@ -61,6 +62,21 @@ assert.match(serverCrypto, /nunca reinterpretar um secret existente/i);
 assert.match(authContext, /async function logout\(\)(?:: Promise<void>)? \{/);
 assert.match(authContext, /await logoutRequest\(\)/);
 assert.match(authContext, /finally\s*\{\s*await clearSessionScopedClientState\(\)/s);
+
+// O lockout canônico D1 precisa incrementar no próprio UPDATE. Read + write absoluto
+// perde tentativas quando bcrypts concorrentes terminam quase ao mesmo tempo.
+assert.match(
+  cloudflareAuthShared,
+  /failed_login_attempts = COALESCE\(failed_login_attempts, 0\) \+ 1/,
+);
+assert.match(
+  cloudflareAuthShared,
+  /WHEN COALESCE\(failed_login_attempts, 0\) \+ 1 >= \? THEN \?/,
+);
+assert.doesNotMatch(
+  cloudflareAuthShared,
+  /const attempts = \(u\.failed_login_attempts \?\? 0\) \+ 1/,
+);
 
 // Toast: timer não deve reiniciar por mudança de callback nem chamar closure obsoleta.
 assert.match(visualStates, /const onDismissRef = useRef\(onDismiss\)/);
