@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -12,6 +12,10 @@ const filtro = read("client/src/pages/filtro.tsx");
 const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const portalFamilia = read("client/src/pages/portal-familia.tsx");
 const buildInfo = read("scripts/gen-build-info.mjs");
+const authContext = read("client/src/contexts/AuthContext.tsx");
+const visualStates = read("client/src/components/ui/VisualStates.tsx");
+const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
+const serverCrypto = read("server/lib/crypto.ts");
 const pkg = JSON.parse(read("package.json"));
 const clinicalFiles = [
   "functions/api/patients/index.ts",
@@ -46,5 +50,37 @@ for (const path of clinicalFiles) {
   assert.match(source, /DB_REQUIRED/);
   assert.doesNotMatch(source, /Registro simulado|registro simulado/);
 }
+
+// Compatibilidade criptográfica: o secret Base64 é texto opaco historicamente.
+// Reinterpretá-lo como bytes Base64 rompe ciphertexts e blind/deterministic hashes existentes.
+assert.match(serverCrypto, /Buffer\.from\(raw, "utf8"\)/);
+assert.doesNotMatch(serverCrypto, /Buffer\.from\(raw, "base64"\)/);
+assert.match(serverCrypto, /nunca reinterpretar um secret existente/i);
+
+// AuthContext: memoização só é real com callbacks estáveis; logout limpa PHI local até em falha de rede.
+for (const callbackName of ["login", "logout", "refreshUser"]) {
+  assert.match(
+    authContext,
+    new RegExp(`const ${callbackName} = useCallback`),
+    `${callbackName} deve ter identidade estável`,
+  );
+}
+assert.match(authContext, /finally\s*\{\s*await clearSessionScopedClientState\(\)/s);
+
+// Toast: timer não deve reiniciar por mudança de callback nem chamar closure obsoleta.
+assert.match(visualStates, /const onDismissRef = useRef\(onDismiss\)/);
+assert.match(visualStates, /onDismissRef\.current = onDismiss/);
+assert.match(visualStates, /onDismissRef\.current\?\.\(\)/);
+assert.match(visualStates, /\}, \[durationMs\]\);/);
+
+// Cognitive Lab: AudioContext tem lifecycle próprio; o timer de encerramento não pode ser
+// registrado em `after`, pois clearTimers() roda entre trials e poderia cancelar ctx.close().
+assert.match(cognitiveRunner, /window\.setTimeout\(\(\) => \{/);
+assert.match(cognitiveRunner, /void ctx\.close\(\)/);
+assert.match(cognitiveRunner, /beep\(correct \? 880 : 220\);/);
+assert.doesNotMatch(cognitiveRunner, /beep\([^\n]*after\)/);
+
+// Scripts ad-hoc de auditoria não devem ficar esquecidos na raiz quando gates reais já existem.
+assert.equal(existsSync(resolve(root, "analyze-a11y.sh")), false);
 
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");
