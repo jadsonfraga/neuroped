@@ -13,6 +13,7 @@ async function provision(db: D1Database): Promise<void> {
         value INTEGER CHECK (value IS NULL OR (value BETWEEN 1 AND 5)),
         duration_minutes INTEGER CHECK (duration_minutes IS NULL OR (duration_minutes BETWEEN 0 AND 10080)),
         payload_json TEXT,
+        secure_payload_encrypted TEXT,
         is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -30,8 +31,8 @@ async function provision(db: D1Database): Promise<void> {
 
 /**
  * Mantém o deploy fail-safe mesmo quando uma migração D1 aditiva ainda não
- * foi aplicada. A migração versionada continua sendo a fonte de verdade; este
- * provisionamento é somente uma catraca idempotente para a tabela nova.
+ * foi aplicada. A migração versionada continua sendo a fonte de verdade;
+ * instalações novas já nascem com payload cifrável.
  */
 export async function ensureConectaDemoSchema(db: D1Database): Promise<void> {
   if (!schemaReady) {
