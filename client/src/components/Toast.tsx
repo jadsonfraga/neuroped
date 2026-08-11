@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
@@ -50,7 +50,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const t: Toast = { id, variant, message, description, duration: 3600 };
       setToasts((prev) => [...prev, t]);
 
-      // Som + haptic apropriado
       if (variant === "success") {
         softSuccess();
         haptic.success();
@@ -90,10 +89,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
+  const onDismissRef = useRef(onDismiss);
+
   useEffect(() => {
-    const t = setTimeout(onDismiss, toast.duration ?? 3600);
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  useEffect(() => {
+    const t = setTimeout(() => onDismissRef.current(), toast.duration ?? 3600);
     return () => clearTimeout(t);
-  }, [toast.duration, onDismiss]);
+  }, [toast.duration]);
 
   const config = {
     success: {
@@ -158,10 +163,11 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
 export function useToast(): ToastApi {
   const ctx = useContext(ToastContext);
   if (!ctx) {
-    // Fallback seguro sem provider — apenas console
+    // Falhar silenciosamente sem provider evita que mensagens potencialmente
+    // sensíveis acabem no console do navegador.
     return {
       success: () => {},
-      error: (m) => console.warn("[toast.error]", m),
+      error: () => {},
       info: () => {},
       dismiss: () => {},
     };
