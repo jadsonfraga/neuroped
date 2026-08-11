@@ -1,5 +1,6 @@
 import {
   CLINICAL_LEGACY_SENTINEL,
+  clinicalBlindTokenGroupsForQuery,
   clinicalBlindTokensForQuery,
   clinicalBlindTokensForValue,
   decryptClinicalJson,
@@ -28,11 +29,7 @@ export function clinicalKeyringFromEnv(env: ClinicalCryptoEnv): ClinicalKeyring 
   const active = env.CLINICAL_DATA_KEY?.trim() ?? "";
   if (active.length < 32) throw new Error("CLINICAL_DATA_KEY_NOT_CONFIGURED");
   const previous = env.CLINICAL_DATA_KEY_PREVIOUS?.trim() || null;
-  return {
-    active,
-    previous,
-    strict: env.CLINICAL_ENCRYPTION_STRICT === "true",
-  };
+  return { active, previous, strict: env.CLINICAL_ENCRYPTION_STRICT === "true" };
 }
 
 export function clinicalScope(table: string, rowId: string, field = "secure_payload"): ClinicalFieldScope {
@@ -55,12 +52,7 @@ export async function decryptClinicalPayload<T>(
   encrypted: string | null | undefined,
   legacyJson?: string | null,
 ): Promise<T | null> {
-  return decryptClinicalJson<T>(
-    clinicalKeyringFromEnv(env),
-    clinicalScope(table, rowId),
-    encrypted,
-    legacyJson,
-  );
+  return decryptClinicalJson<T>(clinicalKeyringFromEnv(env), clinicalScope(table, rowId), encrypted, legacyJson);
 }
 
 export async function encryptClinicalField(
@@ -70,11 +62,7 @@ export async function encryptClinicalField(
   field: string,
   value: string,
 ): Promise<string> {
-  return encryptClinicalText(
-    clinicalKeyringFromEnv(env).active,
-    clinicalScope(table, rowId, field),
-    value,
-  );
+  return encryptClinicalText(clinicalKeyringFromEnv(env).active, clinicalScope(table, rowId, field), value);
 }
 
 export async function decryptClinicalField(
@@ -85,12 +73,7 @@ export async function decryptClinicalField(
   encrypted: string | null | undefined,
   legacy?: string | null,
 ): Promise<string | null> {
-  return decryptClinicalText(
-    clinicalKeyringFromEnv(env),
-    clinicalScope(table, rowId, field),
-    encrypted,
-    legacy,
-  );
+  return decryptClinicalText(clinicalKeyringFromEnv(env), clinicalScope(table, rowId, field), encrypted, legacy);
 }
 
 export async function blindTokensForQuery(
@@ -99,6 +82,14 @@ export async function blindTokensForQuery(
   query: string,
 ): Promise<string[]> {
   return clinicalBlindTokensForQuery(clinicalKeyringFromEnv(env), resourceType, query);
+}
+
+export async function blindTokenGroupsForQuery(
+  env: ClinicalCryptoEnv,
+  resourceType: string,
+  query: string,
+): Promise<string[][]> {
+  return clinicalBlindTokenGroupsForQuery(clinicalKeyringFromEnv(env), resourceType, query);
 }
 
 export async function replaceClinicalSearchTokensStatements(
@@ -113,29 +104,26 @@ export async function replaceClinicalSearchTokensStatements(
     for (const hash of await clinicalBlindTokensForValue(active, options.resourceType, value)) hashes.add(hash);
   }
   const statements: D1PreparedStatement[] = [
-    db
-      .prepare("DELETE FROM clinical_search_tokens WHERE resource_type = ? AND resource_id = ?")
+    db.prepare("DELETE FROM clinical_search_tokens WHERE resource_type = ? AND resource_id = ?")
       .bind(options.resourceType, options.resourceId),
   ];
   for (const tokenHash of hashes) {
     statements.push(
-      db
-        .prepare(
-          `INSERT INTO clinical_search_tokens
-            (resource_type, resource_id, patient_id, owner_user_id, token_hash, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(resource_type, resource_id, token_hash) DO UPDATE SET
-             patient_id = excluded.patient_id,
-             owner_user_id = excluded.owner_user_id`,
-        )
-        .bind(
-          options.resourceType,
-          options.resourceId,
-          options.patientId ?? null,
-          options.ownerUserId ?? null,
-          tokenHash,
-          new Date().toISOString(),
-        ),
+      db.prepare(
+        `INSERT INTO clinical_search_tokens
+          (resource_type, resource_id, patient_id, owner_user_id, token_hash, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(resource_type, resource_id, token_hash) DO UPDATE SET
+           patient_id = excluded.patient_id,
+           owner_user_id = excluded.owner_user_id`,
+      ).bind(
+        options.resourceType,
+        options.resourceId,
+        options.patientId ?? null,
+        options.ownerUserId ?? null,
+        tokenHash,
+        new Date().toISOString(),
+      ),
     );
   }
   return statements;
@@ -147,10 +135,7 @@ export function encryptedLegacySentinel(): string {
 
 export function clinicalCryptoErrorResponse(error: unknown): Response | null {
   const message = error instanceof Error ? error.message : String(error);
-  if (
-    message === "CLINICAL_DATA_KEY_NOT_CONFIGURED" ||
-    message === "CLINICAL_DATA_KEY_NOT_CONFIGURED_NOT_CONFIGURED"
-  ) {
+  if (message === "CLINICAL_DATA_KEY_NOT_CONFIGURED") {
     return Response.json(
       { error: "Criptografia clínica não configurada.", code: "CLINICAL_CRYPTO_NOT_CONFIGURED" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
