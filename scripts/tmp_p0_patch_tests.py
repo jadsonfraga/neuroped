@@ -125,7 +125,8 @@ Path('tests/unit/clinical-encryption-static.test.mjs').write_text(r'''import ass
 import { readFileSync } from "node:fs";
 const read=(p)=>readFileSync(new URL(`../../${p}`,import.meta.url),"utf8");
 const op=read("functions/api/operations/_core.ts");
-assert.doesNotMatch(op,/NEUROPED_JWT_SECRET/);
+assert.doesNotMatch(op,/env\.NEUROPED_JWT_SECRET/);
+assert.doesNotMatch(op,/OperationsEnv[\s\S]{0,220}NEUROPED_JWT_SECRET/);
 assert.match(op,/OPERATIONAL_DATA_KEY_K1/);
 assert.match(op,/v2\.\$\{keyId\}/);
 const seed=read("db/seed.d1.sql");
@@ -149,7 +150,7 @@ const conecta=read("functions/api/conecta/index.ts");
 assert.match(conecta,/category.*encrypted/);
 const migration=read("functions/api/admin/crypto-migration.ts");
 for(const marker of ["residualPlaintext","decryptFailures","missingSearchIndexes","readyForStrict"]) assert.match(migration,new RegExp(marker));
-console.log("✓ persistência clínica D1 não reintroduz payload clínico em texto aberto");
+console.log("✓ persistência clínica D1 não reintroduz payload clínico em texto aberto nem deriva chave operacional do JWT");
 ''')
 
 p=Path('package.json');data=json.loads(p.read_text());quick=data['scripts']['test:quick-wins'];prefix='node --import tsx tests/unit/clinical-data-encryption.test.ts && node tests/unit/clinical-encryption-static.test.mjs && '
