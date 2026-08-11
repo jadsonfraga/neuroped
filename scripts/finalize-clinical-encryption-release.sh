@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Este helper contém a segunda publicação porque a Cloudflare exige novo deploy
+# após alterar secrets de Pages Functions. Ele é deliberadamente inutilizável
+# fora do workflow oficial para não reabrir um entrypoint manual de produção.
+[ "${GITHUB_ACTIONS:-}" = "true" ] || { echo "::error::Execução permitida apenas no GitHub Actions."; exit 1; }
+[ "${GITHUB_REF:-}" = "refs/heads/main" ] || { echo "::error::Finalização permitida somente na main."; exit 1; }
+[ "${GITHUB_WORKFLOW:-}" = "Deploy Cloudflare Pages" ] || { echo "::error::Workflow não autorizado para finalização clínica."; exit 1; }
+
 : "${CLOUDFLARE_API_TOKEN:?CLOUDFLARE_API_TOKEN ausente}"
 : "${CLOUDFLARE_ACCOUNT_ID:?CLOUDFLARE_ACCOUNT_ID ausente}"
 : "${D1_DATABASE_ID:?D1_DATABASE_ID ausente}"
+: "${GITHUB_SHA:?GITHUB_SHA ausente}"
 
 PROJECT="neuroped"
 DB_NAME="neuroped-db"
@@ -52,8 +60,6 @@ if [ "${CLINICAL_MIGRATION_REQUIRED:-false}" = "true" ]; then
   LEGACY_OPERATIONAL_DATA_KEY="$LEGACY_OPERATIONAL_DATA_KEY" \
     node --import tsx scripts/migrate-d1-clinical-encryption.mts apply
 
-  # O backup foi descriptografado e restaurado com integrity_check=ok antes da
-  # migração. Registra somente hash/evidência temporal, nunca material secreto.
   npx wrangler@4 d1 execute "$DB_NAME" --remote --yes --command \
     "UPDATE clinical_encryption_state SET backup_sha256='${CLINICAL_BACKUP_SHA256}', rollback_verified_at=CURRENT_TIMESTAMP WHERE id=1;"
 
@@ -66,9 +72,49 @@ else
   echo "Migração clínica já estava concluída; preservando chaves existentes."
 fi
 
-# O endpoint ICP foi aposentado. Esses valores nunca mais devem permanecer no
-# runtime do Pages, mesmo em uma instalação que já estivesse strict.
 delete_secret_if_present CERT_P12_B64
 delete_secret_if_present CERT_P12_PASSWORD
 
-echo "Finalização de dados concluída. O workflow oficial deve republicar o mesmo SHA e validar produção."
+# Secrets de Pages Functions só entram em vigor em um novo deployment. A
+# segunda publicação usa o mesmo dist e o mesmo GITHUB_SHA da primeira fase.
+npx wrangler@4 pages deploy dist/public --project-name "$PROJECT" --branch main
+
+ok=0
+for attempt in $(seq 1 18); do
+  sleep 10
+  if curl -fsSL "https://neuroped.pages.dev/deploy-check.json?final=${GITHUB_RUN_ID:-0}-${attempt}" \
+       -o /tmp/clinical-final-deploy-check.json 2>/dev/null \
+    && grep -q "$GITHUB_SHA" /tmp/clinical-final-deploy-check.json; then
+    ok=1
+    break
+  fi
+done
+cat /tmp/clinical-final-deploy-check.json 2>/dev/null || true
+[ "$ok" -eq 1 ] || { echo "::error::Apex não confirmou o mesmo SHA após finalização criptográfica."; exit 1; }
+
+health_ok=0
+for attempt in $(seq 1 18); do
+  if curl -fsSL "https://neuroped.pages.dev/api/health?crypto=${GITHUB_RUN_ID:-0}-${attempt}" \
+       -o /tmp/clinical-final-health.json 2>/dev/null \
+    && jq -e '
+      .database == "ok" and
+      .authentication.required == true and
+      .authentication.configured == true and
+      .encryption.readyForIdentifiableClinicalData == true and
+      .encryption.clinicalStrict == true and
+      .encryption.clinicalPhase == "strict" and
+      .encryption.operationalConfigured == true
+    ' /tmp/clinical-final-health.json >/dev/null; then
+    health_ok=1
+    break
+  fi
+  sleep 10
+done
+cat /tmp/clinical-final-health.json 2>/dev/null || true
+[ "$health_ok" -eq 1 ] || { echo "::error::Backend não atingiu prontidão criptográfica strict."; exit 1; }
+
+cert_code="$(curl -sS -o /tmp/cert-retired.json -w '%{http_code}' https://neuroped.pages.dev/api/cert)"
+[ "$cert_code" = "410" ] || { echo "::error::/api/cert deveria permanecer 410; recebeu ${cert_code}."; cat /tmp/cert-retired.json; exit 1; }
+jq -e '.code == "CERT_ENDPOINT_RETIRED"' /tmp/cert-retired.json >/dev/null
+
+echo "Criptografia clínica strict, chave operacional separada e endpoint ICP aposentado confirmados."
