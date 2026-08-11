@@ -7,6 +7,13 @@
 interface Env {
   DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
+  CLINICAL_DATA_KEY?: string;
+  CLINICAL_DATA_KEY_K1?: string;
+  CLINICAL_INDEX_KEY?: string;
+  CLINICAL_INDEX_KEY_K1?: string;
+  CLINICAL_REQUIRE_ENCRYPTED?: string;
+  OPERATIONAL_DATA_KEY?: string;
+  OPERATIONAL_DATA_KEY_K1?: string;
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -57,6 +64,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         Boolean(env.DB) &&
         authSchemaReady !== false &&
         (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) >= 32,
+    },
+    clinicalEncryption: {
+      configured:
+        (env.CLINICAL_DATA_KEY?.trim().length ?? 0) >= 32 &&
+        (env.CLINICAL_DATA_KEY_K1?.trim().length ?? 0) >= 32 &&
+        (env.CLINICAL_INDEX_KEY?.trim().length ?? 0) >= 32 &&
+        (env.CLINICAL_INDEX_KEY_K1?.trim().length ?? 0) >= 32,
+      strict: env.CLINICAL_REQUIRE_ENCRYPTED?.trim().toLowerCase() === "true",
+    },
+    operationalEncryption: {
+      configured:
+        (env.OPERATIONAL_DATA_KEY?.trim().length ?? 0) >= 32 &&
+        (env.OPERATIONAL_DATA_KEY_K1?.trim().length ?? 0) >= 32,
+      jwtFallback: false,
     },
     semanticSearch: {
       status: "not_configured",

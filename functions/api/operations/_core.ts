@@ -15,8 +15,9 @@ import {
 
 export interface OperationsEnv {
   DB?: D1Database;
-  NEUROPED_JWT_SECRET?: string;
   OPERATIONAL_DATA_KEY?: string;
+  OPERATIONAL_DATA_KEY_ID?: string;
+  OPERATIONAL_DATA_KEY_K1?: string;
 }
 
 interface ProviderIdentity {
@@ -286,32 +287,46 @@ function base64ToBytes(value: string): Uint8Array {
   return out;
 }
 
-async function operationalKey(env: OperationsEnv): Promise<CryptoKey> {
-  const source = env.OPERATIONAL_DATA_KEY?.trim() || env.NEUROPED_JWT_SECRET?.trim();
-  if (!source || source.length < 32) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
-  const material = new TextEncoder().encode(`neuroped-operational-v1:${source}`);
+function operationalSecretFor(env: OperationsEnv, keyId: string): string {
+  const activeId = env.OPERATIONAL_DATA_KEY_ID?.trim() || "k1";
+  const active = env.OPERATIONAL_DATA_KEY?.trim() ?? "";
+  if (keyId === activeId && active.length >= 32) return active;
+  if (keyId === "k1") {
+    const archived = env.OPERATIONAL_DATA_KEY_K1?.trim() ?? "";
+    if (archived.length >= 32) return archived;
+    if (activeId === "k1" && active.length >= 32) return active;
+  }
+  throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
+}
+
+async function operationalKey(secret: string, keyId: string): Promise<CryptoKey> {
+  const material = new TextEncoder().encode(`neuroped-operational-v2:${keyId}:${secret}`);
   const digest = await crypto.subtle.digest("SHA-256", material);
   return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
 export async function encryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
   if (!value) return null;
-  const key = await operationalKey(env);
+  const keyId = env.OPERATIONAL_DATA_KEY_ID?.trim() || "k1";
+  if (!/^[a-z0-9][a-z0-9_-]{0,31}$/i.test(keyId)) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
+  const secret = operationalSecretFor(env, keyId);
+  const key = await operationalKey(secret, keyId);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
     new TextEncoder().encode(value),
   );
-  return `v1.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(ciphertext))}`;
+  return `v2.${keyId}.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(ciphertext))}`;
 }
 
 export async function decryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
   if (!value) return null;
-  const [version, ivB64, cipherB64] = value.split(".");
-  if (version !== "v1" || !ivB64 || !cipherB64) return null;
+  const [version, keyId, ivB64, cipherB64, ...extra] = value.split(".");
+  if (version !== "v2" || !keyId || !ivB64 || !cipherB64 || extra.length > 0) return null;
   try {
-    const key = await operationalKey(env);
+    const secret = operationalSecretFor(env, keyId);
+    const key = await operationalKey(secret, keyId);
     const plain = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: base64ToBytes(ivB64) },
       key,

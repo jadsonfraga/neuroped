@@ -32,7 +32,6 @@ export class ClinicalCryptoError extends Error {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const ENVELOPE_VERSION = "c1";
-const INDEX_VERSION = "i1";
 
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = "";
