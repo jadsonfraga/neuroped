@@ -20,30 +20,6 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Restore validation ordering in patient PATCH
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('functions/api/patients/[id].ts')
-          s = p.read_text()
-          old = '''  if (!env.DB) return errorResponse("Persistência indisponível. Nenhum paciente foi atualizado.", "DB_REQUIRED", 503);\n  const user = getContextUser(context); if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);\n  if (!canWriteClinicalData(user)) return authorizationError("Perfil sem permissão para atualizar pacientes.", "FORBIDDEN", 403);\n\n  let parsed: unknown; try { parsed = await request.json(); } catch { return errorResponse("Corpo da requisição inválido ou não é JSON.", "INVALID_JSON", 400); }\n  if (!isPlainObject(parsed)) return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);\n  const normalized = normalizePatientWrite(parsed, { requireName: false });\n  if (!normalized.ok) return errorResponse(normalized.message, "VALIDATION_ERROR", 400);\n  const entries = Object.entries(normalized.values) as Array<[PatientWriteField, string | null]>;\n  if (!entries.length) return errorResponse("Nenhum campo válido para atualizar.", "NO_UPDATES", 400);\n\n  try {'''
-          new = '''  let parsed: unknown; try { parsed = await request.json(); } catch { return errorResponse("Corpo da requisição inválido ou não é JSON.", "INVALID_JSON", 400); }\n  if (!isPlainObject(parsed)) return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);\n  const normalized = normalizePatientWrite(parsed, { requireName: false });\n  if (!normalized.ok) return errorResponse(normalized.message, "VALIDATION_ERROR", 400);\n  const entries = Object.entries(normalized.values) as Array<[PatientWriteField, string | null]>;\n  if (!entries.length) return errorResponse("Nenhum campo válido para atualizar.", "NO_UPDATES", 400);\n  if (!env.DB) return errorResponse("Persistência indisponível. Nenhum paciente foi atualizado.", "DB_REQUIRED", 503);\n  const user = getContextUser(context); if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);\n  if (!canWriteClinicalData(user)) return authorizationError("Perfil sem permissão para atualizar pacientes.", "FORBIDDEN", 403);\n\n  try {'''
-          if old in s:
-              p.write_text(s.replace(old, new, 1))
-          elif new not in s:
-              raise SystemExit('patient PATCH validation anchor missing')
-          PY
-      - name: Commit validation fix when needed
-        run: |
-          if git diff --quiet -- 'functions/api/patients/[id].ts'; then
-            echo "Validation ordering already fixed."
-          else
-            git config user.name "neuroped-security-bot"
-            git config user.email "actions@users.noreply.github.com"
-            git add 'functions/api/patients/[id].ts'
-            git commit -m "fix(api): validar PATCH clínico antes de exigir storage"
-            git push origin HEAD:fix/close-p0-security-20260811
-          fi
       - name: Install
         run: npm ci
         env:
@@ -57,41 +33,72 @@ jobs:
           node --import tsx tests/unit/clinical-encryption-contract.test.ts
           node tests/unit/clinical-encryption-static.test.mjs
           node tests/unit/clinical-encryption-release-static.test.mjs
-      - name: Existing release security contracts
+      - name: Diagnose release contracts without hiding the first failure
         run: |
-          npm run test:quick-wins
-          npm run test:operations
-      - name: Inspect Cloudflare encryption state without exposing values
-        if: always()
+          set +e
+          status=success
+          failed=""
+          node --input-type=module <<'NODE' > /tmp/quick-wins-commands.txt
+          import fs from 'node:fs';
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          for (const command of pkg.scripts['test:quick-wins'].split(' && ')) console.log(command);
+          NODE
+          while IFS= read -r command; do
+            echo "RUN $command"
+            bash -lc "$command"
+            code=$?
+            if [ "$code" -ne 0 ]; then
+              status=failure
+              failed="$command"
+              break
+            fi
+          done < /tmp/quick-wins-commands.txt
+          if [ "$status" = success ]; then
+            npm run test:operations
+            code=$?
+            if [ "$code" -ne 0 ]; then
+              status=failure
+              failed="npm run test:operations"
+            fi
+          fi
+          printf 'status=%s\nfailed_command=%s\nhead_sha=%s\n' "$status" "$failed" "$GITHUB_SHA" > tmp-p0-diagnostic.txt
+          exit 0
+      - name: Record non-secret infrastructure state
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]
-          npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets.txt
-          echo "Cloudflare Pages secret presence:"
-          for name in CLINICAL_DATA_KEY CLINICAL_ENCRYPTION_STRICT OPERATIONAL_DATA_KEY OPERATIONAL_DATA_KEY_PREVIOUS CERT_P12_B64 CERT_P12_PASSWORD; do
-            if grep -q "\b${name}\b" /tmp/pages-secrets.txt; then
-              echo "  ${name}=present"
-            else
-              echo "  ${name}=absent"
-            fi
-          done
-          echo "D1 encryption state:"
-          if npx wrangler@4 d1 execute neuroped-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name='clinical_encryption_state';" > /tmp/state-table.txt 2>&1 \
-            && grep -q "clinical_encryption_state" /tmp/state-table.txt; then
-            npx wrangler@4 d1 execute neuroped-db --remote --command "SELECT envelope_version, key_id, phase, backup_sha256 IS NOT NULL AS has_backup, rollback_verified_at IS NOT NULL AS rollback_verified FROM clinical_encryption_state WHERE id=1;"
-          else
-            echo "  clinical_encryption_state=absent"
-          fi
-          npx wrangler@4 pages secret delete --help | head -20
-      - name: Inspect retired GitHub secret presence without exposing values
-        if: always()
-        env:
           OLD_CERT_B64: ${{ secrets.CERT_P12_B64 }}
           OLD_CERT_PW: ${{ secrets.CERT_P12_PASSWORD }}
         run: |
           set -euo pipefail
-          [ -n "$OLD_CERT_B64" ] && echo "CERT_P12_B64=present" || echo "CERT_P12_B64=absent"
-          [ -n "$OLD_CERT_PW" ] && echo "CERT_P12_PASSWORD=present" || echo "CERT_P12_PASSWORD=absent"
+          : > tmp-p0-infra-state.txt
+          echo "head_sha=$GITHUB_SHA" >> tmp-p0-infra-state.txt
+          [ -n "$OLD_CERT_B64" ] && echo "github_CERT_P12_B64=present" >> tmp-p0-infra-state.txt || echo "github_CERT_P12_B64=absent" >> tmp-p0-infra-state.txt
+          [ -n "$OLD_CERT_PW" ] && echo "github_CERT_P12_PASSWORD=present" >> tmp-p0-infra-state.txt || echo "github_CERT_P12_PASSWORD=absent" >> tmp-p0-infra-state.txt
+          npx wrangler@4 pages secret list --project-name neuroped > /tmp/pages-secrets.txt
+          for name in CLINICAL_DATA_KEY CLINICAL_ENCRYPTION_STRICT OPERATIONAL_DATA_KEY OPERATIONAL_DATA_KEY_PREVIOUS CERT_P12_B64 CERT_P12_PASSWORD; do
+            if grep -Eq "(^|[^A-Za-z0-9_])${name}([^A-Za-z0-9_]|$)" /tmp/pages-secrets.txt; then
+              echo "cloudflare_${name}=present" >> tmp-p0-infra-state.txt
+            else
+              echo "cloudflare_${name}=absent" >> tmp-p0-infra-state.txt
+            fi
+          done
+          if npx wrangler@4 d1 execute neuroped-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name='clinical_encryption_state';" > /tmp/state-table.txt 2>&1 \
+            && grep -q "clinical_encryption_state" /tmp/state-table.txt; then
+            echo "d1_clinical_encryption_state=present" >> tmp-p0-infra-state.txt
+            npx wrangler@4 d1 execute neuroped-db --remote --json --command "SELECT envelope_version,key_id,phase,backup_sha256 IS NOT NULL AS has_backup,rollback_verified_at IS NOT NULL AS rollback_verified FROM clinical_encryption_state WHERE id=1;" \
+              | jq -r '.[0].results[0] // {} | "d1_phase=\(.phase // "none")\nd1_has_backup=\((.has_backup // 0) != 0)\nd1_rollback_verified=\((.rollback_verified // 0) != 0)"' \
+              >> tmp-p0-infra-state.txt
+          else
+            echo "d1_clinical_encryption_state=absent" >> tmp-p0-infra-state.txt
+            echo "d1_phase=none" >> tmp-p0-infra-state.txt
+          fi
+      - name: Commit diagnostic state
+        run: |
+          git config user.name "neuroped-security-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add tmp-p0-diagnostic.txt tmp-p0-infra-state.txt
+          git commit -m "chore(security): registrar diagnóstico P0 temporário"
+          git push origin HEAD:fix/close-p0-security-20260811
+      - name: Enforce diagnosed release contracts
+        run: grep -qx 'status=success' tmp-p0-diagnostic.txt
