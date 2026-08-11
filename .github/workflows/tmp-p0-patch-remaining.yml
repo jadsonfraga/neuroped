@@ -1,6 +1,6 @@
 name: Temporary P0 remaining clinical crypto
 
-# retry: validation precedes storage/key dependencies
+# retry: encrypted patient contract aligned
 on:
   push:
     branches:
