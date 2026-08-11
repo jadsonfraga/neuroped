@@ -20,17 +20,35 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Patch deployment governance for the workflow-owned finalizer
-        run: python3 scripts/tmp_patch_deploy_governance.py
-      - name: Commit governance patch when needed
+      - name: Restore manifest exactly from main and add only P0 tests
         run: |
-          if git diff --quiet; then
-            echo "No governance patch pending."
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:package.json > package.json
+          git show origin/main:package-lock.json > package-lock.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const prefix = [
+            'node --import tsx tests/unit/clinical-encryption-contract.test.ts',
+            'node tests/unit/clinical-encryption-static.test.mjs',
+            'node tests/unit/clinical-encryption-release-static.test.mjs',
+          ].join(' && ') + ' && ';
+          if (!pkg.scripts['test:quick-wins'].startsWith(prefix)) {
+            pkg.scripts['test:quick-wins'] = prefix + pkg.scripts['test:quick-wins'];
+          }
+          fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+      - name: Commit minimal manifest correction when needed
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "Manifest already minimal."
           else
             git config user.name "neuroped-security-bot"
             git config user.email "actions@users.noreply.github.com"
-            git add tests/unit/deploy-entrypoints.test.mjs tests/unit/workflow-governance.test.mjs
-            git commit -m "test(security): governar finalizador P0 do workflow oficial"
+            git add package.json package-lock.json
+            git commit -m "fix(security): restaurar manifesto e conectar apenas gates P0"
             git push origin HEAD:fix/close-p0-security-20260811
           fi
       - name: Install
@@ -73,7 +91,6 @@ jobs:
           else
             echo "  clinical_encryption_state=absent"
           fi
-          echo "Wrangler Pages secret-delete command is available:"
           npx wrangler@4 pages secret delete --help | head -20
       - name: Inspect retired GitHub secret presence without exposing values
         env:
