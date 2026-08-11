@@ -26,7 +26,7 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - run: python3 scripts/tmp_p0_patch_endpoints.py
-      - name: Validate
+      - name: Validate code and permanent regression gate
         run: npm run check && npm run lint && npm run test:quick-wins
       - name: Commit verified endpoints
         run: |
