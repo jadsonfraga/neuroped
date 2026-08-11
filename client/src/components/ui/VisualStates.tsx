@@ -210,7 +210,7 @@ export function SuccessToast({ message, durationMs = 3000, onDismiss }: SuccessT
       onDismiss?.();
     }, durationMs);
     return () => clearTimeout(t);
-  }, [durationMs, onDismiss]);
+  }, [durationMs]);
 
   if (!visible) return null;
 
