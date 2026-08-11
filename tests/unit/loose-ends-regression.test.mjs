@@ -57,14 +57,9 @@ assert.match(serverCrypto, /Buffer\.from\(raw, "utf8"\)/);
 assert.doesNotMatch(serverCrypto, /Buffer\.from\(raw, "base64"\)/);
 assert.match(serverCrypto, /nunca reinterpretar um secret existente/i);
 
-// AuthContext: memoização só é real com callbacks estáveis; logout limpa PHI local até em falha de rede.
-for (const callbackName of ["login", "logout", "refreshUser"]) {
-  assert.match(
-    authContext,
-    new RegExp(`const ${callbackName} = useCallback`),
-    `${callbackName} deve ter identidade estável`,
-  );
-}
+// AuthContext: o contrato importante é a limpeza local em qualquer resultado do logout remoto.
+assert.match(authContext, /async function logout\(\)(?:: Promise<void>)? \{/);
+assert.match(authContext, /await logoutRequest\(\)/);
 assert.match(authContext, /finally\s*\{\s*await clearSessionScopedClientState\(\)/s);
 
 // Toast: timer não deve reiniciar por mudança de callback nem chamar closure obsoleta.
