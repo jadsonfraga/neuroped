@@ -28,6 +28,7 @@ jobs:
       - run: |
           python3 scripts/tmp_p0_patch_remaining.py
           python3 scripts/tmp_p0_patch_remaining_fix.py
+          python3 scripts/tmp_p0_patch_memory_transition.py
       - name: Validate
         run: |
           npm run check
