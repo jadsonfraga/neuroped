@@ -7,7 +7,7 @@ import {
   authFetch,
   getAuthCapability,
 } from "@/lib/authClient";
-import { queryClient } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { secureClearAll } from "@/lib/secureStorage";
 
 export type AccessMode = "checking" | "remote" | "local";
