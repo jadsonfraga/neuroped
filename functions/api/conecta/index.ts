@@ -4,9 +4,15 @@ import {
   getContextUser,
   getPatientAccess,
 } from "../auth/_authorization";
+import {
+  clinicalCryptoErrorResponse,
+  decryptClinicalPayload,
+  encryptClinicalPayload,
+  type ClinicalCryptoEnv,
+} from "../_clinicalCrypto";
 import { ensureConectaDemoSchema } from "./_schema";
 
-interface Env {
+interface Env extends ClinicalCryptoEnv {
   DB?: D1Database;
 }
 
@@ -20,7 +26,13 @@ interface D1ConectaRow {
   value: number | null;
   duration_minutes: number | null;
   payload_json: string | null;
+  secure_payload_encrypted: string | null;
   created_at: string;
+}
+
+interface SecureConectaPayload {
+  context?: ConectaEvent["context"] | null;
+  payload?: Pick<ConectaEvent, "note" | "detail"> | null;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -34,26 +46,34 @@ function error(message: string, code: string, status: number): Response {
   return json({ error: message, code }, status);
 }
 
-function present(row: D1ConectaRow): ConectaEvent {
-  let payload: Pick<ConectaEvent, "note" | "detail"> = {};
+async function present(env: Env, row: D1ConectaRow): Promise<ConectaEvent> {
+  let legacyPayload: Pick<ConectaEvent, "note" | "detail"> | null = null;
   if (row.payload_json) {
     try {
       const parsed = JSON.parse(row.payload_json) as Pick<ConectaEvent, "note" | "detail">;
-      payload = parsed && typeof parsed === "object" ? parsed : {};
+      legacyPayload = parsed && typeof parsed === "object" ? parsed : null;
     } catch {
-      payload = {};
+      legacyPayload = null;
     }
   }
+  const secure = await decryptClinicalPayload<SecureConectaPayload>(
+    env,
+    "conecta_events_demo",
+    row.id,
+    row.secure_payload_encrypted,
+    JSON.stringify({ context: row.context, payload: legacyPayload }),
+  );
+  const payload = secure?.payload ?? {};
   return {
     id: row.id,
     patientId: row.patient_id,
     authorUserId: row.author_user_id,
     category: row.category,
     occurredAt: row.occurred_at,
-    ...(row.context ? { context: row.context } : {}),
+    ...(secure?.context ? { context: secure.context } : {}),
     ...(typeof row.value === "number" ? { value: row.value } : {}),
     ...(typeof row.duration_minutes === "number" ? { durationMinutes: row.duration_minutes } : {}),
-    ...payload,
+    ...(payload ?? {}),
     createdAt: row.created_at,
     storageMode: "demo-db",
   };
@@ -84,7 +104,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const result = await env.DB
       .prepare(
         `SELECT id, patient_id, author_user_id, category, occurred_at, context,
-                value, duration_minutes, payload_json, created_at
+                value, duration_minutes, payload_json, secure_payload_encrypted, created_at
            FROM conecta_events_demo
           WHERE patient_id = ? AND is_demo = 1 AND occurred_at >= ?
           ORDER BY occurred_at DESC
@@ -93,8 +113,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       .bind(patientId, cutoff)
       .all<D1ConectaRow>();
     const rows = result.results ?? [];
-    return json({ data: rows.map(present), total: rows.length, mode: "demo-db" });
+    const data = await Promise.all(rows.map((row) => present(env, row)));
+    return json({ data, total: data.length, mode: "demo-db" });
   } catch (cause) {
+    const cryptoResponse = clinicalCryptoErrorResponse(cause);
+    if (cryptoResponse) return cryptoResponse;
     console.error("[conecta.GET]", cause);
     return error("Não foi possível carregar os registros agora.", "DB_ERROR", 500);
   }
@@ -131,18 +154,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const id = `conecta-${crypto.randomUUID()}`;
   const createdAt = new Date().toISOString();
-  const payload = parsed.data.note || parsed.data.detail
-    ? JSON.stringify({ note: parsed.data.note, detail: parsed.data.detail })
-    : null;
+  const securePayload: SecureConectaPayload = {
+    context: parsed.data.context ?? null,
+    payload: parsed.data.note || parsed.data.detail
+      ? { note: parsed.data.note, detail: parsed.data.detail }
+      : null,
+  };
 
   try {
     await ensureConectaDemoSchema(env.DB);
+    const encrypted = await encryptClinicalPayload(env, "conecta_events_demo", id, securePayload);
     await env.DB
       .prepare(
         `INSERT INTO conecta_events_demo
           (id, patient_id, author_user_id, category, occurred_at, context,
-           value, duration_minutes, payload_json, is_demo, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+           value, duration_minutes, payload_json, secure_payload_encrypted, is_demo, created_at)
+         VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NULL, ?, 1, ?)`,
       )
       .bind(
         id,
@@ -150,10 +177,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         user.id,
         parsed.data.category,
         parsed.data.occurredAt,
-        parsed.data.context ?? null,
         parsed.data.value ?? null,
         parsed.data.durationMinutes ?? null,
-        payload,
+        encrypted,
         createdAt,
       )
       .run();
@@ -167,6 +193,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     };
     return json(created, 201);
   } catch (cause) {
+    const cryptoResponse = clinicalCryptoErrorResponse(cause);
+    if (cryptoResponse) return cryptoResponse;
     console.error("[conecta.POST]", cause);
     return error("Não foi possível salvar o registro.", "DB_ERROR", 500);
   }
