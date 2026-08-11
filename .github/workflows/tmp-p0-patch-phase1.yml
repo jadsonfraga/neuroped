@@ -28,6 +28,8 @@ jobs:
       - name: Apply patch and pre-existing lint fixes
         run: |
           python3 scripts/tmp_p0_patch_phase1.py
+          # Workflow files are updated by the GitHub connector, not by Actions.
+          git checkout -- .github/workflows/provision-d1.yml
           sed -i '/const INDEX_VERSION = "i1";/d' functions/api/_clinicalCrypto.ts
           python3 - <<'PY'
           from pathlib import Path
@@ -46,11 +48,12 @@ jobs:
           PY
       - name: TypeScript and lint
         run: npm run check && npm run lint
-      - name: Commit verified patch
+      - name: Commit verified code patch
         run: |
           set -euo pipefail
           git config user.name "jadsonfraga"
           git config user.email "jadsonfraga@hotmail.com"
-          git add functions/api/_clinicalCrypto.ts functions/api/operations/_core.ts functions/api/health.ts db/seed.d1.sql .github/workflows/provision-d1.yml client/src/components/ui/VisualStates.tsx client/src/contexts/AuthContext.tsx
+          git add functions/api/_clinicalCrypto.ts functions/api/operations/_core.ts functions/api/health.ts db/seed.d1.sql client/src/components/ui/VisualStates.tsx client/src/contexts/AuthContext.tsx
+          git diff --cached --quiet && { echo "No code changes to push"; exit 0; }
           git commit -m "fix(security): separar chaves e estabilizar hooks de sessão"
           git push origin HEAD:fix/p0-clinical-crypto-20260811
