@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
   crm TEXT,
   specialty TEXT,
   pin_hash TEXT,
-  -- Autenticação nominal (functions/api/auth, hash PBKDF2 via Web Crypto):
   password_hash TEXT,
   must_change_password INTEGER NOT NULL DEFAULT 0 CHECK (must_change_password IN (0, 1)),
   failed_login_attempts INTEGER NOT NULL DEFAULT 0,
@@ -47,11 +46,7 @@ CREATE TABLE IF NOT EXISTS consents (
   batch_id TEXT NOT NULL,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   consent_type TEXT NOT NULL CHECK (
-    consent_type IN (
-      'termo_uso',
-      'politica_privacidade',
-      'tratamento_dados_saude'
-    )
+    consent_type IN ('termo_uso','politica_privacidade','tratamento_dados_saude')
   ),
   consent_version TEXT NOT NULL,
   consent_text TEXT NOT NULL,
@@ -77,11 +72,13 @@ CREATE TABLE IF NOT EXISTS patients_demo (
   guardian_phone TEXT,
   diagnosis_code TEXT,
   notes TEXT,
+  secure_payload_encrypted TEXT,
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_patients_demo_name ON patients_demo(name);
+CREATE INDEX IF NOT EXISTS idx_patients_demo_owner ON patients_demo(owner_user_id);
 
 CREATE TABLE IF NOT EXISTS consultations_demo (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
@@ -91,6 +88,7 @@ CREATE TABLE IF NOT EXISTS consultations_demo (
   objective TEXT,
   assessment TEXT,
   plan TEXT,
+  secure_payload_encrypted TEXT,
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -102,9 +100,10 @@ CREATE TABLE IF NOT EXISTS scale_results_demo (
   patient_id TEXT NOT NULL,
   scale_id TEXT NOT NULL,
   scale_name TEXT NOT NULL,
-  score REAL,               -- coluna legada; novas gravações usam NULL
-  interpretation TEXT,      -- coluna legada; novas gravações usam NULL
-  details TEXT,             -- JSON com perguntas e respostas integrais
+  score REAL,
+  interpretation TEXT,
+  details TEXT,
+  secure_payload_encrypted TEXT,
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -118,6 +117,7 @@ CREATE TABLE IF NOT EXISTS documents_demo (
   type TEXT NOT NULL CHECK (type IN ('laudo', 'relatorio', 'encaminhamento', 'prescricao', 'atestado', 'orientacao')),
   title TEXT NOT NULL,
   content TEXT,
+  secure_payload_encrypted TEXT,
   is_family_visible INTEGER NOT NULL DEFAULT 0 CHECK (is_family_visible IN (0, 1)),
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -148,11 +148,39 @@ CREATE TABLE IF NOT EXISTS memory_notes (
   source TEXT,
   patient_id TEXT,
   tags TEXT,
+  secure_payload_encrypted TEXT,
   is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_memory_notes_category ON memory_notes(category);
+
+CREATE TABLE IF NOT EXISTS clinical_search_tokens (
+  resource_type TEXT NOT NULL,
+  resource_id TEXT NOT NULL,
+  patient_id TEXT,
+  owner_user_id TEXT,
+  token_hash TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (resource_type, resource_id, token_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_clinical_search_tokens_lookup
+  ON clinical_search_tokens(resource_type, token_hash, owner_user_id, resource_id);
+CREATE INDEX IF NOT EXISTS idx_clinical_search_tokens_patient
+  ON clinical_search_tokens(patient_id, resource_type);
+
+CREATE TABLE IF NOT EXISTS clinical_encryption_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  envelope_version TEXT NOT NULL,
+  key_id TEXT NOT NULL,
+  phase TEXT NOT NULL CHECK (phase IN ('dual_read','migrating','strict')),
+  backup_sha256 TEXT,
+  started_at DATETIME NOT NULL,
+  migrated_at DATETIME,
+  verified_at DATETIME,
+  rollback_verified_at DATETIME,
+  last_error TEXT
+);
 
 CREATE TABLE IF NOT EXISTS app_settings (
   key TEXT PRIMARY KEY,
@@ -163,4 +191,4 @@ CREATE TABLE IF NOT EXISTS app_settings (
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.version', '2.0.0');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.mode', 'demo');
 INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.lgpd.version', '1.0');
-INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.schema.version', '2026-05-08');
+INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app.schema.version', '2026-08-11-clinical-encryption-c1');
