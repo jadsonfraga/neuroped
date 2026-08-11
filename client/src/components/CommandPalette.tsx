@@ -15,16 +15,16 @@ import {
   UsersRound,
 } from "lucide-react";
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/lib/commandPaletteBus";
-import { isPublicRoute } from "@/lib/publicRoutes";
+import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
 
 /**
  * CommandPalette — busca global orientada a tarefa.
  *
  * Abre com Ctrl/Cmd+K ou pelo evento "neuroped:open-command". Busca páginas,
- * escalas e, na zona privada, pacientes reais. Pacientes são consultados apenas
- * depois de o usuário digitar ao menos 2 caracteres e seus nomes nunca entram
- * no histórico local de "recentes" da paleta.
+ * escalas e, apenas dentro de uma rota privada, pacientes reais. Pacientes são
+ * consultados depois de ao menos 2 caracteres e seus nomes nunca entram no
+ * histórico local de "recentes" da paleta.
  */
 
 interface NavScale {
@@ -68,10 +68,13 @@ function navigate(href: string) {
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [path, setPath] = useState(() => currentHashPath());
   const [navigableScales, setNavigableScales] = useState<NavScale[]>([]);
   const { recents, pushRecent } = useRecents();
   const normalizedSearch = normalize(search);
-  const patientSearchReady = !IS_PUBLIC_ZONE && open && normalizedSearch.length >= 2;
+  const onPublicRoute = isPublicRoute(path);
+  const privateToolsAllowed = !IS_PUBLIC_ZONE && !onPublicRoute;
+  const patientSearchReady = privateToolsAllowed && open && normalizedSearch.length >= 2;
 
   const patientQuery = useQuery<any>({
     queryKey: ["/api/patients"],
@@ -80,7 +83,13 @@ export function CommandPalette() {
   });
 
   useEffect(() => {
-    if (IS_PUBLIC_ZONE || !open || navigableScales.length > 0) return;
+    const syncPath = () => setPath(currentHashPath());
+    window.addEventListener("hashchange", syncPath);
+    return () => window.removeEventListener("hashchange", syncPath);
+  }, []);
+
+  useEffect(() => {
+    if (!privateToolsAllowed || !open || navigableScales.length > 0) return;
     let cancelled = false;
     import("@/data/scaleFilter").then((mod) => {
       if (cancelled) return;
@@ -101,7 +110,7 @@ export function CommandPalette() {
     return () => {
       cancelled = true;
     };
-  }, [open, navigableScales.length]);
+  }, [open, navigableScales.length, privateToolsAllowed]);
 
   const recentScales = useMemo(
     () => recents.map((id) => navigableScales.find((s) => s.id === id)).filter(Boolean) as NavScale[],
@@ -109,8 +118,10 @@ export function CommandPalette() {
   );
 
   const visiblePages = useMemo(
-    () => IS_PUBLIC_ZONE ? navigablePages.filter((page) => isPublicRoute(page.href)) : navigablePages,
-    [],
+    () => (IS_PUBLIC_ZONE || onPublicRoute)
+      ? navigablePages.filter((page) => isPublicRoute(page.href))
+      : navigablePages,
+    [onPublicRoute],
   );
 
   const patients = useMemo<NavPatient[]>(() => {
@@ -172,14 +183,14 @@ export function CommandPalette() {
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder="Buscar paciente, escala ou página…"
+        placeholder={privateToolsAllowed ? "Buscar paciente, escala ou página…" : "Buscar conteúdo público…"}
         value={search}
         onValueChange={setSearch}
       />
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
 
-        {!IS_PUBLIC_ZONE && (
+        {privateToolsAllowed && (
           <CommandGroup heading="Ações rápidas">
             <CommandItem value="meus pacientes prontuario paciente" onSelect={() => goPage("/pacientes")}>
               <UsersRound className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -206,7 +217,7 @@ export function CommandPalette() {
           </CommandGroup>
         )}
 
-        {!IS_PUBLIC_ZONE && patientMatches.length > 0 && (
+        {privateToolsAllowed && patientMatches.length > 0 && (
           <CommandGroup heading="Pacientes">
             {patientMatches.map((patient) => (
               <CommandItem
@@ -226,7 +237,7 @@ export function CommandPalette() {
           </CommandGroup>
         )}
 
-        {recentScales.length > 0 && (
+        {privateToolsAllowed && recentScales.length > 0 && (
           <CommandGroup heading="Escalas recentes">
             {recentScales.map((scale) => (
               <CommandItem
@@ -241,7 +252,7 @@ export function CommandPalette() {
           </CommandGroup>
         )}
 
-        {!IS_PUBLIC_ZONE && (
+        {privateToolsAllowed && (
           <CommandGroup heading="Escalas">
             {navigableScales.map((scale) => (
               <CommandItem

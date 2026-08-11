@@ -1,0 +1,46 @@
+name: Deep audit regressions
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/components/MobilePrimaryDock.tsx"
+      - "client/src/pages/agendar.tsx"
+      - ".github/workflows/daily-authorial-static-sync.yml"
+      - "tests/unit/deep-audit-regressions-static.test.mjs"
+      - ".github/workflows/deep-audit-regressions.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/components/MobilePrimaryDock.tsx"
+      - "client/src/pages/agendar.tsx"
+      - ".github/workflows/daily-authorial-static-sync.yml"
+      - "tests/unit/deep-audit-regressions-static.test.mjs"
+      - ".github/workflows/deep-audit-regressions.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Deep audit regression contracts
+        run: node tests/unit/deep-audit-regressions-static.test.mjs
+      - name: TypeScript
+        run: npm run check
+      - name: Lint
+        run: npm run lint
