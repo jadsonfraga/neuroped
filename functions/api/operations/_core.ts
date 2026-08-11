@@ -16,6 +16,7 @@ import {
 export interface OperationsEnv {
   DB?: D1Database;
   OPERATIONAL_DATA_KEY?: string;
+  OPERATIONAL_DATA_KEY_PREVIOUS?: string;
 }
 
 interface ProviderIdentity {
@@ -285,8 +286,8 @@ function base64ToBytes(value: string): Uint8Array {
   return out;
 }
 
-async function operationalKey(env: OperationsEnv): Promise<CryptoKey> {
-  const source = env.OPERATIONAL_DATA_KEY?.trim();
+async function operationalKey(env: OperationsEnv, explicitSource?: string): Promise<CryptoKey> {
+  const source = explicitSource?.trim() || env.OPERATIONAL_DATA_KEY?.trim();
   if (!source || source.length < 32) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
   const material = new TextEncoder().encode(`neuroped-operational-v1:${source}`);
   const digest = await crypto.subtle.digest("SHA-256", material);
@@ -309,17 +310,21 @@ export async function decryptText(env: OperationsEnv, value: string | null): Pro
   if (!value) return null;
   const [version, ivB64, cipherB64] = value.split(".");
   if (version !== "v1" || !ivB64 || !cipherB64) return null;
-  try {
-    const key = await operationalKey(env);
-    const plain = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: base64ToBytes(ivB64) },
-      key,
-      base64ToBytes(cipherB64),
-    );
-    return new TextDecoder().decode(plain);
-  } catch {
-    return null;
+  for (const source of [env.OPERATIONAL_DATA_KEY, env.OPERATIONAL_DATA_KEY_PREVIOUS]) {
+    if (!source?.trim()) continue;
+    try {
+      const key = await operationalKey(env, source);
+      const plain = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: base64ToBytes(ivB64) },
+        key,
+        base64ToBytes(cipherB64),
+      );
+      return new TextDecoder().decode(plain);
+    } catch {
+      // Durante rotação, tenta explicitamente a chave anterior; nunca o JWT.
+    }
   }
+  return null;
 }
 
 export async function sha256(value: string): Promise<string> {
