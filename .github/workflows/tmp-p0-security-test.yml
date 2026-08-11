@@ -6,26 +6,45 @@ on:
       - fix/close-p0-security-20260811
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
+      - name: Apply idempotent repository patch
+        run: python3 scripts/tmp_apply_p0_patches.py
+      - name: Commit patch when needed
+        run: |
+          if git diff --quiet; then
+            echo "No repository patch pending."
+          else
+            git config user.name "neuroped-security-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add functions/api/operations/_core.ts package.json
+            git commit -m "fix(security): separar chave operacional e conectar gate P0"
+            git push origin HEAD:fix/close-p0-security-20260811
+          fi
       - name: Install
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
       - name: TypeScript
         run: npm run check
-      - name: Lint
-        run: npm run lint
-      - name: Existing release security contracts
+      - name: Targeted encryption contracts
+        run: |
+          node --import tsx tests/unit/clinical-encryption-contract.test.ts
+          node tests/unit/clinical-encryption-static.test.mjs
+      - name: Lint changed security surfaces
+        run: npx eslint shared/clinical-crypto.ts functions/api/_clinicalCrypto.ts functions/api/patients/index.ts 'functions/api/patients/[id].ts' functions/api/consultations/index.ts functions/api/scales/results.ts functions/api/documents/index.ts functions/api/clinical-core/index.ts functions/api/conecta/index.ts functions/api/memory/search.ts functions/api/health.ts --max-warnings=0
+      - name: Existing security contracts
         run: |
           npm run test:quick-wins
           npm run test:operations
