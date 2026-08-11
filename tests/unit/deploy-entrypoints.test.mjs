@@ -21,6 +21,9 @@ const ignoredDirectories = new Set([
   "coverage",
   "tests",
 ]);
+const workflowOwnedMutators = new Set([
+  "scripts/finalize-clinical-encryption-release.sh",
+]);
 
 const legacyEntrypoints = [
   "deploy.sh",
@@ -104,6 +107,8 @@ for (const path of legacyEntrypoints) {
 
 const violations = [];
 for (const absolute of walk(root)) {
+  const relativePath = relative(root, absolute);
+  if (workflowOwnedMutators.has(relativePath)) continue;
   const content = readFileSync(absolute, "utf8");
   for (const pattern of forbiddenMutations) {
     if (pattern.test(content)) {
@@ -115,6 +120,17 @@ assert.deepEqual(
   violations,
   [],
   `scripts fora dos workflows não podem publicar ou alterar provedores:\n${violations.join("\n")}`,
+);
+
+const clinicalFinalizer = read("scripts/finalize-clinical-encryption-release.sh");
+assert.match(clinicalFinalizer, /GITHUB_ACTIONS[^\n]*true/);
+assert.match(clinicalFinalizer, /GITHUB_REF[^\n]*refs\/heads\/main/);
+assert.match(clinicalFinalizer, /GITHUB_WORKFLOW[^\n]*Deploy Cloudflare Pages/);
+assert.match(clinicalFinalizer, /wrangler@4 pages deploy dist\/public --project-name \"?\$PROJECT\"? --branch main/);
+assert.match(
+  read(".github/workflows/deploy-cloudflare.yml"),
+  /run: bash scripts\/finalize-clinical-encryption-release\.sh/,
+  "o único helper mutador permitido deve ser invocado pelo workflow oficial",
 );
 
 for (const path of [

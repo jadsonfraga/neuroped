@@ -249,7 +249,7 @@ assert.match(
 );
 assert.match(
   cloudflareDeploy,
-  /Backend canônico, D1, CORS e autenticação confirmados\./,
+  /Backend canônico, D1, auth e criptografia strict confirmados\./,
 );
 assert.doesNotMatch(
   cloudflareDeploy,
