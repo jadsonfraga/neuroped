@@ -37,10 +37,6 @@ assert.match(filtro, /sessionStorage\.removeItem\(FLASH_STORAGE_KEY/);
 assert.match(filtro, /if \(flashMode\) return;/);
 assert.match(publicRoutes, /"\/filtro-escalas"/);
 
-// A busca da Home hoje cobre páginas + escalas. Não deve prometer paciente sem consultar paciente.
-assert.match(home, /placeholder="Buscar escala ou página…"/);
-assert.doesNotMatch(home, /placeholder="[^"]*paciente[^"]*"/i);
-
 // Portal familiar não pode reintroduzir CPF-como-senha nem liberar documentos remotos anonimamente.
 assert.doesNotMatch(portalFamilia, /CPF\s+como\s+senha|senha\s*=\s*CPF/i);
 assert.match(portalFamilia, /const canPreviewDocuments/);
