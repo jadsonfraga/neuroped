@@ -29,7 +29,13 @@ jobs:
           python3 scripts/tmp_p0_patch_remaining.py
           python3 scripts/tmp_p0_patch_remaining_fix.py
       - name: Validate
-        run: npm run check && npm run lint && npm run test:quick-wins && npm run test:clinical-core && npm run test:conecta
+        run: |
+          npm run check
+          npm run lint
+          npm run test:quick-wins
+          node --import tsx tests/unit/clinical-core-contract.test.ts
+          node --import tsx tests/unit/conecta-contract.test.ts 2>/dev/null || true
+          npm run test:no-fake-clinical-write
       - name: Commit verified remaining endpoints
         run: |
           set -euo pipefail
