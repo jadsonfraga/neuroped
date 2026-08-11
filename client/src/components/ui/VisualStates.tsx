@@ -14,7 +14,7 @@
  *   import { LoadingState, EmptyState, ErrorState } from "@/components/ui/VisualStates";
  */
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -203,11 +203,16 @@ interface SuccessToastProps {
 
 export function SuccessToast({ message, durationMs = 3000, onDismiss }: SuccessToastProps) {
   const [visible, setVisible] = useState(true);
+  const onDismissRef = useRef(onDismiss);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     const t = setTimeout(() => {
       setVisible(false);
-      onDismiss?.();
+      onDismissRef.current?.();
     }, durationMs);
     return () => clearTimeout(t);
   }, [durationMs]);
