@@ -39,4 +39,7 @@ jobs:
           echo "=== PAGES SECRET NAMES ==="
           npx --yes wrangler@4 pages secret list --project-name neuroped | sed -E 's/(: ).*/: [redacted]/' || true
           echo "=== CLINICAL TABLE COUNTS ==="
-          npx --yes wrangler@4 d1 execute neuroped-db --remote --command "SELECT 'patients_demo' AS table_name, COUNT(*) AS rows FROM patients_demo UNION ALL SELECT 'consultations_demo', COUNT(*) FROM consultations_demo UNION ALL SELECT 'scale_results_demo', COUNT(*) FROM scale_results_demo UNION ALL SELECT 'documents_demo', COUNT(*) FROM documents_demo UNION ALL SELECT 'memory_notes', COUNT(*) FROM memory_notes UNION ALL SELECT 'clinical_events_demo', COUNT(*) FROM clinical_events_demo UNION ALL SELECT 'conecta_events_demo', COUNT(*) FROM conecta_events_demo UNION ALL SELECT 'appointments', COUNT(*) FROM appointments UNION ALL SELECT 'waitlist_entries', COUNT(*) FROM waitlist_entries UNION ALL SELECT 'appointment_reviews', COUNT(*) FROM appointment_reviews UNION ALL SELECT 'notification_outbox', COUNT(*) FROM notification_outbox;"
+          for table in patients_demo consultations_demo scale_results_demo documents_demo memory_notes clinical_events_demo conecta_events_demo appointments waitlist_entries appointment_reviews notification_outbox; do
+            echo "-- $table"
+            npx --yes wrangler@4 d1 execute neuroped-db --remote --command "SELECT COUNT(*) AS rows FROM $table;"
+          done
