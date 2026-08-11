@@ -1,0 +1,42 @@
+name: Temporary P0 admin role probe
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-admin-role-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+      E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+      ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+    steps:
+      - name: Probe roles only — never print credentials or tokens
+        run: |
+          set -euo pipefail
+          probe() {
+            local label="$1" mail="$2" pw="$3"
+            if [ -z "$mail" ] || [ -z "$pw" ]; then
+              echo "$label=ABSENT"
+              return 0
+            fi
+            payload="$(jq -nc --arg email "$mail" --arg password "$pw" '{email:$email,password:$password}')"
+            code="$(curl -sS -o /tmp/${label}.json -w '%{http_code}' -X POST https://neuroped.pages.dev/api/auth/login -H 'Content-Type: application/json' --data "$payload")"
+            if [ "$code" != "200" ]; then
+              echo "$label=LOGIN_HTTP_$code"
+            else
+              role="$(jq -r '.user.role // "missing"' /tmp/${label}.json)"
+              echo "$label=ROLE_$role"
+            fi
+            rm -f /tmp/${label}.json
+          }
+          probe ADMIN "$ADMIN_MAIL" "$ADMIN_PW"
+          probe E2E "$E2E_MAIL" "$E2E_PW"
