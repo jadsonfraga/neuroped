@@ -1,0 +1,38 @@
+name: Temporary P0 remaining clinical crypto
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-patch-remaining.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/p0-clinical-crypto-20260811
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - run: python3 scripts/tmp_p0_patch_remaining.py
+      - name: Validate
+        run: npm run check && npm run lint && npm run test:quick-wins && npm run test:clinical-core && npm run test:conecta
+      - name: Commit verified remaining endpoints
+        run: |
+          set -euo pipefail
+          git config user.name "jadsonfraga"
+          git config user.email "jadsonfraga@hotmail.com"
+          git add functions/api/_clinicalRecords.ts functions/api/admin/crypto-migration.ts functions/api/patients/index.ts 'functions/api/patients/[id].ts' 'functions/api/patients/[id]/results.ts' functions/api/memory/search.ts functions/api/clinical-core/index.ts functions/api/conecta/index.ts functions/api/results.ts functions/api/scales/results.ts functions/api/documents/index.ts
+          git commit -m "fix(security): cifrar PII memória Clinical Core e Conecta"
+          git push origin HEAD:fix/p0-clinical-crypto-20260811
