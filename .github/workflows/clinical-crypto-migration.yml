@@ -1,0 +1,246 @@
+name: Clinical D1 encryption migration
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Cloudflare Pages
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "SHA exato da main já publicado no Cloudflare"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clinical-d1-encryption-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+      E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+      ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+      PAGES_PROJECT: neuroped
+      D1_NAME: neuroped-db
+    steps:
+      - name: Resolver SHA e evitar migração em release obsoleto
+        id: target
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            target_sha="${{ github.event.workflow_run.head_sha }}"
+          else
+            target_sha="${{ inputs.target_sha }}"
+          fi
+          case "$target_sha" in
+            [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) ;;
+            *) echo "::error::target_sha inválido"; exit 1 ;;
+          esac
+          current_sha="$(git ls-remote https://github.com/${GITHUB_REPOSITORY}.git refs/heads/main | cut -f1)"
+          if [ "$current_sha" != "$target_sha" ]; then
+            echo "Release $target_sha ficou obsoleto; main atual=$current_sha. Migração será executada pelo release mais novo."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "sha=$target_sha" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "sha=$target_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout do SHA já publicado
+        if: steps.target.outputs.skip != 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.target.outputs.sha }}
+          fetch-depth: 1
+
+      - name: Node.js 24
+        if: steps.target.outputs.skip != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Instalar dependências
+        if: steps.target.outputs.skip != 'true'
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Validar release e credenciais sem expor valores
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+          npm run verify:release
+          names="$(npx --yes wrangler@4 pages secret list --project-name "$PAGES_PROJECT")"
+          for required in \
+            CLINICAL_DATA_KEY CLINICAL_DATA_KEY_K1 CLINICAL_DATA_KEY_ID \
+            CLINICAL_INDEX_KEY CLINICAL_INDEX_KEY_K1 CLINICAL_INDEX_KEY_ID \
+            OPERATIONAL_DATA_KEY OPERATIONAL_DATA_KEY_K1 OPERATIONAL_DATA_KEY_ID; do
+            echo "$names" | grep -q -- "- $required" || {
+              echo "::error::Secret obrigatório ausente no Pages: $required"
+              exit 1
+            }
+          done
+          echo "Chaves separadas presentes (valores não exibidos)."
+
+      - name: Criar backup exportável, bookmark e testar restauração local
+        if: steps.target.outputs.skip != 'true'
+        id: backup
+        run: |
+          set -euo pipefail
+          trap 'rm -f /tmp/neuroped-precrypto.sql /tmp/neuroped-restore-test.db' EXIT
+          db_id="$(npx --yes wrangler@4 d1 list --json | jq -r --arg name "$D1_NAME" '.[] | select(.name==$name) | .uuid' | head -n1)"
+          [ -n "$db_id" ] && [ "$db_id" != "null" ] || { echo "::error::D1 não encontrado"; exit 1; }
+          response="$(curl -fsS \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${db_id}/time_travel/bookmark")"
+          bookmark="$(printf '%s' "$response" | jq -r '.result.bookmark // empty')"
+          [ -n "$bookmark" ] || { echo "::error::Bookmark Time Travel não obtido"; exit 1; }
+          echo "db_id=$db_id" >> "$GITHUB_OUTPUT"
+          echo "bookmark=$bookmark" >> "$GITHUB_OUTPUT"
+          echo "Bookmark pré-migração registrado: $bookmark"
+
+          npx --yes wrangler@4 d1 export "$D1_NAME" --remote --output=/tmp/neuroped-precrypto.sql
+          test -s /tmp/neuroped-precrypto.sql
+          sqlite3 /tmp/neuroped-restore-test.db < /tmp/neuroped-precrypto.sql
+          for table in patients_demo consultations_demo scale_results_demo documents_demo memory_notes; do
+            sqlite3 /tmp/neuroped-restore-test.db "SELECT COUNT(*) FROM $table;" >/dev/null
+          done
+          echo "Backup SQL restaurado e consultado em banco SQLite isolado."
+          rm -f /tmp/neuroped-precrypto.sql /tmp/neuroped-restore-test.db
+
+      - name: Aplicar schema aditivo de criptografia
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 d1 execute "$D1_NAME" --remote --yes \
+            --file=./db/migrations/0010_clinical_field_encryption.sql
+
+      - name: Migrar e verificar payloads pelo backend publicado
+        if: steps.target.outputs.skip != 'true'
+        id: migration
+        run: |
+          set -euo pipefail
+          base="https://neuroped.pages.dev"
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
+            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
+            mail="$E2E_MAIL"; pw="$E2E_PW"
+          else
+            mail="$ADMIN_MAIL"; pw="$ADMIN_PW"
+          fi
+          [ -n "$mail" ] && [ -n "$pw" ] || { echo "::error::credencial nominal ausente"; exit 1; }
+          login_payload="$(jq -nc --arg email "$mail" --arg password "$pw" '{email:$email,password:$password}')"
+          curl -fsS -X POST "$base/api/auth/login" -H 'Content-Type: application/json' \
+            --data "$login_payload" -o /tmp/crypto-login.json
+          token="$(jq -r '.accessToken // empty' /tmp/crypto-login.json)"
+          rm -f /tmp/crypto-login.json
+          [ -n "$token" ] || { echo "::error::login não retornou token"; exit 1; }
+
+          curl -fsS -X POST "$base/api/admin/crypto-migration" \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"migrate"}' -o /tmp/crypto-migrate.json
+          jq -e '
+            .migrated == true and
+            .verification.readyForStrict == true and
+            .verification.residualPlaintext == 0 and
+            .verification.decryptFailures == 0 and
+            .verification.missingSearchIndexes == 0 and
+            .verification.plaintextFtsObjects == 0
+          ' /tmp/crypto-migrate.json >/dev/null
+          jq '{migrated, stats, verification:{readyForStrict,residualPlaintext,decryptFailures,missingSearchIndexes,plaintextFtsObjects,totalEncryptedRows}}' /tmp/crypto-migrate.json
+          rm -f /tmp/crypto-migrate.json
+          echo "verified=true" >> "$GITHUB_OUTPUT"
+
+      - name: Restaurar bookmark se a migração não foi verificada
+        if: failure() && steps.target.outputs.skip != 'true' && steps.migration.outputs.verified != 'true' && steps.backup.outputs.bookmark != ''
+        run: |
+          set -euo pipefail
+          db_id="${{ steps.backup.outputs.db_id }}"
+          bookmark="${{ steps.backup.outputs.bookmark }}"
+          response="$(curl -fsS -X POST \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${db_id}/time_travel/restore?bookmark=${bookmark}")"
+          printf '%s' "$response" | jq -e '.success == true' >/dev/null
+          echo "Rollback D1 para o bookmark pré-migração concluído."
+
+      - name: Ativar modo estrito e redeployar exatamente o mesmo SHA
+        if: steps.target.outputs.skip != 'true' && steps.migration.outputs.verified == 'true'
+        run: |
+          set -euo pipefail
+          printf 'true' | npx --yes wrangler@4 pages secret put CLINICAL_REQUIRE_ENCRYPTED --project-name "$PAGES_PROJECT" >/dev/null
+          mkdir -p client/public
+          cat > client/public/deploy-check.json <<EOF
+          {
+            "app": "NeuroPed",
+            "provider": "cloudflare-pages",
+            "branch": "main",
+            "commit": "${{ steps.target.outputs.sha }}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          NODE_ENV=production VITE_AUTH_MODE=remote VITE_API_URL="" VITE_ZONE=full VITE_ALLOWED_HOSTS="" \
+            VITE_PIN_HASH= npm run build:client
+          npm run test:bundle-audit
+          npm run audit:bundle
+          npm run audit:built-pin
+          npx --yes wrangler@4 pages deploy dist/public --project-name "$PAGES_PROJECT" --branch main
+
+      - name: Provar modo estrito, readback e separação operacional
+        if: steps.target.outputs.skip != 'true' && steps.migration.outputs.verified == 'true'
+        run: |
+          set -euo pipefail
+          base="https://neuroped.pages.dev"
+          target="${{ steps.target.outputs.sha }}"
+          ok=0
+          for attempt in $(seq 1 18); do
+            sleep 10
+            if curl -fsS "$base/deploy-check.json?run=${GITHUB_RUN_ID}&try=$attempt" -o /tmp/sentinel.json \
+              && jq -e --arg sha "$target" '.commit == $sha' /tmp/sentinel.json >/dev/null \
+              && curl -fsS "$base/api/health?run=${GITHUB_RUN_ID}&try=$attempt" -o /tmp/health.json \
+              && jq -e '
+                .database == "ok" and
+                .authentication.required == true and
+                .authentication.configured == true and
+                .clinicalEncryption.configured == true and
+                .clinicalEncryption.strict == true and
+                .operationalEncryption.configured == true and
+                .operationalEncryption.jwtFallback == false
+              ' /tmp/health.json >/dev/null; then
+              ok=1; break
+            fi
+          done
+          [ "$ok" -eq 1 ] || { echo "::error::produção não confirmou criptografia estrita"; exit 1; }
+
+          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then mail="$E2E_MAIL"; pw="$E2E_PW"; else mail="$ADMIN_MAIL"; pw="$ADMIN_PW"; fi
+          login_payload="$(jq -nc --arg email "$mail" --arg password "$pw" '{email:$email,password:$password}')"
+          curl -fsS -X POST "$base/api/auth/login" -H 'Content-Type: application/json' --data "$login_payload" -o /tmp/login2.json
+          token="$(jq -r '.accessToken // empty' /tmp/login2.json)"; rm -f /tmp/login2.json
+          [ -n "$token" ]
+          curl -fsS "$base/api/admin/crypto-migration" -H "Authorization: Bearer $token" -o /tmp/verify2.json
+          jq -e '.readyForStrict == true and .strictMode == true and .residualPlaintext == 0 and .decryptFailures == 0 and .missingSearchIndexes == 0' /tmp/verify2.json >/dev/null
+          curl -fsS "$base/api/patients?q=Demo&limit=3" -H "Authorization: Bearer $token" -o /tmp/patients2.json
+          jq -e '.data | type == "array"' /tmp/patients2.json >/dev/null
+          echo "Readback autorizado e busca cega confirmados em modo estrito."
+
+      - name: Limpar material temporário do runner
+        if: always()
+        run: rm -f /tmp/neuroped-precrypto.sql /tmp/neuroped-restore-test.db /tmp/crypto-*.json /tmp/login2.json /tmp/verify2.json /tmp/patients2.json /tmp/health.json /tmp/sentinel.json
