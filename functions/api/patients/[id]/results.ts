@@ -1,106 +1,11 @@
-/**
- * GET /api/patients/:id/results — lista resultados somente quando o usuário
- * autenticado pode acessar o paciente. A UI espera um ARRAY direto no sucesso.
- */
-
-import {
-  authorizationError,
-  getContextUser,
-  getPatientAccess,
-} from "../../auth/_authorization";
+/** Resultados de escala autorizados com payload clínico cifrado em repouso. */
+import type { ClinicalCryptoEnv } from "../../_clinicalCrypto";
+import { ClinicalCryptoError } from "../../_clinicalCrypto";
+import { readScalePayload } from "../../_clinicalRecords";
+import { authorizationError, getContextUser, getPatientAccess } from "../../auth/_authorization";
 import { isValidPatientId } from "../_contract";
-
-interface Env {
-  DB?: D1Database;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-    },
-  });
-}
-
-function errorResponse(
-  message: string,
-  code: string,
-  status: number,
-): Response {
-  return json({ error: message, code }, status);
-}
-
-function parseResponses(details: unknown): unknown[] {
-  if (typeof details !== "string") return [];
-  try {
-    const parsed = JSON.parse(details);
-    const responses = parsed?.responses ?? parsed?.answers;
-    return Array.isArray(responses) ? responses : [];
-  } catch {
-    return [];
-  }
-}
-
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { env, params } = context;
-  const rawId = params.id;
-  const patientId = String(
-    Array.isArray(rawId) ? rawId[0] : (rawId ?? ""),
-  ).trim();
-
-  if (!patientId) {
-    return errorResponse("ID do paciente não fornecido.", "MISSING_ID", 400);
-  }
-  if (!isValidPatientId(patientId)) {
-    return errorResponse("ID do paciente inválido.", "INVALID_ID", 400);
-  }
-  if (!env.DB) return json([], 200);
-
-  const user = getContextUser(context);
-  if (!user) {
-    return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);
-  }
-
-  try {
-    const access = await getPatientAccess(env.DB, patientId, user);
-    if (!access.exists) {
-      return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-    }
-    if (!access.allowed) {
-      return authorizationError(
-        "Você não tem acesso a este paciente.",
-        "FORBIDDEN",
-        403,
-      );
-    }
-
-    const rows = await env.DB.prepare(
-      `SELECT id, patient_id, scale_id, scale_name, details, applied_at, is_demo
-           FROM scale_results_demo
-          WHERE patient_id = ? AND is_demo = 1
-          ORDER BY applied_at DESC
-          LIMIT 200`,
-    )
-      .bind(patientId)
-      .all();
-    const data = (rows.results ?? []).map((row: Record<string, unknown>) => ({
-      id: row.id,
-      patientId: row.patient_id,
-      scaleId: row.scale_id,
-      scaleName: row.scale_name,
-      responses: parseResponses(row.details),
-      createdAt: row.applied_at,
-      isDemo: row.is_demo === true || row.is_demo === 1 || row.is_demo === "1",
-    }));
-    return json(data, 200);
-  } catch (error) {
-    console.error("[patients/:id/results.GET] DB error:", error);
-    return errorResponse(
-      "Erro ao buscar resultados do paciente.",
-      "DB_ERROR",
-      500,
-    );
-  }
-};
+interface Env extends ClinicalCryptoEnv { DB?: D1Database }
+function json(data:unknown,status=200){return new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}})}
+function errorResponse(message:string,code:string,status:number){return json({error:message,code},status)}
+function parseResponses(details:string|null):unknown[]{if(!details)return[];try{const p=JSON.parse(details);const r=p?.responses??p?.answers;return Array.isArray(r)?r:[]}catch{return[]}}
+export const onRequestGet:PagesFunction<Env>=async(context)=>{const{env,params}=context;const raw=params.id;const patientId=String(Array.isArray(raw)?raw[0]:(raw??"")).trim();if(!patientId)return errorResponse("ID do paciente não fornecido.","MISSING_ID",400);if(!isValidPatientId(patientId))return errorResponse("ID do paciente inválido.","INVALID_ID",400);if(!env.DB)return json([],200);const user=getContextUser(context);if(!user)return authorizationError("Não autenticado.","UNAUTHENTICATED",401);try{const access=await getPatientAccess(env.DB,patientId,user);if(!access.exists)return errorResponse("Paciente não encontrado.","NOT_FOUND",404);if(!access.allowed)return authorizationError("Você não tem acesso a este paciente.","FORBIDDEN",403);const rows=await env.DB.prepare(`SELECT id,patient_id,scale_id,scale_name,score,interpretation,details,applied_at,is_demo FROM scale_results_demo WHERE patient_id=? AND is_demo=1 ORDER BY applied_at DESC LIMIT 200`).bind(patientId).all<Record<string,unknown>>();const data=await Promise.all((rows.results??[]).map(async row=>{const secure=await readScalePayload(env,row);return{id:row.id,patientId:row.patient_id,scaleId:secure.scale_id,scaleName:secure.scale_name,responses:parseResponses(secure.details),createdAt:row.applied_at,isDemo:row.is_demo===true||row.is_demo===1||row.is_demo==="1"}}));return json(data,200)}catch(error){if(error instanceof ClinicalCryptoError)return errorResponse(error.message,error.code,503);console.error("[patients/:id/results.GET] DB error");return errorResponse("Erro ao buscar resultados do paciente.","DB_ERROR",500)}};

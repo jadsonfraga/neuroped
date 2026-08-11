@@ -23,12 +23,15 @@ export interface ConsultationSecurePayload {
 }
 
 export interface ScaleSecurePayload {
+  scale_id: string;
+  scale_name: string;
   score: unknown;
   interpretation: unknown;
   details: string | null;
 }
 
 export interface DocumentSecurePayload {
+  type: string;
   title: string;
   content: string | null;
 }
@@ -135,6 +138,8 @@ export async function readScalePayload(
     { entityType: "scale_result", entityId: id, patientId },
     row.details,
     () => ({
+      scale_id: String(row.scale_id ?? ""),
+      scale_name: String(row.scale_name ?? ""),
       score: row.score ?? null,
       interpretation: row.interpretation ?? null,
       details: nullable(row.details),
@@ -161,7 +166,7 @@ export async function readDocumentPayload(
     env,
     { entityType: "document", entityId: id, patientId },
     row.content,
-    () => ({ title: String(row.title ?? ""), content: nullable(row.content) }),
+    () => ({ type: String(row.type ?? ""), title: String(row.title ?? ""), content: nullable(row.content) }),
   );
 }
 

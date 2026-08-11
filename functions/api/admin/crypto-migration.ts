@@ -145,7 +145,7 @@ async function migrateConsultations(env: Env, db: D1Database): Promise<number> {
 
 async function migrateScaleResults(env: Env, db: D1Database): Promise<number> {
   const rows = await db.prepare(
-    `SELECT id, patient_id, score, interpretation, details
+    `SELECT id, patient_id, scale_id, scale_name, score, interpretation, details
        FROM scale_results_demo WHERE is_demo = 1 ORDER BY id`,
   ).all<Record<string, unknown>>();
   let migrated = 0;
@@ -157,14 +157,14 @@ async function migrateScaleResults(env: Env, db: D1Database): Promise<number> {
       env,
       aad,
       row.details,
-      () => ({ score: row.score ?? null, interpretation: row.interpretation ?? null, details: row.details ?? null }),
+      () => ({ scale_id: String(row.scale_id ?? ""), scale_name: String(row.scale_name ?? ""), score: row.score ?? null, interpretation: row.interpretation ?? null, details: row.details ?? null }),
     );
     const envelope = isEncryptedClinicalValue(row.details)
       ? String(row.details)
       : await encryptClinicalPayload(env, aad, payload);
     await db.prepare(
       `UPDATE scale_results_demo
-          SET score = NULL, interpretation = NULL, details = ?
+          SET scale_id = 'encrypted', scale_name = '[encrypted]', score = NULL, interpretation = NULL, details = ?
         WHERE id = ? AND is_demo = 1`,
     ).bind(envelope, id).run();
     if (!isEncryptedClinicalValue(row.details)) migrated += 1;
@@ -174,7 +174,7 @@ async function migrateScaleResults(env: Env, db: D1Database): Promise<number> {
 
 async function migrateDocuments(env: Env, db: D1Database): Promise<number> {
   const rows = await db.prepare(
-    `SELECT id, patient_id, title, content
+    `SELECT id, patient_id, type, title, content
        FROM documents_demo WHERE is_demo = 1 ORDER BY id`,
   ).all<Record<string, unknown>>();
   let migrated = 0;
@@ -186,14 +186,14 @@ async function migrateDocuments(env: Env, db: D1Database): Promise<number> {
       env,
       aad,
       row.content,
-      () => ({ title: String(row.title ?? ""), content: row.content == null ? null : String(row.content) }),
+      () => ({ type: String(row.type ?? ""), title: String(row.title ?? ""), content: row.content == null ? null : String(row.content) }),
     );
     const envelope = isEncryptedClinicalValue(row.content)
       ? String(row.content)
       : await encryptClinicalPayload(env, aad, payload);
     await db.prepare(
       `UPDATE documents_demo
-          SET title = '[encrypted]', content = ?, updated_at = CURRENT_TIMESTAMP
+          SET type = 'encrypted', title = '[encrypted]', content = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND is_demo = 1`,
     ).bind(envelope, id).run();
     if (!isEncryptedClinicalValue(row.content)) migrated += 1;
@@ -203,7 +203,7 @@ async function migrateDocuments(env: Env, db: D1Database): Promise<number> {
 
 async function migrateMemoryNotes(env: Env, db: D1Database): Promise<number> {
   const rows = await db.prepare(
-    `SELECT id, patient_id, title, content, category, source, tags
+    `SELECT id, patient_id, type, title, content, category, source, tags
        FROM memory_notes WHERE is_demo = 1 ORDER BY id`,
   ).all<Record<string, unknown>>();
   let migrated = 0;
@@ -351,8 +351,8 @@ async function verifyEncryptedRows(env: Env, db: D1Database): Promise<{ residual
   const scrubChecks = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS n FROM patients_demo WHERE is_demo = 1 AND (name <> '[encrypted]' OR birth_date IS NOT NULL OR guardian_name IS NOT NULL OR guardian_phone IS NOT NULL OR diagnosis_code IS NOT NULL)`).first<{ n: number }>(),
     db.prepare(`SELECT COUNT(*) AS n FROM consultations_demo WHERE is_demo = 1 AND (objective IS NOT NULL OR assessment IS NOT NULL OR plan IS NOT NULL)`).first<{ n: number }>(),
-    db.prepare(`SELECT COUNT(*) AS n FROM scale_results_demo WHERE is_demo = 1 AND (score IS NOT NULL OR interpretation IS NOT NULL)`).first<{ n: number }>(),
-    db.prepare(`SELECT COUNT(*) AS n FROM documents_demo WHERE is_demo = 1 AND title <> '[encrypted]'`).first<{ n: number }>(),
+    db.prepare(`SELECT COUNT(*) AS n FROM scale_results_demo WHERE is_demo = 1 AND (scale_id <> 'encrypted' OR scale_name <> '[encrypted]' OR score IS NOT NULL OR interpretation IS NOT NULL)`).first<{ n: number }>(),
+    db.prepare(`SELECT COUNT(*) AS n FROM documents_demo WHERE is_demo = 1 AND (type <> 'encrypted' OR title <> '[encrypted]')`).first<{ n: number }>(),
     db.prepare(`SELECT COUNT(*) AS n FROM memory_notes WHERE is_demo = 1 AND (title IS NOT NULL OR category IS NOT NULL OR source IS NOT NULL OR tags IS NOT NULL)`).first<{ n: number }>(),
     db.prepare(`SELECT COUNT(*) AS n FROM clinical_events_demo WHERE is_demo = 1 AND (event_type <> 'observation' OR encounter_id IS NOT NULL OR provenance_kind <> 'documented' OR provenance_source <> 'encrypted')`).first<{ n: number }>(),
     db.prepare(`SELECT COUNT(*) AS n FROM conecta_events_demo WHERE is_demo = 1 AND (category <> 'encrypted' OR context IS NOT NULL OR value IS NOT NULL OR duration_minutes IS NOT NULL)`).first<{ n: number }>(),

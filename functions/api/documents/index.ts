@@ -11,7 +11,7 @@ function errorResponse(message: string, code: string, status: number): Response 
 function cryptoError(error: unknown): Response | null { return error instanceof ClinicalCryptoError ? errorResponse(error.message, error.code, 503) : null; }
 const DOCUMENT_TYPES = ["laudo", "relatorio", "encaminhamento", "prescricao", "atestado", "orientacao"];
 const DEMO_DOCS = [{ id: "doc-demo-001", patient_id: "demo-001", type: "laudo", title: "Laudo de Avaliação Neuropediátrica — Demo", content: "Este é um documento de demonstração. Conteúdo fictício para fins de teste da plataforma. Não representa avaliação clínica real.", is_family_visible: false, is_demo: true, created_at: new Date("2025-04-20").toISOString() }];
-async function present(env: Env, row: Record<string, unknown>) { const secure = await readDocumentPayload(env, row); return { id: row.id, patient_id: row.patient_id, type: row.type, ...secure, is_family_visible: row.is_family_visible === 1 || row.is_family_visible === true, is_demo: row.is_demo === 1 || row.is_demo === true, created_at: row.created_at }; }
+async function present(env: Env, row: Record<string, unknown>) { const secure = await readDocumentPayload(env, row); return { id: row.id, patient_id: row.patient_id, ...secure, is_family_visible: row.is_family_visible === 1 || row.is_family_visible === true, is_demo: row.is_demo === 1 || row.is_demo === true, created_at: row.created_at }; }
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env, request } = context; const url = new URL(request.url); const patientId = url.searchParams.get("patient_id")?.trim(); const type = url.searchParams.get("type")?.trim(); const rawFamilyOnly = url.searchParams.get("family_only"); const familyOnly = rawFamilyOnly === "true";
   if (patientId && !hasBoundedIdentifier(patientId)) return errorResponse("'patient_id' é inválido ou excede 128 caracteres.", "VALIDATION_ERROR", 400);
@@ -22,8 +22,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const user = getContextUser(context); if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
     if (patientId) { const access = await getPatientAccess(env.DB, patientId, user); if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404); if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403); }
     let sql = "SELECT id, patient_id, type, title, content, is_family_visible, is_demo, created_at FROM documents_demo WHERE is_demo = 1"; const binds: unknown[] = [];
-    if (patientId) { sql += " AND patient_id = ?"; binds.push(patientId); } if (type) { sql += " AND type = ?"; binds.push(type); } if (familyOnly) sql += " AND is_family_visible = 1"; if (!isAdmin(user)) { sql += " AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ? AND is_demo = 1)"; binds.push(user.id); } sql += " ORDER BY created_at DESC LIMIT 50";
-    const rows = await env.DB.prepare(sql).bind(...binds).all<Record<string, unknown>>(); const data = await Promise.all((rows.results ?? []).map((row) => present(env, row))); return jsonResponse({ data, total: data.length, mode: "db" });
+    if (patientId) { sql += " AND patient_id = ?"; binds.push(patientId); }  if (familyOnly) sql += " AND is_family_visible = 1"; if (!isAdmin(user)) { sql += " AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ? AND is_demo = 1)"; binds.push(user.id); } sql += " ORDER BY created_at DESC LIMIT 50";
+    const rows = await env.DB.prepare(sql).bind(...binds).all<Record<string, unknown>>(); let data = await Promise.all((rows.results ?? []).map((row) => present(env, row))); if (type) data = data.filter((row) => row.type === type); return jsonResponse({ data, total: data.length, mode: "db" });
   } catch (error) { const response = cryptoError(error); if (response) return response; console.error("[documents.GET] DB error"); return errorResponse("Erro ao buscar documentos.", "DB_ERROR", 500); }
 };
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -34,8 +34,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const id = createClinicalRecordId("doc"); const now = new Date().toISOString(); const is_family_visible = body.is_family_visible === true;
   try {
     const user = getContextUser(context); if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401); if (!canWriteClinicalData(user)) return errorResponse("Perfil sem permissão para criar documentos.", "FORBIDDEN", 403); const access = await getPatientAccess(env.DB, patient_id, user); if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404); if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
-    const envelope = await documentStorage(env, id, patient_id, { title, content });
-    await env.DB.prepare(`INSERT INTO documents_demo (id, patient_id, type, title, content, is_family_visible, is_demo, created_at) VALUES (?, ?, ?, '[encrypted]', ?, ?, 1, ?)`).bind(id, patient_id, type, envelope, is_family_visible ? 1 : 0, now).run();
+    const envelope = await documentStorage(env, id, patient_id, { type, title, content });
+    await env.DB.prepare(`INSERT INTO documents_demo (id, patient_id, type, title, content, is_family_visible, is_demo, created_at) VALUES (?, ?, 'encrypted', '[encrypted]', ?, ?, 1, ?)`).bind(id, patient_id, envelope, is_family_visible ? 1 : 0, now).run();
     return jsonResponse({ id, patient_id, type, title, content, is_family_visible, is_demo: true, created_at: now }, 201);
   } catch (error) { const response = cryptoError(error); if (response) return response; console.error("[documents.POST] DB error"); return errorResponse("Erro ao criar documento.", "DB_ERROR", 500); }
 };

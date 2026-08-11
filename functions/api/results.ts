@@ -20,8 +20,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!env.DB) return json({ error: "Persistência indisponível. Nenhum resultado foi registrado.", code: "DB_REQUIRED" }, 503);
   try {
     const user = getContextUser(context); if (!user) return json({ error: "Não autenticado.", code: "UNAUTHENTICATED" }, 401); if (!canWriteClinicalData(user)) return json({ error: "Perfil sem permissão para registrar resultados.", code: "FORBIDDEN" }, 403); const access = await getPatientAccess(env.DB, patient_id, user); if (!access.exists) return json({ error: "Paciente não encontrado.", code: "NOT_FOUND" }, 404); if (!access.allowed) return json({ error: "Sem permissão para este paciente.", code: "FORBIDDEN" }, 403);
-    const envelope = await scaleStorage(env, id, patient_id, { score: null, interpretation: null, details });
-    await env.DB.prepare(`INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at) VALUES (?, ?, ?, ?, NULL, NULL, ?, 1, ?)`).bind(id, patient_id, scale_id, scale_name, envelope, applied_at).run();
+    const envelope = await scaleStorage(env, id, patient_id, { scale_id, scale_name, score: null, interpretation: null, details });
+    await env.DB.prepare(`INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at) VALUES (?, ?, 'encrypted', '[encrypted]', NULL, NULL, ?, 1, ?)`).bind(id, patient_id, envelope, applied_at).run();
     return json({ ...payload, mode: "db" }, 201);
   } catch (error) { if (error instanceof ClinicalCryptoError) return json({ error: error.message, code: error.code }, 503); console.error("[results.POST] DB error"); return json({ error: "Erro ao registrar resultado.", code: "DB_ERROR" }, 500); }
 };
