@@ -6,7 +6,7 @@ on:
       - fix/close-p0-security-20260811
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 jobs:
@@ -14,10 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
+      - name: Patch deployment governance for the workflow-owned finalizer
+        run: python3 scripts/tmp_patch_deploy_governance.py
+      - name: Commit governance patch when needed
+        run: |
+          if git diff --quiet; then
+            echo "No governance patch pending."
+          else
+            git config user.name "neuroped-security-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add tests/unit/deploy-entrypoints.test.mjs tests/unit/workflow-governance.test.mjs
+            git commit -m "test(security): governar finalizador P0 do workflow oficial"
+            git push origin HEAD:fix/close-p0-security-20260811
+          fi
       - name: Install
         run: npm ci
         env:
@@ -30,6 +45,7 @@ jobs:
         run: |
           node --import tsx tests/unit/clinical-encryption-contract.test.ts
           node tests/unit/clinical-encryption-static.test.mjs
+          node tests/unit/clinical-encryption-release-static.test.mjs
       - name: Existing release security contracts
         run: |
           npm run test:quick-wins
