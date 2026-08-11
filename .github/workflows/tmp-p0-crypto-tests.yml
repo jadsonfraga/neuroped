@@ -1,0 +1,38 @@
+name: Temporary P0 crypto regressions
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-crypto-tests.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/p0-clinical-crypto-20260811
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - run: python3 scripts/tmp_p0_patch_tests.py
+      - name: Validate
+        run: npm run check && npm run lint && npm run test:quick-wins
+      - name: Commit permanent crypto regressions
+        run: |
+          set -euo pipefail
+          git config user.name "jadsonfraga"
+          git config user.email "jadsonfraga@hotmail.com"
+          git add functions/api/operations/_core.ts tests/unit/clinical-data-encryption.test.ts tests/unit/clinical-encryption-static.test.mjs package.json
+          git commit -m "test(security): travar rotação e separação criptográfica"
+          git push origin HEAD:fix/p0-clinical-crypto-20260811
