@@ -3,7 +3,7 @@ name: Deploy Cloudflare Pages
 # Deploy do frontend (Vite) para o Cloudflare Pages, em paralelo ao GitHub Pages.
 # Usa as secrets do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
 # Publica frontend + Pages Functions. Com D1 vinculado, autenticação nominal
-# configurada é requisito de release e qualquer ausência falha antes do deploy.
+# configurada e criptografia clínica strict são requisitos de release.
 
 on:
   push:
@@ -169,8 +169,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          # Cada coluna é adicionada de forma independente; "duplicate column" é
-          # esperado em re-execuções e tolerado. Robusto a aplicação parcial.
           add_col() {
             echo "ALTER users ADD $1"
             npx wrangler@4 d1 execute neuroped-db --remote --yes \
@@ -269,6 +267,22 @@ jobs:
           put_optional ADMIN_EMAIL "$admin_mail"
           put_optional ADMIN_NAME "$admin_name"
 
+      - name: Preparar migração clínica P0, backup e chaves separadas
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEUROPED_JWT_SECRET: ${{ secrets.NEUROPED_JWT_SECRET }}
+        run: bash scripts/prepare-clinical-encryption-release.sh
+
+      - name: Preservar backup clínico pré-migração cifrado
+        if: env.CLINICAL_MIGRATION_REQUIRED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: clinical-d1-pre-migration-${{ github.run_id }}
+          path: /tmp/neuroped-clinical-pre-migration.enc.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Deploy para Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -278,10 +292,6 @@ jobs:
       - name: Verificar publicação pública no Cloudflare
         run: |
           echo "Aguardando o Cloudflare promover o deploy para o domínio apex (poll)..."
-          # O `wrangler pages deploy` já concluiu com sucesso; aqui só confirmamos
-          # que o apex (neuroped.pages.dev) já serve o commit novo. A promoção do
-          # apex pode levar alguns minutos — então fazemos poll em vez de um único
-          # sleep. Release só fica verde quando o commit esperado estiver público.
           ok=0
           for i in $(seq 1 12); do
             sleep 15
@@ -300,6 +310,12 @@ jobs:
             exit 1
           fi
 
+      - name: Finalizar criptografia clínica strict e retirar segredos legados
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/finalize-clinical-encryption-release.sh
+
       - name: Validar health autenticado do backend publicado
         run: |
           set -euo pipefail
@@ -307,16 +323,23 @@ jobs:
           for i in $(seq 1 12); do
             if curl -fsSL "https://neuroped.pages.dev/api/health?run=${GITHUB_RUN_ID}&try=$i" \
                  -o /tmp/cloudflare-health.json 2>/dev/null \
-               && jq -e '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
-                    /tmp/cloudflare-health.json >/dev/null; then
+               && jq -e '
+                    .database == "ok" and
+                    .authentication.required == true and
+                    .authentication.configured == true and
+                    .encryption.readyForIdentifiableClinicalData == true and
+                    .encryption.clinicalStrict == true and
+                    .encryption.clinicalPhase == "strict" and
+                    .encryption.operationalConfigured == true
+                  ' /tmp/cloudflare-health.json >/dev/null; then
               ok=1
               break
             fi
             sleep 10
           done
           cat /tmp/cloudflare-health.json 2>/dev/null || true
-          [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth plenamente configurados"; exit 1; }
-          echo "✅ HEALTH OK — D1 e autenticação nominal configurados."
+          [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth/criptografia plenamente configurados"; exit 1; }
+          echo "✅ HEALTH OK — D1, auth e criptografia clínica strict confirmados."
 
       - name: Validar CORS restrito do mirror oficial
         run: |
@@ -344,7 +367,7 @@ jobs:
                    -H "Origin: $origin" \
                    "$BASE/api/health?cors=${GITHUB_RUN_ID}&try=$attempt" \
                 && [ "$(header_value "$headers" Access-Control-Allow-Origin)" = "$origin" ] \
-                && jq -e '.database == "ok" and .authentication.configured == true' \
+                && jq -e '.database == "ok" and .authentication.configured == true and .encryption.readyForIdentifiableClinicalData == true' \
                      /tmp/cors-health.json >/dev/null; then
                 get_ok=1
               fi
@@ -376,8 +399,6 @@ jobs:
             echo "CORS oficial OK: $origin"
           done
 
-          # A propagação entre edges não é atômica. A política negativa também
-          # precisa convergir no commit novo antes de reprovar o release.
           denied_index=0
           for denied_origin in \
             https://neuroped.vercel.app \
@@ -435,7 +456,6 @@ jobs:
           fi
           unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
           sleep 10
-          # 1) senha errada → 401
           wrong_payload=$(jq -nc --arg email "ci-negative-${GITHUB_RUN_ID}@invalid.example" \
             --arg password "senha_errada___" '{email:$email,password:$password}')
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/auth/login" \
@@ -443,7 +463,6 @@ jobs:
             --data "$wrong_payload")
           echo "login (senha errada): HTTP $code"
           [ "$code" = "401" ] || { echo "::error::esperado 401 para senha errada"; exit 1; }
-          # 2) correto → 200 + accessToken (token nunca é impresso)
           login_payload=$(jq -nc --arg email "$admin_mail" --arg password "$admin_pw" '{email:$email,password:$password}')
           resp=$(curl -s -X POST "$BASE/api/auth/login" -H "Content-Type: application/json" \
             --data "$login_payload")
@@ -451,11 +470,9 @@ jobs:
           refresh=$(printf '%s' "$resp" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).refreshToken||'')}catch{process.stdout.write('')}})")
           [ -n "$tok" ] && [ -n "$refresh" ] || { echo "::error::login correto não retornou o par de tokens"; exit 1; }
           echo "login (correto): OK — tokens recebidos (mascarados)"
-          # 3) /me com o token → 200
           mecode=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/auth/me" -H "Authorization: Bearer $tok")
           echo "me: HTTP $mecode"
           [ "$mecode" = "200" ] || { echo "::error::/api/auth/me esperado 200"; exit 1; }
-          # 4) logout revoga a família da sessão e invalida o access token
           logout_payload=$(jq -nc --arg refreshToken "$refresh" '{refreshToken:$refreshToken}')
           logoutcode=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/auth/logout" \
             -H "Content-Type: application/json" --data "$logout_payload")
@@ -487,7 +504,7 @@ jobs:
             description="Falha ao publicar o estado inicial do Cloudflare."
           elif [ "$DEPLOY_RESULT" = "success" ]; then
             state="success"
-            description="Backend canônico, D1, CORS e autenticação confirmados."
+            description="Backend canônico, D1, auth e criptografia strict confirmados."
           fi
 
           gh api --method POST \
