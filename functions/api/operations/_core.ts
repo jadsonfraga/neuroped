@@ -299,6 +299,12 @@ function operationalSecretFor(env: OperationsEnv, keyId: string): string {
   throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
 }
 
+async function legacyOperationalKey(secret: string): Promise<CryptoKey> {
+  const material = new TextEncoder().encode(`neuroped-operational-v1:${secret}`);
+  const digest = await crypto.subtle.digest("SHA-256", material);
+  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["decrypt"]);
+}
+
 async function operationalKey(secret: string, keyId: string): Promise<CryptoKey> {
   const material = new TextEncoder().encode(`neuroped-operational-v2:${keyId}:${secret}`);
   const digest = await crypto.subtle.digest("SHA-256", material);
@@ -322,17 +328,35 @@ export async function encryptText(env: OperationsEnv, value: string | null): Pro
 
 export async function decryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
   if (!value) return null;
-  const [version, keyId, ivB64, cipherB64, ...extra] = value.split(".");
-  if (version !== "v2" || !keyId || !ivB64 || !cipherB64 || extra.length > 0) return null;
+  const parts = value.split(".");
   try {
-    const secret = operationalSecretFor(env, keyId);
-    const key = await operationalKey(secret, keyId);
-    const plain = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: base64ToBytes(ivB64) },
-      key,
-      base64ToBytes(cipherB64),
-    );
-    return new TextDecoder().decode(plain);
+    if (parts[0] === "v2" && parts.length === 4) {
+      const [, keyId, ivB64, cipherB64] = parts;
+      if (!keyId || !ivB64 || !cipherB64) return null;
+      const secret = operationalSecretFor(env, keyId);
+      const key = await operationalKey(secret, keyId);
+      const plain = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: base64ToBytes(ivB64) },
+        key,
+        base64ToBytes(cipherB64),
+      );
+      return new TextDecoder().decode(plain);
+    }
+    // Compatibilidade somente de leitura: v1 antigo pode usar exclusivamente K1.
+    // O fallback para NEUROPED_JWT_SECRET foi removido e não volta nesta via.
+    if (parts[0] === "v1" && parts.length === 3) {
+      const [, ivB64, cipherB64] = parts;
+      if (!ivB64 || !cipherB64) return null;
+      const secret = operationalSecretFor(env, "k1");
+      const key = await legacyOperationalKey(secret);
+      const plain = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: base64ToBytes(ivB64) },
+        key,
+        base64ToBytes(cipherB64),
+      );
+      return new TextDecoder().decode(plain);
+    }
+    return null;
   } catch {
     return null;
   }
