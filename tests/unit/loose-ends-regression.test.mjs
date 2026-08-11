@@ -88,10 +88,12 @@ assert.doesNotMatch(
 // Credential stuffing entre contas diferentes precisa de bucket distribuído no D1,
 // pseudonimizado por HMAC do IP — não depender só de memória por isolate.
 assert.match(cloudflareRateLimit, /CREATE TABLE IF NOT EXISTS auth_login_rate_limits/);
+assert.match(cloudflareRateLimit, /idx_auth_login_rate_limits_updated/);
 assert.match(cloudflareRateLimit, /CF-Connecting-IP/);
 assert.match(cloudflareRateLimit, /name: "HMAC", hash: "SHA-256"/);
 assert.match(cloudflareRateLimit, /ON CONFLICT\(bucket_hash\) DO UPDATE SET/);
 assert.match(cloudflareRateLimit, /failed_attempts \+ 1 >= \?/);
+assert.match(cloudflareRateLimit, /DELETE FROM auth_login_rate_limits WHERE updated_at < \?/);
 assert.doesNotMatch(cloudflareRateLimit, /INSERT[^]*CF-Connecting-IP/i);
 assert.match(cloudflareLogin, /enforceLoginAbuseLimit\(env, request, secret\)/);
 assert.ok(
@@ -116,7 +118,16 @@ assert.match(cognitiveRunner, /void ctx\.close\(\)/);
 assert.match(cognitiveRunner, /beep\(correct \? 880 : 220\);/);
 assert.doesNotMatch(cognitiveRunner, /beep\([^\n]*after\)/);
 
-// Scripts ad-hoc de auditoria não devem ficar esquecidos na raiz quando gates reais já existem.
-assert.equal(existsSync(resolve(root, "analyze-a11y.sh")), false);
+// Ferramentas temporárias/legadas capazes de reescrever clínica ou simular auditorias
+// não devem reaparecer na raiz ativa sem um workflow e contrato explícitos.
+for (const path of [
+  "analyze-a11y.sh",
+  "run-audit-loop-20min.sh",
+  "audit-filter-random-patients.mjs",
+  "add-clinical-report.cjs",
+  "generate-report.cjs",
+]) {
+  assert.equal(existsSync(resolve(root, path)), false, `${path} não deve existir na raiz ativa`);
+}
 
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");
