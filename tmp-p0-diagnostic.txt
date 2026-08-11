@@ -1,0 +1,3 @@
+status=failure
+failed_command=node --import tsx tests/unit/cloudflare-patients-contract.test.ts
+head_sha=73d631a590a9510e2d432d43e3c19e8e014fe93e

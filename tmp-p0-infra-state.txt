@@ -1,0 +1,11 @@
+head_sha=73d631a590a9510e2d432d43e3c19e8e014fe93e
+github_CERT_P12_B64=present
+github_CERT_P12_PASSWORD=present
+cloudflare_CLINICAL_DATA_KEY=present
+cloudflare_CLINICAL_ENCRYPTION_STRICT=absent
+cloudflare_OPERATIONAL_DATA_KEY=present
+cloudflare_OPERATIONAL_DATA_KEY_PREVIOUS=absent
+cloudflare_CERT_P12_B64=absent
+cloudflare_CERT_P12_PASSWORD=absent
+d1_clinical_encryption_state=absent
+d1_phase=none
