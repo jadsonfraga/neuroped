@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   type AuthUser,
   getStoredUser,
@@ -25,10 +25,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-/**
- * Dados do React Query e rascunhos cifrados pertencem à sessão clínica atual.
- * Nunca podem sobreviver a expiração, logout ou troca de conta no mesmo SPA.
- */
 async function clearSessionScopedClientState(): Promise<void> {
   try {
     await queryClient.cancelQueries();
@@ -71,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
         }
       } catch {
-        // A capacidade informou backend clínico: falhar fechado, sem auto-login.
         if (!cancelled) setUser(null);
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -90,26 +85,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function login(email: string, password: string): Promise<void> {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     const data = await loginRequest(email, password);
     await clearSessionScopedClientState();
     setUser(data.user);
-  }
+  }, []);
 
-  async function logout(): Promise<void> {
+  const logout = useCallback(async (): Promise<void> => {
     setUser(null);
     await logoutRequest();
     await clearSessionScopedClientState();
-  }
+  }, []);
 
-  async function refreshUser(): Promise<void> {
+  const refreshUser = useCallback(async (): Promise<void> => {
     try {
       const response = await authFetch("/api/auth/me");
       if (response.ok) setUser(await response.json());
     } catch {
       // Sessão não validada (offline/sem backend): mantém o estado atual.
     }
-  }
+  }, []);
 
   const contextValue = useMemo(
     () => ({
@@ -125,11 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user, isLoading, accessMode, remoteConfigured, login, logout, refreshUser],
   );
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {
