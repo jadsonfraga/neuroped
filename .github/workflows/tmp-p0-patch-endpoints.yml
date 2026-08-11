@@ -1,0 +1,38 @@
+name: Temporary P0 encrypted endpoints
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-patch-endpoints.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/p0-clinical-crypto-20260811
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - run: python3 scripts/tmp_p0_patch_endpoints.py
+      - name: Validate
+        run: npm run check && npm run lint && npm run test:quick-wins
+      - name: Commit verified endpoints
+        run: |
+          set -euo pipefail
+          git config user.name "jadsonfraga"
+          git config user.email "jadsonfraga@hotmail.com"
+          git add functions/api/consultations/index.ts functions/api/documents/index.ts functions/api/results.ts functions/api/scales/results.ts
+          git commit -m "fix(security): cifrar consultas documentos e resultados D1"
+          git push origin HEAD:fix/p0-clinical-crypto-20260811
