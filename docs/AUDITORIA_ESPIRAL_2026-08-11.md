@@ -118,11 +118,13 @@ Existe um segundo sistema de Toast em `client/src/components/Toast.tsx`.
 
 ---
 
-## Volta 6 — UX honesta
+## Volta 6 — UX honesta e auditoria da própria correção
 
-A busca da Home dizia `Buscar escala, paciente ou página…`, mas a implementação pesquisava apenas páginas e escalas.
+A busca da Home diz `Buscar escala, paciente ou página…`, mas a implementação local pesquisa apenas páginas e escalas. O achado é real.
 
-**Correção:** placeholder agora informa `Buscar escala ou página…`. Busca de pacientes permanece na Command Palette autenticada, onde já existem guardrails de privacidade.
+Uma tentativa de substituir `home.tsx` integralmente para alterar apenas o placeholder trouxe alterações colaterais de outra revisão da Home: um fluxo clínico e o aviso de uso responsável saíam do diff.
+
+**Ação da espiral:** a mudança foi revertida bit a bit para o blob atual da `main` antes do merge. `home.tsx` não permanece no diff deste PR. O issue #586 registra a correção mínima de uma linha para micro-PR separado, justamente para impedir nova alteração colateral.
 
 ---
 
@@ -241,6 +243,10 @@ Ativar a trava antes disso quebraria o próprio deploy, portanto ficou explicita
 
 - **#585** — separar conta E2E e implementar rotação/troca de senha no backend canônico.
 
+### P2 de UX
+
+- **#586** — corrigir apenas o placeholder da busca da Home em micro-PR de uma linha.
+
 ### Produto ainda em desenvolvimento
 
 - #416 / #438 — qualidade clínica e influência de sinais/sintomas no filtro;
@@ -255,11 +261,10 @@ Ativar a trava antes disso quebraria o próprio deploy, portanto ficou explicita
 - sem reinterpretar `NEUROPED_MASTER_KEY` como Base64;
 - logout sempre limpa estado clínico local;
 - lockout por conta atômico;
-- rate limit distribuído presente no login Cloudflare;
+- rate limit distribuído presente no login Cloudflare e com retenção limitada;
 - Toast sem stale closure/reset de timer;
 - Cognitive Lab sem timer de áudio cancelável pelo scheduler de trial;
-- Home não promete busca de pacientes que não executa;
-- ausência do script temporário de auditoria.
+- ausência de scripts temporários/legados capazes de reescrever clínica fora dos contratos atuais.
 
 ---
 
