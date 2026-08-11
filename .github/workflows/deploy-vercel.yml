@@ -24,8 +24,6 @@ jobs:
             exit 1
           fi
 
-  # Pré-checagem fail-closed: nunca transforma configuração ausente em sucesso.
-  # O status informa somente os NOMES ausentes; valores continuam protegidos.
   preflight:
     needs: assert-main
     runs-on: ubuntu-latest
@@ -121,17 +119,24 @@ jobs:
                 '.provider == "cloudflare-pages" and .commit == $sha' \
                 /tmp/cloudflare-sentinel.json >/dev/null \
               && curl -fsSL "$health?$cache_buster" -o /tmp/cloudflare-health.json \
-              && jq -e \
-                '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
-                /tmp/cloudflare-health.json >/dev/null; then
-              echo "Backend canônico confirma ${GITHUB_SHA}."
+              && jq -e '
+                .database == "ok" and
+                .authentication.required == true and
+                .authentication.configured == true and
+                .encryption.readyForIdentifiableClinicalData == true and
+                .encryption.clinicalStrict == true and
+                .encryption.clinicalPhase == "strict" and
+                .encryption.operationalConfigured == true
+              ' /tmp/cloudflare-health.json >/dev/null; then
+              echo "Backend canônico confirma ${GITHUB_SHA} com criptografia clínica strict."
               exit 0
             fi
-            echo "Aguardando backend canônico do mesmo commit ($attempt/36)."
+            echo "Aguardando backend canônico strict do mesmo commit ($attempt/36)."
             sleep 10
           done
           cat /tmp/cloudflare-sentinel.json 2>/dev/null || true
-          echo "::error::Cloudflare não confirmou ${GITHUB_SHA}; Vercel não será publicado."
+          cat /tmp/cloudflare-health.json 2>/dev/null || true
+          echo "::error::Cloudflare não confirmou ${GITHUB_SHA} com criptografia strict; Vercel não será publicado."
           exit 1
 
       - name: Create deploy sentinel
@@ -181,10 +186,6 @@ jobs:
           set -euo pipefail
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
-
-          # Apenas este projeto possui alias público exclusivo e controlado.
-          # O host neuroped.vercel.app pertence a outro aplicativo e nunca deve
-          # receber confiança da API NeuroPed.
           projects=(
             "superneuroped:prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
           )
@@ -193,12 +194,9 @@ jobs:
             name="${entry%%:*}"
             export VERCEL_PROJECT_ID="${entry#*:}"
             echo "Configurando e publicando projeto: $name"
-
             rm -rf .vercel
             vercel pull --yes --environment=production --token="$token"
 
-            # Sobrescreve toda variável VITE_* relevante para que configurações
-            # antigas do projeto nunca mudem autenticação, zona ou allowlist.
             VITE_AUTH_MODE=remote \
             VITE_API_URL=https://neuroped.pages.dev \
             VITE_PIN_HASH= \
@@ -232,9 +230,6 @@ jobs:
               ' "$1"
             }
 
-            # A URL imutável pode estar protegida pelo Vercel Authentication e
-            # responder com a tela de SSO mesmo após um deploy válido. O gate
-            # observável é o alias público efetivamente acessado pelos usuários.
             production_url="https://${name}.vercel.app"
             alias_ok=0
             for i in $(seq 1 18); do
@@ -252,7 +247,6 @@ jobs:
               echo "::error::O alias $production_url não serve ${GITHUB_SHA}."
               exit 1
             }
-
           done
 
       - name: Validate remote authentication from the stable Vercel origin
@@ -404,7 +398,7 @@ jobs:
           description="Deploy Vercel falhou; consulte o workflow."
           if [ "$JOB_STATUS" = "success" ]; then
             state=success
-            description="Mirror público publicado com auth nominal validada."
+            description="Mirror público publicado após backend strict, com auth nominal validada."
           fi
           gh api --method POST \
             "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
