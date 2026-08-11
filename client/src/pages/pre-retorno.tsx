@@ -116,11 +116,11 @@ function buildResumo(record: PreRetornoRecord) {
   return `RESUMO PRÉ-RETORNO\n\nPaciente: ${record.paciente || "Não informado"}\nIdade: ${record.idade || "Não informada"}\nÚltima consulta: ${record.ultimaConsulta || "Não informada"}\nMotivo do retorno: ${record.motivo || "Não informado"}\n\nEvolução geral: ${record.evolucao}\nSono: ${record.sono}\nComportamento: ${record.comportamento}\nEscola: ${record.escola}\nAlimentação: ${record.alimentacao}\nComunicação: ${record.comunicacao}\nCrises, se aplicável: ${record.crises}\nMedicação: ${record.medicacao}\nSintomas/efeitos percebidos pela família: ${record.sintomasTratamento || "Não informado"}\n\nDúvida principal da família: ${record.duvida || "Não informada"}\nPrioridade da consulta de hoje: ${record.prioridade || "Não informada"}\n\nPontos de alerta:\n1. ${alertas[0] || "Revisar relato."}\n2. ${alertas[1] || "Correlacionar com contexto escolar/terapêutico."}\n3. ${alertas[2] || "Confirmar em consulta."}\n\nPontos positivos:\n1. ${positivos[0] || "Registro familiar organizado."}\n2. ${positivos[1] || "Família engajada."}\n3. ${positivos[2] || "Consulta pode iniciar com prioridade clara."}\n\nPerguntas estratégicas para o médico:\n1. Qual é a maior preocupação da família hoje?\n2. O que mais atrapalha a rotina em casa, escola ou terapias?\n\nInterpretação prudente:\n- relato familiar pré-consulta;\n- não substitui avaliação médica;\n- não define causalidade de sintomas relatados;\n- não orienta ajuste de dose sem avaliação médica;\n- correlacionar com exame clínico e contexto escolar/terapêutico.\n\nObservações livres:\n${record.observacoes || "- Sem observações adicionais."}`;
 }
 
-function FieldSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) {
+function FieldSelect({ label, value, onChange, options, id }: { label: string; value: string; onChange: (value: string) => void; options: string[]; id: string }) {
   return (
-    <label className="space-y-1">
+    <label htmlFor={id} className="space-y-1">
       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</span>
-      <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-2xl border border-border bg-background px-3 text-sm">
         {options.map((option) => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
@@ -214,10 +214,11 @@ export default function PreRetornoPage() {
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <Card><CardContent className="space-y-4 p-4">
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paciente</span><Input value={paciente} onChange={(e) => setPaciente(e.target.value)} placeholder="Nome ou identificação" /></label>
-            <label className="space-y-1">
+            <label htmlFor="pre-retorno-paciente" className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paciente</span><Input id="pre-retorno-paciente" value={paciente} onChange={(e) => setPaciente(e.target.value)} placeholder="Nome ou identificação" /></label>
+            <label htmlFor="pre-retorno-anos" className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anos</span>
               <Input
+                id="pre-retorno-anos"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -230,9 +231,10 @@ export default function PreRetornoPage() {
                 className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
               />
             </label>
-            <label className="space-y-1">
+            <label htmlFor="pre-retorno-meses" className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Meses</span>
               <Input
+                id="pre-retorno-meses"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -250,25 +252,25 @@ export default function PreRetornoPage() {
                 {ageValidation.errors.join(" ")}
               </div>
             )}
-            <label className="space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Última consulta</span><Input value={ultimaConsulta} onChange={(e) => setUltimaConsulta(e.target.value)} placeholder="Data aproximada" /></label>
-            <label className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Motivo do retorno</span><Input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Principal motivo" /></label>
+            <label htmlFor="pre-retorno-ultima-consulta" className="space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Última consulta</span><Input id="pre-retorno-ultima-consulta" value={ultimaConsulta} onChange={(e) => setUltimaConsulta(e.target.value)} placeholder="Data aproximada" /></label>
+            <label htmlFor="pre-retorno-motivo" className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Motivo do retorno</span><Input id="pre-retorno-motivo" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Principal motivo" /></label>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <FieldSelect label="Evolução geral" value={evolucao} onChange={setEvolucao} options={opcoesEvolucao} />
-            <FieldSelect label="Sono" value={sono} onChange={setSono} options={opcoesBasicas} />
-            <FieldSelect label="Comportamento" value={comportamento} onChange={setComportamento} options={opcoesEvolucao} />
-            <FieldSelect label="Escola" value={escola} onChange={setEscola} options={opcoesEscola} />
-            <FieldSelect label="Alimentação" value={alimentacao} onChange={setAlimentacao} options={opcoesAlimentacao} />
-            <FieldSelect label="Comunicação" value={comunicacao} onChange={setComunicacao} options={opcoesBasicas} />
-            <FieldSelect label="Crises epilépticas" value={crises} onChange={setCrises} options={opcoesCrises} />
-            <FieldSelect label="Medicação" value={medicacao} onChange={setMedicacao} options={opcoesMedicacao} />
+            <FieldSelect id="pre-retorno-evolucao" label="Evolução geral" value={evolucao} onChange={setEvolucao} options={opcoesEvolucao} />
+            <FieldSelect id="pre-retorno-sono" label="Sono" value={sono} onChange={setSono} options={opcoesBasicas} />
+            <FieldSelect id="pre-retorno-comportamento" label="Comportamento" value={comportamento} onChange={setComportamento} options={opcoesEvolucao} />
+            <FieldSelect id="pre-retorno-escola" label="Escola" value={escola} onChange={setEscola} options={opcoesEscola} />
+            <FieldSelect id="pre-retorno-alimentacao" label="Alimentação" value={alimentacao} onChange={setAlimentacao} options={opcoesAlimentacao} />
+            <FieldSelect id="pre-retorno-comunicacao" label="Comunicação" value={comunicacao} onChange={setComunicacao} options={opcoesBasicas} />
+            <FieldSelect id="pre-retorno-crises" label="Crises epilépticas" value={crises} onChange={setCrises} options={opcoesCrises} />
+            <FieldSelect id="pre-retorno-medicacao" label="Medicação" value={medicacao} onChange={setMedicacao} options={opcoesMedicacao} />
           </div>
 
-          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sintomas ou efeitos percebidos pela família</span><textarea aria-label="Sintomas ou efeitos percebidos pela família" value={sintomasTratamento} onChange={(e) => setSintomasTratamento(e.target.value)} className="min-h-20 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato livre. Não altera conduta automaticamente; será revisado pelo médico." /></label>
-          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dúvida principal da família</span><Input value={duvida} onChange={(e) => setDuvida(e.target.value)} /></label>
-          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Prioridade de hoje</span><Input value={prioridade} onChange={(e) => setPrioridade(e.target.value)} /></label>
-          <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea aria-label="Observações livres" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
+          <label htmlFor="pre-retorno-sintomas" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sintomas ou efeitos percebidos pela família</span><textarea id="pre-retorno-sintomas" value={sintomasTratamento} onChange={(e) => setSintomasTratamento(e.target.value)} className="min-h-20 w-full rounded-2xl border border-border bg-background p-3 text-sm" placeholder="Relato livre. Não altera conduta automaticamente; será revisado pelo médico." /></label>
+          <label htmlFor="pre-retorno-duvida" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dúvida principal da família</span><Input id="pre-retorno-duvida" value={duvida} onChange={(e) => setDuvida(e.target.value)} /></label>
+          <label htmlFor="pre-retorno-prioridade" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Prioridade de hoje</span><Input id="pre-retorno-prioridade" value={prioridade} onChange={(e) => setPrioridade(e.target.value)} /></label>
+          <label htmlFor="pre-retorno-observacoes" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea id="pre-retorno-observacoes" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
 
           <div className="flex flex-wrap gap-2">
             <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>

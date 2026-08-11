@@ -122,13 +122,14 @@ export default function PreConsultaPage() {
         <Card>
           <CardContent className="space-y-4 p-4">
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1 md:col-span-2">
+              <label htmlFor="pre-consulta-paciente" className="space-y-1 md:col-span-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paciente</span>
-                <Input value={paciente} onChange={(event) => setPaciente(event.target.value)} placeholder="Nome ou identificação" />
+                <Input id="pre-consulta-paciente" value={paciente} onChange={(event) => setPaciente(event.target.value)} placeholder="Nome ou identificação" />
               </label>
-              <label className="space-y-1">
+              <label htmlFor="pre-consulta-anos" className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anos</span>
                 <Input
+                  id="pre-consulta-anos"
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
@@ -141,9 +142,10 @@ export default function PreConsultaPage() {
                   className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
                 />
               </label>
-              <label className="space-y-1">
+              <label htmlFor="pre-consulta-meses" className="space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Meses</span>
                 <Input
+                  id="pre-consulta-meses"
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
@@ -171,16 +173,16 @@ export default function PreConsultaPage() {
               className="min-h-40"
             />
 
-            <div className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa principal</span>
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Queixa principal</legend>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {preConsultaQueixas.map((item) => (
-                  <button key={item.id} type="button" onClick={() => setQueixa(item.id)} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${queixa === item.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>
+                  <button key={item.id} type="button" onClick={() => setQueixa(item.id)} aria-pressed={queixa === item.id} className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${queixa === item.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}>
                     {item.label}
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             <div className="grid gap-3 md:grid-cols-2">
               <label htmlFor="pre-consulta-respondente" className="space-y-1">
