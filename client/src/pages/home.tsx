@@ -199,6 +199,7 @@ export default function HomePage() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Buscar escala, questionário, paciente ou página…"
+                aria-label="Buscar escala, questionário, paciente ou página"
                 className="h-12 rounded-2xl border-border/70 bg-background/80 pl-11 pr-10 text-[15px] shadow-sm transition-shadow focus-visible:shadow-md"
                 data-testid="input-search"
               />
