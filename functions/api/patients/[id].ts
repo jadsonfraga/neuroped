@@ -147,16 +147,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 export const onRequestPatch: PagesFunction<Env> = async (context) => {
   const { env, params, request } = context;
   const id = patientIdFrom(params); const invalidId = invalidIdResponse(id); if (invalidId) return invalidId;
-  if (!env.DB) return errorResponse("Persistência indisponível. Nenhum paciente foi atualizado.", "DB_REQUIRED", 503);
-  const user = getContextUser(context); if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);
-  if (!canWriteClinicalData(user)) return authorizationError("Perfil sem permissão para atualizar pacientes.", "FORBIDDEN", 403);
-
   let parsed: unknown; try { parsed = await request.json(); } catch { return errorResponse("Corpo da requisição inválido ou não é JSON.", "INVALID_JSON", 400); }
   if (!isPlainObject(parsed)) return errorResponse("Corpo deve ser um objeto JSON.", "INVALID_JSON", 400);
   const normalized = normalizePatientWrite(parsed, { requireName: false });
   if (!normalized.ok) return errorResponse(normalized.message, "VALIDATION_ERROR", 400);
   const entries = Object.entries(normalized.values) as Array<[PatientWriteField, string | null]>;
   if (!entries.length) return errorResponse("Nenhum campo válido para atualizar.", "NO_UPDATES", 400);
+  if (!env.DB) return errorResponse("Persistência indisponível. Nenhum paciente foi atualizado.", "DB_REQUIRED", 503);
+  const user = getContextUser(context); if (!user) return authorizationError("Não autenticado.", "UNAUTHENTICATED", 401);
+  if (!canWriteClinicalData(user)) return authorizationError("Perfil sem permissão para atualizar pacientes.", "FORBIDDEN", 403);
 
   try {
     const access = await getPatientAccess(env.DB, id, user);
