@@ -1,0 +1,74 @@
+name: Temporary apply definitive loose ends
+
+on:
+  push:
+    branches:
+      - fix/definitive-loose-ends-20260811
+    paths:
+      - "scripts/tmp_apply_definitive_loose_ends.py"
+      - ".github/workflows/tmp-apply-definitive-loose-ends.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: fix/definitive-loose-ends-20260811
+          fetch-depth: 0
+
+      - name: Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Apply fixes
+        run: python3 scripts/tmp_apply_definitive_loose_ends.py
+
+      - name: Focused regression
+        run: |
+          node --import tsx tests/unit/definitive-loose-ends.test.ts
+          node --import tsx tests/unit/cloudflare-auth-middleware.test.ts
+          node --import tsx tests/unit/clinical-core-contract.test.ts
+          node tests/unit/clinical-core-integration-static.test.mjs
+
+      - name: Release gate
+        run: npm run verify:release
+
+      - name: Commit verified fixes
+        run: |
+          set -euo pipefail
+          git config user.name "jadsonfraga"
+          git config user.email "jadsonfraga@hotmail.com"
+          git add \
+            functions/api/_middleware.ts \
+            functions/api/auth/login.ts \
+            functions/api/clinical-core/index.ts \
+            functions/api/clinical-core/_schema.ts \
+            db/migrations/0006_clinical_core.sql \
+            server/auth/routes.ts \
+            server/routes/clinical-core.ts \
+            server/lib/env.ts \
+            server/index.ts \
+            server/lib/db.ts \
+            server/lib/db-enhanced.ts \
+            server/routes/files.ts \
+            tests/unit/cloudflare-auth-middleware.test.ts \
+            tests/unit/definitive-loose-ends.test.ts \
+            package.json
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração a commitar."
+            exit 0
+          fi
+          git commit -m "fix(security): amarrar pontas soltas de auth, concorrência e fail-closed"
+          git push origin HEAD:fix/definitive-loose-ends-20260811
