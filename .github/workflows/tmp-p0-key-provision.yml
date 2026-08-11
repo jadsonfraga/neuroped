@@ -1,0 +1,66 @@
+name: Temporary P0 key provision
+
+on:
+  push:
+    branches:
+      - fix/p0-clinical-crypto-20260811
+    paths:
+      - ".github/workflows/tmp-p0-key-provision.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Provision independent crypto keys and purge retired certificate secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_API_TOKEN" ]
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ]
+
+          random_key() { openssl rand -base64 48 | tr -d '\n'; }
+          put_secret() {
+            local name="$1"
+            local value="$2"
+            printf '%s' "$value" | npx --yes wrangler@4 pages secret put "$name" --project-name neuroped >/dev/null
+            echo "secret $name: provisioned"
+          }
+
+          clinical="$(random_key)"
+          clinical_index="$(random_key)"
+          operational="$(random_key)"
+
+          # Active + immutable K1 archive: enables rotation without exporting old secret values.
+          put_secret CLINICAL_DATA_KEY "$clinical"
+          put_secret CLINICAL_DATA_KEY_K1 "$clinical"
+          put_secret CLINICAL_INDEX_KEY "$clinical_index"
+          put_secret CLINICAL_INDEX_KEY_K1 "$clinical_index"
+          put_secret OPERATIONAL_DATA_KEY "$operational"
+          put_secret OPERATIONAL_DATA_KEY_K1 "$operational"
+          put_secret CLINICAL_DATA_KEY_ID "k1"
+          put_secret CLINICAL_INDEX_KEY_ID "k1"
+          put_secret OPERATIONAL_DATA_KEY_ID "k1"
+
+          unset clinical clinical_index operational
+
+          # No code path consumes this retired legacy secret.
+          npx --yes wrangler@4 pages secret delete certificado --project-name neuroped >/dev/null 2>&1 || true
+
+          names="$(npx --yes wrangler@4 pages secret list --project-name neuroped)"
+          for required in CLINICAL_DATA_KEY CLINICAL_DATA_KEY_K1 CLINICAL_INDEX_KEY CLINICAL_INDEX_KEY_K1 OPERATIONAL_DATA_KEY OPERATIONAL_DATA_KEY_K1 CLINICAL_DATA_KEY_ID CLINICAL_INDEX_KEY_ID OPERATIONAL_DATA_KEY_ID; do
+            echo "$names" | grep -q -- "- $required" || { echo "::error::$required missing after provision"; exit 1; }
+          done
+          if echo "$names" | grep -q -- "- certificado"; then
+            echo "::error::retired certificado secret still present"
+            exit 1
+          fi
+          echo "Independent key slots present; retired certificate secret absent. Values were never printed."
