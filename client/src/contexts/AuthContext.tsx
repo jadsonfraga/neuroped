@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   type AuthUser,
   getStoredUser,
@@ -7,7 +7,7 @@ import {
   authFetch,
   getAuthCapability,
 } from "@/lib/authClient";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient } from "@tanstack/react-query";
 import { secureClearAll } from "@/lib/secureStorage";
 
 export type AccessMode = "checking" | "remote" | "local";
@@ -90,28 +90,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function login(email: string, password: string): Promise<void> {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     const data = await loginRequest(email, password);
     await clearSessionScopedClientState();
     setUser(data.user);
-  }
+  }, []);
 
-  async function logout(): Promise<void> {
+  const logout = useCallback(async (): Promise<void> => {
+    // O estado local deve ser invalidado mesmo se a requisição de logout falhar.
+    // Isso impede cache/rascunhos clínicos de sobreviverem a uma sessão encerrada.
     setUser(null);
-    await logoutRequest();
-    await clearSessionScopedClientState();
-  }
+    try {
+      await logoutRequest();
+    } finally {
+      await clearSessionScopedClientState();
+    }
+  }, []);
 
-  async function refreshUser(): Promise<void> {
+  const refreshUser = useCallback(async (): Promise<void> => {
     try {
       const response = await authFetch("/api/auth/me");
       if (response.ok) setUser(await response.json());
     } catch {
       // Sessão não validada (offline/sem backend): mantém o estado atual.
     }
-  }
+  }, []);
 
-  const contextValue = useMemo(
+  const contextValue = useMemo<AuthContextValue>(
     () => ({
       user,
       isAuthenticated: !!user,
