@@ -13,6 +13,7 @@ async function provision(db: D1Database): Promise<void> {
         provenance_kind TEXT NOT NULL CHECK (provenance_kind IN ('reported','observed','measured','documented','inferred','decision')),
         provenance_source TEXT NOT NULL,
         payload_json TEXT NOT NULL,
+        secure_payload_encrypted TEXT,
         supersedes_event_id TEXT REFERENCES clinical_events_demo(id) ON DELETE SET NULL,
         status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','corrected','voided')),
         is_demo INTEGER NOT NULL DEFAULT 1 CHECK (is_demo = 1),
@@ -39,8 +40,9 @@ async function provision(db: D1Database): Promise<void> {
 }
 
 /**
- * Catraca idempotente para o backend demo Cloudflare. A migração versionada
- * permanece a fonte de verdade do schema.
+ * Catraca idempotente para o backend Cloudflare. A migração versionada
+ * permanece a fonte de verdade do schema; instalações novas já nascem com
+ * secure_payload_encrypted para não reintroduzir plaintext clínico.
  */
 export async function ensureClinicalCoreDemoSchema(db: D1Database): Promise<void> {
   if (!schemaReady) {
