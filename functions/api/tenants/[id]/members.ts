@@ -8,7 +8,6 @@ import {
   membershipCanManage,
   tenantError,
   tenantJson,
-  writeSaasAudit,
   type TenantEnv,
 } from "../../tenant/_core";
 
@@ -19,6 +18,10 @@ function clinicIdFrom(params: Record<string, string | string[]>): string {
 
 function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function isLastOwnerError(error: unknown): boolean {
+  return /LAST_OWNER_PROTECTED/.test(error instanceof Error ? error.message : String(error));
 }
 
 type ManagerContextInput = {
@@ -125,29 +128,74 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     );
   }
 
-  const now = new Date().toISOString();
-  await auth.db
+  const existing = await auth.db
     .prepare(
-      `INSERT INTO clinic_memberships
-        (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
-       VALUES (?, ?, ?, 1, ?, ?, ?)
-       ON CONFLICT(clinic_id, user_id) DO UPDATE SET
-         role = excluded.role,
-         active = 1,
-         invited_by_user_id = excluded.invited_by_user_id,
-         updated_at = excluded.updated_at`,
+      `SELECT role, active
+         FROM clinic_memberships
+        WHERE clinic_id = ? AND user_id = ?
+        LIMIT 1`,
     )
-    .bind(auth.clinicId, target.id, role, auth.user.id, now, now)
-    .run();
+    .bind(auth.clinicId, target.id)
+    .first<{ role: ClinicMembershipRole; active: number }>();
 
-  await writeSaasAudit(auth.db, {
-    clinicId: auth.clinicId,
-    actorUserId: auth.user.id,
-    action: "clinic_membership_upsert",
-    targetType: "user",
-    targetId: target.id,
-    metadata: { role },
-  });
+  const demotingActiveOwner = Boolean(
+    existing?.active && existing.role === "owner" && role !== "owner",
+  );
+  if (demotingActiveOwner && auth.membership.role !== "owner") {
+    return tenantError("Somente owner pode retirar o papel owner.", "TENANT_FORBIDDEN", 403);
+  }
+
+  const now = new Date().toISOString();
+  const auditId = crypto.randomUUID();
+  const membershipStatement = demotingActiveOwner
+    ? auth.db
+        .prepare(
+          `UPDATE clinic_memberships
+              SET role = ?, active = 1, invited_by_user_id = ?, updated_at = ?
+            WHERE clinic_id = ? AND user_id = ? AND active = 1 AND role = 'owner'`,
+        )
+        .bind(role, auth.user.id, now, auth.clinicId, target.id)
+    : auth.db
+        .prepare(
+          `INSERT INTO clinic_memberships
+            (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
+           VALUES (?, ?, ?, 1, ?, ?, ?)
+           ON CONFLICT(clinic_id, user_id) DO UPDATE SET
+             role = excluded.role,
+             active = 1,
+             invited_by_user_id = excluded.invited_by_user_id,
+             updated_at = excluded.updated_at`,
+        )
+        .bind(auth.clinicId, target.id, role, auth.user.id, now, now);
+
+  try {
+    const results = await auth.db.batch([
+      membershipStatement,
+      auth.db
+        .prepare(
+          `INSERT INTO saas_audit_log
+            (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
+           VALUES (?, ?, ?, 'clinic_membership_upsert', 'user', ?, ?, ?)`,
+        )
+        .bind(
+          auditId,
+          auth.clinicId,
+          auth.user.id,
+          target.id,
+          JSON.stringify({ role }),
+          now,
+        ),
+    ]);
+    if (Number(results[0]?.meta?.changes ?? 0) < 1) {
+      return tenantError("Membership mudou durante a operação. Recarregue e tente novamente.", "MEMBERSHIP_STALE", 409);
+    }
+  } catch (error) {
+    if (isLastOwnerError(error)) {
+      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+    }
+    console.error("[tenants.members.POST] DB error", error);
+    return tenantError("Não foi possível atualizar a equipe.", "DB_ERROR", 500);
+  }
 
   return tenantJson(
     {
@@ -176,38 +224,52 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
   if (!targetMembership || !targetMembership.active) {
     return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
   }
-  if (targetMembership.role === "owner") {
-    const owners = await auth.db
-      .prepare(
-        `SELECT COUNT(*) AS total FROM clinic_memberships
-          WHERE clinic_id = ? AND role = 'owner' AND active = 1`,
-      )
-      .bind(auth.clinicId)
-      .first<{ total: number }>();
-    if ((owners?.total ?? 0) <= 1) {
-      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
-    }
-    if (auth.membership.role !== "owner") {
-      return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
-    }
+  if (targetMembership.role === "owner" && auth.membership.role !== "owner") {
+    return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
   }
 
-  await auth.db
-    .prepare(
-      `UPDATE clinic_memberships
-          SET active = 0, updated_at = ?
-        WHERE clinic_id = ? AND user_id = ?`,
-    )
-    .bind(new Date().toISOString(), auth.clinicId, targetUserId)
-    .run();
-
-  await writeSaasAudit(auth.db, {
-    clinicId: auth.clinicId,
-    actorUserId: auth.user.id,
-    action: "clinic_membership_deactivate",
-    targetType: "user",
-    targetId: targetUserId,
-  });
+  const now = new Date().toISOString();
+  const auditId = crypto.randomUUID();
+  try {
+    const results = await auth.db.batch([
+      auth.db
+        .prepare(
+          `UPDATE clinic_memberships
+              SET active = 0, updated_at = ?
+            WHERE clinic_id = ? AND user_id = ? AND active = 1`,
+        )
+        .bind(now, auth.clinicId, targetUserId),
+      auth.db
+        .prepare(
+          `INSERT INTO saas_audit_log
+            (id, clinic_id, actor_user_id, action, target_type, target_id, created_at)
+           SELECT ?, ?, ?, 'clinic_membership_deactivate', 'user', ?, ?
+            WHERE EXISTS (
+              SELECT 1 FROM clinic_memberships
+               WHERE clinic_id = ? AND user_id = ? AND active = 0 AND updated_at = ?
+            )`,
+        )
+        .bind(
+          auditId,
+          auth.clinicId,
+          auth.user.id,
+          targetUserId,
+          now,
+          auth.clinicId,
+          targetUserId,
+          now,
+        ),
+    ]);
+    if (Number(results[0]?.meta?.changes ?? 0) < 1) {
+      return tenantError("Membership mudou durante a operação. Recarregue e tente novamente.", "MEMBERSHIP_STALE", 409);
+    }
+  } catch (error) {
+    if (isLastOwnerError(error)) {
+      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+    }
+    console.error("[tenants.members.DELETE] DB error", error);
+    return tenantError("Não foi possível desativar a membership.", "DB_ERROR", 500);
+  }
 
   return tenantJson({ ok: true });
 };
