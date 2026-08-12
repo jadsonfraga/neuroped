@@ -3,6 +3,7 @@ import { Target, ArrowRight, ShieldAlert, Footprints, Sparkles, Filter } from "l
 import { Card, CardContent } from "@/components/ui/card";
 import { allScales } from "@/data/scaleFilter";
 import { getImplementationStatus } from "@/data/advancedFilterLogic";
+import { saveProtectedFilterState } from "@/lib/filterStateStorage";
 import {
   fluxoBands, fluxoMasterRule, fluxoSafetyNode, fluxoMotorNode,
   type FluxoPick, type FluxoNode,
@@ -63,21 +64,15 @@ function NodeBanner({ node }: { node: FluxoNode }) {
   );
 }
 
-// Chave de persistência do Filtro (mesma de filtro.tsx) — pré-preenche idade+queixa.
-const FILTER_STATE_KEY = "np_filtro_state_v1";
-
 export default function FluxogramaPage() {
   const [, navigate] = useLocation();
-  function openInFilter(ageBandId: string, queixaId?: string) {
+  async function openInFilter(ageBandId: string, queixaId?: string) {
     if (!queixaId) return;
-    try {
-      localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({ queixas: [queixaId], age: ageBandId }));
-    } catch { /* storage best-effort */ }
+    await saveProtectedFilterState({ queixas: [queixaId], age: ageBandId });
     navigate("/filtro");
   }
   return (
     <div className="page-enter pb-8 space-y-5">
-      {/* Hero */}
       <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-sm backdrop-blur">
         <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-primary/15 to-chart-2/10 blur-3xl" />
         <div className="relative flex items-center gap-3.5">
@@ -92,17 +87,14 @@ export default function FluxogramaPage() {
         </div>
       </header>
 
-      {/* Regra-mestre */}
       <section className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-4 sm:p-5">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary"><Sparkles className="h-3.5 w-3.5" /> Regra-mestre</p>
         <p className="mt-1.5 text-sm leading-relaxed text-foreground">{fluxoMasterRule}</p>
       </section>
 
-      {/* Nós transversais */}
       <NodeBanner node={fluxoSafetyNode} />
       <NodeBanner node={fluxoMotorNode} />
 
-      {/* Matriz por faixa etária */}
       <div className="grid gap-4 md:grid-cols-2">
         {fluxoBands.map((band) => (
           <Card key={band.id} className="border-border/70 bg-card/80">
@@ -120,7 +112,7 @@ export default function FluxogramaPage() {
                     {cell.queixaId ? (
                       <button
                         type="button"
-                        onClick={() => openInFilter(band.ageBandId, cell.queixaId)}
+                        onClick={() => void openInFilter(band.ageBandId, cell.queixaId)}
                         title={`Abrir no Filtro: ${cell.queixa} · ${band.ageLabel}`}
                         className="group flex w-full items-center gap-1.5 rounded-lg px-1 py-0.5 text-left transition hover:bg-primary/5"
                       >
