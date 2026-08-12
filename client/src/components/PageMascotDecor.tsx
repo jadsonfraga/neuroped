@@ -1,6 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useLocation } from "wouter";
-import { scaleReferences } from "@/data/scaleReferences";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
 import drConsultorioHero from "@assets/images/dr-jadson-consultorio-superman.jpeg";
 import drArteMascot from "@assets/images/dr-jadson-arte.jpeg";
@@ -65,9 +64,16 @@ const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
 const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas"];
 
 // Durante a aplicação de uma escala o conteúdo clínico domina a tela: nenhum
-// mascote decorativo compete com o questionário. As rotas dedicadas derivam do
-// catálogo de referências (slug = rota) e o runner genérico entra pelo prefixo.
-const scaleApplicationRoutes = new Set(Object.keys(scaleReferences).map((id) => `/${id}`));
+// mascote decorativo compete com o questionário. A lista espelha as chaves de
+// scaleReferences (slug = rota) SEM importar o catálogo — este componente vive
+// no chunk inicial e os dados das referências estourariam o teto de bundle.
+// test:loose-ends trava a sincronia entre esta lista e o catálogo.
+const scaleApplicationSlugs = [
+  "mchat", "cars", "denver", "snap", "sdq", "conners", "scared", "vineland",
+  "cbcl", "vanderbilt", "brief2", "abc", "asq3", "gmfcs", "pedsql", "cshq",
+  "ygtss", "cdi2", "phqa", "cssrs", "crafft",
+];
+const scaleApplicationRoutes = new Set(scaleApplicationSlugs.map((id) => `/${id}`));
 
 function isScaleApplicationRoute(path: string): boolean {
   return scaleApplicationRoutes.has(path) || path.startsWith("/generic-scale/");
