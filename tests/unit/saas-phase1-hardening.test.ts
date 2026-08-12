@@ -12,8 +12,12 @@ const liveEventsApi = read("functions/api/live/events/index.ts");
 const migrationWorkflow = read(".github/workflows/saas-phase1-d1-migration.yml");
 
 // Travas estáticas: autorização do handler não pode confundir "não conceder owner"
-// com "poder demover owner".
-assert.match(membersApi, /currentMembership\?\.role === "owner"/);
+// com "poder demover owner". Verificamos a propriedade sem exigir uma forma
+// sintática específica de optional chaining.
+assert.match(
+  membersApi,
+  /currentMembership\?\.active === 1[\s\S]{0,140}currentMembership\.role === "owner"[\s\S]{0,140}auth\.membership\.role !== "owner"/,
+);
 assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
 assert.match(membersApi, /otherActiveOwnerCount/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
