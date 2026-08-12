@@ -216,11 +216,17 @@ assert.match(
   /Somente owner pode alterar o papel de outro owner/,
   "clinic_admin não pode demover owner por upsert",
 );
+assert.match(membersApi, /otherActiveOwnerCount/);
 assert.match(
   membersApi,
   /isLastOwnerConstraintError/,
   "handler precisa reagir ao trigger físico de último owner (0010)",
 );
+assert.match(membersApi, /auth\.db\.batch\(/);
+assert.match(membersApi, /prepareSaasAudit\(/);
+assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
+assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit/);
 
 const tenantsApi = readFileSync(
   new URL("../../functions/api/tenants/index.ts", import.meta.url),
