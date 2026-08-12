@@ -232,13 +232,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   };
 
   if (!env.DB) {
-    return jsonResponse(
-      {
-        ...payload,
-        mode: "demo",
-        note: "Registro simulado — banco não configurado.",
-      },
-      201,
+    return errorResponse(
+      "Persistência indisponível. Nenhum resultado foi registrado.",
+      "DB_REQUIRED",
+      503,
     );
   }
 

@@ -1,0 +1,55 @@
+name: Visual reset premium
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/styles/visual-reset.css"
+      - "client/src/styles/premium-polish-10.css"
+      - "client/src/styles/flow-os.css"
+      - "client/src/main.tsx"
+      - "client/src/components/Layout.tsx"
+      - "client/src/components/MobilePrimaryDock.tsx"
+      - "client/src/components/CommandPalette.tsx"
+      - "client/src/components/PageHero.tsx"
+      - "client/src/pages/home.tsx"
+      - "client/src/components/clinical/PatientCockpit.tsx"
+      - "client/src/components/ui/**"
+      - "tests/unit/visual-reset-static.test.mjs"
+      - "tests/unit/premium-polish-10-static.test.mjs"
+      - "tests/unit/flow-os-navigation-static.test.mjs"
+      - ".github/workflows/visual-reset.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  visual-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Visual reset contract
+        run: node tests/unit/visual-reset-static.test.mjs
+      - name: Premium Polish 10 contract
+        run: node tests/unit/premium-polish-10-static.test.mjs
+      - name: Flow OS navigation contract
+        run: node tests/unit/flow-os-navigation-static.test.mjs
+      - name: TypeScript
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Build client
+        run: npm run build:client
+      - name: Accessibility audit
+        run: npm run audit:a11y
+      - name: Design audit
+        run: npm run audit:design

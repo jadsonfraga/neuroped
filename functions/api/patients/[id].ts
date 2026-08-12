@@ -273,13 +273,11 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
 
   const now = new Date().toISOString();
   if (!env.DB) {
-    const partial = toPatientApi({
-      id,
-      ...normalized.values,
-      is_demo: 1,
-      updated_at: now,
-    });
-    return jsonResponse({ ...partial, updated: true, mode: "demo" });
+    return errorResponse(
+      "Persistência indisponível. Nenhum paciente foi atualizado.",
+      "DB_REQUIRED",
+      503,
+    );
   }
 
   try {
@@ -329,7 +327,11 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   if (invalidId) return invalidId;
 
   if (!env.DB) {
-    return jsonResponse({ id, deleted: false, mode: "demo" });
+    return errorResponse(
+      "Persistência indisponível. Nenhum paciente foi removido.",
+      "DB_REQUIRED",
+      503,
+    );
   }
 
   const user = getContextUser(context);

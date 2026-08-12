@@ -18,7 +18,7 @@ import {
   parseStatus,
   profileToApi,
   randomAccessToken,
-  releaseSlotLocksStatement,
+  releaseSlotLocksAfterSuccessfulMutationStatement,
   serviceToApi,
   sha256,
   slotLockStatements,
@@ -38,7 +38,7 @@ import {
   setOperationsStaffActive,
   type OperationsPrincipal,
 } from "./_access";
-import type { AppointmentStatus } from "../../../shared/operations";
+import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
 
 function canConfigure(role: string): boolean {
   return role === "admin" || role === "professional";
@@ -65,6 +65,7 @@ function moneyCents(value: unknown): number | null {
 }
 
 function integerBetween(value: unknown, min: number, max: number): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) return null;
   return parsed;
@@ -103,6 +104,11 @@ async function getDashboard(
   principal: OperationsPrincipal,
 ) {
   const profile = await ensureProviderProfile(db, provider);
+  const nowMinute = localNow(profile.timezone);
+  const today = nowMinute.slice(0, 10);
+  const next30 = addDaysLocalMinute(nowMinute, 30);
+  const prior30 = addDaysLocalMinute(nowMinute, -30);
+
   const servicesResult = await db
     .prepare(`SELECT * FROM booking_services WHERE provider_user_id = ? ORDER BY active DESC, name`)
     .bind(provider.id)
@@ -121,10 +127,21 @@ async function getDashboard(
          FROM appointments a
          JOIN booking_services s ON s.id = a.service_id
         WHERE a.provider_user_id = ?
-        ORDER BY a.starts_at_local DESC
+        ORDER BY
+          CASE
+            WHEN a.starts_at_local >= ?
+             AND a.status IN ('requested','confirmed','checked_in','in_care')
+            THEN 0 ELSE 1
+          END ASC,
+          CASE
+            WHEN a.starts_at_local >= ?
+             AND a.status IN ('requested','confirmed','checked_in','in_care')
+            THEN a.starts_at_local
+          END ASC,
+          a.starts_at_local DESC
         LIMIT 250`,
     )
-    .bind(provider.id)
+    .bind(provider.id, nowMinute, nowMinute)
     .all<AppointmentRow>();
   const waitlistResult = await db
     .prepare(
@@ -203,26 +220,42 @@ async function getDashboard(
     })),
   );
 
-  const nowMinute = localNow(profile.timezone);
-  const today = nowMinute.slice(0, 10);
-  const next30 = addDaysLocalMinute(nowMinute, 30);
-  const prior30 = addDaysLocalMinute(nowMinute, -30);
+  const [appointmentMetrics, waitlistMetrics, reviewMetrics, notificationMetrics] = await Promise.all([
+    db.prepare(
+      `SELECT
+         COALESCE(SUM(CASE WHEN substr(starts_at_local, 1, 10) = ? AND status NOT IN ('cancelled','no_show') THEN 1 ELSE 0 END), 0) AS today_count,
+         COALESCE(SUM(CASE WHEN starts_at_local >= ? AND status IN ('requested','confirmed','checked_in','in_care') THEN 1 ELSE 0 END), 0) AS upcoming_count,
+         COALESCE(SUM(CASE WHEN status = 'requested' THEN 1 ELSE 0 END), 0) AS requested_count,
+         COALESCE(SUM(CASE WHEN status = 'no_show' AND starts_at_local >= ? AND starts_at_local <= ? THEN 1 ELSE 0 END), 0) AS no_show_30d,
+         COALESCE(SUM(CASE WHEN starts_at_local >= ? AND starts_at_local <= ? AND status NOT IN ('cancelled','no_show') THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS expected_cents,
+         COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS paid_cents
+       FROM appointments
+      WHERE provider_user_id = ?`,
+    ).bind(today, nowMinute, prior30, nowMinute, nowMinute, next30, provider.id).first<{
+      today_count: number; upcoming_count: number; requested_count: number; no_show_30d: number;
+      expected_cents: number; paid_cents: number;
+    }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM waitlist_entries WHERE provider_user_id = ? AND status = 'waiting'`,
+    ).bind(provider.id).first<{ count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM appointment_reviews WHERE provider_user_id = ? AND approved = 0`,
+    ).bind(provider.id).first<{ count: number }>(),
+    db.prepare(
+      `SELECT COUNT(*) AS count FROM notification_outbox WHERE provider_user_id = ? AND status = 'pending_provider'`,
+    ).bind(provider.id).first<{ count: number }>(),
+  ]);
+
   const metrics = {
-    today: fullAppointments.filter((item) => item.startsAtLocal.startsWith(today) && !["cancelled", "no_show"].includes(item.status)).length,
-    upcoming: fullAppointments.filter((item) => item.startsAtLocal >= nowMinute && !["cancelled", "completed", "no_show"].includes(item.status)).length,
-    requested: fullAppointments.filter((item) => item.status === "requested").length,
-    waitlist: waitlist.filter((item) => item.status === "waiting").length,
-    pendingReviews: principal.canConfigure ? fullReviews.filter((item) => !item.approved).length : 0,
-    pendingNotifications: notifications.filter((item) => item.status === "pending_provider").length,
-    expectedCents: principal.canConfigure
-      ? fullAppointments
-          .filter((item) => item.startsAtLocal >= nowMinute && item.startsAtLocal <= next30 && !["cancelled", "no_show"].includes(item.status))
-          .reduce((sum, item) => sum + (item.amountCents ?? 0), 0)
-      : 0,
-    paidCents: principal.canConfigure
-      ? fullAppointments.filter((item) => item.paymentStatus === "paid").reduce((sum, item) => sum + (item.amountCents ?? 0), 0)
-      : 0,
-    noShow30d: fullAppointments.filter((item) => item.status === "no_show" && item.startsAtLocal >= prior30 && item.startsAtLocal <= nowMinute).length,
+    today: appointmentMetrics?.today_count ?? 0,
+    upcoming: appointmentMetrics?.upcoming_count ?? 0,
+    requested: appointmentMetrics?.requested_count ?? 0,
+    waitlist: waitlistMetrics?.count ?? 0,
+    pendingReviews: principal.canConfigure ? (reviewMetrics?.count ?? 0) : 0,
+    pendingNotifications: notificationMetrics?.count ?? 0,
+    expectedCents: principal.canConfigure ? (appointmentMetrics?.expected_cents ?? 0) : 0,
+    paidCents: principal.canConfigure ? (appointmentMetrics?.paid_cents ?? 0) : 0,
+    noShow30d: appointmentMetrics?.no_show_30d ?? 0,
   };
 
   return {
@@ -370,14 +403,18 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const locationLabel = cleanOptionalText(body.locationLabel, 180);
       const timezone = cleanText(body.timezone, 80) || "America/Recife";
       const requestedSlug = cleanText(body.slug, 50) || slugify(displayName || user.name);
+      if (!isValidTimeZone(timezone)) return errorResponse("Fuso horário inválido.", "VALIDATION_ERROR", 400);
       if (!displayName || !specialty || !validSlug(requestedSlug)) return errorResponse("Perfil público inválido.", "VALIDATION_ERROR", 400);
       const bookingEnabled = body.bookingEnabled === true ? 1 : 0;
       try {
-        await env.DB.prepare(
+        const update = await env.DB.prepare(
           `UPDATE booking_provider_profiles
               SET slug = ?, display_name = ?, specialty = ?, location_label = ?, timezone = ?, booking_enabled = ?, updated_at = ?
             WHERE user_id = ?`,
         ).bind(requestedSlug, displayName, specialty, locationLabel, timezone, bookingEnabled, now, user.id).run();
+        if ((update.meta?.changes ?? 0) !== 1) {
+          return errorResponse("Perfil público não encontrado.", "NOT_FOUND", 404);
+        }
       } catch (error) {
         if (String(error).toLowerCase().includes("unique")) return errorResponse("Este endereço público já está em uso.", "SLUG_CONFLICT", 409);
         throw error;
@@ -409,11 +446,12 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const priceCents = body.priceCents === undefined ? existing.price_cents : moneyCents(body.priceCents);
       const active = body.active === undefined ? existing.active : body.active === true ? 1 : 0;
       const publicVisible = body.publicVisible === undefined ? existing.public_visible : body.publicVisible === true ? 1 : 0;
-      await env.DB.prepare(
+      const update = await env.DB.prepare(
         `UPDATE booking_services
             SET name = ?, duration_minutes = ?, price_cents = ?, modality = ?, active = ?, public_visible = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ?`,
       ).bind(name, duration, priceCents, modality, active, publicVisible, now, id, user.id).run();
+      if ((update.meta?.changes ?? 0) !== 1) return errorResponse("Serviço não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "service";
       auditTargetId = id;
       auditMetadata = { modality, status: active ? "active" : "inactive" };
@@ -433,7 +471,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetId = id;
     } else if (action === "delete_rule") {
       const id = cleanText(body.id, 80);
-      await env.DB.prepare(`DELETE FROM booking_availability_rules WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if (!id) return errorResponse("Regra inválida.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(`DELETE FROM booking_availability_rules WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Regra não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "availability_rule";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
@@ -450,7 +490,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetId = id;
     } else if (action === "delete_block") {
       const id = cleanText(body.id, 80);
-      await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if (!id) return errorResponse("Bloqueio inválido.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Bloqueio não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "availability_block";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
@@ -499,11 +541,31 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const completedAt = status === "completed" ? now : current.completed_at;
       const cancelledAt = status === "cancelled" ? now : current.cancelled_at;
       const updateStatus = env.DB.prepare(
-        `UPDATE appointments SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
-          WHERE id = ? AND provider_user_id = ?`,
-      ).bind(status, checkedInAt, completedAt, cancelledAt, now, id, user.id);
+        `UPDATE appointments
+            SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ? AND status = ?
+            AND starts_at_local = ? AND ends_at_local = ?`,
+      ).bind(
+        status,
+        checkedInAt,
+        completedAt,
+        cancelledAt,
+        now,
+        id,
+        user.id,
+        current.status,
+        current.starts_at_local,
+        current.ends_at_local,
+      );
       const releasesSchedule = ["cancelled", "no_show", "completed"].includes(status);
-      await env.DB.batch(releasesSchedule ? [updateStatus, releaseSlotLocksStatement(env.DB, id)] : [updateStatus]);
+      const transitionResults = await env.DB.batch(
+        releasesSchedule
+          ? [updateStatus, releaseSlotLocksAfterSuccessfulMutationStatement(env.DB, id)]
+          : [updateStatus],
+      );
+      if ((transitionResults[0]?.meta?.changes ?? 0) !== 1) {
+        return errorResponse("A consulta mudou durante a atualização. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
+      }
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,
@@ -519,10 +581,11 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = parsePaymentStatus(body.paymentStatus);
       if (!id || !status) return errorResponse("Pagamento inválido.", "VALIDATION_ERROR", 400);
-      await env.DB.prepare(
+      const result = await env.DB.prepare(
         `UPDATE appointments SET amount_cents = COALESCE(?, amount_cents), payment_status = ?, payment_method = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ?`,
       ).bind(moneyCents(body.amountCents), status, cleanOptionalText(body.paymentMethod, 60), now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "appointment_payment";
       auditTargetId = id;
       auditMetadata = { paymentStatus: status };
@@ -530,22 +593,26 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 20);
       if (!id || !["waiting", "offered", "booked", "closed"].includes(status)) return errorResponse("Status da lista de espera inválido.", "VALIDATION_ERROR", 400);
-      await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Entrada da lista de espera não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "waitlist";
       auditTargetId = id;
       auditMetadata = { status };
     } else if (action === "review_moderate") {
       const id = cleanText(body.id, 80);
+      if (!id) return errorResponse("Avaliação inválida.", "VALIDATION_ERROR", 400);
       const approved = body.approved === true ? 1 : 0;
-      await env.DB.prepare(`UPDATE appointment_reviews SET approved = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(approved, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE appointment_reviews SET approved = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(approved, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Avaliação não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "review";
       auditTargetId = id;
       auditMetadata = { status: approved ? "approved" : "hidden" };
     } else if (action === "notification_status") {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 30);
-      if (!["manual_sent", "failed"].includes(status)) return errorResponse("Status de notificação inválido.", "VALIDATION_ERROR", 400);
-      await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      if (!id || !["manual_sent", "failed"].includes(status)) return errorResponse("Status de notificação inválido.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Notificação não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "notification";
       auditTargetId = id;
       auditMetadata = { status };

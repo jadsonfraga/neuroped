@@ -175,8 +175,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   if (["POST", "PATCH", "PUT"].includes(request.method)) {
-    const ct = request.headers.get("Content-Type") ?? "";
-    if (!ct.includes("application/json")) {
+    const ct = (request.headers.get("Content-Type") ?? "").toLowerCase();
+    const bodyPath = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+    const multipartAllowed =
+      request.method === "POST" &&
+      bodyPath === "/api/integrations/boaconsulta/import" &&
+      ct.includes("multipart/form-data");
+    if (!ct.includes("application/json") && !multipartAllowed) {
       return new Response(JSON.stringify({ error: "Content-Type deve ser application/json", code: "INVALID_CONTENT_TYPE" }), {
         status: 415,
         headers: { "Content-Type": "application/json", ...corsHeaders, ...SECURITY_HEADERS },

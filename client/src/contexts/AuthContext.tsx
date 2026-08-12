@@ -98,8 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout(): Promise<void> {
     setUser(null);
-    await logoutRequest();
-    await clearSessionScopedClientState();
+    try {
+      await logoutRequest();
+    } finally {
+      await clearSessionScopedClientState();
+    }
   }
 
   async function refreshUser(): Promise<void> {

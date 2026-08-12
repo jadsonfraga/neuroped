@@ -218,7 +218,7 @@ export async function linkOperationsOperator(
 
   const now = new Date().toISOString();
   if (existing) {
-    await db
+    const update = await db
       .prepare(
         `UPDATE booking_staff_links
             SET active = 1, created_by_user_id = ?, updated_at = ?
@@ -226,7 +226,11 @@ export async function linkOperationsOperator(
       )
       .bind(principal.actorUserId, now, principal.providerUserId, staff.id)
       .run();
-    return { ok: true, staffUserId: staff.id };
+    if ((update.meta?.changes ?? 0) === 1) {
+      return { ok: true, staffUserId: staff.id };
+    }
+    // A linha pode ter sido removida depois do SELECT; nesse caso seguimos para
+    // o INSERT protegido pela constraint/checagem de vencedor abaixo.
   }
 
   try {
