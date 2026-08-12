@@ -17,7 +17,7 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../storage.js";
 import { requireAuth, requireProfessional } from "../middleware/auth.js";
@@ -318,17 +318,22 @@ export function registerFileRoutes(app: Express): void {
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
-    const baseQuery = patientId
-      ? db.select().from(filesTable).where(and(eq(filesTable.ownerUserId, req.user!.id), eq(filesTable.patientId, patientId)))
-      : db.select().from(filesTable).where(eq(filesTable.ownerUserId, req.user!.id));
+    // Filtro de deletados na query (não pós-limit) para páginas completas.
+    // Builders drizzle são mutáveis: rows e count precisam de builders separados.
+    const whereClause = patientId
+      ? and(
+          eq(filesTable.ownerUserId, req.user!.id),
+          eq(filesTable.patientId, patientId),
+          eq(filesTable.isDeleted, false),
+        )
+      : and(eq(filesTable.ownerUserId, req.user!.id), eq(filesTable.isDeleted, false));
 
-    const rows = baseQuery.limit(limit).offset(offset).all();
-    const countResult = baseQuery.all();
-    const total = countResult.filter((r: any) => !r.isDeleted).length;
+    const rows = db.select().from(filesTable).where(whereClause).limit(limit).offset(offset).all();
+    const countResult = db.select({ count: count() }).from(filesTable).where(whereClause).all();
+    const total = Number(countResult[0]?.count) || 0;
 
     return res.json({
       data: rows
-        .filter((r: any) => !r.isDeleted)
         .map((r: any) => ({
           id: r.id,
           filename: r.filename,
