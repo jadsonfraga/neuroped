@@ -122,7 +122,7 @@ export default function SnapPage() {
                     {i + 1}
                   </Badge>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm text-foreground leading-relaxed">
+                    <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">
                       {q}
                     </p>
                     <p className="text-sm font-medium text-primary">
@@ -235,7 +235,7 @@ export default function SnapPage() {
                   >
                     {i + 1}
                   </Badge>
-                  <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                  <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">{q}</p>
                 </div>
                 {pending && (
                   <p
@@ -250,10 +250,10 @@ export default function SnapPage() {
                   onValueChange={(val) =>
                     setAnswers({ ...answers, [i]: parseInt(val) })
                   }
-                  className="flex flex-wrap gap-2"
+                  className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
                 >
                   {snapLabels.map((label, j) => (
-                    <div key={j} className="flex items-center">
+                    <div key={j} className="flex items-stretch">
                       <RadioGroupItem
                         value={j.toString()}
                         id={`q${i}-o${j}`}
@@ -261,7 +261,7 @@ export default function SnapPage() {
                       />
                       <Label
                         htmlFor={`q${i}-o${j}`}
-                        className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                        className={`inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] leading-snug transition-all duration-200 active:scale-[0.98] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background sm:w-auto sm:rounded-full sm:text-sm ${
                           answers[i] === j
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-card text-foreground border-border hover:bg-muted"
@@ -311,7 +311,7 @@ export default function SnapPage() {
                   >
                     {i + 1}
                   </Badge>
-                  <p className="text-sm text-foreground leading-relaxed">{q}</p>
+                  <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">{q}</p>
                 </div>
                 {pending && (
                   <p
@@ -326,10 +326,10 @@ export default function SnapPage() {
                   onValueChange={(val) =>
                     setAnswers({ ...answers, [i]: parseInt(val) })
                   }
-                  className="flex flex-wrap gap-2"
+                  className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
                 >
                   {snapLabels.map((label, j) => (
-                    <div key={j} className="flex items-center">
+                    <div key={j} className="flex items-stretch">
                       <RadioGroupItem
                         value={j.toString()}
                         id={`q${i}-o${j}`}
@@ -337,7 +337,7 @@ export default function SnapPage() {
                       />
                       <Label
                         htmlFor={`q${i}-o${j}`}
-                        className={`inline-flex min-h-[40px] cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                        className={`inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] leading-snug transition-all duration-200 active:scale-[0.98] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background sm:w-auto sm:rounded-full sm:text-sm ${
                           answers[i] === j
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-card text-foreground border-border hover:bg-muted"
