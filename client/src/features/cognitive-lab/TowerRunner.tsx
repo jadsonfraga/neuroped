@@ -475,7 +475,7 @@ export function TowerRunner() {
                 </div>
                 {phase === "feedback" && (
                   <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/70">
-                    <span className="celebrate text-3xl font-black text-emerald-500">
+                    <span className="celebrate text-3xl font-bold text-emerald-500">
                       {solvedNow ? "🎉 Resolvido!" : ""}
                     </span>
                   </div>

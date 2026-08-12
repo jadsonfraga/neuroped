@@ -295,7 +295,7 @@ export function VisualSearchRunner() {
 
               {phase === "fixation" && (
                 <div className="flex min-h-64 items-center justify-center rounded-2xl border border-border bg-muted/30">
-                  <span className="text-6xl font-black text-muted-foreground" aria-hidden="true">
+                  <span className="text-6xl font-bold text-muted-foreground" aria-hidden="true">
                     +
                   </span>
                 </div>

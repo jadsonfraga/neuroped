@@ -88,7 +88,7 @@ export function ServiceWorkerManager() {
         <RefreshCw className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-foreground">Nova versão disponível</p>
+        <p className="text-sm font-semibold text-foreground">Nova versão disponível</p>
         <p className="text-xs text-muted-foreground">Atualize para usar as correções mais recentes.</p>
       </div>
       <Button size="sm" onClick={() => window.location.reload()} className="shrink-0">Atualizar</Button>

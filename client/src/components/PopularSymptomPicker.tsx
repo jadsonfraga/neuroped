@@ -104,7 +104,7 @@ export function PopularSymptomPicker({
         <div className="min-w-0 flex-1">
           <h3
             id="popular-symptoms-title"
-            className="text-sm font-black leading-tight text-foreground"
+            className="text-sm font-semibold leading-tight text-foreground"
           >
             Sintomas que você percebe
           </h3>

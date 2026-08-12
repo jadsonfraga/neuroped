@@ -25,7 +25,7 @@ export function PageHero({
   children,
 }: PageHeroProps) {
   return (
-    <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-primary/[0.07] via-card/70 to-chart-2/[0.05] p-5 shadow-sm backdrop-blur sm:p-6">
+    <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/[0.07] via-card/70 to-chart-2/[0.05] p-5 shadow-sm backdrop-blur sm:p-6">
       <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-chart-2/15 to-transparent blur-3xl" />
       <div className="relative flex items-start gap-3">

@@ -16,7 +16,7 @@ export default function SobreNeuropedPage() {
             Sobre o NeuroPed
           </span>
         </div>
-        <h1 className="text-2xl font-black">Natureza da ferramenta</h1>
+        <h1 className="text-2xl font-bold">Natureza da ferramenta</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           O que o NeuroPed é — e o que ele <strong>não</strong> é. Em linguagem clara,
           para profissionais e famílias.

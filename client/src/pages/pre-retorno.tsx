@@ -198,14 +198,14 @@ export default function PreRetornoPage() {
 
   return (
     <div className="page-enter space-y-5 pb-8">
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
+      <header className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
             <ClipboardCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">pré-retorno · família</Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Pré-retorno familiar</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Pré-retorno familiar</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Registro simples do que mudou desde a última consulta, pronto para recepção e médico.</p>
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function PreRetornoPage() {
         </CardContent></Card>
 
         <Card><CardContent className="space-y-3 p-4">
-          <p className="text-sm font-black text-foreground">Resumo para o médico</p>
+          <p className="text-sm font-semibold text-foreground">Resumo para o médico</p>
           <pre className="max-h-[680px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{resumo}</pre>
         </CardContent></Card>
       </section>

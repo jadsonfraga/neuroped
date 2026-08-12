@@ -45,7 +45,7 @@ export default function AcessibilidadePage() {
           <Accessibility className="w-6 h-6 text-primary" />
           <Badge variant="secondary">WCAG 2.2 nível AA</Badge>
         </div>
-        <h1 className="text-2xl font-black">Declaração de Acessibilidade</h1>
+        <h1 className="text-2xl font-bold">Declaração de Acessibilidade</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           NeuroPed — Aplicativo Clínico de Neuropediatria. Compromisso de tornar o app acessível
           a profissionais, pacientes e familiares com deficiência ou limitação funcional.

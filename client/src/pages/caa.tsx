@@ -300,7 +300,7 @@ export default function CaaPage() {
             {supported ? "Voz PT-BR" : "Voz indisponível"}
           </span>
         </div>
-        <h1 className="text-2xl font-black flex items-center gap-2">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
           <MessageCircle className="w-7 h-7 text-primary" /> Vou Falar!
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">

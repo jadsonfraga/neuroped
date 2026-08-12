@@ -223,7 +223,7 @@ function DigitSpan({ onComplete, onReset }: DirectTestCallbacks) {
           className="flex min-h-[96px] items-center justify-center rounded-2xl border border-border bg-muted/40"
           aria-live="polite"
         >
-          <span className="text-6xl font-black tabular-nums text-foreground">
+          <span className="text-6xl font-bold tabular-nums text-foreground">
             {seq[shownIdx] ?? ""}
           </span>
         </div>
@@ -231,7 +231,7 @@ function DigitSpan({ onComplete, onReset }: DirectTestCallbacks) {
 
       {phase === "input" && (
         <div className="space-y-3">
-          <div className="flex min-h-[48px] flex-wrap items-center justify-center gap-1 rounded-2xl border border-border bg-background p-2 text-2xl font-black tabular-nums">
+          <div className="flex min-h-[48px] flex-wrap items-center justify-center gap-1 rounded-2xl border border-border bg-background p-2 text-2xl font-bold tabular-nums">
             {entry.length ? (
               entry.join(" ")
             ) : (
@@ -1015,7 +1015,7 @@ export default function TestesDiretosPage() {
 
   return (
     <div className="space-y-5 pb-8">
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm">
+      <header className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
             <Baby className="h-5 w-5" />
@@ -1024,7 +1024,7 @@ export default function TestesDiretosPage() {
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">
               testes diretos com a criança · pré-consulta
             </Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Testes Diretos
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -1073,7 +1073,7 @@ export default function TestesDiretosPage() {
           <div>
             <h2
               id="bateria-unica-title"
-              className="text-lg font-black text-foreground"
+              className="text-lg font-bold text-foreground"
             >
               Bateria única por faixa etária
             </h2>
@@ -1104,7 +1104,7 @@ export default function TestesDiretosPage() {
                 aria-pressed={isActive}
                 className={`min-h-[56px] rounded-2xl border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isActive ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}
               >
-                <span className="block text-sm font-black text-foreground">
+                <span className="block text-sm font-semibold text-foreground">
                   {band.label}
                 </span>
                 <span className="block text-[11px] text-muted-foreground">
@@ -1141,7 +1141,7 @@ export default function TestesDiretosPage() {
                       </Badge>
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-foreground">
+                      <h3 className="text-sm font-semibold text-foreground">
                         {test.label}
                       </h3>
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -1251,7 +1251,7 @@ export default function TestesDiretosPage() {
         <Card className="border-border/70 bg-muted/30">
           <CardContent className="space-y-3 p-5">
             <div>
-              <h2 className="text-sm font-black text-foreground">
+              <h2 className="text-sm font-semibold text-foreground">
                 Entrega integral da sessão
               </h2>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">

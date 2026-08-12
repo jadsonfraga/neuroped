@@ -50,7 +50,7 @@ export default function PortalNovidadesPage() {
               </Badge>
             )}
           </div>
-          <h1 className="text-2xl font-black leading-tight">{open.title}</h1>
+          <h1 className="text-2xl font-bold leading-tight">{open.title}</h1>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>{open.date}</span>
             <span className="inline-flex items-center gap-1">
@@ -78,7 +78,7 @@ export default function PortalNovidadesPage() {
           <Newspaper className="w-6 h-6 text-primary" />
           <Badge variant="secondary">Portal das Famílias</Badge>
         </div>
-        <h1 className="text-2xl font-black">Saúde &amp; Desenvolvimento</h1>
+        <h1 className="text-2xl font-bold">Saúde &amp; Desenvolvimento</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Biblioteca ampliada com {novidadesConteudoStats.artigosTotal} artigos
           educativos em {novidadesConteudoStats.categoriasTotal - 1} trilhas:

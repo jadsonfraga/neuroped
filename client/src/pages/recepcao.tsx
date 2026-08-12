@@ -69,14 +69,14 @@ export default function RecepcaoPage() {
 
   return (
     <div className="page-enter space-y-5 pb-8">
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
+      <header className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
             <Users className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">recepção · fluxo operacional</Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Painel da recepção</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Painel da recepção</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               Inicie pré-consultas, acompanhe status e entregue um resumo objetivo ao médico sem acessar áreas sensíveis.
             </p>
@@ -85,9 +85,9 @@ export default function RecepcaoPage() {
       </header>
 
       <section className="grid gap-3 md:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">total</p><p className="text-2xl font-black text-foreground">{items.length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-black text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-black text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">total</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
         <Card><CardContent className="flex h-full flex-col gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Pré-consulta</Link></Button><Button asChild variant="outline" className="w-full gap-2"><Link href="/pre-retorno"><ClipboardCheck className="h-4 w-4" />Pré-retorno</Link></Button></CardContent></Card>
       </section>
 
@@ -109,7 +109,7 @@ export default function RecepcaoPage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-black text-foreground">Pré-consultas salvas</p>
+              <p className="text-sm font-semibold text-foreground">Pré-consultas salvas</p>
               <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
             </div>
             {isLoading ? (
@@ -126,7 +126,7 @@ export default function RecepcaoPage() {
                   <button key={record.id} type="button" onClick={() => setSelected(record)} className={`w-full rounded-2xl border p-3 text-left transition ${selected?.id === record.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-black text-foreground">{record.paciente || "Paciente sem nome"}</p>
+                        <p className="text-sm font-semibold text-foreground">{record.paciente || "Paciente sem nome"}</p>
                         <p className="text-xs text-muted-foreground">{idade(record)} · {record.queixa} · {record.respondente}</p>
                       </div>
                       <Badge variant="outline">{statusLabels[record.status]}</Badge>
@@ -148,7 +148,7 @@ export default function RecepcaoPage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm font-black text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
                 <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>

@@ -233,15 +233,15 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
               {variant === "digit" ? (
                 <div className="flex min-h-36 items-center justify-center rounded-2xl border border-border bg-muted/30">
                   {phase === "showing" ? (
-                    <span className="text-8xl font-black tabular-nums" aria-live="polite">
+                    <span className="text-8xl font-bold tabular-nums" aria-live="polite">
                       {showIdx >= 0 ? r.sequence[showIdx] : ""}
                     </span>
                   ) : phase === "feedback" ? (
-                    <span className={`text-3xl font-black ${feedbackOk ? "text-emerald-500" : "text-red-500"} celebrate`}>
+                    <span className={`text-3xl font-bold ${feedbackOk ? "text-emerald-500" : "text-red-500"} celebrate`}>
                       {feedbackOk ? "🎉 Certo!" : "Quase!"}
                     </span>
                   ) : (
-                    <span className="text-4xl font-black tabular-nums tracking-widest" aria-label={`digitado: ${entered.join(" ")}`}>
+                    <span className="text-4xl font-bold tabular-nums tracking-widest" aria-label={`digitado: ${entered.join(" ")}`}>
                       {entered.length ? entered.join(" ") : direction === "backward" ? "…de trás pra frente" : "…digite a sequência"}
                     </span>
                   )}
@@ -272,13 +272,13 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
                         }`}
                         style={{ left: `${p.x}%`, top: `${p.y}%` }}
                       >
-                        {tappedOrder >= 0 && <span className="text-[10px] font-black text-primary-foreground">{tappedOrder + 1}</span>}
+                        {tappedOrder >= 0 && <span className="text-[10px] font-semibold text-primary-foreground">{tappedOrder + 1}</span>}
                       </button>
                     );
                   })}
                   {phase === "feedback" && (
                     <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/70">
-                      <span className={`text-3xl font-black ${feedbackOk ? "text-emerald-500" : "text-red-500"} celebrate`}>
+                      <span className={`text-3xl font-bold ${feedbackOk ? "text-emerald-500" : "text-red-500"} celebrate`}>
                         {feedbackOk ? "🎉 Certo!" : "Quase!"}
                       </span>
                     </div>
@@ -292,7 +292,7 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
                     <Button
                       key={d}
                       variant="secondary"
-                      className={`min-h-12 text-xl font-black ${d === 0 ? "col-start-2" : ""}`}
+                      className={`min-h-12 text-xl font-bold ${d === 0 ? "col-start-2" : ""}`}
                       onPointerDown={() => setEntered((e) => (e.length < r.sequence.length ? [...e, d] : e))}
                     >
                       {d}
@@ -307,7 +307,7 @@ export function SpanTaskRunner({ variant }: { variant: Variant }) {
                     <Delete className="h-4 w-4" />
                   </Button>
                   <Button
-                    className="col-start-3 row-start-4 min-h-12 font-black"
+                    className="col-start-3 row-start-4 min-h-12 font-bold"
                     disabled={entered.length !== r.sequence.length}
                     onPointerDown={() => submit(entered)}
                   >

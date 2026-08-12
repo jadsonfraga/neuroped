@@ -132,26 +132,26 @@ export default function EscalasNeuropsiquiatriaPage() {
 
   return (
     <main className="page-enter space-y-5 pb-10">
-      <section className="rounded-[2rem] border border-border/70 bg-gradient-to-br from-card via-card to-muted/40 p-5 shadow-sm">
+      <section className="rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/40 p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">NeuroPed · catálogo mundial gratuito/sem custo</p>
-            <h1 className="mt-2 text-2xl font-black tracking-tight text-foreground sm:text-3xl">100 escalas de neuropsiquiatria infantil</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">NeuroPed · catálogo mundial gratuito/sem custo</p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">100 escalas de neuropsiquiatria infantil</h1>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Registro operacional para triagem, escolha de instrumento e curadoria clínica. A tela não copia itens protegidos: mostra metadados, idade, respondente, prioridade e política de incorporação.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
-              <div className="text-xl font-black text-foreground">{escalas.length}</div>
+              <div className="text-xl font-bold text-foreground">{escalas.length}</div>
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">total</div>
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900 dark:bg-amber-950/20">
-              <div className="text-xl font-black text-amber-900 dark:text-amber-100">{totalOuro}</div>
+              <div className="text-xl font-bold text-amber-900 dark:text-amber-100">{totalOuro}</div>
               <div className="text-[10px] uppercase tracking-wide text-amber-800 dark:text-amber-200">ouro</div>
             </div>
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
-              <div className="text-xl font-black text-emerald-900 dark:text-emerald-100">{totalEmbed}</div>
+              <div className="text-xl font-bold text-emerald-900 dark:text-emerald-100">{totalEmbed}</div>
               <div className="text-[10px] uppercase tracking-wide text-emerald-800 dark:text-emerald-200">embed</div>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function EscalasNeuropsiquiatriaPage() {
       <section className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">resultado</p>
-          <h2 className="text-lg font-black text-foreground">{filtradas.length} instrumentos encontrados</h2>
+          <h2 className="text-lg font-bold text-foreground">{filtradas.length} instrumentos encontrados</h2>
         </div>
         <button
           type="button"
@@ -227,11 +227,11 @@ export default function EscalasNeuropsiquiatriaPage() {
           <article key={escala.n} className="flex min-h-[220px] flex-col rounded-3xl border border-border/70 bg-card/90 p-4 shadow-sm transition hover:border-primary/40 hover:shadow-md">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">#{String(escala.n).padStart(3, "0")}</p>
-                <h3 className="mt-1 text-base font-black text-foreground">{escala.sigla}</h3>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">#{String(escala.n).padStart(3, "0")}</p>
+                <h3 className="mt-1 text-base font-bold text-foreground">{escala.sigla}</h3>
                 <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{escala.nome}</p>
               </div>
-              <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase ${badgeSelo(escala.selo)}`}>
+              <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase ${badgeSelo(escala.selo)}`}>
                 {escala.selo}
               </span>
             </div>

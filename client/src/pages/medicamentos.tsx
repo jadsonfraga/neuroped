@@ -35,7 +35,7 @@ const medicationHubs = [
 export default function MedicamentosPage() {
   return (
     <div className="page-enter space-y-5 pb-8">
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
+      <header className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
             <Pill className="h-5 w-5" />
@@ -44,7 +44,7 @@ export default function MedicamentosPage() {
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">
               {appMetrics.medicationCount} medicações · {appMetrics.medicationCategoryCount} categorias
             </Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Medicamentos</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Medicamentos</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               Hub clínico para farmacologia, cálculo de dose e monitorização do tratamento no NeuroPed.
             </p>
@@ -63,7 +63,7 @@ export default function MedicamentosPage() {
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-black text-foreground">{item.title}</h2>
+                    <h2 className="text-base font-bold text-foreground">{item.title}</h2>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
                   </div>
                 </div>

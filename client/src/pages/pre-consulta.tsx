@@ -103,14 +103,14 @@ export default function PreConsultaPage() {
 
   return (
     <div className="page-enter space-y-5 pb-8">
-      <header className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
+      <header className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">
             <ClipboardCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">pré-consulta · sem redesign</Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Pré-consulta guiada</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Pré-consulta guiada</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               Fluxo simples para recepção/família antes da consulta. Usa o motor do Filtro Inteligente e mostra apenas as melhores opções.
             </p>
@@ -221,11 +221,11 @@ export default function PreConsultaPage() {
         <div className="space-y-4">
           <Card>
             <CardContent className="space-y-3 p-4">
-              <div className="flex items-center gap-2 text-sm font-black text-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Questionários sugeridos</div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Questionários sugeridos</div>
               {recommendations.map((item) => (
                 <div key={item.label} className="rounded-2xl border border-border/70 bg-muted/40 p-3">
                   <Badge variant="outline" className="mb-2">{item.label}</Badge>
-                  <p className="text-sm font-black text-foreground">{item.scale?.name || "Sem sugestão forte"}</p>
+                  <p className="text-sm font-semibold text-foreground">{item.scale?.name || "Sem sugestão forte"}</p>
                   <p className="line-clamp-2 text-xs text-muted-foreground">{item.scale?.fullName || "Refine idade/queixa/respondente."}</p>
                   <p className="mt-2 text-[11px] text-muted-foreground">{item.reason}</p>
                   {item.scale?.appRoute && <Link href={item.scale.appRoute} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">Abrir questionário <ArrowRight className="h-3 w-3" /></Link>}
@@ -236,7 +236,7 @@ export default function PreConsultaPage() {
 
           <Card>
             <CardContent className="space-y-3 p-4">
-              <p className="text-sm font-black text-foreground">Resumo para o médico</p>
+              <p className="text-sm font-semibold text-foreground">Resumo para o médico</p>
               <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{summary}</pre>
             </CardContent>
           </Card>

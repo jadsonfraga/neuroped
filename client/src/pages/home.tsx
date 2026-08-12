@@ -174,7 +174,7 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.07] via-card/40 to-card/20 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur sm:p-9"
+        className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-primary/[0.07] via-card/40 to-card/20 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur sm:p-9"
       >
         <BrandWatermark className="-right-6 -top-6 h-44 w-44 opacity-60" />
         <div className="relative grid gap-7 lg:grid-cols-[1.45fr_0.55fr] lg:items-center">
