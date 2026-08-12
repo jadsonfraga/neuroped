@@ -73,7 +73,11 @@ assert.doesNotMatch(serverCrypto, /Buffer\.from\(raw, "base64"\)/);
 assert.match(serverCrypto, /nunca reinterpretar um secret existente/i);
 
 // AuthContext: o contrato importante é a limpeza local em qualquer resultado do logout remoto.
-assert.match(authContext, /async function logout\(\)(?:: Promise<void>)? \{/);
+// Aceita declaração clássica ou arrow memoizada via useCallback.
+assert.match(
+  authContext,
+  /(?:async function logout\(\)(?:: Promise<void>)? \{|const logout = useCallback\(async \(\)(?:: Promise<void>)? =>)/,
+);
 assert.match(authContext, /await logoutRequest\(\)/);
 assert.match(authContext, /finally\s*\{\s*await clearSessionScopedClientState\(\)/s);
 

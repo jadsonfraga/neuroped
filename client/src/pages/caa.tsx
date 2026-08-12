@@ -252,7 +252,8 @@ export default function CaaPage() {
     setStorageStatus("saving");
     const operation = storageQueue.current
       .catch(() => undefined)
-      .then(() => secureSet(SECURE_CAA_KEY, snapshot));
+      .then(() => secureSet(SECURE_CAA_KEY, snapshot))
+      .catch(() => false);
     storageQueue.current = operation;
     void operation.then((stored) => {
       if (revision === storageRevision.current) {
