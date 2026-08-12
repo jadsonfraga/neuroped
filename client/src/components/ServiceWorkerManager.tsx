@@ -8,8 +8,69 @@ interface UpdateInfo {
   version: string;
 }
 
+/**
+ * Libera apenas travas de scroll ÓRFÃS.
+ *
+ * Radix/react-remove-scroll pode bloquear o body por atributo
+ * `data-scroll-locked` + CSS injetado, sem depender de body.style.overflow.
+ * O shell já limpava overflow inline, mas isso não alcançava essa segunda forma
+ * de lock — sintoma observado em tablet: a página fica visualmente normal,
+ * porém swipe/touch não move absolutamente nada.
+ *
+ * Nunca interfere enquanto houver um drawer/modal legítimo aberto.
+ */
+function releaseOrphanedScrollLock() {
+  if (typeof document === "undefined") return;
+
+  const body = document.body;
+  const legitimateOverlayOpen =
+    body.classList.contains("np-mobile-drawer-open") ||
+    document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
+    document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
+    document.querySelector('[data-vaul-drawer][data-state="open"]') !== null;
+
+  if (legitimateOverlayOpen) return;
+
+  const hasOrphanedLock =
+    body.style.overflow === "hidden" ||
+    body.style.overflowY === "hidden" ||
+    body.style.pointerEvents === "none" ||
+    body.hasAttribute("data-scroll-locked");
+
+  if (!hasOrphanedLock) return;
+
+  body.style.removeProperty("overflow");
+  body.style.removeProperty("overflow-y");
+  body.style.removeProperty("pointer-events");
+  body.removeAttribute("data-scroll-locked");
+}
+
 export function ServiceWorkerManager() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
+
+  useEffect(() => {
+    // P0 de produção: autocura uma trava órfã ao voltar para a aba/PWA e,
+    // principalmente, no primeiro novo gesto do usuário. O listener em capture
+    // roda antes do conteúdo e não exige troca de rota nem recarregamento.
+    const recoverScroll = () => releaseOrphanedScrollLock();
+    const recoverWhenVisible = () => {
+      if (document.visibilityState === "visible") recoverScroll();
+    };
+
+    const initialRecovery = globalThis.setTimeout(recoverScroll, 0);
+    window.addEventListener("pageshow", recoverScroll);
+    window.addEventListener("pointerdown", recoverScroll, { capture: true });
+    window.addEventListener("touchstart", recoverScroll, { capture: true, passive: true });
+    document.addEventListener("visibilitychange", recoverWhenVisible);
+
+    return () => {
+      globalThis.clearTimeout(initialRecovery);
+      window.removeEventListener("pageshow", recoverScroll);
+      window.removeEventListener("pointerdown", recoverScroll, { capture: true });
+      window.removeEventListener("touchstart", recoverScroll, { capture: true });
+      document.removeEventListener("visibilitychange", recoverWhenVisible);
+    };
+  }, []);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
