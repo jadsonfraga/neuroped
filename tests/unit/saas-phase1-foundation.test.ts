@@ -6,6 +6,7 @@ import {
   canReadClinicClinicalData,
   canWriteClinicClinicalData,
   isClinicMembershipRole,
+  isValidClinicSlug,
   normalizeClinicSlug,
 } from "../../shared/tenant";
 import {
@@ -28,6 +29,8 @@ assert.equal(canWriteClinicClinicalData("financial"), false, "financeiro não es
 assert.equal(canAccessClinicFinance("financial"), true);
 assert.equal(canAccessClinicFinance("professional"), false);
 assert.equal(normalizeClinicSlug("Clínica Neuro Desenvolvimento"), "clinica-neuro-desenvolvimento");
+assert.equal(isValidClinicSlug("ai"), true, "slug tenant de dois caracteres não pode repetir o bug antigo de quantificador");
+assert.equal(isValidClinicSlug("a-"), false);
 
 const dataKeyV1 = "phase1-data-key-v1-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const dataKeyV2 = "phase1-data-key-v2-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -133,6 +136,8 @@ assert.doesNotMatch(
   /user\.role\s*===\s*["']admin["']\s*\?\s*true/,
   "não pode reaparecer bypass global de tenant",
 );
+assert.match(tenantCore, /export function prepareSaasAudit/);
+assert.match(tenantCore, /SELECT \?, \?, \?, \?, \?, \?, \? WHERE changes\(\) = 1/);
 
 const tenantCrypto = readFileSync(
   new URL("../../functions/api/tenant/_crypto.ts", import.meta.url),
@@ -151,6 +156,10 @@ assert.match(livePatientsApi, /CLINICAL_LIVE_DISABLED/);
 assert.match(livePatientsApi, /CLINICAL_CRYPTO_NOT_CONFIGURED/);
 assert.match(livePatientsApi, /getClinicMembership/);
 assert.match(livePatientsApi, /profile_encrypted/);
+assert.match(livePatientsApi, /db\.batch\(/);
+assert.match(livePatientsApi, /prepareSaasAudit\(/);
+assert.match(livePatientsApi, /EXTERNAL_REFERENCE_CONFLICT/);
+assert.doesNotMatch(livePatientsApi, /await writeSaasAudit/);
 assert.doesNotMatch(livePatientsApi, /INSERT INTO patients_demo/);
 
 const liveEventsApi = readFileSync(
@@ -162,7 +171,13 @@ assert.match(liveEventsApi, /patientBelongsToClinic/);
 assert.match(liveEventsApi, /payload_encrypted/);
 assert.match(liveEventsApi, /provenanceSource/);
 assert.match(liveEventsApi, /supersedesEventId/);
+assert.match(liveEventsApi, /STALE_SUPERSESSION/);
+assert.match(liveEventsApi, /SET status = 'corrected'/);
+assert.match(liveEventsApi, /WHERE changes\(\) = 1/);
+assert.match(liveEventsApi, /prepareSaasAudit\(db, auditParams, true\)/);
+assert.match(liveEventsApi, /validIsoTimestamp/);
 assert.match(liveEventsApi, /duplicate: true/);
+assert.doesNotMatch(liveEventsApi, /await writeSaasAudit/);
 assert.doesNotMatch(liveEventsApi, /clinical_events_demo/);
 assert.doesNotMatch(liveEventsApi, /patients_demo/);
 
@@ -173,5 +188,16 @@ const membersApi = readFileSync(
 assert.match(membersApi, /LAST_OWNER_PROTECTED/);
 assert.match(membersApi, /membershipCanManage/);
 assert.match(membersApi, /Somente owner pode conceder papel owner/);
+assert.match(membersApi, /other\.user_id <> clinic_memberships\.user_id/);
+assert.match(membersApi, /prepareSaasAudit\(/);
+assert.doesNotMatch(membersApi, /SELECT COUNT\(\*\) AS total/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit/);
+
+const tenantsApi = readFileSync(
+  new URL("../../functions/api/tenants/index.ts", import.meta.url),
+  "utf8",
+);
+assert.match(tenantsApi, /isValidTimeZone/);
+assert.match(tenantsApi, /Timezone IANA inválido/);
 
 console.log("saas phase1 foundation tests ok");
