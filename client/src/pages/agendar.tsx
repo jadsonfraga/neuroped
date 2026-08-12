@@ -28,6 +28,25 @@ function todayLocal(): string {
   return local.toISOString().slice(0, 10);
 }
 
+function dateInTimeZone(timeZone: string, date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+    const read = (type: "year" | "month" | "day") =>
+      parts.find((part) => part.type === type)?.value ?? "";
+    const year = read("year");
+    const month = read("month");
+    const day = read("day");
+    return year && month && day ? `${year}-${month}-${day}` : todayLocal();
+  } catch {
+    return todayLocal();
+  }
+}
+
 function displayLocal(value: string): string {
   const [date, time] = value.split("T");
   if (!date || !time) return value;
@@ -68,6 +87,9 @@ export default function AgendarPage() {
         if (!active) return;
         setProfile(data);
         setServiceId(data.services[0]?.id ?? "");
+        // A agenda pertence ao fuso do profissional, não ao dispositivo da família.
+        // Isso evita liberar/impedir a data errada perto da meia-noite em outro fuso.
+        setDate(dateInTimeZone(data.timezone));
       } catch {
         if (active) setError("O perfil de agendamento não está disponível agora.");
       } finally {
@@ -83,6 +105,7 @@ export default function AgendarPage() {
     if (!profile?.reviews.length) return null;
     return profile.reviews.reduce((sum, item) => sum + item.rating, 0) / profile.reviews.length;
   }, [profile]);
+  const providerToday = profile ? dateInTimeZone(profile.timezone) : todayLocal();
 
   async function loadSlots() {
     if (!providerSlug || !serviceId || !date) return;
@@ -221,7 +244,7 @@ export default function AgendarPage() {
       {!profile.bookingEnabled ? (
         <Card><CardContent className="p-6"><h2 className="font-bold">Agendamento online ainda não está ativo</h2><p className="mt-2 text-sm text-muted-foreground">O perfil pode ser consultado, mas nenhum horário é oferecido enquanto a clínica não habilitar a agenda.</p></CardContent></Card>
       ) : (
-        <Card><CardContent className="space-y-5 p-5 sm:p-6"><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="public-service">Serviço</Label><select id="public-service" value={serviceId} onChange={(e) => { setServiceId(e.target.value); setSlots([]); setSlot(null); }} className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm">{profile.services.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.durationMinutes} min</option>)}</select></div><div className="space-y-1.5"><Label htmlFor="public-date">Data</Label><Input id="public-date" type="date" min={todayLocal()} value={date} onChange={(e) => { setDate(e.target.value); setSlots([]); setSlot(null); }} /></div></div>{selectedService && <div className="rounded-2xl border bg-muted/30 p-4 text-sm"><div className="flex flex-wrap items-center gap-3"><span className="flex items-center gap-1.5"><Clock3 className="h-4 w-4 text-primary" />{selectedService.durationMinutes} min</span><span>{selectedService.modality === "remote" ? "Atendimento remoto" : "Atendimento presencial"}</span><strong>{formatMoneyBRL(selectedService.priceCents)}</strong></div></div>}<Button onClick={loadSlots} disabled={busy || !serviceId || !date} className="gap-2"><CalendarClock className="h-4 w-4" />Consultar horários</Button>{slots.length > 0 && <div><Label>Horários disponíveis</Label><div className="mt-2 flex flex-wrap gap-2">{slots.map((item) => <button type="button" key={item.startsAtLocal} onClick={() => setSlot(item)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${slot?.startsAtLocal === item.startsAtLocal ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary/40"}`}>{item.startsAtLocal.slice(11)}</button>)}</div></div>}{slots.length === 0 && !busy && <div className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">Nenhum horário carregado para esta data. Consulte os horários ou use a lista de espera.</div>}
+        <Card><CardContent className="space-y-5 p-5 sm:p-6"><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="public-service">Serviço</Label><select id="public-service" value={serviceId} onChange={(e) => { setServiceId(e.target.value); setSlots([]); setSlot(null); }} className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm">{profile.services.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.durationMinutes} min</option>)}</select></div><div className="space-y-1.5"><Label htmlFor="public-date">Data</Label><Input id="public-date" type="date" min={providerToday} value={date} onChange={(e) => { setDate(e.target.value); setSlots([]); setSlot(null); }} /></div></div>{selectedService && <div className="rounded-2xl border bg-muted/30 p-4 text-sm"><div className="flex flex-wrap items-center gap-3"><span className="flex items-center gap-1.5"><Clock3 className="h-4 w-4 text-primary" />{selectedService.durationMinutes} min</span><span>{selectedService.modality === "remote" ? "Atendimento remoto" : "Atendimento presencial"}</span><strong>{formatMoneyBRL(selectedService.priceCents)}</strong></div></div>}<Button onClick={loadSlots} disabled={busy || !serviceId || !date} className="gap-2"><CalendarClock className="h-4 w-4" />Consultar horários</Button>{slots.length > 0 && <div><Label>Horários disponíveis</Label><div className="mt-2 flex flex-wrap gap-2">{slots.map((item) => <button type="button" key={item.startsAtLocal} onClick={() => setSlot(item)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${slot?.startsAtLocal === item.startsAtLocal ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:border-primary/40"}`}>{item.startsAtLocal.slice(11)}</button>)}</div></div>}{slots.length === 0 && !busy && <div className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">Nenhum horário carregado para esta data. Consulte os horários ou use a lista de espera.</div>}
 
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Nome da criança"><Input value={booking.patientName} onChange={(e) => setBooking((p) => ({ ...p, patientName: e.target.value }))} autoComplete="off" /></Field><Field label="Responsável"><Input value={booking.guardianName} onChange={(e) => setBooking((p) => ({ ...p, guardianName: e.target.value }))} autoComplete="name" /></Field><Field label="Telefone"><Input value={booking.guardianPhone} onChange={(e) => setBooking((p) => ({ ...p, guardianPhone: e.target.value }))} inputMode="tel" autoComplete="tel" /></Field><Field label="E-mail"><Input value={booking.guardianEmail} onChange={(e) => setBooking((p) => ({ ...p, guardianEmail: e.target.value }))} type="email" autoComplete="email" /></Field></div>
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border p-4 text-sm"><input type="checkbox" checked={booking.privacy} onChange={(e) => setBooking((p) => ({ ...p, privacy: e.target.checked }))} className="mt-1 h-4 w-4" /><span><strong>Aviso de privacidade do agendamento.</strong><span className="mt-1 block text-xs leading-relaxed text-muted-foreground">Concordo com o uso destes dados mínimos para solicitar, confirmar, remarcar ou cancelar a consulta. Não informe diagnóstico, medicação ou detalhes clínicos nesta etapa.</span></span></label>

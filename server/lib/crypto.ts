@@ -49,6 +49,18 @@ function getMasterKey(): Buffer {
       "NEUROPED_MASTER_KEY muito curta. Minimo 32 caracteres aleatorios.",
     );
   }
+
+  /**
+   * Compatibilidade criptografica:
+   *
+   * O secret e normalmente GERADO como texto Base64, mas historicamente o
+   * NeuroPed usa esse valor como segredo opaco UTF-8 na PBKDF2/HMAC. Decodificar
+   * silenciosamente a string como Base64 muda o material da chave e torna
+   * ciphertexts e hashes determinísticos anteriores incompativeis.
+   *
+   * Qualquer mudanca futura de representacao exige envelope/versionamento de
+   * chave e migracao coordenada; nunca reinterpretar um secret existente.
+   */
   return Buffer.from(raw, "utf8");
 }
 

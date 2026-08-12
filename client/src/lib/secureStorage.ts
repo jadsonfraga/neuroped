@@ -249,9 +249,6 @@ export async function secureSet<T>(
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const plaintext = new TextEncoder().encode(JSON.stringify(value));
     if (plaintext.byteLength > MAX_SECURE_PLAINTEXT_BYTES) {
-      console.warn(
-        "[secureStorage] conteúdo excede o limite seguro da sessão.",
-      );
       return false;
     }
     const additionalData = new TextEncoder().encode(NAMESPACE + key);
