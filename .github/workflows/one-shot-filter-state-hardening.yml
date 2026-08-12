@@ -1,0 +1,161 @@
+name: One-shot filter state hardening
+
+on:
+  push:
+    branches:
+      - fix/filter-state-privacy-20260812
+    paths:
+      - ".github/workflows/one-shot-filter-state-hardening.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-filter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/filter-state-privacy-20260812
+          fetch-depth: 0
+
+      - name: Migrar filtro para secureStorage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("client/src/pages/filtro.tsx")
+          text = path.read_text()
+
+          import_anchor = 'import { buildFilterCsv, buildFilterPdf, downloadBlob, type FilterExportRow, type FilterExportMeta } from "@/lib/filterExport";\n'
+          import_line = 'import { loadProtectedFilterState, saveProtectedFilterState } from "@/lib/filterStateStorage";\n'
+          assert import_anchor in text, "import anchor ausente"
+          if import_line not in text:
+              text = text.replace(import_anchor, import_anchor + import_line, 1)
+
+          persisted_start = text.index("// Persistência das seleções do filtro")
+          component_start = text.index("export default function FiltroPage()", persisted_start)
+          persisted_block = text[persisted_start:component_start]
+          assert 'const FILTER_STATE_KEY = "np_filtro_state_v1";' in persisted_block
+          assert "function loadFilterState()" in persisted_block
+          new_persisted = '''// Estado clínico do filtro permanece apenas no cofre cifrado da sessão.
+          // A antiga chave em localStorage é migrada uma única vez pelo helper.
+          interface PersistedFilter {
+            search?: string;
+            queixas?: string[];
+            age?: string | null;
+            respondente?: ScaleEntry["respondente"][number] | null;
+            communication?: "verbal" | "nonverbal" | null;
+            literacy?: "literate" | "preliterate" | null;
+            assessment?: "diagnostic" | "monitoring" | null;
+            signals?: string[];
+            availability?: AvailabilityMode;
+          }
+
+          '''
+          text = text[:persisted_start] + new_persisted + text[component_start:]
+
+          state_start = text.index("  const flashMode = isFlashRoute();")
+          state_end = text.index("  const [result, setResult]", state_start)
+          old_state = text[state_start:state_end]
+          assert "loadFilterState" in old_state
+          assert "availabilityMode" in old_state
+          new_state = '''  const flashMode = isFlashRoute();
+            const [filterStateReady, setFilterStateReady] = useState(flashMode);
+            const [search, setSearch] = useState<string>("");
+            const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
+            const [selectedAge, setSelectedAge] = useState<string | null>(null);
+            const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
+            const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(null);
+            const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
+            const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
+            const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
+            const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>("complete");
+          '''
+          text = text[:state_start] + new_state + text[state_end:]
+
+          marker = "sessionStorage.removeItem(FLASH_STORAGE_KEY)"
+          marker_index = text.index(marker, state_start)
+          effect_start = text.rfind("  useEffect(() => {", state_start, marker_index)
+          assert effect_start > state_start
+          hydrate = '''  useEffect(() => {
+            if (flashMode) return;
+            let active = true;
+            void (async () => {
+              const saved = await loadProtectedFilterState<PersistedFilter>();
+              if (!active) return;
+              if (saved) {
+                if (typeof saved.search === "string") setSearch(saved.search);
+                if (Array.isArray(saved.queixas)) setSelectedQueixas(saved.queixas.filter((item): item is string => typeof item === "string"));
+                if (typeof saved.age === "string" || saved.age === null) setSelectedAge(saved.age ?? null);
+                if (typeof saved.respondente === "string" || saved.respondente === null) {
+                  setSelectedRespondente((saved.respondente ?? null) as ScaleEntry["respondente"][number] | null);
+                }
+                if (saved.communication === "verbal" || saved.communication === "nonverbal" || saved.communication === null) {
+                  setSelectedCommunication(saved.communication ?? null);
+                }
+                if (saved.literacy === "literate" || saved.literacy === "preliterate" || saved.literacy === null) {
+                  setSelectedLiteracy(saved.literacy ?? null);
+                }
+                if (saved.assessment === "diagnostic" || saved.assessment === "monitoring" || saved.assessment === null) {
+                  setSelectedAssessmentType(saved.assessment ?? null);
+                }
+                if (Array.isArray(saved.signals)) setSelectedSignalIds(saved.signals.filter((item): item is string => typeof item === "string"));
+                if (saved.availability === "all" || saved.availability === "complete") setAvailabilityMode(saved.availability);
+              }
+              setFilterStateReady(true);
+            })();
+            return () => { active = false; };
+          }, [flashMode]);
+
+          '''
+          text = text[:effect_start] + hydrate + text[effect_start:]
+
+          save_start = text.index("  // Persiste as seleções sempre que mudam (best-effort).", effect_start)
+          save_end = text.index("  const persistFlashSnapshot = useCallback", save_start)
+          save_block = text[save_start:save_end]
+          assert "localStorage.setItem(FILTER_STATE_KEY" in save_block
+          new_save = '''  // Persiste somente no cofre AES-GCM da sessão. Nunca volta a escrever
+            // contexto clínico em localStorage; o helper apaga a cópia legada após migração.
+            useEffect(() => {
+              if (flashMode || !filterStateReady) return;
+              void saveProtectedFilterState({
+                search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,
+                communication: selectedCommunication, literacy: selectedLiteracy,
+                assessment: selectedAssessmentType, signals: selectedSignalIds,
+                availability: availabilityMode,
+              } satisfies PersistedFilter);
+            }, [flashMode, filterStateReady, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, availabilityMode]);
+
+          '''
+          text = text[:save_start] + new_save + text[save_end:]
+
+          assert 'localStorage.setItem(FILTER_STATE_KEY' not in text
+          assert 'localStorage.getItem(FILTER_STATE_KEY' not in text
+          assert 'const FILTER_STATE_KEY = "np_filtro_state_v1"' not in text
+          assert text.count("loadProtectedFilterState<PersistedFilter>") == 1
+          assert text.count("saveProtectedFilterState({") == 1
+          path.write_text(text)
+          PY
+
+      - name: Validar TypeScript e lint
+        run: |
+          npm ci
+          npm run check
+          npm run lint
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Commitar patch
+        run: |
+          set -euo pipefail
+          git config user.name "neuroped-audit-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add client/src/pages/filtro.tsx
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git commit -m "fix(privacy): cifrar estado clínico do filtro"
+          git push origin HEAD:fix/filter-state-privacy-20260812
