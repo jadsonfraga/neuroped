@@ -42,28 +42,47 @@ function currentDataKey(env: TenantEnv): DataKeyDescriptor {
   return current;
 }
 
-function dataKeyForId(env: TenantEnv, requestedId: string): DataKeyDescriptor {
-  const current = descriptor(env.CLINICAL_DATA_KEY, env.CLINICAL_DATA_KEY_ID, "k1");
-  if (current?.id === requestedId) return current;
-  const previous = descriptor(
+function previousDataKey(env: TenantEnv): DataKeyDescriptor | null {
+  return descriptor(
     env.CLINICAL_DATA_KEY_PREVIOUS,
     env.CLINICAL_DATA_KEY_PREVIOUS_ID,
     "previous",
   );
+}
+
+function dataKeyForId(env: TenantEnv, requestedId: string): DataKeyDescriptor {
+  const current = currentDataKey(env);
+  if (current.id === requestedId) return current;
+  const previous = previousDataKey(env);
   if (previous?.id === requestedId) return previous;
   throw new Error("CLINICAL_KEY_VERSION_UNAVAILABLE");
 }
 
-function requireIndexSecret(env: TenantEnv): Uint8Array {
+function requireIndexSecretText(env: TenantEnv): string {
   const source = env.CLINICAL_INDEX_KEY?.trim();
   if (!source || source.length < 32) throw new Error("CLINICAL_INDEX_KEY_NOT_CONFIGURED");
-  return new TextEncoder().encode(source);
+  return source;
+}
+
+function requireIndexSecret(env: TenantEnv): Uint8Array {
+  return new TextEncoder().encode(requireIndexSecretText(env));
+}
+
+function validateKeyring(env: TenantEnv): void {
+  const current = currentDataKey(env);
+  const previous = previousDataKey(env);
+  const indexSecret = requireIndexSecretText(env);
+  if (previous && previous.id === current.id) {
+    throw new Error("CLINICAL_KEY_ID_COLLISION");
+  }
+  if (indexSecret === current.secret || (previous && indexSecret === previous.secret)) {
+    throw new Error("CLINICAL_KEY_SEPARATION_REQUIRED");
+  }
 }
 
 export function clinicalCryptoReady(env: TenantEnv): boolean {
   try {
-    currentDataKey(env);
-    requireIndexSecret(env);
+    validateKeyring(env);
     return true;
   } catch {
     return false;
