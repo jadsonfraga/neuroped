@@ -210,9 +210,11 @@ const membersApi = readFileSync(
 assert.match(membersApi, /LAST_OWNER_PROTECTED/);
 assert.match(membersApi, /membershipCanManage/);
 assert.match(membersApi, /Somente owner pode conceder papel owner/);
-assert.match(membersApi, /other\.user_id <> clinic_memberships\.user_id/);
+assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
+assert.match(membersApi, /otherActiveOwnerCount/);
+assert.match(membersApi, /isLastOwnerConstraintError/);
+assert.match(membersApi, /auth\.db\.batch\(/);
 assert.match(membersApi, /prepareSaasAudit\(/);
-assert.doesNotMatch(membersApi, /SELECT COUNT\(\*\) AS total/);
 assert.doesNotMatch(membersApi, /await writeSaasAudit/);
 
 const tenantsApi = readFileSync(
