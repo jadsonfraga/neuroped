@@ -166,7 +166,8 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     const snapshot = sanitizeEntries(entries, config.fields);
     const operation = saveQueue.current
       .catch(() => undefined)
-      .then(() => secureSet(secureKey, snapshot));
+      .then(() => secureSet(secureKey, snapshot))
+      .catch(() => false);
     saveQueue.current = operation;
     void operation.then((stored) => setStorageError(stored !== true));
   }, [config.fields, config.id, entries, entriesReady]);
