@@ -88,13 +88,10 @@ function hasInlineNino(path: string): boolean {
 /**
  * Assinatura visual global do NeuroPed.
  *
- * - Toda rota recebe um mascote histórico contextual, escolhido de forma
- *   determinística para não "piscar" entre renders.
- * - O Nino premium aparece como assinatura contemporânea nas rotas que ainda
- *   não o exibem dentro do próprio conteúdo.
- * - Ambos são puramente decorativos: sem foco, clique ou impacto na leitura.
- * - Z-index fica abaixo do header/fluxo clínico/help e os elementos ficam
- *   parcialmente fora das bordas para reduzir competição com o conteúdo.
+ * Nino funciona como personagem principal contemporâneo. O acervo histórico
+ * aparece como cameo secundário no desktop, preservando a memória visual do
+ * produto sem competir com o fluxo clínico. A camada inteira é decorativa,
+ * sem foco, clique ou alteração da semântica das páginas.
  */
 export function PageMascotDecor() {
   const [location] = useLocation();
@@ -105,7 +102,7 @@ export function PageMascotDecor() {
 
   return (
     <div
-      className="pointer-events-none select-none print:hidden"
+      className="np-mascot-layer pointer-events-none select-none print:hidden"
       aria-hidden="true"
       data-testid="page-mascot-decor"
       data-route={pathname}
@@ -113,14 +110,15 @@ export function PageMascotDecor() {
       {showGlobalNino && (
         <motion.div
           key={`nino-${pathname}`}
-          initial={reduceMotion ? false : { opacity: 0, x: 10, y: -4, scale: 0.94 }}
+          initial={reduceMotion ? false : { opacity: 0, x: 14, y: -5, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="fixed -right-3 top-16 z-20 h-14 w-14 sm:h-16 sm:w-16 md:-right-2 md:top-12 md:h-20 md:w-20 xl:h-24 xl:w-24"
+          transition={{ duration: 0.46, ease: "easeOut" }}
+          className="np-mascot-nino fixed -right-2 top-[4.65rem] z-20 h-[4.6rem] w-[4.6rem] sm:right-1 sm:h-20 sm:w-20 md:right-2 md:top-16 md:h-24 md:w-24 xl:right-5 xl:h-28 xl:w-28"
           data-mascot-era="novo"
           data-mascot-id="nino-premium"
         >
-          <div className="absolute inset-[18%] rounded-full bg-primary/10 blur-xl dark:bg-primary/15" />
+          <div className="np-mascot-orb" />
+          <div className="absolute inset-[9%] rounded-full border border-white/45 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] backdrop-blur-[2px] dark:border-white/10" />
           <motion.img
             src={NINO_PREMIUM_SRC}
             alt=""
@@ -128,23 +126,25 @@ export function PageMascotDecor() {
             height="640"
             loading="lazy"
             decoding="async"
-            animate={reduceMotion ? undefined : { y: [0, -3, 0], rotate: [0, 0.7, 0] }}
-            transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
-            className="relative h-full w-full object-contain opacity-70 drop-shadow-[0_12px_18px_rgba(31,24,43,0.16)] dark:opacity-75"
+            animate={reduceMotion ? undefined : { y: [0, -4, 0], rotate: [0, 0.85, 0] }}
+            transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut" }}
+            className="relative h-full w-full object-contain opacity-[0.93] dark:opacity-[0.96]"
           />
+          <span className="np-mascot-chip hidden sm:inline-flex">NeuroPed</span>
         </motion.div>
       )}
 
       <motion.div
         key={`legacy-${pathname}-${legacy.id}`}
-        initial={reduceMotion ? false : { opacity: 0, x: 8, y: 8, scale: 0.94 }}
+        initial={reduceMotion ? false : { opacity: 0, x: 10, y: 10, scale: 0.9 }}
         animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-        transition={{ duration: 0.38, ease: "easeOut", delay: 0.04 }}
-        className="fixed bottom-16 right-2 z-20 sm:right-3 md:bottom-4 md:right-16"
+        transition={{ duration: 0.4, ease: "easeOut", delay: 0.06 }}
+        className="np-mascot-legacy fixed bottom-5 right-5 z-20 hidden md:block"
         data-mascot-era="legado"
         data-mascot-id={legacy.id}
       >
-        <div className="overflow-hidden rounded-2xl border border-white/65 bg-white/55 p-1 shadow-[0_10px_28px_-14px_rgba(31,24,43,0.32)] backdrop-blur-md dark:border-white/10 dark:bg-slate-950/45">
+        <div className="np-mascot-legacy-card">
+          <div className="absolute -right-3 -top-3 h-9 w-9 rounded-full bg-primary/15 blur-xl" />
           <img
             src={legacy.src}
             alt=""
@@ -152,7 +152,7 @@ export function PageMascotDecor() {
             height="160"
             loading="lazy"
             decoding="async"
-            className={`h-9 w-9 rounded-xl object-cover opacity-[0.72] sm:h-10 sm:w-10 md:h-12 md:w-12 md:opacity-[0.78] ${legacy.objectPosition ?? "object-center"}`}
+            className={`relative h-14 w-14 rounded-[0.9rem] object-cover opacity-[0.8] xl:h-16 xl:w-16 xl:opacity-[0.86] ${legacy.objectPosition ?? "object-center"}`}
           />
         </div>
       </motion.div>
