@@ -116,12 +116,12 @@ function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; acti
       ) : (
         <>
           {/* Mobile (drawer largo): mostra os cartões completos */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <p className="px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Destaques</p>
             {FullCards}
           </div>
           {/* Desktop recolhido: trilha de ícones */}
-          <div className="hidden md:block">{IconRail}</div>
+          <div className="hidden lg:block">{IconRail}</div>
         </>
       )}
     </div>
@@ -144,7 +144,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches,
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches,
   );
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileCloseButtonRef = useRef<HTMLButtonElement>(null);
@@ -174,7 +174,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [collapsed]);
 
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
+    const media = window.matchMedia("(min-width: 1024px)");
     const update = () => {
       setIsDesktop(media.matches);
       if (media.matches) setMobileOpen(false);
@@ -183,6 +183,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    const drawerOpen = mobileOpen && !isDesktop;
+    document.body.classList.toggle("np-mobile-drawer-open", drawerOpen);
+    return () => document.body.classList.remove("np-mobile-drawer-open");
+  }, [isDesktop, mobileOpen]);
 
   useEffect(() => {
     const setInert = (element: HTMLElement | null, disabled: boolean) => {
@@ -329,7 +335,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile top header bar */}
       <header
         ref={mobileHeaderRef}
-        className="print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md md:hidden"
+        className="print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md lg:hidden"
       >
         <div className="flex items-center gap-3">
           <motion.div
@@ -408,7 +414,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
             onClick={() => {
               softTap();
               setMobileOpen(false);
@@ -428,10 +434,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         className={[
           "print:hidden",
           "fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
-          "transition-transform duration-300 md:transition-all md:duration-300",
+          "transition-transform duration-300 lg:transition-all lg:duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
-          "md:translate-x-0",
-          collapsed ? "md:w-16" : "md:w-64",
+          "lg:translate-x-0",
+          collapsed ? "lg:w-16" : "lg:w-64",
           "w-64",
         ].join(" ")}
         style={{
@@ -467,7 +473,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ref={mobileCloseButtonRef}
             variant="ghost"
             size="sm"
-            className="px-2 md:hidden ml-auto"
+            className="px-2 lg:hidden ml-auto"
             onClick={() => {
               softTap();
               haptic.tap();
@@ -492,19 +498,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
             data-testid="button-command-palette"
             aria-label={collapsed ? "Buscar escala, teste ou módulo" : undefined}
             className={`flex items-center gap-2 w-full min-h-[40px] rounded-lg border border-sidebar-border bg-sidebar-accent/40 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors ${
-              collapsed ? "md:justify-center md:px-0 px-3" : "px-3"
+              collapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"
             }`}
           >
             <Search className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             {!collapsed && (
               <>
                 <span className="text-xs">Buscar escala, teste ou módulo</span>
-                <kbd className="ml-auto hidden text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-background/50 md:inline-flex">
+                <kbd className="ml-auto hidden text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-background/50 lg:inline-flex">
                   Ctrl K
                 </kbd>
               </>
             )}
-            {collapsed && <span className="text-xs md:hidden">Buscar escala, teste ou módulo</span>}
+            {collapsed && <span className="text-xs lg:hidden">Buscar escala, teste ou módulo</span>}
           </button>
         </div>
 
@@ -536,7 +542,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 )}
                 {collapsed && section.title && (
-                  <div className="border-t border-sidebar-border my-1 hidden md:block" />
+                  <div className="border-t border-sidebar-border my-1 hidden lg:block" />
                 )}
                 <AnimatePresence initial={false}>
                 {sectionOpen && (
@@ -563,7 +569,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               active
                                 ? "bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
                                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
-                            } ${collapsed ? "md:justify-center" : ""}`}
+                            } ${collapsed ? "lg:justify-center" : ""}`}
                           >
                             <item.icon
                               className={`w-4 h-4 flex-shrink-0 transition-transform ${
@@ -576,7 +582,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               <span className="text-xs truncate">{item.label}</span>
                             )}
                             {collapsed && (
-                              <span className="text-xs truncate md:hidden">{item.label}</span>
+                              <span className="text-xs truncate lg:hidden">{item.label}</span>
                             )}
                             {active && !collapsed && (
                               <motion.div
@@ -602,7 +608,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="sm"
-            className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
+            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
             onClick={() => {
               softTap();
               haptic.tap();
@@ -616,25 +622,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="ml-2 text-sm">{dark ? "Modo Claro" : "Modo Escuro"}</span>
             )}
             {collapsed && (
-              <span className="ml-2 text-sm md:hidden">{dark ? "Modo Claro" : "Modo Escuro"}</span>
+              <span className="ml-2 text-sm lg:hidden">{dark ? "Modo Claro" : "Modo Escuro"}</span>
             )}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
+            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
             onClick={handleSessionAction}
             data-testid={accessMode === "remote" ? "button-session-exit" : "button-clear-local-data"}
             aria-label={accessMode === "remote" ? "Sair — encerrar sessão" : "Apagar dados locais — dados clínicos deste navegador"}
           >
             {accessMode === "remote" ? <KeyRound className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
             {!collapsed && <span className="ml-2 text-sm">{accessMode === "remote" ? "Sair" : "Apagar dados locais"}</span>}
-            {collapsed && <span className="ml-2 text-sm md:hidden">{accessMode === "remote" ? "Sair" : "Apagar dados locais"}</span>}
+            {collapsed && <span className="ml-2 text-sm lg:hidden">{accessMode === "remote" ? "Sair" : "Apagar dados locais"}</span>}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className={`w-full ${collapsed ? "md:justify-center md:px-0" : "justify-start"}`}
+            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
             onClick={() => {
               softTap();
               haptic.tap();
@@ -645,7 +651,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             {!collapsed && <span className="ml-2 text-xs text-muted-foreground">Recolher</span>}
-            {collapsed && <span className="ml-2 text-sm md:hidden">Expandir</span>}
+            {collapsed && <span className="ml-2 text-sm lg:hidden">Expandir</span>}
           </Button>
         </div>
       </aside>
@@ -655,10 +661,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ref={mainContentRef}
         id="main-content"
         tabIndex={-1}
-        className={`flex-1 min-w-0 transition-all duration-300 pt-14 md:pt-0 print:!ml-0 print:!pt-0 ${collapsed ? "md:ml-16" : "md:ml-64"}`}
+        className={`flex-1 min-w-0 transition-all duration-300 pt-14 lg:pt-0 print:!ml-0 print:!pt-0 ${collapsed ? "lg:ml-16" : "lg:ml-64"}`}
       >
         {showClinicalFlow && (
-          <div className="sticky top-14 md:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
+          <div className="sticky top-14 lg:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
             <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-muted-foreground">
               <ClipboardList className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="shrink-0 font-semibold text-foreground">Fluxo clínico</span>
@@ -673,7 +679,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
-        <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
+        <div className="p-3 lg:p-5 max-w-[1600px] mx-auto">
           <div className="min-h-[calc(100vh-4rem)]">{children}</div>
           {/* Aviso EDUCATIVO global — presente em todas as páginas do app. */}
           <aside
