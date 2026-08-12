@@ -7,21 +7,35 @@ const read = (relative: string) =>
 
 const foundationMigration = read("db/migrations/0009_saas_phase1_foundation.sql");
 const hardeningMigration = read("db/migrations/0010_saas_phase1_hardening.sql");
+const tenantCore = read("functions/api/tenant/_core.ts");
+const tenantsApi = read("functions/api/tenants/index.ts");
 const membersApi = read("functions/api/tenants/[id]/members.ts");
+const livePatientsApi = read("functions/api/live/patients/index.ts");
 const liveEventsApi = read("functions/api/live/events/index.ts");
 const migrationWorkflow = read(".github/workflows/saas-phase1-d1-migration.yml");
 
 // Travas estáticas: autorização do handler não pode confundir "não conceder owner"
-// com "poder demover owner". Verificamos a propriedade sem exigir uma forma
-// sintática específica de optional chaining.
+// com "poder demover owner". A mutação continua protegida fisicamente pelo D1.
 assert.match(
   membersApi,
-  /currentMembership\?\.active === 1[\s\S]{0,140}currentMembership\.role === "owner"[\s\S]{0,140}auth\.membership\.role !== "owner"/,
+  /currentMembership\?\.active === 1[\s\S]{0,160}currentMembership\.role === "owner"[\s\S]{0,180}auth\.membership\.role !== "owner"/,
 );
 assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
 assert.match(membersApi, /otherActiveOwnerCount/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
-assert.match(membersApi, /result\.meta\?\.changes/);
+assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
+
+// Papéis tenant com capacidade clínica não podem ser atribuídos a uma conta
+// global read-only/operator, pois a camada global é deliberadamente o teto de privilégio.
+assert.match(membersApi, /GLOBAL_CLINICAL_ROLES/);
+assert.match(membersApi, /TENANT_CLINICAL_ROLES/);
+assert.match(membersApi, /GLOBAL_ROLE_INCOMPATIBLE/);
+assert.match(membersApi, /role AS global_role/);
+
+// Timezone da clínica é dado operacional: não aceitar texto arbitrário que só
+// falhará depois, quando agenda/notificações precisarem converter tempo.
+assert.match(tenantsApi, /isValidTimeZone/);
+assert.match(tenantsApi, /timezone deve ser um identificador IANA válido/);
 
 // Clinical LIVE reutiliza o contrato canônico, não aceita provenance_source livre
 // e mantém a cadeia de correções com estado explícito.
@@ -35,6 +49,19 @@ assert.match(liveEventsApi, /payload clínico deve ser um objeto JSON/);
 assert.match(liveEventsApi, /encounterId deve ser um identificador opaco/);
 assert.doesNotMatch(liveEventsApi, /const provenanceSource = cleanText\(body\.provenanceSource, 240\)/);
 
+// Audit log e mutação pertencem à mesma transação. Uma falha apenas do audit
+// não pode produzir "write persistido + HTTP 500" e induzir retry duplicado.
+assert.match(tenantCore, /export function prepareSaasAudit/);
+assert.match(tenantCore, /estado impossível[\s\S]{0,180}dado persistido/);
+assert.match(livePatientsApi, /await db\.batch\(\[/);
+assert.match(livePatientsApi, /prepareSaasAudit\(/);
+assert.doesNotMatch(livePatientsApi, /await writeSaasAudit\(/);
+assert.match(liveEventsApi, /const audit = prepareSaasAudit\(/);
+assert.match(liveEventsApi, /await db\.batch\(\[insert, audit\]\)/);
+assert.doesNotMatch(liveEventsApi, /await writeSaasAudit\(/);
+assert.match(membersApi, /prepareSaasAudit\(/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit\(/);
+
 assert.match(hardeningMigration, /ux_live_clinical_events_supersedes_once/);
 assert.match(hardeningMigration, /trg_clinic_memberships_keep_last_owner_update/);
 assert.match(hardeningMigration, /trg_clinic_memberships_keep_last_owner_delete/);
@@ -42,6 +69,9 @@ assert.match(hardeningMigration, /trg_live_events_provenance_source_insert/);
 assert.match(hardeningMigration, /INVALID_PROVENANCE_SOURCE/);
 assert.match(migrationWorkflow, /0010_saas_phase1_hardening\.sql/);
 assert.match(migrationWorkflow, /ux_live_clinical_events_supersedes_once/);
+assert.match(migrationWorkflow, /saas-phase1-hardening\.test\.ts/);
+assert.match(migrationWorkflow, /npm run verify/);
+assert.match(migrationWorkflow, /Catraca completa antes de tocar no D1 remoto/);
 
 // Prova as invariantes no próprio SQLite: elas não dependem de um único handler
 // nem de um SELECT anterior que possa perder a corrida.
@@ -131,4 +161,4 @@ assert.throws(
 );
 
 db.close();
-console.log("✓ SaaS hardening: owner, provenance e supersessão protegidos no banco e handler");
+console.log("✓ SaaS hardening: owner, provenance, atomicidade e supersessão protegidos");
