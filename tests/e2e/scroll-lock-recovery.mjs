@@ -227,6 +227,10 @@ async function verifyRecovery(width) {
     await dispatchRealTouchStart(page, x, y);
     await page.waitForFunction(() => !document.body.hasAttribute("data-scroll-locked"));
     assertUnlocked(await readLock(page), `${width}px post-modal recovery`);
+    // O mouse do runner pode conservar o alvo anterior enquanto o modal/body estava
+    // bloqueado. Um movimento SEM pointerdown apenas renova o hit-test do wheel;
+    // não aciona nenhum listener de recuperação e, portanto, não mascara o P0.
+    await page.mouse.move(x + 2, y + 2);
     const afterModalWheel = await proveWheelScroll(page, width, "após fechamento do modal");
 
     const compositor = baselineTouch.moved
