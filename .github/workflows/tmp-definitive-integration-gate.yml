@@ -20,11 +20,39 @@ jobs:
         run: |
           git config user.name "neuroped-audit-bot"
           git config user.email "actions@users.noreply.github.com"
-      - name: Merge validated bughunt branch into current main snapshot
+      - name: Merge bughunt into current main and resolve superseded conflicts safely
         run: |
           set -euo pipefail
-          git fetch origin fix/final-definitive-bughunt-20260810
-          git merge --no-ff --no-edit origin/fix/final-definitive-bughunt-20260810
+          git fetch origin fix/final-definitive-bughunt-20260810 main
+          if git merge --no-ff --no-edit origin/fix/final-definitive-bughunt-20260810; then
+            echo "Merge sem conflitos."
+          else
+            # A main contém versões SaaS mais novas (#592/#595+) para estes arquivos.
+            # Mantemos a main apenas onde a correção antiga foi claramente supersedida.
+            git checkout --ours -- \
+              functions/api/live/events/index.ts \
+              'functions/api/tenants/[id]/members.ts' \
+              functions/api/tenants/index.ts \
+              tests/unit/saas-phase1-foundation.test.ts \
+              tests/unit/saas-phase1-hardening.test.ts
+            git add \
+              functions/api/live/events/index.ts \
+              'functions/api/tenants/[id]/members.ts' \
+              functions/api/tenants/index.ts \
+              tests/unit/saas-phase1-foundation.test.ts \
+              tests/unit/saas-phase1-hardening.test.ts
+
+            # Estes adapters foram removidos da main atual; não ressuscitar código morto.
+            git rm -f --ignore-unmatch server/lib/db.ts server/lib/db-enhanced.ts
+
+            unresolved="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$unresolved" ]; then
+              echo "::error::Conflitos não adjudicados:"
+              echo "$unresolved"
+              exit 1
+            fi
+            git commit --no-edit
+          fi
       - name: Full release gate on merged tree
         run: |
           npm ci
