@@ -116,7 +116,7 @@ export function PageMascotDecor() {
           initial={reduceMotion ? false : { opacity: 0, x: 10, y: -4, scale: 0.94 }}
           animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="fixed -right-3 top-16 z-20 h-14 w-14 sm:h-16 sm:w-16 md:-right-2 md:top-3 md:h-20 md:w-20 xl:h-24 xl:w-24"
+          className="fixed -right-3 top-16 z-20 h-14 w-14 sm:h-16 sm:w-16 md:-right-2 md:top-12 md:h-20 md:w-20 xl:h-24 xl:w-24"
           data-mascot-era="novo"
           data-mascot-id="nino-premium"
         >
