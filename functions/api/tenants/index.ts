@@ -1,5 +1,6 @@
 import { getContextUser } from "../auth/_authorization";
 import { normalizeClinicSlug, isValidClinicSlug } from "../../../shared/tenant";
+import { isValidTimeZone } from "../../../shared/operations";
 import { tenantError, tenantJson, type TenantEnv } from "../tenant/_core";
 
 function cleanText(value: unknown, max: number): string {
@@ -74,6 +75,9 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   if (name.length < 2) return tenantError("Nome da clínica é obrigatório.", "VALIDATION_ERROR", 400);
   if (!isValidClinicSlug(slug)) return tenantError("Slug da clínica inválido.", "VALIDATION_ERROR", 400);
+  if (!isValidTimeZone(timezone)) {
+    return tenantError("timezone deve ser um identificador IANA válido.", "VALIDATION_ERROR", 400);
+  }
 
   const clinicId = crypto.randomUUID();
   const now = new Date().toISOString();
