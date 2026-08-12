@@ -163,4 +163,16 @@ assert.equal(
   "server/modules aposentado não deve reaparecer",
 );
 
+// O Express efetivo persiste via server/storage.ts. Adapters Postgres/SQLite e
+// repositories sem qualquer import de runtime criavam uma segunda DAL enganosa,
+// com documentação dizendo que initDb() rodava no boot quando isso não ocorria.
+for (const path of [
+  "server/lib/db.ts",
+  "server/lib/db-enhanced.ts",
+  "server/lib/repositories",
+  "shared/schema-pg.ts",
+]) {
+  assert.equal(existsSync(resolve(root, path)), false, `${path} não deve reaparecer sem wiring real`);
+}
+
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");
