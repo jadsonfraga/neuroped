@@ -22,6 +22,8 @@ const visualStates = read("client/src/components/ui/VisualStates.tsx");
 const toastSystem = read("client/src/components/Toast.tsx");
 const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
 const serverCrypto = read("server/lib/crypto.ts");
+const skipNav = read("client/src/components/SkipNav.tsx");
+const pageMascotDecor = read("client/src/components/PageMascotDecor.tsx");
 const pkg = JSON.parse(read("package.json"));
 const clinicalFiles = [
   "functions/api/patients/index.ts",
@@ -136,6 +138,35 @@ assert.match(cognitiveRunner, /window\.setTimeout\(\(\) => \{/);
 assert.match(cognitiveRunner, /void ctx\.close\(\)/);
 assert.match(cognitiveRunner, /beep\(correct \? 880 : 220\);/);
 assert.doesNotMatch(cognitiveRunner, /beep\([^\n]*after\)/);
+
+// Mascotes globais: toda página atravessa SkipNav no início do Layout, portanto a camada
+// decorativa deve continuar montada ali. Os mascotes não podem capturar clique/foco e a
+// geração nova (Nino) deve coexistir com o acervo histórico de forma contextual por rota.
+assert.match(skipNav, /PageMascotDecor/);
+assert.match(pageMascotDecor, /useLocation\(\)/);
+assert.match(pageMascotDecor, /pointer-events-none/);
+assert.match(pageMascotDecor, /aria-hidden="true"/);
+assert.match(pageMascotDecor, /data-mascot-era="novo"/);
+assert.match(pageMascotDecor, /data-mascot-era="legado"/);
+assert.match(pageMascotDecor, /\/neuroped-mascot-premium\.webp/);
+assert.match(pageMascotDecor, /routesWithInlineNino/);
+assert.match(pageMascotDecor, /path\.startsWith\("\/generic-scale\/"\)/);
+assert.doesNotMatch(pageMascotDecor, /onClick=/);
+for (const fileName of [
+  "dr-jadson-logo-super.jpeg",
+  "dr-jadson-consultorio-superman.jpeg",
+  "dr-jadson-arte.jpeg",
+  "dr-jadson-selfie.jpeg",
+  "dr-jadson-consultorio-batman.jpeg",
+  "dr-jadson-consultorio-full.jpeg",
+]) {
+  assert.match(pageMascotDecor, new RegExp(fileName.replaceAll(".", "\\.")));
+}
+assert.equal(
+  existsSync(resolve(root, "client/public/neuroped-mascot-premium.webp")),
+  true,
+  "Nino premium precisa permanecer publicado para a assinatura global das páginas",
+);
 
 // Ferramentas temporárias/legadas capazes de reescrever clínica ou simular auditorias
 // não devem reaparecer na raiz ativa sem um workflow e contrato explícitos.
