@@ -90,7 +90,7 @@ main,
 }
 
 /* ───────────────────────── Shell desktop ───────────────────────── */
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 768px) {
   aside[aria-label="Menu de navegação"] {
     background:
       linear-gradient(180deg, hsl(var(--sidebar) / 0.985), hsl(var(--sidebar) / 0.94)) !important;
@@ -285,12 +285,12 @@ a[class*="inline-flex"]:active {
 }
 
 /* ───────────────────────── Mobile: dock + tela nativa ───────────────────────── */
-@media screen and (max-width: 1023px) {
+@media screen and (max-width: 767px) {
   body.np-mobile-dock-active {
     padding-bottom: calc(5.4rem + var(--np-safe-bottom));
   }
 
-  header.fixed.lg\:hidden {
+  header.fixed.md\:hidden {
     background:
       linear-gradient(180deg, hsl(var(--card) / 0.97), hsl(var(--card) / 0.88)) !important;
     border-bottom-color: hsl(var(--border) / 0.58) !important;
@@ -437,7 +437,7 @@ a[class*="inline-flex"]:active {
   background: linear-gradient(135deg, hsl(0 0% 100% / 0.2), transparent 45%);
 }
 
-@media screen and (max-width: 1023px) {
+@media screen and (max-width: 767px) {
   .np-mascot-chip,
   .np-mascot-legacy {
     display: none !important;

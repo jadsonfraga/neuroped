@@ -36,8 +36,8 @@ async function openShell(width) {
   await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
   await page.locator("#main-content").waitFor({ state: "visible", timeout: 15000 });
   await page.waitForFunction(
-    (desktop) => window.matchMedia("(min-width: 1024px)").matches === desktop,
-    width >= 1024,
+    (desktop) => window.matchMedia("(min-width: 768px)").matches === desktop,
+    width >= 768,
   );
   return { context, page };
 }
@@ -79,25 +79,27 @@ async function verifyTablet(width) {
   }
 }
 
-async function verifyDesktopBoundary() {
-  const { context, page } = await openShell(1024);
+async function verifyDesktopBoundary(width = 1024) {
+  const { context, page } = await openShell(width);
   try {
     const menu = page.getByTestId("button-mobile-menu");
     const dock = page.getByTestId("mobile-primary-dock");
     const sidebar = page.locator('aside[aria-label="Menu de navegação"]');
 
-    assert.equal(await menu.isVisible(), false, "1024px deve usar shell desktop");
-    assert.equal(await dock.isVisible(), false, "1024px não deve exibir dock mobile");
-    assert.equal(await sidebar.isVisible(), true, "1024px deve exibir sidebar fixa");
+    assert.equal(await menu.isVisible(), false, `${width}px deve usar shell com sidebar fixa`);
+    assert.equal(await dock.isVisible(), false, `${width}px não deve exibir dock mobile`);
+    assert.equal(await sidebar.isVisible(), true, `${width}px deve exibir sidebar fixa`);
     assert.equal(await sidebar.getAttribute("aria-hidden"), null, "sidebar desktop não pode ficar oculta");
-    console.log("[responsive-shell] ✓ 1024px: limite desktop preservado");
+    console.log(`[responsive-shell] ✓ ${width}px: sidebar fixa presente`);
   } finally {
     await context.close();
   }
 }
 
 async function verifyPrintIsolation() {
-  const { context, page } = await openShell(834);
+  // Impressão testada num viewport de CELULAR (o único que ainda usa o shell
+  // mobile depois que a sidebar fixa voltou a valer a partir de 768px).
+  const { context, page } = await openShell(640);
   try {
     await page.emulateMedia({ media: "print" });
     const styles = await page.evaluate(() => {
@@ -126,8 +128,11 @@ async function verifyPrintIsolation() {
 }
 
 try {
-  for (const width of [768, 834, 1023]) await verifyTablet(width);
-  await verifyDesktopBoundary();
+  // Contrato 2026-08-12 (pedido do Dr. Jadson): sidebar FIXA a partir de 768px
+  // — iPad retrato (834) e paisagem voltam a ter sidebar; drawer+dock só no
+  // celular (<768px).
+  for (const width of [390, 640, 767]) await verifyTablet(width);
+  for (const width of [768, 834, 1024]) await verifyDesktopBoundary(width);
   await verifyPrintIsolation();
   console.log("[responsive-shell] ✓ contrato responsivo aprovado.");
 } finally {
