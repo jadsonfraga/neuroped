@@ -1,0 +1,45 @@
+name: SaaS Phase 1 foundation
+
+on:
+  pull_request:
+    paths:
+      - "shared/tenant.ts"
+      - "functions/api/tenant/**"
+      - "functions/api/tenants/**"
+      - "functions/api/live/**"
+      - "db/migrations/0009_saas_phase1_foundation.sql"
+      - "tests/unit/saas-phase1-foundation.test.ts"
+      - ".github/workflows/saas-phase1-foundation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "shared/tenant.ts"
+      - "functions/api/tenant/**"
+      - "functions/api/tenants/**"
+      - "functions/api/live/**"
+      - "db/migrations/0009_saas_phase1_foundation.sql"
+      - "tests/unit/saas-phase1-foundation.test.ts"
+      - ".github/workflows/saas-phase1-foundation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saas-phase1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tenant-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Testar contrato tenant, criptografia e anti-cross-tenant
+        run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
+      - name: TypeScript
+        run: npm run check
