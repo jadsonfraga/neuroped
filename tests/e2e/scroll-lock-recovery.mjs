@@ -110,8 +110,8 @@ async function dispatchRealTouchStart(page, x, y) {
  * entrega os eventos DOM reais, mas algumas versões não transformam a sequência
  * em scroll de compositor. Por isso a capacidade é medida ANTES do cenário P0:
  * quando existir no runner, ela também vira requisito pós-recuperação; quando não
- * existir, o gate continua exigindo touch real para desbloquear + wheel real para
- * provar que o documento voltou a aceitar entrada de rolagem.
+ * existir, o gate continua exigindo touch real para desbloquear + wheel nativo CDP
+ * para provar que o documento voltou a aceitar entrada de rolagem.
  */
 async function tryRealTouchSwipe(page, width) {
   const session = await page.context().newCDPSession(page);
@@ -142,10 +142,33 @@ async function tryRealTouchSwipe(page, width) {
   return { before, after, moved: after > before + 20 };
 }
 
-async function proveWheelScroll(page, width, label) {
+/**
+ * Wheel nativo via Chrome DevTools Protocol. Diferente de page.mouse, não depende
+ * do cache interno de alvo/hit-test do Playwright. O mouseMoved apenas informa a
+ * coordenada ao compositor; não dispara pointerdown/touchstart e, portanto, não
+ * pode acionar o autocurador uma segunda vez nem mascarar uma regressão.
+ */
+async function proveNativeWheelScroll(page, width, label, x, y) {
   const before = await page.evaluate(() => window.scrollY);
-  await page.mouse.wheel(0, 500);
-  await page.waitForTimeout(140);
+  const session = await page.context().newCDPSession(page);
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x,
+    y,
+    buttons: 0,
+    pointerType: "mouse",
+  });
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mouseWheel",
+    x,
+    y,
+    deltaX: 0,
+    deltaY: 500,
+    buttons: 0,
+    pointerType: "mouse",
+  });
+  await session.detach();
+  await page.waitForTimeout(160);
   const after = await page.evaluate(() => window.scrollY);
   assert.ok(after > before + 20, `${width}px ${label}: documento não rolou (${before} -> ${after})`);
   return { before, after };
@@ -174,10 +197,16 @@ async function verifyRecovery(width) {
     );
     assertUnlocked(await readLock(page), `${width}px touch recovery`);
 
-    // Sem qualquer pointerdown adicional: o wheel precisa funcionar logo após o
-    // touch que fez a autocura. Assim provamos que foi o caminho TOUCH que liberou
-    // o body/documento, e não um segundo mecanismo de recuperação.
-    const afterTouchWheel = await proveWheelScroll(page, width, "após touch recovery");
+    // Sem qualquer pointerdown adicional: o wheel NATIVO precisa funcionar logo
+    // após o touch que fez a autocura. Assim provamos que foi o caminho TOUCH que
+    // liberou o body/documento, e não um segundo mecanismo de recuperação.
+    const afterTouchWheel = await proveNativeWheelScroll(
+      page,
+      width,
+      "após touch recovery",
+      x,
+      y,
+    );
 
     // Se esta versão do Chromium oferece scroll de compositor para CDP touch,
     // exige também que ele continue funcionando depois da autocura.
@@ -191,10 +220,8 @@ async function verifyRecovery(width) {
       );
     }
 
-    // Caminho secundário pointerdown: precisa remover o lock órfão. Não usamos
-    // wheel como requisito aqui porque Chromium headless pode preservar o hit-test
-    // do cursor criado enquanto body tinha pointer-events:none; a prova de scroll
-    // real pertence ao caminho touch acima, que reproduz o defeito do tablet.
+    // Caminho secundário pointerdown: precisa remover o lock órfão. A prova de
+    // scroll pertence ao caminho touch acima, que reproduz o defeito do tablet.
     await page.evaluate(() => window.scrollTo(0, 0));
     await injectOrphanedLock(page);
     await page.mouse.move(x, y);
@@ -227,11 +254,13 @@ async function verifyRecovery(width) {
     await dispatchRealTouchStart(page, x, y);
     await page.waitForFunction(() => !document.body.hasAttribute("data-scroll-locked"));
     assertUnlocked(await readLock(page), `${width}px post-modal recovery`);
-    // O mouse do runner pode conservar o alvo anterior enquanto o modal/body estava
-    // bloqueado. Um movimento SEM pointerdown apenas renova o hit-test do wheel;
-    // não aciona nenhum listener de recuperação e, portanto, não mascara o P0.
-    await page.mouse.move(x + 2, y + 2);
-    const afterModalWheel = await proveWheelScroll(page, width, "após fechamento do modal");
+    const afterModalWheel = await proveNativeWheelScroll(
+      page,
+      width,
+      "após fechamento do modal",
+      x,
+      y,
+    );
 
     const compositor = baselineTouch.moved
       ? `touch-scroll ${baselineTouch.before}->${baselineTouch.after} / pós-lock ${recoveredTouch.before}->${recoveredTouch.after}`
