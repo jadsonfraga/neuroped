@@ -21,6 +21,11 @@ function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+function isLastOwnerConstraintError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("LAST_OWNER_PROTECTED");
+}
+
 type ManagerContextInput = {
   env: TenantEnv;
   data?: unknown;
@@ -47,6 +52,25 @@ function contextForManager(context: Parameters<PagesFunction<TenantEnv>>[0]): Ma
     data: context.data,
     params: context.params as Record<string, string | string[]>,
   };
+}
+
+async function otherActiveOwnerCount(
+  db: D1Database,
+  clinicId: string,
+  excludedUserId: string,
+): Promise<number> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS total
+         FROM clinic_memberships
+        WHERE clinic_id = ?
+          AND role = 'owner'
+          AND active = 1
+          AND user_id <> ?`,
+    )
+    .bind(clinicId, excludedUserId)
+    .first<{ total: number }>();
+  return Number(row?.total ?? 0);
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -125,20 +149,56 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     );
   }
 
-  const now = new Date().toISOString();
-  await auth.db
+  const currentMembership = await auth.db
     .prepare(
-      `INSERT INTO clinic_memberships
-        (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
-       VALUES (?, ?, ?, 1, ?, ?, ?)
-       ON CONFLICT(clinic_id, user_id) DO UPDATE SET
-         role = excluded.role,
-         active = 1,
-         invited_by_user_id = excluded.invited_by_user_id,
-         updated_at = excluded.updated_at`,
+      `SELECT role, active
+         FROM clinic_memberships
+        WHERE clinic_id = ? AND user_id = ?
+        LIMIT 1`,
     )
-    .bind(auth.clinicId, target.id, role, auth.user.id, now, now)
-    .run();
+    .bind(auth.clinicId, target.id)
+    .first<{ role: ClinicMembershipRole; active: number }>();
+
+  // Um clinic_admin não pode contornar a trava de owner pedindo outro papel no UPSERT.
+  if (
+    currentMembership?.active === 1 &&
+    currentMembership.role === "owner" &&
+    auth.membership.role !== "owner"
+  ) {
+    return tenantError("Somente owner pode alterar o papel de outro owner.", "TENANT_FORBIDDEN", 403);
+  }
+
+  if (
+    currentMembership?.active === 1 &&
+    currentMembership.role === "owner" &&
+    role !== "owner" &&
+    (await otherActiveOwnerCount(auth.db, auth.clinicId, target.id)) === 0
+  ) {
+    return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+  }
+
+  const now = new Date().toISOString();
+  try {
+    await auth.db
+      .prepare(
+        `INSERT INTO clinic_memberships
+          (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
+         VALUES (?, ?, ?, 1, ?, ?, ?)
+         ON CONFLICT(clinic_id, user_id) DO UPDATE SET
+           role = excluded.role,
+           active = 1,
+           invited_by_user_id = excluded.invited_by_user_id,
+           updated_at = excluded.updated_at`,
+      )
+      .bind(auth.clinicId, target.id, role, auth.user.id, now, now)
+      .run();
+  } catch (error) {
+    if (isLastOwnerConstraintError(error)) {
+      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+    }
+    console.error("[tenants.members.POST] DB error", error);
+    return tenantError("Não foi possível atualizar a equipe da clínica.", "DB_ERROR", 500);
+  }
 
   await writeSaasAudit(auth.db, {
     clinicId: auth.clinicId,
@@ -177,29 +237,33 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
   }
   if (targetMembership.role === "owner") {
-    const owners = await auth.db
-      .prepare(
-        `SELECT COUNT(*) AS total FROM clinic_memberships
-          WHERE clinic_id = ? AND role = 'owner' AND active = 1`,
-      )
-      .bind(auth.clinicId)
-      .first<{ total: number }>();
-    if ((owners?.total ?? 0) <= 1) {
-      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
-    }
     if (auth.membership.role !== "owner") {
       return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
     }
+    if ((await otherActiveOwnerCount(auth.db, auth.clinicId, targetUserId)) === 0) {
+      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+    }
   }
 
-  await auth.db
-    .prepare(
-      `UPDATE clinic_memberships
-          SET active = 0, updated_at = ?
-        WHERE clinic_id = ? AND user_id = ?`,
-    )
-    .bind(new Date().toISOString(), auth.clinicId, targetUserId)
-    .run();
+  try {
+    const result = await auth.db
+      .prepare(
+        `UPDATE clinic_memberships
+            SET active = 0, updated_at = ?
+          WHERE clinic_id = ? AND user_id = ? AND active = 1`,
+      )
+      .bind(new Date().toISOString(), auth.clinicId, targetUserId)
+      .run();
+    if (Number(result.meta?.changes ?? 0) !== 1) {
+      return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
+    }
+  } catch (error) {
+    if (isLastOwnerConstraintError(error)) {
+      return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+    }
+    console.error("[tenants.members.DELETE] DB error", error);
+    return tenantError("Não foi possível desativar a membership.", "DB_ERROR", 500);
+  }
 
   await writeSaasAudit(auth.db, {
     clinicId: auth.clinicId,

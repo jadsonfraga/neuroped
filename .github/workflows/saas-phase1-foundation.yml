@@ -4,21 +4,27 @@ on:
   pull_request:
     paths:
       - "shared/tenant.ts"
+      - "shared/clinical-core.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
       - "functions/api/live/**"
       - "db/migrations/0009_saas_phase1_foundation.sql"
+      - "db/migrations/0010_saas_phase1_hardening.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
+      - "tests/unit/saas-phase1-hardening.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
     paths:
       - "shared/tenant.ts"
+      - "shared/clinical-core.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
       - "functions/api/live/**"
       - "db/migrations/0009_saas_phase1_foundation.sql"
+      - "db/migrations/0010_saas_phase1_hardening.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
+      - "tests/unit/saas-phase1-hardening.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -33,13 +39,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - name: Testar contrato tenant, criptografia e anti-cross-tenant
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
-      - name: TypeScript
-        run: npm run check
+      - name: Testar hardening de owner, provenance e supersessão
+        run: node --import tsx tests/unit/saas-phase1-hardening.test.ts
+      - name: Hard release gate
+        run: npm run verify
