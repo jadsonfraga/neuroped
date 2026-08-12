@@ -12,8 +12,8 @@ const liveEventsApi = read("functions/api/live/events/index.ts");
 const migrationWorkflow = read(".github/workflows/saas-phase1-d1-migration.yml");
 
 // Travas estáticas: autorização do handler não pode confundir "não conceder owner"
-// com "poder demover owner". Verificamos a propriedade sem exigir uma forma
-// sintática específica de optional chaining.
+// com "poder demover owner". A mutação e sua auditoria também permanecem no
+// mesmo batch; os triggers do banco continuam como última linha de defesa.
 assert.match(
   membersApi,
   /currentMembership\?\.active === 1[\s\S]{0,140}currentMembership\.role === "owner"[\s\S]{0,140}auth\.membership\.role !== "owner"/,
@@ -21,7 +21,11 @@ assert.match(
 assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
 assert.match(membersApi, /otherActiveOwnerCount/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
-assert.match(membersApi, /result\.meta\?\.changes/);
+assert.match(membersApi, /auth\.db\.batch\(/);
+assert.match(membersApi, /prepareSaasAudit\(/);
+assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
+assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit/);
 
 // Clinical LIVE reutiliza o contrato canônico, não aceita provenance_source livre
 // e mantém a cadeia de correções com estado explícito.
@@ -131,4 +135,4 @@ assert.throws(
 );
 
 db.close();
-console.log("✓ SaaS hardening: owner, provenance e supersessão protegidos no banco e handler");
+console.log("✓ SaaS hardening: owner, provenance, supersessão e auditoria atômica protegidos");
