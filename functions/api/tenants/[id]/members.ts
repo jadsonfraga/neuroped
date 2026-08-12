@@ -6,11 +6,18 @@ import {
 import {
   getClinicMembership,
   membershipCanManage,
+  prepareSaasAudit,
   tenantError,
   tenantJson,
-  writeSaasAudit,
   type TenantEnv,
 } from "../../tenant/_core";
+
+const GLOBAL_CLINICAL_ROLES = new Set(["admin", "professional"]);
+const TENANT_CLINICAL_ROLES = new Set<ClinicMembershipRole>([
+  "owner",
+  "clinic_admin",
+  "professional",
+]);
 
 function clinicIdFrom(params: Record<string, string | string[]>): string {
   const raw = params.id;
@@ -138,14 +145,27 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const target = await auth.db
-    .prepare(`SELECT id, name, email FROM users WHERE lower(email) = ? AND is_active = 1 LIMIT 1`)
+    .prepare(
+      `SELECT id, name, email, role AS global_role
+         FROM users
+        WHERE lower(email) = ? AND is_active = 1
+        LIMIT 1`,
+    )
     .bind(email)
-    .first<{ id: string; name: string; email: string }>();
+    .first<{ id: string; name: string; email: string; global_role: string }>();
   if (!target) {
     return tenantError(
       "Usuário ainda não possui conta NeuroPed. O fluxo de convite por e-mail será adicionado antes do piloto.",
       "USER_NOT_REGISTERED",
       404,
+    );
+  }
+
+  if (TENANT_CLINICAL_ROLES.has(role) && !GLOBAL_CLINICAL_ROLES.has(target.global_role)) {
+    return tenantError(
+      "O papel tenant solicitado exige conta global admin ou professional.",
+      "GLOBAL_ROLE_INCOMPATIBLE",
+      409,
     );
   }
 
@@ -179,19 +199,32 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   const now = new Date().toISOString();
   try {
-    await auth.db
-      .prepare(
-        `INSERT INTO clinic_memberships
-          (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
-         VALUES (?, ?, ?, 1, ?, ?, ?)
-         ON CONFLICT(clinic_id, user_id) DO UPDATE SET
-           role = excluded.role,
-           active = 1,
-           invited_by_user_id = excluded.invited_by_user_id,
-           updated_at = excluded.updated_at`,
-      )
-      .bind(auth.clinicId, target.id, role, auth.user.id, now, now)
-      .run();
+    await auth.db.batch([
+      auth.db
+        .prepare(
+          `INSERT INTO clinic_memberships
+            (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
+           VALUES (?, ?, ?, 1, ?, ?, ?)
+           ON CONFLICT(clinic_id, user_id) DO UPDATE SET
+             role = excluded.role,
+             active = 1,
+             invited_by_user_id = excluded.invited_by_user_id,
+             updated_at = excluded.updated_at`,
+        )
+        .bind(auth.clinicId, target.id, role, auth.user.id, now, now),
+      prepareSaasAudit(
+        auth.db,
+        {
+          clinicId: auth.clinicId,
+          actorUserId: auth.user.id,
+          action: "clinic_membership_upsert",
+          targetType: "user",
+          targetId: target.id,
+          metadata: { role },
+        },
+        now,
+      ),
+    ]);
   } catch (error) {
     if (isLastOwnerConstraintError(error)) {
       return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
@@ -199,15 +232,6 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     console.error("[tenants.members.POST] DB error", error);
     return tenantError("Não foi possível atualizar a equipe da clínica.", "DB_ERROR", 500);
   }
-
-  await writeSaasAudit(auth.db, {
-    clinicId: auth.clinicId,
-    actorUserId: auth.user.id,
-    action: "clinic_membership_upsert",
-    targetType: "user",
-    targetId: target.id,
-    metadata: { role },
-  });
 
   return tenantJson(
     {
@@ -245,17 +269,40 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     }
   }
 
+  const now = new Date().toISOString();
   try {
-    const result = await auth.db
-      .prepare(
-        `UPDATE clinic_memberships
-            SET active = 0, updated_at = ?
-          WHERE clinic_id = ? AND user_id = ? AND active = 1`,
-      )
-      .bind(new Date().toISOString(), auth.clinicId, targetUserId)
-      .run();
-    if (Number(result.meta?.changes ?? 0) !== 1) {
-      return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
+    const results = await auth.db.batch([
+      auth.db
+        .prepare(
+          `UPDATE clinic_memberships
+              SET active = 0, updated_at = ?
+            WHERE clinic_id = ? AND user_id = ? AND active = 1`,
+        )
+        .bind(now, auth.clinicId, targetUserId),
+      auth.db
+        .prepare(
+          `INSERT INTO saas_audit_log
+            (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
+           SELECT ?, ?, ?, 'clinic_membership_deactivate', 'user', ?, NULL, ?
+            WHERE EXISTS (
+              SELECT 1
+                FROM clinic_memberships
+               WHERE clinic_id = ? AND user_id = ? AND active = 0 AND updated_at = ?
+            )`,
+        )
+        .bind(
+          crypto.randomUUID(),
+          auth.clinicId,
+          auth.user.id,
+          targetUserId,
+          now,
+          auth.clinicId,
+          targetUserId,
+          now,
+        ),
+    ]);
+    if (Number(results[0]?.meta?.changes ?? 0) !== 1) {
+      return tenantError("Membership mudou durante a operação.", "MEMBERSHIP_STALE", 409);
     }
   } catch (error) {
     if (isLastOwnerConstraintError(error)) {
@@ -264,14 +311,6 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     console.error("[tenants.members.DELETE] DB error", error);
     return tenantError("Não foi possível desativar a membership.", "DB_ERROR", 500);
   }
-
-  await writeSaasAudit(auth.db, {
-    clinicId: auth.clinicId,
-    actorUserId: auth.user.id,
-    action: "clinic_membership_deactivate",
-    targetType: "user",
-    targetId: targetUserId,
-  });
 
   return tenantJson({ ok: true });
 };
