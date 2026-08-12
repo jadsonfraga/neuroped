@@ -17,6 +17,7 @@ const cloudflareAuthShared = read("functions/api/auth/_shared.ts");
 const cloudflareLogin = read("functions/api/auth/login.ts");
 const cloudflareRateLimit = read("functions/api/auth/_rateLimit.ts");
 const dailyAuthorialCatalog = read("client/src/data/dailyAuthorialCatalog.ts");
+const dailyAuthorialWorkflow = read(".github/workflows/daily-authorial-inventory.yml");
 const visualStates = read("client/src/components/ui/VisualStates.tsx");
 const toastSystem = read("client/src/components/Toast.tsx");
 const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
@@ -110,6 +111,14 @@ assert.doesNotMatch(
   /export const dailyAuthorialCatalog = loaded\s*\.filter/s,
   "rascunho gerado automaticamente não pode virar catálogo operacional só por ser JSON válido",
 );
+
+// A automação diária não pode mais ser uma exceção que escreve diretamente na main.
+// Ela deve versionar o rascunho em branch datada e abrir PR draft para revisão/checks independentes.
+assert.doesNotMatch(dailyAuthorialWorkflow, /git push origin HEAD:main/);
+assert.match(dailyAuthorialWorkflow, /automation\/daily-authorial-\$\{NEUROPED_GENERATION_DATE\}/);
+assert.match(dailyAuthorialWorkflow, /gh pr create[\s\S]{0,240}--draft/);
+assert.match(dailyAuthorialWorkflow, /pull-requests: write/);
+assert.match(dailyAuthorialWorkflow, /NEUROPED_AUTOMATION_TOKEN é obrigatório/);
 
 // Toasts: callbacks novos não podem reiniciar timers existentes nem vazar texto no console.
 assert.match(visualStates, /const onDismissRef = useRef\(onDismiss\)/);
