@@ -61,6 +61,18 @@ const PUBLIC_API_PATHS = new Set([
   "/api/public-booking",
 ]);
 
+const TENANT_SCOPED_WRITE_PATHS = new Set([
+  "/api/tenants",
+  "/api/live/patients",
+  "/api/live/events",
+]);
+
+function endpointOwnsTenantWriteAuthorization(path: string, method: string): boolean {
+  if (!["POST", "PATCH", "PUT", "DELETE"].includes(method)) return false;
+  if (TENANT_SCOPED_WRITE_PATHS.has(path)) return true;
+  return /^\/api\/tenants\/[^/]+\/members$/.test(path);
+}
+
 function apiError(message: string, code: string, status: number): Response {
   return new Response(JSON.stringify({ error: message, code }), {
     status,
@@ -88,8 +100,18 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
   // nenhuma rota clínica herda esta exceção.
   const isDelegatedOperationalWrite =
     user.role === "operator" && path === "/api/operations" && method === "POST";
+  // Rotas SaaS/LIVE listadas explicitamente têm RBAC próprio por membership.
+  // O middleware continua autenticando a sessão, mas não deve sobrepor o papel
+  // global ao papel tenant. A lista fechada impede bypass em futuras rotas.
+  const isTenantScopedWrite = endpointOwnsTenantWriteAuthorization(path, method);
 
-  if (isWrite && !isOwnConsentWrite && !isDelegatedOperationalWrite && !canWriteClinicalData(user)) {
+  if (
+    isWrite &&
+    !isOwnConsentWrite &&
+    !isDelegatedOperationalWrite &&
+    !isTenantScopedWrite &&
+    !canWriteClinicalData(user)
+  ) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
   }
   return null;
