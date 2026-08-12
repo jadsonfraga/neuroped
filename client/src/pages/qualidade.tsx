@@ -56,7 +56,7 @@ export default function QualidadePage() {
           <ShieldCheck className="w-6 h-6 text-primary" />
           <Badge variant="secondary">Painel de princípios</Badge>
         </div>
-        <h1 className="text-2xl font-black">Qualidade NeuroPed</h1>
+        <h1 className="text-2xl font-bold">Qualidade NeuroPed</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Compromissos de qualidade, segurança, privacidade e integridade visual que orientam o desenvolvimento do app.
         </p>
@@ -88,7 +88,7 @@ export default function QualidadePage() {
               <Image className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-lg font-black text-foreground">Auditoria visual dos assets</h2>
+              <h2 className="text-lg font-bold text-foreground">Auditoria visual dos assets</h2>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 Todos os assets oficiais do repositório são renderizados abaixo. Se algum arquivo quebrar, o card mostra falha imediatamente.
               </p>
@@ -127,7 +127,7 @@ export default function QualidadePage() {
                 <CardContent className="space-y-2 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-black text-foreground">{asset.name}</p>
+                      <p className="text-sm font-semibold text-foreground">{asset.name}</p>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{asset.group}</p>
                     </div>
                     <Badge variant="outline" className="shrink-0 text-[10px]">{asset.status}</Badge>

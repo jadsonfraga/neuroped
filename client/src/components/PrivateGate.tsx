@@ -111,7 +111,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: GATE_BG }}>
         <GateCard>
-          <h1 className="text-lg font-black text-white">Área do profissional</h1>
+          <h1 className="text-lg font-bold text-white">Área do profissional</h1>
           <p className="mt-2 text-sm text-white/60">
             Esta seção é exclusiva do profissional de saúde. As famílias têm
             acesso ao conteúdo educativo aberto.
@@ -147,7 +147,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
         role="alert"
       >
         <GateCard>
-          <h1 className="text-lg font-black text-white">
+          <h1 className="text-lg font-bold text-white">
             Acesso clínico indisponível
           </h1>
           <p className="mt-2 text-sm text-white/60">
@@ -238,7 +238,7 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
           >
             <LockIcon />
           </div>
-          <h1 className="text-xl font-black tracking-tight text-white">
+          <h1 className="text-xl font-bold tracking-tight text-white">
             NeuroPed
           </h1>
           <p className="mt-1 text-sm font-medium text-white/50">

@@ -44,7 +44,7 @@ export function AvisoLegalGate() {
     >
       <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl sm:p-7">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl dark:bg-amber-950/40" aria-hidden="true">⚕️</div>
-        <h1 id="aviso-legal-title" className="text-center text-lg font-black text-foreground">Aviso importante</h1>
+        <h1 id="aviso-legal-title" className="text-center text-lg font-bold text-foreground">Aviso importante</h1>
         <p className="mt-2 text-center text-[13px] leading-relaxed text-muted-foreground">
           O <strong className="font-semibold text-foreground">NeuroPed</strong> tem finalidade
           <strong className="font-semibold text-foreground"> exclusivamente educativa</strong>. Não é dispositivo

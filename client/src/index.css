@@ -5,60 +5,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE — Lúdico / Colorido / Neuropediatria */
+/* LIGHT MODE — Clínico profissional / Neuropediatria
+   Paleta índigo profunda + neutros frios + cards brancos puros.
+   O gradiente de marca vai de índigo (--primary) a violeta (--chart-2),
+   substituindo o antigo par violeta→rosa por algo mais sóbrio. */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 30 30% 97%;
-  --foreground: 260 30% 15%;
-  --border: 30 20% 88%;
-  --card: 30 25% 98.5%;
-  --card-foreground: 260 30% 15%;
-  --card-border: 30 20% 91%;
-  --sidebar: 260 20% 96.5%;
-  --sidebar-foreground: 260 30% 15%;
-  --sidebar-border: 260 20% 90%;
-  --sidebar-primary: 260 60% 55%;
+  --background: 220 20% 97.5%;
+  --foreground: 226 30% 12%;
+  --border: 220 14% 88%;
+  --card: 0 0% 100%;
+  --card-foreground: 226 30% 12%;
+  --card-border: 220 14% 90%;
+  --sidebar: 224 25% 97%;
+  --sidebar-foreground: 226 30% 12%;
+  --sidebar-border: 222 16% 89%;
+  --sidebar-primary: 243 52% 47%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 260 30% 93%;
-  --sidebar-accent-foreground: 260 30% 15%;
-  --sidebar-ring: 260 60% 55%;
-  --popover: 30 40% 97%;
-  --popover-foreground: 260 30% 15%;
-  --popover-border: 30 20% 88%;
-  --primary: 260 60% 55%;
+  --sidebar-accent: 226 22% 93%;
+  --sidebar-accent-foreground: 226 30% 12%;
+  --sidebar-ring: 243 52% 47%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 226 30% 12%;
+  --popover-border: 220 14% 88%;
+  --primary: 243 52% 47%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 170 50% 92%;
-  --secondary-foreground: 170 50% 20%;
-  --muted: 30 20% 93%;
-  --muted-foreground: 260 12% 39%;
-  --accent: 30 40% 93%;
-  --accent-foreground: 260 30% 15%;
-  --destructive: 0 72% 50%;
+  --secondary: 172 40% 93%;
+  --secondary-foreground: 174 55% 18%;
+  --muted: 220 16% 93%;
+  /* Escurecido (42%→40%) preservando o ajuste de contraste vindo da main. */
+  --muted-foreground: 226 12% 40%;
+  --accent: 224 22% 94%;
+  --accent-foreground: 226 30% 12%;
+  --destructive: 0 65% 45%;
   --destructive-foreground: 0 0% 100%;
-  --input: 260 15% 78%;
-  --ring: 260 60% 55%;
-  --chart-1: 260 60% 55%;
-  --chart-2: 330 65% 55%;
-  --chart-3: 170 55% 42%;
-  --chart-4: 42 80% 55%;
-  --chart-5: 15 80% 55%;
+  --input: 222 14% 80%;
+  --ring: 243 52% 47%;
+  --chart-1: 243 52% 50%;
+  --chart-2: 262 45% 55%;
+  --chart-3: 172 48% 38%;
+  --chart-4: 40 75% 48%;
+  --chart-5: 350 55% 48%;
   --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
   --font-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
   --font-mono: 'JetBrains Mono', Menlo, monospace;
   --radius: .625rem;
-  --shadow-2xs: 0px 1px 0px 0px hsl(260 30% 15% / 0.02);
-  --shadow-xs: 0px 1px 2px 0px hsl(260 30% 15% / 0.04);
-  --shadow-sm: 0px 1px 3px 0px hsl(260 30% 15% / 0.06), 0px 1px 2px -1px hsl(260 30% 15% / 0.04);
-  --shadow: 0px 2px 4px 0px hsl(260 30% 15% / 0.06), 0px 1px 2px -1px hsl(260 30% 15% / 0.04);
-  --shadow-md: 0px 4px 8px 0px hsl(260 30% 15% / 0.08), 0px 2px 4px -1px hsl(260 30% 15% / 0.04);
-  --shadow-lg: 0px 8px 16px 0px hsl(260 30% 15% / 0.10), 0px 4px 8px -1px hsl(260 30% 15% / 0.04);
-  --shadow-xl: 0px 16px 32px 0px hsl(260 30% 15% / 0.12), 0px 8px 16px -1px hsl(260 30% 15% / 0.04);
-  --shadow-2xl: 0px 24px 48px 0px hsl(260 30% 15% / 0.16);
+  --shadow-2xs: 0px 1px 0px 0px hsl(226 30% 12% / 0.02);
+  --shadow-xs: 0px 1px 2px 0px hsl(226 30% 12% / 0.04);
+  --shadow-sm: 0px 1px 3px 0px hsl(226 30% 12% / 0.06), 0px 1px 2px -1px hsl(226 30% 12% / 0.04);
+  --shadow: 0px 2px 4px 0px hsl(226 30% 12% / 0.06), 0px 1px 2px -1px hsl(226 30% 12% / 0.04);
+  --shadow-md: 0px 4px 8px 0px hsl(226 30% 12% / 0.08), 0px 2px 4px -1px hsl(226 30% 12% / 0.04);
+  --shadow-lg: 0px 8px 16px 0px hsl(226 30% 12% / 0.10), 0px 4px 8px -1px hsl(226 30% 12% / 0.04);
+  --shadow-xl: 0px 16px 32px 0px hsl(226 30% 12% / 0.12), 0px 8px 16px -1px hsl(226 30% 12% / 0.04);
+  --shadow-2xl: 0px 24px 48px 0px hsl(226 30% 12% / 0.16);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -85,40 +89,40 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  --background: 260 20% 8%;
-  --foreground: 30 20% 95%;
-  --border: 260 15% 18%;
-  --card: 260 18% 11%;
-  --card-foreground: 30 20% 95%;
-  --card-border: 260 15% 15%;
-  --sidebar: 260 18% 10%;
-  --sidebar-foreground: 30 20% 95%;
-  --sidebar-border: 260 15% 16%;
-  --sidebar-primary: 260 55% 65%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 260 15% 18%;
-  --sidebar-accent-foreground: 30 20% 95%;
-  --sidebar-ring: 260 55% 65%;
-  --popover: 260 18% 13%;
-  --popover-foreground: 30 20% 95%;
-  --popover-border: 260 15% 18%;
-  --primary: 260 55% 65%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 170 35% 18%;
-  --secondary-foreground: 170 40% 85%;
-  --muted: 260 10% 20%;
-  --muted-foreground: 30 10% 60%;
-  --accent: 260 12% 18%;
-  --accent-foreground: 30 20% 95%;
-  --destructive: 0 72% 50%;
+  --background: 228 24% 8%;
+  --foreground: 220 20% 96%;
+  --border: 226 16% 18%;
+  --card: 228 20% 11%;
+  --card-foreground: 220 20% 96%;
+  --card-border: 226 16% 15%;
+  --sidebar: 228 22% 9.5%;
+  --sidebar-foreground: 220 20% 96%;
+  --sidebar-border: 226 16% 16%;
+  --sidebar-primary: 240 58% 70%;
+  --sidebar-primary-foreground: 234 40% 12%;
+  --sidebar-accent: 226 16% 18%;
+  --sidebar-accent-foreground: 220 20% 96%;
+  --sidebar-ring: 240 58% 70%;
+  --popover: 228 20% 13%;
+  --popover-foreground: 220 20% 96%;
+  --popover-border: 226 16% 18%;
+  --primary: 240 58% 70%;
+  --primary-foreground: 234 40% 12%;
+  --secondary: 172 30% 16%;
+  --secondary-foreground: 172 35% 82%;
+  --muted: 226 14% 18%;
+  --muted-foreground: 222 12% 64%;
+  --accent: 226 16% 17%;
+  --accent-foreground: 220 20% 96%;
+  --destructive: 0 62% 52%;
   --destructive-foreground: 0 0% 100%;
-  --input: 260 12% 28%;
-  --ring: 260 55% 65%;
-  --chart-1: 260 55% 65%;
-  --chart-2: 330 55% 65%;
-  --chart-3: 170 45% 55%;
+  --input: 226 12% 26%;
+  --ring: 240 58% 70%;
+  --chart-1: 240 58% 72%;
+  --chart-2: 262 55% 70%;
+  --chart-3: 172 45% 55%;
   --chart-4: 42 70% 60%;
-  --chart-5: 15 70% 60%;
+  --chart-5: 350 60% 66%;
   --shadow-2xs: 0px 1px 0px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.10);
   --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.12), 0px 1px 2px -1px hsl(0 0% 0% / 0.08);
@@ -189,7 +193,7 @@
   }
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px -5px hsl(260 30% 15% / 0.1);
+    box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
   }
 
   .stagger-in > * {
@@ -213,20 +217,20 @@
     animation: glowPulse 2s ease-in-out infinite;
   }
   @keyframes glowPulse {
-    0%, 100% { box-shadow: 0 0 0 0 hsl(260 60% 55% / 0.2); }
-    50% { box-shadow: 0 0 0 8px hsl(260 60% 55% / 0); }
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: hsl(260 10% 70% / 0.3); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(260 10% 60% / 0.5); }
+  ::-webkit-scrollbar-thumb { background: hsl(222 10% 70% / 0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(222 10% 60% / 0.5); }
 
   .count-up { animation: countFade 0.5s ease-out; }
   @keyframes countFade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(260 60% 55%), hsl(330 65% 55%));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -265,7 +269,7 @@
   @keyframes celebratePop { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
 
   *:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; border-radius: inherit; }
-  ::selection { background: hsl(260 60% 55% / 0.2); color: hsl(var(--foreground)); }
+  ::selection { background: hsl(var(--primary) / 0.2); color: hsl(var(--foreground)); }
 
   .font-display { font-family: var(--font-display); font-feature-settings: "lnum", "ss01"; letter-spacing: -0.01em; }
   .font-serif-editorial { font-family: var(--font-serif); font-feature-settings: "lnum"; }
@@ -840,7 +844,7 @@
   select {
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='hsl(260 10%25 45%25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='hsl(226 12%25 42%25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     padding-right: 2.5rem !important;
@@ -862,7 +866,7 @@
     box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
   }
   .dark select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='hsl(30 10%25 60%25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='hsl(222 12%25 64%25)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-color: hsl(var(--card));
   }
 

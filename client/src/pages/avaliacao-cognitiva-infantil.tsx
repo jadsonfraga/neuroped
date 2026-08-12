@@ -1253,7 +1253,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
   return (
     <div className="space-y-5 pb-8">
       {/* Header */}
-      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 sm:p-6 shadow-sm backdrop-blur">
+      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 sm:p-6 shadow-sm backdrop-blur">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl"
@@ -1270,7 +1270,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
             <Badge className="mb-2 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300 hover:bg-violet-100">
               avaliação cognitiva · 2–19 anos
             </Badge>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Avaliação Cognitiva Infantil
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -1367,7 +1367,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
                   const Icon = d.icon;
                   return <Icon className={`h-5 w-5 ${d.color}`} />;
                 })()}
-                <h2 className="text-base font-black text-foreground">
+                <h2 className="text-base font-bold text-foreground">
                   {DOMAINS.find((x) => x.id === activeDomain)?.label}
                 </h2>
                 <Badge variant="outline" className="ml-auto text-[11px]">

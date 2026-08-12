@@ -6,7 +6,7 @@ const UPDATED = "julho de 2026";
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-1.5">
-      <h2 className="text-sm font-black text-foreground">{title}</h2>
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       <div className="text-[13px] leading-relaxed text-muted-foreground">{children}</div>
     </section>
   );

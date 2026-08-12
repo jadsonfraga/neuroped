@@ -435,7 +435,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           "w-64",
         ].join(" ")}
         style={{
-          boxShadow: mobileOpen ? "0 0 60px hsl(260 30% 15% / 0.25)" : undefined,
+          boxShadow: mobileOpen ? "0 0 60px hsl(var(--foreground) / 0.25)" : undefined,
         }}
       >
         {/* Logo + close button on mobile */}

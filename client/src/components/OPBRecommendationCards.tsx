@@ -94,7 +94,7 @@ export function OPBRecommendationCards({
               </span>
               <Badge
                 variant="outline"
-                className={`max-w-[70%] whitespace-normal text-right text-[10px] font-black uppercase tracking-[0.08em] ${visual.badge}`}
+                className={`max-w-[70%] whitespace-normal text-right text-[10px] font-semibold uppercase tracking-[0.08em] ${visual.badge}`}
               >
                 {visual.label}
               </Badge>
@@ -119,7 +119,7 @@ export function OPBRecommendationCards({
             <section aria-label="Pergunta clínica principal">
               <div className="mb-1.5 flex items-center gap-1.5 text-primary">
                 <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                <h4 className="text-[10px] font-black uppercase tracking-[0.1em]">
+                <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em]">
                   Pergunta principal
                 </h4>
               </div>
@@ -132,7 +132,7 @@ export function OPBRecommendationCards({
               aria-label="O que será observado"
               className="rounded-2xl border border-border/60 bg-background/65 p-3"
             >
-              <h4 className="text-[10px] font-black uppercase tracking-[0.1em] text-muted-foreground">
+              <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 O que será observado
               </h4>
               <p className="mt-1 text-xs leading-relaxed text-foreground/85">
@@ -143,7 +143,7 @@ export function OPBRecommendationCards({
             <section aria-label="Justificativa clínica" className="flex-1">
               <div className="mb-1.5 flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
                 <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                <h4 className="text-[10px] font-black uppercase tracking-[0.1em]">
+                <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em]">
                   Por que ajuda neste perfil
                 </h4>
               </div>
@@ -180,7 +180,7 @@ export function OPBRecommendationCards({
       <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-card to-chart-2/[0.05] p-4">
         <p
           id="opb-recommendations-title"
-          className="text-sm font-black text-foreground"
+          className="text-sm font-semibold text-foreground"
         >
           Pódio clínico para {recommendations.ageRange}
         </p>

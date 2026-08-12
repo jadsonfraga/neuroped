@@ -1,3 +1,5 @@
+import { escapeHtml } from "./htmlEscape";
+
 export interface ScaleResponseItem {
   question: string;
   answer: string;
@@ -93,15 +95,6 @@ export function buildScaleResponseText(
 
   text += "Registro descritivo para revisão do profissional responsável.\n";
   return text;
-}
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
 }
 
 export function buildScaleResponsePrintHtml(

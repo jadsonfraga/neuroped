@@ -474,7 +474,7 @@ export default function CaaPage() {
         </div>
       )}
 
-      <section className="relative overflow-hidden rounded-[2rem] border border-amber-400/30 bg-gradient-to-br from-slate-950 via-primary to-rose-950 p-5 text-white shadow-xl sm:p-7">
+      <section className="relative overflow-hidden rounded-3xl border border-amber-400/30 bg-gradient-to-br from-slate-950 via-primary to-rose-950 p-5 text-white shadow-xl sm:p-7">
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
         <div className="relative grid gap-5 lg:grid-cols-[1.4fr_.6fr]">
           <div>
@@ -489,7 +489,7 @@ export default function CaaPage() {
                 {CAA_FULL_QUICK.length} mensagens rápidas
               </Badge>
             </div>
-            <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight sm:text-4xl">
+            <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
               <span className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-300/40 bg-white/10">
                 <MessageCircle className="h-7 w-7 text-amber-200" aria-hidden="true" />
               </span>
@@ -521,11 +521,11 @@ export default function CaaPage() {
 
           <div className="grid grid-cols-2 gap-2 self-end">
             <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
-              <p className="text-2xl font-black text-amber-200">{Object.keys(board).length}</p>
+              <p className="text-2xl font-bold text-amber-200">{Object.keys(board).length}</p>
               <p className="text-xs text-white/70">categorias</p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
-              <p className="text-2xl font-black text-amber-200">2×</p>
+              <p className="text-2xl font-bold text-amber-200">2×</p>
               <p className="text-xs text-white/70">vocabulário-base</p>
             </div>
             <div className="col-span-2 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
@@ -545,7 +545,7 @@ export default function CaaPage() {
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Núcleo rápido</p>
-            <h2 className="text-lg font-black">Palavras essenciais sempre à mão</h2>
+            <h2 className="text-lg font-bold">Palavras essenciais sempre à mão</h2>
           </div>
           <span className="hidden text-xs text-muted-foreground sm:inline">posição estável · acesso rápido</span>
         </div>
@@ -573,7 +573,7 @@ export default function CaaPage() {
                   <p className="text-xs font-bold uppercase tracking-[0.15em] text-amber-700 dark:text-amber-300">
                     Suporte visual
                   </p>
-                  <h2 className="text-lg font-black">Primeiro → Depois</h2>
+                  <h2 className="text-lg font-bold">Primeiro → Depois</h2>
                   <p className="text-xs text-muted-foreground">
                     Toque em um cartão para preencher a primeira etapa e depois em outro para a segunda.
                   </p>
@@ -627,7 +627,7 @@ export default function CaaPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">Barra de mensagem</p>
-              <h2 className="text-lg font-black">Minha frase</h2>
+              <h2 className="text-lg font-bold">Minha frase</h2>
             </div>
             <span className="text-xs text-muted-foreground">{activeUsage.hint}</span>
           </div>
@@ -692,7 +692,7 @@ export default function CaaPage() {
           <CardContent className="space-y-4 p-4">
             <div className="rounded-2xl border border-primary/15 bg-primary/5 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Modo de uso</p>
-              <p className="mt-1 text-sm font-black">{activeUsage.label} · {activeUsage.badge}</p>
+              <p className="mt-1 text-sm font-semibold">{activeUsage.label} · {activeUsage.badge}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{activeUsage.description}</p>
               <div className="mt-3 grid grid-cols-3 gap-1.5" role="group" aria-label="Selecionar modo de uso da CAA">
                 {(Object.keys(usageModes) as UsageMode[]).map((key) => (
@@ -886,7 +886,7 @@ export default function CaaPage() {
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary">Prancha ativa</p>
-              <h2 className="text-xl font-black">{title}</h2>
+              <h2 className="text-xl font-bold">{title}</h2>
             </div>
             <span className="text-xs text-muted-foreground">{visibleItems.length} cartões · toque para ouvir</span>
           </div>
@@ -937,7 +937,7 @@ export default function CaaPage() {
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" aria-hidden="true" />
               <div>
-                <h2 id="caa-quick-title" className="text-lg font-black">Mensagens rápidas</h2>
+                <h2 id="caa-quick-title" className="text-lg font-bold">Mensagens rápidas</h2>
                 <p className="text-xs text-muted-foreground">40 frases previsíveis para situações frequentes.</p>
               </div>
             </div>
@@ -960,7 +960,7 @@ export default function CaaPage() {
             <section className="space-y-3 pt-2" aria-labelledby="caa-message-history">
               <div className="flex items-center gap-2">
                 <History className="h-4 w-4 text-primary" aria-hidden="true" />
-                <h2 id="caa-message-history" className="text-lg font-black">Mensagens recentes</h2>
+                <h2 id="caa-message-history" className="text-lg font-bold">Mensagens recentes</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 {messageHist.map((message) => (

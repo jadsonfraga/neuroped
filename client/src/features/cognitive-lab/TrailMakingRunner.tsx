@@ -299,7 +299,7 @@ export function TrailMakingRunner() {
                       type="button"
                       aria-label={`alvo ${r.sequence[i]}`}
                       onPointerDown={() => tapTarget(i)}
-                      className={`absolute flex h-[12%] w-[12%] items-center justify-center rounded-full border-2 text-sm font-black transition ${
+                      className={`absolute flex h-[12%] w-[12%] items-center justify-center rounded-full border-2 text-sm font-semibold transition ${
                         done
                           ? "border-primary/60 bg-primary/30 text-muted-foreground"
                           : "border-border bg-card"
@@ -308,7 +308,7 @@ export function TrailMakingRunner() {
                     >
                       {r.sequence[i]}
                       {done && (
-                        <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[9px] font-black text-primary-foreground">
+                        <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
                           {i + 1}
                         </span>
                       )}

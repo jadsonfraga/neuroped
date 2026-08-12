@@ -33,7 +33,7 @@ export function PremiumVisualPanel({
         <Badge variant="outline" className="mb-2 w-fit bg-background/75 text-[10px] uppercase tracking-[0.14em] backdrop-blur">
           {badge}
         </Badge>
-        <p className="text-sm font-black leading-tight text-foreground sm:text-base">{title}</p>
+        <p className="text-sm font-semibold leading-tight text-foreground sm:text-base">{title}</p>
         <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">{subtitle}</p>
       </div>
     </aside>
