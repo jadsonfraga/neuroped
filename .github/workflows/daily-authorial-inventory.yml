@@ -32,6 +32,7 @@ on:
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 concurrency:
   group: neuroped-daily-authorial-inventory
@@ -39,7 +40,7 @@ concurrency:
 
 jobs:
   generate-and-publish:
-    name: Gerar, auditar, incorporar e rastrear
+    name: Gerar, auditar, preparar revisão e rastrear
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -252,7 +253,7 @@ jobs:
           }
           NODE
 
-      - name: Executar catraca técnica completa antes de alterar a main
+      - name: Executar catraca técnica completa antes de preparar a revisão
         run: npm run verify
 
       - name: Preservar artefato auditável da execução
@@ -263,51 +264,64 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Incorporar o registro na branch principal com recuperação de concorrência
+      - name: Publicar branch de revisão e abrir PR draft
         id: publish
+        env:
+          AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
         run: |
           set -euo pipefail
+          [ -n "${AUTOMATION_TOKEN:-}" ] || {
+            echo "::error::NEUROPED_AUTOMATION_TOKEN é obrigatório para versionar o rascunho em PR sem bypass da main."
+            exit 1
+          }
+          export GH_TOKEN="$AUTOMATION_TOKEN"
+          branch="automation/daily-authorial-${NEUROPED_GENERATION_DATE}"
+
+          existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --base main --head "$branch" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing_pr" ]; then
+            remote_sha="$(git ls-remote origin "refs/heads/$branch" | awk '{print $1}')"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "commit=${remote_sha:-$(git rev-parse HEAD)}" >> "$GITHUB_OUTPUT"
+            echo "pr=$existing_pr" >> "$GITHUB_OUTPUT"
+            echo "PR #$existing_pr já representa o inventário da data; nenhuma mutação automática será feita sobre revisão humana em andamento."
+            exit 0
+          fi
+
           git add client/src/data/daily-authorial
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-            echo "Inventário já incorporado; execução idempotente concluída."
+            echo "pr=" >> "$GITHUB_OUTPUT"
+            echo "Inventário já está na main; execução idempotente concluída."
             exit 0
           fi
 
           git config user.name "NeuroPed Daily Bot"
           git config user.email "neuroped-daily-bot@users.noreply.github.com"
-          git commit -m "feat(escalas): inventário autoral diário ${NEUROPED_GENERATION_DATE}"
+          git commit -m "feat(escalas): preparar inventário autoral diário ${NEUROPED_GENERATION_DATE}"
+          git push origin "HEAD:refs/heads/$branch"
 
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              echo "changed=true" >> "$GITHUB_OUTPUT"
-              echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
+          cat > /tmp/daily-pr-body.md <<EOF
+          ## Inventário autoral diário — ${NEUROPED_GENERATION_DATE}
 
-            echo "Push concorrente detectado; tentativa ${attempt}/3 de reconciliação."
-            git fetch origin main
-            if git ls-tree -r --name-only origin/main client/src/data/daily-authorial \
-              | grep -Eq "^client/src/data/daily-authorial/${NEUROPED_GENERATION_DATE}-.*\\.json$"; then
-              echo "Outro processo já incorporou o inventário da data."
-              echo "changed=false" >> "$GITHUB_OUTPUT"
-              echo "commit=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
+          Artefato gerado e validado automaticamente, preservado como rascunho para revisão humana.
 
-            if ! git rebase origin/main; then
-              git rebase --abort || true
-              if [ "$attempt" -eq 3 ]; then
-                echo "::error::Não foi possível reconciliar a branch principal."
-                exit 1
-              fi
-            fi
-            sleep $((attempt * 20))
-          done
+          - Modelo: ${{ steps.verify.outputs.model }}
+          - Contingência: ${{ steps.verify.outputs.contingency }}
+          - Arquivo: ${{ steps.verify.outputs.file }}
+          - Status esperado: rascunho_revisao
 
-          echo "::error::Falha persistente ao publicar na branch principal."
-          exit 1
+          Não promover para uso clínico operacional sem revisar redação, segurança, utilidade, originalidade e coerência com o restante do catálogo. A publicação no aplicativo exige status revisado_clinicamente.
+          EOF
+
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --draft \
+            --title "chore(clinical): revisar inventário autoral ${NEUROPED_GENERATION_DATE}" \
+            --body-file /tmp/daily-pr-body.md)"
+          pr_number="$(gh pr view "$pr_url" --repo "$GITHUB_REPOSITORY" --json number --jq .number)"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "pr=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "Rascunho encaminhado ao PR #$pr_number; main permaneceu inalterada."
 
       - name: Resumo operacional
         if: always()
@@ -319,7 +333,8 @@ jobs:
             echo "- **Arquivo:** ${{ steps.verify.outputs.file || 'não confirmado' }}"
             echo "- **Modelo:** ${{ steps.verify.outputs.model || steps.current.outputs.model || 'não confirmado' }}"
             echo "- **Contingência:** ${{ steps.verify.outputs.contingency || steps.current.outputs.contingency || 'não confirmado' }}"
-            echo "- **Commit:** ${{ steps.publish.outputs.commit || github.sha }}"
+            echo "- **Commit de revisão:** ${{ steps.publish.outputs.commit || github.sha }}"
+            echo "- **PR de revisão:** ${{ steps.publish.outputs.pr || 'não criado' }}"
             echo "- **Execução:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -354,7 +369,7 @@ jobs:
         run: |
           set -euo pipefail
           title="[automação] Inventário autoral diário — falha persistente"
-          body="A geração, contingência, auditoria ou publicação diária não foi concluída. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. O watchdog externo poderá realizar nova tentativa; manter este incidente aberto até recuperação automática."
+          body="A geração, contingência, auditoria ou preparação da revisão diária não foi concluída. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Manter este incidente aberto até recuperação automática."
           issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
           if [ -n "$issue" ]; then
             gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"

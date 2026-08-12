@@ -113,10 +113,24 @@ export const dailyAuthorialCatalogErrors = loaded
   .filter(({ value }) => !isDailyInventory(value))
   .map(({ path }) => `Registro autoral inválido: ${path}`);
 
-export const dailyAuthorialCatalog = loaded
+/**
+ * Inventário completo para auditoria/revisão interna. Rascunhos e arquivados
+ * permanecem rastreáveis no repositório, mas não viram conteúdo clínico
+ * operacional só por terem sido gerados automaticamente.
+ */
+export const dailyAuthorialReviewCatalog = loaded
   .filter(
     (entry): entry is { path: string; value: DailyAuthorialInventory } =>
       isDailyInventory(entry.value),
   )
   .map(({ value }) => value)
   .sort((a, b) => b.generatedOn.localeCompare(a.generatedOn));
+
+/**
+ * Catálogo operacional exibido no app. Publicação clínica exige promoção
+ * humana explícita para `revisado_clinicamente`; rascunhos de automação e itens
+ * arquivados nunca atravessam esta fronteira.
+ */
+export const dailyAuthorialCatalog = dailyAuthorialReviewCatalog.filter(
+  (record) => record.status === "revisado_clinicamente",
+);
