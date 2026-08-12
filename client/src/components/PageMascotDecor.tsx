@@ -72,6 +72,10 @@ function stablePathHash(path: string): number {
   return hash >>> 0;
 }
 
+function getPathname(location: string): string {
+  return location.split("?")[0] || "/";
+}
+
 function getLegacyMascot(path: string): LegacyMascot {
   const routePool = routePools.find(({ test }) => test.test(path))?.mascots ?? defaultLegacyPool;
   return routePool[stablePathHash(path) % routePool.length];
@@ -95,19 +99,20 @@ function hasInlineNino(path: string): boolean {
 export function PageMascotDecor() {
   const [location] = useLocation();
   const reduceMotion = useReducedMotion();
-  const legacy = getLegacyMascot(location);
-  const showGlobalNino = !hasInlineNino(location);
+  const pathname = getPathname(location);
+  const legacy = getLegacyMascot(pathname);
+  const showGlobalNino = !hasInlineNino(pathname);
 
   return (
     <div
       className="pointer-events-none select-none print:hidden"
       aria-hidden="true"
       data-testid="page-mascot-decor"
-      data-route={location}
+      data-route={pathname}
     >
       {showGlobalNino && (
         <motion.div
-          key={`nino-${location}`}
+          key={`nino-${pathname}`}
           initial={reduceMotion ? false : { opacity: 0, x: 10, y: -4, scale: 0.94 }}
           animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
@@ -131,7 +136,7 @@ export function PageMascotDecor() {
       )}
 
       <motion.div
-        key={`legacy-${location}-${legacy.id}`}
+        key={`legacy-${pathname}-${legacy.id}`}
         initial={reduceMotion ? false : { opacity: 0, x: 8, y: 8, scale: 0.94 }}
         animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
         transition={{ duration: 0.38, ease: "easeOut", delay: 0.04 }}
@@ -147,7 +152,7 @@ export function PageMascotDecor() {
             height="160"
             loading="lazy"
             decoding="async"
-            className={`h-9 w-9 rounded-xl object-cover opacity-72 sm:h-10 sm:w-10 md:h-12 md:w-12 md:opacity-78 ${legacy.objectPosition ?? "object-center"}`}
+            className={`h-9 w-9 rounded-xl object-cover opacity-[0.72] sm:h-10 sm:w-10 md:h-12 md:w-12 md:opacity-[0.78] ${legacy.objectPosition ?? "object-center"}`}
           />
         </div>
       </motion.div>
