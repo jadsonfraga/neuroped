@@ -108,7 +108,9 @@ export async function listFiles(patientId?: string): Promise<FileMetadata[]> {
   const url = patientId ? `/api/files?patientId=${encodeURIComponent(patientId)}` : "/api/files";
   const r = await authFetch(url);
   if (!r.ok) throw new Error("Falha ao listar arquivos");
-  return r.json();
+  const payload = await r.json();
+  // API paginada retorna { data, pagination }; aceita array puro por robustez.
+  return Array.isArray(payload) ? payload : (payload?.data ?? []);
 }
 
 /**
