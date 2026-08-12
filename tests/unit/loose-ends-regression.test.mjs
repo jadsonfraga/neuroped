@@ -145,6 +145,11 @@ for (const path of [
   "audit-filter-random-patients.mjs",
   "add-clinical-report.cjs",
   "generate-report.cjs",
+  "fix-audit-issues.mjs",
+  "add-child-respondent.mjs",
+  "audit-advanced-250.mjs",
+  "audit-230-integrated.mjs",
+  "audit-250-combinations.mjs",
 ]) {
   assert.equal(existsSync(resolve(root, path)), false, `${path} não deve existir na raiz ativa`);
 }
