@@ -37,6 +37,15 @@ interface MembershipRow {
   clinic_status: "active" | "suspended" | "closed";
 }
 
+export interface SaasAuditParams {
+  clinicId?: string | null;
+  actorUserId: string;
+  action: string;
+  targetType: string;
+  targetId?: string | null;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
 export function tenantJson(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -103,22 +112,21 @@ export function membershipCanAccessFinance(membership: ClinicMembership): boolea
   return membership.clinicStatus === "active" && canAccessClinicFinance(membership.role);
 }
 
-export async function writeSaasAudit(
+/**
+ * Prepara o INSERT de auditoria sem executá-lo. Isso permite incluir a trilha no
+ * mesmo D1.batch() da mutação que ela descreve, evitando o estado impossível
+ * "dado persistido + resposta 500 porque só o audit log falhou".
+ */
+export function prepareSaasAudit(
   db: D1Database,
-  params: {
-    clinicId?: string | null;
-    actorUserId: string;
-    action: string;
-    targetType: string;
-    targetId?: string | null;
-    metadata?: Record<string, string | number | boolean | null>;
-  },
-): Promise<void> {
-  await db
+  params: SaasAuditParams,
+  createdAt = new Date().toISOString(),
+) {
+  return db
     .prepare(
       `INSERT INTO saas_audit_log
-        (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       crypto.randomUUID(),
@@ -128,6 +136,13 @@ export async function writeSaasAudit(
       params.targetType,
       params.targetId ?? null,
       params.metadata ? JSON.stringify(params.metadata) : null,
-    )
-    .run();
+      createdAt,
+    );
+}
+
+export async function writeSaasAudit(
+  db: D1Database,
+  params: SaasAuditParams,
+): Promise<void> {
+  await prepareSaasAudit(db, params).run();
 }
