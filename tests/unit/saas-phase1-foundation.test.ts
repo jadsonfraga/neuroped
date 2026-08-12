@@ -42,6 +42,26 @@ const env = {
 };
 assert.equal(clinicalCryptoReady(env), true);
 assert.equal(clinicalCryptoReady({ CLINICAL_DATA_KEY: dataKeyV2 }), false, "index key é obrigatória");
+assert.equal(
+  clinicalCryptoReady({
+    CLINICAL_DATA_KEY: dataKeyV2,
+    CLINICAL_DATA_KEY_ID: "k2",
+    CLINICAL_INDEX_KEY: dataKeyV2,
+  }),
+  false,
+  "blind index deve usar secret independente da data key",
+);
+assert.equal(
+  clinicalCryptoReady({
+    CLINICAL_DATA_KEY: dataKeyV2,
+    CLINICAL_DATA_KEY_ID: "k2",
+    CLINICAL_DATA_KEY_PREVIOUS: dataKeyV1,
+    CLINICAL_DATA_KEY_PREVIOUS_ID: "k2",
+    CLINICAL_INDEX_KEY: indexKey,
+  }),
+  false,
+  "key IDs atual/anterior não podem colidir",
+);
 assert.equal(currentClinicalEncryptionVersion(env), "clinical-v1:k2");
 
 const clinicA = "clinic-a";
@@ -146,6 +166,8 @@ const tenantCrypto = readFileSync(
 assert.match(tenantCrypto, /CLINICAL_INDEX_KEY/);
 assert.match(tenantCrypto, /CLINICAL_DATA_KEY_PREVIOUS/);
 assert.match(tenantCrypto, /HKDF/);
+assert.match(tenantCrypto, /CLINICAL_KEY_ID_COLLISION/);
+assert.match(tenantCrypto, /CLINICAL_KEY_SEPARATION_REQUIRED/);
 assert.doesNotMatch(tenantCrypto, /NEUROPED_JWT_SECRET/);
 
 const livePatientsApi = readFileSync(
