@@ -144,7 +144,8 @@ export default function AssinaturaDigitalPage() {
     setRegistryStatus("saving");
     const operation = registrySaveQueue.current
       .catch(() => undefined)
-      .then(() => secureSet(SECURE_REGISTRY_KEY, snapshot));
+      .then(() => secureSet(SECURE_REGISTRY_KEY, snapshot))
+      .catch(() => false);
     registrySaveQueue.current = operation;
     void operation.then((stored) => {
       if (revision === registryRevision.current) {

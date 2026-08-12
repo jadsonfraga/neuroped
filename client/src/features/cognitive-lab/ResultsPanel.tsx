@@ -35,9 +35,13 @@ export function ResultsPanel({ session }: { session: CognitiveSession }) {
   useEffect(() => {
     let active = true;
     setPersistence("saving");
-    void saveSession(session).then((stored) => {
-      if (active) setPersistence(stored ? "saved" : "error");
-    });
+    void saveSession(session)
+      .then((stored) => {
+        if (active) setPersistence(stored ? "saved" : "error");
+      })
+      .catch(() => {
+        if (active) setPersistence("error");
+      });
     return () => { active = false; };
   }, [session]);
 

@@ -279,7 +279,9 @@ export function registerFileRoutes(app: Express): void {
    */
   app.get("/api/files", requireAuth, async (req: Request, res: Response) => {
     const patientId = typeof req.query.patientId === "string" ? req.query.patientId : null;
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    // Clamp inferior obrigatório: LIMIT negativo no SQLite significa "sem
+    // limite" e furaria o teto de 100 itens por página.
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
     // Filtro de deletados na query (não pós-limit) para páginas completas.
