@@ -12,8 +12,8 @@ const liveEventsApi = read("functions/api/live/events/index.ts");
 const migrationWorkflow = read(".github/workflows/saas-phase1-d1-migration.yml");
 
 // Travas estáticas: autorização do handler não pode confundir "não conceder owner"
-// com "poder demover owner". Verificamos a propriedade sem exigir uma forma
-// sintática específica de optional chaining.
+// com "poder demover owner". A mutação e a auditoria também devem permanecer
+// acopladas no mesmo batch, enquanto triggers protegem a última linha de defesa.
 assert.match(
   membersApi,
   /currentMembership\?\.active === 1[\s\S]{0,140}currentMembership\.role === "owner"[\s\S]{0,140}auth\.membership\.role !== "owner"/,
@@ -21,18 +21,25 @@ assert.match(
 assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
 assert.match(membersApi, /otherActiveOwnerCount/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
-assert.match(membersApi, /result\.meta\?\.changes/);
+assert.match(membersApi, /auth\.db\.batch\(/);
+assert.match(membersApi, /prepareSaasAudit\(/);
+assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
+assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit/);
 
 // Clinical LIVE reutiliza o contrato canônico, não aceita provenance_source livre
-// e mantém a cadeia de correções com estado explícito.
+// e mantém a cadeia de correções com estado explícito e auditoria atômica.
 assert.match(liveEventsApi, /clinicalEventInputSchema/);
 assert.match(liveEventsApi, /clinicalSources/);
 assert.match(liveEventsApi, /PROVENANCE_SOURCES\.has\(provenanceSource\)/);
 assert.match(liveEventsApi, /Evento canônico importado deve ser normalizado/);
 assert.match(liveEventsApi, /SET status = 'corrected'/);
 assert.match(liveEventsApi, /EVENT_ALREADY_SUPERSEDED/);
+assert.match(liveEventsApi, /STALE_SUPERSESSION/);
+assert.match(liveEventsApi, /prepareSaasAudit\(db, auditParams, true\)/);
 assert.match(liveEventsApi, /payload clínico deve ser um objeto JSON/);
 assert.match(liveEventsApi, /encounterId deve ser um identificador opaco/);
+assert.doesNotMatch(liveEventsApi, /await writeSaasAudit/);
 assert.doesNotMatch(liveEventsApi, /const provenanceSource = cleanText\(body\.provenanceSource, 240\)/);
 
 assert.match(hardeningMigration, /ux_live_clinical_events_supersedes_once/);
@@ -131,4 +138,4 @@ assert.throws(
 );
 
 db.close();
-console.log("✓ SaaS hardening: owner, provenance e supersessão protegidos no banco e handler");
+console.log("✓ SaaS hardening: owner, provenance, supersessão e auditoria atômica protegidos");
