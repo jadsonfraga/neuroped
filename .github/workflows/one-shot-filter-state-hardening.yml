@@ -30,6 +30,9 @@ jobs:
           def line_start(source: str, index: int) -> int:
               return source.rfind("\n", 0, index) + 1
 
+          def block(lines: list[str], indent: str = "") -> str:
+              return "\n".join(indent + line for line in lines) + "\n"
+
           import_anchor = 'import { buildFilterCsv, buildFilterPdf, downloadBlob, type FilterExportRow, type FilterExportMeta } from "@/lib/filterExport";\n'
           import_line = 'import { loadProtectedFilterState, saveProtectedFilterState } from "@/lib/filterStateStorage";\n'
           assert import_anchor in text, "import anchor ausente"
@@ -41,21 +44,22 @@ jobs:
           persisted_block = text[persisted_start:component_start]
           assert 'const FILTER_STATE_KEY = "np_filtro_state_v1";' in persisted_block
           assert "function loadFilterState()" in persisted_block
-          new_persisted = '''// Estado clínico do filtro permanece apenas no cofre cifrado da sessão.
-// A antiga chave em localStorage é migrada uma única vez pelo helper.
-interface PersistedFilter {
-  search?: string;
-  queixas?: string[];
-  age?: string | null;
-  respondente?: ScaleEntry["respondente"][number] | null;
-  communication?: "verbal" | "nonverbal" | null;
-  literacy?: "literate" | "preliterate" | null;
-  assessment?: "diagnostic" | "monitoring" | null;
-  signals?: string[];
-  availability?: AvailabilityMode;
-}
-
-'''
+          new_persisted = block([
+              "// Estado clínico do filtro permanece apenas no cofre cifrado da sessão.",
+              "// A antiga chave em localStorage é migrada uma única vez pelo helper.",
+              "interface PersistedFilter {",
+              "  search?: string;",
+              "  queixas?: string[];",
+              "  age?: string | null;",
+              '  respondente?: ScaleEntry["respondente"][number] | null;',
+              '  communication?: "verbal" | "nonverbal" | null;',
+              '  literacy?: "literate" | "preliterate" | null;',
+              '  assessment?: "diagnostic" | "monitoring" | null;',
+              "  signals?: string[];",
+              "  availability?: AvailabilityMode;",
+              "}",
+              "",
+          ])
           text = text[:persisted_start] + new_persisted + text[component_start:]
 
           flash_index = text.index("const flashMode = isFlashRoute();")
@@ -66,57 +70,58 @@ interface PersistedFilter {
           assert "loadFilterState" in old_state
           assert "availabilityMode" in old_state
           indent = text[state_start:flash_index]
-          new_state = f'''{indent}const flashMode = isFlashRoute();
-{indent}const [filterStateReady, setFilterStateReady] = useState(flashMode);
-{indent}const [search, setSearch] = useState<string>("");
-{indent}const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);
-{indent}const [selectedAge, setSelectedAge] = useState<string | null>(null);
-{indent}const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);
-{indent}const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(null);
-{indent}const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);
-{indent}const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);
-{indent}const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
-{indent}const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>("complete");
-'''
+          new_state = block([
+              "const flashMode = isFlashRoute();",
+              "const [filterStateReady, setFilterStateReady] = useState(flashMode);",
+              'const [search, setSearch] = useState<string>("");',
+              "const [selectedQueixas, setSelectedQueixas] = useState<string[]>([]);",
+              "const [selectedAge, setSelectedAge] = useState<string | null>(null);",
+              'const [selectedRespondente, setSelectedRespondente] = useState<ScaleEntry["respondente"][number] | null>(null);',
+              'const [selectedCommunication, setSelectedCommunication] = useState<"verbal" | "nonverbal" | null>(null);',
+              'const [selectedLiteracy, setSelectedLiteracy] = useState<"literate" | "preliterate" | null>(null);',
+              'const [selectedAssessmentType, setSelectedAssessmentType] = useState<"diagnostic" | "monitoring" | null>(null);',
+              "const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);",
+              'const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>("complete");',
+          ], indent)
           text = text[:state_start] + new_state + text[state_end:]
 
           marker_index = text.index("sessionStorage.removeItem(FLASH_STORAGE_KEY)", state_start)
-          effect_token = "useEffect(() => {"
-          effect_index = text.rfind(effect_token, state_start, marker_index)
+          effect_index = text.rfind("useEffect(() => {", state_start, marker_index)
           assert effect_index > state_start, "flash cleanup effect ausente"
           effect_start = line_start(text, effect_index)
           effect_indent = text[effect_start:effect_index]
-          hydrate = f'''{effect_indent}useEffect(() => {{
-{effect_indent}  if (flashMode) return;
-{effect_indent}  let active = true;
-{effect_indent}  void (async () => {{
-{effect_indent}    const saved = await loadProtectedFilterState<PersistedFilter>();
-{effect_indent}    if (!active) return;
-{effect_indent}    if (saved) {{
-{effect_indent}      if (typeof saved.search === "string") setSearch(saved.search);
-{effect_indent}      if (Array.isArray(saved.queixas)) setSelectedQueixas(saved.queixas.filter((item): item is string => typeof item === "string"));
-{effect_indent}      if (typeof saved.age === "string" || saved.age === null) setSelectedAge(saved.age ?? null);
-{effect_indent}      if (typeof saved.respondente === "string" || saved.respondente === null) {{
-{effect_indent}        setSelectedRespondente((saved.respondente ?? null) as ScaleEntry["respondente"][number] | null);
-{effect_indent}      }}
-{effect_indent}      if (saved.communication === "verbal" || saved.communication === "nonverbal" || saved.communication === null) {{
-{effect_indent}        setSelectedCommunication(saved.communication ?? null);
-{effect_indent}      }}
-{effect_indent}      if (saved.literacy === "literate" || saved.literacy === "preliterate" || saved.literacy === null) {{
-{effect_indent}        setSelectedLiteracy(saved.literacy ?? null);
-{effect_indent}      }}
-{effect_indent}      if (saved.assessment === "diagnostic" || saved.assessment === "monitoring" || saved.assessment === null) {{
-{effect_indent}        setSelectedAssessmentType(saved.assessment ?? null);
-{effect_indent}      }}
-{effect_indent}      if (Array.isArray(saved.signals)) setSelectedSignalIds(saved.signals.filter((item): item is string => typeof item === "string"));
-{effect_indent}      if (saved.availability === "all" || saved.availability === "complete") setAvailabilityMode(saved.availability);
-{effect_indent}    }}
-{effect_indent}    setFilterStateReady(true);
-{effect_indent}  }})();
-{effect_indent}  return () => {{ active = false; }};
-{effect_indent}}}, [flashMode]);
-
-'''
+          hydrate = block([
+              "useEffect(() => {",
+              "  if (flashMode) return;",
+              "  let active = true;",
+              "  void (async () => {",
+              "    const saved = await loadProtectedFilterState<PersistedFilter>();",
+              "    if (!active) return;",
+              "    if (saved) {",
+              '      if (typeof saved.search === "string") setSearch(saved.search);',
+              '      if (Array.isArray(saved.queixas)) setSelectedQueixas(saved.queixas.filter((item): item is string => typeof item === "string"));',
+              '      if (typeof saved.age === "string" || saved.age === null) setSelectedAge(saved.age ?? null);',
+              '      if (typeof saved.respondente === "string" || saved.respondente === null) {',
+              '        setSelectedRespondente((saved.respondente ?? null) as ScaleEntry["respondente"][number] | null);',
+              "      }",
+              '      if (saved.communication === "verbal" || saved.communication === "nonverbal" || saved.communication === null) {',
+              "        setSelectedCommunication(saved.communication ?? null);",
+              "      }",
+              '      if (saved.literacy === "literate" || saved.literacy === "preliterate" || saved.literacy === null) {',
+              "        setSelectedLiteracy(saved.literacy ?? null);",
+              "      }",
+              '      if (saved.assessment === "diagnostic" || saved.assessment === "monitoring" || saved.assessment === null) {',
+              "        setSelectedAssessmentType(saved.assessment ?? null);",
+              "      }",
+              '      if (Array.isArray(saved.signals)) setSelectedSignalIds(saved.signals.filter((item): item is string => typeof item === "string"));',
+              '      if (saved.availability === "all" || saved.availability === "complete") setAvailabilityMode(saved.availability);',
+              "    }",
+              "    setFilterStateReady(true);",
+              "  })();",
+              "  return () => { active = false; };",
+              "}, [flashMode]);",
+              "",
+          ], effect_indent)
           text = text[:effect_start] + hydrate + text[effect_start:]
 
           save_comment_index = text.index("// Persiste as seleções sempre que mudam (best-effort).", effect_start)
@@ -126,19 +131,20 @@ interface PersistedFilter {
           save_block = text[save_start:save_end]
           assert "localStorage.setItem(FILTER_STATE_KEY" in save_block
           save_indent = text[save_start:save_comment_index]
-          new_save = f'''{save_indent}// Persiste somente no cofre AES-GCM da sessão. Nunca volta a escrever
-{save_indent}// contexto clínico em localStorage; o helper apaga a cópia legada após migração.
-{save_indent}useEffect(() => {{
-{save_indent}  if (flashMode || !filterStateReady) return;
-{save_indent}  void saveProtectedFilterState({{
-{save_indent}    search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,
-{save_indent}    communication: selectedCommunication, literacy: selectedLiteracy,
-{save_indent}    assessment: selectedAssessmentType, signals: selectedSignalIds,
-{save_indent}    availability: availabilityMode,
-{save_indent}  }} satisfies PersistedFilter);
-{save_indent}}}, [flashMode, filterStateReady, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, availabilityMode]);
-
-'''
+          new_save = block([
+              "// Persiste somente no cofre AES-GCM da sessão. Nunca volta a escrever",
+              "// contexto clínico em localStorage; o helper apaga a cópia legada após migração.",
+              "useEffect(() => {",
+              "  if (flashMode || !filterStateReady) return;",
+              "  void saveProtectedFilterState({",
+              "    search, queixas: selectedQueixas, age: selectedAge, respondente: selectedRespondente,",
+              "    communication: selectedCommunication, literacy: selectedLiteracy,",
+              "    assessment: selectedAssessmentType, signals: selectedSignalIds,",
+              "    availability: availabilityMode,",
+              "  } satisfies PersistedFilter);",
+              "}, [flashMode, filterStateReady, search, selectedQueixas, selectedAge, selectedRespondente, selectedCommunication, selectedLiteracy, selectedAssessmentType, selectedSignalIds, availabilityMode]);",
+              "",
+          ], save_indent)
           text = text[:save_start] + new_save + text[save_end:]
 
           assert 'localStorage.setItem(FILTER_STATE_KEY' not in text
