@@ -16,7 +16,9 @@ interface EscalaLivre {
 
 type CompactRow = [number, string, string, string, string, string, Selo, Politica];
 
-const DATA_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
+// Mesma cópia servida pela própria origem que o filtro usa — ver a nota em
+// client/src/pages/filtro.tsx sobre por que o fetch saiu do raw.githubusercontent.
+const DATA_URL = `${import.meta.env.BASE_URL}data/neuroped_escalas_neuropsiquiatria_infantil_100.json`;
 
 const fallbackScales: EscalaLivre[] = [
   { n: 1, sigla: "SWYC Milestones", nome: "Survey of Well-being of Young Children – Developmental Milestones", categoria: "Desenvolvimento e TEA", idade: "0–5.5", respondente: "Pais/cuidadores", selo: "Ouro", politica: "embed" },
@@ -131,7 +133,7 @@ export default function EscalasNeuropsiquiatriaPage() {
   }, [busca, categoria, selo, politica, escalas]);
 
   return (
-    <main className="page-enter space-y-5 pb-10">
+    <div className="page-enter space-y-5 pb-10">
       <section className="rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/40 p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
@@ -260,6 +262,6 @@ export default function EscalasNeuropsiquiatriaPage() {
           </article>
         ))}
       </section>
-    </main>
+    </div>
   );
 }

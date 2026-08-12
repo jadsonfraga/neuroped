@@ -622,7 +622,7 @@ export default function InventariosAutoPage() {
                   {inv.tabLabel}
                   {done && <CheckCircle2 className="w-3 h-3" />}
                   {!done && (
-                    <span className="text-xs opacity-70">
+                    <span className="text-xs text-muted-foreground">
                       {cnt}/{inv.items.length}
                     </span>
                   )}

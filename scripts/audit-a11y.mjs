@@ -17,13 +17,26 @@ const repoRoot = resolve(__dirname, "..");
 const reportPath = resolve(__dirname, "guards/a11y-report.json");
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "guards/baseline.json"), "utf8"));
 const MAX = typeof baseline.axeSeriousCriticalViolations === "number" ? baseline.axeSeriousCriticalViolations : 0;
-const ROUTES = ["/", "/#/filtro", "/#/mchat", "/#/caa", "/#/prontuario"];
+const MAX_TOTAL = typeof baseline.axeTotalViolations === "number" ? baseline.axeTotalViolations : Infinity;
+const SENTINEL_ROUTES = ["/", "/#/filtro", "/#/mchat", "/#/cars", "/#/espasticidade", "/#/caa", "/#/prontuario"];
+const navigationSource = readFileSync(resolve(repoRoot, "client/src/data/navigation.ts"), "utf8");
+const FULL_ROUTES = [
+  "/",
+  ...new Set(
+    [...navigationSource.matchAll(/href:\s*["']([^"']+)["']/g)].map((match) => `/#${match[1]}`),
+  ),
+];
+const ROUTES = process.env.A11Y_FULL === "1" ? FULL_ROUTES : SENTINEL_ROUTES;
 
 function reportAndExit(violations, mode, details = {}) {
   writeFileSync(reportPath, JSON.stringify({ mode, total: violations.length, violations, ...details }, null, 2));
-  console.log(`[a11y] modo=${mode} | violações serious/critical=${violations.length} (teto ${MAX})`);
-  if (violations.length > MAX) {
-    for (const violation of violations.slice(0, 50)) console.error(`  ✗ ${violation.id} - ${violation.where}`);
+  const allSeverityCount = Array.isArray(details.allSeverityViolations)
+    ? details.allSeverityViolations.length
+    : violations.length;
+  console.log(`[a11y] modo=${mode} | violações serious/critical=${violations.length} (teto ${MAX}) | todas as severidades=${allSeverityCount} (teto ${MAX_TOTAL})`);
+  if (violations.length > MAX || allSeverityCount > MAX_TOTAL) {
+    const failures = violations.length > MAX ? violations : details.allSeverityViolations;
+    for (const violation of failures.slice(0, 50)) console.error(`  ✗ ${violation.id} (${violation.impact ?? "sem impacto"}) - ${violation.where}`);
     process.exitCode = 1;
   } else {
     console.log("[a11y] ✓ sem violações serious/critical acima do teto.");
@@ -42,8 +55,10 @@ async function runAxe() {
   }
 
   const all = [];
+  const allSeverityViolations = [];
   const routeSummary = {};
   try {
+    console.log(`[a11y] auditando ${ROUTES.length} rota(s) em navegador real${process.env.A11Y_FULL === "1" ? " (cobertura integral)" : ""}.`);
     for (const route of ROUTES) {
       const context = await browser.newContext({ reducedMotion: "reduce" });
       await context.addInitScript((values) => {
@@ -72,13 +87,20 @@ async function runAxe() {
           help: violation.help,
         });
       }
+      for (const violation of results.violations) {
+        allSeverityViolations.push({
+          id: violation.id,
+          impact: violation.impact,
+          where: `${route} (${violation.nodes.length} nós)`,
+        });
+      }
       await context.close();
     }
   } finally {
     await browser.close();
     await server.close();
   }
-  reportAndExit(all, "axe-playwright", { routes: routeSummary });
+  reportAndExit(all, "axe-playwright", { routes: routeSummary, allSeverityViolations });
   return true;
 }
 
@@ -108,6 +130,7 @@ function runStatic() {
     const relative = file.slice(repoRoot.length + 1).replaceAll("\\", "/");
     for (const match of source.matchAll(/<img\b[^>]*>/g)) if (!/\balt\s*=/.test(match[0])) violations.push({ id: "image-alt", where: relative });
     for (const match of source.matchAll(/<button\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/button>/g)) if (!hasName(match[1])) violations.push({ id: "button-name", where: relative });
+    for (const match of source.matchAll(/<Label\b[^>]*\baria-pressed\s*=/g)) violations.push({ id: "aria-allowed-attr", where: `${relative} (<Label aria-pressed>)` });
     for (const match of source.matchAll(/<a\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/a>/g)) if (!hasName(match[1])) violations.push({ id: "link-name", where: relative });
     for (const match of source.matchAll(/<input\b((?:=>|[^>])*?)\/?>/g)) if (!/type\s*=\s*["']hidden["']/.test(match[1]) && !hasFieldName(match[1])) violations.push({ id: "input-name", where: relative });
     for (const match of source.matchAll(/<select\b((?:=>|[^>])*?)>/g)) if (!hasFieldName(match[1])) violations.push({ id: "select-name", where: relative });

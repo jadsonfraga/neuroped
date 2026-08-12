@@ -15,6 +15,13 @@ export { isRouteSensitive, SENSITIVE_ROUTES };
 
 type RouteRole = "admin" | "professional" | "reader" | "operator";
 
+function operationalRolesForPath(path: string, roles?: RouteRole[]): RouteRole[] | undefined {
+  if (!roles || path !== "/agenda" || roles.includes("operator")) return roles;
+  // A agenda é a única superfície explicitamente compartilhada com a recepção.
+  // O backend ainda exige vínculo operator -> profissional e filtra as ações.
+  return [...roles, "operator"];
+}
+
 export function RouteGuard({ children, roles }: { children: ReactNode; roles?: RouteRole[] }) {
   const [location] = useLocation();
   const { accessMode, isAuthenticated, isLoading, user } = useAuth();
@@ -24,7 +31,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     isAuthenticated,
     isLoading,
     userRole: user?.role,
-    allowedRoles: roles,
+    allowedRoles: operationalRolesForPath(location, roles),
     localPinConfigured:
       accessMode === "local" && hasConfiguredMasterPin(),
     localPinUnlocked:
@@ -45,7 +52,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
           />
           <p className="font-semibold text-slate-700">Verificando acesso seguro…</p>
           <p className="mt-1 text-xs text-slate-500">
-            O conteúdo clínico só será exibido após validar a sessão.
+            O conteúdo restrito só será exibido após validar a sessão.
           </p>
         </div>
       </div>
@@ -64,7 +71,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
       >
         <h1 className="text-lg font-bold text-foreground">Acesso não autorizado</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Seu perfil não possui permissão para abrir esta área clínica.
+          Seu perfil não possui permissão para abrir esta área restrita.
         </p>
       </section>
     );
@@ -72,3 +79,5 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
 
   return <>{children}</>;
 }
+
+export { operationalRolesForPath };

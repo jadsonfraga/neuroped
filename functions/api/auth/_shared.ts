@@ -92,15 +92,24 @@ export function isLocked(u: UserRow): boolean {
   return Number.isFinite(until) && until > Date.now();
 }
 
+/**
+ * Incrementa falhas no próprio UPDATE. O formato anterior calculava
+ * `attempts = row + 1` em memória depois do bcrypt; logins simultâneos podiam
+ * ler o mesmo valor e sobrescrever o contador, enfraquecendo o lockout.
+ */
 export async function registerFailedAttempt(db: D1Database, u: UserRow): Promise<void> {
-  const attempts = (u.failed_login_attempts ?? 0) + 1;
-  const lockedUntil =
-    attempts >= MAX_FAILED_ATTEMPTS
-      ? new Date(Date.now() + LOCK_MINUTES * 60 * 1000).toISOString()
-      : null;
+  const lockedUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000).toISOString();
   await db
-    .prepare(`UPDATE users SET failed_login_attempts = ?, locked_until = ? WHERE id = ?`)
-    .bind(attempts, lockedUntil, u.id)
+    .prepare(
+      `UPDATE users
+          SET failed_login_attempts = COALESCE(failed_login_attempts, 0) + 1,
+              locked_until = CASE
+                WHEN COALESCE(failed_login_attempts, 0) + 1 >= ? THEN ?
+                ELSE locked_until
+              END
+        WHERE id = ?`,
+    )
+    .bind(MAX_FAILED_ATTEMPTS, lockedUntil, u.id)
     .run();
 }
 

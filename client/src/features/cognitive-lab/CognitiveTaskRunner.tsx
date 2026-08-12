@@ -37,7 +37,18 @@ function beep(freq: number, durationMs = 120) {
     gain.gain.value = 0.05;
     osc.connect(gain).connect(ctx.destination);
     osc.start();
-    window.setTimeout(() => { osc.stop(); void ctx.close(); }, durationMs);
+
+    // O lifecycle do AudioContext não pode compartilhar os timers de ensaio:
+    // clearTimers() é chamado a cada trial/restart. Se o timer de encerramento
+    // entrar nessa lista, ele pode ser cancelado antes de osc.stop()/ctx.close().
+    window.setTimeout(() => {
+      try {
+        osc.stop();
+      } catch {
+        // Oscilador já encerrado; ainda tentamos fechar o contexto.
+      }
+      void ctx.close();
+    }, durationMs);
   } catch {
     /* áudio indisponível — segue silencioso */
   }

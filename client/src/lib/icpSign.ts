@@ -1,7 +1,7 @@
 // ============================================================
 // Assinatura digital ICP-Brasil (certificado A1 .p12/.pfx) no navegador.
 // A chave privada nunca sai do dispositivo: o arquivo e lido em memoria,
-// usado para assinar o PDF em PAdES-BES e descartado.
+// usado para assinar o PDF e descartado.
 // ============================================================
 import { Buffer } from "buffer";
 import { PDFDocument } from "pdf-lib";
@@ -84,7 +84,10 @@ function certMatchesPrivateKey(cert: forge.pki.Certificate, privateKey: forge.pk
 
 function orderCertChain(privateKey: forge.pki.rsa.PrivateKey, certs: forge.pki.Certificate[]): forge.pki.Certificate[] {
   const signingCertIndex = certs.findIndex((cert) => certMatchesPrivateKey(cert, privateKey));
-  if (signingCertIndex <= 0) return certs;
+  if (signingCertIndex === -1) {
+    throw new Error("Nenhum certificado do arquivo .p12/.pfx corresponde à chave privada encontrada. Verifique se o arquivo não está corrompido.");
+  }
+  if (signingCertIndex === 0) return certs;
   const signingCert = certs[signingCertIndex];
   return [signingCert, ...certs.slice(0, signingCertIndex), ...certs.slice(signingCertIndex + 1)];
 }
@@ -119,6 +122,9 @@ export function icpErrorMessage(error: unknown): string {
   if (/private key|chave privada/i.test(msg)) {
     return "O certificado selecionado nao contem chave privada. Use o certificado A1 completo (.p12/.pfx).";
   }
+  if (/integridade|byterange|contents|subfilter|pdf assinado/i.test(msg)) {
+    return "O PDF foi processado, mas a assinatura digital não passou na verificação estrutural interna. Gere novamente e não utilize o arquivo incompleto.";
+  }
   if (/not enough space|placeholder|signature/i.test(msg)) {
     return "Falha ao embutir a assinatura no PDF. Gere novamente; o app agora reserva espaco ampliado para certificados ICP-Brasil.";
   }
@@ -131,6 +137,40 @@ export function readP12Info(p12: ArrayBuffer, passphrase: string): CertInfo {
   const cert = orderCertChain(privateKey, certs)[0];
   assertCertificateDates(cert);
   return { ...getCertDisplayInfo(cert), hasPrivateKey: true };
+}
+
+/**
+ * Verifica o ARQUIVO produzido pelo assinador, não apenas a ausência de exceção.
+ * Isso bloqueia falsos positivos em que o download seria disparado com um PDF
+ * parseável, porém sem dicionário de assinatura efetivamente preenchido.
+ */
+export async function assertSignedPdfIntegrity(
+  signedBytes: Uint8Array,
+  expectedPageCount?: number,
+): Promise<void> {
+  const buffer = Buffer.from(signedBytes);
+  if (buffer.length < 128 || buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    throw new Error("Integridade do PDF assinado inválida: cabeçalho PDF ausente.");
+  }
+
+  const source = buffer.toString("latin1");
+  if (!/\/ByteRange\s*\[\s*0\s+\d+\s+\d+\s+\d+\s*\]/.test(source)) {
+    throw new Error("Integridade do PDF assinado inválida: /ByteRange ausente.");
+  }
+  if (!/\/SubFilter\s*\/ETSI\.CAdES\.detached/.test(source)) {
+    throw new Error("Integridade do PDF assinado inválida: subfiltro CAdES detached ausente.");
+  }
+  const contents = source.match(/\/Contents\s*<([0-9A-Fa-f]{64,})>/);
+  if (!contents || /^0+$/.test(contents[1].slice(0, 128))) {
+    throw new Error("Integridade do PDF assinado inválida: /Contents não foi preenchido.");
+  }
+
+  const parsed = await PDFDocument.load(signedBytes);
+  if (expectedPageCount !== undefined && parsed.getPageCount() !== expectedPageCount) {
+    throw new Error(
+      `Integridade do PDF assinado inválida: páginas ${parsed.getPageCount()} != ${expectedPageCount}.`,
+    );
+  }
 }
 
 async function signPreparedPdf(
@@ -172,7 +212,7 @@ async function signPreparedPdf(
   return new Uint8Array(signed);
 }
 
-/** Assina um PDF com certificado A1 .p12/.pfx em PAdES-BES. */
+/** Assina um PDF com certificado A1 .p12/.pfx. */
 export async function signPdfWithP12(
   pdfBytes: Uint8Array,
   p12: ArrayBuffer,
@@ -181,6 +221,8 @@ export async function signPdfWithP12(
 ): Promise<Uint8Array> {
   // Valida senha, validade e chave privada antes de gerar a assinatura.
   readP12Info(p12, passphrase);
+  const original = await PDFDocument.load(pdfBytes);
+  const expectedPageCount = original.getPageCount();
 
   const candidateP12s = [normalizePfxBuffer(p12, passphrase), originalPfxBuffer(p12)];
   let lastError: unknown = null;
@@ -188,7 +230,9 @@ export async function signPdfWithP12(
   for (const signatureLength of SIGNATURE_PLACEHOLDER_LENGTHS) {
     for (const candidateP12 of candidateP12s) {
       try {
-        return await signPreparedPdf(pdfBytes, candidateP12, passphrase, signatureLength, meta);
+        const signed = await signPreparedPdf(pdfBytes, candidateP12, passphrase, signatureLength, meta);
+        await assertSignedPdfIntegrity(signed, expectedPageCount);
+        return signed;
       } catch (error) {
         lastError = error;
       }

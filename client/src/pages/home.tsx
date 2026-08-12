@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   ClipboardCheck,
+  Clock3,
   FileText,
   Filter,
   LineChart,
@@ -15,7 +16,6 @@ import {
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { BrandMark, BrandWatermark } from "@/components/BrandAssets";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
@@ -122,11 +122,11 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           softTap();
           haptic.tap();
         }}
-        className="group relative flex h-full cursor-pointer flex-col gap-5 rounded-3xl border border-border/60 bg-card/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-300 hover:border-border hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.18)]"
+        className="group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-[1.75rem] border border-white/75 bg-card/90 p-5 shadow-[0_18px_55px_-38px_rgba(38,24,53,0.38)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-300 hover:border-primary/20 hover:shadow-[0_24px_60px_-32px_rgba(87,37,113,0.3)] dark:border-white/10"
         data-testid={`home-flow-${index + 1}`}
       >
         <div className="flex items-start justify-between">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${accentClasses[flow.emphasis]}`}>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 transition-transform duration-300 group-hover:scale-105 ${accentClasses[flow.emphasis]}`}>
             <Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden="true" />
           </div>
           <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
@@ -168,39 +168,48 @@ export default function HomePage() {
   const isSearching = q.length >= 2;
 
   return (
-    <div className="page-enter proportion-safe-page space-y-7 pb-10">
-      {/* Hero — calmo, confiante, com a busca como ação principal */}
+    <div className="page-enter proportion-safe-page space-y-9 pb-10">
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-primary/[0.07] via-card/40 to-card/20 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur sm:p-9"
+        className="np-home-hero relative overflow-hidden rounded-3xl border border-white/70 p-6 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] sm:p-10 lg:min-h-[34rem] dark:border-white/10"
       >
-        <BrandWatermark className="-right-6 -top-6 h-44 w-44 opacity-60" />
-        <div className="relative grid gap-7 lg:grid-cols-[1.45fr_0.55fr] lg:items-center">
-          <div className="space-y-6">
-            <BrandMark size="md" showWordmark subtitle="Painel clínico NeuroPed" />
-            <div className="max-w-2xl space-y-3.5">
+        <div className="np-home-orb np-home-orb-one" aria-hidden="true" />
+        <div className="np-home-orb np-home-orb-two" aria-hidden="true" />
+        <div className="absolute right-2 top-2 lg:hidden">
+          <Mascote contexto="home" size="sm" fala="" />
+        </div>
+        <div className="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
+          <div className="space-y-7">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/65 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur dark:bg-white/5">
+              <span className="relative flex h-2 w-2" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40 motion-reduce:animate-none" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
+              </span>
+              Painel clínico inteligente
+            </div>
+            <div className="max-w-3xl space-y-4">
               <h1
-                className="text-[2.5rem] leading-[1.04] tracking-[-0.02em] text-foreground sm:text-[3.25rem]"
-                style={{ fontFamily: "Cormorant Garamond, Georgia, serif", fontWeight: 600 }}
+                className="max-w-2xl text-[2.65rem] font-semibold leading-[0.98] tracking-[-0.045em] text-foreground sm:text-[4rem] lg:text-[4.65rem]"
+                style={{ fontFamily: "var(--font-display)" }}
                 data-testid="text-page-title"
               >
-                Decisão clínica, <span className="text-primary">com clareza</span>.
+                Menos ruído. <span className="np-title-gradient">Mais clareza clínica.</span>
               </h1>
-              <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-                Aplique escalas validadas, encontre o instrumento ideal por queixa e idade, acompanhe a evolução e gere documentos — tudo em um fluxo só.
+              <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
+                Escalas, triagem e acompanhamento em uma jornada segura, acolhedora e feita para o ritmo do consultório.
               </p>
             </div>
 
-            <div className="relative max-w-xl" data-testid="search-container">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
+            <div className="relative max-w-2xl" data-testid="search-container">
+              <Search className="pointer-events-none absolute left-5 top-1/2 h-[19px] w-[19px] -translate-y-1/2 text-primary" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala, questionário, paciente ou página…"
+                placeholder="Buscar escala, paciente ou página…"
                 aria-label="Buscar escala, questionário, paciente ou página"
-                className="h-12 rounded-2xl border-border/70 bg-background/80 pl-11 pr-10 text-[15px] shadow-sm transition-shadow focus-visible:shadow-md"
+                className="h-14 rounded-[1.15rem] border-white/80 bg-white/80 pl-13 pr-10 text-[15px] shadow-[0_14px_35px_-22px_rgba(45,25,58,0.4)] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-primary/30 focus-visible:shadow-[0_18px_42px_-22px_rgba(91,42,116,0.4)] dark:border-white/10 dark:bg-slate-950/50"
                 data-testid="input-search"
               />
               {searchQuery && (
@@ -214,29 +223,32 @@ export default function HomePage() {
                 </button>
               )}
             </div>
-            <Link
-              href="/filtro-escalas?mode=flash"
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/15"
-            >
-              Triar paciente sem cadastrar
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/filtro" className="np-primary-cta inline-flex min-h-11 items-center gap-2 rounded-2xl px-5 py-2.5 text-[13px] font-semibold text-white">
+                Encontrar escala ideal
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link href="/filtro-escalas?mode=flash" className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-primary/15 bg-white/55 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10">
+                <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
+                Triagem rápida
+              </Link>
+            </div>
 
-            {/* Métricas — faixa fina com divisores, em vez de caixas pesadas */}
             <div
-              className="flex max-w-xl divide-x divide-border/50 overflow-hidden rounded-2xl border border-border/50 bg-card/50"
+              className="grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/60 bg-white/45 sm:grid-cols-4 dark:border-white/10 dark:bg-white/5"
               aria-label="Métricas do app"
             >
               {metricCards.map((metric) => (
-                <div key={metric.label} className="flex-1 px-3.5 py-3 sm:px-4">
-                  <div className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{metric.value}</div>
-                  <p className="mt-0.5 text-[11px] font-medium text-muted-foreground">{metric.label}</p>
+                <div key={metric.label} className="bg-white/35 px-3.5 py-3.5 dark:bg-slate-950/20">
+                  <div className="text-xl font-semibold tracking-[-0.03em] text-foreground sm:text-2xl">{metric.value}<span className="ml-0.5 text-primary">+</span></div>
+                  <p className="mt-0.5 text-[10.5px] font-medium leading-tight text-muted-foreground">{metric.label}</p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="hidden justify-center lg:flex">
-            <Mascote contexto="home" size="md" />
+          <div className="relative hidden min-h-[27rem] items-center justify-center lg:flex">
+            <div className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]" aria-hidden="true" />
+            <Mascote contexto="home" size="lg" className="relative z-10" />
           </div>
         </div>
       </motion.section>
@@ -273,8 +285,8 @@ export default function HomePage() {
           <section className="space-y-4" aria-labelledby="fluxos-principais">
             <div className="flex items-end justify-between gap-3">
               <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-primary">Fluxos principais</p>
-                <h2 id="fluxos-principais" className="text-xl font-semibold tracking-tight text-foreground">Por onde começar</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Sua jornada</p>
+                <h2 id="fluxos-principais" className="text-2xl font-semibold tracking-[-0.03em] text-foreground">O cuidado começa por aqui</h2>
               </div>
             </div>
             <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">

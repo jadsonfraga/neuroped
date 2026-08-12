@@ -26,7 +26,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { brandAssets } from "@/components/BrandAssets";
+import { Mascote } from "@/components/Mascote";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,7 +64,16 @@ type AvailabilityMode = "complete" | "all";
 type Tier = "ouro" | "prata" | "bronze";
 type Row = [number, string, string, string, string, string, "Ouro" | "Prata" | "Bronze", "embed" | "permission" | "link"];
 
-const REGISTRY_URL = "https://raw.githubusercontent.com/jadsonfraga/neuroped/main/data/neuroped_escalas_neuropsiquiatria_infantil_100.json";
+// Servido pela PRÓPRIA origem (client/public/data/ entra no build). Antes isto
+// apontava para raw.githubusercontent.com: um app clínico offline-first buscando
+// catálogo num host de terceiro a cada carga do filtro — falha sem rede, vaza o
+// IP do usuário para o GitHub, e o navegador registra erro de console quando a
+// requisição falha (reprovava a auditoria errors-in-console e derrubava
+// best-practices para 96). A cópia local tem as mesmas 100 linhas e a mesma
+// version; só troca travessão por hífen na faixa etária, e ageMonths aceita [–-].
+// NOTA: client/public/data/ e data/ na raiz são cópias independentes, sem script
+// que as sincronize — quem editar uma precisa editar a outra.
+const REGISTRY_URL = `${import.meta.env.BASE_URL}data/neuroped_escalas_neuropsiquiatria_infantil_100.json`;
 // EUSM-10 agora vive no catálogo canônico (filterableCatalog, id "eusm10") — sem
 // duplicata. CORE_FILTERABLE_CATALOG já o inclui.
 const CORE_FILTERABLE_CATALOG = mergeFilterableCatalog(allScales);
@@ -145,7 +154,7 @@ function ageMonths(range: string) {
 
 function rowToScale(row: Row): ScaleEntry {
   if (!Array.isArray(row) || row.length < 8) {
-    throw new Error(`Invalid row structure: expected 8+ fields, got ${Array.isArray(row) ? row.length : 'non-array'}`);
+    throw new Error(`Invalid row structure: expected 8+ fields, got ${Array.isArray(row) ? row.length : "non-array"}`);
   }
   const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
   const a = ageMonths(idade);
@@ -1175,7 +1184,6 @@ export default function FiltroPage() {
                   type="button"
                   onMouseEnter={() => softHover()}
                   onClick={() => { softTap(); haptic.tap(); setSelectedAge(q.age); setSelectedQueixas(q.queixas); }}
-                  aria-label={`Sugestão rápida: ${q.label}, ${q.sub}`}
                   className="group flex items-center gap-1.5 rounded-2xl border border-border bg-background px-2.5 py-1.5 text-xs font-bold transition hover:border-primary/50 hover:bg-primary/5 active:scale-[0.97]"
                 >
                   <span aria-hidden="true" className="text-sm leading-none transition-transform group-hover:scale-110">{q.emoji}</span>
@@ -1203,7 +1211,7 @@ export default function FiltroPage() {
             {hasSearch && <Button type="button" variant="ghost" size="sm" onClick={clearAll} className="h-6 sm:h-7 gap-1 px-2 text-xs"><RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> <span className="hidden sm:inline">limpar</span></Button>}
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-            {queixas.map((q) => { const sel = selectedQueixas.includes(q.id); return <button key={q.id} type="button" aria-pressed={sel} aria-label={q.parentHint ? `${q.label} — ${q.parentHint}` : q.label} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${sel ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
+            {queixas.map((q) => { const sel = selectedQueixas.includes(q.id); return <button key={q.id} type="button" aria-pressed={sel} onMouseEnter={() => softHover()} onClick={() => toggleQueixa(q.id)} className={`rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs font-bold transition flex items-center gap-1.5 sm:gap-2 min-h-9 sm:min-h-auto ${sel ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:border-primary/40 hover:bg-muted/60"}`}>
               {q.emoji && <span aria-hidden="true" className="shrink-0 text-sm sm:text-base leading-none">{q.emoji}</span>}
               {/* Sem truncate: rótulo POR EXTENSO + dica em linguagem de pai/mãe
                   (o que a criança faz), pra um leigo escolher a queixa certa. */}
@@ -1303,11 +1311,10 @@ export default function FiltroPage() {
       {/* Mascote Inteligente — muda com padrão detectado */}
       {!hasSearch && (
         <div className="flex justify-center mt-4">
-          <img
-            src={brandAssets.mascots.superDoctor}
-            alt="Dr. Jadson — seu assistente de diagnóstico"
-            className="w-32 h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform"
-            loading="lazy"
+          <Mascote
+            contexto="home"
+            size="md"
+            fala="Conte a idade e os sinais observados. Eu ajudo a organizar as opções mais adequadas."
           />
         </div>
       )}

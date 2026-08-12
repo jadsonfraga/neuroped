@@ -1,0 +1,551 @@
+/*
+ * NeuroPed — Signature Clinical / Premium Product v2
+ *
+ * Camada final e reversível do sistema visual. O objetivo não é “decorar” o app,
+ * e sim dar acabamento de produto clínico de alto valor: hierarquia nítida,
+ * superfícies nobres, movimento contido, contraste forte e identidade própria.
+ * Nenhuma regra clínica, rota, dado ou permissão é alterada aqui.
+ */
+
+:root {
+  /* Paleta assinatura — pearl / ink / deep teal / muted wine */
+  --background: 42 24% 97.4%;
+  --foreground: 222 34% 14%;
+  --border: 220 13% 87.5%;
+  --card: 42 30% 99.2%;
+  --card-foreground: 222 34% 14%;
+  --card-border: 220 13% 89%;
+  --sidebar: 216 28% 97.1%;
+  --sidebar-foreground: 222 34% 14%;
+  --sidebar-border: 218 15% 88.5%;
+  --sidebar-primary: 173 52% 28%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 216 18% 93.5%;
+  --sidebar-accent-foreground: 222 34% 14%;
+  --sidebar-ring: 173 52% 31%;
+  --popover: 42 32% 99.4%;
+  --popover-foreground: 222 34% 14%;
+  --popover-border: 220 13% 88%;
+  --primary: 173 52% 28%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 24% 92.8%;
+  --secondary-foreground: 222 30% 18%;
+  --muted: 38 18% 93.5%;
+  --muted-foreground: 220 11% 40%;
+  --accent: 338 22% 92%;
+  --accent-foreground: 338 38% 28%;
+  --input: 220 14% 79%;
+  --ring: 173 52% 31%;
+  --chart-1: 173 52% 28%;
+  --chart-2: 338 38% 38%;
+  --chart-3: 208 40% 38%;
+  --chart-4: 37 43% 46%;
+  --chart-5: 18 46% 48%;
+
+  --np-premium-canvas: hsl(42 24% 97.4%);
+  --np-premium-surface: hsl(42 30% 99.2%);
+  --np-premium-surface-strong: hsl(0 0% 100%);
+  --np-premium-ink: hsl(222 34% 14%);
+  --np-premium-teal: hsl(173 52% 28%);
+  --np-premium-wine: hsl(338 38% 38%);
+  --np-premium-gold: hsl(37 43% 46%);
+  --np-premium-hairline: hsl(220 13% 87.5% / 0.9);
+  --np-premium-shadow: 0 1px 1px hsl(222 34% 14% / 0.025), 0 12px 34px -28px hsl(222 34% 14% / 0.38);
+  --np-premium-shadow-raised: 0 1px 2px hsl(222 34% 14% / 0.04), 0 18px 48px -30px hsl(222 34% 14% / 0.34);
+  --np-premium-shadow-floating: 0 18px 55px -32px hsl(222 34% 14% / 0.42);
+  --np-premium-inset: inset 0 1px 0 hsl(0 0% 100% / 0.78);
+}
+
+.dark {
+  --background: 222 26% 7.6%;
+  --foreground: 40 18% 93.5%;
+  --border: 220 16% 17%;
+  --card: 222 24% 10.4%;
+  --card-foreground: 40 18% 93.5%;
+  --card-border: 220 16% 17.5%;
+  --sidebar: 222 25% 8.6%;
+  --sidebar-foreground: 40 18% 93.5%;
+  --sidebar-border: 220 16% 16%;
+  --sidebar-primary: 172 44% 57%;
+  --sidebar-primary-foreground: 222 30% 8%;
+  --sidebar-accent: 220 18% 14.5%;
+  --sidebar-accent-foreground: 40 18% 93.5%;
+  --sidebar-ring: 172 44% 57%;
+  --popover: 222 23% 11.6%;
+  --popover-foreground: 40 18% 93.5%;
+  --popover-border: 220 16% 18%;
+  --primary: 172 44% 57%;
+  --primary-foreground: 222 30% 8%;
+  --secondary: 220 18% 16%;
+  --secondary-foreground: 40 16% 90%;
+  --muted: 220 18% 15.5%;
+  --muted-foreground: 220 10% 68%;
+  --accent: 338 22% 17%;
+  --accent-foreground: 338 45% 75%;
+  --input: 220 14% 28%;
+  --ring: 172 44% 57%;
+  --chart-1: 172 44% 57%;
+  --chart-2: 338 42% 64%;
+  --chart-3: 208 46% 63%;
+  --chart-4: 38 48% 63%;
+  --chart-5: 18 52% 64%;
+
+  --np-premium-canvas: hsl(222 26% 7.6%);
+  --np-premium-surface: hsl(222 24% 10.4%);
+  --np-premium-surface-strong: hsl(222 23% 12%);
+  --np-premium-ink: hsl(40 18% 93.5%);
+  --np-premium-teal: hsl(172 44% 57%);
+  --np-premium-wine: hsl(338 42% 64%);
+  --np-premium-gold: hsl(38 48% 63%);
+  --np-premium-hairline: hsl(220 16% 18% / 0.95);
+  --np-premium-shadow: 0 1px 1px hsl(0 0% 0% / 0.2), 0 16px 44px -30px hsl(0 0% 0% / 0.72);
+  --np-premium-shadow-raised: 0 1px 1px hsl(0 0% 0% / 0.28), 0 22px 54px -30px hsl(0 0% 0% / 0.78);
+  --np-premium-shadow-floating: 0 22px 64px -34px hsl(0 0% 0% / 0.86);
+  --np-premium-inset: inset 0 1px 0 hsl(0 0% 100% / 0.035);
+}
+
+html {
+  background: hsl(var(--background));
+}
+
+body {
+  background:
+    radial-gradient(900px 520px at 92% -12%, hsl(var(--primary) / 0.055), transparent 66%),
+    radial-gradient(700px 460px at -12% 18%, hsl(var(--chart-2) / 0.025), transparent 68%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--foreground));
+}
+
+/* ── Superfícies / componentes-base ───────────────────────────── */
+.shadcn-card {
+  border-radius: 1.25rem !important;
+  border-color: hsl(var(--card-border) / 0.92) !important;
+  background: hsl(var(--card) / 0.97) !important;
+  box-shadow: var(--np-premium-shadow), var(--np-premium-inset) !important;
+  backdrop-filter: none !important;
+}
+
+.card-hover:hover,
+.card-premium:hover,
+.hover-elevate:hover {
+  transform: none !important;
+  box-shadow: var(--np-premium-shadow-raised) !important;
+}
+
+.active-elevate-2:active {
+  transform: translateY(0) !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shadcn-card,
+  .shadcn-card:hover,
+  button,
+  [role="button"],
+  [role="tab"],
+  input,
+  textarea,
+  select {
+    transition-duration: 180ms !important;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  .shadcn-card:hover {
+    border-color: hsl(var(--primary) / 0.16) !important;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: scale(0.992) !important;
+  }
+}
+
+input,
+textarea,
+select {
+  border-color: hsl(var(--border) / 0.92) !important;
+  background: hsl(var(--card) / 0.72) !important;
+  box-shadow: inset 0 1px 1px hsl(var(--foreground) / 0.018) !important;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: hsl(var(--foreground) / 0.18) !important;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.11), inset 0 1px 1px hsl(var(--foreground) / 0.02) !important;
+}
+
+[role="tablist"] {
+  border: 1px solid hsl(var(--border) / 0.78) !important;
+  background: hsl(var(--muted) / 0.48) !important;
+  box-shadow: inset 0 1px 0 hsl(var(--card) / 0.72) !important;
+}
+
+[role="tab"] {
+  border-radius: 0.72rem !important;
+  box-shadow: none !important;
+}
+
+[role="tab"][data-state="active"] {
+  background: hsl(var(--card)) !important;
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05), 0 7px 18px -14px hsl(var(--foreground) / 0.32) !important;
+}
+
+/* ── Atmosfera ────────────────────────────────────────────────── */
+.np-ambient-aurora {
+  opacity: 0.24 !important;
+  animation: none !important;
+  background:
+    radial-gradient(52% 44% at 10% 2%, hsl(var(--primary) / 0.05), transparent 74%),
+    radial-gradient(44% 38% at 96% 14%, hsl(var(--chart-2) / 0.025), transparent 76%);
+}
+
+.np-ambient-noise {
+  opacity: 0.007 !important;
+}
+
+/* ── Shell premium ────────────────────────────────────────────── */
+aside[aria-label="Menu de navegação"] {
+  background:
+    linear-gradient(180deg, hsl(var(--sidebar) / 0.985), hsl(var(--background) / 0.97)) !important;
+  border-right-color: hsl(var(--sidebar-border) / 0.9) !important;
+  box-shadow: 10px 0 42px -38px hsl(var(--foreground) / 0.34) !important;
+  backdrop-filter: blur(20px);
+}
+
+aside[aria-label="Menu de navegação"] > div:first-of-type {
+  padding-top: 1.15rem !important;
+  padding-bottom: 1.05rem !important;
+}
+
+/* Medallion institucional: pequeno, sólido, sem cara de template. */
+aside[aria-label="Menu de navegação"] > div:first-of-type > div:first-of-type,
+header.fixed.md\:hidden > div:first-child > div:first-child {
+  background: hsl(var(--primary)) !important;
+  border: 1px solid hsl(var(--primary) / 0.68) !important;
+  box-shadow: 0 8px 24px -16px hsl(var(--primary) / 0.72), inset 0 1px 0 hsl(var(--primary-foreground) / 0.2) !important;
+  border-radius: 0.9rem !important;
+}
+
+header.fixed.md\:hidden {
+  background: hsl(var(--sidebar) / 0.9) !important;
+  border-bottom-color: hsl(var(--border) / 0.8) !important;
+  box-shadow: 0 10px 30px -28px hsl(var(--foreground) / 0.42) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+}
+
+[data-testid="button-command-palette"] {
+  border-color: hsl(var(--sidebar-border) / 0.82) !important;
+  background: hsl(var(--card) / 0.48) !important;
+  box-shadow: inset 0 1px 0 hsl(var(--card) / 0.7) !important;
+  border-radius: 0.85rem !important;
+}
+
+[data-testid="button-command-palette"]:hover {
+  background: hsl(var(--sidebar-accent) / 0.74) !important;
+  border-color: hsl(var(--primary) / 0.2) !important;
+}
+
+[data-testid="featured-filtro"],
+[data-testid="featured-avaliacao-cognitiva"] {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0.82rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+[data-testid="featured-filtro"]:hover,
+[data-testid="featured-avaliacao-cognitiva"]:hover {
+  background: hsl(var(--sidebar-accent) / 0.66) !important;
+  transform: none !important;
+}
+
+[data-testid="featured-filtro"] > span:first-of-type,
+[data-testid="featured-avaliacao-cognitiva"] > span:first-of-type {
+  background: hsl(var(--primary) / 0.09) !important;
+  color: hsl(var(--primary)) !important;
+  border: 1px solid hsl(var(--primary) / 0.12) !important;
+  box-shadow: none !important;
+  border-radius: 0.72rem !important;
+}
+
+#sidebar-nav [data-testid^="nav-"] {
+  position: relative;
+  border-radius: 0.82rem !important;
+  box-shadow: none !important;
+  transform: none !important;
+  background-image: none !important;
+}
+
+#sidebar-nav [data-testid^="nav-"].font-semibold {
+  background: hsl(var(--primary) / 0.08) !important;
+  color: hsl(var(--primary)) !important;
+  box-shadow: inset 3px 0 0 hsl(var(--primary)), inset 0 0 0 1px hsl(var(--primary) / 0.08) !important;
+}
+
+#sidebar-nav [data-testid^="nav-"]:not(.font-semibold):hover {
+  background: hsl(var(--sidebar-accent) / 0.66) !important;
+}
+
+@media (min-width: 768px) {
+  #sidebar-nav [data-testid^="nav-"] {
+    min-height: 40px !important;
+    padding-top: 0.44rem !important;
+    padding-bottom: 0.44rem !important;
+  }
+}
+
+/* A barra de sete chips duplicava informação e diminuía percepção de produto. */
+#main-content > .sticky {
+  display: none !important;
+}
+
+#main-content {
+  background: transparent !important;
+}
+
+#main-content > div:last-child {
+  max-width: 1480px !important;
+  padding: clamp(0.9rem, 2vw, 1.8rem) clamp(0.85rem, 2.3vw, 2.25rem) 1.8rem !important;
+}
+
+/* Avisos globais continuam integrais, mas sem competir com a tarefa principal. */
+#main-content aside[aria-label="Aviso de finalidade educativa"] {
+  max-width: 76rem;
+  margin: 2.8rem auto 0 !important;
+  padding: 0.85rem 0 0 !important;
+  gap: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid hsl(var(--border) / 0.75) !important;
+  background: transparent !important;
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 10px !important;
+  line-height: 1.6 !important;
+  box-shadow: none !important;
+}
+
+#main-content aside[aria-label="Aviso de finalidade educativa"] > span[aria-hidden="true"] {
+  display: none !important;
+}
+
+/* ── Home assinatura ──────────────────────────────────────────── */
+.np-home-hero {
+  position: relative;
+  min-height: 0 !important;
+  padding: clamp(1.65rem, 3.3vw, 3.4rem) !important;
+  border-radius: 1.65rem !important;
+  border-color: hsl(var(--border) / 0.82) !important;
+  background:
+    radial-gradient(440px 300px at 96% 0%, hsl(var(--primary) / 0.075), transparent 70%),
+    linear-gradient(145deg, hsl(var(--card) / 0.99), hsl(var(--background) / 0.9)) !important;
+  box-shadow: 0 1px 0 hsl(var(--card) / 0.9), 0 30px 84px -60px hsl(var(--foreground) / 0.5) !important;
+  isolation: isolate;
+}
+
+.np-home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0.9rem auto 0.9rem 0;
+  width: 2px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, transparent, hsl(var(--primary) / 0.7), hsl(var(--chart-2) / 0.28), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.np-home-orb {
+  opacity: 0.2 !important;
+  filter: blur(42px) !important;
+}
+
+.np-home-orb-one {
+  width: 12rem !important;
+  height: 12rem !important;
+  right: -4rem !important;
+  top: -6rem !important;
+}
+
+.np-home-orb-two {
+  width: 9rem !important;
+  height: 9rem !important;
+  bottom: -6rem !important;
+}
+
+.np-home-hero h1 {
+  max-width: 15ch !important;
+  font-size: clamp(2.65rem, 6.1vw, 4.85rem) !important;
+  line-height: 0.96 !important;
+  letter-spacing: -0.052em !important;
+  text-wrap: balance;
+}
+
+.np-title-gradient {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: hsl(var(--primary)) !important;
+}
+
+.np-primary-cta {
+  background: hsl(var(--primary)) !important;
+  border: 1px solid hsl(var(--primary) / 0.72) !important;
+  box-shadow: 0 10px 24px -18px hsl(var(--primary) / 0.9), inset 0 1px 0 hsl(var(--primary-foreground) / 0.2) !important;
+}
+
+.np-primary-cta:hover {
+  transform: none !important;
+  filter: saturate(1.04);
+  box-shadow: 0 14px 30px -20px hsl(var(--primary) / 0.92), inset 0 1px 0 hsl(var(--primary-foreground) / 0.2) !important;
+}
+
+.np-home-hero [data-testid="input-search"] {
+  background: hsl(var(--card) / 0.9) !important;
+  border-color: hsl(var(--border) / 0.86) !important;
+  box-shadow: 0 10px 32px -26px hsl(var(--foreground) / 0.42), var(--np-premium-inset) !important;
+}
+
+.np-home-hero [aria-label="Métricas do app"] {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .np-home-hero > .relative {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .np-home-hero > .relative > div:last-child {
+    display: none !important;
+  }
+}
+
+[data-testid^="home-flow-"] {
+  border-radius: 1.25rem !important;
+  border-color: hsl(var(--border) / 0.78) !important;
+  background: hsl(var(--card) / 0.94) !important;
+  box-shadow: var(--np-premium-shadow) !important;
+  backdrop-filter: none !important;
+  padding: 1.1rem !important;
+  gap: 0.95rem !important;
+  transform: none !important;
+}
+
+[data-testid^="home-flow-"]:hover {
+  transform: none !important;
+  border-color: hsl(var(--primary) / 0.2) !important;
+  box-shadow: var(--np-premium-shadow-raised) !important;
+}
+
+/* ── PageHero / headers editoriais ────────────────────────────── */
+#main-content header[class*="bg-gradient-to-br"] {
+  background-image: none !important;
+  background-color: hsl(var(--card) / 0.94) !important;
+  border-color: hsl(var(--border) / 0.82) !important;
+  box-shadow: var(--np-premium-shadow) !important;
+}
+
+#main-content [class*="rounded-[2rem]"] {
+  border-radius: 1.45rem !important;
+}
+
+/* ── Patient Cockpit: dashboard clínico executivo ─────────────── */
+[data-testid="patient-cockpit"] {
+  position: relative;
+  padding-top: 0.25rem;
+}
+
+[data-testid="patient-cockpit"] > div:first-child {
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.75);
+}
+
+[data-testid="patient-cockpit"] > div.grid:nth-of-type(2) .shadcn-card {
+  min-height: 8.8rem;
+  background:
+    linear-gradient(180deg, hsl(var(--card) / 0.99), hsl(var(--card) / 0.92)) !important;
+}
+
+[data-testid="patient-cockpit"] > div.grid:nth-of-type(2) .shadcn-card p.text-2xl {
+  font-size: clamp(1.9rem, 3vw, 2.35rem) !important;
+  letter-spacing: -0.045em !important;
+}
+
+[data-testid="patient-cockpit"] .shadcn-card [class*="rounded-lg"][class*="border"] {
+  border-radius: 0.85rem !important;
+}
+
+[data-testid="patient-cockpit"] ol li {
+  border-left-color: hsl(var(--primary) / 0.24) !important;
+  padding-left: 0.95rem !important;
+}
+
+/* ── Estados e densidade operacional ──────────────────────────── */
+#main-content .shadcn-card > div[class*="p-4"],
+#main-content .shadcn-card > div[class*="p-5"] {
+  border-radius: inherit;
+}
+
+#main-content [role="status"][class*="rounded-3xl"],
+#main-content [role="alert"][class*="rounded-3xl"] {
+  border-radius: 1.25rem !important;
+  box-shadow: var(--np-premium-shadow) !important;
+}
+
+.animate-pulse {
+  animation-duration: 1.7s !important;
+  animation-timing-function: ease-in-out !important;
+}
+
+/* ── Mobile: premium sem encolher demais ─────────────────────── */
+@media (max-width: 767px) {
+  .np-home-hero {
+    padding: 1.35rem !important;
+    border-radius: 1.25rem !important;
+  }
+
+  .np-home-hero::before {
+    inset: 0.8rem auto 0.8rem 0;
+  }
+
+  .np-home-hero h1 {
+    font-size: clamp(2.25rem, 11.5vw, 3.35rem) !important;
+    line-height: 0.99 !important;
+  }
+
+  #main-content > div:last-child {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .shadcn-card {
+    border-radius: 1.1rem !important;
+  }
+
+  [role="tablist"] {
+    border-radius: 0.9rem !important;
+  }
+}
+
+@media print {
+  .np-ambient-layer,
+  #main-content > .sticky {
+    display: none !important;
+  }
+
+  body,
+  #main-content,
+  .shadcn-card {
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+}

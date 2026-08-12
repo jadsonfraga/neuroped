@@ -9,10 +9,11 @@
  *   test-clinical.mjs       → ≥ clinicalCasesMin casos clínicos verdes
  *
  * Aqui guardamos o que essas etapas não cobrem diretamente: o catálogo não
- * pode encolher (perda de instrumentos ou de proveniência declarada).
+ * pode encolher, perder fontes já declaradas nem aumentar silenciosamente as
+ * pendências de validação psicométrica.
  *
- * Lighthouse/axe ficam como null no baseline (sem browser headless no CI);
- * quando passarem a ser medidos, preencher e este script passa a compará-los.
+ * IMPORTANTE: ausência de fonte (proveniência) e validação psicométrica
+ * pendente são eixos independentes e possuem tetos separados.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -26,15 +27,23 @@ const { allScales, allScalesComFichas } = await import(
   pathToFileURL(resolve(repoRoot, "client/src/data/scaleFilter.ts")).href
 );
 
+const hasFonte = (scale) =>
+  typeof scale.fonte === "string" && scale.fonte.trim().length > 0;
+
 const current = {
   catalogRunnableInstruments: allScales.length,
-  catalogRunnableReviewedWithFonte: allScales.filter((s) => {
-    const hasFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
-    return hasFonte && s.pendente_validacao_clinica !== true;
-  }).length,
+  catalogRunnableWithFonte: allScales.filter(hasFonte).length,
+  catalogRunnableReviewedWithFonte: allScales.filter(
+    (s) => hasFonte(s) && s.pendente_validacao_clinica !== true,
+  ).length,
+  catalogRunnablePendingProvenance: allScales.filter((s) => !hasFonte(s)).length,
+  catalogRunnablePendingPsychometricValidation: allScales.filter(
+    (s) => s.pendente_validacao_clinica === true,
+  ).length,
   catalogDocumentedInstruments: allScalesComFichas.length,
-  catalogDocumentedWithFonte: allScalesComFichas.filter(
-    (s) => typeof s.fonte === "string" && s.fonte.trim().length > 0,
+  catalogDocumentedWithFonte: allScalesComFichas.filter(hasFonte).length,
+  catalogDocumentedPendingProvenance: allScalesComFichas.filter(
+    (s) => !hasFonte(s),
   ).length,
 };
 
@@ -47,16 +56,34 @@ function noLessThan(key) {
   }
 }
 
+function noMoreThan(currentKey, baselineKey) {
+  if (typeof baseline[baselineKey] !== "number") return;
+  if (current[currentKey] > baseline[baselineKey]) {
+    regressions.push(`${currentKey}: atual ${current[currentKey]} > teto ${baseline[baselineKey]}`);
+  }
+}
+
 noLessThan("catalogRunnableInstruments");
+noLessThan("catalogRunnableWithFonte");
 noLessThan("catalogRunnableReviewedWithFonte");
 noLessThan("catalogDocumentedInstruments");
 noLessThan("catalogDocumentedWithFonte");
+noMoreThan("catalogRunnablePendingProvenance", "catalogRunnablePendingProvenanceMax");
+noMoreThan(
+  "catalogRunnablePendingPsychometricValidation",
+  "catalogRunnablePendingPsychometricValidationMax",
+);
+noMoreThan("catalogDocumentedPendingProvenance", "catalogDocumentedPendingProvenanceMax");
 
 console.log(
   `[baseline] executáveis=${current.catalogRunnableInstruments} (min ${baseline.catalogRunnableInstruments})` +
+  ` | executáveis+fonte=${current.catalogRunnableWithFonte} (min ${baseline.catalogRunnableWithFonte})` +
   ` | executáveis revisados+fonte=${current.catalogRunnableReviewedWithFonte} (min ${baseline.catalogRunnableReviewedWithFonte})` +
+  ` | sem fonte executável=${current.catalogRunnablePendingProvenance} (máx ${baseline.catalogRunnablePendingProvenanceMax})` +
+  ` | validação psicométrica pendente=${current.catalogRunnablePendingPsychometricValidation} (máx ${baseline.catalogRunnablePendingPsychometricValidationMax})` +
   ` | fichas=${current.catalogDocumentedInstruments} (min ${baseline.catalogDocumentedInstruments})` +
-  ` | fichas+fonte=${current.catalogDocumentedWithFonte} (min ${baseline.catalogDocumentedWithFonte})`,
+  ` | fichas+fonte=${current.catalogDocumentedWithFonte} (min ${baseline.catalogDocumentedWithFonte})` +
+  ` | sem fonte documental=${current.catalogDocumentedPendingProvenance} (máx ${baseline.catalogDocumentedPendingProvenanceMax})`,
 );
 
 if (regressions.length > 0) {

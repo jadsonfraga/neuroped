@@ -13,6 +13,7 @@ export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
   "/sessao-expirada", // Recuperação de sessão remota
   "/familia", // Capa pública (home das famílias)
+  "/agendar", // Perfil e autoagendamento público com dados mínimos cifrados
   "/pre-consulta", // Formulário pré-consulta para família/recepção
   "/pre-retorno", // Atualização familiar antes do retorno
   "/efeitos-colaterais", // Alias familiar seguro do pré-retorno

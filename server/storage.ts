@@ -15,7 +15,7 @@ import {
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
+import { eq, or, and, isNull, desc, getTableColumns } from "drizzle-orm";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -224,6 +224,7 @@ sqlite.exec(`
 export interface IStorage {
   saveResult(result: InsertScaleResult): ScaleResult;
   getResults(): ScaleResult[];
+  getResultsAccessibleBy(user: { id: string; role: string }, limit?: number): ScaleResult[];
   getResult(id: string): ScaleResult | undefined;
   getResultsByPatient(patientId: string): ScaleResult[];
   deleteResult(id: string): boolean;
@@ -237,6 +238,38 @@ export class SqliteStorage implements IStorage {
 
   getResults(): ScaleResult[] {
     return db.select().from(scaleResults).all();
+  }
+
+  /**
+   * Resultados que `user` pode ver, já filtrados e paginados em UMA query.
+   *
+   * A rota GET /api/results antes chamava getResults() (tabela inteira, sem
+   * LIMIT) e, para não-admin, rodava uma query SÍNCRONA extra POR LINHA só
+   * para checar dono do paciente — um N+1 que degrada linearmente com o
+   * crescimento da tabela. A regra de ownership replicada aqui é a mesma de
+   * `canAccessScaleResult` (lib/ownership.ts): resultado com paciente herda
+   * SEMPRE o dono do paciente (não o `appliedByUserId`); resultado órfão (sem
+   * paciente) usa `appliedByUserId`. Coberto por teste manual antes do merge:
+   * duas contas, um paciente cada, resultado vinculado e órfão — cada conta
+   * só vê o que é dela.
+   */
+  getResultsAccessibleBy(user: { id: string; role: string }, limit = 50): ScaleResult[] {
+    if (user.role === "admin") {
+      return db.select().from(scaleResults).orderBy(desc(scaleResults.createdAt)).limit(limit).all();
+    }
+    return db
+      .select(getTableColumns(scaleResults))
+      .from(scaleResults)
+      .leftJoin(patients, eq(scaleResults.patientId, patients.id))
+      .where(
+        or(
+          eq(patients.ownerUserId, user.id),
+          and(isNull(scaleResults.patientId), eq(scaleResults.appliedByUserId, user.id)),
+        ),
+      )
+      .orderBy(desc(scaleResults.createdAt))
+      .limit(limit)
+      .all() as ScaleResult[];
   }
 
   getResult(id: string): ScaleResult | undefined {

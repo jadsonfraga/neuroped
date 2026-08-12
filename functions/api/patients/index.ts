@@ -215,13 +215,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   };
 
   if (!env.DB) {
-    return jsonResponse(
-      {
-        ...toPatientApi(row),
-        mode: "demo",
-        note: "Registro simulado — banco não configurado. Configure D1 para persistência real.",
-      },
-      201,
+    return errorResponse(
+      "Persistência indisponível. Nenhum paciente foi criado.",
+      "DB_REQUIRED",
+      503,
     );
   }
 

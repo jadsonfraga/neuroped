@@ -83,14 +83,15 @@ export default function DenverPage() {
       <Card className="border-card-border">
         <CardContent className="p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">
+            <h2 className="text-sm font-semibold text-foreground">
               Idade da Criança
-            </h3>
+            </h2>
             <Badge variant="secondary" className="text-sm font-bold">
               {getAgeLabel(ageMonths)}
             </Badge>
           </div>
           <Slider
+            aria-label="Idade da criança em meses"
             value={[ageMonths]}
             onValueChange={([v]) => setAgeMonths(v)}
             min={0}

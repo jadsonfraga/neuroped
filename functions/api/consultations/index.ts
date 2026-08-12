@@ -187,7 +187,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   };
 
   if (!env.DB) {
-    return jsonResponse({ ...payload, mode: "demo", note: "Registro simulado — banco não configurado." }, 201);
+    return errorResponse(
+      "Persistência indisponível. Nenhuma consulta foi registrada.",
+      "DB_REQUIRED",
+      503,
+    );
   }
 
   try {

@@ -128,7 +128,7 @@ export class ScaleResultRepository implements BaseRepository<ScaleResult, Insert
       .returning()
       .execute();
 
-    return result[0];
+    return result[0] ?? null;
   }
 
   async update(id: string, input: Partial<ScaleResult>): Promise<ScaleResult | null> {

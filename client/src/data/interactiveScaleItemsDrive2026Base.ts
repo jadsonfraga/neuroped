@@ -98,8 +98,16 @@ export const driveImport2026Items: Record<string, InteractiveScaleDef> = {
   },
 
   "mnp-psi-100": {
-    instruction: "Cada item recebe pontuação de 0 a 3: 0 = Ausente ou dentro do esperado para idade; 1 = Leve, ocasional ou com pouco prejuízo funcional; 2 = Moderado, frequente ou com prejuízo claro; 3 = Intenso, persistente, generalizado ou com prejuízo importante; NA = Não aplicável ou sem informação suficiente.",
-    infoBox: "MNP-PSI 100 — instrumento autoral experimental (Dr. Jadson Fraga). Triagem/monitorização: não estabelece diagnóstico isolado. No app, a interpretação usa o percentual do escore máximo, equivalente às faixas do documento original. Pontuação total possível: 0 a 300 pontos (100 itens de 0 a 3); opção adicional NA = não aplicável ou sem informação suficiente. As faixas (bands) referem-se à MÉDIA GLOBAL dos itens respondidos (soma dos pontos / número de itens válidos), não ao escore bruto total. Interpretação por domín…",
+    // instruction/infoBox prometiam uma opção "NA" que nunca existiu na tela:
+    // `labels` sempre teve só 4 entradas (0-3), e GenericScale monta os botões
+    // de resposta a partir dela. Quem respondia procurava "NA", não achava, e
+    // era forçado a escolher um dos 4 valores numéricos arbitrariamente para
+    // um item que não se aplica — distorcendo o registro daquele item. Mesma
+    // convenção já adotada no EDJ-TDL (interactiveScalesDrive2026.ts): sem
+    // opção NA na aplicação interativa, usar "Ausente" e registrar a ressalva
+    // em comentário clínico à parte.
+    instruction: "Cada item recebe pontuação de 0 a 3: 0 = Ausente ou dentro do esperado para idade; 1 = Leve, ocasional ou com pouco prejuízo funcional; 2 = Moderado, frequente ou com prejuízo claro; 3 = Intenso, persistente, generalizado ou com prejuízo importante. Se o item não se aplica ou não há informação suficiente, marque \"Ausente\" e registre a ressalva em comentário clínico à parte — a aplicação interativa não tem opção separada de \"não aplicável\".",
+    infoBox: "MNP-PSI 100 — instrumento autoral experimental (Dr. Jadson Fraga). Triagem/monitorização: não estabelece diagnóstico isolado. No app, a interpretação usa o percentual do escore máximo, equivalente às faixas do documento original. Pontuação total possível: 0 a 300 pontos (100 itens de 0 a 3, sem opção separada de \"não aplicável\" nesta aplicação interativa). As faixas (bands) referem-se à MÉDIA GLOBAL dos itens respondidos (soma dos pontos / número de itens válidos), não ao escore bruto total. Interpretação por domín…",
     labels: ["Ausente ou dentro do esperado para idade", "Leve, ocasional ou com pouco prejuízo funcional", "Moderado, frequente ou com prejuízo claro", "Intenso, persistente, generalizado ou com prejuízo importante"],
     optionPoints: [0, 1, 2, 3],
     scoreDirection: "higher_worse",

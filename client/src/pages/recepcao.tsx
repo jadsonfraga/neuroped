@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, Users } from "lucide-react";
+import { CalendarClock, ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,14 +78,14 @@ export default function RecepcaoPage() {
             <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">recepção · fluxo operacional</Badge>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Painel da recepção</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Inicie pré-consultas, acompanhe status e entregue um resumo objetivo ao médico sem acessar áreas sensíveis.
+              Organize pré-consultas e fluxo de chegada e acesse a Agenda & Gestão compartilhada sem abrir prontuário, prescrição ou áreas clínicas sensíveis.
             </p>
           </div>
         </div>
       </header>
 
       <section className="grid gap-3 md:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">total</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">pré-consultas</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
         <Card><CardContent className="flex h-full flex-col gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Pré-consulta</Link></Button><Button asChild variant="outline" className="w-full gap-2"><Link href="/pre-retorno"><ClipboardCheck className="h-4 w-4" />Pré-retorno</Link></Button></CardContent></Card>
@@ -101,9 +101,28 @@ export default function RecepcaoPage() {
         src={brandAssets.illustrations.teamMultiprofessional}
         badge="Recepção organizada"
         title="Família, equipe e médico chegam à consulta falando a mesma língua."
-        subtitle="O painel reúne o que foi respondido antes da entrada no consultório e transforma a espera em informação útil."
+        subtitle="O painel reúne o que foi respondido antes da entrada no consultório e mantém a agenda operacional em uma única fonte compartilhada."
         className="min-h-44"
       />
+
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.08] via-card to-chart-2/[0.06]">
+        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <CalendarClock className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Agenda oficial: Agenda & Gestão</p>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+                A agenda cloud agora é a única fonte operacional editável. A antiga agenda local permanece preservada no cofre do dispositivo para evitar perda silenciosa, mas não é mais editada nesta tela.
+              </p>
+            </div>
+          </div>
+          <Button asChild className="shrink-0 gap-2">
+            <Link href="/agenda"><CalendarClock className="h-4 w-4" />Abrir Agenda & Gestão</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Card>

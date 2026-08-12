@@ -6,15 +6,15 @@ interface PageHeroProps {
   title: string;
   subtitle?: string;
   eyebrow?: string;
-  /** Gradiente do ícone (classes Tailwind). Padrão: primary → chart-2. */
+  /** Gradiente reservado ao pequeno medalhão do módulo, não à superfície inteira. */
   gradient?: string;
   children?: ReactNode;
 }
 
 /**
- * Cabeçalho de página estilo Lovable — hero em gradiente suave, bolha de ícone,
- * eyebrow opcional, título e subtítulo. Reutilizável para dar às páginas de
- * referência/formulário a mesma cara polida dos módulos principais.
+ * Cabeçalho editorial Signature Clinical.
+ * A superfície permanece calma; identidade de cada módulo fica concentrada no
+ * medalhão do ícone e numa hairline superior, preservando hierarquia e contraste.
  */
 export function PageHero({
   icon: Icon,
@@ -25,24 +25,32 @@ export function PageHero({
   children,
 }: PageHeroProps) {
   return (
-    <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/[0.07] via-card/70 to-chart-2/[0.05] p-5 shadow-sm backdrop-blur sm:p-6">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-chart-2/15 to-transparent blur-3xl" />
-      <div className="relative flex items-start gap-3">
-        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg ring-1 ring-white/20`}>
-          <Icon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
+    <header className="np-page-hero relative overflow-hidden rounded-[1.4rem] border border-border/80 bg-card/92 p-5 shadow-[0_1px_1px_hsl(var(--foreground)/0.025),0_16px_42px_-34px_hsl(var(--foreground)/0.38)] sm:p-6">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent"
+      />
+      <div className="relative flex items-start gap-4">
+        <div
+          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[0.95rem] bg-gradient-to-br ${gradient} text-white shadow-[0_10px_24px_-17px_hsl(var(--foreground)/0.52)] ring-1 ring-white/20`}
+        >
+          <Icon className="h-5 w-5" strokeWidth={1.85} aria-hidden="true" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pt-0.5">
           {eyebrow && (
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">{eyebrow}</p>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+              {eyebrow}
+            </p>
           )}
-          <h1 className="text-[1.55rem] font-bold leading-tight tracking-tight text-foreground">
+          <h1 className="text-[1.6rem] font-bold leading-[1.1] tracking-[-0.028em] text-foreground sm:text-[1.75rem]">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              {subtitle}
+            </p>
           )}
-          {children && <div className="mt-3">{children}</div>}
+          {children && <div className="mt-4">{children}</div>}
         </div>
       </div>
     </header>

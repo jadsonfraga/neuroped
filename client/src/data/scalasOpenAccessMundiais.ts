@@ -278,7 +278,10 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
   {
     id: "bpfas",
     name: "BPFAS",
-    fullName: "Brief Pediatric Feeding Assessment Scale",
+    // fullName era "Brief Pediatric Feeding Assessment Scale" — expansão errada
+    // da sigla (nem "Brief", nem singular). Nome correto confirmado no PubMed:
+    // Crist W, Napier-Phillips A, 2001, J Dev Behav Pediatr 22(5):279-86.
+    fullName: "Behavioral Pediatrics Feeding Assessment Scale",
     ageMin: 24,
     ageMax: 168,
     queixas: ["alimentacao"],
@@ -286,7 +289,7 @@ export const scalasOpenAccessMundiais: ScaleEntry[] = [
     prioridade: "triagem",
     tempo: "5–10 min",
     description: "Avaliação breve de problemas de alimentação em crianças (35 itens).",
-    fonte: "NIH-funded research",
+    fonte: "Crist W, Napier-Phillips A, 2001 (Behavioral Pediatrics Feeding Assessment Scale) — J Dev Behav Pediatr 22(5):279-86. PMID 11718230 · doi:10.1097/00004703-200110000-00001",
     licencaUso: "livre",
     pendente_validacao_clinica: false,
   },

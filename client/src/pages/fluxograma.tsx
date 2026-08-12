@@ -32,9 +32,9 @@ function PickChip({ pick, variant }: { pick: FluxoPick; variant: "ouro" | "prata
           <span aria-hidden="true" className="text-[10px]">{variant === "ouro" ? "🥇" : "🥈"}</span>
           <span className="truncate text-xs font-bold">{pick.label}</span>
         </div>
-        {pick.sub && <p className="text-[10px] font-medium leading-tight opacity-80">{pick.sub}</p>}
+        {pick.sub && <p className="text-[10px] font-semibold leading-tight">{pick.sub}</p>}
       </div>
-      {route ? <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-70" /> : <span className="shrink-0 rounded-full border border-current/30 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide opacity-70">ref</span>}
+      {route ? <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-70" /> : <span className="shrink-0 rounded-full border border-current/40 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">ref</span>}
     </div>
   );
   return route ? <Link href={route} className="block">{inner}</Link> : inner;
@@ -52,7 +52,7 @@ function NodeBanner({ node }: { node: FluxoNode }) {
       <div className="flex items-start gap-2.5">
         <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${iconTone}`} />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-foreground">{node.title}</h3>
+          <h2 className="text-sm font-semibold text-foreground">{node.title}</h2>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{node.intro}</p>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-3">
             {node.picks.map((p) => <PickChip key={p.label} pick={p} variant="ouro" />)}

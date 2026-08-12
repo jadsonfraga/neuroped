@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ShieldCheck,
   FileSignature,
@@ -36,8 +36,15 @@ function signingErrorMessage(error: unknown): string {
  * da aba e nunca é persistido ou transferido pelo cliente.
  */
 export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex }: Props) {
+  const uid = useId();
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [p12Name, setP12Name] = useState("");
+  // Se o usuário trocar o arquivo .p12 antes do arrayBuffer() anterior resolver,
+  // as duas leituras assíncronas correm em paralelo; sem esta trava, a que
+  // resolve por último "vence" o setP12 independente de qual foi selecionada
+  // por último — a UI podia mostrar o nome do certificado B enquanto os bytes
+  // carregados (usados para assinar) eram do certificado A.
+  const p12LoadIdRef = useRef(0);
   const [senha, setSenha] = useState("");
   const [cert, setCert] = useState<{ commonName: string; notAfter: Date; issuer: string } | null>(null);
   const [busy, setBusy] = useState<"" | "verify" | "sign" | "plain" | "save">("");
@@ -67,8 +74,11 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     setErro(""); setOkMsg(""); setCert(null);
     const f = e.target.files?.[0];
     if (!f) return;
+    const loadId = ++p12LoadIdRef.current;
     setP12Name(f.name);
-    setP12(await f.arrayBuffer());
+    const bytes = await f.arrayBuffer();
+    if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
+    setP12(bytes);
   }
 
   async function verificar() {
@@ -141,10 +151,15 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div>
-          <label className="text-[11px] font-semibold text-muted-foreground">
+          {/* Os dois rótulos abaixo eram <label> soltos, sem htmlFor e sem envolver
+              o campo — visualmente corretos, programaticamente desconectados. O de
+              senha passava no axe só porque o placeholder serve de nome fraco; o de
+              arquivo não tinha nada e ficava sem nome acessível. */}
+          <label htmlFor={`${uid}-p12`} className="text-[11px] font-semibold text-muted-foreground">
             Certificado (.p12 / .pfx)
           </label>
           <Input
+            id={`${uid}-p12`}
             type="file"
             accept=".p12,.pfx"
             onChange={onPickP12}
@@ -156,10 +171,11 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
           )}
         </div>
         <div>
-          <label className="text-[11px] font-semibold text-muted-foreground">
+          <label htmlFor={`${uid}-p12-senha`} className="text-[11px] font-semibold text-muted-foreground">
             Senha do certificado
           </label>
           <Input
+            id={`${uid}-p12-senha`}
             type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}

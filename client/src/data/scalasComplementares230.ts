@@ -627,6 +627,7 @@ export const paralisiaCerebral: ScaleEntry[] = [
   },
   {
     id: "mini-macs",
+    fonte: "Eliasson AC, Ullenhag A, Wahlström U, Krumlinde-Sundholm L, 2017 (Mini-MACS) — Dev Med Child Neurol 59(1):72-78. PMID 27273427 · doi:10.1111/dmcn.13162",
     name: "Mini-MACS",
     fullName: "Mini Manual Ability Classification System — crianças pequenas com PC",
     ageMin: 24,
@@ -809,6 +810,7 @@ export const paralisiaCerebral: ScaleEntry[] = [
   },
   {
     id: "viking-speech",
+    fonte: "Pennington L, Virella D, Mjøen T, et al., 2013 (Viking Speech Scale) — Res Dev Disabil 34(10):3202-10. PMID 23891732 · doi:10.1016/j.ridd.2013.06.035",
     name: "Viking Speech Scale",
     fullName: "Viking Speech Scale — Inteligibilidade de fala em PC",
     ageMin: 24,
@@ -824,6 +826,7 @@ export const paralisiaCerebral: ScaleEntry[] = [
   },
   {
     id: "bfmf",
+    fonte: "Beckung E, Hagberg G, 2002 (BFMF descrito no artigo) — Dev Med Child Neurol 44(5):309-16. PMID 12033716 · doi:10.1017/s0012162201002134",
     name: "BFMF",
     fullName: "Bimanual Fine Motor Function Classification — Função motora fina bimanual",
     ageMin: 24,

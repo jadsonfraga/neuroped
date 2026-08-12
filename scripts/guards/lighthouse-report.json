@@ -1,15 +1,21 @@
 {
   "/": {
-    "performance": 98,
+    "performance": 100,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 714,
-      "lcpMs": 1027,
-      "speedIndexMs": 714,
-      "tbtMs": 6,
+      "fcpMs": 303,
+      "lcpMs": 474,
+      "speedIndexMs": 386,
+      "tbtMs": 0,
       "cls": 0.005
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
     },
     "layoutShifts": [
       {
@@ -45,7 +51,7 @@
             "width": 159,
             "height": 48
           },
-          "snippet": "<button aria-label=\"Rever o tour guiado do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
+          "snippet": "<button aria-label=\"Tour do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
           "nodeLabel": "Tour do app"
         },
         "score": 0.001586607811896922
@@ -53,44 +59,9 @@
     ],
     "failedAudits": [
       {
-        "id": "first-contentful-paint",
-        "score": 0.97,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.94,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
-      },
-      {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
-      },
-      {
-        "id": "unused-css-rules",
-        "score": 0,
-        "title": "Reduce unused CSS"
-      },
-      {
-        "id": "unused-javascript",
-        "score": 0,
-        "title": "Reduce unused JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
       },
       {
         "id": "forced-reflow-insight",
@@ -115,68 +86,39 @@
     ]
   },
   "/#/filtro": {
-    "performance": 96,
+    "performance": 100,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 831,
-      "lcpMs": 1281,
-      "speedIndexMs": 902,
-      "tbtMs": 19,
+      "fcpMs": 418,
+      "lcpMs": 683,
+      "speedIndexMs": 520,
+      "tbtMs": 0,
       "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
     },
     "layoutShifts": [],
     "failedAudits": [
       {
-        "id": "first-contentful-paint",
-        "score": 0.94,
-        "title": "First Contentful Paint"
-      },
-      {
         "id": "largest-contentful-paint",
-        "score": 0.87,
+        "score": 0.99,
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "speed-index",
-        "score": 0.98,
-        "title": "Speed Index"
-      },
-      {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
-      },
-      {
-        "id": "unsized-images",
-        "score": 0.5,
-        "title": "Image elements do not have explicit `width` and `height`"
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
-      },
-      {
-        "id": "unused-css-rules",
-        "score": 0,
-        "title": "Reduce unused CSS"
-      },
-      {
-        "id": "unused-javascript",
-        "score": 0,
-        "title": "Reduce unused JavaScript"
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
       },
       {
         "id": "forced-reflow-insight",
@@ -203,36 +145,32 @@
   "/#/mchat": {
     "performance": 100,
     "accessibility": 100,
-    "best-practices": 96,
+    "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 375,
-      "lcpMs": 455,
-      "speedIndexMs": 450,
+      "fcpMs": 388,
+      "lcpMs": 609,
+      "speedIndexMs": 426,
       "tbtMs": 0,
       "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
     },
     "layoutShifts": [],
     "failedAudits": [
       {
-        "id": "errors-in-console",
-        "score": 0,
-        "title": "Browser errors were logged to the console"
+        "id": "largest-contentful-paint",
+        "score": 0.99,
+        "title": "Largest Contentful Paint"
       },
       {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "label-content-name-mismatch",
-        "score": 0,
-        "title": "Elements with visible text labels do not have matching accessible names."
-      },
-      {
-        "id": "bf-cache",
-        "score": 0,
-        "title": "Page prevented back/forward cache restoration"
       },
       {
         "id": "forced-reflow-insight",
@@ -246,7 +184,395 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/cars": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 332,
+      "lcpMs": 504,
+      "speedIndexMs": 358,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/vineland": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 297,
+      "lcpMs": 491,
+      "speedIndexMs": 320,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/cbcl": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 409,
+      "lcpMs": 612,
+      "speedIndexMs": 456,
+      "tbtMs": 1,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.99,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/caa": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 345,
+      "lcpMs": 497,
+      "speedIndexMs": 394,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/espasticidade": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 323,
+      "lcpMs": 491,
+      "speedIndexMs": 371,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/prontuario": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 363,
+      "lcpMs": 459,
+      "speedIndexMs": 404,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/fluxograma": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 311,
+      "lcpMs": 446,
+      "speedIndexMs": 360,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/laudo-neuroped": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 313,
+      "lcpMs": 449,
+      "speedIndexMs": 351,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/receita-c1": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 440,
+      "lcpMs": 613,
+      "speedIndexMs": 472,
+      "tbtMs": 0,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.99,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]

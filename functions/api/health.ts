@@ -68,7 +68,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "no-store",
+      // Capacidade não-sensível, sondada em todo carregamento. `no-cache`
+      // (revalida sempre, nunca serve estado obsoleto) em vez de `no-store`
+      // para não bloquear o back/forward cache do navegador. O _middleware
+      // reforça esse mesmo valor para /api/health; os demais endpoints
+      // clínicos permanecem `no-store`.
+      "Cache-Control": "no-cache",
       "X-Service": "neuroped-edj",
     },
   });

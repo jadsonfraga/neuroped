@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       expected_commit:
-        description: "Commit que originou a sincronização; vazio publica o main atual"
+        description: "Commit exato que originou a sincronização; vazio usa o main observado no início"
         required: false
         type: string
 
@@ -24,6 +24,8 @@ jobs:
     concurrency:
       group: cloudflare-pages
       cancel-in-progress: false
+    outputs:
+      deploy_sha: ${{ steps.revision.outputs.sha }}
 
     steps:
       - name: Checkout do main atual
@@ -32,17 +34,18 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Definir commit efetivamente publicado
+      - name: Fixar commit exato da sincronização
         id: revision
         env:
           EXPECTED_COMMIT: ${{ inputs.expected_commit }}
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
-          echo "sha=$actual" >> "$GITHUB_OUTPUT"
           if [ -n "${EXPECTED_COMMIT:-}" ] && [ "$EXPECTED_COMMIT" != "$actual" ]; then
-            echo "::notice::O main avançou de $EXPECTED_COMMIT para $actual; será publicada a revisão mais recente."
+            echo "::error::O main avançou de $EXPECTED_COMMIT para $actual. A sincronização diária não pode promover uma revisão diferente da solicitada."
+            exit 1
           fi
+          echo "sha=$actual" >> "$GITHUB_OUTPUT"
 
       - name: Validar credenciais de publicação
         env:
@@ -149,15 +152,22 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - name: Checkout do main atual
+      - name: Checkout do mesmo commit publicado no Cloudflare
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ needs.cloudflare.outputs.deploy_sha }}
           fetch-depth: 1
 
-      - name: Definir commit efetivamente publicado
+      - name: Confirmar commit fixado
         id: revision
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        env:
+          TARGET_COMMIT: ${{ needs.cloudflare.outputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          [ -n "$TARGET_COMMIT" ] || { echo "::error::Cloudflare não expôs o commit publicado."; exit 1; }
+          [ "$TARGET_COMMIT" = "$actual" ] || { echo "::error::Checkout Vercel divergiu de $TARGET_COMMIT para $actual."; exit 1; }
+          echo "sha=$actual" >> "$GITHUB_OUTPUT"
 
       - name: Validar credenciais do Vercel
         env:

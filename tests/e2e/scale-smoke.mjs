@@ -106,7 +106,14 @@ async function main() {
   const server = external ? null : await startStaticServer();
   const base = external || `http://127.0.0.1:${server.address().port}`;
 
-  const browser = await chromium.launch();
+  // Paridade com audit-screens: permite Chromium fora do caminho padrão do
+  // Playwright (ex.: ambientes remotos com binário pré-instalado).
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  const browser = await chromium.launch(
+    executablePath
+      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+      : undefined,
+  );
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
   // O smoke valida as escalas, não o fluxo de primeira visita. Prepara somente
@@ -154,9 +161,12 @@ async function main() {
         );
         await submit.click();
 
-        await page.getByText(/Resultado/i).first().waitFor({ timeout: 10000 });
-        await page.getByTestId("button-print-report").waitFor({ timeout: 10000 });
-        await page.locator("[data-scale-response-action]").waitFor({ timeout: 10000 });
+        // "Resultado" também existe em elementos de navegação visual que podem
+        // permanecer ocultos. O relatório clínico possui um marcador estrutural
+        // próprio; esperar por ele valida o estado real pós-submit sem falso timeout.
+        await page.locator("[data-scale-response-report]").waitFor({ state: "visible", timeout: 10000 });
+        await page.getByTestId("button-print-report").waitFor({ state: "visible", timeout: 10000 });
+        await page.locator("[data-scale-response-action]").waitFor({ state: "visible", timeout: 10000 });
 
         ok += 1;
         console.log(`  ✓ ${scale.name}`);

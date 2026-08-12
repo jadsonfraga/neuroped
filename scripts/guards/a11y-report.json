@@ -18,6 +18,16 @@
       "seriousCritical": 0,
       "violations": []
     },
+    "/#/cars": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/espasticidade": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
     "/#/caa": {
       "total": 0,
       "seriousCritical": 0,
@@ -28,5 +38,6 @@
       "seriousCritical": 0,
       "violations": []
     }
-  }
+  },
+  "allSeverityViolations": []
 }

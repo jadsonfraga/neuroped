@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,11 +55,21 @@ function PatientHeaderForm({
   value: PatientInfo;
   onChange: (v: PatientInfo) => void;
 }) {
+  // Este formulário é montado uma vez por aba (Ashworth e Tardieu) com os
+  // mesmos ids literais. Hoje não há colisão porque as Tabs desmontam a aba
+  // inativa, então só uma instância existe no DOM por vez — mas isso é uma
+  // garantia do componente de abas, não deste formulário: bastaria montar as
+  // duas juntas (forceMount, uma view de impressão) para o htmlFor casar só com
+  // a primeira e deixar os dois type="date" sem rótulo, já que eles não têm
+  // placeholder para mascarar a falha. useId remove a dependência disso.
+  const uid = useId();
+  const fieldId = (name: string) => `esp-${name}-${uid}`;
   return (
     <div className="grid grid-cols-2 gap-3 mb-4">
       <div className="space-y-1">
-        <Label className="text-xs">Nome do Paciente</Label>
+        <Label htmlFor={fieldId("patient-name")} className="text-xs">Nome do Paciente</Label>
         <Input
+          id={fieldId("patient-name")}
           className="h-8 text-xs"
           value={value.nome}
           onChange={(e) => onChange({ ...value, nome: e.target.value })}
@@ -68,8 +78,9 @@ function PatientHeaderForm({
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Data de Nascimento</Label>
+        <Label htmlFor={fieldId("patient-dob")} className="text-xs">Data de Nascimento</Label>
         <Input
+          id={fieldId("patient-dob")}
           type="date"
           className="h-8 text-xs"
           value={value.nascimento}
@@ -78,8 +89,9 @@ function PatientHeaderForm({
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Data da Avaliação</Label>
+        <Label htmlFor={fieldId("assessment-date")} className="text-xs">Data da Avaliação</Label>
         <Input
+          id={fieldId("assessment-date")}
           type="date"
           className="h-8 text-xs"
           value={value.data}
@@ -88,8 +100,9 @@ function PatientHeaderForm({
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Examinador(a)</Label>
+        <Label htmlFor={fieldId("examiner")} className="text-xs">Examinador(a)</Label>
         <Input
+          id={fieldId("examiner")}
           className="h-8 text-xs"
           value={value.examinador}
           onChange={(e) => onChange({ ...value, examinador: e.target.value })}
@@ -211,6 +224,7 @@ function AshworthTab() {
                       onValueChange={(value) => setCell(group, column, value)}
                     >
                       <SelectTrigger
+                        aria-label={`${group} — ${limbLabels[column]}`}
                         className="h-7 text-xs"
                         data-testid={`sel-ash-${group}-${column}`}
                       >
@@ -347,6 +361,7 @@ function TardieuTab() {
                 </td>
                 <td className="p-1 border border-border text-center">
                   <Input
+                    aria-label={`${group} — ângulo R2 passivo em graus`}
                     type="number"
                     className="h-7 text-xs text-center"
                     value={rows[group]?.r2 || ""}
@@ -359,6 +374,7 @@ function TardieuTab() {
                 </td>
                 <td className="p-1 border border-border text-center">
                   <Input
+                    aria-label={`${group} — ângulo R1 de captura em graus`}
                     type="number"
                     className="h-7 text-xs text-center"
                     value={rows[group]?.r1 || ""}
@@ -375,6 +391,7 @@ function TardieuTab() {
                     onValueChange={(value) => setCell(group, "quality", value)}
                   >
                     <SelectTrigger
+                      aria-label={`${group} — qualidade do tônus`}
                       className="h-7 text-xs"
                       data-testid={`sel-tq-${group}`}
                     >

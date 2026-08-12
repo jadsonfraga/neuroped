@@ -1,0 +1,43 @@
+name: Certificate retirement smoke
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Cloudflare Pages
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  retired-cert-endpoint:
+    name: Remote /api/cert remains retired
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirmar 410 e contrato CERT_ENDPOINT_RETIRED
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          code="$(curl --silent --show-error --location \
+            --output "$body" \
+            --write-out '%{http_code}' \
+            --max-time 20 \
+            "https://neuroped.pages.dev/api/cert?retirement-smoke=${GITHUB_RUN_ID}")"
+
+          cat "$body"
+          if [ "$code" != "410" ]; then
+            echo "::error::/api/cert retornou HTTP $code; esperado 410 Gone."
+            exit 1
+          fi
+
+          jq -e '.code == "CERT_ENDPOINT_RETIRED"' "$body" >/dev/null || {
+            echo "::error::/api/cert não confirmou CERT_ENDPOINT_RETIRED."
+            exit 1
+          }
+
+          echo "✓ Certificado remoto permanece aposentado: HTTP 410 / CERT_ENDPOINT_RETIRED."

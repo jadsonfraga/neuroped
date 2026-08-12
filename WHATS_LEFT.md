@@ -1,61 +1,24 @@
 # O QUE AINDA FALTA — NeuroPed
 
-> **Atualizado em 2026-07-01** durante a reconciliação de pontas soltas.
-> Este documento antes descrevia um subsistema de "metadata clínica + regras de
-> bloqueio" (`scalesWithMetadata`, `blockingRules`, `FilterContext` UI) que nunca
-> foi integrado à interface. Esse código órfão foi **removido** nesta reconciliação
-> (recuperável pelo histórico do git). O texto abaixo reflete o estado real do app.
+> Reconciliação de produção: 10 de agosto de 2026.
 
----
+## Estado comprovado nesta auditoria
 
-## Estado atual do filtro de escalas
+O app possui rotas React registradas, filtro clínico com sinais/sintomas, modo de triagem efêmera sem cadastro, exportação PDF/CSV, escalas interativas, Clinical Core, Conecta, agenda/booking, recepção, documentos, autenticação remota, consentimento LGPD e deploy coordenado Cloudflare/Vercel. A suíte de release, auditoria completa de acessibilidade, E2E de escalas, auditoria de telas e build completo passaram antes desta reconciliação.
 
-O filtro clínico (`client/src/pages/filtro.tsx` + `client/src/data/*`) usa o motor
-de ranking ativo:
+A partir desta revisão, endpoints clínicos nunca mais devolvem `201` fictício quando D1 está ausente: escritas falham com `503 DB_REQUIRED`, enquanto leitura demonstrativa continua explicitamente marcada como demo. A regra é coberta por teste runtime e estático dentro de `verify:release`.
 
-- `filterScalesWithClinicalRescue` / `filterScalesIntelligently` — seleção de
-  candidatos seguros.
-- `selectCuratedTiers` + `selectPodium` — pódio Ouro/Prata/Bronze ordenado por
-  score, com resgate por respondente e fallback broadband.
-- `clinicalHardBlock` — bloqueio clínico duro (idade/segurança) já aplicado no
-  motor real.
+## Pendências reais que permanecem
 
-A cobertura é validada por:
+1. **Criptografia de dados clínicos reais em repouso (#514).** As tabelas clínicas atuais continuam deliberadamente demo-only. Não liberar persistência identificável de pacientes reais até concluir migração cifrada, backup/rollback e revisão LGPD.
+2. **Revogação externa de credenciais históricas (#515).** O app removeu o mecanismo ICP aposentado e o purge de secrets Cloudflare já passou, mas revogação/rotação no emissor/provedor não pode ser provada apenas pelo repositório.
+3. **Proveniência de conteúdo externo (#533).** Exige validação da fonte original fora do código; não deve ser "resolvida" por inferência.
+4. **Peso clínico exato de sinais/sintomas (#438).** Sinais já participam do ranking, porém alterar peso para 50% muda decisão clínica do motor e permanece decisão médica explícita; não automatizar apenas para fechar issue antiga.
 
-- `npm run test:practical-filter` — 100 casos práticos. O gate exige **integridade
-  de segurança em todos os casos** (sempre encontra candidato, sem escala repetida
-  no pódio, todas abrem internamente, nenhuma viola bloqueio clínico duro) e
-  **qualidade agregada** (média ≥ 9.5 com piso de 8.0 por caso). Combinações
-  clinicamente impossíveis (ex.: TDAH aos 8 meses) não são penalizadas como erro,
-  pois o catálogo legitimamente não tem 3 escalas de alta relevância para elas.
-- `npm run test:podium`, `npm run test:clinical`, `npm run validate:ranking`,
-  `npm run validate:catalog` — provas exaustivas de robustez e integridade.
+## Dívidas de produto não bloqueadoras
 
----
+Propostas antigas exclusivamente estéticas ou de arquitetura visual devem ser tratadas como ideias opcionais, não como bugs de produção. O design atual é validado pelos gates de acessibilidade/design/telas e deve evoluir por mudanças pequenas com comparação visual e rollback.
 
-## Melhorias possíveis (não bloqueiam produção)
+## Catraca obrigatória
 
-Estas são ideias de produto, não pendências quebradas:
-
-1. **Coletar contexto do respondente na UI** — hoje o filtro infere respondente e
-   idade; poderia coletar disponibilidade de pais/escola/profissional e nível de
-   leitura para refinar o pódio. (Era a intenção do subsistema removido; se for
-   retomado, reimplementar de forma integrada desde o início.)
-2. **Persistir o contexto do filtro** — salvar seleções em localStorage para não
-   reselecionar ao trocar de página.
-3. **Exportar escalas filtradas** — gerar PDF/Excel da lista recomendada.
-4. **Comparação lado a lado** entre versões de uma escala (ex.: SCARED-pais vs
-   SCARED-criança).
-
----
-
-## Como verificar o estado do projeto
-
-```bash
-npm run check                 # TypeScript
-npm run lint                  # ESLint (0 warnings)
-npm run test:clinical         # provas clínicas exaustivas
-npm run test:podium           # robustez do pódio
-npm run test:practical-filter # qualidade prática (gate honesto)
-npm run verify                # suíte completa de guards + testes
-```
+Antes de qualquer merge em `main`: `npm run verify:release`, `npm run audit:a11y:full`, `npm run test:e2e:scales`, `npm run audit:screens` e build completo. Depois do merge, Cloudflare e Vercel precisam publicar o mesmo SHA; qualquer divergência bloqueia a promoção.

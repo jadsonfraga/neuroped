@@ -1,0 +1,426 @@
+/*
+ * NeuroPed — Premium Polish 10
+ *
+ * Camada final, carregada depois de Signature Clinical v2.
+ * Referência de qualidade: apps de consumo maduros (hierarquia imediata,
+ * touch-first, scroll natural, estados claros e acabamento consistente),
+ * sem copiar identidade visual de terceiros e sem tocar em lógica clínica.
+ */
+
+:root {
+  --np-appbar-height: 58px;
+  --np-touch: 48px;
+  --np-section-gap: clamp(1.25rem, 2.2vw, 2rem);
+  --np-consumer-shadow: 0 1px 2px hsl(var(--foreground) / 0.03), 0 16px 46px -34px hsl(var(--foreground) / 0.32);
+  --np-consumer-shadow-hover: 0 2px 5px hsl(var(--foreground) / 0.035), 0 22px 54px -35px hsl(var(--foreground) / 0.36);
+  --np-soft-ring: 0 0 0 1px hsl(var(--foreground) / 0.035);
+}
+
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+button,
+a,
+[role="button"],
+[role="tab"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--foreground) / 0.14) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.13);
+  border-radius: 999px;
+}
+
+#main-content > div:last-child {
+  max-width: 1480px !important;
+}
+
+.proportion-safe-page,
+.page-enter {
+  scroll-margin-top: 5rem;
+}
+
+.shadcn-card {
+  box-shadow: var(--np-consumer-shadow), var(--np-premium-inset) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shadcn-card:hover {
+    box-shadow: var(--np-consumer-shadow-hover), var(--np-premium-inset) !important;
+  }
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+a.np-primary-cta:active {
+  opacity: 0.92;
+}
+
+[role="status"] {
+  border-color: hsl(var(--border) / 0.75) !important;
+  background: hsl(var(--card) / 0.76) !important;
+  box-shadow: var(--np-soft-ring) !important;
+}
+
+@media (max-width: 767px) {
+  header.fixed.md\:hidden {
+    height: calc(var(--np-appbar-height) + env(safe-area-inset-top)) !important;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-left: 0.85rem !important;
+    padding-right: 0.65rem !important;
+    background: hsl(var(--card) / 0.93) !important;
+    border-bottom-color: hsl(var(--border) / 0.72) !important;
+    box-shadow: 0 10px 36px -30px hsl(var(--foreground) / 0.42) !important;
+    backdrop-filter: blur(24px) saturate(135%) !important;
+  }
+
+  header.fixed.md\:hidden > div:first-child {
+    gap: 0.65rem !important;
+  }
+
+  header.fixed.md\:hidden > div:first-child > div:first-child {
+    width: 2.15rem !important;
+    height: 2.15rem !important;
+    border-radius: 0.82rem !important;
+  }
+
+  header.fixed.md\:hidden button {
+    min-width: 2.75rem !important;
+    min-height: 2.75rem !important;
+    border-radius: 0.95rem !important;
+  }
+
+  aside[aria-label="Menu de navegação"] {
+    width: min(88vw, 22.5rem) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    background: hsl(var(--sidebar) / 0.985) !important;
+    box-shadow: 26px 0 72px -34px hsl(var(--foreground) / 0.52) !important;
+  }
+
+  aside[aria-label="Menu de navegação"] nav {
+    padding-left: 0.7rem !important;
+    padding-right: 0.7rem !important;
+    scroll-padding-top: 1rem;
+  }
+
+  #sidebar-nav [data-testid^="nav-"] {
+    min-height: var(--np-touch) !important;
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+    border-radius: 1rem !important;
+  }
+
+  #sidebar-nav [data-testid^="nav-"] span {
+    font-size: 0.84rem !important;
+  }
+
+  #main-content {
+    padding-top: calc(var(--np-appbar-height) + env(safe-area-inset-top)) !important;
+  }
+
+  #main-content > div:last-child {
+    padding-left: 0.85rem !important;
+    padding-right: 0.85rem !important;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  #main-content button:not([data-size="icon"]),
+  #main-content [role="tab"] {
+    min-height: 44px;
+  }
+}
+
+.np-home-hero {
+  isolation: isolate;
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.025), 0 28px 72px -52px hsl(var(--foreground) / 0.34) !important;
+}
+
+.np-home-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: auto 7% 0 7%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.34), hsl(var(--chart-2) / 0.2), transparent);
+}
+
+.np-home-hero [data-testid="search-container"] input,
+[data-testid="search-container"] input {
+  min-height: 58px !important;
+  border-radius: 1.2rem !important;
+  background: hsl(var(--card) / 0.96) !important;
+  border-color: hsl(var(--border) / 0.78) !important;
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.025), 0 16px 38px -30px hsl(var(--foreground) / 0.34) !important;
+}
+
+[data-testid^="home-flow-"] {
+  min-height: 13.5rem;
+  box-shadow: var(--np-consumer-shadow) !important;
+}
+
+[data-testid^="home-flow-"] h2 {
+  letter-spacing: -0.025em !important;
+}
+
+@media (max-width: 639px) {
+  .np-home-hero {
+    margin-left: -0.1rem;
+    margin-right: -0.1rem;
+    padding: 1.35rem !important;
+    border-radius: 1.35rem !important;
+  }
+
+  .np-home-hero h1 {
+    max-width: 10.5ch !important;
+    font-size: clamp(2.45rem, 12.8vw, 3.45rem) !important;
+    line-height: 0.98 !important;
+  }
+
+  .np-home-hero p {
+    max-width: 34rem;
+  }
+
+  .np-home-hero .np-primary-cta {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: var(--np-touch) !important;
+    border-radius: 1rem !important;
+  }
+
+  .np-home-hero .np-primary-cta + a {
+    flex: 1 1 100%;
+    justify-content: center;
+    min-height: var(--np-touch) !important;
+    border-radius: 1rem !important;
+  }
+
+  section[aria-labelledby="fluxos-principais"] > div.grid {
+    display: flex !important;
+    gap: 0.85rem !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.2rem;
+    padding: 0.15rem 0.15rem 0.75rem !important;
+    margin-left: -0.15rem;
+    margin-right: -0.85rem;
+    padding-right: 0.9rem !important;
+    scrollbar-width: none;
+  }
+
+  section[aria-labelledby="fluxos-principais"] > div.grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  section[aria-labelledby="fluxos-principais"] > div.grid > a {
+    flex: 0 0 min(82vw, 20.5rem);
+    scroll-snap-align: start;
+  }
+
+  [data-testid^="home-flow-"] {
+    min-height: 12.5rem !important;
+    border-radius: 1.2rem !important;
+    padding: 1.05rem !important;
+  }
+}
+
+.np-page-hero {
+  box-shadow: 0 1px 1px hsl(var(--foreground) / 0.025), 0 18px 46px -38px hsl(var(--foreground) / 0.34) !important;
+}
+
+@media (max-width: 639px) {
+  .np-page-hero {
+    padding: 1.05rem !important;
+    border-radius: 1.15rem !important;
+  }
+
+  .np-page-hero > div:last-child {
+    gap: 0.8rem !important;
+  }
+
+  .np-page-hero h1 {
+    font-size: 1.6rem !important;
+  }
+}
+
+#main-content:has(header a[href="/recepcao"]) header:first-of-type {
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.025), 0 22px 56px -42px hsl(var(--foreground) / 0.38) !important;
+}
+
+#main-content:has(header a[href="/recepcao"]) [role="tablist"] {
+  gap: 0.22rem;
+  padding: 0.3rem !important;
+}
+
+#main-content:has(header a[href="/recepcao"]) [role="tab"] {
+  min-height: 42px;
+  padding-inline: 0.95rem !important;
+}
+
+#main-content:has(header a[href="/recepcao"]) [role="tab"][data-state="active"] {
+  color: hsl(var(--primary)) !important;
+}
+
+@media (max-width: 767px) {
+  #main-content:has(header a[href="/recepcao"]) header:first-of-type {
+    padding: 1.15rem !important;
+    border-radius: 1.25rem !important;
+  }
+
+  #main-content:has(header a[href="/recepcao"]) header:first-of-type ~ section.grid {
+    display: flex !important;
+    gap: 0.75rem !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.55rem;
+    margin-right: -0.85rem;
+    padding-right: 0.85rem;
+    scrollbar-width: none;
+  }
+
+  #main-content:has(header a[href="/recepcao"]) header:first-of-type ~ section.grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  #main-content:has(header a[href="/recepcao"]) header:first-of-type ~ section.grid > * {
+    flex: 0 0 min(72vw, 16rem);
+    scroll-snap-align: start;
+  }
+
+  #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
+    position: sticky;
+    top: calc(var(--np-appbar-height) + env(safe-area-inset-top) + 0.35rem);
+    z-index: 24;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x proximity;
+    background: hsl(var(--card) / 0.94) !important;
+    box-shadow: 0 10px 34px -28px hsl(var(--foreground) / 0.44) !important;
+    backdrop-filter: blur(22px) saturate(120%);
+    scrollbar-width: none;
+  }
+
+  #main-content:has(header a[href="/recepcao"]) [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  #main-content:has(header a[href="/recepcao"]) [role="tab"] {
+    scroll-snap-align: start;
+  }
+}
+
+[data-testid="patient-cockpit"] {
+  --cockpit-accent: hsl(var(--primary));
+}
+
+[data-testid="patient-cockpit"] > div:first-child {
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.64);
+}
+
+[data-testid="patient-cockpit"] .shadcn-card {
+  background: hsl(var(--card) / 0.985) !important;
+}
+
+[data-testid="patient-cockpit"] ol li {
+  position: relative;
+}
+
+[data-testid="patient-cockpit"] ol li::before {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  left: -0.29rem;
+  top: 0.42rem;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--card));
+}
+
+@media (max-width: 639px) {
+  [data-testid="patient-cockpit"] > div.grid:first-of-type {
+    display: flex !important;
+    gap: 0.75rem !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    margin-right: -0.85rem;
+    padding-right: 0.85rem;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+  }
+
+  [data-testid="patient-cockpit"] > div.grid:first-of-type::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-testid="patient-cockpit"] > div.grid:first-of-type > * {
+    flex: 0 0 min(72vw, 16rem);
+    scroll-snap-align: start;
+  }
+}
+
+label {
+  letter-spacing: -0.005em;
+}
+
+input,
+textarea,
+select,
+[role="combobox"] {
+  font-variant-numeric: tabular-nums;
+}
+
+[role="alert"] {
+  border-radius: 1rem !important;
+}
+
+.dark .shadcn-card,
+.dark [role="tablist"],
+.dark input,
+.dark textarea,
+.dark select {
+  border-color: hsl(var(--border) / 0.92) !important;
+}
+
+.dark #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
+  background: hsl(var(--card) / 0.96) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media print {
+  section[aria-labelledby="fluxos-principais"] > div.grid,
+  #main-content:has(header a[href="/recepcao"]) header:first-of-type ~ section.grid,
+  [data-testid="patient-cockpit"] > div.grid:first-of-type {
+    display: grid !important;
+    overflow: visible !important;
+  }
+}

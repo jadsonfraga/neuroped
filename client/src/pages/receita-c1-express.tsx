@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Pill,
   FileSignature,
@@ -19,6 +19,7 @@ import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
+import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
 import { buildAppHashUrl } from "@/lib/appUrl";
 
@@ -190,6 +191,7 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
   const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
   const signatureImage = await pdf.embedJpg(signatureImageBytes);
+  const logoImage = await pdf.embedJpg(drJadsonMasterShieldLogo.split(",")[1] ?? "");
 
   const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
     let text = pdfSafe(value || "");
@@ -233,8 +235,15 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
 
     page.drawRectangle({ x: m, y: top - 55, width: contentW, height: 31, color: navy });
     page.drawRectangle({ x: A5.w - 155, y: top - 55, width: 141, height: 31, color: bordo });
-    page.drawText(CLINIC_NAME, { x: m + 8, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
-    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 8, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
+    const logoDims = logoImage.scaleToFit(24, 24);
+    page.drawImage(logoImage, {
+      x: m + 6,
+      y: top - 51 + (24 - logoDims.height) / 2,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
+    page.drawText(CLINIC_NAME, { x: m + 36, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 36, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
     page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
     page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
     page.drawLine({ start: { x: m, y: top - 57 }, end: { x: A5.w - m, y: top - 57 }, thickness: 1.5, color: gold });
@@ -270,9 +279,26 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     page.drawLine({ start: { x: m + 40, y: tableY - 39 }, end: { x: A5.w - m - 6, y: tableY - 39 }, thickness: 0.3, color: line, dashArray: [2, 2] });
     drawFitted(page, `Quantidade: ${f.quantidade || "-"}${f.quantidadeExtenso ? ` (${f.quantidadeExtenso})` : ""}`, m + 40, tableY - 52, contentW - 52, 6.8, helv);
     let iy = tableY - 67;
-    for (const ln of wrap(`Instrucoes: ${f.instrucoes || "-"}`, contentW - 52, 6.4, helv).slice(0, 10)) {
+    // O corte era `.slice(0, 10)` fixo — bem abaixo da capacidade real do
+    // quadro Rx (~30 linhas) e SEM qualquer aviso, ao contrário de drawFitted()
+    // (ver comentário acima: "nunca corte silencioso do medicamento/quantidade").
+    // Numa receita de controle especial, omitir parte da posologia sem marca
+    // visível pode levar a erro de dose. Agora o limite reflete o espaço real
+    // do quadro e, se ainda assim faltar espaço, a última linha é substituída
+    // por um aviso visível — nunca um corte mudo.
+    const iyMinPosologia = rxY + 6;
+    const linhasPosologia = wrap(`Instrucoes: ${f.instrucoes || "-"}`, contentW - 52, 6.4, helv);
+    const maxLinhasPosologia = Math.max(1, Math.floor((iy - iyMinPosologia) / 9) + 1);
+    const posologiaTruncada = linhasPosologia.length > maxLinhasPosologia;
+    const linhasPosologiaVisiveis = posologiaTruncada
+      ? linhasPosologia.slice(0, Math.max(0, maxLinhasPosologia - 1))
+      : linhasPosologia;
+    for (const ln of linhasPosologiaVisiveis) {
       page.drawText(ln || " ", { x: m + 40, y: iy, size: 6.4, font: helv, color: ink });
       iy -= 9;
+    }
+    if (posologiaTruncada) {
+      page.drawText("[posologia truncada - revise o registro completo antes de dispensar]", { x: m + 40, y: iy, size: 5.6, font: bold, color: bordo });
     }
 
     page.drawLine({ start: { x: m, y: 120 }, end: { x: A5.w - m, y: 120 }, thickness: 0.4, color: line });
@@ -375,32 +401,34 @@ function buildC1PrintHtml(f: FormFields): string {
 <style>
 @page{size:A5 portrait;margin:8mm 10mm 10mm 10mm}
 :root{--navy:#1E2A4A;--navyd:#101A2D;--bordo:#7A1F2B;--gold:#C9A961;--teal:#2E7163;
-  --ivory:#FBF8F0;--ink:#5B5B6B;--graf:#2C2C3E;--line:#D9D2C2}
+  --ivory:#FBF8F0;--ink:#5B5B6B;--graf:#2C2C3E;--line:#D9D2C2;--white:#fff;--linen:#f7f5ef;
+  --mist:#bbb;--linen-deep:#f4f2ec;--taupe:#c8c0b0;--charcoal:#333;--silver:#888;
+  --gold-a5:rgba(201,169,97,.5);--white-a7:rgba(255,255,255,.7)}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:#fff;font-family:'Carlito',Arial,sans-serif;font-size:9pt;color:var(--graf)}
+html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-size:9pt;color:var(--graf)}
 
 .via{page-break-after:always;min-height:97vh;display:flex;flex-direction:column;gap:3mm}
 .via:last-child{page-break-after:auto}
 
-.head{padding:3mm 4mm;background:linear-gradient(135deg,#101A2D 0%,#1E2A4A 50%,#7A1F2B 100%);
-  color:#fff;display:flex;align-items:center;justify-content:space-between;
-  border-radius:1.5mm;box-shadow:inset 0 -0.8mm 0 rgba(201,169,97,.5)}
+.head{padding:3mm 4mm;background:linear-gradient(135deg,var(--navyd) 0%,var(--navy) 50%,var(--bordo) 100%);
+  color:var(--white);display:flex;align-items:center;justify-content:space-between;
+  border-radius:1.5mm;box-shadow:inset 0 -0.8mm 0 var(--gold-a5)}
 .logo-nm{font-family:'Cormorant Garamond',Georgia,serif;font-size:13pt;font-weight:700;letter-spacing:.05em}
-.logo-sub{font-size:6pt;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:.5mm}
+.logo-sub{font-size:6pt;letter-spacing:.2em;text-transform:uppercase;color:var(--white-a7);margin-top:.5mm}
 .rt{text-align:right}
-.via-tag{font-size:6pt;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.via-tag{font-size:6pt;letter-spacing:.15em;text-transform:uppercase;color:var(--white-a7)}
 .c1-tag{font-family:'Cormorant Garamond',Georgia,serif;font-size:10pt;font-weight:700;letter-spacing:.04em}
 
-.medico-box{background:#f7f5ef;border-left:2mm solid var(--gold);padding:1.5mm 3mm;
+.medico-box{background:var(--linen);border-left:2mm solid var(--gold);padding:1.5mm 3mm;
   font-size:7.5pt;line-height:1.5;color:var(--graf)}
 
 table.dados{width:100%;border-collapse:collapse;font-size:8pt}
-.dados td{border:0.35pt solid #bbb;padding:1.2mm 2mm;vertical-align:top}
-.dados .lbl{background:#f4f2ec;font-size:6.5pt;letter-spacing:.05em;text-transform:uppercase;
+.dados td{border:0.35pt solid var(--mist);padding:1.2mm 2mm;vertical-align:top}
+.dados .lbl{background:var(--linen-deep);font-size:6.5pt;letter-spacing:.05em;text-transform:uppercase;
   color:var(--ink);white-space:nowrap;width:16%}
 .dados .val{font-weight:600}
 
-.rx-area{display:flex;gap:3mm;flex:1;border:0.5pt solid #c8c0b0;border-radius:1mm;padding:2.5mm 3mm}
+.rx-area{display:flex;gap:3mm;flex:1;border:0.5pt solid var(--taupe);border-radius:1mm;padding:2.5mm 3mm}
 .rx-sym{font-size:32pt;font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;
   color:var(--navyd);line-height:1;padding-top:1mm;flex-shrink:0}
 .rx-body{flex:1;display:flex;flex-direction:column;gap:1.5mm}
@@ -413,10 +441,10 @@ table.dados{width:100%;border-collapse:collapse;font-size:8pt}
   border-top:.5pt solid var(--line);padding-top:2mm;font-size:7.5pt;color:var(--ink);flex-wrap:wrap;gap:2mm}
 .sig-area{text-align:center}
 .sig-img{width:42mm;height:9mm;object-fit:contain;display:block;margin:0 auto -1.2mm;opacity:.96}
-.sig-line{width:48mm;border-top:.6pt solid #333;margin:0 auto 1mm}
+.sig-line{width:48mm;border-top:.6pt solid var(--charcoal);margin:0 auto 1mm}
 .sig-nm{font-size:8pt;font-weight:700;font-family:'Cormorant Garamond',Georgia,serif}
 .sig-info{font-size:6.5pt;color:var(--ink)}
-.sig-digital{font-size:6pt;color:#888;font-style:italic}
+.sig-digital{font-size:6pt;color:var(--silver);font-style:italic}
 
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .via{min-height:auto}}
@@ -463,6 +491,10 @@ export default function ReceitaC1ExpressPage() {
   const [certInfo, setCertInfo] = useState<{ commonName: string; notAfter: Date } | null>(null);
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  // Trava contra corrida: trocar o arquivo antes do arrayBuffer() anterior
+  // resolver deixa duas leituras assíncronas em paralelo; sem isso, o
+  // certificado que acaba assinando pode não ser o último selecionado.
+  const p12LoadIdRef = useRef(0);
 
   const [busy, setBusy] = useState<"" | "sign" | "plain" | "verify">("");
   const [error, setError] = useState("");
@@ -494,7 +526,9 @@ export default function ReceitaC1ExpressPage() {
   async function onUploadP12(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    const loadId = ++p12LoadIdRef.current;
     const ab = await f.arrayBuffer();
+    if (loadId !== p12LoadIdRef.current) return; // uma seleção mais recente já venceu
     setP12(ab);
     setCertStatus("ready");
     setShowUpload(false);

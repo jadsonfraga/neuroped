@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
+  Activity,
   ArrowLeft,
   Pencil,
   Trash2,
@@ -255,7 +257,7 @@ export default function PacienteDetalhePage() {
       </Link>
 
       {/* Patient header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-lg font-bold text-foreground">{patient.name}</h1>
           <div className="flex items-center gap-3 mt-1">
@@ -274,62 +276,71 @@ export default function PacienteDetalhePage() {
             </p>
           )}
         </div>
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={openEditDialog}
-              data-testid="button-edit-patient"
-            >
-              <Pencil className="w-3 h-3" /> Editar
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/conecta?patient=${encodeURIComponent(patientId)}`}>
+            <Button size="sm" className="gap-1.5" data-testid="button-open-conecta">
+              <Activity className="w-3.5 h-3.5" /> Abrir jornada
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Paciente</DialogTitle>
-              <DialogDescription>
-                Atualize os dados do paciente.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-2">
-              <Input
-                placeholder="Nome *"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-              />
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">
-                  Data de nascimento
-                </label>
+          </Link>
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={openEditDialog}
+                data-testid="button-edit-patient"
+              >
+                <Pencil className="w-3 h-3" /> Editar
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Editar Paciente</DialogTitle>
+                <DialogDescription>
+                  Atualize os dados do paciente.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
                 <Input
-                  type="date"
-                  value={formBirth}
-                  onChange={(e) => setFormBirth(e.target.value)}
+                  placeholder="Nome *"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                />
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    Data de nascimento
+                  </label>
+                  <Input
+                    type="date"
+                    value={formBirth}
+                    onChange={(e) => setFormBirth(e.target.value)}
+                  />
+                </div>
+                <Textarea
+                  placeholder="Observações"
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  rows={3}
                 />
               </div>
-              <Textarea
-                placeholder="Observações"
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={handleUpdate}
-                disabled={!formName.trim() || updateMutation.isPending}
-                className="w-full"
-              >
-                {updateMutation.isPending ? "Salvando..." : "Atualizar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button
+                  onClick={handleUpdate}
+                  disabled={!formName.trim() || updateMutation.isPending}
+                  className="w-full"
+                >
+                  {updateMutation.isPending ? "Salvando..." : "Atualizar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {/* Tabs */}
+      <PatientCockpit patientId={patientId} scaleCount={results.length} />
+
+      {/* Legacy modules remain available while the Clinical OS becomes the primary patient view. */}
       <Tabs defaultValue="avaliacoes">
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="avaliacoes">Respostas</TabsTrigger>

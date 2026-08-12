@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>NeuroPed · Importação BoaConsulta</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f6f7fb;--card:#fff;--text:#152033;--muted:#687386;--line:#dfe4ec;--accent:#254b78;--ok:#166534;--warn:#92400e;--danger:#991b1b}
+    @media(prefers-color-scheme:dark){:root{--bg:#0f131a;--card:#161c25;--text:#edf2f7;--muted:#a9b3c1;--line:#2c3644;--accent:#8bb9e9;--ok:#86efac;--warn:#fcd34d;--danger:#fca5a5}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:920px;margin:0 auto;padding:28px 18px 60px}.top{display:flex;align-items:center;gap:14px;margin-bottom:18px}.mark{width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#173f68,#4d83b7);display:grid;place-items:center;color:#fff;font-weight:800}.top h1{font-size:22px;margin:0}.top p{margin:2px 0 0;color:var(--muted);font-size:13px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 8px 30px rgba(20,32,51,.05)}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:14px;padding:12px}.metric b{display:block;font-size:22px}.metric span{font-size:12px;color:var(--muted)}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}button,.button{border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.primary{background:#244f7a;color:#fff}.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.5;cursor:not-allowed}input[type=file]{width:100%;padding:14px;border:1px dashed var(--line);border-radius:14px;background:transparent;color:var(--text)}.notice{padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--accent) 9%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line));font-size:13px}.warn{color:var(--warn)}.danger{color:var(--danger)}.ok{color:var(--ok)}.muted{color:var(--muted)}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:11px}.status{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:color-mix(in srgb,var(--text) 4%,transparent);border-radius:12px;padding:12px;max-height:220px;overflow:auto}.hidden{display:none}@media(max-width:640px){.grid{grid-template-columns:1fr}.wrap{padding-top:18px}.top h1{font-size:19px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="mark">NP</div>
+      <div><h1>Bridge BoaConsulta</h1><p>Importação clínica segura · NeuroPed</p></div>
+    </div>
+
+    <section class="card">
+      <div class="notice"><strong>Fluxo protegido:</strong> prévia sem persistência → arquivo original cifrado → staging idempotente → reconciliação antes de entrar no prontuário. Nenhum conteúdo é enviado a IA ou serviço de terceiros por esta tela.</div>
+      <p class="muted">Formatos aceitos: CSV, JSON, TXT e PDF. PDF é guardado integralmente, mas não é convertido em dados clínicos até existir um mapeamento validado contra uma exportação real.</p>
+      <input id="file" type="file" accept=".csv,.json,.txt,.pdf,text/csv,application/json,text/plain,application/pdf" />
+      <div class="row" style="margin-top:12px">
+        <button id="preview" class="secondary" disabled>Analisar exportação</button>
+        <button id="store" class="primary" disabled>Guardar no cofre NeuroPed</button>
+        <a class="button secondary" href="/#/pacientes">Voltar ao NeuroPed</a>
+      </div>
+      <p id="auth" class="muted" style="margin-bottom:0"></p>
+    </section>
+
+    <section id="summary" class="card hidden">
+      <div class="grid">
+        <div class="metric"><b id="records">0</b><span>registros reconhecidos</span></div>
+        <div class="metric"><b id="warnings">0</b><span>alertas de reconciliação</span></div>
+        <div class="metric"><b id="fingerprint">—</b><span>fingerprint do arquivo</span></div>
+      </div>
+      <div id="messages" style="margin-top:14px"></div>
+      <div style="overflow:auto;margin-top:12px"><table><thead><tr><th>#</th><th>Tipo</th><th>Paciente</th><th>Nascimento</th><th>CPF</th><th>Data</th><th>Revisão</th></tr></thead><tbody id="previewRows"></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between"><div><strong>Importações recentes</strong><div class="muted" style="font-size:12px">Somente metadados não clínicos são exibidos aqui.</div></div><button id="reload" class="secondary">Atualizar</button></div>
+      <div style="overflow:auto;margin-top:10px"><table><thead><tr><th>Data</th><th>Formato</th><th>Status</th><th>Registros</th><th>Alertas</th><th>Fingerprint</th></tr></thead><tbody id="history"><tr><td colspan="6" class="muted">Carregando…</td></tr></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <strong>Estado técnico</strong>
+      <div id="log" class="status" style="margin-top:10px">Pronto.</div>
+    </section>
+  </main>
+<script>
+(() => {
+  const API = '/api/integrations/boaconsulta/import';
+  const ACCESS='neuroped:access', REFRESH='neuroped:refresh';
+  const MIME_BY_EXTENSION={csv:'text/csv',json:'application/json',txt:'text/plain',pdf:'application/pdf'};
+  const $=id=>document.getElementById(id);
+  const file=$('file'), preview=$('preview'), store=$('store'), log=$('log');
+  let selected=null;
+  const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function write(message){log.textContent=`${new Date().toLocaleTimeString('pt-BR')} · ${message}\n${log.textContent}`.slice(0,8000)}
+  function token(){try{return sessionStorage.getItem(ACCESS)}catch{return null}}
+  function refreshToken(){try{return sessionStorage.getItem(REFRESH)}catch{return null}}
+  function normalizedUploadFile(source){const ext=(source.name.split('.').pop()||'').toLowerCase();const type=MIME_BY_EXTENSION[ext]||source.type||'application/octet-stream';if(source.type===type)return source;return new File([source],source.name,{type,lastModified:source.lastModified})}
+  async function refresh(){const rt=refreshToken();if(!rt)return null;try{const r=await fetch('/api/auth/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refreshToken:rt})});if(!r.ok)return null;const d=await r.json();sessionStorage.setItem(ACCESS,d.accessToken);sessionStorage.setItem(REFRESH,d.refreshToken);return d.accessToken}catch{return null}}
+  async function authFetch(url,init={}){let t=token();const headers=new Headers(init.headers||{});if(t)headers.set('Authorization',`Bearer ${t}`);let r=await fetch(url,{...init,headers,cache:'no-store'});if(r.status===401&&refreshToken()){t=await refresh();if(t){headers.set('Authorization',`Bearer ${t}`);r=await fetch(url,{...init,headers,cache:'no-store'})}}return r}
+  async function readJson(r){const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Erro HTTP ${r.status}`);return d}
+  function setBusy(value){preview.disabled=value||!selected;store.disabled=value||!selected;file.disabled=value}
+  function show(data){$('summary').classList.remove('hidden');$('records').textContent=data.recordCount??0;$('warnings').textContent=data.warningCount??0;$('fingerprint').textContent=data.sourceFingerprint??data.batch?.sourceFingerprint??'—';$('messages').innerHTML=(data.warnings||[]).map(w=>`<div class="notice warn" style="margin-top:7px">${escapeHtml(w)}</div>`).join('');$('previewRows').innerHTML=(data.preview||[]).map(r=>`<tr><td>${r.ordinal+1}</td><td><span class="pill">${escapeHtml(r.recordType)}</span></td><td>${escapeHtml(r.patientName||'—')}</td><td>${escapeHtml(r.birthDate||'—')}</td><td>${escapeHtml(r.cpf||'—')}</td><td>${escapeHtml(r.occurredAt||'—')}</td><td>${(r.warnings||[]).map(escapeHtml).join('<br>')||'<span class="ok">sem alerta</span>'}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">Nenhuma linha estruturada reconhecida.</td></tr>'}
+  async function submit(mode){if(!selected)return;setBusy(true);write(`${mode==='preview'?'Analisando':'Armazenando'} ${selected.name}…`);try{const fd=new FormData();fd.append('mode',mode);fd.append('file',normalizedUploadFile(selected));const d=await readJson(await authFetch(API,{method:'POST',body:fd}));show(d);write(mode==='preview'?`Prévia concluída: ${d.recordCount||0} registro(s).`:d.duplicateFile?'Arquivo já existia; nenhuma duplicação criada.':`Lote ${d.batch?.id||''} armazenado no cofre.`);if(mode==='store')await loadHistory()}catch(e){write(`ERRO: ${e.message}`);alert(e.message)}finally{setBusy(false)}}
+  async function loadHistory(){try{const d=await readJson(await authFetch(API));const rows=d.data||[];$('history').innerHTML=rows.map(r=>`<tr><td>${escapeHtml(new Date(r.createdAt).toLocaleString('pt-BR'))}</td><td>${escapeHtml((r.extension||r.mimeType||'—').toUpperCase())}</td><td><span class="pill">${escapeHtml(r.status)}</span></td><td>${r.recordCount}</td><td>${r.warningCount}</td><td>${escapeHtml(r.sourceFingerprint)}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">Nenhuma importação armazenada.</td></tr>';$('auth').innerHTML='<span class="ok">Sessão clínica autenticada.</span>'}catch(e){$('history').innerHTML=`<tr><td colspan="6" class="danger">${escapeHtml(e.message)}</td></tr>`;$('auth').innerHTML='A API exige sessão clínica. <a href="/#/login">Entrar no NeuroPed</a>.';write(`Histórico indisponível: ${e.message}`)}}
+  file.addEventListener('change',()=>{selected=file.files&&file.files[0]||null;if(selected&&selected.size>8*1024*1024){alert('Limite atual: 8 MB.');file.value='';selected=null}preview.disabled=!selected;store.disabled=!selected;if(selected)write(`Arquivo selecionado: ${selected.name} (${Math.round(selected.size/1024)} KB).`)});
+  preview.addEventListener('click',()=>submit('preview'));store.addEventListener('click',()=>submit('store'));$('reload').addEventListener('click',loadHistory);loadHistory();
+})();
+</script>
+</body>
+</html>

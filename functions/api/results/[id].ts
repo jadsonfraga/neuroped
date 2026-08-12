@@ -33,7 +33,12 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       400,
     );
   }
-  if (!env.DB) return json({ deleted: false, mode: "demo" }, 200);
+  if (!env.DB) {
+    return json(
+      { error: "Persistência indisponível. Nenhum resultado foi removido.", code: "DB_REQUIRED" },
+      503,
+    );
+  }
 
   try {
     const user = getContextUser(context);

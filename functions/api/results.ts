@@ -170,11 +170,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!env.DB) {
     return json(
       {
-        ...payload,
-        mode: "demo",
-        note: "Banco não configurado — registro simulado.",
+        error: "Persistência indisponível. Nenhum resultado foi registrado.",
+        code: "DB_REQUIRED",
       },
-      201,
+      503,
     );
   }
 

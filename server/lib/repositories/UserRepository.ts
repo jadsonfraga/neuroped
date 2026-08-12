@@ -69,7 +69,7 @@ export class UserRepository implements BaseRepository<User, CreateUserInput> {
       .returning()
       .execute();
 
-    return result[0];
+    return result[0] ?? null;
   }
 
   async update(id: string, input: Partial<User>): Promise<User | null> {

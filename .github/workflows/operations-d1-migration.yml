@@ -1,0 +1,166 @@
+name: NeuroPed Operational Suite D1 migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0007_operational_suite.sql"
+      - "db/migrations/0008_operational_hardening.sql"
+      - "functions/api/operations/**"
+      - "functions/api/public-booking.ts"
+      - "functions/api/_middleware.ts"
+      - "shared/operations.ts"
+      - "client/src/pages/agenda.tsx"
+      - "client/src/pages/recepcao.tsx"
+      - "client/src/components/RouteGuard.tsx"
+      - "tests/unit/operations-contract.test.ts"
+      - "tests/unit/operations-integration-static.test.mjs"
+      - ".github/workflows/operations-d1-migration.yml"
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-operations-d1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Migração operacional permitida somente a partir de main."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+      - name: Validar contrato operacional antes da migração
+        run: |
+          node --import tsx tests/unit/operations-contract.test.ts
+          node tests/unit/operations-integration-static.test.mjs
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar migração 0007 da Operational Suite
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0007_operational_suite.sql
+
+      - name: Aplicar migração 0008 de equipe, auditoria e conflitos
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0008_operational_hardening.sql
+
+      - name: Verificar schema operacional no D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('booking_provider_profiles','booking_services','booking_availability_rules','booking_blocks','appointments','appointment_slot_locks','waitlist_entries','appointment_reviews','notification_outbox','booking_staff_links','operations_audit_log') ORDER BY name;" \
+            > /tmp/operations-tables.txt 2>&1
+          cat /tmp/operations-tables.txt
+          for table in \
+            booking_provider_profiles booking_services booking_availability_rules booking_blocks \
+            appointments appointment_slot_locks waitlist_entries appointment_reviews notification_outbox \
+            booking_staff_links operations_audit_log; do
+            grep -q "$table" /tmp/operations-tables.txt || {
+              echo "::error::Tabela operacional ausente: $table"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('ux_appointments_occupied_slot','idx_appointments_provider_time','idx_appointment_slot_locks_appointment','idx_waitlist_provider_status','idx_notification_outbox_provider_status','idx_booking_staff_provider_active','idx_operations_audit_provider_time','idx_operations_audit_actor_time') ORDER BY name;" \
+            > /tmp/operations-indexes.txt 2>&1
+          cat /tmp/operations-indexes.txt
+          for idx in \
+            ux_appointments_occupied_slot idx_appointments_provider_time idx_appointment_slot_locks_appointment \
+            idx_waitlist_provider_status idx_notification_outbox_provider_status idx_booking_staff_provider_active \
+            idx_operations_audit_provider_time idx_operations_audit_actor_time; do
+            grep -q "$idx" /tmp/operations-indexes.txt || {
+              echo "::error::Índice operacional ausente: $idx"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_appointments_respect_blocks_insert','trg_appointments_respect_blocks_update','trg_blocks_respect_appointments_insert','trg_blocks_respect_appointments_update') ORDER BY name;" \
+            > /tmp/operations-triggers.txt 2>&1
+          cat /tmp/operations-triggers.txt
+          for trigger in \
+            trg_appointments_respect_blocks_insert trg_appointments_respect_blocks_update \
+            trg_blocks_respect_appointments_insert trg_blocks_respect_appointments_update; do
+            grep -q "$trigger" /tmp/operations-triggers.txt || {
+              echo "::error::Trigger de conflito operacional ausente: $trigger"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='appointments';" \
+            > /tmp/appointments-schema.txt 2>&1
+          cat /tmp/appointments-schema.txt
+          grep -q "guardian_name_encrypted" /tmp/appointments-schema.txt
+          grep -q "booking_token_hash" /tmp/appointments-schema.txt
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='appointment_slot_locks';" \
+            > /tmp/slot-locks-schema.txt 2>&1
+          cat /tmp/slot-locks-schema.txt
+          grep -Eq "PRIMARY KEY[[:space:]]*\([[:space:]]*provider_user_id[[:space:]]*,[[:space:]]*slot_key[[:space:]]*\)" /tmp/slot-locks-schema.txt || {
+            echo "::error::Trava física de sobreposição ausente em appointment_slot_locks"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT sql FROM sqlite_master WHERE type='table' AND name='booking_staff_links';" \
+            > /tmp/staff-schema.txt 2>&1
+          cat /tmp/staff-schema.txt
+          grep -Eq "staff_user_id[[:space:]]+TEXT[[:space:]]+NOT NULL[[:space:]]+UNIQUE" /tmp/staff-schema.txt || {
+            echo "::error::Operador sem vínculo único de profissional"
+            exit 1
+          }
+          grep -q "created_by_user_id" /tmp/staff-schema.txt || {
+            echo "::error::Vínculo de equipe sem autoria"
+            exit 1
+          }
+
+          echo "✅ Operational Suite D1: agenda, PII cifrada, locks, bloqueios físicos, equipe e auditoria confirmados."

@@ -188,19 +188,19 @@ export function WelcomeTour() {
     <>
       <button
         onClick={start}
-        aria-label="Rever o tour guiado do app"
+        aria-label={introHighlight ? "Tour do app" : "Rever o tour guiado do app"}
         title="Rever tour"
         className={[
           "fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 rounded-full",
-          "bg-gradient-to-b from-indigo-500 to-violet-600 text-white shadow-[0_8px_28px_rgba(99,102,241,0.45),0_2px_8px_rgba(0,0,0,0.25)]",
-          "transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-300",
-          introHighlight ? "h-12 px-5 text-sm font-bold animate-pulse" : "h-11 w-11",
+          "bg-gradient-to-b from-primary to-primary/85 text-white shadow-[0_8px_28px_hsl(var(--primary)/0.38),0_2px_8px_rgba(0,0,0,0.2)]",
+          "transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/30",
+          introHighlight ? "h-11 w-11 text-sm font-bold sm:h-12 sm:w-auto sm:px-5 motion-safe:animate-pulse" : "h-11 w-11",
         ].join(" ")}
         data-testid="button-tour"
       >
         {introHighlight ? (
           <>
-            <HelpCircle className="w-5 h-5" aria-hidden="true" /> Tour do app
+            <HelpCircle className="w-5 h-5" aria-hidden="true" /> <span className="hidden sm:inline">Tour do app</span>
           </>
         ) : (
           <HelpCircle className="w-5 h-5" aria-hidden="true" />
