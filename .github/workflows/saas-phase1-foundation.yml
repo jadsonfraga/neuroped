@@ -9,6 +9,7 @@ on:
       - "functions/api/live/**"
       - "db/migrations/0009_saas_phase1_foundation.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
+      - "tests/unit/saas-membership-owner-regression.test.mjs"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "functions/api/live/**"
       - "db/migrations/0009_saas_phase1_foundation.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
+      - "tests/unit/saas-membership-owner-regression.test.mjs"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -40,6 +42,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Testar contrato tenant, criptografia e anti-cross-tenant
-        run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
+        run: |
+          node --import tsx tests/unit/saas-phase1-foundation.test.ts
+          node tests/unit/saas-membership-owner-regression.test.mjs
       - name: TypeScript
         run: npm run check
