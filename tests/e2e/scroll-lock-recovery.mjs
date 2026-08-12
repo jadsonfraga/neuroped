@@ -82,36 +82,55 @@ function assertUnlocked(lock, label) {
   assert.equal(lock.dataScrollLocked, false, `${label}: data-scroll-locked ficou órfão`);
 }
 
+function touchPoint(x, y) {
+  return { x, y, radiusX: 2, radiusY: 2, force: 1, id: 1 };
+}
+
 async function dispatchRealTouchStart(page, x, y) {
   const session = await page.context().newCDPSession(page);
   await session.send("Input.dispatchTouchEvent", {
     type: "touchStart",
-    touchPoints: [{ x, y, radiusX: 2, radiusY: 2, force: 1, id: 1 }],
+    touchPoints: [touchPoint(x, y)],
   });
   await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await session.detach();
 }
 
-async function synthesizeTouchScroll(page, width) {
+/**
+ * Swipe real por touch: usa a mesma sequência que um dedo produz
+ * (touchStart -> vários touchMove -> touchEnd). Evita Input.synthesizeScrollGesture,
+ * que em Chromium headless pode retornar sucesso sem gerar scroll nativo.
+ */
+async function performRealTouchSwipe(page, width) {
   const session = await page.context().newCDPSession(page);
+  const x = Math.round(width / 2);
+  const startY = Math.round(HEIGHT * 0.78);
+  const endY = Math.round(HEIGHT * 0.24);
   const before = await page.evaluate(() => window.scrollY);
-  const payload = {
-    x: Math.round(width / 2),
-    y: Math.round(HEIGHT * 0.72),
-    yDistance: -420,
-    speed: 900,
-    gestureSourceType: "touch",
-  };
-  await session.send("Input.synthesizeScrollGesture", payload);
-  await page.waitForTimeout(180);
-  let after = await page.evaluate(() => window.scrollY);
-  if (after <= before + 20) {
-    await session.send("Input.synthesizeScrollGesture", { ...payload, yDistance: 420 });
-    await page.waitForTimeout(180);
-    after = await page.evaluate(() => window.scrollY);
+
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [touchPoint(x, startY)],
+  });
+
+  const frames = 12;
+  for (let frame = 1; frame <= frames; frame += 1) {
+    const progress = frame / frames;
+    const y = Math.round(startY + (endY - startY) * progress);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [touchPoint(x, y)],
+    });
+    await page.waitForTimeout(14);
   }
+
+  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await session.detach();
-  assert.ok(after > before + 20, `${width}px: gesto touch não alterou scrollY (${before} -> ${after})`);
+  await page.waitForTimeout(180);
+
+  const after = await page.evaluate(() => window.scrollY);
+  assert.ok(after > before + 20, `${width}px: swipe touch não alterou scrollY (${before} -> ${after})`);
+  return { before, after };
 }
 
 async function verifyRecovery(width) {
@@ -121,7 +140,7 @@ async function verifyRecovery(width) {
     const y = Math.round(HEIGHT / 2);
 
     // Caso real do P0: lock órfão completo. Um touchStart nativo precisa curar
-    // a trava antes que o gesto de rolagem continue.
+    // a trava; o swipe touch SEGUINTE precisa efetivamente mover o documento.
     await injectOrphanedLock(page);
     await dispatchRealTouchStart(page, x, y);
     await page.waitForFunction(() =>
@@ -131,7 +150,7 @@ async function verifyRecovery(width) {
       !document.body.hasAttribute("data-scroll-locked"),
     );
     assertUnlocked(await readLock(page), `${width}px touch recovery`);
-    await synthesizeTouchScroll(page, width);
+    const touchScroll = await performRealTouchSwipe(page, width);
 
     // O caminho pointerdown também precisa se autocurar, porque mouse/trackpad e
     // canetas podem ser a primeira interação depois de retornar ao PWA.
@@ -173,7 +192,9 @@ async function verifyRecovery(width) {
     await page.waitForFunction(() => !document.body.hasAttribute("data-scroll-locked"));
     assertUnlocked(await readLock(page), `${width}px post-modal recovery`);
 
-    console.log(`[scroll-lock-recovery] ✓ ${width}px: touch + pointer + wheel + proteção de modal`);
+    console.log(
+      `[scroll-lock-recovery] ✓ ${width}px: touch ${touchScroll.before}->${touchScroll.after} + pointer/wheel ${wheelBefore}->${wheelAfter} + proteção de modal`,
+    );
   } finally {
     await context.close();
   }
