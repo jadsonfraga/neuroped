@@ -41,5 +41,5 @@ export function normalizeClinicSlug(value: string): string {
 }
 
 export function isValidClinicSlug(value: string): boolean {
-  return /^[a-z0-9](?:[a-z0-9-]{1,48}[a-z0-9])?$/.test(value);
+  return /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(value);
 }
