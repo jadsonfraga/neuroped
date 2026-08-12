@@ -403,3 +403,14 @@ assert.match(splash, /useReducedMotion/);
 assert.match(splash, /reduceMotion\s*\?\s*\{ duration: 0 \}/);
 
 console.log("✓ proteções das melhorias críticas permanecem conectadas ao app");
+
+
+// CORS de produção deve falhar fechado mesmo se a env receber wildcard.
+const expressSecurity = read("server/middleware/security.ts");
+assert.match(expressSecurity, /export function isCorsOriginAllowed/);
+assert.match(expressSecurity, /return !isProduction && corsOrigins\.includes\("\*"\)/);
+assert.doesNotMatch(
+  expressSecurity,
+  /corsOrigins\.includes\(origin\) \|\| corsOrigins\.includes\("\*"\)/,
+  "produção não pode aceitar wildcard CORS com credenciais",
+);
