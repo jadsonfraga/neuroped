@@ -145,8 +145,34 @@ for (const path of [
   "audit-filter-random-patients.mjs",
   "add-clinical-report.cjs",
   "generate-report.cjs",
+  "fix-audit-issues.mjs",
+  "add-child-respondent.mjs",
+  "audit-advanced-250.mjs",
+  "audit-230-integrated.mjs",
+  "audit-250-combinations.mjs",
 ]) {
   assert.equal(existsSync(resolve(root, path)), false, `${path} não deve existir na raiz ativa`);
+}
+
+// O mini-backend CommonJS de laudo/receita/P12 foi aposentado. A assinatura atual
+// é local no cliente; reintroduzir este diretório recriaria uma segunda arquitetura
+// de certificado e uma superfície para exemplos clínicos identificáveis.
+assert.equal(
+  existsSync(resolve(root, "server/modules")),
+  false,
+  "server/modules aposentado não deve reaparecer",
+);
+
+// O Express efetivo persiste via server/storage.ts. Adapters Postgres/SQLite e
+// repositories sem qualquer import de runtime criavam uma segunda DAL enganosa,
+// com documentação dizendo que initDb() rodava no boot quando isso não ocorria.
+for (const path of [
+  "server/lib/db.ts",
+  "server/lib/db-enhanced.ts",
+  "server/lib/repositories",
+  "shared/schema-pg.ts",
+]) {
+  assert.equal(existsSync(resolve(root, path)), false, `${path} não deve reaparecer sem wiring real`);
 }
 
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");

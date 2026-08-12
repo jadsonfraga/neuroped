@@ -12,6 +12,13 @@ import {
   type TenantEnv,
 } from "../../tenant/_core";
 
+const GLOBAL_CLINICAL_ROLES = new Set(["admin", "professional"]);
+const TENANT_CLINICAL_ROLES = new Set<ClinicMembershipRole>([
+  "owner",
+  "clinic_admin",
+  "professional",
+]);
+
 function clinicIdFrom(params: Record<string, string | string[]>): string {
   const raw = params.id;
   return String(Array.isArray(raw) ? raw[0] : (raw ?? "")).trim().slice(0, 80);
@@ -138,14 +145,27 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const target = await auth.db
-    .prepare(`SELECT id, name, email FROM users WHERE lower(email) = ? AND is_active = 1 LIMIT 1`)
+    .prepare(
+      `SELECT id, name, email, role AS global_role
+         FROM users
+        WHERE lower(email) = ? AND is_active = 1
+        LIMIT 1`,
+    )
     .bind(email)
-    .first<{ id: string; name: string; email: string }>();
+    .first<{ id: string; name: string; email: string; global_role: string }>();
   if (!target) {
     return tenantError(
       "Usuário ainda não possui conta NeuroPed. O fluxo de convite por e-mail será adicionado antes do piloto.",
       "USER_NOT_REGISTERED",
       404,
+    );
+  }
+
+  if (TENANT_CLINICAL_ROLES.has(role) && !GLOBAL_CLINICAL_ROLES.has(target.global_role)) {
+    return tenantError(
+      "O papel tenant solicitado exige conta global admin ou professional.",
+      "GLOBAL_ROLE_INCOMPATIBLE",
+      409,
     );
   }
 
@@ -159,8 +179,6 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     .bind(auth.clinicId, target.id)
     .first<{ role: ClinicMembershipRole; active: number }>();
 
-  // Clinic admin nunca pode demover owner. O trigger do banco é a última linha
-  // de defesa contra corrida ao tentar remover/rebaixar o último owner.
   if (
     currentMembership?.active === 1 &&
     currentMembership.role === "owner" &&
@@ -206,12 +224,11 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         true,
       ),
     ]);
-
-    if ((results[0]?.meta?.changes ?? 0) !== 1) {
-      return tenantError("Membership mudou durante a atualização.", "MEMBERSHIP_STATE_CHANGED", 409);
-    }
-    if ((results[1]?.meta?.changes ?? 0) !== 1) {
-      return tenantError("Não foi possível auditar a alteração de equipe.", "DB_ERROR", 500);
+    if (
+      Number(results[0]?.meta?.changes ?? 0) !== 1 ||
+      Number(results[1]?.meta?.changes ?? 0) !== 1
+    ) {
+      return tenantError("Membership mudou durante a operação.", "MEMBERSHIP_STALE", 409);
     }
   } catch (error) {
     if (isLastOwnerConstraintError(error)) {
@@ -279,12 +296,11 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
         true,
       ),
     ]);
-
-    if (Number(results[0]?.meta?.changes ?? 0) !== 1) {
-      return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
-    }
-    if (Number(results[1]?.meta?.changes ?? 0) !== 1) {
-      return tenantError("Não foi possível auditar a alteração de equipe.", "DB_ERROR", 500);
+    if (
+      Number(results[0]?.meta?.changes ?? 0) !== 1 ||
+      Number(results[1]?.meta?.changes ?? 0) !== 1
+    ) {
+      return tenantError("Membership mudou durante a operação.", "MEMBERSHIP_STALE", 409);
     }
   } catch (error) {
     if (isLastOwnerConstraintError(error)) {

@@ -11,6 +11,7 @@ on:
       - "functions/api/tenants/**"
       - "functions/api/live/**"
       - "tests/unit/saas-phase1-foundation.test.ts"
+      - "tests/unit/saas-phase1-hardening.test.ts"
       - ".github/workflows/saas-phase1-d1-migration.yml"
 
 concurrency:
@@ -23,7 +24,7 @@ permissions:
 jobs:
   migrate-saas-foundation:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Confirmar branch de produção
         run: |
@@ -47,11 +48,12 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      - name: Validar contrato da Fase 1
+      - name: Catraca completa antes de tocar no D1 remoto
         run: |
           set -euo pipefail
           node --import tsx tests/unit/saas-phase1-foundation.test.ts
-          npm run check
+          node --import tsx tests/unit/saas-phase1-hardening.test.ts
+          npm run verify
 
       - name: Validar credenciais Cloudflare
         env:
