@@ -81,7 +81,7 @@ a.np-primary-cta:active {
   box-shadow: var(--np-soft-ring) !important;
 }
 
-@media (max-width: 1023px) {
+@media screen and (max-width: 1023px) {
   header.fixed.lg\:hidden {
     height: calc(var(--np-appbar-height) + env(safe-area-inset-top)) !important;
     padding-top: env(safe-area-inset-top) !important;

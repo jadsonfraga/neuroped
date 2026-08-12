@@ -41,6 +41,9 @@ jobs:
       - name: Install Chromium for real browser gates
         run: npx playwright install --with-deps chromium
 
+      - name: Validate tablet shell breakpoints and print isolation
+        run: node tests/e2e/responsive-shell-smoke.mjs
+
       - name: Audit every navigable route with axe
         run: npm run audit:a11y:full
 
