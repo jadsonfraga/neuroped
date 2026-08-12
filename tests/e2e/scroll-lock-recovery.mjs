@@ -195,6 +195,10 @@ async function verifyRecovery(width) {
       !document.body.hasAttribute("data-scroll-locked"),
     );
     assertUnlocked(await readLock(page), `${width}px pointer recovery`);
+    // O primeiro pointerdown nasceu enquanto o body estava com pointer-events:none;
+    // após a autocura, um movimento mínimo força o Chromium a refazer o hit-test
+    // antes do wheel, sem acionar nenhum segundo mecanismo de recuperação.
+    await page.mouse.move(x + 1, y + 1);
     const afterPointerWheel = await proveWheelScroll(page, width, "após pointer recovery");
 
     // Segurança: lock legítimo de modal NÃO pode ser removido pelo autocurador.
