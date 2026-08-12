@@ -185,6 +185,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const drawerOpen = mobileOpen && !isDesktop;
+    document.body.classList.toggle("np-mobile-drawer-open", drawerOpen);
+    return () => document.body.classList.remove("np-mobile-drawer-open");
+  }, [isDesktop, mobileOpen]);
+
+  useEffect(() => {
     const setInert = (element: HTMLElement | null, disabled: boolean) => {
       if (disabled) element?.setAttribute("inert", "");
       else element?.removeAttribute("inert");
