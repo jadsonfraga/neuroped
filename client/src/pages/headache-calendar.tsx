@@ -1,16 +1,56 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { BrainCog, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
+import { AlertTriangle, BrainCog, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
 import {
   headacheTypes, headacheLocations, headacheTriggers,
   headacheSymptoms, headacheAuraTypes,
   type HeadacheEntry
 } from "@/data/expandedScales";
+import { secureGet, secureSet } from "@/lib/secureStorage";
+
+const STORAGE_KEY = "diario:cefaleia:v1";
+const MAX_ENTRIES = 500;
+const MAX_FIELD = 4_000;
+
+function safeText(value: unknown, max = MAX_FIELD): string {
+  return typeof value === "string" ? value.slice(0, max) : "";
+}
+
+function safeList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string").slice(0, 40).map((item) => item.slice(0, 200))
+    : [];
+}
+
+function sanitizeEntries(value: unknown): HeadacheEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, MAX_ENTRIES).flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return [];
+    const item = candidate as Record<string, unknown>;
+    const intensity = typeof item.intensity === "number" && Number.isFinite(item.intensity)
+      ? Math.max(0, Math.min(10, Math.round(item.intensity)))
+      : 0;
+    return [{
+      date: safeText(item.date, 10),
+      intensity,
+      type: safeText(item.type, 160),
+      location: safeText(item.location, 160),
+      duration: safeText(item.duration, 120),
+      aura: item.aura === true,
+      auraType: safeText(item.auraType, 160),
+      triggers: safeList(item.triggers),
+      symptoms: safeList(item.symptoms),
+      medication: safeText(item.medication, 1_000),
+      relief: safeText(item.relief, 160),
+      notes: safeText(item.notes),
+    } satisfies HeadacheEntry];
+  });
+}
 
 function newEntry(): HeadacheEntry {
   const now = new Date();
@@ -30,20 +70,48 @@ function newEntry(): HeadacheEntry {
   };
 }
 
+function csvCell(value: unknown): string {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
 export default function HeadacheCalendarPage() {
   const [entries, setEntries] = useState<HeadacheEntry[]>([]);
+  const [entriesReady, setEntriesReady] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [current, setCurrent] = useState<HeadacheEntry>(newEntry());
   const [adding, setAdding] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const restored = sanitizeEntries(await secureGet<HeadacheEntry[]>(STORAGE_KEY));
+      if (!active) return;
+      setEntries(restored);
+      setEntriesReady(true);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!entriesReady) return;
+    const snapshot = sanitizeEntries(entries);
+    const operation = saveQueue.current
+      .catch(() => undefined)
+      .then(() => secureSet(STORAGE_KEY, snapshot));
+    saveQueue.current = operation.then(() => undefined, () => undefined);
+    void operation.then((stored) => setStorageError(stored !== true));
+  }, [entries, entriesReady]);
+
   function saveEntry() {
     if (!current.type) return;
-    setEntries([current, ...entries]);
+    setEntries((previous) => [current, ...previous].slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
     setAdding(false);
   }
 
   function removeEntry(i: number) {
-    setEntries(entries.filter((_, idx) => idx !== i));
+    setEntries((previous) => previous.filter((_, idx) => idx !== i));
   }
 
   function exportCSV() {
@@ -54,17 +122,31 @@ export default function HeadacheCalendarPage() {
       e.triggers.join("; "), e.symptoms.join("; "),
       e.medication, e.relief, e.notes,
     ]);
-    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `calendario-cefaleia-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
   }
 
   const intensityColor = (v: number) => v <= 3 ? "text-emerald-600" : v <= 6 ? "text-amber-600" : "text-red-600";
+
+  if (!entriesReady) {
+    return (
+      <div className="space-y-4" role="status" aria-live="polite">
+        <div className="h-24 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+        <span className="sr-only">Carregando calendário de cefaleia</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -82,10 +164,17 @@ export default function HeadacheCalendarPage() {
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-rose-800 dark:text-rose-300 leading-relaxed">
-            Registre cada episódio de cefaleia com o máximo de detalhes. O diário é essencial para diagnóstico e acompanhamento de cefaleias na infância e adolescência.
+            Registre cada episódio com detalhes. O histórico fica cifrado neste dispositivo e é apagado no logout; exporte o CSV quando precisar compartilhar com a equipe clínica.
           </p>
         </div>
       </div>
+
+      {storageError && (
+        <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200" role="alert">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>O episódio está visível nesta tela, mas o cofre local não confirmou a gravação. Exporte o CSV antes de sair.</span>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button onClick={() => setAdding(true)} className="gap-2" disabled={adding}>
@@ -255,7 +344,7 @@ export default function HeadacheCalendarPage() {
         <div className="space-y-3">
           <h3 className="text-sm font-bold text-foreground">Registros ({entries.length})</h3>
           {entries.map((e, i) => (
-            <Card key={i} className="border-card-border">
+            <Card key={`${e.date}-${e.type}-${i}`} className="border-card-border">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -263,7 +352,7 @@ export default function HeadacheCalendarPage() {
                     <Badge variant="outline" className={`text-xs font-bold ${intensityColor(e.intensity)}`}>EVA {e.intensity}/10</Badge>
                     {e.duration && <Badge variant="outline" className="text-xs">{e.duration}</Badge>}
                   </div>
-                  <button onClick={() => removeEntry(i)} className="text-muted-foreground hover:text-red-500 transition-colors">
+                  <button onClick={() => removeEntry(i)} className="text-muted-foreground hover:text-red-500 transition-colors" aria-label={`Excluir episódio de ${e.date}`}>
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
