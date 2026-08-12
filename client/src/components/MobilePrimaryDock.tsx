@@ -104,7 +104,7 @@ export function MobilePrimaryDock() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 md:hidden print:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 lg:hidden print:hidden"
       style={{ paddingBottom: "max(0.45rem, env(safe-area-inset-bottom))" }}
       data-testid="mobile-primary-dock"
     >
