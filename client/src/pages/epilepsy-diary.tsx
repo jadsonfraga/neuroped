@@ -1,14 +1,49 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Zap, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
+import { AlertTriangle, Zap, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
 import {
   epilepsyTypes, epilepsyTriggers, postIctalSymptoms,
   type EpilepsyEntry
 } from "@/data/expandedScales";
+import { secureGet, secureSet } from "@/lib/secureStorage";
+
+const STORAGE_KEY = "diario:epilepsia:v1";
+const MAX_ENTRIES = 500;
+const MAX_FIELD = 4_000;
+
+function safeText(value: unknown, max = MAX_FIELD): string {
+  return typeof value === "string" ? value.slice(0, max) : "";
+}
+
+function safeList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string").slice(0, 40).map((item) => item.slice(0, 200))
+    : [];
+}
+
+function sanitizeEntries(value: unknown): EpilepsyEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, MAX_ENTRIES).flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return [];
+    const item = candidate as Record<string, unknown>;
+    return [{
+      date: safeText(item.date, 10),
+      time: safeText(item.time, 5),
+      type: safeText(item.type, 160),
+      duration: safeText(item.duration, 120),
+      consciousness: safeText(item.consciousness, 120),
+      triggers: safeList(item.triggers),
+      description: safeText(item.description),
+      postIctal: safeList(item.postIctal),
+      medication: safeText(item.medication, 1_000),
+      notes: safeText(item.notes),
+    } satisfies EpilepsyEntry];
+  });
+}
 
 function newEntry(): EpilepsyEntry {
   const now = new Date();
@@ -26,20 +61,48 @@ function newEntry(): EpilepsyEntry {
   };
 }
 
+function csvCell(value: unknown): string {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
 export default function EpilepsyDiaryPage() {
   const [entries, setEntries] = useState<EpilepsyEntry[]>([]);
+  const [entriesReady, setEntriesReady] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [current, setCurrent] = useState<EpilepsyEntry>(newEntry());
   const [adding, setAdding] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const restored = sanitizeEntries(await secureGet<EpilepsyEntry[]>(STORAGE_KEY));
+      if (!active) return;
+      setEntries(restored);
+      setEntriesReady(true);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!entriesReady) return;
+    const snapshot = sanitizeEntries(entries);
+    const operation = saveQueue.current
+      .catch(() => undefined)
+      .then(() => secureSet(STORAGE_KEY, snapshot));
+    saveQueue.current = operation.then(() => undefined, () => undefined);
+    void operation.then((stored) => setStorageError(stored !== true));
+  }, [entries, entriesReady]);
+
   function saveEntry() {
     if (!current.type || !current.duration) return;
-    setEntries([current, ...entries]);
+    setEntries((previous) => [current, ...previous].slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
     setAdding(false);
   }
 
   function removeEntry(i: number) {
-    setEntries(entries.filter((_, idx) => idx !== i));
+    setEntries((previous) => previous.filter((_, idx) => idx !== i));
   }
 
   function exportCSV() {
@@ -49,14 +112,28 @@ export default function EpilepsyDiaryPage() {
       e.triggers.join("; "), e.description, e.postIctal.join("; "),
       e.medication, e.notes,
     ]);
-    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `diario-epilepsia-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
+  }
+
+  if (!entriesReady) {
+    return (
+      <div className="space-y-4" role="status" aria-live="polite">
+        <div className="h-24 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+        <span className="sr-only">Carregando diário de crises</span>
+      </div>
+    );
   }
 
   return (
@@ -75,10 +152,17 @@ export default function EpilepsyDiaryPage() {
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 text-violet-600 dark:text-violet-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-violet-800 dark:text-violet-300 leading-relaxed">
-            Registre cada crise epiléptica com detalhes. Os dados ajudam o neurologista a ajustar o tratamento. Você pode exportar o diário em CSV para levar à consulta.
+            Registre cada crise epiléptica com detalhes. Os dados ficam cifrados neste dispositivo e são apagados no logout. Exporte o diário em CSV quando precisar levá-lo à consulta.
           </p>
         </div>
       </div>
+
+      {storageError && (
+        <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200" role="alert">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>O registro está visível nesta tela, mas o cofre local não confirmou a gravação. Exporte o CSV antes de sair.</span>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button onClick={() => setAdding(true)} className="gap-2" disabled={adding}>
@@ -228,7 +312,7 @@ export default function EpilepsyDiaryPage() {
         <div className="space-y-3">
           <h3 className="text-sm font-bold text-foreground">Registros ({entries.length})</h3>
           {entries.map((e, i) => (
-            <Card key={i} className="border-card-border">
+            <Card key={`${e.date}-${e.time}-${i}`} className="border-card-border">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -237,7 +321,7 @@ export default function EpilepsyDiaryPage() {
                     </Badge>
                     <Badge variant="outline" className="text-xs">{e.duration}</Badge>
                   </div>
-                  <button onClick={() => removeEntry(i)} className="text-muted-foreground hover:text-red-500 transition-colors">
+                  <button onClick={() => removeEntry(i)} className="text-muted-foreground hover:text-red-500 transition-colors" aria-label={`Excluir crise de ${e.date} ${e.time}`}>
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

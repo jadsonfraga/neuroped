@@ -24,6 +24,13 @@ const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRun
 const serverCrypto = read("server/lib/crypto.ts");
 const skipNav = read("client/src/components/SkipNav.tsx");
 const pageMascotDecor = read("client/src/components/PageMascotDecor.tsx");
+const secureStorage = read("client/src/lib/secureStorage.ts");
+const persistentSecureStorage = read("client/src/lib/persistentSecureStorage.ts");
+const diarioClinico = read("client/src/components/DiarioClinico.tsx");
+const epilepsyDiary = read("client/src/pages/epilepsy-diary.tsx");
+const headacheCalendar = read("client/src/pages/headache-calendar.tsx");
+const cognitiveStorage = read("client/src/features/cognitive-lab/storage.ts");
+const signatureRegistry = read("client/src/pages/assinatura-digital.tsx");
 const pkg = JSON.parse(read("package.json"));
 const clinicalFiles = [
   "functions/api/patients/index.ts",
@@ -167,6 +174,49 @@ assert.equal(
   true,
   "Nino premium precisa permanecer publicado para a assinatura global das páginas",
 );
+
+// Artefatos locais que se apresentam como longitudinais precisam sobreviver a reload,
+// mas continuar cifrados e destrutíveis no logout. O cofre persistente usa CryptoKey
+// não exportável no IndexedDB; rascunhos comuns continuam efêmeros.
+assert.match(secureStorage, /const PERSISTENT_SECURE_KEYS = new Set\(\[/);
+for (const key of ["caa:workspace:v3", "assinatura:registros:v2", "cognitive-lab:sessions:v2"]) {
+  assert.match(secureStorage, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+}
+assert.match(secureStorage, /const PERSISTENT_SECURE_PREFIXES = \["diario:"\]/);
+assert.match(secureStorage, /PERSISTENT_SECURE_PREFIXES\.some\(\(prefix\) => key\.startsWith\(prefix\)\)/);
+assert.match(secureStorage, /await persistentSecureClearAll\(\)/);
+assert.match(persistentSecureStorage, /extractable false|false,\s*\["encrypt", "decrypt"\]/s);
+// O cofre separa chave-mestra e valores em object stores distintas: a CryptoKey
+// não exportável vive em KEY_STORE e nunca se mistura aos envelopes cifrados.
+assert.match(persistentSecureStorage, /const KEY_STORE = "keys"/);
+assert.match(persistentSecureStorage, /const VALUE_STORE = "values"/);
+assert.match(persistentSecureStorage, /const MASTER_KEY_ID = "aes-gcm-master-v1"/);
+assert.match(persistentSecureStorage, /deleteDatabase/);
+
+// Diário genérico e os dois diários dedicados não podem voltar a estado apenas em memória.
+assert.match(diarioClinico, /const secureKey = `diario:\$\{config\.id\}`/);
+assert.match(diarioClinico, /secureGet<DiarioEntry\[]>\(secureKey\)/);
+assert.match(diarioClinico, /secureSet\(secureKey, snapshot\)/);
+for (const [name, source, key] of [
+  ["epilepsia", epilepsyDiary, "diario:epilepsia:v1"],
+  ["cefaleia", headacheCalendar, "diario:cefaleia:v1"],
+]) {
+  assert.match(source, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${name}: chave cifrada longitudinal ausente`);
+  assert.match(source, /secureGet<[^>]+>\(STORAGE_KEY\)/, `${name}: leitura cifrada ausente`);
+  assert.match(source, /secureSet\(STORAGE_KEY, snapshot\)/, `${name}: escrita cifrada ausente`);
+  assert.match(source, /storageError/, `${name}: falha de persistência deve ser visível`);
+  assert.doesNotMatch(source, /localStorage\.(?:getItem|setItem)/, `${name}: não pode persistir PHI em texto puro`);
+  assert.match(source, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 2_000\)/, `${name}: blob deve sobreviver ao click`);
+}
+
+// Sessões explicitamente salvas do Cognitive Lab e o registro local de assinatura
+// usam chaves roteadas para o mesmo cofre persistente; logout destrói a chave comum.
+assert.match(cognitiveStorage, /const SECURE_KEY = "cognitive-lab:sessions:v2"/);
+assert.match(cognitiveStorage, /secureGet<CognitiveSession\[]>\(SECURE_KEY\)/);
+assert.match(cognitiveStorage, /secureSet\(SECURE_KEY, all\)/);
+assert.match(signatureRegistry, /const SECURE_REGISTRY_KEY = "assinatura:registros:v2"/);
+assert.match(signatureRegistry, /secureGet<Registro\[]>\(SECURE_REGISTRY_KEY\)/);
+assert.match(signatureRegistry, /secureSet\(SECURE_REGISTRY_KEY/);
 
 // Ferramentas temporárias/legadas capazes de reescrever clínica ou simular auditorias
 // não devem reaparecer na raiz ativa sem um workflow e contrato explícitos.
