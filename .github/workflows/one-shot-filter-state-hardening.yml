@@ -64,8 +64,8 @@ jobs:
 
           flash_index = text.index("const flashMode = isFlashRoute();")
           state_start = line_start(text, flash_index)
-          result_index = text.index("const [result, setResult]", flash_index)
-          state_end = line_start(text, result_index)
+          copied_index = text.index("const [copiedRec, setCopiedRec]", flash_index)
+          state_end = line_start(text, copied_index)
           old_state = text[state_start:state_end]
           assert "loadFilterState" in old_state
           assert "availabilityMode" in old_state
@@ -126,8 +126,10 @@ jobs:
 
           save_comment_index = text.index("// Persiste as seleções sempre que mudam (best-effort).", effect_start)
           save_start = line_start(text, save_comment_index)
-          persist_flash_index = text.index("const persistFlashSnapshot = useCallback", save_start)
-          save_end = line_start(text, persist_flash_index)
+          alive_index = text.index("let alive = true", save_start)
+          next_effect_index = text.rfind("useEffect(() => {", save_start, alive_index)
+          assert next_effect_index > save_start, "efeito de registry ausente"
+          save_end = line_start(text, next_effect_index)
           save_block = text[save_start:save_end]
           assert "localStorage.setItem(FILTER_STATE_KEY" in save_block
           save_indent = text[save_start:save_comment_index]
