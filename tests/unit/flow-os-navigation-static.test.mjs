@@ -5,6 +5,9 @@ const dock = fs.readFileSync("client/src/components/MobilePrimaryDock.tsx", "utf
 const palette = fs.readFileSync("client/src/components/CommandPalette.tsx", "utf8");
 const main = fs.readFileSync("client/src/main.tsx", "utf8");
 const css = fs.readFileSync("client/src/styles/flow-os.css", "utf8");
+const layout = fs.readFileSync("client/src/components/Layout.tsx", "utf8");
+const shellCss = fs.readFileSync("client/src/styles/premium-app-shell-v12.css", "utf8");
+const polishCss = fs.readFileSync("client/src/styles/premium-polish-10.css", "utf8");
 
 for (const label of ["Início", "Pacientes", "Clínica", "Agenda", "Buscar"]) {
   assert.match(dock, new RegExp(`label: \\"${label}\\"`), `dock deve manter a ação ${label}`);
@@ -28,6 +31,27 @@ assert.match(main, /\.\/styles\/flow-os\.css/, "shell deve carregar o contrato d
 assert.match(css, /#main-content/, "conteúdo principal deve reservar espaço para o dock");
 assert.match(css, /safe-area-inset-bottom/, "reserva do conteúdo deve considerar safe area");
 
+assert.match(dock, /\blg:hidden\b/, "dock deve encerrar no breakpoint lg de 1024px");
+assert.match(layout, /matchMedia\("\(min-width: 1024px\)"\)/, "shell React deve compartilhar o breakpoint lg");
+assert.match(layout, /classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
+assert.match(css, /@media screen and \(max-width: 1023px\)/, "contrato tablet deve valer apenas em tela");
+assert.match(
+  css,
+  /body\.np-mobile-drawer-open \[data-testid="mobile-primary-dock"\][\s\S]*?display: none !important;/,
+  "dock deve sair da árvore visual enquanto o drawer modal estiver aberto",
+);
+for (const [source, name] of [
+  [css, "flow-os"],
+  [shellCss, "premium-app-shell"],
+  [polishCss, "premium-polish"],
+]) {
+  assert.doesNotMatch(
+    source,
+    /@media \(max-width: 1023px\)/,
+    `${name} não pode aplicar regras de tela tablet durante impressão`,
+  );
+}
+
 assert.match(palette, /queryKey: \["\/api\/patients"\]/, "busca global deve consultar pacientes reais");
 assert.match(palette, /normalizedSearch\.length >= 2/, "pacientes só devem ser consultados após intenção de busca");
 assert.match(palette, /enabled: patientSearchReady/, "consulta de pacientes deve ser condicional");
@@ -36,4 +60,4 @@ assert.match(palette, /navigate\(`\/pacientes\/\$\{id\}`\)/, "resultado deve abr
 assert.match(palette, /Abrir prontuário longitudinal/, "resultado deve comunicar a ação clínica");
 assert.doesNotMatch(palette, /localStorage.*patient/i, "paleta não deve persistir nomes de pacientes em recentes");
 
-console.log("[flow-os] ✓ dock mobile, fronteira pública, stacking, busca clínica real e privacidade aprovados.");
+console.log("[flow-os] ✓ dock tablet, impressão, fronteira pública, stacking, busca clínica real e privacidade aprovados.");
