@@ -1,0 +1,33 @@
+name: Temporary definitive integration gate
+
+on:
+  push:
+    branches:
+      - fix/final-definitive-bughunt-integration-20260812
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/final-definitive-bughunt-integration-20260812
+          fetch-depth: 0
+      - name: Configure git
+        run: |
+          git config user.name "neuroped-audit-bot"
+          git config user.email "actions@users.noreply.github.com"
+      - name: Merge validated bughunt branch into current main snapshot
+        run: |
+          set -euo pipefail
+          git fetch origin fix/final-definitive-bughunt-20260810
+          git merge --no-ff --no-edit origin/fix/final-definitive-bughunt-20260810
+      - name: Full release gate on merged tree
+        run: |
+          npm ci
+          npm run verify:release
+      - name: Push integrated branch
+        run: git push origin HEAD:fix/final-definitive-bughunt-integration-20260812
