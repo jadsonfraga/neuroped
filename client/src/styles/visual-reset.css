@@ -230,14 +230,14 @@ aside[aria-label="Menu de navegação"] > div:first-of-type {
 
 /* Medallion institucional: pequeno, sólido, sem cara de template. */
 aside[aria-label="Menu de navegação"] > div:first-of-type > div:first-of-type,
-header.fixed.md\:hidden > div:first-child > div:first-child {
+header.fixed.lg\:hidden > div:first-child > div:first-child {
   background: hsl(var(--primary)) !important;
   border: 1px solid hsl(var(--primary) / 0.68) !important;
   box-shadow: 0 8px 24px -16px hsl(var(--primary) / 0.72), inset 0 1px 0 hsl(var(--primary-foreground) / 0.2) !important;
   border-radius: 0.9rem !important;
 }
 
-header.fixed.md\:hidden {
+header.fixed.lg\:hidden {
   background: hsl(var(--sidebar) / 0.9) !important;
   border-bottom-color: hsl(var(--border) / 0.8) !important;
   box-shadow: 0 10px 30px -28px hsl(var(--foreground) / 0.42) !important;
@@ -299,7 +299,7 @@ header.fixed.md\:hidden {
   background: hsl(var(--sidebar-accent) / 0.66) !important;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   #sidebar-nav [data-testid^="nav-"] {
     min-height: 40px !important;
     padding-top: 0.44rem !important;

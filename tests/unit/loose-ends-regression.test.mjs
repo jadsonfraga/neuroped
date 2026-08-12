@@ -22,6 +22,15 @@ const visualStates = read("client/src/components/ui/VisualStates.tsx");
 const toastSystem = read("client/src/components/Toast.tsx");
 const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
 const serverCrypto = read("server/lib/crypto.ts");
+const skipNav = read("client/src/components/SkipNav.tsx");
+const pageMascotDecor = read("client/src/components/PageMascotDecor.tsx");
+const secureStorage = read("client/src/lib/secureStorage.ts");
+const persistentSecureStorage = read("client/src/lib/persistentSecureStorage.ts");
+const diarioClinico = read("client/src/components/DiarioClinico.tsx");
+const epilepsyDiary = read("client/src/pages/epilepsy-diary.tsx");
+const headacheCalendar = read("client/src/pages/headache-calendar.tsx");
+const cognitiveStorage = read("client/src/features/cognitive-lab/storage.ts");
+const signatureRegistry = read("client/src/pages/assinatura-digital.tsx");
 const pkg = JSON.parse(read("package.json"));
 const clinicalFiles = [
   "functions/api/patients/index.ts",
@@ -141,6 +150,113 @@ assert.match(cognitiveRunner, /void ctx\.close\(\)/);
 assert.match(cognitiveRunner, /beep\(correct \? 880 : 220\);/);
 assert.doesNotMatch(cognitiveRunner, /beep\([^\n]*after\)/);
 
+// Mascotes globais: toda página atravessa SkipNav no início do Layout, portanto a camada
+// decorativa deve continuar montada ali. Os mascotes não podem capturar clique/foco e a
+// geração nova (Nino) deve coexistir com o acervo histórico de forma contextual por rota.
+assert.match(skipNav, /PageMascotDecor/);
+assert.match(pageMascotDecor, /useLocation\(\)/);
+assert.match(pageMascotDecor, /pointer-events-none/);
+assert.match(pageMascotDecor, /aria-hidden="true"/);
+assert.match(pageMascotDecor, /data-mascot-era="novo"/);
+assert.match(pageMascotDecor, /data-mascot-era="legado"/);
+assert.match(pageMascotDecor, /\/neuroped-mascot-premium\.webp/);
+assert.match(pageMascotDecor, /routesWithInlineNino/);
+assert.match(pageMascotDecor, /path\.startsWith\("\/generic-scale\/"\)/);
+assert.doesNotMatch(pageMascotDecor, /onClick=/);
+for (const fileName of [
+  "dr-jadson-logo-super.jpeg",
+  "dr-jadson-consultorio-superman.jpeg",
+  "dr-jadson-arte.jpeg",
+  "dr-jadson-selfie.jpeg",
+  "dr-jadson-consultorio-batman.jpeg",
+  "dr-jadson-consultorio-full.jpeg",
+]) {
+  assert.match(pageMascotDecor, new RegExp(fileName.replaceAll(".", "\\.")));
+}
+assert.equal(
+  existsSync(resolve(root, "client/public/neuroped-mascot-premium.webp")),
+  true,
+  "Nino premium precisa permanecer publicado para a assinatura global das páginas",
+);
+
+// Artefatos locais que se apresentam como longitudinais precisam sobreviver a reload,
+// mas continuar cifrados e destrutíveis no logout. O cofre persistente usa CryptoKey
+// não exportável no IndexedDB; rascunhos comuns continuam efêmeros.
+assert.match(secureStorage, /const PERSISTENT_SECURE_KEYS = new Set\(\[/);
+for (const key of ["caa:workspace:v3", "assinatura:registros:v2", "cognitive-lab:sessions:v2"]) {
+  assert.match(secureStorage, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+}
+assert.match(secureStorage, /const PERSISTENT_SECURE_PREFIXES = \["diario:"\]/);
+assert.match(secureStorage, /PERSISTENT_SECURE_PREFIXES\.some\(\(prefix\) => key\.startsWith\(prefix\)\)/);
+assert.match(secureStorage, /await persistentSecureClearAll\(\)/);
+assert.match(persistentSecureStorage, /extractable false|false,\s*\["encrypt", "decrypt"\]/s);
+// O cofre separa chave-mestra e valores em object stores distintas: a CryptoKey
+// não exportável vive em KEY_STORE e nunca se mistura aos envelopes cifrados.
+assert.match(persistentSecureStorage, /const KEY_STORE = "keys"/);
+assert.match(persistentSecureStorage, /const VALUE_STORE = "values"/);
+assert.match(persistentSecureStorage, /const MASTER_KEY_ID = "aes-gcm-master-v1"/);
+assert.match(persistentSecureStorage, /deleteDatabase/);
+
+// Diário genérico e os dois diários dedicados não podem voltar a estado apenas em memória.
+assert.match(diarioClinico, /const secureKey = `diario:\$\{config\.id\}`/);
+assert.match(diarioClinico, /secureGet<DiarioEntry\[]>\(secureKey\)/);
+assert.match(diarioClinico, /secureSet\(secureKey, snapshot\)/);
+for (const [name, source, key] of [
+  ["epilepsia", epilepsyDiary, "diario:epilepsia:v1"],
+  ["cefaleia", headacheCalendar, "diario:cefaleia:v1"],
+]) {
+  assert.match(source, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${name}: chave cifrada longitudinal ausente`);
+  assert.match(source, /secureGet<[^>]+>\(STORAGE_KEY\)/, `${name}: leitura cifrada ausente`);
+  assert.match(source, /secureSet\(STORAGE_KEY, snapshot\)/, `${name}: escrita cifrada ausente`);
+  assert.match(source, /storageError/, `${name}: falha de persistência deve ser visível`);
+  assert.doesNotMatch(source, /localStorage\.(?:getItem|setItem)/, `${name}: não pode persistir PHI em texto puro`);
+  assert.match(source, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 2_000\)/, `${name}: blob deve sobreviver ao click`);
+}
+
+// Sessões explicitamente salvas do Cognitive Lab e o registro local de assinatura
+// usam chaves roteadas para o mesmo cofre persistente; logout destrói a chave comum.
+assert.match(cognitiveStorage, /const SECURE_KEY = "cognitive-lab:sessions:v2"/);
+assert.match(cognitiveStorage, /secureGet<CognitiveSession\[]>\(SECURE_KEY\)/);
+assert.match(cognitiveStorage, /secureSet\(SECURE_KEY, all\)/);
+assert.match(signatureRegistry, /const SECURE_REGISTRY_KEY = "assinatura:registros:v2"/);
+assert.match(signatureRegistry, /secureGet<Registro\[]>\(SECURE_REGISTRY_KEY\)/);
+assert.match(signatureRegistry, /secureSet\(SECURE_REGISTRY_KEY/);
+
+// Exports com texto livre do usuário não podem virar fórmula ao abrir no Excel
+// (CSV injection). A neutralização é única em lib/csv e todos os builders de
+// CSV com campos digitados precisam passá-la.
+const csvLib = read("client/src/lib/csv.ts");
+assert.match(csvLib, /export function neutralizeCsvFormula/);
+assert.match(csvLib, /\^\[=\+\\-@\\t\\r\]/);
+for (const [name, source] of [
+  ["epilepsia", epilepsyDiary],
+  ["cefaleia", headacheCalendar],
+  ["diário genérico", diarioClinico],
+  ["filtro clínico", read("client/src/lib/filterExport.ts")],
+]) {
+  assert.match(source, /neutralizeCsvFormula/, `${name}: export CSV sem neutralização de fórmula`);
+}
+
+// Nenhuma revogação de blob: pode ser síncrona após o click — o download pode
+// não ter começado. O padrão canônico é o adiamento de 2s (downloadBlob/#599).
+for (const path of [
+  "client/src/components/agenda/AgendaBoard.tsx",
+  "client/src/components/DiarioClinico.tsx",
+  "client/src/features/cognitive-lab/storage.ts",
+  "client/src/lib/filterExport.ts",
+  "client/src/pages/caa.tsx",
+  "client/src/pages/pacientes.tsx",
+  "client/src/pages/assinatura-digital.tsx",
+  "client/src/pages/epilepsy-diary.tsx",
+  "client/src/pages/headache-calendar.tsx",
+]) {
+  const source = read(path);
+  const bare = source
+    .split("\n")
+    .filter((line) => line.includes("revokeObjectURL") && !line.includes("setTimeout"));
+  assert.equal(bare.length, 0, `${path}: revokeObjectURL síncrono reintroduzido`);
+}
+
 // Ferramentas temporárias/legadas capazes de reescrever clínica ou simular auditorias
 // não devem reaparecer na raiz ativa sem um workflow e contrato explícitos.
 for (const path of [
@@ -149,8 +265,34 @@ for (const path of [
   "audit-filter-random-patients.mjs",
   "add-clinical-report.cjs",
   "generate-report.cjs",
+  "fix-audit-issues.mjs",
+  "add-child-respondent.mjs",
+  "audit-advanced-250.mjs",
+  "audit-230-integrated.mjs",
+  "audit-250-combinations.mjs",
 ]) {
   assert.equal(existsSync(resolve(root, path)), false, `${path} não deve existir na raiz ativa`);
+}
+
+// O mini-backend CommonJS de laudo/receita/P12 foi aposentado. A assinatura atual
+// é local no cliente; reintroduzir este diretório recriaria uma segunda arquitetura
+// de certificado e uma superfície para exemplos clínicos identificáveis.
+assert.equal(
+  existsSync(resolve(root, "server/modules")),
+  false,
+  "server/modules aposentado não deve reaparecer",
+);
+
+// O Express efetivo persiste via server/storage.ts. Adapters Postgres/SQLite e
+// repositories sem qualquer import de runtime criavam uma segunda DAL enganosa,
+// com documentação dizendo que initDb() rodava no boot quando isso não ocorria.
+for (const path of [
+  "server/lib/db.ts",
+  "server/lib/db-enhanced.ts",
+  "server/lib/repositories",
+  "shared/schema-pg.ts",
+]) {
+  assert.equal(existsSync(resolve(root, path)), false, `${path} não deve reaparecer sem wiring real`);
 }
 
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");

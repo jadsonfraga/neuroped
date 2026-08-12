@@ -6,6 +6,7 @@ import {
   canReadClinicClinicalData,
   canWriteClinicClinicalData,
   isClinicMembershipRole,
+  isValidClinicSlug,
   normalizeClinicSlug,
 } from "../../shared/tenant";
 import {
@@ -28,6 +29,8 @@ assert.equal(canWriteClinicClinicalData("financial"), false, "financeiro não es
 assert.equal(canAccessClinicFinance("financial"), true);
 assert.equal(canAccessClinicFinance("professional"), false);
 assert.equal(normalizeClinicSlug("Clínica Neuro Desenvolvimento"), "clinica-neuro-desenvolvimento");
+assert.equal(isValidClinicSlug("ai"), true, "slug tenant de dois caracteres não pode repetir o bug antigo de quantificador");
+assert.equal(isValidClinicSlug("a-"), false);
 
 const dataKeyV1 = "phase1-data-key-v1-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const dataKeyV2 = "phase1-data-key-v2-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -39,6 +42,26 @@ const env = {
 };
 assert.equal(clinicalCryptoReady(env), true);
 assert.equal(clinicalCryptoReady({ CLINICAL_DATA_KEY: dataKeyV2 }), false, "index key é obrigatória");
+assert.equal(
+  clinicalCryptoReady({
+    CLINICAL_DATA_KEY: dataKeyV2,
+    CLINICAL_DATA_KEY_ID: "k2",
+    CLINICAL_INDEX_KEY: dataKeyV2,
+  }),
+  false,
+  "blind index deve usar secret independente da data key",
+);
+assert.equal(
+  clinicalCryptoReady({
+    CLINICAL_DATA_KEY: dataKeyV2,
+    CLINICAL_DATA_KEY_ID: "k2",
+    CLINICAL_DATA_KEY_PREVIOUS: dataKeyV1,
+    CLINICAL_DATA_KEY_PREVIOUS_ID: "k2",
+    CLINICAL_INDEX_KEY: indexKey,
+  }),
+  false,
+  "key IDs atual/anterior não podem colidir",
+);
 assert.equal(currentClinicalEncryptionVersion(env), "clinical-v1:k2");
 
 const clinicA = "clinic-a";
@@ -133,6 +156,8 @@ assert.doesNotMatch(
   /user\.role\s*===\s*["']admin["']\s*\?\s*true/,
   "não pode reaparecer bypass global de tenant",
 );
+assert.match(tenantCore, /export function prepareSaasAudit/);
+assert.match(tenantCore, /SELECT \?, \?, \?, \?, \?, \?, \? WHERE changes\(\) = 1/);
 
 const tenantCrypto = readFileSync(
   new URL("../../functions/api/tenant/_crypto.ts", import.meta.url),
@@ -141,6 +166,8 @@ const tenantCrypto = readFileSync(
 assert.match(tenantCrypto, /CLINICAL_INDEX_KEY/);
 assert.match(tenantCrypto, /CLINICAL_DATA_KEY_PREVIOUS/);
 assert.match(tenantCrypto, /HKDF/);
+assert.match(tenantCrypto, /CLINICAL_KEY_ID_COLLISION/);
+assert.match(tenantCrypto, /CLINICAL_KEY_SEPARATION_REQUIRED/);
 assert.doesNotMatch(tenantCrypto, /NEUROPED_JWT_SECRET/);
 
 const livePatientsApi = readFileSync(
@@ -151,6 +178,10 @@ assert.match(livePatientsApi, /CLINICAL_LIVE_DISABLED/);
 assert.match(livePatientsApi, /CLINICAL_CRYPTO_NOT_CONFIGURED/);
 assert.match(livePatientsApi, /getClinicMembership/);
 assert.match(livePatientsApi, /profile_encrypted/);
+assert.match(livePatientsApi, /db\.batch\(/);
+assert.match(livePatientsApi, /prepareSaasAudit\(/);
+assert.match(livePatientsApi, /EXTERNAL_REFERENCE_CONFLICT/);
+assert.doesNotMatch(livePatientsApi, /await writeSaasAudit/);
 assert.doesNotMatch(livePatientsApi, /INSERT INTO patients_demo/);
 
 const liveEventsApi = readFileSync(
@@ -162,7 +193,14 @@ assert.match(liveEventsApi, /patientBelongsToClinic/);
 assert.match(liveEventsApi, /payload_encrypted/);
 assert.match(liveEventsApi, /provenanceSource/);
 assert.match(liveEventsApi, /supersedesEventId/);
+assert.match(liveEventsApi, /STALE_SUPERSESSION/);
+assert.match(liveEventsApi, /SET status = 'corrected'/);
+assert.match(liveEventsApi, /WHERE changes\(\) = 1/);
+assert.match(liveEventsApi, /prepareSaasAudit\(db, auditParams, true\)/);
+assert.match(liveEventsApi, /normalizedOccurredAt/, "occurredAt precisa passar por validação ISO estrita");
+assert.match(liveEventsApi, /datetime\(\{ offset: true \}\)/);
 assert.match(liveEventsApi, /duplicate: true/);
+assert.doesNotMatch(liveEventsApi, /await writeSaasAudit/);
 assert.doesNotMatch(liveEventsApi, /clinical_events_demo/);
 assert.doesNotMatch(liveEventsApi, /patients_demo/);
 
@@ -173,5 +211,28 @@ const membersApi = readFileSync(
 assert.match(membersApi, /LAST_OWNER_PROTECTED/);
 assert.match(membersApi, /membershipCanManage/);
 assert.match(membersApi, /Somente owner pode conceder papel owner/);
+assert.match(
+  membersApi,
+  /Somente owner pode alterar o papel de outro owner/,
+  "clinic_admin não pode demover owner por upsert",
+);
+assert.match(membersApi, /otherActiveOwnerCount/);
+assert.match(
+  membersApi,
+  /isLastOwnerConstraintError/,
+  "handler precisa reagir ao trigger físico de último owner (0010)",
+);
+assert.match(membersApi, /auth\.db\.batch\(/);
+assert.match(membersApi, /prepareSaasAudit\(/);
+assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
+assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit/);
+
+const tenantsApi = readFileSync(
+  new URL("../../functions/api/tenants/index.ts", import.meta.url),
+  "utf8",
+);
+assert.match(tenantsApi, /isValidTimeZone/);
+assert.match(tenantsApi, /Timezone IANA inválido/);
 
 console.log("saas phase1 foundation tests ok");

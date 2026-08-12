@@ -37,6 +37,15 @@ interface MembershipRow {
   clinic_status: "active" | "suspended" | "closed";
 }
 
+export interface SaasAuditParams {
+  clinicId?: string | null;
+  actorUserId: string;
+  action: string;
+  targetType: string;
+  targetId?: string | null;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
 export function tenantJson(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -103,23 +112,27 @@ export function membershipCanAccessFinance(membership: ClinicMembership): boolea
   return membership.clinicStatus === "active" && canAccessClinicFinance(membership.role);
 }
 
-export async function writeSaasAudit(
+/**
+ * Prepara a escrita de auditoria para poder compô-la no mesmo `db.batch()` da
+ * mutação que está sendo auditada. Quando `onlyIfPreviousChanged` é true, o
+ * INSERT só ocorre se o statement imediatamente anterior alterou exatamente uma
+ * linha; isso evita audit log órfão em updates condicionais concorrentes.
+ */
+export function prepareSaasAudit(
   db: D1Database,
-  params: {
-    clinicId?: string | null;
-    actorUserId: string;
-    action: string;
-    targetType: string;
-    targetId?: string | null;
-    metadata?: Record<string, string | number | boolean | null>;
-  },
-): Promise<void> {
-  await db
-    .prepare(
-      `INSERT INTO saas_audit_log
+  params: SaasAuditParams,
+  onlyIfPreviousChanged = false,
+): D1PreparedStatement {
+  const sql = onlyIfPreviousChanged
+    ? `INSERT INTO saas_audit_log
         (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    )
+       SELECT ?, ?, ?, ?, ?, ?, ? WHERE changes() = 1`
+    : `INSERT INTO saas_audit_log
+        (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+  return db
+    .prepare(sql)
     .bind(
       crypto.randomUUID(),
       params.clinicId ?? null,
@@ -128,6 +141,12 @@ export async function writeSaasAudit(
       params.targetType,
       params.targetId ?? null,
       params.metadata ? JSON.stringify(params.metadata) : null,
-    )
-    .run();
+    );
+}
+
+export async function writeSaasAudit(
+  db: D1Database,
+  params: SaasAuditParams,
+): Promise<void> {
+  await prepareSaasAudit(db, params).run();
 }

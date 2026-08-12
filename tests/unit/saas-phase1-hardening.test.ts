@@ -7,21 +7,35 @@ const read = (relative: string) =>
 
 const foundationMigration = read("db/migrations/0009_saas_phase1_foundation.sql");
 const hardeningMigration = read("db/migrations/0010_saas_phase1_hardening.sql");
+const tenantCore = read("functions/api/tenant/_core.ts");
+const tenantsApi = read("functions/api/tenants/index.ts");
 const membersApi = read("functions/api/tenants/[id]/members.ts");
+const livePatientsApi = read("functions/api/live/patients/index.ts");
 const liveEventsApi = read("functions/api/live/events/index.ts");
 const migrationWorkflow = read(".github/workflows/saas-phase1-d1-migration.yml");
 
 // Travas estáticas: autorização do handler não pode confundir "não conceder owner"
-// com "poder demover owner". Verificamos a propriedade sem exigir uma forma
-// sintática específica de optional chaining.
+// com "poder demover owner". A mutação continua protegida fisicamente pelo D1.
 assert.match(
   membersApi,
-  /currentMembership\?\.active === 1[\s\S]{0,140}currentMembership\.role === "owner"[\s\S]{0,140}auth\.membership\.role !== "owner"/,
+  /currentMembership\?\.active === 1[\s\S]{0,160}currentMembership\.role === "owner"[\s\S]{0,180}auth\.membership\.role !== "owner"/,
 );
 assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
 assert.match(membersApi, /otherActiveOwnerCount/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
-assert.match(membersApi, /result\.meta\?\.changes/);
+assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
+assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
+
+// O papel global é teto de privilégio: uma membership clínica não pode elevar
+// reader/operator para owner, clinic_admin ou professional.
+assert.match(membersApi, /GLOBAL_CLINICAL_ROLES/);
+assert.match(membersApi, /TENANT_CLINICAL_ROLES/);
+assert.match(membersApi, /GLOBAL_ROLE_INCOMPATIBLE/);
+assert.match(membersApi, /role AS global_role/);
+
+// Timezone da clínica precisa ser um identificador operacional real.
+assert.match(tenantsApi, /isValidTimeZone/);
+assert.match(tenantsApi, /timezone deve ser um identificador IANA válido/);
 
 // Clinical LIVE reutiliza o contrato canônico, não aceita provenance_source livre
 // e mantém a cadeia de correções com estado explícito.
@@ -31,9 +45,25 @@ assert.match(liveEventsApi, /PROVENANCE_SOURCES\.has\(provenanceSource\)/);
 assert.match(liveEventsApi, /Evento canônico importado deve ser normalizado/);
 assert.match(liveEventsApi, /SET status = 'corrected'/);
 assert.match(liveEventsApi, /EVENT_ALREADY_SUPERSEDED/);
+assert.match(liveEventsApi, /STALE_SUPERSESSION/);
 assert.match(liveEventsApi, /payload clínico deve ser um objeto JSON/);
 assert.match(liveEventsApi, /encounterId deve ser um identificador opaco/);
 assert.doesNotMatch(liveEventsApi, /const provenanceSource = cleanText\(body\.provenanceSource, 240\)/);
+
+// Auditoria não é uma segunda transação. O helper de #595 condiciona o INSERT
+// a changes()=1; pacientes/eventos e agora memberships compõem tudo em D1.batch().
+assert.match(tenantCore, /export function prepareSaasAudit/);
+assert.match(tenantCore, /onlyIfPreviousChanged/);
+assert.match(tenantCore, /WHERE changes\(\) = 1/);
+assert.match(livePatientsApi, /prepareSaasAudit\([\s\S]{0,320}true/);
+assert.match(livePatientsApi, /await db\.batch\(\[/);
+assert.doesNotMatch(livePatientsApi, /await writeSaasAudit\(/);
+assert.match(liveEventsApi, /prepareSaasAudit\(db, auditParams, true\)/);
+assert.match(liveEventsApi, /await db\.batch\(/);
+assert.doesNotMatch(liveEventsApi, /await writeSaasAudit\(/);
+assert.match(membersApi, /prepareSaasAudit\([\s\S]{0,320}true/);
+assert.match(membersApi, /auth\.db\.batch\(\[/);
+assert.doesNotMatch(membersApi, /await writeSaasAudit\(/);
 
 assert.match(hardeningMigration, /ux_live_clinical_events_supersedes_once/);
 assert.match(hardeningMigration, /trg_clinic_memberships_keep_last_owner_update/);
@@ -42,6 +72,9 @@ assert.match(hardeningMigration, /trg_live_events_provenance_source_insert/);
 assert.match(hardeningMigration, /INVALID_PROVENANCE_SOURCE/);
 assert.match(migrationWorkflow, /0010_saas_phase1_hardening\.sql/);
 assert.match(migrationWorkflow, /ux_live_clinical_events_supersedes_once/);
+assert.match(migrationWorkflow, /saas-phase1-hardening\.test\.ts/);
+assert.match(migrationWorkflow, /npm run verify/);
+assert.match(migrationWorkflow, /Catraca completa antes de tocar no D1 remoto/);
 
 // Prova as invariantes no próprio SQLite: elas não dependem de um único handler
 // nem de um SELECT anterior que possa perder a corrida.
@@ -131,4 +164,4 @@ assert.throws(
 );
 
 db.close();
-console.log("✓ SaaS hardening: owner, provenance e supersessão protegidos no banco e handler");
+console.log("✓ SaaS hardening: owner, provenance, atomicidade, roles e supersessão protegidos");

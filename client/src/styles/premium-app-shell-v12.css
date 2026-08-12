@@ -1,0 +1,481 @@
+/*
+ * NeuroPed — Premium App Shell v12
+ *
+ * Camada estritamente visual. Recupera o que funcionava melhor no legado
+ * (safe areas, touch-first, glass, profundidade, superfícies de cockpit,
+ * microinterações e presença de mascotes) sem alterar lógica clínica.
+ * Carregada depois das camadas atuais para funcionar como acabamento final.
+ */
+
+:root {
+  --np-safe-top: env(safe-area-inset-top, 0px);
+  --np-safe-right: env(safe-area-inset-right, 0px);
+  --np-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --np-safe-left: env(safe-area-inset-left, 0px);
+  --np-app-touch: 46px;
+  --np-app-radius: 1.45rem;
+  --np-app-radius-lg: 1.8rem;
+  --np-app-stroke: hsl(var(--border) / 0.64);
+  --np-app-glass: hsl(var(--card) / 0.76);
+  --np-app-glass-strong: hsl(var(--card) / 0.9);
+  --np-app-ambient-1: hsl(var(--primary) / 0.105);
+  --np-app-ambient-2: hsl(var(--chart-2) / 0.085);
+  --np-app-ambient-warm: hsl(39 88% 64% / 0.07);
+  --np-app-shadow-soft:
+    0 1px 2px hsl(var(--foreground) / 0.025),
+    0 18px 48px -34px hsl(var(--foreground) / 0.32);
+  --np-app-shadow-float:
+    0 2px 8px hsl(var(--foreground) / 0.035),
+    0 28px 76px -42px hsl(var(--foreground) / 0.43);
+  --np-app-inner: inset 0 1px 0 hsl(0 0% 100% / 0.5);
+}
+
+.dark {
+  --np-app-glass: hsl(var(--card) / 0.72);
+  --np-app-glass-strong: hsl(var(--card) / 0.88);
+  --np-app-ambient-1: hsl(var(--primary) / 0.12);
+  --np-app-ambient-2: hsl(var(--chart-2) / 0.1);
+  --np-app-ambient-warm: hsl(39 75% 58% / 0.035);
+  --np-app-inner: inset 0 1px 0 hsl(0 0% 100% / 0.045);
+}
+
+html {
+  background: hsl(var(--background));
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(72rem 38rem at 78% -8%, var(--np-app-ambient-1), transparent 68%),
+    radial-gradient(58rem 34rem at 14% 92%, var(--np-app-ambient-2), transparent 72%),
+    radial-gradient(42rem 24rem at 55% 45%, var(--np-app-ambient-warm), transparent 75%),
+    hsl(var(--background));
+  background-attachment: fixed;
+}
+
+#root {
+  isolation: isolate;
+  background: transparent !important;
+}
+
+#root::before,
+#root::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(3px);
+}
+
+#root::before {
+  width: min(42vw, 38rem);
+  height: min(42vw, 38rem);
+  right: -16vw;
+  top: 16vh;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.07), transparent 66%);
+}
+
+#root::after {
+  width: min(36vw, 32rem);
+  height: min(36vw, 32rem);
+  left: -14vw;
+  bottom: 3vh;
+  background: radial-gradient(circle, hsl(var(--chart-2) / 0.055), transparent 68%);
+}
+
+main,
+#main-content {
+  background: transparent !important;
+}
+
+/* ───────────────────────── Shell desktop ───────────────────────── */
+@media screen and (min-width: 1024px) {
+  aside[aria-label="Menu de navegação"] {
+    background:
+      linear-gradient(180deg, hsl(var(--sidebar) / 0.985), hsl(var(--sidebar) / 0.94)) !important;
+    border-right-color: hsl(var(--sidebar-border) / 0.72) !important;
+    box-shadow:
+      12px 0 34px -30px hsl(var(--foreground) / 0.42),
+      inset -1px 0 0 hsl(0 0% 100% / 0.18);
+    backdrop-filter: blur(28px) saturate(125%);
+  }
+
+  #main-content > div:last-child {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--np-app-stroke);
+    border-radius: 2rem;
+    background:
+      linear-gradient(180deg, hsl(var(--card) / 0.58), hsl(var(--background) / 0.82));
+    box-shadow: var(--np-app-shadow-float), var(--np-app-inner);
+    backdrop-filter: blur(16px) saturate(112%);
+    overflow: clip;
+  }
+
+  #main-content > div:last-child::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 7rem;
+    pointer-events: none;
+    background:
+      radial-gradient(38rem 8rem at 78% -20%, hsl(var(--primary) / 0.085), transparent 68%),
+      linear-gradient(180deg, hsl(0 0% 100% / 0.13), transparent);
+    z-index: 0;
+  }
+
+  #main-content > div:last-child > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* ───────────────────────── App bar / clinical flow ───────────────────────── */
+#main-content > .sticky {
+  border-bottom-color: hsl(var(--border) / 0.5) !important;
+  background: hsl(var(--background) / 0.74) !important;
+  box-shadow: 0 12px 32px -30px hsl(var(--foreground) / 0.45);
+  backdrop-filter: blur(24px) saturate(135%) !important;
+}
+
+#main-content > .sticky > div {
+  scrollbar-width: none;
+}
+
+#main-content > .sticky > div::-webkit-scrollbar {
+  display: none;
+}
+
+#main-content > .sticky span.rounded-full {
+  min-height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.38);
+}
+
+/* ───────────────────────── Sidebar com sensação de rail nativo ───────────────────────── */
+aside[aria-label="Menu de navegação"] > div:first-of-type {
+  background: linear-gradient(180deg, hsl(var(--card) / 0.24), transparent);
+}
+
+aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
+  min-height: var(--np-app-touch) !important;
+  border-radius: 0.95rem !important;
+  background: hsl(var(--card) / 0.6) !important;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.32);
+  backdrop-filter: blur(12px);
+}
+
+#sidebar-nav [data-testid^="nav-"] {
+  border: 1px solid transparent;
+  border-radius: 0.95rem !important;
+  min-height: var(--np-app-touch) !important;
+}
+
+#sidebar-nav [data-testid^="nav-"]:hover {
+  border-color: hsl(var(--sidebar-border) / 0.58);
+  background: hsl(var(--sidebar-accent) / 0.8) !important;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.2);
+}
+
+/* ───────────────────────── Superfícies premium ───────────────────────── */
+.np-home-hero,
+.np-page-hero,
+.shadcn-card,
+[data-testid^="home-flow-"] {
+  border-color: hsl(var(--border) / 0.64) !important;
+  box-shadow: var(--np-app-shadow-soft), var(--np-app-inner) !important;
+  backdrop-filter: blur(18px) saturate(112%);
+}
+
+.np-home-hero {
+  background:
+    radial-gradient(34rem 22rem at 88% 18%, hsl(var(--primary) / 0.13), transparent 66%),
+    radial-gradient(24rem 18rem at 18% 92%, hsl(var(--chart-2) / 0.08), transparent 70%),
+    linear-gradient(145deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.78)) !important;
+  border-radius: 2rem !important;
+}
+
+.np-home-hero::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  width: 11rem;
+  height: 11rem;
+  right: 5%;
+  top: 8%;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--primary) / 0.1);
+  box-shadow:
+    0 0 0 1.65rem hsl(var(--primary) / 0.022),
+    0 0 0 3.3rem hsl(var(--chart-2) / 0.018);
+}
+
+.np-page-hero {
+  background:
+    radial-gradient(20rem 12rem at 92% 0%, hsl(var(--primary) / 0.09), transparent 72%),
+    linear-gradient(135deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.82)) !important;
+  border-radius: 1.55rem !important;
+}
+
+.np-page-hero::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: auto 1.1rem 0 1.1rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.16), transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shadcn-card,
+  [data-testid^="home-flow-"] {
+    transition:
+      transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .shadcn-card:hover,
+  [data-testid^="home-flow-"]:hover {
+    transform: translateY(-3px);
+    border-color: hsl(var(--primary) / 0.18) !important;
+    box-shadow:
+      0 3px 8px hsl(var(--foreground) / 0.035),
+      0 30px 68px -42px hsl(var(--primary) / 0.34),
+      var(--np-app-inner) !important;
+  }
+}
+
+/* ───────────────────────── Inputs e botões táteis ───────────────────────── */
+button,
+[role="button"],
+[role="tab"],
+a[class*="inline-flex"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#main-content button:not([data-size="icon"]),
+#main-content [role="tab"] {
+  min-height: 44px;
+}
+
+input,
+textarea,
+select,
+[role="combobox"] {
+  border-radius: 0.95rem;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow:
+    0 0 0 3px hsl(var(--primary) / 0.085),
+    0 12px 30px -24px hsl(var(--primary) / 0.42);
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+a[class*="inline-flex"]:active {
+  transform: scale(0.985);
+}
+
+/* ───────────────────────── Mobile: dock + tela nativa ───────────────────────── */
+@media screen and (max-width: 1023px) {
+  body.np-mobile-dock-active {
+    padding-bottom: calc(5.4rem + var(--np-safe-bottom));
+  }
+
+  header.fixed.lg\:hidden {
+    background:
+      linear-gradient(180deg, hsl(var(--card) / 0.97), hsl(var(--card) / 0.88)) !important;
+    border-bottom-color: hsl(var(--border) / 0.58) !important;
+    box-shadow: 0 14px 42px -34px hsl(var(--foreground) / 0.5) !important;
+  }
+
+  #main-content > div:last-child {
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+  }
+
+  [data-testid="mobile-primary-dock"] {
+    padding-left: max(0.55rem, var(--np-safe-left)) !important;
+    padding-right: max(0.55rem, var(--np-safe-right)) !important;
+  }
+
+  [data-testid="mobile-primary-dock"] nav {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.55rem !important;
+    border-color: hsl(var(--border) / 0.52) !important;
+    background:
+      linear-gradient(180deg, hsl(var(--card) / 0.94), hsl(var(--card) / 0.86)) !important;
+    box-shadow:
+      0 -1px 0 hsl(0 0% 100% / 0.36),
+      0 18px 46px -18px hsl(var(--foreground) / 0.34) !important;
+    backdrop-filter: blur(28px) saturate(145%) !important;
+  }
+
+  [data-testid="mobile-primary-dock"] nav::before {
+    content: "";
+    position: absolute;
+    inset: 0 14% auto 14%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.42), transparent);
+    pointer-events: none;
+  }
+
+  [data-testid="mobile-primary-dock"] button {
+    min-height: 3.6rem !important;
+    border-radius: 1.05rem !important;
+  }
+
+  [data-testid="mobile-primary-dock"] button[aria-current="page"] {
+    background:
+      linear-gradient(180deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.075)) !important;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.32),
+      0 10px 22px -18px hsl(var(--primary) / 0.58);
+  }
+
+  [data-testid="mobile-primary-dock"] button[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0.25rem;
+    width: 1.45rem;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--chart-2)));
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.35);
+  }
+
+  .np-home-hero,
+  .np-page-hero,
+  .shadcn-card,
+  [data-testid^="home-flow-"] {
+    backdrop-filter: blur(14px) saturate(108%);
+  }
+
+  .np-home-hero {
+    border-radius: 1.55rem !important;
+  }
+
+  .np-page-hero {
+    border-radius: 1.3rem !important;
+  }
+}
+
+/* ───────────────────────── Mascotes: integração de interface ───────────────────────── */
+.np-mascot-layer {
+  --np-mascot-halo: hsl(var(--primary) / 0.13);
+}
+
+.np-mascot-orb {
+  position: absolute;
+  inset: 12%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 38% 32%, hsl(0 0% 100% / 0.68), transparent 30%),
+    radial-gradient(circle, var(--np-mascot-halo), transparent 66%);
+  filter: blur(1px);
+}
+
+.np-mascot-nino img {
+  filter: drop-shadow(0 18px 24px hsl(var(--foreground) / 0.18));
+}
+
+.np-mascot-chip {
+  position: absolute;
+  right: 72%;
+  top: 58%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  border: 1px solid hsl(var(--border) / 0.54);
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  background: hsl(var(--card) / 0.86);
+  box-shadow: 0 10px 26px -18px hsl(var(--foreground) / 0.42), inset 0 1px 0 hsl(0 0% 100% / 0.38);
+  backdrop-filter: blur(18px);
+  color: hsl(var(--foreground) / 0.78);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.np-mascot-chip::before {
+  content: "";
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: hsl(var(--chart-3));
+  box-shadow: 0 0 0 0.18rem hsl(var(--chart-3) / 0.12);
+}
+
+.np-mascot-legacy-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border) / 0.52);
+  border-radius: 1.15rem;
+  padding: 0.28rem;
+  background:
+    linear-gradient(145deg, hsl(var(--card) / 0.9), hsl(var(--card) / 0.68));
+  box-shadow: 0 16px 34px -22px hsl(var(--foreground) / 0.4), var(--np-app-inner);
+  backdrop-filter: blur(18px);
+}
+
+.np-mascot-legacy-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, hsl(0 0% 100% / 0.2), transparent 45%);
+}
+
+@media screen and (max-width: 1023px) {
+  .np-mascot-chip,
+  .np-mascot-legacy {
+    display: none !important;
+  }
+}
+
+/* ───────────────────────── Acessibilidade e movimento ───────────────────────── */
+:focus-visible {
+  outline-color: hsl(var(--primary));
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .np-home-hero::before,
+  .np-mascot-nino,
+  .np-mascot-legacy {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  #root::before,
+  #root::after,
+  .np-mascot-layer,
+  [data-testid="mobile-primary-dock"] {
+    display: none !important;
+  }
+
+  #main-content > div:last-child {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+}

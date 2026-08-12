@@ -168,11 +168,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     await ensureClinicalCoreDemoSchema(env.DB);
     if (input.supersedesEventId) {
       const previous = await env.DB
-        .prepare("SELECT id, patient_id FROM clinical_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
+        .prepare("SELECT id, patient_id, status FROM clinical_events_demo WHERE id = ? AND is_demo = 1 LIMIT 1")
         .bind(input.supersedesEventId)
-        .first<{ id: string; patient_id: string }>();
+        .first<{ id: string; patient_id: string; status: ClinicalEventStatus }>();
       if (!previous || previous.patient_id !== input.patientId) {
         return error("Evento supersedido inválido para este paciente.", "INVALID_SUPERSESSION", 400);
+      }
+      if (previous.status !== "active") {
+        return error("O evento já foi supersedido. Recarregue a linha clínica.", "STALE_SUPERSESSION", 409);
       }
     }
 
@@ -185,37 +188,55 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       ...(input.provenance.capturedAt ? { capturedAt: input.provenance.capturedAt } : {}),
     };
 
-    const statements = [
-      env.DB
-        .prepare(
-          `INSERT INTO clinical_events_demo
+    const insertSql = `INSERT INTO clinical_events_demo
             (id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
              provenance_kind, provenance_source, payload_json, supersedes_event_id,
              status, is_demo, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?)`,
-        )
-        .bind(
-          id,
-          input.patientId,
-          user.id,
-          input.eventType,
-          input.occurredAt,
-          input.encounterId ?? null,
-          input.provenance.kind,
-          input.provenance.source,
-          JSON.stringify(payload),
-          input.supersedesEventId ?? null,
-          createdAt,
-        ),
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?)`;
+    const insertBindings = [
+      id,
+      input.patientId,
+      user.id,
+      input.eventType,
+      input.occurredAt,
+      input.encounterId ?? null,
+      input.provenance.kind,
+      input.provenance.source,
+      JSON.stringify(payload),
+      input.supersedesEventId ?? null,
+      createdAt,
     ];
+
     if (input.supersedesEventId) {
-      statements.push(
+      const correctionResults = await env.DB.batch([
         env.DB
-          .prepare("UPDATE clinical_events_demo SET status = 'corrected' WHERE id = ? AND patient_id = ? AND is_demo = 1")
+          .prepare(
+            "UPDATE clinical_events_demo SET status = 'corrected' WHERE id = ? AND patient_id = ? AND is_demo = 1 AND status = 'active'",
+          )
           .bind(input.supersedesEventId, input.patientId),
-      );
+        env.DB
+          .prepare(
+            `INSERT INTO clinical_events_demo
+              (id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
+               provenance_kind, provenance_source, payload_json, supersedes_event_id,
+               status, is_demo, created_at)
+             SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?
+              WHERE changes() = 1`,
+          )
+          .bind(...insertBindings),
+      ]);
+      if (
+        (correctionResults[0]?.meta?.changes ?? 0) !== 1 ||
+        (correctionResults[1]?.meta?.changes ?? 0) !== 1
+      ) {
+        return error("O evento mudou durante a correção. Recarregue a linha clínica.", "STALE_SUPERSESSION", 409);
+      }
+    } else {
+      const inserted = await env.DB.prepare(insertSql).bind(...insertBindings).run();
+      if ((inserted.meta?.changes ?? 0) !== 1) {
+        return error("Não foi possível persistir o evento clínico.", "DB_ERROR", 500);
+      }
     }
-    await env.DB.batch(statements);
 
     const created: ClinicalEvent = {
       id,

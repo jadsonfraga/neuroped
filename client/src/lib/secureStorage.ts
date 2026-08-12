@@ -9,25 +9,28 @@
  *   await secureClearAll();   // limpa todos os itens gerenciados
  *
  * SEGURANÇA:
- *  - Chave AES-256 aleatória, não exportável e mantida somente em memória
+ *  - Rascunhos usam chave AES-256 aleatória, não exportável e somente em memória
  *  - IV gerado aleatoriamente por escrita
- *  - Dados expiram automaticamente após SESSION_TTL_MS (padrão 8h)
- *  - O ciphertext fica no sessionStorage, isolado por aba; a chave não é persistida
- *  - Recarregar/fechar a aba invalida os rascunhos, por desenho de segurança
+ *  - Rascunhos expiram automaticamente após SESSION_TTL_MS (padrão 8h)
+ *  - O ciphertext efêmero fica no sessionStorage, isolado por aba
+ *  - Recarregar/fechar a aba invalida rascunhos, por desenho de segurança
  *
- * EXCEÇÃO DELIBERADA:
- *  - A workspace da CAA é uma preferência funcional de longo prazo e precisa
- *    sobreviver a reload. Só essa chave é delegada ao IndexedDB cifrado com
- *    CryptoKey não exportável; os rascunhos clínicos continuam efêmeros.
+ * EXCEÇÕES DELIBERADAS — COFRE LOCAL PERSISTENTE:
+ *  - workspace CAA;
+ *  - registros locais de conferência de documentos;
+ *  - diários clínicos longitudinais (`diario:*`);
+ *  - sessões explicitamente salvas do Cognitive Lab.
+ *
+ * Esses itens precisam sobreviver a reload para cumprir sua própria função. Eles
+ * são delegados ao IndexedDB cifrado com CryptoKey AES-GCM não exportável. O
+ * logout/troca de conta chama secureClearAll(), que destrói dados E chave.
  *
  * LGPD / LIMITAÇÕES:
- *  - sessionStorage cifrado NÃO substitui armazenamento server-side para dados de pacientes
- *  - Deve ser usado apenas para rascunhos/contexto de sessão clínica
- *  - Use exclusivamente para dados SEM identificação direta quando possível
+ *  - armazenamento local cifrado NÃO substitui backend clínico/backup institucional;
+ *  - dados persistentes ficam restritos a este dispositivo/perfil do navegador;
+ *  - a cifra reduz exposição em repouso, mas não protege contra XSS na mesma origem.
  *
- * Dados de pré-consulta/pré-retorno são migrados para este armazenamento e
- * expiram ao fim da sessão clínica. A cifra reduz exposição de dados em repouso,
- * mas não protege contra código malicioso executando na mesma origem (XSS).
+ * Dados de pré-consulta/pré-retorno e rascunhos de escalas continuam efêmeros.
  */
 
 import {
@@ -38,7 +41,12 @@ import {
 } from "@/lib/persistentSecureStorage";
 
 const NAMESPACE = "neuroped:secure:";
-const PERSISTENT_SECURE_KEYS = new Set(["caa:workspace:v3"]);
+const PERSISTENT_SECURE_KEYS = new Set([
+  "caa:workspace:v3",
+  "assinatura:registros:v2",
+  "cognitive-lab:sessions:v2",
+]);
+const PERSISTENT_SECURE_PREFIXES = ["diario:"] as const;
 // Mantido apenas para migrar envelopes da versão anterior, cuja chave era
 // derivável do próprio salt. Novas gravações nunca persistem material de chave.
 const SESSION_SALT_KEY = "neuroped:secure-salt";
@@ -76,7 +84,10 @@ interface StoredEnvelope {
 let _sessionKey: CryptoKey | null = null;
 
 function isPersistentSecureKey(key: string): boolean {
-  return PERSISTENT_SECURE_KEYS.has(key);
+  return (
+    PERSISTENT_SECURE_KEYS.has(key) ||
+    PERSISTENT_SECURE_PREFIXES.some((prefix) => key.startsWith(prefix))
+  );
 }
 
 /**
@@ -233,7 +244,7 @@ async function decryptEnvelope<T>(
 
 /**
  * Armazena valor cifrado. Rascunhos clínicos ficam no sessionStorage da aba;
- * a workspace CAA usa IndexedDB cifrado porque precisa sobreviver a reload.
+ * artefatos explicitamente longitudinais usam o cofre persistente IndexedDB.
  */
 export async function secureSet<T>(
   key: string,
@@ -283,8 +294,8 @@ export async function secureSet<T>(
 }
 
 /**
- * Recupera e decifra o valor. A CAA consulta primeiro o cofre persistente;
- * demais chaves mantêm exatamente a semântica efêmera histórica.
+ * Recupera e decifra o valor. Chaves longitudinais consultam o cofre persistente;
+ * demais chaves mantêm a semântica efêmera histórica.
  */
 export async function secureGet<T>(key: string): Promise<T | null> {
   if (isPersistentSecureKey(key)) {
@@ -426,8 +437,8 @@ export async function secureClearAll(): Promise<void> {
     // A chave em memória ainda será invalidada abaixo.
   }
 
-  // A CAA pode conter histórico/frases sensíveis. Logout/troca de conta também
-  // destrói o cofre persistente e sua chave não exportável.
+  // Artefatos persistentes podem conter histórico/frases sensíveis. Logout/troca
+  // de conta destrói o cofre persistente e sua chave não exportável.
   await persistentSecureClearAll();
 
   // Invalida chave de sessão em memória

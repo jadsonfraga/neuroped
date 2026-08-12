@@ -7,6 +7,7 @@ const read = (path) =>
     "\n",
   );
 const cloudflareDeploy = read(".github/workflows/deploy-cloudflare.yml");
+const boaConsultaPr = read(".github/workflows/boaconsulta-import-pr.yml");
 const dailyContract = read(".github/workflows/daily-authorial-contract.yml");
 const dailyInventory = read(".github/workflows/daily-authorial-inventory.yml");
 const dailyStaticSync = read(
@@ -21,6 +22,13 @@ const vercelDeploy = read(".github/workflows/deploy-vercel.yml");
 const verify = read(".github/workflows/verify.yml");
 const prCheck = read(".github/workflows/pr-check.yml");
 const vercelConfig = read("vercel.json");
+
+assert.match(boaConsultaPr, /on:\s*\n\s*pull_request:/);
+assert.doesNotMatch(
+  boaConsultaPr,
+  /secrets\.|CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|--remote|pages secret|d1 execute/,
+  "workflows de pull request devem permanecer somente leitura e nunca tocar produção",
+);
 
 assert.match(securityAudit, /set -euo pipefail/);
 assert.match(securityAudit, /if \[ "\$audit_exit" -gt 1 \]/);

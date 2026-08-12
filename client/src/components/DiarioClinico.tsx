@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MAX_SECURE_PLAINTEXT_BYTES, secureGet, secureSet } from "@/lib/secureStorage";
+import { neutralizeCsvFormula } from "@/lib/csv";
 
 /**
  * Motor genérico de diários clínicos longitudinais.
@@ -226,14 +227,15 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
       ...cols.map((c) => e[c] ?? ""),
     ]);
     const csv = [header, ...rows]
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .map((r) => r.map((c) => `"${neutralizeCsvFormula(String(c)).replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = `${config.id}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(url), 2_000);
   }
 
   if (!entriesReady) {

@@ -194,12 +194,18 @@ export function registerClinicalCoreRoutes(app: Express): void {
 
       if (input.supersedesEventId) {
         const previous = sqlite
-          .prepare("SELECT id, patient_id FROM clinical_events WHERE id = ? LIMIT 1")
-          .get(input.supersedesEventId) as { id: string; patient_id: string } | undefined;
+          .prepare("SELECT id, patient_id, status FROM clinical_events WHERE id = ? LIMIT 1")
+          .get(input.supersedesEventId) as { id: string; patient_id: string; status: ClinicalEventStatus } | undefined;
         if (!previous || previous.patient_id !== input.patientId) {
           return res.status(400).json({
             error: "Evento supersedido inválido para este paciente",
             code: "INVALID_SUPERSESSION",
+          });
+        }
+        if (previous.status !== "active") {
+          return res.status(409).json({
+            error: "O evento já foi supersedido. Recarregue a linha clínica.",
+            code: "STALE_SUPERSESSION",
           });
         }
       }
@@ -215,7 +221,16 @@ export function registerClinicalCoreRoutes(app: Express): void {
       const encryptedPayload = encrypt(JSON.stringify(sensitive));
 
       const transaction = sqlite.transaction(() => {
-        sqlite
+        if (input.supersedesEventId) {
+          const corrected = sqlite
+            .prepare(
+              "UPDATE clinical_events SET status = 'corrected' WHERE id = ? AND patient_id = ? AND status = 'active'",
+            )
+            .run(input.supersedesEventId, input.patientId);
+          if (corrected.changes !== 1) return false;
+        }
+
+        const inserted = sqlite
           .prepare(
             `INSERT INTO clinical_events
               (id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
@@ -236,13 +251,14 @@ export function registerClinicalCoreRoutes(app: Express): void {
             input.supersedesEventId ?? null,
             createdAt,
           );
-        if (input.supersedesEventId) {
-          sqlite
-            .prepare("UPDATE clinical_events SET status = 'corrected' WHERE id = ?")
-            .run(input.supersedesEventId);
-        }
+        return inserted.changes === 1;
       });
-      transaction();
+      if (!transaction()) {
+        return res.status(409).json({
+          error: "O evento mudou durante a correção. Recarregue a linha clínica.",
+          code: "STALE_SUPERSESSION",
+        });
+      }
 
       const created: ClinicalEvent = {
         id,

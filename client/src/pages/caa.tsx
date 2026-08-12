@@ -399,10 +399,11 @@ export default function CaaPage() {
       { type: "application/json" },
     );
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    link.href = url;
     link.download = "caa_neuroped_premium.json";
     link.click();
-    URL.revokeObjectURL(link.href);
+    setTimeout(() => URL.revokeObjectURL(url), 2_000);
   }
 
   function importBoard(event: React.ChangeEvent<HTMLInputElement>) {
