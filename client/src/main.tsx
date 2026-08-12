@@ -10,6 +10,7 @@ import "./styles/proportion-guards.css";
 import "./styles/visual-reset.css";
 import "./styles/premium-polish-10.css";
 import "./styles/flow-os.css";
+import "./styles/premium-app-shell-v12.css";
 
 installChunkRecovery();
 void purgeLegacyCertificateCache();
