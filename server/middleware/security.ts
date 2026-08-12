@@ -10,6 +10,21 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 
+
+export function isCorsOriginAllowed(
+  origin: string | undefined,
+  corsOrigins: readonly string[],
+  isProduction = process.env.NODE_ENV === "production",
+): boolean {
+  if (!origin) return true;
+  if (corsOrigins.includes(origin)) return true;
+
+  // Wildcard é útil apenas para desenvolvimento local. Em produção, aceitar
+  // `*` junto de `credentials: true` converte um erro de configuração em CORS
+  // aberto para qualquer origem. Falha fechada: somente origens nominais.
+  return !isProduction && corsOrigins.includes("*");
+}
+
 export function applySecurity(app: Express): void {
   // ----- Helmet: headers de seguranca -----
   app.use(
@@ -52,10 +67,7 @@ export function applySecurity(app: Express): void {
     app.use(
       cors({
         origin: (origin, cb) => {
-          if (!origin) return cb(null, true);
-          if (corsOrigins.includes(origin) || corsOrigins.includes("*")) {
-            return cb(null, true);
-          }
+          if (isCorsOriginAllowed(origin, corsOrigins)) return cb(null, true);
           return cb(new Error("Origem nao autorizada pelo CORS"));
         },
         credentials: true,
