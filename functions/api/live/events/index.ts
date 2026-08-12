@@ -10,9 +10,9 @@ import {
   getClinicMembership,
   membershipCanReadClinical,
   membershipCanWriteClinical,
+  prepareSaasAudit,
   tenantError,
   tenantJson,
-  writeSaasAudit,
   type TenantEnv,
 } from "../../tenant/_core";
 import {
@@ -365,6 +365,23 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       supersedesEventId,
       now,
     );
+  const audit = prepareSaasAudit(
+    db,
+    {
+      clinicId,
+      actorUserId: user.id,
+      action: "live_clinical_event_create",
+      targetType: "clinical_event",
+      targetId: eventId,
+      metadata: {
+        eventType,
+        provenanceKind,
+        imported: provenanceKind === "imported",
+        encryptionVersion,
+      },
+    },
+    now,
+  );
 
   try {
     if (supersedesEventId) {
@@ -377,9 +394,10 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
               WHERE id = ? AND clinic_id = ? AND patient_id = ? AND status = 'active'`,
           )
           .bind(supersedesEventId, clinicId, patientId),
+        audit,
       ]);
     } else {
-      await insert.run();
+      await db.batch([insert, audit]);
     }
   } catch (error) {
     // Corridas de deduplicação devem continuar idempotentes, não virar falso 500.
@@ -408,15 +426,6 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     console.error("[live.events.POST] DB error", error);
     return tenantError("Não foi possível registrar o evento clínico.", "DB_ERROR", 500);
   }
-
-  await writeSaasAudit(db, {
-    clinicId,
-    actorUserId: user.id,
-    action: "live_clinical_event_create",
-    targetType: "clinical_event",
-    targetId: eventId,
-    metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
-  });
 
   return tenantJson(
     {
