@@ -17,7 +17,7 @@ interface UpdateInfo {
  * de lock — sintoma observado em tablet: a página fica visualmente normal,
  * porém swipe/touch não move absolutamente nada.
  *
- * Nunca interfere enquanto houver um drawer/modal legítimo aberto.
+ * Nunca interfere enquanto houver um drawer/modal/menu legítimo aberto.
  */
 function releaseOrphanedScrollLock() {
   if (typeof document === "undefined") return;
@@ -27,6 +27,8 @@ function releaseOrphanedScrollLock() {
     body.classList.contains("np-mobile-drawer-open") ||
     document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
+    document.querySelector('[role="menu"]') !== null ||
+    document.querySelector('[role="listbox"]') !== null ||
     document.querySelector('[data-vaul-drawer][data-state="open"]') !== null;
 
   if (legitimateOverlayOpen) return;
