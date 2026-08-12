@@ -63,6 +63,22 @@ const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
 
 const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas"];
 
+// Durante a aplicação de uma escala o conteúdo clínico domina a tela: nenhum
+// mascote decorativo compete com o questionário. A lista espelha as chaves de
+// scaleReferences (slug = rota) SEM importar o catálogo — este componente vive
+// no chunk inicial e os dados das referências estourariam o teto de bundle.
+// test:loose-ends trava a sincronia entre esta lista e o catálogo.
+const scaleApplicationSlugs = [
+  "mchat", "cars", "denver", "snap", "sdq", "conners", "scared", "vineland",
+  "cbcl", "vanderbilt", "brief2", "abc", "asq3", "gmfcs", "pedsql", "cshq",
+  "ygtss", "cdi2", "phqa", "cssrs", "crafft",
+];
+const scaleApplicationRoutes = new Set(scaleApplicationSlugs.map((id) => `/${id}`));
+
+function isScaleApplicationRoute(path: string): boolean {
+  return scaleApplicationRoutes.has(path) || path.startsWith("/generic-scale/");
+}
+
 function stablePathHash(path: string): number {
   let hash = 2166136261;
   for (let i = 0; i < path.length; i += 1) {
@@ -98,7 +114,9 @@ export function PageMascotDecor() {
   const reduceMotion = useReducedMotion();
   const pathname = getPathname(location);
   const legacy = getLegacyMascot(pathname);
-  const showGlobalNino = !hasInlineNino(pathname);
+  const scaleFocus = isScaleApplicationRoute(pathname);
+  const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus;
+  const showLegacyCameo = !scaleFocus;
 
   return (
     <div
@@ -134,6 +152,7 @@ export function PageMascotDecor() {
         </motion.div>
       )}
 
+      {showLegacyCameo && (
       <motion.div
         key={`legacy-${pathname}-${legacy.id}`}
         initial={reduceMotion ? false : { opacity: 0, x: 10, y: 10, scale: 0.9 }}
@@ -156,6 +175,7 @@ export function PageMascotDecor() {
           />
         </div>
       </motion.div>
+      )}
     </div>
   );
 }

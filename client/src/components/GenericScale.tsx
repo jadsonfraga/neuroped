@@ -803,8 +803,8 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         : "bg-card/70 hover:bg-card hover:shadow-md"
                   }`}
                 >
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-start gap-2">
+                  <CardContent className="p-4 sm:p-5 space-y-3.5">
+                    <div className="flex items-start gap-2.5">
                       <Badge
                         variant="outline"
                         className="text-xs font-mono flex-shrink-0 mt-0.5"
@@ -816,7 +816,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                           1}
                       </Badge>
                       <div className="flex-1 space-y-1.5">
-                        <p className="text-sm text-foreground leading-relaxed">
+                        <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">
                           {itemEmoji(item) && (
                             <span
                               className="mr-1.5 text-sm opacity-60 align-middle"
@@ -879,7 +879,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }
                         }}
-                        className="flex flex-wrap gap-2"
+                        className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
                       >
                         {config.labels.map((label, j) => {
                           const maxIdx = config.labels.length - 1;
@@ -893,7 +893,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                                   ? "bg-amber-500 text-white border-amber-500"
                                   : "bg-red-500 text-white border-red-500";
                           return (
-                            <div key={j} className="flex items-center">
+                            <div key={j} className="flex items-stretch">
                               <RadioGroupItem
                                 value={j.toString()}
                                 id={`q-${key}-o${j}`}
@@ -901,9 +901,9 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                               />
                               <Label
                                 htmlFor={`q-${key}-o${j}`}
-                                className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-3.5 py-2 text-xs transition-all duration-200 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background ${
+                                className={`inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] leading-snug transition-all duration-200 active:scale-[0.98] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background sm:w-auto sm:rounded-full sm:text-sm ${
                                   answers[key] === j
-                                    ? selectedColor
+                                    ? `${selectedColor} font-semibold shadow-sm`
                                     : "bg-card text-foreground border-border hover:bg-muted"
                                 }`}
                               >

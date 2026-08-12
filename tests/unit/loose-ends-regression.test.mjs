@@ -257,6 +257,26 @@ for (const path of [
   assert.equal(bare.length, 0, `${path}: revokeObjectURL síncrono reintroduzido`);
 }
 
+// Mascotes não competem com o questionário: as rotas de aplicação de escala no
+// PageMascotDecor espelham as chaves de scaleReferences SEM importar o catálogo
+// (dados de referência não podem entrar no chunk inicial). Sincronia obrigatória.
+{
+  const decorSlugs = (pageMascotDecor.match(/scaleApplicationSlugs = \[([\s\S]*?)\]/)?.[1] ?? "")
+    .match(/"([a-z0-9_-]+)"/g)?.map((s) => s.slice(1, -1)).sort() ?? [];
+  const catalogSlugs = [...read("client/src/data/scaleReferences.ts")
+    .matchAll(/^\s{2}"?([a-z0-9_-]+)"?:\s*\{/gm)].map((m) => m[1]).sort();
+  assert.deepEqual(
+    decorSlugs,
+    catalogSlugs,
+    "lista de rotas de escala do PageMascotDecor divergiu das chaves de scaleReferences",
+  );
+  assert.doesNotMatch(
+    pageMascotDecor,
+    /from "@\/data\/scaleReferences"/,
+    "PageMascotDecor não pode importar o catálogo de referências (estoura o bundle inicial)",
+  );
+}
+
 // Ferramentas temporárias/legadas capazes de reescrever clínica ou simular auditorias
 // não devem reaparecer na raiz ativa sem um workflow e contrato explícitos.
 for (const path of [
