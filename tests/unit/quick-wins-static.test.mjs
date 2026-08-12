@@ -31,9 +31,11 @@ assert.match(
   authClient,
   /const refreshToken = getRefreshToken\(\);[\s\S]*?clearAuth\(\);[\s\S]*?keepalive: true/,
 );
+// O contrato protegido é o logout aguardar a limpeza local; aceita declaração
+// clássica ou arrow memoizada via useCallback.
 assert.match(
   auth,
-  /async function logout\(\)(?:: Promise<void>)? \{[\s\S]{0,180}await clearSessionScopedClientState\(\);/,
+  /(?:async function logout\(\)(?:: Promise<void>)? \{|const logout = useCallback\(async \(\)(?:: Promise<void>)? => \{)[\s\S]{0,200}await clearSessionScopedClientState\(\);/,
 );
 
 const app = read("client/src/App.tsx");
