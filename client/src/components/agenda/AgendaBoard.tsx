@@ -326,7 +326,7 @@ export function AgendaBoard() {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 2_000);
     setNotice("Arquivo .ics criado sem nome do paciente nem informação clínica.");
   }
 

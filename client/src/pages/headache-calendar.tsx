@@ -12,6 +12,7 @@ import {
   type HeadacheEntry
 } from "@/data/expandedScales";
 import { secureGet, secureSet } from "@/lib/secureStorage";
+import { neutralizeCsvFormula } from "@/lib/csv";
 
 const STORAGE_KEY = "diario:cefaleia:v1";
 const MAX_ENTRIES = 500;
@@ -71,7 +72,7 @@ function newEntry(): HeadacheEntry {
 }
 
 function csvCell(value: unknown): string {
-  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+  return `"${neutralizeCsvFormula(String(value ?? "")).replace(/"/g, '""')}"`;
 }
 
 export default function HeadacheCalendarPage() {

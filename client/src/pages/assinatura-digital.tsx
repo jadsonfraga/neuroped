@@ -223,10 +223,11 @@ export default function AssinaturaDigitalPage() {
     ].join("\n");
     const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    a.href = url;
     a.download = "registro_hash_" + r.id + ".txt";
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(url), 2_000);
   }
 
   async function verificarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
