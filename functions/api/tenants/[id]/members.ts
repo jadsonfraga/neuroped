@@ -137,9 +137,30 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
              role = excluded.role,
              active = 1,
              invited_by_user_id = excluded.invited_by_user_id,
-             updated_at = excluded.updated_at`,
+             updated_at = excluded.updated_at
+           WHERE clinic_memberships.role <> 'owner'
+              OR excluded.role = 'owner'
+              OR (
+                ? = 'owner'
+                AND EXISTS (
+                  SELECT 1
+                    FROM clinic_memberships AS other
+                   WHERE other.clinic_id = clinic_memberships.clinic_id
+                     AND other.role = 'owner'
+                     AND other.active = 1
+                     AND other.user_id <> clinic_memberships.user_id
+                )
+              )`,
         )
-        .bind(auth.clinicId, target.id, role, auth.user.id, now, now),
+        .bind(
+          auth.clinicId,
+          target.id,
+          role,
+          auth.user.id,
+          now,
+          now,
+          auth.membership.role,
+        ),
       prepareSaasAudit(
         auth.db,
         {
@@ -153,8 +174,21 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         true,
       ),
     ]);
-    if ((results[0]?.meta?.changes ?? 0) !== 1 || (results[1]?.meta?.changes ?? 0) !== 1) {
+    if ((results[0]?.meta?.changes ?? 0) !== 1) {
+      const current = await auth.db
+        .prepare(`SELECT role, active FROM clinic_memberships WHERE clinic_id = ? AND user_id = ? LIMIT 1`)
+        .bind(auth.clinicId, target.id)
+        .first<{ role: ClinicMembershipRole; active: number }>();
+      if (current?.role === "owner" && role !== "owner") {
+        if (auth.membership.role !== "owner") {
+          return tenantError("Somente owner pode rebaixar outro owner.", "TENANT_FORBIDDEN", 403);
+        }
+        return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
+      }
       return tenantError("Membership mudou durante a atualização.", "MEMBERSHIP_STATE_CHANGED", 409);
+    }
+    if ((results[1]?.meta?.changes ?? 0) !== 1) {
+      return tenantError("Não foi possível auditar a alteração de equipe.", "DB_ERROR", 500);
     }
   } catch (error) {
     console.error("[tenant.members.POST] DB error", error);
