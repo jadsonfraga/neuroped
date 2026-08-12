@@ -4,9 +4,9 @@ import {
   getClinicMembership,
   membershipCanReadClinical,
   membershipCanWriteClinical,
+  prepareSaasAudit,
   tenantError,
   tenantJson,
-  writeSaasAudit,
   type TenantEnv,
 } from "../../tenant/_core";
 import {
@@ -194,37 +194,57 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const now = new Date().toISOString();
 
   try {
-    await db
-      .prepare(
-        `INSERT INTO live_patients
-          (id, clinic_id, primary_professional_user_id, created_by_user_id,
-           external_reference_hash, patient_identity_hash, profile_encrypted,
-           encryption_version, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
-      )
-      .bind(
-        patientId,
-        clinicId,
-        user.id,
-        user.id,
-        externalReferenceHash,
-        patientIdentityHash,
-        profileEncrypted,
-        encryptionVersion,
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO live_patients
+            (id, clinic_id, primary_professional_user_id, created_by_user_id,
+             external_reference_hash, patient_identity_hash, profile_encrypted,
+             encryption_version, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
+        )
+        .bind(
+          patientId,
+          clinicId,
+          user.id,
+          user.id,
+          externalReferenceHash,
+          patientIdentityHash,
+          profileEncrypted,
+          encryptionVersion,
+          now,
+          now,
+        ),
+      prepareSaasAudit(
+        db,
+        {
+          clinicId,
+          actorUserId: user.id,
+          action: "live_patient_create",
+          targetType: "patient",
+          targetId: patientId,
+          metadata: { encryptionVersion },
+        },
         now,
-        now,
-      )
-      .run();
-
-    await writeSaasAudit(db, {
-      clinicId,
-      actorUserId: user.id,
-      action: "live_patient_create",
-      targetType: "patient",
-      targetId: patientId,
-      metadata: { encryptionVersion },
-    });
+      ),
+    ]);
   } catch (error) {
+    if (externalReferenceHash) {
+      const existing = await db
+        .prepare(
+          `SELECT id FROM live_patients
+            WHERE clinic_id = ? AND external_reference_hash = ? LIMIT 1`,
+        )
+        .bind(clinicId, externalReferenceHash)
+        .first<{ id: string }>();
+      if (existing) {
+        return tenantError(
+          "Já existe paciente LIVE com esta referência externa na clínica.",
+          "EXTERNAL_REFERENCE_CONFLICT",
+          409,
+        );
+      }
+    }
     console.error("[live.patients.POST] DB error", error);
     return tenantError("Não foi possível criar o paciente LIVE.", "DB_ERROR", 500);
   }
