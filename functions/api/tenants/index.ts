@@ -1,18 +1,10 @@
 import { getContextUser } from "../auth/_authorization";
 import { normalizeClinicSlug, isValidClinicSlug } from "../../../shared/tenant";
+import { isValidTimeZone } from "../../../shared/operations";
 import { tenantError, tenantJson, type TenantEnv } from "../tenant/_core";
 
 function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
-
-function isValidTimeZone(value: string): boolean {
-  try {
-    new Intl.DateTimeFormat("pt-BR", { timeZone: value }).format(new Date(0));
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -83,7 +75,13 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   if (name.length < 2) return tenantError("Nome da clínica é obrigatório.", "VALIDATION_ERROR", 400);
   if (!isValidClinicSlug(slug)) return tenantError("Slug da clínica inválido.", "VALIDATION_ERROR", 400);
-  if (!isValidTimeZone(timezone)) return tenantError("Timezone IANA inválido.", "VALIDATION_ERROR", 400);
+  if (!isValidTimeZone(timezone)) {
+    return tenantError(
+      "Timezone IANA inválido: timezone deve ser um identificador IANA válido.",
+      "VALIDATION_ERROR",
+      400,
+    );
+  }
 
   const clinicId = crypto.randomUUID();
   const now = new Date().toISOString();
