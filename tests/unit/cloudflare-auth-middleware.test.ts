@@ -52,9 +52,38 @@ function authDb(role = "professional", active = 1, sessionActive = 1) {
 }
 
 assert.equal((await call("/api/patients", {})).status, 200, "demo sem D1 permanece disponível");
+assert.equal(
+  (await call("/api/patients", { ENVIRONMENT: "production" })).status,
+  503,
+  "produção sem D1 falha fechada também em leitura protegida",
+);
+assert.equal(
+  (await call("/api/patients", {
+    ENVIRONMENT: "production",
+    DEMO_API_WRITES_ENABLED: "true",
+  })).status,
+  503,
+  "flag demo jamais pode reabrir rota protegida em produção sem D1",
+);
 assert.equal((await call("/api/patients", { DB: {} })).status, 503, "D1 sem segredo falha fechado");
 assert.equal((await call("/api/patients", { DB: {}, NEUROPED_JWT_SECRET: secret })).status, 401);
 assert.equal((await call("/api/health", { DB: {} })).status, 200, "health é público");
+
+const distributedBlockUntil = Date.now() + 45_000;
+const blockedByKv = await onRequest({
+  request: new Request("https://neuroped.test/api/health", {
+    headers: { "CF-Connecting-IP": "203.0.113.55" },
+  }),
+  env: {
+    RATE_LIMIT_KV: {
+      get: async () => String(distributedBlockUntil),
+      put: async () => undefined,
+    },
+  },
+  next,
+  data: {},
+} as never);
+assert.equal(blockedByKv.status, 429, "bloqueio distribuído em KV deve ser respeitado entre isolates");
 
 const unhealthyDb = {
   prepare: () => ({ first: async () => { throw new Error("database unavailable"); } }),

@@ -34,6 +34,17 @@ import crypto from "node:crypto";
 export class CloudStorageError extends Error {}
 export class CloudStorageConfigError extends CloudStorageError {}
 
+function isStorageNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+  return (
+    candidate.$metadata?.httpStatusCode === 404 ||
+    candidate.name === "NotFound" ||
+    candidate.name === "NoSuchKey" ||
+    candidate.name === "NoSuchObject"
+  );
+}
+
 let _client: S3Client | null = null;
 
 function getStorageConfig() {
@@ -155,8 +166,9 @@ export async function headObject(key: string): Promise<{
       etag: r.ETag,
       metadata: r.Metadata,
     };
-  } catch {
-    return null;
+  } catch (error) {
+    if (isStorageNotFoundError(error)) return null;
+    throw new CloudStorageError("Falha ao consultar o objeto no storage.");
   }
 }
 

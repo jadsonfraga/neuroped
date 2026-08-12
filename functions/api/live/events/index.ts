@@ -10,9 +10,9 @@ import {
   getClinicMembership,
   membershipCanReadClinical,
   membershipCanWriteClinical,
+  prepareSaasAudit,
   tenantError,
   tenantJson,
-  writeSaasAudit,
   type TenantEnv,
 } from "../../tenant/_core";
 import {
@@ -341,35 +341,37 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const encryptionVersion = currentClinicalEncryptionVersion(context.env);
   const now = new Date().toISOString();
 
-  const insert = db
-    .prepare(
-      `INSERT INTO live_clinical_events
-        (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
-         encounter_id, provenance_kind, provenance_source, payload_encrypted,
-         encryption_version, source_record_hash, supersedes_event_id, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-    )
-    .bind(
-      eventId,
-      clinicId,
-      patientId,
-      user.id,
-      eventType,
-      occurredAt,
-      encounterId,
-      provenanceKind,
-      provenanceSource,
-      payloadEncrypted,
-      encryptionVersion,
-      sourceRecordHash,
-      supersedesEventId,
-      now,
-    );
+  const insertBindings = [
+    eventId,
+    clinicId,
+    patientId,
+    user.id,
+    eventType,
+    occurredAt,
+    encounterId,
+    provenanceKind,
+    provenanceSource,
+    payloadEncrypted,
+    encryptionVersion,
+    sourceRecordHash,
+    supersedesEventId,
+    now,
+  ];
+  const auditParams = {
+    clinicId,
+    actorUserId: user.id,
+    action: "live_clinical_event_create",
+    targetType: "clinical_event",
+    targetId: eventId,
+    metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
+  };
 
   try {
     if (supersedesEventId) {
-      await db.batch([
-        insert,
+      // Correção supersede o evento anterior no mesmo batch transacional: se o
+      // UPDATE não atingir exatamente o evento ativo, o INSERT e a auditoria
+      // (guardados por changes() = 1) não acontecem — nada parcial persiste.
+      const results = await db.batch([
         db
           .prepare(
             `UPDATE live_clinical_events
@@ -377,9 +379,41 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
               WHERE id = ? AND clinic_id = ? AND patient_id = ? AND status = 'active'`,
           )
           .bind(supersedesEventId, clinicId, patientId),
+        db
+          .prepare(
+            `INSERT INTO live_clinical_events
+              (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
+               encounter_id, provenance_kind, provenance_source, payload_encrypted,
+               encryption_version, source_record_hash, supersedes_event_id, status, created_at)
+             SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?
+              WHERE changes() = 1`,
+          )
+          .bind(...insertBindings),
+        prepareSaasAudit(db, auditParams, true),
       ]);
+      if (
+        (results[0]?.meta?.changes ?? 0) !== 1 ||
+        (results[1]?.meta?.changes ?? 0) !== 1 ||
+        (results[2]?.meta?.changes ?? 0) !== 1
+      ) {
+        return tenantError("O evento mudou durante a correção. Recarregue a linha clínica.", "STALE_SUPERSESSION", 409);
+      }
     } else {
-      await insert.run();
+      const results = await db.batch([
+        db
+          .prepare(
+            `INSERT INTO live_clinical_events
+              (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
+               encounter_id, provenance_kind, provenance_source, payload_encrypted,
+               encryption_version, source_record_hash, supersedes_event_id, status, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+          )
+          .bind(...insertBindings),
+        prepareSaasAudit(db, auditParams, true),
+      ]);
+      if ((results[0]?.meta?.changes ?? 0) !== 1 || (results[1]?.meta?.changes ?? 0) !== 1) {
+        return tenantError("Não foi possível registrar o evento clínico.", "DB_ERROR", 500);
+      }
     }
   } catch (error) {
     // Corridas de deduplicação devem continuar idempotentes, não virar falso 500.
@@ -408,15 +442,6 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     console.error("[live.events.POST] DB error", error);
     return tenantError("Não foi possível registrar o evento clínico.", "DB_ERROR", 500);
   }
-
-  await writeSaasAudit(db, {
-    clinicId,
-    actorUserId: user.id,
-    action: "live_clinical_event_create",
-    targetType: "clinical_event",
-    targetId: eventId,
-    metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
-  });
 
   return tenantJson(
     {

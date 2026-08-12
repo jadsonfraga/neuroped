@@ -29,16 +29,18 @@ import {
   headObject,
   generateStorageKey,
   CloudStorageConfigError,
+  CloudStorageError,
 } from "../lib/cloudStorage.js";
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { oneParam } from "../lib/http.js";
 import { patientReferenceDecision } from "../lib/ownership.js";
+import { boundedIntegerEnv } from "../lib/runtimeConfig.js";
 
 import { files as sqliteFiles, patients } from "@shared/schema";
 
 const filesTable = sqliteFiles;
 
-const MAX_FILE_SIZE_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB || "50", 10) * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = boundedIntegerEnv("MAX_FILE_SIZE_MB", 50, 1, 2048) * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
@@ -126,6 +128,21 @@ export function registerFileRoutes(app: Express): void {
         },
       });
 
+      if (parsed.patientId) {
+        const freshPatient = db
+          .select()
+          .from(patients)
+          .where(eq(patients.id, parsed.patientId))
+          .get();
+        const freshDecision = patientReferenceDecision(req.user!, freshPatient);
+        if (freshDecision === "not_found") {
+          return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+        }
+        if (freshDecision === "forbidden") {
+          return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+        }
+      }
+
       // Cria registro em files (status pendente — sha256 sera setado em /confirm)
       const created = db.insert(filesTable)
         .values({
@@ -171,6 +188,9 @@ export function registerFileRoutes(app: Express): void {
       if (e instanceof CloudStorageConfigError) {
         return res.status(503).json({ error: "Storage nao configurado", code: "STORAGE_NOT_CONFIGURED" });
       }
+      if (e instanceof CloudStorageError) {
+        return res.status(503).json({ error: "Storage indisponivel", code: "STORAGE_UNAVAILABLE" });
+      }
       console.error("[files.sign-upload]", e);
       return res.status(500).json({ error: "Erro interno" });
     }
@@ -211,9 +231,12 @@ export function registerFileRoutes(app: Express): void {
       const sha = z.string().regex(/^[a-f0-9]{64}$/i).optional().parse(req.body?.sha256);
       const updated = db.update(filesTable)
         .set({ sha256: sha })
-        .where(eq(filesTable.id, file.id))
+        .where(and(eq(filesTable.id, file.id), eq(filesTable.isDeleted, false)))
         .returning()
         .get();
+      if (!updated) {
+        return res.status(409).json({ error: "Arquivo mudou durante a confirmacao", code: "FILE_STATE_CHANGED" });
+      }
 
       return res.json({
         ok: true,
@@ -227,6 +250,9 @@ export function registerFileRoutes(app: Express): void {
         },
       });
     } catch (e: any) {
+      if (e instanceof CloudStorageError) {
+        return res.status(503).json({ error: "Storage indisponivel", code: "STORAGE_UNAVAILABLE" });
+      }
       console.error("[files.confirm]", e);
       return res.status(500).json({ error: "Erro interno" });
     }
@@ -246,28 +272,38 @@ export function registerFileRoutes(app: Express): void {
       }
 
       const signed = await getDownloadSignedUrl(file.storageKey);
+      const freshFile = db.select().from(filesTable).where(eq(filesTable.id, file.id)).get();
+      if (!freshFile || freshFile.isDeleted) {
+        return res.status(404).json({ error: "Arquivo nao encontrado" });
+      }
+      if (freshFile.ownerUserId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ error: "Sem permissao" });
+      }
 
       await logAudit({
         eventType: "file.download",
         context: ctx,
         targetType: "file",
-        targetId: file.id,
-        metadata: { filename: file.filename, patientId: file.patientId },
+        targetId: freshFile.id,
+        metadata: { filename: freshFile.filename, patientId: freshFile.patientId },
       });
 
       return res.json({
-        id: file.id,
-        filename: file.filename,
-        mimeType: file.mimeType,
-        sizeBytes: file.sizeBytes,
-        sha256: file.sha256,
-        category: file.category,
-        patientId: file.patientId,
-        createdAt: file.createdAt,
+        id: freshFile.id,
+        filename: freshFile.filename,
+        mimeType: freshFile.mimeType,
+        sizeBytes: freshFile.sizeBytes,
+        sha256: freshFile.sha256,
+        category: freshFile.category,
+        patientId: freshFile.patientId,
+        createdAt: freshFile.createdAt,
         downloadUrl: signed.url,
         downloadExpiresInSeconds: signed.expiresInSeconds,
       });
     } catch (e: any) {
+      if (e instanceof CloudStorageError) {
+        return res.status(503).json({ error: "Storage indisponivel", code: "STORAGE_UNAVAILABLE" });
+      }
       console.error("[files.get]", e);
       return res.status(500).json({ error: "Erro interno" });
     }
@@ -319,24 +355,27 @@ export function registerFileRoutes(app: Express): void {
         return res.status(403).json({ error: "Sem permissao" });
       }
 
-      // Tenta apagar do bucket; mesmo que falhe, marca soft-delete em DB
+      const deleted = db.update(filesTable)
+        .set({ isDeleted: true, deletedAt: new Date().toISOString() })
+        .where(and(eq(filesTable.id, file.id), eq(filesTable.isDeleted, false)))
+        .returning()
+        .get();
+      if (!deleted) return res.status(404).json({ error: "Arquivo nao encontrado" });
+
+      // Estado local é revogado antes da I/O remota. Assim outro request não recebe
+      // uma nova URL assinada enquanto o bucket ainda está sendo apagado.
       try {
-        await deleteObject(file.storageKey);
+        await deleteObject(deleted.storageKey);
       } catch (e) {
         console.error("[files.delete] bucket delete failed:", e);
       }
-
-      db.update(filesTable)
-        .set({ isDeleted: true, deletedAt: new Date().toISOString() })
-        .where(eq(filesTable.id, file.id))
-        .run();
 
       await logAudit({
         eventType: "file.delete",
         context: ctx,
         targetType: "file",
-        targetId: file.id,
-        metadata: { filename: file.filename },
+        targetId: deleted.id,
+        metadata: { filename: deleted.filename },
       });
 
       return res.json({ ok: true });

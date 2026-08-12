@@ -89,16 +89,15 @@ export async function getUserById(db: D1Database, id: string): Promise<UserRow |
 export function isLocked(u: UserRow): boolean {
   if (!u.locked_until) return false;
   const until = Date.parse(u.locked_until);
-  return Number.isFinite(until) && until > Date.now();
+  // Campo presente porém malformado é estado inseguro: não reinterpretar como
+  // conta desbloqueada. O operador precisa corrigir o dado antes do login.
+  return !Number.isFinite(until) || until > Date.now();
 }
 
-/**
- * Incrementa falhas no próprio UPDATE. O formato anterior calculava
- * `attempts = row + 1` em memória depois do bcrypt; logins simultâneos podiam
- * ler o mesmo valor e sobrescrever o contador, enfraquecendo o lockout.
- */
 export async function registerFailedAttempt(db: D1Database, u: UserRow): Promise<void> {
   const lockedUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000).toISOString();
+  // Incremento atômico: duas tentativas simultâneas não podem ler o mesmo contador
+  // e sobrescrever uma à outra, postergando artificialmente o lockout.
   await db
     .prepare(
       `UPDATE users
@@ -107,20 +106,24 @@ export async function registerFailedAttempt(db: D1Database, u: UserRow): Promise
                 WHEN COALESCE(failed_login_attempts, 0) + 1 >= ? THEN ?
                 ELSE locked_until
               END
-        WHERE id = ?`,
+        WHERE id = ? AND is_active = 1`,
     )
     .bind(MAX_FAILED_ATTEMPTS, lockedUntil, u.id)
     .run();
 }
 
-export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promise<void> {
-  await db
+export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promise<boolean> {
+  const now = new Date().toISOString();
+  const result = await db
     .prepare(
       `UPDATE users SET failed_login_attempts = 0, locked_until = NULL,
-              last_login_at = ? WHERE id = ?`,
+              last_login_at = ?
+        WHERE id = ? AND is_active = 1
+          AND (locked_until IS NULL OR julianday(locked_until) <= julianday(?))`,
     )
-    .bind(new Date().toISOString(), u.id)
+    .bind(now, u.id, now)
     .run();
+  return (result.meta?.changes ?? 0) === 1;
 }
 
 /**

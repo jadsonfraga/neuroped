@@ -12,6 +12,7 @@
 
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { requiredBoundedIntegerEnv } from "./runtimeConfig.js";
 
 let transporter: Transporter | null = null;
 
@@ -22,20 +23,21 @@ function getTransporter(): Transporter {
   if (transporter) return transporter;
 
   const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
+  const portRaw = process.env.SMTP_PORT;
   const user = process.env.SMTP_USER;
   const password = process.env.SMTP_PASSWORD;
 
-  if (!host || !port || !user || !password) {
+  if (!host || !portRaw || !user || !password) {
     throw new EmailConfigurationError(
       "Variaveis SMTP ausentes (SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASSWORD). Configure em .env.",
     );
   }
 
+  const port = requiredBoundedIntegerEnv("SMTP_PORT", 1, 65535);
   transporter = nodemailer.createTransport({
     host,
-    port: parseInt(port, 10),
-    secure: parseInt(port, 10) === 465,
+    port,
+    secure: port === 465,
     auth: { user, pass: password },
     tls: { rejectUnauthorized: true },
   });
