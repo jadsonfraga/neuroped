@@ -125,6 +125,16 @@ export const planKinds = [
 export const planStatuses = ["planned", "in_progress", "completed", "cancelled"] as const;
 export const planPriorities = ["routine", "priority", "urgent"] as const;
 
+export const outcomeContexts = [
+  "clinic",
+  "home",
+  "school",
+  "therapy",
+  "telemedicine",
+  "other",
+] as const;
+export type OutcomeContext = (typeof outcomeContexts)[number];
+
 export const safetyDomains = [
   "suicide_self_harm",
   "seizure_emergency",
@@ -217,6 +227,18 @@ const planDataSchema = z
     dueAt: isoInstant.optional(),
     responsibleRole: optionalText(160),
     successCriterion: optionalText(1_000),
+    /**
+     * Metas terapêuticas usam goalId estável para ligar plano e desfechos sem
+     * criar um prontuário paralelo. Campos numéricos são opcionais: uma meta
+     * continua válida quando o desfecho é qualitativo ou medido por instrumento.
+     */
+    goalId: boundedId.optional(),
+    goalDomain: optionalText(120),
+    baselineValue: z.number().finite().optional(),
+    baselineUnit: optionalText(40),
+    targetValue: z.number().finite().optional(),
+    targetUnit: optionalText(40),
+    measurementMethod: optionalText(500),
   })
   .strict();
 
@@ -229,6 +251,8 @@ const outcomeDataSchema = z
     unit: optionalText(40),
     direction: z.enum(["improved", "stable", "worsened", "mixed", "unknown"]).optional(),
     comparisonWindowDays: z.number().int().min(1).max(3_650).optional(),
+    goalId: boundedId.optional(),
+    context: z.enum(outcomeContexts).optional(),
   })
   .strict();
 
