@@ -46,7 +46,6 @@ async function verifyTablet(width) {
   const { context, page } = await openShell(width);
   try {
     const menu = page.getByTestId("button-mobile-menu");
-    const close = page.getByTestId("button-mobile-close");
     const dock = page.getByTestId("mobile-primary-dock");
     const sidebar = page.locator('aside[aria-label="Menu de navegação"]');
     const main = page.locator("#main-content");
@@ -70,6 +69,7 @@ async function verifyTablet(width) {
     await page.waitForFunction(() => !document.body.classList.contains("np-mobile-drawer-open"));
     assert.equal(await menu.getAttribute("aria-expanded"), "false", `${width}px deve anunciar drawer fechado`);
     assert.equal(await main.getAttribute("inert"), null, `${width}px deve liberar o conteúdo`);
+    await dock.waitFor({ state: "visible" });
     await page.waitForFunction(
       () => document.activeElement?.getAttribute("data-testid") === "button-mobile-menu",
     );
