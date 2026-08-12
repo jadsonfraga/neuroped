@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, AlertTriangle, Pill, Stethoscope } from "lucide-react";
 import type { ClinicalEvent } from "@shared/clinical-core";
+import { TherapyGoalsPanel } from "@/components/clinical/TherapyGoalsPanel";
 
 interface PatientCockpitProps {
   patientId: string;
@@ -285,6 +286,8 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
           </CardContent>
         </Card>
       </div>
+
+      <TherapyGoalsPanel patientId={patientId} events={events} unavailable={coreUnavailable} />
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <Card className="border-card-border">
