@@ -154,4 +154,13 @@ for (const path of [
   assert.equal(existsSync(resolve(root, path)), false, `${path} não deve existir na raiz ativa`);
 }
 
+// O mini-backend CommonJS de laudo/receita/P12 foi aposentado. A assinatura atual
+// é local no cliente; reintroduzir este diretório recriaria uma segunda arquitetura
+// de certificado e uma superfície para exemplos clínicos identificáveis.
+assert.equal(
+  existsSync(resolve(root, "server/modules")),
+  false,
+  "server/modules aposentado não deve reaparecer",
+);
+
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");
