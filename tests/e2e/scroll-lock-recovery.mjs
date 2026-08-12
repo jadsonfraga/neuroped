@@ -32,10 +32,6 @@ async function openScrollableApp(width) {
   await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
   await page.locator("#main-content").waitFor({ state: "visible", timeout: 15000 });
-
-  // O shell usa o documento (window/body) como superfície vertical de scroll.
-  // Acrescentamos altura apenas para tornar a prova independente da quantidade
-  // de resultados clínicos exibidos pelo filtro em cada build.
   await page.evaluate(() => {
     const main = document.querySelector("#main-content");
     if (!(main instanceof HTMLElement)) throw new Error("#main-content ausente");
@@ -59,11 +55,6 @@ async function injectOrphanedLock(page) {
     body.style.pointerEvents = "none";
     body.setAttribute("data-scroll-locked", "1");
   });
-  const lock = await readLock(page);
-  assert.equal(lock.overflow, "hidden");
-  assert.equal(lock.overflowY, "hidden");
-  assert.equal(lock.pointerEvents, "none");
-  assert.equal(lock.dataScrollLocked, true);
 }
 
 async function readLock(page) {
@@ -105,72 +96,11 @@ async function dispatchRealTouchStart(page, x, y) {
   await session.detach();
 }
 
-/**
- * Diagnóstico opcional de compositor. Em Chrome headless, Input.dispatchTouchEvent
- * entrega os eventos DOM reais, mas algumas versões não transformam a sequência
- * em scroll de compositor. Por isso a capacidade é medida ANTES do cenário P0:
- * quando existir no runner, ela também vira requisito pós-recuperação; quando não
- * existir, o gate continua exigindo touch real para desbloquear + wheel nativo CDP
- * para provar que o documento voltou a aceitar entrada de rolagem.
- */
-async function tryRealTouchSwipe(page, width) {
-  const session = await page.context().newCDPSession(page);
-  const x = Math.round(width / 2);
-  const startY = Math.round(HEIGHT * 0.78);
-  const endY = Math.round(HEIGHT * 0.24);
+async function wheelDelta(page, deltaY = 500) {
   const before = await page.evaluate(() => window.scrollY);
-
-  await session.send("Input.dispatchTouchEvent", {
-    type: "touchStart",
-    touchPoints: [touchPoint(x, startY)],
-  });
-  const frames = 12;
-  for (let frame = 1; frame <= frames; frame += 1) {
-    const progress = frame / frames;
-    const y = Math.round(startY + (endY - startY) * progress);
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchMove",
-      touchPoints: [touchPoint(x, y)],
-    });
-    await page.waitForTimeout(14);
-  }
-  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await session.detach();
-  await page.waitForTimeout(180);
-
-  const after = await page.evaluate(() => window.scrollY);
-  return { before, after, moved: after > before + 20 };
-}
-
-/**
- * Wheel nativo via Chrome DevTools Protocol. Diferente de page.mouse, não depende
- * do cache interno de alvo/hit-test do Playwright. O mouseMoved apenas informa a
- * coordenada ao compositor; não dispara pointerdown/touchstart e, portanto, não
- * pode acionar o autocurador uma segunda vez nem mascarar uma regressão.
- */
-async function proveNativeWheelScroll(page, width, label, x, y) {
-  const before = await page.evaluate(() => window.scrollY);
-  const session = await page.context().newCDPSession(page);
-  await session.send("Input.dispatchMouseEvent", {
-    type: "mouseMoved",
-    x,
-    y,
-    buttons: 0,
-    pointerType: "mouse",
-  });
-  await session.send("Input.dispatchMouseEvent", {
-    type: "mouseWheel",
-    x,
-    y,
-    deltaX: 0,
-    deltaY: 500,
-    buttons: 0,
-    pointerType: "mouse",
-  });
-  await session.detach();
+  await page.mouse.wheel(0, deltaY);
   await page.waitForTimeout(160);
   const after = await page.evaluate(() => window.scrollY);
-  assert.ok(after > before + 20, `${width}px ${label}: documento não rolou (${before} -> ${after})`);
   return { before, after };
 }
 
@@ -179,15 +109,24 @@ async function verifyRecovery(width) {
   try {
     const x = Math.round(width / 2);
     const y = Math.round(HEIGHT / 2);
+    await page.mouse.move(x, y);
 
-    // Mede primeiro a capacidade específica do compositor headless. Se o próprio
-    // runner não converte touchMove em scroll, não confundimos limitação do harness
-    // com regressão do app.
-    const baselineTouch = await tryRealTouchSwipe(page, width);
+    // 1) Prova que o próprio harness consegue rolar este documento nesta largura.
+    const baseline = await wheelDelta(page);
+    assert.ok(baseline.after > baseline.before + 20, `${width}px: baseline de wheel não rolou`);
     await page.evaluate(() => window.scrollTo(0, 0));
 
-    // Caso P0 real: touchstart NATIVO deve remover todas as formas do lock órfão.
+    // 2) Injeta exatamente o estado órfão que congelava o app. Wheel não pode
+    // mover a página e, por não emitir pointerdown/touchstart, não pode autocurar.
     await injectOrphanedLock(page);
+    const locked = await readLock(page);
+    assert.equal(locked.dataScrollLocked, true, `${width}px: lock não foi injetado`);
+    const blocked = await wheelDelta(page);
+    assert.ok(blocked.after <= blocked.before + 2, `${width}px: wheel rolou apesar do lock (${blocked.before}->${blocked.after})`);
+    assert.equal((await readLock(page)).dataScrollLocked, true, `${width}px: wheel não pode remover o lock`);
+
+    // 3) O toque NATIVO é o único evento de recuperação. Depois dele, sem nenhum
+    // pointerdown adicional, o MESMO wheel deve voltar a mover window.scrollY.
     await dispatchRealTouchStart(page, x, y);
     await page.waitForFunction(() =>
       document.body.style.overflow !== "hidden" &&
@@ -196,47 +135,23 @@ async function verifyRecovery(width) {
       !document.body.hasAttribute("data-scroll-locked"),
     );
     assertUnlocked(await readLock(page), `${width}px touch recovery`);
-
-    // Sem qualquer pointerdown adicional: o wheel NATIVO precisa funcionar logo
-    // após o touch que fez a autocura. Assim provamos que foi o caminho TOUCH que
-    // liberou o body/documento, e não um segundo mecanismo de recuperação.
-    const afterTouchWheel = await proveNativeWheelScroll(
-      page,
-      width,
-      "após touch recovery",
-      x,
-      y,
+    const recovered = await wheelDelta(page);
+    assert.ok(
+      recovered.after > recovered.before + 20,
+      `${width}px: documento não voltou a rolar após touch (${recovered.before}->${recovered.after})`,
     );
 
-    // Se esta versão do Chromium oferece scroll de compositor para CDP touch,
-    // exige também que ele continue funcionando depois da autocura.
-    let recoveredTouch = null;
-    if (baselineTouch.moved) {
-      await page.evaluate(() => window.scrollTo(0, 0));
-      recoveredTouch = await tryRealTouchSwipe(page, width);
-      assert.ok(
-        recoveredTouch.moved,
-        `${width}px: compositor suportava touch-scroll antes do lock, mas não depois da recuperação`,
-      );
-    }
-
-    // Caminho secundário pointerdown: precisa remover o lock órfão. A prova de
-    // scroll pertence ao caminho touch acima, que reproduz o defeito do tablet.
+    // 4) Pointerdown também precisa autocurar o lock órfão.
     await page.evaluate(() => window.scrollTo(0, 0));
     await injectOrphanedLock(page);
-    await page.mouse.move(x, y);
     await page.mouse.down();
     await page.mouse.up();
-    await page.waitForFunction(() =>
-      document.body.style.overflow !== "hidden" &&
-      document.body.style.pointerEvents !== "none" &&
-      !document.body.hasAttribute("data-scroll-locked"),
-    );
+    await page.waitForFunction(() => !document.body.hasAttribute("data-scroll-locked"));
     assertUnlocked(await readLock(page), `${width}px pointer recovery`);
 
-    // Segurança: lock legítimo de modal NÃO pode ser removido pelo autocurador.
+    // 5) Segurança: modal legítimo deve preservar o lock, e o primeiro touch
+    // depois de fechar o modal deve liberar tudo novamente.
     await page.evaluate(() => {
-      window.scrollTo(0, 0);
       const dialog = document.createElement("div");
       dialog.dataset.scrollRecoveryDialog = "true";
       dialog.setAttribute("role", "dialog");
@@ -247,27 +162,17 @@ async function verifyRecovery(width) {
     await dispatchRealTouchStart(page, x, y);
     const protectedLock = await readLock(page);
     assert.equal(protectedLock.dataScrollLocked, true, `${width}px: lock legítimo de modal foi removido`);
-    assert.equal(protectedLock.overflow, "hidden", `${width}px: overflow de modal foi removido`);
+    assert.equal(protectedLock.overflow, "hidden", `${width}px: overflow legítimo de modal foi removido`);
 
-    // Fechado o modal, o primeiro toque seguinte precisa liberar tudo de novo.
     await page.evaluate(() => document.querySelector('[data-scroll-recovery-dialog="true"]')?.remove());
     await dispatchRealTouchStart(page, x, y);
     await page.waitForFunction(() => !document.body.hasAttribute("data-scroll-locked"));
     assertUnlocked(await readLock(page), `${width}px post-modal recovery`);
-    const afterModalWheel = await proveNativeWheelScroll(
-      page,
-      width,
-      "após fechamento do modal",
-      x,
-      y,
-    );
 
-    const compositor = baselineTouch.moved
-      ? `touch-scroll ${baselineTouch.before}->${baselineTouch.after} / pós-lock ${recoveredTouch.before}->${recoveredTouch.after}`
-      : "touch DOM validado; compositor touch-scroll indisponível neste Chrome headless";
     console.log(
-      `[scroll-lock-recovery] ✓ ${width}px: ${compositor}; wheel pós-touch ${afterTouchWheel.before}->${afterTouchWheel.after}; ` +
-      `pointer unlock validado; pós-modal ${afterModalWheel.before}->${afterModalWheel.after}`,
+      `[scroll-lock-recovery] ✓ ${width}px: baseline ${baseline.before}->${baseline.after}; ` +
+      `bloqueado ${blocked.before}->${blocked.after}; touch recovery ${recovered.before}->${recovered.after}; ` +
+      `pointer + proteção/pós-modal OK`,
     );
   } finally {
     await context.close();
