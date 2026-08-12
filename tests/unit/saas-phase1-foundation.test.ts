@@ -197,7 +197,8 @@ assert.match(liveEventsApi, /STALE_SUPERSESSION/);
 assert.match(liveEventsApi, /SET status = 'corrected'/);
 assert.match(liveEventsApi, /WHERE changes\(\) = 1/);
 assert.match(liveEventsApi, /prepareSaasAudit\(db, auditParams, true\)/);
-assert.match(liveEventsApi, /validIsoTimestamp/);
+assert.match(liveEventsApi, /normalizedOccurredAt/, "occurredAt precisa passar por validação ISO estrita");
+assert.match(liveEventsApi, /datetime\(\{ offset: true \}\)/);
 assert.match(liveEventsApi, /duplicate: true/);
 assert.doesNotMatch(liveEventsApi, /await writeSaasAudit/);
 assert.doesNotMatch(liveEventsApi, /clinical_events_demo/);
@@ -210,10 +211,16 @@ const membersApi = readFileSync(
 assert.match(membersApi, /LAST_OWNER_PROTECTED/);
 assert.match(membersApi, /membershipCanManage/);
 assert.match(membersApi, /Somente owner pode conceder papel owner/);
-assert.match(membersApi, /other\.user_id <> clinic_memberships\.user_id/);
-assert.match(membersApi, /prepareSaasAudit\(/);
-assert.doesNotMatch(membersApi, /SELECT COUNT\(\*\) AS total/);
-assert.doesNotMatch(membersApi, /await writeSaasAudit/);
+assert.match(
+  membersApi,
+  /Somente owner pode alterar o papel de outro owner/,
+  "clinic_admin não pode demover owner por upsert",
+);
+assert.match(
+  membersApi,
+  /isLastOwnerConstraintError/,
+  "handler precisa reagir ao trigger físico de último owner (0010)",
+);
 
 const tenantsApi = readFileSync(
   new URL("../../functions/api/tenants/index.ts", import.meta.url),
