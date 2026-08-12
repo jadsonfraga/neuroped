@@ -165,16 +165,16 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      - name: Commitar patch
+      - name: Publicar arquivo validado pela Contents API
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name "neuroped-audit-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add client/src/pages/filtro.tsx
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo "Nenhuma alteração necessária."
-            exit 0
-          fi
-          git commit -m "fix(privacy): cifrar estado clínico do filtro"
-          git push origin HEAD:fix/filter-state-privacy-20260812
+          git diff --check -- client/src/pages/filtro.tsx
+          current_sha="$(gh api "repos/${GITHUB_REPOSITORY}/contents/client/src/pages/filtro.tsx?ref=fix/filter-state-privacy-20260812" --jq .sha)"
+          encoded="$(base64 -w 0 client/src/pages/filtro.tsx)"
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/client/src/pages/filtro.tsx" \
+            -f message="fix(privacy): cifrar estado clínico do filtro" \
+            -f content="$encoded" \
+            -f branch="fix/filter-state-privacy-20260812" \
+            -f sha="$current_sha" >/dev/null
