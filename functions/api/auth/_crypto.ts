@@ -16,6 +16,12 @@ const PBKDF2_ITERATIONS = 100_000;
 const PBKDF2_HASH = "SHA-256";
 const KEY_BITS = 256;
 
+// Hash sintaticamente válido, mas que não corresponde a nenhuma credencial real.
+// É usado somente para executar o mesmo PBKDF2 quando o e-mail não existe,
+// reduzindo enumeração por diferença grosseira de tempo de resposta.
+export const DUMMY_PASSWORD_HASH =
+  "pbkdf2$sha256$100000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
 // ── base64 / base64url ────────────────────────────────────────────────────
 function bytesToB64(bytes: Uint8Array): string {
   let bin = "";

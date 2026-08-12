@@ -13,6 +13,7 @@ import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
+import { boundedIntegerEnv } from "./runtimeConfig.js";
 import { createRepositories } from "./repositories/factory";
 import type { IRepositories } from "./repositories";
 
@@ -58,7 +59,7 @@ export async function initDb(): Promise<void> {
 
   // Pool configuration otimizado para produção
   _client = postgres(DATABASE_URL, {
-    max: parseInt(process.env.DATABASE_POOL_MAX || "20", 10), // Aumentado para 20 (default Postgres)
+    max: boundedIntegerEnv("DATABASE_POOL_MAX", 20, 1, 100), // Aumentado para 20 (default Postgres)
     idle_timeout: 30, // 30 segundos
     connect_timeout: 10,
     connection: { statement_timeout: 30000 }, // 30s timeout nas queries (parâmetro de conexão)

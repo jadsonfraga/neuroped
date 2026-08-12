@@ -42,6 +42,23 @@ class FakeSessionD1 {
         throw new Error(`SELECT não suportado no fake: ${sql}`);
       },
       run: async () => {
+        if (sql.includes("INSERT INTO auth_refresh_sessions") && sql.includes("SELECT ?, id, ?, ?")) {
+          const [id, familyId, tokenHash, expiresAt, createdAt, userId] = values.map(String);
+          this.sessions.set(id, {
+            id,
+            user_id: userId,
+            family_id: familyId,
+            token_hash: tokenHash,
+            parent_session_id: null,
+            replaced_by_session_id: null,
+            expires_at: expiresAt,
+            revoked_at: null,
+            revoke_reason: null,
+            created_at: createdAt,
+            last_used_at: null,
+          });
+          return { meta: { changes: 1 } };
+        }
         if (sql.includes("INSERT INTO auth_refresh_sessions") && sql.includes("VALUES (?, ?, ?, ?")) {
           const [id, userId, familyId, tokenHash, expiresAt, createdAt] = values.map(String);
           this.sessions.set(id, {

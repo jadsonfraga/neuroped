@@ -6,6 +6,15 @@ function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+function isValidTimeZone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("pt-BR", { timeZone: value }).format(new Date(0));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const user = getContextUser(context);
   if (!context.env.DB) return tenantError("Banco SaaS não configurado.", "SAAS_DB_NOT_CONFIGURED", 503);
@@ -74,6 +83,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   if (name.length < 2) return tenantError("Nome da clínica é obrigatório.", "VALIDATION_ERROR", 400);
   if (!isValidClinicSlug(slug)) return tenantError("Slug da clínica inválido.", "VALIDATION_ERROR", 400);
+  if (!isValidTimeZone(timezone)) return tenantError("Timezone IANA inválido.", "VALIDATION_ERROR", 400);
 
   const clinicId = crypto.randomUUID();
   const now = new Date().toISOString();
