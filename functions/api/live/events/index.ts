@@ -1,3 +1,9 @@
+import { z } from "zod";
+import {
+  clinicalEventInputSchema,
+  clinicalEventTypes,
+  clinicalSources,
+} from "../../../../shared/clinical-core";
 import { getContextUser } from "../../auth/_authorization";
 import {
   clinicalLiveEnabled,
@@ -18,16 +24,11 @@ import {
 } from "../../tenant/_crypto";
 
 const EVENT_TYPES = new Set([
-  "encounter",
-  "problem",
-  "medication",
-  "observation",
-  "plan",
-  "outcome",
-  "safety",
+  ...clinicalEventTypes,
   "document",
   "scale_result",
 ]);
+const CANONICAL_EVENT_TYPES = new Set<string>(clinicalEventTypes);
 const PROVENANCE_KINDS = new Set([
   "reported",
   "observed",
@@ -37,6 +38,9 @@ const PROVENANCE_KINDS = new Set([
   "decision",
   "imported",
 ]);
+const PROVENANCE_SOURCES = new Set<string>(clinicalSources);
+const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/;
+const ISO_INSTANT = z.string().datetime({ offset: true });
 
 interface LiveEventRow {
   id: string;
@@ -73,6 +77,56 @@ function requireLiveConfiguration(env: TenantEnv): Response | null {
     return tenantError("Keyring clínico dedicado não configurado.", "CLINICAL_CRYPTO_NOT_CONFIGURED", 503);
   }
   return null;
+}
+
+function normalizedOccurredAt(value: unknown): string | null {
+  const raw = cleanText(value, 64);
+  if (!raw) return new Date().toISOString();
+  const parsed = ISO_INSTANT.safeParse(raw);
+  if (!parsed.success) return null;
+  const millis = Date.parse(parsed.data);
+  return Number.isFinite(millis) ? new Date(millis).toISOString() : null;
+}
+
+function isPlainJsonObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateCanonicalPayload(params: {
+  patientId: string;
+  eventType: string;
+  occurredAt: string;
+  encounterId: string | null;
+  provenanceKind: string;
+  provenanceSource: string;
+  supersedesEventId: string | null;
+  payload: unknown;
+}): z.ZodIssue[] | null {
+  if (!CANONICAL_EVENT_TYPES.has(params.eventType)) return null;
+  // Dados importados não podem se fantasiar de evento canônico sem passar pela
+  // normalização clínica. Material bruto deve entrar como document/scale_result.
+  if (params.provenanceKind === "imported") {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        path: ["provenanceKind"],
+        message: "Evento canônico importado deve ser normalizado antes do registro.",
+      },
+    ];
+  }
+  const parsed = clinicalEventInputSchema.safeParse({
+    patientId: params.patientId,
+    eventType: params.eventType,
+    occurredAt: params.occurredAt,
+    ...(params.encounterId ? { encounterId: params.encounterId } : {}),
+    provenance: {
+      kind: params.provenanceKind,
+      source: params.provenanceSource,
+    },
+    ...(params.supersedesEventId ? { supersedesEventId: params.supersedesEventId } : {}),
+    data: params.payload,
+  });
+  return parsed.success ? null : parsed.error.issues;
 }
 
 async function patientBelongsToClinic(
@@ -177,28 +231,56 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const patientId = cleanText(body.patientId, 80);
   const eventType = cleanText(body.eventType, 40);
   const provenanceKind = cleanText(body.provenanceKind, 40);
-  const provenanceSource = cleanText(body.provenanceSource, 240);
+  const provenanceSource = cleanText(body.provenanceSource, 40);
   const encounterId = cleanOptional(body.encounterId, 120);
   const sourceRecordReference = cleanOptional(body.sourceRecordReference, 500);
   const supersedesEventId = cleanOptional(body.supersedesEventId, 80);
-  const occurredAt = cleanText(body.occurredAt, 40) || new Date().toISOString();
+  const occurredAt = normalizedOccurredAt(body.occurredAt);
   const payload = body.payload;
 
   if (!clinicId || !patientId || !EVENT_TYPES.has(eventType)) {
     return tenantError("clinicId, patientId e eventType válido são obrigatórios.", "VALIDATION_ERROR", 400);
   }
-  if (!PROVENANCE_KINDS.has(provenanceKind) || !provenanceSource) {
-    return tenantError("Proveniência clínica é obrigatória.", "VALIDATION_ERROR", 400);
+  if (!PROVENANCE_KINDS.has(provenanceKind) || !PROVENANCE_SOURCES.has(provenanceSource)) {
+    return tenantError(
+      "Proveniência exige kind e source da taxonomia clínica controlada.",
+      "VALIDATION_ERROR",
+      400,
+    );
   }
-  if (Number.isNaN(Date.parse(occurredAt))) {
-    return tenantError("occurredAt inválido.", "VALIDATION_ERROR", 400);
+  if (!occurredAt) {
+    return tenantError("occurredAt deve ser um instante ISO 8601 com fuso.", "VALIDATION_ERROR", 400);
   }
-  if (payload === undefined) {
-    return tenantError("payload clínico é obrigatório.", "VALIDATION_ERROR", 400);
+  if (encounterId && !OPAQUE_ID.test(encounterId)) {
+    return tenantError("encounterId deve ser um identificador opaco.", "VALIDATION_ERROR", 400);
+  }
+  if (supersedesEventId && !OPAQUE_ID.test(supersedesEventId)) {
+    return tenantError("supersedesEventId inválido.", "VALIDATION_ERROR", 400);
+  }
+  if (!isPlainJsonObject(payload)) {
+    return tenantError("payload clínico deve ser um objeto JSON.", "VALIDATION_ERROR", 400);
   }
   const payloadSize = new TextEncoder().encode(JSON.stringify(payload)).byteLength;
   if (payloadSize > 100_000) {
     return tenantError("payload clínico excede 100 KB.", "PAYLOAD_TOO_LARGE", 413);
+  }
+
+  const coreIssues = validateCanonicalPayload({
+    patientId,
+    eventType,
+    occurredAt,
+    encounterId,
+    provenanceKind,
+    provenanceSource,
+    supersedesEventId,
+    payload,
+  });
+  if (coreIssues) {
+    return tenantError(
+      `Evento não atende ao Clinical Core: ${coreIssues.map((issue) => issue.message).join("; ")}`,
+      "CLINICAL_CORE_VALIDATION_ERROR",
+      400,
+    );
   }
 
   const membership = await getClinicMembership(db, clinicId, user);
@@ -212,13 +294,18 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   if (supersedesEventId) {
     const superseded = await db
       .prepare(
-        `SELECT id FROM live_clinical_events
-          WHERE id = ? AND clinic_id = ? AND patient_id = ? LIMIT 1`,
+        `SELECT id, status
+           FROM live_clinical_events
+          WHERE id = ? AND clinic_id = ? AND patient_id = ?
+          LIMIT 1`,
       )
       .bind(supersedesEventId, clinicId, patientId)
-      .first<{ id: string }>();
+      .first<{ id: string; status: "active" | "corrected" | "voided" }>();
     if (!superseded) {
       return tenantError("Evento supersedido não pertence ao mesmo paciente/tenant.", "INVALID_SUPERSESSION", 409);
+    }
+    if (superseded.status !== "active") {
+      return tenantError("Somente evento ativo pode ser supersedido.", "EVENT_NOT_ACTIVE", 409);
     }
   }
 
@@ -254,45 +341,82 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const encryptionVersion = currentClinicalEncryptionVersion(context.env);
   const now = new Date().toISOString();
 
-  try {
-    await db
-      .prepare(
-        `INSERT INTO live_clinical_events
-          (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
-           encounter_id, provenance_kind, provenance_source, payload_encrypted,
-           encryption_version, source_record_hash, supersedes_event_id, status, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-      )
-      .bind(
-        eventId,
-        clinicId,
-        patientId,
-        user.id,
-        eventType,
-        occurredAt,
-        encounterId,
-        provenanceKind,
-        provenanceSource,
-        payloadEncrypted,
-        encryptionVersion,
-        sourceRecordHash,
-        supersedesEventId,
-        now,
-      )
-      .run();
-
-    await writeSaasAudit(db, {
+  const insert = db
+    .prepare(
+      `INSERT INTO live_clinical_events
+        (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
+         encounter_id, provenance_kind, provenance_source, payload_encrypted,
+         encryption_version, source_record_hash, supersedes_event_id, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+    )
+    .bind(
+      eventId,
       clinicId,
-      actorUserId: user.id,
-      action: "live_clinical_event_create",
-      targetType: "clinical_event",
-      targetId: eventId,
-      metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
-    });
+      patientId,
+      user.id,
+      eventType,
+      occurredAt,
+      encounterId,
+      provenanceKind,
+      provenanceSource,
+      payloadEncrypted,
+      encryptionVersion,
+      sourceRecordHash,
+      supersedesEventId,
+      now,
+    );
+
+  try {
+    if (supersedesEventId) {
+      await db.batch([
+        insert,
+        db
+          .prepare(
+            `UPDATE live_clinical_events
+                SET status = 'corrected'
+              WHERE id = ? AND clinic_id = ? AND patient_id = ? AND status = 'active'`,
+          )
+          .bind(supersedesEventId, clinicId, patientId),
+      ]);
+    } else {
+      await insert.run();
+    }
   } catch (error) {
+    // Corridas de deduplicação devem continuar idempotentes, não virar falso 500.
+    if (sourceRecordHash) {
+      const duplicate = await db
+        .prepare(
+          `SELECT id FROM live_clinical_events
+            WHERE clinic_id = ? AND provenance_source = ? AND source_record_hash = ? LIMIT 1`,
+        )
+        .bind(clinicId, provenanceSource, sourceRecordHash)
+        .first<{ id: string }>();
+      if (duplicate) return tenantJson({ id: duplicate.id, duplicate: true }, 200);
+    }
+    if (supersedesEventId) {
+      const successor = await db
+        .prepare(
+          `SELECT id FROM live_clinical_events
+            WHERE supersedes_event_id = ? LIMIT 1`,
+        )
+        .bind(supersedesEventId)
+        .first<{ id: string }>();
+      if (successor) {
+        return tenantError("Evento já possui uma correção sucessora.", "EVENT_ALREADY_SUPERSEDED", 409);
+      }
+    }
     console.error("[live.events.POST] DB error", error);
     return tenantError("Não foi possível registrar o evento clínico.", "DB_ERROR", 500);
   }
+
+  await writeSaasAudit(db, {
+    clinicId,
+    actorUserId: user.id,
+    action: "live_clinical_event_create",
+    targetType: "clinical_event",
+    targetId: eventId,
+    metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
+  });
 
   return tenantJson(
     {
