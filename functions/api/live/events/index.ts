@@ -17,6 +17,14 @@ import {
 } from "../../tenant/_crypto";
 import { clinicalEventInputSchema } from "../../../../shared/clinical-core";
 
+const STORED_PAYLOAD_FORMAT = "clinical-core-event-v1";
+
+interface StoredClinicalPayload {
+  format: typeof STORED_PAYLOAD_FORMAT;
+  data: unknown;
+  note: string | null;
+}
+
 interface LiveEventRow {
   id: string;
   clinic_id: string;
@@ -42,6 +50,24 @@ function cleanText(value: unknown, max: number): string {
 function cleanOptional(value: unknown, max: number): string | null {
   const result = cleanText(value, max);
   return result || null;
+}
+
+function unpackStoredPayload(value: unknown): { data: unknown; note: string | null } {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    (value as Partial<StoredClinicalPayload>).format === STORED_PAYLOAD_FORMAT &&
+    "data" in value
+  ) {
+    const stored = value as Partial<StoredClinicalPayload>;
+    return {
+      data: stored.data,
+      note: typeof stored.note === "string" ? stored.note : null,
+    };
+  }
+  // Compatibilidade de leitura com qualquer linha criada antes deste envelope.
+  return { data: value, note: null };
 }
 
 function requireLiveConfiguration(env: TenantEnv): Response | null {
@@ -104,27 +130,32 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
   try {
     const data = await Promise.all(
-      (rows.results ?? []).map(async (row) => ({
-        id: row.id,
-        clinicId: row.clinic_id,
-        patientId: row.patient_id,
-        authorUserId: row.author_user_id,
-        eventType: row.event_type,
-        occurredAt: row.occurred_at,
-        encounterId: row.encounter_id,
-        provenanceKind: row.provenance_kind,
-        provenanceSource: row.provenance_source,
-        payload: await decryptClinicalJson<unknown>(
+      (rows.results ?? []).map(async (row) => {
+        const decrypted = await decryptClinicalJson<unknown>(
           context.env,
           clinicId,
           `clinical-event:${row.id}`,
           row.payload_encrypted,
-        ),
-        encryptionVersion: row.encryption_version,
-        supersedesEventId: row.supersedes_event_id,
-        status: row.status,
-        createdAt: row.created_at,
-      })),
+        );
+        const stored = unpackStoredPayload(decrypted);
+        return {
+          id: row.id,
+          clinicId: row.clinic_id,
+          patientId: row.patient_id,
+          authorUserId: row.author_user_id,
+          eventType: row.event_type,
+          occurredAt: row.occurred_at,
+          encounterId: row.encounter_id,
+          provenanceKind: row.provenance_kind,
+          provenanceSource: row.provenance_source,
+          payload: stored.data,
+          note: stored.note,
+          encryptionVersion: row.encryption_version,
+          supersedesEventId: row.supersedes_event_id,
+          status: row.status,
+          createdAt: row.created_at,
+        };
+      }),
     );
     return tenantJson({ data });
   } catch (error) {
@@ -175,7 +206,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   let payloadSize = 0;
   try {
-    payloadSize = new TextEncoder().encode(JSON.stringify(payload)).byteLength;
+    payloadSize = new TextEncoder().encode(JSON.stringify({ payload, note })).byteLength;
   } catch {
     return tenantError("payload clínico não é serializável.", "VALIDATION_ERROR", 400);
   }
@@ -258,11 +289,16 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const eventId = crypto.randomUUID();
+  const storedPayload: StoredClinicalPayload = {
+    format: STORED_PAYLOAD_FORMAT,
+    data: canonicalEvent.data,
+    note: canonicalEvent.note ?? null,
+  };
   const payloadEncrypted = await encryptClinicalJson(
     context.env,
     clinicId,
     `clinical-event:${eventId}`,
-    canonicalEvent.data,
+    storedPayload,
   );
   const encryptionVersion = currentClinicalEncryptionVersion(context.env);
   const now = new Date().toISOString();
@@ -368,6 +404,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       provenanceKind: canonicalEvent.provenance.kind,
       provenanceSource: canonicalEvent.provenance.source,
       payload: canonicalEvent.data,
+      note: canonicalEvent.note ?? null,
       encryptionVersion,
       supersedesEventId: canonicalEvent.supersedesEventId ?? null,
       status: "active",
