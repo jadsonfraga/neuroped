@@ -112,7 +112,7 @@ function download(filename: string, mime: string, content: string): void {
   a.href = url;
   a.download = filename;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 2_000);
 }
 
 export function exportSessionJson(session: CognitiveSession): void {

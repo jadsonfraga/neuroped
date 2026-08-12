@@ -5,6 +5,8 @@
 // fonte). Reusa buildDocumentPdf (pdf-lib) para o PDF institucional.
 // ============================================================
 
+import { neutralizeCsvFormula } from "./csv";
+
 export interface FilterExportRow {
   slot: string;
   clinicalTier: string;
@@ -53,7 +55,7 @@ function asciiSafe(input: string): string {
 
 // ---------- CSV ----------
 function csvCell(value: string): string {
-  const s = (value ?? "").replace(/\r?\n/g, " ").trim();
+  const s = neutralizeCsvFormula((value ?? "").replace(/\r?\n/g, " ").trim());
   return /[",;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

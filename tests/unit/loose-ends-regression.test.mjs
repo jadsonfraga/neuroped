@@ -218,6 +218,41 @@ assert.match(signatureRegistry, /const SECURE_REGISTRY_KEY = "assinatura:registr
 assert.match(signatureRegistry, /secureGet<Registro\[]>\(SECURE_REGISTRY_KEY\)/);
 assert.match(signatureRegistry, /secureSet\(SECURE_REGISTRY_KEY/);
 
+// Exports com texto livre do usuário não podem virar fórmula ao abrir no Excel
+// (CSV injection). A neutralização é única em lib/csv e todos os builders de
+// CSV com campos digitados precisam passá-la.
+const csvLib = read("client/src/lib/csv.ts");
+assert.match(csvLib, /export function neutralizeCsvFormula/);
+assert.match(csvLib, /\^\[=\+\\-@\\t\\r\]/);
+for (const [name, source] of [
+  ["epilepsia", epilepsyDiary],
+  ["cefaleia", headacheCalendar],
+  ["diário genérico", diarioClinico],
+  ["filtro clínico", read("client/src/lib/filterExport.ts")],
+]) {
+  assert.match(source, /neutralizeCsvFormula/, `${name}: export CSV sem neutralização de fórmula`);
+}
+
+// Nenhuma revogação de blob: pode ser síncrona após o click — o download pode
+// não ter começado. O padrão canônico é o adiamento de 2s (downloadBlob/#599).
+for (const path of [
+  "client/src/components/agenda/AgendaBoard.tsx",
+  "client/src/components/DiarioClinico.tsx",
+  "client/src/features/cognitive-lab/storage.ts",
+  "client/src/lib/filterExport.ts",
+  "client/src/pages/caa.tsx",
+  "client/src/pages/pacientes.tsx",
+  "client/src/pages/assinatura-digital.tsx",
+  "client/src/pages/epilepsy-diary.tsx",
+  "client/src/pages/headache-calendar.tsx",
+]) {
+  const source = read(path);
+  const bare = source
+    .split("\n")
+    .filter((line) => line.includes("revokeObjectURL") && !line.includes("setTimeout"));
+  assert.equal(bare.length, 0, `${path}: revokeObjectURL síncrono reintroduzido`);
+}
+
 // Ferramentas temporárias/legadas capazes de reescrever clínica ou simular auditorias
 // não devem reaparecer na raiz ativa sem um workflow e contrato explícitos.
 for (const path of [

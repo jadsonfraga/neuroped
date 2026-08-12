@@ -180,7 +180,7 @@ export default function PacientesPage() {
       a.href = url;
       a.download = `neuroped-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 2_000);
       softSuccess();
       haptic.success();
       toast({ title: `Backup de ${patients.length} paciente(s) exportado.` });
