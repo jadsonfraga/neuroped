@@ -47,7 +47,7 @@ export function Mascote({
         className={`relative ${SIZES[size]} shrink-0`}
       >
         <div
-          className="absolute inset-[7%] rounded-full border border-white/55 bg-gradient-to-br from-white/45 via-primary/[0.06] to-chart-2/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_24px_50px_-30px_hsl(var(--primary)/0.45)] backdrop-blur-sm dark:border-white/10 dark:from-white/[0.05] dark:via-primary/[0.08] dark:to-chart-2/[0.07]"
+          className="absolute inset-[7%] rounded-full border border-white/50 bg-gradient-to-br from-white/40 via-primary/[0.06] to-chart-2/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_24px_50px_-30px_hsl(var(--primary)/0.45)] backdrop-blur-sm dark:border-white/10 dark:from-white/[0.05] dark:via-primary/[0.08] dark:to-chart-2/[0.07]"
           aria-hidden="true"
         />
         <motion.div
@@ -57,7 +57,7 @@ export function Mascote({
           aria-hidden="true"
         >
           <span className="absolute left-[9%] top-[28%] h-2 w-2 rounded-full bg-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.28)]" />
-          <span className="absolute bottom-[18%] right-[6%] h-1.5 w-1.5 rounded-full bg-chart-2/45 shadow-[0_0_10px_hsl(var(--chart-2)/0.25)]" />
+          <span className="absolute bottom-[18%] right-[6%] h-1.5 w-1.5 rounded-full bg-chart-2/40 shadow-[0_0_10px_hsl(var(--chart-2)/0.25)]" />
         </motion.div>
         <img
           src="/neuroped-mascot-premium.webp"
@@ -70,9 +70,9 @@ export function Mascote({
         />
       </motion.div>
       {message && (
-        <figcaption className="relative -mt-3 max-w-[18rem] rounded-[1.15rem] border border-white/70 bg-card/85 px-4 py-3.5 text-center text-[12px] font-medium leading-relaxed text-foreground/78 shadow-[0_16px_40px_-22px_hsl(var(--foreground)/0.38)] backdrop-blur-xl dark:border-white/10">
+        <figcaption className="relative -mt-3 max-w-[18rem] rounded-[1.15rem] border border-white/70 bg-card/[0.85] px-4 py-3.5 text-center text-[12px] font-medium leading-relaxed text-foreground/[0.78] shadow-[0_16px_40px_-22px_hsl(var(--foreground)/0.38)] backdrop-blur-xl dark:border-white/10">
           <span
-            className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t border-white/70 bg-card/85 dark:border-white/10"
+            className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t border-white/70 bg-card/[0.85] dark:border-white/10"
             aria-hidden="true"
           />
           <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-primary/[0.065] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.11em] text-primary">
