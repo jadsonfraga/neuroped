@@ -106,7 +106,14 @@ async function main() {
   const server = external ? null : await startStaticServer();
   const base = external || `http://127.0.0.1:${server.address().port}`;
 
-  const browser = await chromium.launch();
+  // Paridade com audit-screens: permite Chromium fora do caminho padrão do
+  // Playwright (ex.: ambientes remotos com binário pré-instalado).
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  const browser = await chromium.launch(
+    executablePath
+      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+      : undefined,
+  );
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
   // O smoke valida as escalas, não o fluxo de primeira visita. Prepara somente
