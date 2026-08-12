@@ -2,7 +2,7 @@
  * A camada não oculta conteúdo: apenas reserva espaço para o dock fixo e
  * reposiciona superfícies flutuantes conhecidas acima dele. */
 
-@media screen and (max-width: 1023px) {
+@media screen and (max-width: 767px) {
   body.np-mobile-dock-active #main-content {
     padding-bottom: calc(6.35rem + env(safe-area-inset-bottom)) !important;
   }

@@ -31,10 +31,12 @@ assert.match(main, /\.\/styles\/flow-os\.css/, "shell deve carregar o contrato d
 assert.match(css, /#main-content/, "conteúdo principal deve reservar espaço para o dock");
 assert.match(css, /safe-area-inset-bottom/, "reserva do conteúdo deve considerar safe area");
 
-assert.match(dock, /\blg:hidden\b/, "dock deve encerrar no breakpoint lg de 1024px");
-assert.match(layout, /matchMedia\("\(min-width: 1024px\)"\)/, "shell React deve compartilhar o breakpoint lg");
+// Sidebar fixa voltou a valer a partir de md (768px) a pedido do Dr. Jadson
+// (2026-08-12): tablet retrato mantém a sidebar; drawer+dock só no celular.
+assert.match(dock, /\bmd:hidden\b/, "dock deve encerrar no breakpoint md de 768px");
+assert.match(layout, /matchMedia\("\(min-width: 768px\)"\)/, "shell React deve compartilhar o breakpoint md");
 assert.match(layout, /classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
-assert.match(css, /@media screen and \(max-width: 1023px\)/, "contrato tablet deve valer apenas em tela");
+assert.match(css, /@media screen and \(max-width: 767px\)/, "contrato mobile deve valer apenas em tela");
 assert.match(
   css,
   /body\.np-mobile-drawer-open \[data-testid="mobile-primary-dock"\][\s\S]*?display: none !important;/,

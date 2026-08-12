@@ -81,8 +81,8 @@ a.np-primary-cta:active {
   box-shadow: var(--np-soft-ring) !important;
 }
 
-@media screen and (max-width: 1023px) {
-  header.fixed.lg\:hidden {
+@media screen and (max-width: 767px) {
+  header.fixed.md\:hidden {
     height: calc(var(--np-appbar-height) + env(safe-area-inset-top)) !important;
     padding-top: env(safe-area-inset-top) !important;
     padding-left: 0.85rem !important;
@@ -93,17 +93,17 @@ a.np-primary-cta:active {
     backdrop-filter: blur(24px) saturate(135%) !important;
   }
 
-  header.fixed.lg\:hidden > div:first-child {
+  header.fixed.md\:hidden > div:first-child {
     gap: 0.65rem !important;
   }
 
-  header.fixed.lg\:hidden > div:first-child > div:first-child {
+  header.fixed.md\:hidden > div:first-child > div:first-child {
     width: 2.15rem !important;
     height: 2.15rem !important;
     border-radius: 0.82rem !important;
   }
 
-  header.fixed.lg\:hidden button {
+  header.fixed.md\:hidden button {
     min-width: 2.75rem !important;
     min-height: 2.75rem !important;
     border-radius: 0.95rem !important;
