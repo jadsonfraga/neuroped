@@ -1,0 +1,48 @@
+name: Temporary sync definitive bughunt with main
+
+on:
+  push:
+    branches:
+      - fix/final-definitive-bughunt-20260810
+    paths:
+      - ".github/workflows/tmp-sync-definitive-main.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/final-definitive-bughunt-20260810
+          fetch-depth: 0
+      - name: Merge current main with explicit conflict policy
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          set +e
+          git merge --no-ff origin/main -m "chore(audit): sincronizar bughunt definitivo com main atual"
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "Conflitos detectados; preservando hardening da branch somente nos arquivos previamente auditados."
+            for file in functions/api/auth/_shared.ts functions/api/auth/login.ts; do
+              if git diff --name-only --diff-filter=U | grep -Fxq "$file"; then
+                git checkout --ours -- "$file"
+                git add "$file"
+              fi
+            done
+            remaining="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$remaining" ]; then
+              echo "::error::Conflitos não previstos permanecem:"
+              printf '%s\n' "$remaining"
+              exit 1
+            fi
+            git commit --no-edit
+          fi
+          git push origin HEAD:fix/final-definitive-bughunt-20260810
