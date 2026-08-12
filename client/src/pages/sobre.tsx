@@ -78,7 +78,7 @@ export default function SobrePage() {
             <Badge className="mb-1 border-amber-500/30 bg-amber-500/20 text-amber-600 dark:text-amber-400">
               <Star className="mr-1 h-3 w-3" /> Neuropediatria infantil em Petrolina
             </Badge>
-            <h1 className="text-xl font-black text-foreground">Dr. Jadson Fraga Araújo Júnior</h1>
+            <h1 className="text-xl font-bold text-foreground">Dr. Jadson Fraga Araújo Júnior</h1>
           </div>
         </div>
       </div>

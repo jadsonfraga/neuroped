@@ -175,7 +175,7 @@ export default function PortalFamiliaPage() {
           <Users className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-black text-foreground">Portal dos Pais / Psicoeducação</h1>
+          <h1 className="text-xl font-bold text-foreground">Portal dos Pais / Psicoeducação</h1>
           <p className="text-xs text-muted-foreground">Informações gerais, escola, rotina e documentos liberados</p>
         </div>
       </div>
@@ -191,7 +191,7 @@ export default function PortalFamiliaPage() {
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-sm font-black text-foreground">{resource.title}</h2>
+                    <h2 className="text-sm font-semibold text-foreground">{resource.title}</h2>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{resource.description}</p>
                   </div>
                 </CardContent>

@@ -20,7 +20,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   return (
     <div className="rounded-xl border border-border bg-muted/30 px-3 py-2">
       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="text-lg font-black tabular-nums">{value}</p>
+      <p className="text-lg font-bold tabular-nums">{value}</p>
       {hint && <p className="text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );

@@ -52,7 +52,7 @@ function NodeBanner({ node }: { node: FluxoNode }) {
       <div className="flex items-start gap-2.5">
         <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${iconTone}`} />
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-black text-foreground">{node.title}</h2>
+          <h2 className="text-sm font-semibold text-foreground">{node.title}</h2>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{node.intro}</p>
           <div className="mt-3 grid gap-1.5 sm:grid-cols-3">
             {node.picks.map((p) => <PickChip key={p.label} pick={p} variant="ouro" />)}
@@ -78,7 +78,7 @@ export default function FluxogramaPage() {
   return (
     <div className="page-enter pb-8 space-y-5">
       {/* Hero */}
-      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-sm backdrop-blur">
+      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-primary/[0.06] via-card/40 to-card/20 p-5 sm:p-7 shadow-sm backdrop-blur">
         <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-primary/15 to-chart-2/10 blur-3xl" />
         <div className="relative flex items-center gap-3.5">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/15 shadow-sm">
@@ -111,7 +111,7 @@ export default function FluxogramaPage() {
                 <span className="text-2xl leading-none" aria-hidden="true">{band.emoji}</span>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">{band.stage}</p>
-                  <h2 className="text-base font-black text-foreground">{band.ageLabel}</h2>
+                  <h2 className="text-base font-bold text-foreground">{band.ageLabel}</h2>
                 </div>
               </div>
               <div className="space-y-3">

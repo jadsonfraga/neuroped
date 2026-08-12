@@ -296,7 +296,7 @@ export function BrandMark({
       </div>
       {showWordmark && (
         <div className="min-w-0">
-          <p className={`truncate text-base font-black tracking-tight text-foreground ${titleClassName}`}>NeuroPed</p>
+          <p className={`truncate text-base font-bold tracking-tight text-foreground ${titleClassName}`}>NeuroPed</p>
           <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{subtitle}</p>
         </div>
       )}
@@ -363,7 +363,7 @@ export function AssetShowcase({
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">assets oficiais</p>
-          <h2 className="text-base font-black text-foreground">{title}</h2>
+          <h2 className="text-base font-bold text-foreground">{title}</h2>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{subtitle}</p>
         </div>
         <span className="hidden rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-primary sm:inline-flex">

@@ -11,7 +11,7 @@
 
 import type { Express } from "express";
 import { type Server } from "http";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import { z } from "zod";
 import { db, storage } from "./storage.js";
 import {
@@ -138,19 +138,29 @@ export async function registerRoutes(
 
   app.get("/api/patients", requireAuth, async (req, res) => {
     const ctx = getAuditContextFromRequest(req);
-    const rows = isAdmin(req.user!)
-      ? db.select().from(patients).all()
-      : db
-          .select()
-          .from(patients)
-          .where(eq(patients.ownerUserId, req.user!.id))
-          .all();
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+
+    const query = isAdmin(req.user!)
+      ? db.select().from(patients)
+      : db.select().from(patients).where(eq(patients.ownerUserId, req.user!.id));
+
+    const rows = query.limit(limit).offset(offset).all();
+    const countResult = isAdmin(req.user!)
+      ? db.select({ count: count() }).from(patients).all()
+      : db.select({ count: count() }).from(patients).where(eq(patients.ownerUserId, req.user!.id)).all();
+
+    const total = countResult[0]?.count || 0;
+
     await logAudit({
       eventType: "patient.read",
       context: ctx,
-      metadata: { count: rows.length },
+      metadata: { count: rows.length, total, limit, offset },
     });
-    return res.json(rows.map(patientToPlaintext));
+    return res.json({
+      data: rows.map(patientToPlaintext),
+      pagination: { total, limit, offset, hasMore: offset + limit < total },
+    });
   });
 
   app.get("/api/patients/:id", requireAuth, async (req, res) => {

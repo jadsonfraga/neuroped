@@ -64,7 +64,7 @@ export class AppErrorBoundary extends Component<Props, State> {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
             <AlertTriangle className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-xl font-black text-foreground">O NeuroPed encontrou uma falha</h1>
+          <h1 className="mt-4 text-xl font-bold text-foreground">O NeuroPed encontrou uma falha</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Seus registros locais não foram apagados. Recarregue o aplicativo; se a falha persistir, atualize somente o cache do app.
           </p>

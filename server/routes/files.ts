@@ -315,12 +315,19 @@ export function registerFileRoutes(app: Express): void {
    */
   app.get("/api/files", requireAuth, async (req: Request, res: Response) => {
     const patientId = typeof req.query.patientId === "string" ? req.query.patientId : null;
-    const rows = patientId
-      ? db.select().from(filesTable).where(and(eq(filesTable.ownerUserId, req.user!.id), eq(filesTable.patientId, patientId))).all()
-      : db.select().from(filesTable).where(eq(filesTable.ownerUserId, req.user!.id)).all();
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
-    return res.json(
-      rows
+    const baseQuery = patientId
+      ? db.select().from(filesTable).where(and(eq(filesTable.ownerUserId, req.user!.id), eq(filesTable.patientId, patientId)))
+      : db.select().from(filesTable).where(eq(filesTable.ownerUserId, req.user!.id));
+
+    const rows = baseQuery.limit(limit).offset(offset).all();
+    const countResult = baseQuery.all();
+    const total = countResult.filter((r: any) => !r.isDeleted).length;
+
+    return res.json({
+      data: rows
         .filter((r: any) => !r.isDeleted)
         .map((r: any) => ({
           id: r.id,
@@ -331,7 +338,8 @@ export function registerFileRoutes(app: Express): void {
           patientId: r.patientId,
           createdAt: r.createdAt,
         })),
-    );
+      pagination: { total, limit, offset, hasMore: offset + limit < total },
+    });
   });
 
   /**

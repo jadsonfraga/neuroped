@@ -1,14 +1,18 @@
 :root {
-    --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
-    /* Serif editorial do app (carregada via Google Fonts). Antes apontava para
-       "Fraunces", que NÃO é carregada → títulos caíam para Georgia, divergindo
-       dos títulos que usam var(--font-display). Unificado no serif real do
-       design (Cormorant Garamond) para tipografia consistente em todo o app. */
+    --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+    /* Serif editorial do app — reservado para momentos deliberados (logo,
+       peças institucionais) via .fraunces / var(--font-display). Os títulos
+       de interface usam a mesma sans do corpo: em produto clínico denso, uma
+       única família com pesos e tracking bem calibrados lê mais profissional
+       do que serif display em todo <h*>. */
     --font-heading: "Cormorant Garamond", "Source Serif 4", Georgia, serif;
     --space-md: 16px;
     --weight-semibold: 600;
 }
 body { font-family: var(--font-main); line-height: 1.5; -webkit-font-smoothing: antialiased; letter-spacing: -0.011em; }
-h1, h2, h3, .fraunces { font-family: var(--font-heading); letter-spacing: -0.02em; }
+h1, h2, h3 { font-family: var(--font-main); letter-spacing: -0.022em; font-variant-numeric: lining-nums tabular-nums; }
+.fraunces { font-family: var(--font-heading); letter-spacing: -0.02em; }
 .np-card { padding: var(--space-md); margin-bottom: var(--space-md); border-radius: var(--radius-lg); }
 button { font-family: var(--font-main); font-weight: var(--weight-semibold); letter-spacing: -0.01em; }
+/* Números alinhados em tabelas e métricas — evita "dança" de dígitos. */
+table, [data-stat], time { font-variant-numeric: lining-nums tabular-nums; }

@@ -31,7 +31,7 @@ export default function PortalNovidadesSafePage() {
             <span className="text-3xl" aria-hidden>{open.emoji}</span>
             {open.isNew && <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">Novo</Badge>}
           </div>
-          <h1 className="text-2xl font-black leading-tight">{open.title}</h1>
+          <h1 className="text-2xl font-bold leading-tight">{open.title}</h1>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>{open.date}</span>
             <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> {open.readTime}</span>
@@ -58,7 +58,7 @@ export default function PortalNovidadesSafePage() {
           <Newspaper className="w-6 h-6 text-primary" />
           <Badge variant="secondary">Portal das Famílias</Badge>
         </div>
-        <h1 className="text-2xl font-black">Saúde &amp; Desenvolvimento</h1>
+        <h1 className="text-2xl font-bold">Saúde &amp; Desenvolvimento</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Biblioteca educativa com {novidadesConteudoStats.artigosTotal} artigos em {novidadesConteudoStats.categoriasTotal - 1} trilhas: neurodesenvolvimento, escola, sono, comportamento, medicação, terapias, segurança e rotina familiar.
         </p>

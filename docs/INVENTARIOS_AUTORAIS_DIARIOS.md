@@ -2,7 +2,9 @@
 
 ## Finalidade
 
-O módulo gera um novo inventário clínico estruturado por dia e o incorpora automaticamente à Biblioteca de Instrumentos do NeuroPed. Cada registro entra obrigatoriamente como **rascunho em revisão**, identificado como **não validado psicometricamente**.
+O módulo gera um novo inventário clínico estruturado por dia e o preserva como artefato auditável no repositório. Cada registro entra obrigatoriamente como **rascunho em revisão**, identificado como **não validado psicometricamente**.
+
+A geração automática não equivale a publicação clínica. Somente registros promovidos manualmente para `revisado_clinicamente` entram no catálogo operacional exibido pelo aplicativo. Rascunhos e itens arquivados permanecem rastreáveis no repositório, mas não ficam disponíveis como instrumento de uso corrente.
 
 A automação não transforma rascunhos em escalas diagnósticas. Os instrumentos autorais não participam do ranking clínico automático, não possuem ponto de corte e não produzem escore total. Red flags são analisadas separadamente.
 
@@ -36,8 +38,8 @@ A auditoria bloqueia duplicidade de identificadores, item sem domínio, red flag
 
 ## Estados de publicação
 
-1. `rascunho_revisao`: gerado automaticamente e visível apenas como material autoral não validado.
-2. `revisado_clinicamente`: promovido manualmente após revisão do conteúdo, redação, segurança e utilidade.
+1. `rascunho_revisao`: gerado automaticamente, auditável no repositório e **não publicado no catálogo operacional**.
+2. `revisado_clinicamente`: promovido manualmente após revisão do conteúdo, redação, segurança e utilidade; é o único estado elegível para aparecer na Biblioteca do aplicativo.
 3. `arquivado`: retirado da utilização corrente, preservando rastreabilidade.
 
 A promoção de status nunca é automática.
@@ -47,7 +49,7 @@ A promoção de status nunca é automática.
 O workflow requer dois segredos no repositório:
 
 - `OPENAI_API_KEY`: chave de projeto da OpenAI usada exclusivamente no servidor do GitHub Actions;
-- `NEUROPED_AUTOMATION_TOKEN`: token com permissão de escrita no conteúdo do repositório, usado para que o commit diário possa acionar a esteira normal de implantação.
+- `NEUROPED_AUTOMATION_TOKEN`: token de automação usado pelo fluxo de versionamento/publicação controlada.
 
 Nenhuma chave deve ser colocada em arquivos `.env`, no cliente Vite ou em commits.
 
@@ -73,6 +75,9 @@ npm run build:client
 
 ## Catálogo no aplicativo
 
-`client/src/data/dailyAuthorialCatalog.ts` usa `import.meta.glob` para carregar todos os arquivos JSON em `client/src/data/daily-authorial/`. Portanto, cada arquivo diário válido passa a aparecer na Biblioteca sem edição manual de índice.
+`client/src/data/dailyAuthorialCatalog.ts` usa `import.meta.glob` para carregar os arquivos JSON em `client/src/data/daily-authorial/`, mas mantém duas fronteiras distintas:
 
-O filtro unificado permite selecionar fonte, categoria, idade, respondente, contexto e evidência/status, além da busca textual em títulos, finalidades, domínios e itens.
+- `dailyAuthorialReviewCatalog`: inventário completo válido, para auditoria/revisão interna;
+- `dailyAuthorialCatalog`: somente registros com `status === "revisado_clinicamente"`, que podem aparecer na Biblioteca operacional.
+
+Assim, adicionar um JSON válido ao repositório não o transforma automaticamente em conteúdo clínico publicado.

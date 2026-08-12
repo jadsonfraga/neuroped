@@ -344,7 +344,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
               <p className="text-sm font-semibold">{tut.text}</p>
               {tut.stimulus && (
                 <div className={`flex min-h-32 items-center ${tut.stimulus.position === "left" ? "justify-start pl-6" : tut.stimulus.position === "right" ? "justify-end pr-6" : "justify-center"}`}>
-                  <span className={`${stimSize} font-black ${tut.stimulus.colorClass ?? ""} float-gentle`} role="img" aria-label={tut.stimulus.ariaLabel ?? tut.stimulus.display}>
+                  <span className={`${stimSize} font-bold ${tut.stimulus.colorClass ?? ""} float-gentle`} role="img" aria-label={tut.stimulus.ariaLabel ?? tut.stimulus.display}>
                     {tut.stimulus.display}
                   </span>
                 </div>
@@ -381,12 +381,12 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
               <div className={`flex min-h-44 items-center rounded-2xl border border-border bg-muted/30 ${posClass}`} aria-live="off">
                 {trialState === "fixation" && <span className="w-full text-center text-4xl text-muted-foreground" aria-hidden="true">+</span>}
                 {trialState === "stimulus" && current && (
-                  <span className={`${stimSize} font-black ${current.stimulus.colorClass ?? ""}`} role="img" aria-label={current.stimulus.ariaLabel ?? current.stimulus.display}>
+                  <span className={`${stimSize} font-bold ${current.stimulus.colorClass ?? ""}`} role="img" aria-label={current.stimulus.ariaLabel ?? current.stimulus.display}>
                     {current.stimulus.display}
                   </span>
                 )}
                 {trialState === "feedback" && (
-                  <span className={`w-full text-center text-3xl font-black ${lastFeedback === "acerto" ? "text-emerald-500" : "text-red-500"} ${kidMode ? "celebrate" : ""}`}>
+                  <span className={`w-full text-center text-3xl font-bold ${lastFeedback === "acerto" ? "text-emerald-500" : "text-red-500"} ${kidMode ? "celebrate" : ""}`}>
                     {lastFeedback === "acerto" ? "🎉 Acertou!" : "Ops! Tente na próxima."}
                   </span>
                 )}
@@ -397,7 +397,7 @@ export function CognitiveTaskRunner({ task }: { task: CognitiveTaskConfig }) {
                     key={r.id}
                     size="lg"
                     variant="secondary"
-                    className={`${kidMode ? "min-h-16 text-lg" : "min-h-12"} font-black`}
+                    className={`${kidMode ? "min-h-16 text-lg" : "min-h-12"} font-bold`}
                     onPointerDown={() => respond(r.id)}
                   >
                     {r.emoji && <span aria-hidden="true" className="mr-1">{r.emoji}</span>} {r.label}

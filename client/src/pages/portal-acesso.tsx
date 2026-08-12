@@ -68,7 +68,7 @@ export default function PortalAcessoPage() {
             NeuroPed
           </span>
         </div>
-        <h1 className="text-2xl font-black">Política de Acesso</h1>
+        <h1 className="text-2xl font-bold">Política de Acesso</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Conteúdo educativo público e dados clínicos protegidos por autenticação
           remota ou PIN local previamente provisionado.

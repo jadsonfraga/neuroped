@@ -13,7 +13,7 @@ export function UnauthorizedCopyScreen({ host }: { host: string }) {
         >
           🔒
         </div>
-        <h1 className="text-lg font-black">Cópia não autorizada</h1>
+        <h1 className="text-lg font-bold">Cópia não autorizada</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
           Esta é uma cópia não oficial do <strong className="font-semibold text-foreground">NeuroPed</strong>, hospedada
           em um endereço não autorizado{host ? (

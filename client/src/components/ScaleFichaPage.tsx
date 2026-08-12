@@ -186,7 +186,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
         <Card className="rounded-2xl border-border/70">
           <CardContent className="p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-black text-foreground">Descrição</h2>
+              <h2 className="text-sm font-semibold text-foreground">Descrição</h2>
               <Button
                 type="button"
                 size="sm"
@@ -219,7 +219,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
       {scale.scoringCutoff && (
         <Card className="rounded-2xl border-primary/20 bg-primary/[0.04]">
           <CardContent className="p-5">
-            <h2 className="mb-2 flex items-center gap-1.5 text-sm font-black text-foreground">
+            <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <Target className="h-4 w-4 text-primary" aria-hidden="true" />
               Interpretação do escore
             </h2>
@@ -232,7 +232,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
 
       <Card className="rounded-2xl border-border/70">
         <CardContent className="space-y-3 p-5">
-          <h2 className="flex items-center gap-1.5 text-sm font-black text-foreground">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
             <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
             Evidência e proveniência
           </h2>

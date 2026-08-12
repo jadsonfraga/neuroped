@@ -26,14 +26,14 @@ export default function FamiliaPage() {
   return (
     <div className="space-y-6 pb-10">
       {/* Hero */}
-      <header className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-primary/[0.08] via-card/70 to-chart-2/[0.06] p-6 shadow-sm backdrop-blur sm:p-8">
+      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/[0.08] via-card/70 to-chart-2/[0.06] p-6 shadow-sm backdrop-blur sm:p-8">
         <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-chart-2/15 to-transparent blur-3xl" />
         <div className="relative">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Espaço das Famílias
           </span>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Bem-vindo(a) ao <span className="text-primary">NeuroPed</span>
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -54,7 +54,7 @@ export default function FamiliaPage() {
                   <l.icon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-base font-black leading-tight text-foreground group-hover:text-primary">{l.title}</h2>
+                  <h2 className="text-base font-bold leading-tight text-foreground group-hover:text-primary">{l.title}</h2>
                   <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{l.desc}</p>
                 </div>
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-primary/80 group-hover:text-primary">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useId } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -38,6 +38,8 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const scaleName = rawProps.scaleName ?? rawProps.testName ?? "Teste";
   const patientAge = rawProps.patientAge;
   const { toast } = useToast();
+  const selectId = useId();
+  const newPatientId = useId();
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [newPatientName, setNewPatientName] = useState("");
   const [savedPatientId, setSavedPatientId] = useState<string | null>(null);
@@ -186,22 +188,24 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           </Badge>
         </div>
 
-        <Select
-          value={selectedPatientId}
-          onValueChange={(value) => {
-            setSelectedPatientId(value);
-            setErrorMessage(null);
-          }}
-        >
-          <SelectTrigger data-testid="select-patient">
-            <SelectValue
-              placeholder={
-                loadingPatients
-                  ? "Carregando pacientes..."
-                  : "Selecionar paciente..."
-              }
-            />
-          </SelectTrigger>
+        <div className="space-y-1">
+          <label htmlFor={selectId} className="text-xs font-semibold text-muted-foreground">Paciente</label>
+          <Select
+            value={selectedPatientId}
+            onValueChange={(value) => {
+              setSelectedPatientId(value);
+              setErrorMessage(null);
+            }}
+          >
+            <SelectTrigger id={selectId} data-testid="select-patient">
+              <SelectValue
+                placeholder={
+                  loadingPatients
+                    ? "Carregando pacientes..."
+                    : "Selecionar paciente..."
+                }
+              />
+            </SelectTrigger>
           <SelectContent>
             <SelectItem value="__new__">+ Criar novo paciente</SelectItem>
             {patients.length === 0 && !loadingPatients && (
@@ -215,15 +219,20 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+          </Select>
+        </div>
 
         {selectedPatientId === "__new__" && (
-          <Input
+          <div className="space-y-1">
+            <label htmlFor={newPatientId} className="text-xs font-semibold text-muted-foreground">Nome do paciente</label>
+            <Input
+              id={newPatientId}
             placeholder="Nome do paciente"
             value={newPatientName}
             onChange={(e) => setNewPatientName(e.target.value)}
-            data-testid="input-new-patient-name"
-          />
+              data-testid="input-new-patient-name"
+            />
+          </div>
         )}
 
         {patientsError && (

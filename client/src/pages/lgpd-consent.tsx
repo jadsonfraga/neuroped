@@ -177,7 +177,7 @@ export default function LgpdConsentPage() {
     >
       <motion.header
         variants={slideUpFadeIn}
-        className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur"
+        className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
@@ -188,7 +188,7 @@ export default function LgpdConsentPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
                 LGPD · aviso não bloqueante
               </p>
-              <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
                 Privacidade e consentimento
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -226,7 +226,7 @@ export default function LgpdConsentPage() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black text-foreground">{block.title}</h2>
+                    <h2 className="text-sm font-semibold text-foreground">{block.title}</h2>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{block.short}</p>
                   </div>
                 </div>

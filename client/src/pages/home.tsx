@@ -173,7 +173,7 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="np-home-hero relative overflow-hidden rounded-[2rem] border border-white/70 p-6 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] sm:p-10 lg:min-h-[34rem] dark:border-white/10"
+        className="np-home-hero relative overflow-hidden rounded-3xl border border-white/70 p-6 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] sm:p-10 lg:min-h-[34rem] dark:border-white/10"
       >
         <div className="np-home-orb np-home-orb-one" aria-hidden="true" />
         <div className="np-home-orb np-home-orb-two" aria-hidden="true" />
@@ -207,7 +207,8 @@ export default function HomePage() {
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala ou página…"
+                placeholder="Buscar escala, paciente ou página…"
+                aria-label="Buscar escala, questionário, paciente ou página"
                 className="h-14 rounded-[1.15rem] border-white/80 bg-white/80 pl-13 pr-10 text-[15px] shadow-[0_14px_35px_-22px_rgba(45,25,58,0.4)] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-primary/30 focus-visible:shadow-[0_18px_42px_-22px_rgba(91,42,116,0.4)] dark:border-white/10 dark:bg-slate-950/50"
                 data-testid="input-search"
               />

@@ -70,7 +70,7 @@ export default function GlossarioPage() {
           <BookText className="w-6 h-6 text-primary" />
           <Badge variant="secondary">Glossário</Badge>
         </div>
-        <h1 className="text-2xl font-black">Termos de Neuropediatria</h1>
+        <h1 className="text-2xl font-bold">Termos de Neuropediatria</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Definições em linguagem acessível dos termos usados no app. Conteúdo educativo —
           não é instrumento clínico nem substitui avaliação profissional.

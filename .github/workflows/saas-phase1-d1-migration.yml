@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "db/migrations/0009_saas_phase1_foundation.sql"
+      - "db/migrations/0010_saas_phase1_hardening.sql"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
       - "functions/api/live/**"
@@ -61,7 +62,7 @@ jobs:
           [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
           [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
 
-      - name: Aplicar somente schema SaaS da Fase 1
+      - name: Aplicar schema e hardening SaaS da Fase 1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -69,8 +70,10 @@ jobs:
           set -euo pipefail
           npx wrangler@4 d1 execute neuroped-db --remote --yes \
             --file=./db/migrations/0009_saas_phase1_foundation.sql
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0010_saas_phase1_hardening.sql
 
-      - name: Verificar isolamento físico do schema LIVE
+      - name: Verificar isolamento físico e invariantes LIVE
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -105,4 +108,28 @@ jobs:
           grep -q "clinic_id TEXT NOT NULL" /tmp/live-events-schema.txt
           grep -q "payload_encrypted TEXT NOT NULL" /tmp/live-events-schema.txt
 
-          echo "✅ Fundação SaaS criada. Clinical LIVE NÃO foi habilitado por este workflow."
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name='ux_live_clinical_events_supersedes_once';" \
+            > /tmp/saas-hardening-index.txt 2>&1
+          cat /tmp/saas-hardening-index.txt
+          grep -q "ux_live_clinical_events_supersedes_once" /tmp/saas-hardening-index.txt || {
+            echo "::error::Índice linear de supersessão ausente"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_clinic_memberships_keep_last_owner_update','trg_clinic_memberships_keep_last_owner_delete','trg_live_events_provenance_source_insert','trg_live_events_provenance_source_update') ORDER BY name;" \
+            > /tmp/saas-hardening-triggers.txt 2>&1
+          cat /tmp/saas-hardening-triggers.txt
+          for trigger in \
+            trg_clinic_memberships_keep_last_owner_update \
+            trg_clinic_memberships_keep_last_owner_delete \
+            trg_live_events_provenance_source_insert \
+            trg_live_events_provenance_source_update; do
+            grep -q "$trigger" /tmp/saas-hardening-triggers.txt || {
+              echo "::error::Trigger SaaS ausente: $trigger"
+              exit 1
+            }
+          done
+
+          echo "✅ Fundação SaaS + invariantes de hardening criadas. Clinical LIVE NÃO foi habilitado por este workflow."

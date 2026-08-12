@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
+import { escapeHtml } from "@/lib/htmlEscape";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — texto integral + assinatura PAdES
@@ -40,15 +41,6 @@ Petrolina/PE, ____/____/______.
 Dr. Jadson Fraga Araújo Júnior
 Neurologista Infantil / Neuropediatra
 CRM-PE 25.227 | RQE 17.756`;
-
-function escapeHtml(value: string): string {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 function dateStamp(): string {
   const d = new Date();

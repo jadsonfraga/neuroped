@@ -50,7 +50,7 @@ export default function VerificarPage() {
       <section className="rounded-3xl border border-border bg-card/75 p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-6 h-6 text-primary" />
-          <h1 className="text-xl font-black tracking-tight text-foreground">Verificacao de documento</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Verificacao de documento</h1>
         </div>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
           Confira um documento NeuroPed assinado digitalmente. Se o PDF foi aberto pelo QR impresso no
