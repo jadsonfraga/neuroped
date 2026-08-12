@@ -18,6 +18,7 @@ import { DUMMY_PASSWORD_HASH, verifyPassword } from "./_crypto";
 import { createSessionTokens } from "./_sessions";
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
+import { enforceLoginAbuseLimit, registerLoginAbuseFailure } from "./_rateLimit";
 
 const INVALID = { error: "Credenciais inválidas.", code: "INVALID_CREDENTIALS" };
 
@@ -62,6 +63,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Informe e-mail e senha.", code: "MISSING_FIELDS" }, 400);
   }
 
+  // Credential stuffing entre múltiplas contas precisa de um limite distribuído,
+  // além do lockout por conta e do limiter geral do middleware.
+  try {
+    const abuseLimit = await enforceLoginAbuseLimit(env, request, secret);
+    if (abuseLimit) return abuseLimit;
+  } catch {
+    // O lockout por conta continua disponível; falha do limitador auxiliar não
+    // transforma indisponibilidade de telemetria em indisponibilidade de login.
+  }
+
   // Provisiona o admin inicial (idempotente) antes de buscar o usuário.
   try {
     await bootstrapAdmin(env.DB, env);
@@ -71,6 +82,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const user = await getUserByEmail(env.DB, email);
   const locked = user ? isLocked(user) : false;
+
   // Mesmo quando o e-mail não existe, executa PBKDF2 sobre um hash sentinela.
   // Estado inexistente/inativo/bloqueado e senha incorreta compartilham a mesma
   // resposta externa para não funcionar como oráculo de cadastro.
@@ -78,10 +90,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!user || !user.is_active || locked || !ok) {
     if (user && user.is_active && !locked && !ok) {
       await registerFailedAttempt(env.DB, user);
+      try {
+        await registerLoginAbuseFailure(env, request, secret);
+      } catch {
+        // O contador atômico por conta já foi registrado.
+      }
+    } else {
+      try {
+        await registerLoginAbuseFailure(env, request, secret);
+      } catch {
+        // A resposta externa continua genérica mesmo sem o bucket distribuído.
+      }
     }
     return json(INVALID, 401);
   }
 
+  // Entre a leitura e este ponto a conta pode ter sido desativada/bloqueada.
+  // O UPDATE condicional impede emitir sessão para um estado que deixou de valer.
   if (!(await registerSuccessfulLogin(env.DB, user))) {
     return json(INVALID, 401);
   }
