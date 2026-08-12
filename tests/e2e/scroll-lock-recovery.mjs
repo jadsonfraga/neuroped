@@ -32,6 +32,7 @@ async function openScrollableApp(width) {
   await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
   await page.locator("#main-content").waitFor({ state: "visible", timeout: 15000 });
+
   await page.evaluate(() => {
     const main = document.querySelector("#main-content");
     if (!(main instanceof HTMLElement)) throw new Error("#main-content ausente");
@@ -41,10 +42,26 @@ async function openScrollableApp(width) {
     spacer.style.width = "1px";
     spacer.style.pointerEvents = "none";
     main.appendChild(spacer);
+
+    // Remove animação de scroll do harness e fixa o foco no documento. Isso
+    // torna PageDown uma entrada de rolagem determinística em contextos touch,
+    // onde Chrome headless não entrega wheel/swipe de compositor de forma estável.
+    document.documentElement.style.scrollBehavior = "auto";
+    document.body.style.scrollBehavior = "auto";
+    document.body.tabIndex = -1;
+    document.body.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   });
   await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight + 1200);
   return { context, page };
+}
+
+async function resetScroll(page) {
+  await page.evaluate(() => {
+    document.body.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  });
+  await page.waitForFunction(() => window.scrollY <= 1);
 }
 
 async function injectOrphanedLock(page) {
@@ -96,10 +113,10 @@ async function dispatchRealTouchStart(page, x, y) {
   await session.detach();
 }
 
-async function wheelDelta(page, deltaY = 500) {
+async function pageDownDelta(page) {
   const before = await page.evaluate(() => window.scrollY);
-  await page.mouse.wheel(0, deltaY);
-  await page.waitForTimeout(160);
+  await page.keyboard.press("PageDown");
+  await page.waitForTimeout(220);
   const after = await page.evaluate(() => window.scrollY);
   return { before, after };
 }
@@ -109,24 +126,27 @@ async function verifyRecovery(width) {
   try {
     const x = Math.round(width / 2);
     const y = Math.round(HEIGHT / 2);
-    await page.mouse.move(x, y);
 
-    // 1) Prova que o próprio harness consegue rolar este documento nesta largura.
-    const baseline = await wheelDelta(page);
-    assert.ok(baseline.after > baseline.before + 20, `${width}px: baseline de wheel não rolou`);
-    await page.evaluate(() => window.scrollTo(0, 0));
+    // 1) Controle positivo: neste MESMO contexto touch o documento precisa
+    // responder a uma entrada nativa de rolagem que não dispara pointer/touch.
+    const baseline = await pageDownDelta(page);
+    assert.ok(baseline.after > baseline.before + 20, `${width}px: baseline de PageDown não rolou`);
+    await resetScroll(page);
 
-    // 2) Injeta exatamente o estado órfão que congelava o app. Wheel não pode
-    // mover a página e, por não emitir pointerdown/touchstart, não pode autocurar.
+    // 2) Estado exato do P0: enquanto o lock órfão existe, PageDown não deve
+    // mover a página e não pode acionar o autocurador.
     await injectOrphanedLock(page);
     const locked = await readLock(page);
     assert.equal(locked.dataScrollLocked, true, `${width}px: lock não foi injetado`);
-    const blocked = await wheelDelta(page);
-    assert.ok(blocked.after <= blocked.before + 2, `${width}px: wheel rolou apesar do lock (${blocked.before}->${blocked.after})`);
-    assert.equal((await readLock(page)).dataScrollLocked, true, `${width}px: wheel não pode remover o lock`);
+    const blocked = await pageDownDelta(page);
+    assert.ok(
+      blocked.after <= blocked.before + 2,
+      `${width}px: PageDown rolou apesar do lock (${blocked.before}->${blocked.after})`,
+    );
+    assert.equal((await readLock(page)).dataScrollLocked, true, `${width}px: PageDown não pode remover o lock`);
 
-    // 3) O toque NATIVO é o único evento de recuperação. Depois dele, sem nenhum
-    // pointerdown adicional, o MESMO wheel deve voltar a mover window.scrollY.
+    // 3) O touch NATIVO é o ÚNICO evento de recuperação. Sem pointerdown/click,
+    // o mesmo PageDown precisa voltar a mover window.scrollY.
     await dispatchRealTouchStart(page, x, y);
     await page.waitForFunction(() =>
       document.body.style.overflow !== "hidden" &&
@@ -135,22 +155,23 @@ async function verifyRecovery(width) {
       !document.body.hasAttribute("data-scroll-locked"),
     );
     assertUnlocked(await readLock(page), `${width}px touch recovery`);
-    const recovered = await wheelDelta(page);
+    const recovered = await pageDownDelta(page);
     assert.ok(
       recovered.after > recovered.before + 20,
       `${width}px: documento não voltou a rolar após touch (${recovered.before}->${recovered.after})`,
     );
 
-    // 4) Pointerdown também precisa autocurar o lock órfão.
-    await page.evaluate(() => window.scrollTo(0, 0));
+    // 4) Caminho secundário: pointerdown também precisa limpar o lock órfão.
+    await resetScroll(page);
     await injectOrphanedLock(page);
+    await page.mouse.move(x, y);
     await page.mouse.down();
     await page.mouse.up();
     await page.waitForFunction(() => !document.body.hasAttribute("data-scroll-locked"));
     assertUnlocked(await readLock(page), `${width}px pointer recovery`);
 
-    // 5) Segurança: modal legítimo deve preservar o lock, e o primeiro touch
-    // depois de fechar o modal deve liberar tudo novamente.
+    // 5) Segurança: modal legítimo preserva o lock. Depois de removê-lo, o
+    // primeiro touch seguinte precisa liberar todas as formas da trava.
     await page.evaluate(() => {
       const dialog = document.createElement("div");
       dialog.dataset.scrollRecoveryDialog = "true";
