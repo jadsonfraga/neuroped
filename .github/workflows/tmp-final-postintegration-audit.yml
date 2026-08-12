@@ -1,0 +1,41 @@
+name: Temporary final post-integration audit
+
+on:
+  push:
+    branches:
+      - fix/final-definitive-bughunt-integration-20260812
+
+permissions:
+  contents: read
+
+jobs:
+  deep-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/final-definitive-bughunt-integration-20260812
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Independent static scanner
+        run: python3 scripts/tmp_final_postintegration_scan.py
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Release gate
+        run: npm run verify:release
+      - name: Install Chromium for real browser gates
+        run: npx playwright install --with-deps chromium
+      - name: Full accessibility browser audit
+        run: npm run audit:a11y:full
+      - name: Real E2E smoke for scales
+        run: npm run test:e2e:scales
+      - name: Screen audit
+        run: npm run audit:screens
+      - name: Final production client build
+        run: npm run build:client
