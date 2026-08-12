@@ -10,9 +10,9 @@ import {
   getClinicMembership,
   membershipCanReadClinical,
   membershipCanWriteClinical,
+  prepareSaasAudit,
   tenantError,
   tenantJson,
-  writeSaasAudit,
   type TenantEnv,
 } from "../../tenant/_core";
 import {
@@ -88,6 +88,10 @@ function normalizedOccurredAt(value: unknown): string | null {
   return Number.isFinite(millis) ? new Date(millis).toISOString() : null;
 }
 
+function validIsoTimestamp(value: string): boolean {
+  return normalizedOccurredAt(value) !== null;
+}
+
 function isPlainJsonObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -139,6 +143,21 @@ async function patientBelongsToClinic(
     .bind(patientId, clinicId)
     .first<{ id: string }>();
   return Boolean(row);
+}
+
+async function findSourceDuplicate(
+  db: D1Database,
+  clinicId: string,
+  provenanceSource: string,
+  sourceRecordHash: string,
+): Promise<{ id: string } | null> {
+  return db
+    .prepare(
+      `SELECT id FROM live_clinical_events
+        WHERE clinic_id = ? AND provenance_source = ? AND source_record_hash = ? LIMIT 1`,
+    )
+    .bind(clinicId, provenanceSource, sourceRecordHash)
+    .first<{ id: string }>();
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -248,7 +267,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       400,
     );
   }
-  if (!occurredAt) {
+  if (!occurredAt || !validIsoTimestamp(occurredAt)) {
     return tenantError("occurredAt deve ser um instante ISO 8601 com fuso.", "VALIDATION_ERROR", 400);
   }
   if (encounterId && !OPAQUE_ID.test(encounterId)) {
@@ -305,7 +324,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       return tenantError("Evento supersedido não pertence ao mesmo paciente/tenant.", "INVALID_SUPERSESSION", 409);
     }
     if (superseded.status !== "active") {
-      return tenantError("Somente evento ativo pode ser supersedido.", "EVENT_NOT_ACTIVE", 409);
+      return tenantError("O evento já foi supersedido. Recarregue a linha clínica.", "STALE_SUPERSESSION", 409);
     }
   }
 
@@ -319,13 +338,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     : null;
 
   if (sourceRecordHash) {
-    const existing = await db
-      .prepare(
-        `SELECT id FROM live_clinical_events
-          WHERE clinic_id = ? AND provenance_source = ? AND source_record_hash = ? LIMIT 1`,
-      )
-      .bind(clinicId, provenanceSource, sourceRecordHash)
-      .first<{ id: string }>();
+    const existing = await findSourceDuplicate(db, clinicId, provenanceSource, sourceRecordHash);
     if (existing) {
       return tenantJson({ id: existing.id, duplicate: true }, 200);
     }
@@ -340,36 +353,39 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   );
   const encryptionVersion = currentClinicalEncryptionVersion(context.env);
   const now = new Date().toISOString();
-
-  const insert = db
-    .prepare(
-      `INSERT INTO live_clinical_events
-        (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
-         encounter_id, provenance_kind, provenance_source, payload_encrypted,
-         encryption_version, source_record_hash, supersedes_event_id, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
-    )
-    .bind(
-      eventId,
-      clinicId,
-      patientId,
-      user.id,
-      eventType,
-      occurredAt,
-      encounterId,
-      provenanceKind,
-      provenanceSource,
-      payloadEncrypted,
-      encryptionVersion,
-      sourceRecordHash,
-      supersedesEventId,
-      now,
-    );
+  const auditParams = {
+    clinicId,
+    actorUserId: user.id,
+    action: "live_clinical_event_create",
+    targetType: "clinical_event",
+    targetId: eventId,
+    metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
+  };
+  const insertSql = `INSERT INTO live_clinical_events
+      (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
+       encounter_id, provenance_kind, provenance_source, payload_encrypted,
+       encryption_version, source_record_hash, supersedes_event_id, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`;
+  const insertBindings = [
+    eventId,
+    clinicId,
+    patientId,
+    user.id,
+    eventType,
+    occurredAt,
+    encounterId,
+    provenanceKind,
+    provenanceSource,
+    payloadEncrypted,
+    encryptionVersion,
+    sourceRecordHash,
+    supersedesEventId,
+    now,
+  ];
 
   try {
     if (supersedesEventId) {
-      await db.batch([
-        insert,
+      const results = await db.batch([
         db
           .prepare(
             `UPDATE live_clinical_events
@@ -377,29 +393,52 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
               WHERE id = ? AND clinic_id = ? AND patient_id = ? AND status = 'active'`,
           )
           .bind(supersedesEventId, clinicId, patientId),
+        db
+          .prepare(
+            `INSERT INTO live_clinical_events
+              (id, clinic_id, patient_id, author_user_id, event_type, occurred_at,
+               encounter_id, provenance_kind, provenance_source, payload_encrypted,
+               encryption_version, source_record_hash, supersedes_event_id, status, created_at)
+             SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?
+              WHERE changes() = 1`,
+          )
+          .bind(...insertBindings),
+        prepareSaasAudit(db, auditParams, true),
       ]);
+      if (
+        (results[0]?.meta?.changes ?? 0) !== 1 ||
+        (results[1]?.meta?.changes ?? 0) !== 1 ||
+        (results[2]?.meta?.changes ?? 0) !== 1
+      ) {
+        return tenantError(
+          "O evento mudou durante a correção. Recarregue a linha clínica.",
+          "STALE_SUPERSESSION",
+          409,
+        );
+      }
     } else {
-      await insert.run();
+      const results = await db.batch([
+        db.prepare(insertSql).bind(...insertBindings),
+        prepareSaasAudit(db, auditParams, true),
+      ]);
+      if ((results[0]?.meta?.changes ?? 0) !== 1 || (results[1]?.meta?.changes ?? 0) !== 1) {
+        return tenantError("Não foi possível registrar o evento clínico.", "DB_ERROR", 500);
+      }
     }
   } catch (error) {
     // Corridas de deduplicação devem continuar idempotentes, não virar falso 500.
     if (sourceRecordHash) {
-      const duplicate = await db
-        .prepare(
-          `SELECT id FROM live_clinical_events
-            WHERE clinic_id = ? AND provenance_source = ? AND source_record_hash = ? LIMIT 1`,
-        )
-        .bind(clinicId, provenanceSource, sourceRecordHash)
-        .first<{ id: string }>();
+      const duplicate = await findSourceDuplicate(db, clinicId, provenanceSource, sourceRecordHash);
       if (duplicate) return tenantJson({ id: duplicate.id, duplicate: true }, 200);
     }
+    // O índice único do hardening impede duas correções diretas do mesmo evento.
     if (supersedesEventId) {
       const successor = await db
         .prepare(
           `SELECT id FROM live_clinical_events
-            WHERE supersedes_event_id = ? LIMIT 1`,
+            WHERE supersedes_event_id = ? AND clinic_id = ? AND patient_id = ? LIMIT 1`,
         )
-        .bind(supersedesEventId)
+        .bind(supersedesEventId, clinicId, patientId)
         .first<{ id: string }>();
       if (successor) {
         return tenantError("Evento já possui uma correção sucessora.", "EVENT_ALREADY_SUPERSEDED", 409);
@@ -408,15 +447,6 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     console.error("[live.events.POST] DB error", error);
     return tenantError("Não foi possível registrar o evento clínico.", "DB_ERROR", 500);
   }
-
-  await writeSaasAudit(db, {
-    clinicId,
-    actorUserId: user.id,
-    action: "live_clinical_event_create",
-    targetType: "clinical_event",
-    targetId: eventId,
-    metadata: { eventType, provenanceKind, imported: provenanceKind === "imported", encryptionVersion },
-  });
 
   return tenantJson(
     {
