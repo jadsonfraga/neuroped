@@ -1,22 +1,23 @@
 /**
- * tablet-coarse-perf.css — perfil de desempenho para tablets touch.
+ * tablet-coarse-perf.css — perfil de desempenho para dispositivos touch
+ * (celulares e tablets, Android e iOS).
  *
- * Motivação (P1 UX/touch): a partir de 768px o app aplica o shell de desktop
- * (premium-app-shell-v12), que combina backdrop-filter em sidebar, contêiner e
- * cards com animações decorativas contínuas. Em GPUs móveis esse conjunto
- * torna pintura+composição caras e a rolagem por toque engasga.
+ * Motivação (P1 UX/touch): o app combina backdrop-filter em header/sidebar/
+ * cards com animações decorativas contínuas — no shell mobile (<768px) e no
+ * shell de desktop aplicado a tablets (≥768px, premium-app-shell-v12). Em
+ * GPUs móveis, backdrop-filter força repintura da área atrás do elemento a
+ * cada frame de rolagem, e é a principal causa de engasgo no scroll por toque.
  *
- * Escopo deliberadamente cirúrgico: só (pointer: coarse) na faixa 768–1023px
- * — desktops com mouse e phones (<768px, shell mobile) não mudam. Nada de
- * lógica clínica, breakpoints ou acessibilidade; o pinch-zoom permanece livre.
+ * Escopo: (pointer: coarse) até 1023px — celulares E tablets. Desktops com
+ * mouse (pointer fine) não mudam em nenhuma largura. Nada de lógica clínica,
+ * breakpoints ou acessibilidade; o pinch-zoom permanece livre.
  *
  * Precisa ser importado por último em main.tsx: várias regras do shell usam
  * !important e a vitória aqui é por cascata + !important.
  */
 
-@media (pointer: coarse) and (min-width: 768px) and (max-width: 1023px) {
-  /* 1 — backdrop-filter é o efeito mais caro no compositor móvel (força
-     repintura da área atrás do elemento a cada frame de rolagem). As
+@media (pointer: coarse) and (max-width: 1023px) {
+  /* 1 — backdrop-filter é o efeito mais caro no compositor móvel. As
      superfícies que o usam já têm fundo ≥70% opaco, então removê-lo degrada
      pouco o visual e muito o custo. Universal para vencer as várias fontes
      (shell v12, polish-10, visual-reset e utilitários backdrop-blur-*). */
@@ -30,6 +31,7 @@
   /* Regras do shell com !important e especificidade alta não perdem para o
      universal (especificidade 0); repete-as aqui para vencer por cascata. */
   header.fixed.md\:hidden,
+  [data-testid="mobile-primary-dock"] nav,
   #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -58,6 +60,12 @@
   .animate-ping,
   .animate-pulse {
     animation: none !important;
+  }
+
+  /* Partículas ambientais usam filter: blur(40px) — camada cara mesmo
+     estática em GPU móvel. A aurora (gradientes) permanece como fundo. */
+  .np-particle {
+    display: none !important;
   }
 
   /* 3 — transition-all anima qualquer propriedade que mude, inclusive
