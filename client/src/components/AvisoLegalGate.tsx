@@ -21,9 +21,14 @@ export function AvisoLegalGate() {
 
   useEffect(() => {
     if (accepted) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    // Owner próprio no scroller real e no body: nunca salva/restaura a trava
+    // de outro overlay e funciona de forma consistente entre engines.
+    document.documentElement.classList.add("np-legal-gate-open");
+    document.body.classList.add("np-legal-gate-open");
+    return () => {
+      document.documentElement.classList.remove("np-legal-gate-open");
+      document.body.classList.remove("np-legal-gate-open");
+    };
   }, [accepted]);
 
   if (accepted) return null;

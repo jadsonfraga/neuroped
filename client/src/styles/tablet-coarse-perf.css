@@ -79,11 +79,11 @@
       transform, box-shadow !important;
   }
 
-  /* 5 — cards do filtro são grandes superfícies clicáveis. Declarar a intenção
-     do gesto somente no card prioriza o pan vertical sem limitar os scrollers
-     horizontais de filtros e tabelas que existem no restante da página.
-     Pinch-zoom continua permitido. */
-  .filter-260-card {
+  /* 5 — superfícies verticais reais do filtro priorizam pan-y. O escopo fica
+     nos cards, seletor de sintomas e pódio OPB; nunca sobe para wrappers que
+     contêm tabelas/linhas horizontais. Pinch-zoom continua permitido. */
+  .filter-260-card,
+  .filter-touch-pan-y {
     touch-action: pan-y pinch-zoom;
   }
 }

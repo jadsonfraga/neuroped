@@ -44,6 +44,9 @@ jobs:
       - name: Validate tablet shell breakpoints and print isolation
         run: node tests/e2e/responsive-shell-smoke.mjs
 
+      - name: Prove scroll continuity with real touch and wheel
+        run: node tests/e2e/scroll-continuity.mjs
+
       - name: Audit every navigable route with axe
         run: npm run audit:a11y:full
 

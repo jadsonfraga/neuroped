@@ -88,7 +88,7 @@ export function PopularSymptomPicker({
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] via-card to-chart-2/[0.05] p-4 shadow-sm sm:p-5"
+      className="filter-touch-pan-y relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] via-card to-chart-2/[0.05] p-4 shadow-sm sm:p-5"
       aria-labelledby="popular-symptoms-title"
       data-testid="popular-symptom-picker"
     >
