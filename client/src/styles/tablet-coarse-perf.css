@@ -1,0 +1,70 @@
+/**
+ * tablet-coarse-perf.css — perfil de desempenho para tablets touch.
+ *
+ * Motivação (P1 UX/touch): a partir de 768px o app aplica o shell de desktop
+ * (premium-app-shell-v12), que combina backdrop-filter em sidebar, contêiner e
+ * cards com animações decorativas contínuas. Em GPUs móveis esse conjunto
+ * torna pintura+composição caras e a rolagem por toque engasga.
+ *
+ * Escopo deliberadamente cirúrgico: só (pointer: coarse) na faixa 768–1023px
+ * — desktops com mouse e phones (<768px, shell mobile) não mudam. Nada de
+ * lógica clínica, breakpoints ou acessibilidade; o pinch-zoom permanece livre.
+ *
+ * Precisa ser importado por último em main.tsx: várias regras do shell usam
+ * !important e a vitória aqui é por cascata + !important.
+ */
+
+@media (pointer: coarse) and (min-width: 768px) and (max-width: 1023px) {
+  /* 1 — backdrop-filter é o efeito mais caro no compositor móvel (força
+     repintura da área atrás do elemento a cada frame de rolagem). As
+     superfícies que o usam já têm fundo ≥70% opaco, então removê-lo degrada
+     pouco o visual e muito o custo. Universal para vencer as várias fontes
+     (shell v12, polish-10, visual-reset e utilitários backdrop-blur-*). */
+  *,
+  *::before,
+  *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Regras do shell com !important e especificidade alta não perdem para o
+     universal (especificidade 0); repete-as aqui para vencer por cascata. */
+  header.fixed.md\:hidden,
+  #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Única superfície com fundo mais translúcido (0.7): compensa a perda do
+     blur com opacidade maior para manter legibilidade do texto sobre ela. */
+  .glass {
+    background: hsl(var(--card) / 0.96) !important;
+  }
+
+  /* 2 — animações decorativas contínuas mantêm o compositor acordado o tempo
+     todo (aurora, partículas, brilhos, shimmer). Mesmo tratamento que
+     prefers-reduced-motion já aplica, mas condicionado ao hardware. */
+  .np-ambient-aurora,
+  .np-particle,
+  .np-home-orb,
+  .glow-pulse,
+  .float-gentle,
+  .shimmer::after,
+  .np-anim-float,
+  .np-anim-glow,
+  .np-anim-sparkle,
+  .np-shimmer,
+  .filter-260-card.tier-ouro::before,
+  .animate-ping,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  /* 3 — transition-all anima qualquer propriedade que mude, inclusive
+     layout/filter. Restringe às propriedades compostas baratas, mantendo a
+     sensação de resposta (cor, opacidade, transform, sombra). */
+  .transition-all {
+    transition-property: color, background-color, border-color, opacity,
+      transform, box-shadow !important;
+  }
+}
