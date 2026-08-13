@@ -94,6 +94,40 @@ function releaseOrphanedScrollLock() {
   }
 }
 
+/**
+ * Aplica a atualização de verdade, não só recarrega.
+ *
+ * O sw.js chama skipWaiting() no install, então normalmente não há worker em
+ * "waiting" — mas quando há (instalação concluída enquanto a aba estava em
+ * segundo plano, ou um install antigo interrompido), um reload simples é
+ * servido pelo worker ANTIGO com o precache antigo, e o banner volta em loop.
+ * Aqui destravamos explicitamente o worker em espera antes de recarregar.
+ */
+async function applyPendingUpdate(): Promise<void> {
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    const waiting = registration?.waiting;
+    if (waiting) {
+      const activated = new Promise<void>((resolve) => {
+        const timer = globalThis.setTimeout(resolve, 1500);
+        navigator.serviceWorker.addEventListener(
+          "controllerchange",
+          () => {
+            globalThis.clearTimeout(timer);
+            resolve();
+          },
+          { once: true },
+        );
+      });
+      waiting.postMessage({ type: "SKIP_WAITING" });
+      await activated;
+    }
+  } catch {
+    // O reload abaixo ainda busca o HTML novo (network-first + no-cache).
+  }
+  window.location.reload();
+}
+
 export function ServiceWorkerManager() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
 
@@ -227,7 +261,7 @@ export function ServiceWorkerManager() {
         <p className="text-sm font-semibold text-foreground">Nova versão disponível</p>
         <p className="text-xs text-muted-foreground">Atualize para usar as correções mais recentes.</p>
       </div>
-      <Button size="sm" onClick={() => window.location.reload()} className="shrink-0">Atualizar</Button>
+      <Button size="sm" onClick={() => { void applyPendingUpdate(); }} className="shrink-0">Atualizar</Button>
       <Button variant="ghost" size="icon" onClick={() => setUpdate(null)} aria-label="Fechar aviso de atualização" className="h-8 w-8 shrink-0">
         <X className="h-4 w-4" />
       </Button>

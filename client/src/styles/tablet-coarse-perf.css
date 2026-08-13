@@ -1,26 +1,31 @@
 /**
- * tablet-coarse-perf.css — perfil de desempenho para tablets touch.
+ * tablet-coarse-perf.css — perfil de desempenho para dispositivos touch
+ * (celulares e tablets, Android e iOS).
  *
- * Motivação (P1 UX/touch): a partir de 768px o app aplica o shell de desktop
- * (premium-app-shell-v12), que combina efeitos de composição e superfícies
- * fixas. Em tablets Android/Samsung, especialmente em modo desktop/DeX ou com
- * S Pen/mouse disponível, o ponteiro PRIMÁRIO pode ser reportado como `fine`
- * mesmo enquanto o usuário toca a tela. Por isso o contrato usa `any-pointer`
- * e não apenas `pointer`.
+ * Motivação (P1 UX/touch): o app combina backdrop-filter em header/sidebar/
+ * cards com animações decorativas contínuas — no shell mobile (<768px) e no
+ * shell de desktop aplicado a tablets (≥768px, premium-app-shell-v12). Em
+ * GPUs móveis, backdrop-filter força repintura da área atrás do elemento a
+ * cada frame de rolagem, e é a principal causa de engasgo no scroll por toque.
  *
- * Escopo deliberadamente cirúrgico: qualquer dispositivo com capacidade touch
- * (`any-pointer: coarse`) entre 768–1366px. Isso cobre tablets em viewport
- * normal e em desktop-site/DeX sem alterar desktops sem touch ou celulares
- * (<768px). Nada de lógica clínica, breakpoints ou bloqueio de pinch-zoom.
+ * Contrato de detecção: `any-pointer: coarse`, não `pointer`. Em tablets
+ * Android/Samsung (modo desktop/DeX, S Pen ou mouse pareado) o ponteiro
+ * PRIMÁRIO pode ser reportado como `fine` mesmo com o usuário tocando a tela.
+ *
+ * Escopo: qualquer dispositivo com capacidade touch até 1366px — celulares,
+ * tablets em viewport normal e tablets em desktop-site/DeX. Desktops sem
+ * touch não mudam em nenhuma largura. Nada de lógica clínica, breakpoints,
+ * acessibilidade ou bloqueio de pinch-zoom.
  *
  * Precisa ser importado por último em main.tsx: várias regras do shell usam
  * !important e a vitória aqui é por cascata + !important.
  */
 
-@media (any-pointer: coarse) and (min-width: 768px) and (max-width: 1366px) {
-  /* 1 — backdrop-filter é caro no compositor móvel: a área atrás precisa ser
-     recomposta durante o scroll. As superfícies já têm fundo suficientemente
-     opaco, então removemos o blur somente no perfil tablet touch. */
+@media (any-pointer: coarse) and (max-width: 1366px) {
+  /* 1 — backdrop-filter é o efeito mais caro no compositor móvel. As
+     superfícies que o usam já têm fundo ≥70% opaco, então removê-lo degrada
+     pouco o visual e muito o custo. Universal para vencer as várias fontes
+     (shell v12, polish-10, visual-reset e utilitários backdrop-blur-*). */
   *,
   *::before,
   *::after {
@@ -29,20 +34,23 @@
   }
 
   /* Regras do shell com !important e especificidade alta não perdem para o
-     universal; repetimos os alvos para vencer por cascata. */
+     universal (especificidade 0); repete-as aqui para vencer por cascata. */
   header.fixed.md\:hidden,
+  [data-testid="mobile-primary-dock"] nav,
   #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
 
+  /* Única superfície com fundo mais translúcido (0.7): compensa a perda do
+     blur com opacidade maior para manter legibilidade do texto sobre ela. */
   .glass {
     background: hsl(var(--card) / 0.96) !important;
   }
 
   /* 2 — Android/Chromium sofre especialmente quando a página combina scroll
-     com background-attachment: fixed e pseudo-elementos fixed. No tablet touch
-     o canvas fica visualmente equivalente, mas acompanha o documento e não
+     com background-attachment: fixed e pseudo-elementos fixed. No touch o
+     canvas fica visualmente equivalente, mas acompanha o documento e não
      exige recomposição fixa a cada frame. */
   body {
     background-attachment: scroll !important;
@@ -54,8 +62,8 @@
   }
 
   /* 3 — animações decorativas contínuas mantêm o compositor acordado durante
-     todo o gesto. Mesmo princípio do prefers-reduced-motion, condicionado aqui
-     ao perfil de hardware/entrada. */
+     todo o gesto (aurora, partículas, brilhos, shimmer). Mesmo princípio do
+     prefers-reduced-motion, condicionado aqui ao perfil de hardware. */
   .np-ambient-aurora,
   .np-particle,
   .np-home-orb,
@@ -72,8 +80,15 @@
     animation: none !important;
   }
 
-  /* 4 — transition-all pode animar propriedades que forçam layout/paint.
-     Mantemos apenas propriedades baratas e perceptualmente úteis. */
+  /* Partículas ambientais usam filter: blur(40px) — camada cara mesmo
+     estática em GPU móvel. A aurora (gradientes) permanece como fundo. */
+  .np-particle {
+    display: none !important;
+  }
+
+  /* 4 — transition-all anima qualquer propriedade que mude, inclusive
+     layout/filter. Restringe às propriedades compostas baratas, mantendo a
+     sensação de resposta (cor, opacidade, transform, sombra). */
   .transition-all {
     transition-property: color, background-color, border-color, opacity,
       transform, box-shadow !important;
