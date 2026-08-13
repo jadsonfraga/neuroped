@@ -80,12 +80,9 @@
   }
 
   /* 5 — cards do filtro são grandes superfícies clicáveis. Declarar a intenção
-     de gesto no contêiner evita que um toque iniciado sobre o card seja tratado
-     como candidato a gesto horizontal/zoom antes do pan vertical. Pinch-zoom
-     continua permitido. */
-  .container-filtro,
-  .filter-260-shell,
-  .filter-260-grid,
+     do gesto somente no card prioriza o pan vertical sem limitar os scrollers
+     horizontais de filtros e tabelas que existem no restante da página.
+     Pinch-zoom continua permitido. */
   .filter-260-card {
     touch-action: pan-y pinch-zoom;
   }
