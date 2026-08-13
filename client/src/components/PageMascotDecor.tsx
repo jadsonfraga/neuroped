@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useLocation } from "wouter";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
@@ -92,9 +93,8 @@ function getPathname(location: string): string {
   return location.split("?")[0] || "/";
 }
 
-function getLegacyMascot(path: string): LegacyMascot {
-  const routePool = routePools.find(({ test }) => test.test(path))?.mascots ?? defaultLegacyPool;
-  return routePool[stablePathHash(path) % routePool.length];
+function getLegacyPool(path: string): LegacyMascot[] {
+  return routePools.find(({ test }) => test.test(path))?.mascots ?? defaultLegacyPool;
 }
 
 function hasInlineNino(path: string): boolean {
@@ -113,7 +113,17 @@ export function PageMascotDecor() {
   const [location] = useLocation();
   const reduceMotion = useReducedMotion();
   const pathname = getPathname(location);
-  const legacy = getLegacyMascot(pathname);
+  const pool = getLegacyPool(pathname);
+  // O cameo revez a TODO o acervo da rota em ciclo lento, para que nenhuma
+  // arte histórica fique invisível na prática. Com prefers-reduced-motion a
+  // imagem permanece estática (determinada pela rota).
+  const [cycle, setCycle] = useState(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = globalThis.setInterval(() => setCycle((value) => value + 1), 14_000);
+    return () => globalThis.clearInterval(timer);
+  }, [reduceMotion]);
+  const legacy = pool[(stablePathHash(pathname) + cycle) % pool.length];
   const scaleFocus = isScaleApplicationRoute(pathname);
   const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus;
   const showLegacyCameo = !scaleFocus;

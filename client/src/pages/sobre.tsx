@@ -10,9 +10,11 @@ import drBatman from "@assets/images/dr-jadson-consultorio-batman.jpeg";
 import drSuperman from "@assets/images/dr-jadson-consultorio-superman.jpeg";
 import drFull from "@assets/images/dr-jadson-consultorio-full.jpeg";
 import drArte from "@assets/images/dr-jadson-arte.jpeg";
+import drLogoSuper from "@assets/images/dr-jadson-logo-super.jpeg";
 
 const photos = [
   { src: drSuperman, alt: "Dr. Jadson — SuperNeuroPed", caption: "O SuperNeuroPed no consultório" },
+  { src: drLogoSuper, alt: "Mascote SuperNeuroPed — arte original", caption: "SuperNeuroPed — o mascote original do app" },
   { src: drBatman, alt: "Dr. Jadson — Consultório", caption: "Avaliação lúdica com brinquedos terapêuticos" },
   { src: drFull, alt: "Dr. Jadson — Sala de Avaliação", caption: "Sala de avaliação neuropediátrica completa" },
   { src: drSelfie, alt: "Dr. Jadson Fraga", caption: "Dr. Jadson Fraga Araújo Júnior" },
@@ -123,6 +125,71 @@ export default function SobrePage() {
         </h2>
         <PhotoCarousel />
       </div>
+
+      {/* Todas as gerações de mascotes do app, lado a lado: o acervo é parte
+          da identidade e permanece integral dentro do produto. */}
+      <Card className="overflow-hidden border-primary/20 shadow-lg">
+        <div className="h-1.5 bg-gradient-to-r from-chart-2 via-primary to-chart-2" />
+        <CardContent className="space-y-4 p-6">
+          <div className="space-y-1">
+            <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Star className="h-4 w-4 text-chart-2" />
+              Mascotes do NeuroPed
+            </h2>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Cada era do app deixou um personagem. Todos continuam em casa: o acervo aparece
+              em cameos pelas páginas e o Nino guia a jornada atual.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <figure className="m-0 space-y-2 rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 text-center">
+              <div className="asset-proportion-box mx-auto h-28 w-28 overflow-hidden rounded-2xl bg-white/60 dark:bg-white/[0.06]">
+                <img
+                  src="/neuroped-mascot-premium.webp"
+                  alt="Nino, mascote cerebral do NeuroPed, de jaleco e escudo"
+                  loading="lazy"
+                  decoding="async"
+                  className="no-zoom-media h-full w-full object-contain"
+                />
+              </div>
+              <figcaption className="space-y-0.5">
+                <p className="text-sm font-bold text-foreground">Nino</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">Guia atual do NeuroPed — organiza o caminho clínico.</p>
+              </figcaption>
+            </figure>
+            <figure className="m-0 space-y-2 rounded-2xl border border-chart-2/15 bg-chart-2/[0.04] p-4 text-center">
+              <div className="asset-proportion-box mx-auto h-28 w-28 overflow-hidden rounded-2xl bg-muted">
+                <img
+                  src={drLogoSuper}
+                  alt="SuperNeuroPed, o mascote original do aplicativo"
+                  loading="lazy"
+                  decoding="async"
+                  className="no-zoom-media h-full w-full object-cover object-top"
+                />
+              </div>
+              <figcaption className="space-y-0.5">
+                <p className="text-sm font-bold text-foreground">SuperNeuroPed</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">O mascote original — herói da primeira era do app.</p>
+              </figcaption>
+            </figure>
+            <figure className="m-0 space-y-2 rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-center">
+              <div className="asset-proportion-box mx-auto h-28 w-28 overflow-hidden rounded-2xl bg-muted">
+                <img
+                  src={drArte}
+                  alt="Arte comemorativa do Dr. Jadson"
+                  loading="lazy"
+                  decoding="async"
+                  className="no-zoom-media h-full w-full object-cover"
+                />
+              </div>
+              <figcaption className="space-y-0.5">
+                <p className="text-sm font-bold text-foreground">Acervo em cameo</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">Seis artes históricas revezam no canto das páginas.</p>
+              </figcaption>
+            </figure>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="overflow-hidden border-emerald-500/20 shadow-lg">
         <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
