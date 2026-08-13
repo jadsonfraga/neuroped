@@ -2,6 +2,13 @@ import { motion, useReducedMotion } from "framer-motion";
 
 export type MascoteContexto = "home" | "resultado" | "celebracao" | "vazio";
 
+/**
+ * Guia visual do NeuroPed. A partir de 2026 o personagem passou de "Nino" (mascote
+ * cerebral genérico) para o próprio Dr. Jadson Fraga em desenho — mantendo o mesmo
+ * papel de guia contextual, apenas com a identidade real da marca.
+ * Nino permanece publicado no app (acervo histórico em /sobre e no cameo rotativo
+ * do rodapé das páginas), apenas não é mais o personagem ativo aqui.
+ */
 const FALAS: Record<MascoteContexto, string> = {
   home: "Olá! Eu organizo o caminho para você decidir com mais clareza.",
   resultado: "Resultado pronto. Agora revise os sinais e o contexto clínico.",
@@ -35,7 +42,7 @@ export function Mascote({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 150, damping: 20 }}
       className={`relative m-0 flex flex-col items-center ${className}`}
-      data-testid="mascote-nino-premium"
+      data-testid="mascote-dr-jadson-guide"
     >
       <div
         className="absolute inset-x-[12%] bottom-10 h-14 rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.2),transparent_70%)] blur-2xl"
@@ -60,8 +67,8 @@ export function Mascote({
           <span className="absolute bottom-[18%] right-[6%] h-1.5 w-1.5 rounded-full bg-chart-2/40 shadow-[0_0_10px_hsl(var(--chart-2)/0.25)]" />
         </motion.div>
         <img
-          src="/neuroped-mascot-premium.webp"
-          alt="Nino, mascote cerebral do NeuroPed, usando jaleco e segurando um escudo"
+          src="/dr-jadson-mascot-guide.webp"
+          alt="Dr. Jadson Fraga em desenho, guia do NeuroPed, de jaleco com o distintivo da clínica"
           width="640"
           height="640"
           loading={contexto === "home" ? "eager" : "lazy"}
@@ -77,7 +84,7 @@ export function Mascote({
           />
           <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-primary/[0.065] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.11em] text-primary">
             <span className="h-1.5 w-1.5 rounded-full bg-chart-3" aria-hidden="true" />
-            Nino · guia do NeuroPed
+            Dr. Jadson · guia do NeuroPed
           </span>
           <span className="block">{message}</span>
         </figcaption>

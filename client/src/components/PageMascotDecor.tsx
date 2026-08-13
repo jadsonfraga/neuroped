@@ -14,6 +14,12 @@ type LegacyMascot = {
   objectPosition?: string;
 };
 
+// Guia ativo do NeuroPed (2026): Dr. Jadson Fraga em desenho, substituindo o Nino
+// genérico no papel de personagem principal — ver Mascote.tsx para o hero grande.
+const GUIDE_MASCOT_SRC = "/dr-jadson-mascot-guide.webp";
+
+// Nino não é mais o guia ativo, mas continua publicado: reentra como mais um item
+// do acervo em cameo (abaixo), preservando sua presença histórica no app inteiro.
 const NINO_PREMIUM_SRC = "/neuroped-mascot-premium.webp";
 
 const legacyMascots = {
@@ -35,6 +41,7 @@ const legacyMascots = {
     src: drConsultorioFull,
     objectPosition: "object-center",
   },
+  ninoRetired: { id: "nino-legado", src: NINO_PREMIUM_SRC, objectPosition: "object-center" },
 } satisfies Record<string, LegacyMascot>;
 
 const defaultLegacyPool = Object.values(legacyMascots);
@@ -42,23 +49,23 @@ const defaultLegacyPool = Object.values(legacyMascots);
 const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
   {
     test: /^\/(familia|portal-familia|orientacao-parental|diario-sono|diario-alimentar|marcos-desenvolvimento)/,
-    mascots: [legacyMascots.doctorSelfie, legacyMascots.celebrationArt, legacyMascots.consultorioFull],
+    mascots: [legacyMascots.doctorSelfie, legacyMascots.celebrationArt, legacyMascots.consultorioFull, legacyMascots.ninoRetired],
   },
   {
     test: /^\/(documentos|laudo-neuroped|receita-c1|receita-c1-express|assinatura-digital|pant|verificar)/,
-    mascots: [legacyMascots.celebrationArt, legacyMascots.consultorioSuperman, legacyMascots.consultorioFull],
+    mascots: [legacyMascots.celebrationArt, legacyMascots.consultorioSuperman, legacyMascots.consultorioFull, legacyMascots.ninoRetired],
   },
   {
     test: /^\/(medicamentos|farmacologia|calculadora-dose|psiquiatria|mchat|pre-consulta|pre-retorno|prontuario|agenda|recepcao)/,
-    mascots: [legacyMascots.consultorioSuperman, legacyMascots.superDoctor, legacyMascots.consultorioBatman],
+    mascots: [legacyMascots.consultorioSuperman, legacyMascots.superDoctor, legacyMascots.consultorioBatman, legacyMascots.ninoRetired],
   },
   {
     test: /^\/(login|sessao-expirada|consentimento-lgpd|ajuda|sobre|sobre-neuroped|termos|qualidade|acessibilidade)/,
-    mascots: [legacyMascots.superDoctor, legacyMascots.doctorSelfie, legacyMascots.consultorioFull],
+    mascots: [legacyMascots.superDoctor, legacyMascots.doctorSelfie, legacyMascots.consultorioFull, legacyMascots.ninoRetired],
   },
   {
     test: /^\/(tea|tea-comportamentos|snap|denver|sdq|scared|conners|vineland|cbcl|vanderbilt|brief2|abc|asq3|cdi2|phqa|cssrs|crafft|rcads|masc2)/,
-    mascots: [legacyMascots.superDoctor, legacyMascots.consultorioBatman, legacyMascots.consultorioSuperman],
+    mascots: [legacyMascots.superDoctor, legacyMascots.consultorioBatman, legacyMascots.consultorioSuperman, legacyMascots.ninoRetired],
   },
 ];
 
@@ -104,10 +111,11 @@ function hasInlineNino(path: string): boolean {
 /**
  * Assinatura visual global do NeuroPed.
  *
- * Nino funciona como personagem principal contemporâneo. O acervo histórico
- * aparece como cameo secundário no desktop, preservando a memória visual do
- * produto sem competir com o fluxo clínico. A camada inteira é decorativa,
- * sem foco, clique ou alteração da semântica das páginas.
+ * Dr. Jadson Fraga (desenho) é o personagem principal contemporâneo — guia
+ * ativo do app, ver Mascote.tsx. O acervo histórico, incluindo o antigo guia
+ * Nino, aparece como cameo secundário no desktop, preservando a memória
+ * visual do produto sem competir com o fluxo clínico. A camada inteira é
+ * decorativa, sem foco, clique ou alteração da semântica das páginas.
  */
 export function PageMascotDecor() {
   const [location] = useLocation();
@@ -137,18 +145,18 @@ export function PageMascotDecor() {
     >
       {showGlobalNino && (
         <motion.div
-          key={`nino-${pathname}`}
+          key={`guide-${pathname}`}
           initial={reduceMotion ? false : { opacity: 0, x: 14, y: -5, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
           transition={{ duration: 0.46, ease: "easeOut" }}
           className="np-mascot-nino fixed -right-2 top-[4.65rem] z-20 h-[4.6rem] w-[4.6rem] sm:right-1 sm:h-20 sm:w-20 md:right-2 md:top-16 md:h-24 md:w-24 xl:right-5 xl:h-28 xl:w-28"
           data-mascot-era="novo"
-          data-mascot-id="nino-premium"
+          data-mascot-id="dr-jadson-guide"
         >
           <div className="np-mascot-orb" />
           <div className="absolute inset-[9%] rounded-full border border-white/45 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] backdrop-blur-[2px] dark:border-white/10" />
           <motion.img
-            src={NINO_PREMIUM_SRC}
+            src={GUIDE_MASCOT_SRC}
             alt=""
             width="640"
             height="640"

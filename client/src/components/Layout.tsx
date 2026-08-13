@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter } from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
@@ -347,13 +347,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: duration.normal, ease: easing.spring }}
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
+            className="relative w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
             style={{
               background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
               boxShadow: "0 4px 14px hsl(var(--primary) / 0.3)",
             }}
           >
-            <Brain className="w-4 h-4 text-white" strokeWidth={1.75} />
+            <img
+              src="/dr-jadson-shield-badge.webp"
+              alt="Dr. Jadson Fraga"
+              width="256"
+              height="256"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           </motion.div>
           <span
             className="text-base tracking-tight text-sidebar-foreground"
@@ -452,13 +459,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Logo + close button on mobile */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
           <div
-            className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+            className="relative flex-shrink-0 w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
             style={{
               background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
               boxShadow: "0 4px 14px hsl(var(--primary) / 0.35)",
             }}
           >
-            <Brain className="w-5 h-5 text-white" strokeWidth={1.75} />
+            <img
+              src="/dr-jadson-shield-badge.webp"
+              alt="Dr. Jadson Fraga"
+              width="256"
+              height="256"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+            <span
+              className="absolute -right-1 -bottom-1 flex h-3.5 w-3.5 items-center justify-center rounded-md bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-sm ring-1 ring-white/70 dark:ring-black/40"
+              aria-hidden="true"
+            >
+              <Zap className="h-2 w-2" strokeWidth={3} />
+            </span>
           </div>
           {!collapsed && (
             <div className="overflow-hidden flex-1">
@@ -704,7 +724,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </span>
           </aside>
           {/* Aviso de propriedade / anticópia. */}
-          <p className="mt-3 text-center text-[10px] leading-snug text-muted-foreground">
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[10px] leading-snug text-muted-foreground">
+            <img
+              src="/dr-jadson-shield-badge.webp"
+              alt=""
+              width="256"
+              height="256"
+              loading="lazy"
+              decoding="async"
+              className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-80"
+            />
             © 2026 NeuroPed · Dr. Jadson Fraga. Conteúdo proprietário e educativo — cópia, redistribuição ou
             re-hospedagem não autorizada é proibida.
           </p>
