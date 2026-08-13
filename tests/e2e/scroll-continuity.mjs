@@ -170,6 +170,10 @@ function assertUnlocked(lock, label) {
   assert.equal(lock.pointerEvents, "", `${label}: pointer-events permaneceu`);
   assert.equal(lock.dataLocked, false, `${label}: data-scroll-locked permaneceu`);
   assert.notEqual(lock.computedOverflowY, "hidden", `${label}: body continuou travado`);
+  assert.equal(lock.rootDrawerOwner, false, `${label}: classe raiz órfã do drawer permaneceu`);
+  assert.equal(lock.rootLegalOwner, false, `${label}: classe raiz órfã do aviso permaneceu`);
+  assert.equal(lock.drawerOwner, false, `${label}: classe órfã do drawer permaneceu`);
+  assert.equal(lock.legalOwner, false, `${label}: classe órfã do aviso permaneceu`);
 }
 
 async function openFilter(width) {
@@ -269,7 +273,7 @@ async function proveNativeScroll(width) {
     const start = { x: Math.round(viewport.width / 2), y: Math.min(650, viewport.height - 100) };
     const end = { x: start.x, y: Math.max(120, start.y - 360) };
     await beginTouch(session, start.x, start.y);
-    assertUnlocked(await readLock(page), `${width}px touchStart`);
+    assertUnlocked(await readLock(page), `${width}px primeiro contato`);
     const beforeRecovery = (await rootState(page)).top;
     await continueTouch(page, session, start, end);
     await page.waitForFunction(
@@ -279,6 +283,76 @@ async function proveNativeScroll(width) {
     );
 
     console.log(`[scroll-continuity] ✓ ${width}px: wheel, touch, pan-x e recuperação no primeiro gesto`);
+  } finally {
+    await session.detach();
+    await context.close();
+  }
+}
+
+async function proveOrphanedOwnerClasses() {
+  const { context, page } = await openFilter(390);
+  const session = await context.newCDPSession(page);
+  try {
+    const viewport = page.viewportSize();
+    assert.ok(viewport, "viewport ausente");
+    const start = { x: Math.round(viewport.width / 2), y: 620 };
+    const end = { x: start.x, y: 240 };
+
+    for (const className of ["np-mobile-drawer-open", "np-legal-gate-open"]) {
+      await resetRoot(page);
+      await page.evaluate((ownerClass) => {
+        document.documentElement.classList.add(ownerClass);
+        document.body.classList.add(ownerClass);
+      }, className);
+      await page.waitForFunction(
+        () => getComputedStyle(document.documentElement).overflowY === "hidden",
+      );
+      await assertWheelBlocked(page, `${className} órfã`);
+      await beginTouch(session, start.x, start.y);
+      assertUnlocked(await readLock(page), `${className} órfã no primeiro contato`);
+      const before = (await rootState(page)).top;
+      await continueTouch(page, session, start, end);
+      await page.waitForFunction(
+        (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
+        before,
+        { timeout: 3000 },
+      );
+    }
+    console.log("[scroll-continuity] ✓ classes órfãs: owner vivo exigido e primeiro gesto recuperado");
+  } finally {
+    await session.detach();
+    await context.close();
+  }
+}
+
+async function proveDialogOwnership() {
+  const { context, page } = await openFilter(834);
+  const session = await context.newCDPSession(page);
+  try {
+    await page.keyboard.press("Control+K");
+    const dialog = page.locator('[role="dialog"][aria-modal="true"]').first();
+    await dialog.waitFor({ state: "visible", timeout: 5000 });
+    await resetRoot(page);
+    await injectOrphanedLock(page);
+    await assertWheelBlocked(page, "dialog real");
+
+    const viewport = page.viewportSize();
+    assert.ok(viewport, "viewport ausente");
+    await beginTouch(session, Math.round(viewport.width / 2), 300);
+    let lock = await readLock(page);
+    assert.equal(lock.rootDataLocked, true, "watchdog removeu lock raiz durante dialog real");
+    assert.equal(lock.dataLocked, true, "watchdog removeu lock durante dialog real");
+    await endTouch(session);
+
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(
+      () => document.querySelector('[role="dialog"][aria-modal="true"]') === null,
+    );
+    await beginTouch(session, Math.round(viewport.width / 2), 300);
+    lock = await readLock(page);
+    assertUnlocked(lock, "após desmontar dialog real");
+    await endTouch(session);
+    console.log("[scroll-continuity] ✓ dialog real: lock legítimo preservado e resíduo recuperado");
   } finally {
     await session.detach();
     await context.close();
@@ -357,6 +431,8 @@ try {
   for (const width of WIDTHS) await proveNativeScroll(width);
   await proveDrawerOwnership();
   await proveLegalGateOwnership();
+  await proveOrphanedOwnerClasses();
+  await proveDialogOwnership();
   console.log("[scroll-continuity] ✓ contrato completo aprovado.");
 } finally {
   await browser.close();

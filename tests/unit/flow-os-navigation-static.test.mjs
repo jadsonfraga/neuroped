@@ -46,7 +46,16 @@ assert.match(legalGate, /document\.body\.classList\.add\("np-legal-gate-open"\)/
 assert.match(legalGate, /document\.documentElement\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar o root");
 assert.match(legalGate, /document\.body\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar só o próprio owner");
 assert.doesNotMatch(legalGate, /document\.body\.style\.overflow/, "aviso não pode restaurar lock inline alheio");
-assert.match(serviceWorkerManager, /classList\.contains\("np-legal-gate-open"\)/, "watchdog deve preservar o aviso legítimo");
+assert.match(
+  serviceWorkerManager,
+  /aria-labelledby="aviso-legal-title"/,
+  "watchdog deve exigir um aviso legal vivo antes de preservar seu owner",
+);
+assert.match(
+  serviceWorkerManager,
+  /classList\.remove\(owner\.className\)/,
+  "watchdog deve remover classes de owner sem overlay vivo",
+);
 assert.match(
   css,
   /html\.np-mobile-drawer-open,\s*html\.np-legal-gate-open,\s*body\.np-mobile-drawer-open,\s*body\.np-legal-gate-open\s*\{\s*overflow:\s*hidden;/,

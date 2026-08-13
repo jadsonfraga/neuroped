@@ -14,8 +14,8 @@ interface UpdateInfo {
  * Radix/react-remove-scroll pode bloquear o body ou o scroller raiz por
  * atributo `data-scroll-locked` + CSS injetado, sem depender apenas de
  * body.style.overflow. O shell já limpava overflow inline, mas isso não
- * de lock — sintoma observado em tablet: a página fica visualmente normal,
- * porém swipe/touch não move absolutamente nada.
+ * alcançava todas as formas de lock — sintoma observado em tablet: a página
+ * fica visualmente normal, porém swipe/touch não move absolutamente nada.
  *
  * Nunca interfere enquanto houver um drawer/modal/menu legítimo aberto.
  */
@@ -25,13 +25,33 @@ function releaseOrphanedScrollLock() {
   const body = document.body;
   const scrollRoot = document.documentElement;
   const lockTargets = [scrollRoot, body];
-  const appOwnedOverlayOpen = lockTargets.some(
-    (target) =>
-      target.classList.contains("np-mobile-drawer-open") ||
-      target.classList.contains("np-legal-gate-open"),
-  );
+  // Uma classe sozinha não prova ownership: se o componente desmontar antes do
+  // cleanup, ela própria vira a trava órfã. Exige o overlay vivo no DOM e limpa
+  // a classe residual antes de decidir se a recuperação deve ser bloqueada.
+  const appOwners = [
+    {
+      className: "np-mobile-drawer-open",
+      open:
+        document.querySelector(
+          'aside[aria-label="Menu de navegação"][role="dialog"][aria-modal="true"]',
+        ) !== null,
+    },
+    {
+      className: "np-legal-gate-open",
+      open:
+        document.querySelector(
+          '[role="dialog"][aria-modal="true"][aria-labelledby="aviso-legal-title"]',
+        ) !== null,
+    },
+  ];
+
+  for (const owner of appOwners) {
+    if (owner.open) continue;
+    for (const target of lockTargets) target.classList.remove(owner.className);
+  }
+
   const legitimateOverlayOpen =
-    appOwnedOverlayOpen ||
+    appOwners.some((owner) => owner.open) ||
     document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="menu"]') !== null ||
