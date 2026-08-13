@@ -50,17 +50,25 @@ function releaseOrphanedScrollLock() {
     for (const target of lockTargets) target.classList.remove(owner.className);
   }
 
+  // Radix pode não refletir aria-modal no Content; data-state="open" é o
+  // contrato real. Elementos fechados/invisíveis ainda montados não podem
+  // preservar uma trava órfã indefinidamente.
+  const hasActiveOverlay = (selector: string) =>
+    [...document.querySelectorAll<HTMLElement>(selector)].some((element) => {
+      if (element.dataset.state === "closed" || element.getAttribute("aria-hidden") === "true") {
+        return false;
+      }
+      const style = getComputedStyle(element);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
+
   const legitimateOverlayOpen =
     appOwners.some((owner) => owner.open) ||
-    document.querySelector(
-      '[role="dialog"][aria-modal="true"], [role="dialog"][data-state="open"]',
-    ) !== null ||
-    document.querySelector(
-      '[role="alertdialog"][aria-modal="true"], [role="alertdialog"][data-state="open"]',
-    ) !== null ||
-    document.querySelector('[role="menu"]') !== null ||
-    document.querySelector('[role="listbox"]') !== null ||
-    document.querySelector('[data-vaul-drawer][data-state="open"]') !== null;
+    hasActiveOverlay(
+      '[role="dialog"][aria-modal="true"], [role="dialog"][data-state="open"], ' +
+        '[role="alertdialog"][aria-modal="true"], [role="alertdialog"][data-state="open"], ' +
+        '[role="menu"], [role="listbox"], [data-vaul-drawer][data-state="open"]',
+    );
 
   if (legitimateOverlayOpen) return;
 

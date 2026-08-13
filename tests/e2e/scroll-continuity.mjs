@@ -289,10 +289,141 @@ async function proveNativeScroll(width) {
   }
 }
 
+async function provePodiumReachability(width) {
+  const { context, page } = await openFilter(width);
+  const session = await context.newCDPSession(page);
+  try {
+    const quickStart = page.getByRole("button", { name: /TEA.*2.*4 anos/i });
+    await quickStart.waitFor({ state: "visible", timeout: 10000 });
+    await quickStart.click();
+
+    const symptomPicker = page.getByTestId("popular-symptom-picker");
+    const podium = page.getByTestId("opb-recommendation-podium");
+    await symptomPicker.waitFor({ state: "visible", timeout: 15000 });
+    await podium.waitFor({ state: "visible", timeout: 15000 });
+    await page.waitForTimeout(650);
+    await resetRoot(page);
+
+    const ownership = await podium.evaluate((element) => {
+      for (let current = element.parentElement; current instanceof HTMLElement; current = current.parentElement) {
+        const style = getComputedStyle(current);
+        if (/auto|scroll|overlay/.test(style.overflowY) && current.scrollHeight > current.clientHeight + 8) {
+          return { tag: current.tagName, isDocument: current === document.scrollingElement };
+        }
+      }
+      const root = document.scrollingElement;
+      if (!(root instanceof HTMLElement)) throw new Error("document.scrollingElement ausente");
+      return { tag: root.tagName, isDocument: true };
+    });
+    assert.deepEqual(
+      ownership,
+      { tag: "HTML", isDocument: true },
+      `${width}px: pódio deve pertencer ao scroller global, não à coluna lateral`,
+    );
+
+    const lockState = await page.evaluate(() => ({
+      rootOverflowY: getComputedStyle(document.documentElement).overflowY,
+      bodyOverflowY: getComputedStyle(document.body).overflowY,
+      bodyInlineOverflow: document.body.style.overflow,
+      bodyInlineOverflowY: document.body.style.overflowY,
+      rootDataLocked: document.documentElement.hasAttribute("data-scroll-locked"),
+      bodyDataLocked: document.body.hasAttribute("data-scroll-locked"),
+    }));
+    assert.notEqual(lockState.rootOverflowY, "hidden", `${width}px: scroller raiz iniciou travado`);
+    assert.notEqual(lockState.bodyOverflowY, "hidden", `${width}px: body iniciou travado`);
+    assert.equal(lockState.bodyInlineOverflow, "", `${width}px: overflow inline órfão no body`);
+    assert.equal(lockState.bodyInlineOverflowY, "", `${width}px: overflow-y inline órfão no body`);
+    assert.equal(lockState.rootDataLocked, false, `${width}px: lock órfão no root`);
+    assert.equal(lockState.bodyDataLocked, false, `${width}px: lock órfão no body`);
+
+    if (width < 1024) {
+      await symptomPicker.scrollIntoViewIfNeeded();
+      await settleFrames(page);
+      const beforeSymptoms = (await rootState(page)).top;
+      await swipeLocator(page, session, symptomPicker, 0, -280);
+      await page.waitForFunction(
+        (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
+        beforeSymptoms,
+        { timeout: 3000 },
+      );
+    }
+
+    const gold = podium.locator('article[data-tier="ouro"]');
+    const bronze = podium.locator('article[data-tier="bronze"]');
+    await gold.scrollIntoViewIfNeeded();
+    await settleFrames(page);
+
+    const beforeTouch = (await rootState(page)).top;
+    await swipeLocator(page, session, gold, 0, -320);
+    await page.waitForFunction(
+      (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
+      beforeTouch,
+      { timeout: 3000 },
+    );
+
+    const viewport = page.viewportSize();
+    assert.ok(viewport, "viewport ausente");
+    const start = {
+      x: Math.max(24, Math.min(Math.round(viewport.width * 0.74), viewport.width - 24)),
+      y: Math.min(720, viewport.height - 90),
+    };
+    const end = { x: start.x, y: 180 };
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const bronzeVisible = await bronze.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.top < window.innerHeight - 20 && rect.bottom > 20;
+      });
+      if (bronzeVisible) break;
+      await beginTouch(session, start.x, start.y);
+      await continueTouch(page, session, start, end, 8);
+    }
+
+    assert.equal(
+      await bronze.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.top < window.innerHeight - 20 && rect.bottom > 20;
+      }),
+      true,
+      `${width}px: Bronze não ficou alcançável por gestos touch na área de resultados`,
+    );
+
+    const beforeWheel = (await rootState(page)).top;
+    const podiumBox = await podium.boundingBox();
+    assert.ok(podiumBox, "pódio sem geometria");
+    await page.mouse.move(
+      Math.max(20, Math.min(podiumBox.x + podiumBox.width * 0.75, viewport.width - 20)),
+      Math.max(80, Math.min(podiumBox.y + Math.min(podiumBox.height * 0.4, 320), viewport.height - 80)),
+    );
+    await page.mouse.wheel(0, 420);
+    await page.waitForFunction(
+      (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
+      beforeWheel,
+      { timeout: 3000 },
+    );
+
+    console.log(
+      `[scroll-continuity] ✓ ${width}px: área Ouro/Prata/Bronze responde a touch e wheel no scroller global`,
+    );
+  } finally {
+    await session.detach();
+    await context.close();
+  }
+}
+
 async function proveOrphanedOwnerClasses() {
   const { context, page } = await openFilter(390);
   const session = await context.newCDPSession(page);
   try {
+    await page.evaluate(() => {
+      const hiddenMenu = document.createElement("div");
+      hiddenMenu.setAttribute("role", "menu");
+      hiddenMenu.setAttribute("data-testid", "closed-overlay-decoy");
+      hiddenMenu.dataset.state = "closed";
+      hiddenMenu.style.display = "none";
+      document.body.append(hiddenMenu);
+    });
+
     const viewport = page.viewportSize();
     assert.ok(viewport, "viewport ausente");
     const start = { x: Math.round(viewport.width / 2), y: 620 };
@@ -348,10 +479,9 @@ async function proveDialogOwnership() {
     await endTouch(session);
 
     await page.keyboard.press("Escape");
-    // Presence mantém o portal durante a animação de saída. Enquanto ele ainda
-    // existe, seu listbox é um overlay legítimo e o watchdog deve preservar o
-    // lock. Só provamos a autocura após a desmontagem completa do dialog.
-    await dialog.waitFor({ state: "detached", timeout: 10000 });
+    await page.waitForFunction(
+      () => document.querySelector('[role="dialog"][data-state="open"] [cmdk-root]') === null,
+    );
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     lock = await readLock(page);
     assertUnlocked(lock, "após desmontar dialog real");
@@ -433,6 +563,7 @@ async function proveLegalGateOwnership() {
 
 try {
   for (const width of WIDTHS) await proveNativeScroll(width);
+  for (const width of [834, 1280]) await provePodiumReachability(width);
   await proveDrawerOwnership();
   await proveLegalGateOwnership();
   await proveOrphanedOwnerClasses();

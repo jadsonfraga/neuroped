@@ -173,7 +173,7 @@ export function OPBRecommendationCards({
 
   return (
     <section
-      className="space-y-5"
+      className="filter-touch-pan-y space-y-5"
       aria-labelledby="opb-recommendations-title"
       data-testid="opb-recommendation-podium"
     >

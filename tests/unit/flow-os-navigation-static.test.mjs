@@ -62,6 +62,16 @@ assert.match(
   "watchdog deve preservar um dialog Radix realmente aberto",
 );
 assert.match(
+  serviceWorkerManager,
+  /dataset\.state === "closed"/,
+  "watchdog deve ignorar overlays fechados ainda montados",
+);
+assert.match(
+  serviceWorkerManager,
+  /style\.display !== "none" && style\.visibility !== "hidden"/,
+  "watchdog deve ignorar overlays invisíveis ainda montados",
+);
+assert.match(
   css,
   /html\.np-mobile-drawer-open,\s*html\.np-legal-gate-open,\s*body\.np-mobile-drawer-open,\s*body\.np-legal-gate-open\s*\{\s*overflow:\s*hidden;/,
   "owners de drawer e aviso devem compor a trava sem restauração cruzada",
