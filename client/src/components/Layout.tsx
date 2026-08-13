@@ -60,18 +60,18 @@ function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; acti
           data-testid="featured-avaliacao-cognitiva"
           className={`group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-xl border px-3 py-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
             activeHref === "/avaliacao-cognitiva-infantil"
-              ? "border-violet-400/50 bg-gradient-to-br from-violet-500/20 via-violet-500/12 to-blue-500/12 shadow-sm"
-              : "border-violet-400/25 bg-gradient-to-br from-violet-500/12 via-violet-500/[0.07] to-blue-500/10 hover:border-violet-400/40"
+              ? "border-chart-2/50 bg-gradient-to-br from-chart-2/20 via-chart-2/12 to-primary/12 shadow-sm"
+              : "border-chart-2/25 bg-gradient-to-br from-chart-2/12 via-chart-2/[0.07] to-primary/10 hover:border-chart-2/40"
           }`}
         >
-          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-sm shadow-violet-600/30">
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-chart-2 to-primary text-white shadow-sm shadow-chart-2/30">
             <Brain className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-bold leading-tight text-foreground">Avaliação Cognitiva Infantil</span>
             <span className="block text-[10px] leading-tight text-muted-foreground">Triagem lúdica · 2–19 anos</span>
           </span>
-          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-violet-500/50 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-chart-2/50 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </div>
       </Link>
     </div>
@@ -96,8 +96,8 @@ function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; acti
           onClick={onPick}
           title="Avaliação Cognitiva Infantil"
           aria-label="Avaliação Cognitiva Infantil"
-          className={`flex h-10 w-10 items-center justify-center rounded-xl border text-violet-600 dark:text-violet-400 transition-colors ${
-            activeHref === "/avaliacao-cognitiva-infantil" ? "border-violet-400/50 bg-violet-500/20" : "border-violet-400/25 bg-gradient-to-br from-violet-500/15 to-blue-500/10 hover:border-violet-400/40"
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border text-chart-2 transition-colors ${
+            activeHref === "/avaliacao-cognitiva-infantil" ? "border-chart-2/50 bg-chart-2/20" : "border-chart-2/25 bg-gradient-to-br from-chart-2/15 to-primary/10 hover:border-chart-2/40"
           }`}
         >
           <Brain className="h-4 w-4" aria-hidden="true" />

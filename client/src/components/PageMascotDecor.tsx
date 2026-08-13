@@ -158,7 +158,7 @@ export function PageMascotDecor() {
         initial={reduceMotion ? false : { opacity: 0, x: 10, y: 10, scale: 0.9 }}
         animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: "easeOut", delay: 0.06 }}
-        className="np-mascot-legacy fixed bottom-5 right-5 z-20 hidden md:block"
+        className="np-mascot-legacy fixed bottom-[5.75rem] right-5 z-20 hidden md:block"
         data-mascot-era="legado"
         data-mascot-id={legacy.id}
       >
