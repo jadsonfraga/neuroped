@@ -11,11 +11,11 @@ interface UpdateInfo {
 /**
  * Libera apenas travas de scroll ÓRFÃS.
  *
- * Radix/react-remove-scroll pode bloquear o body por atributo
- * `data-scroll-locked` + CSS injetado, sem depender de body.style.overflow.
- * O shell já limpava overflow inline, mas isso não alcançava essa segunda forma
- * de lock — sintoma observado em tablet: a página fica visualmente normal,
- * porém swipe/touch não move absolutamente nada.
+ * Radix/react-remove-scroll pode bloquear o body ou o scroller raiz por
+ * atributo `data-scroll-locked` + CSS injetado, sem depender apenas de
+ * body.style.overflow. O shell já limpava overflow inline, mas isso não
+ * alcançava todas as formas de lock — sintoma observado em tablet: a página
+ * fica visualmente normal, porém swipe/touch não move absolutamente nada.
  *
  * Nunca interfere enquanto houver um drawer/modal/menu legítimo aberto.
  */
@@ -23,28 +23,75 @@ function releaseOrphanedScrollLock() {
   if (typeof document === "undefined") return;
 
   const body = document.body;
+  const scrollRoot = document.documentElement;
+  const lockTargets = [scrollRoot, body];
+  // Uma classe sozinha não prova ownership: se o componente desmontar antes do
+  // cleanup, ela própria vira a trava órfã. Exige o overlay vivo no DOM e limpa
+  // a classe residual antes de decidir se a recuperação deve ser bloqueada.
+  const appOwners = [
+    {
+      className: "np-mobile-drawer-open",
+      open:
+        document.querySelector(
+          'aside[aria-label="Menu de navegação"][role="dialog"][aria-modal="true"]',
+        ) !== null,
+    },
+    {
+      className: "np-legal-gate-open",
+      open:
+        document.querySelector(
+          '[role="dialog"][aria-modal="true"][aria-labelledby="aviso-legal-title"]',
+        ) !== null,
+    },
+  ];
+
+  for (const owner of appOwners) {
+    if (owner.open) continue;
+    for (const target of lockTargets) target.classList.remove(owner.className);
+  }
+
+  // Radix pode não refletir aria-modal no Content; data-state="open" é o
+  // contrato real. Elementos fechados/invisíveis ainda montados não podem
+  // preservar uma trava órfã indefinidamente.
+  const hasActiveOverlay = (selector: string) =>
+    [...document.querySelectorAll<HTMLElement>(selector)].some((element) => {
+      if (element.dataset.state === "closed" || element.getAttribute("aria-hidden") === "true") {
+        return false;
+      }
+      const style = getComputedStyle(element);
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        element.getClientRects().length > 0
+      );
+    });
+
   const legitimateOverlayOpen =
-    body.classList.contains("np-mobile-drawer-open") ||
-    document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
-    document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
-    document.querySelector('[role="menu"]') !== null ||
-    document.querySelector('[role="listbox"]') !== null ||
-    document.querySelector('[data-vaul-drawer][data-state="open"]') !== null;
+    appOwners.some((owner) => owner.open) ||
+    hasActiveOverlay(
+      '[role="dialog"][aria-modal="true"], [role="dialog"][data-state="open"], ' +
+        '[role="alertdialog"][aria-modal="true"], [role="alertdialog"][data-state="open"], ' +
+        '[role="menu"], [role="listbox"], [data-vaul-drawer][data-state="open"]',
+    );
 
   if (legitimateOverlayOpen) return;
 
-  const hasOrphanedLock =
-    body.style.overflow === "hidden" ||
-    body.style.overflowY === "hidden" ||
-    body.style.pointerEvents === "none" ||
-    body.hasAttribute("data-scroll-locked");
+  const hasOrphanedLock = lockTargets.some(
+    (target) =>
+      target.style.overflow === "hidden" ||
+      target.style.overflowY === "hidden" ||
+      target.style.pointerEvents === "none" ||
+      target.hasAttribute("data-scroll-locked"),
+  );
 
   if (!hasOrphanedLock) return;
 
-  body.style.removeProperty("overflow");
-  body.style.removeProperty("overflow-y");
-  body.style.removeProperty("pointer-events");
-  body.removeAttribute("data-scroll-locked");
+  for (const target of lockTargets) {
+    target.style.removeProperty("overflow");
+    target.style.removeProperty("overflow-y");
+    target.style.removeProperty("pointer-events");
+    target.removeAttribute("data-scroll-locked");
+  }
 }
 
 /**

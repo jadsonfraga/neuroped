@@ -1112,13 +1112,11 @@ export default function FiltroPage() {
 
   const resultsSectionRef = useRef<HTMLDivElement>(null);
 
-  // Scroll suavemente para resultados quando aparecem
+  // Posiciona os resultados sem animação concorrente: um scroll suave
+  // agendado disputava o primeiro gesto touch e podia puxar a página de volta.
   useEffect(() => {
-    if (hasSearch && resultsSectionRef.current) {
-      setTimeout(() => {
-        resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
+    if (!hasSearch) return;
+    resultsSectionRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
   }, [hasSearch]);
 
   return (

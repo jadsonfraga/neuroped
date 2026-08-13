@@ -8,15 +8,20 @@
  * GPUs móveis, backdrop-filter força repintura da área atrás do elemento a
  * cada frame de rolagem, e é a principal causa de engasgo no scroll por toque.
  *
- * Escopo: (pointer: coarse) até 1023px — celulares E tablets. Desktops com
- * mouse (pointer fine) não mudam em nenhuma largura. Nada de lógica clínica,
- * breakpoints ou acessibilidade; o pinch-zoom permanece livre.
+ * Contrato de detecção: `any-pointer: coarse`, não `pointer`. Em tablets
+ * Android/Samsung (modo desktop/DeX, S Pen ou mouse pareado) o ponteiro
+ * PRIMÁRIO pode ser reportado como `fine` mesmo com o usuário tocando a tela.
+ *
+ * Escopo: qualquer dispositivo com capacidade touch até 1366px — celulares,
+ * tablets em viewport normal e tablets em desktop-site/DeX. Desktops sem
+ * touch não mudam em nenhuma largura. Nada de lógica clínica, breakpoints,
+ * acessibilidade ou bloqueio de pinch-zoom.
  *
  * Precisa ser importado por último em main.tsx: várias regras do shell usam
  * !important e a vitória aqui é por cascata + !important.
  */
 
-@media (pointer: coarse) and (max-width: 1023px) {
+@media (any-pointer: coarse) and (max-width: 1366px) {
   /* 1 — backdrop-filter é o efeito mais caro no compositor móvel. As
      superfícies que o usam já têm fundo ≥70% opaco, então removê-lo degrada
      pouco o visual e muito o custo. Universal para vencer as várias fontes
@@ -43,9 +48,22 @@
     background: hsl(var(--card) / 0.96) !important;
   }
 
-  /* 2 — animações decorativas contínuas mantêm o compositor acordado o tempo
-     todo (aurora, partículas, brilhos, shimmer). Mesmo tratamento que
-     prefers-reduced-motion já aplica, mas condicionado ao hardware. */
+  /* 2 — Android/Chromium sofre especialmente quando a página combina scroll
+     com background-attachment: fixed e pseudo-elementos fixed. No touch o
+     canvas fica visualmente equivalente, mas acompanha o documento e não
+     exige recomposição fixa a cada frame. */
+  body {
+    background-attachment: scroll !important;
+  }
+
+  #root::before,
+  #root::after {
+    display: none !important;
+  }
+
+  /* 3 — animações decorativas contínuas mantêm o compositor acordado durante
+     todo o gesto (aurora, partículas, brilhos, shimmer). Mesmo princípio do
+     prefers-reduced-motion, condicionado aqui ao perfil de hardware. */
   .np-ambient-aurora,
   .np-particle,
   .np-home-orb,
@@ -68,11 +86,19 @@
     display: none !important;
   }
 
-  /* 3 — transition-all anima qualquer propriedade que mude, inclusive
+  /* 4 — transition-all anima qualquer propriedade que mude, inclusive
      layout/filter. Restringe às propriedades compostas baratas, mantendo a
      sensação de resposta (cor, opacidade, transform, sombra). */
   .transition-all {
     transition-property: color, background-color, border-color, opacity,
       transform, box-shadow !important;
+  }
+
+  /* 5 — superfícies verticais reais do filtro priorizam pan-y. O escopo fica
+     nos cards, seletor de sintomas e pódio OPB; nunca sobe para wrappers que
+     contêm tabelas/linhas horizontais. Pinch-zoom continua permitido. */
+  .filter-260-card,
+  .filter-touch-pan-y {
+    touch-action: pan-y pinch-zoom;
   }
 }

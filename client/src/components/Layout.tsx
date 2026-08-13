@@ -186,8 +186,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const drawerOpen = mobileOpen && !isDesktop;
+    document.documentElement.classList.toggle("np-mobile-drawer-open", drawerOpen);
     document.body.classList.toggle("np-mobile-drawer-open", drawerOpen);
-    return () => document.body.classList.remove("np-mobile-drawer-open");
+    return () => {
+      document.documentElement.classList.remove("np-mobile-drawer-open");
+      document.body.classList.remove("np-mobile-drawer-open");
+    };
   }, [isDesktop, mobileOpen]);
 
   useEffect(() => {
@@ -213,12 +217,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     mobileMenuWasOpen.current = true;
     mobileCloseButtonRef.current?.focus();
     const sidebar = sidebarRef.current;
-    // Trava de rolagem SEM salvar/restaurar valor anterior: o padrão
-    // previousOverflow deixa o body travado para sempre quando drawer e um
-    // modal (Radix) fecham fora de ordem — cada um "restaura" o hidden do
-    // outro. Aqui o cleanup sempre LIMPA a nossa trava; overlays Radix
-    // gerenciam a própria trava por conta.
-    document.body.style.overflow = "hidden";
+    // A classe np-mobile-drawer-open é o owner exclusivo da trava do shell.
+    // O efeito dedicado remove somente essa classe, sem tocar em locks de
+    // dialogs de terceiros que possam abrir ou fechar em outra ordem.
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -245,18 +246,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
     document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = "";
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [isDesktop, mobileOpen]);
 
   useEffect(() => {
+    // Layout só fecha o shell. AppRouter é o único owner do reset instantâneo
+    // do document.scrollingElement, evitando duas animações concorrentes.
     setMobileOpen(false);
-    // Failsafe de navegação: nenhuma trava de rolagem do shell pode
-    // sobreviver a uma troca de rota (sintoma real: página inteira sem
-    // rolagem até recarregar).
-    if (document.body.style.overflow === "hidden") document.body.style.overflow = "";
-    window.scrollTo({ top: 0, behavior: "smooth" });
     if (location !== "/") softWhoosh();
   }, [location]);
 
