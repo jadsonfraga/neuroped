@@ -348,9 +348,10 @@ async function proveDialogOwnership() {
     await endTouch(session);
 
     await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => document.querySelector('[role="dialog"][data-state="open"] [cmdk-root]') === null,
-    );
+    // Presence mantém o portal durante a animação de saída. Enquanto ele ainda
+    // existe, seu listbox é um overlay legítimo e o watchdog deve preservar o
+    // lock. Só provamos a autocura após a desmontagem completa do dialog.
+    await dialog.waitFor({ state: "detached", timeout: 10000 });
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     lock = await readLock(page);
     assertUnlocked(lock, "após desmontar dialog real");
