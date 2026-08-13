@@ -329,9 +329,12 @@ async function proveDialogOwnership() {
   const { context, page } = await openFilter(834);
   const session = await context.newCDPSession(page);
   try {
-    await page.keyboard.press("Control+K");
-    const dialog = page.locator('[role="dialog"][aria-modal="true"]').first();
-    await dialog.waitFor({ state: "visible", timeout: 5000 });
+    const trigger = page.getByTestId("button-command-palette");
+    await trigger.waitFor({ state: "visible", timeout: 5000 });
+    await trigger.click();
+    const dialog = page.locator('[role="dialog"]').filter({ has: page.locator("[cmdk-root]") });
+    await dialog.waitFor({ state: "visible", timeout: 10000 });
+    assert.equal(await dialog.getAttribute("aria-modal"), "true", "Command Dialog deve anunciar modal");
     await resetRoot(page);
     await injectOrphanedLock(page);
     await assertWheelBlocked(page, "dialog real");
