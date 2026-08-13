@@ -334,7 +334,7 @@ async function proveDialogOwnership() {
     await trigger.click();
     const dialog = page.locator('[role="dialog"]').filter({ has: page.locator("[cmdk-root]") });
     await dialog.waitFor({ state: "visible", timeout: 10000 });
-    assert.equal(await dialog.getAttribute("aria-modal"), "true", "Command Dialog deve anunciar modal");
+    assert.equal(await dialog.getAttribute("data-state"), "open", "Command Dialog deve estar realmente aberto");
     await resetRoot(page);
     await injectOrphanedLock(page);
     await assertWheelBlocked(page, "dialog real");
@@ -349,7 +349,7 @@ async function proveDialogOwnership() {
 
     await page.keyboard.press("Escape");
     await page.waitForFunction(
-      () => document.querySelector('[role="dialog"][aria-modal="true"]') === null,
+      () => document.querySelector('[role="dialog"][data-state="open"] [cmdk-root]') === null,
     );
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     lock = await readLock(page);

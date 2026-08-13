@@ -57,6 +57,11 @@ assert.match(
   "watchdog deve remover classes de owner sem overlay vivo",
 );
 assert.match(
+  serviceWorkerManager,
+  /\[role="dialog"\]\[data-state="open"\]/,
+  "watchdog deve preservar um dialog Radix realmente aberto",
+);
+assert.match(
   css,
   /html\.np-mobile-drawer-open,\s*html\.np-legal-gate-open,\s*body\.np-mobile-drawer-open,\s*body\.np-legal-gate-open\s*\{\s*overflow:\s*hidden;/,
   "owners de drawer e aviso devem compor a trava sem restauração cruzada",

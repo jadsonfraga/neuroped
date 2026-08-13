@@ -52,8 +52,12 @@ function releaseOrphanedScrollLock() {
 
   const legitimateOverlayOpen =
     appOwners.some((owner) => owner.open) ||
-    document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
-    document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
+    document.querySelector(
+      '[role="dialog"][aria-modal="true"], [role="dialog"][data-state="open"]',
+    ) !== null ||
+    document.querySelector(
+      '[role="alertdialog"][aria-modal="true"], [role="alertdialog"][data-state="open"]',
+    ) !== null ||
     document.querySelector('[role="menu"]') !== null ||
     document.querySelector('[role="listbox"]') !== null ||
     document.querySelector('[data-vaul-drawer][data-state="open"]') !== null;
