@@ -301,7 +301,11 @@ async function provePodiumReachability(width) {
     const podium = page.getByTestId("opb-recommendation-podium");
     await symptomPicker.waitFor({ state: "visible", timeout: 15000 });
     await podium.waitFor({ state: "visible", timeout: 15000 });
-    await page.waitForTimeout(650);
+    await page.waitForFunction(
+      () => (document.scrollingElement?.scrollTop ?? 0) > 20,
+      undefined,
+      { timeout: 3000 },
+    );
     await resetRoot(page);
 
     const ownership = await podium.evaluate((element) => {

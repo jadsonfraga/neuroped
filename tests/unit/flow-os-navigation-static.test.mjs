@@ -6,6 +6,7 @@ const palette = fs.readFileSync("client/src/components/CommandPalette.tsx", "utf
 const main = fs.readFileSync("client/src/main.tsx", "utf8");
 const css = fs.readFileSync("client/src/styles/flow-os.css", "utf8");
 const layout = fs.readFileSync("client/src/components/Layout.tsx", "utf8");
+const filterPage = fs.readFileSync("client/src/pages/filtro.tsx", "utf8");
 const legalGate = fs.readFileSync("client/src/components/AvisoLegalGate.tsx", "utf8");
 const serviceWorkerManager = fs.readFileSync("client/src/components/ServiceWorkerManager.tsx", "utf8");
 const shellCss = fs.readFileSync("client/src/styles/premium-app-shell-v12.css", "utf8");
@@ -41,6 +42,16 @@ assert.match(layout, /document\.documentElement\.classList\.toggle\("np-mobile-d
 assert.match(layout, /document\.body\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
 assert.doesNotMatch(layout, /document\.body\.style\.overflow/, "Layout não pode disputar lock inline com dialogs");
 assert.doesNotMatch(layout, /window\.scrollTo/, "Layout não pode duplicar o reset de rota do AppRouter");
+assert.match(
+  filterPage,
+  /scrollIntoView\(\{\s*behavior:\s*"auto"/,
+  "resultados devem ser posicionados sem animação concorrente",
+);
+assert.doesNotMatch(
+  filterPage,
+  /scrollIntoView\(\{\s*behavior:\s*"smooth"/,
+  "filtro não pode disputar o primeiro gesto com scroll suave programático",
+);
 assert.match(legalGate, /document\.documentElement\.classList\.add\("np-legal-gate-open"\)/, "aviso deve travar o scroller raiz");
 assert.match(legalGate, /document\.body\.classList\.add\("np-legal-gate-open"\)/, "aviso deve adquirir owner próprio");
 assert.match(legalGate, /document\.documentElement\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar o root");
