@@ -210,10 +210,11 @@ async function verifyTouchPerformanceProfile(width = 1280) {
       true,
       `${width}px touch deve ativar o perfil ampliado até 1366px`,
     );
-    assert.equal(
-      contract.bodyBackgroundAttachment,
-      "scroll",
-      "tablet touch não pode manter background fixed",
+    assert.ok(
+      contract.bodyBackgroundAttachment
+        .split(",")
+        .every((attachment) => attachment.trim() === "scroll"),
+      `tablet touch não pode manter background fixed: ${contract.bodyBackgroundAttachment}`,
     );
     assert.equal(contract.rootBeforeDisplay, "none", "glow fixo ::before deve ser removido");
     assert.equal(contract.rootAfterDisplay, "none", "glow fixo ::after deve ser removido");
