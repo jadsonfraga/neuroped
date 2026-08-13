@@ -98,34 +98,17 @@ function releaseOrphanedScrollLock() {
  * Aplica a atualização de verdade, não só recarrega.
  *
  * O sw.js chama skipWaiting() no install, então normalmente não há worker em
- * "waiting" — mas quando há (instalação concluída enquanto a aba estava em
- * segundo plano, ou um install antigo interrompido), um reload simples é
- * servido pelo worker ANTIGO com o precache antigo, e o banner volta em loop.
- * Aqui destravamos explicitamente o worker em espera antes de recarregar.
+ * "waiting" — mas quando há (instalação concluída com a aba em segundo plano),
+ * um reload simples é servido pelo worker ANTIGO com o precache antigo e o
+ * banner volta em loop. Destrava o worker em espera antes de recarregar; o
+ * HTML é network-first + no-cache, então o reload já busca o índice novo.
  */
-async function applyPendingUpdate(): Promise<void> {
-  try {
-    const registration = await navigator.serviceWorker?.getRegistration();
-    const waiting = registration?.waiting;
-    if (waiting) {
-      const activated = new Promise<void>((resolve) => {
-        const timer = globalThis.setTimeout(resolve, 1500);
-        navigator.serviceWorker.addEventListener(
-          "controllerchange",
-          () => {
-            globalThis.clearTimeout(timer);
-            resolve();
-          },
-          { once: true },
-        );
-      });
-      waiting.postMessage({ type: "SKIP_WAITING" });
-      await activated;
-    }
-  } catch {
-    // O reload abaixo ainda busca o HTML novo (network-first + no-cache).
-  }
-  window.location.reload();
+function applyPendingUpdate(): void {
+  void navigator.serviceWorker
+    ?.getRegistration()
+    .then((r) => r?.waiting?.postMessage({ type: "SKIP_WAITING" }))
+    .catch(() => undefined)
+    .then(() => window.location.reload());
 }
 
 export function ServiceWorkerManager() {
@@ -261,7 +244,7 @@ export function ServiceWorkerManager() {
         <p className="text-sm font-semibold text-foreground">Nova versão disponível</p>
         <p className="text-xs text-muted-foreground">Atualize para usar as correções mais recentes.</p>
       </div>
-      <Button size="sm" onClick={() => { void applyPendingUpdate(); }} className="shrink-0">Atualizar</Button>
+      <Button size="sm" onClick={applyPendingUpdate} className="shrink-0">Atualizar</Button>
       <Button variant="ghost" size="icon" onClick={() => setUpdate(null)} aria-label="Fechar aviso de atualização" className="h-8 w-8 shrink-0">
         <X className="h-4 w-4" />
       </Button>

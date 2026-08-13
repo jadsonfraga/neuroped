@@ -1,2 +1,2 @@
 // GERADO AUTOMATICAMENTE por scripts/gen-build-info.mjs — não editar à mão.
-self.__NEUROPED_BUILD_ID__ = "2.0.0-fullstack-e344e2d6";
+self.__NEUROPED_BUILD_ID__ = "2.0.0-fullstack-71e2a2d5";

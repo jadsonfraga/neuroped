@@ -1,15 +1,15 @@
 {
   "/": {
-    "performance": 100,
+    "performance": 75,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 303,
-      "lcpMs": 474,
-      "speedIndexMs": 386,
-      "tbtMs": 0,
-      "cls": 0.005
+      "fcpMs": 325,
+      "lcpMs": 484,
+      "speedIndexMs": 737,
+      "tbtMs": 673,
+      "cls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -17,47 +17,23 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [
+    "layoutShifts": [],
+    "failedAudits": [
       {
-        "node": {
-          "type": "node",
-          "lhId": "page-1-ASIDE",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,MAIN,0,DIV,1,ASIDE",
-          "selector": "div.flex > main#main-content > div.p-3 > aside.mt-8",
-          "boundingRect": {
-            "top": 1444,
-            "bottom": 1523,
-            "left": 276,
-            "right": 1324,
-            "width": 1048,
-            "height": 80
-          },
-          "snippet": "<aside role=\"note\" aria-label=\"Aviso de finalidade educativa\" class=\"mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber…\">",
-          "nodeLabel": "⚕️\nAviso — finalidade exclusivamente educativa. O NeuroPed é uma ferramenta de i…"
-        },
-        "score": 0.003818078095599942
+        "id": "total-blocking-time",
+        "score": 0.16,
+        "title": "Total Blocking Time"
       },
       {
-        "node": {
-          "type": "node",
-          "lhId": "page-2-BUTTON",
-          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
-          "boundingRect": {
-            "top": 868,
-            "bottom": 916,
-            "left": 1165,
-            "right": 1324,
-            "width": 159,
-            "height": 48
-          },
-          "snippet": "<button aria-label=\"Tour do app\" class=\"fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 ro…\" data-testid=\"button-tour\">",
-          "nodeLabel": "Tour do app"
-        },
-        "score": 0.001586607811896922
-      }
-    ],
-    "failedAudits": [
+        "id": "max-potential-fid",
+        "score": 0.01,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "interactive",
+        "score": 0.99,
+        "title": "Time to Interactive"
+      },
       {
         "id": "valid-source-maps",
         "score": 0,
@@ -69,32 +45,27 @@
         "title": "Forced reflow"
       },
       {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
-      },
-      {
         "id": "network-dependency-tree-insight",
         "score": 0,
         "title": "Network dependency tree"
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/filtro": {
-    "performance": 100,
+    "performance": 93,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 418,
-      "lcpMs": 683,
-      "speedIndexMs": 520,
-      "tbtMs": 0,
+      "fcpMs": 444,
+      "lcpMs": 721,
+      "speedIndexMs": 614,
+      "tbtMs": 215,
       "cls": 0
     },
     "requiredAudits": {
@@ -111,8 +82,13 @@
         "title": "Largest Contentful Paint"
       },
       {
+        "id": "total-blocking-time",
+        "score": 0.76,
+        "title": "Total Blocking Time"
+      },
+      {
         "id": "max-potential-fid",
-        "score": 0.99,
+        "score": 0.37,
         "title": "Max Potential First Input Delay"
       },
       {
@@ -148,10 +124,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 388,
-      "lcpMs": 609,
-      "speedIndexMs": 426,
-      "tbtMs": 0,
+      "fcpMs": 411,
+      "lcpMs": 647,
+      "speedIndexMs": 503,
+      "tbtMs": 19,
       "cls": 0
     },
     "requiredAudits": {
@@ -195,10 +171,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 332,
-      "lcpMs": 504,
-      "speedIndexMs": 358,
-      "tbtMs": 0,
+      "fcpMs": 376,
+      "lcpMs": 548,
+      "speedIndexMs": 472,
+      "tbtMs": 12,
       "cls": 0
     },
     "requiredAudits": {
@@ -237,10 +213,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 297,
-      "lcpMs": 491,
-      "speedIndexMs": 320,
-      "tbtMs": 0,
+      "fcpMs": 340,
+      "lcpMs": 494,
+      "speedIndexMs": 398,
+      "tbtMs": 8,
       "cls": 0
     },
     "requiredAudits": {
@@ -274,15 +250,15 @@
     ]
   },
   "/#/cbcl": {
-    "performance": 100,
+    "performance": 99,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 409,
-      "lcpMs": 612,
-      "speedIndexMs": 456,
-      "tbtMs": 1,
+      "fcpMs": 412,
+      "lcpMs": 604,
+      "speedIndexMs": 512,
+      "tbtMs": 69,
       "cls": 0
     },
     "requiredAudits": {
@@ -297,6 +273,16 @@
         "id": "largest-contentful-paint",
         "score": 0.99,
         "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.99,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.93,
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "valid-source-maps",
@@ -326,10 +312,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 345,
-      "lcpMs": 497,
-      "speedIndexMs": 394,
-      "tbtMs": 0,
+      "fcpMs": 385,
+      "lcpMs": 555,
+      "speedIndexMs": 562,
+      "tbtMs": 12,
       "cls": 0
     },
     "requiredAudits": {
@@ -341,6 +327,11 @@
     "layoutShifts": [],
     "failedAudits": [
       {
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
+      },
+      {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
@@ -349,6 +340,16 @@
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -368,10 +369,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 323,
-      "lcpMs": 491,
-      "speedIndexMs": 371,
-      "tbtMs": 0,
+      "fcpMs": 355,
+      "lcpMs": 422,
+      "speedIndexMs": 460,
+      "tbtMs": 1,
       "cls": 0
     },
     "requiredAudits": {
@@ -391,6 +392,16 @@
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -410,135 +421,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 363,
-      "lcpMs": 459,
-      "speedIndexMs": 404,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/fluxograma": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 311,
-      "lcpMs": 446,
-      "speedIndexMs": 360,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/laudo-neuroped": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 313,
-      "lcpMs": 449,
-      "speedIndexMs": 351,
-      "tbtMs": 0,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
-    "failedAudits": [
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
-      }
-    ]
-  },
-  "/#/receita-c1": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 440,
-      "lcpMs": 613,
-      "speedIndexMs": 472,
+      "fcpMs": 414,
+      "lcpMs": 603,
+      "speedIndexMs": 466,
       "tbtMs": 0,
       "cls": 0
     },
@@ -564,6 +449,177 @@
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/fluxograma": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 330,
+      "lcpMs": 468,
+      "speedIndexMs": 454,
+      "tbtMs": 17,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/laudo-neuroped": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 362,
+      "lcpMs": 563,
+      "speedIndexMs": 493,
+      "tbtMs": 1,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "max-potential-fid",
+        "score": 0.99,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/receita-c1": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 469,
+      "lcpMs": 649,
+      "speedIndexMs": 561,
+      "tbtMs": 14,
+      "cls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [],
+    "failedAudits": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.99,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",

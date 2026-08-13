@@ -1,6 +1,43 @@
 {
-  "mode": "static-lint",
+  "mode": "axe-playwright",
   "total": 0,
   "violations": [],
-  "reason": "Chromium não instalado no ambiente"
+  "routes": {
+    "/": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/filtro": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/mchat": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/cars": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/espasticidade": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/caa": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/prontuario": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    }
+  },
+  "allSeverityViolations": []
 }
