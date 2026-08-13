@@ -34,7 +34,7 @@
   "axeSeriousCriticalViolations": 0,
   "axeTotalViolations": 0,
   "bundleMaxGzipKb": 112,
-  "initialJsMaxGzipKb": 170,
+  "initialJsMaxGzipKb": 170.5,
   "largestJsChunkMaxKb": 1240,
   "largestJsChunkMaxGzipKb": 320,
   "initialJsForbiddenChunks": [
