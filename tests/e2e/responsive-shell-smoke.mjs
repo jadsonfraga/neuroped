@@ -257,6 +257,7 @@ try {
   // celular (<768px).
   for (const width of [390, 640, 767]) await verifyTablet(width);
   for (const width of [768, 834, 1024]) await verifyDesktopBoundary(width);
+  await verifyTouchPerformanceProfile();
   await verifyPrintIsolation();
   console.log("[responsive-shell] ✓ contrato responsivo aprovado.");
 } finally {
