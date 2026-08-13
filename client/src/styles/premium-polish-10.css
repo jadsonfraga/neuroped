@@ -24,7 +24,25 @@ html {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-y: none;
+  /* "contain" (não "none"): bloqueia o pull-to-refresh acidental durante o
+   * preenchimento de escalas, mas PRESERVA o elástico local do iOS. Com
+   * "none", o arraste morria seco nas bordas — sensação de rolagem travada
+   * relatada em tablet ("bloqueio que impede a rolagem fácil"). */
+  overscroll-behavior-y: contain;
+}
+
+/* iOS/iPadOS dá ZOOM AUTOMÁTICO ao focar qualquer campo com fonte < 16px —
+ * e a página fica ampliada depois que o teclado fecha, desalinhando o shell
+ * fixo e travando o arraste. Todos os campos do app usavam 14px (text-sm).
+ * Em ponteiro grosso (touch), o mínimo vira 16px; campos maiores mantêm o
+ * tamanho (max()). A alternativa — maximum-scale no viewport — é vetada pelo
+ * guard de acessibilidade (axe: meta-viewport, impacto critical). */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
 }
 
 button,
