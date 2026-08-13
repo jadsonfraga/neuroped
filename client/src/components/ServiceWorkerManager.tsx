@@ -11,9 +11,9 @@ interface UpdateInfo {
 /**
  * Libera apenas travas de scroll ÓRFÃS.
  *
- * Radix/react-remove-scroll pode bloquear o body por atributo
- * `data-scroll-locked` + CSS injetado, sem depender de body.style.overflow.
- * O shell já limpava overflow inline, mas isso não alcançava essa segunda forma
+ * Radix/react-remove-scroll pode bloquear o body ou o scroller raiz por
+ * atributo `data-scroll-locked` + CSS injetado, sem depender apenas de
+ * body.style.overflow. O shell já limpava overflow inline, mas isso não
  * de lock — sintoma observado em tablet: a página fica visualmente normal,
  * porém swipe/touch não move absolutamente nada.
  *
@@ -23,9 +23,15 @@ function releaseOrphanedScrollLock() {
   if (typeof document === "undefined") return;
 
   const body = document.body;
+  const scrollRoot = document.documentElement;
+  const lockTargets = [scrollRoot, body];
+  const appOwnedOverlayOpen = lockTargets.some(
+    (target) =>
+      target.classList.contains("np-mobile-drawer-open") ||
+      target.classList.contains("np-legal-gate-open"),
+  );
   const legitimateOverlayOpen =
-    body.classList.contains("np-mobile-drawer-open") ||
-    body.classList.contains("np-legal-gate-open") ||
+    appOwnedOverlayOpen ||
     document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="menu"]') !== null ||
@@ -34,18 +40,22 @@ function releaseOrphanedScrollLock() {
 
   if (legitimateOverlayOpen) return;
 
-  const hasOrphanedLock =
-    body.style.overflow === "hidden" ||
-    body.style.overflowY === "hidden" ||
-    body.style.pointerEvents === "none" ||
-    body.hasAttribute("data-scroll-locked");
+  const hasOrphanedLock = lockTargets.some(
+    (target) =>
+      target.style.overflow === "hidden" ||
+      target.style.overflowY === "hidden" ||
+      target.style.pointerEvents === "none" ||
+      target.hasAttribute("data-scroll-locked"),
+  );
 
   if (!hasOrphanedLock) return;
 
-  body.style.removeProperty("overflow");
-  body.style.removeProperty("overflow-y");
-  body.style.removeProperty("pointer-events");
-  body.removeAttribute("data-scroll-locked");
+  for (const target of lockTargets) {
+    target.style.removeProperty("overflow");
+    target.style.removeProperty("overflow-y");
+    target.style.removeProperty("pointer-events");
+    target.removeAttribute("data-scroll-locked");
+  }
 }
 
 export function ServiceWorkerManager() {

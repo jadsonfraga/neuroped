@@ -4,6 +4,8 @@
 
 /* Ownership aditivo: fechar um overlay remove apenas a sua classe e nunca
  * libera outro overlay ainda aberto. Evita restauração cruzada de overflow. */
+html.np-mobile-drawer-open,
+html.np-legal-gate-open,
 body.np-mobile-drawer-open,
 body.np-legal-gate-open {
   overflow: hidden;

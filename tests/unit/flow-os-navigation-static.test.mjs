@@ -37,16 +37,19 @@ assert.match(css, /safe-area-inset-bottom/, "reserva do conteúdo deve considera
 // (2026-08-12): tablet retrato mantém a sidebar; drawer+dock só no celular.
 assert.match(dock, /\bmd:hidden\b/, "dock deve encerrar no breakpoint md de 768px");
 assert.match(layout, /matchMedia\("\(min-width: 768px\)"\)/, "shell React deve compartilhar o breakpoint md");
-assert.match(layout, /classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
+assert.match(layout, /document\.documentElement\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve travar o scroller raiz");
+assert.match(layout, /document\.body\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
 assert.doesNotMatch(layout, /document\.body\.style\.overflow/, "Layout não pode disputar lock inline com dialogs");
 assert.doesNotMatch(layout, /window\.scrollTo/, "Layout não pode duplicar o reset de rota do AppRouter");
-assert.match(legalGate, /classList\.add\("np-legal-gate-open"\)/, "aviso deve adquirir owner próprio");
-assert.match(legalGate, /classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar só o próprio owner");
+assert.match(legalGate, /document\.documentElement\.classList\.add\("np-legal-gate-open"\)/, "aviso deve travar o scroller raiz");
+assert.match(legalGate, /document\.body\.classList\.add\("np-legal-gate-open"\)/, "aviso deve adquirir owner próprio");
+assert.match(legalGate, /document\.documentElement\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar o root");
+assert.match(legalGate, /document\.body\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar só o próprio owner");
 assert.doesNotMatch(legalGate, /document\.body\.style\.overflow/, "aviso não pode restaurar lock inline alheio");
 assert.match(serviceWorkerManager, /classList\.contains\("np-legal-gate-open"\)/, "watchdog deve preservar o aviso legítimo");
 assert.match(
   css,
-  /body\.np-mobile-drawer-open,\s*body\.np-legal-gate-open\s*\{\s*overflow:\s*hidden;/,
+  /html\.np-mobile-drawer-open,\s*html\.np-legal-gate-open,\s*body\.np-mobile-drawer-open,\s*body\.np-legal-gate-open\s*\{\s*overflow:\s*hidden;/,
   "owners de drawer e aviso devem compor a trava sem restauração cruzada",
 );
 assert.match(

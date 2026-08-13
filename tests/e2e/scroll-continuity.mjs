@@ -130,6 +130,9 @@ async function swipeLocator(page, session, locator, deltaX, deltaY) {
 
 async function injectOrphanedLock(page) {
   await page.evaluate(() => {
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.overflowY = "hidden";
+    document.documentElement.setAttribute("data-scroll-locked", "1");
     document.body.style.overflow = "hidden";
     document.body.style.overflowY = "hidden";
     document.body.style.pointerEvents = "none";
@@ -139,6 +142,13 @@ async function injectOrphanedLock(page) {
 
 async function readLock(page) {
   return page.evaluate(() => ({
+    rootOverflow: document.documentElement.style.overflow,
+    rootOverflowY: document.documentElement.style.overflowY,
+    rootPointerEvents: document.documentElement.style.pointerEvents,
+    rootComputedOverflowY: getComputedStyle(document.documentElement).overflowY,
+    rootDataLocked: document.documentElement.hasAttribute("data-scroll-locked"),
+    rootDrawerOwner: document.documentElement.classList.contains("np-mobile-drawer-open"),
+    rootLegalOwner: document.documentElement.classList.contains("np-legal-gate-open"),
     overflow: document.body.style.overflow,
     overflowY: document.body.style.overflowY,
     pointerEvents: document.body.style.pointerEvents,
@@ -150,6 +160,11 @@ async function readLock(page) {
 }
 
 function assertUnlocked(lock, label) {
+  assert.equal(lock.rootOverflow, "", `${label}: overflow inline do root permaneceu`);
+  assert.equal(lock.rootOverflowY, "", `${label}: overflow-y inline do root permaneceu`);
+  assert.equal(lock.rootPointerEvents, "", `${label}: pointer-events do root permaneceu`);
+  assert.equal(lock.rootDataLocked, false, `${label}: data-scroll-locked do root permaneceu`);
+  assert.notEqual(lock.rootComputedOverflowY, "hidden", `${label}: scroller raiz continuou travado`);
   assert.equal(lock.overflow, "", `${label}: overflow inline permaneceu`);
   assert.equal(lock.overflowY, "", `${label}: overflow-y inline permaneceu`);
   assert.equal(lock.pointerEvents, "", `${label}: pointer-events permaneceu`);
@@ -279,7 +294,8 @@ async function proveDrawerOwnership() {
     await page.waitForFunction(() => document.body.classList.contains("np-mobile-drawer-open"));
     let lock = await readLock(page);
     assert.equal(lock.drawerOwner, true, "drawer não adquiriu ownership");
-    assert.equal(lock.computedOverflowY, "hidden", "drawer não travou o body");
+    assert.equal(lock.rootDrawerOwner, true, "drawer não adquiriu ownership no scroller raiz");
+    assert.equal(lock.rootComputedOverflowY, "hidden", "drawer não travou o scroller raiz");
 
     await injectOrphanedLock(page);
     const viewport = page.viewportSize();
@@ -287,7 +303,9 @@ async function proveDrawerOwnership() {
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     lock = await readLock(page);
     assert.equal(lock.drawerOwner, true, "touchStart removeu owner legítimo do drawer");
+    assert.equal(lock.rootDrawerOwner, true, "touchStart removeu owner raiz do drawer");
     assert.equal(lock.dataLocked, true, "watchdog removeu lock durante drawer legítimo");
+    assert.equal(lock.rootDataLocked, true, "watchdog removeu lock raiz durante drawer legítimo");
     await endTouch(session);
 
     await page.keyboard.press("Escape");
@@ -322,7 +340,8 @@ async function proveLegalGateOwnership() {
     await page.waitForFunction(() => document.body.classList.contains("np-legal-gate-open"));
     const locked = await readLock(page);
     assert.equal(locked.legalOwner, true, "aviso legal não adquiriu ownership");
-    assert.equal(locked.computedOverflowY, "hidden", "aviso legal não travou o body");
+    assert.equal(locked.rootLegalOwner, true, "aviso legal não adquiriu ownership no root");
+    assert.equal(locked.rootComputedOverflowY, "hidden", "aviso legal não travou o scroller raiz");
     assert.equal(locked.overflow, "", "aviso legal voltou a usar lock inline compartilhado");
 
     await accept.click();
