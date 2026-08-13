@@ -138,11 +138,26 @@ export default function SobrePage() {
             </h2>
             <p className="text-xs leading-relaxed text-muted-foreground">
               Cada era do app deixou um personagem. Todos continuam em casa: o acervo aparece
-              em cameos pelas páginas e o Nino guia a jornada atual.
+              em cameos pelas páginas e o próprio Dr. Jadson, em desenho, guia a jornada atual.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <figure className="m-0 space-y-2 rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 text-center">
+              <div className="asset-proportion-box mx-auto h-28 w-28 overflow-hidden rounded-2xl bg-white/60 dark:bg-white/[0.06]">
+                <img
+                  src="/dr-jadson-mascot-guide.webp"
+                  alt="Dr. Jadson Fraga em desenho, guia atual do NeuroPed"
+                  loading="lazy"
+                  decoding="async"
+                  className="no-zoom-media h-full w-full object-contain"
+                />
+              </div>
+              <figcaption className="space-y-0.5">
+                <p className="text-sm font-bold text-foreground">Dr. Jadson</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">Guia atual do NeuroPed — o próprio Dr. Jadson em desenho.</p>
+              </figcaption>
+            </figure>
+            <figure className="m-0 space-y-2 rounded-2xl border border-border bg-muted/30 p-4 text-center">
               <div className="asset-proportion-box mx-auto h-28 w-28 overflow-hidden rounded-2xl bg-white/60 dark:bg-white/[0.06]">
                 <img
                   src="/neuroped-mascot-premium.webp"
@@ -154,7 +169,7 @@ export default function SobrePage() {
               </div>
               <figcaption className="space-y-0.5">
                 <p className="text-sm font-bold text-foreground">Nino</p>
-                <p className="text-[11px] leading-snug text-muted-foreground">Guia atual do NeuroPed — organiza o caminho clínico.</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">Guia anterior — hoje revezando no acervo em cameo.</p>
               </figcaption>
             </figure>
             <figure className="m-0 space-y-2 rounded-2xl border border-chart-2/15 bg-chart-2/[0.04] p-4 text-center">
@@ -184,7 +199,7 @@ export default function SobrePage() {
               </div>
               <figcaption className="space-y-0.5">
                 <p className="text-sm font-bold text-foreground">Acervo em cameo</p>
-                <p className="text-[11px] leading-snug text-muted-foreground">Seis artes históricas revezam no canto das páginas.</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">Sete artes históricas — incluindo o Nino — revezam no canto das páginas.</p>
               </figcaption>
             </figure>
           </div>
