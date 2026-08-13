@@ -415,11 +415,19 @@ header.fixed.md\:hidden {
   box-shadow: 0 10px 32px -26px hsl(var(--foreground) / 0.42), var(--np-premium-inset) !important;
 }
 
+/* Métricas do hero: herança das eras anteriores (253 escalas, 269 filtráveis…).
+   Conteúdo informativo querido do produto — permanece visível, com a moldura
+   premium atual aplicada logo abaixo. */
 .np-home-hero [aria-label="Métricas do app"] {
-  display: none !important;
+  border-color: hsl(var(--border) / 0.7) !important;
+  background: hsl(var(--card) / 0.55) !important;
+  box-shadow: var(--np-premium-shadow);
 }
 
-@media (min-width: 768px) {
+/* Entre o shell mobile e o desktop largo, o hero colapsa numa coluna para o
+   texto respirar. Em lg+ o grid volta a duas colunas e o Nino — personagem
+   herdado das primeiras eras — ocupa a coluna direita como assinatura da home. */
+@media (min-width: 768px) and (max-width: 1023px) {
   .np-home-hero > .relative {
     grid-template-columns: minmax(0, 1fr) !important;
   }
