@@ -25,6 +25,7 @@ function releaseOrphanedScrollLock() {
   const body = document.body;
   const legitimateOverlayOpen =
     body.classList.contains("np-mobile-drawer-open") ||
+    body.classList.contains("np-legal-gate-open") ||
     document.querySelector('[role="dialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="alertdialog"][aria-modal="true"]') !== null ||
     document.querySelector('[role="menu"]') !== null ||

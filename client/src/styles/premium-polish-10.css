@@ -19,16 +19,14 @@
 html {
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
+  /* O scroller real do app é document.scrollingElement (HTML). Aplicar o
+   * contrato no body é inócuo/variável entre engines e não governa o viewport. */
+  overscroll-behavior-y: contain;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* "contain" (não "none"): bloqueia o pull-to-refresh acidental durante o
-   * preenchimento de escalas, mas PRESERVA o elástico local do iOS. Com
-   * "none", o arraste morria seco nas bordas — sensação de rolagem travada
-   * relatada em tablet ("bloqueio que impede a rolagem fácil"). */
-  overscroll-behavior-y: contain;
 }
 
 /* iOS/iPadOS dá ZOOM AUTOMÁTICO ao focar qualquer campo com fonte < 16px —

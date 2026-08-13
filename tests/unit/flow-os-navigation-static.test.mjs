@@ -6,6 +6,8 @@ const palette = fs.readFileSync("client/src/components/CommandPalette.tsx", "utf
 const main = fs.readFileSync("client/src/main.tsx", "utf8");
 const css = fs.readFileSync("client/src/styles/flow-os.css", "utf8");
 const layout = fs.readFileSync("client/src/components/Layout.tsx", "utf8");
+const legalGate = fs.readFileSync("client/src/components/AvisoLegalGate.tsx", "utf8");
+const serviceWorkerManager = fs.readFileSync("client/src/components/ServiceWorkerManager.tsx", "utf8");
 const shellCss = fs.readFileSync("client/src/styles/premium-app-shell-v12.css", "utf8");
 const polishCss = fs.readFileSync("client/src/styles/premium-polish-10.css", "utf8");
 
@@ -36,6 +38,27 @@ assert.match(css, /safe-area-inset-bottom/, "reserva do conteúdo deve considera
 assert.match(dock, /\bmd:hidden\b/, "dock deve encerrar no breakpoint md de 768px");
 assert.match(layout, /matchMedia\("\(min-width: 768px\)"\)/, "shell React deve compartilhar o breakpoint md");
 assert.match(layout, /classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
+assert.doesNotMatch(layout, /document\.body\.style\.overflow/, "Layout não pode disputar lock inline com dialogs");
+assert.doesNotMatch(layout, /window\.scrollTo/, "Layout não pode duplicar o reset de rota do AppRouter");
+assert.match(legalGate, /classList\.add\("np-legal-gate-open"\)/, "aviso deve adquirir owner próprio");
+assert.match(legalGate, /classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar só o próprio owner");
+assert.doesNotMatch(legalGate, /document\.body\.style\.overflow/, "aviso não pode restaurar lock inline alheio");
+assert.match(serviceWorkerManager, /classList\.contains\("np-legal-gate-open"\)/, "watchdog deve preservar o aviso legítimo");
+assert.match(
+  css,
+  /body\.np-mobile-drawer-open,\s*body\.np-legal-gate-open\s*\{\s*overflow:\s*hidden;/,
+  "owners de drawer e aviso devem compor a trava sem restauração cruzada",
+);
+assert.match(
+  polishCss,
+  /html\s*\{[^}]*overscroll-behavior-y:\s*contain;/s,
+  "overscroll deve pertencer ao document.scrollingElement",
+);
+assert.doesNotMatch(
+  polishCss,
+  /body\s*\{[^}]*overscroll-behavior-y:/s,
+  "body não pode fingir ser o scroller raiz",
+);
 assert.match(css, /@media screen and \(max-width: 767px\)/, "contrato mobile deve valer apenas em tela");
 assert.match(
   css,
