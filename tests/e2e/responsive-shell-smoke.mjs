@@ -127,12 +127,138 @@ async function verifyPrintIsolation() {
   }
 }
 
+async function verifyTouchPerformanceProfile(width = 1280) {
+  const context = await browser.newContext({
+    viewport: { width, height: 1000 },
+    hasTouch: true,
+    reducedMotion: "no-preference",
+  });
+  const page = await context.newPage();
+  await page.addInitScript((storage) => {
+    for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
+  }, ACCEPTED_FIRST_VISIT_STORAGE);
+
+  try {
+    await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
+    await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
+    await page.locator(".container-filtro").waitFor({ state: "visible", timeout: 15000 });
+    await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 15000 });
+
+    const contract = await page.evaluate(() => {
+      const root = document.querySelector("#root");
+      const sidebar = document.querySelector('aside[aria-label="Menu de navegação"]');
+      const wrapper = document.querySelector(".container-filtro");
+      const grid = document.querySelector(".filter-260-grid");
+      const card = document.querySelector(".filter-260-card");
+      const scroller = document.querySelector(".container-filtro .overflow-x-auto");
+      const viewport = document.querySelector('meta[name="viewport"]')?.getAttribute("content") ?? "";
+
+      if (
+        !(root instanceof HTMLElement) ||
+        !(sidebar instanceof HTMLElement) ||
+        !(wrapper instanceof HTMLElement) ||
+        !(grid instanceof HTMLElement) ||
+        !(card instanceof HTMLElement) ||
+        !(scroller instanceof HTMLElement)
+      ) {
+        throw new Error("Filtro incompleto durante o teste touch");
+      }
+
+      // Torna o overflow determinístico inclusive em viewports largos/DeX.
+      scroller.style.width = "280px";
+      scroller.style.maxWidth = "280px";
+      const beforeHorizontal = scroller.scrollLeft;
+      scroller.scrollLeft = Math.min(120, scroller.scrollWidth - scroller.clientWidth);
+      const horizontalDelta = scroller.scrollLeft - beforeHorizontal;
+      scroller.scrollLeft = beforeHorizontal;
+
+      const beforeVertical = window.scrollY;
+      const verticalTarget = Math.min(
+        600,
+        document.documentElement.scrollHeight - window.innerHeight,
+      );
+      window.scrollTo(0, verticalTarget);
+      const verticalDelta = window.scrollY - beforeVertical;
+      window.scrollTo(0, beforeVertical);
+
+      const sidebarStyle = getComputedStyle(sidebar);
+      return {
+        anyCoarse: window.matchMedia("(any-pointer: coarse)").matches,
+        profileMatches: window.matchMedia(
+          "(any-pointer: coarse) and (min-width: 768px) and (max-width: 1366px)",
+        ).matches,
+        bodyBackgroundAttachment: getComputedStyle(document.body).backgroundAttachment,
+        rootBeforeDisplay: getComputedStyle(root, "::before").display,
+        rootAfterDisplay: getComputedStyle(root, "::after").display,
+        sidebarBackdrop:
+          sidebarStyle.backdropFilter ||
+          sidebarStyle.getPropertyValue("-webkit-backdrop-filter"),
+        wrapperTouchAction: getComputedStyle(wrapper).touchAction,
+        gridTouchAction: getComputedStyle(grid).touchAction,
+        cardTouchAction: getComputedStyle(card).touchAction,
+        scrollerTouchAction: getComputedStyle(scroller).touchAction,
+        scrollerOverflowX: getComputedStyle(scroller).overflowX,
+        horizontalDelta,
+        verticalDelta,
+        viewport,
+      };
+    });
+
+    assert.equal(contract.anyCoarse, true, "Chromium deve expor capacidade touch coarse");
+    assert.equal(
+      contract.profileMatches,
+      true,
+      `${width}px touch deve ativar o perfil ampliado até 1366px`,
+    );
+    assert.ok(
+      contract.bodyBackgroundAttachment
+        .split(",")
+        .every((attachment) => attachment.trim() === "scroll"),
+      `tablet touch não pode manter background fixed: ${contract.bodyBackgroundAttachment}`,
+    );
+    assert.equal(contract.rootBeforeDisplay, "none", "glow fixo ::before deve ser removido");
+    assert.equal(contract.rootAfterDisplay, "none", "glow fixo ::after deve ser removido");
+    assert.equal(contract.sidebarBackdrop, "none", "blur do shell deve ser removido");
+    assert.match(contract.cardTouchAction, /pan-y/, "card deve priorizar pan vertical");
+    assert.match(contract.cardTouchAction, /pinch-zoom/, "card deve preservar pinch-zoom");
+    assert.match(
+      contract.wrapperTouchAction,
+      /^(auto|manipulation|.*pan-x.*)$/,
+      "wrapper não pode bloquear pan horizontal descendente",
+    );
+    assert.match(
+      contract.gridTouchAction,
+      /^(auto|manipulation|.*pan-x.*)$/,
+      "grid não pode bloquear pan horizontal descendente",
+    );
+    assert.match(
+      contract.scrollerTouchAction,
+      /^(auto|manipulation|.*pan-x.*)$/,
+      "scroller deve aceitar gesto horizontal",
+    );
+    assert.equal(contract.scrollerOverflowX, "auto", "linha do filtro deve manter overflow-x");
+    assert.ok(contract.horizontalDelta > 0, "linha do filtro deve continuar rolável na horizontal");
+    assert.ok(contract.verticalDelta > 0, "página do filtro deve continuar rolável na vertical");
+    assert.doesNotMatch(
+      contract.viewport,
+      /maximum-scale\s*=|user-scalable\s*=\s*(?:no|0)/i,
+      "viewport não pode bloquear zoom manual",
+    );
+    console.log(
+      `[responsive-shell] ✓ ${width}px touch: perfil leve, pan vertical/horizontal e zoom preservados`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   // Contrato 2026-08-12 (pedido do Dr. Jadson): sidebar FIXA a partir de 768px
   // — iPad retrato (834) e paisagem voltam a ter sidebar; drawer+dock só no
   // celular (<768px).
   for (const width of [390, 640, 767]) await verifyTablet(width);
   for (const width of [768, 834, 1024]) await verifyDesktopBoundary(width);
+  await verifyTouchPerformanceProfile();
   await verifyPrintIsolation();
   console.log("[responsive-shell] ✓ contrato responsivo aprovado.");
 } finally {
