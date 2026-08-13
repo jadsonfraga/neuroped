@@ -79,6 +79,8 @@ export function ServiceWorkerManager() {
     let cancelled = false;
     let idleId: number | undefined;
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+    let registrationRef: ServiceWorkerRegistration | null = null;
 
     const rememberVersion = (version: string) => {
       let previous: string | null = null;
@@ -103,18 +105,34 @@ export function ServiceWorkerManager() {
       navigator.serviceWorker.controller?.postMessage({ type: "GET_VERSION" });
     };
 
-    navigator.serviceWorker.addEventListener("message", handleMessage);
-    navigator.serviceWorker.addEventListener("controllerchange", askCurrentVersion);
+    // Reconsulta o navegador por uma versão nova do sw.js. Sozinho, o registro
+    // inicial só verifica UMA vez no carregamento — uma aba/PWA que fica aberta
+    // em segundo plano por horas (comum em tablet de consultório) nunca mais
+    // descobre um deploy novo até fechar e reabrir. Isso deixava o app preso
+    // numa build antiga mesmo com o deploy já publicado e verde no CI.
+    const checkForUpdate = () => {
+      if (cancelled || !registrationRef) return;
+      registrationRef.update().catch(() => undefined);
+    };
 
     const register = () => {
       if (cancelled) return;
       navigator.serviceWorker
         .register("./sw.js")
         .then(async (registration) => {
+          registrationRef = registration;
           askCurrentVersion();
           await registration.update().catch(() => undefined);
+          // Poll de baixa frequência enquanto o app fica aberto, mais um
+          // recheck sempre que a aba volta ao primeiro plano ou a conexão
+          // retorna — cobre o cenário real de tablet de consultório.
+          pollTimer = globalThis.setInterval(checkForUpdate, 15 * 60 * 1000);
         })
         .catch(() => undefined);
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkForUpdate();
     };
 
     const scheduleRegistration = () => {
@@ -133,13 +151,21 @@ export function ServiceWorkerManager() {
     if (document.readyState === "complete") scheduleRegistration();
     else window.addEventListener("load", scheduleRegistration, { once: true });
 
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    navigator.serviceWorker.addEventListener("controllerchange", askCurrentVersion);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", checkForUpdate);
+
     return () => {
       cancelled = true;
       window.removeEventListener("load", scheduleRegistration);
       if (idleId !== undefined && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
       if (fallbackTimer !== undefined) globalThis.clearTimeout(fallbackTimer);
+      if (pollTimer !== undefined) globalThis.clearInterval(pollTimer);
       navigator.serviceWorker.removeEventListener("message", handleMessage);
       navigator.serviceWorker.removeEventListener("controllerchange", askCurrentVersion);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", checkForUpdate);
     };
   }, []);
 
