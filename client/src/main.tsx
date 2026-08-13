@@ -11,6 +11,8 @@ import "./styles/visual-reset.css";
 import "./styles/premium-polish-10.css";
 import "./styles/flow-os.css";
 import "./styles/premium-app-shell-v12.css";
+// Último por design: precisa vencer a cascata dos shells acima em tablets touch.
+import "./styles/tablet-coarse-perf.css";
 
 installChunkRecovery();
 void purgeLegacyCertificateCache();
