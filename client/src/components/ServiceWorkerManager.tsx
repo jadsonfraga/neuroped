@@ -59,7 +59,11 @@ function releaseOrphanedScrollLock() {
         return false;
       }
       const style = getComputedStyle(element);
-      return style.display !== "none" && style.visibility !== "hidden";
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        element.getClientRects().length > 0
+      );
     });
 
   const legitimateOverlayOpen =

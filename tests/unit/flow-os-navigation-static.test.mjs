@@ -68,8 +68,18 @@ assert.match(
 );
 assert.match(
   serviceWorkerManager,
-  /style\.display !== "none" && style\.visibility !== "hidden"/,
-  "watchdog deve ignorar overlays invisíveis ainda montados",
+  /style\.display !== "none"/,
+  "watchdog deve ignorar overlays com display none",
+);
+assert.match(
+  serviceWorkerManager,
+  /style\.visibility !== "hidden"/,
+  "watchdog deve ignorar overlays com visibility hidden",
+);
+assert.match(
+  serviceWorkerManager,
+  /getClientRects\(\)\.length > 0/,
+  "watchdog deve exigir geometria visível do overlay",
 );
 assert.match(
   css,

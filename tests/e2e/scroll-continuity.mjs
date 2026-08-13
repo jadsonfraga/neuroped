@@ -479,9 +479,9 @@ async function proveDialogOwnership() {
     await endTouch(session);
 
     await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => document.querySelector('[role="dialog"][data-state="open"] [cmdk-root]') === null,
-    );
+    // Presence mantém o portal durante a animação de saída. Só depois da
+    // desmontagem completa qualquer lock residual passa a ser órfão.
+    await dialog.waitFor({ state: "detached", timeout: 10000 });
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     lock = await readLock(page);
     assertUnlocked(lock, "após desmontar dialog real");
