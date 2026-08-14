@@ -2245,7 +2245,10 @@ export default function FiltroPage() {
 
             {/* Síntese clínica do motor de filtragem avançada */}
             {refinedMatches.length > 0 && (
-              <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-3 sm:p-4">
+              <div
+                className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-chart-2/5 p-3 sm:p-4"
+                data-testid="filter-safe-results-summary"
+              >
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
                   síntese clínica
                 </p>

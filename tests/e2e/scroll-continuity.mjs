@@ -402,7 +402,7 @@ async function proveNativeScroll(width) {
   }
 }
 
-async function provePodiumReachability(width) {
+async function proveSafeResultsReachability(width) {
   const { context, page } = await openFilter(width);
   const session = await context.newCDPSession(page);
   try {
@@ -414,9 +414,9 @@ async function provePodiumReachability(width) {
     await quickStart.click();
 
     const symptomPicker = page.getByTestId("popular-symptom-picker");
-    const podium = page.getByTestId("opb-recommendation-podium");
+    const safeResults = page.getByTestId("filter-safe-results-summary");
     await symptomPicker.waitFor({ state: "visible", timeout: 15000 });
-    await podium.waitFor({ state: "visible", timeout: 15000 });
+    await safeResults.waitFor({ state: "visible", timeout: 15000 });
     await settleFrames(page);
     const afterSelection = (await rootState(page)).top;
     assert.ok(
@@ -425,7 +425,7 @@ async function provePodiumReachability(width) {
     );
     await resetRoot(page);
 
-    const ownership = await podium.evaluate((element) => {
+    const ownership = await safeResults.evaluate((element) => {
       for (
         let current = element.parentElement;
         current instanceof HTMLElement;
@@ -450,7 +450,7 @@ async function provePodiumReachability(width) {
     assert.deepEqual(
       ownership,
       { tag: "HTML", isDocument: true },
-      `${width}px: pódio deve pertencer ao scroller global, não à coluna lateral`,
+      `${width}px: resultados seguros devem pertencer ao scroller global, não à coluna lateral`,
     );
 
     const lockState = await page.evaluate(() => ({
@@ -506,13 +506,11 @@ async function provePodiumReachability(width) {
       );
     }
 
-    const gold = podium.locator('article[data-tier="ouro"]');
-    const bronze = podium.locator('article[data-tier="bronze"]');
-    await gold.scrollIntoViewIfNeeded();
+    await safeResults.scrollIntoViewIfNeeded();
     await settleFrames(page);
 
     const beforeTouch = (await rootState(page)).top;
-    await swipeLocator(page, session, gold, 0, -320);
+    await swipeLocator(page, session, safeResults, 0, -320);
     await page.waitForFunction(
       (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
       beforeTouch,
@@ -521,46 +519,20 @@ async function provePodiumReachability(width) {
 
     const viewport = page.viewportSize();
     assert.ok(viewport, "viewport ausente");
-    const start = {
-      x: Math.max(
-        24,
-        Math.min(Math.round(viewport.width * 0.74), viewport.width - 24),
-      ),
-      y: Math.min(720, viewport.height - 90),
-    };
-    const end = { x: start.x, y: 180 };
-
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      const bronzeVisible = await bronze.evaluate((element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.top < window.innerHeight - 20 && rect.bottom > 20;
-      });
-      if (bronzeVisible) break;
-      await beginTouch(session, start.x, start.y);
-      await continueTouch(page, session, start, end, 8);
-    }
-
-    assert.equal(
-      await bronze.evaluate((element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.top < window.innerHeight - 20 && rect.bottom > 20;
-      }),
-      true,
-      `${width}px: Bronze não ficou alcançável por gestos touch na área de resultados`,
-    );
-
+    await safeResults.scrollIntoViewIfNeeded();
+    await settleFrames(page);
     const beforeWheel = (await rootState(page)).top;
-    const podiumBox = await podium.boundingBox();
-    assert.ok(podiumBox, "pódio sem geometria");
+    const resultsBox = await safeResults.boundingBox();
+    assert.ok(resultsBox, "síntese segura sem geometria");
     await page.mouse.move(
       Math.max(
         20,
-        Math.min(podiumBox.x + podiumBox.width * 0.75, viewport.width - 20),
+        Math.min(resultsBox.x + resultsBox.width * 0.75, viewport.width - 20),
       ),
       Math.max(
         80,
         Math.min(
-          podiumBox.y + Math.min(podiumBox.height * 0.4, 320),
+          resultsBox.y + Math.min(resultsBox.height * 0.4, 320),
           viewport.height - 80,
         ),
       ),
@@ -573,7 +545,7 @@ async function provePodiumReachability(width) {
     );
 
     console.log(
-      `[scroll-continuity] ✓ ${width}px: área Ouro/Prata/Bronze responde a touch e wheel no scroller global`,
+      `[scroll-continuity] ✓ ${width}px: resultados seguros respondem a touch e wheel no scroller global`,
     );
   } finally {
     await session.detach();
@@ -806,7 +778,8 @@ async function proveLegalGateOwnership() {
 
 try {
   for (const width of WIDTHS) await proveNativeScroll(width);
-  for (const width of [390, 834, 1280]) await provePodiumReachability(width);
+  for (const width of [390, 834, 1280])
+    await proveSafeResultsReachability(width);
   await proveDrawerOwnership();
   await proveLegalGateOwnership();
   await proveOrphanedOwnerClasses();
