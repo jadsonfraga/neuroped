@@ -113,7 +113,9 @@ export default function CssrsPage() {
             <ShieldAlert className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Respostas registradas — C-SSRS</h1>
+            <h1 className="text-lg font-bold">
+              Respostas registradas — C-SSRS
+            </h1>
             <p className="text-xs text-muted-foreground">
               Escala Columbia de Gravidade de Ideação Suicida
             </p>
@@ -214,9 +216,9 @@ export default function CssrsPage() {
       </div>
       <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 p-4">
         <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed">
-          <strong>Instruções:</strong> Aplique em sequência clínica. Perguntas
-          sobre ideação ativa, método, intenção e plano só aparecem quando a
-          resposta anterior indica necessidade.
+          <strong>Instruções:</strong> Sempre aplique Q1 e Q2. Se Q2 = Sim,
+          apresente Q3–Q5; se Q2 = Não, omita Q3–Q5. Apresente Q6 após Q2 em
+          ambos os casos.
         </p>
       </div>
 

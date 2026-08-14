@@ -12,7 +12,10 @@ const API_BASE = (import.meta.env?.VITE_API_URL ?? "").replace(/\/$/, "");
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    throw Object.assign(new Error(`${res.status}: ${text}`), {
+      status: res.status,
+      retryAfter: res.headers.get("Retry-After"),
+    });
   }
 }
 

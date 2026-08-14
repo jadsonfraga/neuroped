@@ -35,8 +35,16 @@ import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { EmptyState, LoadingState } from "@/components/ui/VisualStates";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/components/ui/VisualStates";
 import { easing, duration } from "@/lib/motion";
+import {
+  getWithRateLimitBackoff,
+  loadAllPatientResults,
+} from "@/lib/patientResultsPagination";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -46,6 +54,109 @@ function calcAge(birthDate: string | null | undefined): string | null {
   } catch {
     return null;
   }
+}
+
+const BACKUP_PAGE_SIZE = 50;
+const MAX_BACKUP_PAGES = 10_000;
+
+interface PatientPage {
+  rows: any[];
+  total: number | null;
+  hasMore: boolean | null;
+}
+
+function parsePatientPage(payload: any): PatientPage {
+  if (Array.isArray(payload)) {
+    return { rows: payload, total: payload.length, hasMore: false };
+  }
+
+  if (!payload || !Array.isArray(payload.data)) {
+    throw new Error("Resposta inválida ao listar pacientes para backup.");
+  }
+
+  const rawTotal = payload.total ?? payload.pagination?.total;
+  const total =
+    typeof rawTotal === "number" &&
+    Number.isSafeInteger(rawTotal) &&
+    rawTotal >= 0
+      ? rawTotal
+      : null;
+  const hasMore =
+    typeof payload.pagination?.hasMore === "boolean"
+      ? payload.pagination.hasMore
+      : null;
+
+  if (total === null && hasMore === null) {
+    throw new Error("A API não informou como concluir a lista de pacientes.");
+  }
+
+  return { rows: payload.data, total, hasMore };
+}
+
+async function loadAllPatientsForBackup(): Promise<any[]> {
+  const all: any[] = [];
+  const seenIds = new Set<string>();
+  let expectedTotal: number | null = null;
+  let page = 1;
+  let offset = 0;
+
+  while (page <= MAX_BACKUP_PAGES) {
+    // Cloudflare Pages pagina por `page`; o servidor Node pagina por `offset`.
+    // Enviar ambos mantém o backup completo nos dois runtimes oficiais.
+    const response = await getWithRateLimitBackoff(
+      `/api/patients?page=${page}&limit=${BACKUP_PAGE_SIZE}&offset=${offset}`,
+    );
+    const current = parsePatientPage(await response.json());
+
+    if (current.total !== null) {
+      if (expectedTotal !== null && current.total !== expectedTotal) {
+        throw new Error("A lista de pacientes mudou durante o backup.");
+      }
+      expectedTotal = current.total;
+    }
+
+    for (const patient of current.rows) {
+      const rawId = patient?.id;
+      const id = typeof rawId === "string" ? rawId.trim() : "";
+      if (!id || seenIds.has(id)) {
+        throw new Error("A paginação de pacientes ficou inconsistente.");
+      }
+      seenIds.add(id);
+      all.push(patient);
+    }
+
+    if (expectedTotal !== null && all.length > expectedTotal) {
+      throw new Error(
+        "A API retornou mais pacientes do que o total informado.",
+      );
+    }
+
+    const reachedTotal = expectedTotal !== null && all.length === expectedTotal;
+    if (reachedTotal && current.hasMore === true) {
+      throw new Error(
+        "A API informou páginas extras após o total de pacientes.",
+      );
+    }
+    if (reachedTotal || current.hasMore === false) {
+      if (expectedTotal !== null && all.length !== expectedTotal) {
+        throw new Error(
+          "A API encerrou a paginação antes de carregar todos os pacientes.",
+        );
+      }
+      return all;
+    }
+
+    if (current.rows.length === 0) {
+      throw new Error(
+        "A API retornou uma página vazia antes de concluir o backup.",
+      );
+    }
+
+    offset += current.rows.length;
+    page += 1;
+  }
+
+  throw new Error("O backup excedeu o limite seguro de paginação.");
 }
 
 export default function PacientesPage() {
@@ -64,7 +175,12 @@ export default function PacientesPage() {
   const [importLoading, setImportLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: patientsRaw, isLoading } = useQuery<any>({
+  const {
+    data: patientsRaw,
+    isLoading,
+    isError,
+    refetch: refetchPatients,
+  } = useQuery<any>({
     queryKey: ["/api/patients"],
     enabled: true,
   });
@@ -155,21 +271,17 @@ export default function PacientesPage() {
     }
     setBackupLoading(true);
     try {
+      const backupPatients = await loadAllPatientsForBackup();
       const results: Record<string, any[]> = {};
-      for (const p of patients) {
-        try {
-          const res = await apiRequest("GET", `/api/patients/${p.id}/results`);
-          const data = await res.json();
-          results[p.id] = Array.isArray(data) ? data : (data?.data ?? []);
-        } catch {
-          results[p.id] = [];
-        }
+      for (const patient of backupPatients) {
+        const patientId = String(patient.id);
+        results[patientId] = await loadAllPatientResults(patientId);
       }
       const backup = {
         version: "1.0",
         app: "NeuroPed",
         exportedAt: new Date().toISOString(),
-        patients,
+        patients: backupPatients,
         results,
       };
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -183,11 +295,20 @@ export default function PacientesPage() {
       setTimeout(() => URL.revokeObjectURL(url), 2_000);
       softSuccess();
       haptic.success();
-      toast({ title: `Backup de ${patients.length} paciente(s) exportado.` });
+      toast({
+        title: `Backup completo de ${backupPatients.length} paciente(s) exportado.`,
+        description:
+          "Todos os pacientes e resultados foram carregados antes de salvar o arquivo.",
+      });
     } catch {
       softError();
       haptic.error();
-      toast({ title: "Erro ao gerar backup.", variant: "destructive" });
+      toast({
+        title: "Backup não gerado.",
+        description:
+          "Não foi possível carregar todos os pacientes e resultados. Nenhum arquivo parcial foi salvo.",
+        variant: "destructive",
+      });
     } finally {
       setBackupLoading(false);
     }
@@ -200,34 +321,51 @@ export default function PacientesPage() {
     setImportLoading(true);
     try {
       const backup = JSON.parse(await file.text());
-      if (!backup.version || !Array.isArray(backup.patients)) {
+      if (
+        !backup.version ||
+        !Array.isArray(backup.patients) ||
+        !backup.results ||
+        typeof backup.results !== "object" ||
+        Array.isArray(backup.results) ||
+        backup.patients.some(
+          (patient: unknown) =>
+            !patient ||
+            typeof patient !== "object" ||
+            typeof (patient as { id?: unknown }).id !== "string" ||
+            typeof (patient as { name?: unknown }).name !== "string" ||
+            !Array.isArray(backup.results[(patient as { id: string }).id]),
+        )
+      ) {
         toast({
-          title: "Arquivo inválido. Selecione um backup NeuroPed (.json).",
+          title: "Backup incompleto ou inválido.",
+          description:
+            "O arquivo precisa conter todos os pacientes e suas listas de resultados.",
           variant: "destructive",
         });
         return;
       }
       let imported = 0;
+      let partial = 0;
       let skipped = 0;
+      let failedResults = 0;
       for (const p of backup.patients) {
         try {
           const pd: any = { name: p.name };
           if (p.birthDate) pd.birthDate = p.birthDate;
           if (p.notes) pd.notes = p.notes;
           const res = await apiRequest("POST", "/api/patients", pd);
-          if (!res.ok) {
-            skipped++;
-            continue;
-          }
           const newPatient = await res.json();
-          for (const r of backup.results?.[p.id] ?? []) {
+          let patientComplete = true;
+          for (const r of backup.results[p.id]) {
             try {
               const responses = Array.isArray(r.responses)
                 ? r.responses
                 : Array.isArray(r.answers)
                   ? r.answers
                   : [];
-              if (responses.length === 0) continue;
+              if (responses.length === 0) {
+                throw new Error("Resultado sem respostas importáveis.");
+              }
               await apiRequest("POST", "/api/results", {
                 patientId: newPatient.id,
                 scaleName: r.scaleName,
@@ -236,20 +374,30 @@ export default function PacientesPage() {
                 patientAge: r.patientAge,
               });
             } catch {
-              /* pula resultados com erro */
+              failedResults++;
+              patientComplete = false;
             }
           }
-          imported++;
+          if (patientComplete) imported++;
+          else partial++;
         } catch {
           skipped++;
         }
       }
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      softSuccess();
-      haptic.success();
-      toast({
-        title: `${imported} paciente(s) importado(s)${skipped > 0 ? `, ${skipped} ignorado(s)` : ""}.`,
-      });
+      if (partial > 0 || skipped > 0 || failedResults > 0) {
+        softError();
+        haptic.error();
+        toast({
+          title: "Importação concluída com pendências.",
+          description: `${imported} paciente(s) integralmente importado(s); ${partial} criado(s) com resultados incompletos; ${skipped} não criado(s). ${failedResults} resultado(s) falharam.`,
+          variant: "destructive",
+        });
+      } else {
+        softSuccess();
+        haptic.success();
+        toast({ title: `${imported} paciente(s) integralmente importado(s).` });
+      }
     } catch {
       softError();
       haptic.error();
@@ -430,10 +578,11 @@ export default function PacientesPage() {
                 Dados clínicos sob responsabilidade profissional
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A API de pacientes não é cacheada pelo service worker. Neste modo
-                sem senha, qualquer pessoa no mesmo perfil do navegador pode ver
-                os registros. Confirme consentimento, exporte backup e use “Apagar
-                dados locais” ao terminar em dispositivo compartilhado.
+                A API de pacientes não é cacheada pelo service worker. Neste
+                modo sem senha, qualquer pessoa no mesmo perfil do navegador
+                pode ver os registros. Confirme consentimento, exporte backup e
+                use “Apagar dados locais” ao terminar em dispositivo
+                compartilhado.
               </p>
             </div>
           </CardContent>
@@ -510,7 +659,14 @@ export default function PacientesPage() {
 
       {/* Patient list */}
       {isLoading ? (
-        <LoadingState rows={4} />
+        <LoadingState rows={4} label="Carregando pacientes..." />
+      ) : isError ? (
+        <ErrorState
+          message="Não foi possível carregar os pacientes. Verifique a conexão e tente novamente."
+          onRetry={() => {
+            void refetchPatients();
+          }}
+        />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Users className="w-7 h-7 text-muted-foreground" />}

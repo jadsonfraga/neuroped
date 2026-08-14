@@ -5,7 +5,9 @@ import {
   classifyCssrs,
   classifyPhqa,
   classifyVanderbilt,
+  getCssrsSkipLogicSummary,
   getVisibleCssrsQuestionIds,
+  hasPositivePhqaSelfHarm,
   pruneCssrsAnswers,
 } from "@/data/expandedScales";
 import { classifyConners, classifyScared, classifySdq } from "@/data/newScales";
@@ -18,17 +20,49 @@ describe("clinical scoring cutoffs", () => {
   });
 
   it("SDQ classifies total difficulty bands", () => {
-    expect(classifySdq({ emotional: 3, conduct: 2, hyperactivity: 4, peer: 3, prosocial: 8 }).classification).toBe("Normal");
-    expect(classifySdq({ emotional: 4, conduct: 3, hyperactivity: 6, peer: 3, prosocial: 6 }).classification).toMatch(/Lim/i);
-    expect(classifySdq({ emotional: 6, conduct: 5, hyperactivity: 8, peer: 5, prosocial: 4 }).classification).toBe("Anormal");
+    expect(
+      classifySdq({
+        emotional: 3,
+        conduct: 2,
+        hyperactivity: 4,
+        peer: 3,
+        prosocial: 8,
+      }).classification,
+    ).toBe("Normal");
+    expect(
+      classifySdq({
+        emotional: 4,
+        conduct: 3,
+        hyperactivity: 6,
+        peer: 3,
+        prosocial: 6,
+      }).classification,
+    ).toMatch(/Lim/i);
+    expect(
+      classifySdq({
+        emotional: 6,
+        conduct: 5,
+        hyperactivity: 8,
+        peer: 5,
+        prosocial: 4,
+      }).classification,
+    ).toBe("Anormal");
   });
 
   it("Vanderbilt flags domains at established item-count thresholds", () => {
     const results = classifyVanderbilt(6, 6, 4);
-    expect(results.find((item) => item.domain.includes("Desaten"))?.positive).toBe(true);
-    expect(results.find((item) => item.domain.includes("Hiperatividade"))?.positive).toBe(true);
-    expect(results.find((item) => item.domain.includes("Conduta"))?.positive).toBe(true);
-    expect(classifyVanderbilt(5, 5, 3).every((item) => item.positive === false)).toBe(true);
+    expect(
+      results.find((item) => item.domain.includes("Desaten"))?.positive,
+    ).toBe(true);
+    expect(
+      results.find((item) => item.domain.includes("Hiperatividade"))?.positive,
+    ).toBe(true);
+    expect(
+      results.find((item) => item.domain.includes("Conduta"))?.positive,
+    ).toBe(true);
+    expect(
+      classifyVanderbilt(5, 5, 3).every((item) => item.positive === false),
+    ).toBe(true);
   });
 
   it("SCARED classifies anxiety bands and subscale positivity", () => {
@@ -36,7 +70,10 @@ describe("clinical scoring cutoffs", () => {
     expect(classifyScared(25, { gad: 9 }).classification).toMatch(/Poss/i);
     const high = classifyScared(30, { gad: 9 });
     expect(high.classification).toMatch(/Prov/i);
-    expect(high.subscaleResults.find((item) => item.name.includes("Generalizada"))?.positive).toBe(true);
+    expect(
+      high.subscaleResults.find((item) => item.name.includes("Generalizada"))
+        ?.positive,
+    ).toBe(true);
   });
 
   it("CDI-2 and PHQ-A preserve depressive severity bands", () => {
@@ -49,6 +86,8 @@ describe("clinical scoring cutoffs", () => {
     expect(classifyPhqa(5).color).toBe("amber");
     expect(classifyPhqa(10).color).toBe("orange");
     expect(classifyPhqa(15).color).toBe("red");
+    expect(hasPositivePhqaSelfHarm({ 8: 0 })).toBe(false);
+    expect(hasPositivePhqaSelfHarm({ 8: 1 })).toBe(true);
   });
 
   it("C-SSRS escalates safety risk by highest positive item", () => {
@@ -60,10 +99,46 @@ describe("clinical scoring cutoffs", () => {
   });
 
   it("C-SSRS applies skip logic and prunes dependent answers", () => {
-    expect(getVisibleCssrsQuestionIds({ 1: false })).toEqual([1, 6]);
-    expect(getVisibleCssrsQuestionIds({ 1: true })).toEqual([1, 2, 6]);
-    expect(getVisibleCssrsQuestionIds({ 1: true, 2: true })).toEqual([1, 2, 3, 6]);
-    expect(pruneCssrsAnswers({ 1: false, 2: true, 3: true, 4: true, 5: true, 6: false })).toEqual({ 1: false, 6: false });
+    expect(getVisibleCssrsQuestionIds({})).toEqual([1, 2]);
+    expect(getVisibleCssrsQuestionIds({ 1: false })).toEqual([1, 2]);
+    expect(getVisibleCssrsQuestionIds({ 1: false, 2: false })).toEqual([
+      1, 2, 6,
+    ]);
+    expect(getVisibleCssrsQuestionIds({ 1: false, 2: true })).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ]);
+    expect(getVisibleCssrsQuestionIds({ 1: true, 2: true, 3: false })).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ]);
+    expect(
+      pruneCssrsAnswers({
+        1: false,
+        2: false,
+        3: true,
+        4: true,
+        5: true,
+        6: false,
+      }),
+    ).toEqual({ 1: false, 2: false, 6: false });
+    const previouslyPositive = {
+      1: true,
+      2: true,
+      3: true,
+      4: true,
+      5: true,
+      6: false,
+    };
+    expect(pruneCssrsAnswers({ ...previouslyPositive, 2: false })).toEqual({
+      1: true,
+      2: false,
+      6: false,
+    });
+    expect(getCssrsSkipLogicSummary({ 1: false, 2: false, 6: false })).toMatch(
+      /Q2 = Não; Q3-Q5 foram omitidas/,
+    );
+    expect(getCssrsSkipLogicSummary({ 1: false, 2: true, 6: false })).toMatch(
+      /Q2 = Sim; Q3-Q5 e Q6/,
+    );
   });
 
   it("Conners flags normal, attention and clinically significant ranges", () => {

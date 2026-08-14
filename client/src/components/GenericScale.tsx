@@ -248,10 +248,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         ? 100
         : (requiredAnswered / requiredItems.length) * 100;
   const allAnswered = total > 0 && allItems.every(isCompleteForSubmit);
-  const missingCount = Math.max(
-    requiredItems.length - requiredAnswered,
-    0,
-  );
+  const missingCount = Math.max(requiredItems.length - requiredAnswered, 0);
   const firstMissing = requiredItems.find((item) => !hasResponse(item));
   const triggeredSafetyItems = allItems.filter(
     (item) =>
@@ -785,8 +782,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 itemResponseType(item) === "text"
                   ? Boolean(textAnswers[key]?.trim())
                   : answers[key] !== undefined;
-              const itemComplete =
-                !itemRequired(item) || itemHasResponse;
+              const itemComplete = !itemRequired(item) || itemHasResponse;
               return (
                 <Card
                   key={key}

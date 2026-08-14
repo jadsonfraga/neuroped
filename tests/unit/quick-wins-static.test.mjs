@@ -192,6 +192,16 @@ assert.match(worker, /\.\.\.PRECACHE_ASSETS/);
 assert.match(worker, /Promise\.all\(/);
 assert.match(worker, /return Promise\.all\(\[\s*self\.clients\.claim\(\)/);
 assert.match(worker, /request\.mode === "navigate" && response\.status >= 500/);
+assert.match(
+  worker,
+  /const cache = await caches\.open\(CACHE_NAME\);[\s\S]*const cached = await cache\.match\(request\)/,
+);
+assert.match(worker, /const legacy = await caches\.match\(request\)/);
+assert.doesNotMatch(
+  worker,
+  /async function cacheFirst\(request\) \{\s*const cached = await caches\.match/,
+  "cache-first não pode preferir indefinidamente um asset não-hasheado do build anterior",
+);
 assert.doesNotMatch(worker, /Promise\.allSettled\(/);
 assert.doesNotMatch(worker, /ONLINE_STATUS[\s\S]*online: true/);
 assert.doesNotMatch(worker, /neuroped-v7/);
@@ -199,8 +209,16 @@ assert.doesNotMatch(worker, /neuroped-v7/);
 const vite = read("vite.config.ts");
 assert.match(vite, /serviceWorkerPrecacheManifest/);
 assert.match(vite, /sw-assets\.js/);
-assert.match(vite, /async writeBundle\(\)/, "precache só pode rodar após os artefatos serem gravados");
-assert.doesNotMatch(vite, /async closeBundle\(\)/, "closeBundle reintroduz a corrida do manifesto");
+assert.match(
+  vite,
+  /async writeBundle\(\)/,
+  "precache só pode rodar após os artefatos serem gravados",
+);
+assert.doesNotMatch(
+  vite,
+  /async closeBundle\(\)/,
+  "closeBundle reintroduz a corrida do manifesto",
+);
 
 const a11yAudit = read("scripts/audit-a11y.mjs");
 assert.match(a11yAudit, /process\.env\.A11Y_FULL === "1"/);
@@ -231,6 +249,16 @@ for (const scaleRunner of [genericScale, interactiveScale]) {
   assert.match(scaleRunner, /useSecureScaleDraft/);
 }
 assert.doesNotMatch(genericScale, /localStorage\.setItem\(\s*draftKey/);
+assert.match(
+  genericScale,
+  /if \(showResult\)[\s\S]{0,220}clearPersistedDraft/,
+  "conclusão deve remover o draft armazenado antes de outra aplicação",
+);
+assert.match(
+  interactiveScale,
+  /if \(showResult\)[\s\S]{0,160}clearPersistedDraft/,
+  "runner interativo deve isolar respostas entre aplicações",
+);
 
 const news = read("client/src/pages/portal-novidades.tsx");
 const sanitizer = read("client/src/lib/sanitizeArticleHtml.ts");
@@ -406,11 +434,13 @@ assert.match(splash, /reduceMotion\s*\?\s*\{ duration: 0 \}/);
 
 console.log("✓ proteções das melhorias críticas permanecem conectadas ao app");
 
-
 // CORS de produção deve falhar fechado mesmo se a env receber wildcard.
 const expressSecurity = read("server/middleware/security.ts");
 assert.match(expressSecurity, /export function isCorsOriginAllowed/);
-assert.match(expressSecurity, /return !isProduction && corsOrigins\.includes\("\*"\)/);
+assert.match(
+  expressSecurity,
+  /return !isProduction && corsOrigins\.includes\("\*"\)/,
+);
 assert.doesNotMatch(
   expressSecurity,
   /corsOrigins\.includes\(origin\) \|\| corsOrigins\.includes\("\*"\)/,

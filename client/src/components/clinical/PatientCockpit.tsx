@@ -8,7 +8,7 @@ import { TherapyGoalsPanel } from "@/components/clinical/TherapyGoalsPanel";
 
 interface PatientCockpitProps {
   patientId: string;
-  scaleCount: number;
+  scaleCount: number | null;
 }
 
 interface ClinicalCoreResponse {
@@ -281,7 +281,10 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
             </div>
             <ContinuityRow label="Última consulta" value={latestConsultation ? formatDate(latestConsultation.date) : "Sem consulta registrada"} />
             <ContinuityRow label="Conecta · últimos 90 dias" value={conectaQuery.isError ? "Indisponível" : `${conectaQuery.data?.total ?? 0} registros`} />
-            <ContinuityRow label="Escalas vinculadas" value={`${scaleCount} aplicações`} />
+            <ContinuityRow
+              label="Escalas vinculadas"
+              value={scaleCount === null ? "Indisponível" : `${scaleCount} aplicações`}
+            />
             <ContinuityRow label="Clinical Core" value={coreUnavailable ? "Indisponível" : `${events.length} eventos`} />
           </CardContent>
         </Card>

@@ -6,8 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RotateCcw, Info, HeartPulse } from "lucide-react";
-import { phqaQuestions, phqaLabels } from "@/data/expandedScales";
+import {
+  buildPhqaReportItems,
+  hasPositivePhqaSelfHarm,
+  phqaQuestions,
+  phqaLabels,
+  requiresPhqaSafetyConfirmation,
+  updatePhqaSafetyConfirmation,
+} from "@/data/expandedScales";
 import { ScaleReference } from "@/components/ScaleReference";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import {
@@ -29,7 +37,11 @@ const PHQA_DRAFT_VALUES = indexedAllowedValues(
 export default function PhqaPage() {
   const [showResult, setShowResult] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [safetyProtocolConfirmed, setSafetyProtocolConfirmed] = useState(false);
+  const [safetyConfirmationAttempted, setSafetyConfirmationAttempted] =
+    useState(false);
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const safetyAlertRef = useRef<HTMLDivElement | null>(null);
   const {
     value: answers,
     setValue: setAnswers,
@@ -55,9 +67,45 @@ export default function PhqaPage() {
     (_, i) => answers[i] === undefined,
   );
   const missingCount = Math.max(total - answered, 0);
+  const selfHarmAlert = hasPositivePhqaSelfHarm(answers);
+  const safetyConfirmationRequired = requiresPhqaSafetyConfirmation(
+    answers,
+    safetyProtocolConfirmed,
+  );
+
+  function focusSafetyAlert() {
+    safetyAlertRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    window.setTimeout(
+      () => safetyAlertRef.current?.focus({ preventScroll: true }),
+      250,
+    );
+  }
+
+  function answerQuestion(index: number, nextValue: number) {
+    setSafetyProtocolConfirmed((currentConfirmed) =>
+      updatePhqaSafetyConfirmation(
+        currentConfirmed,
+        index,
+        answers[index],
+        nextValue,
+      ),
+    );
+    if (index === 8 && answers[index] !== nextValue) {
+      setSafetyConfirmationAttempted(false);
+    }
+    setAnswers({ ...answers, [index]: nextValue });
+  }
 
   function handleSubmit() {
     setSubmitAttempted(true);
+    if (safetyConfirmationRequired) {
+      setSafetyConfirmationAttempted(true);
+      focusSafetyAlert();
+      return;
+    }
     if (!allAnswered) {
       if (firstMissingIndex >= 0) {
         itemRefs.current[firstMissingIndex]?.scrollIntoView({
@@ -72,6 +120,7 @@ export default function PhqaPage() {
       }
       return;
     }
+    setSafetyConfirmationAttempted(false);
     setShowResult(true);
   }
 
@@ -79,18 +128,14 @@ export default function PhqaPage() {
     void clearDraft();
     setShowResult(false);
     setSubmitAttempted(false);
+    setSafetyProtocolConfirmed(false);
+    setSafetyConfirmationAttempted(false);
   }
 
   if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
-    const reportItems = phqaQuestions.map((question, index) => ({
-      question,
-      answer:
-        answers[index] !== undefined
-          ? phqaLabels[answers[index]]
-          : "Não respondida",
-    }));
+    const reportItems = buildPhqaReportItems(answers, safetyProtocolConfirmed);
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -104,6 +149,23 @@ export default function PhqaPage() {
             </p>
           </div>
         </div>
+        {selfHarmAlert && (
+          <div
+            className="rounded-xl border-2 border-red-300 bg-red-50 p-4 text-red-950 dark:border-red-800 dark:bg-red-950/35 dark:text-red-100"
+            role="alert"
+            data-testid="phqa-self-harm-result-alert"
+          >
+            <p className="text-sm font-black">
+              Item 9 positivo — protocolo de segurança iniciado
+            </p>
+            <p className="mt-1 text-xs leading-relaxed">
+              A confirmação de segurança foi registrada antes da conclusão. As
+              respostas abaixo permanecem sem cálculo ou interpretação de
+              escore. Mantenha avaliação direta e encaminhamento conforme o
+              risco identificado.
+            </p>
+          </div>
+        )}
         <Card className="border-card-border">
           <CardContent className="p-6 space-y-4">
             <h2 className="text-sm font-semibold text-foreground">
@@ -145,12 +207,12 @@ export default function PhqaPage() {
           scaleName="PHQ-A"
           scaleFullName="Patient Health Questionnaire for Adolescents"
           items={reportItems}
-          patientAge="12-17 anos"
+          patientAge="11-17 anos"
         />
         <SaveToPatient
           scaleName="PHQ-A"
           responses={reportItems}
-          patientAge="12-17 anos"
+          patientAge="11-17 anos"
         />
         <Button
           onClick={handleReset}
@@ -231,9 +293,7 @@ export default function PhqaPage() {
               )}
               <RadioGroup
                 value={answers[i]?.toString()}
-                onValueChange={(val) =>
-                  setAnswers({ ...answers, [i]: parseInt(val) })
-                }
+                onValueChange={(val) => answerQuestion(i, parseInt(val))}
                 className="flex flex-wrap gap-2"
               >
                 {phqaLabels.map((label, j) => (
@@ -252,6 +312,66 @@ export default function PhqaPage() {
                   </div>
                 ))}
               </RadioGroup>
+              {selfHarmAlert && i === 8 && (
+                <div
+                  ref={safetyAlertRef}
+                  tabIndex={-1}
+                  className="rounded-xl border-2 border-red-300 bg-red-50 p-4 text-red-950 dark:border-red-800 dark:bg-red-950/35 dark:text-red-100"
+                  role="alert"
+                  aria-live="assertive"
+                  data-testid="phqa-self-harm-alert"
+                >
+                  <p className="text-sm font-black">
+                    Resposta de segurança identificada no item 9
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed">
+                    Interrompa a interpretação do escore e faça avaliação direta
+                    de ideação, plano, meios e risco imediato. Se houver perigo
+                    imediato, não deixe a pessoa sozinha: acione o SAMU 192 ou
+                    procure um serviço de emergência.
+                  </p>
+                  <a
+                    href="#/cssrs"
+                    className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-red-700 px-4 py-2 text-xs font-bold text-white hover:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                  >
+                    Abrir avaliação C-SSRS
+                  </a>
+                  <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-300/80 bg-white/70 p-3 dark:border-red-700 dark:bg-red-950/50">
+                    <Checkbox
+                      id="phqa-safety-protocol-confirmed"
+                      checked={safetyProtocolConfirmed}
+                      onCheckedChange={(checked) => {
+                        setSafetyProtocolConfirmed(checked === true);
+                        if (checked === true) {
+                          setSafetyConfirmationAttempted(false);
+                        }
+                      }}
+                      aria-describedby="phqa-safety-confirmation-help"
+                    />
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="phqa-safety-protocol-confirmed"
+                        className="cursor-pointer text-xs font-bold leading-relaxed"
+                      >
+                        Confirmo que iniciei o protocolo de segurança.
+                      </Label>
+                      <p
+                        id="phqa-safety-confirmation-help"
+                        className="text-[11px] leading-relaxed"
+                      >
+                        Inclui avaliação direta de ideação, plano, meios e risco
+                        imediato, com acionamento de suporte ou emergência
+                        conforme necessário.
+                      </p>
+                    </div>
+                  </div>
+                  {safetyConfirmationAttempted && (
+                    <p className="mt-2 text-xs font-black">
+                      Confirme o início do protocolo antes de ver o resultado.
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         );
@@ -267,13 +387,15 @@ export default function PhqaPage() {
       )}
       <Button
         onClick={handleSubmit}
-        aria-disabled={!allAnswered}
+        aria-disabled={!allAnswered || safetyConfirmationRequired}
         className="w-full"
         size="lg"
       >
-        {allAnswered
-          ? "Ver respostas"
-          : `Responder pendências (${answered}/${total})`}
+        {safetyConfirmationRequired
+          ? "Confirmar protocolo de segurança"
+          : allAnswered
+            ? "Ver respostas"
+            : `Responder pendências (${answered}/${total})`}
       </Button>
       <ScaleReference scaleId="phqa" />
     </div>

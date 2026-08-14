@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CommandDialog, CommandInput, CommandList, CommandEmpty,
-  CommandGroup, CommandItem, CommandShortcut,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
 } from "@/components/ui/command";
 import { useRecents } from "@/hooks/useFavorites";
 import { navigablePages } from "@/data/navigation";
@@ -55,7 +60,9 @@ function Highlight({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="rounded bg-primary/20 px-0.5 text-foreground">{text.slice(idx, idx + q.length)}</mark>
+      <mark className="rounded bg-primary/20 px-0.5 text-foreground">
+        {text.slice(idx, idx + q.length)}
+      </mark>
       {text.slice(idx + q.length)}
     </>
   );
@@ -74,7 +81,8 @@ export function CommandPalette() {
   const normalizedSearch = normalize(search);
   const onPublicRoute = isPublicRoute(path);
   const privateToolsAllowed = !IS_PUBLIC_ZONE && !onPublicRoute;
-  const patientSearchReady = privateToolsAllowed && open && normalizedSearch.length >= 2;
+  const patientSearchReady =
+    privateToolsAllowed && open && normalizedSearch.length >= 2;
 
   const patientQuery = useQuery<any>({
     queryKey: ["/api/patients"],
@@ -102,7 +110,10 @@ export function CommandPalette() {
           id: s.id,
           name: s.name,
           fullName: s.fullName,
-          appRoute: s.appRoute && s.appRoute.length > 0 ? s.appRoute : `/generic-scale/${s.id}`,
+          appRoute:
+            s.appRoute && s.appRoute.length > 0
+              ? s.appRoute
+              : `/generic-scale/${s.id}`,
         });
       }
       setNavigableScales(list);
@@ -113,14 +124,18 @@ export function CommandPalette() {
   }, [open, navigableScales.length, privateToolsAllowed]);
 
   const recentScales = useMemo(
-    () => recents.map((id) => navigableScales.find((s) => s.id === id)).filter(Boolean) as NavScale[],
+    () =>
+      recents
+        .map((id) => navigableScales.find((s) => s.id === id))
+        .filter(Boolean) as NavScale[],
     [recents, navigableScales],
   );
 
   const visiblePages = useMemo(
-    () => (IS_PUBLIC_ZONE || onPublicRoute)
-      ? navigablePages.filter((page) => isPublicRoute(page.href))
-      : navigablePages,
+    () =>
+      IS_PUBLIC_ZONE || onPublicRoute
+        ? navigablePages.filter((page) => isPublicRoute(page.href))
+        : navigablePages,
     [onPublicRoute],
   );
 
@@ -129,7 +144,10 @@ export function CommandPalette() {
     const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
     if (!Array.isArray(list)) return [];
     return list
-      .filter((patient: any) => patient?.id != null && typeof patient?.name === "string")
+      .filter(
+        (patient: any) =>
+          patient?.id != null && typeof patient?.name === "string",
+      )
       .map((patient: any) => ({ id: String(patient.id), name: patient.name }));
   }, [patientQuery.data]);
 
@@ -176,14 +194,18 @@ export function CommandPalette() {
   }, []);
 
   const goPatient = useCallback((id: string) => {
-    navigate(`/pacientes/${id}`);
+    navigate(`/paciente/${encodeURIComponent(id)}`);
     setOpen(false);
   }, []);
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput
-        placeholder={privateToolsAllowed ? "Buscar paciente, escala ou página…" : "Buscar conteúdo público…"}
+        placeholder={
+          privateToolsAllowed
+            ? "Buscar paciente, escala ou página…"
+            : "Buscar conteúdo público…"
+        }
         value={search}
         onValueChange={setSearch}
       />
@@ -192,30 +214,53 @@ export function CommandPalette() {
 
         {privateToolsAllowed && (
           <CommandGroup heading="Ações rápidas">
-            <CommandItem value="meus pacientes prontuario paciente" onSelect={() => goPage("/pacientes")}>
-              <UsersRound className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <CommandItem
+              value="meus pacientes prontuario paciente"
+              onSelect={() => goPage("/pacientes")}
+            >
+              <UsersRound
+                className="mr-2 h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               Meus pacientes
             </CommandItem>
-            <CommandItem value="agenda gestao consultas" onSelect={() => goPage("/agenda")}>
-              <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <CommandItem
+              value="agenda gestao consultas"
+              onSelect={() => goPage("/agenda")}
+            >
+              <CalendarDays
+                className="mr-2 h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               Agenda & Gestão
             </CommandItem>
-            <CommandItem value="filtro clinico escala ideal" onSelect={() => goPage("/filtro")}>
-              <Filter className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <CommandItem
+              value="filtro clinico escala ideal"
+              onSelect={() => goPage("/filtro")}
+            >
+              <Filter
+                className="mr-2 h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               Filtro Clínico Inteligente
               <CommandShortcut>Clínica</CommandShortcut>
             </CommandItem>
           </CommandGroup>
         )}
 
-        {patientSearchReady && patientQuery.isFetching && patientMatches.length === 0 && (
-          <CommandGroup heading="Pacientes">
-            <CommandItem disabled value="consultando pacientes">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-muted-foreground motion-reduce:animate-none" aria-hidden="true" />
-              Consultando pacientes…
-            </CommandItem>
-          </CommandGroup>
-        )}
+        {patientSearchReady &&
+          patientQuery.isFetching &&
+          patientMatches.length === 0 && (
+            <CommandGroup heading="Pacientes">
+              <CommandItem disabled value="consultando pacientes">
+                <Loader2
+                  className="mr-2 h-4 w-4 animate-spin text-muted-foreground motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
+                Consultando pacientes…
+              </CommandItem>
+            </CommandGroup>
+          )}
 
         {privateToolsAllowed && patientMatches.length > 0 && (
           <CommandGroup heading="Pacientes">
@@ -225,12 +270,17 @@ export function CommandPalette() {
                 value={`paciente ${patient.name} ${normalize(patient.name)}`}
                 onSelect={() => goPatient(patient.id)}
               >
-                <UsersRound className="mr-2 h-4 w-4 text-primary" aria-hidden="true" />
+                <UsersRound
+                  className="mr-2 h-4 w-4 text-primary"
+                  aria-hidden="true"
+                />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate text-sm font-medium">
                     <Highlight text={patient.name} query={search} />
                   </span>
-                  <span className="text-xs text-muted-foreground">Abrir prontuário longitudinal</span>
+                  <span className="text-xs text-muted-foreground">
+                    Abrir prontuário longitudinal
+                  </span>
                 </span>
               </CommandItem>
             ))}
@@ -245,7 +295,10 @@ export function CommandPalette() {
                 value={`recente ${scale.name} ${scale.fullName}`}
                 onSelect={() => goScale(scale.id, scale.appRoute!)}
               >
-                <Clock className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Clock
+                  className="mr-2 h-4 w-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <Highlight text={scale.name} query={search} />
               </CommandItem>
             ))}
@@ -260,10 +313,17 @@ export function CommandPalette() {
                 value={`${scale.name} ${scale.fullName}`}
                 onSelect={() => goScale(scale.id, scale.appRoute!)}
               >
-                <Search className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Search
+                  className="mr-2 h-4 w-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span className="flex flex-col">
-                  <span className="text-sm"><Highlight text={scale.name} query={search} /></span>
-                  <span className="text-xs text-muted-foreground"><Highlight text={scale.fullName} query={search} /></span>
+                  <span className="text-sm">
+                    <Highlight text={scale.name} query={search} />
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    <Highlight text={scale.fullName} query={search} />
+                  </span>
                 </span>
               </CommandItem>
             ))}
@@ -272,10 +332,19 @@ export function CommandPalette() {
 
         <CommandGroup heading="Páginas">
           {visiblePages.map((page) => (
-            <CommandItem key={`page-${page.href}`} value={`pagina ${page.label}`} onSelect={() => goPage(page.href)}>
-              <page.icon className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <CommandItem
+              key={`page-${page.href}`}
+              value={`pagina ${page.label}`}
+              onSelect={() => goPage(page.href)}
+            >
+              <page.icon
+                className="mr-2 h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               <Highlight text={page.label} query={search} />
-              {page.href === "/filtro" && <CommandShortcut>Filtro</CommandShortcut>}
+              {page.href === "/filtro" && (
+                <CommandShortcut>Filtro</CommandShortcut>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>

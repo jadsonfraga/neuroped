@@ -37,10 +37,33 @@ export const cdi2Questions = [
 ];
 export const cdi2Labels = ["0 — Ausente", "1 — Às vezes", "2 — Sempre"];
 export function classifyCdi2(total: number) {
-  if (total <= 13) return { classification: "Mínima", color: "emerald", description: "Sintomas depressivos mínimos. Manter acompanhamento de rotina." };
-  if (total <= 19) return { classification: "Leve", color: "amber", description: "Sintomas depressivos leves. Sugere-se acompanhamento e reavaliação." };
-  if (total <= 25) return { classification: "Moderada", color: "orange", description: "Sintomas depressivos moderados. Indicada avaliação especializada." };
-  return { classification: "Grave", color: "red", description: "Sintomas depressivos graves. Encaminhamento urgente para psiquiatria infantil." };
+  if (total <= 13)
+    return {
+      classification: "Mínima",
+      color: "emerald",
+      description:
+        "Sintomas depressivos mínimos. Manter acompanhamento de rotina.",
+    };
+  if (total <= 19)
+    return {
+      classification: "Leve",
+      color: "amber",
+      description:
+        "Sintomas depressivos leves. Sugere-se acompanhamento e reavaliação.",
+    };
+  if (total <= 25)
+    return {
+      classification: "Moderada",
+      color: "orange",
+      description:
+        "Sintomas depressivos moderados. Indicada avaliação especializada.",
+    };
+  return {
+    classification: "Grave",
+    color: "red",
+    description:
+      "Sintomas depressivos graves. Encaminhamento urgente para psiquiatria infantil.",
+  };
 }
 
 // --- PHQ-A (Patient Health Questionnaire for Adolescents) ---
@@ -55,49 +78,147 @@ export const phqaQuestions = [
   "Movimentar-se ou falar tão devagar que as outras pessoas notaram, ou o contrário — tão agitado(a) que fica andando de um lado para o outro",
   "Pensamentos de que seria melhor estar morto(a) ou de se machucar de alguma forma",
 ];
-export const phqaLabels = ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"];
+export const phqaLabels = [
+  "Nenhuma vez",
+  "Vários dias",
+  "Mais da metade dos dias",
+  "Quase todos os dias",
+];
+export function hasPositivePhqaSelfHarm(
+  answers: Record<number, number>,
+): boolean {
+  return Number.isInteger(answers[8]) && answers[8] > 0;
+}
+
+export function requiresPhqaSafetyConfirmation(
+  answers: Record<number, number>,
+  safetyProtocolConfirmed: boolean,
+): boolean {
+  return hasPositivePhqaSelfHarm(answers) && !safetyProtocolConfirmed;
+}
+
+export function updatePhqaSafetyConfirmation(
+  currentConfirmed: boolean,
+  questionIndex: number,
+  previousValue: number | undefined,
+  nextValue: number,
+): boolean {
+  if (questionIndex !== 8) return currentConfirmed;
+  if (previousValue !== nextValue) return false;
+  return nextValue > 0 ? currentConfirmed : false;
+}
+
+export function buildPhqaReportItems(
+  answers: Record<number, number>,
+  safetyProtocolConfirmed: boolean,
+): Array<{
+  question: string;
+  answer: string;
+}> {
+  const items = phqaQuestions.map((question, index) => ({
+    question,
+    answer:
+      answers[index] !== undefined
+        ? phqaLabels[answers[index]]
+        : "Não respondida",
+  }));
+
+  if (hasPositivePhqaSelfHarm(answers)) {
+    items.push({
+      question: "Nota de segurança — item 9 positivo",
+      answer: safetyProtocolConfirmed
+        ? "Protocolo de segurança iniciado antes da conclusão. Respostas registradas sem cálculo ou interpretação de escore."
+        : "Confirmação do protocolo de segurança pendente. Resultado não deve ser concluído. Respostas sem cálculo ou interpretação de escore.",
+    });
+  }
+
+  return items;
+}
 export function classifyPhqa(total: number) {
-  if (total <= 4) return { classification: "Mínima", color: "emerald", description: "Depressão mínima (0-4). Monitoramento." };
-  if (total <= 9) return { classification: "Leve", color: "amber", description: "Depressão leve (5-9). Observação ativa, considerar reavaliação em 2 semanas." };
-  if (total <= 14) return { classification: "Moderada", color: "orange", description: "Depressão moderada (10-14). Considerar tratamento psicoterápico e/ou farmacológico." };
-  if (total <= 19) return { classification: "Moderada-Grave", color: "red", description: "Depressão moderadamente grave (15-19). Tratamento ativo indicado." };
-  return { classification: "Grave", color: "red", description: "Depressão grave (20-27). Encaminhamento urgente para psiquiatria, avaliar risco." };
+  if (total <= 4)
+    return {
+      classification: "Mínima",
+      color: "emerald",
+      description: "Depressão mínima (0-4). Monitoramento.",
+    };
+  if (total <= 9)
+    return {
+      classification: "Leve",
+      color: "amber",
+      description:
+        "Depressão leve (5-9). Observação ativa, considerar reavaliação em 2 semanas.",
+    };
+  if (total <= 14)
+    return {
+      classification: "Moderada",
+      color: "orange",
+      description:
+        "Depressão moderada (10-14). Considerar tratamento psicoterápico e/ou farmacológico.",
+    };
+  if (total <= 19)
+    return {
+      classification: "Moderada-Grave",
+      color: "red",
+      description:
+        "Depressão moderadamente grave (15-19). Tratamento ativo indicado.",
+    };
+  return {
+    classification: "Grave",
+    color: "red",
+    description:
+      "Depressão grave (20-27). Encaminhamento urgente para psiquiatria, avaliar risco.",
+  };
 }
 
 // --- C-SSRS (Columbia Suicide Severity Rating Scale) ---
 export const cssrsQuestions = [
-  { id: 1, text: "Desejou estar morto(a) ou desejou poder adormecer e não acordar?", level: "Ideação passiva" },
+  {
+    id: 1,
+    text: "Desejou estar morto(a) ou desejou poder adormecer e não acordar?",
+    level: "Ideação passiva",
+  },
   { id: 2, text: "Teve pensamentos de se matar?", level: "Ideação ativa" },
-  { id: 3, text: "Pensou em como faria isso (método)?", level: "Ideação com método" },
-  { id: 4, text: "Teve intenção de agir com base nesses pensamentos?", level: "Ideação com intenção" },
-  { id: 5, text: "Começou a elaborar os detalhes de como se matar ou fez preparativos?", level: "Ideação com plano" },
-  { id: 6, text: "Já fez algo, começou a fazer algo ou se preparou para fazer algo para acabar com sua vida?", level: "Comportamento suicida" },
+  {
+    id: 3,
+    text: "Pensou em como faria isso (método)?",
+    level: "Ideação com método",
+  },
+  {
+    id: 4,
+    text: "Teve intenção de agir com base nesses pensamentos?",
+    level: "Ideação com intenção",
+  },
+  {
+    id: 5,
+    text: "Começou a elaborar os detalhes de como se matar ou fez preparativos?",
+    level: "Ideação com plano",
+  },
+  {
+    id: 6,
+    text: "Já fez algo, começou a fazer algo ou se preparou para fazer algo para acabar com sua vida?",
+    level: "Comportamento suicida",
+  },
 ];
 
-export function getVisibleCssrsQuestionIds(answers: Record<number, boolean>): number[] {
-  const visible = [1];
+export function getVisibleCssrsQuestionIds(
+  answers: Record<number, boolean>,
+): number[] {
+  const visible = [1, 2];
 
-  if (answers[1] === true) {
-    visible.push(2);
-    if (answers[2] === true) {
-      visible.push(3);
-      if (answers[3] === true) {
-        visible.push(4);
-        if (answers[4] === true) {
-          visible.push(5);
-        }
-      }
-    }
+  if (answers[2] === true) {
+    visible.push(3, 4, 5);
   }
 
-  if (answers[1] !== undefined) {
+  if (answers[2] !== undefined) {
     visible.push(6);
   }
 
   return visible;
 }
 
-export function pruneCssrsAnswers(answers: Record<number, boolean>): Record<number, boolean> {
+export function pruneCssrsAnswers(
+  answers: Record<number, boolean>,
+): Record<number, boolean> {
   const visible = new Set(getVisibleCssrsQuestionIds(answers));
   return Object.fromEntries(
     Object.entries(answers)
@@ -106,29 +227,72 @@ export function pruneCssrsAnswers(answers: Record<number, boolean>): Record<numb
   );
 }
 
-export function getCssrsSkipLogicSummary(answers: Record<number, boolean>): string {
-  if (answers[1] === false) {
-    return "Lógica de interrupção aplicada: Q1 = Não; Q2-Q5 foram omitidas para não expor perguntas sobre ideação ativa, método, intenção ou plano sem indicação clínica.";
-  }
+export function getCssrsSkipLogicSummary(
+  answers: Record<number, boolean>,
+): string {
   if (answers[2] === false) {
     return "Lógica de interrupção aplicada: Q2 = Não; Q3-Q5 foram omitidas.";
   }
-  if (answers[3] === false) {
-    return "Lógica de interrupção aplicada: Q3 = Não; Q4-Q5 foram omitidas.";
+  if (answers[2] === true) {
+    return "Lógica de seguimento aplicada: Q2 = Sim; Q3-Q5 e Q6 foram apresentadas.";
   }
-  if (answers[4] === false) {
-    return "Lógica de interrupção aplicada: Q4 = Não; Q5 foi omitida.";
-  }
-  return "Lógica progressiva aplicada conforme respostas clínicas.";
+  return "Q1 e Q2 devem ser respondidas antes da pergunta sobre comportamento suicida.";
 }
 export function classifyCssrs(answers: Record<number, boolean>) {
-  if (answers[6]) return { level: 6, classification: "Comportamento Suicida", color: "red", description: "Presença de comportamento suicida. Encaminhamento IMEDIATO para emergência psiquiátrica." };
-  if (answers[5]) return { level: 5, classification: "Ideação com Plano", color: "red", description: "Ideação suicida ativa com plano específico. Alto risco — encaminhamento urgente." };
-  if (answers[4]) return { level: 4, classification: "Ideação com Intenção", color: "red", description: "Ideação suicida ativa com intenção de agir. Encaminhamento psiquiátrico urgente." };
-  if (answers[3]) return { level: 3, classification: "Ideação com Método", color: "orange", description: "Ideação suicida ativa com método, sem intenção. Avaliação de segurança necessária." };
-  if (answers[2]) return { level: 2, classification: "Ideação Ativa", color: "orange", description: "Ideação suicida ativa sem método específico. Avaliação especializada indicada." };
-  if (answers[1]) return { level: 1, classification: "Ideação Passiva", color: "amber", description: "Desejo de morte sem ideação ativa. Acompanhamento recomendado." };
-  return { level: 0, classification: "Sem Risco Identificado", color: "emerald", description: "Sem ideação suicida identificada nesta avaliação." };
+  if (answers[6])
+    return {
+      level: 6,
+      classification: "Comportamento Suicida",
+      color: "red",
+      description:
+        "Presença de comportamento suicida. Encaminhamento IMEDIATO para emergência psiquiátrica.",
+    };
+  if (answers[5])
+    return {
+      level: 5,
+      classification: "Ideação com Plano",
+      color: "red",
+      description:
+        "Ideação suicida ativa com plano específico. Alto risco — encaminhamento urgente.",
+    };
+  if (answers[4])
+    return {
+      level: 4,
+      classification: "Ideação com Intenção",
+      color: "red",
+      description:
+        "Ideação suicida ativa com intenção de agir. Encaminhamento psiquiátrico urgente.",
+    };
+  if (answers[3])
+    return {
+      level: 3,
+      classification: "Ideação com Método",
+      color: "orange",
+      description:
+        "Ideação suicida ativa com método, sem intenção. Avaliação de segurança necessária.",
+    };
+  if (answers[2])
+    return {
+      level: 2,
+      classification: "Ideação Ativa",
+      color: "orange",
+      description:
+        "Ideação suicida ativa sem método específico. Avaliação especializada indicada.",
+    };
+  if (answers[1])
+    return {
+      level: 1,
+      classification: "Ideação Passiva",
+      color: "amber",
+      description:
+        "Desejo de morte sem ideação ativa. Acompanhamento recomendado.",
+    };
+  return {
+    level: 0,
+    classification: "Sem Risco Identificado",
+    color: "emerald",
+    description: "Sem ideação suicida identificada nesta avaliação.",
+  };
 }
 
 // --- CRAFFT (Screening de Uso de Substâncias) ---
@@ -138,17 +302,60 @@ export const crafftPartA = [
   "Nos últimos 12 meses, você usou alguma outra substância para 'ficar chapado(a)'?",
 ];
 export const crafftPartB = [
-  { letter: "C", question: "Você já andou em um CARRO dirigido por alguém (incluindo você) que estava sob efeito de álcool ou drogas?", keyword: "Car" },
-  { letter: "R", question: "Você já usou álcool ou drogas para RELAXAR, se sentir melhor ou se enturmar?", keyword: "Relax" },
-  { letter: "A", question: "Você já usou álcool ou drogas quando estava SOZINHO(A)?", keyword: "Alone" },
-  { letter: "F", question: "Você já ESQUECEU coisas que fez enquanto usava álcool ou drogas?", keyword: "Forget" },
-  { letter: "F", question: "Sua FAMÍLIA ou amigos já disseram que você deveria parar de beber ou usar drogas?", keyword: "Friends/Family" },
-  { letter: "T", question: "Você já se meteu em PROBLEMAS enquanto usava álcool ou drogas?", keyword: "Trouble" },
+  {
+    letter: "C",
+    question:
+      "Você já andou em um CARRO dirigido por alguém (incluindo você) que estava sob efeito de álcool ou drogas?",
+    keyword: "Car",
+  },
+  {
+    letter: "R",
+    question:
+      "Você já usou álcool ou drogas para RELAXAR, se sentir melhor ou se enturmar?",
+    keyword: "Relax",
+  },
+  {
+    letter: "A",
+    question: "Você já usou álcool ou drogas quando estava SOZINHO(A)?",
+    keyword: "Alone",
+  },
+  {
+    letter: "F",
+    question:
+      "Você já ESQUECEU coisas que fez enquanto usava álcool ou drogas?",
+    keyword: "Forget",
+  },
+  {
+    letter: "F",
+    question:
+      "Sua FAMÍLIA ou amigos já disseram que você deveria parar de beber ou usar drogas?",
+    keyword: "Friends/Family",
+  },
+  {
+    letter: "T",
+    question: "Você já se meteu em PROBLEMAS enquanto usava álcool ou drogas?",
+    keyword: "Trouble",
+  },
 ];
 export function classifyCrafft(score: number) {
-  if (score === 0) return { classification: "Baixo Risco", color: "emerald", description: "Sem indicadores de uso problemático. Reforço positivo." };
-  if (score === 1) return { classification: "Risco Moderado", color: "amber", description: "Algum risco identificado. Breve intervenção e orientação recomendadas." };
-  return { classification: "Alto Risco", color: "red", description: `Pontuação ≥2 (${score}/6). Alto risco de uso problemático de substâncias. Avaliação aprofundada e possível encaminhamento.` };
+  if (score === 0)
+    return {
+      classification: "Baixo Risco",
+      color: "emerald",
+      description: "Sem indicadores de uso problemático. Reforço positivo.",
+    };
+  if (score === 1)
+    return {
+      classification: "Risco Moderado",
+      color: "amber",
+      description:
+        "Algum risco identificado. Breve intervenção e orientação recomendadas.",
+    };
+  return {
+    classification: "Alto Risco",
+    color: "red",
+    description: `Pontuação ≥2 (${score}/6). Alto risco de uso problemático de substâncias. Avaliação aprofundada e possível encaminhamento.`,
+  };
 }
 
 // --- CBCL (Child Behavior Checklist — versão abreviada para triagem) ---
@@ -212,24 +419,95 @@ export const cbclDomains = [
     ],
   },
 ];
-export const cbclLabels = ["Falso", "Às vezes verdadeiro", "Frequentemente verdadeiro"];
-export function classifyCbcl(internalizing: number, externalizing: number, social: number) {
+export const cbclLabels = [
+  "Falso",
+  "Às vezes verdadeiro",
+  "Frequentemente verdadeiro",
+];
+export function classifyCbcl(
+  internalizing: number,
+  externalizing: number,
+  social: number,
+) {
   const total = internalizing + externalizing + social;
   const results = [];
   // Internalizantes (max 30)
-  if (internalizing <= 8) results.push({ domain: "Internalizantes", score: internalizing, classification: "Normal", color: "emerald" });
-  else if (internalizing <= 12) results.push({ domain: "Internalizantes", score: internalizing, classification: "Limítrofe", color: "amber" });
-  else results.push({ domain: "Internalizantes", score: internalizing, classification: "Clínico", color: "red" });
+  if (internalizing <= 8)
+    results.push({
+      domain: "Internalizantes",
+      score: internalizing,
+      classification: "Normal",
+      color: "emerald",
+    });
+  else if (internalizing <= 12)
+    results.push({
+      domain: "Internalizantes",
+      score: internalizing,
+      classification: "Limítrofe",
+      color: "amber",
+    });
+  else
+    results.push({
+      domain: "Internalizantes",
+      score: internalizing,
+      classification: "Clínico",
+      color: "red",
+    });
   // Externalizantes (max 30)
-  if (externalizing <= 10) results.push({ domain: "Externalizantes", score: externalizing, classification: "Normal", color: "emerald" });
-  else if (externalizing <= 15) results.push({ domain: "Externalizantes", score: externalizing, classification: "Limítrofe", color: "amber" });
-  else results.push({ domain: "Externalizantes", score: externalizing, classification: "Clínico", color: "red" });
+  if (externalizing <= 10)
+    results.push({
+      domain: "Externalizantes",
+      score: externalizing,
+      classification: "Normal",
+      color: "emerald",
+    });
+  else if (externalizing <= 15)
+    results.push({
+      domain: "Externalizantes",
+      score: externalizing,
+      classification: "Limítrofe",
+      color: "amber",
+    });
+  else
+    results.push({
+      domain: "Externalizantes",
+      score: externalizing,
+      classification: "Clínico",
+      color: "red",
+    });
   // Social/Atenção (max 20)
-  if (social <= 6) results.push({ domain: "Social/Atenção", score: social, classification: "Normal", color: "emerald" });
-  else if (social <= 9) results.push({ domain: "Social/Atenção", score: social, classification: "Limítrofe", color: "amber" });
-  else results.push({ domain: "Social/Atenção", score: social, classification: "Clínico", color: "red" });
+  if (social <= 6)
+    results.push({
+      domain: "Social/Atenção",
+      score: social,
+      classification: "Normal",
+      color: "emerald",
+    });
+  else if (social <= 9)
+    results.push({
+      domain: "Social/Atenção",
+      score: social,
+      classification: "Limítrofe",
+      color: "amber",
+    });
+  else
+    results.push({
+      domain: "Social/Atenção",
+      score: social,
+      classification: "Clínico",
+      color: "red",
+    });
 
-  return { total, results, description: total <= 24 ? "Faixa normal global." : total <= 36 ? "Faixa limítrofe — reavaliação recomendada." : "Faixa clínica — encaminhamento para avaliação especializada." };
+  return {
+    total,
+    results,
+    description:
+      total <= 24
+        ? "Faixa normal global."
+        : total <= 36
+          ? "Faixa limítrofe — reavaliação recomendada."
+          : "Faixa clínica — encaminhamento para avaliação especializada.",
+  };
 }
 
 // --- Vanderbilt (NICHQ Vanderbilt — TDAH) ---
@@ -279,27 +557,45 @@ export const vanderbiltDomains = [
     ],
   },
 ];
-export const vanderbiltLabels = ["Nunca", "Às vezes", "Frequentemente", "Muito frequentemente"];
-export function classifyVanderbilt(inattention: number, hyperactivity: number, conduct: number) {
+export const vanderbiltLabels = [
+  "Nunca",
+  "Às vezes",
+  "Frequentemente",
+  "Muito frequentemente",
+];
+export function classifyVanderbilt(
+  inattention: number,
+  hyperactivity: number,
+  conduct: number,
+) {
   const results = [];
   // Desatenção: ≥6 itens com score ≥2 = positivo screening
   results.push({
     domain: "Desatenção",
     score: inattention,
     positive: inattention >= 6,
-    description: inattention >= 6 ? "Triagem positiva para desatenção (≥6 itens pontuados 2-3)" : "Triagem negativa para desatenção",
+    description:
+      inattention >= 6
+        ? "Triagem positiva para desatenção (≥6 itens pontuados 2-3)"
+        : "Triagem negativa para desatenção",
   });
   results.push({
     domain: "Hiperatividade/Impulsividade",
     score: hyperactivity,
     positive: hyperactivity >= 6,
-    description: hyperactivity >= 6 ? "Triagem positiva para hiperatividade/impulsividade" : "Triagem negativa para hiperatividade/impulsividade",
+    description:
+      hyperactivity >= 6
+        ? "Triagem positiva para hiperatividade/impulsividade"
+        : "Triagem negativa para hiperatividade/impulsividade",
   });
   results.push({
     domain: "Conduta/Oposição",
     score: conduct,
     positive: conduct >= 4,
-    description: conduct >= 4 ? "Triagem positiva para problemas de conduta" : "Triagem negativa para problemas de conduta",
+    description:
+      conduct >= 4
+        ? "Triagem positiva para problemas de conduta"
+        : "Triagem negativa para problemas de conduta",
   });
   return results;
 }
@@ -369,8 +665,13 @@ export function classifyBrief2(domainScores: Record<string, number>) {
     const tScore = Math.round(50 + (score - 3) * 5); // Approximate T-score conversion
     let classification = "Normal";
     let color = "emerald";
-    if (tScore >= 65) { classification = "Clinicamente significativo"; color = "red"; }
-    else if (tScore >= 60) { classification = "Potencialmente clínico"; color = "amber"; }
+    if (tScore >= 65) {
+      classification = "Clinicamente significativo";
+      color = "red";
+    } else if (tScore >= 60) {
+      classification = "Potencialmente clínico";
+      color = "amber";
+    }
     return { domain, score, tScore, classification, color };
   });
   return results;
@@ -465,9 +766,24 @@ export const asq3Labels = ["Sim", "Às vezes", "Ainda não"];
 export const asq3Values = [10, 5, 0];
 export function classifyAsq3Domain(score: number) {
   // Simplified cutoffs (real ASQ-3 has age-specific norms)
-  if (score >= 40) return { classification: "Adequado", color: "emerald", description: "Desenvolvimento dentro do esperado." };
-  if (score >= 25) return { classification: "Monitorar", color: "amber", description: "Próximo ao ponto de corte. Atividades de estimulação e reavaliação." };
-  return { classification: "Encaminhar", color: "red", description: "Abaixo do esperado. Avaliação profissional recomendada." };
+  if (score >= 40)
+    return {
+      classification: "Adequado",
+      color: "emerald",
+      description: "Desenvolvimento dentro do esperado.",
+    };
+  if (score >= 25)
+    return {
+      classification: "Monitorar",
+      color: "amber",
+      description:
+        "Próximo ao ponto de corte. Atividades de estimulação e reavaliação.",
+    };
+  return {
+    classification: "Encaminhar",
+    color: "red",
+    description: "Abaixo do esperado. Avaliação profissional recomendada.",
+  };
 }
 
 // --- CSHQ (Children's Sleep Habits Questionnaire) ---
@@ -540,10 +856,23 @@ export const cshqDomains = [
     ],
   },
 ];
-export const cshqLabels = ["Raramente (0-1x/sem)", "Às vezes (2-4x/sem)", "Habitualmente (5-7x/sem)"];
+export const cshqLabels = [
+  "Raramente (0-1x/sem)",
+  "Às vezes (2-4x/sem)",
+  "Habitualmente (5-7x/sem)",
+];
 export function classifyCshq(total: number) {
-  if (total <= 41) return { classification: "Normal", color: "emerald", description: "Hábitos de sono dentro da normalidade (≤41)." };
-  return { classification: "Distúrbio do Sono", color: "red", description: `Pontuação ${total} (ponto de corte: 41). Sugere distúrbio do sono — avaliação do sono recomendada.` };
+  if (total <= 41)
+    return {
+      classification: "Normal",
+      color: "emerald",
+      description: "Hábitos de sono dentro da normalidade (≤41).",
+    };
+  return {
+    classification: "Distúrbio do Sono",
+    color: "red",
+    description: `Pontuação ${total} (ponto de corte: 41). Sugere distúrbio do sono — avaliação do sono recomendada.`,
+  };
 }
 
 // --- YGTSS (Yale Global Tic Severity Scale — triagem) ---
@@ -569,18 +898,52 @@ export const ygtssVocalTics = [
   "Palavras ou frases inapropriadas (coprolalia)",
   "Assobios, sopros ou outros sons",
 ];
-export const ygtssFrequencyLabels = ["Ausente", "Raramente", "Frequentemente", "Quase sempre", "Constante"];
-export const ygtssIntensityLabels = ["Nenhuma", "Mínima", "Leve", "Moderada", "Grave", "Muito grave"];
-export function classifyYgtss(motorScore: number, vocalScore: number, impairment: number) {
+export const ygtssFrequencyLabels = [
+  "Ausente",
+  "Raramente",
+  "Frequentemente",
+  "Quase sempre",
+  "Constante",
+];
+export const ygtssIntensityLabels = [
+  "Nenhuma",
+  "Mínima",
+  "Leve",
+  "Moderada",
+  "Grave",
+  "Muito grave",
+];
+export function classifyYgtss(
+  motorScore: number,
+  vocalScore: number,
+  impairment: number,
+) {
   const totalTic = motorScore + vocalScore;
   const globalScore = totalTic + impairment;
   let severity = "Ausente";
   let color = "emerald";
-  if (globalScore >= 50) { severity = "Grave"; color = "red"; }
-  else if (globalScore >= 30) { severity = "Moderado"; color = "orange"; }
-  else if (globalScore >= 10) { severity = "Leve"; color = "amber"; }
-  else if (globalScore > 0) { severity = "Mínimo"; color = "emerald"; }
-  return { motorScore, vocalScore, totalTic, impairment, globalScore, severity, color };
+  if (globalScore >= 50) {
+    severity = "Grave";
+    color = "red";
+  } else if (globalScore >= 30) {
+    severity = "Moderado";
+    color = "orange";
+  } else if (globalScore >= 10) {
+    severity = "Leve";
+    color = "amber";
+  } else if (globalScore > 0) {
+    severity = "Mínimo";
+    color = "emerald";
+  }
+  return {
+    motorScore,
+    vocalScore,
+    totalTic,
+    impairment,
+    globalScore,
+    severity,
+    color,
+  };
 }
 
 // --- ABC (Aberrant Behavior Checklist) ---
@@ -660,7 +1023,12 @@ export const abcDomains = [
     ],
   },
 ];
-export const abcLabels = ["Não é problema", "Problema leve", "Problema moderado", "Problema grave"];
+export const abcLabels = [
+  "Não é problema",
+  "Problema leve",
+  "Problema moderado",
+  "Problema grave",
+];
 export function classifyAbc(domainScores: Record<string, number>) {
   return Object.entries(domainScores).map(([domain, score]) => ({
     domain,
@@ -720,13 +1088,24 @@ export const pedsqlDomains = [
     ],
   },
 ];
-export const pedsqlLabels = ["Nunca", "Quase nunca", "Às vezes", "Frequentemente", "Quase sempre"];
+export const pedsqlLabels = [
+  "Nunca",
+  "Quase nunca",
+  "Às vezes",
+  "Frequentemente",
+  "Quase sempre",
+];
 export const pedsqlValues = [100, 75, 50, 25, 0]; // Reverse scored
 export function classifyPedsql(domainScores: Record<string, number>) {
   return Object.entries(domainScores).map(([domain, avgScore]) => ({
     domain,
     score: Math.round(avgScore),
-    level: avgScore >= 70 ? "Boa qualidade de vida" : avgScore >= 50 ? "Qualidade moderada" : "Qualidade comprometida",
+    level:
+      avgScore >= 70
+        ? "Boa qualidade de vida"
+        : avgScore >= 50
+          ? "Qualidade moderada"
+          : "Qualidade comprometida",
     color: avgScore >= 70 ? "emerald" : avgScore >= 50 ? "amber" : "red",
   }));
 }
@@ -737,7 +1116,8 @@ export const gmfcsLevels = [
     level: "I",
     title: "Nível I — Anda sem Limitações",
     color: "emerald",
-    description: "Anda em casa, na escola, ao ar livre e na comunidade. Consegue subir escadas sem apoio no corrimão. Realiza habilidades motoras grossas como correr e pular, mas a velocidade, equilíbrio e coordenação podem ser reduzidos.",
+    description:
+      "Anda em casa, na escola, ao ar livre e na comunidade. Consegue subir escadas sem apoio no corrimão. Realiza habilidades motoras grossas como correr e pular, mas a velocidade, equilíbrio e coordenação podem ser reduzidos.",
     characteristics: [
       "Anda sem limitações dentro e fora de casa",
       "Sobe e desce escadas sem apoio",
@@ -749,7 +1129,8 @@ export const gmfcsLevels = [
     level: "II",
     title: "Nível II — Anda com Limitações",
     color: "amber",
-    description: "Anda na maioria dos ambientes. Pode ter dificuldade em superfícies irregulares, inclinadas, em áreas lotadas ou espaços apertados. Pode usar dispositivos auxiliares para longas distâncias. Sobe escadas com apoio.",
+    description:
+      "Anda na maioria dos ambientes. Pode ter dificuldade em superfícies irregulares, inclinadas, em áreas lotadas ou espaços apertados. Pode usar dispositivos auxiliares para longas distâncias. Sobe escadas com apoio.",
     characteristics: [
       "Anda na maioria dos ambientes com limitações",
       "Dificuldade em terrenos irregulares e inclinações",
@@ -761,7 +1142,8 @@ export const gmfcsLevels = [
     level: "III",
     title: "Nível III — Anda com Dispositivo Auxiliar",
     color: "orange",
-    description: "Anda usando dispositivo auxiliar de mobilidade manual (andador, muletas) em ambientes internos. Senta-se com apoio ou pode necessitar de cinto pélvico. Usa cadeira de rodas para distâncias maiores.",
+    description:
+      "Anda usando dispositivo auxiliar de mobilidade manual (andador, muletas) em ambientes internos. Senta-se com apoio ou pode necessitar de cinto pélvico. Usa cadeira de rodas para distâncias maiores.",
     characteristics: [
       "Anda com andador ou muletas em ambientes internos",
       "Senta-se com apoio — pode precisar de cinto",
@@ -773,7 +1155,8 @@ export const gmfcsLevels = [
     level: "IV",
     title: "Nível IV — Mobilidade Limitada (Cadeira de Rodas)",
     color: "red",
-    description: "A auto-mobilidade é limitada. É transportado ou usa cadeira de rodas motorizada. Necessita de adaptações para sentar-se. Pode conseguir andar curtas distâncias com dispositivo e supervisão intensa.",
+    description:
+      "A auto-mobilidade é limitada. É transportado ou usa cadeira de rodas motorizada. Necessita de adaptações para sentar-se. Pode conseguir andar curtas distâncias com dispositivo e supervisão intensa.",
     characteristics: [
       "Usa cadeira de rodas na maioria dos ambientes",
       "Pode andar curtas distâncias com muito apoio",
@@ -785,7 +1168,8 @@ export const gmfcsLevels = [
     level: "V",
     title: "Nível V — Transportado em Cadeira de Rodas",
     color: "red",
-    description: "Deficiências físicas graves limitam o controle voluntário do movimento. Não consegue manter posturas contra gravidade de cabeça e tronco. Requer tecnologia assistiva e assistência física total.",
+    description:
+      "Deficiências físicas graves limitam o controle voluntário do movimento. Não consegue manter posturas contra gravidade de cabeça e tronco. Requer tecnologia assistiva e assistência física total.",
     characteristics: [
       "Transportado em cadeira de rodas em todos os ambientes",
       "Limitações graves no controle de cabeça e tronco",

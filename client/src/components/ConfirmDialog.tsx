@@ -1,9 +1,8 @@
-import { motion, AnimatePresence } from "framer-motion";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { softTap, softError } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
-import { fadeIn, scaleIn, easing, duration } from "@/lib/motion";
 
 /**
  * Modal de confirmação premium. Substituto elegante do confirm() nativo.
@@ -45,123 +44,115 @@ export function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <motion.div
-            variants={scaleIn}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: duration.normal, ease: easing.spring }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"
-          >
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              aria-labelledby="confirm-title"
-              aria-describedby="confirm-desc"
-              className="pointer-events-auto w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
-              style={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--card-border))",
-              }}
-            >
-              {variant === "destructive" && (
-                <div className="h-1.5 w-full bg-gradient-to-r from-rose-500 to-red-600" />
-              )}
-              {variant === "default" && (
-                <div className="h-1.5 w-full bg-gradient-to-r from-primary to-chart-2" />
-              )}
+    <AlertDialogPrimitive.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !loading) onClose();
+      }}
+    >
+      <AlertDialogPrimitive.Portal>
+        <AlertDialogPrimitive.Overlay className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <AlertDialogPrimitive.Content
+          onEscapeKeyDown={(event) => {
+            if (loading) event.preventDefault();
+          }}
+          className="fixed left-1/2 top-1/2 z-[100] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-card-border bg-card shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        >
+          {variant === "destructive" && (
+            <div className="h-1.5 w-full bg-gradient-to-r from-rose-500 to-red-600" />
+          )}
+          {variant === "default" && (
+            <div className="h-1.5 w-full bg-gradient-to-r from-primary to-chart-2" />
+          )}
 
-              <div className="p-6 sm:p-7">
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center ${
-                      variant === "destructive"
-                        ? "bg-rose-500/10"
-                        : "bg-primary/10"
-                    }`}
-                  >
-                    <AlertTriangle
-                      className={`w-6 h-6 ${
-                        variant === "destructive" ? "text-rose-500" : "text-primary"
-                      }`}
-                      strokeWidth={1.75}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h2
-                      id="confirm-title"
-                      className="text-lg font-semibold leading-tight"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {title}
-                    </h2>
-                    {description && (
-                      <p
-                        id="confirm-desc"
-                        className="text-sm text-muted-foreground mt-2 leading-relaxed"
-                      >
-                        {description}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={onClose}
-                    aria-label="Fechar"
-                    className="shrink-0 -mr-1 -mt-1 p-1.5 rounded-md hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+          <div className="p-6 sm:p-7">
+            <div className="flex items-start gap-4">
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                  variant === "destructive" ? "bg-rose-500/10" : "bg-primary/10"
+                }`}
+                aria-hidden="true"
+              >
+                <AlertTriangle
+                  className={`h-6 w-6 ${
+                    variant === "destructive" ? "text-rose-500" : "text-primary"
+                  }`}
+                  strokeWidth={1.75}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <AlertDialogPrimitive.Title
+                  className="text-lg font-semibold leading-tight"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {title}
+                </AlertDialogPrimitive.Title>
+                <AlertDialogPrimitive.Description
+                  className={
+                    description
+                      ? "mt-2 text-sm leading-relaxed text-muted-foreground"
+                      : "sr-only"
+                  }
+                >
+                  {description ?? "Confirme se deseja continuar com esta ação."}
+                </AlertDialogPrimitive.Description>
+              </div>
+              <AlertDialogPrimitive.Cancel asChild>
+                <button
+                  type="button"
+                  disabled={loading}
+                  aria-label="Fechar"
+                  className="-mr-1 -mt-1 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </AlertDialogPrimitive.Cancel>
+            </div>
 
-                <div className="mt-7 flex items-center justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
+            <div className="mt-7 flex items-center justify-end gap-2">
+              <AlertDialogPrimitive.Cancel asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={loading}
+                  onClick={() => {
+                    softTap();
+                    haptic.tap();
+                  }}
+                >
+                  {cancelLabel}
+                </Button>
+              </AlertDialogPrimitive.Cancel>
+              <AlertDialogPrimitive.Action asChild>
+                <Button
+                  type="button"
+                  disabled={loading}
+                  className={
+                    variant === "destructive"
+                      ? "bg-gradient-to-r from-rose-500 to-red-600 text-white hover:opacity-90"
+                      : ""
+                  }
+                  onClick={async (event) => {
+                    // A mutation controla `open`; impedir o auto-close nativo
+                    // mantém foco/inert até sucesso ou cancelamento explícito.
+                    event.preventDefault();
+                    if (variant === "destructive") {
+                      softError();
+                      haptic.warning();
+                    } else {
                       softTap();
                       haptic.tap();
-                      onClose();
-                    }}
-                    disabled={loading}
-                  >
-                    {cancelLabel}
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      if (variant === "destructive") {
-                        softError();
-                        haptic.warning();
-                      } else {
-                        softTap();
-                        haptic.tap();
-                      }
-                      await onConfirm();
-                    }}
-                    disabled={loading}
-                    className={
-                      variant === "destructive"
-                        ? "bg-gradient-to-r from-rose-500 to-red-600 text-white hover:opacity-90"
-                        : ""
                     }
-                  >
-                    {loading ? "Aguarde…" : confirmLabel}
-                  </Button>
-                </div>
-              </div>
+                    await onConfirm();
+                  }}
+                >
+                  {loading ? "Aguarde…" : confirmLabel}
+                </Button>
+              </AlertDialogPrimitive.Action>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </div>
+        </AlertDialogPrimitive.Content>
+      </AlertDialogPrimitive.Portal>
+    </AlertDialogPrimitive.Root>
   );
 }
