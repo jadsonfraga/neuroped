@@ -35,8 +35,13 @@ const hiddenRoutePrefixes = [
   "/efeitos-colaterais",
   "/portal-familia",
   "/verificar",
-  "/cognitive-task",
 ];
+
+// O hub permanece navegável; somente o runner cronometrado fica sem dock para
+// evitar distração e impedir que a barra cubra controles de resposta.
+function isCognitiveTaskRoute(path: string) {
+  return path.startsWith("/cognitive-lab/");
+}
 
 const dockItems: DockItem[] = [
   {
@@ -49,7 +54,7 @@ const dockItems: DockItem[] = [
     label: "Pacientes",
     href: "/pacientes",
     icon: UsersRound,
-    isActive: (path) => path === "/pacientes" || path.startsWith("/pacientes/"),
+    isActive: (path) => path === "/pacientes" || path.startsWith("/paciente/"),
   },
   {
     label: "Clínica",
@@ -93,7 +98,11 @@ export function MobilePrimaryDock() {
   }, []);
 
   const hidden =
-    IS_PUBLIC_ZONE || hiddenRoutePrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+    IS_PUBLIC_ZONE ||
+    isCognitiveTaskRoute(path) ||
+    hiddenRoutePrefixes.some(
+      (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+    );
 
   useEffect(() => {
     document.body.classList.toggle("np-mobile-dock-active", !hidden);
@@ -135,7 +144,11 @@ export function MobilePrimaryDock() {
                 aria-label="Buscar no NeuroPed"
                 data-testid="mobile-dock-search"
               >
-                <Icon className="h-[19px] w-[19px]" strokeWidth={active ? 2.2 : 1.9} aria-hidden="true" />
+                <Icon
+                  className="h-[19px] w-[19px]"
+                  strokeWidth={active ? 2.2 : 1.9}
+                  aria-hidden="true"
+                />
                 <span>{item.label}</span>
               </button>
             );
@@ -150,7 +163,11 @@ export function MobilePrimaryDock() {
               aria-current={active ? "page" : undefined}
               data-testid={`mobile-dock-${item.label.toLowerCase()}`}
             >
-              <Icon className="h-[19px] w-[19px]" strokeWidth={active ? 2.2 : 1.9} aria-hidden="true" />
+              <Icon
+                className="h-[19px] w-[19px]"
+                strokeWidth={active ? 2.2 : 1.9}
+                aria-hidden="true"
+              />
               <span>{item.label}</span>
               {active && (
                 <span

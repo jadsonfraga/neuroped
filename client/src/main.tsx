@@ -16,11 +16,19 @@ import "./styles/tablet-coarse-perf.css";
 
 installChunkRecovery();
 void purgeLegacyCertificateCache();
+// Falha fechado no startup: versões antigas persistiam narrativa clínica do
+// filtro. A única preferência não sensível passa a usar uma chave separada.
+try {
+  window.localStorage.removeItem("np_filtro_state_v1");
+} catch {
+  /* storage indisponível */
+}
 
 try {
   const savedTheme = window.localStorage.getItem("neuroped:theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const useDark = savedTheme === "dark" || (savedTheme !== "light" && prefersDark);
+  const useDark =
+    savedTheme === "dark" || (savedTheme !== "light" && prefersDark);
   document.documentElement.classList.toggle("dark", useDark);
 } catch {
   document.documentElement.classList.toggle(

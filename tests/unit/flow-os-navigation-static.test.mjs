@@ -1,62 +1,317 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const dock = fs.readFileSync("client/src/components/MobilePrimaryDock.tsx", "utf8");
-const palette = fs.readFileSync("client/src/components/CommandPalette.tsx", "utf8");
+const dock = fs.readFileSync(
+  "client/src/components/MobilePrimaryDock.tsx",
+  "utf8",
+);
+const palette = fs.readFileSync(
+  "client/src/components/CommandPalette.tsx",
+  "utf8",
+);
+const app = fs.readFileSync("client/src/App.tsx", "utf8");
 const main = fs.readFileSync("client/src/main.tsx", "utf8");
 const css = fs.readFileSync("client/src/styles/flow-os.css", "utf8");
 const layout = fs.readFileSync("client/src/components/Layout.tsx", "utf8");
 const filterPage = fs.readFileSync("client/src/pages/filtro.tsx", "utf8");
-const legalGate = fs.readFileSync("client/src/components/AvisoLegalGate.tsx", "utf8");
-const serviceWorkerManager = fs.readFileSync("client/src/components/ServiceWorkerManager.tsx", "utf8");
-const shellCss = fs.readFileSync("client/src/styles/premium-app-shell-v12.css", "utf8");
-const polishCss = fs.readFileSync("client/src/styles/premium-polish-10.css", "utf8");
+const floatingHelp = fs.readFileSync(
+  "client/src/components/FloatingHelp.tsx",
+  "utf8",
+);
+const toastPrimitive = fs.readFileSync(
+  "client/src/components/ui/toast.tsx",
+  "utf8",
+);
+const legalGate = fs.readFileSync(
+  "client/src/components/AvisoLegalGate.tsx",
+  "utf8",
+);
+const serviceWorkerManager = fs.readFileSync(
+  "client/src/components/ServiceWorkerManager.tsx",
+  "utf8",
+);
+const shellCss = fs.readFileSync(
+  "client/src/styles/premium-app-shell-v12.css",
+  "utf8",
+);
+const polishCss = fs.readFileSync(
+  "client/src/styles/premium-polish-10.css",
+  "utf8",
+);
 
 for (const label of ["Início", "Pacientes", "Clínica", "Agenda", "Buscar"]) {
-  assert.match(dock, new RegExp(`label: \\"${label}\\"`), `dock deve manter a ação ${label}`);
+  assert.match(
+    dock,
+    new RegExp(`label: \\"${label}\\"`),
+    `dock deve manter a ação ${label}`,
+  );
 }
 
-assert.match(dock, /IS_PUBLIC_ZONE/, "dock deve permanecer fora da zona pública");
-for (const publicFlow of ["/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais"]) {
-  assert.match(dock, new RegExp(publicFlow.replace("/", "\\/")), `dock não deve invadir o fluxo público ${publicFlow}`);
+assert.match(
+  dock,
+  /IS_PUBLIC_ZONE/,
+  "dock deve permanecer fora da zona pública",
+);
+for (const publicFlow of [
+  "/familia",
+  "/agendar",
+  "/pre-consulta",
+  "/pre-retorno",
+  "/efeitos-colaterais",
+]) {
+  assert.match(
+    dock,
+    new RegExp(publicFlow.replace("/", "\\/")),
+    `dock não deve invadir o fluxo público ${publicFlow}`,
+  );
 }
-assert.match(dock, /safe-area-inset-bottom/, "dock deve respeitar safe area de iPhone");
-assert.match(dock, /aria-label="Navegação principal"/, "dock deve ter landmark acessível");
-assert.match(dock, /openCommandPalette\(\)/, "busca do dock deve abrir a paleta global");
+assert.match(
+  dock,
+  /safe-area-inset-bottom/,
+  "dock deve respeitar safe area de iPhone",
+);
+assert.match(
+  dock,
+  /aria-label="Navegação principal"/,
+  "dock deve ter landmark acessível",
+);
+assert.match(
+  dock,
+  /openCommandPalette\(\)/,
+  "busca do dock deve abrir a paleta global",
+);
 assert.match(dock, /\/pacientes/, "dock deve dar acesso direto aos pacientes");
 assert.match(dock, /\/filtro/, "dock deve dar acesso direto ao fluxo clínico");
 assert.match(dock, /\/agenda/, "dock deve dar acesso direto à agenda");
 assert.match(dock, /\bz-40\b/, "dock deve ficar abaixo de dialogs/paleta z-50");
-assert.doesNotMatch(dock, /z-\[99970\]/, "dock não pode sobrepor dialogs e command palette");
+assert.doesNotMatch(
+  dock,
+  /z-\[99970\]/,
+  "dock não pode sobrepor dialogs e command palette",
+);
+assert.match(
+  dock,
+  /path === "\/pacientes" \|\| path\.startsWith\("\/paciente\/"\)/,
+  "detalhe singular deve manter Pacientes como destino ativo",
+);
+assert.match(
+  dock,
+  /path\.startsWith\("\/cognitive-lab\/"\)/,
+  "runner cronometrado deve ocultar o dock sem ocultar o hub",
+);
+assert.doesNotMatch(
+  dock,
+  /\/cognitive-task/,
+  "dock não pode depender da rota cognitiva removida",
+);
 
-assert.match(main, /<MobilePrimaryDock \/>/, "shell autorizado deve renderizar o dock");
-assert.match(main, /\.\/styles\/flow-os\.css/, "shell deve carregar o contrato de espaçamento do Flow OS");
-assert.match(css, /#main-content/, "conteúdo principal deve reservar espaço para o dock");
-assert.match(css, /safe-area-inset-bottom/, "reserva do conteúdo deve considerar safe area");
+assert.match(
+  main,
+  /<MobilePrimaryDock \/>/,
+  "shell autorizado deve renderizar o dock",
+);
+assert.match(
+  main,
+  /\.\/styles\/flow-os\.css/,
+  "shell deve carregar o contrato de espaçamento do Flow OS",
+);
+assert.match(
+  css,
+  /#main-content/,
+  "conteúdo principal deve reservar espaço para o dock",
+);
+assert.match(
+  css,
+  /safe-area-inset-bottom/,
+  "reserva do conteúdo deve considerar safe area",
+);
 
 // Sidebar fixa voltou a valer a partir de md (768px) a pedido do Dr. Jadson
 // (2026-08-12): tablet retrato mantém a sidebar; drawer+dock só no celular.
-assert.match(dock, /\bmd:hidden\b/, "dock deve encerrar no breakpoint md de 768px");
-assert.match(layout, /matchMedia\("\(min-width: 768px\)"\)/, "shell React deve compartilhar o breakpoint md");
-assert.match(layout, /document\.documentElement\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve travar o scroller raiz");
-assert.match(layout, /document\.body\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/, "drawer deve sinalizar isolamento do dock");
-assert.doesNotMatch(layout, /document\.body\.style\.overflow/, "Layout não pode disputar lock inline com dialogs");
-assert.doesNotMatch(layout, /window\.scrollTo/, "Layout não pode duplicar o reset de rota do AppRouter");
 assert.match(
-  filterPage,
-  /scrollIntoView\(\{\s*behavior:\s*"auto"/,
-  "resultados devem ser posicionados sem animação concorrente",
+  dock,
+  /\bmd:hidden\b/,
+  "dock deve encerrar no breakpoint md de 768px",
+);
+assert.match(
+  layout,
+  /matchMedia\("\(min-width: 768px\)"\)/,
+  "shell React deve compartilhar o breakpoint md",
+);
+assert.match(
+  layout,
+  /document\.documentElement\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/,
+  "drawer deve travar o scroller raiz",
+);
+assert.match(
+  layout,
+  /document\.body\.classList\.toggle\("np-mobile-drawer-open", drawerOpen\)/,
+  "drawer deve sinalizar isolamento do dock",
+);
+assert.doesNotMatch(
+  layout,
+  /document\.body\.style\.overflow/,
+  "Layout não pode disputar lock inline com dialogs",
+);
+assert.doesNotMatch(
+  layout,
+  /window\.scrollTo/,
+  "Layout não pode duplicar o reset de rota do AppRouter",
 );
 assert.doesNotMatch(
   filterPage,
-  /scrollIntoView\(\{\s*behavior:\s*"smooth"/,
-  "filtro não pode disputar o primeiro gesto com scroll suave programático",
+  /scrollIntoView\(/,
+  "filtro não pode tirar foco ou pular controles quando os resultados aparecem",
 );
-assert.match(legalGate, /document\.documentElement\.classList\.add\("np-legal-gate-open"\)/, "aviso deve travar o scroller raiz");
-assert.match(legalGate, /document\.body\.classList\.add\("np-legal-gate-open"\)/, "aviso deve adquirir owner próprio");
-assert.match(legalGate, /document\.documentElement\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar o root");
-assert.match(legalGate, /document\.body\.classList\.remove\("np-legal-gate-open"\)/, "aviso deve liberar só o próprio owner");
-assert.doesNotMatch(legalGate, /document\.body\.style\.overflow/, "aviso não pode restaurar lock inline alheio");
+assert.doesNotMatch(
+  filterPage,
+  /resultsSectionRef/,
+  "filtro não deve manter âncora de auto-scroll obsoleta",
+);
+assert.doesNotMatch(
+  filterPage,
+  /PIN master/,
+  "filtro não deve prometer um gate de PIN desativado",
+);
+assert.match(
+  filterPage,
+  /encaminha para a fonte oficial/,
+  "licença deve indicar a alternativa real disponível",
+);
+assert.match(
+  app,
+  /useState\(hasAcceptedLegalNotice\)/,
+  "shell deve iniciar pelo aceite legal persistido",
+);
+assert.match(
+  app,
+  /const onboardingVisible =\s*splashComplete && legalAccepted && showOnboarding && isRootRoute/,
+  "onboarding só pode montar depois do aceite legal e apenas na home",
+);
+assert.match(
+  app,
+  /currentPath === "\/" && getCurrentHashPath\(\) === "\/"/,
+  "a rota real deve impedir o onboarding de cobrir uma navegação recém-iniciada",
+);
+assert.match(
+  app,
+  /window\.addEventListener\("hashchange", syncCurrentPath\)/,
+  "o shell deve acompanhar mudanças de rota fora do Router",
+);
+assert.match(
+  app,
+  /const auxiliarySurfacesVisible =\s*splashComplete && legalAccepted && !onboardingVisible/,
+  "paleta, tour e superfícies auxiliares devem aguardar aviso e onboarding visível",
+);
+assert.match(
+  app,
+  /useState\(shouldShowOnboarding\)/,
+  "onboarding deve iniciar bloqueado sem flash das superfícies auxiliares",
+);
+for (const surface of ["CommandPalette", "WelcomeTour"]) {
+  assert.match(
+    app,
+    new RegExp(
+      `auxiliarySurfacesVisible && \\(\\s*<Suspense[\\s\\S]{0,120}<${surface} \\/>`,
+    ),
+    `${surface} não pode competir com o aviso legal nem com o onboarding`,
+  );
+}
+assert.doesNotMatch(
+  app,
+  /<PrivateGate>[\s\S]{0,180}<CommandPalette \/>/,
+  "PrivateGate sozinho não basta para liberar a paleta antes do aceite",
+);
+assert.match(
+  app,
+  /<AvisoLegalGate onAccepted=\{\(\) => setLegalAccepted\(true\)\} \/>/,
+  "aceite deve liberar o shell na mesma sessão",
+);
+for (const surface of ["InstallPrompt", "PreferencesPanel", "FloatingHelp"]) {
+  assert.match(
+    app,
+    new RegExp(`auxiliarySurfacesVisible && \\([\\s\\S]*?<${surface} \\/>`),
+    `${surface} não pode competir com o aviso legal nem com o onboarding`,
+  );
+}
+const openTerms = legalGate.match(/function abrirTermos[\s\S]*?\n  }/)?.[0];
+assert.ok(openTerms, "link de termos deve ter navegação explícita");
+assert.ok(
+  openTerms.indexOf('window.location.hash = "#/termos"') <
+    openTerms.indexOf("aceitar();"),
+  "a rota de termos deve mudar antes de liberar o onboarding",
+);
+assert.equal(
+  (main.match(/localStorage\.removeItem\("np_filtro_state_v1"\)/g) ?? [])
+    .length,
+  1,
+  "startup deve executar uma única sanitização do estado clínico legado",
+);
+assert.match(
+  legalGate,
+  /document\.documentElement\.classList\.add\("np-legal-gate-open"\)/,
+  "aviso deve travar o scroller raiz",
+);
+assert.match(
+  legalGate,
+  /document\.body\.classList\.add\("np-legal-gate-open"\)/,
+  "aviso deve adquirir owner próprio",
+);
+assert.match(
+  legalGate,
+  /document\.documentElement\.classList\.remove\("np-legal-gate-open"\)/,
+  "aviso deve liberar o root",
+);
+assert.match(
+  legalGate,
+  /document\.body\.classList\.remove\("np-legal-gate-open"\)/,
+  "aviso deve liberar só o próprio owner",
+);
+assert.doesNotMatch(
+  legalGate,
+  /document\.body\.style\.overflow/,
+  "aviso não pode restaurar lock inline alheio",
+);
+assert.match(
+  legalGate,
+  /max-h-\[calc\(100dvh-2rem\)\]/,
+  "aviso deve caber em viewports de pouca altura",
+);
+assert.match(
+  legalGate,
+  /overflow-y-auto/,
+  "conteúdo do aviso deve permanecer rolável",
+);
+assert.match(
+  legalGate,
+  /acceptButtonRef\.current\?\.focus\(\)/,
+  "aceite deve receber foco inicial",
+);
+assert.match(
+  legalGate,
+  /event\.key !== "Tab"/,
+  "aviso deve implementar contenção de Tab",
+);
+assert.match(
+  legalGate,
+  /last\.focus\(\)/,
+  "Shift+Tab deve circular para o último controle",
+);
+assert.match(
+  legalGate,
+  /first\.focus\(\)/,
+  "Tab deve circular para o primeiro controle",
+);
+assert.match(
+  legalGate,
+  /previouslyFocused\?\.focus\(\)/,
+  "aviso deve devolver o foco ao fechar",
+);
+assert.match(
+  legalGate,
+  /onAccepted\?\.\(\)/,
+  "aviso deve notificar o shell após persistir o aceite",
+);
 assert.match(
   serviceWorkerManager,
   /aria-labelledby="aviso-legal-title"/,
@@ -107,11 +362,45 @@ assert.doesNotMatch(
   /body\s*\{[^}]*overscroll-behavior-y:/s,
   "body não pode fingir ser o scroller raiz",
 );
-assert.match(css, /@media screen and \(max-width: 767px\)/, "contrato mobile deve valer apenas em tela");
+assert.match(
+  css,
+  /@media screen and \(max-width: 767px\)/,
+  "contrato mobile deve valer apenas em tela",
+);
 assert.match(
   css,
   /body\.np-mobile-drawer-open \[data-testid="mobile-primary-dock"\][\s\S]*?display: none !important;/,
   "dock deve sair da árvore visual enquanto o drawer modal estiver aberto",
+);
+assert.match(
+  css,
+  /\[data-testid="button-floating-help"\][\s\S]*?bottom:\s*calc\(10\.1rem \+ env\(safe-area-inset-bottom\)\)/,
+  "ajuda flutuante deve ficar acima do tour e do dock no mobile",
+);
+assert.match(
+  floatingHelp,
+  /bottom-\[5\.25rem\]/,
+  "ajuda e tour não podem se sobrepor fora do mobile",
+);
+assert.match(
+  css,
+  /\[data-radix-toast-viewport\][\s\S]*?top:\s*auto !important;[\s\S]*?pointer-events:\s*none !important;/,
+  "viewport de toast não pode ocupar nem capturar a tela entre o topo e o dock",
+);
+assert.match(
+  toastPrimitive,
+  /pointer-events-none fixed top-0/,
+  "viewport de toast deve ser transparente a cliques",
+);
+assert.match(
+  toastPrimitive,
+  /data-radix-toast-viewport=""/,
+  "viewport deve expor o seletor usado pelo contrato de posicionamento mobile",
+);
+assert.match(
+  toastPrimitive,
+  /group pointer-events-auto/,
+  "o próprio toast deve continuar interativo",
 );
 for (const [source, name] of [
   [css, "flow-os"],
@@ -125,12 +414,52 @@ for (const [source, name] of [
   );
 }
 
-assert.match(palette, /queryKey: \["\/api\/patients"\]/, "busca global deve consultar pacientes reais");
-assert.match(palette, /normalizedSearch\.length >= 2/, "pacientes só devem ser consultados após intenção de busca");
-assert.match(palette, /enabled: patientSearchReady/, "consulta de pacientes deve ser condicional");
-assert.match(palette, /IS_PUBLIC_ZONE/, "pacientes não devem ser consultados na zona pública");
-assert.match(palette, /navigate\(`\/pacientes\/\$\{id\}`\)/, "resultado deve abrir o prontuário do paciente");
-assert.match(palette, /Abrir prontuário longitudinal/, "resultado deve comunicar a ação clínica");
-assert.doesNotMatch(palette, /localStorage.*patient/i, "paleta não deve persistir nomes de pacientes em recentes");
+assert.match(
+  palette,
+  /queryKey: \["\/api\/patients"\]/,
+  "busca global deve consultar pacientes reais",
+);
+assert.match(
+  palette,
+  /normalizedSearch\.length >= 2/,
+  "pacientes só devem ser consultados após intenção de busca",
+);
+assert.match(
+  palette,
+  /enabled: patientSearchReady/,
+  "consulta de pacientes deve ser condicional",
+);
+assert.match(
+  palette,
+  /IS_PUBLIC_ZONE/,
+  "pacientes não devem ser consultados na zona pública",
+);
+assert.match(
+  app,
+  /<Route path="\/paciente\/:id"/,
+  "roteador deve declarar o detalhe singular do paciente",
+);
+assert.match(
+  palette,
+  /navigate\(`\/paciente\/\$\{encodeURIComponent\(id\)\}`\)/,
+  "resultado deve abrir a rota singular registrada e codificar o identificador",
+);
+assert.doesNotMatch(
+  palette,
+  /navigate\(`\/pacientes\/\$\{id\}`\)/,
+  "teste não pode aceitar novamente a rota plural inexistente",
+);
+assert.match(
+  palette,
+  /Abrir prontuário longitudinal/,
+  "resultado deve comunicar a ação clínica",
+);
+assert.doesNotMatch(
+  palette,
+  /localStorage.*patient/i,
+  "paleta não deve persistir nomes de pacientes em recentes",
+);
 
-console.log("[flow-os] ✓ dock tablet, impressão, fronteira pública, stacking, busca clínica real e privacidade aprovados.");
+console.log(
+  "[flow-os] ✓ dock tablet, impressão, fronteira pública, stacking, busca clínica real e privacidade aprovados.",
+);

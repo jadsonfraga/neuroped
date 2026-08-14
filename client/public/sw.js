@@ -156,18 +156,27 @@ self.addEventListener("message", (event) => {
  * Retorna cache imediatamente; só vai à rede se não estiver no cache.
  */
 async function cacheFirst(request) {
-  const cached = await caches.match(request);
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
   if (cached) return cached;
 
   try {
     const response = await fetch(request);
     if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
       await cache.put(request, response.clone());
+      return response;
     }
-    return response;
+
+    // Compatibilidade com uma aba que ainda executa o build anterior: um
+    // chunk hasheado antigo pode já ter saído da origem, mas continua no único
+    // cache legado preservado durante a ativação. Recursos não hasheados nunca
+    // usam esse atalho quando a rede respondeu com a versão atual.
+    const legacy = await caches.match(request);
+    return legacy ?? response;
   } catch {
-    // Recurso indisponível offline — 408 para imagens, evita crash
+    const legacy = await caches.match(request);
+    if (legacy) return legacy;
+    // Recurso indisponível offline — 408 para imagens, evita crash.
     return new Response("", { status: 408, statusText: "Request Timeout" });
   }
 }

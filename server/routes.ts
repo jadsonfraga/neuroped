@@ -40,6 +40,20 @@ import {
 import { buildExpressHealth } from "./lib/healthContract.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
+const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
+
+function queryInteger(
+  value: unknown,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed)) return fallback;
+  return Math.min(Math.max(parsed, minimum), maximum);
+}
 
 function normalizeScaleResponses(
   value: unknown,
@@ -389,10 +403,11 @@ export async function registerRoutes(
   );
 
   app.get("/api/patients/:id/results", requireAuth, (req, res) => {
+    const patientId = oneParam(req.params.id);
     const patient = db
       .select()
       .from(patients)
-      .where(eq(patients.id, oneParam(req.params.id)))
+      .where(eq(patients.id, patientId))
       .get();
     if (!patient)
       return res.status(404).json({ error: "Paciente nao encontrado" });
@@ -400,11 +415,38 @@ export async function registerRoutes(
       return res
         .status(403)
         .json({ error: "Sem permissao", code: "FORBIDDEN" });
-    res.json(
-      storage
-        .getResultsByPatient(oneParam(req.params.id))
-        .map(presentScaleResponseRecord),
+    const paginationRequested = ["page", "limit", "offset"].some(
+      (key) => req.query[key] !== undefined,
     );
+    if (!paginationRequested) {
+      return res.json(
+        storage.getResultsByPatient(patientId).map(presentScaleResponseRecord),
+      );
+    }
+
+    const limit = queryInteger(
+      req.query.limit,
+      MAX_PATIENT_RESULTS_PAGE_SIZE,
+      1,
+      MAX_PATIENT_RESULTS_PAGE_SIZE,
+    );
+    const requestedPage = queryInteger(req.query.page, 1, 1, 10_000);
+    const explicitOffset = req.query.offset === undefined
+      ? null
+      : queryInteger(req.query.offset, 0, 0, 2_000_000);
+    const offset = explicitOffset ?? (requestedPage - 1) * limit;
+    const page = Math.floor(offset / limit) + 1;
+    const total = storage.countResultsByPatient(patientId);
+    const data = storage
+      .getResultsByPatient(patientId, limit, offset)
+      .map(presentScaleResponseRecord);
+    return res.json({
+      data,
+      total,
+      page,
+      limit,
+      hasMore: offset + data.length < total,
+    });
   });
 
   // =========================================================================

@@ -43,7 +43,7 @@ const clinicalFiles = [
 // Triagem sem cadastro: deve continuar pública, efêmera e sem contaminar o estado persistente.
 assert.match(home, /filtro-escalas\?mode=flash/);
 assert.match(filtro, /Modo efêmero — saia da tela e os dados somem/);
-assert.match(filtro, /sessionStorage\.setItem\(FLASH_STORAGE_KEY/);
+assert.match(filtro, /sessionStorage\.setItem\(\s*FLASH_STORAGE_KEY/);
 assert.match(filtro, /sessionStorage\.removeItem\(FLASH_STORAGE_KEY/);
 assert.match(filtro, /if \(flashMode\) return;/);
 assert.match(publicRoutes, /"\/filtro-escalas"/);

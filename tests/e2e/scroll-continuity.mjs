@@ -27,7 +27,14 @@ const VIEWPORT_HEIGHT = 900;
 const WIDTHS = [390, 767, 768, 834, 1280, 1366];
 
 function touchPoint(x, y) {
-  return { x: Math.round(x), y: Math.round(y), radiusX: 3, radiusY: 3, force: 1, id: 1 };
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    radiusX: 3,
+    radiusY: 3,
+    force: 1,
+    id: 1,
+  };
 }
 
 async function settleFrames(page, count = 4) {
@@ -41,12 +48,14 @@ async function settleFrames(page, count = 4) {
 async function rootState(page) {
   return page.evaluate(() => {
     const root = document.scrollingElement;
-    if (!(root instanceof HTMLElement)) throw new Error("document.scrollingElement ausente");
+    if (!(root instanceof HTMLElement))
+      throw new Error("document.scrollingElement ausente");
     return {
       top: root.scrollTop,
       max: root.scrollHeight - root.clientHeight,
       tag: root.tagName,
-      overscrollY: getComputedStyle(document.documentElement).overscrollBehaviorY,
+      overscrollY: getComputedStyle(document.documentElement)
+        .overscrollBehaviorY,
     };
   });
 }
@@ -54,12 +63,15 @@ async function rootState(page) {
 async function resetRoot(page) {
   await page.evaluate(() => {
     const root = document.scrollingElement;
-    if (!(root instanceof HTMLElement)) throw new Error("document.scrollingElement ausente");
+    if (!(root instanceof HTMLElement))
+      throw new Error("document.scrollingElement ausente");
     document.documentElement.style.scrollBehavior = "auto";
     document.body.style.scrollBehavior = "auto";
     root.scrollTo(0, 0);
   });
-  await page.waitForFunction(() => (document.scrollingElement?.scrollTop ?? -1) <= 1);
+  await page.waitForFunction(
+    () => (document.scrollingElement?.scrollTop ?? -1) <= 1,
+  );
   await settleFrames(page);
 }
 
@@ -67,7 +79,10 @@ async function realWheel(page, deltaY = 480) {
   const before = (await rootState(page)).top;
   const viewport = page.viewportSize();
   assert.ok(viewport, "viewport ausente");
-  await page.mouse.move(Math.floor(viewport.width / 2), Math.floor(viewport.height / 2));
+  await page.mouse.move(
+    Math.floor(viewport.width / 2),
+    Math.floor(viewport.height / 2),
+  );
   await page.mouse.wheel(0, deltaY);
   await page.waitForFunction(
     (start) => (document.scrollingElement?.scrollTop ?? 0) > start + 20,
@@ -82,7 +97,10 @@ async function assertWheelBlocked(page, label) {
   await page.mouse.wheel(0, 480);
   await settleFrames(page, 6);
   const after = (await rootState(page)).top;
-  assert.ok(after <= before + 2, `${label}: lock injetado não bloqueou wheel (${before} -> ${after})`);
+  assert.ok(
+    after <= before + 2,
+    `${label}: lock injetado não bloqueou wheel (${before} -> ${after})`,
+  );
 }
 
 async function beginTouch(session, x, y) {
@@ -97,18 +115,26 @@ async function continueTouch(page, session, from, to, steps = 6) {
     const ratio = index / steps;
     await session.send("Input.dispatchTouchEvent", {
       type: "touchMove",
-      touchPoints: [touchPoint(
-        from.x + (to.x - from.x) * ratio,
-        from.y + (to.y - from.y) * ratio,
-      )],
+      touchPoints: [
+        touchPoint(
+          from.x + (to.x - from.x) * ratio,
+          from.y + (to.y - from.y) * ratio,
+        ),
+      ],
     });
     await settleFrames(page, 1);
   }
-  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
 }
 
 async function endTouch(session) {
-  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
 }
 
 async function swipeLocator(page, session, locator, deltaX, deltaY) {
@@ -147,8 +173,11 @@ async function readLock(page) {
     rootPointerEvents: document.documentElement.style.pointerEvents,
     rootComputedOverflowY: getComputedStyle(document.documentElement).overflowY,
     rootDataLocked: document.documentElement.hasAttribute("data-scroll-locked"),
-    rootDrawerOwner: document.documentElement.classList.contains("np-mobile-drawer-open"),
-    rootLegalOwner: document.documentElement.classList.contains("np-legal-gate-open"),
+    rootDrawerOwner: document.documentElement.classList.contains(
+      "np-mobile-drawer-open",
+    ),
+    rootLegalOwner:
+      document.documentElement.classList.contains("np-legal-gate-open"),
     overflow: document.body.style.overflow,
     overflowY: document.body.style.overflowY,
     pointerEvents: document.body.style.pointerEvents,
@@ -160,20 +189,64 @@ async function readLock(page) {
 }
 
 function assertUnlocked(lock, label) {
-  assert.equal(lock.rootOverflow, "", `${label}: overflow inline do root permaneceu`);
-  assert.equal(lock.rootOverflowY, "", `${label}: overflow-y inline do root permaneceu`);
-  assert.equal(lock.rootPointerEvents, "", `${label}: pointer-events do root permaneceu`);
-  assert.equal(lock.rootDataLocked, false, `${label}: data-scroll-locked do root permaneceu`);
-  assert.notEqual(lock.rootComputedOverflowY, "hidden", `${label}: scroller raiz continuou travado`);
+  assert.equal(
+    lock.rootOverflow,
+    "",
+    `${label}: overflow inline do root permaneceu`,
+  );
+  assert.equal(
+    lock.rootOverflowY,
+    "",
+    `${label}: overflow-y inline do root permaneceu`,
+  );
+  assert.equal(
+    lock.rootPointerEvents,
+    "",
+    `${label}: pointer-events do root permaneceu`,
+  );
+  assert.equal(
+    lock.rootDataLocked,
+    false,
+    `${label}: data-scroll-locked do root permaneceu`,
+  );
+  assert.notEqual(
+    lock.rootComputedOverflowY,
+    "hidden",
+    `${label}: scroller raiz continuou travado`,
+  );
   assert.equal(lock.overflow, "", `${label}: overflow inline permaneceu`);
   assert.equal(lock.overflowY, "", `${label}: overflow-y inline permaneceu`);
   assert.equal(lock.pointerEvents, "", `${label}: pointer-events permaneceu`);
-  assert.equal(lock.dataLocked, false, `${label}: data-scroll-locked permaneceu`);
-  assert.notEqual(lock.computedOverflowY, "hidden", `${label}: body continuou travado`);
-  assert.equal(lock.rootDrawerOwner, false, `${label}: classe raiz órfã do drawer permaneceu`);
-  assert.equal(lock.rootLegalOwner, false, `${label}: classe raiz órfã do aviso permaneceu`);
-  assert.equal(lock.drawerOwner, false, `${label}: classe órfã do drawer permaneceu`);
-  assert.equal(lock.legalOwner, false, `${label}: classe órfã do aviso permaneceu`);
+  assert.equal(
+    lock.dataLocked,
+    false,
+    `${label}: data-scroll-locked permaneceu`,
+  );
+  assert.notEqual(
+    lock.computedOverflowY,
+    "hidden",
+    `${label}: body continuou travado`,
+  );
+  assert.equal(
+    lock.rootDrawerOwner,
+    false,
+    `${label}: classe raiz órfã do drawer permaneceu`,
+  );
+  assert.equal(
+    lock.rootLegalOwner,
+    false,
+    `${label}: classe raiz órfã do aviso permaneceu`,
+  );
+  assert.equal(
+    lock.drawerOwner,
+    false,
+    `${label}: classe órfã do drawer permaneceu`,
+  );
+  assert.equal(
+    lock.legalOwner,
+    false,
+    `${label}: classe órfã do aviso permaneceu`,
+  );
 }
 
 async function openFilter(width) {
@@ -184,15 +257,26 @@ async function openFilter(width) {
   });
   const page = await context.newPage();
   await page.addInitScript((storage) => {
-    for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
+    for (const [key, value] of Object.entries(storage))
+      localStorage.setItem(key, value);
   }, ACCEPTED_FIRST_VISIT_STORAGE);
-  await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
-  await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
-  await page.locator("#main-content").waitFor({ state: "visible", timeout: 15000 });
-  await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 15000 });
+  await page.goto(`${server.origin}/#/filtro`, {
+    waitUntil: "domcontentloaded",
+  });
+  await page
+    .getByTestId("splash-screen")
+    .waitFor({ state: "detached", timeout: 15000 });
+  await page
+    .locator("#main-content")
+    .waitFor({ state: "visible", timeout: 15000 });
+  await page
+    .locator(".filter-260-card")
+    .first()
+    .waitFor({ state: "visible", timeout: 15000 });
   await page.evaluate(() => {
     const main = document.querySelector("#main-content");
-    if (!(main instanceof HTMLElement)) throw new Error("#main-content ausente");
+    if (!(main instanceof HTMLElement))
+      throw new Error("#main-content ausente");
     const sentinel = document.createElement("div");
     sentinel.setAttribute("data-testid", "scroll-sentinel");
     sentinel.style.height = "2400px";
@@ -208,9 +292,20 @@ async function proveNativeScroll(width) {
   const session = await context.newCDPSession(page);
   try {
     const initial = await rootState(page);
-    assert.equal(initial.tag, "HTML", `${width}px: scroller raiz deve ser HTML`);
-    assert.ok(initial.max > 1200, `${width}px: página sem overflow vertical suficiente (${initial.max})`);
-    assert.equal(initial.overscrollY, "contain", `${width}px: overscroll deve estar no scroller raiz`);
+    assert.equal(
+      initial.tag,
+      "HTML",
+      `${width}px: scroller raiz deve ser HTML`,
+    );
+    assert.ok(
+      initial.max > 1200,
+      `${width}px: página sem overflow vertical suficiente (${initial.max})`,
+    );
+    assert.equal(
+      initial.overscrollY,
+      "contain",
+      `${width}px: overscroll deve estar no scroller raiz`,
+    );
 
     await resetRoot(page);
     await realWheel(page);
@@ -236,7 +331,11 @@ async function proveNativeScroll(width) {
       const actions = [];
       let current = element;
       while (current instanceof HTMLElement) {
-        actions.push({ tag: current.tagName, className: current.className, value: getComputedStyle(current).touchAction });
+        actions.push({
+          tag: current.tagName,
+          className: current.className,
+          value: getComputedStyle(current).touchAction,
+        });
         if (current.classList.contains("container-filtro")) break;
         current = current.parentElement;
       }
@@ -246,8 +345,15 @@ async function proveNativeScroll(width) {
         actions,
       };
     });
-    assert.ok(horizontalContract.max > 40, `${width}px: scroller horizontal sem overflow`);
-    assert.equal(horizontalContract.overflowX, "auto", `${width}px: overflow-x deixou de ser auto`);
+    assert.ok(
+      horizontalContract.max > 40,
+      `${width}px: scroller horizontal sem overflow`,
+    );
+    assert.equal(
+      horizontalContract.overflowX,
+      "auto",
+      `${width}px: overflow-x deixou de ser auto`,
+    );
     for (const action of horizontalContract.actions) {
       assert.match(
         action.value,
@@ -258,7 +364,9 @@ async function proveNativeScroll(width) {
     await swipeLocator(page, session, scroller, -170, 0);
     await page.waitForFunction(
       () => {
-        const element = document.querySelector(".container-filtro .overflow-x-auto");
+        const element = document.querySelector(
+          ".container-filtro .overflow-x-auto",
+        );
         return element instanceof HTMLElement && element.scrollLeft > 20;
       },
       undefined,
@@ -270,7 +378,10 @@ async function proveNativeScroll(width) {
     await assertWheelBlocked(page, `${width}px`);
     const viewport = page.viewportSize();
     assert.ok(viewport, "viewport ausente");
-    const start = { x: Math.round(viewport.width / 2), y: Math.min(650, viewport.height - 100) };
+    const start = {
+      x: Math.round(viewport.width / 2),
+      y: Math.min(650, viewport.height - 100),
+    };
     const end = { x: start.x, y: Math.max(120, start.y - 360) };
     await beginTouch(session, start.x, start.y);
     assertUnlocked(await readLock(page), `${width}px primeiro contato`);
@@ -282,7 +393,9 @@ async function proveNativeScroll(width) {
       { timeout: 3000 },
     );
 
-    console.log(`[scroll-continuity] ✓ ${width}px: wheel, touch, pan-x e recuperação no primeiro gesto`);
+    console.log(
+      `[scroll-continuity] ✓ ${width}px: wheel, touch, pan-x e recuperação no primeiro gesto`,
+    );
   } finally {
     await session.detach();
     await context.close();
@@ -295,28 +408,43 @@ async function provePodiumReachability(width) {
   try {
     const quickStart = page.getByRole("button", { name: /TEA.*2.*4 anos/i });
     await quickStart.waitFor({ state: "visible", timeout: 10000 });
+    await quickStart.scrollIntoViewIfNeeded();
+    await settleFrames(page);
+    const beforeSelection = (await rootState(page)).top;
     await quickStart.click();
 
     const symptomPicker = page.getByTestId("popular-symptom-picker");
     const podium = page.getByTestId("opb-recommendation-podium");
     await symptomPicker.waitFor({ state: "visible", timeout: 15000 });
     await podium.waitFor({ state: "visible", timeout: 15000 });
-    await page.waitForFunction(
-      () => (document.scrollingElement?.scrollTop ?? 0) > 20,
-      undefined,
-      { timeout: 3000 },
+    await settleFrames(page);
+    const afterSelection = (await rootState(page)).top;
+    assert.ok(
+      Math.abs(afterSelection - beforeSelection) <= 2,
+      `${width}px: exibir resultados não pode sequestrar a rolagem (${beforeSelection} -> ${afterSelection})`,
     );
     await resetRoot(page);
 
     const ownership = await podium.evaluate((element) => {
-      for (let current = element.parentElement; current instanceof HTMLElement; current = current.parentElement) {
+      for (
+        let current = element.parentElement;
+        current instanceof HTMLElement;
+        current = current.parentElement
+      ) {
         const style = getComputedStyle(current);
-        if (/auto|scroll|overlay/.test(style.overflowY) && current.scrollHeight > current.clientHeight + 8) {
-          return { tag: current.tagName, isDocument: current === document.scrollingElement };
+        if (
+          /auto|scroll|overlay/.test(style.overflowY) &&
+          current.scrollHeight > current.clientHeight + 8
+        ) {
+          return {
+            tag: current.tagName,
+            isDocument: current === document.scrollingElement,
+          };
         }
       }
       const root = document.scrollingElement;
-      if (!(root instanceof HTMLElement)) throw new Error("document.scrollingElement ausente");
+      if (!(root instanceof HTMLElement))
+        throw new Error("document.scrollingElement ausente");
       return { tag: root.tagName, isDocument: true };
     });
     assert.deepEqual(
@@ -330,15 +458,40 @@ async function provePodiumReachability(width) {
       bodyOverflowY: getComputedStyle(document.body).overflowY,
       bodyInlineOverflow: document.body.style.overflow,
       bodyInlineOverflowY: document.body.style.overflowY,
-      rootDataLocked: document.documentElement.hasAttribute("data-scroll-locked"),
+      rootDataLocked:
+        document.documentElement.hasAttribute("data-scroll-locked"),
       bodyDataLocked: document.body.hasAttribute("data-scroll-locked"),
     }));
-    assert.notEqual(lockState.rootOverflowY, "hidden", `${width}px: scroller raiz iniciou travado`);
-    assert.notEqual(lockState.bodyOverflowY, "hidden", `${width}px: body iniciou travado`);
-    assert.equal(lockState.bodyInlineOverflow, "", `${width}px: overflow inline órfão no body`);
-    assert.equal(lockState.bodyInlineOverflowY, "", `${width}px: overflow-y inline órfão no body`);
-    assert.equal(lockState.rootDataLocked, false, `${width}px: lock órfão no root`);
-    assert.equal(lockState.bodyDataLocked, false, `${width}px: lock órfão no body`);
+    assert.notEqual(
+      lockState.rootOverflowY,
+      "hidden",
+      `${width}px: scroller raiz iniciou travado`,
+    );
+    assert.notEqual(
+      lockState.bodyOverflowY,
+      "hidden",
+      `${width}px: body iniciou travado`,
+    );
+    assert.equal(
+      lockState.bodyInlineOverflow,
+      "",
+      `${width}px: overflow inline órfão no body`,
+    );
+    assert.equal(
+      lockState.bodyInlineOverflowY,
+      "",
+      `${width}px: overflow-y inline órfão no body`,
+    );
+    assert.equal(
+      lockState.rootDataLocked,
+      false,
+      `${width}px: lock órfão no root`,
+    );
+    assert.equal(
+      lockState.bodyDataLocked,
+      false,
+      `${width}px: lock órfão no body`,
+    );
 
     if (width < 1024) {
       await symptomPicker.scrollIntoViewIfNeeded();
@@ -346,7 +499,8 @@ async function provePodiumReachability(width) {
       const beforeSymptoms = (await rootState(page)).top;
       await swipeLocator(page, session, symptomPicker, 0, -280);
       await page.waitForFunction(
-        (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
+        (startTop) =>
+          (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
         beforeSymptoms,
         { timeout: 3000 },
       );
@@ -368,7 +522,10 @@ async function provePodiumReachability(width) {
     const viewport = page.viewportSize();
     assert.ok(viewport, "viewport ausente");
     const start = {
-      x: Math.max(24, Math.min(Math.round(viewport.width * 0.74), viewport.width - 24)),
+      x: Math.max(
+        24,
+        Math.min(Math.round(viewport.width * 0.74), viewport.width - 24),
+      ),
       y: Math.min(720, viewport.height - 90),
     };
     const end = { x: start.x, y: 180 };
@@ -396,8 +553,17 @@ async function provePodiumReachability(width) {
     const podiumBox = await podium.boundingBox();
     assert.ok(podiumBox, "pódio sem geometria");
     await page.mouse.move(
-      Math.max(20, Math.min(podiumBox.x + podiumBox.width * 0.75, viewport.width - 20)),
-      Math.max(80, Math.min(podiumBox.y + Math.min(podiumBox.height * 0.4, 320), viewport.height - 80)),
+      Math.max(
+        20,
+        Math.min(podiumBox.x + podiumBox.width * 0.75, viewport.width - 20),
+      ),
+      Math.max(
+        80,
+        Math.min(
+          podiumBox.y + Math.min(podiumBox.height * 0.4, 320),
+          viewport.height - 80,
+        ),
+      ),
     );
     await page.mouse.wheel(0, 420);
     await page.waitForFunction(
@@ -444,16 +610,22 @@ async function proveOrphanedOwnerClasses() {
       );
       await assertWheelBlocked(page, `${className} órfã`);
       await beginTouch(session, start.x, start.y);
-      assertUnlocked(await readLock(page), `${className} órfã no primeiro contato`);
+      assertUnlocked(
+        await readLock(page),
+        `${className} órfã no primeiro contato`,
+      );
       const before = (await rootState(page)).top;
       await continueTouch(page, session, start, end);
       await page.waitForFunction(
-        (startTop) => (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
+        (startTop) =>
+          (document.scrollingElement?.scrollTop ?? 0) > startTop + 20,
         before,
         { timeout: 3000 },
       );
     }
-    console.log("[scroll-continuity] ✓ classes órfãs: owner vivo exigido e primeiro gesto recuperado");
+    console.log(
+      "[scroll-continuity] ✓ classes órfãs: owner vivo exigido e primeiro gesto recuperado",
+    );
   } finally {
     await session.detach();
     await context.close();
@@ -467,9 +639,15 @@ async function proveDialogOwnership() {
     const trigger = page.getByTestId("button-command-palette");
     await trigger.waitFor({ state: "visible", timeout: 5000 });
     await trigger.click();
-    const dialog = page.locator('[role="dialog"]').filter({ has: page.locator("[cmdk-root]") });
+    const dialog = page
+      .locator('[role="dialog"]')
+      .filter({ has: page.locator("[cmdk-root]") });
     await dialog.waitFor({ state: "visible", timeout: 10000 });
-    assert.equal(await dialog.getAttribute("data-state"), "open", "Command Dialog deve estar realmente aberto");
+    assert.equal(
+      await dialog.getAttribute("data-state"),
+      "open",
+      "Command Dialog deve estar realmente aberto",
+    );
     await resetRoot(page);
     await injectOrphanedLock(page);
     await assertWheelBlocked(page, "dialog real");
@@ -478,8 +656,16 @@ async function proveDialogOwnership() {
     assert.ok(viewport, "viewport ausente");
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     let lock = await readLock(page);
-    assert.equal(lock.rootDataLocked, true, "watchdog removeu lock raiz durante dialog real");
-    assert.equal(lock.dataLocked, true, "watchdog removeu lock durante dialog real");
+    assert.equal(
+      lock.rootDataLocked,
+      true,
+      "watchdog removeu lock raiz durante dialog real",
+    );
+    assert.equal(
+      lock.dataLocked,
+      true,
+      "watchdog removeu lock durante dialog real",
+    );
     await endTouch(session);
 
     await page.keyboard.press("Escape");
@@ -490,7 +676,9 @@ async function proveDialogOwnership() {
     lock = await readLock(page);
     assertUnlocked(lock, "após desmontar dialog real");
     await endTouch(session);
-    console.log("[scroll-continuity] ✓ dialog real: lock legítimo preservado e resíduo recuperado");
+    console.log(
+      "[scroll-continuity] ✓ dialog real: lock legítimo preservado e resíduo recuperado",
+    );
   } finally {
     await session.detach();
     await context.close();
@@ -503,29 +691,59 @@ async function proveDrawerOwnership() {
   try {
     const menu = page.getByTestId("button-mobile-menu");
     await menu.click();
-    await page.waitForFunction(() => document.body.classList.contains("np-mobile-drawer-open"));
+    await page.waitForFunction(() =>
+      document.body.classList.contains("np-mobile-drawer-open"),
+    );
     let lock = await readLock(page);
     assert.equal(lock.drawerOwner, true, "drawer não adquiriu ownership");
-    assert.equal(lock.rootDrawerOwner, true, "drawer não adquiriu ownership no scroller raiz");
-    assert.equal(lock.rootComputedOverflowY, "hidden", "drawer não travou o scroller raiz");
+    assert.equal(
+      lock.rootDrawerOwner,
+      true,
+      "drawer não adquiriu ownership no scroller raiz",
+    );
+    assert.equal(
+      lock.rootComputedOverflowY,
+      "hidden",
+      "drawer não travou o scroller raiz",
+    );
 
     await injectOrphanedLock(page);
     const viewport = page.viewportSize();
     assert.ok(viewport, "viewport ausente");
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     lock = await readLock(page);
-    assert.equal(lock.drawerOwner, true, "touchStart removeu owner legítimo do drawer");
-    assert.equal(lock.rootDrawerOwner, true, "touchStart removeu owner raiz do drawer");
-    assert.equal(lock.dataLocked, true, "watchdog removeu lock durante drawer legítimo");
-    assert.equal(lock.rootDataLocked, true, "watchdog removeu lock raiz durante drawer legítimo");
+    assert.equal(
+      lock.drawerOwner,
+      true,
+      "touchStart removeu owner legítimo do drawer",
+    );
+    assert.equal(
+      lock.rootDrawerOwner,
+      true,
+      "touchStart removeu owner raiz do drawer",
+    );
+    assert.equal(
+      lock.dataLocked,
+      true,
+      "watchdog removeu lock durante drawer legítimo",
+    );
+    assert.equal(
+      lock.rootDataLocked,
+      true,
+      "watchdog removeu lock raiz durante drawer legítimo",
+    );
     await endTouch(session);
 
     await page.keyboard.press("Escape");
-    await page.waitForFunction(() => !document.body.classList.contains("np-mobile-drawer-open"));
+    await page.waitForFunction(
+      () => !document.body.classList.contains("np-mobile-drawer-open"),
+    );
     await beginTouch(session, Math.round(viewport.width / 2), 300);
     assertUnlocked(await readLock(page), "após fechar drawer");
     await endTouch(session);
-    console.log("[scroll-continuity] ✓ drawer: ownership preservado e liberação sem restauração cruzada");
+    console.log(
+      "[scroll-continuity] ✓ drawer: ownership preservado e liberação sem restauração cruzada",
+    );
   } finally {
     await session.detach();
     await context.close();
@@ -542,24 +760,45 @@ async function proveLegalGateOwnership() {
   const storage = { ...ACCEPTED_FIRST_VISIT_STORAGE };
   delete storage["neuroped:aviso-educativo-aceito-v1"];
   await page.addInitScript((entries) => {
-    for (const [key, value] of Object.entries(entries)) localStorage.setItem(key, value);
+    for (const [key, value] of Object.entries(entries))
+      localStorage.setItem(key, value);
     localStorage.removeItem("neuroped:aviso-educativo-aceito-v1");
   }, storage);
   try {
-    await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${server.origin}/#/filtro`, {
+      waitUntil: "domcontentloaded",
+    });
     const accept = page.getByTestId("button-aviso-aceitar");
     await accept.waitFor({ state: "visible", timeout: 15000 });
-    await page.waitForFunction(() => document.body.classList.contains("np-legal-gate-open"));
+    await page.waitForFunction(() =>
+      document.body.classList.contains("np-legal-gate-open"),
+    );
     const locked = await readLock(page);
     assert.equal(locked.legalOwner, true, "aviso legal não adquiriu ownership");
-    assert.equal(locked.rootLegalOwner, true, "aviso legal não adquiriu ownership no root");
-    assert.equal(locked.rootComputedOverflowY, "hidden", "aviso legal não travou o scroller raiz");
-    assert.equal(locked.overflow, "", "aviso legal voltou a usar lock inline compartilhado");
+    assert.equal(
+      locked.rootLegalOwner,
+      true,
+      "aviso legal não adquiriu ownership no root",
+    );
+    assert.equal(
+      locked.rootComputedOverflowY,
+      "hidden",
+      "aviso legal não travou o scroller raiz",
+    );
+    assert.equal(
+      locked.overflow,
+      "",
+      "aviso legal voltou a usar lock inline compartilhado",
+    );
 
     await accept.click();
-    await page.waitForFunction(() => !document.body.classList.contains("np-legal-gate-open"));
+    await page.waitForFunction(
+      () => !document.body.classList.contains("np-legal-gate-open"),
+    );
     assertUnlocked(await readLock(page), "após aceitar aviso legal");
-    console.log("[scroll-continuity] ✓ aviso legal: ownership isolado e cleanup definitivo");
+    console.log(
+      "[scroll-continuity] ✓ aviso legal: ownership isolado e cleanup definitivo",
+    );
   } finally {
     await context.close();
   }
@@ -567,7 +806,7 @@ async function proveLegalGateOwnership() {
 
 try {
   for (const width of WIDTHS) await proveNativeScroll(width);
-  for (const width of [834, 1280]) await provePodiumReachability(width);
+  for (const width of [390, 834, 1280]) await provePodiumReachability(width);
   await proveDrawerOwnership();
   await proveLegalGateOwnership();
   await proveOrphanedOwnerClasses();

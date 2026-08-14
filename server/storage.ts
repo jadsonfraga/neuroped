@@ -15,7 +15,7 @@ import {
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import { eq, or, and, isNull, desc, getTableColumns } from "drizzle-orm";
+import { eq, or, and, isNull, desc, getTableColumns, count } from "drizzle-orm";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -226,7 +226,8 @@ export interface IStorage {
   getResults(): ScaleResult[];
   getResultsAccessibleBy(user: { id: string; role: string }, limit?: number): ScaleResult[];
   getResult(id: string): ScaleResult | undefined;
-  getResultsByPatient(patientId: string): ScaleResult[];
+  getResultsByPatient(patientId: string, limit?: number, offset?: number): ScaleResult[];
+  countResultsByPatient(patientId: string): number;
   deleteResult(id: string): boolean;
   deletePatient(id: string): boolean;
 }
@@ -276,8 +277,36 @@ export class SqliteStorage implements IStorage {
     return db.select().from(scaleResults).where(eq(scaleResults.id, id)).get();
   }
 
-  getResultsByPatient(patientId: string): ScaleResult[] {
-    return db.select().from(scaleResults).where(eq(scaleResults.patientId, patientId)).all();
+  getResultsByPatient(
+    patientId: string,
+    limit?: number,
+    offset = 0,
+  ): ScaleResult[] {
+    if (limit === undefined) {
+      return db
+        .select()
+        .from(scaleResults)
+        .where(eq(scaleResults.patientId, patientId))
+        .all();
+    }
+    return db
+      .select()
+      .from(scaleResults)
+      .where(eq(scaleResults.patientId, patientId))
+      .orderBy(desc(scaleResults.createdAt), desc(scaleResults.id))
+      .limit(limit)
+      .offset(offset)
+      .all();
+  }
+
+  countResultsByPatient(patientId: string): number {
+    return (
+      db
+        .select({ count: count() })
+        .from(scaleResults)
+        .where(eq(scaleResults.patientId, patientId))
+        .get()?.count ?? 0
+    );
   }
 
   deleteResult(id: string): boolean {

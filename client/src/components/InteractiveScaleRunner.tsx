@@ -65,7 +65,8 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   // Microcopy que acompanha o progresso — deixa a aplicação mais acolhedora.
   const progressHint = useMemo(() => {
     if (answered === 0) return "Toque numa opção para começar";
-    if (allAnswered) return "Tudo respondido — veja as respostas registradas ✨";
+    if (allAnswered)
+      return "Tudo respondido — veja as respostas registradas ✨";
     if (progress >= 66) return "Quase lá! 💪";
     if (progress >= 33) return "Indo muito bem…";
     return "Continue no seu ritmo";
