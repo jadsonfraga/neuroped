@@ -392,8 +392,18 @@ assert.match(
 );
 assert.match(
   floatingHelp,
-  /dispatchEvent\(new Event\(OPEN_TOUR_EVENT\)\)/,
-  "a ajuda única deve abrir o tour por evento explícito",
+  /dispatchEvent\(new Event\(eventName\)\)/,
+  "o helper de assistência deve despachar o evento recebido explicitamente",
+);
+assert.match(
+  floatingHelp,
+  /openAuxiliarySurface\(OPEN_TOUR_EVENT\)/,
+  "a ajuda única deve abrir o tour pelo helper compartilhado",
+);
+assert.match(
+  floatingHelp,
+  /openAuxiliarySurface\(OPEN_PREFERENCES_EVENT\)/,
+  "a ajuda única deve abrir preferências pelo helper compartilhado",
 );
 assert.match(
   floatingHelp,
