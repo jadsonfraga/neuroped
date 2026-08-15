@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Compass, HelpCircle, Search, ClipboardCheck, ShieldAlert } from "lucide-react";
+import {
+  Compass,
+  HelpCircle,
+  Search,
+  ClipboardCheck,
+  Settings,
+  ShieldAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,14 +19,15 @@ import {
 } from "@/components/ui/dialog";
 
 const OPEN_TOUR_EVENT = "neuroped:open-tour";
+const OPEN_PREFERENCES_EVENT = "neuroped:open-preferences";
 
 export function FloatingHelp() {
   const [open, setOpen] = useState(false);
 
-  function startTour() {
+  function openAuxiliarySurface(eventName: string) {
     setOpen(false);
     window.requestAnimationFrame(() => {
-      window.dispatchEvent(new Event(OPEN_TOUR_EVENT));
+      window.dispatchEvent(new Event(eventName));
     });
   }
 
@@ -76,12 +84,27 @@ export function FloatingHelp() {
             </p>
           </div>
           <div className="grid gap-2 pt-1 sm:grid-cols-2">
-            <Button type="button" onClick={startTour} className="w-full gap-2" data-testid="button-start-tour">
+            <Button
+              type="button"
+              onClick={() => openAuxiliarySurface(OPEN_TOUR_EVENT)}
+              className="w-full gap-2"
+              data-testid="button-start-tour"
+            >
               <Compass className="h-4 w-4" aria-hidden="true" />
               Tour guiado
             </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/ajuda" onClick={() => setOpen(false)}>Central de ajuda</Link>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => openAuxiliarySurface(OPEN_PREFERENCES_EVENT)}
+              className="w-full gap-2"
+              data-testid="button-open-preferences"
+            >
+              <Settings className="h-4 w-4" aria-hidden="true" />
+              Preferências
+            </Button>
+            <Button asChild variant="outline" className="w-full sm:col-span-2">
+              <Link href="/ajuda" onClick={() => setOpen(false)}>Abrir central de ajuda</Link>
             </Button>
           </div>
         </div>
