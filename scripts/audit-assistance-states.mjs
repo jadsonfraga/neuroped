@@ -34,13 +34,16 @@ const CASES = [
 async function openAssistanceState(page, state) {
   await page.getByTestId("button-floating-help").waitFor({ state: "visible", timeout: 15_000 });
   await page.getByTestId("button-floating-help").click();
-  await page.getByTestId("help-dialog").waitFor({ state: "visible", timeout: 10_000 });
+  const helpDialog = page.getByTestId("help-dialog");
+  await helpDialog.waitFor({ state: "visible", timeout: 10_000 });
 
   if (state === "preferences") {
     await page.getByTestId("button-open-preferences").click();
+    await helpDialog.waitFor({ state: "detached", timeout: 10_000 });
     await page.getByTestId("preferences-panel").waitFor({ state: "visible", timeout: 10_000 });
   } else if (state === "tour") {
     await page.getByTestId("button-start-tour").click();
+    await helpDialog.waitFor({ state: "detached", timeout: 10_000 });
     await page.getByRole("dialog", { name: "Tour guiado" }).waitFor({ state: "visible", timeout: 10_000 });
   }
 }
@@ -88,7 +91,7 @@ try {
     });
 
     await openAssistanceState(page, testCase.state);
-    await page.waitForTimeout(180);
+    await page.waitForTimeout(100);
 
     const audit = await page.evaluate(({ state, compactViewport }) => {
       const selector = state === "preferences"
