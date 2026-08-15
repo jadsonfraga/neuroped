@@ -1,0 +1,87 @@
+name: Visual 9.9 gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/**"
+      - "scripts/audit-a11y.mjs"
+      - "scripts/audit-design.mjs"
+      - "scripts/audit-lighthouse.mjs"
+      - "scripts/audit-visual-proof.mjs"
+      - "tests/unit/brand-motion-99-static.test.mjs"
+      - "tests/unit/visual-reset-static.test.mjs"
+      - "tests/unit/premium-polish-10-static.test.mjs"
+      - "tests/unit/flow-os-navigation-static.test.mjs"
+      - ".github/workflows/visual-99-gate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-99-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-99:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install real Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Static visual contracts
+        run: |
+          node tests/unit/brand-motion-99-static.test.mjs
+          node tests/unit/visual-reset-static.test.mjs
+          node tests/unit/premium-polish-10-static.test.mjs
+          node tests/unit/flow-os-navigation-static.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production client build
+        run: npm run build:client
+
+      - name: Accessibility — complete navigation
+        env:
+          A11Y_FULL: "1"
+        run: npm run audit:a11y
+
+      - name: Design tokens
+        run: npm run audit:design
+
+      - name: Lighthouse — configured archetypes
+        run: npm run audit:lighthouse
+
+      - name: Expanded responsive visual proof
+        run: node scripts/audit-visual-proof.mjs
+
+      - name: Publish visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-99-${{ github.event.pull_request.head.sha || github.sha }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            artifacts/visual-proof
+            scripts/guards/a11y-report.json
+            scripts/guards/lighthouse-report.json
