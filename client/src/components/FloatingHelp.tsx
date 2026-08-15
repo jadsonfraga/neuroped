@@ -20,15 +20,19 @@ import {
 
 const OPEN_TOUR_EVENT = "neuroped:open-tour";
 const OPEN_PREFERENCES_EVENT = "neuroped:open-preferences";
+const ASSISTANCE_HANDOFF_DELAY_MS = 220;
 
 export function FloatingHelp() {
   const [open, setOpen] = useState(false);
 
   function openAuxiliarySurface(eventName: string) {
     setOpen(false);
-    window.requestAnimationFrame(() => {
+    // O Dialog do Radix restaura o foco ao gatilho ao concluir a saída.
+    // Só então abrimos a próxima superfície, evitando que essa restauração
+    // roube o foco do tour ou das preferências recém-montados.
+    window.setTimeout(() => {
       window.dispatchEvent(new Event(eventName));
-    });
+    }, ASSISTANCE_HANDOFF_DELAY_MS);
   }
 
   return (
