@@ -1,0 +1,226 @@
+name: Agent finalize real visual 9.9 gates
+
+on:
+  push:
+    branches:
+      - agent/visual-9-9-final-proof
+    paths:
+      - ".github/workflows/agent-finalize-99-gates.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-visual-9-9-final-proof
+  cancel-in-progress: false
+
+jobs:
+  finalize-gates:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout current main-based branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/visual-9-9-final-proof
+          fetch-depth: 0
+
+      - name: Apply the three audited gate corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, before: str, after: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              count = text.count(before)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one target, found {count}")
+              file.write_text(text.replace(before, after, 1), encoding="utf-8")
+
+          replace_once(
+              "scripts/audit-assistance-states.mjs",
+              '    await page.getByRole("dialog", { name: "Tour guiado" }).waitFor({ state: "visible", timeout: 10_000 });',
+              '''    // aria-labelledby tem precedência sobre aria-label no nome acessível.
+              // O seletor estrutural confirma o mesmo diálogo sem depender do título da etapa.
+              await page.locator('[role="dialog"][aria-label="Tour guiado"]').waitFor({
+                state: "visible",
+                timeout: 10_000,
+              });''',
+          )
+
+          replace_once(
+              "scripts/audit-assistance-states.mjs",
+              '''      const visible = (element) => {
+                if (!(element instanceof HTMLElement)) return false;
+                const style = getComputedStyle(element);
+                const box = element.getBoundingClientRect();
+                return style.display !== "none"
+                  && style.visibility !== "hidden"
+                  && Number(style.opacity) !== 0
+                  && box.width > 0
+                  && box.height > 0;
+              };''',
+              '''      const visible = (element) => {
+                if (!(element instanceof HTMLElement)) return false;
+                if (element.closest('[hidden], [inert], [aria-hidden="true"], [data-state="closed"]')) {
+                  return false;
+                }
+                const style = getComputedStyle(element);
+                const box = element.getBoundingClientRect();
+                return style.display !== "none"
+                  && style.visibility !== "hidden"
+                  && Number(style.opacity) !== 0
+                  && box.width > 0
+                  && box.height > 0
+                  && box.right > 0
+                  && box.bottom > 0
+                  && box.left < innerWidth
+                  && box.top < innerHeight;
+              };''',
+          )
+
+          replace_once(
+              "tests/unit/flow-os-navigation-static.test.mjs",
+              '''assert.match(
+            floatingHelp,
+            /dispatchEvent\\(new Event\\(OPEN_TOUR_EVENT\\)\\)/,
+            "a ajuda única deve abrir o tour por evento explícito",
+          );''',
+              '''assert.match(
+            floatingHelp,
+            /dispatchEvent\\(new Event\\(eventName\\)\\)/,
+            "o helper de assistência deve despachar o evento recebido explicitamente",
+          );
+          assert.match(
+            floatingHelp,
+            /openAuxiliarySurface\\(OPEN_TOUR_EVENT\\)/,
+            "a ajuda única deve abrir o tour pelo helper compartilhado",
+          );
+          assert.match(
+            floatingHelp,
+            /openAuxiliarySurface\\(OPEN_PREFERENCES_EVENT\\)/,
+            "a ajuda única deve abrir preferências pelo helper compartilhado",
+          );''',
+          )
+
+          Path("tests/unit/assistance-surface-static.test.mjs").write_text('''import assert from "node:assert/strict";
+          import fs from "node:fs";
+
+          const read = (path) => fs.readFileSync(path, "utf8");
+          const floatingHelp = read("client/src/components/FloatingHelp.tsx");
+          const preferencesPanel = read("client/src/components/PreferencesPanel.tsx");
+          const welcomeTour = read("client/src/components/WelcomeTour.tsx");
+          const app = read("client/src/App.tsx");
+          const assistanceAudit = read("scripts/audit-assistance-states.mjs");
+
+          assert.equal(
+            [...floatingHelp.matchAll(/data-testid="button-floating-help"/g)].length,
+            1,
+            "o shell deve expor exatamente um botão persistente de assistência",
+          );
+          assert.match(
+            floatingHelp,
+            /const OPEN_PREFERENCES_EVENT = "neuroped:open-preferences"/,
+            "a ajuda única deve declarar o canal de preferências",
+          );
+          assert.match(
+            floatingHelp,
+            /openAuxiliarySurface\\(OPEN_PREFERENCES_EVENT\\)/,
+            "preferências devem abrir a partir da ajuda única",
+          );
+          assert.match(
+            floatingHelp,
+            /data-testid="button-open-preferences"/,
+            "a ação de preferências deve permanecer testável",
+          );
+          assert.match(
+            preferencesPanel,
+            /addEventListener\\(OPEN_PREFERENCES_EVENT, openPreferences\\)/,
+            "o painel deve escutar o canal explícito do shell",
+          );
+          assert.match(
+            preferencesPanel,
+            /<Dialog open=\\{open\\} onOpenChange=\\{setOpen\\}>/,
+            "preferências devem usar Dialog com foco, Escape e retorno de foco",
+          );
+          assert.match(
+            preferencesPanel,
+            /data-testid="preferences-panel"/,
+            "o painel de preferências deve ser verificável no navegador",
+          );
+          assert.match(
+            preferencesPanel,
+            /aria-pressed=\\{on\\}/,
+            "as preferências binárias devem anunciar estado assistivo",
+          );
+          assert.doesNotMatch(
+            preferencesPanel,
+            /fixed\\s+bottom-4\\s+left-4|<Settings\\b|data-testid="button-preferences"/,
+            "preferências não podem reintroduzir um FAB concorrente",
+          );
+          assert.doesNotMatch(
+            welcomeTour,
+            /data-testid="button-tour"/,
+            "o tour não pode reintroduzir um segundo botão persistente",
+          );
+          assert.match(
+            app,
+            /<PreferencesPanel \\/>/,
+            "o receptor de preferências deve permanecer montado no aplicativo",
+          );
+          assert.match(
+            assistanceAudit,
+            /page\\.locator\\('\\[role="dialog"\\]\\[aria-label="Tour guiado"\\]'\\)/,
+            "a prova do tour deve usar o seletor estrutural estável",
+          );
+          assert.doesNotMatch(
+            assistanceAudit,
+            /getByRole\\("dialog",\\s*\\{\\s*name:\\s*"Tour guiado"/,
+            "a prova não pode depender de nome acessível sobrescrito por aria-labelledby",
+          );
+          assert.match(
+            assistanceAudit,
+            /\\[hidden\\], \\[inert\\], \\[aria-hidden="true"\\], \\[data-state="closed"\\]/,
+            "a contagem de diálogos deve ignorar superfícies fechadas ou inertes",
+          );
+
+          console.log("[assistance-surface] ✓ ajuda, tour e preferências convergem em uma única superfície persistente.");
+          ''', encoding="utf-8")
+          PY
+
+      - name: Install dependencies and real Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run focused static and browser proof
+        run: |
+          set -euo pipefail
+          git diff --check
+          node tests/unit/visual-reset-static.test.mjs
+          node tests/unit/premium-polish-10-static.test.mjs
+          node tests/unit/flow-os-navigation-static.test.mjs
+          node tests/unit/assistance-surface-static.test.mjs
+          npm run check
+          npm run lint
+          npm run build:client
+          node tests/e2e/scroll-continuity.mjs
+          node scripts/audit-assistance-states.mjs
+
+      - name: Commit only the validated final corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/agent-finalize-99-gates.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/audit-assistance-states.mjs \
+                  tests/unit/flow-os-navigation-static.test.mjs \
+                  tests/unit/assistance-surface-static.test.mjs \
+                  .github/workflows/agent-finalize-99-gates.yml
+          git commit -m "test: certify deterministic visual assistance gates"
+          git push origin HEAD:agent/visual-9-9-final-proof
