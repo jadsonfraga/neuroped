@@ -8,14 +8,19 @@ on:
       - "client/src/styles/visual-reset.css"
       - "client/src/styles/premium-polish-10.css"
       - "client/src/styles/flow-os.css"
+      - "client/src/styles/premium-app-shell-v12.css"
       - "client/src/main.tsx"
       - "client/src/components/Layout.tsx"
       - "client/src/components/MobilePrimaryDock.tsx"
       - "client/src/components/CommandPalette.tsx"
       - "client/src/components/PageHero.tsx"
+      - "client/src/components/PageMascotDecor.tsx"
       - "client/src/pages/home.tsx"
       - "client/src/components/clinical/PatientCockpit.tsx"
       - "client/src/components/ui/**"
+      - "scripts/audit-visual-proof.mjs"
+      - "scripts/audit-a11y.mjs"
+      - "scripts/audit-lighthouse.mjs"
       - "tests/unit/visual-reset-static.test.mjs"
       - "tests/unit/premium-polish-10-static.test.mjs"
       - "tests/unit/flow-os-navigation-static.test.mjs"
@@ -27,6 +32,7 @@ permissions:
 jobs:
   visual-contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -37,6 +43,8 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: npm ci
+      - name: Install real Chromium
+        run: npx playwright install --with-deps chromium
       - name: Visual reset contract
         run: node tests/unit/visual-reset-static.test.mjs
       - name: Premium Polish 10 contract
@@ -49,7 +57,40 @@ jobs:
         run: npm run lint
       - name: Build client
         run: npm run build:client
-      - name: Accessibility audit
+      - name: Accessibility audit in Chromium — full navigation
+        id: browser-a11y
+        continue-on-error: true
+        env:
+          A11Y_FULL: "1"
         run: npm run audit:a11y
-      - name: Design audit
+      - name: Design token audit
         run: npm run audit:design
+      - name: Lighthouse in Chromium — 12 archetypes
+        id: browser-lighthouse
+        continue-on-error: true
+        run: npm run audit:lighthouse
+      - name: Responsive visual proof — 8 captures
+        id: browser-visual
+        continue-on-error: true
+        run: node scripts/audit-visual-proof.mjs
+      - name: Publish visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-floor-${{ github.event.pull_request.head.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            artifacts/visual-proof
+            scripts/guards/a11y-report.json
+            scripts/guards/lighthouse-report.json
+      - name: Enforce real-browser gates
+        if: always()
+        env:
+          A11Y_OUTCOME: ${{ steps.browser-a11y.outcome }}
+          LIGHTHOUSE_OUTCOME: ${{ steps.browser-lighthouse.outcome }}
+          VISUAL_OUTCOME: ${{ steps.browser-visual.outcome }}
+        run: |
+          test "$A11Y_OUTCOME" = "success"
+          test "$LIGHTHOUSE_OUTCOME" = "success"
+          test "$VISUAL_OUTCOME" = "success"
