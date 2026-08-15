@@ -28,6 +28,7 @@ jobs:
           python3 .github/agent/patch-floating-help-contract.py
           python3 .github/agent/patch-tour-handoff-timing.py
           python3 .github/agent/patch-welcome-tour-eager.py
+          python3 .github/agent/patch-tour-eager-event.py
 
       - name: Install dependencies and Chromium
         run: |
