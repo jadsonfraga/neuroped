@@ -46,6 +46,38 @@ html {
   background: hsl(var(--background));
 }
 
+/* ───────────────────────── Acabamento de plataforma ─────────────────────────
+   Scrollbar fina e temática + seleção de texto com a cor da marca: detalhes
+   que elevam a percepção de produto sem nenhum custo de JS. */
+::selection {
+  background: hsl(var(--primary) / 0.24);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: hsl(var(--muted-foreground) / 0.32);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
 body {
   min-height: 100dvh;
   background:
@@ -201,6 +233,12 @@ aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
   border-radius: 2rem !important;
 }
 
+/* Assinatura da marca: fio dourado no topo das superfícies-hero. */
+.np-home-hero,
+.np-page-hero {
+  border-top-color: hsl(var(--np-brand-gold) / 0.42) !important;
+}
+
 .np-home-hero::before {
   content: "";
   position: absolute;
@@ -213,7 +251,29 @@ aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
   border: 1px solid hsl(var(--primary) / 0.1);
   box-shadow:
     0 0 0 1.65rem hsl(var(--primary) / 0.022),
-    0 0 0 3.3rem hsl(var(--chart-2) / 0.018);
+    0 0 0 3.3rem hsl(var(--chart-2) / 0.018),
+    0 0 0 5rem hsl(var(--np-brand-gold) / 0.016);
+}
+
+/* Microinteração premium nos cartões da jornada (hover-only, sem JS). */
+[data-testid^="home-flow-"] {
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+[data-testid^="home-flow-"]:hover {
+  transform: translateY(-3px);
+  border-color: hsl(var(--np-brand-gold) / 0.34) !important;
+  box-shadow: var(--np-app-shadow-float), inset 0 1px 0 hsl(var(--np-brand-gold) / 0.28) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-testid^="home-flow-"] {
+    transition: none;
+  }
+
+  [data-testid^="home-flow-"]:hover {
+    transform: none;
+  }
 }
 
 .np-page-hero {
@@ -400,7 +460,7 @@ a[class*="inline-flex"]:active {
   align-items: center;
   gap: 0.3rem;
   white-space: nowrap;
-  border: 1px solid hsl(var(--border) / 0.54);
+  border: 1px solid hsl(var(--np-brand-gold) / 0.32);
   border-radius: 999px;
   padding: 0.35rem 0.55rem;
   background: hsl(var(--card) / 0.86);
