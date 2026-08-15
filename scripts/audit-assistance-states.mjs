@@ -44,7 +44,12 @@ async function openAssistanceState(page, state) {
   } else if (state === "tour") {
     await page.getByTestId("button-start-tour").click();
     await helpDialog.waitFor({ state: "detached", timeout: 10_000 });
-    await page.getByRole("dialog", { name: "Tour guiado" }).waitFor({ state: "visible", timeout: 10_000 });
+    // aria-labelledby tem precedência sobre aria-label no nome acessível.
+    // O seletor estrutural confirma o mesmo diálogo sem depender do título da etapa.
+    await page.locator('[role="dialog"][aria-label="Tour guiado"]').waitFor({
+      state: "visible",
+      timeout: 10_000,
+    });
   }
 }
 
@@ -104,13 +109,20 @@ try {
 
       const visible = (element) => {
         if (!(element instanceof HTMLElement)) return false;
+        if (element.closest('[hidden], [inert], [aria-hidden="true"], [data-state="closed"]')) {
+          return false;
+        }
         const style = getComputedStyle(element);
         const box = element.getBoundingClientRect();
         return style.display !== "none"
           && style.visibility !== "hidden"
           && Number(style.opacity) !== 0
           && box.width > 0
-          && box.height > 0;
+          && box.height > 0
+          && box.right > 0
+          && box.bottom > 0
+          && box.left < innerWidth
+          && box.top < innerHeight;
       };
       const box = dialog.getBoundingClientRect();
       const visibleDialogs = [...document.querySelectorAll('[role="dialog"]')].filter(visible);
