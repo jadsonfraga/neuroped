@@ -131,7 +131,16 @@ assert.doesNotMatch(dailyAuthorialWorkflow, /git push origin HEAD:main/);
 assert.match(dailyAuthorialWorkflow, /automation\/daily-authorial-\$\{NEUROPED_GENERATION_DATE\}/);
 assert.match(dailyAuthorialWorkflow, /gh pr create[\s\S]{0,240}--draft/);
 assert.match(dailyAuthorialWorkflow, /pull-requests: write/);
-assert.match(dailyAuthorialWorkflow, /NEUROPED_AUTOMATION_TOKEN é obrigatório/);
+assert.match(
+  dailyAuthorialWorkflow,
+  /GH_TOKEN: \$\{\{ secrets\.NEUROPED_AUTOMATION_TOKEN \|\| github\.token \}\}/,
+  "o token nativo só pode atuar como fallback após a catraca completa e em branch de revisão",
+);
+assert.doesNotMatch(
+  dailyAuthorialWorkflow,
+  /NEUROPED_AUTOMATION_TOKEN é obrigatório/,
+  "a ausência do token dedicado não deve transformar geração, auditoria e preservação bem-sucedidas em falha operacional",
+);
 
 // Toasts: callbacks novos não podem reiniciar timers existentes nem vazar texto no console.
 assert.match(visualStates, /const onDismissRef = useRef\(onDismiss\)/);
