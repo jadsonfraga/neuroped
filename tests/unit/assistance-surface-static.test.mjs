@@ -75,7 +75,7 @@ assert.doesNotMatch(
 );
 assert.match(
   assistanceAudit,
-  /\[hidden\], \[inert\], \[aria-hidden=\\"true\\"\], \[data-state=\\"closed\\"\]/,
+  /\[hidden\], \[inert\], \[aria-hidden="true"\], \[data-state="closed"\]/,
   "a contagem de diálogos deve ignorar superfícies fechadas ou inertes",
 );
 
