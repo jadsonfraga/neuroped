@@ -33,7 +33,13 @@ jobs:
           def sub_once(path: str, pattern: str, replacement: str, flags: int = 0) -> None:
               file = Path(path)
               text = file.read_text(encoding="utf-8")
-              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              updated, count = re.subn(
+                  pattern,
+                  lambda _match: replacement,
+                  text,
+                  count=1,
+                  flags=flags,
+              )
               if count != 1:
                   raise SystemExit(f"{path}: expected one replacement target, found {count}")
               file.write_text(updated, encoding="utf-8")
