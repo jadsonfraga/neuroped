@@ -25,6 +25,7 @@ on:
       - "client/src/components/clinical/PatientCockpit.tsx"
       - "client/src/components/ui/**"
       - "scripts/audit-visual-proof.mjs"
+      - "scripts/audit-assistance-states.mjs"
       - "scripts/audit-a11y.mjs"
       - "scripts/audit-lighthouse.mjs"
       - "tests/unit/visual-reset-static.test.mjs"
@@ -82,6 +83,10 @@ jobs:
         id: browser-visual
         continue-on-error: true
         run: node scripts/audit-visual-proof.mjs
+      - name: Assistance states visual proof — 5 cases / 10 captures
+        id: browser-assistance
+        continue-on-error: true
+        run: node scripts/audit-assistance-states.mjs
       - name: Publish visual evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -99,7 +104,9 @@ jobs:
           A11Y_OUTCOME: ${{ steps.browser-a11y.outcome }}
           LIGHTHOUSE_OUTCOME: ${{ steps.browser-lighthouse.outcome }}
           VISUAL_OUTCOME: ${{ steps.browser-visual.outcome }}
+          ASSISTANCE_OUTCOME: ${{ steps.browser-assistance.outcome }}
         run: |
           test "$A11Y_OUTCOME" = "success"
           test "$LIGHTHOUSE_OUTCOME" = "success"
           test "$VISUAL_OUTCOME" = "success"
+          test "$ASSISTANCE_OUTCOME" = "success"
