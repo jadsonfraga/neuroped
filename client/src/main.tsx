@@ -11,7 +11,7 @@ import "./styles/visual-reset.css";
 import "./styles/premium-polish-10.css";
 import "./styles/flow-os.css";
 import "./styles/premium-app-shell-v12.css";
-// Último por design: vence a cascata do shell compacto e do perfil touch até 1366 px.
+// Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
 import "./styles/tablet-coarse-perf.css";
 
 installChunkRecovery();
