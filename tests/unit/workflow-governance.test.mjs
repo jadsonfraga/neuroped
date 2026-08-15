@@ -115,6 +115,31 @@ assert.match(
 );
 assert.match(
   dailyInventory,
+  /remote_sha="\$\(git ls-remote origin "refs\/heads\/\$branch"/,
+  "uma branch de revisão já existente deve ser detectada antes de qualquer sobrescrita",
+);
+assert.match(
+  dailyInventory,
+  /branch_preserved_pending_pr/,
+  "branch auditada sem PR deve virar pendência de revisão, não falso erro de geração",
+);
+assert.match(
+  dailyInventory,
+  /GitHub Actions is not permitted to create or approve pull requests/,
+  "o bloqueio conhecido da política do repositório deve possuir fallback explícito e restrito",
+);
+assert.match(
+  dailyInventory,
+  /gh issue create[\s\S]{0,220}\$review_title/,
+  "o fallback deve abrir uma issue rastreável para revisão humana",
+);
+assert.match(
+  dailyInventory,
+  /Erro inesperado ao criar o PR draft[\s\S]{0,180}exit 1/,
+  "erros diferentes da limitação conhecida devem continuar falhando fechado",
+);
+assert.match(
+  dailyInventory,
   /Data inválida[^\n]*calendário|isValidCalendarDate|toISOString\(\)\.slice\(0, 10\)/,
   "a entrada manual deve rejeitar datas inexistentes antes da geração e do fallback",
 );

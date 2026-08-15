@@ -141,6 +141,21 @@ assert.doesNotMatch(
   /NEUROPED_AUTOMATION_TOKEN é obrigatório/,
   "a ausência do token dedicado não deve transformar geração, auditoria e preservação bem-sucedidas em falha operacional",
 );
+assert.match(
+  dailyAuthorialWorkflow,
+  /branch_preserved_pending_pr/,
+  "branch sem PR precisa permanecer rastreável sem reclassificar uma auditoria aprovada como falha",
+);
+assert.match(
+  dailyAuthorialWorkflow,
+  /gh issue create[\s\S]{0,220}\$review_title/,
+  "a revisão humana pendente deve receber issue própria quando o Actions não puder criar PR",
+);
+assert.match(
+  dailyAuthorialWorkflow,
+  /Erro inesperado ao criar o PR draft[\s\S]{0,180}exit 1/,
+  "o fallback conhecido não pode mascarar falhas inesperadas",
+);
 
 // Toasts: callbacks novos não podem reiniciar timers existentes nem vazar texto no console.
 assert.match(visualStates, /const onDismissRef = useRef\(onDismiss\)/);
