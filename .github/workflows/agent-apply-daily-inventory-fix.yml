@@ -1,4 +1,4 @@
-name: Agent apply daily inventory token fallback
+name: Agent build daily inventory token fallback patch
 
 on:
   push:
@@ -8,14 +8,14 @@ on:
       - ".github/workflows/agent-apply-daily-inventory-fix.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: agent-fix-daily-inventory-token-fallback
   cancel-in-progress: false
 
 jobs:
-  apply:
+  build-tested-patch:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -110,13 +110,12 @@ jobs:
           node tests/unit/workflow-governance.test.mjs
           git diff --check
 
-      - name: Commit focused correction
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -f .github/workflows/agent-apply-daily-inventory-fix.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/daily-authorial-inventory.yml tests/unit/workflow-governance.test.mjs .github/workflows/agent-apply-daily-inventory-fix.yml
-          git commit -m "fix(ci): preserve daily review without custom token"
-          git push origin HEAD:agent/fix-daily-inventory-token-fallback
+      - name: Publish tested files for connector commit
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-inventory-token-fallback-patch
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            .github/workflows/daily-authorial-inventory.yml
+            tests/unit/workflow-governance.test.mjs
