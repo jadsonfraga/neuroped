@@ -1,0 +1,59 @@
+name: Agent export loose-ends contract fix
+
+on:
+  push:
+    branches:
+      - agent/fix-daily-inventory-token-fallback
+    paths:
+      - ".github/workflows/agent-export-loose-ends-fix.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-tested-file:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout correction branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/fix-daily-inventory-token-fallback
+
+      - name: Align legacy loose-ends contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/unit/loose-ends-regression.test.mjs')
+          source = path.read_text(encoding='utf-8')
+          old = 'assert.match(dailyAuthorialWorkflow, /NEUROPED_AUTOMATION_TOKEN é obrigatório/);'
+          new = '''assert.match(
+            dailyAuthorialWorkflow,
+            /GH_TOKEN: \\$\\{\\{ secrets\\.NEUROPED_AUTOMATION_TOKEN \\|\\| github\\.token \\}\\}/,
+            "o token nativo só pode atuar como fallback após a catraca completa e em branch de revisão",
+          );
+          assert.doesNotMatch(
+            dailyAuthorialWorkflow,
+            /NEUROPED_AUTOMATION_TOKEN é obrigatório/,
+            "a ausência do token dedicado não deve transformar geração, auditoria e preservação bem-sucedidas em falha operacional",
+          );'''
+          if source.count(old) != 1:
+              raise SystemExit(f'Contrato legado encontrado {source.count(old)} vez(es), esperado 1.')
+          path.write_text(source.replace(old, new), encoding='utf-8')
+          PY
+
+          node tests/unit/loose-ends-regression.test.mjs
+          node tests/unit/workflow-governance.test.mjs
+          git diff --check
+
+      - name: Publish tested file
+        uses: actions/upload-artifact@v4
+        with:
+          name: loose-ends-token-fallback-contract
+          retention-days: 1
+          if-no-files-found: error
+          path: tests/unit/loose-ends-regression.test.mjs
