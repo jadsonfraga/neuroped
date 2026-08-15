@@ -91,3 +91,5 @@ jobs:
                   .github/workflows/agent-finalize-99-gates.yml
           git commit -m "test: certify deterministic visual assistance gates"
           git push origin HEAD:agent/visual-9-9-final-proof
+
+# rerun: serialize focus handoff before opening the next assistance surface
