@@ -1,0 +1,219 @@
+name: Agent verify visual 9.9
+
+on:
+  push:
+    branches:
+      - agent/visual-floor-9-9
+    paths:
+      - ".github/workflows/agent-verify-visual-99.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-verify-visual-99
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout visual branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/visual-floor-9-9
+          fetch-depth: 0
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        id: install
+        continue-on-error: true
+        run: npm ci
+
+      - name: Install Chromium
+        id: chromium
+        continue-on-error: true
+        run: npx playwright install --with-deps chromium
+
+      - name: Brand motion contract
+        id: brand
+        continue-on-error: true
+        run: node tests/unit/brand-motion-99-static.test.mjs
+
+      - name: Existing visual contracts
+        id: contracts
+        continue-on-error: true
+        run: |
+          node tests/unit/visual-reset-static.test.mjs
+          node tests/unit/premium-polish-10-static.test.mjs
+          node tests/unit/flow-os-navigation-static.test.mjs
+
+      - name: TypeScript
+        id: typescript
+        continue-on-error: true
+        run: npm run check
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Build client
+        id: build
+        continue-on-error: true
+        run: npm run build:client
+
+      - name: Accessibility — full navigation
+        id: a11y
+        continue-on-error: true
+        env:
+          A11Y_FULL: "1"
+        run: npm run audit:a11y
+
+      - name: Design tokens
+        id: design
+        continue-on-error: true
+        run: npm run audit:design
+
+      - name: Lighthouse — 12 archetypes
+        id: lighthouse
+        continue-on-error: true
+        run: npm run audit:lighthouse
+
+      - name: Responsive visual proof
+        id: visual
+        continue-on-error: true
+        run: node scripts/audit-visual-proof.mjs
+
+      - name: Publish screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-99-evidence-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            artifacts/visual-proof
+            scripts/guards/a11y-report.json
+            scripts/guards/lighthouse-report.json
+
+      - name: Record reproducible evidence
+        if: always()
+        env:
+          INSTALL: ${{ steps.install.outcome }}
+          CHROMIUM: ${{ steps.chromium.outcome }}
+          BRAND: ${{ steps.brand.outcome }}
+          CONTRACTS: ${{ steps.contracts.outcome }}
+          TYPESCRIPT: ${{ steps.typescript.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          A11Y: ${{ steps.a11y.outcome }}
+          DESIGN: ${{ steps.design.outcome }}
+          LIGHTHOUSE: ${{ steps.lighthouse.outcome }}
+          VISUAL: ${{ steps.visual.outcome }}
+          HEAD_SHA: ${{ github.sha }}
+        shell: node {0}
+        run: |
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const outcomes = {
+            install: process.env.INSTALL,
+            chromium: process.env.CHROMIUM,
+            brand: process.env.BRAND,
+            contracts: process.env.CONTRACTS,
+            typescript: process.env.TYPESCRIPT,
+            lint: process.env.LINT,
+            build: process.env.BUILD,
+            a11y: process.env.A11Y,
+            design: process.env.DESIGN,
+            lighthouse: process.env.LIGHTHOUSE,
+            visual: process.env.VISUAL,
+          };
+          const readJson = (file) => {
+            try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+            catch { return null; }
+          };
+          const visual = readJson('artifacts/visual-proof/report.json');
+          const a11y = readJson('scripts/guards/a11y-report.json');
+          const lighthouse = readJson('scripts/guards/lighthouse-report.json');
+          const technicalGate = Object.values(outcomes).every((value) => value === 'success') &&
+            Number(visual?.summary?.failedCases ?? 1) === 0;
+          const evidence = {
+            generatedAt: new Date().toISOString(),
+            headSha: process.env.HEAD_SHA,
+            outcomes,
+            visualSummary: visual?.summary ?? null,
+            accessibilityReport: a11y,
+            lighthouseReport: lighthouse,
+            technicalGate,
+            manualVisualReview: 'pending',
+            certified99: false,
+            rule: '9.9 requires technicalGate=true and manualVisualReview=approved',
+          };
+          fs.mkdirSync('docs/audits', { recursive: true });
+          fs.writeFileSync('docs/audits/visual-floor-99-current.json', JSON.stringify(evidence, null, 2));
+          const rows = Object.entries(outcomes).map(([key, value]) => `| ${key} | ${value === 'success' ? '✅' : '❌'} ${value} |`).join('\n');
+          fs.writeFileSync('docs/audits/VISUAL_FLOOR_99_CURRENT.md', [
+            '# NeuroPed — piso visual 9.9',
+            '',
+            `Commit auditado: \`${process.env.HEAD_SHA}\``,
+            '',
+            '| Gate | Resultado |',
+            '|---|---|',
+            rows,
+            '',
+            `**Gate técnico:** ${technicalGate ? 'APROVADO' : 'REPROVADO'}`,
+            '',
+            '**Revisão visual humana:** PENDENTE',
+            '',
+            '**Certificação 9,9:** NÃO — exige os dois gates.',
+            '',
+          ].join('\n'));
+
+      - name: Commit evidence ledger
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/audits/visual-floor-99-current.json docs/audits/VISUAL_FLOOR_99_CURRENT.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test: record reproducible visual 9.9 evidence"
+          git push origin HEAD:agent/visual-floor-9-9
+
+      - name: Enforce technical gate
+        if: always()
+        env:
+          INSTALL: ${{ steps.install.outcome }}
+          CHROMIUM: ${{ steps.chromium.outcome }}
+          BRAND: ${{ steps.brand.outcome }}
+          CONTRACTS: ${{ steps.contracts.outcome }}
+          TYPESCRIPT: ${{ steps.typescript.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          A11Y: ${{ steps.a11y.outcome }}
+          DESIGN: ${{ steps.design.outcome }}
+          LIGHTHOUSE: ${{ steps.lighthouse.outcome }}
+          VISUAL: ${{ steps.visual.outcome }}
+        run: |
+          test "$INSTALL" = success
+          test "$CHROMIUM" = success
+          test "$BRAND" = success
+          test "$CONTRACTS" = success
+          test "$TYPESCRIPT" = success
+          test "$LINT" = success
+          test "$BUILD" = success
+          test "$A11Y" = success
+          test "$DESIGN" = success
+          test "$LIGHTHOUSE" = success
+          test "$VISUAL" = success
