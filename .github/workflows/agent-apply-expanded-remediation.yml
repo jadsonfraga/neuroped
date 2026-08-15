@@ -1,0 +1,235 @@
+name: Agent apply expanded visual remediation
+
+on:
+  push:
+    branches:
+      - agent/visual-floor-9-9
+    paths:
+      - ".github/workflows/agent-apply-expanded-remediation.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-apply-expanded-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout visual branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/visual-floor-9-9
+          fetch-depth: 0
+
+      - name: Apply systemic compact-layout remediation
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          layout_path = root / 'client/src/components/Layout.tsx'
+          layout = layout_path.read_text(encoding='utf-8')
+          pattern = r'(<aside\s+[^>]*aria-label="Menu de navegação"[^>]*)(>)'
+          def add_hidden(match):
+              head = match.group(1)
+              if 'aria-hidden=' in head:
+                  return match.group(0)
+              return head + ' aria-hidden={!isDesktop && !mobileOpen}' + match.group(2)
+          layout = re.sub(pattern, add_hidden, layout, count=1, flags=re.S)
+          layout_path.write_text(layout, encoding='utf-8')
+
+          help_path = root / 'client/src/components/FloatingHelp.tsx'
+          help_text = help_path.read_text(encoding='utf-8')
+          if 'useLocation' not in help_text:
+              help_text = help_text.replace(
+                  'import { Link } from "wouter";',
+                  'import { Link, useLocation } from "wouter";',
+              )
+          if 'denseClinicalWorkspace' not in help_text:
+              help_text = help_text.replace(
+                  'export function FloatingHelp() {',
+                  'export function FloatingHelp() {\n  const [pathname] = useLocation();\n  const denseClinicalWorkspace = /^\\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\\/|$)/.test(pathname);',
+              )
+              help_text = help_text.replace(
+                  '  return (\n',
+                  '  if (denseClinicalWorkspace) return null;\n\n  return (\n',
+                  1,
+              )
+          help_path.write_text(help_text, encoding='utf-8')
+
+          final_css = root / 'client/src/styles/brand-motion-99.css'
+          css = final_css.read_text(encoding='utf-8')
+          if 'np-responsive-containment-99' not in css:
+              css += '''
+
+          /* np-responsive-containment-99 — largura intrínseca não escapa da coluna. */
+          #main-content :where(.grid, .flex) > * { min-width: 0; }
+          #main-content :where(input, textarea, select, pre, code) { max-width: 100%; }
+          #main-content pre { overflow-x: auto; }
+
+          @media (max-width: 1023px) {
+            #main-content table {
+              display: block;
+              width: 100%;
+              max-width: 100%;
+              overflow-x: auto;
+              overscroll-behavior-inline: contain;
+              -webkit-overflow-scrolling: touch;
+            }
+          }
+          '''
+          final_css.write_text(css, encoding='utf-8')
+
+          shell_css_path = root / 'client/src/styles/premium-app-shell-v12.css'
+          shell_css = shell_css_path.read_text(encoding='utf-8')
+          compact_rule = '''
+          @media screen and (max-width: 1023px) {
+            .np-mascot-layer, .np-mascot-chip, .np-mascot-nino, .np-mascot-legacy { display: none !important; }
+          }
+          '''
+          if compact_rule.strip() not in shell_css:
+              shell_css += '\n' + compact_rule
+          shell_css_path.write_text(shell_css, encoding='utf-8')
+
+          flow_path = root / 'client/src/styles/flow-os.css'
+          flow = flow_path.read_text(encoding='utf-8')
+          flow = re.sub(
+              r'padding-bottom:\s*calc\(6\.35rem \+ env\(safe-area-inset-bottom\)\)',
+              'padding-bottom: calc(7rem + env(safe-area-inset-bottom))',
+              flow,
+          )
+          flow_path.write_text(flow, encoding='utf-8')
+
+          proof_path = root / 'scripts/audit-visual-proof.mjs'
+          proof = proof_path.read_text(encoding='utf-8')
+          cases = '''const CASES = [
+            { id: "home-mobile-small-light", route: "/", width: 360, height: 800, theme: "light" },
+            { id: "home-mobile-light", route: "/", width: 390, height: 844, theme: "light" },
+            { id: "home-tablet-light", route: "/", width: 820, height: 1180, theme: "light" },
+            { id: "home-desktop-light", route: "/", width: 1440, height: 1000, theme: "light" },
+            { id: "home-desktop-dark", route: "/", width: 1440, height: 1000, theme: "dark" },
+            { id: "home-mobile-help", route: "/", width: 390, height: 844, theme: "light", state: "help" },
+            { id: "home-desktop-tour", route: "/", width: 1440, height: 1000, theme: "light", state: "tour" },
+            { id: "filtro-mobile-light", route: "/#/filtro", width: 390, height: 844, theme: "light" },
+            { id: "filtro-tablet-light", route: "/#/filtro", width: 820, height: 1180, theme: "light" },
+            { id: "filtro-desktop-light", route: "/#/filtro", width: 1440, height: 1000, theme: "light" },
+            { id: "filtro-desktop-dark", route: "/#/filtro", width: 1440, height: 1000, theme: "dark" },
+            { id: "prontuario-mobile-light", route: "/#/prontuario", width: 390, height: 844, theme: "light" },
+            { id: "prontuario-mobile-medications", route: "/#/prontuario", width: 390, height: 844, theme: "light", state: "medications-tab" },
+            { id: "prontuario-tablet-dark", route: "/#/prontuario", width: 820, height: 1180, theme: "dark" },
+            { id: "prontuario-desktop-light", route: "/#/prontuario", width: 1440, height: 1000, theme: "light" },
+            { id: "mchat-mobile-light", route: "/#/mchat", width: 390, height: 844, theme: "light" },
+            { id: "mchat-desktop-light", route: "/#/mchat", width: 1440, height: 1000, theme: "light" },
+            { id: "medicamentos-mobile", route: "/#/medicamentos", width: 390, height: 844, theme: "light" },
+            { id: "medicamentos-desktop", route: "/#/medicamentos", width: 1440, height: 1000, theme: "light" },
+            { id: "agenda-mobile", route: "/#/agenda", width: 390, height: 844, theme: "light" },
+            { id: "agenda-desktop", route: "/#/agenda", width: 1440, height: 1000, theme: "light" },
+            { id: "pacientes-mobile", route: "/#/pacientes", width: 390, height: 844, theme: "light" },
+            { id: "pacientes-desktop", route: "/#/pacientes", width: 1440, height: 1000, theme: "light" },
+            { id: "documentos-mobile", route: "/#/documentos", width: 390, height: 844, theme: "light" },
+            { id: "documentos-desktop", route: "/#/documentos", width: 1440, height: 1000, theme: "light" },
+            { id: "laudo-mobile", route: "/#/laudo-neuroped", width: 390, height: 844, theme: "light" },
+            { id: "laudo-desktop", route: "/#/laudo-neuroped", width: 1440, height: 1000, theme: "light" },
+            { id: "receita-mobile", route: "/#/receita-c1", width: 390, height: 844, theme: "light" },
+            { id: "receita-desktop", route: "/#/receita-c1", width: 1440, height: 1000, theme: "light" },
+            { id: "familia-mobile", route: "/#/portal-familia", width: 390, height: 844, theme: "light" },
+            { id: "familia-desktop", route: "/#/portal-familia", width: 1440, height: 1000, theme: "light" },
+            { id: "crescimento-mobile", route: "/#/curvas-crescimento", width: 390, height: 844, theme: "light" },
+            { id: "crescimento-desktop", route: "/#/curvas-crescimento", width: 1440, height: 1000, theme: "light" },
+            { id: "biblioteca-mobile", route: "/#/biblioteca-instrumentos", width: 390, height: 844, theme: "light" },
+            { id: "biblioteca-desktop", route: "/#/biblioteca-instrumentos", width: 1440, height: 1000, theme: "light" },
+            { id: "cognitiva-mobile", route: "/#/avaliacao-cognitiva-infantil", width: 390, height: 844, theme: "light" },
+            { id: "cognitiva-desktop", route: "/#/avaliacao-cognitiva-infantil", width: 1440, height: 1000, theme: "light" },
+            { id: "marcos-mobile", route: "/#/marcos-desenvolvimento", width: 390, height: 844, theme: "light" },
+            { id: "marcos-desktop", route: "/#/marcos-desenvolvimento", width: 1440, height: 1000, theme: "light" },
+            { id: "ajuda-mobile", route: "/#/ajuda", width: 390, height: 844, theme: "light" },
+            { id: "ajuda-desktop-dark", route: "/#/ajuda", width: 1440, height: 1000, theme: "dark" },
+          ];'''
+          proof, count = re.subn(r'const CASES = \[[\s\S]*?\n\];', cases, proof, count=1)
+          if count != 1:
+              raise SystemExit('CASES block not found')
+          state_block = '''
+              if (testCase.state === "help") {
+                const trigger = page.getByTestId("button-floating-help");
+                if (await trigger.count()) { await trigger.click(); await page.waitForTimeout(180); }
+              } else if (testCase.state === "tour") {
+                await page.evaluate(() => window.dispatchEvent(new Event("neuroped:open-tour")));
+                await page.waitForTimeout(180);
+              } else if (testCase.state === "medications-tab") {
+                const tab = page.getByRole("tab", { name: /Medica/i });
+                if (await tab.count()) { await tab.first().click(); await page.waitForTimeout(180); }
+              }
+          '''
+          anchor = '    await page.waitForTimeout(250);\n\n    const audit = await page.evaluate(() => {'
+          if 'testCase.state === "help"' not in proof:
+              if anchor not in proof:
+                  raise SystemExit('state anchor not found')
+              proof = proof.replace(anchor, '    await page.waitForTimeout(250);\n' + state_block + '\n    const audit = await page.evaluate(() => {', 1)
+          proof_path.write_text(proof, encoding='utf-8')
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Static, type and build gates
+        run: |
+          node tests/unit/brand-motion-99-static.test.mjs
+          node tests/unit/visual-reset-static.test.mjs
+          node tests/unit/premium-polish-10-static.test.mjs
+          node tests/unit/flow-os-navigation-static.test.mjs
+          npm run check
+          npm run lint
+          npm run build:client
+
+      - name: Full browser gates
+        env:
+          A11Y_FULL: "1"
+        run: |
+          npm run audit:a11y
+          npm run audit:design
+          npm run audit:lighthouse
+          node scripts/audit-visual-proof.mjs
+
+      - name: Publish expanded evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-expanded-remediated-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            artifacts/visual-proof
+            scripts/guards/a11y-report.json
+            scripts/guards/lighthouse-report.json
+
+      - name: Commit only after all gates pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/components/Layout.tsx \
+                  client/src/components/FloatingHelp.tsx \
+                  client/src/styles/brand-motion-99.css \
+                  client/src/styles/premium-app-shell-v12.css \
+                  client/src/styles/flow-os.css \
+                  scripts/audit-visual-proof.mjs
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "fix: close expanded visual floor gaps"
+          git push origin HEAD:agent/visual-floor-9-9
