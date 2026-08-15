@@ -53,3 +53,5 @@ jobs:
           git add client/src/App.tsx client/src/components/FloatingHelp.tsx client/src/components/WelcomeTour.tsx scripts/audit-assistance-states.mjs tests/unit/assistance-surface-static.test.mjs tests/unit/flow-os-navigation-static.test.mjs
           git commit -m "fix: serialize assistance surfaces"
           git push origin HEAD:agent/visual-9-9-gates-green
+
+# deterministic eager-event validation
