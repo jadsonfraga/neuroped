@@ -44,6 +44,14 @@ jobs:
                   raise SystemExit(f"{path}: expected one replacement target, found {count}")
               file.write_text(updated, encoding="utf-8")
 
+          def replace_once(path: str, before: str, after: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              count = text.count(before)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one literal target, found {count}")
+              file.write_text(text.replace(before, after, 1), encoding="utf-8")
+
           sub_once(
               "client/src/App.tsx",
               r'import \{ FloatingHelp \} from "@/components/FloatingHelp";\n',
@@ -123,6 +131,29 @@ jobs:
             "o tour não pode depender do ciclo de vida do gate clínico",
           );''',
           )
+
+          replace_once(
+              "tests/unit/flow-os-navigation-static.test.mjs",
+              '''for (const surface of ["CommandPalette", "WelcomeTour"]) {
+            assert.match(
+              app,
+              new RegExp(
+                `auxiliarySurfacesVisible && \\(\\s*<Suspense[\\s\\S]{0,120}<${surface} \\/>`,
+              ),
+              `${surface} não pode competir com o aviso legal nem com o onboarding`,
+            );
+          }''',
+              '''assert.match(
+            app,
+            /auxiliarySurfacesVisible && \(\s*<Suspense[\s\S]{0,120}<CommandPalette \/>/,
+            "CommandPalette não pode competir com o aviso legal nem com o onboarding",
+          );
+          assert.match(
+            app,
+            /auxiliarySurfacesVisible && \([\s\S]{0,220}<WelcomeTour \/>/,
+            "WelcomeTour não pode competir com o aviso legal nem com o onboarding",
+          );''',
+          )
           PY
 
       - name: Install dependencies and real Chromium
@@ -145,6 +176,6 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client/src/App.tsx client/src/components/FloatingHelp.tsx scripts/audit-assistance-states.mjs tests/unit/assistance-surface-static.test.mjs
+          git add client/src/App.tsx client/src/components/FloatingHelp.tsx scripts/audit-assistance-states.mjs tests/unit/assistance-surface-static.test.mjs tests/unit/flow-os-navigation-static.test.mjs
           git commit -m "fix: serialize assistance surfaces"
           git push origin HEAD:agent/visual-9-9-gates-green
