@@ -1,0 +1,135 @@
+name: Agent fix assistance handoff
+
+on:
+  push:
+    branches:
+      - agent/visual-9-9-gates-green
+    paths:
+      - ".github/workflows/agent-fix-assistance-handoff.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fix-assistance-handoff:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/visual-9-9-gates-green
+          fetch-depth: 0
+
+      - name: Make assistance handoff deterministic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, before: str, after: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              count = text.count(before)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one replacement target, found {count}")
+              file.write_text(text.replace(before, after, 1), encoding="utf-8")
+
+          replace_once(
+              "client/src/App.tsx",
+              'import { FloatingHelp } from "@/components/FloatingHelp";\n',
+              'import { FloatingHelp } from "@/components/FloatingHelp";\nimport { PreferencesPanel } from "@/components/PreferencesPanel";\nimport { WelcomeTour } from "@/components/WelcomeTour";\n',
+          )
+          replace_once(
+              "client/src/App.tsx",
+              '''const PreferencesPanel = lazy(() =>
+            import("@/components/PreferencesPanel").then(({ PreferencesPanel }) => ({
+              default: PreferencesPanel,
+            })),
+          );
+          
+          ''',
+              '',
+          )
+          replace_once(
+              "client/src/App.tsx",
+              '''const WelcomeTour = lazy(() =>
+            import("@/components/WelcomeTour").then((mod) => ({
+              default: mod.WelcomeTour,
+            })),
+          );
+          ''',
+              '',
+          )
+
+          replace_once(
+              "client/src/components/FloatingHelp.tsx",
+              '''  function openAuxiliarySurface(eventName: string) {
+            setOpen(false);
+            window.requestAnimationFrame(() => {
+              window.dispatchEvent(new Event(eventName));
+            });
+          }''',
+              '''  function openAuxiliarySurface(eventName: string) {
+            setOpen(false);
+            // Aguarda a animação de saída do Dialog (200 ms) antes de montar a
+            // próxima superfície. Evita duas camadas modais e conflito de foco.
+            window.setTimeout(() => {
+              window.dispatchEvent(new Event(eventName));
+            }, 220);
+          }''',
+          )
+
+          replace_once(
+              "scripts/audit-assistance-states.mjs",
+              '''      const visible = (element) => {
+            if (!(element instanceof HTMLElement)) return false;
+            const style = getComputedStyle(element);
+            const box = element.getBoundingClientRect();
+            return style.display !== "none"
+              && style.visibility !== "hidden"
+              && Number(style.opacity) !== 0
+              && box.width > 0
+              && box.height > 0;
+          };''',
+              '''      const visible = (element) => {
+            if (!(element instanceof HTMLElement)) return false;
+            if (
+              element.closest('[hidden], [inert], [aria-hidden="true"], [data-state="closed"]')
+            ) return false;
+            const style = getComputedStyle(element);
+            const box = element.getBoundingClientRect();
+            return style.display !== "none"
+              && style.visibility !== "hidden"
+              && Number(style.opacity) !== 0
+              && box.width > 0
+              && box.height > 0
+              && box.right > 0
+              && box.bottom > 0
+              && box.left < innerWidth
+              && box.top < innerHeight;
+          };''',
+          )
+          PY
+
+      - name: Validate assistance contracts
+        run: |
+          npm ci
+          git diff --check
+          node tests/unit/flow-os-navigation-static.test.mjs
+          node tests/unit/assistance-surface-static.test.mjs
+          npm run check
+          npm run build:client
+          node scripts/audit-assistance-states.mjs
+
+      - name: Commit assistance fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/App.tsx client/src/components/FloatingHelp.tsx scripts/audit-assistance-states.mjs
+          git commit -m "fix: serialize assistance surfaces"
+          git push origin HEAD:agent/visual-9-9-gates-green
