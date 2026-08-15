@@ -25,6 +25,16 @@ assert.match(
 );
 assert.match(
   floatingHelp,
+  /const ASSISTANCE_HANDOFF_DELAY_MS = 220/,
+  "o handoff deve aguardar a saída do Dialog antes de abrir outra superfície",
+);
+assert.match(
+  floatingHelp,
+  /window\.setTimeout\([\s\S]{0,180}dispatchEvent\(new Event\(eventName\)\);[\s\S]{0,100}ASSISTANCE_HANDOFF_DELAY_MS/,
+  "o evento auxiliar deve ser emitido somente após a restauração de foco do Dialog",
+);
+assert.match(
+  floatingHelp,
   /data-testid="button-open-preferences"/,
   "a ação de preferências deve permanecer testável",
 );
