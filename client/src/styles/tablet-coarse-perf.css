@@ -3,8 +3,8 @@
  * (celulares e tablets, Android e iOS).
  *
  * Motivação (P1 UX/touch): o app combina backdrop-filter em header/sidebar/
- * cards com animações decorativas contínuas — no shell mobile (<768px) e no
- * shell de desktop aplicado a tablets (≥768px, premium-app-shell-v12). Em
+ * cards com animações decorativas contínuas — no shell compacto de celulares
+ * e tablets (<1024px, premium-app-shell-v12). Em
  * GPUs móveis, backdrop-filter força repintura da área atrás do elemento a
  * cada frame de rolagem, e é a principal causa de engasgo no scroll por toque.
  *
@@ -35,7 +35,7 @@
 
   /* Regras do shell com !important e especificidade alta não perdem para o
      universal (especificidade 0); repete-as aqui para vencer por cascata. */
-  header.fixed.md\:hidden,
+  header.fixed.lg\:hidden,
   [data-testid="mobile-primary-dock"] nav,
   #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
     backdrop-filter: none !important;

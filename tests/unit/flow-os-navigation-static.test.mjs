@@ -18,6 +18,14 @@ const floatingHelp = fs.readFileSync(
   "client/src/components/FloatingHelp.tsx",
   "utf8",
 );
+const pageMascotDecor = fs.readFileSync(
+  "client/src/components/PageMascotDecor.tsx",
+  "utf8",
+);
+const welcomeTour = fs.readFileSync(
+  "client/src/components/WelcomeTour.tsx",
+  "utf8",
+);
 const toastPrimitive = fs.readFileSync(
   "client/src/components/ui/toast.tsx",
   "utf8",
@@ -126,17 +134,17 @@ assert.match(
   "reserva do conteúdo deve considerar safe area",
 );
 
-// Sidebar fixa voltou a valer a partir de md (768px) a pedido do Dr. Jadson
-// (2026-08-12): tablet retrato mantém a sidebar; drawer+dock só no celular.
+// O shell compacto vai até 1023px: tablets ganham drawer + dock e preservam
+// largura útil. A sidebar fixa entra apenas em desktop (>=1024px).
 assert.match(
   dock,
-  /\bmd:hidden\b/,
-  "dock deve encerrar no breakpoint md de 768px",
+  /\blg:hidden\b/,
+  "dock deve encerrar apenas no breakpoint desktop de 1024px",
 );
 assert.match(
   layout,
-  /matchMedia\("\(min-width: 768px\)"\)/,
-  "shell React deve compartilhar o breakpoint md",
+  /matchMedia\("\(min-width: 1024px\)"\)/,
+  "shell React deve compartilhar o breakpoint desktop de 1024px",
 );
 assert.match(
   layout,
@@ -364,8 +372,8 @@ assert.doesNotMatch(
 );
 assert.match(
   css,
-  /@media screen and \(max-width: 767px\)/,
-  "contrato mobile deve valer apenas em tela",
+  /@media screen and \(max-width: 1023px\)/,
+  "contrato compacto deve valer em celular e tablet, apenas em tela",
 );
 assert.match(
   css,
@@ -374,13 +382,48 @@ assert.match(
 );
 assert.match(
   css,
-  /\[data-testid="button-floating-help"\][\s\S]*?bottom:\s*calc\(10\.1rem \+ env\(safe-area-inset-bottom\)\)/,
-  "ajuda flutuante deve ficar acima do tour e do dock no mobile",
+  /\[data-testid="button-floating-help"\][\s\S]*?bottom:\s*calc\(6\.65rem \+ env\(safe-area-inset-bottom\)\)/,
+  "ajuda flutuante única deve ficar acima do dock no shell compacto",
 );
 assert.match(
   floatingHelp,
-  /bottom-\[5\.25rem\]/,
-  "ajuda e tour não podem se sobrepor fora do mobile",
+  /bottom-6/,
+  "ajuda deve ter posição-base única fora do shell compacto",
+);
+assert.match(
+  floatingHelp,
+  /dispatchEvent\(new Event\(OPEN_TOUR_EVENT\)\)/,
+  "a ajuda única deve abrir o tour por evento explícito",
+);
+assert.match(
+  floatingHelp,
+  /data-testid="button-start-tour"/,
+  "o diálogo de ajuda deve expor a ação de tour testável",
+);
+assert.match(
+  welcomeTour,
+  /addEventListener\("neuroped:open-tour", openTour\)/,
+  "o tour deve escutar a ação da ajuda única",
+);
+assert.doesNotMatch(
+  welcomeTour,
+  /data-testid="button-tour"/,
+  "o tour não pode manter um segundo botão flutuante persistente",
+);
+assert.match(
+  pageMascotDecor,
+  /routesWithInlineNino = \["\/", "\/filtro", "\/filtro-escalas", "\/prontuario"\]/,
+  "prontuário deve bloquear mascote fixo sobre o cabeçalho",
+);
+assert.match(
+  pageMascotDecor,
+  /const denseClinicalWorkspace = isDenseClinicalWorkspace\(pathname\)/,
+  "workspaces densos devem ter política explícita de silêncio visual",
+);
+assert.match(
+  pageMascotDecor,
+  /const showLegacyCameo = pathname === "\/sobre" \|\| pathname === "\/sobre-neuroped"/,
+  "acervo histórico deve ficar restrito às páginas institucionais",
 );
 assert.match(
   css,
@@ -461,5 +504,5 @@ assert.doesNotMatch(
 );
 
 console.log(
-  "[flow-os] ✓ dock tablet, impressão, fronteira pública, stacking, busca clínica real e privacidade aprovados.",
+  "[flow-os] ✓ shell compacto, ajuda única, impressão, fronteira pública, stacking, busca clínica real e privacidade aprovados.",
 );

@@ -69,7 +69,7 @@ const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
   },
 ];
 
-const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas"];
+const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas", "/prontuario"];
 
 // Durante a aplicação de uma escala o conteúdo clínico domina a tela: nenhum
 // mascote decorativo compete com o questionário. A lista espelha as chaves de
@@ -108,6 +108,10 @@ function hasInlineNino(path: string): boolean {
   return routesWithInlineNino.includes(path) || path.startsWith("/generic-scale/");
 }
 
+function isDenseClinicalWorkspace(path: string): boolean {
+  return /^\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
+}
+
 /**
  * Assinatura visual global do NeuroPed.
  *
@@ -133,8 +137,10 @@ export function PageMascotDecor() {
   }, [reduceMotion]);
   const legacy = pool[(stablePathHash(pathname) + cycle) % pool.length];
   const scaleFocus = isScaleApplicationRoute(pathname);
-  const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus;
-  const showLegacyCameo = !scaleFocus;
+  const denseClinicalWorkspace = isDenseClinicalWorkspace(pathname);
+  const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus && !denseClinicalWorkspace;
+  // O acervo continua disponível onde é conteúdo, não como FAB concorrente.
+  const showLegacyCameo = pathname === "/sobre" || pathname === "/sobre-neuroped";
 
   return (
     <div

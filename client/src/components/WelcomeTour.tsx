@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { HelpCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { appMetrics } from "@/data/appMetrics";
 import { softTap } from "@/lib/softSounds";
 
@@ -12,7 +12,6 @@ import { softTap } from "@/lib/softSounds";
  */
 
 const DONE_KEY = "np_tour_v2_done";
-const INTRO_KEY = "np_tour_intro_v2";
 
 interface TourStep {
   emoji: string;
@@ -104,19 +103,7 @@ export function WelcomeTour() {
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
-  const [introHighlight, setIntroHighlight] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    try {
-      if (localStorage.getItem(INTRO_KEY) !== "1") {
-        setIntroHighlight(true);
-        localStorage.setItem(INTRO_KEY, "1");
-        const t = setTimeout(() => setIntroHighlight(false), 6000);
-        return () => clearTimeout(t);
-      }
-    } catch { /* storage indisponivel — silencioso */ }
-  }, []);
 
   const recompute = useCallback((stepIdx: number) => {
     setRect(visibleRect(STEPS[stepIdx]?.target));
@@ -143,12 +130,17 @@ export function WelcomeTour() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, idx]);
 
-  function start() {
+  const start = useCallback(() => {
     softTap();
-    setIntroHighlight(false);
     setIdx(0);
     setOpen(true);
-  }
+  }, []);
+
+  useEffect(() => {
+    const openTour = () => start();
+    window.addEventListener("neuroped:open-tour", openTour);
+    return () => window.removeEventListener("neuroped:open-tour", openTour);
+  }, [start]);
 
   function finish() {
     setOpen(false);
@@ -186,27 +178,6 @@ export function WelcomeTour() {
 
   return (
     <>
-      <button
-        onClick={start}
-        aria-label={introHighlight ? "Tour do app" : "Rever o tour guiado do app"}
-        title="Rever tour"
-        className={[
-          "fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 rounded-full",
-          "bg-gradient-to-b from-primary to-primary/85 text-white shadow-[0_8px_28px_hsl(var(--primary)/0.38),0_2px_8px_rgba(0,0,0,0.2)]",
-          "transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/30",
-          introHighlight ? "h-11 w-11 text-sm font-bold sm:h-12 sm:w-auto sm:px-5 motion-safe:animate-pulse" : "h-11 w-11",
-        ].join(" ")}
-        data-testid="button-tour"
-      >
-        {introHighlight ? (
-          <>
-            <HelpCircle className="w-5 h-5" aria-hidden="true" /> <span className="hidden sm:inline">Tour do app</span>
-          </>
-        ) : (
-          <HelpCircle className="w-5 h-5" aria-hidden="true" />
-        )}
-      </button>
-
       {open && (
         <div className="fixed inset-0 z-[99998]" role="dialog" aria-modal="true" aria-label="Tour guiado">
           <div className="absolute inset-0 bg-[rgba(8,8,20,0.55)] backdrop-blur-[2px]" onClick={finish} />

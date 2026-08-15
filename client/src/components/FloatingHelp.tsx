@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { HelpCircle, Search, ClipboardCheck, ShieldAlert } from "lucide-react";
+import { Compass, HelpCircle, Search, ClipboardCheck, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,13 +11,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+const OPEN_TOUR_EVENT = "neuroped:open-tour";
+
 export function FloatingHelp() {
+  const [open, setOpen] = useState(false);
+
+  function startTour() {
+    setOpen(false);
+    window.requestAnimationFrame(() => {
+      window.dispatchEvent(new Event(OPEN_TOUR_EVENT));
+    });
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-[5.25rem] right-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 print:hidden"
+          className="fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-card/95 text-foreground shadow-[0_12px_30px_-16px_hsl(var(--foreground)/0.5)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:right-5 print:hidden"
           aria-label="Abrir ajuda do NeuroPed"
           data-testid="button-floating-help"
         >
@@ -63,9 +75,15 @@ export function FloatingHelp() {
               respostas antes de salvar.
             </p>
           </div>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/ajuda">Abrir central de ajuda</Link>
-          </Button>
+          <div className="grid gap-2 pt-1 sm:grid-cols-2">
+            <Button type="button" onClick={startTour} className="w-full gap-2" data-testid="button-start-tour">
+              <Compass className="h-4 w-4" aria-hidden="true" />
+              Tour guiado
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/ajuda" onClick={() => setOpen(false)}>Central de ajuda</Link>
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
