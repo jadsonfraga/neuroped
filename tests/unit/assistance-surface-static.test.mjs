@@ -6,6 +6,7 @@ const floatingHelp = read("client/src/components/FloatingHelp.tsx");
 const preferencesPanel = read("client/src/components/PreferencesPanel.tsx");
 const welcomeTour = read("client/src/components/WelcomeTour.tsx");
 const app = read("client/src/App.tsx");
+const assistanceAudit = read("scripts/audit-assistance-states.mjs");
 
 assert.equal(
   [...floatingHelp.matchAll(/data-testid="button-floating-help"/g)].length,
@@ -61,6 +62,21 @@ assert.match(
   app,
   /<PreferencesPanel \/>/,
   "o receptor de preferências deve permanecer montado no aplicativo",
+);
+assert.match(
+  assistanceAudit,
+  /page\.locator\('\[role="dialog"\]\[aria-label="Tour guiado"\]'\)/,
+  "a prova do tour deve usar o seletor estrutural estável",
+);
+assert.doesNotMatch(
+  assistanceAudit,
+  /getByRole\("dialog",\s*\{\s*name:\s*"Tour guiado"/,
+  "a prova não pode depender de nome acessível sobrescrito por aria-labelledby",
+);
+assert.match(
+  assistanceAudit,
+  /\[hidden\], \[inert\], \[aria-hidden=\\"true\\"\], \[data-state=\\"closed\\"\]/,
+  "a contagem de diálogos deve ignorar superfícies fechadas ou inertes",
 );
 
 console.log("[assistance-surface] ✓ ajuda, tour e preferências convergem em uma única superfície persistente.");
