@@ -357,6 +357,107 @@ assert.equal(
   "falha do banco não pode se disfarçar de histórico vazio",
 );
 
+const resultRows = Array.from({ length: 205 }, (_, index) => ({
+  id: `result-${String(205 - index).padStart(3, "0")}`,
+  patient_id: "patient-1",
+  scale_id: "mchat",
+  scale_name: "M-CHAT-R/F",
+  details: JSON.stringify({ responses: [{ question: "Q", answer: index }] }),
+  applied_at: new Date(Date.UTC(2026, 0, 1, 0, 0, 205 - index)).toISOString(),
+  is_demo: 1,
+}));
+const paginatedResultsDb = new FakeDatabase({
+  first: (statement) => {
+    if (statement.sql.includes("SELECT owner_user_id")) {
+      return { owner_user_id: professional.id };
+    }
+    if (statement.sql.includes("COUNT(*) AS total")) {
+      return { total: resultRows.length };
+    }
+    return null;
+  },
+  all: (statement) => {
+    const limit = Number(statement.bindings[1]);
+    const offset = Number(statement.bindings[2]);
+    return { results: resultRows.slice(offset, offset + limit) };
+  },
+});
+
+const firstResultsPageResponse = await listPatientResults(
+  context(
+    paginatedResultsDb,
+    new Request(
+      "https://neuroped.test/api/patients/patient-1/results?page=1&limit=200&offset=0",
+    ),
+    { id: "patient-1" },
+  ),
+);
+assert.equal(firstResultsPageResponse.status, 200);
+const firstResultsPage = (await firstResultsPageResponse.json()) as {
+  data: Array<Record<string, unknown>>;
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+assert.equal(firstResultsPage.data.length, 200);
+assert.equal(firstResultsPage.total, 205);
+assert.equal(firstResultsPage.page, 1);
+assert.equal(firstResultsPage.limit, 200);
+assert.equal(firstResultsPage.hasMore, true);
+
+const secondResultsPageResponse = await listPatientResults(
+  context(
+    paginatedResultsDb,
+    new Request(
+      "https://neuroped.test/api/patients/patient-1/results?page=2&limit=200&offset=200",
+    ),
+    { id: "patient-1" },
+  ),
+);
+const secondResultsPage = (await secondResultsPageResponse.json()) as {
+  data: Array<Record<string, unknown>>;
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+assert.equal(secondResultsPage.data.length, 5);
+assert.equal(secondResultsPage.total, 205);
+assert.equal(secondResultsPage.page, 2);
+assert.equal(secondResultsPage.limit, 200);
+assert.equal(secondResultsPage.hasMore, false);
+
+const resultSelects = paginatedResultsDb.statements.filter((statement) =>
+  statement.sql.includes("FROM scale_results_demo"),
+);
+assert.ok(
+  resultSelects.some((statement) => /COUNT\(\*\) AS total/.test(statement.sql)),
+);
+assert.ok(
+  resultSelects.some((statement) =>
+    /ORDER BY applied_at DESC, id DESC\s+LIMIT \? OFFSET \?/.test(
+      statement.sql,
+    ),
+  ),
+  "paginação deve ser estável e usar LIMIT/OFFSET parametrizados",
+);
+
+const legacyResultsResponse = await listPatientResults(
+  context(
+    paginatedResultsDb,
+    new Request("https://neuroped.test/api/patients/patient-1/results"),
+    { id: "patient-1" },
+  ),
+);
+const legacyResults = (await legacyResultsResponse.json()) as unknown[];
+assert.ok(Array.isArray(legacyResults), "clientes legados ainda recebem array");
+assert.equal(
+  legacyResults.length,
+  200,
+  "contrato legado mantém o limite histórico",
+);
+
 const appSource = await readFile(
   new URL("../../client/src/App.tsx", import.meta.url),
   "utf8",

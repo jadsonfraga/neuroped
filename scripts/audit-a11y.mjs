@@ -44,6 +44,9 @@ function reportAndExit(violations, mode, details = {}) {
 }
 
 async function runAxe() {
+  // Evita iniciar servidor/abrir porta quando o binário não foi instalado.
+  // O lint estático abaixo é o fallback determinístico oficial desse ambiente.
+  if (!existsSync(chromium.executablePath())) return false;
   const server = await startStaticServer(ensureClientBuild(repoRoot));
   let browser;
   try {

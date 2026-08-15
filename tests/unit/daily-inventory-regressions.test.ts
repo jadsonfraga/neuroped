@@ -110,10 +110,87 @@ const libraryPage = await readFile(
   path.join(ROOT, "client/src/pages/biblioteca-instrumentos.tsx"),
   "utf8",
 );
+const watchdogWorkflow = await readFile(
+  path.join(ROOT, ".github/workflows/daily-authorial-watchdog.yml"),
+  "utf8",
+);
 assert.match(
   libraryPage,
   /dailyInventoryMatchesQuery\(record, query\)/,
   "a UI deve usar o predicado de busca coberto pelo teste",
+);
+
+// O watchdog respeita a revisão humana: main válida segue para os mirrors; caso
+// contrário, somente execução + artefato + branch + PR coerentes viram sucesso
+// `review_pending`. O CLI `gh` não recebe os argumentos próprios do jq.
+assert.match(watchdogWorkflow, /pull-requests: read/);
+assert.match(watchdogWorkflow, /timeout-minutes: 150/);
+assert.match(watchdogWorkflow, /id: date/);
+assert.match(watchdogWorkflow, /workflow-run-artifact/);
+assert.match(
+  watchdogWorkflow,
+  /capture\("\^inventario-autoral-\(\?<date>\[0-9\]\{4\}-\[0-9\]\{2\}-\[0-9\]\{2\}\)-\[0-9\]\+\$"\)/,
+);
+assert.match(watchdogWorkflow, /TRIGGER_EVENT:/);
+assert.match(watchdogWorkflow, /TRIGGER_CREATED_AT:/);
+assert.match(watchdogWorkflow, /unattributed-workflow-run/);
+assert.match(watchdogWorkflow, /NEUROPED_GENERATION_DATE=\$effective_date/);
+assert.match(watchdogWorkflow, /github\.event_name != 'workflow_run'/);
+assert.match(watchdogWorkflow, /echo "state=production"/);
+assert.match(watchdogWorkflow, /echo "state=review_pending"/);
+assert.match(
+  watchdogWorkflow,
+  /actions\/runs\/\$\{RECOVERY_RUN_ID\}\/artifacts\?per_page=100/,
+);
+assert.match(watchdogWorkflow, /gh run download "\$RECOVERY_RUN_ID"/);
+assert.match(
+  watchdogWorkflow,
+  /git fetch origin "\+refs\/heads\/\$branch:refs\/remotes\/origin\/\$branch"/,
+);
+assert.match(
+  watchdogWorkflow,
+  /repos\/\$\{GITHUB_REPOSITORY\}\/pulls[\s\S]{0,220}-f head="\$\{GITHUB_REPOSITORY_OWNER\}:\$\{branch\}"/,
+);
+assert.match(watchdogWorkflow, /artifact_sha/);
+assert.match(watchdogWorkflow, /branch_file_sha/);
+assert.match(watchdogWorkflow, /review_branch_commit/);
+assert.match(watchdogWorkflow, /\.head\.repo\.full_name == \$repo/);
+assert.match(watchdogWorkflow, /\.base\.repo\.full_name == \$repo/);
+assert.match(watchdogWorkflow, /head_ref_oid/);
+assert.match(
+  watchdogWorkflow,
+  /\[ "\$head_ref_oid" = "\$review_branch_commit" \]/,
+);
+assert.match(watchdogWorkflow, /pr_draft=/);
+assert.match(
+  watchdogWorkflow,
+  /if: steps\.date\.outputs\.current == 'true' && steps\.catalog\.outputs\.state == 'production'/,
+  "produção só pode ser sincronizada quando a data já estiver válida na main",
+);
+assert.match(
+  watchdogWorkflow,
+  /if: success\(\) && steps\.date\.outputs\.skip != 'true' && steps\.date\.outputs\.current == 'true'/,
+  "backfill histórico não pode encerrar o incidente do dia corrente",
+);
+assert.doesNotMatch(
+  watchdogWorkflow,
+  /gh pr list[\s\S]{0,260}--head "\$branch"/,
+  "nome da branch sem vínculo ao repositório permite colisão com PR de fork",
+);
+assert.doesNotMatch(
+  watchdogWorkflow,
+  /gh run list[\s\S]{0,360}--jq\s+--arg/,
+  "--arg pertence ao jq, não ao gh run list",
+);
+assert.doesNotMatch(
+  watchdogWorkflow,
+  /gh api[\s\S]{0,260}--jq\s+--arg/,
+  "--arg pertence ao jq, não ao gh api",
+);
+assert.doesNotMatch(
+  watchdogWorkflow,
+  /Inventário diário permanece ausente ou inválido/,
+  "main não deve ser exigida antes da revisão humana do PR",
 );
 
 assert.equal(isValidCalendarDate("2028-02-29"), true);

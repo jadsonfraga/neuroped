@@ -16,7 +16,7 @@ export function FloatingHelp() {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-4 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 print:hidden"
+          className="fixed bottom-[5.25rem] right-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 print:hidden"
           aria-label="Abrir ajuda do NeuroPed"
           data-testid="button-floating-help"
         >

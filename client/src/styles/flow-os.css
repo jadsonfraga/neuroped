@@ -24,8 +24,14 @@ body.np-legal-gate-open {
     bottom: calc(6.6rem + env(safe-area-inset-bottom)) !important;
   }
 
+  body.np-mobile-dock-active [data-testid="button-floating-help"] {
+    bottom: calc(10.1rem + env(safe-area-inset-bottom)) !important;
+  }
+
   body.np-mobile-dock-active [data-radix-toast-viewport] {
+    top: auto !important;
     bottom: calc(6.6rem + env(safe-area-inset-bottom)) !important;
+    pointer-events: none !important;
   }
 }
 

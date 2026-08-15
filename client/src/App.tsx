@@ -9,8 +9,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { PreferencesPanel } from "@/components/PreferencesPanel";
-import { AvisoLegalGate } from "@/components/AvisoLegalGate";
+import {
+  AvisoLegalGate,
+  hasAcceptedLegalNotice,
+} from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 import { AmbientEffects } from "@/components/AmbientEffects";
@@ -26,9 +28,18 @@ import NotFound from "@/pages/not-found";
 const LoginPage = lazy(() => import("@/pages/login"));
 const SessionExpiredPage = lazy(() => import("@/pages/session-expired"));
 const LgpdConsentPage = lazy(() => import("@/pages/lgpd-consent"));
+const PreferencesPanel = lazy(() =>
+  import("@/components/PreferencesPanel").then(({ PreferencesPanel }) => ({
+    default: PreferencesPanel,
+  })),
+);
 
 const HomePage = lazy(() => import("@/pages/home"));
-const SplashScreen = lazy(() => import("@/components/SplashScreen").then(({ SplashScreen }) => ({ default: SplashScreen })));
+const SplashScreen = lazy(() =>
+  import("@/components/SplashScreen").then(({ SplashScreen }) => ({
+    default: SplashScreen,
+  })),
+);
 const MchatPage = lazy(() => import("@/pages/mchat"));
 const CarsPage = lazy(() => import("@/pages/cars"));
 const SnapPage = lazy(() => import("@/pages/snap"));
@@ -522,10 +533,23 @@ function canSkipSplash(): boolean {
   }
 }
 
+function shouldShowOnboarding(): boolean {
+  if (typeof window === "undefined" || getCurrentHashPath() !== "/") {
+    return false;
+  }
+  try {
+    return localStorage.getItem("neuroped:onboarding-seen") !== "1";
+  } catch {
+    return false;
+  }
+}
+
 function App() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(shouldShowOnboarding);
   const [splashComplete, setSplashComplete] = useState(canSkipSplash);
   const [appReady, setAppReady] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(hasAcceptedLegalNotice);
+  const [currentPath, setCurrentPath] = useState(getCurrentHashPath);
 
   useEffect(() => {
     const t = setTimeout(() => setAppReady(true), 50);
@@ -533,16 +557,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!splashComplete) return;
-    const currentPath = getCurrentHashPath();
-    if (currentPath !== "/") return;
-    try {
-      const seen = localStorage.getItem("neuroped:onboarding-seen");
-      if (!seen) setShowOnboarding(true);
-    } catch {
-      /* storage indisponível (modo privado/cota) — silencioso */
-    }
-  }, [splashComplete]);
+    const syncCurrentPath = () => {
+      const nextPath = getCurrentHashPath();
+      if (nextPath === "/" && shouldShowOnboarding()) {
+        setShowOnboarding(true);
+      }
+      setCurrentPath(nextPath);
+    };
+    window.addEventListener("hashchange", syncCurrentPath);
+    syncCurrentPath();
+    return () => window.removeEventListener("hashchange", syncCurrentPath);
+  }, []);
 
   function dismissOnboarding() {
     setShowOnboarding(false);
@@ -553,49 +578,67 @@ function App() {
     }
   }
 
+  // O hash real também entra na condição para que o clique em "Ler Termos"
+  // esconda o onboarding já no mesmo render em que registra o aceite.
+  const isRootRoute = currentPath === "/" && getCurrentHashPath() === "/";
+  const onboardingVisible =
+    splashComplete && legalAccepted && showOnboarding && isRootRoute;
+  const auxiliarySurfacesVisible =
+    splashComplete && legalAccepted && !onboardingVisible;
+
   return (
     <AppErrorBoundary>
       <MotionConfig reducedMotion="user">
         <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <ToastProvider>
-              <AmbientEffects />
-              <Toaster />
-              {!splashComplete && (
-                <Suspense fallback={null}>
-                  <SplashScreen
-                    awaiting={!appReady}
-                    onComplete={() => setSplashComplete(true)}
-                  />
-                </Suspense>
-              )}
-              {splashComplete && showOnboarding && (
-                <Suspense fallback={null}>
-                  <Onboarding onComplete={dismissOnboarding} />
-                </Suspense>
-              )}
-              <PrivateGate>
-                <Router hook={useHashLocation}>
-                  <AppRouter />
-                </Router>
-                <Suspense fallback={null}>
-                  <CommandPalette />
-                </Suspense>
-                {splashComplete && (
+          <AuthProvider>
+            <TooltipProvider>
+              <ToastProvider>
+                <AmbientEffects />
+                <Toaster />
+                {!splashComplete && (
                   <Suspense fallback={null}>
-                    <WelcomeTour />
+                    <SplashScreen
+                      awaiting={!appReady}
+                      onComplete={() => setSplashComplete(true)}
+                    />
                   </Suspense>
                 )}
-              </PrivateGate>
-              {splashComplete && <AvisoLegalGate />}
-              <InstallPrompt />
-              <PreferencesPanel />
-              <FloatingHelp />
-              <ServiceWorkerManager />
-            </ToastProvider>
-          </TooltipProvider>
-        </AuthProvider>
+                {onboardingVisible && (
+                  <Suspense fallback={null}>
+                    <Onboarding onComplete={dismissOnboarding} />
+                  </Suspense>
+                )}
+                <PrivateGate>
+                  <Router hook={useHashLocation}>
+                    <AppRouter />
+                  </Router>
+                  {auxiliarySurfacesVisible && (
+                    <Suspense fallback={null}>
+                      <CommandPalette />
+                    </Suspense>
+                  )}
+                  {auxiliarySurfacesVisible && (
+                    <Suspense fallback={null}>
+                      <WelcomeTour />
+                    </Suspense>
+                  )}
+                </PrivateGate>
+                {splashComplete && (
+                  <AvisoLegalGate onAccepted={() => setLegalAccepted(true)} />
+                )}
+                {auxiliarySurfacesVisible && (
+                  <>
+                    <InstallPrompt />
+                    <Suspense fallback={null}>
+                      <PreferencesPanel />
+                    </Suspense>
+                    <FloatingHelp />
+                  </>
+                )}
+                <ServiceWorkerManager />
+              </ToastProvider>
+            </TooltipProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </MotionConfig>
     </AppErrorBoundary>

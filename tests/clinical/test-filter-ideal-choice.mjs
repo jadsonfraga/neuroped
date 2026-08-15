@@ -18,8 +18,8 @@
  *  R4 sinais          — se o usuario marcou sinais e existe candidata viavel
  *                       (bate a tag, contem a idade, rel>=45), o podio contem
  *                       uma escala que fala aos sinais.
- *  R5 respondente     — respondente escolhido respeitado quando >=3 candidatas
- *                       atendem.
+ *  R5 respondente     — respondente escolhido é obrigatório em toda candidata
+ *                       e em toda medalha.
  *  R6 implementacao   — medalha "recomendacao" (nada aplicavel) so quando
  *                       nenhuma candidata aplicavel preserva a cobertura.
  *  R7 seguranca       — bloqueios clinicos duros, podio completo e sem
@@ -316,7 +316,7 @@ for (const ctx of cases) {
   // R5 — respondente
   if (ctx.respondente) {
     const fits = (m) => m.scale.respondente.includes(ctx.respondente);
-    if (matches.filter(fits).length >= 3 && !slots.every(fits))
+    if (!matches.every(fits) || !slots.every(fits))
       issues.push("R5-respondente");
   }
 

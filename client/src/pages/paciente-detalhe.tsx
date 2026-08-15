@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useRoute, Link } from "wouter";
+import { useLocation, useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PatientCockpit } from "@/components/clinical/PatientCockpit";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { loadAllPatientResults } from "@/lib/patientResultsPagination";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +21,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/components/ui/VisualStates";
 import {
   Activity,
   ArrowLeft,
@@ -120,8 +127,19 @@ function resultCreatedAt(result: any): string | Date | null {
   return result.createdAt ?? result.applied_at ?? null;
 }
 
+function isNotFoundError(error: unknown): boolean {
+  if (error && typeof error === "object" && "status" in error) {
+    const status = Number((error as { status?: unknown }).status);
+    if (status === 404) return true;
+  }
+
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /^404(?:\s|:|$)/.test(message);
+}
+
 export default function PacienteDetalhePage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [, params] = useRoute("/paciente/:id");
   const patientId = params?.id || "";
 
@@ -131,16 +149,38 @@ export default function PacienteDetalhePage() {
   const [formNotes, setFormNotes] = useState("");
   const [doctorName, setDoctorName] = useState("Dr. Jadson Fraga");
   const [specialty, setSpecialty] = useState("Neuropediatra");
+  const [imageExporting, setImageExporting] = useState(false);
+  const [reportCopying, setReportCopying] = useState(false);
+  const [resultPendingDeletion, setResultPendingDeletion] = useState<{
+    id: string;
+    scaleName: string;
+  } | null>(null);
 
-  const { data: patient } = useQuery<any>({
+  const {
+    data: patient,
+    isLoading: patientLoading,
+    isError: patientIsError,
+    error: patientError,
+    refetch: refetchPatient,
+  } = useQuery<any>({
     queryKey: [`/api/patients/${patientId}`],
     enabled: !!patientId,
   });
 
-  const { data: results = [] } = useQuery<any[]>({
+  const {
+    data: resultsRaw,
+    isLoading: resultsLoading,
+    isError: resultsIsError,
+    refetch: refetchResults,
+  } = useQuery<any[]>({
     queryKey: [`/api/patients/${patientId}/results`],
-    enabled: !!patientId,
+    queryFn: () => loadAllPatientResults(patientId),
+    enabled: !!patientId && Boolean(patient),
   });
+  const resultsShapeIsInvalid =
+    resultsRaw !== undefined && !Array.isArray(resultsRaw);
+  const resultsUnavailable = resultsIsError || resultsShapeIsInvalid;
+  const results = Array.isArray(resultsRaw) ? resultsRaw : [];
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -158,13 +198,24 @@ export default function PacienteDetalhePage() {
 
   const deleteResultMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/results/${id}`);
+      await apiRequest("DELETE", `/api/results/${encodeURIComponent(id)}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      setResultPendingDeletion(null);
+      toast({ title: "Avaliação removida." });
+    },
+    onError: () => {
+      toast({
+        title: "Não foi possível excluir a avaliação.",
+        description:
+          "Não foi possível confirmar o estado do registro. A lista será atualizada para conferir.",
+        variant: "destructive",
+      });
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
         queryKey: [`/api/patients/${patientId}/results`],
       });
-      toast({ title: "Avaliação removida." });
     },
   });
 
@@ -185,58 +236,105 @@ export default function PacienteDetalhePage() {
   }
 
   async function exportAsImage() {
-    const el = document.getElementById("report-content");
-    if (!el) return;
-    const canvas = await html2canvas(el, {
-      scale: 2,
-      backgroundColor: "#ffffff",
-    });
-    const link = document.createElement("a");
-    link.download = `relatorio-${patient?.name || "paciente"}-${new Date().toISOString().slice(0, 10)}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-    toast({ title: "Imagem exportada!" });
+    if (imageExporting) return;
+    setImageExporting(true);
+    try {
+      const el = document.getElementById("report-content");
+      if (!el) throw new Error("Conteúdo do relatório indisponível.");
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+      });
+      const link = document.createElement("a");
+      link.download = `relatorio-${patient?.name || "paciente"}-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+      toast({ title: "Imagem exportada!" });
+    } catch {
+      toast({
+        title: "Não foi possível exportar a imagem.",
+        description: "Tente novamente ou use a opção de copiar o relatório.",
+        variant: "destructive",
+      });
+    } finally {
+      setImageExporting(false);
+    }
   }
 
-  function copyReportText() {
-    if (!patient) return;
-    const age = calcAge(patient.birthDate);
-    let text = `RELATÓRIO CLÍNICO\n${doctorName} — ${specialty}\n\n`;
-    text += `Paciente: ${patient.name}\n`;
-    if (age) text += `Idade: ${age}\n`;
-    if (patient.notes) text += `Observações: ${patient.notes}\n`;
-    text += `\nREGISTROS DE RESPOSTAS:\n`;
+  async function copyReportText() {
+    if (!patient || reportCopying) return;
+    setReportCopying(true);
+    try {
+      const age = calcAge(patient.birthDate);
+      let text = `RELATÓRIO CLÍNICO\n${doctorName} — ${specialty}\n\n`;
+      text += `Paciente: ${patient.name}\n`;
+      if (age) text += `Idade: ${age}\n`;
+      if (patient.notes) text += `Observações: ${patient.notes}\n`;
+      text += `\nREGISTROS DE RESPOSTAS:\n`;
 
-    const sorted = [...results].sort(
-      (a: any, b: any) =>
-        new Date(resultCreatedAt(b) ?? 0).getTime() -
-        new Date(resultCreatedAt(a) ?? 0).getTime(),
-    );
-    sorted.forEach((r: any) => {
-      text += `\n${fmtDate(resultCreatedAt(r))} | ${resultScaleName(r)}\n`;
-      const responses = storedResponses(r);
-      if (responses.length === 0) {
-        text += "Aplicação antiga sem transcrição integral disponível.\n";
-      } else {
-        responses.forEach((item, index) => {
-          text += `${index + 1}. ${item.question}\n   Resposta: ${item.answer}\n`;
-        });
+      const sorted = [...results].sort(
+        (a: any, b: any) =>
+          new Date(resultCreatedAt(b) ?? 0).getTime() -
+          new Date(resultCreatedAt(a) ?? 0).getTime(),
+      );
+      sorted.forEach((r: any) => {
+        text += `\n${fmtDate(resultCreatedAt(r))} | ${resultScaleName(r)}\n`;
+        const responses = storedResponses(r);
+        if (responses.length === 0) {
+          text += "Aplicação antiga sem transcrição integral disponível.\n";
+        } else {
+          responses.forEach((item, index) => {
+            text += `${index + 1}. ${item.question}\n   Resposta: ${item.answer}\n`;
+          });
+        }
+      });
+
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API indisponível.");
       }
-    });
-
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copiado!",
-      description: "Relatório copiado para a área de transferência.",
-    });
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copiado!",
+        description: "Relatório copiado para a área de transferência.",
+      });
+    } catch {
+      toast({
+        title: "Não foi possível copiar o relatório.",
+        description:
+          "Autorize o acesso à área de transferência e tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setReportCopying(false);
+    }
   }
 
-  if (!patient) {
+  if (patientLoading) {
+    return <LoadingState rows={4} label="Carregando paciente..." />;
+  }
+
+  if (patientIsError && !isNotFoundError(patientError)) {
     return (
-      <div className="text-center py-12 space-y-3">
-        <Users className="w-10 h-10 mx-auto text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">Carregando paciente...</p>
-      </div>
+      <ErrorState
+        message="Não foi possível carregar este paciente. Verifique a conexão e tente novamente."
+        onRetry={() => {
+          void refetchPatient();
+        }}
+      />
+    );
+  }
+
+  if (!patient || isNotFoundError(patientError)) {
+    return (
+      <EmptyState
+        icon={<Users className="w-7 h-7 text-muted-foreground" />}
+        title="Paciente não encontrado"
+        description="Este cadastro não existe ou não está mais disponível."
+        action={{
+          label: "Voltar aos pacientes",
+          onClick: () => navigate("/pacientes"),
+        }}
+      />
     );
   }
 
@@ -267,7 +365,11 @@ export default function PacienteDetalhePage() {
               </span>
             )}
             <Badge variant="secondary" className="text-xs">
-              {results.length} avaliação{results.length !== 1 ? "ões" : ""}
+              {resultsLoading
+                ? "Carregando avaliações..."
+                : resultsUnavailable
+                  ? "Avaliações indisponíveis"
+                  : `${results.length} avaliação${results.length !== 1 ? "ões" : ""}`}
             </Badge>
           </div>
           {patient.notes && (
@@ -278,7 +380,11 @@ export default function PacienteDetalhePage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/conecta?patient=${encodeURIComponent(patientId)}`}>
-            <Button size="sm" className="gap-1.5" data-testid="button-open-conecta">
+            <Button
+              size="sm"
+              className="gap-1.5"
+              data-testid="button-open-conecta"
+            >
               <Activity className="w-3.5 h-3.5" /> Abrir jornada
             </Button>
           </Link>
@@ -338,7 +444,12 @@ export default function PacienteDetalhePage() {
         </div>
       </div>
 
-      <PatientCockpit patientId={patientId} scaleCount={results.length} />
+      <PatientCockpit
+        patientId={patientId}
+        scaleCount={
+          resultsLoading || resultsUnavailable ? null : results.length
+        }
+      />
 
       {/* Legacy modules remain available while the Clinical OS becomes the primary patient view. */}
       <Tabs defaultValue="avaliacoes">
@@ -349,7 +460,17 @@ export default function PacienteDetalhePage() {
 
         {/* Tab: Avaliações */}
         <TabsContent value="avaliacoes" className="space-y-4 mt-4">
-          {sortedResultsDesc.length === 0 ? (
+          {resultsLoading ? (
+            <LoadingState rows={3} label="Carregando avaliações..." />
+          ) : resultsUnavailable ? (
+            <ErrorState
+              compact
+              message="Não foi possível carregar as avaliações deste paciente."
+              onRetry={() => {
+                void refetchResults();
+              }}
+            />
+          ) : sortedResultsDesc.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <ClipboardList className="w-8 h-8 mx-auto text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">
@@ -383,10 +504,17 @@ export default function PacienteDetalhePage() {
                           variant="ghost"
                           size="sm"
                           className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                          onClick={() => deleteResultMutation.mutate(r.id)}
+                          aria-label={`Excluir avaliação ${resultScaleName(r)} de ${fmtDate(resultCreatedAt(r))}`}
+                          disabled={deleteResultMutation.isPending}
+                          onClick={() =>
+                            setResultPendingDeletion({
+                              id: String(r.id),
+                              scaleName: resultScaleName(r),
+                            })
+                          }
                           data-testid={`button-delete-result-${r.id}`}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3 h-3" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
@@ -424,120 +552,166 @@ export default function PacienteDetalhePage() {
 
         {/* Tab: Relatório */}
         <TabsContent value="relatorio" className="space-y-4 mt-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Input
-              placeholder="Nome do profissional"
-              value={doctorName}
-              onChange={(e) => setDoctorName(e.target.value)}
+          {resultsLoading ? (
+            <LoadingState rows={4} label="Carregando dados do relatório..." />
+          ) : resultsUnavailable ? (
+            <ErrorState
+              compact
+              message="O relatório não pode ser montado porque as avaliações não foram carregadas."
+              onRetry={() => {
+                void refetchResults();
+              }}
             />
-            <Input
-              placeholder="Especialidade"
-              value={specialty}
-              onChange={(e) => setSpecialty(e.target.value)}
-            />
-          </div>
-
-          {/* Report preview */}
-          <Card className="border-card-border overflow-hidden">
-            <div
-              id="report-content"
-              className="bg-white p-6 space-y-4 text-black"
-            >
-              {/* Header */}
-              <div className="border-b-2 border-purple-600 pb-3">
-                <h2 className="text-base font-bold text-purple-700">
-                  {doctorName}
-                </h2>
-                <p className="text-xs text-gray-500">{specialty}</p>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input
+                  placeholder="Nome do profissional"
+                  value={doctorName}
+                  onChange={(e) => setDoctorName(e.target.value)}
+                />
+                <Input
+                  placeholder="Especialidade"
+                  value={specialty}
+                  onChange={(e) => setSpecialty(e.target.value)}
+                />
               </div>
 
-              {/* Patient info */}
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold">Paciente: {patient.name}</h3>
-                {age && <p className="text-xs text-gray-600">Idade: {age}</p>}
-                {patient.notes && (
-                  <p className="text-xs text-gray-600">Obs: {patient.notes}</p>
-                )}
-                <p className="text-xs text-gray-400">
-                  Data do relatório: {format(new Date(), "dd/MM/yyyy")}
-                </p>
-              </div>
+              {/* Report preview */}
+              <Card className="border-card-border overflow-hidden">
+                <div
+                  id="report-content"
+                  className="bg-white p-6 space-y-4 text-black"
+                >
+                  {/* Header */}
+                  <div className="border-b-2 border-purple-600 pb-3">
+                    <h2 className="text-base font-bold text-purple-700">
+                      {doctorName}
+                    </h2>
+                    <p className="text-xs text-gray-500">{specialty}</p>
+                  </div>
 
-              {/* Registros integrais */}
-              {sortedResultsDesc.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase text-gray-500">
-                    Perguntas e respostas registradas
-                  </h4>
-                  {sortedResultsDesc.map((r: any) => {
-                    const responses = storedResponses(r);
-                    return (
-                      <section
-                        key={r.id}
-                        className="break-inside-avoid space-y-2 border-t border-gray-200 pt-3 first:border-t-0 first:pt-0"
-                      >
-                        <div className="flex items-baseline justify-between gap-3">
-                          <h5 className="text-xs font-bold text-gray-800">
-                            {resultScaleName(r)}
-                          </h5>
-                          <span className="text-[10px] text-gray-500">
-                            {fmtDate(resultCreatedAt(r))}
-                          </span>
-                        </div>
-                        {responses.length === 0 ? (
-                          <p className="text-xs text-gray-500">
-                            Aplicação antiga sem transcrição integral
-                            disponível.
-                          </p>
-                        ) : (
-                          <ol className="space-y-1.5">
-                            {responses.map((item, index) => (
-                              <li
-                                key={`${r.id}-report-${index}`}
-                                className="text-xs text-gray-700"
-                              >
-                                <p>
-                                  <span className="font-mono text-gray-400">
-                                    {index + 1}.
-                                  </span>{" "}
-                                  {item.question}
-                                </p>
-                                <p className="pl-4 font-semibold text-purple-800">
-                                  Resposta: {item.answer}
-                                </p>
-                              </li>
-                            ))}
-                          </ol>
-                        )}
-                      </section>
-                    );
-                  })}
+                  {/* Patient info */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold">
+                      Paciente: {patient.name}
+                    </h3>
+                    {age && (
+                      <p className="text-xs text-gray-600">Idade: {age}</p>
+                    )}
+                    {patient.notes && (
+                      <p className="text-xs text-gray-600">
+                        Obs: {patient.notes}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      Data do relatório: {format(new Date(), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+
+                  {/* Registros integrais */}
+                  {sortedResultsDesc.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold uppercase text-gray-500">
+                        Perguntas e respostas registradas
+                      </h4>
+                      {sortedResultsDesc.map((r: any) => {
+                        const responses = storedResponses(r);
+                        return (
+                          <section
+                            key={r.id}
+                            className="break-inside-avoid space-y-2 border-t border-gray-200 pt-3 first:border-t-0 first:pt-0"
+                          >
+                            <div className="flex items-baseline justify-between gap-3">
+                              <h5 className="text-xs font-bold text-gray-800">
+                                {resultScaleName(r)}
+                              </h5>
+                              <span className="text-[10px] text-gray-500">
+                                {fmtDate(resultCreatedAt(r))}
+                              </span>
+                            </div>
+                            {responses.length === 0 ? (
+                              <p className="text-xs text-gray-500">
+                                Aplicação antiga sem transcrição integral
+                                disponível.
+                              </p>
+                            ) : (
+                              <ol className="space-y-1.5">
+                                {responses.map((item, index) => (
+                                  <li
+                                    key={`${r.id}-report-${index}`}
+                                    className="text-xs text-gray-700"
+                                  >
+                                    <p>
+                                      <span className="font-mono text-gray-400">
+                                        {index + 1}.
+                                      </span>{" "}
+                                      {item.question}
+                                    </p>
+                                    <p className="pl-4 font-semibold text-purple-800">
+                                      Resposta: {item.answer}
+                                    </p>
+                                  </li>
+                                ))}
+                              </ol>
+                            )}
+                          </section>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Card>
+              </Card>
 
-          {/* Export buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={exportAsImage}
-              variant="outline"
-              className="gap-2"
-              data-testid="button-export-image"
-            >
-              <Download className="w-4 h-4" /> Exportar Imagem
-            </Button>
-            <Button
-              onClick={copyReportText}
-              variant="outline"
-              className="gap-2"
-              data-testid="button-copy-text"
-            >
-              <Copy className="w-4 h-4" /> Copiar Texto
-            </Button>
-          </div>
+              {/* Export buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={exportAsImage}
+                  disabled={imageExporting || reportCopying}
+                  variant="outline"
+                  className="gap-2"
+                  data-testid="button-export-image"
+                >
+                  <Download className="w-4 h-4" />
+                  {imageExporting ? "Exportando..." : "Exportar Imagem"}
+                </Button>
+                <Button
+                  onClick={copyReportText}
+                  disabled={imageExporting || reportCopying}
+                  variant="outline"
+                  className="gap-2"
+                  data-testid="button-copy-text"
+                >
+                  <Copy className="w-4 h-4" />
+                  {reportCopying ? "Copiando..." : "Copiar Texto"}
+                </Button>
+              </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={Boolean(resultPendingDeletion)}
+        onClose={() => {
+          if (!deleteResultMutation.isPending) setResultPendingDeletion(null);
+        }}
+        onConfirm={() => {
+          if (resultPendingDeletion) {
+            deleteResultMutation.mutate(resultPendingDeletion.id);
+          }
+        }}
+        title="Excluir avaliação?"
+        description={
+          resultPendingDeletion
+            ? `A avaliação “${resultPendingDeletion.scaleName}” será removida permanentemente. Esta ação não pode ser desfeita.`
+            : undefined
+        }
+        confirmLabel="Excluir avaliação"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        loading={deleteResultMutation.isPending}
+      />
     </div>
   );
 }

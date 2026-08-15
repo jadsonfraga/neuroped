@@ -48,33 +48,227 @@ export interface RefinedScaleMatch {
 }
 
 const POST_CONSULT_QUEIXAS = new Set(["efeitos", "evolucao"]);
+const ACUTE_RISK_QUEIXAS = new Set(["suicidio", "psicose"]);
+
+/**
+ * Contextos de risco agudo nunca recebem um rastreador de outro domínio só
+ * para completar três posições. Ausência de instrumento específico seguro é
+ * uma saída clínica válida e deve direcionar para avaliação de segurança.
+ */
+export function isAcuteRiskContext(
+  ctx: Pick<FilterContext, "queixas">,
+): boolean {
+  return ctx.queixas.some((queixa) => ACUTE_RISK_QUEIXAS.has(queixa));
+}
 
 const SIGNAL_TAGS_BY_SCALE_ID: Record<string, string[]> = {
-  mchat: ["tea", "social", "comunicacao", "linguagem", "gestos", "atencao compartilhada", "resposta nome", "triagem precoce"],
-  cars: ["tea", "social", "comunicacao", "sensorial", "rrb", "rigidez", "funcionalidade", "diagnostico"],
-  srs2: ["tea", "social", "reciprocidade", "pragmatica", "camuflagem", "amizade", "professor", "pais"],
+  mchat: [
+    "tea",
+    "social",
+    "comunicacao",
+    "linguagem",
+    "gestos",
+    "atencao compartilhada",
+    "resposta nome",
+    "triagem precoce",
+  ],
+  cars: [
+    "tea",
+    "social",
+    "comunicacao",
+    "sensorial",
+    "rrb",
+    "rigidez",
+    "funcionalidade",
+    "diagnostico",
+  ],
+  srs2: [
+    "tea",
+    "social",
+    "reciprocidade",
+    "pragmatica",
+    "camuflagem",
+    "amizade",
+    "professor",
+    "pais",
+  ],
   scq: ["tea", "social", "comunicacao", "rrb", "pais"],
   assq: ["tea", "social", "pragmatica", "escolar", "amizade", "adolescente"],
   cast: ["tea", "social", "comunicacao", "escolar", "amizade"],
   gars3: ["tea", "social", "comunicacao", "sensorial", "rrb", "funcionalidade"],
-  atec: ["tea", "linguagem", "social", "sensorial", "funcionalidade", "monitorizacao"],
-  "podj-tea-prime-familiar": ["tea", "social", "linguagem", "comunicacao", "sensorial", "funcionalidade", "rigidez", "camuflagem", "familia", "regressao"],
-  "podj-tea-prime-escola-terapia": ["tea", "social", "pragmatica", "sensorial", "funcionalidade", "aprendizagem", "escola", "terapia", "pervasividade"],
-  "podj-tea-prime-1-6a": ["tea", "atraso", "linguagem", "gestos", "atencao compartilhada", "brincadeira", "sensorial", "seletividade", "funcionalidade", "nao verbal"],
-  "podj-tea-prime-6-12a": ["tea", "social", "pragmatica", "amizade", "bullying", "rigidez", "hiperfoco", "sensorial", "funcionalidade", "aprendizagem"],
-  "podj-tea-prime-12-19a": ["tea", "social", "camuflagem", "exaustao social", "vulnerabilidade", "autonomia", "funcionalidade", "ansiedade", "rigidez", "sensorial"],
-  snap: ["tdah", "desatencao", "hiperatividade", "impulsividade", "pais", "professor", "dsm"],
-  vanderbilt: ["tdah", "desatencao", "hiperatividade", "impulsividade", "comportamento", "oposicao", "escola", "pais", "professor"],
-  conners: ["tdah", "desatencao", "hiperatividade", "impulsividade", "comportamento", "aprendizagem", "executivo"],
-  brief2: ["tdah", "funcao executiva", "inibicao", "memoria trabalho", "planejamento", "flexibilidade", "organizacao"],
-  cbcl: ["comportamento", "ansiedade", "depressao", "social", "agressao", "externalizante", "internalizante"],
-  sdq: ["comportamento", "emocional", "hiperatividade", "pares", "prosocial", "triagem"],
-  basc3: ["comportamento", "ansiedade", "depressao", "social", "adaptativo", "aprendizagem", "banda larga"],
-  "psc17": ["comportamento", "tdah", "ansiedade", "depressao", "internalizante", "externalizante", "atencao"],
-  "asq3": ["atraso", "desenvolvimento", "motor", "linguagem", "comunicacao", "cognicao", "precoce"],
-  "asq-se-2": ["social", "emocional", "comportamento", "autonomia", "funcionalidade", "precoce"],
-  denver: ["atraso", "desenvolvimento", "motor", "linguagem", "social", "adaptativo"],
-  vineland: ["funcionalidade", "autonomia", "comunicacao", "social", "vida diaria", "adaptativo"],
+  atec: [
+    "tea",
+    "linguagem",
+    "social",
+    "sensorial",
+    "funcionalidade",
+    "monitorizacao",
+  ],
+  "podj-tea-prime-familiar": [
+    "tea",
+    "social",
+    "linguagem",
+    "comunicacao",
+    "sensorial",
+    "funcionalidade",
+    "rigidez",
+    "camuflagem",
+    "familia",
+    "regressao",
+  ],
+  "podj-tea-prime-escola-terapia": [
+    "tea",
+    "social",
+    "pragmatica",
+    "sensorial",
+    "funcionalidade",
+    "aprendizagem",
+    "escola",
+    "terapia",
+    "pervasividade",
+  ],
+  "podj-tea-prime-1-6a": [
+    "tea",
+    "atraso",
+    "linguagem",
+    "gestos",
+    "atencao compartilhada",
+    "brincadeira",
+    "sensorial",
+    "seletividade",
+    "funcionalidade",
+    "nao verbal",
+  ],
+  "podj-tea-prime-6-12a": [
+    "tea",
+    "social",
+    "pragmatica",
+    "amizade",
+    "bullying",
+    "rigidez",
+    "hiperfoco",
+    "sensorial",
+    "funcionalidade",
+    "aprendizagem",
+  ],
+  "podj-tea-prime-12-19a": [
+    "tea",
+    "social",
+    "camuflagem",
+    "exaustao social",
+    "vulnerabilidade",
+    "autonomia",
+    "funcionalidade",
+    "ansiedade",
+    "rigidez",
+    "sensorial",
+  ],
+  snap: [
+    "tdah",
+    "desatencao",
+    "hiperatividade",
+    "impulsividade",
+    "pais",
+    "professor",
+    "dsm",
+  ],
+  vanderbilt: [
+    "tdah",
+    "desatencao",
+    "hiperatividade",
+    "impulsividade",
+    "comportamento",
+    "oposicao",
+    "escola",
+    "pais",
+    "professor",
+  ],
+  conners: [
+    "tdah",
+    "desatencao",
+    "hiperatividade",
+    "impulsividade",
+    "comportamento",
+    "aprendizagem",
+    "executivo",
+  ],
+  brief2: [
+    "tdah",
+    "funcao executiva",
+    "inibicao",
+    "memoria trabalho",
+    "planejamento",
+    "flexibilidade",
+    "organizacao",
+  ],
+  cbcl: [
+    "comportamento",
+    "ansiedade",
+    "depressao",
+    "social",
+    "agressao",
+    "externalizante",
+    "internalizante",
+  ],
+  sdq: [
+    "comportamento",
+    "emocional",
+    "hiperatividade",
+    "pares",
+    "prosocial",
+    "triagem",
+  ],
+  basc3: [
+    "comportamento",
+    "ansiedade",
+    "depressao",
+    "social",
+    "adaptativo",
+    "aprendizagem",
+    "banda larga",
+  ],
+  psc17: [
+    "comportamento",
+    "tdah",
+    "ansiedade",
+    "depressao",
+    "internalizante",
+    "externalizante",
+    "atencao",
+  ],
+  asq3: [
+    "atraso",
+    "desenvolvimento",
+    "motor",
+    "linguagem",
+    "comunicacao",
+    "cognicao",
+    "precoce",
+  ],
+  "asq-se-2": [
+    "social",
+    "emocional",
+    "comportamento",
+    "autonomia",
+    "funcionalidade",
+    "precoce",
+  ],
+  denver: [
+    "atraso",
+    "desenvolvimento",
+    "motor",
+    "linguagem",
+    "social",
+    "adaptativo",
+  ],
+  vineland: [
+    "funcionalidade",
+    "autonomia",
+    "comunicacao",
+    "social",
+    "vida diaria",
+    "adaptativo",
+  ],
   ablls: ["linguagem", "aprendizagem", "funcionalidade", "tea", "habilidades"],
 };
 
@@ -101,7 +295,9 @@ export function isLicenseRestricted(scale: ScaleEntry): boolean {
  * dedicada implementada (Denver, ASQ-3, CARS, Conners, BRIEF-2, CBCL, ABC, CDI-2,
  * CSHQ, Vineland, PedsQL): o filtro precisa nomeá-los como 1ª linha clínica.
  */
-export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus {
+export function getImplementationStatus(
+  scale: ScaleEntry,
+): ImplementationStatus {
   if (scale.implementationStatus) return scale.implementationStatus;
   const route = scale.appRoute;
   const hasDedicatedPage =
@@ -112,8 +308,10 @@ export function getImplementationStatus(scale: ScaleEntry): ImplementationStatus
   if (hasDedicatedPage) return "complete";
   // Aplicação interativa em qualquer dos dois acervos: itens (GenericScale)
   // ou runner (InteractiveScaleRunner) — ambos abrem em /generic-scale/:id.
-  if (INTERACTIVE_SCALE_IDS.has(scale.id) && !isLicenseRestricted(scale)) return "complete";
-  if (!route) return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
+  if (INTERACTIVE_SCALE_IDS.has(scale.id) && !isLicenseRestricted(scale))
+    return "complete";
+  if (!route)
+    return isLicenseRestricted(scale) ? "external_only" : "not_implemented";
   if (isLicenseRestricted(scale)) return "external_only";
   if (route.startsWith("/generic-scale/")) return "metadata_only";
   return "complete";
@@ -124,7 +322,7 @@ export function getImplementationLabel(status: ImplementationStatus): string {
     case "complete":
       return "Aplicação completa disponível no app.";
     case "metadata_only":
-      return "Ficha técnica e registro interno com PIN master disponíveis; itens oficiais podem depender de autorização.";
+      return "Ficha técnica disponível; itens oficiais podem depender de autorização ou acesso à fonte licenciada.";
     case "external_only":
       return "Instrumento externo/licenciado; não embutir itens ou escore sem permissão.";
     case "not_implemented":
@@ -139,9 +337,12 @@ export function getApplicationMode(scale: ScaleEntry): ApplicationMode {
   if (r.includes("teste_direto_crianca")) return "teste_direto_crianca";
   if (r.includes("professor")) return "questionario_professor";
   if (r.includes("pais")) return "questionario_pais";
-  if (r.includes("autoaplicavel")) return "autoquestionario_crianca_adolescente";
+  if (r.includes("autoaplicavel"))
+    return "autoquestionario_crianca_adolescente";
   if (r.includes("clinico")) {
-    return scale.prioridade === "monitorizacao" ? "registro_clinico" : "observacional_clinico";
+    return scale.prioridade === "monitorizacao"
+      ? "registro_clinico"
+      : "observacional_clinico";
   }
   // "crianca" legado, isolado e ambíguo: trata como autoquestionário (mais restritivo por idade),
   // evitando que vire "teste direto" sem evidência explícita.
@@ -157,7 +358,10 @@ export function getAssessmentUse(scale: ScaleEntry): AssessmentUse {
   const text = `${scale.id} ${scale.name} ${scale.fullName}`.toLowerCase();
   // NÃO usar "follow" aqui: aparece em nomes (ex.: M-CHAT-R/F "Follow-Up") e
   // classificaria errado um instrumento de triagem como seguimento.
-  if (scale.queixas.includes("evolucao") || /reavalia[çc]|seguimento|evolu[çc][ãa]o/.test(text)) {
+  if (
+    scale.queixas.includes("evolucao") ||
+    /reavalia[çc]|seguimento|evolu[çc][ãa]o/.test(text)
+  ) {
     return "seguimento";
   }
   if (scale.prioridade === "monitorizacao") return "monitorizacao";
@@ -171,11 +375,19 @@ export function getAssessmentUse(scale: ScaleEntry): AssessmentUse {
  *  - demais modos (pais/professor/clínico/teste direto observacional) => indiferente.
  * Override explícito (scale.literacyRequirement) sempre tem prioridade.
  */
-export function getLiteracyRequirement(scale: ScaleEntry): "indiferente" | "alfabetizado" | "pre_alfabetizado" {
+export function getLiteracyRequirement(
+  scale: ScaleEntry,
+): "indiferente" | "alfabetizado" | "pre_alfabetizado" {
   if (scale.literacyRequirement) return scale.literacyRequirement;
   const text = `${scale.id} ${scale.name} ${scale.fullName}`.toLowerCase();
-  const pictorial = /faces|wong|baker|visual.?anal|pict[óo]ric|figura|emoji|smiley|flacc/.test(text);
-  if (getApplicationMode(scale) === "autoquestionario_crianca_adolescente" && !pictorial) {
+  const pictorial =
+    /faces|wong|baker|visual.?anal|pict[óo]ric|figura|emoji|smiley|flacc/.test(
+      text,
+    );
+  if (
+    getApplicationMode(scale) === "autoquestionario_crianca_adolescente" &&
+    !pictorial
+  ) {
     return "alfabetizado";
   }
   return "indiferente";
@@ -190,15 +402,29 @@ export function getLiteracyRequirement(scale: ScaleEntry): "indiferente" | "alfa
  *  - demais => indiferente.
  * Override explícito (scale.verbalRequirement) sempre tem prioridade.
  */
-export function getVerbalRequirement(scale: ScaleEntry): "indiferente" | "verbal" | "nao_verbal_compativel" {
+export function getVerbalRequirement(
+  scale: ScaleEntry,
+): "indiferente" | "verbal" | "nao_verbal_compativel" {
   if (scale.verbalRequirement) return scale.verbalRequirement;
   const text = `${scale.id} ${scale.name} ${scale.fullName}`.toLowerCase();
-  if (/leiter|raven|toni|matriz|n[aã]o-?verbal|nonverbal|naglieri|\bwnv\b|pictorial/.test(text)) {
+  if (
+    /leiter|raven|toni|matriz|n[aã]o-?verbal|nonverbal|naglieri|\bwnv\b|pictorial/.test(
+      text,
+    )
+  ) {
     return "nao_verbal_compativel";
   }
   const mode = getApplicationMode(scale);
-  const childPerforms = mode === "teste_direto_crianca" || mode === "observacional_clinico" || mode === "autoquestionario_crianca_adolescente";
-  if (childPerforms && /flu[êe]ncia verbal|linguagem (expressiva|oral)|express[ãa]o oral|nomea[çc][ãa]o|vocabul[áa]rio expressivo|articula[çc]|fonol[óo]gic|narrativ|fala\b/.test(text)) {
+  const childPerforms =
+    mode === "teste_direto_crianca" ||
+    mode === "observacional_clinico" ||
+    mode === "autoquestionario_crianca_adolescente";
+  if (
+    childPerforms &&
+    /flu[êe]ncia verbal|linguagem (expressiva|oral)|express[ãa]o oral|nomea[çc][ãa]o|vocabul[áa]rio expressivo|articula[çc]|fonol[óo]gic|narrativ|fala\b/.test(
+      text,
+    )
+  ) {
     return "verbal";
   }
   return "indiferente";
@@ -211,29 +437,38 @@ export function getVerbalRequirement(scale: ScaleEntry): "indiferente" | "verbal
 // ou "matriz" não muda um gate de segurança sem revisão humana. Exportadas para o
 // guard de CI (validate-safety-metadata), que congela essa classificação.
 export function isSuicideInstrument(scale: ScaleEntry): boolean {
-  if (typeof scale.suicideRiskInstrument === "boolean") return scale.suicideRiskInstrument;
+  if (typeof scale.suicideRiskInstrument === "boolean")
+    return scale.suicideRiskInstrument;
   const id = scale.id.toLowerCase();
   const text = `${scale.name} ${scale.fullName}`.toLowerCase();
   return (
     scale.queixas.includes("suicidio") ||
-    /suicide|suic[ií]d|self-harm|autoles|ask suicide|c-?ssrs|ecar-si/.test(`${id} ${text}`)
+    /suicide|suic[ií]d|self-harm|autoles|ask suicide|c-?ssrs|ecar-si/.test(
+      `${id} ${text}`,
+    )
   );
 }
 
 export function isPsychosisInstrument(scale: ScaleEntry): boolean {
-  if (typeof scale.psychosisRiskInstrument === "boolean") return scale.psychosisRiskInstrument;
+  if (typeof scale.psychosisRiskInstrument === "boolean")
+    return scale.psychosisRiskInstrument;
   const id = scale.id.toLowerCase();
   const text = `${scale.name} ${scale.fullName}`.toLowerCase();
   return (
     scale.queixas.includes("psicose") ||
-    /psicos|psychosis|mania|bipolar|sips|panss|prodrom|prime-?screen/.test(`${id} ${text}`)
+    /psicos|psychosis|mania|bipolar|sips|panss|prodrom|prime-?screen/.test(
+      `${id} ${text}`,
+    )
   );
 }
 
 // ============ BLOQUEIOS CLÍNICOS DUROS (req. de segurança) ============
 // Retorna a razão do bloqueio, ou null se a escala é segura para o contexto.
 
-export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string | null {
+export function clinicalHardBlock(
+  scale: ScaleEntry,
+  ctx: FilterContext,
+): string | null {
   const age = ctx.ageMonths;
 
   // Valida que a escala tem campos obrigatórios de idade
@@ -243,41 +478,51 @@ export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string
 
   // Para bloqueios de segurança do tipo "requer idade >= X", uma faixa selecionada
   // (ageBand) precisa ser avaliada pelo seu extremo MAIS NOVO — senão a criança
-  // mais nova da faixa escaparia do bloqueio (ex.: faixa 6–12 anos usando o ponto
-  // médio de 9 anos deixaria passar instrumentos de suicídio para uma criança de 6).
-  const youngestAge = ctx.ageBand && typeof ctx.ageBand.min === 'number' ? ctx.ageBand.min : age;
+  // mais nova escaparia do bloqueio (ex.: autoquestionário abaixo de 8 anos ou
+  // instrumento de psicose/mania abaixo de 12 anos).
+  const youngestAge =
+    ctx.ageBand && typeof ctx.ageBand.min === "number" ? ctx.ageBand.min : age;
 
   // Idade fora do range do instrumento. Com faixa (ageBand) usa SOBREPOSIÇÃO
   // (a escala cobre algum ponto da faixa selecionada) — restaura a semântica
   // correta e evita excluir escalas estreitas/neonatais que tangenciam a faixa.
-  if (ctx.ageBand && typeof ctx.ageBand.min === 'number' && typeof ctx.ageBand.max === 'number') {
-    const overlaps = scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
+  if (
+    ctx.ageBand &&
+    typeof ctx.ageBand.min === "number" &&
+    typeof ctx.ageBand.max === "number"
+  ) {
+    const overlaps =
+      scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
     if (!overlaps) return "Fora da faixa etária do instrumento";
   } else if (age !== null && (age < scale.ageMin || age > scale.ageMax)) {
     return "Fora da faixa etária do instrumento";
   }
 
-  // Suicídio/autolesão: requer ≥ 8 anos (96 meses).
-  if (isSuicideInstrument(scale) && youngestAge !== null && youngestAge < 96) {
-    return "Risco de suicídio requer ≥ 8 anos";
-  }
-
   // Psicose/mania: requer ≥ 12 anos (144 meses).
-  if (isPsychosisInstrument(scale) && youngestAge !== null && youngestAge < 144) {
+  if (
+    isPsychosisInstrument(scale) &&
+    youngestAge !== null &&
+    youngestAge < 144
+  ) {
     return "Psicose/mania requer ≥ 12 anos";
   }
 
   const mode = getApplicationMode(scale);
 
   // Autoquestionário: requer ≥ 8 anos.
-  if (mode === "autoquestionario_crianca_adolescente" && youngestAge !== null && youngestAge < 96) {
+  if (
+    mode === "autoquestionario_crianca_adolescente" &&
+    youngestAge !== null &&
+    youngestAge < 96
+  ) {
     return "Autoaplicável requer ≥ 8 anos";
   }
 
   // Alfabetização obrigatória (metadado derivado quando não declarado).
   if (getLiteracyRequirement(scale) === "alfabetizado") {
     if (ctx.isLiterate === false) return "Requer criança alfabetizada";
-    if (ctx.isLiterate === null && youngestAge !== null && youngestAge < 72) return "Requer alfabetização";
+    if (ctx.isLiterate === null && youngestAge !== null && youngestAge < 72)
+      return "Requer alfabetização";
   }
 
   // Linguagem verbal obrigatória (metadado derivado quando não declarado).
@@ -289,7 +534,9 @@ export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string
   // Bloqueia escalas que entram pelo TDAH, salvo se o usuário também pediu outra
   // queixa (comportamento/atraso/etc.) que a própria escala cobre — aí ela entra por essa via.
   if (age !== null && age < 48 && scale.queixas.includes("tdah")) {
-    const matchesOtherSelectedQueixa = ctx.queixas.some((q) => q !== "tdah" && scale.queixas.includes(q));
+    const matchesOtherSelectedQueixa = ctx.queixas.some(
+      (q) => q !== "tdah" && scale.queixas.includes(q),
+    );
     if (!matchesOtherSelectedQueixa) {
       return "TDAH não recomendado como principal abaixo de 4 anos";
     }
@@ -300,9 +547,15 @@ export function clinicalHardBlock(scale: ScaleEntry, ctx: FilterContext): string
 
 // ============ FILTROS OBRIGATÓRIOS ============
 
-function passesMandatoryFilters(scale: ScaleEntry, ctx: FilterContext): boolean {
+function passesMandatoryFilters(
+  scale: ScaleEntry,
+  ctx: FilterContext,
+): boolean {
   // Queixa: ao menos uma das selecionadas.
-  if (ctx.queixas.length > 0 && !scale.queixas.some((q) => ctx.queixas.includes(q))) {
+  if (
+    ctx.queixas.length > 0 &&
+    !scale.queixas.some((q) => ctx.queixas.includes(q))
+  ) {
     return false;
   }
 
@@ -348,11 +601,27 @@ function normalizeClinicalText(value: string): string {
 }
 
 function tokensFromText(value: string): Set<string> {
-  const shortValidTokens = new Set(["tea", "toc", "tic", "tdah", "tda", "pc", "oab", "gad", "phq", "dbt", "tcc", "imao", "isrs", "irsn", "atcc"]);
+  const shortValidTokens = new Set([
+    "tea",
+    "toc",
+    "tic",
+    "tdah",
+    "tda",
+    "pc",
+    "oab",
+    "gad",
+    "phq",
+    "dbt",
+    "tcc",
+    "imao",
+    "isrs",
+    "irsn",
+    "atcc",
+  ]);
   return new Set(
     normalizeClinicalText(value)
       .split(/\s+/)
-      .filter((token) => token.length >= 4 || shortValidTokens.has(token))
+      .filter((token) => token.length >= 4 || shortValidTokens.has(token)),
   );
 }
 
@@ -380,9 +649,15 @@ function selectedSignalText(ctx: FilterContext): string {
 function allSignalTags(scale: ScaleEntry): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const t of [...(scale.signalTags || []), ...(SIGNAL_TAGS_BY_SCALE_ID[scale.id] || [])]) {
+  for (const t of [
+    ...(scale.signalTags || []),
+    ...(SIGNAL_TAGS_BY_SCALE_ID[scale.id] || []),
+  ]) {
     const key = t.trim().toLowerCase();
-    if (key && !seen.has(key)) { seen.add(key); out.push(t); }
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      out.push(t);
+    }
   }
   return out;
 }
@@ -398,7 +673,10 @@ function scaleClinicalText(scale: ScaleEntry): string {
   ].join(" ");
 }
 
-function calculateSignalSpecificity(scale: ScaleEntry, ctx: FilterContext): { score: number; rawScore: number; reason?: string } {
+function calculateSignalSpecificity(
+  scale: ScaleEntry,
+  ctx: FilterContext,
+): { score: number; rawScore: number; reason?: string } {
   if (!ctx.selectedSignals?.length) return { score: 0, rawScore: 0 };
 
   const signalText = selectedSignalText(ctx);
@@ -411,24 +689,47 @@ function calculateSignalSpecificity(scale: ScaleEntry, ctx: FilterContext): { sc
 
   const normalizedSignalText = normalizeClinicalText(signalText);
   const idPrefixHits = ctx.selectedSignals.filter((id) =>
-    scale.queixas.some((queixa) => id.startsWith(`${queixa}-`))
+    scale.queixas.some((queixa) => id.startsWith(`${queixa}-`)),
   ).length;
   const exactTagHits = allSignalTags(scale).filter((tag) =>
-    normalizedSignalText.includes(normalizeClinicalText(tag))
+    normalizedSignalText.includes(normalizeClinicalText(tag)),
   ).length;
 
-  const rawScore = Math.round(matched * 1.6 + idPrefixHits * 2 + exactTagHits * 3 + Math.min(4, ctx.selectedSignals.length));
+  const rawScore = Math.round(
+    matched * 1.6 +
+      idPrefixHits * 2 +
+      exactTagHits * 3 +
+      Math.min(4, ctx.selectedSignals.length),
+  );
   const score = Math.min(18, rawScore);
 
-  if (score >= 12) return { score, rawScore, reason: "Alta correspondência com os sinais marcados" };
-  if (score >= 6) return { score, rawScore, reason: "Boa correspondência com os sinais marcados" };
-  if (score > 0) return { score, rawScore, reason: "Alguma correspondência com os sinais marcados" };
+  if (score >= 12)
+    return {
+      score,
+      rawScore,
+      reason: "Alta correspondência com os sinais marcados",
+    };
+  if (score >= 6)
+    return {
+      score,
+      rawScore,
+      reason: "Boa correspondência com os sinais marcados",
+    };
+  if (score > 0)
+    return {
+      score,
+      rawScore,
+      reason: "Alguma correspondência com os sinais marcados",
+    };
   return { score: 0, rawScore };
 }
 
 // ============ SCORING REFINADO (nova hierarquia clínica) ============
 
-export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): RefinedScaleMatch {
+export function calculateRefinedScore(
+  scale: ScaleEntry,
+  ctx: FilterContext,
+): RefinedScaleMatch {
   const reasons: string[] = [];
   const warnings: string[] = [];
   let score = 0;
@@ -455,7 +756,11 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
     } else {
       // Piso de contenção: cobre a idade de fato ⇒ 22; senão margem real ⇒ 16.
       ageScore = containsAge ? 22 : 16;
-      reasons.push(containsAge ? "Faixa validada cobre esta idade" : "Idade na margem da faixa");
+      reasons.push(
+        containsAge
+          ? "Faixa validada cobre esta idade"
+          : "Idade na margem da faixa",
+      );
     }
     score += ageScore;
   }
@@ -467,7 +772,9 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
   if (ctx.queixas.length === 0) {
     score += 14;
   } else {
-    const matchCount = scale.queixas.filter((q) => ctx.queixas.includes(q)).length;
+    const matchCount = scale.queixas.filter((q) =>
+      ctx.queixas.includes(q),
+    ).length;
     if (matchCount === ctx.queixas.length) {
       const synergy = Math.min(10, (ctx.queixas.length - 1) * 5);
       score += 28 + synergy;
@@ -545,7 +852,11 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
   if (scale.licencaUso === "livre") score += 5;
   else if (scale.licencaUso === "autoral") score += 4;
   else if (scale.licencaUso === "comercial") score += 2;
-  else if (scale.licencaUso === "restrita" || scale.licencaUso === "contato_autor") score += 1;
+  else if (
+    scale.licencaUso === "restrita" ||
+    scale.licencaUso === "contato_autor"
+  )
+    score += 1;
   else score += 3;
 
   // 7. Status real de implementação (0–4).
@@ -563,13 +874,17 @@ export function calculateRefinedScore(scale: ScaleEntry, ctx: FilterContext): Re
 
   // ---- Avisos (não alteram a pertinência, mas a honestidade clínica) ----
   if (licenseRestricted) {
-    warnings.push(`Licença ${scale.licencaUso} — não embutir itens/escore sem permissão.`);
+    warnings.push(
+      `Licença ${scale.licencaUso} — não embutir itens/escore sem permissão.`,
+    );
   }
   if (isSuicideInstrument(scale)) {
     warnings.push("⚠️ Risco suicida — requer avaliação clínica imediata.");
   }
   if (isPsychosisInstrument(scale)) {
-    warnings.push("⚠️ Suspeita de psicose/mania — encaminhamento especializado.");
+    warnings.push(
+      "⚠️ Suspeita de psicose/mania — encaminhamento especializado.",
+    );
   }
 
   const relevanceScore = Math.min(100, Math.round(score));
@@ -608,20 +923,26 @@ function calculateConfidenceLevel(ctx: FilterContext, score: number): number {
 
 export function filterScalesIntelligently(
   scales: ScaleEntry[],
-  ctx: FilterContext
+  ctx: FilterContext,
 ): RefinedScaleMatch[] {
   const candidates = scales.filter(
-    (scale) => passesMandatoryFilters(scale, ctx) && clinicalHardBlock(scale, ctx) === null
+    (scale) =>
+      passesMandatoryFilters(scale, ctx) &&
+      clinicalHardBlock(scale, ctx) === null,
   );
 
   const tierOrder = { gold: 0, silver: 1, bronze: 2, conditional: 3 };
   return candidates
     .map((scale) => calculateRefinedScore(scale, ctx))
     .sort((a, b) => {
-      if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
-      if (tierOrder[a.tier] !== tierOrder[b.tier]) return tierOrder[a.tier] - tierOrder[b.tier];
+      if (b.relevanceScore !== a.relevanceScore)
+        return b.relevanceScore - a.relevanceScore;
+      if (tierOrder[a.tier] !== tierOrder[b.tier])
+        return tierOrder[a.tier] - tierOrder[b.tier];
       if ((b.signalSpecificityScore ?? 0) !== (a.signalSpecificityScore ?? 0)) {
-        return (b.signalSpecificityScore ?? 0) - (a.signalSpecificityScore ?? 0);
+        return (
+          (b.signalSpecificityScore ?? 0) - (a.signalSpecificityScore ?? 0)
+        );
       }
       // desempate final por usabilidade (rota disponível), depois nome.
       const ar = a.scale.appRoute ? 1 : 0;
@@ -634,36 +955,32 @@ export function filterScalesIntelligently(
 
 export function filterScalesWithClinicalRescue(
   scales: ScaleEntry[],
-  ctx: FilterContext
+  ctx: FilterContext,
 ): RefinedScaleMatch[] {
   const primary = filterScalesIntelligently(scales, ctx);
-  const hasClinicalContext = ctx.queixas.length > 0 || ctx.ageBand != null || ctx.ageMonths != null;
+  const hasClinicalContext =
+    ctx.queixas.length > 0 || ctx.ageBand != null || ctx.ageMonths != null;
   if (!hasClinicalContext) return primary;
 
-  // Regra de robustez do filtro atual: sempre que o clínico informou idade ou
-  // queixa, o pódio precisa ter três opções seguras. Se a seleção específica
-  // trouxer só 1-2 escalas, completamos com rastreadores amplos adequados à
-  // idade, sem violar bloqueios duros nem cair para o catálogo inteiro.
-  if (!ctx.respondente) return fillPodiumWithBroadband(primary, scales, ctx);
-
-  const primaryIsStrong =
-    primary.length >= 3 &&
-    primary[0]?.relevanceScore >= 60 &&
-    primary.slice(0, 3).every((m) => m.relevanceScore >= 45);
-  if (primaryIsStrong) return primary;
-
-  const relaxed = filterScalesIntelligently(scales, { ...ctx, respondente: null });
-  if (relaxed.length === 0) return fillPodiumWithBroadband(primary, scales, ctx);
-
-  const seen = new Set(primary.map((m) => m.scale.id));
-  const rescued = [...primary];
-  for (const match of relaxed) {
-    if (!seen.has(match.scale.id)) {
-      rescued.push(match);
-      seen.add(match.scale.id);
-    }
+  // Nunca relaxa queixa/respondente nem preenche um pódio de suicídio/psicose
+  // com escalas desenvolvimentais ou de banda larga não responsivas ao risco.
+  if (isAcuteRiskContext(ctx)) {
+    const acuteQueixas = ctx.queixas.filter((queixa) =>
+      ACUTE_RISK_QUEIXAS.has(queixa),
+    );
+    return primary.filter((match) =>
+      acuteQueixas.every((queixa) => match.scale.queixas.includes(queixa)),
+    );
   }
-  return fillPodiumWithBroadband(rescued, scales, ctx);
+
+  // Respondente é um vínculo clínico obrigatório, não uma preferência de
+  // ranking. Se não houver opção compatível, falha fechado: nunca repete a
+  // busca sem o respondente nem completa o pódio com fallback de outro perfil.
+  if (ctx.respondente) return primary;
+
+  // Sem respondente explícito, contextos não agudos podem ser completados com
+  // rastreadores amplos apropriados à idade e aos demais bloqueios duros.
+  return fillPodiumWithBroadband(primary, scales, ctx);
 }
 
 // ============ FALLBACK DE TRIAGEM AMPLA ============
@@ -671,8 +988,8 @@ export function filterScalesWithClinicalRescue(
 // Quando NÃO há instrumento específico seguro para a queixa+idade, oferecemos um
 // rastreador AMPLO real e apropriado à idade (em vez de vazio). Nunca força um
 // instrumento clinicamente inadequado: cada candidato precisa cobrir a idade e
-// passar o mesmo clinicalHardBlock. Ex.: "suicídio + bebê" não traz escala de
-// suicídio (bloqueada) — traz triagem de desenvolvimento apropriada à idade.
+// passar o mesmo clinicalHardBlock. Risco agudo (suicídio/psicose) é exceção
+// fail-closed e não recebe escala de outro domínio para preencher o pódio.
 //
 // Lista curada e ORDENADA por idade (do menor ao maior). Todos são instrumentos
 // reais, de banda larga, presentes no catálogo e que abrem.
@@ -681,20 +998,22 @@ export function filterScalesWithClinicalRescue(
 // saíram do banco; PANT e EFDI (autorais, 0-216m, aplicação completa) garantem
 // fallback triplo também em lactentes.
 export const BROADBAND_SCREENER_IDS = [
-  "denver",  // 0-72m - desenvolvimento
-  "asq3",    // 1-66m - desenvolvimento
-  "pant",    // 0-216m - índice PANT (autoral, banda larga do desenvolvimento)
-  "efdi",    // 0-216m - funcionalidade/desenvolvimento (autoral)
-  "cbcl",    // 18-216m - banda larga emocional/comportamental
-  "sdq",     // 24-204m - banda larga
-  "psc17",   // 48-192m - banda larga
+  "denver", // 0-72m - desenvolvimento
+  "asq3", // 1-66m - desenvolvimento
+  "pant", // 0-216m - índice PANT (autoral, banda larga do desenvolvimento)
+  "efdi", // 0-216m - funcionalidade/desenvolvimento (autoral)
+  "cbcl", // 18-216m - banda larga emocional/comportamental
+  "sdq", // 24-204m - banda larga
+  "psc17", // 48-192m - banda larga
   "ndi-360", // 36-215m - banda larga neurodesenvolvimental (autoral)
-  "who5",    // 108-216m - bem-estar/humor em adolescentes
+  "who5", // 108-216m - bem-estar/humor em adolescentes
 ];
 
 function ageCovers(scale: ScaleEntry, ctx: FilterContext): boolean {
-  if (ctx.ageBand) return scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
-  if (ctx.ageMonths != null) return scale.ageMin <= ctx.ageMonths && ctx.ageMonths <= scale.ageMax;
+  if (ctx.ageBand)
+    return scale.ageMax >= ctx.ageBand.min && scale.ageMin <= ctx.ageBand.max;
+  if (ctx.ageMonths != null)
+    return scale.ageMin <= ctx.ageMonths && ctx.ageMonths <= scale.ageMax;
   return true;
 }
 
@@ -702,13 +1021,21 @@ function ageCovers(scale: ScaleEntry, ctx: FilterContext): boolean {
  * Rastreadores amplos seguros para o contexto (idade), marcados como fallback.
  * Retorna [] apenas se nem um rastreador amplo for apropriado/seguro à idade.
  */
-export function getBroadbandFallback(scales: ScaleEntry[], ctx: FilterContext): RefinedScaleMatch[] {
+export function getBroadbandFallback(
+  scales: ScaleEntry[],
+  ctx: FilterContext,
+): RefinedScaleMatch[] {
+  if (isAcuteRiskContext(ctx)) return [];
   const byId = new Map(scales.map((s) => [s.id, s]));
   const baseCtx: FilterContext = { ...ctx, queixas: [], assessmentUse: null };
   const out: RefinedScaleMatch[] = [];
   for (const id of BROADBAND_SCREENER_IDS) {
     const scale = byId.get(id);
     if (!scale) continue;
+    // O fallback pode ampliar o domínio da queixa, mas nunca o respondente.
+    // Isso também protege consumidores que chamam getBroadbandFallback após
+    // um resultado vazio do rescue.
+    if (!passesMandatoryFilters(scale, baseCtx)) continue;
     if (!ageCovers(scale, ctx)) continue;
     if (clinicalHardBlock(scale, baseCtx) !== null) continue; // nunca oferece algo inadequado à idade
     const refined = calculateRefinedScore(scale, baseCtx);
@@ -718,7 +1045,9 @@ export function getBroadbandFallback(scales: ScaleEntry[], ctx: FilterContext): 
       clinicalReason: [
         reason,
         "Complemento de triagem ampla apropriado à idade quando a queixa específica não fecha três escalas seguras",
-      ].filter(Boolean).join(" • "),
+      ]
+        .filter(Boolean)
+        .join(" • "),
       isBroadbandFallback: true,
     });
   }
@@ -732,7 +1061,7 @@ function tidyReason(value: string): string {
 function fillPodiumWithBroadband(
   matches: RefinedScaleMatch[],
   scales: ScaleEntry[],
-  ctx: FilterContext
+  ctx: FilterContext,
 ): RefinedScaleMatch[] {
   if (matches.length >= 3) return matches;
   const seen = new Set(matches.map((m) => m.scale.id));
@@ -746,7 +1075,6 @@ function fillPodiumWithBroadband(
   }
   return out;
 }
-
 
 // ============ DETECÇÃO DE PADRÃO CLÍNICO ============
 
@@ -788,24 +1116,48 @@ export function detectClinicalPattern(context: FilterContext): string {
 
   // ── Padrões mono-queixa com refinamento por sinal ───────────────────────────
   if (queixas.includes("tdah")) {
-    if (/hiperatividade|movimento|sentado|impulsiv|fala excessiva|aguardar|intromet/.test(selectedText)) return "TDAH com hiperatividade/impulsividade predominante";
-    if (/desatenc|focar|instruc|organiza|distrai|tarefa|memoria trabalho|procrast/.test(selectedText)) return "TDAH com desatenção predominante";
+    if (
+      /hiperatividade|movimento|sentado|impulsiv|fala excessiva|aguardar|intromet/.test(
+        selectedText,
+      )
+    )
+      return "TDAH com hiperatividade/impulsividade predominante";
+    if (
+      /desatenc|focar|instruc|organiza|distrai|tarefa|memoria trabalho|procrast/.test(
+        selectedText,
+      )
+    )
+      return "TDAH com desatenção predominante";
     return "TDAH misto";
   }
 
   if (queixas.includes("tea")) {
-    const hasLanguage = /linguagem|comunicacao|fala|gestos|pragmatica|ecolalia|balbucio/.test(selectedText);
-    const hasSocial = /social|amizade|reciproc|pares|camuflagem|exaustao|bullying|vulnerabilidade/.test(selectedText);
-    const hasSensory = /sensorial|auditiv|tatil|textura|seletividade|sobrecarga/.test(selectedText);
-    if (hasSocial && hasSensory) return "TEA com déficit social e perfil sensorial";
+    const hasLanguage =
+      /linguagem|comunicacao|fala|gestos|pragmatica|ecolalia|balbucio/.test(
+        selectedText,
+      );
+    const hasSocial =
+      /social|amizade|reciproc|pares|camuflagem|exaustao|bullying|vulnerabilidade/.test(
+        selectedText,
+      );
+    const hasSensory =
+      /sensorial|auditiv|tatil|textura|seletividade|sobrecarga/.test(
+        selectedText,
+      );
+    if (hasSocial && hasSensory)
+      return "TEA com déficit social e perfil sensorial";
     if (hasLanguage && hasSocial) return "TEA com déficit social-comunicativo";
     if (hasLanguage) return "TEA com atraso de linguagem";
     return "Suspeita TEA";
   }
 
   if (queixas.includes("atraso")) {
-    const hasMotor = /motor|sentar|engatinh|biped|rolar|cabeca|pinca/.test(selectedText);
-    const hasLanguage = /linguagem|comunicacao|balbucio|palavras|gestos/.test(selectedText);
+    const hasMotor = /motor|sentar|engatinh|biped|rolar|cabeca|pinca/.test(
+      selectedText,
+    );
+    const hasLanguage = /linguagem|comunicacao|balbucio|palavras|gestos/.test(
+      selectedText,
+    );
     if (hasMotor && hasLanguage) return "Atraso desenvolvimento global";
     if (hasMotor) return "Atraso motor";
     if (hasLanguage) return "Atraso de linguagem";
@@ -813,34 +1165,45 @@ export function detectClinicalPattern(context: FilterContext): string {
   }
 
   if (queixas.includes("depressao")) {
-    if (context.ageMonths !== null && context.ageMonths >= 144) return "Depressão no adolescente";
+    if (context.ageMonths !== null && context.ageMonths >= 144)
+      return "Depressão no adolescente";
     return "Humor deprimido";
   }
-  if (queixas.includes("suicidio")) return "Risco de suicídio — avaliação urgente";
+  if (queixas.includes("suicidio"))
+    return "Risco de suicídio — avaliação urgente";
   if (queixas.includes("ansiedade")) {
-    if (/fobia|social|vergonha|apresentacao|estranhos/.test(selectedText)) return "Ansiedade social/fóbica";
-    if (/panico|crise|tremor|aguda/.test(selectedText)) return "Pânico/ansiedade aguda";
-    if (/separacao|cuidador|dormir sozinho/.test(selectedText)) return "Ansiedade de separação";
+    if (/fobia|social|vergonha|apresentacao|estranhos/.test(selectedText))
+      return "Ansiedade social/fóbica";
+    if (/panico|crise|tremor|aguda/.test(selectedText))
+      return "Pânico/ansiedade aguda";
+    if (/separacao|cuidador|dormir sozinho/.test(selectedText))
+      return "Ansiedade de separação";
     return "Quadro ansioso";
   }
   if (queixas.includes("comportamento")) {
-    if (/agress|bate|morde|bullying|ameaca|vandalismo/.test(selectedText)) return "Comportamento agressivo";
-    if (/oposi|desafio|recusa|birra|regras|autoridade/.test(selectedText)) return "Comportamento opositivo";
+    if (/agress|bate|morde|bullying|ameaca|vandalismo/.test(selectedText))
+      return "Comportamento agressivo";
+    if (/oposi|desafio|recusa|birra|regras|autoridade/.test(selectedText))
+      return "Comportamento opositivo";
     return "Transtorno comportamental";
   }
   if (queixas.includes("linguagem")) return "Atraso/transtorno de linguagem";
   if (queixas.includes("aprendizagem")) return "Dificuldade de aprendizagem";
-  if (queixas.includes("cognicao")) return "Avaliação cognitiva/neuropsicológica";
+  if (queixas.includes("cognicao"))
+    return "Avaliação cognitiva/neuropsicológica";
   if (queixas.includes("motor")) return "Atraso/disfunção motora";
   if (queixas.includes("sono")) return "Transtorno de sono";
-  if (queixas.includes("funcionalidade")) return "Avaliação de funcionalidade adaptativa";
+  if (queixas.includes("funcionalidade"))
+    return "Avaliação de funcionalidade adaptativa";
   if (queixas.includes("social")) return "Dificuldade de habilidades sociais";
   if (queixas.includes("tiques")) return "Tiques / Síndrome de Tourette";
   if (queixas.includes("toc")) return "Transtorno Obsessivo-Compulsivo";
   if (queixas.includes("trauma")) return "Trauma / TEPT";
   if (queixas.includes("psicose")) return "Suspeita de psicose/mania";
-  if (queixas.includes("alimentacao")) return "Transtorno alimentar/seletividade";
-  if (queixas.includes("epilepsia")) return "Epilepsia — monitorização de crises";
+  if (queixas.includes("alimentacao"))
+    return "Transtorno alimentar/seletividade";
+  if (queixas.includes("epilepsia"))
+    return "Epilepsia — monitorização de crises";
   if (queixas.includes("dor")) return "Dor crônica / cefaleia";
   if (queixas.includes("sensorial")) return "Disfunção de integração sensorial";
   if (queixas.includes("neonatal")) return "Avaliação neonatal/prematuridade";
@@ -863,12 +1226,16 @@ export function generateContextualRecommendation(
   // shown in the medal card (eliminates score-tier vs podium-slot divergence).
   const primary = podiumOuro ?? matches.find((m) => m.tier === "gold");
   if (primary) {
-    const reason = primary.clinicalReason || primary.scale.description || "instrumento de primeira linha para este perfil";
+    const reason =
+      primary.clinicalReason ||
+      primary.scale.description ||
+      "instrumento de primeira linha para este perfil";
     return `Recomendado: ${primary.scale.name} — ${reason}`;
   }
 
   const silver = matches.find((m) => m.tier === "silver");
-  if (silver) return `Segunda opção: ${silver.scale.name} — ${silver.clinicalReason}`;
+  if (silver)
+    return `Segunda opção: ${silver.scale.name} — ${silver.clinicalReason}`;
 
   return `Disponível com ressalvas: ${matches[0].scale.name}`;
 }
