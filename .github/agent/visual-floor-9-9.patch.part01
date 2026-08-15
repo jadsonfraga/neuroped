@@ -1,0 +1,263 @@
+           <aside
+             role="note"
+             aria-label="Aviso de finalidade educativa"
+-            className="mt-8 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3.5 py-3 text-[11px] leading-relaxed text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
++            className="np-legal-disclosure mt-8 rounded-2xl border border-amber-300/55 bg-amber-50/75 px-3.5 py-3 text-amber-950 shadow-sm dark:border-amber-800/45 dark:bg-amber-950/25 dark:text-amber-100"
+           >
+-            <span aria-hidden="true" className="mt-px text-sm">⚕️</span>
+-            <span>
+-              <strong className="font-bold">Aviso — finalidade exclusivamente educativa.</strong> O NeuroPed é uma
+-              ferramenta de <strong className="font-semibold">informação e educação</strong>. Não é dispositivo médico e
+-              não realiza diagnóstico, prescrição ou tratamento. O conteúdo <strong className="font-semibold">não
+-              substitui</strong> a consulta, a avaliação ou a conduta de um profissional de saúde habilitado, nem
+-              estabelece relação médico-paciente. O uso das informações é de responsabilidade do usuário. Em caso de
+-              dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.{" "}
+-              <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
+-            </span>
++            <details className="group">
++              <summary className="flex cursor-pointer list-none items-center gap-2 text-[11px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
++                <span aria-hidden="true" className="text-sm">⚕️</span>
++                <span className="flex-1">Uso educativo — não substitui avaliação, diagnóstico ou conduta profissional.</span>
++                <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">Detalhes</span>
++                <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">Recolher</span>
++              </summary>
++              <div className="mt-3 border-t border-amber-300/45 pt-3 text-[11px] leading-relaxed text-amber-900/90 dark:border-amber-800/45 dark:text-amber-100/85">
++                O NeuroPed é uma ferramenta de <strong className="font-semibold">informação e educação</strong>. Não é dispositivo médico e não realiza diagnóstico, prescrição ou tratamento. O conteúdo não estabelece relação médico-paciente e não substitui consulta, avaliação ou conduta de profissional habilitado. Em caso de dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.{" "}
++                <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
++              </div>
++            </details>
+           </aside>
+-          {/* Aviso de propriedade / anticópia. */}
+-          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[10px] leading-snug text-muted-foreground">
++          {/* Propriedade intelectual, sem competir com o conteúdo clínico. */}
++          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[9.5px] leading-snug text-muted-foreground/85">
+             <img
+               src="/dr-jadson-shield-badge.webp"
+               alt=""
+@@ -744,10 +746,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
+               height="256"
+               loading="lazy"
+               decoding="async"
+-              className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-80"
++              className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
+             />
+-            © 2026 NeuroPed · Dr. Jadson Fraga. Conteúdo proprietário e educativo — cópia, redistribuição ou
+-            re-hospedagem não autorizada é proibida.
++            © 2026 NeuroPed · Dr. Jadson Fraga · Conteúdo proprietário e educativo.
+           </p>
+         </div>
+       </main>
+diff --git a/client/src/components/MobilePrimaryDock.tsx b/client/src/components/MobilePrimaryDock.tsx
+index fb3446c093fb4ba38a78926ae61152383ed65831..c66fea26d5802fdf2ef8115f2f913e32bd2262a7 100644
+--- a/client/src/components/MobilePrimaryDock.tsx
++++ b/client/src/components/MobilePrimaryDock.tsx
+@@ -113,7 +113,7 @@ export function MobilePrimaryDock() {
+ 
+   return (
+     <div
+-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 md:hidden print:hidden"
++      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 lg:hidden print:hidden"
+       style={{ paddingBottom: "max(0.45rem, env(safe-area-inset-bottom))" }}
+       data-testid="mobile-primary-dock"
+     >
+diff --git a/client/src/components/PageMascotDecor.tsx b/client/src/components/PageMascotDecor.tsx
+index aeac5efbef4459e856e5128c815ce912c49fda1d..377838388e6fbc112badf1e8cd0de825bfa79c2d 100644
+--- a/client/src/components/PageMascotDecor.tsx
++++ b/client/src/components/PageMascotDecor.tsx
+@@ -69,7 +69,7 @@ const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
+   },
+ ];
+ 
+-const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas"];
++const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas", "/prontuario"];
+ 
+ // Durante a aplicação de uma escala o conteúdo clínico domina a tela: nenhum
+ // mascote decorativo compete com o questionário. A lista espelha as chaves de
+@@ -108,6 +108,10 @@ function hasInlineNino(path: string): boolean {
+   return routesWithInlineNino.includes(path) || path.startsWith("/generic-scale/");
+ }
+ 
++function isDenseClinicalWorkspace(path: string): boolean {
++  return /^\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
++}
++
+ /**
+  * Assinatura visual global do NeuroPed.
+  *
+@@ -133,8 +137,10 @@ export function PageMascotDecor() {
+   }, [reduceMotion]);
+   const legacy = pool[(stablePathHash(pathname) + cycle) % pool.length];
+   const scaleFocus = isScaleApplicationRoute(pathname);
+-  const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus;
+-  const showLegacyCameo = !scaleFocus;
++  const denseClinicalWorkspace = isDenseClinicalWorkspace(pathname);
++  const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus && !denseClinicalWorkspace;
++  // O acervo continua disponível onde é conteúdo, não como FAB concorrente.
++  const showLegacyCameo = pathname === "/sobre" || pathname === "/sobre-neuroped";
+ 
+   return (
+     <div
+diff --git a/client/src/components/WelcomeTour.tsx b/client/src/components/WelcomeTour.tsx
+index c01cd3c2642d0b1c2284de33816018a810cf1097..e5433adbdf59471773eb050e8318fb4d14362615 100644
+--- a/client/src/components/WelcomeTour.tsx
++++ b/client/src/components/WelcomeTour.tsx
+@@ -1,5 +1,5 @@
+ import { useCallback, useEffect, useRef, useState } from "react";
+-import { HelpCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
++import { X, ChevronLeft, ChevronRight } from "lucide-react";
+ import { appMetrics } from "@/data/appMetrics";
+ import { softTap } from "@/lib/softSounds";
+ 
+@@ -12,7 +12,6 @@ import { softTap } from "@/lib/softSounds";
+  */
+ 
+ const DONE_KEY = "np_tour_v2_done";
+-const INTRO_KEY = "np_tour_intro_v2";
+ 
+ interface TourStep {
+   emoji: string;
+@@ -104,20 +103,8 @@ export function WelcomeTour() {
+   const [open, setOpen] = useState(false);
+   const [idx, setIdx] = useState(0);
+   const [rect, setRect] = useState<Rect | null>(null);
+-  const [introHighlight, setIntroHighlight] = useState(false);
+   const cardRef = useRef<HTMLDivElement | null>(null);
+ 
+-  useEffect(() => {
+-    try {
+-      if (localStorage.getItem(INTRO_KEY) !== "1") {
+-        setIntroHighlight(true);
+-        localStorage.setItem(INTRO_KEY, "1");
+-        const t = setTimeout(() => setIntroHighlight(false), 6000);
+-        return () => clearTimeout(t);
+-      }
+-    } catch { /* storage indisponivel — silencioso */ }
+-  }, []);
+-
+   const recompute = useCallback((stepIdx: number) => {
+     setRect(visibleRect(STEPS[stepIdx]?.target));
+   }, []);
+@@ -143,12 +130,17 @@ export function WelcomeTour() {
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [open, idx]);
+ 
+-  function start() {
++  const start = useCallback(() => {
+     softTap();
+-    setIntroHighlight(false);
+     setIdx(0);
+     setOpen(true);
+-  }
++  }, []);
++
++  useEffect(() => {
++    const openTour = () => start();
++    window.addEventListener("neuroped:open-tour", openTour);
++    return () => window.removeEventListener("neuroped:open-tour", openTour);
++  }, [start]);
+ 
+   function finish() {
+     setOpen(false);
+@@ -186,27 +178,6 @@ export function WelcomeTour() {
+ 
+   return (
+     <>
+-      <button
+-        onClick={start}
+-        aria-label={introHighlight ? "Tour do app" : "Rever o tour guiado do app"}
+-        title="Rever tour"
+-        className={[
+-          "fixed right-5 bottom-6 z-[99990] flex items-center justify-center gap-2 rounded-full",
+-          "bg-gradient-to-b from-primary to-primary/85 text-white shadow-[0_8px_28px_hsl(var(--primary)/0.38),0_2px_8px_rgba(0,0,0,0.2)]",
+-          "transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/30",
+-          introHighlight ? "h-11 w-11 text-sm font-bold sm:h-12 sm:w-auto sm:px-5 motion-safe:animate-pulse" : "h-11 w-11",
+-        ].join(" ")}
+-        data-testid="button-tour"
+-      >
+-        {introHighlight ? (
+-          <>
+-            <HelpCircle className="w-5 h-5" aria-hidden="true" /> <span className="hidden sm:inline">Tour do app</span>
+-          </>
+-        ) : (
+-          <HelpCircle className="w-5 h-5" aria-hidden="true" />
+-        )}
+-      </button>
+-
+       {open && (
+         <div className="fixed inset-0 z-[99998]" role="dialog" aria-modal="true" aria-label="Tour guiado">
+           <div className="absolute inset-0 bg-[rgba(8,8,20,0.55)] backdrop-blur-[2px]" onClick={finish} />
+diff --git a/client/src/pages/filtro.tsx b/client/src/pages/filtro.tsx
+index daae26f31e5314412cc2bfebc9c9fe332146d7a4..65a46ed9fa5201d24d0098036c5b1761f57e6ed9 100644
+--- a/client/src/pages/filtro.tsx
++++ b/client/src/pages/filtro.tsx
+@@ -1771,10 +1771,15 @@ export default function FiltroPage() {
+             )}
+ 
+             <div className="space-y-1.5 sm:space-y-2">
+-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+-                Idade da criança
+-              </p>
+-              <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
++              <div className="flex items-center justify-between gap-2">
++                <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
++                  Idade da criança
++                </p>
++                <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75 sm:hidden" aria-hidden="true">
++                  Deslize →
++                </span>
++              </div>
++              <div className="np-horizontal-chips flex gap-1 sm:gap-2 overflow-x-auto pb-1" data-testid="age-band-scroll" aria-label="Faixas etárias; deslize horizontalmente para ver todas">
+                 {faixasEtarias.map((age) => (
+                   <button
+                     key={age.id}
+diff --git a/client/src/pages/home.tsx b/client/src/pages/home.tsx
+index adba2442184bd3241eb01c278a3cae6e45ac63e7..08b923fdf9e4ad0b61d49e56c3ee45c9cbafafa8 100644
+--- a/client/src/pages/home.tsx
++++ b/client/src/pages/home.tsx
+@@ -89,7 +89,7 @@ const clinicalFlows: ClinicalFlow[] = [
+ // Acento sutil por fluxo: fundo tonal + ícone colorido + anel fino. Sem
+ // gradientes escuros pesados — leveza e coerência (nível premium).
+ const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
+-  primary: "bg-rose-500/10 text-rose-600 ring-rose-500/15 dark:text-rose-400",
++  primary: "bg-primary/10 text-primary ring-primary/15",
+   gold: "bg-amber-500/10 text-amber-600 ring-amber-500/15 dark:text-amber-400",
+   teal: "bg-teal-500/10 text-teal-600 ring-teal-500/15 dark:text-teal-400",
+   blue: "bg-blue-500/10 text-blue-600 ring-blue-500/15 dark:text-blue-400",
+@@ -288,8 +288,11 @@ export default function HomePage() {
+                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Sua jornada</p>
+                 <h2 id="fluxos-principais" className="text-2xl font-semibold tracking-[-0.03em] text-foreground">O cuidado começa por aqui</h2>
+               </div>
++              <span className="shrink-0 rounded-full border border-border/70 bg-card/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden">
++                Deslize →
++              </span>
+             </div>
+-            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
++            <div className="np-home-flow-grid grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+               {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
+             </div>
+           </section>
+diff --git a/client/src/pages/prontuario.tsx b/client/src/pages/prontuario.tsx
+index b1b1c47018d0900bf69ab084ecbc34071c934dd5..d566ecd30dd8abeee2a81a999d3721ff49512641 100644
+--- a/client/src/pages/prontuario.tsx
++++ b/client/src/pages/prontuario.tsx
+@@ -635,76 +635,78 @@ export default function ProntuarioPage() {
+     });
+ 
+   return (
+-    <div className="min-h-screen bg-gradient-to-br from-violet-50/60 via-purple-50/30 to-background dark:from-violet-950/20 dark:via-purple-950/10 dark:to-background pb-16">
++    <div className="min-h-screen bg-gradient-to-br from-violet-50/60 via-purple-50/30 to-background pb-8 dark:from-violet-950/20 dark:via-purple-950/10 dark:to-background lg:pb-16" data-testid="prontuario-shell">
+       {/* ── page header ── */}
+-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3 shadow-sm">
+-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+-          <div className="flex items-center gap-3">
+-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md">
+-              <ClipboardList className="w-5 h-5 text-white" strokeWidth={1.75} />
++      <div className="sticky top-14 z-20 border-b border-border bg-background/95 px-3 py-2.5 shadow-sm backdrop-blur lg:top-0 sm:px-4 sm:py-3" data-testid="prontuario-header">
++        <div className="mx-auto flex max-w-4xl items-center justify-between gap-2.5">
++          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
++            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 shadow-md sm:h-11 sm:w-11">
++              <ClipboardList className="h-5 w-5 text-white" strokeWidth={1.75} />
+             </div>
+-            <div>
++            <div className="min-w-0">
+               <h1
