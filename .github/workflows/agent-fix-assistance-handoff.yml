@@ -44,14 +44,6 @@ jobs:
                   raise SystemExit(f"{path}: expected one replacement target, found {count}")
               file.write_text(updated, encoding="utf-8")
 
-          def replace_once(path: str, before: str, after: str) -> None:
-              file = Path(path)
-              text = file.read_text(encoding="utf-8")
-              count = text.count(before)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected one literal target, found {count}")
-              file.write_text(text.replace(before, after, 1), encoding="utf-8")
-
           sub_once(
               "client/src/App.tsx",
               r'import \{ FloatingHelp \} from "@/components/FloatingHelp";\n',
@@ -120,7 +112,7 @@ jobs:
           sub_once(
               "tests/unit/assistance-surface-static.test.mjs",
               r'assert\.match\(\n  app,\n  /<PreferencesPanel \\/>/,\n  "o receptor de preferências deve permanecer montado no aplicativo",\n\);',
-              '''assert.match(
+              r'''assert.match(
             app,
             /<PreferencesPanel \/>[\s\S]*<WelcomeTour \/>[\s\S]*<FloatingHelp \/>/,
             "ajuda, preferências e tour devem compartilhar o mesmo host auxiliar",
@@ -132,18 +124,10 @@ jobs:
           );''',
           )
 
-          replace_once(
+          sub_once(
               "tests/unit/flow-os-navigation-static.test.mjs",
-              '''for (const surface of ["CommandPalette", "WelcomeTour"]) {
-            assert.match(
-              app,
-              new RegExp(
-                `auxiliarySurfacesVisible && \\(\\s*<Suspense[\\s\\S]{0,120}<${surface} \\/>`,
-              ),
-              `${surface} não pode competir com o aviso legal nem com o onboarding`,
-            );
-          }''',
-              '''assert.match(
+              r'for \(const surface of \["CommandPalette", "WelcomeTour"\]\) \{[\s\S]*?\n\}',
+              r'''assert.match(
             app,
             /auxiliarySurfacesVisible && \(\s*<Suspense[\s\S]{0,120}<CommandPalette \/>/,
             "CommandPalette não pode competir com o aviso legal nem com o onboarding",
