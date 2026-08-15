@@ -28,50 +28,35 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          def replace_once(path: str, before: str, after: str) -> None:
+          def sub_once(path: str, pattern: str, replacement: str, flags: int = 0) -> None:
               file = Path(path)
               text = file.read_text(encoding="utf-8")
-              count = text.count(before)
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
               if count != 1:
                   raise SystemExit(f"{path}: expected one replacement target, found {count}")
-              file.write_text(text.replace(before, after, 1), encoding="utf-8")
+              file.write_text(updated, encoding="utf-8")
 
-          replace_once(
+          sub_once(
               "client/src/App.tsx",
-              'import { FloatingHelp } from "@/components/FloatingHelp";\n',
+              r'import \{ FloatingHelp \} from "@/components/FloatingHelp";\n',
               'import { FloatingHelp } from "@/components/FloatingHelp";\nimport { PreferencesPanel } from "@/components/PreferencesPanel";\nimport { WelcomeTour } from "@/components/WelcomeTour";\n',
           )
-          replace_once(
+          sub_once(
               "client/src/App.tsx",
-              '''const PreferencesPanel = lazy(() =>
-            import("@/components/PreferencesPanel").then(({ PreferencesPanel }) => ({
-              default: PreferencesPanel,
-            })),
-          );
-          
-          ''',
+              r'const PreferencesPanel = lazy\(\(\) =>\n\s*import\("@/components/PreferencesPanel"\)\.then\(\(\{ PreferencesPanel \}\) => \(\{\n\s*default: PreferencesPanel,\n\s*\}\)\),\n\);\n\n',
               '',
           )
-          replace_once(
+          sub_once(
               "client/src/App.tsx",
-              '''const WelcomeTour = lazy(() =>
-            import("@/components/WelcomeTour").then((mod) => ({
-              default: mod.WelcomeTour,
-            })),
-          );
-          ''',
+              r'const WelcomeTour = lazy\(\(\) =>\n\s*import\("@/components/WelcomeTour"\)\.then\(\(mod\) => \(\{\n\s*default: mod\.WelcomeTour,\n\s*\}\)\),\n\);\n',
               '',
           )
 
-          replace_once(
+          sub_once(
               "client/src/components/FloatingHelp.tsx",
-              '''  function openAuxiliarySurface(eventName: string) {
-            setOpen(false);
-            window.requestAnimationFrame(() => {
-              window.dispatchEvent(new Event(eventName));
-            });
-          }''',
+              r'  function openAuxiliarySurface\(eventName: string\) \{\n\s*setOpen\(false\);\n\s*window\.requestAnimationFrame\(\(\) => \{\n\s*window\.dispatchEvent\(new Event\(eventName\)\);\n\s*\}\);\n\s*\}',
               '''  function openAuxiliarySurface(eventName: string) {
             setOpen(false);
             // Aguarda a animação de saída do Dialog (200 ms) antes de montar a
@@ -82,18 +67,9 @@ jobs:
           }''',
           )
 
-          replace_once(
+          sub_once(
               "scripts/audit-assistance-states.mjs",
-              '''      const visible = (element) => {
-            if (!(element instanceof HTMLElement)) return false;
-            const style = getComputedStyle(element);
-            const box = element.getBoundingClientRect();
-            return style.display !== "none"
-              && style.visibility !== "hidden"
-              && Number(style.opacity) !== 0
-              && box.width > 0
-              && box.height > 0;
-          };''',
+              r'      const visible = \(element\) => \{\n\s*if \(!\(element instanceof HTMLElement\)\) return false;\n\s*const style = getComputedStyle\(element\);\n\s*const box = element\.getBoundingClientRect\(\);\n\s*return style\.display !== "none"\n\s*&& style\.visibility !== "hidden"\n\s*&& Number\(style\.opacity\) !== 0\n\s*&& box\.width > 0\n\s*&& box\.height > 0;\n\s*\};',
               '''      const visible = (element) => {
             if (!(element instanceof HTMLElement)) return false;
             if (
