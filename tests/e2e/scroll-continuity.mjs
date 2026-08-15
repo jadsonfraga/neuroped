@@ -608,9 +608,10 @@ async function proveDialogOwnership() {
   const { context, page } = await openFilter(834);
   const session = await context.newCDPSession(page);
   try {
-    const trigger = page.getByTestId("button-command-palette");
-    await trigger.waitFor({ state: "visible", timeout: 5000 });
-    await trigger.click();
+    // Em 834 px o shell é compacto e a sidebar permanece em drawer fechado.
+    // Abre a mesma paleta pelo contrato global, sem depender de um gatilho
+    // visual deliberadamente fora do viewport.
+    await page.keyboard.press("Control+K");
     const dialog = page
       .locator('[role="dialog"]')
       .filter({ has: page.locator("[cmdk-root]") });
