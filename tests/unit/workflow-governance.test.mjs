@@ -118,6 +118,11 @@ assert.match(
   /remote_sha="\$\(git ls-remote origin "refs\/heads\/\$branch"/,
   "uma branch de revisão já existente deve ser detectada antes de qualquer sobrescrita",
 );
+assert.ok(
+  dailyInventory.indexOf("git add client/src/data/daily-authorial") <
+    dailyInventory.indexOf('if [ -n "$remote_sha" ]; then'),
+  "conteúdo já incorporado à main deve encerrar idempotentemente antes de classificar branch antiga como pendência",
+);
 assert.match(
   dailyInventory,
   /branch_preserved_pending_pr/,
