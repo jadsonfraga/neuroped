@@ -14,7 +14,7 @@ jobs:
   fix-assistance-handoff:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout branch
         uses: actions/checkout@v7
@@ -90,9 +90,13 @@ jobs:
           )
           PY
 
-      - name: Validate assistance contracts
+      - name: Install dependencies and real Chromium
         run: |
           npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Validate assistance contracts
+        run: |
           git diff --check
           node tests/unit/flow-os-navigation-static.test.mjs
           node tests/unit/assistance-surface-static.test.mjs
