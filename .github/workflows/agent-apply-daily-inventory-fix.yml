@@ -1,0 +1,109 @@
+name: Agent apply daily inventory token fallback
+
+on:
+  push:
+    branches:
+      - agent/fix-daily-inventory-token-fallback
+    paths:
+      - ".github/workflows/agent-apply-daily-inventory-fix.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-fix-daily-inventory-token-fallback
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout correction branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/fix-daily-inventory-token-fallback
+          fetch-depth: 0
+
+      - name: Remove false token blocker and add regression contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          workflow_path = Path('.github/workflows/daily-authorial-inventory.yml')
+          workflow = workflow_path.read_text(encoding='utf-8')
+          old = '''      - name: Publicar branch de revisão e abrir PR draft
+                id: publish
+                env:
+                  AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+                run: |
+                  set -euo pipefail
+                  [ -n "${AUTOMATION_TOKEN:-}" ] || {
+                    echo "::error::NEUROPED_AUTOMATION_TOKEN é obrigatório para versionar o rascunho em PR sem bypass da main."
+                    exit 1
+                  }
+                  export GH_TOKEN="$AUTOMATION_TOKEN"
+                  branch="automation/daily-authorial-${NEUROPED_GENERATION_DATE}"
+          '''
+          new = '''      - name: Publicar branch de revisão e abrir PR draft
+                id: publish
+                env:
+                  GH_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN || github.token }}
+                  DEDICATED_AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+                run: |
+                  set -euo pipefail
+                  if [ -z "${DEDICATED_AUTOMATION_TOKEN:-}" ]; then
+                    echo "::warning::NEUROPED_AUTOMATION_TOKEN ausente; usando github.token para preservar o rascunho em branch e PR draft. A catraca npm run verify já foi executada no mesmo conteúdo."
+                  fi
+                  unset DEDICATED_AUTOMATION_TOKEN
+                  branch="automation/daily-authorial-${NEUROPED_GENERATION_DATE}"
+          '''
+          if workflow.count(old) != 1:
+              raise SystemExit('Bloco de publicação esperado não encontrado exatamente uma vez.')
+          workflow_path.write_text(workflow.replace(old, new), encoding='utf-8')
+
+          test_path = Path('tests/unit/workflow-governance.test.mjs')
+          test = test_path.read_text(encoding='utf-8')
+          marker = '''assert.match(
+            dailyInventory,
+            /npm run verify/,
+            "a automação diária deve passar pelo gate completo antes de gravar na main",
+          );
+          '''
+          addition = marker + '''assert.match(
+            dailyInventory,
+            /GH_TOKEN: \\$\\{\\{ secrets\\.NEUROPED_AUTOMATION_TOKEN \\|\\| github\\.token \\}\\}/,
+            "a automação diária deve usar github.token como fallback seguro quando o token dedicado estiver ausente",
+          );
+          assert.doesNotMatch(
+            dailyInventory,
+            /NEUROPED_AUTOMATION_TOKEN é obrigatório/,
+            "a ausência do token dedicado não pode invalidar um artefato já gerado, auditado e preservado em PR draft",
+          );
+          assert.match(
+            dailyInventory,
+            /git push origin "HEAD:refs\\/heads\\/\\$branch"/,
+            "o fallback deve continuar publicando somente uma branch de revisão, nunca a main",
+          );
+          '''
+          if test.count(marker) != 1:
+              raise SystemExit('Ponto de inserção do contrato não encontrado exatamente uma vez.')
+          test_path.write_text(test.replace(marker, addition), encoding='utf-8')
+          PY
+
+          node tests/unit/workflow-governance.test.mjs
+          git diff --check
+
+      - name: Commit focused correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/agent-apply-daily-inventory-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/daily-authorial-inventory.yml tests/unit/workflow-governance.test.mjs .github/workflows/agent-apply-daily-inventory-fix.yml
+          git commit -m "fix(ci): preserve daily review without custom token"
+          git push origin HEAD:agent/fix-daily-inventory-token-fallback
