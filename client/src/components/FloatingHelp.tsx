@@ -43,7 +43,7 @@ export function FloatingHelp() {
           <HelpCircle className="h-5 w-5" aria-hidden="true" />
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-md rounded-2xl">
+      <DialogContent className="max-w-md rounded-2xl" data-testid="help-dialog">
         <DialogHeader>
           <DialogTitle>Ajuda rápida do NeuroPed</DialogTitle>
           <DialogDescription>
@@ -87,7 +87,7 @@ export function FloatingHelp() {
             <Button
               type="button"
               onClick={() => openAuxiliarySurface(OPEN_TOUR_EVENT)}
-              className="w-full gap-2"
+              className="min-h-11 w-full gap-2"
               data-testid="button-start-tour"
             >
               <Compass className="h-4 w-4" aria-hidden="true" />
@@ -97,13 +97,13 @@ export function FloatingHelp() {
               type="button"
               variant="outline"
               onClick={() => openAuxiliarySurface(OPEN_PREFERENCES_EVENT)}
-              className="w-full gap-2"
+              className="min-h-11 w-full gap-2"
               data-testid="button-open-preferences"
             >
               <Settings className="h-4 w-4" aria-hidden="true" />
               Preferências
             </Button>
-            <Button asChild variant="outline" className="w-full sm:col-span-2">
+            <Button asChild variant="outline" className="min-h-11 w-full sm:col-span-2">
               <Link href="/ajuda" onClick={() => setOpen(false)}>Abrir central de ajuda</Link>
             </Button>
           </div>
