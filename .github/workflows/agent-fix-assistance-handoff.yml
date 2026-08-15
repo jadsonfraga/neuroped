@@ -53,14 +53,28 @@ jobs:
               r'const WelcomeTour = lazy\(\(\) =>\n\s*import\("@/components/WelcomeTour"\)\.then\(\(mod\) => \(\{\n\s*default: mod\.WelcomeTour,\n\s*\}\)\),\n\);\n',
               '',
           )
+          sub_once(
+              "client/src/App.tsx",
+              r'\s*\{auxiliarySurfacesVisible && \(\n\s*<Suspense fallback=\{null\}>\n\s*<WelcomeTour />\n\s*</Suspense>\n\s*\)\}\n',
+              '\n',
+          )
+          sub_once(
+              "client/src/App.tsx",
+              r'\s*<InstallPrompt />\n\s*<Suspense fallback=\{null\}>\n\s*<PreferencesPanel />\n\s*</Suspense>\n\s*<FloatingHelp />',
+              '''
+                    <InstallPrompt />
+                    <PreferencesPanel />
+                    <WelcomeTour />
+                    <FloatingHelp />''',
+          )
 
           sub_once(
               "client/src/components/FloatingHelp.tsx",
               r'  function openAuxiliarySurface\(eventName: string\) \{\n\s*setOpen\(false\);\n\s*window\.requestAnimationFrame\(\(\) => \{\n\s*window\.dispatchEvent\(new Event\(eventName\)\);\n\s*\}\);\n\s*\}',
               '''  function openAuxiliarySurface(eventName: string) {
             setOpen(false);
-            // Aguarda a animação de saída do Dialog (200 ms) antes de montar a
-            // próxima superfície. Evita duas camadas modais e conflito de foco.
+            // Aguarda a animação de saída do Dialog antes de montar a próxima
+            // superfície. Assim só existe um modal e um dono de foco por vez.
             window.setTimeout(() => {
               window.dispatchEvent(new Event(eventName));
             }, 220);
@@ -88,6 +102,21 @@ jobs:
               && box.top < innerHeight;
           };''',
           )
+
+          sub_once(
+              "tests/unit/assistance-surface-static.test.mjs",
+              r'assert\.match\(\n  app,\n  /<PreferencesPanel \\/>/,\n  "o receptor de preferências deve permanecer montado no aplicativo",\n\);',
+              '''assert.match(
+            app,
+            /<PreferencesPanel \/>[\s\S]*<WelcomeTour \/>[\s\S]*<FloatingHelp \/>/,
+            "ajuda, preferências e tour devem compartilhar o mesmo host auxiliar",
+          );
+          assert.doesNotMatch(
+            app,
+            /<PrivateGate>[\s\S]*<WelcomeTour \/>[\s\S]*<\/PrivateGate>/,
+            "o tour não pode depender do ciclo de vida do gate clínico",
+          );''',
+          )
           PY
 
       - name: Install dependencies and real Chromium
@@ -110,6 +139,6 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client/src/App.tsx client/src/components/FloatingHelp.tsx scripts/audit-assistance-states.mjs
+          git add client/src/App.tsx client/src/components/FloatingHelp.tsx scripts/audit-assistance-states.mjs tests/unit/assistance-surface-static.test.mjs
           git commit -m "fix: serialize assistance surfaces"
           git push origin HEAD:agent/visual-9-9-gates-green
