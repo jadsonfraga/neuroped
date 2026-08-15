@@ -104,6 +104,7 @@ export function WelcomeTour() {
   const [idx, setIdx] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const recompute = useCallback((stepIdx: number) => {
     setRect(visibleRect(STEPS[stepIdx]?.target));
@@ -112,18 +113,50 @@ export function WelcomeTour() {
   useEffect(() => {
     if (!open) return;
     recompute(idx);
-    cardRef.current?.focus();
+    const focusFrame = window.requestAnimationFrame(() => cardRef.current?.focus());
+
     function onResize() {
       recompute(idx);
     }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") finish();
-      else if (e.key === "ArrowRight") next();
-      else if (e.key === "ArrowLeft") prev();
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        finish();
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        next();
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        prev();
+        return;
+      }
+      if (event.key !== "Tab" || !cardRef.current) return;
+
+      const focusable = [...cardRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )].filter((element) => element.getClientRects().length > 0);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === cardRef.current)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
+
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKey);
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
     };
@@ -132,6 +165,9 @@ export function WelcomeTour() {
 
   const start = useCallback(() => {
     softTap();
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     setIdx(0);
     setOpen(true);
   }, []);
@@ -147,6 +183,9 @@ export function WelcomeTour() {
     try {
       localStorage.setItem(DONE_KEY, "1");
     } catch { /* storage indisponivel — silencioso */ }
+    const returnTarget = previousFocusRef.current
+      ?? document.querySelector<HTMLElement>('[data-testid="button-floating-help"]');
+    window.requestAnimationFrame(() => returnTarget?.focus());
   }
 
   function next() {
@@ -170,8 +209,8 @@ export function WelcomeTour() {
     ? {
         left: Math.min(Math.max(14, rect.left), Math.max(14, window.innerWidth - 358)),
         top:
-          rect.top + rect.height + 220 > window.innerHeight
-            ? Math.max(14, rect.top - 212)
+          rect.top + rect.height + 240 > window.innerHeight
+            ? Math.max(14, rect.top - 232)
             : rect.top + rect.height + 12,
       }
     : { left: "50%", top: "50%", transform: "translate(-50%, -50%)" };
@@ -179,13 +218,24 @@ export function WelcomeTour() {
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-[99998]" role="dialog" aria-modal="true" aria-label="Tour guiado">
-          <div className="absolute inset-0 bg-[rgba(8,8,20,0.55)] backdrop-blur-[2px]" onClick={finish} />
+        <div
+          className="fixed inset-0 z-[99998]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tour-step-title"
+          aria-describedby="tour-step-body"
+          aria-label="Tour guiado"
+        >
+          <div
+            className="absolute inset-0 bg-[rgba(8,8,20,0.55)] backdrop-blur-[2px]"
+            onClick={finish}
+            aria-hidden="true"
+          />
 
           {rect && (
             <div
               aria-hidden="true"
-              className="absolute rounded-2xl pointer-events-none transition-all duration-300"
+              className="pointer-events-none absolute rounded-2xl transition-all duration-300"
               style={{
                 left: rect.left - 6,
                 top: rect.top - 6,
@@ -200,22 +250,27 @@ export function WelcomeTour() {
           <div
             ref={cardRef}
             tabIndex={-1}
-            className="absolute z-[100000] w-[min(344px,calc(100vw-36px))] rounded-2xl border border-indigo-400/40 bg-gradient-to-b from-[#15152a] to-[#101022] p-5 text-indigo-50 shadow-2xl outline-none transition-[left,top] duration-300"
+            className="absolute z-[100000] w-[min(344px,calc(100vw-36px))] rounded-2xl border border-indigo-400/40 bg-gradient-to-b from-[#15152a] to-[#101022] p-5 pr-12 text-indigo-50 shadow-2xl outline-none transition-[left,top] duration-300"
             style={cardStyle}
           >
             <button
+              type="button"
               onClick={finish}
               aria-label="Fechar o tour"
-              className="absolute right-2.5 top-2.5 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-indigo-100 hover:bg-white/20"
+              className="absolute right-1.5 top-1.5 grid h-11 w-11 place-items-center rounded-xl bg-white/10 text-indigo-100 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
 
-            {step.emoji && <div className="text-3xl leading-none mb-2">{step.emoji}</div>}
-            <h3 className="text-lg font-bold text-white tracking-tight mb-1.5">{step.title}</h3>
-            <p className="text-sm leading-relaxed text-indigo-100/80 mb-4">{step.body}</p>
+            {step.emoji && <div className="mb-2 text-3xl leading-none">{step.emoji}</div>}
+            <h3 id="tour-step-title" className="mb-1.5 text-lg font-bold tracking-tight text-white">
+              {step.title}
+            </h3>
+            <p id="tour-step-body" className="mb-4 text-sm leading-relaxed text-indigo-100/80">
+              {step.body}
+            </p>
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex gap-1.5" aria-hidden="true">
                 {STEPS.map((_, d) => (
                   <span
@@ -226,27 +281,30 @@ export function WelcomeTour() {
                   />
                 ))}
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-end gap-1.5">
                 {idx > 0 && (
                   <button
+                    type="button"
                     onClick={prev}
-                    className="flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-indigo-50 hover:bg-white/20"
+                    className="flex min-h-11 items-center gap-1 rounded-xl bg-white/10 px-3 text-xs font-bold text-indigo-50 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" /> Anterior
+                    <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" /> Anterior
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={finish}
-                  className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-indigo-200/70 hover:text-indigo-100"
+                  className="min-h-11 rounded-xl px-3 text-xs font-bold text-indigo-200/80 transition-colors hover:bg-white/10 hover:text-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
                 >
                   Pular
                 </button>
                 <button
+                  type="button"
                   onClick={next}
-                  className="flex items-center gap-1 rounded-lg bg-gradient-to-b from-indigo-500 to-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-[0_8px_28px_rgba(99,102,241,0.45),0_2px_8px_rgba(0,0,0,0.25)]"
+                  className="flex min-h-11 items-center gap-1 rounded-xl bg-gradient-to-b from-indigo-500 to-violet-600 px-3 text-xs font-bold text-white shadow-[0_8px_28px_rgba(99,102,241,0.45),0_2px_8px_rgba(0,0,0,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
                 >
                   {idx === STEPS.length - 1 ? "Concluir" : "Próximo"}
-                  {idx < STEPS.length - 1 && <ChevronRight className="w-3.5 h-3.5" />}
+                  {idx < STEPS.length - 1 && <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />}
                 </button>
               </div>
             </div>
