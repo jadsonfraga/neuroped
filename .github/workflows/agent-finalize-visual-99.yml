@@ -1,0 +1,224 @@
+name: Agent finalize visual 9.9
+
+on:
+  push:
+    branches:
+      - agent/visual-floor-9-9
+    paths:
+      - ".github/workflows/agent-finalize-visual-99.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-finalize-visual-99
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout visual branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/visual-floor-9-9
+          fetch-depth: 0
+
+      - name: Apply restrained brand signature
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          for pattern in (
+              '.github/agent/visual-floor-9-9*.part*',
+              '.github/agent/visual-floor-9-9*.b64*',
+          ):
+              for item in root.glob(pattern):
+                  item.unlink(missing_ok=True)
+
+          css_path = root / 'client/src/styles/brand-motion-99.css'
+          css_path.write_text('''/* NeuroPed — assinatura de marca 9.9
+           * Movimento curto, sem loop e sem interferência clínica. */
+          .np-brand-symbol {
+            transform-box: fill-box;
+            transform-origin: center;
+            will-change: transform, filter;
+            animation: np-brand-arrival 680ms cubic-bezier(.2,.8,.2,1) both;
+            transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
+          }
+
+          :is(a, button):hover .np-brand-symbol,
+          :is(a, button):focus-visible .np-brand-symbol,
+          .np-brand-symbol:hover {
+            transform: translateY(-1px) scale(1.035);
+            filter: drop-shadow(0 5px 11px hsl(var(--primary) / .2));
+          }
+
+          @keyframes np-brand-arrival {
+            0% { opacity: 0; transform: translateY(3px) scale(.94); filter: blur(1.5px); }
+            62% { opacity: 1; transform: translateY(-1px) scale(1.025); filter: blur(0); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: none; }
+          }
+
+          #main-content :where(h1, h2) { text-wrap: balance; }
+          #main-content :where(p, li, dd, td, th) { overflow-wrap: anywhere; }
+          #main-content :where(section, article, [role="region"]) { scroll-margin-top: 5.5rem; }
+
+          :where([role="dialog"], [data-radix-dialog-content]) {
+            max-height: min(90dvh, 56rem);
+            overscroll-behavior: contain;
+          }
+
+          :where(button, a[href], input, textarea, select, [role="button"], [role="tab"]):focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+          }
+
+          @media (max-width: 1023px) {
+            #main-content { min-width: 0; }
+            #main-content :where(.overflow-x-auto, [data-horizontal-scroll]) {
+              overscroll-behavior-inline: contain;
+              -webkit-overflow-scrolling: touch;
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .np-brand-symbol {
+              animation: none !important;
+              transition: none !important;
+              transform: none !important;
+              filter: none !important;
+            }
+          }
+
+          @media print {
+            .np-brand-symbol { animation: none !important; filter: none !important; }
+          }
+          ''', encoding='utf-8')
+
+          main_path = root / 'client/src/main.tsx'
+          main = main_path.read_text(encoding='utf-8')
+          import_line = 'import "./styles/brand-motion-99.css";'
+          if import_line not in main:
+              imports = list(re.finditer(r'^import\s+["\'][^"\']+\.css["\'];\s*$', main, re.M))
+              if imports:
+                  pos = imports[-1].end()
+                  main = main[:pos] + '\n' + import_line + main[pos:]
+              else:
+                  main = import_line + '\n' + main
+              main_path.write_text(main, encoding='utf-8')
+
+          layout_path = root / 'client/src/components/Layout.tsx'
+          layout = layout_path.read_text(encoding='utf-8')
+          layout = re.sub(
+              r'<Brain\s+className="(?![^"]*np-brand-symbol)([^"]*)"',
+              r'<Brain className="np-brand-symbol \1"',
+              layout,
+          )
+          layout = re.sub(
+              r'<Brain\s+className=\{`(?![^`]*np-brand-symbol)([^`]*)`\}',
+              r'<Brain className={`np-brand-symbol \1`}',
+              layout,
+          )
+          layout_path.write_text(layout, encoding='utf-8')
+
+          pref_path = root / 'client/src/components/PreferencesPanel.tsx'
+          if pref_path.exists():
+              pref = pref_path.read_text(encoding='utf-8')
+              pref = pref.replace(
+                  'className="fixed bottom-16 left-4 z-50 w-72 rounded-2xl shadow-2xl overflow-hidden"',
+                  'className="fixed inset-x-4 bottom-4 z-50 max-w-sm overflow-hidden rounded-2xl shadow-2xl sm:inset-x-auto sm:bottom-16 sm:left-4 sm:w-72"',
+              )
+              pref = pref.replace(
+                  'className="fixed bottom-16 left-4 z-50 w-72 overflow-hidden rounded-2xl shadow-2xl"',
+                  'className="fixed inset-x-4 bottom-4 z-50 max-w-sm overflow-hidden rounded-2xl shadow-2xl sm:inset-x-auto sm:bottom-16 sm:left-4 sm:w-72"',
+              )
+              if 'data-testid="preferences-panel"' not in pref:
+                  pref = re.sub(
+                      r'(className="fixed inset-x-4 bottom-4 z-50[^\n]+"\s*\n\s*style=\{\{[\s\S]*?\}\})',
+                      r'\1\n              role="dialog"\n              aria-modal="true"\n              aria-labelledby="preferences-title"\n              data-testid="preferences-panel"',
+                      pref,
+                      count=1,
+                  )
+              pref = pref.replace(
+                  '<h3 className="text-sm font-semibold">Preferências</h3>',
+                  '<h3 id="preferences-title" className="text-sm font-semibold">Preferências</h3>',
+              )
+              pref = pref.replace('aria-label="Fechar"', 'aria-label="Fechar preferências"')
+              pref_path.write_text(pref, encoding='utf-8')
+
+          test_path = root / 'tests/unit/brand-motion-99-static.test.mjs'
+          test_path.write_text('''import assert from "node:assert/strict";
+          import fs from "node:fs";
+
+          const css = fs.readFileSync("client/src/styles/brand-motion-99.css", "utf8");
+          const main = fs.readFileSync("client/src/main.tsx", "utf8");
+          const layout = fs.readFileSync("client/src/components/Layout.tsx", "utf8");
+
+          assert.match(main, /brand-motion-99\\.css/, "camada final deve ser importada");
+          assert.match(layout, /np-brand-symbol/, "símbolo institucional deve receber a assinatura");
+          assert.match(css, /animation:\\s*np-brand-arrival\\s+680ms[^;]*both/, "animação deve executar uma vez");
+          assert.doesNotMatch(css, /np-brand-arrival[^;\\n]*infinite/, "símbolo não pode pulsar indefinidamente");
+          assert.match(css, /prefers-reduced-motion:\\s*reduce/, "movimento reduzido deve ser respeitado");
+          assert.match(css, /@media print/, "impressão deve permanecer estática");
+
+          console.log("[brand-motion-99] ✓ símbolo sutil, finito e acessível.");
+          ''', encoding='utf-8')
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Static visual contracts
+        run: |
+          node tests/unit/brand-motion-99-static.test.mjs
+          node tests/unit/visual-reset-static.test.mjs
+          node tests/unit/premium-polish-10-static.test.mjs
+          node tests/unit/flow-os-navigation-static.test.mjs
+
+      - name: TypeScript, lint and client build
+        run: |
+          npm run check
+          npm run lint
+          npm run build:client
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser quality gates
+        env:
+          A11Y_FULL: "1"
+        run: |
+          npm run audit:a11y
+          npm run audit:design
+          npm run audit:lighthouse
+          node scripts/audit-visual-proof.mjs
+
+      - name: Commit verified source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A .github/agent || true
+          git add client/src/styles/brand-motion-99.css \
+                  client/src/main.tsx \
+                  client/src/components/Layout.tsx \
+                  client/src/components/PreferencesPanel.tsx \
+                  tests/unit/brand-motion-99-static.test.mjs
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: finalize restrained visual signature and 9.9 guardrails"
+          git push origin HEAD:agent/visual-floor-9-9
