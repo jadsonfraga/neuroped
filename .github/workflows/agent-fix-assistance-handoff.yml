@@ -23,7 +23,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply deterministic assistance patch
-        run: python3 .github/agent/apply-assistance-direct.py
+        run: |
+          python3 .github/agent/apply-assistance-direct.py
+          python3 .github/agent/patch-floating-help-contract.py
 
       - name: Install dependencies and Chromium
         run: |
