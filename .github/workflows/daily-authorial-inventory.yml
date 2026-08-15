@@ -336,17 +336,17 @@ jobs:
             exit 0
           fi
 
-          if [ -n "$remote_sha" ]; then
-            review_issue="$(register_pending_review "$remote_sha" "A branch já existia sem PR; o conteúdo foi preservado sem sobrescrever revisão anterior.")"
-            write_outputs false "$remote_sha" "" branch_preserved_pending_pr "$review_issue"
-            echo "Branch $branch preservada no commit $remote_sha; revisão rastreada na issue #$review_issue."
-            exit 0
-          fi
-
           git add client/src/data/daily-authorial
           if git diff --cached --quiet; then
             write_outputs false "$(git rev-parse HEAD)" "" already_in_main ""
             echo "Inventário já está na main; execução idempotente concluída."
+            exit 0
+          fi
+
+          if [ -n "$remote_sha" ]; then
+            review_issue="$(register_pending_review "$remote_sha" "A branch já existia sem PR; o conteúdo foi preservado sem sobrescrever revisão anterior.")"
+            write_outputs false "$remote_sha" "" branch_preserved_pending_pr "$review_issue"
+            echo "Branch $branch preservada no commit $remote_sha; revisão rastreada na issue #$review_issue."
             exit 0
           fi
 
