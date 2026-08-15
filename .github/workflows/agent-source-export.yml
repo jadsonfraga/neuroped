@@ -34,8 +34,8 @@ jobs:
               .github/agent/visual-floor-9-9.patch.part02 \
               .github/agent/visual-floor-9-9.patch.part03 \
               > /tmp/visual-floor-9-9.patch
-          git apply --check /tmp/visual-floor-9-9.patch
-          git apply /tmp/visual-floor-9-9.patch
+          git apply --check --exclude=.github/workflows/visual-reset.yml /tmp/visual-floor-9-9.patch
+          git apply --exclude=.github/workflows/visual-reset.yml /tmp/visual-floor-9-9.patch
           rm -f .github/agent/visual-floor-9-9.patch.part00 \
                 .github/agent/visual-floor-9-9.patch.part01 \
                 .github/agent/visual-floor-9-9.patch.part02 \
