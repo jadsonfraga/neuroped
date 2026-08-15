@@ -64,7 +64,7 @@ export function Mascote({
           aria-hidden="true"
         >
           <span className="absolute left-[9%] top-[28%] h-2 w-2 rounded-full bg-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.28)]" />
-          <span className="absolute bottom-[18%] right-[6%] h-1.5 w-1.5 rounded-full bg-chart-2/40 shadow-[0_0_10px_hsl(var(--chart-2)/0.25)]" />
+          <span className="absolute bottom-[18%] right-[6%] h-1.5 w-1.5 rounded-full bg-[hsl(var(--np-brand-gold)/0.55)] shadow-[0_0_10px_hsl(var(--np-brand-gold)/0.3)]" />
         </motion.div>
         <img
           src="/dr-jadson-mascot-guide.webp"
@@ -83,7 +83,7 @@ export function Mascote({
             aria-hidden="true"
           />
           <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-primary/[0.065] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.11em] text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-chart-3" aria-hidden="true" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--np-brand-gold))]" aria-hidden="true" />
             Dr. Jadson · guia do NeuroPed
           </span>
           <span className="block">{message}</span>
