@@ -608,7 +608,11 @@ async function proveDialogOwnership() {
   const { context, page } = await openFilter(834);
   const session = await context.newCDPSession(page);
   try {
-    const trigger = page.getByTestId("button-command-palette");
+    const compactTrigger = page.getByTestId("button-command-palette-mobile");
+    const desktopTrigger = page.getByTestId("button-command-palette");
+    const trigger = (await compactTrigger.isVisible())
+      ? compactTrigger
+      : desktopTrigger;
     await trigger.waitFor({ state: "visible", timeout: 5000 });
     await trigger.click();
     const dialog = page
