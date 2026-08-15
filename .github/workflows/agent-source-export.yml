@@ -1,4 +1,4 @@
-name: Agent apply visual remediation
+name: Agent sync responsive contract
 
 on:
   push:
@@ -11,11 +11,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: agent-visual-floor-apply
+  group: agent-responsive-contract
   cancel-in-progress: false
 
 jobs:
-  apply-patch:
+  sync-contract:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -25,23 +25,40 @@ jobs:
         with:
           ref: agent/visual-floor-9-9
           fetch-depth: 0
-      - name: Assemble and apply audited patch
+      - name: Align the executable breakpoint contract
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/agent/visual-floor-9-9.patch.part00 \
-              .github/agent/visual-floor-9-9.patch.part01 \
-              .github/agent/visual-floor-9-9.patch.part02 \
-              .github/agent/visual-floor-9-9.patch.part03 \
-              > /tmp/visual-floor-9-9.patch
-          git apply --check --exclude=.github/workflows/visual-reset.yml /tmp/visual-floor-9-9.patch
-          git apply --exclude=.github/workflows/visual-reset.yml /tmp/visual-floor-9-9.patch
-          rm -f .github/agent/visual-floor-9-9.patch.part00 \
-                .github/agent/visual-floor-9-9.patch.part01 \
-                .github/agent/visual-floor-9-9.patch.part02 \
-                .github/agent/visual-floor-9-9.patch.part03
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("tests/e2e/responsive-shell-smoke.mjs")
+          text = path.read_text(encoding="utf-8")
+          replacements = [
+              (
+                  'window.matchMedia("(min-width: 768px)").matches === desktop,\n    width >= 768,',
+                  'window.matchMedia("(min-width: 1024px)").matches === desktop,\n    width >= 1024,',
+              ),
+              (
+                  '  // Impressão testada num viewport de CELULAR (o único que ainda usa o shell\n  // mobile depois que a sidebar fixa voltou a valer a partir de 768px).',
+                  '  // Impressão testada em viewport do shell compacto; celular e tablet usam\n  // drawer+dock até 1023px e a impressão não pode herdar esses espaços.',
+              ),
+              (
+                  '  // Contrato 2026-08-12 (pedido do Dr. Jadson): sidebar FIXA a partir de 768px\n  // — iPad retrato (834) e paisagem voltam a ter sidebar; drawer+dock só no\n  // celular (<768px).\n  for (const width of [390, 640, 767]) await verifyTablet(width);\n  for (const width of [768, 834, 1024]) await verifyDesktopBoundary(width);',
+                  '  // Contrato visual 9,9: shell compacto em celular/tablet até 1023px; a\n  // sidebar fixa começa em 1024px. Os dois lados da fronteira são testados.\n  for (const width of [390, 640, 767, 768, 834, 1023]) await verifyTablet(width);\n  for (const width of [1024, 1280]) await verifyDesktopBoundary(width);',
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f"Contrato esperado não encontrado: {old[:90]!r}")
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+          git rm .github/workflows/agent-source-export.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "feat: raise real visual floor across mobile tablet and desktop"
+          git add tests/e2e/responsive-shell-smoke.mjs
+          git commit -m "test: align responsive shell boundary with 1024px contract"
           git push origin HEAD:agent/visual-floor-9-9
