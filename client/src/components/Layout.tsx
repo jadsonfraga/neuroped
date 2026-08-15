@@ -347,20 +347,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: duration.normal, ease: easing.spring }}
-            className="relative w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
-              boxShadow: "0 4px 14px hsl(var(--primary) / 0.3)",
-            }}
+            className="relative w-8 h-8"
           >
-            <img
-              src="/dr-jadson-shield-badge.webp"
-              alt="Dr. Jadson Fraga"
-              width="256"
-              height="256"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
+            <div
+              className="h-full w-full rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
+                boxShadow: "0 4px 14px hsl(var(--primary) / 0.3)",
+              }}
+            >
+              <img
+                src="/dr-jadson-shield-badge.webp"
+                alt="Dr. Jadson Fraga"
+                width="256"
+                height="256"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <span
+              className="absolute -right-1 -bottom-1 flex h-3 w-3 items-center justify-center rounded-md bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-sm ring-1 ring-white/70 dark:ring-black/40"
+              aria-hidden="true"
+            >
+              <Zap className="h-1.5 w-1.5" strokeWidth={3} />
+            </span>
           </motion.div>
           <span
             className="text-base tracking-tight text-sidebar-foreground"
@@ -458,21 +468,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo + close button on mobile */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-          <div
-            className="relative flex-shrink-0 w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
-              boxShadow: "0 4px 14px hsl(var(--primary) / 0.35)",
-            }}
-          >
-            <img
-              src="/dr-jadson-shield-badge.webp"
-              alt="Dr. Jadson Fraga"
-              width="256"
-              height="256"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
+          <div className="relative flex-shrink-0 w-9 h-9">
+            <div
+              className="h-full w-full rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2)))",
+                boxShadow: "0 4px 14px hsl(var(--primary) / 0.35)",
+              }}
+            >
+              <img
+                src="/dr-jadson-shield-badge.webp"
+                alt="Dr. Jadson Fraga"
+                width="256"
+                height="256"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+            </div>
             <span
               className="absolute -right-1 -bottom-1 flex h-3.5 w-3.5 items-center justify-center rounded-md bg-gradient-to-br from-amber-300 to-yellow-600 text-red-950 shadow-sm ring-1 ring-white/70 dark:ring-black/40"
               aria-hidden="true"

@@ -149,7 +149,7 @@ export function PageMascotDecor() {
           initial={reduceMotion ? false : { opacity: 0, x: 14, y: -5, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
           transition={{ duration: 0.46, ease: "easeOut" }}
-          className="np-mascot-nino fixed -right-2 top-[4.65rem] z-20 h-[4.6rem] w-[4.6rem] sm:right-1 sm:h-20 sm:w-20 md:right-2 md:top-16 md:h-24 md:w-24 xl:right-5 xl:h-28 xl:w-28"
+          className="np-mascot-nino fixed -right-1 top-[4.9rem] z-20 h-[4.35rem] w-[4.35rem] sm:right-1 sm:h-20 sm:w-20 md:right-2 md:top-16 md:h-24 md:w-24 xl:right-5 xl:h-28 xl:w-28"
           data-mascot-era="novo"
           data-mascot-id="dr-jadson-guide"
         >
@@ -189,7 +189,7 @@ export function PageMascotDecor() {
             height="160"
             loading="lazy"
             decoding="async"
-            className={`relative h-14 w-14 rounded-[0.9rem] object-cover opacity-[0.8] xl:h-16 xl:w-16 xl:opacity-[0.86] ${legacy.objectPosition ?? "object-center"}`}
+            className={`relative h-16 w-16 rounded-[0.9rem] object-cover opacity-[0.9] xl:h-20 xl:w-20 xl:opacity-[0.95] ${legacy.objectPosition ?? "object-center"}`}
           />
         </div>
       </motion.div>
