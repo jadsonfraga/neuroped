@@ -49,7 +49,7 @@ assert.match(
 );
 assert.doesNotMatch(
   preferencesPanel,
-  /fixed\s+bottom-4\s+left-4|<Settings\b|FAB/,
+  /fixed\s+bottom-4\s+left-4|<Settings\b|data-testid="button-preferences"/,
   "preferências não podem reintroduzir um FAB concorrente",
 );
 assert.doesNotMatch(
