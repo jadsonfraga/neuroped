@@ -1,0 +1,155 @@
+name: Agent expand visual matrix
+
+on:
+  push:
+    branches:
+      - agent/visual-floor-9-9
+    paths:
+      - ".github/workflows/agent-expand-visual-matrix.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-expand-visual-matrix
+  cancel-in-progress: false
+
+jobs:
+  expand-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout visual branch
+        uses: actions/checkout@v7
+        with:
+          ref: agent/visual-floor-9-9
+          fetch-depth: 0
+
+      - name: Expand routes and interaction states
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('scripts/audit-visual-proof.mjs')
+          text = path.read_text(encoding='utf-8')
+          cases = '''const CASES = [
+            { id: "home-mobile-small-light", route: "/", width: 360, height: 800, theme: "light" },
+            { id: "home-mobile-light", route: "/", width: 390, height: 844, theme: "light" },
+            { id: "home-tablet-light", route: "/", width: 820, height: 1180, theme: "light" },
+            { id: "home-desktop-light", route: "/", width: 1440, height: 1000, theme: "light" },
+            { id: "home-desktop-dark", route: "/", width: 1440, height: 1000, theme: "dark" },
+            { id: "home-mobile-help", route: "/", width: 390, height: 844, theme: "light", state: "help" },
+            { id: "home-desktop-tour", route: "/", width: 1440, height: 1000, theme: "light", state: "tour" },
+
+            { id: "filtro-mobile-light", route: "/#/filtro", width: 390, height: 844, theme: "light" },
+            { id: "filtro-tablet-light", route: "/#/filtro", width: 820, height: 1180, theme: "light" },
+            { id: "filtro-desktop-light", route: "/#/filtro", width: 1440, height: 1000, theme: "light" },
+            { id: "filtro-desktop-dark", route: "/#/filtro", width: 1440, height: 1000, theme: "dark" },
+
+            { id: "prontuario-mobile-light", route: "/#/prontuario", width: 390, height: 844, theme: "light" },
+            { id: "prontuario-mobile-medications", route: "/#/prontuario", width: 390, height: 844, theme: "light", state: "medications-tab" },
+            { id: "prontuario-tablet-dark", route: "/#/prontuario", width: 820, height: 1180, theme: "dark" },
+            { id: "prontuario-desktop-light", route: "/#/prontuario", width: 1440, height: 1000, theme: "light" },
+
+            { id: "mchat-mobile-light", route: "/#/mchat", width: 390, height: 844, theme: "light" },
+            { id: "mchat-desktop-light", route: "/#/mchat", width: 1440, height: 1000, theme: "light" },
+
+            { id: "medicamentos-mobile", route: "/#/medicamentos", width: 390, height: 844, theme: "light" },
+            { id: "medicamentos-desktop", route: "/#/medicamentos", width: 1440, height: 1000, theme: "light" },
+            { id: "agenda-mobile", route: "/#/agenda", width: 390, height: 844, theme: "light" },
+            { id: "agenda-desktop", route: "/#/agenda", width: 1440, height: 1000, theme: "light" },
+            { id: "pacientes-mobile", route: "/#/pacientes", width: 390, height: 844, theme: "light" },
+            { id: "pacientes-desktop", route: "/#/pacientes", width: 1440, height: 1000, theme: "light" },
+            { id: "documentos-mobile", route: "/#/documentos", width: 390, height: 844, theme: "light" },
+            { id: "documentos-desktop", route: "/#/documentos", width: 1440, height: 1000, theme: "light" },
+            { id: "laudo-mobile", route: "/#/laudo-neuroped", width: 390, height: 844, theme: "light" },
+            { id: "laudo-desktop", route: "/#/laudo-neuroped", width: 1440, height: 1000, theme: "light" },
+            { id: "receita-mobile", route: "/#/receita-c1", width: 390, height: 844, theme: "light" },
+            { id: "receita-desktop", route: "/#/receita-c1", width: 1440, height: 1000, theme: "light" },
+            { id: "familia-mobile", route: "/#/portal-familia", width: 390, height: 844, theme: "light" },
+            { id: "familia-desktop", route: "/#/portal-familia", width: 1440, height: 1000, theme: "light" },
+            { id: "crescimento-mobile", route: "/#/curvas-crescimento", width: 390, height: 844, theme: "light" },
+            { id: "crescimento-desktop", route: "/#/curvas-crescimento", width: 1440, height: 1000, theme: "light" },
+            { id: "biblioteca-mobile", route: "/#/biblioteca-instrumentos", width: 390, height: 844, theme: "light" },
+            { id: "biblioteca-desktop", route: "/#/biblioteca-instrumentos", width: 1440, height: 1000, theme: "light" },
+            { id: "cognitiva-mobile", route: "/#/avaliacao-cognitiva-infantil", width: 390, height: 844, theme: "light" },
+            { id: "cognitiva-desktop", route: "/#/avaliacao-cognitiva-infantil", width: 1440, height: 1000, theme: "light" },
+            { id: "marcos-mobile", route: "/#/marcos-desenvolvimento", width: 390, height: 844, theme: "light" },
+            { id: "marcos-desktop", route: "/#/marcos-desenvolvimento", width: 1440, height: 1000, theme: "light" },
+            { id: "ajuda-mobile", route: "/#/ajuda", width: 390, height: 844, theme: "light" },
+            { id: "ajuda-desktop-dark", route: "/#/ajuda", width: 1440, height: 1000, theme: "dark" },
+          ];'''
+          text, count = re.subn(r'const CASES = \[[\s\S]*?\n\];', cases, text, count=1)
+          if count != 1:
+              raise SystemExit('CASES block not found exactly once')
+
+          state_block = '''
+              if (testCase.state === "help") {
+                const trigger = page.getByTestId("button-floating-help");
+                if (await trigger.count()) {
+                  await trigger.click();
+                  await page.waitForTimeout(180);
+                }
+              } else if (testCase.state === "tour") {
+                await page.evaluate(() => window.dispatchEvent(new Event("neuroped:open-tour")));
+                await page.waitForTimeout(180);
+              } else if (testCase.state === "medications-tab") {
+                const tab = page.getByRole("tab", { name: /Medica/i });
+                if (await tab.count()) {
+                  await tab.first().click();
+                  await page.waitForTimeout(180);
+                }
+              }
+          '''
+          anchor = '    await page.waitForTimeout(250);\n\n    const audit = await page.evaluate(() => {'
+          if 'testCase.state === "help"' not in text:
+              if anchor not in text:
+                  raise SystemExit('state preparation anchor not found')
+              text = text.replace(anchor, '    await page.waitForTimeout(250);\n' + state_block + '\n    const audit = await page.evaluate(() => {', 1)
+
+          text = text.replace('Captura uma matriz representativa em Chromium real', 'Captura uma matriz ampliada de rotas e estados em Chromium real')
+          path.write_text(text, encoding='utf-8')
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Validate source
+        run: |
+          npm run check
+          npm run lint
+          npm run build:client
+
+      - name: Prove expanded visual floor
+        run: node scripts/audit-visual-proof.mjs
+
+      - name: Publish expanded screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-matrix-expanded-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: artifacts/visual-proof
+
+      - name: Commit matrix only after it passes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/audit-visual-proof.mjs
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test: expand visual floor across clinical archetypes"
+          git push origin HEAD:agent/visual-floor-9-9
