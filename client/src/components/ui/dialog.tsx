@@ -42,8 +42,8 @@ const DialogContent = React.forwardRef<
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-[0.72rem] border border-transparent text-muted-foreground transition-[background-color,color,border-color] hover:border-border/70 hover:bg-muted/65 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring/70 focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
+      <DialogPrimitive.Close className="absolute right-2.5 top-2.5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-[background-color,color,border-color] hover:border-border/70 hover:bg-muted/65 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring/70 focus:ring-offset-2 disabled:pointer-events-none">
+        <X className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">Fechar</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -57,7 +57,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 pr-8 text-center sm:text-left",
+      "flex flex-col space-y-1.5 pr-12 text-center sm:text-left",
       className,
     )}
     {...props}

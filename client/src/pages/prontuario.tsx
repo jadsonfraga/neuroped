@@ -635,76 +635,78 @@ export default function ProntuarioPage() {
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50/60 via-purple-50/30 to-background dark:from-violet-950/20 dark:via-purple-950/10 dark:to-background pb-16">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50/60 via-purple-50/30 to-background pb-8 dark:from-violet-950/20 dark:via-purple-950/10 dark:to-background lg:pb-16" data-testid="prontuario-shell">
       {/* ── page header ── */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md">
-              <ClipboardList className="w-5 h-5 text-white" strokeWidth={1.75} />
+      <div className="sticky top-14 z-20 border-b border-border bg-background/95 px-3 py-2.5 shadow-sm backdrop-blur lg:top-0 sm:px-4 sm:py-3" data-testid="prontuario-header">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-2.5">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 shadow-md sm:h-11 sm:w-11">
+              <ClipboardList className="h-5 w-5 text-white" strokeWidth={1.75} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1
-                className="text-lg text-foreground leading-tight"
+                className="truncate text-base leading-tight text-foreground sm:text-lg"
                 style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
               >
                 Prontuário Clínico
               </h1>
-              <p className="text-xs text-muted-foreground italic">Neuropediatria — sessão local</p>
+              <p className="truncate text-[11px] italic text-muted-foreground sm:text-xs">Neuropediatria — sessão local</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs border-violet-300 text-violet-700 dark:text-violet-300 hidden sm:flex">
-              <Clock className="w-3 h-3 mr-1" />
+          <div className="flex shrink-0 items-center gap-2">
+            <Badge variant="outline" className="hidden border-violet-300 text-xs text-violet-700 dark:text-violet-300 sm:flex">
+              <Clock className="mr-1 h-3 w-3" />
               Sessão temporária
             </Badge>
             <Button
               size="sm"
+              aria-label="Gerar relatório em PDF"
+              data-testid="prontuario-print"
               onClick={() => { softTap(); haptic.tap(); handlePrint(); }}
-              className="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-1.5 shadow-sm btn-glow"
+              className="h-11 gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-700 px-3 text-white shadow-sm hover:from-violet-700 hover:to-purple-800 sm:px-4 btn-glow"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Printer className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Gerar Relatório</span>
-              <span className="sm:hidden">Imprimir</span>
+              <span className="sm:hidden">PDF</span>
             </Button>
           </div>
         </div>
       </div>
 
       {/* ── main content ── */}
-      <div className="max-w-4xl mx-auto px-4 pt-6">
-        <Tabs defaultValue="identificacao" className="space-y-6">
-          <TabsList className="flex flex-wrap gap-1 h-auto p-1.5 bg-muted/80 rounded-xl w-full">
-            <TabsTrigger value="identificacao" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+      <div className="mx-auto max-w-4xl px-3 pt-4 sm:px-4 sm:pt-6">
+        <Tabs defaultValue="identificacao" className="space-y-5 sm:space-y-6">
+          <div className="flex items-center justify-between px-1 sm:hidden" aria-hidden="true">
+            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Etapas do prontuário</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75">Deslize →</span>
+          </div>
+          <TabsList className="np-prontuario-tabs flex h-auto w-full flex-nowrap justify-start gap-1.5 overflow-x-auto rounded-2xl bg-muted/80 p-1.5">
+            <TabsTrigger value="identificacao" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <User className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="hidden sm:inline">Identificação</span>
-              <span className="sm:hidden">ID</span>
+              <span>Identificação</span>
               {idCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{idCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="anamnese" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+            <TabsTrigger value="anamnese" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Anamnese</span>
               {anCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{anCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="marcos" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+            <TabsTrigger value="marcos" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="hidden sm:inline">Marcos</span>
-              <span className="sm:hidden">Dev</span>
+              <span>Marcos</span>
               {mkCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{mkCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="medicacoes" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+            <TabsTrigger value="medicacoes" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <Pill className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="hidden sm:inline">Medicações</span>
-              <span className="sm:hidden">Med</span>
+              <span>Medicações</span>
               {medicacoes.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{medicacoes.length}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="terapias" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+            <TabsTrigger value="terapias" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <Heart className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="hidden sm:inline">Terapias</span>
-              <span className="sm:hidden">Ter</span>
+              <span>Terapias</span>
               {terapias.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{terapias.length}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="exames" className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+            <TabsTrigger value="exames" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <FlaskConical className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Exames</span>
               {exames.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{exames.length}</Badge>}

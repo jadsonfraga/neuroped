@@ -1771,10 +1771,15 @@ export default function FiltroPage() {
             )}
 
             <div className="space-y-1.5 sm:space-y-2">
-              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Idade da criança
-              </p>
-              <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Idade da criança
+                </p>
+                <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75 sm:hidden" aria-hidden="true">
+                  Deslize →
+                </span>
+              </div>
+              <div className="np-horizontal-chips flex gap-1 sm:gap-2 overflow-x-auto pb-1" data-testid="age-band-scroll" aria-label="Faixas etárias; deslize horizontalmente para ver todas">
                 {faixasEtarias.map((age) => (
                   <button
                     key={age.id}

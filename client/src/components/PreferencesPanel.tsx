@@ -1,110 +1,71 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { Volume2, VolumeX, Vibrate, Settings, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { Volume2, VolumeX, Vibrate } from "lucide-react";
 import { useUiPreferences } from "@/hooks/useUiPreferences";
 import { softTap } from "@/lib/softSounds";
-import { haptic } from "@/lib/haptic";
-import { fadeIn, scaleIn, easing, duration } from "@/lib/motion";
+import { easing } from "@/lib/motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const OPEN_PREFERENCES_EVENT = "neuroped:open-preferences";
 
 /**
- * Painel flutuante de preferencias UI/UX (som, vibracao).
- * Discreto, fixed bottom-right, abre com FAB de engrenagem.
+ * Preferências de UI abertas sob demanda pelo centro único de ajuda.
+ * Sem FAB persistente: a superfície não compete com navegação, formulários ou
+ * o dock compacto. O Dialog fornece foco confinado, Escape e retorno de foco.
  */
 export function PreferencesPanel() {
   const [open, setOpen] = useState(false);
   const { soundOn, hapticOn, toggleSound, toggleHaptic } = useUiPreferences();
 
+  useEffect(() => {
+    const openPreferences = () => setOpen(true);
+    window.addEventListener(OPEN_PREFERENCES_EVENT, openPreferences);
+    return () => window.removeEventListener(OPEN_PREFERENCES_EVENT, openPreferences);
+  }, []);
+
   return (
-    <>
-      {/* FAB */}
-      <motion.button
-        initial={{ scale: 0, rotate: -90 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ delay: 1.2, duration: duration.normal, ease: easing.spring }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => {
-          setOpen((s) => !s);
-          softTap();
-          haptic.tap();
-        }}
-        className="fixed bottom-4 left-4 z-40 w-10 h-10 rounded-full shadow-lg flex items-center justify-center print:hidden"
-        style={{
-          background: "hsl(var(--card))",
-          border: "1px solid hsl(var(--border))",
-          color: "hsl(var(--foreground))",
-        }}
-        aria-label="Preferencias de UI"
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent
+        className="max-w-sm overflow-hidden rounded-2xl p-0"
+        data-testid="preferences-panel"
       >
-        <Settings className="w-4 h-4" />
-      </motion.button>
+        <DialogHeader className="border-b border-card-border px-4 py-4 pr-12 text-left">
+          <DialogTitle>Preferências</DialogTitle>
+          <DialogDescription>
+            Ajuste sons discretos e resposta tátil neste dispositivo.
+          </DialogDescription>
+        </DialogHeader>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              variants={fadeIn}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-            />
+        <div className="p-2">
+          <PrefRow
+            icon={soundOn ? Volume2 : VolumeX}
+            label="Sons da interface"
+            description="Toques sutis ao clicar e navegar"
+            on={soundOn}
+            onToggle={toggleSound}
+          />
+          <PrefRow
+            icon={Vibrate}
+            label="Vibração tátil"
+            description="Feedback no celular, quando disponível"
+            on={hapticOn}
+            onToggle={toggleHaptic}
+          />
+        </div>
 
-            {/* Panel */}
-            <motion.div
-              variants={scaleIn}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="fixed bottom-16 left-4 z-50 w-72 rounded-2xl shadow-2xl overflow-hidden"
-              style={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-              }}
-            >
-              <div className="p-4 border-b border-card-border flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Preferências</h3>
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    softTap();
-                  }}
-                  className="text-muted-foreground hover:text-foreground p-1 -mr-1"
-                  aria-label="Fechar"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="p-2">
-                <PrefRow
-                  icon={soundOn ? Volume2 : VolumeX}
-                  label="Sons da interface"
-                  description="Toques sutis ao clicar e navegar"
-                  on={soundOn}
-                  onToggle={toggleSound}
-                />
-                <PrefRow
-                  icon={Vibrate}
-                  label="Vibração tátil"
-                  description="Feedback no celular (se disponível)"
-                  on={hapticOn}
-                  onToggle={toggleHaptic}
-                />
-              </div>
-
-              <div className="p-3 border-t border-card-border">
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Configurações salvas neste dispositivo. Você pode alterá-las a qualquer momento.
-                </p>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+        <div className="border-t border-card-border p-3">
+          <p className="text-[10px] leading-relaxed text-muted-foreground">
+            Configurações salvas neste dispositivo. Você pode alterá-las a qualquer momento.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -123,32 +84,38 @@ function PrefRow({
 }) {
   return (
     <button
-      onClick={onToggle}
-      className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors text-left"
+      type="button"
+      aria-pressed={on}
+      onClick={() => {
+        softTap();
+        onToggle();
+      }}
+      className="flex min-h-14 w-full items-start gap-3 rounded-xl p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
         style={{
           background: on ? "hsl(var(--primary) / 0.15)" : "hsl(var(--muted))",
           color: on ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
         }}
       >
-        <Icon className="w-4 h-4" />
+        <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">{description}</p>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">{description}</p>
       </div>
       <div
-        className="shrink-0 w-9 h-5 rounded-full relative transition-colors"
+        className="relative h-5 w-9 shrink-0 rounded-full transition-colors"
         style={{
           background: on ? "hsl(var(--primary))" : "hsl(var(--muted))",
         }}
+        aria-hidden="true"
       >
         <motion.div
           animate={{ x: on ? 16 : 2 }}
           transition={{ duration: 0.2, ease: easing.smooth }}
-          className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
+          className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm"
         />
       </div>
     </button>

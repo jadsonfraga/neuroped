@@ -89,7 +89,7 @@ const clinicalFlows: ClinicalFlow[] = [
 // Acento sutil por fluxo: fundo tonal + ícone colorido + anel fino. Sem
 // gradientes escuros pesados — leveza e coerência (nível premium).
 const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
-  primary: "bg-rose-500/10 text-rose-600 ring-rose-500/15 dark:text-rose-400",
+  primary: "bg-primary/10 text-primary ring-primary/15",
   gold: "bg-amber-500/10 text-amber-600 ring-amber-500/15 dark:text-amber-400",
   teal: "bg-teal-500/10 text-teal-600 ring-teal-500/15 dark:text-teal-400",
   blue: "bg-blue-500/10 text-blue-600 ring-blue-500/15 dark:text-blue-400",
@@ -288,8 +288,11 @@ export default function HomePage() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Sua jornada</p>
                 <h2 id="fluxos-principais" className="text-2xl font-semibold tracking-[-0.03em] text-foreground">O cuidado começa por aqui</h2>
               </div>
+              <span className="shrink-0 rounded-full border border-border/70 bg-card/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden">
+                Deslize →
+              </span>
             </div>
-            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="np-home-flow-grid grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
               {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
             </div>
           </section>
