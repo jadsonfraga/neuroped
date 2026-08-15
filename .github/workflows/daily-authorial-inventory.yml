@@ -267,14 +267,14 @@ jobs:
       - name: Publicar branch de revisão e abrir PR draft
         id: publish
         env:
-          AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+          GH_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN || github.token }}
+          DEDICATED_AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
         run: |
           set -euo pipefail
-          [ -n "${AUTOMATION_TOKEN:-}" ] || {
-            echo "::error::NEUROPED_AUTOMATION_TOKEN é obrigatório para versionar o rascunho em PR sem bypass da main."
-            exit 1
-          }
-          export GH_TOKEN="$AUTOMATION_TOKEN"
+          if [ -z "${DEDICATED_AUTOMATION_TOKEN:-}" ]; then
+            echo "::warning::NEUROPED_AUTOMATION_TOKEN ausente; usando github.token para preservar o rascunho em branch e PR draft. A catraca npm run verify já foi executada no mesmo conteúdo."
+          fi
+          unset DEDICATED_AUTOMATION_TOKEN
           branch="automation/daily-authorial-${NEUROPED_GENERATION_DATE}"
 
           existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --base main --head "$branch" --json number --jq '.[0].number // empty')"

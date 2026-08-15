@@ -100,6 +100,21 @@ assert.match(
 );
 assert.match(
   dailyInventory,
+  /GH_TOKEN: \$\{\{ secrets\.NEUROPED_AUTOMATION_TOKEN \|\| github\.token \}\}/,
+  "a automação diária deve usar github.token como fallback seguro quando o token dedicado estiver ausente",
+);
+assert.doesNotMatch(
+  dailyInventory,
+  /NEUROPED_AUTOMATION_TOKEN é obrigatório/,
+  "a ausência do token dedicado não pode invalidar um artefato já gerado, auditado e preservado em PR draft",
+);
+assert.match(
+  dailyInventory,
+  /git push origin "HEAD:refs\/heads\/\$branch"/,
+  "o fallback deve continuar publicando somente uma branch de revisão, nunca a main",
+);
+assert.match(
+  dailyInventory,
   /Data inválida[^\n]*calendário|isValidCalendarDate|toISOString\(\)\.slice\(0, 10\)/,
   "a entrada manual deve rejeitar datas inexistentes antes da geração e do fallback",
 );
