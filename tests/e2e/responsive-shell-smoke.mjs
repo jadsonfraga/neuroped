@@ -36,8 +36,8 @@ async function openShell(width) {
   await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
   await page.locator("#main-content").waitFor({ state: "visible", timeout: 15000 });
   await page.waitForFunction(
-    (desktop) => window.matchMedia("(min-width: 768px)").matches === desktop,
-    width >= 768,
+    (desktop) => window.matchMedia("(min-width: 1024px)").matches === desktop,
+    width >= 1024,
   );
   return { context, page };
 }
@@ -97,8 +97,8 @@ async function verifyDesktopBoundary(width = 1024) {
 }
 
 async function verifyPrintIsolation() {
-  // Impressão testada num viewport de CELULAR (o único que ainda usa o shell
-  // mobile depois que a sidebar fixa voltou a valer a partir de 768px).
+  // Impressão testada em viewport do shell compacto; celular e tablet usam
+  // drawer+dock até 1023px e a impressão não pode herdar esses espaços.
   const { context, page } = await openShell(640);
   try {
     await page.emulateMedia({ media: "print" });
@@ -253,11 +253,10 @@ async function verifyTouchPerformanceProfile(width = 1280) {
 }
 
 try {
-  // Contrato 2026-08-12 (pedido do Dr. Jadson): sidebar FIXA a partir de 768px
-  // — iPad retrato (834) e paisagem voltam a ter sidebar; drawer+dock só no
-  // celular (<768px).
-  for (const width of [390, 640, 767]) await verifyTablet(width);
-  for (const width of [768, 834, 1024]) await verifyDesktopBoundary(width);
+  // Contrato visual 9,9: shell compacto em celular/tablet até 1023px; a
+  // sidebar fixa começa em 1024px. Os dois lados da fronteira são testados.
+  for (const width of [390, 640, 767, 768, 834, 1023]) await verifyTablet(width);
+  for (const width of [1024, 1280]) await verifyDesktopBoundary(width);
   await verifyTouchPerformanceProfile();
   await verifyPrintIsolation();
   console.log("[responsive-shell] ✓ contrato responsivo aprovado.");
