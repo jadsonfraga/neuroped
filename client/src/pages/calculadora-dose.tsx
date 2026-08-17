@@ -4,18 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-interface MedDose {
-  name: string;
-  indication: string;
-  dosePerKg: number; // mg/kg/day
-  maxDose: number; // mg/day
-  frequency: string;
-  liquidConc?: number; // mg/mL
-  form: string;
-  notes: string;
-  fixedDose?: string; // for fixed-dose meds
-}
+import { calcDoseResult, type MedDose } from "@/lib/doseCalculator";
 
 const medications: MedDose[] = [
   { name: "Risperidona", indication: "TEA, psicose, irritabilidade", dosePerKg: 0.02, maxDose: 6, frequency: "12/12h", liquidConc: 1, form: "comprimido / solução oral (1mg/mL)", notes: "Iniciar com dose baixa. Monitorar prolactina e ganho de peso." },
@@ -60,18 +49,6 @@ const medications: MedDose[] = [
   { name: "Midazolam Nasal", indication: "Crise epiléptica aguda", dosePerKg: 0.2, maxDose: 10, frequency: "dose única (emergência)", form: "solução intranasal", notes: "Aplicar metade em cada narina. Monitorar respiração. Alternativa prática ao diazepam retal." },
 ];
 
-function calcResult(weight: number, med: MedDose) {
-  if (med.fixedDose) return null;
-  const dailyDose = weight * med.dosePerKg;
-  const cappedDailyDose = Math.min(dailyDose, med.maxDose);
-  const timesPerDay = med.frequency.includes("8/8h") ? 3 : med.frequency.includes("12/12h") ? 2 : 1;
-  const dosePerIntake = cappedDailyDose / timesPerDay;
-  const volumePerIntake = med.liquidConc ? dosePerIntake / med.liquidConc : null;
-  const exceedsMax = dailyDose > med.maxDose;
-  const nearMax = dailyDose > med.maxDose * 0.85;
-  return { dailyDose, cappedDailyDose, dosePerIntake, volumePerIntake, exceedsMax, nearMax, timesPerDay };
-}
-
 export default function CalculadoraDosePage() {
   const [weight, setWeight] = useState<string>("");
   const [selectedMed, setSelectedMed] = useState<string>("");
@@ -82,7 +59,7 @@ export default function CalculadoraDosePage() {
   const weightNum = parseFloat(weight);
   const result = useMemo(() => {
     if (!med || !weightNum || weightNum <= 0) return null;
-    return calcResult(weightNum, med);
+    return calcDoseResult(weightNum, med);
   }, [med, weightNum]);
 
   const filteredMeds = useMemo(() => {
