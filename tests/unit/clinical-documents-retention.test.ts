@@ -2,10 +2,8 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import express from "express";
-import { fileURLToPath } from "node:url";
-
 const dbPath = `/tmp/neuroped-clinical-documents-${process.pid}.db`;
-try { fs.unlinkSync(dbPath); } catch {}
+fs.rmSync(dbPath, { force: true });
 process.env.DATABASE_PATH = dbPath;
 process.env.NEUROPED_JWT_SECRET = "test-secret-for-clinical-documents-32-chars";
 process.env.NODE_ENV = "test";
@@ -126,7 +124,7 @@ try {
 } finally {
   await new Promise<void>((resolve) => server.close(() => resolve()));
   sqlite.close();
-  try { fs.rmSync(dbPath, { force: true }); } catch {}
-  try { fs.rmSync(`${dbPath}-shm`, { force: true }); } catch {}
-  try { fs.rmSync(`${dbPath}-wal`, { force: true }); } catch {}
+  fs.rmSync(dbPath, { force: true });
+  fs.rmSync(`${dbPath}-shm`, { force: true });
+  fs.rmSync(`${dbPath}-wal`, { force: true });
 }
