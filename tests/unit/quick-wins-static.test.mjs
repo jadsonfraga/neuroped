@@ -466,6 +466,25 @@ assert.doesNotMatch(
   "o aviso público deve refletir o armazenamento local dos formulários",
 );
 
+const familyPage = read("client/src/pages/familia.tsx");
+assert.match(familyPage, /Projeto autoral/);
+assert.match(familyPage, /Um espaço criado pelo Dr\. Jadson Fraga/);
+assert.match(familyPage, /href="\/sobre"/);
+
+const layoutAuthor = read("client/src/components/Layout.tsx");
+assert.match(layoutAuthor, /NeuroPed é um projeto autoral de/);
+assert.match(layoutAuthor, /<Link href="\/sobre"/);
+
+const documentHead = read("client/index.html");
+assert.match(documentHead, /name="author" content="Dr\. Jadson Fraga Araújo Júnior"/);
+assert.match(documentHead, /property="og:title"/);
+assert.match(documentHead, /projeto autoral do Dr\. Jadson Fraga/);
+
+const publicTerms = read("client/public/terms-of-use.html");
+assert.match(publicTerms, /disponibilizado gratuitamente como projeto educativo e institucional/);
+assert.doesNotMatch(publicTerms, /pagamento da licença \(R\$ 20,00\)/);
+assert.doesNotMatch(publicTerms, /Pagamento e Reembolso/);
+
 const familyPortal = read("client/src/pages/portal-familia.tsx");
 assert.match(familyPortal, /const canPreviewDocuments/);
 assert.match(familyPortal, /enabled: canPreviewDocuments && !!patientId/);

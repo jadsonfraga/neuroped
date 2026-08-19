@@ -737,8 +737,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </details>
           </aside>
-          {/* Propriedade intelectual, sem competir com o conteúdo clínico. */}
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[9.5px] leading-snug text-muted-foreground/85">
+          {/* Assinatura autoral global: reconhecimento visível, sem competir com o conteúdo. */}
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-[9.5px] leading-snug text-muted-foreground/85">
             <img
               src="/dr-jadson-shield-badge.webp"
               alt=""
@@ -748,7 +748,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               decoding="async"
               className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
             />
-            © 2026 NeuroPed · Dr. Jadson Fraga · Conteúdo proprietário e educativo.
+            <span>NeuroPed é um projeto autoral de</span>
+            <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              Dr. Jadson Fraga
+            </Link>
+            <span>· Conteúdo educativo e proprietário.</span>
           </p>
         </div>
       </main>

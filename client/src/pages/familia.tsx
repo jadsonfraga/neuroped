@@ -44,6 +44,38 @@ export default function FamiliaPage() {
         </div>
       </header>
 
+      {/* Assinatura autoral: reconhecimento sem transformar o espaço em publicidade invasiva. */}
+      <section aria-labelledby="author-story" className="rounded-3xl border border-primary/20 bg-card/80 p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/15 to-chart-2/15 ring-1 ring-primary/15">
+            <img
+              src="/dr-jadson-mascot-guide.webp"
+              alt="Dr. Jadson Fraga, criador do NeuroPed"
+              width="256"
+              height="256"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Projeto autoral</p>
+            <h2 id="author-story" className="mt-1 text-lg font-bold tracking-tight text-foreground">
+              Um espaço criado pelo Dr. Jadson Fraga
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              O NeuroPed reúne ciência, criatividade e experiência em neuropediatria para tornar o cuidado infantil mais compreensível para profissionais e famílias.
+            </p>
+          </div>
+          <Link
+            href="/sobre"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-primary/25 bg-primary/10 px-3.5 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Conheça o autor <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
+
       {/* Grade de atalhos */}
       <section aria-label="Conteúdo para famílias">
         <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
