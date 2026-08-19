@@ -59,6 +59,11 @@ assert.doesNotMatch(
   /<Layout>[\s\S]*?<Route path="\/brincando-e-aprendendo" component=\{BrincandoAprendendoPage\} \/>/,
   "a experiência educativa não deve herdar o landmark main do Layout clínico",
 );
+const kidsPage = read("client/src/pages/brincando-e-aprendendo.tsx");
+assert.match(kidsPage, /<header className="kids-hero/);
+assert.doesNotMatch(kidsPage, /<section className="kids-hero/);
+assert.match(kidsPage, /--kids-orange-strong|kids-orange-strong/);
+assert.match(kidsPage, /color:\s*[\s\S]{0,180}var\(--kids-white\)/);
 
 const restoredRoutes = [
   "/recepcao",

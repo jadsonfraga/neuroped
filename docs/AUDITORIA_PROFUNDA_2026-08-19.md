@@ -86,3 +86,11 @@ No commit `f6ed2005`, `Verify NeuroPed`, `Test, Lint & Build`, `No password regr
 
 ## Status de correção do landmark
 A validação local permanece verde e o segundo ciclo remoto será usado para confirmar a correção no navegador real do runner, seguido da inspeção do domínio canônico e do sentinel de publicação.
+
+### Segunda falha remota encontrada e corrigida — contraste dos botões educativos
+O segundo ciclo remoto confirmou a remoção dos três problemas de landmarks, mas revelou uma falha nova e objetiva de `color-contrast` (serious) em cinco nós da rota educativa: o rótulo uppercase `Escolha uma arena` e os quatro botões das arenas azul e roxa. A inspeção local com Chromium real reproduziu exatamente os cinco alvos. A causa foi o uso de laranja claro como texto sobre o fundo creme e de texto escuro sobre backgrounds azul/roxo saturados.
+
+A correção foi feita sem desfigurar a identidade visual: foi criado `--kids-orange-strong` para textos de destaque; `KidsButton` passou a selecionar foreground branco nos botões solid azul/roxo; o roxo foi levemente escurecido para manter razão AA com texto branco; e a hero passou a usar `<header>` para manter todos os elementos dentro de landmarks. A auditoria Axe integral local, cobrindo 87 rotas, agora registra `serious/critical=0`, `todas as severidades=0` e a rota `/#/brincando-e-aprendendo` com `total=0`. Também passaram TypeScript, quick-wins e a regressão estática ampliada.
+
+## Status antes do segundo commit corretivo
+O segundo ciclo remoto foi interrompido somente pelo contraste (após os landmarks já terem sido corrigidos); o novo patch de contraste e região está validado localmente com navegador real e será publicado para o terceiro ciclo remoto.

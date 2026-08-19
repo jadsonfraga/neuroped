@@ -300,8 +300,16 @@ function KidsButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="kids-button inline-flex items-center justify-center gap-2 rounded-full border-[3px] px-4 py-2 text-sm font-extrabold tracking-tight text-[var(--kids-ink)] shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-[1px_1px_0_var(--kids-ink)]"
-      style={{ backgroundColor: variant === "solid" ? color : "var(--kids-white)", borderColor: "var(--kids-ink)" }}
+      className="kids-button inline-flex items-center justify-center gap-2 rounded-full border-[3px] px-4 py-2 text-sm font-extrabold tracking-tight shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-[1px_1px_0_var(--kids-ink)]"
+      style={{
+        backgroundColor: variant === "solid" ? color : "var(--kids-white)",
+        borderColor: "var(--kids-ink)",
+        color:
+          variant === "solid" &&
+          (color === "var(--kids-blue)" || color === "var(--kids-purple)")
+            ? "var(--kids-white)"
+            : "var(--kids-ink)",
+      }}
     >
       {children}
     </button>
@@ -437,7 +445,7 @@ export default function BrincandoAprendendoPage() {
               <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[4px] border-[var(--kids-ink)] bg-[var(--kids-cream-strong)] shadow-[4px_4px_0_var(--kids-ink)]">
                 <Trophy className="h-10 w-10 text-[var(--kids-orange)]" />
               </div>
-              <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--kids-orange)]">Missão concluída</p>
+              <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--kids-orange-strong)]">Missão concluída</p>
               <h1 className="font-[Fredoka,sans-serif] text-3xl font-extrabold md:text-5xl">Você foi incrível!</h1>
               <p className="mx-auto mt-3 max-w-md text-base font-semibold text-[var(--kids-muted)]">Seu cérebro treinou como um verdadeiro superpoder em {currentActionLabel?.toLowerCase()}.</p>
               <div className="my-7 flex justify-center"><Stars active={score} /></div>
@@ -511,7 +519,7 @@ export default function BrincandoAprendendoPage() {
 
   return (
     <div className="np-kids min-h-screen overflow-hidden bg-[var(--kids-background)] text-[var(--kids-ink)]" style={{ fontFamily: "Nunito, Avenir Next, sans-serif" }}>
-      <section className="kids-hero relative border-b-[4px] border-[var(--kids-ink)]" style={{ backgroundColor: phase.tone }}>
+      <header className="kids-hero relative border-b-[4px] border-[var(--kids-ink)]" style={{ backgroundColor: phase.tone }}>
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <span className="absolute left-[10%] top-8 text-2xl text-[var(--kids-coral)]">✦</span>
           <span className="absolute right-[12%] top-16 text-2xl text-[var(--kids-green)]">✦</span>
@@ -551,12 +559,12 @@ export default function BrincandoAprendendoPage() {
             </span>
           </Link>
         </div>
-      </section>
+      </header>
 
       <main id="kids-missions" className="mx-auto max-w-6xl px-5 py-9 md:px-8 md:py-12">
         <div className="kids-section-heading mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--kids-orange)]">Escolha uma arena</p>
+            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--kids-orange-strong)]">Escolha uma arena</p>
             <h2 className="mt-1 font-[Fredoka,sans-serif] text-3xl font-extrabold md:text-4xl">Toda mente é um superpoder</h2>
           </div>
           <p className="max-w-sm text-sm font-semibold text-[var(--kids-muted)]">Missões curtas, coloridas e pensadas para aprender brincando.</p>
