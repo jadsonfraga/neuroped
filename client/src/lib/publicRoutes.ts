@@ -30,6 +30,7 @@ export const PUBLIC_ROUTES = [
   "/curvas-crescimento", // Curvas de Crescimento (OMS)
   "/caa", // CAA · Vou Falar
   "/sobre", // Sobre
+  "/servicos-clinica", // Serviços institucionais da Clínica Jadson Fraga
   "/termos", // Termos de uso e aviso legal público
   "/sobre-neuroped", // Sobre o NeuroPed
   "/ajuda", // Ajuda

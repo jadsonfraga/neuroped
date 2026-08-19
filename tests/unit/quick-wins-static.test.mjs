@@ -307,9 +307,23 @@ assert.match(routeGuard, /isMasterPinUnlocked/);
 
 const loginPage = read("client/src/pages/login.tsx");
 assert.match(loginPage, /PUBLIC_HOME/);
-assert.match(loginPage, /Área clínica protegida/);
+assert.match(loginPage, /useAuth/);
+assert.match(loginPage, /login\(email\.trim\(\), password\)/);
+assert.match(loginPage, /type="password"/);
+assert.match(loginPage, /data-testid="login-form"/);
 assert.doesNotMatch(loginPage, /<Redirect\s+to=["']\/["']\s*\/>/);
-assert.doesNotMatch(loginPage, /type=["']password["']|loginRequest|useAuth|input-login-password/);
+assert.doesNotMatch(loginPage, /FIXED_EMAIL|FIXED_PASSWORD|ADMIN_INITIAL_PASSWORD|Clarice11/);
+
+const servicesPage = read("client/src/pages/servicos-clinica.tsx");
+assert.match(app, /<Route\s+path="\/servicos-clinica"\s+component=\{ServicosClinicaPage\}\s+\/>/);
+assert.match(publicRoutesSource, /"\/servicos-clinica"/);
+assert.match(servicesPage, /Nesplora/);
+assert.match(servicesPage, /vídeo-EEG domiciliar noturno prolongado/i);
+assert.match(servicesPage, /EEG prolongado particular em domicílio/i);
+assert.match(servicesPage, /não confirma nem exclui TDAH sozinho/i);
+assert.match(servicesPage, /Cobertura, credenciamento, autorização/);
+assert.match(servicesPage, /Vantagens potenciais/);
+assert.match(servicesPage, /Limitações e cuidados/);
 
 const viteServer = read("server/vite.ts");
 assert.match(viteServer, /typeof viteConfig === "function"/);

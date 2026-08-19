@@ -115,6 +115,7 @@ export default function CalculadoraDosePage() {
         title="Calculadora de Dose Pediátrica"
         subtitle="Cálculo por peso — neuropediatria."
         gradient="from-blue-500 to-cyan-500"
+        mascotContext="resultado"
       />
 
       <Card className="border-card-border">

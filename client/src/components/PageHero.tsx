@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { Mascote, type MascoteContexto } from "@/components/Mascote";
 
 interface PageHeroProps {
   icon: LucideIcon;
@@ -8,6 +9,8 @@ interface PageHeroProps {
   eyebrow?: string;
   /** Gradiente reservado ao pequeno medalhão do módulo, não à superfície inteira. */
   gradient?: string;
+  /** Cameo do mascote oficial para reforçar identidade em módulos selecionados. */
+  mascotContext?: MascoteContexto;
   children?: ReactNode;
 }
 
@@ -22,6 +25,7 @@ export function PageHero({
   subtitle,
   eyebrow,
   gradient = "from-primary to-chart-2",
+  mascotContext,
   children,
 }: PageHeroProps) {
   return (
@@ -52,6 +56,11 @@ export function PageHero({
           )}
           {children && <div className="mt-4">{children}</div>}
         </div>
+        {mascotContext && (
+          <div className="hidden shrink-0 self-center md:block" aria-hidden="true">
+            <Mascote contexto={mascotContext} size="sm" fala="" className="opacity-90" />
+          </div>
+        )}
       </div>
     </header>
   );

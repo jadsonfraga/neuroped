@@ -178,9 +178,14 @@ export default function AgendaPage() {
         <p className="text-sm text-muted-foreground">
           {detail.includes("STAFF_LINK_REQUIRED")
             ? "Esta conta da recepção ainda precisa ser vinculada pelo profissional responsável na aba Equipe da Agenda & Gestão."
-            : "Nenhum dado foi simulado. Verifique autenticação, vínculo de equipe e banco persistente."}
+            : detail.includes("401") || detail.includes("AUTH")
+              ? "Sua sessão profissional não está disponível. Entre novamente para acessar a agenda persistente."
+              : "Nenhum dado foi simulado. Verifique autenticação, vínculo de equipe e banco persistente."}
         </p>
-        <Button variant="outline" onClick={() => dashboard.refetch()}>Tentar novamente</Button>
+        <div className="flex flex-wrap gap-2">
+          {(detail.includes("401") || detail.includes("AUTH")) && <Button asChild><Link href="/login">Entrar na área profissional</Link></Button>}
+          <Button variant="outline" onClick={() => dashboard.refetch()}>Tentar novamente</Button>
+        </div>
       </div>
     );
   }

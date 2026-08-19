@@ -54,6 +54,7 @@ export default function DocumentosPage() {
         eyebrow="documentos"
         title="Central de Documentos NeuroPed"
         subtitle="Gere laudos neuropediátricos e receitas especiais C1 com templates clínicos oficiais. Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756"
+        mascotContext="celebracao"
       />
 
       {/* Cards de acesso */}

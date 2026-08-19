@@ -30,6 +30,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Stethoscope,
   Target,
   Thermometer,
   Users,
@@ -62,6 +63,12 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },
       { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },
+    ],
+  },
+  {
+    title: "CLÍNICA JADSON FRAGA",
+    items: [
+      { href: "/servicos-clinica", label: "Serviços e avaliação", icon: Stethoscope },
     ],
   },
   {

@@ -19,6 +19,7 @@ export default function ClassificacoesPage() {
         title="Classificações e Frameworks"
         subtitle="Referências clínicas: ILAE 2017, FMS, CIF e GMFCS."
         gradient="from-indigo-500 to-blue-600"
+        mascotContext="vazio"
       />
 
       <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/40 p-4">

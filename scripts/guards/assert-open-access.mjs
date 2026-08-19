@@ -136,14 +136,22 @@ await check("RouteGuard exige login para rota clínica remota e permite allowlis
 
 const appSrc = read("client/src/App.tsx");
 const loginPageSrc = read("client/src/pages/login.tsx");
-await check("rota legada /login termina sem ciclo de redirecionamento", () => {
+await check("/login usa autenticação remota sem credenciais hardcoded", () => {
   assert.match(appSrc, /<Route\s+path="\/login"\s+component=\{LoginPage\}\s*\/>/);
   assert.match(loginPageSrc, /PUBLIC_HOME/);
-  assert.match(loginPageSrc, /Área clínica protegida/);
+  assert.match(loginPageSrc, /Entrar na área profissional/);
+  assert.match(loginPageSrc, /useAuth/);
+  assert.match(loginPageSrc, /type\s*=\s*["']password["']/i);
+  assert.match(loginPageSrc, /data-testid=["']login-form["']/i);
   assert.doesNotMatch(
     loginPageSrc,
-    /<Redirect\s+to=["']\/["']\s*\/>|type\s*=\s*["']password["']|loginRequest|useAuth|input-login-password/i,
-    "a página /login não pode redirecionar para a rota clínica nem conter formulário ou chamada de autenticação",
+    /ADMIN_INITIAL_PASSWORD|password\s*[:=]\s*["'][^"']+["']|senha\s*[:=]\s*["'][^"']+["']/i,
+    "a página /login não pode conter credenciais hardcoded",
+  );
+  assert.doesNotMatch(
+    loginPageSrc,
+    /<Redirect\s+to=["']\/["']\s*\/>/i,
+    "a página /login não pode redirecionar diretamente para a rota clínica",
   );
 });
 
@@ -193,9 +201,10 @@ const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/AssinaturaIcpPanel.tsx",
   "client/src/components/PrivateGate.tsx",
   "client/src/pages/generic-scale.tsx",
+  "client/src/pages/login.tsx",
 ].sort();
 
-await check("nenhum novo campo de senha foi criado na interface", () => {
+await check("somente a tela nominal de login e o certificado podem receber senha", () => {
   assert.deepEqual(
     passwordInputFiles,
     EXPECTED_PASSWORD_INPUT_FILES,
@@ -218,24 +227,24 @@ const pageAndComponentFiles = walk(clientSourceRoot)
     source: readFileSync(path, "utf8"),
   }));
 
-await check("nenhuma tela nova chama o login da API", () => {
+await check("somente o contexto e a tela de login chamam a API de autenticação", () => {
   const offenders = pageAndComponentFiles
-    .filter(({ path }) => path !== "client/src/contexts/AuthContext.tsx")
+    .filter(({ path }) => !["client/src/contexts/AuthContext.tsx", "client/src/pages/login.tsx"].includes(path))
     .filter(({ source }) => /loginRequest\s*\(|\/api\/auth\/login/.test(source))
     .map(({ path }) => path);
-  assert.deepEqual(offenders, [], `telas com chamada de login: ${offenders.join(", ")}`);
+  assert.deepEqual(offenders, [], `telas com chamada de login fora do fluxo nominal: ${offenders.join(", ")}`);
 });
 
 if (errors.length) {
   console.error(`\n[open-access] ✗ ${errors.length} regressão(ões) detectada(s):`);
   for (const error of errors) console.error(`  · ${error}`);
   console.error(
-    "\nO NeuroPed deve permanecer aberto. Mudança de política exige decisão explícita\n" +
-      "do autor e remoção consciente desta catraca — nunca uma regressão silenciosa.",
+    "\nO NeuroPed deve permanecer com rotas clínicas protegidas. Mudanças de autenticação exigem\n" +
+      "decisão explícita do autor e nunca podem gravar credenciais no bundle.",
   );
   process.exit(1);
 }
 
 console.log(
-  "[open-access] ✓ modo aberto é opt-in; rotas clínicas permanecem protegidas e login/PIN não reaparecem indevidamente",
+  "[open-access] ✓ modo aberto é opt-in; rotas clínicas permanecem protegidas e o login remoto não contém segredos",
 );

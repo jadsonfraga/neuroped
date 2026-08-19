@@ -67,6 +67,7 @@ export default function DenverPage() {
         title="Denver II"
         subtitle="Triagem do Desenvolvimento — 0 a 6 anos."
         gradient="from-amber-500 to-orange-500"
+        mascotContext="home"
       />
 
       {/* Instruction */}

@@ -91,6 +91,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
           eyebrow="ficha técnica"
           title="Instrumento não encontrado"
           subtitle="Esta ficha não está disponível no catálogo atual."
+          mascotContext="vazio"
         />
         <Button asChild variant="outline" className="gap-2">
           <Link href="/filtro">
@@ -159,6 +160,7 @@ export function ScaleFichaPage({ scaleId }: { scaleId: string }) {
         title={scale.name}
         subtitle={scale.fullName !== scale.name ? scale.fullName : undefined}
         gradient="from-violet-600 to-blue-600"
+        mascotContext="resultado"
       />
 
       <section
