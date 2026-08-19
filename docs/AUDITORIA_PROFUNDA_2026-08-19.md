@@ -94,3 +94,13 @@ A correção foi feita sem desfigurar a identidade visual: foi criado `--kids-or
 
 ## Status antes do segundo commit corretivo
 O segundo ciclo remoto foi interrompido somente pelo contraste (após os landmarks já terem sido corrigidos); o novo patch de contraste e região está validado localmente com navegador real e será publicado para o terceiro ciclo remoto.
+
+### Fechamento — terceiro ciclo remoto e publicação final
+O terceiro ciclo remoto do commit `14e7b693` foi aprovado integralmente: `Verify NeuroPed` (`32247042502`), `Test, Lint & Build` (`32247042441`), `No password regression` (`32247042475`), `Filter and scales spiral audit` (`32247042446`), `Deploy Cloudflare Pages` (`32247042533`), `Deploy Vercel` (`32247042519`), `Deploy GitHub Pages` (`32247042551`) e `Certificate retirement smoke` (`32247352714`) terminaram com `success`. O workflow de espiral confirmou Axe integral verde na experiência educativa após as correções de landmarks, contraste e `region`.
+
+A verificação pública pós-deploy confirmou `https://neuroped.pages.dev/deploy-check.json` com HTTP 200 e commit `14e7b693`; o shell canônico, o mirror Vercel e o GitHub Pages responderam HTTP 200. O domínio canônico entregou CSP, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` e `Permissions-Policy`. O endpoint público `/api/health` respondeu HTTP 200, declarou banco `ok` e autenticação configurada/obrigatória; uma requisição com origem não autorizada não recebeu `Access-Control-Allow-Origin`. A execução Playwright em Chromium real, inclusive com viewport/user-agent equivalentes ao navegador integrado e marcadores de sessão antigos, renderizou o microsite educativo completo, sem `pageerror`, sem falha de asset e apenas com o 401 esperado de `/api/auth/me` para uma sessão anônima.
+
+A primeira inspeção manual pelo perfil persistente do navegador exibiu temporariamente a tela de recuperação do ErrorBoundary, com `neuroped:sw-version` legado e marcador de recuperação de chunk na sessão. Isso não se reproduziu em contexto limpo nem no Playwright com os mesmos parâmetros do navegador; após a limpeza dos marcadores técnicos e a execução do diagnóstico público, o deployment foi considerado íntegro. Nenhum registro clínico foi alterado durante a verificação remota; as requisições foram somente GET e a checagem de CORS permaneceu sem origem permissiva para domínio externo.
+
+## Resultado final
+A auditoria profunda foi encerrada com validação local integral, validação remota verde, publicação canônica no Cloudflare Pages e mirrors publicados. O branch `main` está alinhado ao `origin/main` no commit `14e7b693`, sem artefatos locais pendentes.
