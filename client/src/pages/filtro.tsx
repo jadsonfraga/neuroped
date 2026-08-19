@@ -89,16 +89,33 @@ type Slot =
   | "Satisfação Medicação";
 type AvailabilityMode = "complete" | "all";
 type Tier = "ouro" | "prata" | "bronze";
-type Row = [
-  number,
-  string,
-  string,
-  string,
-  string,
-  string,
-  "Ouro" | "Prata" | "Bronze",
-  "embed" | "permission" | "link",
-];
+type Row =
+  | [
+      number,
+      string,
+      string,
+      string,
+      string,
+      string,
+      "Ouro" | "Prata" | "Bronze",
+      "embed" | "permission" | "link",
+    ]
+  | [
+      number,
+      string,
+      string,
+      string,
+      string,
+      string,
+      "Ouro" | "Prata" | "Bronze",
+      "embed" | "permission" | "link",
+      string, // score — sistema de escore (referência)
+      string, // cutoff — pontos de corte (referência)
+      string, // diagnose — diagnóstico-alvo da escala
+      string, // sintomas — sinais/sintomas-alvo separados por "|"
+      string, // queixas — ids de queixa canônicos separados por "|"
+      string, // pubmed — URL da referência PubMed
+    ];
 
 // Servido pela PRÓPRIA origem (client/public/data/ entra no build). Antes isto
 // apontava para raw.githubusercontent.com: um app clínico offline-first buscando
@@ -201,13 +218,20 @@ function rowToScale(row: Row): ScaleEntry {
   }
   const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
   const a = ageMonths(idade);
+  // Registro enriquecido (v2.0) traz queixas canônicas e sintomas curados por
+  // evidência nas colunas 12 e 11; quando ausentes, mantém a inferência por
+  // heurística (guessQueixas) como backup.
+  const queixasCuradas =
+    row.length >= 13 && String(row[12] ?? "") ? String(row[12]).split("|").filter(Boolean) : guessQueixas(categoria, `${sigla} ${nome}`);
+  const sintomasCurados =
+    row.length >= 12 && String(row[11] ?? "") ? String(row[11]).split("|").filter(Boolean) : undefined;
   return {
     id: `world-registry-${String(n).padStart(3, "0")}`,
     name: sigla,
     fullName: nome,
     ageMin: a.min,
     ageMax: a.max,
-    queixas: guessQueixas(categoria, `${sigla} ${nome}`),
+    queixas: queixasCuradas,
     respondente: guessRespondente(respondente),
     prioridade: selo === "Bronze" ? "monitorizacao" : "triagem",
     tempo: "3–10 min",
@@ -215,7 +239,8 @@ function rowToScale(row: Row): ScaleEntry {
     fonte:
       "Catálogo NeuroPed 100 escalas · verificar fonte oficial antes de embutir itens",
     licencaUso: politica === "embed" ? "livre" : "restrita",
-  };
+    signalTags: sintomasCurados?.length ? sintomasCurados : undefined,
+  } as ScaleEntry;
 }
 
 function matchAge(scale: ScaleEntry, selectedAge: string | null) {
@@ -1198,7 +1223,7 @@ export default function FiltroPage() {
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((data: { escalas?: Row[] }) => {
         const parsed = (data.escalas || []).map(rowToScale);
-        if (parsed.length !== 100) throw new Error("registro incompleto");
+        if (parsed.length < 100) throw new Error("registro incompleto");
         if (alive) {
           setWorld(unique([...noCostWorldScales, ...parsed]));
           setStatus("ok");
