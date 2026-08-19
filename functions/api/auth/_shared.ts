@@ -129,10 +129,11 @@ export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promi
 /**
  * Bootstrap idempotente do admin a partir de variáveis de ambiente
  * (ADMIN_EMAIL / ADMIN_INITIAL_PASSWORD), definidas como secrets no Cloudflare.
- * - Se o usuário não existe: cria como admin ativo (sem forçar troca, pois a UI
- *   ainda não tem fluxo de troca de senha).
- * - Se existe mas sem password_hash (ex.: seed só com pin): faz backfill do hash.
- * Nunca sobrescreve uma senha já definida.
+ *
+ * Além de criar contas novas, faz uma única migração de senha para uma conta
+ * existente quando o marcador de bootstrap ainda não existe. Isso resolve o
+ * caso em que a conta foi criada com uma senha anterior e o secret foi corrigido
+ * depois, sem deixar a senha sendo sobrescrita em cada login.
  */
 export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
   const email = env.ADMIN_EMAIL?.toLowerCase().trim();
@@ -141,17 +142,34 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
 
   const existing = await getUserByEmail(db, email);
   const now = new Date().toISOString();
+  const markerKey = "auth.admin.bootstrap.v2";
+  const marker = await db
+    .prepare("SELECT value FROM app_settings WHERE key = ? LIMIT 1")
+    .bind(markerKey)
+    .first<{ value: string | null }>();
 
   if (existing) {
-    if (!existing.password_hash) {
+    const needsPasswordBootstrap = !existing.password_hash || !marker;
+    if (needsPasswordBootstrap) {
       const hash = await hashPassword(password);
-      await db
-        .prepare(
-          `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 0,
-                  updated_at = ? WHERE id = ?`,
-        )
-        .bind(hash, now, existing.id)
-        .run();
+      await db.batch([
+        db
+          .prepare(
+            `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 0,
+                    failed_login_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?`,
+          )
+          .bind(hash, now, existing.id),
+        db
+          .prepare(
+            `DELETE FROM auth_refresh_sessions WHERE user_id = ?`,
+          )
+          .bind(existing.id),
+        db
+          .prepare(
+            `INSERT OR REPLACE INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)`,
+          )
+          .bind(markerKey, "completed", now),
+      ]);
     }
     return;
   }
@@ -159,12 +177,18 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
   const id = crypto.randomUUID();
   const name = env.ADMIN_NAME || "Administrador";
   const hash = await hashPassword(password);
-  await db
-    .prepare(
-      `INSERT INTO users (id, name, email, role, is_active, password_hash,
-              must_change_password, failed_login_attempts, created_at, updated_at)
-       VALUES (?, ?, ?, 'admin', 1, ?, 0, 0, ?, ?)`,
-    )
-    .bind(id, name, email, hash, now, now)
-    .run();
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO users (id, name, email, role, is_active, password_hash,
+                must_change_password, failed_login_attempts, created_at, updated_at)
+         VALUES (?, ?, ?, 'admin', 1, ?, 0, 0, ?, ?)`,
+      )
+      .bind(id, name, email, hash, now, now),
+    db
+      .prepare(
+        `INSERT OR REPLACE INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)`,
+      )
+      .bind(markerKey, "completed", now),
+  ]);
 }
