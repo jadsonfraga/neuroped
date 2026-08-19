@@ -10,6 +10,7 @@ import {
   Loader2,
   Mail,
   MessageCircle,
+  Printer,
   RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ import {
   type ScaleResponseItem,
   type ScaleResponseReport,
 } from "@/lib/scaleResponseReport";
+import { printPlainTextDocument } from "@/lib/printDocument";
 import {
   copyText,
   downloadTextDocument,
@@ -251,6 +253,28 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     });
   }
 
+  function handlePrint() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description: "Finalize as respostas antes de imprimir.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const opened = printPlainTextDocument({
+      title: `Resultado da escala — ${props.scaleName}`,
+      text: reportText,
+    });
+    if (!opened) {
+      toast({
+        title: "Impressão bloqueada",
+        description: "Permita janelas pop-up para imprimir o relatório.",
+        variant: "destructive",
+      });
+    }
+  }
+
   async function handleSendEmail() {
     if (!reportReady) {
       toast({
@@ -385,7 +409,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             Enviar relatório pelo WhatsApp / Zap
           </Button>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Button
               variant="outline"
               size="sm"
@@ -410,6 +434,17 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             >
               <Download className="h-4 w-4" />
               Baixar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              disabled={!reportReady}
+              className="h-9 gap-2"
+              data-testid="button-print-text-report"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir
             </Button>
             <Button
               variant="outline"

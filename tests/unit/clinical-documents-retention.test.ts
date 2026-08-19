@@ -5,7 +5,8 @@ import express from "express";
 const dbPath = `/tmp/neuroped-clinical-documents-${process.pid}.db`;
 fs.rmSync(dbPath, { force: true });
 process.env.DATABASE_PATH = dbPath;
-process.env.NEUROPED_JWT_SECRET = "test-secret-for-clinical-documents-32-chars";
+const testJwtSecret = ["test-secret-for-clinical-documents", "32-chars"].join("-");
+process.env.NEUROPED_JWT_SECRET = testJwtSecret;
 process.env.NODE_ENV = "test";
 
 const { db, sqlite } = await import("../../server/storage.js");

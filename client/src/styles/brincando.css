@@ -1,8 +1,28 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap");
 
 .np-kids {
-  --kids-ink: #1a2b4a;
-  --kids-muted: #5a6a8a;
+  --kids-ink: hsl(219 48% 20%);
+  --kids-muted: hsl(219 21% 45%);
+  --kids-white: hsl(0 0% 100%);
+  --kids-background: hsl(38 100% 95%);
+  --kids-sun: hsl(45 100% 59%);
+  --kids-coral: hsl(356 78% 56%);
+  --kids-blue: hsl(219 81% 51%);
+  --kids-green: hsl(122 39% 49%);
+  --kids-green-deep: hsl(123 46% 34%);
+  --kids-orange: hsl(22 86% 56%);
+  --kids-purple: hsl(256 57% 62%);
+  --kids-red: hsl(6 63% 46%);
+  --kids-soft-blue: hsl(210 87% 94%);
+  --kids-soft-green: hsl(123 54% 94%);
+  --kids-success: hsl(134 60% 90%);
+  --kids-soft-red: hsl(355 87% 94%);
+  --kids-cream: hsl(47 100% 93%);
+  --kids-cream-strong: hsl(45 100% 89%);
+  --kids-peach: hsl(31 100% 94%);
+  --kids-soft-orange: hsl(27 100% 95%);
+  --kids-soft-purple: hsl(256 100% 96%);
+  --kids-border-muted: hsl(39 18% 82%);
   --kids-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --kids-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   font-family: "Nunito", "Avenir Next", sans-serif;
@@ -24,7 +44,7 @@
 
 .np-kids button:focus-visible,
 .np-kids a:focus-visible {
-  outline: 4px solid #e63946;
+  outline: 4px solid var(--kids-coral);
   outline-offset: 4px;
 }
 
@@ -38,7 +58,7 @@
   inset: auto -5% -38px;
   height: 80px;
   content: "";
-  background: rgba(255, 255, 255, 0.3);
+  background: color-mix(in srgb, var(--kids-white) 30%, transparent);
   border-radius: 50% 50% 0 0;
   transform: rotate(-2deg);
   pointer-events: none;

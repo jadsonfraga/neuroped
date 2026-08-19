@@ -58,7 +58,7 @@ const phases: Phase[] = [
     emoji: "🌱",
     title: "Descobrindo o mundo!",
     subtitle: "Letras, números, formas e cores.",
-    tone: "#e3f0fd",
+    tone: "var(--kids-soft-blue)",
   },
   {
     id: "6-8",
@@ -66,7 +66,7 @@ const phases: Phase[] = [
     emoji: "🚀",
     title: "Exploradores em ação!",
     subtitle: "Leitura, contas e mistérios.",
-    tone: "#e3f0fd",
+    tone: "var(--kids-soft-blue)",
   },
   {
     id: "9-12",
@@ -74,7 +74,7 @@ const phases: Phase[] = [
     emoji: "⚡",
     title: "Super-heróis da mente!",
     subtitle: "Desafios de lógica de verdade.",
-    tone: "#fff2e2",
+    tone: "var(--kids-peach)",
   },
 ];
 
@@ -84,8 +84,8 @@ const arenas: Arena[] = [
     title: "Cérebro de Herói",
     tagline: "Raciocínio lógico e padrões",
     description: "Treine seu cérebro como um superpoder!",
-    color: "#ffc72c",
-    softColor: "#fff7dd",
+    color: "var(--kids-sun)",
+    softColor: "var(--kids-cream)",
     icon: "🦸",
     art: intellectualArt,
     mascotLine: "Vamos treinar seu cérebro!",
@@ -96,8 +96,8 @@ const arenas: Arena[] = [
     title: "Olhos de Águia",
     tagline: "Atenção, memória e detalhes",
     description: "Observe tudo com olhos de super-herói!",
-    color: "#1e6fe8",
-    softColor: "#e3f0fd",
+    color: "var(--kids-blue)",
+    softColor: "var(--kids-soft-blue)",
     icon: "🦅",
     art: attentionArt,
     mascotLine: "Abra bem os olhos!",
@@ -111,8 +111,8 @@ const arenas: Arena[] = [
     title: "Escolinha Divertida",
     tagline: "Letras, números e formas",
     description: "Letras e números são seus amigos!",
-    color: "#4caf50",
-    softColor: "#e8f7e9",
+    color: "var(--kids-green)",
+    softColor: "var(--kids-soft-green)",
     icon: "📚",
     art: pedagogicalArt,
     mascotLine: "Hora de aprender brincando!",
@@ -123,8 +123,8 @@ const arenas: Arena[] = [
     title: "Mundo Incrível",
     tagline: "Animais, natureza e corpo humano",
     description: "O mundo é cheio de mistérios!",
-    color: "#f0782f",
-    softColor: "#fff0e4",
+    color: "var(--kids-orange)",
+    softColor: "var(--kids-soft-orange)",
     icon: "🌍",
     art: generalArt,
     mascotLine: "Vamos explorar juntos!",
@@ -135,8 +135,8 @@ const arenas: Arena[] = [
     title: "Caça aos 7 Erros",
     tagline: "Encontre as 7 diferenças",
     description: "Sua atenção é o seu superpoder!",
-    color: "#8b65d6",
-    softColor: "#f1ebff",
+    color: "var(--kids-purple)",
+    softColor: "var(--kids-soft-purple)",
     icon: "🕵️",
     art: errorsArt,
     mascotLine: "Você consegue encontrar todos?",
@@ -271,8 +271,8 @@ function Stars({ active = 0, total = 5 }: { active?: number; total?: number }) {
         <Star
           key={index}
           className="h-5 w-5"
-          fill={index < active ? "#ffc72c" : "transparent"}
-          color={index < active ? "#ffc72c" : "#d9d2c7"}
+          fill={index < active ? "var(--kids-sun)" : "transparent"}
+          color={index < active ? "var(--kids-sun)" : "var(--kids-border-muted)"}
           strokeWidth={2.5}
         />
       ))}
@@ -300,8 +300,8 @@ function KidsButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="kids-button inline-flex items-center justify-center gap-2 rounded-full border-[3px] px-4 py-2 text-sm font-extrabold tracking-tight text-[#1a2b4a] shadow-[3px_3px_0_#1a2b4a] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-[1px_1px_0_#1a2b4a]"
-      style={{ backgroundColor: variant === "solid" ? color : "#fff", borderColor: "#1a2b4a" }}
+      className="kids-button inline-flex items-center justify-center gap-2 rounded-full border-[3px] px-4 py-2 text-sm font-extrabold tracking-tight text-[var(--kids-ink)] shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-[1px_1px_0_var(--kids-ink)]"
+      style={{ backgroundColor: variant === "solid" ? color : "var(--kids-white)", borderColor: "var(--kids-ink)" }}
     >
       {children}
     </button>
@@ -319,19 +319,19 @@ function MissionCard({
 }) {
   return (
     <article
-      className="kids-mission-card relative overflow-hidden rounded-[24px] border-[3px] border-[#1a2b4a] bg-white p-4 shadow-[4px_4px_0_#1a2b4a] transition-transform hover:-translate-y-1"
+      className="kids-mission-card relative overflow-hidden rounded-[24px] border-[3px] border-[var(--kids-ink)] bg-white p-4 shadow-[4px_4px_0_var(--kids-ink)] transition-transform hover:-translate-y-1"
       style={{ backgroundColor: arena.softColor }}
     >
       <div className="flex items-start gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-[3px] border-[#1a2b4a] bg-white shadow-[2px_2px_0_#1a2b4a]">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-[3px] border-[var(--kids-ink)] bg-white shadow-[2px_2px_0_var(--kids-ink)]">
           <img src={arena.art} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="min-w-0 pt-1">
-          <p className="font-[Nunito,sans-serif] text-base font-extrabold text-[#1a2b4a]">{arena.title}</p>
-          <p className="text-xs font-bold leading-tight text-[#5a6a8a]">{arena.tagline}</p>
+          <p className="font-[Nunito,sans-serif] text-base font-extrabold text-[var(--kids-ink)]">{arena.title}</p>
+          <p className="text-xs font-bold leading-tight text-[var(--kids-muted)]">{arena.tagline}</p>
         </div>
       </div>
-      <p className="mt-4 text-sm font-semibold text-[#1a2b4a]">{arena.description}</p>
+      <p className="mt-4 text-sm font-semibold text-[var(--kids-ink)]">{arena.description}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {arena.actions.map((action) => (
           <KidsButton key={action.id} color={arena.color} onClick={() => onStart(arena.id, action.id)}>
@@ -409,20 +409,20 @@ export default function BrincandoAprendendoPage() {
 
   if (view === "activity" || view === "complete") {
     return (
-      <div className="np-kids min-h-screen overflow-hidden bg-[#fff6e5] text-[#1a2b4a]" style={{ fontFamily: "Nunito, Avenir Next, sans-serif" }}>
-        <header className="border-b-[4px] border-[#1a2b4a] bg-[#ffc72c] px-4 py-3 shadow-[0_3px_0_#1a2b4a]">
+      <div className="np-kids min-h-screen overflow-hidden bg-[var(--kids-background)] text-[var(--kids-ink)]" style={{ fontFamily: "Nunito, Avenir Next, sans-serif" }}>
+        <header className="border-b-[4px] border-[var(--kids-ink)] bg-[var(--kids-sun)] px-4 py-3 shadow-[0_3px_0_var(--kids-ink)]">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
             <button
               type="button"
               onClick={restart}
-              className="inline-flex items-center gap-2 rounded-full border-[3px] border-[#1a2b4a] bg-white px-4 py-2 text-sm font-extrabold shadow-[3px_3px_0_#1a2b4a] transition-transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 rounded-full border-[3px] border-[var(--kids-ink)] bg-white px-4 py-2 text-sm font-extrabold shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5"
             >
               <ArrowLeft className="h-4 w-4" /> Sair
             </button>
             <div className="hidden items-center gap-2 sm:flex">
               <img src={logoHero} alt="Dr. Jadson Fraga" className="h-10 w-14 object-contain" />
-              <span className="rounded-full border-[2px] border-[#1a2b4a] bg-white px-3 py-1 text-xs font-extrabold">{phase.label}</span>
-              <span className="rounded-full border-[2px] border-[#1a2b4a] bg-white px-3 py-1 text-xs font-extrabold">{arena.title}</span>
+              <span className="rounded-full border-[2px] border-[var(--kids-ink)] bg-white px-3 py-1 text-xs font-extrabold">{phase.label}</span>
+              <span className="rounded-full border-[2px] border-[var(--kids-ink)] bg-white px-3 py-1 text-xs font-extrabold">{arena.title}</span>
             </div>
             <div className="flex items-center gap-2 text-right">
               <span className="hidden text-xs font-extrabold sm:block">{arena.mascotLine}</span>
@@ -433,37 +433,37 @@ export default function BrincandoAprendendoPage() {
 
         <main id="kids-activity" className="mx-auto max-w-5xl px-4 py-10 md:py-14">
           {view === "complete" ? (
-            <section className="mx-auto max-w-2xl rounded-[32px] border-[4px] border-[#1a2b4a] bg-white p-6 text-center shadow-[7px_7px_0_#1a2b4a] md:p-10">
-              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[4px] border-[#1a2b4a] bg-[#fff2c8] shadow-[4px_4px_0_#1a2b4a]">
-                <Trophy className="h-10 w-10 text-[#f0782f]" />
+            <section className="mx-auto max-w-2xl rounded-[32px] border-[4px] border-[var(--kids-ink)] bg-white p-6 text-center shadow-[7px_7px_0_var(--kids-ink)] md:p-10">
+              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[4px] border-[var(--kids-ink)] bg-[var(--kids-cream-strong)] shadow-[4px_4px_0_var(--kids-ink)]">
+                <Trophy className="h-10 w-10 text-[var(--kids-orange)]" />
               </div>
-              <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.16em] text-[#f0782f]">Missão concluída</p>
+              <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--kids-orange)]">Missão concluída</p>
               <h1 className="font-[Fredoka,sans-serif] text-3xl font-extrabold md:text-5xl">Você foi incrível!</h1>
-              <p className="mx-auto mt-3 max-w-md text-base font-semibold text-[#5a6a8a]">Seu cérebro treinou como um verdadeiro superpoder em {currentActionLabel?.toLowerCase()}.</p>
+              <p className="mx-auto mt-3 max-w-md text-base font-semibold text-[var(--kids-muted)]">Seu cérebro treinou como um verdadeiro superpoder em {currentActionLabel?.toLowerCase()}.</p>
               <div className="my-7 flex justify-center"><Stars active={score} /></div>
               <p className="text-lg font-extrabold">Você acertou {score} de {bank.length} desafios.</p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <KidsButton color="#ffc72c" onClick={() => startActivity(selectedArena, selectedAction)}><RotateCcw className="h-4 w-4" /> Jogar novamente</KidsButton>
-                <KidsButton color="#4caf50" variant="soft" onClick={restart}><Home className="h-4 w-4" /> Escolher missão</KidsButton>
+                <KidsButton color="var(--kids-sun)" onClick={() => startActivity(selectedArena, selectedAction)}><RotateCcw className="h-4 w-4" /> Jogar novamente</KidsButton>
+                <KidsButton color="var(--kids-green)" variant="soft" onClick={restart}><Home className="h-4 w-4" /> Escolher missão</KidsButton>
               </div>
             </section>
           ) : (
             <section className="kids-activity-card mx-auto max-w-3xl">
               <div className="mb-5 text-center">
-                <div className="mx-auto inline-flex items-center gap-2 rounded-full border-[3px] border-[#1a2b4a] bg-white px-5 py-2 shadow-[3px_3px_0_#1a2b4a]">
+                <div className="mx-auto inline-flex items-center gap-2 rounded-full border-[3px] border-[var(--kids-ink)] bg-white px-5 py-2 shadow-[3px_3px_0_var(--kids-ink)]">
                   <span className="text-lg">{arena.icon}</span>
                   <h1 className="font-[Fredoka,sans-serif] text-2xl font-extrabold md:text-3xl">{arena.title}</h1>
                 </div>
-                <p className="mt-3 text-sm font-bold text-[#5a6a8a]">{arena.tagline} · Pergunta {questionIndex + 1} de {bank.length}</p>
+                <p className="mt-3 text-sm font-bold text-[var(--kids-muted)]">{arena.tagline} · Pergunta {questionIndex + 1} de {bank.length}</p>
                 <div className="mt-3 flex justify-center"><Stars active={questionIndex} /></div>
               </div>
 
-              <div className="relative rounded-[28px] border-[4px] border-[#1a2b4a] bg-white p-5 shadow-[7px_7px_0_#1a2b4a] md:p-8">
+              <div className="relative rounded-[28px] border-[4px] border-[var(--kids-ink)] bg-white p-5 shadow-[7px_7px_0_var(--kids-ink)] md:p-8">
                 <div className="mb-6 flex items-end gap-3">
                   <img src={mascot} alt="Dr. Jadson Fraga" className="h-28 w-20 object-contain object-top md:h-36 md:w-24" />
-                  <div className="rounded-2xl border-[3px] border-[#1a2b4a] bg-[#e3f0fd] px-4 py-3 text-sm font-extrabold shadow-[3px_3px_0_#1a2b4a]">{arena.mascotLine}</div>
+                  <div className="rounded-2xl border-[3px] border-[var(--kids-ink)] bg-[var(--kids-soft-blue)] px-4 py-3 text-sm font-extrabold shadow-[3px_3px_0_var(--kids-ink)]">{arena.mascotLine}</div>
                 </div>
-                <div className="rounded-2xl border-[3px] border-[#1a2b4a] bg-[#fff7dd] p-5 text-center md:p-7">
+                <div className="rounded-2xl border-[3px] border-[var(--kids-ink)] bg-[var(--kids-cream)] p-5 text-center md:p-7">
                   <h2 className="font-[Fredoka,sans-serif] text-2xl font-extrabold md:text-3xl">{currentQuestion.question}</h2>
                   <div className="mt-6 flex flex-wrap justify-center gap-3">
                     {currentQuestion.options.map((option, index) => {
@@ -474,26 +474,26 @@ export default function BrincandoAprendendoPage() {
                           key={`${option}-${index}`}
                           type="button"
                           onClick={() => chooseAnswer(index)}
-                          className="kids-answer-option flex min-h-20 min-w-24 flex-col items-center justify-center rounded-2xl border-[3px] border-[#1a2b4a] bg-white px-5 py-3 text-3xl font-extrabold shadow-[3px_3px_0_#1a2b4a] transition-all hover:-translate-y-1 disabled:cursor-default"
-                          style={{ backgroundColor: isCorrect ? "#d9f4df" : isSelected ? "#fde3e5" : "#fff" }}
+                          className="kids-answer-option flex min-h-20 min-w-24 flex-col items-center justify-center rounded-2xl border-[3px] border-[var(--kids-ink)] bg-white px-5 py-3 text-3xl font-extrabold shadow-[3px_3px_0_var(--kids-ink)] transition-all hover:-translate-y-1 disabled:cursor-default"
+                          style={{ backgroundColor: isCorrect ? "var(--kids-success)" : isSelected ? "var(--kids-soft-red)" : "var(--kids-white)" }}
                           disabled={selectedAnswer !== null}
                           aria-label={`Opção ${index + 1}: ${option}`}
                         >
                           <span>{currentQuestion.visual[index] ?? option}</span>
-                          <span className="mt-1 text-xs font-extrabold text-[#5a6a8a]">{option}</span>
+                          <span className="mt-1 text-xs font-extrabold text-[var(--kids-muted)]">{option}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
                 {selectedAnswer !== null && (
-                  <div className={`kids-feedback mt-5 flex items-start gap-3 rounded-2xl border-[3px] p-4 text-sm font-extrabold ${answeredCorrectly ? "border-[#2e7d32] bg-[#e8f7e9]" : "border-[#c0392b] bg-[#fde3e5]"}`} aria-live="polite">
+                  <div className={`kids-feedback mt-5 flex items-start gap-3 rounded-2xl border-[3px] p-4 text-sm font-extrabold ${answeredCorrectly ? "border-[var(--kids-green-deep)] bg-[var(--kids-soft-green)]" : "border-[var(--kids-red)] bg-[var(--kids-soft-red)]"}`} aria-live="polite">
                     <span className="text-xl">{answeredCorrectly ? "🌟" : "💡"}</span>
                     <p>{answeredCorrectly ? "Muito bem! " : "Quase! "}{currentQuestion.explain}</p>
                   </div>
                 )}
                 <div className="mt-6 flex justify-end">
-                  <KidsButton color={selectedAnswer === null ? "#e3f0fd" : arena.color} onClick={nextQuestion} disabled={selectedAnswer === null}>
+                  <KidsButton color={selectedAnswer === null ? "var(--kids-soft-blue)" : arena.color} onClick={nextQuestion} disabled={selectedAnswer === null}>
                     {questionIndex === bank.length - 1 ? "Ver resultado" : "Próxima missão"} <ArrowRight className="h-4 w-4" />
                   </KidsButton>
                 </div>
@@ -502,7 +502,7 @@ export default function BrincandoAprendendoPage() {
           )}
         </main>
 
-        <footer className="border-t-[4px] border-[#1a2b4a] bg-[#1a2b4a] px-4 py-6 text-center text-sm font-bold text-white">
+        <footer className="border-t-[4px] border-[var(--kids-ink)] bg-[var(--kids-ink)] px-4 py-6 text-center text-sm font-bold text-white">
           Dr. Jadson Fraga · Neuropediatra · Toda mente é um superpoder! 🦸
         </footer>
       </div>
@@ -510,13 +510,13 @@ export default function BrincandoAprendendoPage() {
   }
 
   return (
-    <div className="np-kids min-h-screen overflow-hidden bg-[#fff6e5] text-[#1a2b4a]" style={{ fontFamily: "Nunito, Avenir Next, sans-serif" }}>
-      <section className="kids-hero relative border-b-[4px] border-[#1a2b4a]" style={{ backgroundColor: phase.tone }}>
+    <div className="np-kids min-h-screen overflow-hidden bg-[var(--kids-background)] text-[var(--kids-ink)]" style={{ fontFamily: "Nunito, Avenir Next, sans-serif" }}>
+      <section className="kids-hero relative border-b-[4px] border-[var(--kids-ink)]" style={{ backgroundColor: phase.tone }}>
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <span className="absolute left-[10%] top-8 text-2xl text-[#e63946]">✦</span>
-          <span className="absolute right-[12%] top-16 text-2xl text-[#4caf50]">✦</span>
-          <span className="absolute bottom-5 right-[30%] text-xl text-[#1e6fe8]">✦</span>
-          <span className="absolute bottom-16 left-[38%] text-lg text-[#ffc72c]">✦</span>
+          <span className="absolute left-[10%] top-8 text-2xl text-[var(--kids-coral)]">✦</span>
+          <span className="absolute right-[12%] top-16 text-2xl text-[var(--kids-green)]">✦</span>
+          <span className="absolute bottom-5 right-[30%] text-xl text-[var(--kids-blue)]">✦</span>
+          <span className="absolute bottom-16 left-[38%] text-lg text-[var(--kids-sun)]">✦</span>
         </div>
         <div className="kids-hero-content mx-auto flex max-w-6xl flex-col gap-7 px-5 pb-8 pt-7 md:flex-row md:items-center md:px-8 md:pb-10 md:pt-8">
           <div className="flex justify-center md:w-44 md:justify-start">
@@ -525,18 +525,18 @@ export default function BrincandoAprendendoPage() {
           <div className="relative flex-1 text-center md:text-left">
             <div className="mb-3 flex items-center justify-center gap-3 md:justify-start">
               <img src={logoHero} alt="Dr. Jadson Fraga" className="h-12 w-16 object-contain" />
-              <span className="rounded-full border-[3px] border-[#1a2b4a] bg-white px-3 py-1 text-xs font-extrabold shadow-[2px_2px_0_#1a2b4a]">Brincando e Aprendendo</span>
+              <span className="rounded-full border-[3px] border-[var(--kids-ink)] bg-white px-3 py-1 text-xs font-extrabold shadow-[2px_2px_0_var(--kids-ink)]">Brincando e Aprendendo</span>
             </div>
-            <p className="text-sm font-extrabold text-[#4caf50]">Fase de herói: {phase.emoji} {phase.label}</p>
+            <p className="text-sm font-extrabold text-[var(--kids-green)]">Fase de herói: {phase.emoji} {phase.label}</p>
             <h1 className="mt-2 font-[Fredoka,sans-serif] text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">Escolha sua missão de hoje!</h1>
-            <p className="mt-2 text-base font-bold text-[#5a6a8a] md:text-lg">{phase.title} {phase.subtitle}</p>
+            <p className="mt-2 text-base font-bold text-[var(--kids-muted)] md:text-lg">{phase.title} {phase.subtitle}</p>
             <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
               {phases.map((option) => (
                 <button
                   key={option.id}
                   type="button"
                   onClick={() => choosePhase(option.id)}
-                  className={`kids-button rounded-full border-[3px] border-[#1a2b4a] px-4 py-2 text-sm font-extrabold shadow-[2px_2px_0_#1a2b4a] transition-transform hover:-translate-y-0.5 ${option.id === phaseId ? "bg-[#ffc72c]" : "bg-white"}`}
+                  className={`kids-button rounded-full border-[3px] border-[var(--kids-ink)] px-4 py-2 text-sm font-extrabold shadow-[2px_2px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5 ${option.id === phaseId ? "bg-[var(--kids-sun)]" : "bg-white"}`}
                   aria-pressed={option.id === phaseId}
                   aria-label={`Selecionar faixa etária ${option.label}`}
                 >
@@ -546,7 +546,7 @@ export default function BrincandoAprendendoPage() {
             </div>
           </div>
           <Link href="/" className="self-center md:self-start">
-            <span className="inline-flex items-center gap-2 rounded-full border-[3px] border-[#1a2b4a] bg-white px-4 py-2 text-sm font-extrabold shadow-[3px_3px_0_#1a2b4a] transition-transform hover:-translate-y-0.5">
+            <span className="inline-flex items-center gap-2 rounded-full border-[3px] border-[var(--kids-ink)] bg-white px-4 py-2 text-sm font-extrabold shadow-[3px_3px_0_var(--kids-ink)] transition-transform hover:-translate-y-0.5">
               <Home className="h-4 w-4" /> Início
             </span>
           </Link>
@@ -556,10 +556,10 @@ export default function BrincandoAprendendoPage() {
       <main id="kids-missions" className="mx-auto max-w-6xl px-5 py-9 md:px-8 md:py-12">
         <div className="kids-section-heading mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[#f0782f]">Escolha uma arena</p>
+            <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--kids-orange)]">Escolha uma arena</p>
             <h2 className="mt-1 font-[Fredoka,sans-serif] text-3xl font-extrabold md:text-4xl">Toda mente é um superpoder</h2>
           </div>
-          <p className="max-w-sm text-sm font-semibold text-[#5a6a8a]">Missões curtas, coloridas e pensadas para aprender brincando.</p>
+          <p className="max-w-sm text-sm font-semibold text-[var(--kids-muted)]">Missões curtas, coloridas e pensadas para aprender brincando.</p>
         </div>
 
         <div className="kids-missions-grid grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -568,20 +568,20 @@ export default function BrincandoAprendendoPage() {
           ))}
         </div>
 
-        <section className="relative mt-9 overflow-hidden rounded-[28px] border-[4px] border-[#1a2b4a] bg-[#fff] px-6 py-8 text-center shadow-[6px_6px_0_#1a2b4a] md:px-10">
-          <span className="absolute left-8 top-5 text-xl text-[#4caf50]">✦</span>
-          <span className="absolute right-8 top-8 text-xl text-[#e63946]">✦</span>
+        <section className="relative mt-9 overflow-hidden rounded-[28px] border-[4px] border-[var(--kids-ink)] bg-[var(--kids-white)] px-6 py-8 text-center shadow-[6px_6px_0_var(--kids-ink)] md:px-10">
+          <span className="absolute left-8 top-5 text-xl text-[var(--kids-green)]">✦</span>
+          <span className="absolute right-8 top-8 text-xl text-[var(--kids-coral)]">✦</span>
           <img src={mascot} alt="Dr. Jadson Fraga" className="mx-auto h-24 w-16 object-contain object-top" />
           <p className="mt-3 font-[Fredoka,sans-serif] text-xl font-extrabold md:text-2xl">“Você escolheu muito bem! Que comece o treino, herói!”</p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3 text-xs font-extrabold text-[#5a6a8a]">
-            <span className="rounded-full bg-[#fff7dd] px-3 py-1">🌟 Missões lúdicas</span>
-            <span className="rounded-full bg-[#e3f0fd] px-3 py-1">🧠 Raciocínio</span>
-            <span className="rounded-full bg-[#e8f7e9] px-3 py-1">🎯 Atenção</span>
+          <div className="mt-5 flex flex-wrap justify-center gap-3 text-xs font-extrabold text-[var(--kids-muted)]">
+            <span className="rounded-full bg-[var(--kids-cream)] px-3 py-1">🌟 Missões lúdicas</span>
+            <span className="rounded-full bg-[var(--kids-soft-blue)] px-3 py-1">🧠 Raciocínio</span>
+            <span className="rounded-full bg-[var(--kids-soft-green)] px-3 py-1">🎯 Atenção</span>
           </div>
         </section>
       </main>
 
-      <footer className="border-t-[4px] border-[#1a2b4a] bg-[#1a2b4a] px-5 py-7 text-center text-sm font-bold text-white">
+      <footer className="border-t-[4px] border-[var(--kids-ink)] bg-[var(--kids-ink)] px-5 py-7 text-center text-sm font-bold text-white">
         Dr. Jadson Fraga · Neuropediatra · Brincando e Aprendendo 🧠✨
       </footer>
     </div>

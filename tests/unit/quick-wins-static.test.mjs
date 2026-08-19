@@ -141,8 +141,11 @@ const battery = read("client/src/components/BatteryReportCard.tsx");
 assert.match(battery, /printPlainTextDocument/);
 assert.doesNotMatch(battery, /document\.write\(`<pre>\$\{report\}/);
 
+const clinicalReport = read("client/src/components/ClinicalReport.tsx");
+assert.match(clinicalReport, /printPlainTextDocument/);
+
 for (const printableSource of [
-  read("client/src/components/ClinicalReport.tsx"),
+  read("client/src/lib/printDocument.ts"),
   read("client/src/pages/fichas-registro.tsx"),
   read("client/src/pages/laudo-neuroped.tsx"),
   read("client/src/pages/plano-terapeutico.tsx"),
