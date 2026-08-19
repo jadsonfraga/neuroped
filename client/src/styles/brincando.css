@@ -1,0 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap");
+
+.np-kids {
+  font-family: "Nunito", "Avenir Next", sans-serif;
+  color: #1a2b4a;
+}
+
+.np-kids h1,
+.np-kids h2,
+.np-kids h3,
+.np-kids [class*="font-[Fredoka"] {
+  font-family: "Fredoka", "Nunito", sans-serif;
+}
+
+.np-kids button,
+.np-kids a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-kids *,
+  .np-kids *::before,
+  .np-kids *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

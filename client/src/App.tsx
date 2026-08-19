@@ -35,6 +35,7 @@ const PreferencesPanel = lazy(() =>
 );
 
 const HomePage = lazy(() => import("@/pages/home"));
+const BrincandoAprendendoPage = lazy(() => import("@/pages/brincando-e-aprendendo"));
 const SplashScreen = lazy(() =>
   import("@/components/SplashScreen").then(({ SplashScreen }) => ({
     default: SplashScreen,
@@ -253,6 +254,7 @@ function AppRouter() {
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
             <Route path="/" component={HomePage} />
+            <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
             <Route path="/mchat" component={MchatPage} />
             <Route path="/cars" component={CarsPage} />
             <Route path="/snap" component={SnapPage} />

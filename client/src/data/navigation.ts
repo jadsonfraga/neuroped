@@ -65,6 +65,12 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    title: "BRINCAR E APRENDER",
+    items: [
+      { href: "/brincando-e-aprendendo", label: "Brincando e Aprendendo", icon: Sparkles },
+    ],
+  },
+  {
     title: "TRABALHO CLÍNICO",
     items: [
       { href: "/filtro", label: "Filtro Clínico Inteligente", icon: Filter },
