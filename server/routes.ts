@@ -38,6 +38,7 @@ import {
   patientReferenceDecision,
 } from "./lib/ownership.js";
 import { buildExpressHealth } from "./lib/healthContract.js";
+import { registerBookingRoutes } from "./routes/booking-adapter.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
@@ -110,6 +111,9 @@ export async function registerRoutes(
 
   // ----- Clinical Core: ledger longitudinal canônico e rastreável -----
   registerClinicalCoreRoutes(app);
+
+  // ----- Agenda interna e agendamento público -----
+  registerBookingRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {
