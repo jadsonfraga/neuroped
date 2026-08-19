@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { attemptChunkRecovery } from "@/lib/chunkRecovery";
 
 interface Props {
   children: ReactNode;
@@ -27,6 +28,12 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // React.lazy encaminha algumas falhas de chunk ao ErrorBoundary antes de
+    // disparar unhandledrejection. Nesse caso, reaproveita a mesma autocura
+    // protegida por cooldown em vez de prender o usuário na tela de falha.
+    const online = typeof navigator === "undefined" || navigator.onLine !== false;
+    if (attemptChunkRecovery(error, online)) return;
+
     // Não persiste mensagem, props, estado nem dados clínicos. O identificador e
     // os nomes de componentes bastam para correlacionar um relato técnico.
     console.error("[AppErrorBoundary] falha de renderização", {

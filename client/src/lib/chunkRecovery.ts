@@ -48,6 +48,22 @@ function reloadOnce(): boolean {
 }
 
 /**
+ * Tenta recuperar uma falha de chunk exatamente uma vez por janela de cooldown.
+ *
+ * O terceiro parâmetro cria uma pequena costura de teste; em produção ele usa
+ * reloadOnce. Esta função também é chamada pelo AppErrorBoundary porque rejeições
+ * de React.lazy podem ser tratadas pelo React antes de chegarem ao listener
+ * global de unhandledrejection.
+ */
+export function attemptChunkRecovery(
+  reason: unknown,
+  online: boolean,
+  reload: () => boolean = reloadOnce,
+): boolean {
+  return shouldAutoRecoverChunkError(reason, online) && reload();
+}
+
+/**
  * Recupera automaticamente uma única vez quando um deploy troca os arquivos
  * lazy-loaded enquanto o app está aberto. O cooldown impede reload infinito.
  */
@@ -61,8 +77,7 @@ export function installChunkRecovery(): void {
 
   window.addEventListener("unhandledrejection", (event) => {
     if (
-      shouldAutoRecoverChunkError(event.reason, navigator.onLine !== false) &&
-      reloadOnce()
+      attemptChunkRecovery(event.reason, navigator.onLine !== false)
     ) {
       event.preventDefault();
     }
