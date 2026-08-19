@@ -59,9 +59,17 @@ export const navSections: NavSection[] = [
     items: [{ href: "/", label: "Início", icon: Home }],
   },
   {
-    title: "ACOMPANHAMENTO",
+    title: "ACESSO RÁPIDO",
     items: [
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },
+      { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users },
+      { href: "/laudo-neuroped", label: "Laudos", icon: FileText },
+      { href: "/receita-c1", label: "Receita C1", icon: Pill },
+    ],
+  },
+  {
+    title: "ACOMPANHAMENTO",
+    items: [
       { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },
     ],
   },

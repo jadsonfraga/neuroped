@@ -38,6 +38,16 @@ import {
 
 const DASHBOARD_KEY = "/api/operations?resource=dashboard";
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const scheduleRows = Array.from({ length: 27 }, (_, index) => {
+  const total = 7 * 60 + index * 30;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+});
+
+function localDateInput(): string {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+}
 
 const statusLabel: Record<AppointmentStatus, string> = {
   requested: "solicitada",
@@ -107,6 +117,7 @@ export default function AgendaPage() {
   const data = dashboard.data;
   const [busy, setBusy] = useState(false);
   const [staffEmail, setStaffEmail] = useState("");
+  const [agendaDate, setAgendaDate] = useState(localDateInput);
 
   const [profile, setProfile] = useState({
     displayName: "",
@@ -165,6 +176,18 @@ export default function AgendaPage() {
       .sort((a, b) => a.startsAtLocal.localeCompare(b.startsAtLocal))
       .slice(0, 40),
     [data?.appointments],
+  );
+
+  const dayAppointments = useMemo(
+    () => (data?.appointments ?? [])
+      .filter((item) => item.startsAtLocal.startsWith(`${agendaDate}T`))
+      .filter((item) => !["cancelled", "no_show"].includes(item.status))
+      .sort((a, b) => a.startsAtLocal.localeCompare(b.startsAtLocal)),
+    [data?.appointments, agendaDate],
+  );
+  const appointmentsByTime = useMemo(
+    () => new Map(dayAppointments.map((item) => [item.startsAtLocal.slice(11, 16), item] as const)),
+    [dayAppointments],
   );
 
   if (dashboard.isLoading) {
@@ -254,6 +277,64 @@ export default function AgendaPage() {
               <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
               <Field label="E-mail"><Input type="email" value={manual.email} onChange={(e) => setManual((p) => ({ ...p, email: e.target.value }))} /></Field>
               <div className="md:col-span-2 xl:col-span-3"><Button disabled={busy || !manual.serviceId || !manual.startsAtLocal} onClick={() => mutate({ action: "create_appointment", serviceId: manual.serviceId, startsAtLocal: manual.startsAtLocal, guardianName: manual.guardianName, patientName: manual.patientName, guardianPhone: manual.phone, guardianEmail: manual.email }, "Consulta adicionada à agenda.")} className="gap-2"><Plus className="h-4 w-4" />Adicionar</Button></div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-base">Grade horária da agenda</CardTitle>
+                  <p className="mt-1 text-xs text-muted-foreground">Clique em um horário livre para preparar um novo agendamento. Os registros exibidos vêm do backend persistente.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="agenda-date" className="text-xs text-muted-foreground">Dia</Label>
+                  <Input id="agenda-date" type="date" value={agendaDate} onChange={(e) => setAgendaDate(e.target.value)} className="w-auto" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="grid grid-cols-[4.5rem_1fr] gap-2 border-b px-2 pb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>Hora</span><span>Paciente / situação</span>
+              </div>
+              <div className="max-h-[34rem] space-y-1 overflow-y-auto pr-1">
+                {scheduleRows.map((time) => {
+                  const appointment = appointmentsByTime.get(time);
+                  const occupied = Boolean(appointment);
+                  return (
+                    <div
+                      key={time}
+                      role="button"
+                      tabIndex={occupied ? -1 : 0}
+                      onClick={() => {
+                        if (occupied) return;
+                        setManual((current) => ({ ...current, startsAtLocal: `${agendaDate}T${time}` }));
+                      }}
+                      onKeyDown={(event) => {
+                        if (!occupied && (event.key === "Enter" || event.key === " ")) {
+                          event.preventDefault();
+                          setManual((current) => ({ ...current, startsAtLocal: `${agendaDate}T${time}` }));
+                        }
+                      }}
+                      className={`grid min-h-11 grid-cols-[4.5rem_1fr] gap-2 rounded-xl border px-2 py-2 text-sm ${occupied ? "border-primary/30 bg-primary/5" : "cursor-pointer border-dashed hover:border-amber-400 hover:bg-amber-50/60 dark:hover:bg-amber-950/20"}`}
+                    >
+                      <span className="font-mono text-xs font-semibold text-muted-foreground">{time}</span>
+                      {appointment ? (
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <strong className="truncate">{appointment.patientName || "Paciente não informado"}</strong>
+                          <Badge variant="outline">{statusLabel[appointment.status]}</Badge>
+                          <span className="text-xs text-muted-foreground">{appointment.serviceName || "Serviço"} · até {appointment.endsAtLocal.slice(11, 16)}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Horário livre · selecionar para marcar</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {dayAppointments.some((item) => !scheduleRows.includes(item.startsAtLocal.slice(11, 16))) && (
+                <p className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">Há consultas fora da grade padrão de 07:00–20:00 ou em minutos intermediários; elas continuam preservadas e aparecem na lista abaixo.</p>
+              )}
             </CardContent>
           </Card>
 

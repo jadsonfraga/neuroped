@@ -128,6 +128,8 @@ function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; acti
   );
 }
 
+const priorityNavHrefs = new Set(["/agenda", "/laudo-neuroped", "/receita-c1"]);
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { accessMode, logout } = useAuth();
@@ -593,24 +595,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   >
                     {section.items.map((item) => {
                       const active = activeNavigation?.item.href === item.href;
+                      const priority = priorityNavHrefs.has(item.href);
                       return (
                         <Link key={`${sectionKey}-${item.href}-${item.label}`} href={item.href}>
                           <div
+                            title={priority ? `${item.label} — acesso prioritário` : undefined}
                             data-testid={`nav-${item.label}`}
                             onMouseEnter={() => softHover()}
                             onClick={() => {
                               softTap();
                               haptic.select();
                             }}
-                            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer transition-all duration-200 ${
-                              active
-                                ? "bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
+                            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer border transition-all duration-200 ${
+                              priority
+                                ? active
+                                  ? "border-amber-400 bg-amber-200/90 text-amber-950 font-semibold shadow-sm dark:border-amber-600 dark:bg-amber-950/60 dark:text-amber-100"
+                                  : "border-amber-300/80 bg-amber-100/70 text-amber-950 hover:bg-amber-200/90 hover:translate-x-0.5 dark:border-amber-700/70 dark:bg-amber-950/35 dark:text-amber-100 dark:hover:bg-amber-950/60"
+                                : active
+                                  ? "border-transparent bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
+                                  : "border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
                             } ${collapsed ? "lg:justify-center" : ""}`}
                           >
                             <item.icon
                               className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                                active ? "text-primary scale-110" : ""
+                                priority
+                                  ? "text-amber-700 dark:text-amber-300"
+                                  : active ? "text-primary scale-110" : ""
                               }`}
                               strokeWidth={active ? 2 : 1.75}
                               aria-hidden="true"

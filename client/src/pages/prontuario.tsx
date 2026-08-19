@@ -1,8 +1,8 @@
-import { cloneElement, isValidElement, useState, useCallback, type ReactElement, type ReactNode } from "react";
+import { cloneElement, isValidElement, useState, useCallback, useEffect, type ReactElement, type ReactNode } from "react";
 import {
   User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
   Activity, MessageSquare, Pill, Dumbbell, FlaskConical,
-  Printer, Copy, CheckCircle2, AlertTriangle, Clock,
+  Printer, Copy, CheckCircle2, AlertTriangle, Clock, Save,
   TrendingUp, Heart, School, ClipboardList
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
+import { apiRequest } from "@/lib/queryClient";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -118,6 +119,40 @@ interface Anamnese {
   patologicos: string;
   familiares: string;
   escolar: string;
+}
+
+type StoredClinicalEvent = {
+  id: string;
+  eventType: string;
+  status: string;
+  occurredAt: string;
+  note?: string;
+  data?: Record<string, unknown>;
+};
+
+const anamneseKeys: (keyof Anamnese)[] = [
+  "queixaPrincipal", "gestacional", "perinatal", "patologicos", "familiares", "escolar",
+];
+const marcoKeys: (keyof Marcos)[] = [
+  "sustentouCabeca", "sentouSemApoio", "engatinhou", "ficouEmPe", "andouSozinho",
+  "balbucio", "primeiraspalavras", "frasesDuasPalavras", "linguagemFluente",
+  "sorrisoSocial", "apontar", "esfincteriDiurno", "esfincteriNoturno",
+  "regressao", "regressaoDesc", "crises", "crisesDesc",
+];
+
+function patientIdFromQuery(): string {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get("patientId")?.trim() ?? "";
+}
+
+function parseClinicalNote(note: unknown): Record<string, unknown> {
+  if (typeof note !== "string" || !note.trim()) return {};
+  try {
+    const parsed = JSON.parse(note);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 // ─── milestone definitions ───────────────────────────────────────────────────
@@ -547,6 +582,7 @@ function defaultAnamnese(): Anamnese {
 
 export default function ProntuarioPage() {
   const { toast } = useToast();
+  const patientId = patientIdFromQuery();
 
   const [identificacao, setId] = useState<Identificacao>(defaultId);
   const [anamnese, setAnamnese] = useState<Anamnese>(defaultAnamnese);
@@ -555,6 +591,78 @@ export default function ProntuarioPage() {
   const [terapias, setTerapias] = useState<Terapia[]>([]);
   const [exames, setExames] = useState<Exame[]>([]);
   const [copied, setCopied] = useState(false);
+  const [recordLoading, setRecordLoading] = useState(Boolean(patientId));
+  const [recordSaving, setRecordSaving] = useState(false);
+  const [eventIds, setEventIds] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!patientId) return;
+    let cancelled = false;
+    setRecordLoading(true);
+    Promise.all([
+      apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`).then((response) => response.json()),
+      apiRequest("GET", `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`).then((response) => response.json()),
+    ]).then(([patient, eventPayload]) => {
+      if (cancelled) return;
+      const events = Array.isArray(eventPayload?.data) ? eventPayload.data as StoredClinicalEvent[] : [];
+      const activeEvents = events.filter((event) => event.status === "active");
+      const nextIds: Record<string, string> = {};
+      const nextAnamnese = defaultAnamnese();
+      const nextMarcos = defaultMarcos();
+      const nextMedications: Medicacao[] = [];
+      const nextTerapias: Terapia[] = [];
+      const nextExames: Exame[] = [];
+      let nextId = { ...defaultId(), nomeCompleto: patient.name ?? "", dataNascimento: patient.birthDate ?? "", cid: patient.cid ?? "" };
+
+      for (const event of activeEvents) {
+        const meta = parseClinicalNote(event.note);
+        const eventKey = typeof meta.key === "string" ? meta.key : "";
+        if (eventKey) nextIds[eventKey] = event.id;
+        const data = event.data ?? {};
+        if (event.eventType === "encounter") {
+          const savedIdentification = meta.identificacao;
+          if (savedIdentification && typeof savedIdentification === "object" && !Array.isArray(savedIdentification)) {
+            nextId = { ...nextId, ...(savedIdentification as Partial<Identificacao>) };
+          }
+          if (event.occurredAt) nextId.dataConsulta = event.occurredAt.slice(0, 10);
+        }
+        if (event.eventType === "observation" && meta.section === "anamnese" && typeof meta.field === "string") {
+          if (meta.field in nextAnamnese) nextAnamnese[meta.field as keyof Anamnese] = String(meta.value ?? data.valueText ?? "");
+        }
+        if (event.eventType === "observation" && meta.section === "marcos" && typeof meta.field === "string") {
+          if (meta.field in nextMarcos) nextMarcos[meta.field as keyof Marcos] = String(meta.value ?? data.valueText ?? "");
+        }
+        if (event.eventType === "medication" && meta.section === "medicacao") {
+          const item = meta.item;
+          if (item && typeof item === "object" && !Array.isArray(item)) {
+            nextMedications.push(item as Medicacao);
+          }
+        }
+        if (event.eventType === "plan" && meta.section === "terapia") {
+          const item = meta.item;
+          if (item && typeof item === "object" && !Array.isArray(item)) nextTerapias.push(item as Terapia);
+        }
+        if (event.eventType === "plan" && meta.section === "exame") {
+          const item = meta.item;
+          if (item && typeof item === "object" && !Array.isArray(item)) nextExames.push(item as Exame);
+        }
+      }
+
+      setId(nextId);
+      setAnamnese(nextAnamnese);
+      setMarcos(nextMarcos);
+      setMedicacoes(nextMedications);
+      setTerapias(nextTerapias);
+      setExames(nextExames);
+      setEventIds(nextIds);
+      setRecordLoading(false);
+    }).catch((error) => {
+      if (cancelled) return;
+      setRecordLoading(false);
+      toast({ title: "Não foi possível carregar o prontuário persistente.", description: String(error), variant: "destructive" });
+    });
+    return () => { cancelled = true; };
+  }, [patientId, toast]);
 
   // ── updaters ──
   const updId = useCallback((field: keyof Identificacao, val: string) =>
@@ -595,6 +703,146 @@ export default function ProntuarioPage() {
       softBell();
       haptic.notify();
       toast({ title: "Impressão", description: "Janela de impressão aberta." });
+    }
+  };
+
+  const handleSave = async () => {
+    if (!patientId) {
+      toast({ title: "Selecione um paciente", description: "Abra o prontuário a partir de um cadastro em Pacientes para habilitar a persistência.", variant: "destructive" });
+      return;
+    }
+    if (!identificacao.nomeCompleto.trim()) {
+      toast({ title: "Nome obrigatório", description: "Informe o nome da criança antes de salvar.", variant: "destructive" });
+      return;
+    }
+
+    setRecordSaving(true);
+    try {
+      await apiRequest("PATCH", `/api/patients/${encodeURIComponent(patientId)}`, {
+        name: identificacao.nomeCompleto.trim(),
+        birthDate: identificacao.dataNascimento || null,
+        cid: identificacao.cid.trim() || null,
+      });
+
+      const occurredAt = new Date(`${identificacao.dataConsulta || today}T12:00:00`).toISOString();
+      const nextIds = { ...eventIds };
+      const postEvent = async (key: string, payload: Record<string, unknown>) => {
+        const previousId = nextIds[key];
+        const response = await apiRequest("POST", "/api/clinical-core/events", {
+          patientId,
+          occurredAt,
+          ...(previousId ? { supersedesEventId: previousId } : {}),
+          provenance: { kind: "documented", source: "clinician", sourceLabel: "Prontuário NeuroPed" },
+          ...payload,
+        });
+        const created = await response.json() as StoredClinicalEvent;
+        nextIds[key] = created.id;
+      };
+
+      await postEvent("encounter", {
+        eventType: "encounter",
+        data: {
+          encounterType: "followup",
+          reason: anamnese.queixaPrincipal.trim() || identificacao.hipoteseDiagnostica.trim() || "Consulta neuropediátrica",
+          setting: "clinic",
+        },
+        note: JSON.stringify({ key: "encounter", identificacao }),
+      });
+
+      for (const field of anamneseKeys) {
+        const value = anamnese[field].trim();
+        await postEvent(`anamnese:${field}`, {
+          eventType: "observation",
+          data: { domain: "other", findingStatus: value ? "present" : "not_assessed", valueText: value },
+          note: JSON.stringify({ key: `anamnese:${field}`, section: "anamnese", field, value }),
+        });
+      }
+
+      for (const field of marcoKeys) {
+        const value = marcos[field].trim();
+        const isRedFlag = (field === "regressao" || field === "crises") && value === "Sim";
+        await postEvent(`marcos:${field}`, {
+          eventType: "observation",
+          data: { domain: field === "crises" || field === "crisesDesc" ? "seizure" : "development", findingStatus: value ? "present" : "not_assessed", valueText: value, redFlag: isRedFlag },
+          note: JSON.stringify({ key: `marcos:${field}`, section: "marcos", field, value }),
+        });
+      }
+
+      const activeMedicationKeys = new Set<string>();
+      for (const item of medicacoes) {
+        if (!item.nome.trim()) continue;
+        const key = `medicacao:${item.id}`;
+        activeMedicationKeys.add(key);
+        const doseMg = Number.parseFloat(item.dose.replace(",", ".").replace(/[^0-9.]/g, ""));
+        await postEvent(key, {
+          eventType: "medication",
+          data: {
+            action: "reported_use",
+            genericName: item.nome.trim(),
+            ...(Number.isFinite(doseMg) ? { doseMg } : {}),
+            frequency: item.posologia.trim() || undefined,
+            indication: item.objetivo.trim() || undefined,
+            effectiveFrom: item.dataInicio ? new Date(`${item.dataInicio}T12:00:00`).toISOString() : undefined,
+          },
+          note: JSON.stringify({ key, section: "medicacao", item }),
+        });
+      }
+      for (const key of Object.keys(nextIds).filter((item) => item.startsWith("medicacao:") && !activeMedicationKeys.has(item))) {
+        await postEvent(key, {
+          eventType: "medication",
+          data: { action: "stop", genericName: "Medicação registrada anteriormente", reason: "Removida no prontuário atual" },
+          note: JSON.stringify({ key, section: "medicacao", removed: true }),
+        });
+      }
+
+      const activeTherapyKeys = new Set<string>();
+      for (const item of terapias) {
+        if (!item.tipo.trim()) continue;
+        const key = `terapia:${item.id}`;
+        activeTherapyKeys.add(key);
+        await postEvent(key, {
+          eventType: "plan",
+          data: { kind: "therapy", target: item.tipo.trim(), status: "planned", priority: "routine", responsibleRole: item.profissional.trim() || undefined },
+          note: JSON.stringify({ key, section: "terapia", item }),
+        });
+      }
+      for (const key of Object.keys(nextIds).filter((item) => item.startsWith("terapia:") && !activeTherapyKeys.has(item))) {
+        await postEvent(key, {
+          eventType: "plan",
+          data: { kind: "therapy", target: "Plano terapêutico registrado anteriormente", status: "cancelled", priority: "routine" },
+          note: JSON.stringify({ key, section: "terapia", removed: true }),
+        });
+      }
+
+      const activeExamKeys = new Set<string>();
+      for (const item of exames) {
+        if (!item.tipo.trim()) continue;
+        const key = `exame:${item.id}`;
+        activeExamKeys.add(key);
+        await postEvent(key, {
+          eventType: "plan",
+          data: { kind: "exam", target: item.tipo.trim(), status: item.status === "Concluído" ? "completed" : "planned", priority: "routine" },
+          note: JSON.stringify({ key, section: "exame", item }),
+        });
+      }
+      for (const key of Object.keys(nextIds).filter((item) => item.startsWith("exame:") && !activeExamKeys.has(item))) {
+        await postEvent(key, {
+          eventType: "plan",
+          data: { kind: "exam", target: "Exame registrado anteriormente", status: "cancelled", priority: "routine" },
+          note: JSON.stringify({ key, section: "exame", removed: true }),
+        });
+      }
+
+      setEventIds(nextIds);
+      setRecordSaving(false);
+      softSuccess();
+      haptic.success();
+      toast({ title: "Prontuário salvo", description: "Dados do paciente e registros clínicos persistidos com trilha de auditoria." });
+    } catch (error) {
+      setRecordSaving(false);
+      softError();
+      haptic.error();
+      toast({ title: "Não foi possível salvar o prontuário", description: String(error), variant: "destructive" });
     }
   };
 
@@ -1492,6 +1740,15 @@ export default function ProntuarioPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   size="lg"
+                  onClick={handleSave}
+                  disabled={recordLoading || recordSaving || !patientId}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-md h-11"
+                >
+                  <Save className="w-5 h-5" />
+                  {recordLoading ? "Carregando…" : recordSaving ? "Salvando…" : "Salvar prontuário"}
+                </Button>
+                <Button
+                  size="lg"
                   onClick={handlePrint}
                   className="flex-1 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white gap-2 shadow-md h-11"
                 >
@@ -1510,7 +1767,7 @@ export default function ProntuarioPage() {
               </div>
 
               <p className="text-[10px] text-muted-foreground text-center mt-3">
-                Os dados existem apenas nesta sessão. Imprima ou copie antes de fechar a aba.
+                O botão Salvar grava o cadastro e os eventos clínicos no backend persistente com trilha de auditoria. Imprimir ou copiar gera apenas uma saída documental.
               </p>
             </CardContent>
           </Card>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileText, Printer, RefreshCw, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
@@ -8,11 +8,12 @@ import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
+import { apiRequest } from "@/lib/queryClient";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
    Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17.756
-   Portaria SVS/MS nº 344/1998 · RDC ANVISA nº 970/2025
+   Portaria SVS/MS nº 344/1998 e modelos Anvisa/SNCR — Versão 2 vigente desde 18/05/2026
 ──────────────────────────────────────────────────────────── */
 
 interface ReceitaFields {
@@ -25,7 +26,12 @@ interface ReceitaFields {
   data: string;
 }
 
+const RECEITA_TEMPLATE_VERSION = "Versão 2 — modelo Anvisa vigente para impressões desde 18/05/2026";
 const EMPTY: ReceitaFields = { pac: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
+
+function todayBR(): string {
+  return new Intl.DateTimeFormat("pt-BR").format(new Date());
+}
 
 // pdf-lib (Helvetica/WinAnsi, Windows-1252) LANÇA em qualquer caractere fora do
 // Latin-1 — inclusive ao só MEDIR a largura do texto. Numa RECEITA C1 assinada,
@@ -77,6 +83,7 @@ function _canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string) {
     DOCTOR_NAME_PDF,
     "CRM-PE 25.227",
     "RQE 17.756",
+    RECEITA_TEMPLATE_VERSION,
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.pac || "-"}`,
     `Endereco: ${f.end || "-"}`,
@@ -88,11 +95,13 @@ function _canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string) {
 }
 
 async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Array> {
-  // Não gerar/assinar uma receita de controle especial em branco: bloqueia antes
-  // de produzir um PDF assinável sem paciente, medicamento ou posologia.
-  if (!f.pac?.trim() || !f.med?.trim() || !f.poso?.trim()) {
-    throw new Error("Preencha ao menos paciente, medicamento e posologia antes de gerar a receita.");
-  }
+  // Não gerar/assinar uma receita de controle especial incompleta: cada campo
+  // essencial precisa ser revisado pelo prescritor antes de produzir o PDF.
+  const missing = [
+    ["paciente", f.pac], ["endereço", f.end], ["medicamento/substância", f.med],
+    ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
+  ].filter(([, value]) => !value?.trim()).map(([label]) => label);
+  if (missing.length) throw new Error(`Preencha os campos obrigatórios: ${missing.join(", ")}.`);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
   const pdf = await PDFDocument.create();
@@ -319,9 +328,7 @@ function viaHtml(tag: string, f: ReceitaFields) {
         <div class="uline" style="margin-top:5mm"></div><div class="mini">Assinatura do farmacêutico</div>
       </div>
     </div>
-    <div class="legal">Validade de <b>30 dias</b> a partir da data de emissão. Emitida em <b>2 vias</b> — 1ª via retida pela farmácia ou drogaria,
-      2ª via do paciente. Substância da <b>Lista C1</b> (Portaria SVS/MS nº 344/1998 e atualizações; RDC ANVISA nº 970/2025).
-      Sem rasuras. Uma via retida no ato da dispensação.</div>
+    <div class="legal"><b>Rascunho para revisão do prescritor:</b> validade de <b>30 dias</b> a partir da data de emissão. Emitida em <b>2 vias</b> — 1ª via retida pela farmácia ou drogaria, 2ª via do paciente. Substância da <b>Lista C1</b>, sujeita à conferência da lista vigente e das regras sanitárias aplicáveis. Modelo Anvisa <b>Versão 2</b>, vigente para impressões desde <b>18/05/2026</b>. Sem rasuras; usar somente após assinatura qualificada válida e conferência profissional.</div>
   </div>
 </div>`;
 }
@@ -448,12 +455,36 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 }
 
 export default function ReceitaC1Page() {
-  const [f, setF] = useState<ReceitaFields>(EMPTY);
+  const [f, setF] = useState<ReceitaFields>({ ...EMPTY, data: todayBR() });
   const [showPreview, setShowPreview] = useState(false);
+  const [patientLoading, setPatientLoading] = useState(false);
   const patientId = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("patientId")
     : null;
   const filename = `receita-c1-${dateStamp()}`;
+
+  useEffect(() => {
+    if (!patientId) return;
+    let cancelled = false;
+    setPatientLoading(true);
+    apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`)
+      .then((response) => response.json())
+      .then((payload) => {
+        if (cancelled) return;
+        const patient = payload?.patient ?? payload?.data ?? payload;
+        setF((current) => ({
+          ...current,
+          pac: current.pac || patient?.name || "",
+          end: current.end || patient?.address || patient?.guardianAddress || "",
+          data: current.data || todayBR(),
+        }));
+        setPatientLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setPatientLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [patientId]);
 
   function set(k: keyof ReceitaFields) {
     return ({ target }: { target: { value: string } }) =>
@@ -461,8 +492,16 @@ export default function ReceitaC1Page() {
   }
 
   const handlePrint = () => {
-    if (!f.pac?.trim() || !f.med?.trim() || !f.poso?.trim()) {
-      window.alert("Preencha ao menos paciente, medicamento e posologia antes de imprimir a receita.");
+    if (!patientId) {
+      window.alert("Abra a Receita C1 a partir de um paciente cadastrado para manter o documento vinculado ao prontuário persistente.");
+      return;
+    }
+    const missing = [
+      ["paciente", f.pac], ["endereço", f.end], ["medicamento/substância", f.med],
+      ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
+    ].filter(([, value]) => !value?.trim()).map(([label]) => label);
+    if (missing.length) {
+      window.alert(`Preencha os campos obrigatórios antes de imprimir: ${missing.join(", ")}.`);
       return;
     }
     const win = window.open("", "_blank");
@@ -480,7 +519,7 @@ export default function ReceitaC1Page() {
         icon={FileText}
         eyebrow="receita de controle especial"
         title="Receita de Controle Especial"
-        subtitle="Preencha os campos abaixo. A receita é gerada em 2 vias (farmácia + paciente) conforme a Portaria SVS/MS nº 344/1998 e RDC ANVISA nº 970/2025. Assine com seu certificado ICP-Brasil antes de imprimir."
+        subtitle={`Preencha, revise e assine os campos abaixo. ${RECEITA_TEMPLATE_VERSION}. A receita de controle especial C1 é gerada em 2 vias; o PDF só deve ser usado após conferência do prescritor e assinatura válida.`}
         gradient="from-primary to-chart-2"
       >
         <div className="flex flex-wrap gap-2">
@@ -488,14 +527,18 @@ export default function ReceitaC1Page() {
             <FileText className="h-4 w-4" />
             {showPreview ? "Fechar prévia" : "Visualizar"}
           </Button>
-          <Button onClick={handlePrint} size="sm" className="gap-2">
+          <Button onClick={handlePrint} disabled={patientLoading || !patientId} size="sm" className="gap-2">
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
-          <Button variant="secondary" size="sm" className="gap-2" onClick={() => setF(EMPTY)}>
+          <Button variant="secondary" size="sm" className="gap-2" onClick={() => setF({ ...EMPTY, data: todayBR() })}>
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
         </div>
       </PageHero>
+
+      <div className="rounded-2xl border border-amber-400/60 bg-amber-50/80 p-4 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
+        <strong>Revisão obrigatória:</strong> este módulo usa o modelo Anvisa {RECEITA_TEMPLATE_VERSION.replace("Versão 2 — ", "")}. A tela não decide se uma substância é C1 nem substitui conferência da lista vigente, do prescritor, do estabelecimento ou da assinatura qualificada. Sem paciente vinculado, a impressão fica bloqueada.
+      </div>
 
       {/* ── Assinatura ICP-Brasil — bloco em destaque ─────────── */}
       <section
@@ -544,7 +587,10 @@ export default function ReceitaC1Page() {
       </section>
 
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
-        <h2 className="text-sm font-bold text-foreground">Dados da receita</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-bold text-foreground">Dados da receita</h2>
+          <span className="text-xs text-muted-foreground">{patientLoading ? "Carregando paciente…" : patientId ? "Paciente vinculado ao prontuário" : "Abra esta tela por Pacientes"}</span>
+        </div>
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground">Paciente</label>
