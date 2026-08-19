@@ -4,7 +4,7 @@
  * Fluxo de upload:
  *  1. POST /api/files/sign-upload -> recebe { fileId, key, url, method }
  *  2. PUT diretamente na url assinada com o body do arquivo
- *  3. POST /api/files/:id/confirm com sha256 calculado
+ *  3. POST /api/files/:id/confirm; o servidor calcula o digest do objeto armazenado
  *
  * Fluxo de download:
  *  1. GET /api/files/:id -> recebe metadata + downloadUrl
@@ -29,14 +29,6 @@ export interface FileMetadata {
   category?: string | null;
   patientId?: string | null;
   createdAt: string;
-}
-
-async function computeSha256(file: File): Promise<string> {
-  const buf = await file.arrayBuffer();
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 /**
@@ -85,11 +77,10 @@ export async function uploadFile(params: FileUploadParams): Promise<FileMetadata
     xhr.send(file);
   });
 
-  // 3. Confirmar upload + enviar sha256 para integridade
-  const sha256 = await computeSha256(file);
+  // 3. Confirmar upload; o servidor calcula o digest no objeto real do bucket.
   const confirmResponse = await authFetch(`/api/files/${fileId}/confirm`, {
     method: "POST",
-    body: JSON.stringify({ sha256 }),
+    body: JSON.stringify({}),
   });
 
   if (!confirmResponse.ok) {

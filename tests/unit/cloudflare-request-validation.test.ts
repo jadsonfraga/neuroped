@@ -33,7 +33,6 @@ const plainObjectHandlers = [
   [patchPatient, { params: { id: "demo-001" } }],
   [createResult, {}],
   [createScaleResult, {}],
-  [createDocument, {}],
   [createConsultation, {}],
 ] as const;
 
@@ -72,19 +71,6 @@ const invalidFieldCases: Array<[
     scale_name: "X",
     responses: [{ question: [], answer: {} }],
   }, {}],
-  [createDocument as never, {
-    patient_id: 123,
-    type: "laudo",
-    title: "Título",
-    content: "Conteúdo",
-  }, {}],
-  [createDocument as never, {
-    patient_id: "demo-001",
-    type: "laudo",
-    title: "Título",
-    content: "Conteúdo",
-    is_family_visible: [true],
-  }, {}],
   [createConsultation as never, { patient_id: 123 }, {}],
   [createConsultation as never, {
     patient_id: "demo-001",
@@ -97,6 +83,13 @@ for (const [handler, payload, options] of invalidFieldCases) {
   assert.equal(response.status, 400, "tipo de campo inválido responde 400, nunca 500");
 }
 
+const unavailableDocument = await invoke(createDocument as never, null);
+assert.equal(unavailableDocument.status, 503);
+assert.equal(
+  (await unavailableDocument.json() as { code?: string }).code,
+  "CLINICAL_DOCUMENTS_BACKEND_UNAVAILABLE",
+);
+
 for (const handler of [login, refresh, logout]) {
   const response = await invoke(handler as never, null, {
     env: { DB: {}, NEUROPED_JWT_SECRET: secret },
@@ -104,4 +97,4 @@ for (const handler of [login, refresh, logout]) {
   assert.equal(response.status, 400, "auth também rejeita null como JSON inválido");
 }
 
-console.log("✓ payloads null, array e tipos aninhados falham com 400");
+console.log("✓ payloads null, array e tipos aninhados falham com 400; documentos demo falham fechado");

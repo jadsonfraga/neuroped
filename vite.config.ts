@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { readFile, writeFile } from "node:fs/promises";
@@ -67,7 +67,10 @@ function serviceWorkerPrecacheManifest() {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "VITE_");
+  const openAccess = env.VITE_OPEN_ACCESS === "true";
+  return {
   plugins: [
     react(),
     serviceWorkerPrecacheManifest(),
@@ -83,6 +86,9 @@ export default defineConfig({
   // base "./" usa caminhos relativos — funciona no GitHub Pages em qualquer subpath
   // O roteamento é hash-based (wouter + useHashLocation), portanto não precisa de basename absoluto
   base: "./",
+  define: {
+    __NEUROPED_OPEN_ACCESS__: JSON.stringify(openAccess),
+  },
   build: {
     outDir: publicOutDir,
     emptyOutDir: true,
@@ -111,4 +117,5 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+};
 });

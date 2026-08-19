@@ -16,6 +16,11 @@ const PBKDF2_ITERATIONS = 100_000;
 const PBKDF2_HASH = "SHA-256";
 const KEY_BITS = 256;
 
+export const JWT_ISSUER = "neuroped-cloudflare";
+export const JWT_AUDIENCE = "neuroped-cloudflare-client";
+const JWT_CLOCK_SKEW_SECONDS = 30;
+const JWT_MAX_LIFETIME_SECONDS = 8 * 24 * 60 * 60;
+
 // Hash sintaticamente válido, mas que não corresponde a nenhuma credencial real.
 // É usado somente para executar o mesmo PBKDF2 quando o e-mail não existe,
 // reduzindo enumeração por diferença grosseira de tempo de resposta.
@@ -109,10 +114,12 @@ export interface JwtPayload {
   email: string;
   name: string;
   role: string;
+  iss: string;
+  aud: string;
   type: "access" | "refresh";
-  /** Identificador estável da família/sessão autenticada. */
-  sid?: string;
-  /** Identificador único do refresh token; ausente em access tokens. */
+  /** Identificador estável da família/sessão autenticada. Obrigatório em todo token. */
+  sid: string;
+  /** Identificador único do refresh token; obrigatório em refresh tokens. */
   jti?: string;
   iat?: number;
   exp?: number;
@@ -127,13 +134,22 @@ export async function sha256Hex(value: string): Promise<string> {
 }
 
 export async function signJwt(
-  payload: Omit<JwtPayload, "iat" | "exp">,
+  payload: Omit<JwtPayload, "iat" | "exp" | "iss" | "aud">,
   secret: string,
   expiresInSec: number,
 ): Promise<string> {
+  if (!Number.isInteger(expiresInSec) || expiresInSec <= 0 || expiresInSec > JWT_MAX_LIFETIME_SECONDS) {
+    throw new Error("JWT_TTL_INVALID");
+  }
   const now = Math.floor(Date.now() / 1000);
   const header = strToB64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const body = strToB64Url(JSON.stringify({ ...payload, iat: now, exp: now + expiresInSec }));
+  const body = strToB64Url(JSON.stringify({
+    ...payload,
+    iss: JWT_ISSUER,
+    aud: JWT_AUDIENCE,
+    iat: now,
+    exp: now + expiresInSec,
+  }));
   const data = `${header}.${body}`;
   const sig = await hmacSign(data, secret);
   return `${data}.${sig}`;
@@ -143,12 +159,33 @@ export async function verifyJwt(token: string, secret: string): Promise<JwtPaylo
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const [header, body, sig] = parts;
-    const expected = await hmacSign(`${header}.${body}`, secret);
+    const [headerPart, body, sig] = parts;
+    const header = JSON.parse(b64UrlToStr(headerPart)) as { alg?: unknown; typ?: unknown };
+    if (header.alg !== "HS256" || header.typ !== "JWT") return null;
+
+    const expected = await hmacSign(`${headerPart}.${body}`, secret);
     if (!timingSafeEqual(enc.encode(sig), enc.encode(expected))) return null;
-    const payload = JSON.parse(b64UrlToStr(body)) as JwtPayload;
-    if (typeof payload.exp === "number" && Math.floor(Date.now() / 1000) >= payload.exp) return null;
-    return payload;
+
+    const payload = JSON.parse(b64UrlToStr(body)) as Partial<JwtPayload>;
+    const now = Math.floor(Date.now() / 1000);
+    if (
+      typeof payload.sub !== "string" || payload.sub.length === 0 ||
+      typeof payload.email !== "string" || payload.email.length === 0 ||
+      typeof payload.name !== "string" || payload.name.length === 0 ||
+      typeof payload.role !== "string" || payload.role.length === 0 ||
+      typeof payload.sid !== "string" || payload.sid.length === 0 ||
+      payload.iss !== JWT_ISSUER || payload.aud !== JWT_AUDIENCE ||
+      (payload.type !== "access" && payload.type !== "refresh") ||
+      (payload.type === "refresh" && (typeof payload.jti !== "string" || payload.jti.length === 0)) ||
+      !Number.isInteger(payload.iat) || !Number.isInteger(payload.exp) ||
+      (payload.iat as number) > now + JWT_CLOCK_SKEW_SECONDS ||
+      (payload.exp as number) <= now ||
+      (payload.exp as number) <= (payload.iat as number) ||
+      (payload.exp as number) - (payload.iat as number) > JWT_MAX_LIFETIME_SECONDS
+    ) {
+      return null;
+    }
+    return payload as JwtPayload;
   } catch {
     return null;
   }

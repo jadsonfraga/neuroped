@@ -62,7 +62,11 @@ assert.match(buildInfo, /pkg\.version/);
 // Nenhum endpoint clínico pode mentir que persistiu quando DB não existe.
 for (const path of clinicalFiles) {
   const source = read(path);
-  assert.match(source, /DB_REQUIRED/);
+  if (path === "functions/api/documents/index.ts") {
+    assert.match(source, /CLINICAL_DOCUMENTS_BACKEND_UNAVAILABLE/);
+  } else {
+    assert.match(source, /DB_REQUIRED/);
+  }
   assert.doesNotMatch(source, /Registro simulado|registro simulado/);
 }
 

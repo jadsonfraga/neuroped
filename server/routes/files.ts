@@ -26,7 +26,7 @@ import {
   getUploadSignedUrl,
   getDownloadSignedUrl,
   deleteObject,
-  headObject,
+  getObjectSha256,
   generateStorageKey,
   CloudStorageConfigError,
   CloudStorageError,
@@ -210,27 +210,37 @@ export function registerFileRoutes(app: Express): void {
         return res.status(403).json({ error: "Sem permissao" });
       }
 
-      const head = await headObject(file.storageKey);
-      if (!head) {
+      const object = await getObjectSha256(file.storageKey);
+      if (!object) {
         return res.status(400).json({ error: "Upload nao confirmado no bucket", code: "NOT_UPLOADED" });
       }
 
-      // Valida tamanho
-      if (head.contentLength !== file.sizeBytes) {
+      // O tamanho e o digest precisam vir do objeto efetivamente lido no servidor.
+      if (object.contentLength !== file.sizeBytes) {
         await logAudit({
           eventType: "file.upload",
           context: ctx,
           targetType: "file",
           targetId: file.id,
-          metadata: { reason: "size_mismatch", expected: file.sizeBytes, actual: head.contentLength },
+          metadata: { reason: "size_mismatch", expected: file.sizeBytes, actual: object.contentLength },
           success: false,
         });
         return res.status(400).json({ error: "Tamanho divergente do esperado", code: "SIZE_MISMATCH" });
       }
+      if (object.contentType && object.contentType.toLowerCase() !== file.mimeType.toLowerCase()) {
+        await logAudit({
+          eventType: "file.upload",
+          context: ctx,
+          targetType: "file",
+          targetId: file.id,
+          metadata: { reason: "mime_mismatch", expected: file.mimeType, actual: object.contentType },
+          success: false,
+        });
+        return res.status(400).json({ error: "MIME divergente do esperado", code: "MIME_MISMATCH" });
+      }
 
-      const sha = z.string().regex(/^[a-f0-9]{64}$/i).optional().parse(req.body?.sha256);
       const updated = db.update(filesTable)
-        .set({ sha256: sha })
+        .set({ sha256: object.sha256 })
         .where(and(eq(filesTable.id, file.id), eq(filesTable.isDeleted, false)))
         .returning()
         .get();

@@ -22,6 +22,7 @@ registerDocumentRoutes(app);
 
 const userId = crypto.randomUUID();
 const fileId = crypto.randomUUID();
+const pendingFileId = crypto.randomUUID();
 const pdfBytes = Buffer.from("%PDF-1.7\nclinical-test\n%%EOF\n", "utf8");
 const sha256 = crypto.createHash("sha256").update(pdfBytes).digest("hex");
 const now = new Date().toISOString();
@@ -63,6 +64,24 @@ db.insert(files).values({
   createdAt: now,
 }).run();
 
+db.insert(files).values({
+  id: pendingFileId,
+  ownerUserId: userId,
+  patientId: null,
+  filename: "receita-pendente.pdf",
+  mimeType: "application/pdf",
+  sizeBytes: pdfBytes.length,
+  storageProvider: "test",
+  storageBucket: "test",
+  storageKey: `clinical-test/${pendingFileId}.pdf`,
+  encryptionEnabled: true,
+  sha256: null,
+  category: "receita",
+  isDeleted: false,
+  deletedAt: null,
+  createdAt: now,
+}).run();
+
 const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
   const instance = app.listen(0, () => resolve(instance));
 });
@@ -82,6 +101,17 @@ async function request(path: string, init: RequestInit = {}) {
 }
 
 try {
+  const pendingCreate = await request("/api/documents", {
+    method: "POST",
+    body: JSON.stringify({
+      fileId: pendingFileId,
+      documentType: "receita",
+      title: "Receita pendente",
+    }),
+  });
+  assert.equal(pendingCreate.status, 409);
+  assert.equal((await pendingCreate.json()).code, "FILE_NOT_CONFIRMED");
+
   const create = await request("/api/documents", {
     method: "POST",
     body: JSON.stringify({
@@ -108,10 +138,8 @@ try {
   assert.equal(listPayload.retentionPolicy, "permanent");
 
   const verify = await request(`/api/documents/${createdPayload.document.id}/verify`, { method: "POST", body: "{}" });
-  assert.equal(verify.status, 200);
-  const verifyPayload = await verify.json() as { verified: boolean; sha256Match: boolean };
-  assert.equal(verifyPayload.verified, true);
-  assert.equal(verifyPayload.sha256Match, true);
+  assert.equal(verify.status, 503, "verificação sem storage não pode declarar integridade confirmada");
+  assert.equal((await verify.json() as { code?: string }).code, "STORAGE_UNAVAILABLE");
 
   const deleteDocument = await request(`/api/documents/${createdPayload.document.id}`, { method: "DELETE" });
   assert.equal(deleteDocument.status, 409);
@@ -121,7 +149,7 @@ try {
   assert.equal(deleteFile.status, 409);
   assert.equal((await deleteFile.json()).code, "CLINICAL_DOCUMENT_IMMUTABLE");
 
-  console.log("[clinical-documents-retention] ✓ PDF arquivado, hash verificado e exclusões permanente/arquivo bloqueadas.");
+  console.log("[clinical-documents-retention] ✓ PDF confirmado, retenção permanente protegida e verificação sem storage falha fechado.");
 } finally {
   await new Promise<void>((resolve) => server.close(() => resolve()));
   sqlite.close();

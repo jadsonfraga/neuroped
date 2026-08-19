@@ -417,15 +417,24 @@ const readerWriteCases = [
     scale_name: "Escala",
     responses: [{ question: "Pergunta", answer: "Resposta" }],
   }),
-  callReaderWrite(documentHandler as never, {
-    patient_id: "demo-001",
-    type: "laudo",
-    title: "Documento clínico",
-    content: "Conteúdo",
-  }),
   callReaderWrite(consultationHandler as never, { patient_id: "demo-001" }),
 ];
 for (const response of await Promise.all(readerWriteCases)) {
   assert.equal(response.status, 403, "handler clínico também bloqueia escrita do reader");
 }
-console.log("✓ Functions clínicas exigem JWT quando D1 está ativo");
+const unavailableDocuments = await callReaderWrite(documentHandler as never, {
+  patient_id: "demo-001",
+  type: "laudo",
+  title: "Documento clínico",
+  content: "Conteúdo",
+});
+assert.equal(
+  unavailableDocuments.status,
+  503,
+  "documentos Cloudflare não podem simular persistência enquanto o backend permanente não está publicado",
+);
+assert.equal(
+  (await unavailableDocuments.json() as { code?: string }).code,
+  "CLINICAL_DOCUMENTS_BACKEND_UNAVAILABLE",
+);
+console.log("✓ Functions clínicas exigem JWT quando D1 está ativo e documentos demo falham fechado");

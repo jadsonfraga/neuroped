@@ -135,13 +135,13 @@ type AuthedExpressRequest = ExpressRequest & {
 };
 
 function operationalEnv() {
+  const operationalKey = process.env.OPERATIONAL_DATA_KEY?.trim();
+  if (!operationalKey || operationalKey.length < 32) {
+    throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
+  }
   return {
     DB: bookingDb as unknown as BookingDatabase,
-    NEUROPED_JWT_SECRET: process.env.NEUROPED_JWT_SECRET,
-    OPERATIONAL_DATA_KEY:
-      process.env.OPERATIONAL_DATA_KEY ||
-      process.env.NEUROPED_MASTER_KEY ||
-      process.env.NEUROPED_JWT_SECRET,
+    OPERATIONAL_DATA_KEY: operationalKey,
   };
 }
 
@@ -214,6 +214,15 @@ function bridge(handler: PagesHandler) {
       });
       await sendWebResponse(response, res);
     } catch (error) {
+      if (error instanceof Error && error.message === "OPERATIONAL_CRYPTO_NOT_CONFIGURED") {
+        if (!res.headersSent) {
+          res.status(503).json({
+            error: "Criptografia operacional não configurada.",
+            code: "OPERATIONAL_CRYPTO_NOT_CONFIGURED",
+          });
+        }
+        return;
+      }
       console.error("[booking-adapter]", error);
       if (!res.headersSent) {
         res.status(500).json({

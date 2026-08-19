@@ -287,7 +287,7 @@ function base64ToBytes(value: string): Uint8Array {
 }
 
 async function operationalKey(env: OperationsEnv): Promise<CryptoKey> {
-  const source = env.OPERATIONAL_DATA_KEY?.trim() || env.NEUROPED_JWT_SECRET?.trim();
+  const source = env.OPERATIONAL_DATA_KEY?.trim();
   if (!source || source.length < 32) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
   const material = new TextEncoder().encode(`neuroped-operational-v1:${source}`);
   const digest = await crypto.subtle.digest("SHA-256", material);

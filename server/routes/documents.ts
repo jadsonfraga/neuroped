@@ -11,7 +11,7 @@ import {
 import { db } from "../storage.js";
 import { requireAuth, requireProfessional } from "../middleware/auth.js";
 import { writeRateLimit } from "../middleware/security.js";
-import { getDownloadSignedUrl, CloudStorageError } from "../lib/cloudStorage.js";
+import { getDownloadSignedUrl, getObjectSha256, CloudStorageError } from "../lib/cloudStorage.js";
 import { getAuditContextFromRequest, logAudit } from "../lib/audit.js";
 import { oneParam } from "../lib/http.js";
 import { patientReferenceDecision } from "../lib/ownership.js";
@@ -98,8 +98,21 @@ export function registerDocumentRoutes(app: Express): void {
         if (file.mimeType !== "application/pdf") {
           return res.status(400).json({ error: "Documento clinico deve ser um PDF", code: "PDF_REQUIRED" });
         }
-        if (parsed.sha256 && file.sha256 && parsed.sha256.toLowerCase() !== file.sha256.toLowerCase()) {
+        if (!file.sha256) {
+          return res.status(409).json({
+            error: "O PDF ainda nao foi confirmado pelo servidor",
+            code: "FILE_NOT_CONFIRMED",
+          });
+        }
+        if (parsed.sha256 && parsed.sha256.toLowerCase() !== file.sha256.toLowerCase()) {
           return res.status(400).json({ error: "Hash do documento nao coincide com o arquivo confirmado", code: "HASH_MISMATCH" });
+        }
+
+        if (file.patientId && parsed.patientId && file.patientId !== parsed.patientId) {
+          return res.status(409).json({
+            error: "O paciente do documento deve coincidir com o paciente do arquivo",
+            code: "PATIENT_FILE_MISMATCH",
+          });
         }
 
         if (parsed.patientId) {
@@ -133,7 +146,7 @@ export function registerDocumentRoutes(app: Express): void {
           certificateIssuer: parsed.certificateIssuer ?? null,
           certificateSerial: parsed.certificateSerial ?? null,
           certificateValidUntil: parsed.certificateValidUntil ?? null,
-          sha256: parsed.sha256 ?? file.sha256 ?? null,
+          sha256: file.sha256,
           retentionPolicy: "permanent",
           isImmutable: true,
           metadata: parsed.metadata ? JSON.stringify(parsed.metadata) : null,
@@ -216,10 +229,24 @@ export function registerDocumentRoutes(app: Express): void {
     if (!row) return res.status(404).json({ error: "Documento nao encontrado" });
     if (!canAccessDocument((req as any).user!, row)) return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
     const file = row.fileId ? db.select().from(files).where(eq(files.id, row.fileId)).get() : null;
-    const sha256Match = Boolean(file && row.sha256 && file.sha256 && row.sha256.toLowerCase() === file.sha256.toLowerCase());
-    const verified = Boolean(file && !file.isDeleted && sha256Match);
-    await logAudit({ eventType: "document.verify", context, targetType: "clinical_document", targetId: row.id, metadata: { verified, sha256Match } });
-    return res.json({ verified, sha256Match, signatureStatus: row.signatureStatus, sha256: row.sha256, message: verified ? "Integridade do arquivo confirmado pelo SHA-256 registrado." : "Nao foi possivel confirmar a integridade do arquivo arquivado." });
+    if (!file || file.isDeleted) {
+      await logAudit({ eventType: "document.verify", context, targetType: "clinical_document", targetId: row.id, metadata: { verified: false, reason: "archive_missing" } });
+      return res.json({ verified: false, sha256Match: false, signatureStatus: row.signatureStatus, sha256: row.sha256, message: "Nao foi possivel confirmar a integridade do arquivo arquivado." });
+    }
+
+    try {
+      const object = await getObjectSha256(file.storageKey);
+      const sha256Match = Boolean(object && row.sha256 && object.sha256.toLowerCase() === row.sha256.toLowerCase());
+      const sizeMatch = Boolean(object && object.contentLength === file.sizeBytes);
+      const mimeMatch = Boolean(object && (!object.contentType || object.contentType.toLowerCase() === file.mimeType.toLowerCase()));
+      const verified = Boolean(object && !file.isDeleted && sha256Match && sizeMatch && mimeMatch);
+      await logAudit({ eventType: "document.verify", context, targetType: "clinical_document", targetId: row.id, metadata: { verified, sha256Match, sizeMatch, mimeMatch } });
+      return res.json({ verified, sha256Match, sizeMatch, mimeMatch, signatureStatus: row.signatureStatus, sha256: row.sha256, message: verified ? "Integridade do arquivo confirmada por digest SHA-256 calculado no servidor." : "Nao foi possivel confirmar a integridade do arquivo arquivado." });
+    } catch (error) {
+      if (error instanceof CloudStorageError) return res.status(503).json({ error: "Storage indisponivel para verificar o documento", code: "STORAGE_UNAVAILABLE" });
+      console.error("[documents.verify]", error);
+      return res.status(500).json({ error: "Erro interno" });
+    }
   });
 
   app.delete("/api/documents/:id", requireAuth, requireProfessional, async (req: Request, res: Response) => {

@@ -64,7 +64,7 @@ Por isso, importar um acervo real do BoaConsulta diretamente para essas tabelas 
 
 ### Outro gap relevante
 
-A interface do NeuroPed está configurada com `OPEN_ACCESS = true` para navegação da UI. A proteção real permanece na API. O Bridge, portanto, não confia na visibilidade da página: `GET` e `POST` exigem sessão e papel `admin` ou `professional` no servidor.
+A interface do NeuroPed usa modo aberto apenas como opt-in explícito de desenvolvimento (`VITE_OPEN_ACCESS=true`); o padrão de produção permanece fechado. A proteção real permanece na API. O Bridge, portanto, não confia na visibilidade da página: `GET` e `POST` exigem sessão e papel `admin` ou `professional` no servidor.
 
 ## Arquitetura implementada
 

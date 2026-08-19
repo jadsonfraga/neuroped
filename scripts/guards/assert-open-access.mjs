@@ -1,10 +1,12 @@
 // @ts-check
 /**
- * TRAVA ANTI-REGRESSÃO DO ACESSO ABERTO.
+ * TRAVA ANTI-REGRESSÃO DA POLÍTICA DE ACESSO.
  *
- * Decisão explícita e permanente do autor: a interface do NeuroPed deve navegar
- * sem senha, e-mail de login ou PIN. Este guard falha o CI se uma catraca de UI
- * reaparecer, inclusive fora dos componentes globais de acesso.
+ * O modo aberto é somente opt-in por VITE_OPEN_ACCESS=true para instalações
+ * locais de demonstração. O bundle de produção deve permanecer fechado por
+ * padrão: rotas clínicas exigem autenticação/role e somente a allowlist pública
+ * dispensa a sessão. Este guard falha o CI se o modo aberto voltar a ser ligado
+ * por literal ou se uma catraca de acesso clínico desaparecer.
  *
  * A senha local do certificado A1 (.p12/.pfx) é a única exceção: ela pertence ao
  * arquivo criptográfico escolhido pelo próprio usuário, é processada em memória
@@ -48,24 +50,24 @@ async function check(label, assertion) {
 console.log("[open-access] verificando trava anti-regressão de senha…");
 
 const accessPolicySrc = read("client/src/security/accessPolicy.ts");
-await check("OPEN_ACCESS permanece declarado e ligado", () => {
-  assert.match(
+await check("OPEN_ACCESS é opt-in e não fica ligado por literal", () => {
+  assert.match(accessPolicySrc, /VITE_OPEN_ACCESS/);
+  assert.doesNotMatch(
     accessPolicySrc,
     /export const OPEN_ACCESS\s*=\s*true\s*;/,
-    "esperado `export const OPEN_ACCESS = true;`",
+    "OPEN_ACCESS não pode ser ligado por literal no código-fonte",
   );
 });
 
 const { getAccessLevel, OPEN_ACCESS } = await importTs(
   "client/src/security/accessPolicy.ts",
 );
-await check("OPEN_ACCESS exportado é true", () => {
-  assert.equal(OPEN_ACCESS, true);
+await check("OPEN_ACCESS fica desligado sem VITE_OPEN_ACCESS=true", () => {
+  assert.equal(OPEN_ACCESS, false);
 });
 
-const ROUTE_SENTINELS = [
+const CLINICAL_ROUTE_SENTINELS = [
   "/",
-  "/login",
   "/prontuario",
   "/pacientes",
   "/paciente/abc",
@@ -83,17 +85,42 @@ const ROUTE_SENTINELS = [
   "/pant",
   "/rota-clinica-inventada-no-futuro",
 ];
-await check("toda rota sentinela é pública na interface", () => {
-  for (const path of ROUTE_SENTINELS) {
-    assert.equal(getAccessLevel(path), "public", `${path} deveria abrir sem senha`);
+const PUBLIC_ROUTE_SENTINELS = [
+  "/login",
+  "/familia",
+  "/agendar",
+  "/verificar",
+  "/brincando-e-aprendendo",
+  "/filtro-escalas",
+];
+await check("rotas clínicas permanecem fechadas por padrão", () => {
+  for (const path of CLINICAL_ROUTE_SENTINELS) {
+    assert.equal(getAccessLevel(path), "clinical", `${path} deveria exigir gate clínico`);
+  }
+});
+await check("somente rotas públicas sentinela dispensam a sessão", () => {
+  for (const path of PUBLIC_ROUTE_SENTINELS) {
+    assert.equal(getAccessLevel(path), "public", `${path} deveria ser pública`);
   }
 });
 
 const { decideRouteAccess } = await importTs(
   "client/src/security/routeGuardPolicy.ts",
 );
-await check("RouteGuard nunca redireciona ao login no modo aberto", () => {
-  for (const path of ROUTE_SENTINELS) {
+await check("RouteGuard exige login para rota clínica remota e permite allowlist pública", () => {
+  for (const path of CLINICAL_ROUTE_SENTINELS) {
+    assert.equal(
+      decideRouteAccess({
+        path,
+        accessMode: "remote",
+        isAuthenticated: false,
+        isLoading: false,
+      }),
+      "login",
+      `${path} deve mandar para /login quando não há sessão`,
+    );
+  }
+  for (const path of PUBLIC_ROUTE_SENTINELS) {
     assert.equal(
       decideRouteAccess({
         path,
@@ -102,7 +129,7 @@ await check("RouteGuard nunca redireciona ao login no modo aberto", () => {
         isLoading: false,
       }),
       "allow",
-      `${path} nunca pode mandar para /login`,
+      `${path} pública não deve mandar para /login`,
     );
   }
 });
@@ -209,5 +236,5 @@ if (errors.length) {
 }
 
 console.log(
-  "[open-access] ✓ interface aberta; login e PIN de acesso não podem reaparecer",
+  "[open-access] ✓ modo aberto é opt-in; rotas clínicas permanecem protegidas e login/PIN não reaparecem indevidamente",
 );

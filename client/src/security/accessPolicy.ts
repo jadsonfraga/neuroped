@@ -2,16 +2,17 @@ import { isPublicRoute as isAllowlistedPublicRoute } from "@/lib/publicRoutes";
 
 export type AccessLevel = "public" | "family" | "family-pass" | "clinical";
 
-// ACESSO ABERTO (decisão explícita do autor, Dr. Jadson Fraga): quando true, o
-// app INTEIRO é navegável SEM qualquer senha — nem PIN local, nem login remoto.
-// Toda rota é tratada como pública para efeito das trancas de UI.
-//
-// Isto remove apenas as TRANCAS DE INTERFACE. A proteção real dos dados de
-// paciente persistidos no backend (Cloudflare D1) permanece na camada de API:
-// as Functions clínicas continuam exigindo JWT para ler/gravar prontuário. As
-// telas abrem, mas o dado armazenado no servidor não é servido sem sessão.
-// Reversível: OPEN_ACCESS=false restaura o modelo seguro por padrão.
-export const OPEN_ACCESS = true;
+// Modo aberto é opt-in e nunca pode ser ativado por default no bundle de produção.
+// Ele remove apenas as trancas de interface para instalações locais de demonstração;
+// a proteção real dos dados clínicos continua obrigatória no backend.
+// Para uma instalação local explicitamente controlada, use VITE_OPEN_ACCESS=true.
+// O workflow de produção define VITE_OPEN_ACCESS=false de forma explícita.
+const BUILD_OPEN_ACCESS =
+  typeof __NEUROPED_OPEN_ACCESS__ === "boolean"
+    ? __NEUROPED_OPEN_ACCESS__
+    : import.meta.env?.VITE_OPEN_ACCESS === "true";
+
+export const OPEN_ACCESS = BUILD_OPEN_ACCESS;
 
 export function getAccessLevel(pathname: string): AccessLevel {
   if (OPEN_ACCESS) return "public";

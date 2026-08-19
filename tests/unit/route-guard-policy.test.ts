@@ -67,6 +67,7 @@ for (const path of [
   "/sessao-expirada",
   "/termos",
   "/familia",
+  "/brincando-e-aprendendo",
   "/pre-consulta",
   "/pre-retorno",
   "/efeitos-colaterais",

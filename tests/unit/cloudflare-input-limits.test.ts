@@ -123,7 +123,10 @@ const documentResponse = await post(createDocument as never, {
   content: "Conteúdo integral",
 });
 assert.equal(documentResponse.status, 503);
-assert.equal((await documentResponse.json() as { code?: string }).code, "DB_REQUIRED");
+assert.equal(
+  (await documentResponse.json() as { code?: string }).code,
+  "CLINICAL_DOCUMENTS_BACKEND_UNAVAILABLE",
+);
 assert.equal(
   (await post(createDocument as never, {
     patient_id: "demo-001",
@@ -131,7 +134,8 @@ assert.equal(
     title: "T".repeat(CLINICAL_INPUT_LIMITS.documentTitle + 1),
     content: "Conteúdo",
   })).status,
-  400,
+  503,
+  "payload não deve alcançar uma persistência demo enquanto o backend permanente não existe",
 );
 assert.equal(
   (await post(createDocument as never, {
@@ -140,7 +144,8 @@ assert.equal(
     title: "Documento clínico",
     content: "C".repeat(CLINICAL_INPUT_LIMITS.documentContent + 1),
   })).status,
-  400,
+  503,
+  "conteúdo clínico não deve ser aceito por um endpoint sem storage permanente",
 );
 
 const consultationResponse = await post(createConsultation as never, {

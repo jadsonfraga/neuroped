@@ -40,12 +40,24 @@ await expectDbRequired("consultations", createConsultation, {
   subjective: "Registro fictício",
 });
 
-await expectDbRequired("documents", createDocument, {
-  patient_id: "demo-001",
-  type: "laudo",
-  title: "Documento fictício",
-  content: "Conteúdo fictício de teste",
+const unavailableDocumentResponse = await createDocument({
+  env: {},
+  request: new Request("https://neuroped.invalid/api/documents", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      patient_id: "demo-001",
+      type: "laudo",
+      title: "Documento fictício",
+      content: "Conteúdo fictício de teste",
+    }),
+  }),
+  data: {},
 });
+const unavailableDocumentPayload = await unavailableDocumentResponse.json() as { code?: string; error?: string };
+assert.equal(unavailableDocumentResponse.status, 503, "documents: endpoint demo deve falhar fechado");
+assert.equal(unavailableDocumentPayload.code, "CLINICAL_DOCUMENTS_BACKEND_UNAVAILABLE");
+assert.match(unavailableDocumentPayload.error ?? "", /arquivamento clínico permanente indisponível/i);
 
 await expectDbRequired("scales-results", createScaleResult, {
   patient_id: "demo-001",

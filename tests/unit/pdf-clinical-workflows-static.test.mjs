@@ -42,10 +42,14 @@ assert.match(documentRoutes, /retentionPolicy: "permanent"/);
 assert.match(documentRoutes, /isImmutable: true/);
 assert.match(documentRoutes, /PERMANENT_RETENTION/);
 assert.match(documentRoutes, /sha256Match/);
+assert.match(documentRoutes, /FILE_NOT_CONFIRMED/);
+assert.match(documentRoutes, /PATIENT_FILE_MISMATCH/);
+assert.match(documentRoutes, /getObjectSha256/);
 
 const filesRoutes = read("server/routes/files.ts");
 assert.match(filesRoutes, /clinicalDocuments/);
 assert.match(filesRoutes, /CLINICAL_DOCUMENT_IMMUTABLE/);
+assert.match(filesRoutes, /getObjectSha256/);
 
 const scaleReport = read("client/src/components/ClinicalReport.tsx");
 assert.match(scaleReport, /buildDocumentPdf/);

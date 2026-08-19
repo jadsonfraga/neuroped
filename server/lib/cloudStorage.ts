@@ -173,6 +173,40 @@ export async function headObject(key: string): Promise<{
 }
 
 /**
+ * Baixa o objeto e calcula o SHA-256 no servidor.
+ * O hash enviado pelo navegador nunca é usado como prova de integridade.
+ */
+export async function getObjectSha256(key: string): Promise<{
+  sha256: string;
+  contentLength: number;
+  contentType?: string;
+} | null> {
+  const c = getStorageConfig();
+  const client = getClient();
+  try {
+    const response = await client.send(new GetObjectCommand({ Bucket: c.bucket, Key: key }));
+    if (!response.Body) return null;
+
+    const hash = crypto.createHash("sha256");
+    let contentLength = 0;
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array | string>) {
+      const bytes = typeof chunk === "string" ? Buffer.from(chunk) : Buffer.from(chunk);
+      hash.update(bytes);
+      contentLength += bytes.byteLength;
+    }
+
+    return {
+      sha256: hash.digest("hex"),
+      contentLength,
+      contentType: response.ContentType,
+    };
+  } catch (error) {
+    if (isStorageNotFoundError(error)) return null;
+    throw new CloudStorageError("Falha ao ler o objeto no storage para verificar sua integridade.");
+  }
+}
+
+/**
  * Gera chave segura (path) para um arquivo.
  * Formato: <category>/<userId>/<yyyy>/<mm>/<uuid>-<filename-sanitized>
  *

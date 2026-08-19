@@ -13,6 +13,10 @@ import { generateRandomToken, sha256 } from "./crypto.js";
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 min
 const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 dias
+// Mantidos por compatibilidade com tokens Express emitidos antes desta auditoria.
+// O runtime Cloudflare usa issuer/audience próprios e não aceita estes tokens.
+const JWT_ISSUER = "neuroped-edj";
+const JWT_AUDIENCE = "neuroped-edj-client";
 
 export class JwtConfigurationError extends Error {}
 export class JwtVerificationError extends Error {}
@@ -35,6 +39,7 @@ export interface AccessTokenClaims {
   email: string;
   role: string;
   name: string;
+  type: "access";
   iat: number;
   exp: number;
 }
@@ -51,13 +56,14 @@ export function signAccessToken(params: {
       email: params.email,
       role: params.role,
       name: params.name,
+      type: "access",
     },
     getJwtSecret(),
     {
       algorithm: "HS256",
       expiresIn: ACCESS_TOKEN_TTL_SECONDS,
-      issuer: "neuroped-edj",
-      audience: "neuroped-edj-client",
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
     },
   );
 }
@@ -66,9 +72,20 @@ export function verifyAccessToken(token: string): AccessTokenClaims {
   try {
     const decoded = jwt.verify(token, getJwtSecret(), {
       algorithms: ["HS256"],
-      issuer: "neuroped-edj",
-      audience: "neuroped-edj-client",
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
     }) as AccessTokenClaims;
+    if (
+      decoded.type !== "access" ||
+      typeof decoded.sub !== "string" || decoded.sub.length === 0 ||
+      typeof decoded.email !== "string" || decoded.email.length === 0 ||
+      typeof decoded.role !== "string" || decoded.role.length === 0 ||
+      typeof decoded.name !== "string" || decoded.name.length === 0 ||
+      !Number.isInteger(decoded.iat) || !Number.isInteger(decoded.exp) ||
+      decoded.exp <= decoded.iat
+    ) {
+      throw new Error("claims inválidas");
+    }
     return decoded;
   } catch (e: any) {
     throw new JwtVerificationError(`Token invalido: ${e.message}`);
