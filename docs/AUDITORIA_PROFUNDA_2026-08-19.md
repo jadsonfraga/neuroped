@@ -77,3 +77,12 @@ A bateria integral `VITE_OPEN_ACCESS=false npm run verify` passou localmente, in
 ## Status atualizado
 
 A auditoria local encontra-se verde. Restam a validação no GitHub Actions, a publicação no Cloudflare Pages e a verificação dos endpoints e assets no domínio canônico após o deploy. Nenhuma publicação ou alteração remota de dados clínicos será considerada válida apenas por sucesso de build; o sentinel de deploy, headers e respostas fail-closed dos endpoints serão conferidos separadamente.
+
+### Falha remota encontrada e corrigida — landmark da experiência educativa
+A primeira validação remota do commit `f6ed2005` concluiu com sucesso os gates canônicos, o deploy Cloudflare, Vercel, GitHub Pages, D1 e contratos operacionais, mas o workflow de espiral de frontend falhou no Axe com três violações moderadas em `/#/brincando-e-aprendendo`: `landmark-main-is-top-level`, `landmark-no-duplicate-main` e `landmark-unique`. A causa foi objetiva: a página educativa já possui `header`, `<main>` e `footer` próprios, mas estava montada dentro do `<main id="main-content">` do `Layout` clínico. A rota foi separada do shell clínico no `AppRouter`, preservando o `RouteGuard`/`PrivateGate` global para rotas privadas e mantendo a experiência pública como microsite autônomo. Foi adicionada regressão estática para impedir o retorno da rota para dentro do `Layout`. `node tests/unit/quick-wins-static.test.mjs`, `npm run check`, `npm run test:quick-wins` e o `npm run verify` completo passaram localmente após a correção. O commit corretivo aguarda o novo ciclo remoto de Axe e deploy.
+
+### Evidência remota do primeiro ciclo
+No commit `f6ed2005`, `Verify NeuroPed`, `Test, Lint & Build`, `No password regression`, `NeuroPed Operational Suite D1 migration`, `Deploy Vercel`, `Deploy GitHub Pages` e `Deploy Cloudflare Pages` concluíram com sucesso. O único resultado negativo foi o workflow `Filter and scales spiral audit`, restrito ao Axe integral da rota educativa; nenhum erro clínico, de autenticação, build, migração ou publicação foi observado nesse ciclo.
+
+## Status de correção do landmark
+A validação local permanece verde e o segundo ciclo remoto será usado para confirmar a correção no navegador real do runner, seguido da inspeção do domínio canônico e do sentinel de publicação.

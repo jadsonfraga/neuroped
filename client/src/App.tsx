@@ -244,6 +244,19 @@ function AppRouter() {
       /* ambiente sem window (SSR/testes) — ignora */
     }
   }, [location]);
+  // A experiência infantil é um microsite público completo, com header/main/footer
+  // próprios. Mantê-la dentro do Layout clínico criaria dois landmarks <main> e
+  // carregaria navegação clínica desnecessária para uma rota sem dados sensíveis.
+  if (location === "/brincando-e-aprendendo") {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Switch>
+          <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
+        </Switch>
+      </Suspense>
+    );
+  }
+
   return (
     <Layout>
       <Suspense fallback={<LoadingSpinner />}>
@@ -254,7 +267,6 @@ function AppRouter() {
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
             <Route path="/" component={HomePage} />
-            <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
             <Route path="/mchat" component={MchatPage} />
             <Route path="/cars" component={CarsPage} />
             <Route path="/snap" component={SnapPage} />

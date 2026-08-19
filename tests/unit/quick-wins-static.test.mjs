@@ -49,6 +49,16 @@ for (const component of [
   assert.match(app, new RegExp(component));
 }
 assert.match(app, /<MotionConfig reducedMotion="user">/);
+assert.match(
+  app,
+  /if \(location === "\/brincando-e-aprendendo"\)[\s\S]*?<Route path="\/brincando-e-aprendendo" component=\{BrincandoAprendendoPage\} \/>[\s\S]*?<\/Switch>/,
+  "a experiência educativa deve ser renderizada como microsite público fora do Layout clínico",
+);
+assert.doesNotMatch(
+  app,
+  /<Layout>[\s\S]*?<Route path="\/brincando-e-aprendendo" component=\{BrincandoAprendendoPage\} \/>/,
+  "a experiência educativa não deve herdar o landmark main do Layout clínico",
+);
 
 const restoredRoutes = [
   "/recepcao",
