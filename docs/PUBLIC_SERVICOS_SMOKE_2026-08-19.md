@@ -29,3 +29,15 @@ A página publicada também renderizou o cabeçalho institucional com `Serviços
 O aviso educativo foi confirmado sem navegação para área clínica. A página continuou na rota pública da Clínica Jadson Fraga, mantendo o conteúdo institucional e os controles de contato/compartilhamento.
 
 **Screenshot após confirmação:** `/home/ubuntu/screenshots/neuroped_pages_dev_2026-08-19_17-10-45_9962.webp`
+
+## Confirmação programática
+
+O botão `Li e entendi — continuar` foi localizado e acionado com sucesso no DOM público. A ação não altera a rota, não abre área clínica e libera a leitura da página institucional conforme o fluxo educativo projetado.
+
+**Saída registrada:** `/home/ubuntu/console_outputs/exec_result_2026-08-19_17-14-40_442.txt`
+
+## Screenshot final sem modal
+
+Após a confirmação do aviso educativo, o deployment público exibiu o hero premium da Clínica Jadson Fraga, os botões de contato, o mascote oficial e o início do bloco Nesplora, sem erro visível de montagem.
+
+**Screenshot final:** `/home/ubuntu/screenshots/neuroped_pages_dev_2026-08-19_17-15-02_8073.webp`
