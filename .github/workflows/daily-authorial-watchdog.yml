@@ -365,6 +365,46 @@ jobs:
               )]
             ' <<<"$prs_json")"
           pr_count="$(jq -r 'length' <<<"$pr_matches")"
+          if [ "$pr_count" -eq 0 ]; then
+            # O gerador considera sucesso também quando a política do GitHub
+            # bloqueia PRs criados pelo token padrão: branch + artefato + issue
+            # preservam a revisão humana sem promover conteúdo para a main.
+            review_title="[revisão] Inventário autoral diário — ${NEUROPED_GENERATION_DATE}"
+            issues_json="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/issues" \
+              -f state=open \
+              -F per_page=100)"
+            issue_matches="$(jq -c \
+              --arg title "$review_title" \
+              --arg branch "$branch" \
+              --arg commit "$review_branch_commit" '
+                [.[] | select(
+                  (.pull_request == null) and
+                  .title == $title and
+                  ((.body // "") | contains("Branch de revisão: " + $branch)) and
+                  ((.body // "") | contains("Commit preservado: " + $commit))
+                )]
+              ' <<<"$issues_json")"
+            issue_count="$(jq -r 'length' <<<"$issue_matches")"
+            [ "$issue_count" -eq 1 ] || {
+              echo "::error::Sem PR, esperado exatamente uma issue same-repo de revisão para $branch e commit $review_branch_commit; encontradas $issue_count."
+              exit 1
+            }
+            issue_json="$(jq -c '.[0]' <<<"$issue_matches")"
+            echo "state=review_pending" >> "$GITHUB_OUTPUT"
+            echo "review_valid=true" >> "$GITHUB_OUTPUT"
+            echo "artifact=$artifact_name" >> "$GITHUB_OUTPUT"
+            echo "branch=$branch" >> "$GITHUB_OUTPUT"
+            echo "branch_commit=$review_branch_commit" >> "$GITHUB_OUTPUT"
+            echo "pr=" >> "$GITHUB_OUTPUT"
+            echo "pr_url=" >> "$GITHUB_OUTPUT"
+            echo "pr_draft=none" >> "$GITHUB_OUTPUT"
+            echo "review_issue=$(jq -r '.number' <<<"$issue_json")" >> "$GITHUB_OUTPUT"
+            echo "review_issue_url=$(jq -r '.html_url' <<<"$issue_json")" >> "$GITHUB_OUTPUT"
+            echo "model=$(jq -r '.model // "desconhecido"' /tmp/inventory-branch.json)" >> "$GITHUB_OUTPUT"
+            echo "contingency=$(jq -r '.contingency' /tmp/inventory-branch.json)" >> "$GITHUB_OUTPUT"
+            echo "Pacote validado; inventário aguardando revisão humana na issue #$(jq -r '.number' <<<"$issue_json")."
+            exit 0
+          fi
           [ "$pr_count" -eq 1 ] || {
             echo "::error::Esperado exatamente um PR same-repo para $branch; encontrados $pr_count."
             exit 1
@@ -399,6 +439,8 @@ jobs:
           echo "pr=$(jq -r '.number' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
           echo "pr_url=$(jq -r '.html_url' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
           echo "pr_draft=$pr_draft" >> "$GITHUB_OUTPUT"
+          echo "review_issue=" >> "$GITHUB_OUTPUT"
+          echo "review_issue_url=" >> "$GITHUB_OUTPUT"
           echo "model=$(jq -r '.model // "desconhecido"' /tmp/inventory-branch.json)" >> "$GITHUB_OUTPUT"
           echo "contingency=$(jq -r '.contingency' /tmp/inventory-branch.json)" >> "$GITHUB_OUTPUT"
           echo "Pacote validado; inventário aguardando revisão humana no PR $(jq -r '.number' <<<"$pr_json")."
@@ -493,6 +535,7 @@ jobs:
             echo "- **Branch de revisão:** ${{ steps.catalog.outputs.branch || 'não necessária' }}"
             echo "- **Commit da branch:** ${{ steps.catalog.outputs.branch_commit || 'não necessário' }}"
             echo "- **PR de revisão:** ${{ steps.catalog.outputs.pr_url || 'não necessário' }}"
+            echo "- **Issue de revisão:** ${{ steps.catalog.outputs.review_issue_url || 'não necessária' }}"
             echo "- **Commit main:** ${{ steps.production.outputs.sha || github.sha }}"
             echo "- **Cloudflare inicial:** ${{ steps.production.outputs.cloudflare || 'não confirmado' }}"
             echo "- **Vercel inicial:** ${{ steps.production.outputs.vercel || 'não confirmado' }}"
@@ -508,7 +551,11 @@ jobs:
           issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
           if [ -n "$issue" ]; then
             if [ "${{ steps.catalog.outputs.state }}" = "review_pending" ]; then
-              body="A recuperação gerou e validou artefato, branch e PR; o inventário está aguardando revisão humana no PR #${{ steps.catalog.outputs.pr }}. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+              if [ -n "${{ steps.catalog.outputs.pr }}" ]; then
+                body="A recuperação gerou e validou artefato, branch e PR; o inventário está aguardando revisão humana no PR #${{ steps.catalog.outputs.pr }}. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+              else
+                body="A recuperação gerou e validou artefato, branch e issue rastreável; o inventário está aguardando revisão humana na issue #${{ steps.catalog.outputs.review_issue }}. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+              fi
             else
               body="Catálogo e produção foram confirmados na execução ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
             fi
@@ -524,7 +571,7 @@ jobs:
         run: |
           set -euo pipefail
           title="[automação] Watchdog diário NeuroPed — recuperação incompleta"
-          body="O watchdog não confirmou inventário válido na main nem um pacote de revisão íntegro (execução + artefato + branch + PR). Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+          body="O watchdog não confirmou inventário válido na main nem um pacote de revisão íntegro (execução + artefato + branch + PR ou issue rastreável). Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
           issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
           if [ -n "$issue" ]; then
             gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"

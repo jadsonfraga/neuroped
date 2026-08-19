@@ -121,8 +121,9 @@ assert.match(
 );
 
 // O watchdog respeita a revisão humana: main válida segue para os mirrors; caso
-// contrário, somente execução + artefato + branch + PR coerentes viram sucesso
-// `review_pending`. O CLI `gh` não recebe os argumentos próprios do jq.
+// contrário, execução + artefato + branch e um PR same-repo ou uma issue same-repo
+// com branch/commit preservados viram sucesso `review_pending`. O CLI `gh` não
+// recebe os argumentos próprios do jq.
 assert.match(watchdogWorkflow, /pull-requests: read/);
 assert.match(watchdogWorkflow, /timeout-minutes: 150/);
 assert.match(watchdogWorkflow, /id: date/);
@@ -162,6 +163,12 @@ assert.match(
   /\[ "\$head_ref_oid" = "\$review_branch_commit" \]/,
 );
 assert.match(watchdogWorkflow, /pr_draft=/);
+assert.match(watchdogWorkflow, /repos\/\$\{GITHUB_REPOSITORY\}\/issues/);
+assert.match(watchdogWorkflow, /\.pull_request == null/);
+assert.match(watchdogWorkflow, /contains\("Branch de revisão: " \+ \$branch\)/);
+assert.match(watchdogWorkflow, /contains\("Commit preservado: " \+ \$commit\)/);
+assert.match(watchdogWorkflow, /review_issue=/);
+assert.match(watchdogWorkflow, /review_issue_url=/);
 assert.match(
   watchdogWorkflow,
   /if: steps\.date\.outputs\.current == 'true' && steps\.catalog\.outputs\.state == 'production'/,
