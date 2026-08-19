@@ -1,6 +1,6 @@
 # Recuperação segura do acesso administrativo
 
-O bootstrap do NeuroPed cria o administrador inicial a partir de `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD`. A partir desta correção, ele também executa uma **migração única** para uma conta existente quando o marcador `auth.admin.bootstrap.v2` ainda não está no D1. Isso corrige o cenário em que a conta foi criada com uma senha anterior e o secret foi alterado depois, sem sobrescrever a senha em todos os logins.
+O bootstrap do NeuroPed cria o administrador inicial a partir de `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD`. A partir desta correção, ele também executa uma **migração única** para uma conta existente quando o marcador `auth.admin.bootstrap.v2` ainda não está no D1 **ou quando o secret atual não corresponde ao hash persistido**. Isso corrige o cenário em que a conta foi criada com uma senha anterior e o secret foi alterado depois, sem sobrescrever a senha em todos os logins.
 
 ## Procedimento
 
@@ -8,7 +8,7 @@ O bootstrap do NeuroPed cria o administrador inicial a partir de `ADMIN_EMAIL` e
 2. Atualize `ADMIN_EMAIL` com o e-mail administrativo correto.
 3. Atualize `ADMIN_INITIAL_PASSWORD` com uma nova senha forte. Essa senha deve ser inserida diretamente no campo protegido do GitHub; não deve ser enviada pelo chat nem adicionada a arquivos.
 4. Abra **Actions** → **Provision D1 backend** → **Run workflow** na branch `main`.
-5. Aguarde a conclusão com sucesso. O workflow publica os secrets no projeto Pages e faz o deploy do backend. Na primeira chamada ao login, o bootstrap atualiza a senha da conta existente uma única vez, limpa bloqueio por tentativas e invalida sessões de refresh antigas.
+5. Aguarde a conclusão com sucesso. O workflow publica os secrets no projeto Pages e faz o deploy do backend. Na primeira chamada ao login, o bootstrap compara o secret com o hash existente e, se houver divergência, atualiza a senha uma única vez, limpa bloqueio por tentativas e invalida sessões de refresh antigas.
 6. Acesse `https://neuroped.pages.dev/#/login` e use o valor atual de `ADMIN_EMAIL` e a nova senha.
 7. Depois de confirmar o acesso, remova `ADMIN_INITIAL_PASSWORD` do ambiente quando o bootstrap inicial não for mais necessário. Não publique a senha em commits, logs, documentos ou mensagens.
 

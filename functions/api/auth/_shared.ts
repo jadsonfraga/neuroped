@@ -9,7 +9,7 @@
  *   POST /api/auth/logout   → { ok }
  */
 
-import { hashPassword } from "./_crypto";
+import { hashPassword, verifyPassword } from "./_crypto";
 
 export interface Env {
   DB?: D1Database;
@@ -148,8 +148,13 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
     .bind(markerKey)
     .first<{ value: string | null }>();
 
+  let passwordMatchesExisting = false;
+  if (existing?.password_hash) {
+    passwordMatchesExisting = await verifyPassword(password, existing.password_hash);
+  }
+
   if (existing) {
-    const needsPasswordBootstrap = !existing.password_hash || !marker;
+    const needsPasswordBootstrap = !existing.password_hash || !marker || !passwordMatchesExisting;
     if (needsPasswordBootstrap) {
       const hash = await hashPassword(password);
       await db.batch([
