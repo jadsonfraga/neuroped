@@ -27,7 +27,7 @@ export default function Asq3Page() {
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {asq3AgeGroups.map((ag) => (
-            <Card key={ag.months} className="border-card-border cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedAge(ag.months)}>
+            <Card key={ag.months} role="button" tabIndex={0} aria-label={`Selecionar faixa etária ${ag.label}`} className="border-card-border cursor-pointer hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" onClick={() => setSelectedAge(ag.months)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedAge(ag.months); } }}>
               <CardContent className="p-3 flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">{ag.label}</span>
                 <Badge variant="outline" className="text-xs">{ag.months}m</Badge>
@@ -41,7 +41,7 @@ export default function Asq3Page() {
 
   return (
     <div className="space-y-4">
-      <button onClick={() => setSelectedAge(null)} className="text-xs text-primary hover:underline">← Voltar para seleção de idade</button>
+      <button type="button" onClick={() => setSelectedAge(null)} className="text-xs text-primary hover:underline">← Voltar para seleção de idade</button>
       <GenericScale config={{
         title: "ASQ-3",
         subtitle: `Triagem do Desenvolvimento — ${selectedAge} meses`,

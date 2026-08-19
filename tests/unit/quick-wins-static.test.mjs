@@ -64,6 +64,14 @@ assert.match(kidsPage, /<header className="kids-hero/);
 assert.doesNotMatch(kidsPage, /<section className="kids-hero/);
 assert.match(kidsPage, /--kids-orange-strong|kids-orange-strong/);
 assert.match(kidsPage, /color:\s*[\s\S]{0,180}var\(--kids-white\)/);
+const asq3 = read("client/src/pages/asq3.tsx");
+assert.match(asq3, /role="button"[\s\S]{0,180}tabIndex=\{0\}/, "faixas etárias do ASQ-3 devem ser acessíveis por teclado");
+assert.match(asq3, /onKeyDown=\{\(event\) => \{[\s\S]{0,180}event\.key === "Enter"[\s\S]{0,120}event\.key === " "/, "ASQ-3 deve aceitar Enter e Espaço na seleção de idade");
+assert.match(asq3, /<button[\s\S]{0,120}type="button"[\s\S]{0,160}setSelectedAge\(null\)/, "o retorno do ASQ-3 não pode submeter formulários");
+const installPrompt = read("client/src/components/InstallPrompt.tsx");
+assert.match(installPrompt, /<button[\s\S]{0,120}type="button"[\s\S]{0,160}onClick=\{handleDismiss\}/);
+const agenda = read("client/src/pages/agenda.tsx");
+assert.match(agenda, /<button[\s\S]{0,120}type="button"[\s\S]{0,180}action: "delete_rule"/);
 
 const restoredRoutes = [
   "/recepcao",

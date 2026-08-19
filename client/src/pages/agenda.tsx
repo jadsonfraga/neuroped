@@ -322,7 +322,7 @@ export default function AgendaPage() {
                   <Field label="Passo (min)"><Input type="number" min="5" value={rule.slot} onChange={(e) => setRule((p) => ({ ...p, slot: e.target.value }))} /></Field>
                   <div className="self-end"><Button className="w-full" disabled={busy} onClick={() => mutate({ action: "create_rule", weekday: Number(rule.weekday), startMinute: toMinute(rule.start), endMinute: toMinute(rule.end), slotMinutes: Number(rule.slot) }, "Disponibilidade adicionada.")}>Adicionar</Button></div>
                 </div>
-                <div className="flex flex-wrap gap-2">{data.rules.map((item) => <Badge key={item.id} variant="secondary" className="gap-2 py-2">{weekdays[item.weekday]} {minutesToClock(item.startMinute)}–{item.endMinute === 1440 ? "24:00" : minutesToClock(item.endMinute)} <button onClick={() => mutate({ action: "delete_rule", id: item.id }, "Regra removida.")} aria-label="Remover regra"><Trash2 className="h-3.5 w-3.5" /></button></Badge>)}</div>
+                <div className="flex flex-wrap gap-2">{data.rules.map((item) => <Badge key={item.id} variant="secondary" className="gap-2 py-2">{weekdays[item.weekday]} {minutesToClock(item.startMinute)}–{item.endMinute === 1440 ? "24:00" : minutesToClock(item.endMinute)} <button type="button" onClick={() => mutate({ action: "delete_rule", id: item.id }, "Regra removida.")} aria-label="Remover regra"><Trash2 className="h-3.5 w-3.5" /></button></Badge>)}</div>
               </CardContent>
             </Card>
 
