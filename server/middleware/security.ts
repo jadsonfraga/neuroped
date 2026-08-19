@@ -26,25 +26,32 @@ export function isCorsOriginAllowed(
 }
 
 export function applySecurity(app: Express): void {
+  // O React Refresh do Vite injeta um preâmbulo inline durante o desenvolvimento.
+  // A CSP de produção deve continuar rígida; em dev, o próprio servidor local
+  // é a fronteira e o HMR precisa executar esse preâmbulo para montar o app.
+  const isProduction = process.env.NODE_ENV === "production";
+
   // ----- Helmet: headers de seguranca -----
   app.use(
     helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-          fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-          imgSrc: ["'self'", "data:", "blob:"],
-          // Uploads usam URLs HTTPS pré-assinadas do provedor de objetos.
-          connectSrc: ["'self'", "https:"],
-          frameAncestors: ["'none'"],
-          objectSrc: ["'none'"],
-          baseUri: ["'self'"],
-          formAction: ["'self'"],
-          upgradeInsecureRequests: [],
-        },
-      },
+      contentSecurityPolicy: isProduction
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: ["'self'"],
+              styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+              fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+              imgSrc: ["'self'", "data:", "blob:"],
+              // Uploads usam URLs HTTPS pré-assinadas do provedor de objetos.
+              connectSrc: ["'self'", "https:"],
+              frameAncestors: ["'none'"],
+              objectSrc: ["'none'"],
+              baseUri: ["'self'"],
+              formAction: ["'self'"],
+              upgradeInsecureRequests: [],
+            },
+          }
+        : false,
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: { policy: "same-site" },
       hsts: {

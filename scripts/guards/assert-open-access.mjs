@@ -136,13 +136,14 @@ await check("RouteGuard exige login para rota clínica remota e permite allowlis
 
 const appSrc = read("client/src/App.tsx");
 const loginPageSrc = read("client/src/pages/login.tsx");
-await check("rota legada /login é somente redirecionamento", () => {
+await check("rota legada /login termina sem ciclo de redirecionamento", () => {
   assert.match(appSrc, /<Route\s+path="\/login"\s+component=\{LoginPage\}\s*\/>/);
-  assert.match(loginPageSrc, /<Redirect\s+to="\/"\s*\/>/);
+  assert.match(loginPageSrc, /PUBLIC_HOME/);
+  assert.match(loginPageSrc, /Área clínica protegida/);
   assert.doesNotMatch(
     loginPageSrc,
-    /type\s*=\s*["']password["']|loginRequest|useAuth|input-login-password|Acesso profissional/i,
-    "a página /login não pode conter formulário ou chamada de autenticação",
+    /<Redirect\s+to=["']\/["']\s*\/>|type\s*=\s*["']password["']|loginRequest|useAuth|input-login-password/i,
+    "a página /login não pode redirecionar para a rota clínica nem conter formulário ou chamada de autenticação",
   );
 });
 

@@ -1,5 +1,8 @@
 import { type Express } from "express";
-import { createServer as createViteServer, createLogger } from "vite";
+import {
+  createServer as createViteServer,
+  createLogger,
+} from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import fs from "fs";
@@ -14,8 +17,21 @@ export async function setupVite(server: Server, app: Express) {
     allowedHosts: true as const,
   };
 
+  // `viteConfig` é uma função porque o root e o contrato de acesso dependem
+  // do modo. Espalhar a função diretamente em `createServer` descarta o
+  // resultado dela e faz o Vite usar a raiz padrão do processo (`/`), então
+  // `/src/main.tsx` não é resolvido para `client/src/main.tsx`.
+  const viteConfigInput =
+    typeof viteConfig === "function"
+      ? await viteConfig({
+          command: "serve",
+          mode: process.env.NODE_ENV ?? "development",
+          isSsrBuild: false,
+          isPreview: false,
+        })
+      : viteConfig;
   const vite = await createViteServer({
-    ...viteConfig,
+    ...viteConfigInput,
     configFile: false,
     customLogger: {
       ...viteLogger,

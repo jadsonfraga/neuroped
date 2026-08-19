@@ -305,6 +305,22 @@ assert.match(routeGuard, /decision === "forbidden"/);
 assert.match(routeGuard, /hasConfiguredMasterPin/);
 assert.match(routeGuard, /isMasterPinUnlocked/);
 
+const loginPage = read("client/src/pages/login.tsx");
+assert.match(loginPage, /PUBLIC_HOME/);
+assert.match(loginPage, /Área clínica protegida/);
+assert.doesNotMatch(loginPage, /<Redirect\s+to=["']\/["']\s*\/>/);
+assert.doesNotMatch(loginPage, /type=["']password["']|loginRequest|useAuth|input-login-password/);
+
+const viteServer = read("server/vite.ts");
+assert.match(viteServer, /typeof viteConfig === "function"/);
+assert.match(viteServer, /command:\s*"serve"/);
+assert.match(viteServer, /\.\.\.viteConfigInput/);
+
+const securityMiddleware = read("server/middleware/security.ts");
+assert.match(securityMiddleware, /const isProduction = process\.env\.NODE_ENV === "production"/);
+assert.match(securityMiddleware, /contentSecurityPolicy:\s*isProduction\s*\?/);
+assert.match(securityMiddleware, /: false/);
+
 const accessPolicy = read("client/src/security/accessPolicy.ts");
 // O modo aberto é somente opt-in para instalações locais e nunca pode ser o
 // default do bundle publicado. A API continua sendo a barreira real dos dados.
