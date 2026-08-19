@@ -1,8 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap");
 
 .np-kids {
+  --kids-ink: #1a2b4a;
+  --kids-muted: #5a6a8a;
+  --kids-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --kids-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   font-family: "Nunito", "Avenir Next", sans-serif;
-  color: #1a2b4a;
+  color: var(--kids-ink);
+  isolation: isolate;
 }
 
 .np-kids h1,
@@ -17,12 +22,148 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.np-kids button:focus-visible,
+.np-kids a:focus-visible {
+  outline: 4px solid #e63946;
+  outline-offset: 4px;
+}
+
+.np-kids .kids-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.np-kids .kids-hero::after {
+  position: absolute;
+  inset: auto -5% -38px;
+  height: 80px;
+  content: "";
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50% 50% 0 0;
+  transform: rotate(-2deg);
+  pointer-events: none;
+}
+
+.np-kids .kids-hero-content,
+.np-kids .kids-section-heading,
+.np-kids .kids-activity-card {
+  animation: kids-rise-in 520ms var(--kids-ease-out) both;
+}
+
+.np-kids .kids-missions-grid > * {
+  animation: kids-rise-in 520ms var(--kids-ease-out) both;
+}
+
+.np-kids .kids-missions-grid > :nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.np-kids .kids-missions-grid > :nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.np-kids .kids-missions-grid > :nth-child(4) {
+  animation-delay: 135ms;
+}
+
+.np-kids .kids-missions-grid > :nth-child(5) {
+  animation-delay: 180ms;
+}
+
+.np-kids .kids-mission-card {
+  transition: transform 180ms var(--kids-ease-out), box-shadow 180ms var(--kids-ease-out);
+}
+
+.np-kids .kids-mission-card:hover {
+  transform: translateY(-5px) rotate(-0.35deg);
+  box-shadow: 6px 6px 0 var(--kids-ink);
+}
+
+.np-kids .kids-mascot-float {
+  animation: kids-float 4.5s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+.np-kids .kids-button {
+  transition: transform 160ms var(--kids-ease-out), box-shadow 160ms var(--kids-ease-out), filter 160ms var(--kids-ease-out);
+}
+
+.np-kids .kids-button:hover {
+  filter: saturate(1.08);
+}
+
+.np-kids .kids-button:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.np-kids .kids-button:disabled {
+  cursor: not-allowed;
+  filter: saturate(0.75);
+  opacity: 0.65;
+}
+
+.np-kids .kids-answer-option {
+  transition: transform 160ms var(--kids-ease-out), box-shadow 160ms var(--kids-ease-out), background-color 160ms ease;
+}
+
+.np-kids .kids-answer-option:not(:disabled):hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+  box-shadow: 5px 5px 0 var(--kids-ink);
+}
+
+.np-kids .kids-feedback {
+  animation: kids-feedback-in 260ms var(--kids-ease-out) both;
+}
+
+@keyframes kids-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes kids-feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kids-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .np-kids .kids-hero::after {
+    bottom: -50px;
+  }
+
+  .np-kids .kids-answer-option {
+    min-width: 7.25rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .np-kids *,
   .np-kids *::before,
   .np-kids *::after {
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
