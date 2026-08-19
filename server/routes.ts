@@ -39,6 +39,7 @@ import {
 } from "./lib/ownership.js";
 import { buildExpressHealth } from "./lib/healthContract.js";
 import { registerBookingRoutes } from "./routes/booking-adapter.js";
+import { registerDocumentRoutes } from "./routes/documents.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
@@ -114,6 +115,9 @@ export async function registerRoutes(
 
   // ----- Agenda interna e agendamento público -----
   registerBookingRoutes(app);
+
+  // ----- Documentos clínicos: PDFs persistentes e imutáveis -----
+  registerDocumentRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {

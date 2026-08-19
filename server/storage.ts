@@ -191,7 +191,38 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS files_owner_idx ON files(owner_user_id);
   CREATE INDEX IF NOT EXISTS files_patient_idx ON files(patient_id);
   CREATE INDEX IF NOT EXISTS files_key_idx ON files(storage_key);
-`);
+
+  CREATE TABLE IF NOT EXISTS clinical_documents (
+    id TEXT PRIMARY KEY,
+    owner_user_id TEXT,
+    patient_id TEXT,
+    file_id TEXT UNIQUE,
+    document_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    source_id TEXT,
+    source_version TEXT,
+    signature_status TEXT NOT NULL DEFAULT 'unsigned',
+    signature_type TEXT,
+    signature_algorithm TEXT,
+    signer_name TEXT,
+    certificate_subject TEXT,
+    certificate_issuer TEXT,
+    certificate_serial TEXT,
+    certificate_valid_until TEXT,
+    sha256 TEXT,
+    retention_policy TEXT NOT NULL DEFAULT 'permanent',
+    is_immutable INTEGER NOT NULL DEFAULT 1,
+    metadata TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(patient_id) REFERENCES patients(id) ON DELETE SET NULL,
+    FOREIGN KEY(file_id) REFERENCES files(id) ON DELETE SET NULL
+  );
+  CREATE INDEX IF NOT EXISTS clinical_documents_owner_idx ON clinical_documents(owner_user_id);
+  CREATE INDEX IF NOT EXISTS clinical_documents_patient_idx ON clinical_documents(patient_id);
+  CREATE INDEX IF NOT EXISTS clinical_documents_source_idx ON clinical_documents(source_id);
+  CREATE INDEX IF NOT EXISTS clinical_documents_created_at_idx ON clinical_documents(created_at);
+  `);
 
 /**
  * Migração aditiva para bancos SQLite já existentes. SQLite não oferece

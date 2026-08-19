@@ -13,6 +13,15 @@ import { Input } from "@/components/ui/input";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
 import { buildAppHashUrl } from "@/lib/appUrl";
 
+export interface ArchivePdfMeta {
+  signatureStatus: "unsigned" | "signed";
+  signatureType?: string | null;
+  signatureAlgorithm?: string | null;
+  signerName?: string | null;
+  certificateIssuer?: string | null;
+  certificateValidUntil?: string | null;
+}
+
 interface Props {
   /** Constrói os bytes do PDF do documento a partir do estado atual da página. */
   buildPdf: () => Promise<Uint8Array>;
@@ -23,6 +32,8 @@ interface Props {
   reason?: string;
   widgetRect?: number[];
   widgetPageIndex?: number;
+  /** Persiste somente os bytes finais e metadados públicos; nunca recebe o .p12. */
+  archivePdf?: (bytes: Uint8Array, meta: ArchivePdfMeta) => Promise<void>;
 }
 
 function signingErrorMessage(error: unknown): string {
@@ -35,7 +46,7 @@ function signingErrorMessage(error: unknown): string {
  * O arquivo vem exclusivamente do seletor local, permanece somente na memória
  * da aba e nunca é persistido ou transferido pelo cliente.
  */
-export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex }: Props) {
+export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, reason, widgetRect, widgetPageIndex, archivePdf }: Props) {
   const uid = useId();
   const [p12, setP12] = useState<ArrayBuffer | null>(null);
   const [p12Name, setP12Name] = useState("");
@@ -100,7 +111,22 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
       const { downloadBytes } = await import("@/lib/icpSign");
       const bytes = await buildPdf();
       downloadBytes(bytes, `${filename}.pdf`);
-      setOkMsg("PDF gerado (sem assinatura).");
+      if (archivePdf) {
+        try {
+          await archivePdf(bytes, {
+            signatureStatus: "unsigned",
+            signatureType: null,
+            signatureAlgorithm: null,
+            signerName: null,
+          });
+          setOkMsg("PDF gerado, baixado e arquivado com retenção permanente.");
+        } catch (archiveError) {
+          setOkMsg("PDF gerado e baixado; o arquivamento não foi concluído.");
+          setErro(archiveError instanceof Error ? archiveError.message : "Storage indisponível para arquivar o PDF.");
+        }
+      } else {
+        setOkMsg("PDF gerado (sem assinatura).");
+      }
       await gerarComprovante(bytes);
     } catch {
       setErro("Falha ao gerar o PDF do documento.");
@@ -111,7 +137,9 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
     if (!p12) { setErro("Selecione o arquivo .p12 do seu certificado A1."); return; }
     setErro(""); setOkMsg(""); setBusy("sign");
     try {
-      const { signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
+      const { signPdfWithP12, downloadBytes, readP12Info } = await import("@/lib/icpSign");
+      const certificateInfo = readP12Info(p12, senha);
+      setCert({ commonName: certificateInfo.commonName, notAfter: certificateInfo.notAfter, issuer: certificateInfo.issuer });
       const pdfBytes = await buildPdf();
       const signed = await signPdfWithP12(pdfBytes, p12, senha, {
         reason: reason ?? "Assinatura digital ICP-Brasil",
@@ -121,7 +149,24 @@ export function AssinaturaIcpPanel({ buildPdf, filename, signerName, location, r
         widgetPageIndex,
       });
       downloadBytes(signed, `${filename}-assinado.pdf`);
-      setOkMsg("Documento assinado e baixado com sucesso.");
+      if (archivePdf) {
+        try {
+          await archivePdf(signed, {
+            signatureStatus: "signed",
+            signatureType: "ICP-Brasil A1 / PAdES",
+            signatureAlgorithm: "ETSI.CAdES.detached",
+            signerName: certificateInfo.commonName || signerName || null,
+            certificateIssuer: certificateInfo.issuer,
+            certificateValidUntil: certificateInfo.notAfter.toISOString(),
+          });
+          setOkMsg("Documento assinado, baixado e arquivado com retenção permanente.");
+        } catch (archiveError) {
+          setOkMsg("Documento assinado e baixado; o arquivamento não foi concluído.");
+          setErro(archiveError instanceof Error ? archiveError.message : "Storage indisponível para arquivar o PDF.");
+        }
+      } else {
+        setOkMsg("Documento assinado e baixado com sucesso.");
+      }
       await gerarComprovante(signed);
     } catch (error) {
       setErro(signingErrorMessage(error));

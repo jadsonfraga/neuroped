@@ -31,4 +31,29 @@ assert.match(c1Express, /buildC1TemplatePdfBytes/);
 assert.match(c1Express, /signPdfWithP12/);
 assert.match(c1Express, /\.p12|\.pfx|PFX|P12/i);
 
-console.log("[pdf-clinical-workflows] ✓ C1, C1 Express e laudo mantêm PDF real + caminho PFX/P12; documentos clínicos usam logo no construtor premium.");
+const archiveClient = read("client/src/lib/clinicalDocumentsClient.ts");
+assert.match(archiveClient, /uploadFile/);
+assert.match(archiveClient, /authFetch\("\/api\/documents"/);
+assert.match(archiveClient, /sha256/);
+assert.doesNotMatch(archiveClient, /p12|pfx|privateKey|senha/i);
+
+const documentRoutes = read("server/routes/documents.ts");
+assert.match(documentRoutes, /retentionPolicy: "permanent"/);
+assert.match(documentRoutes, /isImmutable: true/);
+assert.match(documentRoutes, /PERMANENT_RETENTION/);
+assert.match(documentRoutes, /sha256Match/);
+
+const filesRoutes = read("server/routes/files.ts");
+assert.match(filesRoutes, /clinicalDocuments/);
+assert.match(filesRoutes, /CLINICAL_DOCUMENT_IMMUTABLE/);
+
+const scaleReport = read("client/src/components/ClinicalReport.tsx");
+assert.match(scaleReport, /buildDocumentPdf/);
+assert.match(scaleReport, /Exportar PDF Premium Completo/);
+assert.match(scaleReport, /Perguntas e respostas completas/);
+
+const scaleSave = read("client/src/components/SaveToPatient.tsx");
+assert.match(scaleSave, /archiveClinicalPdf/);
+assert.match(scaleSave, /sourceVersion: "premium-v1"/);
+
+console.log("[pdf-clinical-workflows] ✓ PDFs clínicos, assinatura PFX/P12, arquivamento permanente e exportação premium das escalas permanecem conectados.");

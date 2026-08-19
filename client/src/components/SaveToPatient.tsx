@@ -26,6 +26,7 @@ import {
   normalizeScaleResponseItems,
   type ScaleResponseItem,
 } from "@/lib/scaleResponseReport";
+import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 
 interface SaveToPatientProps {
   scaleName?: string;
@@ -93,18 +94,81 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         answers: responses,
         patientAge: patientAge || null,
       });
-      return res.json();
+      const result = await res.json();
+      let archivedDocumentId: string | null = null;
+      let archiveError: string | null = null;
+      try {
+        const { buildDocumentPdf } = await import("@/lib/documentPdf");
+        const patient = patients.find((item: any) => item.id === patientId);
+        const answerBody = responses
+          .map((item, index) => `${index + 1}. ${item.question}\nResposta: ${item.answer || "Não respondida"}`)
+          .join("\n\n");
+        const pdfBytes = await buildDocumentPdf({
+          title: `Resultado da escala — ${scaleName}`,
+          subtitle: "Relatório clínico premium exportável",
+          credentials: [
+            "NeuroPed EDJ — documento gerado eletronicamente",
+            "Resultado integral com perguntas, respostas e metadados do atendimento",
+          ],
+          sections: [
+            {
+              heading: "Identificação",
+              body: [
+                `Paciente: ${patient?.name || "Paciente vinculado"}`,
+                `Idade informada: ${patientAge || "Não informada"}`,
+                `Escala: ${scaleName}`,
+                `Data de emissão: ${new Date().toLocaleString("pt-BR")}`,
+              ].join("\n"),
+            },
+            {
+              heading: "Perguntas e respostas",
+              body: answerBody || "Nenhuma resposta registrada.",
+            },
+          ],
+          footer: "Documento clínico exportável. O PDF arquivado permanece vinculado ao resultado e ao paciente conforme a política de retenção permanente do NeuroPed.",
+        });
+        const archived = await archiveClinicalPdf({
+          bytes: pdfBytes,
+          filename: `escala-${scaleName.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-${result.id}`,
+          documentType: "escala",
+          title: `Resultado da escala — ${scaleName}`,
+          patientId,
+          sourceId: result.id,
+          sourceVersion: "premium-v1",
+          signatureStatus: "unsigned",
+          metadata: {
+            source: "scale-result",
+            resultId: result.id,
+            scaleName,
+            patientAge: patientAge || null,
+            answerCount: responses.length,
+          },
+        });
+        archivedDocumentId = archived.document.id;
+      } catch (error) {
+        archiveError = error instanceof Error ? error.message : "Não foi possível arquivar o PDF premium.";
+      }
+      return { result, archivedDocumentId, archiveError };
     },
-    onSuccess: (_data, patientId) => {
-      setErrorMessage(null);
+    onSuccess: (data, patientId) => {
       setSavedPatientId(patientId);
       queryClient.invalidateQueries({
         queryKey: [`/api/patients/${patientId}/results`],
       });
-      toast({
-        title: "Salvo!",
-        description: "Perguntas e respostas vinculadas ao paciente.",
-      });
+      if (data.archiveError) {
+        setErrorMessage(`Resultado salvo, mas o PDF premium não foi arquivado: ${data.archiveError}`);
+        toast({
+          title: "Resultado salvo com alerta",
+          description: "O PDF premium não foi persistido; verifique o storage e tente exportar novamente.",
+          variant: "destructive",
+        });
+      } else {
+        setErrorMessage(null);
+        toast({
+          title: "Salvo e arquivado!",
+          description: "Resultado e PDF premium vinculados ao paciente.",
+        });
+      }
     },
     onError: () => {
       setErrorMessage(

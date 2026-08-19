@@ -5,6 +5,7 @@ import { PageHero } from "@/components/PageHero";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { escapeHtml } from "@/lib/htmlEscape";
+import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — texto integral + assinatura PAdES
@@ -129,6 +130,9 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 export default function LaudoNeuropedPage() {
   const [texto, setTexto] = useState(DEFAULT_TEXT);
   const [showPreview, setShowPreview] = useState(false);
+  const patientId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("patientId")
+    : null;
 
   const handlePrint = () => {
     const win = window.open("", "_blank");
@@ -184,6 +188,22 @@ export default function LaudoNeuropedPage() {
           signerName="Dr. Jadson Fraga Araujo Junior"
           location="Petrolina-PE"
           reason="Laudo Neuropediatrico"
+          archivePdf={async (bytes, meta) => {
+            await archiveClinicalPdf({
+              bytes,
+              filename,
+              documentType: "laudo",
+              title: "Laudo Médico Neuropediátrico",
+              patientId,
+              signatureStatus: meta.signatureStatus,
+              signatureType: meta.signatureType,
+              signatureAlgorithm: meta.signatureAlgorithm,
+              signerName: meta.signerName,
+              certificateIssuer: meta.certificateIssuer,
+              certificateValidUntil: meta.certificateValidUntil,
+              metadata: { patientId, source: "laudo-neuroped", textLength: texto.trim().length },
+            });
+          }}
           buildPdf={async () => {
             const { buildDocumentPdf } = await import("@/lib/documentPdf");
             return buildDocumentPdf({

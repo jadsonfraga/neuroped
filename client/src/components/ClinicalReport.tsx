@@ -10,7 +10,6 @@ import {
   Loader2,
   Mail,
   MessageCircle,
-  Printer,
   RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -19,10 +18,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
-import { softBell, softSuccess, softTap } from "@/lib/softSounds";
+import { softSuccess, softTap } from "@/lib/softSounds";
 import { play1Up } from "@/lib/sounds";
 import {
-  buildScaleResponsePrintHtml,
   buildScaleResponseText,
   normalizeScaleResponseItems,
   type ScaleResponseItem,
@@ -109,15 +107,12 @@ function generateReportText(props: NormalizedReport): string {
   return `${buildScaleResponseText(props)}\n---\n${PROFESSIONAL_SIGNATURE.name} — ${PROFESSIONAL_SIGNATURE.specialty}\n${PROFESSIONAL_SIGNATURE.registry}\n${PROFESSIONAL_SIGNATURE.service}\n`;
 }
 
-function buildPrintHtml(props: NormalizedReport) {
-  return buildScaleResponsePrintHtml(props, PROFESSIONAL_SIGNATURE);
-}
-
 export function ClinicalReport(rawProps: ClinicalReportProps) {
   const props = normalizeReportProps(rawProps);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [generatingPremiumPdf, setGeneratingPremiumPdf] = useState(false);
   const { toast } = useToast();
   const reportText = generateReportText(props);
   const reportReady = Boolean(props.scaleName && props.items.length > 0);
@@ -142,70 +137,6 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
         variant: "destructive",
       });
     }
-  }
-
-  function handlePrint() {
-    if (!reportReady) {
-      toast({
-        title: "Relatório incompleto",
-        description: "Finalize as respostas antes de imprimir.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const html = buildPrintHtml(props);
-
-    // Impressão via iframe OCULTO na própria página — não depende de window.open,
-    // que é bloqueado por pop-up blockers (sobretudo no celular) e era a causa de
-    // "a tela trava e não gera PDF". O diálogo nativo permite "Salvar como PDF".
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    iframe.style.visibility = "hidden";
-
-    iframe.onload = () => {
-      const win = iframe.contentWindow;
-      if (!win) {
-        // Fallback raríssimo: nova aba (pode pedir liberação de pop-up).
-        const w = window.open("", "_blank");
-        if (w) {
-          w.opener = null;
-          w.document.write(html);
-          w.document.close();
-          w.onload = () => w.print();
-        }
-        iframe.remove();
-        return;
-      }
-      win.focus();
-      win.print();
-      // Remove o iframe depois que o diálogo de impressão é fechado.
-      const cleanup = () => setTimeout(() => iframe.remove(), 500);
-      win.onafterprint = cleanup;
-      setTimeout(cleanup, 60000); // garantia: remove mesmo se onafterprint não disparar
-    };
-
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(html);
-      doc.close();
-    }
-
-    softBell();
-    haptic.notify();
-    toast({
-      title: "PDF / Impressão",
-      description:
-        "Diálogo de impressão aberto. Escolha “Salvar como PDF” para gerar o arquivo com todas as respostas.",
-    });
   }
 
   async function handleSendWhatsApp() {
@@ -247,6 +178,65 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             ? "Escolha o WhatsApp para enviar todas as perguntas e respostas por extenso."
             : "O WhatsApp foi aberto com o relatório integral pronto para encaminhar.",
     });
+  }
+
+  async function handlePremiumPdf() {
+    if (!reportReady) {
+      toast({
+        title: "Relatório incompleto",
+        description: "Finalize as respostas antes de exportar o PDF premium.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setGeneratingPremiumPdf(true);
+    try {
+      const { buildDocumentPdf } = await import("@/lib/documentPdf");
+      const answerBody = props.items
+        .map((item, index) => `${index + 1}. ${item.question}\nResposta: ${item.answer || "Não respondida"}`)
+        .join("\n\n");
+      const bytes = await buildDocumentPdf({
+        title: `Resultado da escala — ${props.scaleName}`,
+        subtitle: props.scaleFullName || "Relatório clínico premium exportável",
+        credentials: [
+          `${PROFESSIONAL_SIGNATURE.name} — ${PROFESSIONAL_SIGNATURE.specialty}`,
+          PROFESSIONAL_SIGNATURE.registry,
+          PROFESSIONAL_SIGNATURE.service,
+        ],
+        sections: [
+          {
+            heading: "Identificação da aplicação",
+            body: [
+              `Escala: ${props.scaleName}`,
+              `Idade informada: ${props.patientAge || "Não informada"}`,
+              `Data de emissão: ${new Date().toLocaleString("pt-BR")}`,
+              `Total de itens respondidos: ${props.items.length}`,
+            ].join("\n"),
+          },
+          { heading: "Perguntas e respostas completas", body: answerBody },
+        ],
+        footer: "PDF premium gerado pelo NeuroPed. Contém todas as informações apresentadas no resultado desta aplicação.",
+      });
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${safeTextFilename(props.scaleName)}-resultado-premium.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast({
+        title: "PDF premium exportado",
+        description: "O arquivo contém todas as perguntas, respostas e metadados da escala.",
+      });
+    } catch (error) {
+      toast({
+        title: "Falha ao gerar PDF",
+        description: error instanceof Error ? error.message : "Não foi possível gerar o PDF premium.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPremiumPdf(false);
+    }
   }
 
   function handleDownload() {
@@ -375,13 +365,13 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
           )}
 
           <Button
-            onClick={handlePrint}
+            onClick={handlePremiumPdf}
             className="h-12 w-full gap-3 bg-gradient-to-r from-primary to-chart-2 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:from-primary/90 hover:to-chart-2/90"
-            disabled={!reportReady}
+            disabled={!reportReady || generatingPremiumPdf}
             data-testid="button-print-report"
           >
-            <Printer className="h-5 w-5" />
-            Gerar PDF / Imprimir Respostas Completas
+            {generatingPremiumPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
+            {generatingPremiumPdf ? "Gerando PDF premium..." : "Exportar PDF Premium Completo"}
           </Button>
 
           <Button

@@ -36,7 +36,7 @@ import { oneParam } from "../lib/http.js";
 import { patientReferenceDecision } from "../lib/ownership.js";
 import { boundedIntegerEnv } from "../lib/runtimeConfig.js";
 
-import { files as sqliteFiles, patients } from "@shared/schema";
+import { clinicalDocuments, files as sqliteFiles, patients } from "@shared/schema";
 
 const filesTable = sqliteFiles;
 
@@ -360,6 +360,26 @@ export function registerFileRoutes(app: Express): void {
       if (!file || file.isDeleted) return res.status(404).json({ error: "Arquivo nao encontrado" });
       if (file.ownerUserId !== req.user!.id && req.user!.role !== "admin") {
         return res.status(403).json({ error: "Sem permissao" });
+      }
+
+      const linkedDocument = db
+        .select({ id: clinicalDocuments.id, title: clinicalDocuments.title })
+        .from(clinicalDocuments)
+        .where(eq(clinicalDocuments.fileId, file.id))
+        .get();
+      if (linkedDocument) {
+        await logAudit({
+          eventType: "file.delete",
+          context: ctx,
+          targetType: "file",
+          targetId: file.id,
+          metadata: { reason: "clinical_document_immutable", documentId: linkedDocument.id },
+          success: false,
+        });
+        return res.status(409).json({
+          error: "Arquivo protegido: este PDF esta vinculado a um documento clinico imutavel.",
+          code: "CLINICAL_DOCUMENT_IMMUTABLE",
+        });
       }
 
       const deleted = db.update(filesTable)

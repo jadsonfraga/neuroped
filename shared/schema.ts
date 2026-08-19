@@ -216,6 +216,10 @@ export const auditEventTypes = [
   "file.upload",
   "file.download",
   "file.delete",
+  "document.create",
+  "document.read",
+  "document.verify",
+  "document.delete",
 ] as const;
 export type AuditEventType = (typeof auditEventTypes)[number];
 
@@ -401,3 +405,52 @@ export const files = sqliteTable(
 
 export type FileRecord = typeof files.$inferSelect;
 export type InsertFileRecord = typeof files.$inferInsert;
+
+/* =====================================================================
+ * CLINICAL DOCUMENTS — índice imutável de PDFs clínicos persistidos
+ * O binário permanece no object storage; este registro guarda a identidade,
+ * integridade, origem e metadados públicos de assinatura.
+ * ===================================================================== */
+
+export const clinicalDocumentTypes = ["laudo", "receita", "escala"] as const;
+export type ClinicalDocumentType = (typeof clinicalDocumentTypes)[number];
+
+export const clinicalDocumentSignatureStatuses = ["unsigned", "signed", "verified"] as const;
+export type ClinicalDocumentSignatureStatus = (typeof clinicalDocumentSignatureStatuses)[number];
+
+export const clinicalDocuments = sqliteTable(
+  "clinical_documents",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    ownerUserId: text("owner_user_id").references(() => users.id, { onDelete: "set null" }),
+    patientId: text("patient_id").references(() => patients.id, { onDelete: "set null" }),
+    fileId: text("file_id").references(() => files.id, { onDelete: "set null" }),
+    documentType: text("document_type", { enum: clinicalDocumentTypes }).notNull(),
+    title: text("title").notNull(),
+    sourceId: text("source_id"),
+    sourceVersion: text("source_version"),
+    signatureStatus: text("signature_status", { enum: clinicalDocumentSignatureStatuses }).notNull().default("unsigned"),
+    signatureType: text("signature_type"),
+    signatureAlgorithm: text("signature_algorithm"),
+    signerName: text("signer_name"),
+    certificateSubject: text("certificate_subject"),
+    certificateIssuer: text("certificate_issuer"),
+    certificateSerial: text("certificate_serial"),
+    certificateValidUntil: text("certificate_valid_until"),
+    sha256: text("sha256"),
+    retentionPolicy: text("retention_policy").notNull().default("permanent"),
+    isImmutable: integer("is_immutable", { mode: "boolean" }).notNull().default(true),
+    metadata: text("metadata"),
+    createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  },
+  (t) => ({
+    ownerIdx: index("clinical_documents_owner_idx").on(t.ownerUserId),
+    patientIdx: index("clinical_documents_patient_idx").on(t.patientId),
+    fileIdx: uniqueIndex("clinical_documents_file_idx").on(t.fileId),
+    sourceIdx: index("clinical_documents_source_idx").on(t.sourceId),
+    createdAtIdx: index("clinical_documents_created_at_idx").on(t.createdAt),
+  }),
+);
+
+export type ClinicalDocument = typeof clinicalDocuments.$inferSelect;
+export type InsertClinicalDocument = typeof clinicalDocuments.$inferInsert;

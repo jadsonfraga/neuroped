@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
 import { buildAppHashUrl } from "@/lib/appUrl";
+import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -449,6 +450,9 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 export default function ReceitaC1Page() {
   const [f, setF] = useState<ReceitaFields>(EMPTY);
   const [showPreview, setShowPreview] = useState(false);
+  const patientId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("patientId")
+    : null;
   const filename = `receita-c1-${dateStamp()}`;
 
   function set(k: keyof ReceitaFields) {
@@ -514,6 +518,27 @@ export default function ReceitaC1Page() {
           reason="Receita de Controle Especial - Lista C1"
           widgetRect={[218, 44, 394, 110]}
           widgetPageIndex={0}
+          archivePdf={async (bytes, meta) => {
+            await archiveClinicalPdf({
+              bytes,
+              filename,
+              documentType: "receita",
+              title: "Receita de Controle Especial - Lista C1",
+              patientId,
+              signatureStatus: meta.signatureStatus,
+              signatureType: meta.signatureType,
+              signatureAlgorithm: meta.signatureAlgorithm,
+              signerName: meta.signerName,
+              certificateIssuer: meta.certificateIssuer,
+              certificateValidUntil: meta.certificateValidUntil,
+              metadata: {
+                patientName: f.pac,
+                medication: f.med,
+                source: "receita-c1",
+                patientId,
+              },
+            });
+          }}
           buildPdf={async () => buildReceitaC1SignedPdfBytes(f)}
         />
       </section>
