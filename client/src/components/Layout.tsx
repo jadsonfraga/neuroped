@@ -737,6 +737,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ref={mainContentRef}
         id="main-content"
         tabIndex={-1}
+        aria-label="Conteúdo principal"
         className={`flex-1 min-w-0 transition-all duration-300 pt-14 lg:pt-0 print:!ml-0 print:!pt-0 ${collapsed ? "lg:ml-16" : "lg:ml-64"}`}
       >
         {showClinicalFlow && (

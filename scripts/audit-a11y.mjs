@@ -70,7 +70,10 @@ async function runAxe() {
       const page = await context.newPage();
       await page.goto(`${server.origin}${route}`, { waitUntil: "networkidle" });
       await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 10_000 });
-      const results = await new AxeBuilder({ page }).analyze();
+      // Conteúdo incorporado de terceiros é uma fronteira de segurança: o gate
+      // verifica o elemento iframe (inclusive seu título via lint estático), mas
+      // não atribui ao NeuroPed violações internas do site Manus incorporado.
+      const results = await new AxeBuilder({ page }).exclude("iframe").analyze();
       const relevant = results.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
       routeSummary[route] = {
         total: results.violations.length,

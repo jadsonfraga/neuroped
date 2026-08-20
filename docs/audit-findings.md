@@ -133,6 +133,18 @@ A inspeção local sem sessão confirmou redirecionamento para login; o ambiente
 
 **Classificação:** bug funcional crítico do shell, corrigido.
 
+### AUD-010 — Gate de acessibilidade atribuía ao NeuroPed violações internas de iframe externo
+
+**Reprodução:** o workflow `Filter and scales spiral audit` no SHA `1dc9b642` encontrou uma violação `color-contrast` serious em três elementos internos de `Home.tsx` do site Manus carregado na rota `/#/manus`, com contraste 4,31:1. O relatório também apontou `landmark-unique` no `#main-content` do próprio shell.
+
+**Análise:** os três nós de contraste pertencem ao DOM do site externo incorporado, não ao NeuroPed. Como a aba Manus foi desenhada para carregar os domínios originais em isolamento, o gate do NeuroPed não deve transformar a acessibilidade de terceiros em falha de release. O landmark principal, por outro lado, é responsabilidade do shell e estava sem nome acessível único.
+
+**Correção:** o `main#main-content` recebeu `aria-label="Conteúdo principal"`. O auditor axe passou a excluir o DOM interno de `iframe` externo, mantendo a verificação do próprio elemento incorporado e o lint estático de `title`/contratos de iframe.
+
+**Validação:** a reprodução dirigida com Chromium local retornou `violations: []` em `/#/manus`; `npm run verify` passou localmente após a alteração. O workflow de acessibilidade será repetido no novo SHA para confirmação em navegador limpo.
+
+**Classificação:** bug de acessibilidade/limite de auditoria, corrigido.
+
 ## Estado pós-correção
 
-A auditoria permanece em andamento para finalizar a verificação dos fluxos clínicos e publicar somente após a execução do `verify` e dos checks de segurança/deploy no SHA final.
+A auditoria funcional foi concluída e a correção do AUD-010 está pronta para publicação. O novo SHA precisa passar novamente pelos checks de segurança, acessibilidade e deploy antes da entrega final.
