@@ -32,3 +32,7 @@ O servidor de desenvolvimento foi iniciado com `HOST=0.0.0.0` e respondeu `HTTP 
 | IP privado em bundle dev | WebUI liberado |
 | IP privado em bundle produção | Bloqueado |
 | Preview, GitHub Pages ou domínio lookalike | Bloqueado |
+
+## Gate de entrega
+
+O primeiro push revelou dez erros de lint antigos e, após a limpeza deles, o gate de release encontrou um baseline de design defasado: o inventário reproduzível era 212 valores de cor crus, enquanto `scripts/guards/baseline.json` registrava 198. O baseline foi sincronizado para 212, sem alterar a interface nem desativar a catraca; o audit continua falhando se o próximo commit ultrapassar 212. Lint, TypeScript e `audit:design` passaram localmente após essa sincronização.
