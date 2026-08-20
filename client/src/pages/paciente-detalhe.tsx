@@ -422,30 +422,42 @@ export default function PacienteDetalhePage() {
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/conecta?patient=${encodeURIComponent(patientId)}`}>
-            <Button
-              size="sm"
-              className="gap-1.5"
-              data-testid="button-open-conecta"
-            >
-              <Activity className="w-3.5 h-3.5" /> Abrir jornada
-            </Button>
-          </Link>
+          {!liveMode && (
+            <>
+              <Link href={`/conecta?patient=${encodeURIComponent(patientId)}`}>
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  data-testid="button-open-conecta"
+                >
+                  <Activity className="w-3.5 h-3.5" /> Abrir jornada
+                </Button>
+              </Link>
+              <Link href={`/laudo-neuroped?patientId=${encodeURIComponent(patientId)}`}>
+                <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-laudo">
+                  <FileText className="w-3.5 h-3.5" /> Laudo
+                </Button>
+              </Link>
+              <Link href={`/receita-c1?patientId=${encodeURIComponent(patientId)}`}>
+                <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-receita-c1">
+                  <Pill className="w-3.5 h-3.5" /> Receita C1
+                </Button>
+              </Link>
+            </>
+          )}
           <Link href={`/prontuario?patientId=${encodeURIComponent(patientId)}`}>
             <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-prontuario">
               <ClipboardList className="w-3.5 h-3.5" /> Prontuário
             </Button>
           </Link>
-          <Link href={`/laudo-neuroped?patientId=${encodeURIComponent(patientId)}`}>
-            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-laudo">
-              <FileText className="w-3.5 h-3.5" /> Laudo
-            </Button>
-          </Link>
-          <Link href={`/receita-c1?patientId=${encodeURIComponent(patientId)}`}>
-            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-receita-c1">
-              <Pill className="w-3.5 h-3.5" /> Receita C1
-            </Button>
-          </Link>
+          {liveMode && (
+            <p
+              className="basis-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200"
+              data-testid="clinical-live-unavailable-actions"
+            >
+              Conecta, Laudo e Receita C1: <strong>Indisponível no LIVE</strong> até a migração clínica, auditável e aprovada.
+            </p>
+          )}
           {legacyMode && <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
               <Button

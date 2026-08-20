@@ -135,6 +135,7 @@ type StoredClinicalEvent = {
   occurredAt: string;
   note?: string;
   data?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
 };
 
 const anamneseKeys: (keyof Anamnese)[] = [
@@ -661,7 +662,7 @@ export default function ProntuarioPage() {
 
       for (const event of activeEvents) {
         const meta = liveMode ? {} : parseClinicalNote(event.note);
-        const data = event.data ?? {};
+        const data = liveMode ? event.payload ?? {} : event.data ?? {};
         const eventKey = liveMode && typeof data.recordKey === "string"
           ? data.recordKey
           : typeof meta.key === "string" ? meta.key : "";

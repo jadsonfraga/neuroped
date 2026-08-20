@@ -6,6 +6,7 @@ const patientDetail = fs.readFileSync(
   "client/src/pages/paciente-detalhe.tsx",
   "utf8",
 );
+const prontuario = fs.readFileSync("client/src/pages/prontuario.tsx", "utf8");
 const resultPagination = fs.readFileSync(
   "client/src/lib/patientResultsPagination.ts",
   "utf8",
@@ -125,6 +126,26 @@ assert.doesNotMatch(
   patientDetail,
   /!resultsLoading && !resultsUnavailable && \(\s*<PatientCockpit/,
   "falha de avaliações não pode desmontar todo o cockpit longitudinal",
+);
+assert.match(
+  patientDetail,
+  /!liveMode[\s\S]*?\/conecta\?patient=/,
+  "Conecta não pode ser navegável quando o Clinical Core LIVE está ativo",
+);
+assert.match(
+  patientDetail,
+  /clinical-live-unavailable-actions[\s\S]*?Indisponível no LIVE/,
+  "módulos não migrados devem ter indisponibilidade explícita no LIVE",
+);
+assert.match(
+  prontuario,
+  /payload\?: Record<string, unknown>/,
+  "o prontuário deve conhecer o payload retornado pelo endpoint LIVE",
+);
+assert.match(
+  prontuario,
+  /const data = liveMode \? event\.payload \?\? \{\} : event\.data \?\? \{\}/,
+  "a reconstrução deve consumir payload no LIVE e data apenas no legado",
 );
 assert.match(patientCockpit, /scaleCount: number \| null/);
 assert.match(
