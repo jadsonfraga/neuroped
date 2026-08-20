@@ -200,10 +200,19 @@ assert.equal((await get(
   searchMemory as never,
   `/api/memory/search?q=${"q".repeat(301)}`,
 )).status, 400);
+const cappedMemorySearch = await get(
+  searchMemory as never,
+  "/api/memory/search?q=mchat&limit=999&min_score=0",
+);
 assert.equal(
-  (await get(searchMemory as never, "/api/memory/search?q=mchat&limit=999&min_score=0")).status,
-  200,
-  "limite inteiro grande é reduzido ao teto seguro",
+  cappedMemorySearch.status,
+  503,
+  "limite inteiro grande é aceito e reduzido antes da falha segura sem banco",
+);
+assert.equal(
+  ((await cappedMemorySearch.json()) as { code?: string }).code,
+  "DB_REQUIRED",
+  "a busca de memória nunca recorre a dados fictícios sem banco",
 );
 
 assert.equal(
