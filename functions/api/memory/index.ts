@@ -31,7 +31,7 @@ function present(row: Row) {
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  if (!context.env.DB) return error("Persistência da memória indisponível.", "DB_REQUIRED", 503);
+  if (!context.env.DB) return error("Persistência indisponível para a memória.", "DB_REQUIRED", 503);
   const user = getContextUser(context);
   if (!user) return error("Não autenticado.", "UNAUTHENTICATED", 401);
   const url = new URL(context.request.url);
@@ -55,7 +55,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 };
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  if (!context.env.DB) return error("Persistência da memória indisponível. Nenhuma nota foi simulada.", "DB_REQUIRED", 503);
+  if (!context.env.DB) return error("Persistência indisponível para a memória. Nenhuma nota foi simulada.", "DB_REQUIRED", 503);
   const user = getContextUser(context);
   if (!user) return error("Não autenticado.", "UNAUTHENTICATED", 401);
   if (!canWriteClinicalData(user)) return error("Perfil sem permissão para gravar memória clínica.", "FORBIDDEN", 403);

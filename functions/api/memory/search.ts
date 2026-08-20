@@ -190,7 +190,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       category: category ?? null,
       searchType: "unavailable",
       semanticSearchStatus: "unavailable",
-      error: "Persistência da memória indisponível.",
+      error: "Persistência indisponível para a memória.",
       code: "DB_REQUIRED",
     }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
