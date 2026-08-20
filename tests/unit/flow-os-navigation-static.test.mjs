@@ -114,9 +114,9 @@ assert.doesNotMatch(
 );
 
 assert.match(
-  main,
+  app,
   /<MobilePrimaryDock \/>/,
-  "shell autorizado deve renderizar o dock",
+  "shell autorizado deve renderizar o dock na composição principal",
 );
 assert.match(
   main,
