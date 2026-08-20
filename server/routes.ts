@@ -41,6 +41,7 @@ import {
 import { buildExpressHealth } from "./lib/healthContract.js";
 import { registerBookingRoutes } from "./routes/booking-adapter.js";
 import { registerDocumentRoutes } from "./routes/documents.js";
+import { registerMemoryRoutes } from "./routes/memory.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
@@ -122,6 +123,9 @@ export async function registerRoutes(
 
   // ----- Documentos clínicos: PDFs persistentes e imutáveis -----
   registerDocumentRoutes(app);
+
+  // ----- Memória clínica persistente, cifrada e vinculada ao paciente -----
+  registerMemoryRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {

@@ -188,6 +188,7 @@ const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
 const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
+const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
@@ -386,6 +387,7 @@ function AppRouter() {
               component={LinguagemFonologiaPage}
             />
             <Route path="/memoria-teste" component={MemoriaTestePage} />
+            <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
             <Route
               path="/processamento-visuoauditivo"
               component={ProcessamentoVisuoauditivoPage}

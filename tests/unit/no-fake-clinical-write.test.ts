@@ -9,6 +9,11 @@ import {
   onRequestDelete as deletePatient,
 } from "../../functions/api/patients/[id]";
 import { onRequestDelete as deleteScaleResult } from "../../functions/api/results/[id]";
+import { onRequestPost as createMemoryNote } from "../../functions/api/memory/index";
+import {
+  onRequestPatch as updateMemoryNote,
+  onRequestDelete as deleteMemoryNote,
+} from "../../functions/api/memory/[id]";
 
 type Handler = (context: any) => Promise<Response>;
 
@@ -73,6 +78,12 @@ await expectDbRequired("results", createUiResult, {
   responses: [{ question: "Item fictício", answer: "Resposta" }],
 });
 
+await expectDbRequired("memory", createMemoryNote, {
+  patientId: "demo-001",
+  title: "Memória fictícia",
+  content: "Conteúdo fictício de teste",
+});
+
 async function expectMutationDbRequired(
   name: string,
   handler: Handler,
@@ -100,5 +111,7 @@ async function expectMutationDbRequired(
 await expectMutationDbRequired("patients", updatePatient as Handler, "PATCH", { name: "Paciente Editado" });
 await expectMutationDbRequired("patients", deletePatient as Handler, "DELETE");
 await expectMutationDbRequired("results", deleteScaleResult as Handler, "DELETE");
+await expectMutationDbRequired("memory", updateMemoryNote as Handler, "PATCH", { title: "Memória editada" });
+await expectMutationDbRequired("memory", deleteMemoryNote as Handler, "DELETE");
 
 console.log("✓ Escritas clínicas sem D1 falham fechado em POST, PATCH e DELETE");
