@@ -6,6 +6,9 @@ on:
       - "shared/billing.ts"
       - "server/lib/billingEntitlement.ts"
       - "functions/api/billing/**"
+      - "functions/api/live/**"
+      - "functions/api/patients/**"
+      - "functions/api/operations/**"
       - "functions/api/tenants/**"
       - "db/migrations/0012_saas_billing_onboarding.sql"
       - "db/migrations/0013_saas_billing_provider.sql"
@@ -14,27 +17,20 @@ on:
   push:
     branches:
       - feat/saas-billing-onboarding
-    paths:
-      - "shared/billing.ts"
-      - "server/lib/billingEntitlement.ts"
-      - "functions/api/billing/**"
-      - "functions/api/tenants/**"
-      - "db/migrations/0012_saas_billing_onboarding.sql"
-      - "db/migrations/0013_saas_billing_provider.sql"
-      - "tests/unit/saas-billing*.test.ts"
 
 jobs:
   billing:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run typecheck --if-present
+      - run: npm run check
+      - run: npm run lint
       - run: npx tsx tests/unit/saas-billing-contract.test.ts
       - run: npx tsx tests/unit/saas-billing-provider.test.ts
       - run: git diff --check

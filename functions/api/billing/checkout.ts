@@ -1,5 +1,5 @@
 import { getContextUser } from "../auth/_authorization";
-import { monthlyPriceCents } from "../../../shared/billing";
+import { CANONICAL_PRICE_CENTS } from "../../../shared/billing";
 import { getClinicMembership, membershipCanManage, tenantError, tenantJson } from "../tenant/_core";
 import {
   checkoutExternalReference,
@@ -55,29 +55,26 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
-  const customer = await db
-    .prepare(
-      `SELECT bc.id, bc.status, bc.canceled_at,
-              bs.id AS subscription_id, bs.current_period_end
-         FROM billing_customers bc
-         LEFT JOIN billing_subscriptions bs
-           ON bs.billing_customer_id = bc.id
-          AND bs.status IN ('trialing','active','past_due','paused')
-        WHERE bc.clinic_id = ?
-        LIMIT 1`,
-    )
-    .bind(clinicId)
-    .first<{
-      id: string;
-      status: string;
-      canceled_at: string | null;
-      subscription_id: string | null;
-      current_period_end: string | null;
-    }>();
+  const customer = await db.prepare(
+    `SELECT bc.id, bc.status, bc.canceled_at, bc.trial_ends_at,
+            bs.id AS subscription_id, bs.current_period_ends_at
+       FROM billing_customers bc
+       LEFT JOIN billing_subscriptions bs
+         ON bs.customer_id = bc.id
+        AND bs.status IN ('trial','active','past_due')
+      WHERE bc.clinic_id = ?
+      ORDER BY bs.updated_at DESC
+      LIMIT 1`,
+  ).bind(clinicId).first<{
+    id: string;
+    status: string;
+    canceled_at: string | null;
+    trial_ends_at: string | null;
+    subscription_id: string | null;
+    current_period_ends_at: string | null;
+  }>();
 
   if (!customer) return tenantError("Perfil de cobrança não encontrado.", "BILLING_PROFILE_NOT_FOUND", 409);
-
-  const customerId = customer.id;
   if (customer.status === "canceled") {
     return tenantError(
       "Assinatura cancelada exige reativação explícita.",
@@ -86,26 +83,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
-  const billing = await db
-    .prepare(
-      `SELECT bc.id, bc.status, bs.current_period_end
-         FROM billing_customers bc
-         LEFT JOIN billing_subscriptions bs
-           ON bs.billing_customer_id = bc.id
-          AND bs.status IN ('trialing','active','past_due','paused')
-        WHERE bc.id = ? LIMIT 1`,
-    )
-    .bind(customerId)
-    .first<{ id: string; status: string; current_period_end: string | null }>();
-  if (!billing) return tenantError("Perfil de cobrança não encontrado.", "BILLING_PROFILE_NOT_FOUND", 409);
-
-  const externalReference = checkoutExternalReference(customerId);
+  const externalReference = checkoutExternalReference(customer.id);
   let providerCheckout;
   try {
     providerCheckout = await createAsaasRecurringCheckout(context.env, {
       externalReference,
       seats,
-      trialEndsAt: billing.status === "trial" ? billing.current_period_end : null,
+      trialEndsAt: customer.status === "trial"
+        ? (customer.trial_ends_at ?? customer.current_period_ends_at)
+        : null,
       customer: { name: user.name, email: user.email ?? "" },
     });
   } catch (error) {
@@ -123,17 +109,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
          VALUES (?, ?, 'asaas', ?, ?, ?, ?, 'active', datetime('now'), datetime('now'))`,
       ).bind(
         checkoutId,
-        customerId,
+        customer.id,
         providerCheckout.id,
         externalReference,
         seats,
-        monthlyPriceCents(seats),
+        CANONICAL_PRICE_CENTS * seats,
       ),
       db.prepare(
         `UPDATE billing_customers
             SET provider = 'asaas', provider_checkout_id = ?, updated_at = datetime('now')
           WHERE id = ?`,
-      ).bind(providerCheckout.id, customerId),
+      ).bind(providerCheckout.id, customer.id),
+      db.prepare(
+        `UPDATE billing_subscriptions
+            SET provider_checkout_id = ?, updated_at = datetime('now')
+          WHERE id = ?`,
+      ).bind(providerCheckout.id, customer.subscription_id ?? ""),
     ]);
   } catch (error) {
     console.error("[billing.checkout] persistence error", error);
@@ -146,7 +137,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     providerCheckoutId: providerCheckout.id,
     url: providerCheckout.link,
     seats,
-    monthlyPriceCents: monthlyPriceCents(seats),
+    monthlyPriceCents: CANONICAL_PRICE_CENTS * seats,
     currency: "BRL",
   }, 201);
 };

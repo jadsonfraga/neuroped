@@ -1,4 +1,4 @@
-import { SAAS_SEAT_PRICE_CENTS } from "../../../shared/billing";
+import { CANONICAL_PRICE_CENTS } from "../../../shared/billing";
 
 export interface BillingProviderEnv {
   ASAAS_API_KEY?: string;
@@ -34,9 +34,7 @@ export interface AsaasWebhookEvent {
 
 function requireSecret(value: string | undefined, name: string, minLength = 16): string {
   const clean = value?.trim() ?? "";
-  if (clean.length < minLength) {
-    throw new Error(`${name}_NOT_CONFIGURED`);
-  }
+  if (clean.length < minLength) throw new Error(`${name}_NOT_CONFIGURED`);
   return clean;
 }
 
@@ -51,7 +49,6 @@ export function validateAsaasWebhook(request: Request, env: BillingProviderEnv):
   const expected = requireSecret(env.ASAAS_WEBHOOK_TOKEN, "ASAAS_WEBHOOK_TOKEN", 32);
   const received = request.headers.get("asaas-access-token")?.trim() ?? "";
   if (received.length !== expected.length) return false;
-
   let diff = 0;
   for (let i = 0; i < expected.length; i += 1) {
     diff |= expected.charCodeAt(i) ^ received.charCodeAt(i);
@@ -76,9 +73,7 @@ export async function createAsaasRecurringCheckout(
     customer?: { name?: string | null; email?: string | null };
   },
 ): Promise<AsaasCheckout> {
-  if (!Number.isInteger(params.seats) || params.seats < 1) {
-    throw new Error("INVALID_SEAT_COUNT");
-  }
+  if (!Number.isInteger(params.seats) || params.seats < 1) throw new Error("INVALID_SEAT_COUNT");
 
   const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
   const baseUrl = asaasBaseUrl(env);
@@ -101,18 +96,13 @@ export async function createAsaasRecurringCheckout(
       cancelUrl: `${callbackBase}/billing/cancel`,
       expiredUrl: `${callbackBase}/billing/expired`,
     },
-    items: [
-      {
-        name: "NeuroPed SaaS — assento mensal",
-        description: "Assinatura mensal NeuroPed SaaS",
-        quantity: params.seats,
-        value: SAAS_SEAT_PRICE_CENTS / 100,
-      },
-    ],
-    subscription: {
-      cycle: "MONTHLY",
-      nextDueDate,
-    },
+    items: [{
+      name: "NeuroPed SaaS — assento mensal",
+      description: "Assinatura mensal NeuroPed SaaS",
+      quantity: params.seats,
+      value: CANONICAL_PRICE_CENTS / 100,
+    }],
+    subscription: { cycle: "MONTHLY", nextDueDate },
   };
 
   const name = params.customer?.name?.trim();
@@ -135,7 +125,7 @@ export async function createAsaasRecurringCheckout(
   });
 
   const text = await response.text();
-  let parsed: unknown = null;
+  let parsed: unknown;
   try {
     parsed = text ? JSON.parse(text) : null;
   } catch {

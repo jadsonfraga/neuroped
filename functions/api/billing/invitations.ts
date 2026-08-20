@@ -3,10 +3,11 @@ import { isClinicMembershipRole, type ClinicMembershipRole } from "../../../shar
 import { getClinicMembership, membershipCanManage, tenantError, tenantJson } from "../tenant/_core";
 import {
   generateInvitationToken,
-  invitationExpiryIso,
-  normaliseInviteEmail,
+  INVITATION_EXPIRY_MS,
+  isoUtc,
+  normalizeInvitationEmail,
 } from "./_onboarding";
-import { evaluateEntitlement, denialResponse } from "../../../server/lib/billingEntitlement";
+import { requireBillingEntitlement } from "./_guard";
 
 interface Env {
   DB?: D1Database;
@@ -26,25 +27,36 @@ async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: str
   if (!membership || !membershipCanManage(membership)) {
     return { error: tenantError("Apenas gestores podem administrar convites.", "TENANT_FORBIDDEN", 403) } as const;
   }
-  const entitlement = await evaluateEntitlement(db, user.id, clinicId, "admin");
-  if (!entitlement.allowed) return { error: denialResponse(entitlement) } as const;
+  const denial = await requireBillingEntitlement(db, user.id, clinicId, "admin");
+  if (denial) return { error: denial } as const;
   return { db, user, membership } as const;
 }
 
 async function assertSeatAvailable(db: D1Database, clinicId: string): Promise<boolean> {
   const row = await db.prepare(
     `SELECT
+       bc.status AS customer_status,
+       bc.trial_ends_at,
        (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ? AND active = 1) AS active_members,
        COALESCE((
          SELECT bs.seats
            FROM billing_subscriptions bs
-           JOIN billing_customers bc ON bc.id = bs.billing_customer_id
-          WHERE bc.clinic_id = ?
-            AND bs.status IN ('trialing','active','past_due','paused')
+           JOIN billing_customers bc2 ON bc2.id = bs.customer_id
+          WHERE bc2.clinic_id = ?
+            AND bs.status IN ('trial','active','past_due')
           ORDER BY bs.updated_at DESC LIMIT 1
-       ), 0) AS seats`,
-  ).bind(clinicId, clinicId).first<{ active_members: number; seats: number }>();
-  return Number(row?.active_members ?? 0) < Number(row?.seats ?? 0);
+       ), 0) AS seats
+       FROM billing_customers bc
+      WHERE bc.clinic_id = ? LIMIT 1`,
+  ).bind(clinicId, clinicId, clinicId).first<{
+    customer_status: string;
+    trial_ends_at: string | null;
+    active_members: number;
+    seats: number;
+  }>();
+  if (!row || !["trial", "active"].includes(row.customer_status)) return false;
+  if (row.customer_status === "trial" && (!row.trial_ends_at || new Date(row.trial_ends_at) <= new Date())) return false;
+  return Number(row.active_members) < Number(row.seats);
 }
 
 function invitationLink(base: string | undefined, token: string): string {
@@ -60,7 +72,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if ("error" in auth) return auth.error;
 
   const rows = await auth.db.prepare(
-    `SELECT id, email, role, expires_at, accepted_at, revoked_at, created_at, last_sent_at, resend_count
+    `SELECT id, email, role, status, expires_at, accepted_at, created_at, last_sent_at, resend_count
        FROM clinic_invitations
       WHERE clinic_id = ?
       ORDER BY created_at DESC LIMIT 100`,
@@ -81,31 +93,45 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const clinicId = clean(body.clinicId, 80);
   const action = clean(body.action, 20) || "create";
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
-
   const auth = await manager(context, clinicId);
   if ("error" in auth) return auth.error;
 
-  const now = new Date().toISOString();
-  const generated = await generateInvitationToken();
-  const expiresAt = invitationExpiryIso(new Date());
+  const now = isoUtc(new Date());
+  const expiresAt = isoUtc(new Date(Date.now() + INVITATION_EXPIRY_MS));
+  const generated = generateInvitationToken();
 
   if (action === "resend") {
     const existingId = clean(body.invitationId, 80);
     if (!existingId) return tenantError("invitationId é obrigatório para reenvio.", "VALIDATION_ERROR", 400);
     const existing = await auth.db.prepare(
-      `SELECT email, role FROM clinic_invitations
-        WHERE id = ? AND clinic_id = ? AND accepted_at IS NULL AND revoked_at IS NULL
+      `SELECT email, role, resend_count, last_sent_at
+         FROM clinic_invitations
+        WHERE id = ? AND clinic_id = ? AND status = 'pending'
         LIMIT 1`,
-    ).bind(existingId, clinicId).first<{ email: string; role: string }>();
-    if (!existing) {
-      return tenantError("Convite não está disponível para reenvio.", "INVITATION_NOT_USABLE", 409);
+    ).bind(existingId, clinicId).first<{
+      email: string;
+      role: string;
+      resend_count: number;
+      last_sent_at: string | null;
+    }>();
+    if (!existing) return tenantError("Convite não está disponível para reenvio.", "INVITATION_NOT_USABLE", 409);
+
+    const lastSent = existing.last_sent_at ? new Date(existing.last_sent_at.replace(" ", "T") + "Z") : null;
+    const sameDay = lastSent && Date.now() - lastSent.getTime() < 24 * 60 * 60 * 1000;
+    if (sameDay && Number(existing.resend_count) >= 3) {
+      return tenantError("Limite de reenvios atingido nas últimas 24 horas.", "INVITATION_RESEND_LIMIT", 429);
     }
+
     const result = await auth.db.prepare(
       `UPDATE clinic_invitations
           SET token_hash = ?, expires_at = ?, last_sent_at = ?,
-              resend_count = COALESCE(resend_count, 0) + 1
-        WHERE id = ? AND clinic_id = ? AND accepted_at IS NULL AND revoked_at IS NULL`,
-    ).bind(generated.hash, expiresAt, now, existingId, clinicId).run();
+              resend_count = CASE
+                WHEN last_sent_at IS NOT NULL AND julianday(?) - julianday(last_sent_at) < 1
+                  THEN resend_count + 1
+                ELSE 1
+              END
+        WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
+    ).bind(generated.tokenHash, expiresAt, now, now, existingId, clinicId).run();
     if ((result.meta?.changes ?? 0) !== 1) {
       return tenantError("Convite mudou durante o reenvio.", "INVITATION_STALE", 409);
     }
@@ -118,11 +144,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
-  if (action !== "create") {
-    return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
-  }
+  if (action !== "create") return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
 
-  const email = normaliseInviteEmail(clean(body.email, 254));
+  const email = normalizeInvitationEmail(clean(body.email, 320));
   const roleRaw = clean(body.role, 40);
   if (!email || !isClinicMembershipRole(roleRaw)) {
     return tenantError("email e role válidos são obrigatórios.", "VALIDATION_ERROR", 400);
@@ -132,7 +156,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return tenantError("Somente owner pode convidar outro owner.", "TENANT_FORBIDDEN", 403);
   }
   if (!(await assertSeatAvailable(auth.db, clinicId))) {
-    return tenantError("Limite de assentos atingido.", "SEAT_LIMIT_REACHED", 409);
+    return tenantError("Limite de assentos atingido ou billing sem entitlement.", "SEAT_LIMIT_REACHED", 409);
   }
 
   const activeAlready = await auth.db.prepare(
@@ -146,19 +170,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return tenantError("Este e-mail já pertence a um membro ativo.", "MEMBERSHIP_ALREADY_ACTIVE", 409);
   }
 
+  const pendingAlready = await auth.db.prepare(
+    `SELECT id FROM clinic_invitations
+      WHERE clinic_id = ? AND lower(email) = ? AND status = 'pending'
+        AND julianday(expires_at) > julianday('now')
+      LIMIT 1`,
+  ).bind(clinicId, email).first<{ id: string }>();
+  if (pendingAlready) {
+    return tenantError("Já existe convite pendente para este e-mail.", "INVITATION_ALREADY_PENDING", 409);
+  }
+
   const invitationId = crypto.randomUUID();
   try {
     await auth.db.prepare(
       `INSERT INTO clinic_invitations
-        (id, clinic_id, email, role, token_hash, invited_by, expires_at, created_at, last_sent_at, resend_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        (id, clinic_id, invited_by_user_id, email, role, token_hash, status,
+         expires_at, last_sent_at, resend_count, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, 0, ?)`,
     ).bind(
       invitationId,
       clinicId,
+      auth.user.id,
       email,
       role,
-      generated.hash,
-      auth.user.id,
+      generated.tokenHash,
       expiresAt,
       now,
       now,
@@ -187,9 +222,9 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const auth = await manager(context, clinicId);
   if ("error" in auth) return auth.error;
   const result = await auth.db.prepare(
-    `UPDATE clinic_invitations SET revoked_at = ?
-      WHERE id = ? AND clinic_id = ? AND accepted_at IS NULL AND revoked_at IS NULL`,
-  ).bind(new Date().toISOString(), invitationId, clinicId).run();
+    `UPDATE clinic_invitations SET status = 'revoked'
+      WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
+  ).bind(invitationId, clinicId).run();
   if ((result.meta?.changes ?? 0) !== 1) {
     return tenantError("Convite não encontrado ou já encerrado.", "INVITATION_NOT_USABLE", 404);
   }

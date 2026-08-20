@@ -1,10 +1,21 @@
 import { hashPassword } from "../auth/_crypto";
 import { getUserByEmail } from "../auth/_shared";
-import { hashInvitationToken, readInvitationByHash, assertUsableInvitation } from "./_onboarding";
+import { validateInvitationForAccept } from "./_onboarding";
 import { isClinicMembershipRole } from "../../../shared/tenant";
 
 interface Env {
   DB?: D1Database;
+}
+
+interface InvitationRow {
+  id: string;
+  clinic_id: string;
+  invited_by_user_id: string | null;
+  email: string;
+  role: string;
+  token_hash: string;
+  status: string;
+  expires_at: string;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -16,6 +27,11 @@ function json(data: unknown, status = 200): Response {
 
 function text(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
@@ -35,28 +51,43 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const password = text(body.password, 200);
   if (token.length < 32) return json({ error: "Convite inválido.", code: "INVITATION_INVALID" }, 400);
 
-  const hash = await hashInvitationToken(token);
-  const invitation = await readInvitationByHash(env.DB, hash);
-  try {
-    assertUsableInvitation(invitation, new Date());
-  } catch (error) {
-    return json({ error: "Convite expirado, revogado ou já utilizado.", code: String(error) }, 409);
-  }
+  const tokenHash = await sha256Hex(token);
+  const invitation = await env.DB.prepare(
+    `SELECT id, clinic_id, invited_by_user_id, email, role, token_hash, status, expires_at
+       FROM clinic_invitations
+      WHERE token_hash = ? LIMIT 1`,
+  ).bind(tokenHash).first<InvitationRow>();
+
   if (!invitation || !isClinicMembershipRole(invitation.role)) {
     return json({ error: "Convite inválido.", code: "INVITATION_INVALID" }, 409);
   }
+  const validity = validateInvitationForAccept(invitation);
+  if (!validity.ok) {
+    return json({ error: "Convite expirado, revogado ou já utilizado.", code: validity.reason ?? "INVITATION_INVALID" }, 409);
+  }
 
   const billing = await env.DB.prepare(
-    `SELECT bc.status, COALESCE(bs.seats, 0) AS seats,
-            (SELECT COUNT(*) FROM clinic_memberships cm WHERE cm.clinic_id = bc.clinic_id AND cm.active = 1) AS active_members
+    `SELECT bc.status, bc.trial_ends_at,
+            COALESCE(bs.seats, 0) AS seats,
+            (SELECT COUNT(*) FROM clinic_memberships cm
+              WHERE cm.clinic_id = bc.clinic_id AND cm.active = 1) AS active_members
        FROM billing_customers bc
        LEFT JOIN billing_subscriptions bs
-         ON bs.billing_customer_id = bc.id
-        AND bs.status IN ('trialing','active','past_due','paused')
-      WHERE bc.clinic_id = ? LIMIT 1`,
-  ).bind(invitation.clinic_id).first<{ status: string; seats: number; active_members: number }>();
+         ON bs.customer_id = bc.id
+        AND bs.status IN ('trial','active','past_due')
+      WHERE bc.clinic_id = ?
+      ORDER BY bs.updated_at DESC
+      LIMIT 1`,
+  ).bind(invitation.clinic_id).first<{
+    status: string;
+    trial_ends_at: string | null;
+    seats: number;
+    active_members: number;
+  }>();
 
-  if (!billing || !["trial", "active"].includes(billing.status)) {
+  const trialExpired = billing?.status === "trial"
+    && (!billing.trial_ends_at || new Date(billing.trial_ends_at) <= new Date());
+  if (!billing || !["trial", "active"].includes(billing.status) || trialExpired) {
     return json({ error: "Clínica sem entitlement para aceitar novos membros.", code: "BILLING_ENTITLEMENT_DENIED" }, 402);
   }
   if (Number(billing.active_members) >= Number(billing.seats)) {
@@ -64,9 +95,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   const existing = await getUserByEmail(env.DB, invitation.email);
+  if (existing && existing.is_active !== 1) {
+    return json({ error: "Conta existente está inativa.", code: "ACCOUNT_INACTIVE" }, 409);
+  }
+
   let userId = existing?.id ?? "";
   let passwordHash: string | null = null;
-
   if (!existing) {
     if (name.length < 2 || password.length < 10) {
       return json(
@@ -80,21 +114,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
-
   if (!existing) {
     const globalRole = ["owner", "clinic_admin", "professional"].includes(invitation.role)
       ? "professional"
-      : "assistant";
+      : "reader";
     statements.push(
       env.DB.prepare(
         `INSERT INTO users
-          (id, name, email, role, is_active, auth_provider, password_hash, must_change_password,
+          (id, name, email, role, is_active, password_hash, must_change_password,
            failed_login_attempts, created_at, updated_at)
-         SELECT ?, ?, ?, ?, 1, 'local', ?, 0, 0, ?, ?
+         SELECT ?, ?, ?, ?, 1, ?, 0, 0, ?, ?
           WHERE EXISTS (
             SELECT 1 FROM clinic_invitations
-             WHERE id = ? AND token_hash = ?
-               AND accepted_at IS NULL AND revoked_at IS NULL
+             WHERE id = ? AND token_hash = ? AND status = 'pending'
                AND julianday(expires_at) > julianday(?)
           )`,
       ).bind(
@@ -106,7 +138,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
         now,
         now,
         invitation.id,
-        hash,
+        tokenHash,
         now,
       ),
     );
@@ -119,56 +151,56 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
        SELECT ?, ?, ?, 1, ?, ?, ?
         WHERE EXISTS (
           SELECT 1 FROM clinic_invitations
-           WHERE id = ? AND token_hash = ?
-             AND accepted_at IS NULL AND revoked_at IS NULL
+           WHERE id = ? AND token_hash = ? AND status = 'pending'
              AND julianday(expires_at) > julianday(?)
         )
        ON CONFLICT(clinic_id, user_id) DO UPDATE SET
-         role = excluded.role, active = 1,
+         role = excluded.role,
+         active = 1,
          invited_by_user_id = excluded.invited_by_user_id,
          updated_at = excluded.updated_at`,
     ).bind(
       invitation.clinic_id,
       userId,
       invitation.role,
-      invitation.invited_by,
+      invitation.invited_by_user_id,
       now,
       now,
       invitation.id,
-      hash,
+      tokenHash,
       now,
     ),
     env.DB.prepare(
       `UPDATE clinic_invitations
-          SET accepted_at = ?
-        WHERE id = ? AND token_hash = ?
-          AND accepted_at IS NULL AND revoked_at IS NULL
+          SET status = 'accepted', accepted_at = ?
+        WHERE id = ? AND token_hash = ? AND status = 'pending'
           AND julianday(expires_at) > julianday(?)`,
-    ).bind(now, invitation.id, hash, now),
+    ).bind(now, invitation.id, tokenHash, now),
     env.DB.prepare(
       `INSERT INTO saas_audit_events
-        (id, billing_customer_id, clinic_id, actor_user_id, event_type, scope, metadata_json, created_at)
-       SELECT ?, bc.id, ?, ?, 'invitation.accepted', 'admin', ?, ?
-         FROM billing_customers bc
-        WHERE bc.clinic_id = ? LIMIT 1`,
+        (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
+       VALUES (?, ?, ?, 'invitation.accepted', 'clinic_invitation', ?, ?, ?)`,
     ).bind(
       crypto.randomUUID(),
       invitation.clinic_id,
       userId,
-      JSON.stringify({ invitationId: invitation.id, role: invitation.role }),
+      invitation.id,
+      JSON.stringify({ role: invitation.role }),
       now,
-      invitation.clinic_id,
     ),
   );
 
   try {
     const results = await env.DB.batch(statements);
-    const inviteUpdate = results[results.length - 2];
-    if ((inviteUpdate?.meta?.changes ?? 0) !== 1) {
+    const invitationUpdate = results[results.length - 2];
+    if ((invitationUpdate?.meta?.changes ?? 0) !== 1) {
       return json({ error: "Convite mudou durante o aceite.", code: "INVITATION_STALE" }, 409);
     }
   } catch (error) {
     const message = String(error);
+    if (message.includes("SEAT_LIMIT_REACHED") || message.includes("BILLING_ENTITLEMENT_DENIED")) {
+      return json({ error: "Limite de assentos ou entitlement alterado durante o aceite.", code: "SEAT_LIMIT_REACHED" }, 409);
+    }
     if (/UNIQUE|constraint/i.test(message)) {
       return json({ error: "Conta ou membership já existe em estado incompatível.", code: "ACCOUNT_CONFLICT" }, 409);
     }
