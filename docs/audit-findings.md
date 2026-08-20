@@ -120,3 +120,19 @@ A correção ainda precisa passar pela bateria final de TypeScript, lint, testes
 Os avisos de chunks grandes do bundler referem-se a chunks tardios de escalas e documentos, mas os limites específicos de chunk bruto/gzip e o orçamento de carga inicial foram respeitados. Não foi encontrado bypass de autorização nas rotas protegidas: os problemas confirmados foram de exposição indevida de links, corrigidos com filtragem centralizada por papel e estado de autenticação.
 
 A inspeção local sem sessão confirmou redirecionamento para login; o ambiente local não possui autenticação clínica remota configurada, portanto não foi possível testar uma sessão real de cada papel no navegador. Os contratos automatizados de RBAC e o modo local protegido por PIN foram aprovados.
+
+## Achado adicional reproduzido e corrigido — 2026-08-20
+
+### AUD-009 — Dock móvel montado fora do `AuthProvider`
+
+**Reprodução:** o diagnóstico com Chromium mostrou erro de runtime `useAuth must be used within <AuthProvider>`, `#main-content` ausente, shell sem conteúdo e teste responsivo expirando após 15 segundos. A causa era a montagem de `MobilePrimaryDock` diretamente em `main.tsx`, como irmão de `<App />`, enquanto o componente chama `useAuth()` na montagem.
+
+**Correção:** o dock passou a ser lazy-loaded dentro de `App.tsx`, na árvore protegida pelo `QueryClientProvider` e `AuthProvider`; a montagem duplicada foi removida de `main.tsx`. O code splitting foi preservado.
+
+**Validação:** TypeScript, lint e diagnóstico DOM passaram sem erros; o E2E responsivo completo passou em 390, 640, 767, 768, 834, 1023, 1024 e 1280 pixels, incluindo drawer, dock, foco, Escape, touch, zoom e impressão.
+
+**Classificação:** bug funcional crítico do shell, corrigido.
+
+## Estado pós-correção
+
+A auditoria permanece em andamento para finalizar a verificação dos fluxos clínicos e publicar somente após a execução do `verify` e dos checks de segurança/deploy no SHA final.

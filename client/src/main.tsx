@@ -2,11 +2,6 @@ import { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 
-const MobilePrimaryDock = lazy(() =>
-  import("./components/MobilePrimaryDock").then(({ MobilePrimaryDock: Component }) => ({
-    default: Component,
-  })),
-);
 const UnauthorizedCopyScreen = lazy(() =>
   import("./components/UnauthorizedCopyScreen").then(({ UnauthorizedCopyScreen: Component }) => ({
     default: Component,
@@ -60,7 +55,6 @@ if (isAuthorizedHost(hostname)) {
     root.render(
       <Suspense fallback={null}>
         <App />
-        <MobilePrimaryDock />
       </Suspense>,
     );
 } else {

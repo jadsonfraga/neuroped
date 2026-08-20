@@ -238,6 +238,12 @@ const CommandPalette = lazy(() =>
   })),
 );
 
+const MobilePrimaryDock = lazy(() =>
+  import("@/components/MobilePrimaryDock").then(({ MobilePrimaryDock: Component }) => ({
+    default: Component,
+  })),
+);
+
 function LoadingSpinner() {
   return (
     <div className="py-2">
@@ -673,6 +679,9 @@ function App() {
                   </>
                 )}
                 <ServiceWorkerManager />
+                <Suspense fallback={null}>
+                  <MobilePrimaryDock />
+                </Suspense>
               </ToastProvider>
             </TooltipProvider>
           </AuthProvider>
