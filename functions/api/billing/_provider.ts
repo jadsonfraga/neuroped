@@ -178,3 +178,62 @@ export function amountCentsFromWebhook(event: AsaasWebhookEvent): number {
     ? Math.round(value * 100)
     : 0;
 }
+
+async function asaasLifecycleRequest(
+  env: BillingProviderEnv,
+  path: string,
+  method: "POST" | "PUT" | "DELETE",
+  body?: Record<string, unknown>,
+  allowNotFound = false,
+): Promise<void> {
+  const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
+  const response = await fetch(`${asaasBaseUrl(env)}${path}`, {
+    method,
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      access_token: apiKey,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (response.ok || (allowNotFound && response.status === 404)) return;
+  const text = await response.text();
+  console.error("[billing.asaas.lifecycle]", method, path, response.status, text.slice(0, 500));
+  throw new Error(`ASAAS_LIFECYCLE_FAILED_${response.status}`);
+}
+
+/**
+ * Encerra a recorrência no Asaas. A remoção impede novas cobranças e remove as
+ * cobranças pendentes/vencidas vinculadas à recorrência. 404 é aceito como
+ * idempotência para o caso de retry depois de o provedor já ter removido o ID.
+ */
+export async function cancelAsaasSubscription(
+  env: BillingProviderEnv,
+  providerSubscriptionId: string,
+): Promise<void> {
+  const id = providerSubscriptionId.trim();
+  if (!id) throw new Error("ASAAS_SUBSCRIPTION_ID_REQUIRED");
+  await asaasLifecycleRequest(
+    env,
+    `/subscriptions/${encodeURIComponent(id)}`,
+    "DELETE",
+    undefined,
+    true,
+  );
+}
+
+/** Cancela um checkout ainda aberto; 404 é idempotente porque o link pode ter expirado. */
+export async function cancelAsaasCheckout(
+  env: BillingProviderEnv,
+  providerCheckoutId: string,
+): Promise<void> {
+  const id = providerCheckoutId.trim();
+  if (!id) return;
+  await asaasLifecycleRequest(
+    env,
+    `/checkouts/${encodeURIComponent(id)}/cancel`,
+    "POST",
+    undefined,
+    true,
+  );
+}

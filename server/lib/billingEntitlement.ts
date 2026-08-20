@@ -103,13 +103,24 @@ export function evaluateEntitlement(
 
   const sub = row.subscription_status;
   const cust = row.customer_status;
-
-  // Estado do customer prevalece sobre qualquer snapshot de subscription.
   const terminal =
     cust === "suspended" || cust === "canceled" || sub === "canceled" || sub === "expired";
+  const isPastDue = sub === "past_due" || cust === "past_due";
+
+  // Portabilidade não pode depender de uma cobrança vigente. Membership ativa +
+  // role permitido bastam para exportar, inclusive em pending/trial expirado.
+  if (scope === "export") {
+    return {
+      ...base,
+      isPastDue,
+      isSuspended: terminal,
+      deniedReason: null,
+    };
+  }
+
+  // Estado do customer prevalece sobre qualquer snapshot de subscription.
   if (terminal) return suspendedResult(base, scope, false);
 
-  const isPastDue = sub === "past_due" || cust === "past_due";
   if (isPastDue) {
     // Fail-closed: past_due sem carência válida não pode conceder acesso indefinido.
     if (!row.grace_ends_at) return suspendedResult(base, scope, true);
