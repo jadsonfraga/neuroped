@@ -61,6 +61,38 @@ const PUBLIC_API_PATHS = new Set([
   "/api/public-booking",
 ]);
 
+/**
+ * Rotas históricas que ainda apontam para tabelas *_demo. Elas não podem
+ * continuar parecendo prontuário persistente quando D1 está configurado.
+ * O caminho oficial de produção é o Clinical Core LIVE, protegido por
+ * tenant, keyring e CLINICAL_LIVE_ENABLED.
+ */
+const LEGACY_CLINICAL_PATH_PREFIXES = [
+  "/api/patients",
+  "/api/consultations",
+  "/api/results",
+  "/api/scales/results",
+  "/api/clinical-core",
+  "/api/conecta",
+] as const;
+
+function isLegacyClinicalPath(path: string): boolean {
+  return LEGACY_CLINICAL_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
+}
+
+function legacyClinicalRetiredResponse(): Response {
+  return new Response(JSON.stringify({
+    error: "A rota clínica legada foi aposentada. O Clinical Core LIVE ainda não está habilitado para este ambiente.",
+    code: "CLINICAL_LEGACY_ENDPOINT_RETIRED",
+    replacement: "/api/live/patients",
+  }), {
+    status: 410,
+    headers: { "Content-Type": "application/json", ...SECURITY_HEADERS },
+  });
+}
+
 function apiError(message: string, code: string, status: number): Response {
   return new Response(JSON.stringify({ error: message, code }), {
     status,
@@ -234,6 +266,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
     return new Response(authorization.failure.body, { status: authorization.failure.status, headers });
   }
+
+  if (env.DB && isLegacyClinicalPath(requestPathBeforeAuth)) {
+    const retiredResponse = legacyClinicalRetiredResponse();
+    const headers = new Headers(retiredResponse.headers);
+    for (const [key, value] of Object.entries(corsHeaders)) headers.set(key, value);
+    return new Response(retiredResponse.body, {
+      status: retiredResponse.status,
+      statusText: retiredResponse.statusText,
+      headers,
+    });
+  }
+
   if (authorization.user) {
     const mutableContext = context as typeof context & { data?: AuthContextData };
     if (!mutableContext.data) mutableContext.data = {};

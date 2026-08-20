@@ -16,6 +16,7 @@ export interface TenantEnv {
   CLINICAL_DATA_KEY_PREVIOUS_ID?: string;
   CLINICAL_INDEX_KEY?: string;
   CLINICAL_LIVE_ENABLED?: string;
+  CLINICAL_LGPD_READY?: string;
 }
 
 export interface ClinicMembership {
@@ -59,6 +60,10 @@ export function tenantError(message: string, code: string, status: number): Resp
 
 export function clinicalLiveEnabled(env: TenantEnv): boolean {
   return env.CLINICAL_LIVE_ENABLED?.trim().toLowerCase() === "true";
+}
+
+export function clinicalLgpdReady(env: TenantEnv): boolean {
+  return env.CLINICAL_LGPD_READY?.trim().toLowerCase() === "true";
 }
 
 /**

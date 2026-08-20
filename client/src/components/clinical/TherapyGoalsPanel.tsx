@@ -33,6 +33,8 @@ import {
 
 interface TherapyGoalsPanelProps {
   patientId: string;
+  clinicId?: string;
+  liveEnabled?: boolean;
   events: ClinicalEvent[];
   unavailable?: boolean;
 }
@@ -82,11 +84,14 @@ function measurementText(goal: TherapyGoalSnapshot): string {
   return measurement.data.valueText || "Medida registrada sem valor resumível";
 }
 
-export function TherapyGoalsPanel({ patientId, events, unavailable = false }: TherapyGoalsPanelProps) {
+export function TherapyGoalsPanel({ patientId, clinicId = "", liveEnabled = false, events, unavailable = false }: TherapyGoalsPanelProps) {
   const { toast } = useToast();
   const goals = useMemo(() => deriveTherapyGoals(events), [events]);
   const activeCount = goals.filter((goal) => ["planned", "in_progress"].includes(goal.plan.data.status)).length;
-  const queryKey = `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`;
+  const liveMode = liveEnabled && Boolean(clinicId);
+  const queryKey = liveMode
+    ? `/api/live/events?clinicId=${encodeURIComponent(clinicId)}&patientId=${encodeURIComponent(patientId)}`
+    : `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [target, setTarget] = useState("");
@@ -107,11 +112,28 @@ export function TherapyGoalsPanel({ patientId, events, unavailable = false }: Th
   const [measureDirection, setMeasureDirection] = useState<OutcomeDirection>("unknown");
   const [measureNote, setMeasureNote] = useState("");
 
-  async function postEvent(input: ClinicalEventInput): Promise<ClinicalEvent> {
-    const response = await apiRequest("POST", "/api/clinical-core/events", input);
+  async function postEvent(input: ClinicalEventInput): Promise<ClinicalEvent | { id: string; duplicate?: boolean }> {
+    if (unavailable || !patientId || (liveEnabled && !clinicId)) {
+      throw new Error("O Clinical Core não está disponível para escrita neste contexto.");
+    }
+    const path = liveMode ? "/api/live/events" : "/api/clinical-core/events";
+    const body = liveMode
+      ? {
+          clinicId,
+          patientId: input.patientId,
+          eventType: input.eventType,
+          occurredAt: input.occurredAt,
+          provenanceKind: input.provenance.kind,
+          provenanceSource: input.provenance.source,
+          ...(input.supersedesEventId ? { supersedesEventId: input.supersedesEventId } : {}),
+          ...(input.encounterId ? { encounterId: input.encounterId } : {}),
+          payload: input.data,
+        }
+      : input;
+    const response = await apiRequest("POST", path, body);
     if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new Error(body?.error || "Não foi possível salvar no Clinical Core.");
+      const responseBody = await response.json().catch(() => null);
+      throw new Error(responseBody?.error || "Não foi possível salvar no Clinical Core.");
     }
     return response.json();
   }

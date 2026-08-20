@@ -113,8 +113,33 @@ const authorized = await call(
   token,
   "https://evil.example",
 );
-assert.equal(authorized.status, 200);
+assert.equal(authorized.status, 410);
+const retiredLegacyBody = await authorized.json() as { code?: string; replacement?: string };
+assert.equal(retiredLegacyBody.code, "CLINICAL_LEGACY_ENDPOINT_RETIRED");
+assert.equal(retiredLegacyBody.replacement, "/api/live/patients");
 assert.equal(authorized.headers.get("Access-Control-Allow-Origin"), null, "CORS não abre por padrão");
+
+for (const legacyPath of [
+  "/api/patients",
+  "/api/patients/patient-1",
+  "/api/consultations",
+  "/api/results",
+  "/api/results/result-1",
+  "/api/scales/results",
+  "/api/clinical-core/events",
+  "/api/conecta/events/event-1",
+]) {
+  const response = await call(
+    legacyPath,
+    { DB: authDb(), NEUROPED_JWT_SECRET: secret },
+    token,
+  );
+  assert.equal(response.status, 410, `${legacyPath} deve falhar fechado como rota legada`);
+  assert.equal(
+    (await response.json() as { code?: string }).code,
+    "CLINICAL_LEGACY_ENDPOINT_RETIRED",
+  );
+}
 
 const importMultipart = new FormData();
 importMultipart.set("mode", "preview");
@@ -261,8 +286,8 @@ const readerToken = await signJwt(
 );
 assert.equal(
   (await call("/api/patients", { DB: authDb("reader"), NEUROPED_JWT_SECRET: secret }, readerToken)).status,
-  200,
-  "reader pode passar pela autenticação em leitura; ownership ainda filtra os registros",
+  410,
+  "reader autenticado não pode acessar a rota clínica legada aposentada",
 );
 
 async function callWithMethod(path: string, method: string, role: string, token: string) {

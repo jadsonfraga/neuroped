@@ -1,8 +1,14 @@
-import { useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  fetchClinicalRuntime,
+  isClinicalLive,
+  isClinicalReadinessBlocked,
+  isLegacyClinicalRetired,
+} from "@/lib/clinicalRuntime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +69,18 @@ interface PatientPage {
   rows: any[];
   total: number | null;
   hasMore: boolean | null;
+}
+
+function normalizePatientRecord(patient: any): any {
+  const profile = patient?.profile && typeof patient.profile === "object"
+    ? patient.profile
+    : patient;
+  return {
+    ...patient,
+    name: patient?.name ?? profile?.name ?? "Paciente sem nome",
+    birthDate: patient?.birthDate ?? profile?.birthDate ?? null,
+    notes: patient?.notes ?? profile?.notes ?? null,
+  };
 }
 
 function parsePatientPage(payload: any): PatientPage {
@@ -174,28 +192,77 @@ export default function PacientesPage() {
   const [backupLoading, setBackupLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const {
-    data: patientsRaw,
-    isLoading,
-    isError,
-    refetch: refetchPatients,
-  } = useQuery<any>({
-    queryKey: ["/api/patients"],
-    enabled: true,
+  const [activeClinicId, setActiveClinicId] = useState(() => {
+    try {
+      return sessionStorage.getItem("neuroped:active-clinic") ?? "";
+    } catch {
+      return "";
+    }
   });
-  // A API retorna { data: [...] }; aceita também array puro por robustez.
-  const patients: any[] = Array.isArray(patientsRaw)
+
+  const runtimeQuery = useQuery({
+    queryKey: ["clinical-runtime"],
+    queryFn: fetchClinicalRuntime,
+    staleTime: 30_000,
+  });
+  const runtime = runtimeQuery.data;
+  const liveEnabled = isClinicalLive(runtime);
+  const legacyRetired = isLegacyClinicalRetired(runtime);
+  const readinessBlocked = isClinicalReadinessBlocked(runtime);
+
+  const tenantsQuery = useQuery<any>({
+    queryKey: ["/api/tenants"],
+    enabled: liveEnabled,
+  });
+  const clinics: any[] = useMemo(
+    () => (Array.isArray(tenantsQuery.data?.data) ? tenantsQuery.data.data : []),
+    [tenantsQuery.data],
+  );
+
+  useEffect(() => {
+    if (!liveEnabled) return;
+    if (activeClinicId && clinics.some((clinic) => clinic.id === activeClinicId)) return;
+    setActiveClinicId(clinics[0]?.id ?? "");
+  }, [activeClinicId, clinics, liveEnabled]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    try {
+      sessionStorage.setItem("neuroped:active-clinic", activeClinicId);
+    } catch {
+      // A seleção de tenant não impede o fluxo quando storage está indisponível.
+    }
+  }, [activeClinicId]);
+
+  const patientsQuery = useQuery<any>({
+    queryKey: [liveEnabled ? "/api/live/patients" : "/api/patients", liveEnabled ? activeClinicId : "demo"],
+    enabled: !runtimeQuery.isLoading && (!liveEnabled || Boolean(activeClinicId)) && !readinessBlocked,
+    queryFn: async () => {
+      const path = liveEnabled
+        ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId)}`
+        : "/api/patients";
+      const response = await apiRequest("GET", path);
+      return response.json();
+    },
+  });
+  const patientsRaw = patientsQuery.data;
+  const isLoading = runtimeQuery.isLoading || tenantsQuery.isLoading || patientsQuery.isLoading;
+  const isError = runtimeQuery.isError || tenantsQuery.isError || patientsQuery.isError;
+  const refetchPatients = () => { void patientsQuery.refetch(); };
+  const rawPatients: any[] = Array.isArray(patientsRaw)
     ? patientsRaw
     : (patientsRaw?.data ?? []);
+  const patients: any[] = rawPatients.map(normalizePatientRecord);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/patients", data);
+      const path = liveEnabled ? "/api/live/patients" : "/api/patients";
+      const payload = liveEnabled ? { ...data, clinicId: activeClinicId } : data;
+      const res = await apiRequest("POST", path, payload);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [liveEnabled ? "/api/live/patients" : "/api/patients"] });
       resetForm();
       softSuccess();
       haptic.success();
@@ -210,11 +277,12 @@ export default function PacientesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      if (liveEnabled) throw new Error("Edição de pacientes LIVE ainda depende do contrato de correção auditável.");
       const res = await apiRequest("PATCH", `/api/patients/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [liveEnabled ? "/api/live/patients" : "/api/patients"] });
       resetForm();
       softSuccess();
       haptic.success();
@@ -229,10 +297,11 @@ export default function PacientesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (liveEnabled) throw new Error("Exclusão de pacientes LIVE ainda depende do contrato de arquivamento auditável.");
       await apiRequest("DELETE", `/api/patients/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [liveEnabled ? "/api/live/patients" : "/api/patients"] });
       softSuccess();
       haptic.success();
       toast({ title: "Paciente removido." });
@@ -262,6 +331,14 @@ export default function PacientesPage() {
   }
 
   async function handleBackup() {
+    if (liveEnabled) {
+      toast({
+        title: "Backup LIVE ainda não habilitado",
+        description: "A exportação clínica precisa do contrato de portabilidade, criptografia e auditoria antes do piloto.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (patients.length === 0) {
       toast({
         title: "Nenhum paciente para exportar.",
@@ -316,6 +393,15 @@ export default function PacientesPage() {
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (liveEnabled) {
+      if (e.target) e.target.value = "";
+      toast({
+        title: "Importação LIVE ainda não habilitada",
+        description: "A importação clínica precisa passar pela normalização do Clinical Core e trilha de auditoria.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!file) return;
     e.target.value = "";
     setImportLoading(true);
@@ -411,6 +497,14 @@ export default function PacientesPage() {
   }
 
   function handleSubmit() {
+    if (liveEnabled && !activeClinicId) {
+      toast({
+        title: "Selecione uma clínica",
+        description: "O paciente LIVE precisa pertencer a um tenant clínico explícito.",
+        variant: "destructive",
+      });
+      return;
+    }
     const data: any = { name: formName.trim() };
     if (formBirth) data.birthDate = formBirth;
     if (formNotes.trim()) data.notes = formNotes.trim();
@@ -474,6 +568,7 @@ export default function PacientesPage() {
                 haptic.tap();
               }}
               className="gap-1.5 btn-glow"
+              disabled={readinessBlocked || (liveEnabled && !activeClinicId)}
               data-testid="button-new-patient"
             >
               <Plus className="w-3.5 h-3.5" /> Novo
@@ -569,6 +664,52 @@ export default function PacientesPage() {
         </Dialog>
       </motion.div>
 
+      {liveEnabled && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-bold text-foreground">Clínica ativa do Clinical Core LIVE</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  O tenant é obrigatório para separar dados clínicos. A seleção fica somente nesta sessão e não contém dados do paciente.
+                </p>
+              </div>
+            </div>
+            {clinics.length > 0 ? (
+              <select
+                aria-label="Clínica ativa"
+                value={activeClinicId}
+                onChange={(event) => setActiveClinicId(event.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Selecione uma clínica</option>
+                {clinics.map((clinic) => (
+                  <option key={clinic.id} value={clinic.id}>
+                    {clinic.name} — {clinic.role}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+                Nenhuma clínica ativa foi encontrada para esta conta.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {readinessBlocked && (
+        <Card className="border-amber-300 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/20">
+          <CardContent className="p-4 space-y-2">
+            <p className="text-sm font-bold text-amber-900 dark:text-amber-100">Clinical Core LIVE ainda bloqueado</p>
+            <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+              As rotas clínicas legadas foram aposentadas porque o backend persistente está ativo. Nenhum paciente real será lido ou gravado neste modo. Habilite o LIVE somente após concluir keyring, tenant, LGPD, migração e restore.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-3">
         <Card className="border-primary/15 bg-primary/5 sm:col-span-2">
           <CardContent className="p-3 flex items-start gap-3">
@@ -578,15 +719,18 @@ export default function PacientesPage() {
                 Dados clínicos sob responsabilidade profissional
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A API de pacientes não é cacheada pelo service worker. Neste
-                modo sem senha, qualquer pessoa no mesmo perfil do navegador
-                pode ver os registros. Confirme consentimento, exporte backup e
-                use “Apagar dados locais” ao terminar em dispositivo
-                compartilhado.
+                {legacyRetired
+                  ? "As rotas demo foram aposentadas neste backend persistente. O acesso clínico depende do Clinical Core LIVE, tenant explícito, autorização e criptografia dedicada."
+                  : "A API de pacientes não é cacheada pelo service worker. Em homologação sem backend persistente, use apenas dados fictícios e apague o armazenamento ao terminar em dispositivo compartilhado."}
               </p>
             </div>
           </CardContent>
         </Card>
+        {liveEnabled ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+            Backup e importação LIVE permanecem bloqueados até o contrato de portabilidade cifrada e auditoria ser concluído.
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
@@ -635,6 +779,7 @@ export default function PacientesPage() {
             onChange={handleImport}
           />
         </div>
+        )}
       </div>
 
       {/* Search */}
@@ -748,6 +893,7 @@ export default function PacientesPage() {
                           )}
                         </div>
                       </Link>
+                      {!liveEnabled && (
                       <div className="flex gap-1">
                         <Button
                           variant="ghost"
@@ -776,6 +922,7 @@ export default function PacientesPage() {
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
+                      )}
                     </div>
                     <Link href={`/paciente/${p.id}`}>
                       <Button
@@ -799,6 +946,7 @@ export default function PacientesPage() {
       )}
 
       {/* Confirm delete dialog */}
+      {!liveEnabled && (
       <ConfirmDialog
         open={!!confirmingDelete}
         onClose={() => setConfirmingDelete(null)}
@@ -811,6 +959,7 @@ export default function PacientesPage() {
         variant="destructive"
         loading={deleteMutation.isPending}
       />
+      )}
     </div>
   );
 }

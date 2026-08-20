@@ -175,6 +175,7 @@ const livePatientsApi = readFileSync(
   "utf8",
 );
 assert.match(livePatientsApi, /CLINICAL_LIVE_DISABLED/);
+assert.match(livePatientsApi, /CLINICAL_LGPD_NOT_READY/);
 assert.match(livePatientsApi, /CLINICAL_CRYPTO_NOT_CONFIGURED/);
 assert.match(livePatientsApi, /getClinicMembership/);
 assert.match(livePatientsApi, /profile_encrypted/);
@@ -189,6 +190,7 @@ const liveEventsApi = readFileSync(
   "utf8",
 );
 assert.match(liveEventsApi, /CLINICAL_LIVE_DISABLED/);
+assert.match(liveEventsApi, /CLINICAL_LGPD_NOT_READY/);
 assert.match(liveEventsApi, /patientBelongsToClinic/);
 assert.match(liveEventsApi, /payload_encrypted/);
 assert.match(liveEventsApi, /provenanceSource/);
@@ -233,6 +235,10 @@ const tenantsApi = readFileSync(
   "utf8",
 );
 assert.match(tenantsApi, /isValidTimeZone/);
+const versionApi = readFileSync(new URL("../../functions/api/version.ts", import.meta.url), "utf8");
+assert.match(versionApi, /clinicalLgpdReady/);
+assert.match(versionApi, /clinicalLiveReady/);
+assert.match(versionApi, /realPatientsEnabled: clinicalLiveReady/);
 assert.match(tenantsApi, /Timezone IANA inválido/);
 
 console.log("saas phase1 foundation tests ok");

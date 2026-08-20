@@ -7,6 +7,7 @@ import {
 import { getContextUser } from "../../auth/_authorization";
 import {
   clinicalLiveEnabled,
+  clinicalLgpdReady,
   getClinicMembership,
   membershipCanReadClinical,
   membershipCanWriteClinical,
@@ -72,6 +73,9 @@ function cleanOptional(value: unknown, max: number): string | null {
 function requireLiveConfiguration(env: TenantEnv): Response | null {
   if (!clinicalLiveEnabled(env)) {
     return tenantError("Clinical Core LIVE permanece bloqueado.", "CLINICAL_LIVE_DISABLED", 503);
+  }
+  if (!clinicalLgpdReady(env)) {
+    return tenantError("Governança LGPD do Clinical Core ainda não foi aprovada.", "CLINICAL_LGPD_NOT_READY", 503);
   }
   if (!clinicalCryptoReady(env)) {
     return tenantError("Keyring clínico dedicado não configurado.", "CLINICAL_CRYPTO_NOT_CONFIGURED", 503);
@@ -201,10 +205,20 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
         createdAt: row.created_at,
       })),
     );
+    await db.batch([
+      prepareSaasAudit(db, {
+        clinicId,
+        actorUserId: user.id,
+        action: "live_clinical_timeline_read",
+        targetType: "live_patient_timeline",
+        targetId: patientId,
+        metadata: { eventCount: data.length },
+      }),
+    ]);
     return tenantJson({ data });
   } catch (error) {
-    console.error("[live.events.GET] decrypt failure", error);
-    return tenantError("Eventos clínicos indisponíveis.", "CLINICAL_DECRYPT_FAILED", 500);
+    console.error("[live.events.GET] decrypt/audit failure", error);
+    return tenantError("Eventos clínicos indisponíveis.", "CLINICAL_READ_AUDIT_FAILED", 500);
   }
 };
 

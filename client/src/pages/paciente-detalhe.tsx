@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { fetchClinicalRuntime, getStoredActiveClinicId, isClinicalLive, isLegacyClinicalRetired, type ClinicalRuntimeInfo } from "@/lib/clinicalRuntime";
 import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { loadAllPatientResults } from "@/lib/patientResultsPagination";
@@ -157,17 +158,31 @@ export default function PacienteDetalhePage() {
     id: string;
     scaleName: string;
   } | null>(null);
+  const [clinicId] = useState(getStoredActiveClinicId);
+
+  const { data: runtime, isError: runtimeIsError } = useQuery<ClinicalRuntimeInfo>({
+    queryKey: ["/api/version", "clinical-runtime"],
+    queryFn: fetchClinicalRuntime,
+  });
+  const liveMode = isClinicalLive(runtime) && Boolean(clinicId);
+  const legacyMode = Boolean(runtime) && !isClinicalLive(runtime) && !isLegacyClinicalRetired(runtime);
+  const readinessBlocked = Boolean(runtime) && !liveMode && !legacyMode;
 
   const {
-    data: patient,
+    data: patientRaw,
     isLoading: patientLoading,
     isError: patientIsError,
     error: patientError,
     refetch: refetchPatient,
   } = useQuery<any>({
-    queryKey: [`/api/patients/${patientId}`],
-    enabled: !!patientId,
+    queryKey: [liveMode
+      ? `/api/live/patients/${encodeURIComponent(patientId)}?clinicId=${encodeURIComponent(clinicId)}`
+      : `/api/patients/${patientId}`],
+    enabled: !!patientId && Boolean(runtime) && !readinessBlocked,
   });
+  const patient = liveMode && patientRaw?.profile
+    ? { ...patientRaw.profile, id: patientRaw.id, clinicId: patientRaw.clinicId, mode: "live", status: patientRaw.status }
+    : patientRaw;
 
   const {
     data: resultsRaw,
@@ -177,7 +192,7 @@ export default function PacienteDetalhePage() {
   } = useQuery<any[]>({
     queryKey: [`/api/patients/${patientId}/results`],
     queryFn: () => loadAllPatientResults(patientId),
-    enabled: !!patientId && Boolean(patient),
+    enabled: !!patientId && Boolean(patient) && legacyMode,
   });
   const resultsShapeIsInvalid =
     resultsRaw !== undefined && !Array.isArray(resultsRaw);
@@ -186,7 +201,9 @@ export default function PacienteDetalhePage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
+      if (!legacyMode) throw new Error("Edição de paciente LIVE ainda não está disponível.");
       const res = await apiRequest("PATCH", `/api/patients/${patientId}`, data);
+      if (!res.ok) throw new Error(`Atualização indisponível (${res.status}).`);
       return res.json();
     },
     onSuccess: () => {
@@ -311,6 +328,28 @@ export default function PacienteDetalhePage() {
     }
   }
 
+  if (!runtime && !runtimeIsError) {
+    return <LoadingState rows={4} label="Verificando runtime clínico..." />;
+  }
+
+  if (runtimeIsError) {
+    return (
+      <ErrorState
+        message="Não foi possível verificar o runtime clínico. Nenhum dado de paciente foi carregado."
+        onRetry={() => { window.location.reload(); }}
+      />
+    );
+  }
+
+  if (readinessBlocked) {
+    return (
+      <ErrorState
+        message="Clinical Core LIVE ainda está em readiness e as rotas clínicas legadas estão aposentadas. Nenhum dado clínico foi carregado."
+        onRetry={() => { window.location.reload(); }}
+      />
+    );
+  }
+
   if (patientLoading) {
     return <LoadingState rows={4} label="Carregando paciente..." />;
   }
@@ -367,11 +406,13 @@ export default function PacienteDetalhePage() {
               </span>
             )}
             <Badge variant="secondary" className="text-xs">
-              {resultsLoading
-                ? "Carregando avaliações..."
-                : resultsUnavailable
-                  ? "Avaliações indisponíveis"
-                  : `${results.length} avaliação${results.length !== 1 ? "ões" : ""}`}
+              {liveMode
+                ? "Clinical Core LIVE · leitura protegida"
+                : resultsLoading
+                  ? "Carregando avaliações..."
+                  : resultsUnavailable
+                    ? "Avaliações indisponíveis"
+                    : `${results.length} avaliação${results.length !== 1 ? "ões" : ""}`}
             </Badge>
           </div>
           {patient.notes && (
@@ -405,7 +446,7 @@ export default function PacienteDetalhePage() {
               <Pill className="w-3.5 h-3.5" /> Receita C1
             </Button>
           </Link>
-          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          {legacyMode && <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="outline"
@@ -457,19 +498,22 @@ export default function PacienteDetalhePage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
         </div>
       </div>
 
       <PatientCockpit
         patientId={patientId}
+        clinicId={clinicId}
+        clinicalLiveEnabled={liveMode}
+        legacyClinicalAvailable={legacyMode}
         scaleCount={
           resultsLoading || resultsUnavailable ? null : results.length
         }
       />
 
       {/* Legacy modules remain available while the Clinical OS becomes the primary patient view. */}
-      <Tabs defaultValue="avaliacoes">
+      <Tabs defaultValue="avaliacoes" className={liveMode ? "hidden" : undefined} aria-hidden={liveMode}>
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="avaliacoes">Respostas</TabsTrigger>
           <TabsTrigger value="relatorio">Registro completo</TabsTrigger>

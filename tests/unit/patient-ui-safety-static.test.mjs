@@ -35,7 +35,7 @@ assert.ok(
   listLoading >= 0 && listLoading < listError && listError < listEmpty,
   "pacientes deve ordenar loading, error e empty como estados distintos",
 );
-assert.match(patientsPage, /refetch: refetchPatients/);
+assert.match(patientsPage, /onRetry=\{\(\) => \{[\s\S]*?void refetchPatients\(\)/);
 assert.match(patientsPage, /void refetchPatients\(\)/);
 
 // O backup é transacional: pagina os dois runtimes, exige todas as respostas e
@@ -129,7 +129,7 @@ assert.doesNotMatch(
 assert.match(patientCockpit, /scaleCount: number \| null/);
 assert.match(
   patientCockpit,
-  /scaleCount === null \? "Indisponível"/,
+  /liveScaleCount === null \? "Indisponível no LIVE"/,
   "ausência da contagem não pode ser anunciada como zero",
 );
 assert.match(patientDetail, /O relatório não pode ser montado/);

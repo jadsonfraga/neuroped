@@ -9,6 +9,9 @@ import { TherapyGoalsPanel } from "@/components/clinical/TherapyGoalsPanel";
 interface PatientCockpitProps {
   patientId: string;
   scaleCount: number | null;
+  clinicId?: string;
+  clinicalLiveEnabled?: boolean;
+  legacyClinicalAvailable?: boolean;
 }
 
 interface ClinicalCoreResponse {
@@ -32,6 +35,36 @@ interface ConectaResponse {
   data: Array<{ id: string; occurredAt?: string; occurred_at?: string }>;
   total: number;
   mode?: string;
+}
+
+interface LiveClinicalEventResponse {
+  data: Array<{
+    id: string;
+    clinicId: string;
+    patientId: string;
+    eventType: string;
+    occurredAt: string;
+    provenanceKind: string;
+    provenanceSource: string;
+    payload: unknown;
+    supersedesEventId: string | null;
+    status: "active" | "corrected" | "voided";
+  }>;
+}
+
+function normalizeLiveEvent(event: LiveClinicalEventResponse["data"][number]): ClinicalEvent {
+  return {
+    id: event.id,
+    eventType: event.eventType,
+    occurredAt: event.occurredAt,
+    status: event.status,
+    provenance: {
+      kind: event.provenanceKind,
+      source: event.provenanceSource,
+      sourceLabel: "Clinical Core LIVE",
+    },
+    data: event.payload,
+  } as ClinicalEvent;
 }
 
 const eventTypeLabel: Record<ClinicalEvent["eventType"], string> = {
@@ -104,22 +137,33 @@ function eventHeadline(event: ClinicalEvent): string {
   }
 }
 
-export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
+export function PatientCockpit({ patientId, scaleCount, clinicId = "", clinicalLiveEnabled = false, legacyClinicalAvailable = true }: PatientCockpitProps) {
+  const liveMode = clinicalLiveEnabled && Boolean(clinicId);
+  const legacyMode = !clinicalLiveEnabled && legacyClinicalAvailable;
   const coreQuery = useQuery<ClinicalCoreResponse>({
     queryKey: [`/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`],
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && legacyMode,
+  });
+  const liveQuery = useQuery<LiveClinicalEventResponse>({
+    queryKey: [`/api/live/events?clinicId=${encodeURIComponent(clinicId)}&patientId=${encodeURIComponent(patientId)}`],
+    enabled: Boolean(patientId) && liveMode,
   });
   const consultationQuery = useQuery<ConsultationResponse>({
     queryKey: [`/api/consultations?patient_id=${encodeURIComponent(patientId)}`],
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && legacyMode,
   });
   const conectaQuery = useQuery<ConectaResponse>({
     queryKey: [`/api/conecta/events?patient_id=${encodeURIComponent(patientId)}&days=90`],
-    enabled: Boolean(patientId),
+    enabled: Boolean(patientId) && legacyMode,
   });
 
   const coreEvents = coreQuery.data?.data;
-  const events = useMemo(() => coreEvents ?? [], [coreEvents]);
+  const events = useMemo(
+    () => liveMode
+      ? (liveQuery.data?.data ?? []).map(normalizeLiveEvent)
+      : (coreEvents ?? []),
+    [coreEvents, liveMode, liveQuery.data?.data],
+  );
   const latestProblems = useMemo(
     () =>
       latestBy(
@@ -171,10 +215,11 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
   );
 
   const consultations = consultationQuery.data?.data ?? [];
-  const latestConsultation = [...consultations].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  )[0];
-  const coreUnavailable = coreQuery.isError;
+  const latestConsultation = liveMode
+    ? undefined
+    : [...consultations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const coreUnavailable = liveMode ? liveQuery.isError : !legacyMode || coreQuery.isError;
+  const liveScaleCount = liveMode ? null : scaleCount;
 
   return (
     <section className="space-y-4" data-testid="patient-cockpit">
@@ -279,18 +324,30 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
               <p className="text-sm font-bold">Continuidade do cuidado</p>
               <p className="text-xs text-muted-foreground">Cobertura dos principais fluxos do produto.</p>
             </div>
-            <ContinuityRow label="Última consulta" value={latestConsultation ? formatDate(latestConsultation.date) : "Sem consulta registrada"} />
-            <ContinuityRow label="Conecta · últimos 90 dias" value={conectaQuery.isError ? "Indisponível" : `${conectaQuery.data?.total ?? 0} registros`} />
+            <ContinuityRow
+              label="Última consulta"
+              value={liveMode ? "Indisponível no LIVE" : latestConsultation ? formatDate(latestConsultation.date) : "Sem consulta registrada"}
+            />
+            <ContinuityRow
+              label="Conecta · últimos 90 dias"
+              value={liveMode ? "Indisponível no LIVE" : conectaQuery.isError ? "Indisponível" : `${conectaQuery.data?.total ?? 0} registros`}
+            />
             <ContinuityRow
               label="Escalas vinculadas"
-              value={scaleCount === null ? "Indisponível" : `${scaleCount} aplicações`}
+              value={liveScaleCount === null ? "Indisponível no LIVE" : `${liveScaleCount} aplicações`}
             />
             <ContinuityRow label="Clinical Core" value={coreUnavailable ? "Indisponível" : `${events.length} eventos`} />
           </CardContent>
         </Card>
       </div>
 
-      <TherapyGoalsPanel patientId={patientId} events={events} unavailable={coreUnavailable} />
+      <TherapyGoalsPanel
+        patientId={patientId}
+        clinicId={clinicId}
+        liveEnabled={liveMode}
+        events={events}
+        unavailable={coreUnavailable}
+      />
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <Card className="border-card-border">

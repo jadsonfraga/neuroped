@@ -173,6 +173,24 @@ const encounterDataSchema = z
     encounterType: z.enum(encounterTypes),
     reason: optionalText(500),
     setting: z.enum(["clinic", "telemedicine", "hospital", "school", "home", "other"]).optional(),
+    recordKey: boundedId.optional(),
+    clinicalContext: z
+      .object({
+        nomeCompleto: optionalText(160),
+        dataNascimento: optionalText(10),
+        sexo: optionalText(40),
+        nomeResponsavel: optionalText(160),
+        parentesco: optionalText(80),
+        telefone: optionalText(40),
+        email: optionalText(160),
+        convenio: optionalText(160),
+        medicoResponsavel: optionalText(160),
+        cid: optionalText(40),
+        hipoteseDiagnostica: optionalText(2_000),
+        dataConsulta: optionalText(10),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -191,6 +209,7 @@ const problemDataSchema = z
 const medicationDataSchema = z
   .object({
     action: z.enum(medicationActions),
+    recordKey: boundedId.optional(),
     genericName: z.string().trim().min(1).max(160),
     brandName: optionalText(160),
     doseMg: z.number().finite().nonnegative().max(100_000).optional(),
@@ -210,6 +229,7 @@ const medicationDataSchema = z
 const observationDataSchema = z
   .object({
     domain: z.enum(observationDomains),
+    recordKey: boundedId.optional(),
     findingStatus: z.enum(findingStatuses),
     valueNumber: z.number().finite().optional(),
     unit: optionalText(40),
@@ -221,6 +241,7 @@ const observationDataSchema = z
 const planDataSchema = z
   .object({
     kind: z.enum(planKinds),
+    recordKey: boundedId.optional(),
     target: z.string().trim().min(1).max(1_000),
     status: z.enum(planStatuses).default("planned"),
     priority: z.enum(planPriorities).default("routine"),
