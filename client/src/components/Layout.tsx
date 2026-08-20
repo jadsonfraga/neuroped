@@ -141,7 +141,7 @@ function FeaturedShortcuts({
   );
 }
 
-const priorityNavHrefs = new Set(["/agenda", "/laudo-neuroped", "/receita-c1"]);
+const priorityNavHrefs = new Set(["/agenda", "/laudo-neuroped", "/laudo-super", "/receita-c1"]);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
