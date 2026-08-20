@@ -50,8 +50,10 @@ printProprietaryNotice();
 
 const hostname = window.location.hostname;
 const root = createRoot(document.getElementById("root")!);
+const isDevelopmentBuild =
+  (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
-if (isAuthorizedHost(hostname)) {
+if (isAuthorizedHost(hostname, { allowPrivateNetwork: isDevelopmentBuild })) {
     root.render(
       <Suspense fallback={null}>
         <App />
