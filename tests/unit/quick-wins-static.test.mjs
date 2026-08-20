@@ -197,7 +197,7 @@ for (const printableClinicalSource of [
 const layout = read("client/src/components/Layout.tsx");
 assert.match(layout, /clearMasterPinUnlock\(\)/);
 assert.match(layout, /secureClearAll\(\)/);
-assert.match(layout, /const \{ accessMode, logout \} = useAuth\(\)/);
+assert.match(layout, /const \{[^}]*accessMode[^}]*logout[^}]*\} = useAuth\(\)/);
 assert.match(
   layout,
   /await logout\(\)/,

@@ -115,10 +115,12 @@ export default function AgendaPage() {
   const { toast } = useToast();
   const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
   const data = dashboard.data;
-  const patientsQuery = useQuery<{ data: Array<{ id: string; name: string; birthDate?: string | null }> }>({
-    queryKey: ["/api/patients?limit=100&offset=0"],
+  const [patientSearch, setPatientSearch] = useState("");
+  const patientSearchParam = encodeURIComponent(patientSearch.trim());
+  const patientsQuery = useQuery<{ data: Array<{ id: string; name: string; birthDate?: string | null }>; total?: number }>({
+    queryKey: [`/api/patients?limit=50&page=1&q=${patientSearchParam}`],
     enabled: Boolean(data?.access.canConfigure),
-    staleTime: 60_000,
+    staleTime: 30_000,
   });
   const patientOptions = patientsQuery.data?.data ?? [];
   const [busy, setBusy] = useState(false);
@@ -179,8 +181,7 @@ export default function AgendaPage() {
   const upcoming = useMemo(
     () => [...(data?.appointments ?? [])]
       .filter((item) => !["completed", "cancelled", "no_show"].includes(item.status))
-      .sort((a, b) => a.startsAtLocal.localeCompare(b.startsAtLocal))
-      .slice(0, 40),
+      .sort((a, b) => a.startsAtLocal.localeCompare(b.startsAtLocal)),
     [data?.appointments],
   );
 
@@ -278,7 +279,7 @@ export default function AgendaPage() {
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <Field label="Serviço"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.serviceId} onChange={(e) => setManual((p) => ({ ...p, serviceId: e.target.value }))}><option value="">Selecione</option>{data.services.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
               <Field label="Data e horário"><Input type="datetime-local" value={manual.startsAtLocal} onChange={(e) => setManual((p) => ({ ...p, startsAtLocal: e.target.value }))} /></Field>
-              {canConfigure && <Field label="Vincular paciente ao prontuário"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select></Field>}
+              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar por nome ou identificador" aria-label="Buscar paciente para vínculo clínico" /><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientsQuery.data?.total ?? patientOptions.length} resultado(s) encontrado(s).</p></div></Field>}
               <Field label="Criança"><Input value={manual.patientName} onChange={(e) => setManual((p) => ({ ...p, patientName: e.target.value }))} placeholder="Nome" /></Field>
               <Field label="Responsável"><Input value={manual.guardianName} onChange={(e) => setManual((p) => ({ ...p, guardianName: e.target.value }))} /></Field>
               <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
@@ -346,7 +347,7 @@ export default function AgendaPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Próximas consultas</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Próximas consultas</CardTitle><p className="text-xs text-muted-foreground">{upcoming.length} consulta(s) futura(s) carregada(s).</p></CardHeader>
             <CardContent className="space-y-2">
               {upcoming.length === 0 ? <Empty text="Nenhuma consulta futura nesta agenda." /> : upcoming.map((apt) => (
                 <div key={apt.id} className="rounded-2xl border p-4">

@@ -227,3 +227,25 @@ export function decideRouteAccess({
   }
   return "allow";
 }
+
+export function canRenderNavigationItem({
+  path,
+  accessMode,
+  isAuthenticated,
+  isLoading,
+  userRole,
+  localPinConfigured = false,
+  localPinUnlocked = false,
+}: Omit<RouteAccessInput, "allowedRoles">): boolean {
+  return (
+    decideRouteAccess({
+      path,
+      accessMode,
+      isAuthenticated,
+      isLoading,
+      userRole,
+      localPinConfigured,
+      localPinUnlocked,
+    }) === "allow"
+  );
+}

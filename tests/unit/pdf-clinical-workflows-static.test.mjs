@@ -25,11 +25,19 @@ assert.match(c1, /PDFDocument\.create\(\)/);
 assert.match(c1, /buildReceitaC1SignedPdfBytes/);
 assert.match(c1, /AssinaturaIcpPanel/);
 assert.match(c1, /embedJpg\(LOGO_SRC/);
+assert.match(c1, /idadePaciente/);
+assert.match(c1, /dosesPorDia/);
+assert.match(c1, /Idade do paciente/);
+assert.match(c1, /Doses por dia/);
 
 const c1Express = read("client/src/pages/receita-c1-express.tsx");
 assert.match(c1Express, /buildC1TemplatePdfBytes/);
 assert.match(c1Express, /signPdfWithP12/);
 assert.match(c1Express, /\.p12|\.pfx|PFX|P12/i);
+assert.match(c1Express, /idadePaciente/);
+assert.match(c1Express, /dosesPorDia/);
+assert.match(c1Express, /Idade do paciente/);
+assert.match(c1Express, /Doses por dia/);
 
 const archiveClient = read("client/src/lib/clinicalDocumentsClient.ts");
 assert.match(archiveClient, /uploadFile/);

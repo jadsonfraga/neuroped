@@ -13,20 +13,33 @@ import { navSections, getNavigationMatch } from "@/data/navigation";
 import { isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
 import { secureClearAll } from "@/lib/secureStorage";
-import { clearMasterPinUnlock } from "@/lib/masterPin";
+import {
+  clearMasterPinUnlock,
+  hasConfiguredMasterPin,
+  isMasterPinUnlocked,
+} from "@/lib/masterPin";
 import {
   clearLegacyOpenWorkspace,
   subscribeToLegacyOpenWorkspaceClear,
 } from "@/lib/openWorkspaceCleanup";
 import { useAuth } from "@/contexts/AuthContext";
+import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
 // para que fiquem sempre à mão: o Filtro Clínico Inteligente e a Avaliação
 // Cognitiva Infantil. Cartões desenhados à mão (não mapeados) para manter as
 // classes Tailwind estáticas e o visual polido de cada acento.
-function FeaturedShortcuts({ collapsed, activeHref }: { collapsed: boolean; activeHref?: string }) {
-  if (IS_PUBLIC_ZONE) return null;
+function FeaturedShortcuts({
+  collapsed,
+  activeHref,
+  canRenderClinicalLinks,
+}: {
+  collapsed: boolean;
+  activeHref?: string;
+  canRenderClinicalLinks: boolean;
+}) {
+  if (IS_PUBLIC_ZONE || !canRenderClinicalLinks) return null;
 
   const onPick = () => { softTap(); haptic.select(); };
 
@@ -132,7 +145,7 @@ const priorityNavHrefs = new Set(["/agenda", "/laudo-neuroped", "/receita-c1"]);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { accessMode, logout } = useAuth();
+  const { accessMode, isAuthenticated, isLoading, logout, user } = useAuth();
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("neuroped:theme");
@@ -300,11 +313,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const activeNavigation = getNavigationMatch(location);
   const showClinicalFlow = location !== "/" && location !== "/login" && location !== "/sessao-expirada";
   // Na zona pública (host das famílias) o menu mostra só o conteúdo aberto.
+  const canRenderNavItem = (path: string) =>
+    canRenderNavigationItem({
+      path,
+      accessMode,
+      isAuthenticated,
+      isLoading,
+      userRole: user?.role,
+      localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
+      localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
+    });
   const visibleSections = IS_PUBLIC_ZONE
     ? navSections
         .map((s) => ({ ...s, items: s.items.filter((i) => isPublicRoute(i.href)) }))
         .filter((s) => s.items.length > 0)
-    : navSections;
+    : navSections
+        .map((s) => ({ ...s, items: s.items.filter((i) => canRenderNavItem(i.href)) }))
+        .filter((s) => s.items.length > 0);
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
   async function handleSessionAction() {
@@ -554,7 +579,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Atalhos em destaque */}
-        <FeaturedShortcuts collapsed={collapsed} activeHref={activeNavigation?.item.href} />
+        <FeaturedShortcuts
+          collapsed={collapsed}
+          activeHref={activeNavigation?.item.href}
+          canRenderClinicalLinks={canRenderNavItem("/filtro")}
+        />
         <div className="mx-3 mt-2 border-t border-sidebar-border/60" />
 
         {/* Navigation */}

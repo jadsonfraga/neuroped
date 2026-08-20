@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Globe2, RefreshCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +49,14 @@ const sites: ManusSite[] = [
 export default function ManusIntegracoesPage() {
   const [activeId, setActiveId] = useState<ManusSite["id"]>("secretaria");
   const [frameKey, setFrameKey] = useState(0);
+  const [frameStatus, setFrameStatus] = useState<"loading" | "ready" | "timeout" | "error">("loading");
   const activeSite = useMemo(() => sites.find((site) => site.id === activeId) ?? sites[0], [activeId]);
+
+  useEffect(() => {
+    setFrameStatus("loading");
+    const timeout = window.setTimeout(() => setFrameStatus("timeout"), 10_000);
+    return () => window.clearTimeout(timeout);
+  }, [activeSite.id, frameKey]);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
@@ -84,12 +91,21 @@ export default function ManusIntegracoesPage() {
               <CardTitle>{activeSite.label}</CardTitle>
               <CardDescription className="mt-1">{activeSite.description}</CardDescription>
             </div>
-            <Button size="sm" variant="ghost" className="gap-2 self-start" onClick={() => setFrameKey((key) => key + 1)}><RefreshCcw className="h-4 w-4" />Recarregar</Button>
+            <Button size="sm" variant="ghost" className="gap-2 self-start" onClick={() => { setFrameStatus("loading"); setFrameKey((key) => key + 1); }}><RefreshCcw className="h-4 w-4" />Recarregar</Button>
           </div>
           <p className="pt-2 text-xs leading-5 text-muted-foreground">{activeSite.note}</p>
         </CardHeader>
-        <CardContent className="p-0">
-          <iframe key={`${activeSite.id}-${frameKey}`} title={activeSite.label} src={activeSite.url} className="h-[min(76vh,850px)] min-h-[560px] w-full border-0 bg-background" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay" />
+        <CardContent className="relative p-0">
+          {(frameStatus === "loading" || frameStatus === "timeout" || frameStatus === "error") && (
+            <div className="absolute inset-x-0 top-0 z-10 flex min-h-32 items-center justify-center border-b bg-background/95 p-6 text-center backdrop-blur-sm" role="status">
+              <div className="max-w-xl space-y-3">
+                <p className="text-sm font-semibold text-foreground">{frameStatus === "loading" ? "Carregando site Manus…" : "Este site não pode ser exibido dentro do NeuroPed."}</p>
+                <p className="text-xs leading-5 text-muted-foreground">{frameStatus === "loading" ? "Se o conteúdo não aparecer em alguns segundos, abra o site em uma nova guia." : "O domínio pode bloquear incorporação por política de segurança ou exigir login próprio. Seus dados clínicos continuam isolados."}</p>
+                {frameStatus !== "loading" && <Button size="sm" variant="outline" className="gap-2" onClick={() => window.open(activeSite.url, "_blank", "noopener,noreferrer")}><ExternalLink className="h-3.5 w-3.5" />Abrir em nova guia</Button>}
+              </div>
+            </div>
+          )}
+          <iframe key={`${activeSite.id}-${frameKey}`} title={activeSite.label} src={activeSite.url} className="h-[min(76vh,850px)] min-h-[560px] w-full border-0 bg-background" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay" onLoad={() => setFrameStatus("ready")} onError={() => setFrameStatus("error")} />
         </CardContent>
       </Card>
     </div>

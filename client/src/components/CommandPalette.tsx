@@ -22,6 +22,9 @@ import {
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/lib/commandPaletteBus";
 import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
+import { useAuth } from "@/contexts/AuthContext";
+import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
+import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
 
 /**
  * CommandPalette — busca global orientada a tarefa.
@@ -78,14 +81,33 @@ export function CommandPalette() {
   const [path, setPath] = useState(() => currentHashPath());
   const [navigableScales, setNavigableScales] = useState<NavScale[]>([]);
   const { recents, pushRecent } = useRecents();
+  const { accessMode, isAuthenticated, isLoading, user } = useAuth();
   const normalizedSearch = normalize(search);
   const onPublicRoute = isPublicRoute(path);
   const privateToolsAllowed = !IS_PUBLIC_ZONE && !onPublicRoute;
+  const canRenderClinicalItem = useCallback(
+    (href: string) =>
+      canRenderNavigationItem({
+        path: href,
+        accessMode,
+        isAuthenticated,
+        isLoading,
+        userRole: user?.role,
+        localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
+        localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
+      }),
+    [accessMode, isAuthenticated, isLoading, user?.role],
+  );
+  const canOpenPatients = canRenderClinicalItem("/pacientes");
+  const canOpenAgenda = canRenderClinicalItem("/agenda");
+  const canOpenFilter = canRenderClinicalItem("/filtro");
   const patientSearchReady =
-    privateToolsAllowed && open && normalizedSearch.length >= 2;
+    privateToolsAllowed && canOpenPatients && open && normalizedSearch.length >= 2;
 
   const patientQuery = useQuery<any>({
-    queryKey: ["/api/patients"],
+    queryKey: [
+      `/api/patients?q=${encodeURIComponent(normalizedSearch)}&page=1&limit=20`,
+    ],
     enabled: patientSearchReady,
     staleTime: 30_000,
   });
@@ -135,8 +157,8 @@ export function CommandPalette() {
     () =>
       IS_PUBLIC_ZONE || onPublicRoute
         ? navigablePages.filter((page) => isPublicRoute(page.href))
-        : navigablePages,
-    [onPublicRoute],
+        : navigablePages.filter((page) => canRenderClinicalItem(page.href)),
+    [canRenderClinicalItem, onPublicRoute],
   );
 
   const patients = useMemo<NavPatient[]>(() => {
@@ -153,8 +175,7 @@ export function CommandPalette() {
 
   const patientMatches = useMemo(() => {
     if (normalizedSearch.length < 2) return [];
-    return patients
-      .filter((patient) => normalize(patient.name).includes(normalizedSearch))
+    return [...patients]
       .sort((a, b) => {
         const aStarts = normalize(a.name).startsWith(normalizedSearch) ? 1 : 0;
         const bStarts = normalize(b.name).startsWith(normalizedSearch) ? 1 : 0;
@@ -212,9 +233,9 @@ export function CommandPalette() {
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
 
-        {privateToolsAllowed && (
+        {privateToolsAllowed && (canOpenPatients || canOpenAgenda || canOpenFilter) && (
           <CommandGroup heading="Ações rápidas">
-            <CommandItem
+            {canOpenPatients && <CommandItem
               value="meus pacientes prontuario paciente"
               onSelect={() => goPage("/pacientes")}
             >
@@ -223,8 +244,8 @@ export function CommandPalette() {
                 aria-hidden="true"
               />
               Meus pacientes
-            </CommandItem>
-            <CommandItem
+            </CommandItem>}
+            {canOpenAgenda && <CommandItem
               value="agenda gestao consultas"
               onSelect={() => goPage("/agenda")}
             >
@@ -233,8 +254,8 @@ export function CommandPalette() {
                 aria-hidden="true"
               />
               Agenda & Gestão
-            </CommandItem>
-            <CommandItem
+            </CommandItem>}
+            {canOpenFilter && <CommandItem
               value="filtro clinico escala ideal"
               onSelect={() => goPage("/filtro")}
             >
@@ -244,7 +265,7 @@ export function CommandPalette() {
               />
               Filtro Clínico Inteligente
               <CommandShortcut>Clínica</CommandShortcut>
-            </CommandItem>
+            </CommandItem>}
           </CommandGroup>
         )}
 

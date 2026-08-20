@@ -7,7 +7,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
-import { InstallPrompt } from "@/components/InstallPrompt";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
   AvisoLegalGate,
@@ -15,8 +14,7 @@ import {
 } from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
-import { AmbientEffects } from "@/components/AmbientEffects";
-import { FloatingHelp } from "@/components/FloatingHelp";
+
 import { PrivateGate } from "@/components/PrivateGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
@@ -217,6 +215,21 @@ const Onboarding = lazy(() =>
 const WelcomeTour = lazy(() =>
   import("@/components/WelcomeTour").then((mod) => ({
     default: mod.WelcomeTour,
+  })),
+);
+const AmbientEffects = lazy(() =>
+  import("@/components/AmbientEffects").then(({ AmbientEffects: Component }) => ({
+    default: Component,
+  })),
+);
+const InstallPrompt = lazy(() =>
+  import("@/components/InstallPrompt").then(({ InstallPrompt: Component }) => ({
+    default: Component,
+  })),
+);
+const FloatingHelp = lazy(() =>
+  import("@/components/FloatingHelp").then(({ FloatingHelp: Component }) => ({
+    default: Component,
   })),
 );
 const CommandPalette = lazy(() =>
@@ -615,7 +628,9 @@ function App() {
           <AuthProvider>
             <TooltipProvider>
               <ToastProvider>
-                <AmbientEffects />
+                <Suspense fallback={null}>
+                  <AmbientEffects />
+                </Suspense>
                 <Toaster />
                 {!splashComplete && (
                   <Suspense fallback={null}>
@@ -650,11 +665,11 @@ function App() {
                 )}
                 {auxiliarySurfacesVisible && (
                   <>
-                    <InstallPrompt />
                     <Suspense fallback={null}>
+                      <InstallPrompt />
                       <PreferencesPanel />
+                      <FloatingHelp />
                     </Suspense>
-                    <FloatingHelp />
                   </>
                 )}
                 <ServiceWorkerManager />

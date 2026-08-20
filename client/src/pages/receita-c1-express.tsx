@@ -74,6 +74,8 @@ function _canonicalExpressPayload(f: FormFields, issuedAt: string) {
     "RQE 17.756",
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.paciente || "-"}`,
+    `Idade do paciente: ${f.idadePaciente || "-"}`,
+    `Doses por dia: ${f.dosesPorDia || "-"}`,
     `Data de nascimento: ${fmtNasc(f.dataNasc) || "-"}`,
     `Endereco: ${f.endereco || "-"}`,
     `Municipio/UF: ${f.municipio || "-"}`,
@@ -108,6 +110,8 @@ async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
         heading: "Dados do Paciente",
         body: [
           `Nome: ${f.paciente || "—"}`,
+          `Idade do paciente: ${f.idadePaciente || "—"}`,
+          `Doses por dia: ${f.dosesPorDia || "—"}`,
           `Data de nascimento: ${fmtNasc(f.dataNasc) || "—"}`,
           `Endereço: ${f.endereco || "—"}`,
           `Município/UF: ${f.municipio || "—"}  CEP: ${f.cep || "—"}`,
@@ -120,6 +124,7 @@ async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
           f.concentracao ? `Concentração: ${f.concentracao}` : "",
           f.forma ? `Forma farmacêutica: ${f.forma}` : "",
           `Quantidade: ${f.quantidade || "—"}${f.quantidadeExtenso ? ` (${f.quantidadeExtenso})` : ""}`,
+          `Doses por dia: ${f.dosesPorDia || "—"}`,
           `\nPosologia / Instrução de uso:\n${f.instrucoes || "—"}`,
         ].filter(Boolean).join("\n"),
       },
@@ -263,12 +268,14 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     drawFitted(page, f.paciente, m + 74, tableY + 28, 160, 6.2, bold);
     page.drawText("DATA NASC.", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
     drawFitted(page, fmtNasc(f.dataNasc), m + 346, tableY + 28, 60, 6.2, bold);
-    page.drawText("ENDERECO", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.endereco, m + 74, tableY + 15, 318, 6.2, bold);
-    page.drawText("MUNICIPIO/UF", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.municipio, m + 74, tableY + 2, 160, 6.2, bold);
-    page.drawText("CEP", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.cep, m + 346, tableY + 2, 60, 6.2, bold);
+    page.drawText("IDADE", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.idadePaciente, m + 74, tableY + 15, 150, 6.2, bold);
+    page.drawText("DOSES/DIA", { x: m + 242, y: tableY + 16, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.dosesPorDia, m + 346, tableY + 15, 60, 6.2, bold);
+    page.drawText("ENDERECO", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.endereco, m + 74, tableY + 2, 150, 6.2, bold);
+    page.drawText("MUNICIPIO/UF", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.municipio, m + 346, tableY + 2, 60, 6.2, bold);
 
     const rxY = 132;
     const rxH = tableY - rxY - 8;
@@ -358,6 +365,12 @@ function buildC1PrintHtml(f: FormFields): string {
       <td class="val" style="width:18%">${escHtml(fmtNasc(f.dataNasc))}</td>
     </tr>
     <tr>
+      <td class="lbl">Idade</td>
+      <td class="val">${escHtml(f.idadePaciente)}</td>
+      <td class="lbl">Doses/dia</td>
+      <td class="val">${escHtml(f.dosesPorDia)}</td>
+    </tr>
+    <tr>
       <td class="lbl">Endereço</td>
       <td class="val" colspan="3">${escHtml(f.endereco)}</td>
     </tr>
@@ -375,6 +388,7 @@ function buildC1PrintHtml(f: FormFields): string {
       <div class="med-nm">${escHtml(f.medicamento)}${f.concentracao ? ` — ${escHtml(f.concentracao)}` : ""}</div>
       ${f.forma ? `<div class="med-sub">${escHtml(f.forma)}</div>` : ""}
       <div class="med-qtd">Quantidade: <strong>${escHtml(f.quantidade)}</strong>${f.quantidadeExtenso ? ` (${escHtml(f.quantidadeExtenso)})` : ""}</div>
+      <div class="med-qtd">Doses por dia: <strong>${escHtml(f.dosesPorDia)}</strong></div>
       <div class="med-uso"><em>Instruções:</em> ${escHtml(f.instrucoes)}</div>
     </div>
   </div>
@@ -460,6 +474,8 @@ ${via("2ª", "PACIENTE")}
 // ── Tipos ─────────────────────────────────────────────────────────
 interface FormFields {
   paciente: string;
+  idadePaciente: string;
+  dosesPorDia: string;
   dataNasc: string;
   endereco: string;
   municipio: string;
@@ -474,7 +490,7 @@ interface FormFields {
 }
 
 const EMPTY_FORM: FormFields = {
-  paciente: "", dataNasc: "", endereco: "", municipio: "", cep: "",
+  paciente: "", idadePaciente: "", dosesPorDia: "", dataNasc: "", endereco: "", municipio: "", cep: "",
   medicamento: "", concentracao: "", forma: "", quantidade: "", quantidadeExtenso: "",
   instrucoes: "", cid: "",
 };
@@ -539,8 +555,8 @@ export default function ReceitaC1ExpressPage() {
   async function gerarEAssinar() {
     if (!p12) { setError("Certificado não disponível."); return; }
     if (!senha) { setError("Informe a senha do certificado."); return; }
-    if (!form.paciente || !form.medicamento || !form.instrucoes) {
-      setError("Preencha pelo menos: paciente, medicamento e instruções de uso.");
+    if (!form.paciente || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
+      setError("Preencha: paciente, idade do paciente, doses por dia, medicamento e instruções de uso.");
       return;
     }
     setError(""); setOk(""); setBusy("sign");
@@ -573,8 +589,8 @@ export default function ReceitaC1ExpressPage() {
 
   // ── Imprimir 2 vias ───────────────────────────────────────────
   function imprimirDuasVias() {
-    if (!form.paciente || !form.medicamento) {
-      setError("Preencha pelo menos o nome do paciente e o medicamento antes de imprimir.");
+    if (!form.paciente || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
+      setError("Preencha paciente, idade do paciente, doses por dia, medicamento e instruções antes de imprimir.");
       return;
     }
     setError("");
@@ -589,8 +605,8 @@ export default function ReceitaC1ExpressPage() {
 
   // ── Baixar PDF sem assinatura ─────────────────────────────────
   async function baixarSemAssinar() {
-    if (!form.paciente || !form.medicamento) {
-      setError("Preencha pelo menos o nome do paciente e o medicamento.");
+    if (!form.paciente || !form.idadePaciente || !form.dosesPorDia || !form.medicamento || !form.instrucoes) {
+      setError("Preencha paciente, idade do paciente, doses por dia, medicamento e instruções.");
       return;
     }
     setError(""); setOk(""); setBusy("plain");
@@ -760,6 +776,29 @@ export default function ReceitaC1ExpressPage() {
               value={form.dataNasc}
               onChange={set("dataNasc")}
               className="mt-1 w-full sm:w-40"
+            />
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label className="text-xs font-semibold text-muted-foreground">Idade do paciente *</Label>
+            <Input
+              value={form.idadePaciente}
+              onChange={set("idadePaciente")}
+              placeholder="ex.: 7 anos e 3 meses"
+              className="mt-1"
+              data-testid="input-idade-paciente"
+            />
+          </div>
+          <div>
+            <Label className="text-xs font-semibold text-muted-foreground">Doses por dia *</Label>
+            <Input
+              value={form.dosesPorDia}
+              onChange={set("dosesPorDia")}
+              inputMode="numeric"
+              placeholder="ex.: 2"
+              className="mt-1"
+              data-testid="input-doses-por-dia"
             />
           </div>
         </div>

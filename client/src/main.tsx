@@ -1,7 +1,17 @@
+import { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import { MobilePrimaryDock } from "./components/MobilePrimaryDock";
-import { UnauthorizedCopyScreen } from "./components/UnauthorizedCopyScreen";
+
+const MobilePrimaryDock = lazy(() =>
+  import("./components/MobilePrimaryDock").then(({ MobilePrimaryDock: Component }) => ({
+    default: Component,
+  })),
+);
+const UnauthorizedCopyScreen = lazy(() =>
+  import("./components/UnauthorizedCopyScreen").then(({ UnauthorizedCopyScreen: Component }) => ({
+    default: Component,
+  })),
+);
 import { installChunkRecovery } from "./lib/chunkRecovery";
 import { purgeLegacyCertificateCache } from "./lib/certificateSession";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
@@ -47,13 +57,17 @@ const hostname = window.location.hostname;
 const root = createRoot(document.getElementById("root")!);
 
 if (isAuthorizedHost(hostname)) {
-  root.render(
-    <>
-      <App />
-      <MobilePrimaryDock />
-    </>,
-  );
+    root.render(
+      <Suspense fallback={null}>
+        <App />
+        <MobilePrimaryDock />
+      </Suspense>,
+    );
 } else {
   // Trava de domínio: cópia re-hospedada em endereço não autorizado.
-  root.render(<UnauthorizedCopyScreen host={hostname} />);
+    root.render(
+      <Suspense fallback={null}>
+        <UnauthorizedCopyScreen host={hostname} />
+      </Suspense>,
+    );
 }

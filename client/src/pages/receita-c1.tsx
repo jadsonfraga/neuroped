@@ -18,6 +18,8 @@ import { apiRequest } from "@/lib/queryClient";
 
 interface ReceitaFields {
   pac: string;
+  idadePaciente: string;
+  dosesPorDia: string;
   end: string;
   med: string;
   qtd: string;
@@ -27,7 +29,7 @@ interface ReceitaFields {
 }
 
 const RECEITA_TEMPLATE_VERSION = "Versão 2 — modelo Anvisa vigente para impressões desde 18/05/2026";
-const EMPTY: ReceitaFields = { pac: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
+const EMPTY: ReceitaFields = { pac: "", idadePaciente: "", dosesPorDia: "", end: "", med: "", qtd: "", qtde: "", poso: "", data: "" };
 
 function todayBR(): string {
   return new Intl.DateTimeFormat("pt-BR").format(new Date());
@@ -86,6 +88,8 @@ function _canonicalReceitaC1Payload(f: ReceitaFields, issuedAt: string) {
     RECEITA_TEMPLATE_VERSION,
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.pac || "-"}`,
+    `Idade do paciente: ${f.idadePaciente || "-"}`,
+    `Doses por dia: ${f.dosesPorDia || "-"}`,
     `Endereco: ${f.end || "-"}`,
     `Medicamento: ${f.med || "-"}`,
     `Quantidade: ${f.qtd || "-"} ${f.qtde || ""}`.trim(),
@@ -98,7 +102,8 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
   // Não gerar/assinar uma receita de controle especial incompleta: cada campo
   // essencial precisa ser revisado pelo prescritor antes de produzir o PDF.
   const missing = [
-    ["paciente", f.pac], ["endereço", f.end], ["medicamento/substância", f.med],
+    ["paciente", f.pac], ["idade do paciente", f.idadePaciente], ["doses por dia", f.dosesPorDia],
+    ["endereço", f.end], ["medicamento/substância", f.med],
     ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
   ].filter(([, value]) => !value?.trim()).map(([label]) => label);
   if (missing.length) throw new Error(`Preencha os campos obrigatórios: ${missing.join(", ")}.`);
@@ -190,19 +195,23 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
 
     const tableY = top - 122;
     const rowH = 13;
-    page.drawRectangle({ x: m, y: tableY, width: contentW, height: rowH * 3, borderWidth: 0.4, borderColor: line });
-    [1, 2].forEach((i) => page.drawLine({ start: { x: m, y: tableY + rowH * i }, end: { x: A5.w - m, y: tableY + rowH * i }, thickness: 0.35, color: line }));
-    [70, 236, 342].forEach((x) => page.drawLine({ start: { x: m + x, y: tableY }, end: { x: m + x, y: tableY + rowH * 3 }, thickness: 0.35, color: line }));
-    page.drawText("PACIENTE", { x: m + 6, y: tableY + 29, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.pac, m + 74, tableY + 28, 160, 6.2, bold);
-    page.drawText("DATA", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.data, m + 346, tableY + 28, 60, 6.2, bold);
+    page.drawRectangle({ x: m, y: tableY, width: contentW, height: rowH * 4, borderWidth: 0.4, borderColor: line });
+    [1, 2, 3].forEach((i) => page.drawLine({ start: { x: m, y: tableY + rowH * i }, end: { x: A5.w - m, y: tableY + rowH * i }, thickness: 0.35, color: line }));
+    [70, 236, 342].forEach((x) => page.drawLine({ start: { x: m + x, y: tableY }, end: { x: m + x, y: tableY + rowH * 4 }, thickness: 0.35, color: line }));
+    page.drawText("PACIENTE", { x: m + 6, y: tableY + 42, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.pac, m + 74, tableY + 41, 160, 6.2, bold);
+    page.drawText("DATA", { x: m + 242, y: tableY + 42, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.data, m + 346, tableY + 41, 60, 6.2, bold);
+    page.drawText("IDADE", { x: m + 6, y: tableY + 29, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.idadePaciente, m + 74, tableY + 28, 150, 6.2, bold);
+    page.drawText("DOSES/DIA", { x: m + 242, y: tableY + 29, size: 4.5, font: helv, color: muted });
+    drawFitted(page, f.dosesPorDia, m + 346, tableY + 28, 60, 6.2, bold);
     page.drawText("ENDERECO", { x: m + 6, y: tableY + 16, size: 4.5, font: helv, color: muted });
-    drawFitted(page, f.end, m + 74, tableY + 15, 318, 6.2, bold);
-    page.drawText("MUNICIPIO/UF", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
-    page.drawText("Petrolina/PE", { x: m + 74, y: tableY + 2, size: 6.2, font: bold, color: ink });
-    page.drawText("VALIDADE", { x: m + 242, y: tableY + 3, size: 4.5, font: helv, color: muted });
-    page.drawText(valBr, { x: m + 346, y: tableY + 2, size: 6.2, font: bold, color: ink });
+    drawFitted(page, f.end, m + 74, tableY + 15, 150, 6.2, bold);
+    page.drawText("MUNICIPIO/UF", { x: m + 242, y: tableY + 16, size: 4.5, font: helv, color: muted });
+    page.drawText("Petrolina/PE", { x: m + 346, y: tableY + 15, size: 6.2, font: bold, color: ink });
+    page.drawText("VALIDADE", { x: m + 6, y: tableY + 3, size: 4.5, font: helv, color: muted });
+    page.drawText(valBr, { x: m + 74, y: tableY + 2, size: 6.2, font: bold, color: ink });
 
     const rxY = 132;
     const rxH = tableY - rxY - 8;
@@ -259,6 +268,9 @@ async function buildReceitaC1SignedPdfBytes(f: ReceitaFields): Promise<Uint8Arra
 }
 
 function viaHtml(tag: string, f: ReceitaFields) {
+  const validade = new Date();
+  validade.setDate(validade.getDate() + 30);
+  const valBr = validade.toLocaleDateString("pt-BR");
   return `
 <div class="via">
   <div class="head">
@@ -285,8 +297,16 @@ function viaHtml(tag: string, f: ReceitaFields) {
     <div class="row">
       <div class="field"><span class="k">Paciente</span><span class="f">${esc(f.pac) || "&nbsp;"}</span></div>
     </div>
+    <div class="row" style="gap:4mm">
+      <div class="field" style="flex:1"><span class="k">Idade do paciente</span><span class="f">${esc(f.idadePaciente) || "&nbsp;"}</span></div>
+      <div class="field" style="flex:1"><span class="k">Doses por dia</span><span class="f">${esc(f.dosesPorDia) || "&nbsp;"}</span></div>
+    </div>
     <div class="row">
       <div class="field"><span class="k">Endereço</span><span class="f">${esc(f.end) || "&nbsp;"}</span></div>
+    </div>
+    <div class="row" style="gap:4mm">
+      <div class="field" style="flex:1"><span class="k">Município/UF</span><span class="f">Petrolina/PE</span></div>
+      <div class="field" style="flex:1"><span class="k">Validade</span><span class="f">${valBr}</span></div>
     </div>
     <div class="rx-area"><span class="sym">&#8478;</span>
       <div class="rx-line"><span class="k">Medicamento / substância · concentração · forma</span><br>
@@ -497,7 +517,8 @@ export default function ReceitaC1Page() {
       return;
     }
     const missing = [
-      ["paciente", f.pac], ["endereço", f.end], ["medicamento/substância", f.med],
+      ["paciente", f.pac], ["idade do paciente", f.idadePaciente], ["doses por dia", f.dosesPorDia],
+      ["endereço", f.end], ["medicamento/substância", f.med],
       ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
     ].filter(([, value]) => !value?.trim()).map(([label]) => label);
     if (missing.length) {
@@ -576,6 +597,8 @@ export default function ReceitaC1Page() {
               certificateValidUntil: meta.certificateValidUntil,
               metadata: {
                 patientName: f.pac,
+                patientAge: f.idadePaciente,
+                dosesPerDay: f.dosesPorDia,
                 medication: f.med,
                 source: "receita-c1",
                 patientId,
@@ -600,6 +623,28 @@ export default function ReceitaC1Page() {
             placeholder="Nome completo do paciente"
             className="mt-1"
           />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">Idade do paciente *</label>
+            <Input
+              value={f.idadePaciente}
+              onChange={set("idadePaciente")}
+              placeholder="ex.: 7 anos e 3 meses"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">Doses por dia *</label>
+            <Input
+              value={f.dosesPorDia}
+              onChange={set("dosesPorDia")}
+              inputMode="numeric"
+              placeholder="ex.: 2"
+              className="mt-1"
+            />
+          </div>
         </div>
 
         <div>
