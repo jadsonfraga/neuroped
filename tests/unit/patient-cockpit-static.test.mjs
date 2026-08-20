@@ -17,7 +17,11 @@ assert.match(
   "cockpit deve permanecer montado quando avaliações estão indisponíveis",
 );
 assert.match(cockpit, /scaleCount: number \| null/);
-assert.match(cockpit, /scaleCount === null \? "Indisponível"/);
+assert.match(
+  cockpit,
+  /liveScaleCount === null \? "Indisponível(?: no LIVE)?"/,
+  "escalas devem ficar explicitamente indisponíveis quando o cockpit está no LIVE",
+);
 assert.match(
   cockpit,
   /\/api\/clinical-core\/events/,
