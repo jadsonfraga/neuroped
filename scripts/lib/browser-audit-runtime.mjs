@@ -83,6 +83,26 @@ export async function startStaticServer(root, preferredPort = 4173) {
         response.end(JSON.stringify({ status: "ok", authentication: { required: false, configured: false } }));
         return;
       }
+      if (pathname === "/api/version") {
+        // O preview estático não possui D1, keyring ou sessão clínica. Em vez de
+        // devolver 404 e gerar erro de console no Lighthouse, declara explicitamente
+        // o estado de readiness bloqueado sem expor ou simular dados de paciente.
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache" });
+        response.end(JSON.stringify({
+          app: { name: "NeuroPed audit preview", version: "audit", commit: "static-preview", branch: "audit" },
+          api: { version: "1", endpoints: ["GET /api/health", "GET /api/version"] },
+          features: {
+            realPatientsEnabled: false,
+            clinicalLiveFlag: false,
+            clinicalCryptoConfigured: false,
+            clinicalLgpdConfigured: false,
+            clinicalLiveReady: false,
+            legacyClinicalEndpointsRetired: true,
+            mode: "CLINICAL_LIVE_PENDING_READINESS",
+          },
+        }));
+        return;
+      }
       if (pathname === "/api/auth/me") {
         // Endpoint sensível (dados do usuário): mantém `no-store`, fiel à
         // política de produção. Não é buscado no load quando auth não é exigido.
