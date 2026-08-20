@@ -16,6 +16,10 @@ import {
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../../tenant/_crypto";
+import {
+  commercialAccessError,
+  getCommercialEntitlement,
+} from "../../billing/_core";
 
 interface PatientProfile {
   name: string;
@@ -95,6 +99,8 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (!membership || !membershipCanReadClinical(membership)) {
     return tenantError("Acesso clínico negado para esta clínica.", "TENANT_FORBIDDEN", 403);
   }
+  const commercial = await getCommercialEntitlement(db, clinicId);
+  if (!commercial.entitlement.canRead) return commercialAccessError(commercial);
 
   const rows = await db
     .prepare(
@@ -159,6 +165,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   if (!membership || !membershipCanWriteClinical(membership)) {
     return tenantError("Escrita clínica negada para esta clínica.", "TENANT_FORBIDDEN", 403);
   }
+  const commercial = await getCommercialEntitlement(db, clinicId);
+  if (!commercial.entitlement.canWrite) return commercialAccessError(commercial);
 
   const profile: PatientProfile = {
     name: cleanText(body.name, 160),

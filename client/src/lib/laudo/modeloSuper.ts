@@ -289,7 +289,7 @@ export function qaSuper(l: SuperLaudo): string {
   if (s.mapaFuncional.pedeAtencao.length === 0 && s.mapaFuncional.funcionando.length === 0)
     falhas.push("Seção 5 (Mapa funcional) vazia");
   if (s.hipoteses.length === 0) falhas.push("Seção 6 sem hipóteses em avaliação");
-  s.hipoteses.forEach((h, i) => {
+  s.hipoteses.forEach((h) => {
     if (h.texto.length < 20) falhas.push(`Seção 6 · hipótese "${h.titulo}" sem leitura clínica`);
     if (h.aFavor.length === 0 && h.aPonderar.length === 0)
       falhas.push(`Seção 6 · hipótese "${h.titulo}" sem "a favor" / "a ponderar" (modelo exige as duas colunas)`);
@@ -300,7 +300,7 @@ export function qaSuper(l: SuperLaudo): string {
     if (!c.cid11) falhas.push(`Seção 8 · item ${i + 1} sem CID-11`);
   });
   if (s.planoMulti.length === 0) falhas.push("Seção 9 (Plano multiprofissional) sem itens");
-  s.planoMulti.forEach((p, i) => {
+  s.planoMulti.forEach((p) => {
     if (!p.indicacao) falhas.push(`Seção 9 · item "${p.titulo}" sem INDICAÇÃO`);
   });
   if (s.cenarios.favoravel.length === 0 && s.cenarios.esperado.length === 0 && s.cenarios.reservado.length === 0)

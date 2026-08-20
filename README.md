@@ -103,9 +103,11 @@ O servidor sobe em `http://localhost:5000` (frontend + backend juntos via Vite m
 
 ### 5. Login inicial
 
-Apos primeiro `npm run dev`, o usuario admin e criado automaticamente com email/senha de `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD`. Faca login e troque a senha imediatamente em `/configuracoes`.
+Apos primeiro `npm run dev`, o usuario admin e criado automaticamente com email/senha de `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD`. Essa credencial nasce como temporaria: depois do login, somente `/alterar-senha` e a consulta da propria sessao ficam liberadas ate a troca segura.
 
 **IMPORTANTE:** apos primeiro login, REMOVA `ADMIN_INITIAL_PASSWORD` do `.env` para evitar recriar admin acidentalmente.
+
+O plano comercial e de R$ 99 por pessoa/mes, com uma avaliacao de 14 dias por conta. Em producao, configure `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` e `STRIPE_WEBHOOK_SECRET` apenas como secrets do GitHub/Cloudflare. Sem o trio completo, a contratacao falha fechada e o app nao simula cobranca. A equipe entra por convites de uso unico (7 dias, token armazenado somente como hash); convites pendentes reservam assento e o D1 impede excesso sob concorrencia.
 
 ## Build de producao
 

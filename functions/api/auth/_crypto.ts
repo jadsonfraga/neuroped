@@ -12,7 +12,11 @@
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-const PBKDF2_ITERATIONS = 100_000;
+// OWASP Password Storage Cheat Sheet (PBKDF2-HMAC-SHA256, 2026).
+// Hashes legados carregam o próprio work factor e continuam verificáveis;
+// logins bem-sucedidos os promovem para este custo de forma oportunista.
+const PBKDF2_ITERATIONS = 600_000;
+const PBKDF2_LEGACY_MIN_ITERATIONS = 100_000;
 const PBKDF2_HASH = "SHA-256";
 const KEY_BITS = 256;
 
@@ -25,7 +29,7 @@ const JWT_MAX_LIFETIME_SECONDS = 8 * 24 * 60 * 60;
 // É usado somente para executar o mesmo PBKDF2 quando o e-mail não existe,
 // reduzindo enumeração por diferença grosseira de tempo de resposta.
 export const DUMMY_PASSWORD_HASH =
-  "pbkdf2$sha256$100000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  "pbkdf2$sha256$600000$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
 // ── base64 / base64url ────────────────────────────────────────────────────
 function bytesToB64(bytes: Uint8Array): string {
@@ -78,10 +82,17 @@ export async function verifyPassword(plaintext: string, stored: string | null | 
   if (!plaintext || !stored) return false;
   try {
     const parts = stored.split("$");
-    if (parts.length !== 5 || parts[0] !== "pbkdf2") return false;
-    const iterations = Number.parseInt(parts[2], 10);
+    if (parts.length !== 5 || parts[0] !== "pbkdf2" || parts[1] !== "sha256") return false;
+    const iterations = Number(parts[2]);
     const salt = b64ToBytes(parts[3]);
     const expected = b64ToBytes(parts[4]);
+    if (
+      !Number.isSafeInteger(iterations)
+      || iterations < PBKDF2_LEGACY_MIN_ITERATIONS
+      || iterations > PBKDF2_ITERATIONS
+      || salt.length !== 16
+      || expected.length !== KEY_BITS / 8
+    ) return false;
     const key = await crypto.subtle.importKey("raw", enc.encode(plaintext), "PBKDF2", false, ["deriveBits"]);
     const bits = new Uint8Array(
       await crypto.subtle.deriveBits(
@@ -94,6 +105,14 @@ export async function verifyPassword(plaintext: string, stored: string | null | 
   } catch {
     return false;
   }
+}
+
+export function passwordHashNeedsUpgrade(stored: string | null | undefined): boolean {
+  if (!stored) return true;
+  const parts = stored.split("$");
+  if (parts.length !== 5 || parts[0] !== "pbkdf2" || parts[1] !== "sha256") return true;
+  const iterations = Number(parts[2]);
+  return !Number.isSafeInteger(iterations) || iterations !== PBKDF2_ITERATIONS;
 }
 
 // ── JWT HS256 ─────────────────────────────────────────────────────────────

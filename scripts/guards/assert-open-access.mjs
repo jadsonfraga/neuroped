@@ -8,7 +8,8 @@
  * dispensa a sessão. Este guard falha o CI se o modo aberto voltar a ser ligado
  * por literal ou se uma catraca de acesso clínico desaparecer.
  *
- * A senha local do certificado A1 (.p12/.pfx) é a única exceção: ela pertence ao
+ * Senhas de conta aparecem somente nos fluxos remotos nominais de login,
+ * convite e rotação. A senha local do certificado A1 (.p12/.pfx) pertence ao
  * arquivo criptográfico escolhido pelo próprio usuário, é processada em memória
  * e não funciona como credencial de entrada no aplicativo.
  *
@@ -87,6 +88,7 @@ const CLINICAL_ROUTE_SENTINELS = [
 ];
 const PUBLIC_ROUTE_SENTINELS = [
   "/login",
+  "/aceitar-convite",
   "/familia",
   "/agendar",
   "/verificar",
@@ -200,16 +202,32 @@ const passwordInputFiles = walk(clientSourceRoot)
 const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/AssinaturaIcpPanel.tsx",
   "client/src/components/PrivateGate.tsx",
+  "client/src/pages/aceitar-convite.tsx",
+  "client/src/pages/alterar-senha.tsx",
   "client/src/pages/generic-scale.tsx",
   "client/src/pages/login.tsx",
 ].sort();
 
-await check("somente a tela nominal de login e o certificado podem receber senha", () => {
+await check("campos de senha permanecem nos fluxos nominais inventariados", () => {
   assert.deepEqual(
     passwordInputFiles,
     EXPECTED_PASSWORD_INPUT_FILES,
     "campo type=password novo ou remoção não revisada detectada",
   );
+});
+
+const invitationPageSrc = read("client/src/pages/aceitar-convite.tsx");
+const passwordChangePageSrc = read("client/src/pages/alterar-senha.tsx");
+await check("convite e rotação enviam credenciais apenas às APIs nominais", () => {
+  assert.match(invitationPageSrc, /acceptInvitationRequest/);
+  assert.match(passwordChangePageSrc, /changePasswordRequest/);
+  for (const source of [invitationPageSrc, passwordChangePageSrc]) {
+    assert.doesNotMatch(
+      source,
+      /localStorage|sessionStorage|ADMIN_INITIAL_PASSWORD|VITE_[A-Z_]*PASSWORD/,
+      "senhas de conta não podem ser persistidas nem incorporadas ao bundle",
+    );
+  }
 });
 
 const certificatePanelSrc = read("client/src/components/AssinaturaIcpPanel.tsx");

@@ -26,6 +26,9 @@ import NotFound from "@/pages/not-found";
 const LoginPage = lazy(() => import("@/pages/login"));
 const SessionExpiredPage = lazy(() => import("@/pages/session-expired"));
 const LgpdConsentPage = lazy(() => import("@/pages/lgpd-consent"));
+const AceitarConvitePage = lazy(() => import("@/pages/aceitar-convite"));
+const AlterarSenhaPage = lazy(() => import("@/pages/alterar-senha"));
+const PlanoEquipePage = lazy(() => import("@/pages/plano-equipe"));
 const PreferencesPanel = lazy(() =>
   import("@/components/PreferencesPanel").then(({ PreferencesPanel }) => ({
     default: PreferencesPanel,
@@ -288,6 +291,9 @@ function AppRouter() {
             <Route path="/login" component={LoginPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
+            <Route path="/aceitar-convite" component={AceitarConvitePage} />
+            <Route path="/alterar-senha" component={AlterarSenhaPage} />
+            <Route path="/plano-equipe" component={PlanoEquipePage} />
 
             <Route path="/" component={HomePage} />
             <Route path="/mchat" component={MchatPage} />

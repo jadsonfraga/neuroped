@@ -36,7 +36,9 @@ const MUST_BE_GATED = [
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  // O aceite é público por posse de token aleatório; a API armazena apenas o
+  // hash, exige uso único/validade e não devolve dado clínico.
+  "/login", "/sessao-expirada", "/aceitar-convite", "/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",

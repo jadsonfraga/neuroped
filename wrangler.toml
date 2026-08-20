@@ -12,6 +12,7 @@ pages_build_output_dir = "dist/public"
 [vars]
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"
+CANONICAL_APP_URL = "https://neuroped.pages.dev"
 
 # ── Backend: binding Cloudflare D1 ───────────────────────────────────────
 # IMPORTANTE: o workflow Cloudflare sincroniza os bindings deste arquivo. Se o

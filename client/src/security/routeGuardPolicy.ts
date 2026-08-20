@@ -10,6 +10,8 @@ export const SENSITIVE_ROUTES = [
   "/documentos",
   "/pacientes",
   "/memoria-clinica",
+  "/plano-equipe",
+  "/alterar-senha",
   "/paciente",
   "/prontuario",
   "/calculadora-dose",
@@ -145,6 +147,12 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
 }> = [
   // A recepção opera a fila, mas não recebe acesso às demais áreas clínicas.
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  // Todo usuário autenticado deve conseguir trocar a própria senha, inclusive
+  // quando a rotação temporária bloqueia as demais rotas no backend.
+  { route: "/alterar-senha", roles: ["admin", "professional", "reader", "operator"] },
+  // O papel financeiro tenant usa o role global reader; a API ainda exige a
+  // membership financeira da clínica antes de devolver cobrança ou equipe.
+  { route: "/plano-equipe", roles: ["admin", "professional", "reader", "operator"] },
 ];
 
 function normalizePathname(path: string): string {

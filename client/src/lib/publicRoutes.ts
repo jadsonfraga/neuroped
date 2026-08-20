@@ -12,6 +12,7 @@
 export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
   "/sessao-expirada", // Recuperação de sessão remota
+  "/aceitar-convite", // Convite SaaS de uso único, validado integralmente no backend
   "/familia", // Capa pública (home das famílias)
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos
   "/agendar", // Perfil e autoagendamento público com dados mínimos cifrados

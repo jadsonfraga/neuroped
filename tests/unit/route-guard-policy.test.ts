@@ -65,6 +65,7 @@ for (const path of [
   "/login",
   "/login?next=%2Fpacientes",
   "/sessao-expirada",
+  "/aceitar-convite",
   "/termos",
   "/familia",
   "/brincando-e-aprendendo",
@@ -101,6 +102,8 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/assinatura-digital",
   "/documentos",
   "/pacientes",
+  "/plano-equipe",
+  "/alterar-senha",
   "/paciente",
   "/prontuario",
   "/calculadora-dose",
@@ -175,7 +178,11 @@ for (const path of clinicalRouteSamples) {
 
   for (const userRole of ["reader", "operator"] as const) {
     const expected =
-      userRole === "reader" && isReaderClinicalRoute(path)
+      path === "/alterar-senha"
+        ? "allow"
+        : path === "/plano-equipe"
+          ? "allow"
+        : userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
         : path === "/recepcao" && userRole === "operator"
           ? "allow"

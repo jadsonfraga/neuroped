@@ -58,7 +58,9 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
+  "/api/auth/invite",
   "/api/public-booking",
+  "/api/billing/webhook",
 ]);
 
 function apiError(message: string, code: string, status: number): Response {
@@ -83,13 +85,14 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
 
   const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
+  const isOwnAccountWrite = path === "/api/auth/change-password" && method === "POST";
   // `operator` pode escrever somente no endpoint operacional. A própria função
   // /api/operations resolve o vínculo com o profissional e filtra as ações;
   // nenhuma rota clínica herda esta exceção.
   const isDelegatedOperationalWrite =
     user.role === "operator" && path === "/api/operations" && method === "POST";
 
-  if (isWrite && !isOwnConsentWrite && !isDelegatedOperationalWrite && !canWriteClinicalData(user)) {
+  if (isWrite && !isOwnConsentWrite && !isOwnAccountWrite && !isDelegatedOperationalWrite && !canWriteClinicalData(user)) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
   }
   return null;
@@ -124,6 +127,20 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   }
 
   const user = publicUser(row);
+  if (
+    user.mustChangePassword
+    && path !== "/api/auth/change-password"
+    && path !== "/api/auth/me"
+  ) {
+    return {
+      failure: apiError(
+        "Troque a senha temporária antes de acessar dados protegidos.",
+        "PASSWORD_CHANGE_REQUIRED",
+        428,
+      ),
+      user: null,
+    };
+  }
   return { failure: roleFailure(request, user), user };
 }
 
@@ -242,8 +259,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const isProduction = (env.ENVIRONMENT ?? "").toLowerCase() === "production";
   const demoWritesEnabled = env.DEMO_API_WRITES_ENABLED === "true";
-  const isAuthRoute = new URL(request.url).pathname.startsWith("/api/auth/");
-  if (!isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+  const writePath = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const isAuthRoute = writePath.startsWith("/api/auth/");
+  const isPublicApiRoute = PUBLIC_API_PATHS.has(writePath);
+  if (!isProduction && !env.DB && !demoWritesEnabled && !isAuthRoute && !isPublicApiRoute && ["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
     return new Response(JSON.stringify({
       error: "API demo em modo somente leitura. Escritas clinicas exigem backend autenticado oficial.",
       code: "DEMO_API_READ_ONLY",

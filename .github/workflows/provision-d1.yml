@@ -33,6 +33,9 @@ env:
   ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
   ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
   ADMIN_NM: ${{ secrets.ADMIN_NAME }}
+  STRIPE_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+  STRIPE_WEBHOOK: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+  STRIPE_PRICE: ${{ secrets.STRIPE_PRICE_ID }}
 
 jobs:
   provision:
@@ -159,6 +162,8 @@ jobs:
             --file=./db/migrations/0004_consents.sql
           $WRANGLER d1 execute "$D1_NAME" --remote --yes \
             --file=./db/migrations/0011_clinical_memory.sql
+          $WRANGLER d1 execute "$D1_NAME" --remote --yes \
+            --file=./db/migrations/0012_commercial_readiness.sql
           consent_columns="$($WRANGLER d1 execute "$D1_NAME" --remote \
             --command "SELECT name FROM pragma_table_info('consents');")"
           echo "$consent_columns"
@@ -188,6 +193,33 @@ jobs:
             echo "::error::índice da memória clínica ausente"
             exit 1
           }
+          commercial_tables="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('billing_accounts','billing_events','clinic_invitations','commercial_trial_claims') ORDER BY name;")"
+          echo "$commercial_tables"
+          for table in billing_accounts billing_events clinic_invitations commercial_trial_claims; do
+            echo "$commercial_tables" | grep -q "$table" || {
+              echo "::error::tabela comercial ausente: $table"
+              exit 1
+            }
+          done
+          commercial_indexes="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('ux_billing_provider_customer','ux_billing_provider_subscription','ux_billing_provider_checkout_session','idx_billing_events_clinic_time','ux_clinic_invitations_pending_email') ORDER BY name;")"
+          echo "$commercial_indexes"
+          for index in ux_billing_provider_customer ux_billing_provider_subscription ux_billing_provider_checkout_session idx_billing_events_clinic_time ux_clinic_invitations_pending_email; do
+            echo "$commercial_indexes" | grep -q "$index" || {
+              echo "::error::índice comercial ausente: $index"
+              exit 1
+            }
+          done
+          commercial_triggers="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_clinic_memberships_billing_seat_insert','trg_clinic_memberships_billing_seat_reactivate','trg_clinic_invitations_billing_seat_insert') ORDER BY name;")"
+          echo "$commercial_triggers"
+          for trigger in trg_clinic_memberships_billing_seat_insert trg_clinic_memberships_billing_seat_reactivate trg_clinic_invitations_billing_seat_insert; do
+            echo "$commercial_triggers" | grep -q "$trigger" || {
+              echo "::error::trava física de assento ausente: $trigger"
+              exit 1
+            }
+          done
 
       - name: Semear dados demo sem substituir registros existentes
         run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/seed.d1.sql --yes
@@ -253,6 +285,18 @@ jobs:
           if [ -n "$ADMIN_NM" ]; then
             printf '%s' "$ADMIN_NM" | $WRANGLER pages secret put ADMIN_NAME --project-name "$PAGES_PROJECT" >/dev/null
             echo "secret opcional ADMIN_NAME: definido"
+          fi
+          if [ -n "$STRIPE_KEY" ]; then
+            printf '%s' "$STRIPE_KEY" | $WRANGLER pages secret put STRIPE_SECRET_KEY --project-name "$PAGES_PROJECT" >/dev/null
+            echo "secret opcional STRIPE_SECRET_KEY: definido"
+          fi
+          if [ -n "$STRIPE_WEBHOOK" ]; then
+            printf '%s' "$STRIPE_WEBHOOK" | $WRANGLER pages secret put STRIPE_WEBHOOK_SECRET --project-name "$PAGES_PROJECT" >/dev/null
+            echo "secret opcional STRIPE_WEBHOOK_SECRET: definido"
+          fi
+          if [ -n "$STRIPE_PRICE" ]; then
+            printf '%s' "$STRIPE_PRICE" | $WRANGLER pages secret put STRIPE_PRICE_ID --project-name "$PAGES_PROJECT" >/dev/null
+            echo "secret opcional STRIPE_PRICE_ID: definido"
           fi
 
       # ── 4. Build + deploy já com o backend ativo ──────────────────────────

@@ -114,7 +114,7 @@ assert.doesNotMatch(
 );
 
 assert.match(
-  main,
+  app,
   /<MobilePrimaryDock \/>/,
   "shell autorizado deve renderizar o dock",
 );
@@ -469,8 +469,8 @@ for (const [source, name] of [
 
 assert.match(
   palette,
-  /queryKey: \["\/api\/patients"\]/,
-  "busca global deve consultar pacientes reais",
+  /\/api\/patients\?q=\$\{encodeURIComponent\(normalizedSearch\)\}&page=1&limit=20/,
+  "busca global deve consultar pacientes reais com termo codificado e paginação limitada",
 );
 assert.match(
   palette,

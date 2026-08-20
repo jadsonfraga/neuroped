@@ -19,7 +19,13 @@ function readableLoginError(error: unknown): string {
 export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { login, isLoading, remoteConfigured } = useAuth();
-  const [email, setEmail] = useState("");
+  const invitationAccepted = typeof window !== "undefined"
+    && new URLSearchParams(window.location.hash.split("?", 2)[1] ?? "").get("invite") === "accepted";
+  const passwordChanged = typeof window !== "undefined"
+    && new URLSearchParams(window.location.hash.split("?", 2)[1] ?? "").get("password") === "changed";
+  const [email, setEmail] = useState(() => typeof window === "undefined"
+    ? ""
+    : new URLSearchParams(window.location.hash.split("?", 2)[1] ?? "").get("email") ?? "");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +35,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email.trim(), password);
-      setLocation("/");
+      const authenticatedUser = await login(email.trim(), password);
+      setLocation(authenticatedUser.mustChangePassword ? "/alterar-senha?required=1" : "/");
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {
@@ -49,6 +55,8 @@ export default function LoginPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 w-full max-w-sm space-y-4 rounded-3xl border border-primary/15 bg-card p-5 text-left shadow-xl shadow-primary/5 sm:p-6" data-testid="login-form">
+        {invitationAccepted && <p className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 text-xs leading-relaxed text-emerald-700 dark:text-emerald-300">Convite confirmado. Entre para abrir a clínica e concluir os consentimentos aplicáveis.</p>}
+        {passwordChanged && <p className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 text-xs leading-relaxed text-emerald-700 dark:text-emerald-300">Senha alterada e sessões anteriores encerradas. Entre novamente com a nova senha.</p>}
         <div className="space-y-2">
           <Label htmlFor="login-email">E-mail profissional</Label>
           <div className="relative">

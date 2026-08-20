@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { escapeHtml } from "@/lib/htmlEscape";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
-import { gerarEValidar, type EntradaLaudo, parseDiagnosticoProsa } from "@/lib/laudo/gerador";
+import { gerarEValidar, type EntradaLaudo } from "@/lib/laudo/gerador";
 import { laudoParaTexto } from "@/lib/laudo/paraTexto";
 
 /* ────────────────────────────────────────────────────────────

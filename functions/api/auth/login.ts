@@ -14,7 +14,12 @@ import {
   registerSuccessfulLogin,
   bootstrapAdmin,
 } from "./_shared";
-import { DUMMY_PASSWORD_HASH, verifyPassword } from "./_crypto";
+import {
+  DUMMY_PASSWORD_HASH,
+  hashPassword,
+  passwordHashNeedsUpgrade,
+  verifyPassword,
+} from "./_crypto";
 import { createSessionTokens } from "./_sessions";
 import { isPlainObject } from "../_request";
 import { AUTH_INPUT_LIMITS } from "./_limits";
@@ -86,7 +91,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Mesmo quando o e-mail não existe, executa PBKDF2 sobre um hash sentinela.
   // Estado inexistente/inativo/bloqueado e senha incorreta compartilham a mesma
   // resposta externa para não funcionar como oráculo de cadastro.
-  const ok = await verifyPassword(password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
+  const needsPasswordUpgrade = user
+    ? passwordHashNeedsUpgrade(user.password_hash)
+    : false;
+  const [ok] = await Promise.all([
+    verifyPassword(password, user?.password_hash ?? DUMMY_PASSWORD_HASH),
+    // Hashes legados custam menos que o work factor atual. Um dummy atual em
+    // paralelo impede que falhas antigas revelem a existência da conta por
+    // diferença grosseira de tempo, sem somar os dois custos na latência.
+    needsPasswordUpgrade
+      ? verifyPassword(password, DUMMY_PASSWORD_HASH)
+      : Promise.resolve(false),
+  ]);
   if (!user || !user.is_active || locked || !ok) {
     if (user && user.is_active && !locked && !ok) {
       await registerFailedAttempt(env.DB, user);
@@ -107,7 +123,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   // Entre a leitura e este ponto a conta pode ter sido desativada/bloqueada.
   // O UPDATE condicional impede emitir sessão para um estado que deixou de valer.
-  if (!(await registerSuccessfulLogin(env.DB, user))) {
+  const upgradedPasswordHash = needsPasswordUpgrade
+    ? await hashPassword(password)
+    : null;
+  if (!(await registerSuccessfulLogin(env.DB, user, upgradedPasswordHash))) {
     return json(INVALID, 401);
   }
   try {

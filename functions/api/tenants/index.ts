@@ -2,6 +2,7 @@ import { getContextUser } from "../auth/_authorization";
 import { normalizeClinicSlug, isValidClinicSlug } from "../../../shared/tenant";
 import { isValidTimeZone } from "../../../shared/operations";
 import { tenantError, tenantJson, type TenantEnv } from "../tenant/_core";
+import { COMMERCIAL_PLAN, trialEndsAt } from "../../../shared/billing";
 
 function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -56,6 +57,18 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Perfil sem permissão para criar clínica.", "FORBIDDEN", 403);
   }
 
+  const priorTrial = await db
+    .prepare("SELECT clinic_id FROM commercial_trial_claims WHERE user_id = ? LIMIT 1")
+    .bind(user.id)
+    .first<{ clinic_id: string }>();
+  if (priorTrial) {
+    return tenantError(
+      "Esta conta já utilizou o período de avaliação. Abra o plano existente ou fale com o suporte para uma nova unidade.",
+      "TRIAL_ALREADY_USED",
+      409,
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     const parsed = await context.request.json();
@@ -85,6 +98,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   const clinicId = crypto.randomUUID();
   const now = new Date().toISOString();
+  const trialEnd = trialEndsAt(new Date(now));
   const auditId = crypto.randomUUID();
 
   try {
@@ -105,6 +119,20 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         .bind(clinicId, user.id, user.id, now, now),
       db
         .prepare(
+          `INSERT INTO billing_accounts
+            (clinic_id, plan_code, status, seat_quantity, provider, trial_ends_at,
+             cancel_at_period_end, created_at, updated_at)
+           VALUES (?, ?, 'trialing', 1, 'stripe', ?, 0, ?, ?)`,
+        )
+        .bind(clinicId, COMMERCIAL_PLAN.code, trialEnd, now, now),
+      db
+        .prepare(
+          `INSERT INTO commercial_trial_claims (user_id, clinic_id, claimed_at)
+           VALUES (?, ?, ?)`,
+        )
+        .bind(user.id, clinicId, now),
+      db
+        .prepare(
           `INSERT INTO saas_audit_log
             (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
            VALUES (?, ?, ?, 'clinic_create', 'clinic', ?, ?, ?)`,
@@ -114,6 +142,17 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (/unique|constraint/i.test(message)) {
+      const wonByConcurrentRequest = await db
+        .prepare("SELECT clinic_id FROM commercial_trial_claims WHERE user_id = ? LIMIT 1")
+        .bind(user.id)
+        .first<{ clinic_id: string }>();
+      if (wonByConcurrentRequest) {
+        return tenantError(
+          "Esta conta já utilizou o período de avaliação. Abra o plano existente ou fale com o suporte para uma nova unidade.",
+          "TRIAL_ALREADY_USED",
+          409,
+        );
+      }
       return tenantError("Este identificador de clínica já está em uso.", "CLINIC_SLUG_CONFLICT", 409);
     }
     console.error("[tenants.POST] DB error", error);
@@ -129,6 +168,12 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       timezone,
       status: "active",
       role: "owner",
+      billing: {
+        planCode: COMMERCIAL_PLAN.code,
+        status: "trialing",
+        seatQuantity: 1,
+        trialEndsAt: trialEnd,
+      },
     },
     201,
   );

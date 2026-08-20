@@ -114,16 +114,21 @@ export async function registerFailedAttempt(db: D1Database, u: UserRow): Promise
     .run();
 }
 
-export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promise<boolean> {
+export async function registerSuccessfulLogin(
+  db: D1Database,
+  u: UserRow,
+  upgradedPasswordHash: string | null = null,
+): Promise<boolean> {
   const now = new Date().toISOString();
   const result = await db
     .prepare(
       `UPDATE users SET failed_login_attempts = 0, locked_until = NULL,
-              last_login_at = ?
+              password_hash = COALESCE(?, password_hash), last_login_at = ?
         WHERE id = ? AND is_active = 1
+          AND password_hash = ?
           AND (locked_until IS NULL OR julianday(locked_until) <= julianday(?))`,
     )
-    .bind(now, u.id, now)
+    .bind(upgradedPasswordHash, now, u.id, u.password_hash, now)
     .run();
   return (result.meta?.changes ?? 0) === 1;
 }
@@ -162,7 +167,7 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
       await db.batch([
         db
           .prepare(
-            `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 0,
+            `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 1,
                     failed_login_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?`,
           )
           .bind(hash, now, existing.id),
@@ -189,7 +194,7 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
       .prepare(
         `INSERT INTO users (id, name, email, role, is_active, password_hash,
                 must_change_password, failed_login_attempts, created_at, updated_at)
-         VALUES (?, ?, ?, 'admin', 1, ?, 0, 0, ?, ?)`,
+         VALUES (?, ?, ?, 'admin', 1, ?, 1, 0, ?, ?)`,
       )
       .bind(id, name, email, hash, now, now),
     db

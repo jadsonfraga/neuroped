@@ -25,6 +25,15 @@ function operationalRolesForPath(path: string, roles?: RouteRole[]): RouteRole[]
 export function RouteGuard({ children, roles }: { children: ReactNode; roles?: RouteRole[] }) {
   const [location] = useLocation();
   const { accessMode, isAuthenticated, isLoading, user } = useAuth();
+  if (
+    accessMode === "remote"
+    && isAuthenticated
+    && !isLoading
+    && user?.mustChangePassword
+    && !location.startsWith("/alterar-senha")
+  ) {
+    return <Redirect to="/alterar-senha?required=1" />;
+  }
   const decision = decideRouteAccess({
     path: location,
     accessMode,

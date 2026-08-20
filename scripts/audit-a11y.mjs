@@ -136,6 +136,10 @@ function runStatic() {
     const relative = file.slice(repoRoot.length + 1).replaceAll("\\", "/");
     for (const match of source.matchAll(/<img\b[^>]*>/g)) if (!/\balt\s*=/.test(match[0])) violations.push({ id: "image-alt", where: relative });
     for (const match of source.matchAll(/<button\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/button>/g)) if (!hasName(match[1])) violations.push({ id: "button-name", where: relative });
+    // O close do toast vira um <button> no DOM, mas não aparece como tal no
+    // JSX-fonte. Protegê-lo aqui evita depender de Chromium para detectar a
+    // regressão crítica de nome acessível em toda notificação do aplicativo.
+    for (const match of source.matchAll(/<ToastPrimitives\.Close\b([^>]*)>/g)) if (!hasName(match[1])) violations.push({ id: "button-name", where: `${relative} (ToastClose)` });
     for (const match of source.matchAll(/<Label\b[^>]*\baria-pressed\s*=/g)) violations.push({ id: "aria-allowed-attr", where: `${relative} (<Label aria-pressed>)` });
     for (const match of source.matchAll(/<a\b([^>]*)>\s*(<[A-Z][A-Za-z0-9]*\b[^>]*\/>)\s*<\/a>/g)) if (!hasName(match[1])) violations.push({ id: "link-name", where: relative });
     for (const match of source.matchAll(/<input\b((?:=>|[^>])*?)\/?>/g)) if (!/type\s*=\s*["']hidden["']/.test(match[1]) && !hasFieldName(match[1])) violations.push({ id: "input-name", where: relative });

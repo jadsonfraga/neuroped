@@ -11,6 +11,11 @@ import {
   tenantJson,
   type TenantEnv,
 } from "../../tenant/_core";
+import {
+  activeMemberCount,
+  getBillingAccount,
+  pendingInvitationCount,
+} from "../../billing/_core";
 
 const GLOBAL_CLINICAL_ROLES = new Set(["admin", "professional"]);
 const TENANT_CLINICAL_ROLES = new Set<ClinicMembershipRole>([
@@ -31,6 +36,11 @@ function cleanText(value: unknown, max: number): string {
 function isLastOwnerConstraintError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return message.includes("LAST_OWNER_PROTECTED");
+}
+
+function isSeatLimitConstraintError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("SEAT_LIMIT_REACHED");
 }
 
 type ManagerContextInput = {
@@ -155,7 +165,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     .first<{ id: string; name: string; email: string; global_role: string }>();
   if (!target) {
     return tenantError(
-      "Usuário ainda não possui conta NeuroPed. O fluxo de convite por e-mail será adicionado antes do piloto.",
+      "Usuário ainda não possui conta NeuroPed. Crie um convite seguro na área Plano e equipe.",
       "USER_NOT_REGISTERED",
       404,
     );
@@ -178,6 +188,24 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     )
     .bind(auth.clinicId, target.id)
     .first<{ role: ClinicMembershipRole; active: number }>();
+
+  if (!currentMembership?.active) {
+    const [account, activeMembers, pendingInvitations] = await Promise.all([
+      getBillingAccount(auth.db, auth.clinicId),
+      activeMemberCount(auth.db, auth.clinicId),
+      pendingInvitationCount(auth.db, auth.clinicId),
+    ]);
+    if (!account) {
+      return tenantError("Conta comercial da clínica ausente.", "BILLING_ACCOUNT_MISSING", 409);
+    }
+    if (activeMembers + pendingInvitations >= account.seat_quantity) {
+      return tenantError(
+        "Todos os assentos do plano estão ocupados. Aumente a quantidade antes de adicionar outro membro.",
+        "SEAT_LIMIT_REACHED",
+        402,
+      );
+    }
+  }
 
   if (
     currentMembership?.active === 1 &&
@@ -231,6 +259,13 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       return tenantError("Membership mudou durante a operação.", "MEMBERSHIP_STALE", 409);
     }
   } catch (error) {
+    if (isSeatLimitConstraintError(error)) {
+      return tenantError(
+        "Todos os assentos do plano estão ocupados. Aumente a quantidade antes de adicionar outro membro.",
+        "SEAT_LIMIT_REACHED",
+        402,
+      );
+    }
     if (isLastOwnerConstraintError(error)) {
       return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
     }

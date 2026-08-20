@@ -9,8 +9,7 @@
 //   5. nunca injeta perfumaria de IA nem "(est.)".
 // Rodar: node --import tsx tests/laudo/test-gerador-embed.test.ts
 // ============================================================================
-import { gerarEValidar, parseDiagnosticoProsa, gerarLaudo } from "../../client/src/lib/laudo/gerador";
-import { validarDoutrina } from "../../client/src/lib/laudo/doutrina";
+import { gerarEValidar, parseDiagnosticoProsa } from "../../client/src/lib/laudo/gerador";
 import { laudoParaTexto } from "../../client/src/lib/laudo/paraTexto";
 
 let pass = 0,

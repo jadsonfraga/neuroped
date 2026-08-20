@@ -258,6 +258,40 @@ jobs:
           }
           echo "Tabela de memória clínica persistente OK."
 
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0012_commercial_readiness.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('billing_accounts','billing_events','clinic_invitations','commercial_trial_claims') ORDER BY name;" \
+            > /tmp/commercial-tables.txt 2>&1
+          cat /tmp/commercial-tables.txt
+          for table in billing_accounts billing_events clinic_invitations commercial_trial_claims; do
+            grep -q "$table" /tmp/commercial-tables.txt || {
+              echo "::error::tabela comercial ausente: $table"
+              exit 1
+            }
+          done
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name IN ('ux_billing_provider_customer','ux_billing_provider_subscription','ux_billing_provider_checkout_session','idx_billing_events_clinic_time','ux_clinic_invitations_pending_email') ORDER BY name;" \
+            > /tmp/commercial-indexes.txt 2>&1
+          cat /tmp/commercial-indexes.txt
+          for index in ux_billing_provider_customer ux_billing_provider_subscription ux_billing_provider_checkout_session idx_billing_events_clinic_time ux_clinic_invitations_pending_email; do
+            grep -q "$index" /tmp/commercial-indexes.txt || {
+              echo "::error::índice comercial ausente: $index"
+              exit 1
+            }
+          done
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_clinic_memberships_billing_seat_insert','trg_clinic_memberships_billing_seat_reactivate','trg_clinic_invitations_billing_seat_insert') ORDER BY name;" \
+            > /tmp/commercial-triggers.txt 2>&1
+          cat /tmp/commercial-triggers.txt
+          for trigger in trg_clinic_memberships_billing_seat_insert trg_clinic_memberships_billing_seat_reactivate trg_clinic_invitations_billing_seat_insert; do
+            grep -q "$trigger" /tmp/commercial-triggers.txt || {
+              echo "::error::trava física de assento ausente: $trigger"
+              exit 1
+            }
+          done
+          echo "Fundação comercial, convites, assentos e idempotência de cobrança OK."
+
       - name: Configurar secrets/vars de auth no Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -266,13 +300,19 @@ jobs:
           ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
           ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_NM: ${{ secrets.ADMIN_NAME }}
+          STRIPE_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRICE: ${{ secrets.STRIPE_PRICE_ID }}
         run: |
           set -euo pipefail
           jwt_secret="$JWT_SECRET"
           admin_pw="$ADMIN_PW"
           admin_mail="$ADMIN_MAIL"
           admin_name="$ADMIN_NM"
-          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM
+          stripe_key="$STRIPE_KEY"
+          stripe_webhook="$STRIPE_WEBHOOK"
+          stripe_price="$STRIPE_PRICE"
+          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM STRIPE_KEY STRIPE_WEBHOOK STRIPE_PRICE
           put_required() {
             [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
             printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
@@ -288,6 +328,9 @@ jobs:
           put_optional ADMIN_INITIAL_PASSWORD "$admin_pw"
           put_optional ADMIN_EMAIL "$admin_mail"
           put_optional ADMIN_NAME "$admin_name"
+          put_optional STRIPE_SECRET_KEY "$stripe_key"
+          put_optional STRIPE_WEBHOOK_SECRET "$stripe_webhook"
+          put_optional STRIPE_PRICE_ID "$stripe_price"
 
       - name: Deploy para Cloudflare Pages
         env:

@@ -1,10 +1,8 @@
 // Teste do motor SuperNeuroPed — perfil do laudo modelo PANT real
 // Sem dependência de API externa (sem Claude)
 import {
-  gerarLaudoSuper,
   gerarEValidarSuper,
   laudoSuperParaTexto,
-  qaSuper,
   type SuperEntrada,
 } from "../../client/src/lib/laudo/modeloSuper";
 

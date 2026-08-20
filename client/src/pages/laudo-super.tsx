@@ -94,11 +94,11 @@ function buildPrintHtmlSuper(texto: string, paciente: string): string {
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Carlito:ital,wght@0,400;0,700;1,400&family=Marcellus&display=swap" rel="stylesheet">
 <style>
 @page{size:A4;margin:13mm 15mm 19mm 15mm}
-:root{--navy:#1E2A4A;--navyd:#0B1024;--bordo:#7A1F2B;--gold:#C9A961;--goldd:#A88844;
-  --teal:#2E7163;--salmon:#A8463D;--ink:#2C2C3E;--graf:#3A3A4C;--ink2:#5B5B6B;--line:#D9D2C2;
-  --ivory:#FBF8F0;--box:#F7F4EC;--box2:#F3F5F2}
+:root{--navy:hsl(223.636 42.308% 20.392%);--navyd:hsl(228 53.191% 9.216%);--bordo:hsl(352.088 59.477% 30%);--gold:hsl(41.538 49.057% 58.431%);--goldd:hsl(40.8 42.373% 46.275%);
+  --teal:hsl(167.463 42.138% 31.176%);--salmon:hsl(5.047 46.725% 44.902%);--ink:hsl(240 16.981% 20.784%);--graf:hsl(240 13.433% 26.275%);--ink2:hsl(240 8.081% 38.824%);--line:hsl(41.739 23.232% 80.588%);
+  --ivory:hsl(43.636 57.895% 96.275%);--box:hsl(43.636 40.741% 94.706%);--box2:hsl(100 13.043% 95.49%);--paper:hsl(0 0% 100%)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Carlito',Arial,sans-serif;font-size:10pt;color:var(--ink);background:#fff}
+body{font-family:'Carlito',Arial,sans-serif;font-size:10pt;color:var(--ink);background:var(--paper)}
 
 /* ── capa ── */
 .cover{padding:10mm 10mm 8mm;border:1.6pt solid var(--navyd);border-radius:3mm}
@@ -136,7 +136,7 @@ body{font-family:'Carlito',Arial,sans-serif;font-size:10pt;color:var(--ink);back
 .doc .b-pro{color:var(--teal)}
 .doc .b-con{color:var(--salmon)}
 .doc table{width:100%;border-collapse:collapse;margin:2.5mm 0;font-size:8.6pt}
-.doc th{background:var(--navyd);color:#fff;font-weight:700;text-align:left;padding:1.6mm 2.5mm}
+.doc th{background:var(--navyd);color:var(--paper);font-weight:700;text-align:left;padding:1.6mm 2.5mm}
 .doc td{border-bottom:.4pt solid var(--line);padding:1.6mm 2.5mm;vertical-align:top}
 .doc .sig{text-align:center;margin-top:9mm;padding-top:5mm;border-top:.6pt solid var(--navyd)}
 .doc .sig .nm{font-family:'Marcellus',serif;font-size:14pt;color:var(--navyd)}

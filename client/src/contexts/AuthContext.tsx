@@ -18,7 +18,7 @@ interface AuthContextValue {
   isLoading: boolean;
   accessMode: AccessMode;
   remoteConfigured: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -90,10 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (email: string, password: string): Promise<AuthUser> => {
     const data = await loginRequest(email, password);
     await clearSessionScopedClientState();
     setUser(data.user);
+    return data.user;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {

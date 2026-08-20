@@ -5,26 +5,38 @@ on:
     paths:
       - "shared/tenant.ts"
       - "shared/clinical-core.ts"
+      - "shared/billing.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
       - "functions/api/live/**"
+      - "functions/api/billing/**"
+      - "functions/api/auth/invite.ts"
+      - "functions/api/auth/_passwordPolicy.ts"
       - "db/migrations/0009_saas_phase1_foundation.sql"
       - "db/migrations/0010_saas_phase1_hardening.sql"
+      - "db/migrations/0012_commercial_readiness.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
+      - "tests/unit/commercial-readiness.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
     paths:
       - "shared/tenant.ts"
       - "shared/clinical-core.ts"
+      - "shared/billing.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
       - "functions/api/live/**"
+      - "functions/api/billing/**"
+      - "functions/api/auth/invite.ts"
+      - "functions/api/auth/_passwordPolicy.ts"
       - "db/migrations/0009_saas_phase1_foundation.sql"
       - "db/migrations/0010_saas_phase1_hardening.sql"
+      - "db/migrations/0012_commercial_readiness.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
+      - "tests/unit/commercial-readiness.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -49,5 +61,7 @@ jobs:
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
       - name: Testar hardening de owner, provenance e supersessão
         run: node --import tsx tests/unit/saas-phase1-hardening.test.ts
+      - name: Testar entitlement e cobrança comercial
+        run: node --import tsx tests/unit/commercial-readiness.test.ts
       - name: Hard release gate
         run: npm run verify

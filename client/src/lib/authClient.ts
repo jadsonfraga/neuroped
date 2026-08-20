@@ -48,6 +48,15 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+export interface InvitationPreview {
+  email: string;
+  clinicName: string;
+  role: "owner" | "clinic_admin" | "professional" | "assistant" | "financial";
+  expiresAt: string;
+  existingAccount: boolean;
+  existingName: string | null;
+}
+
 function configuredAuthMode(): AuthMode {
   return resolveAuthMode(
     import.meta.env?.VITE_AUTH_MODE,
@@ -167,6 +176,55 @@ export async function loginRequest(email: string, password: string): Promise<Log
   writeToken(REFRESH_KEY, data.refreshToken);
   writeToken(USER_KEY, JSON.stringify(data.user));
   return data;
+}
+
+export async function changePasswordRequest(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const response = await authFetch("/api/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { error?: string; code?: string };
+    const error = new Error(payload.error || `Não foi possível alterar a senha (${response.status}).`);
+    Object.assign(error, { status: response.status, code: payload.code });
+    throw error;
+  }
+  // O backend revoga todas as famílias, inclusive a atual. Limpar antes de
+  // navegar impede que uma resposta concorrente de refresh ressuscite a sessão.
+  clearAuth();
+}
+
+async function publicInvitationFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, init);
+  const payload = await response.json().catch(() => ({})) as T & { error?: string; code?: string };
+  if (!response.ok) {
+    const error = new Error(payload.error || `Convite indisponível (${response.status}).`);
+    Object.assign(error, { status: response.status, code: payload.code });
+    throw error;
+  }
+  return payload;
+}
+
+export function previewInvitation(token: string): Promise<InvitationPreview> {
+  return publicInvitationFetch(`/api/auth/invite?token=${encodeURIComponent(token)}`, {
+    cache: "no-store",
+  });
+}
+
+export function acceptInvitationRequest(input: {
+  token: string;
+  name?: string;
+  password: string;
+}): Promise<{ email: string; clinicName: string; accountCreated: boolean }> {
+  return publicInvitationFetch("/api/auth/invite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 }
 
 async function performRefresh(refreshToken: string, epochAtStart: number): Promise<string | null> {
