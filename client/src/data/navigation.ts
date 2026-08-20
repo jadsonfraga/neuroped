@@ -35,6 +35,7 @@ import {
   Thermometer,
   Users,
   Zap,
+  Globe2,
 } from "lucide-react";
 
 export interface NavItem {
@@ -65,6 +66,7 @@ export const navSections: NavSection[] = [
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
+      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
   },
   {

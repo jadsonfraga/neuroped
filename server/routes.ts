@@ -31,6 +31,7 @@ import { registerFileRoutes } from "./routes/files.js";
 import { registerConsentRoutes } from "./routes/consents.js";
 import { registerConectaRoutes } from "./routes/conecta.js";
 import { registerClinicalCoreRoutes } from "./routes/clinical-core.js";
+import { registerConsultationRoutes } from "./routes/consultations.js";
 import {
   canAccessPatient,
   canAccessScaleResult,
@@ -112,6 +113,9 @@ export async function registerRoutes(
 
   // ----- Clinical Core: ledger longitudinal canônico e rastreável -----
   registerClinicalCoreRoutes(app);
+
+  // ----- Consultas SOAP sobre o Clinical Core -----
+  registerConsultationRoutes(app);
 
   // ----- Agenda interna e agendamento público -----
   registerBookingRoutes(app);

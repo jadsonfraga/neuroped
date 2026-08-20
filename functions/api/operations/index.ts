@@ -97,6 +97,27 @@ function addDaysLocalMinute(value: string, days: number): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}T${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
 }
 
+async function patientBelongsToProvider(
+  db: D1Database,
+  patientId: string,
+  providerUserId: string,
+): Promise<boolean> {
+  const tables = ["patients", "patients_demo"];
+  for (const table of tables) {
+    try {
+      const row = await db
+        .prepare(`SELECT id FROM ${table} WHERE id = ? AND owner_user_id = ? LIMIT 1`)
+        .bind(patientId, providerUserId)
+        .first<{ id: string }>();
+      if (row?.id) return true;
+    } catch {
+      // A tabela pode não existir no ambiente Cloudflare correspondente; a
+      // próxima tabela compatível será tentada sem alterar o contrato da API.
+    }
+  }
+  return false;
+}
+
 async function getDashboard(
   db: D1Database,
   env: OperationsEnv,
@@ -507,6 +528,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const endsAtLocal = ends.toISOString().slice(0, 16);
       const appointmentId = `apt-${crypto.randomUUID()}`;
       const patientId = principal.delegated ? null : cleanOptionalText(body.patientId, 100);
+      if (patientId && !(await patientBelongsToProvider(env.DB, patientId, user.id))) {
+        return errorResponse("Paciente não encontrado ou sem vínculo com este profissional.", "PATIENT_NOT_FOUND", 404);
+      }
       const insertAppointment = env.DB.prepare(
         `INSERT INTO appointments
           (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
