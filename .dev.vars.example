@@ -1,0 +1,6 @@
+# Asaas — use apenas valores sandbox no desenvolvimento.
+# Em produção, cadastre como secrets no Cloudflare; nunca commite valores reais.
+ASAAS_ENVIRONMENT=sandbox
+ASAAS_API_KEY=__SET_IN_CLOUDFLARE_SECRET__
+ASAAS_WEBHOOK_TOKEN=__SET_IN_CLOUDFLARE_SECRET__
+APP_BASE_URL=http://localhost:5173
