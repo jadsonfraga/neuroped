@@ -113,7 +113,7 @@ function normalizar(texto: string) {
 function badgeSelo(selo: Selo) {
   if (selo === "Ouro") return "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100";
   if (selo === "Prata") return "border-slate-300 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100";
-  return "border-orange-300 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-amber-950/30 dark:text-orange-100";
+  return "border-orange-300 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-100";
 }
 
 function badgePolitica(politica: Politica) {
