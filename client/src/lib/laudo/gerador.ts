@@ -117,9 +117,9 @@ export function parseDiagnosticoProsa(
 /** Tenta extrair uma caracterização curta da prosa (ex.: "TEA nível 1 de gravidade" → "nível 1 de gravidade"). */
 function caracterizacaoDeProsa(prosa: string): string {
   const m =
-    prosa.match(/(n[íi]vel\s+\d+[^\.,;]*)/i) ||
-    prosa.match(/(leve|moderad[oa]|grave|sever[oa])[^\.,;]{0,30}/i) ||
-    prosa.match(/(sem prejuízo funcional|com prejuízo [^\.]{0,40})/i);
+    prosa.match(/(n[íi]vel\s+\d+[^.,;]*)/i) ||
+    prosa.match(/(leve|moderad[oa]|grave|sever[oa])[^.,;]{0,30}/i) ||
+    prosa.match(/(sem prejuízo funcional|com prejuízo [^.]{0,40})/i);
   if (!m) return "segundo critérios do DSM-5-TR e da CID-11";
   return m[1].trim().replace(/\.$/, "");
 }
