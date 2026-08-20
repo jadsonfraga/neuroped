@@ -16,7 +16,7 @@ async function authorize(context: { env: Env; data?: unknown }, row: Row) {
 }
 
 export const onRequestPatch: PagesFunction<Env> = async (context) => {
-  if (!context.env.DB) return error("Memória persistente indisponível.", "DB_REQUIRED", 503);
+  if (!context.env.DB) return error("Persistência da memória indisponível.", "DB_REQUIRED", 503);
   const id = String(context.params.id ?? "");
   const row = await context.env.DB.prepare("SELECT id, patient_id, title, content, category, source, tags FROM clinical_memory_notes_demo WHERE id = ? AND is_demo = 1").bind(id).first<Row>();
   if (!row) return error("Nota não encontrada.", "NOT_FOUND", 404);
@@ -41,7 +41,7 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
 };
 
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
-  if (!context.env.DB) return error("Memória persistente indisponível.", "DB_REQUIRED", 503);
+  if (!context.env.DB) return error("Persistência da memória indisponível.", "DB_REQUIRED", 503);
   const id = String(context.params.id ?? "");
   const row = await context.env.DB.prepare("SELECT id, patient_id, title, content, category, source, tags FROM clinical_memory_notes_demo WHERE id=? AND is_demo=1").bind(id).first<Row>();
   if (!row) return error("Nota não encontrada.", "NOT_FOUND", 404);
