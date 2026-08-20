@@ -32,6 +32,22 @@ const SCOPE_TO_ROLES: Record<BillingScope, string[]> = {
   export: ["owner", "clinic_admin", "professional", "assistant", "financial"],
 };
 
+function suspendedResult(
+  base: EntitlementSnapshot,
+  scope: BillingScope,
+  isPastDue: boolean,
+): EntitlementResult {
+  if (scope === "export") {
+    return { ...base, isPastDue, isSuspended: true, deniedReason: null };
+  }
+  return {
+    ...base,
+    isPastDue,
+    isSuspended: true,
+    deniedReason: "ENTITLEMENT_SUSPENDED",
+  };
+}
+
 export function evaluateEntitlement(
   row: EntitlementRow | null | undefined,
   scope: BillingScope,
@@ -51,49 +67,66 @@ export function evaluateEntitlement(
   };
   if (!row) return empty;
 
+  const trialEndsAt = row.trial_ends_at ? Date.parse(row.trial_ends_at) : Number.NaN;
+  const trialMarked =
+    row.trial_active === 1 || row.customer_status === "trial" || row.subscription_status === "trial";
+  const trialValid = trialMarked && Number.isFinite(trialEndsAt) && trialEndsAt > now.getTime();
+
   const base: EntitlementSnapshot = {
     userId: row.user_id,
     clinicId: row.clinic_id,
     role: row.membership_role,
     planId: row.plan_id,
     subscriptionStatus: (row.subscription_status ?? null) as SubscriptionStatus | null,
-    trialActive: row.trial_active === 1,
+    trialActive: trialValid,
     isActive: row.is_active === 1,
   };
 
   if (!base.isActive) {
-    return { ...base, isPastDue: false, isSuspended: false, deniedReason: "ENTITLEMENT_MEMBERSHIP_INACTIVE" };
+    return {
+      ...base,
+      isPastDue: false,
+      isSuspended: false,
+      deniedReason: "ENTITLEMENT_MEMBERSHIP_INACTIVE",
+    };
   }
 
   const roleAllowed = (SCOPE_TO_ROLES[scope] ?? []).includes(row.membership_role);
   if (!roleAllowed) {
-    return { ...base, isPastDue: false, isSuspended: false, deniedReason: "ENTITLEMENT_ROLE_NOT_ALLOWED" };
+    return {
+      ...base,
+      isPastDue: false,
+      isSuspended: false,
+      deniedReason: "ENTITLEMENT_ROLE_NOT_ALLOWED",
+    };
   }
 
   const sub = row.subscription_status;
   const cust = row.customer_status;
-  const terminal = cust === "suspended" || cust === "canceled" || sub === "canceled" || sub === "expired";
-  if (terminal) {
-    if (scope === "export") {
-      return { ...base, isPastDue: false, isSuspended: true, deniedReason: null };
-    }
-    return { ...base, isPastDue: false, isSuspended: true, deniedReason: "ENTITLEMENT_SUSPENDED" };
-  }
+
+  // Estado do customer prevalece sobre qualquer snapshot de subscription.
+  const terminal =
+    cust === "suspended" || cust === "canceled" || sub === "canceled" || sub === "expired";
+  if (terminal) return suspendedResult(base, scope, false);
 
   const isPastDue = sub === "past_due" || cust === "past_due";
-  if (isPastDue && row.grace_ends_at) {
+  if (isPastDue) {
+    // Fail-closed: past_due sem carência válida não pode conceder acesso indefinido.
+    if (!row.grace_ends_at) return suspendedResult(base, scope, true);
     const graceEnds = Date.parse(row.grace_ends_at);
-    if (Number.isFinite(graceEnds) && graceEnds <= now.getTime()) {
-      if (scope === "export") {
-        return { ...base, isPastDue: true, isSuspended: true, deniedReason: null };
-      }
-      return { ...base, isPastDue: true, isSuspended: true, deniedReason: "ENTITLEMENT_SUSPENDED" };
+    if (!Number.isFinite(graceEnds) || graceEnds <= now.getTime()) {
+      return suspendedResult(base, scope, true);
     }
   }
 
-  const isActiveOrTrial = sub === "active" || isPastDue || base.trialActive || cust === "active";
+  const isActiveOrTrial = sub === "active" || isPastDue || cust === "active" || trialValid;
   if (!isActiveOrTrial) {
-    return { ...base, isPastDue: false, isSuspended: false, deniedReason: "ENTITLEMENT_NO_SUBSCRIPTION" };
+    return {
+      ...base,
+      isPastDue: false,
+      isSuspended: false,
+      deniedReason: "ENTITLEMENT_NO_SUBSCRIPTION",
+    };
   }
 
   return {

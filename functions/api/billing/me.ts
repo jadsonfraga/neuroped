@@ -1,5 +1,6 @@
 /** GET /api/billing/me — snapshot live do entitlement do usuário logado. */
 import type { Env, PublicUser } from "../auth/_shared";
+import { getContextUser } from "../auth/_authorization";
 import { tenantJson, tenantError } from "../tenant/_core";
 import { evaluateEntitlement, type BillingScope } from "../../../server/lib/billingEntitlement";
 
@@ -18,6 +19,13 @@ interface SnapshotRow {
 
 export interface BillingEnv extends Env {
   DB?: D1Database;
+}
+
+const BILLING_SCOPES = new Set<BillingScope>(["clinical", "finance", "admin", "export"]);
+
+function scopeFromRequest(request: Request): BillingScope | null {
+  const raw = (new URL(request.url).searchParams.get("scope") ?? "clinical").trim();
+  return BILLING_SCOPES.has(raw as BillingScope) ? (raw as BillingScope) : null;
 }
 
 export async function billingMe(env: BillingEnv, user: PublicUser, scope: BillingScope): Promise<Response> {
@@ -60,3 +68,13 @@ export async function billingMe(env: BillingEnv, user: PublicUser, scope: Billin
     },
   });
 }
+
+export const onRequestGet: PagesFunction<BillingEnv> = async (context) => {
+  const user = getContextUser(context);
+  if (!user) return tenantError("Não autenticado.", "UNAUTHENTICATED", 401);
+
+  const scope = scopeFromRequest(context.request);
+  if (!scope) return tenantError("Escopo de billing inválido.", "BILLING_SCOPE_INVALID", 400);
+
+  return billingMe(context.env, user, scope);
+};

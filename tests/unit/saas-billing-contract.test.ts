@@ -1,12 +1,5 @@
 /**
  * saas-billing-contract.test.ts — contrato de domínio do billing SaaS.
- *
- * Cobre as regras da issue #594 sem tocar infraestrutura:
- * - preço canônico de R$99/assento/mês;
- * - prorata;
- * - transições de status em falha/sucesso de pagamento;
- * - validação de convites (aceito/revogado/expirado);
- * - avaliação de entitlement por escopo.
  */
 import assert from "node:assert/strict";
 import {
@@ -40,52 +33,48 @@ const PLAN: BillingPlan = {
   billingCycleDays: 30,
 };
 
-// ── preço canônico ──────────────────────────────────────────────────────────
-assert.equal(monthlyPriceCents(PLAN, 1), 9900, "cobra R$99/assento/mês");
-assert.equal(monthlyPriceCents(PLAN, 3), 29700, "3 assentos = R$297/mês");
-assert.throws(() => monthlyPriceCents(PLAN, 0), /BILLING_INVALID_SEATS/, "0 assentos é inválido");
+assert.equal(monthlyPriceCents(PLAN, 1), 9900);
+assert.equal(monthlyPriceCents(PLAN, 3), 29700);
+assert.throws(() => monthlyPriceCents(PLAN, 0), /BILLING_INVALID_SEATS/);
 
 {
   const from = new Date("2026-08-20T00:00:00Z");
   const to = new Date("2026-08-25T00:00:00Z");
-  // 5 dias de 30 → 9900/30 = 330/dia → 1650 (arredondado para cima)
-  assert.equal(prorataCents(PLAN, 1, from, to), 1650, "prorata arredonda para cima");
+  assert.equal(prorataCents(PLAN, 1, from, to), 1650);
 }
 
-// ── transições do customer ──────────────────────────────────────────────────
 {
   const now = new Date("2026-08-20T00:00:00Z");
   const recent = new Date(now.getTime() - 24 * 3600 * 1000);
-  assert.equal(transitionCustomerOnPaymentFailure("active", recent, now), "past_due", "active → past_due");
-  assert.equal(transitionCustomerOnPaymentFailure("trial", recent, now), "past_due", "trial → past_due");
+  assert.equal(transitionCustomerOnPaymentFailure("active", recent, now), "past_due");
+  assert.equal(transitionCustomerOnPaymentFailure("trial", recent, now), "past_due");
 
   const justFailed = new Date(now.getTime() - 3 * 24 * 3600 * 1000);
-  assert.equal(transitionCustomerOnPaymentFailure("past_due", justFailed, now), null, "dentro da carência não suspende");
+  assert.equal(transitionCustomerOnPaymentFailure("past_due", justFailed, now), null);
   const oldFailure = new Date(now.getTime() - (PAST_DUE_GRACE_DAYS + 1) * 24 * 3600 * 1000);
-  assert.equal(transitionCustomerOnPaymentFailure("past_due", oldFailure, now), "suspended", "após 7 dias → suspended");
+  assert.equal(transitionCustomerOnPaymentFailure("past_due", oldFailure, now), "suspended");
 
-  assert.equal(transitionCustomerOnPaymentSuccess("past_due", true), "active", "pagamento restaura active");
-  assert.equal(transitionCustomerOnPaymentSuccess("trial", true), "active", "trial pago vira active");
-  assert.equal(transitionCustomerOnPaymentSuccess("active", true), "active", "active permanece");
+  assert.equal(transitionCustomerOnPaymentSuccess("past_due", true), "active");
+  assert.equal(transitionCustomerOnPaymentSuccess("trial", true), "active");
+  assert.equal(transitionCustomerOnPaymentSuccess("active", true), "active");
+  assert.equal(transitionCustomerOnPaymentSuccess("canceled", true), "canceled");
 }
 
-// ── convites ────────────────────────────────────────────────────────────────
 {
   const future = new Date(Date.now() + INVITATION_EXPIRY_MS).toISOString();
   const past = new Date(Date.now() - 60_000).toISOString();
 
-  assert.equal(isInvitationAcceptable({ status: "pending", expiresAt: future }).ok, true, "pendente futuro é aceitável");
-  assert.equal(isInvitationAcceptable({ status: "accepted", expiresAt: future }).ok, false, "aceito é rejeitado");
-  assert.equal(isInvitationAcceptable({ status: "revoked", expiresAt: future }).ok, false, "revogado é rejeitado");
-  assert.equal(isInvitationAcceptable({ status: "pending", expiresAt: past }).ok, false, "expirado é rejeitado");
+  assert.equal(isInvitationAcceptable({ status: "pending", expiresAt: future }).ok, true);
+  assert.equal(isInvitationAcceptable({ status: "accepted", expiresAt: future }).ok, false);
+  assert.equal(isInvitationAcceptable({ status: "revoked", expiresAt: future }).ok, false);
+  assert.equal(isInvitationAcceptable({ status: "pending", expiresAt: past }).ok, false);
 
-  assert.equal(normalizeInvitationEmail(" Dra.Jadson@Clinica.com.br "), "dra.jadson@clinica.com.br", "normaliza e-mail");
-  assert.equal(normalizeInvitationEmail("invalido"), null, "e-mail inválido retorna null");
-  assert.equal(normalizeInvitationEmail("a".repeat(330) + "@x.com"), null, "e-mail longo retorna null");
-  assert.deepEqual(validateInvitationForAccept({ status: "pending", expires_at: future }), { ok: true }, "validação do convite");
+  assert.equal(normalizeInvitationEmail(" Dra.Jadson@Clinica.com.br "), "dra.jadson@clinica.com.br");
+  assert.equal(normalizeInvitationEmail("invalido"), null);
+  assert.equal(normalizeInvitationEmail("a".repeat(330) + "@x.com"), null);
+  assert.deepEqual(validateInvitationForAccept({ status: "pending", expires_at: future }), { ok: true });
 }
 
-// ── entitlement por escopo ──────────────────────────────────────────────────
 const baseRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
   user_id: "u1",
   clinic_id: "c1",
@@ -96,44 +85,89 @@ const baseRow = (overrides: Partial<Record<string, unknown>> = {}) => ({
   is_active: 1,
   trial_ends_at: null,
   customer_status: "active",
+  grace_ends_at: null,
   ...overrides,
 });
 
 {
   const r = evaluateEntitlement(baseRow(), "clinical") as EntitlementResult;
-  assert.equal(r.deniedReason, null, "profissional ativo aprovado no escopo clínico");
-  assert.equal(r.isActive, true, "entitlement ativo");
+  assert.equal(r.deniedReason, null);
+  assert.equal(r.isActive, true);
 }
 {
   const r = evaluateEntitlement(baseRow({ membership_role: "assistant" }), "clinical");
-  assert.equal(r.deniedReason, "ENTITLEMENT_ROLE_NOT_ALLOWED", "assistant não tem acesso clínico");
+  assert.equal(r.deniedReason, "ENTITLEMENT_ROLE_NOT_ALLOWED");
+}
+{
+  const now = new Date("2026-08-20T00:00:00Z");
+  const r = evaluateEntitlement(
+    baseRow({
+      customer_status: "past_due",
+      subscription_status: "past_due",
+      grace_ends_at: "2026-08-24T00:00:00Z",
+    }),
+    "clinical",
+    now,
+  );
+  assert.equal(r.isPastDue, true);
+  assert.equal(r.isSuspended, false);
+  assert.equal(r.deniedReason, "ENTITLEMENT_PAST_DUE");
 }
 {
   const r = evaluateEntitlement(
-    baseRow({ customer_status: "past_due", subscription_status: "past_due" }),
+    baseRow({ customer_status: "past_due", subscription_status: "past_due", grace_ends_at: null }),
     "clinical",
-  ) as EntitlementResult;
-  assert.equal(r.isPastDue, true, "past_due é sinalizado");
-  assert.equal(r.deniedReason, "ENTITLEMENT_PAST_DUE", "motivo da degradação");
+  );
+  assert.equal(r.deniedReason, "ENTITLEMENT_SUSPENDED");
+  assert.equal(r.isSuspended, true);
 }
 {
-  const suspended = baseRow({ customer_status: "suspended", subscription_status: "canceled" });
-  assert.equal(evaluateEntitlement(suspended, "clinical").deniedReason, "ENTITLEMENT_SUSPENDED", "suspended bloqueia clínico");
-  assert.equal(evaluateEntitlement(suspended, "export").deniedReason, null, "export continua permitido (LGPD art. 18)");
+  const suspendedWithActiveSubscription = baseRow({
+    customer_status: "suspended",
+    subscription_status: "active",
+  });
+  assert.equal(
+    evaluateEntitlement(suspendedWithActiveSubscription, "clinical").deniedReason,
+    "ENTITLEMENT_SUSPENDED",
+  );
+  assert.equal(evaluateEntitlement(suspendedWithActiveSubscription, "export").deniedReason, null);
 }
 {
-  const r = evaluateEntitlement(baseRow({ trial_active: 1, customer_status: "trial" }), "clinical") as EntitlementResult;
-  assert.equal(r.deniedReason, null, "trial implícito conta como ativo");
-  assert.equal(r.trialActive, true, "flag de trial");
+  const canceled = baseRow({ customer_status: "canceled", subscription_status: "active" });
+  assert.equal(evaluateEntitlement(canceled, "clinical").deniedReason, "ENTITLEMENT_SUSPENDED");
 }
 {
-  assert.equal(evaluateEntitlement(null, "clinical").deniedReason, "ENTITLEMENT_NOT_FOUND", "linha nula negada");
-  assert.equal(evaluateEntitlement(undefined, "finance").deniedReason, "ENTITLEMENT_NOT_FOUND", "indefinido negado");
+  const now = new Date("2026-08-20T00:00:00Z");
+  const validTrial = baseRow({
+    subscription_status: "trial",
+    trial_active: 1,
+    customer_status: "trial",
+    trial_ends_at: "2026-08-21T00:00:00Z",
+  });
+  const r = evaluateEntitlement(validTrial, "clinical", now);
+  assert.equal(r.deniedReason, null);
+  assert.equal(r.trialActive, true);
+}
+{
+  const now = new Date("2026-08-20T00:00:00Z");
+  const expiredTrial = baseRow({
+    subscription_status: "trial",
+    trial_active: 1,
+    customer_status: "trial",
+    trial_ends_at: "2026-08-19T00:00:00Z",
+  });
+  const r = evaluateEntitlement(expiredTrial, "clinical", now);
+  assert.equal(r.deniedReason, "ENTITLEMENT_NO_SUBSCRIPTION");
+  assert.equal(r.trialActive, false);
+}
+{
+  assert.equal(evaluateEntitlement(null, "clinical").deniedReason, "ENTITLEMENT_NOT_FOUND");
+  assert.equal(evaluateEntitlement(undefined, "finance").deniedReason, "ENTITLEMENT_NOT_FOUND");
 }
 {
   const ends = new Date(Date.now() + 5.5 * 86400000).toISOString();
-  assert.equal(remainingTrialDays(ends), 6, "dias de trial restantes");
-  assert.equal(remainingTrialDays(null), 0, "sem trial retorna 0");
+  assert.equal(remainingTrialDays(ends), 6);
+  assert.equal(remainingTrialDays(null), 0);
 }
 
-console.log("saas-billing-contract: todas as 24 asserções passaram ✔");
+console.log("saas-billing-contract: domínio, suspensão e expiração de trial aprovados ✔");
