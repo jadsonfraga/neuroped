@@ -66,6 +66,7 @@ export const navSections: NavSection[] = [
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText },
+      { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
       { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
