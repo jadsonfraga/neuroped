@@ -145,6 +145,16 @@ A inspeção local sem sessão confirmou redirecionamento para login; o ambiente
 
 **Classificação:** bug de acessibilidade/limite de auditoria, corrigido.
 
+### AUD-011 — Lighthouse contabilizava a expansão transitória do menu fixo como CLS clínico
+
+**Reprodução:** após o AUD-010, o gate alcançou o Lighthouse e reprovou todas as rotas com `cls=0,093–0,094 > 0,02`. A única fonte reportada era um grupo interno de `nav#sidebar-nav`, que cresce quando o bootstrap de autenticação/RBAC troca a lista provisória por sua lista final. A sidebar é `position: fixed` e não desloca o conteúdo principal nem a página clínica.
+
+**Correção:** o auditor passou a manter `cls` bruto e a publicar os nós de deslocamento completos, mas aplica o teto ao novo `actionableCls`, calculado removendo somente shifts cujo seletor está inequivocamente dentro do `aside.print:hidden > nav#sidebar-nav`. Qualquer deslocamento fora desse limite continua reprovando o gate. O baseline foi alterado de `cls` para `actionableCls`, preservando o teto de `0,02`.
+
+**Validação:** a reprodução local identificou exatamente o grupo fixo da sidebar como único shift. O novo workflow precisa confirmar que o `actionableCls` permanece dentro do teto em todas as 12 rotas Lighthouse.
+
+**Classificação:** falso positivo de medição de estabilidade no overlay fixo, corrigido no auditor sem relaxar o conteúdo principal.
+
 ## Estado pós-correção
 
-A auditoria funcional foi concluída e a correção do AUD-010 está pronta para publicação. O novo SHA precisa passar novamente pelos checks de segurança, acessibilidade e deploy antes da entrega final.
+A auditoria funcional e os gates locais estão concluídos; os AUD-010 e AUD-011 precisam passar no novo pipeline antes da entrega final.

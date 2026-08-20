@@ -617,7 +617,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <motion.div
                     id={`nav-section-${si}`}
                     className="space-y-1 overflow-hidden"
-                    initial={{ height: 0, opacity: 0 }}
+                    initial={false}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
