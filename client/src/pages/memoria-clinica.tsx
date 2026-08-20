@@ -104,7 +104,7 @@ export default function MemoriaClinicaPage() {
         </form>
       </CardContent></Card>
       <Card><CardHeader><CardTitle className="text-base">Histórico memorizado</CardTitle></CardHeader><CardContent className="space-y-4">
-        <div className="flex gap-2"><Input aria-label="Pesquisar memória" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void loadNotes(patientId, query); }} placeholder="Pesquisar no histórico…" /><Button variant="outline" onClick={() => void loadNotes(patientId, query)}><Search className="h-4 w-4" /></Button></div>
+        <div className="flex gap-2"><Input aria-label="Pesquisar memória" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void loadNotes(patientId, query); }} placeholder="Pesquisar no histórico…" /><Button variant="outline" aria-label="Pesquisar memória" onClick={() => void loadNotes(patientId, query)}><Search className="h-4 w-4" /></Button></div>
         {loading ? <p className="text-sm text-muted-foreground">Carregando…</p> : notes.length === 0 ? <p className="rounded-xl border border-dashed p-5 text-sm text-muted-foreground">Nenhuma informação encontrada.</p> : notes.map((note) => <article key={note.id} className="rounded-2xl border p-4">
           <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold">{note.title}</h2><p className="text-xs text-muted-foreground">{new Date(note.updatedAt).toLocaleString("pt-BR")}</p></div><Button size="icon" variant="ghost" aria-label="Excluir memória" onClick={() => void deleteNote(note.id)}><Trash2 className="h-4 w-4" /></Button></div>
           <p className="mt-3 whitespace-pre-wrap text-sm">{note.content}</p>
