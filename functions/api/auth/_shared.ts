@@ -148,13 +148,13 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
     .bind(markerKey)
     .first<{ value: string | null }>();
 
-  let passwordMatchesExisting = false;
-  if (existing?.password_hash) {
-    passwordMatchesExisting = await verifyPassword(password, existing.password_hash);
-  }
-
   if (existing) {
-    const needsPasswordBootstrap = !existing.password_hash || !marker || !passwordMatchesExisting;
+    // PBKDF2 só é necessário quando já existe hash e marcador — nesses dois
+    // outros casos o bootstrap já é obrigatório e o resultado da verificação
+    // não muda a decisão, então evita o cálculo (100k iterações) à toa em
+    // todo login enquanto o secret de bootstrap permanecer configurado.
+    const needsPasswordBootstrap = !existing.password_hash || !marker
+      || !(await verifyPassword(password, existing.password_hash));
     if (needsPasswordBootstrap) {
       const hash = await hashPassword(password);
       await db.batch([
