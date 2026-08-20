@@ -469,8 +469,8 @@ for (const [source, name] of [
 
 assert.match(
   palette,
-  /queryKey: \["\/api\/patients"\]/,
-  "busca global deve consultar pacientes reais",
+  /\/api\/patients\?q=\$\{encodeURIComponent\(normalizedSearch\)\}&page=1&limit=20/,
+  "busca global deve consultar pacientes reais com busca parametrizada e paginação limitada",
 );
 assert.match(
   palette,
