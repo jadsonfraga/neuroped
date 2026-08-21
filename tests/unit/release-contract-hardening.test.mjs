@@ -11,7 +11,7 @@ const memorySearch = read("functions/api/memory/search.ts");
 const patientRoute = read("functions/api/patients/[id].ts");
 const cloudflareWorkflow = read(".github/workflows/deploy-cloudflare.yml");
 const vercelWorkflow = read(".github/workflows/deploy-vercel.yml");
-const githubWorkflow = read(".github/workflows/deploy-github-pages.yml");
+const githubWorkflow = read(".github/workflows/deploy.yml");
 
 // Tenant explícito nunca é autorização: precisa pertencer ao usuário autenticado.
 assert.doesNotMatch(billingGuard, /if\s*\(explicit\)\s*return\s+explicit/);
@@ -96,6 +96,7 @@ assert.match(vercelWorkflow, /superneuroped\.vercel\.app/);
 assert.match(githubWorkflow, /deploy-check\.json/);
 for (const workflow of [cloudflareWorkflow, vercelWorkflow, githubWorkflow]) {
   assert.match(workflow, /npm run verify/);
+  assert.doesNotMatch(workflow, /^[\t ]*pull_request:/m);
 }
 
 console.log("✓ tenant, webhook, trial seats, memória e deploy contracts endurecidos");
