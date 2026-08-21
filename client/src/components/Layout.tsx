@@ -639,8 +639,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             className={`relative flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer border transition-all duration-200 ${
                               golden
                                 ? active
-                                  ? "border-amber-300 bg-[linear-gradient(110deg,#FFF7C2,#F4C95D,#B7791F)] text-[#422006] font-extrabold shadow-[0_0_0_1px_rgba(255,239,164,0.45),0_0_22px_rgba(245,185,44,0.48)] dark:border-amber-300 dark:bg-[linear-gradient(110deg,#6B3F08,#C88612,#FFE08A)] dark:text-[#251300]"
-                                  : "border-amber-300/90 bg-[linear-gradient(110deg,rgba(255,248,201,0.94),rgba(249,211,101,0.85),rgba(210,148,35,0.75))] text-[#593006] font-bold shadow-[0_0_0_1px_rgba(255,239,164,0.30),0_0_16px_rgba(245,185,44,0.32)] hover:translate-x-0.5 hover:shadow-[0_0_0_1px_rgba(255,239,164,0.6),0_0_24px_rgba(245,185,44,0.55)] dark:border-amber-400 dark:bg-[linear-gradient(110deg,#5E3708,#A9660E,#D99C29)] dark:text-[#FFF4BF]"
+                                  ? "border-amber-300 bg-gradient-to-r from-amber-100 via-amber-300 to-amber-700 text-amber-950 font-extrabold shadow-lg shadow-amber-400/40 dark:border-amber-300 dark:from-amber-800 dark:via-amber-500 dark:to-amber-200 dark:text-amber-950"
+                                  : "border-amber-300/90 bg-gradient-to-r from-amber-50 via-amber-200 to-amber-500/80 text-amber-950 font-bold shadow-md shadow-amber-400/30 hover:translate-x-0.5 hover:shadow-lg hover:shadow-amber-400/45 dark:border-amber-400 dark:from-amber-900 dark:via-amber-700 dark:to-amber-400 dark:text-amber-50"
                                 : priority
                                 ? active
                                   ? "border-amber-400 bg-amber-200/90 text-amber-950 font-semibold shadow-sm dark:border-amber-600 dark:bg-amber-950/60 dark:text-amber-100"
@@ -653,7 +653,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             <item.icon
                               className={`w-4 h-4 flex-shrink-0 transition-transform ${
                               golden
-                                ? "text-[#7A4409] drop-shadow-[0_1px_0_rgba(255,255,255,0.65)] dark:text-[#FFF0A3]"
+                                ? "text-amber-800 drop-shadow-sm dark:text-amber-100"
                                 : priority
                                   ? "text-amber-700 dark:text-amber-300"
                                   : active ? "text-primary scale-110" : ""
@@ -672,7 +672,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                 initial={{ opacity: 0.58, scale: 0.92 }}
                                 animate={{ opacity: [0.58, 1, 0.58], scale: [0.92, 1.08, 0.92] }}
                                 transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}
-                                className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-[#71410B]/14 text-[#71410B] dark:bg-[#FFF3B0]/18 dark:text-[#FFF1A5]"
+                                className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-amber-900/15 text-amber-900 dark:bg-amber-100/20 dark:text-amber-100"
                                 aria-label="Acesso ao site de vídeo-EEG"
                               >
                                 <Zap className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
