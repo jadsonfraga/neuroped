@@ -7,12 +7,14 @@ on:
     paths:
       - "db/migrations/0012_saas_billing_onboarding.sql"
       - "db/migrations/0013_saas_billing_provider.sql"
+      - "db/migrations/0014_saas_billing_contract_hardening.sql"
       - "shared/billing.ts"
       - "server/lib/billingEntitlement.ts"
       - "functions/api/billing/**"
       - "functions/api/live/**"
       - "functions/api/tenants/**"
       - "tests/unit/saas-billing*.test.ts"
+      - "tests/unit/release-contract-hardening.test.mjs"
       - ".github/workflows/saas-billing-d1-migration.yml"
 
 concurrency:
@@ -57,6 +59,7 @@ jobs:
           node --import tsx tests/unit/saas-billing-contract.test.ts
           node --import tsx tests/unit/saas-billing-provider.test.ts
           node tests/unit/saas-billing-production-wiring.test.mjs
+          node tests/unit/release-contract-hardening.test.mjs
 
       - name: Validar credenciais Cloudflare
         env:
@@ -124,6 +127,15 @@ jobs:
           test -s /tmp/0013-post-alter.sql
           npx wrangler@4 d1 execute neuroped-db --remote --yes --file=/tmp/0013-post-alter.sql
 
+      - name: Aplicar hardening 0014 de trial e contratos
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0014_saas_billing_contract_hardening.sql
+
       - name: Verificar contrato físico de billing
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -152,4 +164,13 @@ jobs:
             }
           done
 
-          echo "✅ Billing SaaS reconciliado no D1 remoto."
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS invalid_trials FROM billing_subscriptions bs JOIN billing_customers bc ON bc.id = bs.customer_id WHERE bs.status = 'trial' AND bc.status = 'trial' AND COALESCE(bs.seats, 0) < MAX(2, (SELECT COUNT(*) + 1 FROM clinic_memberships cm WHERE cm.clinic_id = bc.clinic_id AND cm.active = 1));" \
+            > /tmp/billing-trial-seats.txt 2>&1
+          cat /tmp/billing-trial-seats.txt
+          grep -Eq 'invalid_trials[^0-9]*0|"invalid_trials"[^0-9]*0' /tmp/billing-trial-seats.txt || {
+            echo "::error::Há trial sem a vaga adicional exigida pelo contrato 0014."
+            exit 1
+          }
+
+          echo "✅ Billing SaaS reconciliado no D1 remoto, incluindo hardening 0014."
