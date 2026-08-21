@@ -52,7 +52,20 @@ export function ensureClientBuild(repoRoot) {
   if (reason) {
     console.log(`[browser-audit] ${reason} - executando build:client.`);
     const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-    execFileSync(npm, ["run", "build:client"], { cwd: repoRoot, stdio: "inherit" });
+    execFileSync(npm, ["run", "build:client"], {
+      cwd: repoRoot,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        // Os audits de navegador servem um backend local que declara auth
+        // desnecessária. `auto` deve respeitar essa capacidade; usar o default
+        // remoto aqui redireciona o shell para login e mascara regressões de
+        // layout como timeout do dock/tablet.
+        VITE_AUTH_MODE: "auto",
+        VITE_API_URL: "",
+        VITE_ZONE: "full",
+      },
+    });
   }
   return dist;
 }
