@@ -21,9 +21,14 @@ import {
 
 interface Env {
   DB?: D1Database;
-  AI?: Ai;               // Cloudflare Workers AI (futuro)
-  VECTORIZE?: Vectorize; // Cloudflare Vectorize (futuro)
+  AI?: Ai;
+  VECTORIZE?: Vectorize;
 }
+
+/** Tabela canônica usada pelas rotas de leitura e escrita de memória clínica. */
+const MEMORY_TABLE = "clinical_memory_notes_demo";
+/** Índice FTS5 opcional: quando ausente, o fallback TF-IDF assume. */
+const MEMORY_FTS_TABLE = "clinical_memory_notes_fts";
 
 interface MemoryNote {
   id: string;
@@ -65,37 +70,27 @@ function parseMinimumScore(value: string | null): number | null {
   return parsed;
 }
 
-// ============================================================
-// TF-IDF simplificado para scoring de relevância textual
-// ============================================================
-
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")     // remove acentos
-    .replace(/[^a-z0-9\s]/g, " ")        // remove pontuação
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
-    .filter((t) => t.length > 2);         // remove stopwords curtas
+    .filter((t) => t.length > 2);
 }
 
-/** Calcula TF (term frequency) para um termo em um documento */
 function tf(term: string, tokens: string[]): number {
   const count = tokens.filter((t) => t === term).length;
   return count / (tokens.length || 1);
 }
 
-/** Boost por matches exatos de multi-palavra na query */
 function phraseBoost(query: string, text: string): number {
   const q = query.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const t = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   return t.includes(q) ? 0.5 : 0;
 }
 
-/**
- * Pontua uma nota com base na query.
- * Retorna score 0-1 (0 = irrelevante, 1 = muito relevante).
- */
 function scoreNote(query: string, note: MemoryNote): number {
   const queryTokens = tokenize(query);
   if (queryTokens.length === 0) return 0;
@@ -120,27 +115,18 @@ function scoreNote(query: string, note: MemoryNote): number {
   ];
 
   let totalScore = 0;
-
   for (const { text, weight } of fieldWeights) {
     const tokens = tokenize(text);
     for (const qToken of queryTokens) {
       const termTf = tf(qToken, tokens);
-      if (termTf > 0) {
-        totalScore += termTf * weight;
-      }
+      if (termTf > 0) totalScore += termTf * weight;
     }
-    // Boost por frase exata
     totalScore += phraseBoost(query, text) * weight;
   }
 
-  // Normaliza para [0, 1]
   const maxPossible = queryTokens.length * (3.0 + 1.0 + 2.0 + 1.5) + 0.5 * (3.0 + 1.0 + 2.0 + 1.5);
   return Math.min(1, totalScore / maxPossible);
 }
-
-// ============================================================
-// Handler principal
-// ============================================================
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -160,28 +146,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }, { status: 400 });
   }
   if (query.length > MEMORY_SEARCH_LIMITS.query) {
-    return validationError(
-      `'q' deve ter no máximo ${MEMORY_SEARCH_LIMITS.query} caracteres.`,
-    );
+    return validationError(`'q' deve ter no máximo ${MEMORY_SEARCH_LIMITS.query} caracteres.`);
   }
   if (category && category.length > MEMORY_SEARCH_LIMITS.category) {
-    return validationError(
-      `'category' deve ter no máximo ${MEMORY_SEARCH_LIMITS.category} caracteres.`,
-    );
+    return validationError(`'category' deve ter no máximo ${MEMORY_SEARCH_LIMITS.category} caracteres.`);
   }
-  if (limit === null) {
-    return validationError("'limit' deve ser um número inteiro válido.");
-  }
-  if (minScore === null) {
-    return validationError("'min_score' deve ser um número entre 0 e 1.");
-  }
+  if (limit === null) return validationError("'limit' deve ser um número inteiro válido.");
+  if (minScore === null) return validationError("'min_score' deve ser um número entre 0 e 1.");
 
   const hasVectorize = !!env.VECTORIZE;
   const hasAI = !!env.AI;
 
-  // ============================================================
-  // SEM BANCO: falha fechada, sem memória fictícia
-  // ============================================================
   if (!env.DB) {
     return Response.json({
       results: [],
@@ -202,8 +177,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       { status: 401, headers: { "Cache-Control": "no-store" } },
     );
   }
-  // IN exclui patient_id NULL de forma deliberada: conteúdo global/legado só
-  // pode ser pesquisado pelo administrador, evitando vazamento entre contas.
+
   const ownershipClause = isAdmin(user)
     ? ""
     : `AND n.patient_id IN (
@@ -212,22 +186,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
        )`;
   const ownershipBinds = isAdmin(user) ? [] : [user.id];
 
-  // ============================================================
-  // BUSCA SEMÂNTICA (futuro — Vectorize + Workers AI)
-  // ============================================================
   if (hasVectorize && hasAI) {
-    // Placeholder honesto — implementar quando Vectorize estiver provisionado
-    // Passos futuros:
-    //   1. const embedding = await env.AI.run('@cf/baai/bge-base-en-v1.5', { text: query });
-    //   2. const matches = await env.VECTORIZE.query(embedding.data[0], { topK: limit });
-    //   3. Mapear IDs para memory_notes via D1
-    // Por ora, cai no fallback textual e documenta honestamente:
     console.info("[memory/search] Vectorize disponível mas busca semântica não implementada. Usando FTS5.");
   }
 
-  // ============================================================
-  // BUSCA FTS5 (D1 nativo — mais rápida quando disponível)
-  // ============================================================
   try {
     const categoryClause = category ? "AND n.category = ?" : "";
     const ftsBinds: unknown[] = [query];
@@ -238,14 +200,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const ftsRows = await env.DB
       .prepare(
         `SELECT n.id, n.title, n.content, n.category, n.source, n.tags, n.created_at,
-                bm25(memory_notes_fts) * -1 AS score
-         FROM memory_notes_fts
-         JOIN memory_notes n ON memory_notes_fts.rowid = n.rowid
-         WHERE memory_notes_fts MATCH ?
+                bm25(${MEMORY_FTS_TABLE}) * -1 AS score
+         FROM ${MEMORY_FTS_TABLE}
+         JOIN ${MEMORY_TABLE} n ON ${MEMORY_FTS_TABLE}.rowid = n.rowid
+         WHERE ${MEMORY_FTS_TABLE} MATCH ?
            AND n.is_demo = 1 ${categoryClause}
            ${ownershipClause}
          ORDER BY score DESC
-         LIMIT ?`
+         LIMIT ?`,
       )
       .bind(...ftsBinds)
       .all();
@@ -259,9 +221,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const results = (ftsRows.results as any[])
         .map((row, index) => ({
           ...row,
-          score: maxFtsScore > 0
-            ? Math.min(1, numericScores[index] / maxFtsScore)
-            : 0,
+          score: maxFtsScore > 0 ? Math.min(1, numericScores[index] / maxFtsScore) : 0,
         }))
         .filter((row) => row.score >= minScore)
         .slice(0, limit);
@@ -277,20 +237,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }, { headers: { "Cache-Control": "no-store" } });
     }
   } catch (ftsErr) {
-    // FTS5 pode não estar disponível ou virtual table pode não ter sido criada
     console.warn("[memory/search] FTS5 indisponível, usando TF-IDF:", ftsErr);
   }
 
-  // ============================================================
-  // FALLBACK — Busca LIKE + scoring TF-IDF
-  // ============================================================
   try {
     const queryTokens = tokenize(query);
     if (queryTokens.length === 0) {
       return Response.json({ results: [], total: 0, query, searchType: "text_tfidf", semanticSearchStatus: "not_configured" });
     }
 
-    // Usa LIKE com o primeiro token para reduzir o conjunto antes do scoring
     const primaryToken = queryTokens[0];
     const catBinds: unknown[] = [`%${primaryToken}%`, `%${primaryToken}%`];
     if (category) catBinds.push(category);
@@ -299,12 +254,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const likeRows = await env.DB
       .prepare(
         `SELECT n.id, n.title, n.content, n.category, n.source, n.tags, n.created_at
-         FROM memory_notes n
+         FROM ${MEMORY_TABLE} n
          WHERE (n.content LIKE ? OR n.title LIKE ?)
            AND n.is_demo = 1
            ${category ? "AND n.category = ?" : ""}
            ${ownershipClause}
-         LIMIT 100`
+         LIMIT 100`,
       )
       .bind(...catBinds)
       .all();
@@ -329,7 +284,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     console.error("[memory/search] Erro na busca:", err);
     return Response.json(
       { results: [], total: 0, query, searchType: "text_tfidf", semanticSearchStatus: "error", error: "Erro na busca. Tente novamente." },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
+      { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
 };
