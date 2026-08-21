@@ -24,7 +24,7 @@ interface DockItem {
   highlighted?: boolean;
 }
 
-const NESPLORA_SITE_URL = "https://nesplora-f6dubnnp.manus.space";
+const NESPLORA_SITE_URL = "/nesplora/";
 
 // O dock é navegação do workspace clínico. Mesmo no host "full", fluxos
 // explicitamente familiares/públicos não devem receber atalhos para Pacientes,

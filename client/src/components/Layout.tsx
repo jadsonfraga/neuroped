@@ -26,7 +26,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 
-const NESPLORA_SITE_URL = "https://nesplora-f6dubnnp.manus.space";
+const NESPLORA_SITE_URL = "/nesplora/";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
