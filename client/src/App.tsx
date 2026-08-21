@@ -190,6 +190,7 @@ const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
 const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
+const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
@@ -545,6 +546,7 @@ function AppRouter() {
               </RouteGuard>
             </Route>
             <Route path="/agendar" component={AgendarPage} />
+            <Route path="/marcacao" component={MarcacaoPage} />
 
             <Route path="/familia" component={FamiliaPage} />
             <Route path="/portal-familia" component={PortalFamiliaPage} />

@@ -65,7 +65,7 @@
     "audit:scales:clinical": "node --import tsx scripts/auditClinicaEscalas.js",
     "test:notes": "node --import tsx tests/unit/notes-engine.test.ts",
     "test:cognitive": "node --import tsx tests/unit/cognitive-lab.test.ts",
-    "test:operations": "node --import tsx tests/unit/operations-contract.test.ts && node tests/unit/operations-integration-static.test.mjs",
+    "test:operations": "node --import tsx tests/unit/operations-contract.test.ts && node tests/unit/operations-integration-static.test.mjs && node tests/unit/secretaria-marcacao-navigation.test.mjs",
     "test:no-fake-clinical-write": "node --import tsx tests/unit/no-fake-clinical-write.test.ts",
     "test:loose-ends": "node tests/unit/loose-ends-regression.test.mjs",
     "test:therapy-goals": "node --import tsx tests/unit/therapy-goals.test.ts"

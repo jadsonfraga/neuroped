@@ -3,6 +3,7 @@ import { ExternalLink, Globe2, RefreshCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SECRETARIA_IA_URL } from "@/lib/manusLinks";
 
 type ManusSite = {
   id: "secretaria" | "missao" | "institucional";
@@ -14,7 +15,7 @@ type ManusSite = {
 };
 
 const manusUrls = {
-  secretaria: import.meta.env.VITE_MANUS_SECRETARIA_URL || "https://secretariaia-7jubr6nq.manus.space",
+  secretaria: SECRETARIA_IA_URL,
   missao: import.meta.env.VITE_MANUS_MISSAO_URL || "https://drjadsongame-ko8qudqs.manus.space",
   institucional: import.meta.env.VITE_MANUS_INSTITUCIONAL_URL || "https://drjadsonmd-iqeiteek.manus.space",
 };

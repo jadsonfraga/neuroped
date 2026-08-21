@@ -64,6 +64,7 @@ export const navSections: NavSection[] = [
   {
     title: "ACESSO RÁPIDO",
     items: [
+      { href: "/marcacao", label: "Marcação · Secretaria IA", icon: Calendar },
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },

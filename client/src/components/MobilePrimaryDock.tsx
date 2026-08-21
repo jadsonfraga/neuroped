@@ -36,6 +36,7 @@ const hiddenRoutePrefixes = [
   "/consentimento-lgpd",
   "/familia",
   "/agendar",
+  "/marcacao",
   "/pre-consulta",
   "/pre-retorno",
   "/efeitos-colaterais",
