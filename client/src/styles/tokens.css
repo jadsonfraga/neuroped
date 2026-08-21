@@ -316,3 +316,59 @@
   --ambient-orb-4: rgba(124, 92, 255, 0.45);
   --ambient-orb-5: rgba(139, 92, 246, 0.4);
 }
+
+
+/* ── Missão Saúde — paleta educativa pública ───────────────────────── */
+:root {
+  --ms-ink: #113c4c;
+  --ms-teal: #176469;
+  --ms-mint: #d6f2df;
+  --ms-lilac: #ded6fb;
+  --ms-sun: #ffe5a8;
+  --ms-paper: #fffdf8;
+  --ms-purple: #5946a1;
+  --ms-page-haze: #ece8ff;
+  --ms-page-mint: #f4fbf8;
+  --ms-white: #fff;
+  --ms-border-soft: #b9d7d1;
+  --ms-border-mint: #c4d9d1;
+  --ms-hero-mint: #e8f8ed;
+  --ms-hero-mint-deep: #dcf3e6;
+  --ms-hero-sun: #fff7e2;
+  --ms-teal-faint: #17646920;
+  --ms-paper-translucent: #fffdf8e6;
+  --ms-shadow-teal: #0d555214;
+  --ms-star-muted: #cad7d2;
+  --ms-star-earned: #f7b530;
+  --ms-text-teal: #3b6261;
+  --ms-text-muted: #4d6d6c;
+  --ms-card-border: #c5ddd5;
+  --ms-shadow-card: #133d4310;
+  --ms-lilac-border: #d4c8fb;
+  --ms-sun-border: #f5d996;
+  --ms-card-mint: #def4e9;
+  --ms-card-lilac: #e8e3ff;
+  --ms-card-sun: #ffefca;
+  --ms-sun-ink: #8b5f13;
+  --ms-workspace-lilac-border: #d8cff7;
+  --ms-workspace-mint: #f3fbf7;
+  --ms-workspace-lilac: #f7f5ff;
+  --ms-workspace-sun-border: #f2d99f;
+  --ms-workspace-sun: #fffaf0;
+  --ms-text-workspace: #496565;
+  --ms-shadow-workspace: #163d3c12;
+  --ms-choice-border: #c7dad3;
+  --ms-choice-selected: #e7f7ed;
+  --ms-text-choice: #52706f;
+  --ms-sequence-border: #d4dfdc;
+  --ms-sequence-bg: #fdfefa;
+  --ms-sequence-control-border: #c4d6d0;
+  --ms-finish-border: #d5cbf7;
+  --ms-finish-bg: #f5f2ff;
+  --ms-text-finish: #4d606c;
+  --ms-action-border: #a99fe1;
+  --ms-action-text: #49368f;
+  --ms-divider: #cbded8;
+  --ms-text-disclaimer: #3d6261;
+  --ms-text-footer: #537170;
+}

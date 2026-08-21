@@ -5,7 +5,7 @@ const origins = (process.env.PUBLISHED_ORIGINS ?? "https://neuroped.pages.dev,ht
   .split(",")
   .map((value) => value.trim().replace(/\/$/, ""))
   .filter(Boolean);
-const routes = ["/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/eletroencefalograma", "/#/prontuario"];
+const routes = ["/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/missao-saude", "/#/eletroencefalograma", "/#/prontuario"];
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 const result = { startedAt: new Date().toISOString(), origins, environments: [] };
 const e2eEmail = process.env.PUBLISHED_E2E_EMAIL?.trim();

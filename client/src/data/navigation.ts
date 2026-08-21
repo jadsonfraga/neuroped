@@ -91,6 +91,7 @@ export const navSections: NavSection[] = [
     title: "BRINCAR E APRENDER",
     items: [
       { href: "/brincando-e-aprendendo", label: "Brincando e Aprendendo", icon: Sparkles },
+      { href: "/missao-saude", label: "Missão Saúde", icon: HeartPulse },
     ],
   },
   {

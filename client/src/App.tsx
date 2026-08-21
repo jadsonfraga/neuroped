@@ -48,6 +48,7 @@ const PreferencesPanel = lazy(() =>
 
 const HomePage = lazy(() => import("@/pages/home"));
 const BrincandoAprendendoPage = lazy(() => import("@/pages/brincando-e-aprendendo"));
+const MissaoSaudePage = lazy(() => import("@/pages/missao-saude"));
 const SplashScreen = lazy(() =>
   import("@/components/SplashScreen").then(({ SplashScreen }) => ({
     default: SplashScreen,
@@ -285,6 +286,18 @@ function AppRouter() {
       <Suspense fallback={<LoadingSpinner />}>
         <Switch>
           <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
+        </Switch>
+      </Suspense>
+    );
+  }
+
+  // A Missão Saúde é uma experiência educativa pública, com landmarks próprios,
+  // estado somente em memória e sem acesso à navegação clínica do Neuroped.
+  if (location === "/missao-saude") {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Switch>
+          <Route path="/missao-saude" component={MissaoSaudePage} />
         </Switch>
       </Suspense>
     );
