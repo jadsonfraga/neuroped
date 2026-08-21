@@ -15,7 +15,7 @@ export default function EletroencefalogramaPage() {
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-xl items-center px-6 py-16">
-      <section className="w-full rounded-3xl border border-amber-300/80 bg-gradient-to-br from-amber-50 via-amber-200 to-amber-500 p-8 text-amber-950 shadow-xl shadow-amber-400/35">
+      <section className="w-full rounded-3xl border border-amber-300/80 bg-amber-100 p-8 text-amber-950 shadow-xl shadow-amber-400/35">
         <Waves className="h-8 w-8" aria-hidden="true" />
         <p className="mt-8 text-xs font-extrabold uppercase tracking-[0.16em]">Eletroencefalograma</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight">Abrindo o site de Vídeo-EEG Domiciliar</h1>
