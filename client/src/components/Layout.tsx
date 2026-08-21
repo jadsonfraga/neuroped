@@ -55,7 +55,6 @@ function FeaturedShortcuts({
       onMouseEnter={() => softHover()}
       data-testid="featured-nesplora"
       className="group relative isolate flex items-center gap-3 overflow-hidden rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-950 via-amber-600 to-amber-200 px-3 py-3 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-50 hover:shadow-xl hover:shadow-amber-700/55"
-      aria-label="Abrir site Nesplora em uma nova guia"
     >
       <span aria-hidden="true" className="absolute -right-7 -top-7 h-20 w-20 rounded-full bg-amber-50/55 blur-2xl transition-transform duration-500 group-hover:scale-150" />
       <span className="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-amber-50/90 bg-amber-50 text-amber-800 shadow-sm shadow-amber-950/20">
