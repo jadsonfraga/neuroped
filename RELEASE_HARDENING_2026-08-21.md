@@ -54,3 +54,19 @@ Os workflows existentes publicam o redirecionador canônico no GitHub Pages, o f
 ## Próximos bloqueadores antes do deploy
 
 A divisão final das rotas de escala deve ser feita para que questionários, gráficos e relatórios não compartilhem catálogos agregados no primeiro render. Em seguida, o Lighthouse integral deve ser repetido em build limpo e os thresholds devem ser mantidos, não reduzidos. Após todos os gates verdes, o commit deve ser publicado em `main`; os workflows então executarão a publicação controlada e validarão as sentinelas de GitHub Pages, Cloudflare e Vercel.
+
+## Segunda rodada de performance permanente
+
+A segunda rodada removeu importações estáticas de `ClinicalReport` e `SaveToPatient` do `GenericScale`, do runner interativo, do M-CHAT e do CARS. Esses módulos agora são carregados somente quando o resultado é exibido, com um estado acessível de carregamento; os dados enviados ao relatório e ao salvamento permanecem os mesmos.
+
+M-CHAT e CARS também foram extraídos do arquivo monolítico `data/scales.ts` para `data/mchat.ts` e `data/cars.ts`. `data/scales.ts` mantém reexports compatíveis para consumidores existentes, enquanto as rotas usam as fontes dedicadas. O chunk específico de M-CHAT caiu para aproximadamente 1,46 kB mais o page chunk de aproximadamente 8,07 kB; CARS passou a usar um módulo dedicado de aproximadamente 6,15 kB mais o page chunk de aproximadamente 8,69 kB.
+
+O motor do filtro agora não executa ranking clínico quando não há critério selecionado. A tela inicial continua exibindo instrução e controles; o ranking só é calculado quando há busca, idade, queixa, respondente, sinais, finalidade ou modo `Todas`. Os testes de filtro clínico e de segurança passaram após a alteração.
+
+Os novos testes de hardening continuam integrados ao `verify:release`, e TypeScript, ESLint, build frontend, testes clínicos e segurança passaram nesta rodada. O Lighthouse apresentou melhora do filtro para TBT observado na faixa de centenas de milissegundos, mas ainda não atingiu o threshold de 160 ms em todas as rotas; não foi feito relaxamento artificial de threshold.
+
+## Homologação determinística adicional
+
+Os gates de política de acesso, navegação, integridade de dados, shell offline, bundle, inventário, identidade institucional e documentos clínicos passaram na rodada final. O bundle reportou entrypoint de aproximadamente 94,23 kB gzip, JavaScript inicial real de aproximadamente 147,76 kB gzip e maior chunk bruto de aproximadamente 1,20 MB, dentro dos tetos internos atualmente configurados. O maior chunk ainda é o `generic-scale`; ele permanece funcional e é carregado por rota, mas deve continuar como alvo de refinamento futuro se o objetivo for performance de nível excepcional em conexões lentas.
+
+Os testes de backend e hardening também passaram: autenticação fail-closed, lockout, rotação de refresh, ownership, prontuário, documentos, consentimentos Express/Cloudflare, limites de entrada, contratos de health, RBAC, rotas e workflows. A auditoria de acessibilidade em navegador real permaneceu sem violações serious/critical e sem violações totais no relatório executado.

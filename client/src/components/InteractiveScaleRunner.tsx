@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardCheck,
@@ -12,8 +12,6 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ClinicalReport } from "@/components/ClinicalReport";
-import { SaveToPatient } from "@/components/SaveToPatient";
 import { softTick, softSuccess } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { celebrate } from "@/lib/confetti";
@@ -21,6 +19,13 @@ import { easing, duration, staggerContainer, staggerItem } from "@/lib/motion";
 import { type InteractiveScaleDef } from "@/data/interactiveScales";
 import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
 import { useSecureScaleDraft } from "@/hooks/useSecureScaleDraft";
+
+const LazyClinicalReport = lazy(() =>
+  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+);
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 
 /**
  * InteractiveScaleRunner — renderiza QUALQUER escala definida em
@@ -199,18 +204,25 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
           </CardContent>
         </Card>
 
-        <ClinicalReport
-          scaleName={def.name}
-          scaleFullName={def.fullName}
-          items={reportItems}
-          patientAge={def.ageLabel}
-        />
-
-        <SaveToPatient
-          scaleName={def.name}
-          responses={reportItems}
-          patientAge={def.ageLabel}
-        />
+        <Suspense
+          fallback={
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">
+              Carregando relatório seguro…
+            </div>
+          }
+        >
+          <LazyClinicalReport
+            scaleName={def.name}
+            scaleFullName={def.fullName}
+            items={reportItems}
+            patientAge={def.ageLabel}
+          />
+          <LazySaveToPatient
+            scaleName={def.name}
+            responses={reportItems}
+            patientAge={def.ageLabel}
+          />
+        </Suspense>
 
         <Button
           onClick={handleReset}

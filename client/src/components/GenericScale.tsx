@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,8 +16,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
-import { SaveToPatient } from "@/components/SaveToPatient";
-import { ClinicalReport } from "@/components/ClinicalReport";
 import { WhatsAppShare } from "@/components/WhatsAppShare";
 import { Mascote } from "@/components/Mascote";
 import { celebrate } from "@/lib/confetti";
@@ -30,6 +28,13 @@ import {
   useSecureTypedScaleDraft,
 } from "@/hooks/useSecureScaleDraft";
 import { hasRecordEntries } from "@/lib/scaleDraftCore";
+
+const LazyClinicalReport = lazy(() =>
+  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+);
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 
 /**
  * Item de escala. Pode ser uma string simples (compatível com todo o acervo
@@ -581,7 +586,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           </CardContent>
         </Card>
 
-        <ClinicalReport
+        <LazyClinicalReport
           scaleName={config.title}
           scaleFullName={config.subtitle}
           items={qaItems}
@@ -592,7 +597,15 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           reportText={`${config.title}\n\nPerguntas e respostas:\n\n${qaTranscript}`}
         />
 
-        <SaveToPatient scaleName={config.title} responses={qaItems} />
+        <Suspense
+          fallback={
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">
+              Carregando salvamento seguro…
+            </div>
+          }
+        >
+          <LazySaveToPatient scaleName={config.title} responses={qaItems} />
+        </Suspense>
 
         <Button
           onClick={handleReset}

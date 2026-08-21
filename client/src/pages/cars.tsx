@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { carsCategories } from "@/data/scales";
+import { lazy, Suspense, useRef, useState } from "react";
+import { carsCategories } from "@/data/cars";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +8,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ClipboardCheck, RotateCcw } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
-import { SaveToPatient } from "@/components/SaveToPatient";
-import { ClinicalReport } from "@/components/ClinicalReport";
 import {
   ScaleDraftLoading,
   ScaleDraftRestoredNotice,
 } from "@/components/ScaleDraftLoading";
 import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+
+const LazyClinicalReport = lazy(() =>
+  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+);
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 import { hasRecordEntries, sanitizeNumberRecord } from "@/lib/scaleDraftCore";
 
 const CARS_DRAFT_VALUES = Object.fromEntries(
@@ -136,17 +141,21 @@ export default function CarsPage() {
           </CardContent>
         </Card>
 
-        <ClinicalReport
-          scaleName="CARS — registro clínico"
-          scaleFullName="Registro descritivo dos 15 domínios da Childhood Autism Rating Scale"
-          items={reportItems}
-          patientAge="≥ 2 anos"
-        />
-        <SaveToPatient
-          scaleName="CARS — registro clínico"
-          responses={reportItems}
-          patientAge="≥ 2 anos"
-        />
+        <Suspense
+          fallback={<div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">Carregando relatório seguro…</div>}
+        >
+          <LazyClinicalReport
+            scaleName="CARS — registro clínico"
+            scaleFullName="Registro descritivo dos 15 domínios da Childhood Autism Rating Scale"
+            items={reportItems}
+            patientAge="≥ 2 anos"
+          />
+          <LazySaveToPatient
+            scaleName="CARS — registro clínico"
+            responses={reportItems}
+            patientAge="≥ 2 anos"
+          />
+        </Suspense>
         <Button
           onClick={handleReset}
           variant="outline"

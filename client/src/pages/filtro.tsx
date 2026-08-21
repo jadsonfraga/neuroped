@@ -1323,8 +1323,11 @@ export default function FiltroPage() {
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
   const refinedMatches = useMemo(
-    () => rankSafely(catalog, filterContext, search),
-    [catalog, filterContext, search],
+    () => {
+      if (!hasSearch) return [];
+      return rankSafely(catalog, filterContext, search);
+    },
+    [catalog, filterContext, search, hasSearch],
   );
   const refinedById = useMemo(
     () => new Map(refinedMatches.map((m) => [m.scale.id, m])),
