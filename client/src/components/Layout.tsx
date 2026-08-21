@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap, Glasses, ExternalLink } from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap, Glasses, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
@@ -53,17 +53,21 @@ function FeaturedShortcuts({
       onClick={onPick}
       onMouseEnter={() => softHover()}
       data-testid="featured-nesplora"
-      className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-lime-300/75 bg-[linear-gradient(135deg,#171a13_0%,#28301b_58%,#b7cf50_165%)] px-3 py-3 text-white shadow-md shadow-lime-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-lime-200 hover:shadow-lg hover:shadow-lime-950/30"
+      className="group relative isolate flex items-center gap-3 overflow-hidden rounded-xl border border-amber-100/90 bg-[linear-gradient(135deg,#6a3308_0%,#c98219_51%,#f9e49a_118%)] px-3 py-3 text-amber-950 shadow-[0_8px_22px_-7px_rgba(214,157,37,0.85)] ring-1 ring-amber-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-50 hover:shadow-[0_11px_28px_-7px_rgba(214,157,37,0.95)]"
       aria-label="Abrir site Nesplora em uma nova guia"
     >
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-lime-200/50 bg-lime-300 text-[#151614] shadow-sm shadow-lime-200/20">
+      <span aria-hidden="true" className="absolute -right-7 -top-7 h-20 w-20 rounded-full bg-amber-50/55 blur-2xl transition-transform duration-500 group-hover:scale-150" />
+      <span className="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-amber-50/90 bg-amber-50 text-amber-800 shadow-sm shadow-amber-950/20">
         <Glasses className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-bold leading-tight tracking-wide">Nesplora</span>
-        <span className="mt-0.5 block text-[10px] leading-tight text-lime-100/80">Experiência imersiva em VR</span>
+      <span className="relative z-10 min-w-0 flex-1">
+        <span className="block text-xs font-extrabold leading-tight tracking-[0.07em]">Nesplora</span>
+        <span className="mt-0.5 block text-[10px] leading-tight text-amber-950/75">Experiência imersiva em VR</span>
       </span>
-      <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-lime-100 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+      <span className="relative z-10 flex items-center gap-1 text-amber-900">
+        <Sparkles className="h-3 w-3 animate-pulse" strokeWidth={2.4} aria-hidden="true" />
+        <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+      </span>
     </a>
   );
 
@@ -124,7 +128,7 @@ function FeaturedShortcuts({
         onClick={onPick}
         title="Nesplora — experiência imersiva em realidade virtual"
         aria-label="Abrir site Nesplora em uma nova guia"
-        className="flex h-10 w-10 items-center justify-center rounded-xl border border-lime-300/70 bg-[linear-gradient(135deg,#1a1d15,#3b4720)] text-lime-200 shadow-sm shadow-lime-950/20 transition-colors hover:border-lime-200 hover:text-lime-100"
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-100/90 bg-[linear-gradient(135deg,#8c480b,#d79725,#f4d676)] text-amber-950 shadow-[0_6px_16px_-5px_rgba(214,157,37,0.88)] ring-1 ring-amber-300/45 transition-colors hover:border-amber-50"
       >
         <Glasses className="h-4 w-4" strokeWidth={2.1} aria-hidden="true" />
       </a>
