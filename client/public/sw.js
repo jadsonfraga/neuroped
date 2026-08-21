@@ -110,6 +110,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // A Nesplora é um microsite estático autônomo, publicado dentro deste mesmo
+  // domínio. Ela não pode receber o shell offline, nem o cache de assets do
+  // NeuroPed: uma versão anterior do SW podia devolver o index.html do app para
+  // /nesplora/ enquanto o arquivo estático já existia na origem.
+  if (url.pathname === "/nesplora" || url.pathname.startsWith("/nesplora/")) {
+    return;
+  }
+
   // JS/CSS com hash (imutáveis) → Cache First
   if (url.pathname.match(/\/assets\/.*\.(js|css)$/)) {
     event.respondWith(cacheFirst(request));
