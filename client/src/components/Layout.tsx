@@ -1,7 +1,8 @@
+// Design: navegação clínica de alta clareza, com um sinal dourado Nesplora pontual e motion reduzido quando necessário.
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap } from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap, Glasses, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
@@ -25,6 +26,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 
+const NESPLORA_SITE_URL = "/nesplora/";
+
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
 // para que fiquem sempre à mão: o Filtro Clínico Inteligente e a Avaliação
@@ -43,8 +46,35 @@ function FeaturedShortcuts({
 
   const onPick = () => { softTap(); haptic.select(); };
 
+  const NesploraCard = (
+    <a
+      href={NESPLORA_SITE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onPick}
+      onMouseEnter={() => softHover()}
+      data-testid="featured-nesplora"
+      className="group relative isolate flex items-center gap-3 overflow-hidden rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-950 via-amber-600 to-amber-200 px-3 py-3 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-50 hover:shadow-xl hover:shadow-amber-700/55"
+      aria-label="Abrir site Nesplora em uma nova guia"
+    >
+      <span aria-hidden="true" className="absolute -right-7 -top-7 h-20 w-20 rounded-full bg-amber-50/55 blur-2xl transition-transform duration-500 group-hover:scale-150" />
+      <span className="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-amber-50/90 bg-amber-50 text-amber-800 shadow-sm shadow-amber-950/20">
+        <Glasses className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+      </span>
+      <span className="relative z-10 min-w-0 flex-1">
+        <span className="block text-xs font-extrabold leading-tight tracking-[0.07em]">Nesplora</span>
+        <span className="mt-0.5 block text-[10px] leading-tight text-amber-950/75">Experiência imersiva em VR</span>
+      </span>
+      <span className="relative z-10 flex items-center gap-1 text-amber-900">
+        <Sparkles className="h-3 w-3 motion-safe:animate-pulse motion-reduce:animate-none" strokeWidth={2.4} aria-hidden="true" />
+        <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+      </span>
+    </a>
+  );
+
   const FullCards = (
     <div className="space-y-1.5">
+      {NesploraCard}
       <Link href="/filtro">
         <div
           onClick={onPick}
@@ -92,6 +122,17 @@ function FeaturedShortcuts({
 
   const IconRail = (
     <div className="flex flex-col items-center gap-1.5">
+      <a
+        href={NESPLORA_SITE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onPick}
+        title="Nesplora — experiência imersiva em realidade virtual"
+        aria-label="Abrir site Nesplora em uma nova guia"
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-900 via-amber-600 to-amber-200 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-300/45 transition-colors hover:border-amber-50"
+      >
+        <Glasses className="h-4 w-4" strokeWidth={2.1} aria-hidden="true" />
+      </a>
       <Link href="/filtro">
         <div
           onClick={onPick}

@@ -1,13 +1,13 @@
+// Design: dock móvel clínico com Nesplora como destino dourado central, alvos confortáveis e navegação enxuta.
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
+  Glasses,
   Home,
-  Search,
   Stethoscope,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
-import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { haptic } from "@/lib/haptic";
 import { softTap } from "@/lib/softSounds";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
@@ -18,10 +18,13 @@ import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
 interface DockItem {
   label: string;
   href?: string;
+  externalHref?: string;
   icon: LucideIcon;
   isActive?: (path: string) => boolean;
-  action?: "search";
+  highlighted?: boolean;
 }
+
+const NESPLORA_SITE_URL = "/nesplora/";
 
 // O dock é navegação do workspace clínico. Mesmo no host "full", fluxos
 // explicitamente familiares/públicos não devem receber atalhos para Pacientes,
@@ -60,6 +63,12 @@ const dockItems: DockItem[] = [
     isActive: (path) => path === "/pacientes" || path.startsWith("/paciente/"),
   },
   {
+    label: "Nesplora",
+    externalHref: NESPLORA_SITE_URL,
+    icon: Glasses,
+    highlighted: true,
+  },
+  {
     label: "Clínica",
     href: "/filtro",
     icon: Stethoscope,
@@ -70,11 +79,6 @@ const dockItems: DockItem[] = [
     href: "/agenda",
     icon: CalendarDays,
     isActive: (path) => path === "/agenda" || path.startsWith("/agenda/"),
-  },
-  {
-    label: "Buscar",
-    icon: Search,
-    action: "search",
   },
 ];
 
@@ -143,33 +147,33 @@ export function MobilePrimaryDock() {
         {visibleDockItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive?.(path) ?? false;
-          const commonClass = `relative flex min-h-[3.45rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
-            active
+          const commonClass = `relative flex min-h-[3.55rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
+            item.highlighted
+              ? "-mt-5 min-h-[4.45rem] rounded-[1.3rem] bg-gradient-to-br from-amber-900 via-amber-600 to-amber-200 text-amber-950 shadow-xl shadow-amber-800/50 ring-2 ring-amber-100/90 hover:from-amber-800 hover:via-amber-500 hover:to-amber-100"
+              : active
               ? "bg-primary/12 text-primary"
               : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
           }`;
 
-          if (item.action === "search") {
+          if (item.externalHref) {
             return (
-              <button
+              <a
                 key={item.label}
-                type="button"
+                href={item.externalHref}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={commonClass}
                 onClick={() => {
                   softTap();
-                  haptic.tap();
-                  openCommandPalette();
+                  haptic.select();
                 }}
-                aria-label="Buscar no NeuroPed"
-                data-testid="mobile-dock-search"
+                aria-label="Abrir site Nesplora em uma nova guia"
+                data-testid="mobile-dock-nesplora"
               >
-                <Icon
-                  className="h-[19px] w-[19px]"
-                  strokeWidth={active ? 2.2 : 1.9}
-                  aria-hidden="true"
-                />
-                <span>{item.label}</span>
-              </button>
+                <span aria-hidden="true" className="absolute inset-1 rounded-[1rem] border border-amber-50/65 motion-safe:animate-pulse motion-reduce:animate-none" />
+                <Icon className="relative z-10 h-[21px] w-[21px]" strokeWidth={2.25} aria-hidden="true" />
+                <span className="relative z-10 font-extrabold tracking-[0.06em]">{item.label}</span>
+              </a>
             );
           }
 
