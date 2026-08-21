@@ -17,6 +17,7 @@ import { PrivateGate } from "@/components/PrivateGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
+import { MobilePrimaryDock } from "@/components/MobilePrimaryDock";
 
 import NotFound from "@/pages/not-found";
 // O shell reúne ícones, menu longo e animações. Carregá-lo junto à rota ativa
@@ -252,12 +253,6 @@ const FloatingHelp = lazy(() =>
 const CommandPalette = lazy(() =>
   import("@/components/CommandPalette").then((mod) => ({
     default: mod.CommandPalette,
-  })),
-);
-
-const MobilePrimaryDock = lazy(() =>
-  import("@/components/MobilePrimaryDock").then(({ MobilePrimaryDock: Component }) => ({
-    default: Component,
   })),
 );
 
@@ -719,9 +714,7 @@ function App() {
                   </>
                 )}
                 <ServiceWorkerManager />
-                <Suspense fallback={null}>
-                  <MobilePrimaryDock />
-                </Suspense>
+                <MobilePrimaryDock />
               </ToastProvider>
             </TooltipProvider>
           </AuthProvider>
