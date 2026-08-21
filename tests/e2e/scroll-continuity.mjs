@@ -269,6 +269,11 @@ async function openFilter(width) {
   await page
     .locator("#main-content")
     .waitFor({ state: "visible", timeout: 15000 });
+
+  // Estado vazio é deliberadamente barato: o motor clínico só ranqueia depois
+  // de um critério real. Ativa um cenário de consulta antes de testar os cards,
+  // sem reintroduzir ranking pesado no primeiro paint.
+  await page.getByRole("button", { name: /TDAH/i }).first().click();
   await page
     .locator(".filter-260-card")
     .first()
