@@ -8,7 +8,7 @@ async function source(path) {
   return readFile(new URL(path, root), "utf8");
 }
 
-test("a jornada de marcação fica pública, navegável e aponta para a Secretaria IA", async () => {
+test("a jornada de marcação fica pública, navegável e aponta para o NeuroPed Connect", async () => {
   const [app, navigation, publicRoutes, page, links] = await Promise.all([
     source("client/src/App.tsx"),
     source("client/src/data/navigation.ts"),
@@ -23,5 +23,6 @@ test("a jornada de marcação fica pública, navegável e aponta para a Secretar
   assert.match(publicRoutes, /"\/marcacao"/);
   assert.match(page, /href=\{SECRETARIA_IA_URL\}/);
   assert.match(page, /data-testid="link-secretaria-ia-direto"/);
-  assert.match(links, /https:\/\/secretariaia-7jubr6nq\.manus\.space/);
+  assert.match(links, /https:\/\/neuroped-connect\.lovable\.app/);
+  assert.match(links, /VITE_NEUROPED_CONNECT_URL/);
 });
