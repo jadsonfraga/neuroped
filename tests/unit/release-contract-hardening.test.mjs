@@ -12,6 +12,7 @@ const patientRoute = read("functions/api/patients/[id].ts");
 const cloudflareWorkflow = read(".github/workflows/deploy-cloudflare.yml");
 const vercelWorkflow = read(".github/workflows/deploy-vercel.yml");
 const githubWorkflow = read(".github/workflows/deploy.yml");
+const billingMigrationWorkflow = read(".github/workflows/saas-billing-d1-migration.yml");
 
 // Tenant explícito nunca é autorização: precisa pertencer ao usuário autenticado.
 assert.doesNotMatch(billingGuard, /if\s*\(explicit\)\s*return\s+explicit/);
@@ -87,6 +88,16 @@ assert.equal(
 );
 db.close();
 
+// A migration nova precisa chegar ao D1 remoto no fluxo main-only, não apenas
+// existir no repositório ou passar em SQLite local.
+assert.match(billingMigrationWorkflow, /0014_saas_billing_contract_hardening\.sql/);
+assert.match(
+  billingMigrationWorkflow,
+  /wrangler@4 d1 execute neuroped-db --remote --yes[\s\\\n]+--file=\.\/db\/migrations\/0014_saas_billing_contract_hardening\.sql/,
+);
+assert.match(billingMigrationWorkflow, /invalid_trials/);
+assert.doesNotMatch(billingMigrationWorkflow, /^[\t ]*pull_request:/m);
+
 // Os três deploys continuam encadeados ao mesmo SHA, com Cloudflare como backend.
 assert.match(cloudflareWorkflow, /neuroped\.pages\.dev/);
 assert.match(cloudflareWorkflow, /deploy-check\.json/);
@@ -99,4 +110,4 @@ for (const workflow of [cloudflareWorkflow, vercelWorkflow, githubWorkflow]) {
   assert.doesNotMatch(workflow, /^[\t ]*pull_request:/m);
 }
 
-console.log("✓ tenant, webhook, trial seats, memória e deploy contracts endurecidos");
+console.log("✓ tenant, webhook, trial seats, memória, D1 e deploy contracts endurecidos");
