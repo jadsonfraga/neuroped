@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 import {
   ACCEPTED_FIRST_VISIT_STORAGE,
   ensureClientBuild,
+  isMissingBrowserError,
   startStaticServer,
 } from "../../scripts/lib/browser-audit-runtime.mjs";
 
@@ -11,9 +12,19 @@ const repoRoot = process.cwd();
 const dist = ensureClientBuild(repoRoot);
 const server = await startStaticServer(dist, 0);
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-const browser = await chromium.launch(
-  executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
-);
+let browser;
+try {
+  browser = await chromium.launch(
+    executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
+  );
+} catch (error) {
+  await server.close();
+  if (isMissingBrowserError(error)) {
+    console.log("⊘ Missão Saúde: Chromium indisponível; o contrato estático permanece obrigatório no gate de release.");
+    process.exit(0);
+  }
+  throw error;
+}
 
 try {
   const context = await browser.newContext({
