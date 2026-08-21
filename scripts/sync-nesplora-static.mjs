@@ -58,8 +58,25 @@ await writeFile(
 );
 
 await writeFile(
+  path.join(destination, "sw.js"),
+  `/* Ponte de migração Nesplora: assume /nesplora/ uma vez para escapar do cache legado do NeuroPed. */
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim().then(async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    await Promise.all(windows.map((client) => {
+      const path = new URL(client.url).pathname;
+      return path === "/nesplora" || path.startsWith("/nesplora/") ? client.navigate(client.url) : undefined;
+    }));
+  }));
+});
+`,
+  "utf8",
+);
+
+await writeFile(
   path.join(destination, "README.md"),
-  "# Nesplora estática\n\nEsta pasta é uma cópia autônoma compilada da Nesplora, publicada pelo próprio deploy do Neuroped em `/nesplora/`. Os arquivos de mídia ficam em `media/`; não há dependência de URLs Manus em runtime. Para atualizar a cópia a partir do projeto-fonte, execute `node scripts/sync-nesplora-static.mjs` no repositório do Neuroped.\n",
+  "# Nesplora estática\n\nEsta pasta é uma cópia autônoma compilada da Nesplora, publicada pelo próprio deploy do Neuroped em `/nesplora/`. Os arquivos de mídia ficam em `media/`; não há dependência de URLs Manus em runtime. O `sw.js` local é uma ponte de migração que recupera navegadores com cache legado do NeuroPed. Para atualizar a cópia a partir do projeto-fonte, execute `node scripts/sync-nesplora-static.mjs` no repositório do Neuroped.\n",
   "utf8",
 );
 
