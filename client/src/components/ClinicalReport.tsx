@@ -27,6 +27,10 @@ import {
   type ScaleResponseItem,
   type ScaleResponseReport,
 } from "@/lib/scaleResponseReport";
+import {
+  formatClinicalDate,
+  formatClinicalDateTime,
+} from "@/lib/clinicalDate";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import {
   copyText,
@@ -72,10 +76,11 @@ function normalizeReportProps(p: ClinicalReportProps): NormalizedReport {
 async function sendEmail(
   scaleName: string,
   reportText: string,
+  applicationDate: Date,
   setSent: (v: boolean) => void,
   toast: (opts: any) => void,
 ) {
-  const subject = `[NeuroPed] ${scaleName} — ${new Date().toLocaleDateString("pt-BR")}`;
+  const subject = `[NeuroPed] ${scaleName} — ${formatClinicalDate(applicationDate)}`;
 
   try {
     const outcome = await openEmailDraft({
@@ -105,18 +110,22 @@ async function sendEmail(
   }
 }
 
-function generateReportText(props: NormalizedReport): string {
-  return `${buildScaleResponseText(props)}\n---\n${PROFESSIONAL_SIGNATURE.name} — ${PROFESSIONAL_SIGNATURE.specialty}\n${PROFESSIONAL_SIGNATURE.registry}\n${PROFESSIONAL_SIGNATURE.service}\n`;
+function generateReportText(
+  props: NormalizedReport,
+  applicationDate: Date,
+): string {
+  return `${buildScaleResponseText(props, applicationDate)}\n---\n${PROFESSIONAL_SIGNATURE.name} — ${PROFESSIONAL_SIGNATURE.specialty}\n${PROFESSIONAL_SIGNATURE.registry}\n${PROFESSIONAL_SIGNATURE.service}\n`;
 }
 
 export function ClinicalReport(rawProps: ClinicalReportProps) {
   const props = normalizeReportProps(rawProps);
+  const [applicationDate] = useState(() => new Date());
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatingPremiumPdf, setGeneratingPremiumPdf] = useState(false);
   const { toast } = useToast();
-  const reportText = generateReportText(props);
+  const reportText = generateReportText(props, applicationDate);
   const reportReady = Boolean(props.scaleName && props.items.length > 0);
 
   async function handleCopy() {
@@ -211,7 +220,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             body: [
               `Escala: ${props.scaleName}`,
               `Idade informada: ${props.patientAge || "Não informada"}`,
-              `Data de emissão: ${new Date().toLocaleString("pt-BR")}`,
+              `Data da aplicação: ${formatClinicalDateTime(applicationDate)}`,
               `Total de itens respondidos: ${props.items.length}`,
             ].join("\n"),
           },
@@ -285,7 +294,13 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
       return;
     }
     setSending(true);
-    await sendEmail(props.scaleName, reportText, setSent, toast);
+    await sendEmail(
+      props.scaleName,
+      reportText,
+      applicationDate,
+      setSent,
+      toast,
+    );
     setSending(false);
   }
 

@@ -27,6 +27,7 @@ import {
   type ScaleResponseItem,
 } from "@/lib/scaleResponseReport";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
+import { formatClinicalDateTime } from "@/lib/clinicalDate";
 
 interface SaveToPatientProps {
   scaleName?: string;
@@ -41,6 +42,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const { toast } = useToast();
   const selectId = useId();
   const newPatientId = useId();
+  const [applicationDate] = useState(() => new Date());
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [newPatientName, setNewPatientName] = useState("");
   const [savedPatientId, setSavedPatientId] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
                 `Paciente: ${patient?.name || "Paciente vinculado"}`,
                 `Idade informada: ${patientAge || "Não informada"}`,
                 `Escala: ${scaleName}`,
-                `Data de emissão: ${new Date().toLocaleString("pt-BR")}`,
+                `Data da aplicação: ${formatClinicalDateTime(applicationDate)}`,
               ].join("\n"),
             },
             {
@@ -142,6 +144,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             scaleName,
             patientAge: patientAge || null,
             answerCount: responses.length,
+            appliedAt: applicationDate.toISOString(),
           },
         });
         archivedDocumentId = archived.document.id;
