@@ -157,6 +157,8 @@ jobs:
 
           $WRANGLER d1 execute "$D1_NAME" --remote --yes \
             --file=./db/migrations/0004_consents.sql
+          $WRANGLER d1 execute "$D1_NAME" --remote --yes \
+            --file=./db/migrations/0011_clinical_memory.sql
           consent_columns="$($WRANGLER d1 execute "$D1_NAME" --remote \
             --command "SELECT name FROM pragma_table_info('consents');")"
           echo "$consent_columns"
@@ -170,6 +172,20 @@ jobs:
             --command "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_consents_user_accepted';")"
           echo "$consent_index" | grep -q "idx_consents_user_accepted" || {
             echo "::error::índice de ownership dos consentimentos ausente"
+            exit 1
+          }
+          memory_table="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name='clinical_memory_notes_demo';")"
+          echo "$memory_table"
+          echo "$memory_table" | grep -q "clinical_memory_notes_demo" || {
+            echo "::error::tabela clinical_memory_notes_demo ausente"
+            exit 1
+          }
+          memory_index="$($WRANGLER d1 execute "$D1_NAME" --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_clinical_memory_patient_updated';")"
+          echo "$memory_index"
+          echo "$memory_index" | grep -q "idx_clinical_memory_patient_updated" || {
+            echo "::error::índice da memória clínica ausente"
             exit 1
           }
 

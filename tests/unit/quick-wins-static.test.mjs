@@ -197,7 +197,7 @@ for (const printableClinicalSource of [
 const layout = read("client/src/components/Layout.tsx");
 assert.match(layout, /clearMasterPinUnlock\(\)/);
 assert.match(layout, /secureClearAll\(\)/);
-assert.match(layout, /const \{ accessMode, logout \} = useAuth\(\)/);
+assert.match(layout, /const \{[^}]*accessMode[^}]*logout[^}]*\} = useAuth\(\)/);
 assert.match(
   layout,
   /await logout\(\)/,
@@ -445,6 +445,30 @@ assert.doesNotMatch(
 const memorySearch = read("functions/api/memory/search.ts");
 assert.match(memorySearch, /n\.patient_id IN/);
 assert.match(memorySearch, /p\.owner_user_id = \?/);
+assert.match(memorySearch, /DB_REQUIRED/);
+assert.doesNotMatch(memorySearch, /DEMO_NOTES|mem-demo-/);
+
+const memoryApi = read("functions/api/memory/index.ts");
+const memoryMutationApi = read("functions/api/memory/[id].ts");
+const memoryUi = read("client/src/pages/memoria-clinica.tsx");
+const memoryMigration = read("db/migrations/0011_clinical_memory.sql");
+assert.match(memoryApi, /getPatientAccess/);
+assert.match(memoryApi, /canWriteClinicalData/);
+assert.match(memoryApi, /Nenhuma nota foi simulada/);
+assert.match(memoryMutationApi, /getPatientAccess/);
+assert.match(memoryMutationApi, /onRequestPatch/);
+assert.match(memoryMutationApi, /onRequestDelete/);
+assert.match(memoryUi, /\/api\/memory\?patient_id=/);
+assert.match(memoryUi, /A gravação foi confirmada pelo backend/);
+assert.match(memoryMigration, /FOREIGN KEY\(patient_id\) REFERENCES patients_demo/);
+assert.match(memoryMigration, /idx_clinical_memory_patient_updated/);
+for (const workflow of [
+  read(".github/workflows/provision-d1.yml"),
+  read(".github/workflows/deploy-cloudflare.yml"),
+]) {
+  assert.match(workflow, /0011_clinical_memory\.sql/);
+  assert.match(workflow, /clinical_memory_notes_demo/);
+}
 
 const consentUi = read("client/src/pages/lgpd-consent.tsx");
 assert.match(

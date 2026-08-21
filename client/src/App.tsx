@@ -7,7 +7,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
-import { InstallPrompt } from "@/components/InstallPrompt";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
   AvisoLegalGate,
@@ -15,8 +14,7 @@ import {
 } from "@/components/AvisoLegalGate";
 import { ToastProvider } from "@/components/Toast";
 import { SkeletonShimmer } from "@/components/SkeletonShimmer";
-import { AmbientEffects } from "@/components/AmbientEffects";
-import { FloatingHelp } from "@/components/FloatingHelp";
+
 import { PrivateGate } from "@/components/PrivateGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
@@ -189,6 +187,8 @@ const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
+const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
+const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
@@ -203,6 +203,7 @@ const PlanoTerapeuticoPage = lazy(() => import("@/pages/plano-terapeutico"));
 const PlanoIntervencaoPage = lazy(() => import("@/pages/plano-intervencao"));
 const FichasRegistroPage = lazy(() => import("@/pages/fichas-registro"));
 const LaudoNeuropedPage = lazy(() => import("@/pages/laudo-neuroped"));
+const LaudoSuperPage = lazy(() => import("@/pages/laudo-super"));
 const ReceitaC1Page = lazy(() => import("@/pages/receita-c1"));
 const ReceitaC1ExpressPage = lazy(() => import("@/pages/receita-c1-express"));
 const VerificarPage = lazy(() => import("@/pages/verificar"));
@@ -218,9 +219,30 @@ const WelcomeTour = lazy(() =>
     default: mod.WelcomeTour,
   })),
 );
+const AmbientEffects = lazy(() =>
+  import("@/components/AmbientEffects").then(({ AmbientEffects: Component }) => ({
+    default: Component,
+  })),
+);
+const InstallPrompt = lazy(() =>
+  import("@/components/InstallPrompt").then(({ InstallPrompt: Component }) => ({
+    default: Component,
+  })),
+);
+const FloatingHelp = lazy(() =>
+  import("@/components/FloatingHelp").then(({ FloatingHelp: Component }) => ({
+    default: Component,
+  })),
+);
 const CommandPalette = lazy(() =>
   import("@/components/CommandPalette").then((mod) => ({
     default: mod.CommandPalette,
+  })),
+);
+
+const MobilePrimaryDock = lazy(() =>
+  import("@/components/MobilePrimaryDock").then(({ MobilePrimaryDock: Component }) => ({
+    default: Component,
   })),
 );
 
@@ -366,6 +388,7 @@ function AppRouter() {
               component={LinguagemFonologiaPage}
             />
             <Route path="/memoria-teste" component={MemoriaTestePage} />
+            <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
             <Route
               path="/processamento-visuoauditivo"
               component={ProcessamentoVisuoauditivoPage}
@@ -441,6 +464,11 @@ function AppRouter() {
                 <ProntuarioPage />
               </RouteGuard>
             </Route>
+            <Route path="/manus">
+              <RouteGuard roles={["admin", "professional"]}>
+                <ManusIntegracoesPage />
+              </RouteGuard>
+            </Route>
             <Route path="/documentos">
               <RouteGuard roles={["admin", "professional"]}>
                 <DocumentosPage />
@@ -474,6 +502,11 @@ function AppRouter() {
             <Route path="/laudo-neuroped">
               <RouteGuard roles={["admin", "professional"]}>
                 <LaudoNeuropedPage />
+              </RouteGuard>
+            </Route>
+            <Route path="/laudo-super">
+              <RouteGuard roles={["admin", "professional"]}>
+                <LaudoSuperPage />
               </RouteGuard>
             </Route>
             <Route path="/receita-c1">
@@ -609,7 +642,9 @@ function App() {
           <AuthProvider>
             <TooltipProvider>
               <ToastProvider>
-                <AmbientEffects />
+                <Suspense fallback={null}>
+                  <AmbientEffects />
+                </Suspense>
                 <Toaster />
                 {!splashComplete && (
                   <Suspense fallback={null}>
@@ -644,14 +679,17 @@ function App() {
                 )}
                 {auxiliarySurfacesVisible && (
                   <>
-                    <InstallPrompt />
                     <Suspense fallback={null}>
+                      <InstallPrompt />
                       <PreferencesPanel />
+                      <FloatingHelp />
                     </Suspense>
-                    <FloatingHelp />
                   </>
                 )}
                 <ServiceWorkerManager />
+                <Suspense fallback={null}>
+                  <MobilePrimaryDock />
+                </Suspense>
               </ToastProvider>
             </TooltipProvider>
           </AuthProvider>

@@ -238,6 +238,26 @@ jobs:
           }
           echo "Tabela de consentimentos LGPD OK."
 
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0011_clinical_memory.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name='clinical_memory_notes_demo';" \
+            > /tmp/clinical-memory-table.txt 2>&1
+          cat /tmp/clinical-memory-table.txt
+          grep -q "clinical_memory_notes_demo" /tmp/clinical-memory-table.txt || {
+            echo "::error::tabela de memória clínica ausente"
+            exit 1
+          }
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_clinical_memory_patient_updated';" \
+            > /tmp/clinical-memory-index.txt 2>&1
+          cat /tmp/clinical-memory-index.txt
+          grep -q "idx_clinical_memory_patient_updated" /tmp/clinical-memory-index.txt || {
+            echo "::error::índice da memória clínica ausente"
+            exit 1
+          }
+          echo "Tabela de memória clínica persistente OK."
+
       - name: Configurar secrets/vars de auth no Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

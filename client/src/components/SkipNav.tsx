@@ -12,8 +12,13 @@
  *  1. Adicione <SkipNav /> no início do Layout (antes do header)
  *  2. Adicione id="main-content" na tag <main> do Layout
  */
-import type { MouseEvent } from "react";
-import { PageMascotDecor } from "@/components/PageMascotDecor";
+import { lazy, Suspense, type MouseEvent } from "react";
+
+const PageMascotDecor = lazy(() =>
+  import("@/components/PageMascotDecor").then(({ PageMascotDecor: Component }) => ({
+    default: Component,
+  })),
+);
 
 export function SkipNav() {
   const focusMainContent = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -34,7 +39,9 @@ export function SkipNav() {
       >
         Ir para o conteúdo principal
       </a>
-      <PageMascotDecor />
+      <Suspense fallback={null}>
+        <PageMascotDecor />
+      </Suspense>
     </>
   );
 }

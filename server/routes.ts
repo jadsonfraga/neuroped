@@ -31,6 +31,7 @@ import { registerFileRoutes } from "./routes/files.js";
 import { registerConsentRoutes } from "./routes/consents.js";
 import { registerConectaRoutes } from "./routes/conecta.js";
 import { registerClinicalCoreRoutes } from "./routes/clinical-core.js";
+import { registerConsultationRoutes } from "./routes/consultations.js";
 import {
   canAccessPatient,
   canAccessScaleResult,
@@ -40,6 +41,7 @@ import {
 import { buildExpressHealth } from "./lib/healthContract.js";
 import { registerBookingRoutes } from "./routes/booking-adapter.js";
 import { registerDocumentRoutes } from "./routes/documents.js";
+import { registerMemoryRoutes } from "./routes/memory.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
@@ -113,11 +115,17 @@ export async function registerRoutes(
   // ----- Clinical Core: ledger longitudinal canônico e rastreável -----
   registerClinicalCoreRoutes(app);
 
+  // ----- Consultas SOAP sobre o Clinical Core -----
+  registerConsultationRoutes(app);
+
   // ----- Agenda interna e agendamento público -----
   registerBookingRoutes(app);
 
   // ----- Documentos clínicos: PDFs persistentes e imutáveis -----
   registerDocumentRoutes(app);
+
+  // ----- Memória clínica persistente, cifrada e vinculada ao paciente -----
+  registerMemoryRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {

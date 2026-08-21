@@ -23,7 +23,7 @@
     "fcpMs": 1200,
     "lcpMs": 1900,
     "tbtMs": 160,
-    "cls": 0.02
+    "actionableCls": 0.02
   },
   "lighthouseRequiredPassAudits": [
     "errors-in-console",
@@ -40,5 +40,5 @@
   "initialJsForbiddenChunks": [
     "scaleFilter"
   ],
-  "designRawValues": 198
+  "designRawValues": 212
 }

@@ -11,6 +11,9 @@ import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { haptic } from "@/lib/haptic";
 import { softTap } from "@/lib/softSounds";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
+import { useAuth } from "@/contexts/AuthContext";
+import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
+import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
 
 interface DockItem {
   label: string;
@@ -89,6 +92,7 @@ function navigateTo(href: string) {
 }
 
 export function MobilePrimaryDock() {
+  const { accessMode, isAuthenticated, isLoading, user } = useAuth();
   const [path, setPath] = useState(currentHashPath);
 
   useEffect(() => {
@@ -111,6 +115,20 @@ export function MobilePrimaryDock() {
 
   if (hidden) return null;
 
+  const visibleDockItems = dockItems.filter(
+    (item) =>
+      !item.href ||
+      canRenderNavigationItem({
+        path: item.href,
+        accessMode,
+        isAuthenticated,
+        isLoading,
+        userRole: user?.role,
+        localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
+        localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
+      }),
+  );
+
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 lg:hidden print:hidden"
@@ -119,9 +137,10 @@ export function MobilePrimaryDock() {
     >
       <nav
         aria-label="Navegação principal"
-        className="pointer-events-auto mx-auto grid max-w-[34rem] grid-cols-5 rounded-[1.45rem] border border-white/70 bg-background/92 px-1.5 py-1.5 shadow-[0_-12px_40px_-22px_rgba(24,16,34,0.5)] backdrop-blur-2xl dark:border-white/10"
+        className="pointer-events-auto mx-auto grid max-w-[34rem] rounded-[1.45rem] border border-white/70 bg-background/92 px-1.5 py-1.5 shadow-[0_-12px_40px_-22px_rgba(24,16,34,0.5)] backdrop-blur-2xl dark:border-white/10"
+        style={{ gridTemplateColumns: `repeat(${Math.max(1, visibleDockItems.length)}, minmax(0, 1fr))` }}
       >
-        {dockItems.map((item) => {
+        {visibleDockItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive?.(path) ?? false;
           const commonClass = `relative flex min-h-[3.45rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${

@@ -1,5 +1,5 @@
 /**
- * Camada anticópia / antipirataria (dissuasão).
+ * Camada anticópia / anti-rehost (dissuasão).
  *
  * IMPORTANTE — honestidade técnica: um app estático servido ao navegador
  * NÃO pode ser tornado tecnicamente impossível de copiar. O código-fonte do
@@ -13,13 +13,47 @@
  */
 
 /** Domínios oficiais onde o NeuroPed pode rodar. */
-const DEFAULT_ALLOWED_HOSTS: string[] = [
+const DEFAULT_ALLOWED_HOSTS: ReadonlySet<string> = new Set([
   "neuroped.pages.dev",
   "superneuroped.vercel.app",
-];
+]);
 
 /** Hosts de desenvolvimento local — sempre liberados. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", ""]);
+
+/**
+ * Acesso via IP privado é útil quando o Vite é exposto com `--host 0.0.0.0`
+ * e o navegador abre o WebUI por outro dispositivo da rede local. Isso só é
+ * aceito quando o bundle é de desenvolvimento; builds de produção continuam
+ * restritos aos hosts oficiais ou ao allowlist explícito.
+ */
+function isPrivateNetworkHost(host: string): boolean {
+  const ipv4 = host.split(".");
+  if (ipv4.length === 4 && ipv4.every((part) => /^(?:0|[1-9]\d{0,2})$/.test(part))) {
+    const octets = ipv4.map(Number);
+    if (octets.every((octet) => octet >= 0 && octet <= 255)) {
+      const [a, b] = octets;
+      return (
+        a === 10 ||
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && b === 168) ||
+        (a === 169 && b === 254)
+      );
+    }
+  }
+
+  const ipv6 = host.replace(/^\[/, "").replace(/\]$/, "");
+  return ipv6 === "::1" || ipv6.startsWith("fc") || ipv6.startsWith("fd") || ipv6.startsWith("fe80:");
+}
+
+function normalizeHost(hostname: string | undefined | null): string {
+  return (hostname ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^\[/, "")
+    .replace(/\]$/, "")
+    .replace(/\.$/, "");
+}
 
 function fromEnv(): string[] {
   try {
@@ -28,7 +62,7 @@ function fromEnv(): string[] {
     if (!raw) return [];
     return raw
       .split(",")
-      .map((h) => h.trim().toLowerCase())
+      .map((h) => normalizeHost(h))
       .filter(Boolean);
   } catch {
     return [];
@@ -39,21 +73,24 @@ function fromEnv(): string[] {
  * Retorna true se o hostname atual é um domínio oficial autorizado.
  * - hostname vazio (SSR/testes) → true (não bloqueia ambientes sem window).
  * - localhost e afins → true (desenvolvimento).
- * - domínios do env VITE_ALLOWED_HOSTS → true (override configurável).
+ * - IP privado → true somente quando `allowPrivateNetwork` é explicitamente
+ *   habilitado pelo entrypoint de desenvolvimento.
+ * - domínios do env VITE_ALLOWED_HOSTS → true (allowlist explícito).
  * Previews de plataforma e GitHub Pages permanecem bloqueados: somente hosts
  * estáveis com origem exclusiva recebem autenticação remota e dados clínicos.
  */
-export function isAuthorizedHost(hostname: string | undefined | null): boolean {
-  const host = (hostname ?? "").trim().toLowerCase();
+export function isAuthorizedHost(
+  hostname: string | undefined | null,
+  options: { allowPrivateNetwork?: boolean } = {},
+): boolean {
+  const host = normalizeHost(hostname);
   if (LOCAL_HOSTS.has(host)) return true;
+  if (options.allowPrivateNetwork && isPrivateNetworkHost(host)) return true;
 
   const envHosts = fromEnv();
   if (envHosts.includes(host)) return true;
 
-  const exact = new Set([...DEFAULT_ALLOWED_HOSTS, ...envHosts]);
-  if (exact.has(host)) return true;
-
-  return false;
+  return DEFAULT_ALLOWED_HOSTS.has(host);
 }
 
 /** Aviso de propriedade impresso no console (dissuasão + rastro autoral). */

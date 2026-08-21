@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -162,6 +162,8 @@ async function loadAllPatientsForBackup(): Promise<any[]> {
 export default function PacientesPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [patientPage, setPatientPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [formName, setFormName] = useState("");
@@ -175,19 +177,40 @@ export default function PacientesPage() {
   const [importLoading, setImportLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(search.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPatientPage(1);
+  }, [searchQuery]);
+
+  const PATIENT_PAGE_SIZE = 50;
   const {
     data: patientsRaw,
     isLoading,
+    isFetching,
     isError,
     refetch: refetchPatients,
   } = useQuery<any>({
-    queryKey: ["/api/patients"],
+    queryKey: [
+      `/api/patients?q=${encodeURIComponent(searchQuery)}&page=${patientPage}&limit=${PATIENT_PAGE_SIZE}`,
+    ],
     enabled: true,
+    placeholderData: (previousData: any) => previousData,
   });
-  // A API retorna { data: [...] }; aceita também array puro por robustez.
-  const patients: any[] = Array.isArray(patientsRaw)
-    ? patientsRaw
-    : (patientsRaw?.data ?? []);
+  // A API retorna { data, total, page, limit }; aceita array puro por robustez.
+  const patientPayload: any = patientsRaw;
+  const patients: any[] = Array.isArray(patientPayload)
+    ? patientPayload
+    : (patientPayload?.data ?? []);
+  const patientTotal = Array.isArray(patientPayload)
+    ? patientPayload.length
+    : typeof patientPayload?.total === "number" && Number.isFinite(patientPayload.total)
+      ? Math.max(0, patientPayload.total)
+      : patients.length;
+  const totalPatientPages = Math.max(1, Math.ceil(patientTotal / PATIENT_PAGE_SIZE));
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -196,6 +219,7 @@ export default function PacientesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      setPatientPage(1);
       resetForm();
       softSuccess();
       haptic.success();
@@ -233,6 +257,7 @@ export default function PacientesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      setPatientPage((current) => (current > 1 && patients.length === 1 ? current - 1 : current));
       softSuccess();
       haptic.success();
       toast({ title: "Paciente removido." });
@@ -262,7 +287,7 @@ export default function PacientesPage() {
   }
 
   async function handleBackup() {
-    if (patients.length === 0) {
+    if (patientTotal === 0) {
       toast({
         title: "Nenhum paciente para exportar.",
         variant: "destructive",
@@ -422,19 +447,7 @@ export default function PacientesPage() {
     }
   }
 
-  const q = search
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  const filtered = q
-    ? patients.filter((p: any) =>
-        (p.name || "")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .includes(q),
-      )
-    : patients;
+  const filtered = patients;
 
   return (
     <div className="space-y-6">
@@ -597,7 +610,7 @@ export default function PacientesPage() {
               haptic.tap();
               handleBackup();
             }}
-            disabled={backupLoading || patients.length === 0}
+            disabled={backupLoading || patientTotal === 0}
             title="Exportar todos os pacientes e resultados como JSON"
           >
             {backupLoading ? (
@@ -643,7 +656,10 @@ export default function PacientesPage() {
         <Input
           placeholder="Buscar paciente..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPatientPage(1);
+          }}
           className="pl-10 pr-10 h-10 rounded-xl"
           data-testid="input-search-patients"
         />
@@ -796,6 +812,33 @@ export default function PacientesPage() {
             );
           })}
         </motion.div>
+      )}
+
+      {patientTotal > PATIENT_PAGE_SIZE && (
+        <div className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            Página {patientPage} de {totalPatientPages} · {patientTotal} paciente(s)
+            {isFetching ? " · atualizando…" : ""}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={patientPage <= 1 || isFetching}
+              onClick={() => setPatientPage((page) => Math.max(1, page - 1))}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={patientPage >= totalPatientPages || isFetching}
+              onClick={() => setPatientPage((page) => Math.min(totalPatientPages, page + 1))}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Confirm delete dialog */}

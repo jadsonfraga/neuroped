@@ -5,7 +5,7 @@
  * Estratégias de busca (em ordem de prioridade):
  *  1. FTS5 (Full-Text Search nativo do SQLite/D1) — mais rápida quando disponível
  *  2. Busca textual com scoring TF-IDF simplificado — fallback confiável
- *  3. Modo demo sem banco — retorna notas fictícias filtradas
+ * Sem banco, falha fechada: nunca apresenta conteúdo fictício como memória salva.
  *
  * Busca semântica real (Vectorize + Workers AI) ainda não implementada.
  * Quando disponível, substituir a estratégia 2 por embeddings.
@@ -64,37 +64,6 @@ function parseMinimumScore(value: string | null): number | null {
   if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1) return null;
   return parsed;
 }
-
-// Notas demo para fallback sem banco
-const DEMO_NOTES: MemoryNote[] = [
-  {
-    id: "mem-demo-001",
-    title: "M-CHAT-R/F — Pontos de corte",
-    content: "M-CHAT-R/F: Score 0-2 = baixo risco; 3-7 = risco moderado (realizar entrevista follow-up); 8-20 = risco elevado (encaminhamento imediato). Sensibilidade 91%, especificidade 95%.",
-    category: "escala",
-    source: "manual_mchat",
-    tags: '["mchat","tea","triagem","autismo"]',
-    created_at: new Date("2025-01-01").toISOString(),
-  },
-  {
-    id: "mem-demo-002",
-    title: "SNAP-IV — Interpretação clínica",
-    content: "SNAP-IV: Limiar clínico = média dos itens ≥ 2.0 por subescala. Desatenção: 9 itens. Hiperatividade/Impulsividade: 9 itens. Usar percentis por idade e sexo.",
-    category: "escala",
-    source: "manual_snap",
-    tags: '["snap","tdah","hiperatividade","atencao"]',
-    created_at: new Date("2025-01-01").toISOString(),
-  },
-  {
-    id: "mem-demo-003",
-    title: "Metilfenidato — Posologia pediátrica",
-    content: "Metilfenidato: dose inicial 5mg 1-2x/dia. Titulação semanal de 5mg. Dose máxima: 60mg/dia. Avaliar: apetite, sono, crescimento, FC e PA a cada consulta. DADO FICTÍCIO.",
-    category: "farmacologia",
-    source: "prontuario_demo",
-    tags: '["metilfenidato","tdah","posologia","pediatria"]',
-    created_at: new Date("2025-02-01").toISOString(),
-  },
-];
 
 // ============================================================
 // TF-IDF simplificado para scoring de relevância textual
@@ -211,25 +180,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const hasAI = !!env.AI;
 
   // ============================================================
-  // MODO DEMO (sem banco configurado)
+  // SEM BANCO: falha fechada, sem memória fictícia
   // ============================================================
   if (!env.DB) {
-    const scored = DEMO_NOTES
-      .filter((n) => !category || n.category === category)
-      .map((n) => ({ ...n, score: scoreNote(query, n) }))
-      .filter((n) => n.score >= minScore)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
-
     return Response.json({
-      results: scored,
-      total: scored.length,
+      results: [],
+      total: 0,
       query,
       category: category ?? null,
-      searchType: "text_tfidf",
-      semanticSearchStatus: "not_configured",
-      searchStatusNote: "Banco D1 não configurado. Busca textual (TF-IDF) em notas de demonstração.",
-    }, { headers: { "Cache-Control": "no-store" } });
+      searchType: "unavailable",
+      semanticSearchStatus: "unavailable",
+      error: "Persistência indisponível para a memória.",
+      code: "DB_REQUIRED",
+    }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 
   const user = getContextUser(context);

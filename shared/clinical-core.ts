@@ -173,6 +173,11 @@ const encounterDataSchema = z
     encounterType: z.enum(encounterTypes),
     reason: optionalText(500),
     setting: z.enum(["clinic", "telemedicine", "hospital", "school", "home", "other"]).optional(),
+    appointmentId: boundedId.optional(),
+    subjective: optionalText(5_000),
+    objective: optionalText(5_000),
+    assessment: optionalText(5_000),
+    plan: optionalText(5_000),
   })
   .strict();
 

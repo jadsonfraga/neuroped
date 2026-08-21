@@ -52,7 +52,7 @@ const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
     mascots: [legacyMascots.doctorSelfie, legacyMascots.celebrationArt, legacyMascots.consultorioFull, legacyMascots.ninoRetired],
   },
   {
-    test: /^\/(documentos|laudo-neuroped|receita-c1|receita-c1-express|assinatura-digital|pant|verificar)/,
+    test: /^\/(documentos|laudo-neuroped|laudo-super|receita-c1|receita-c1-express|assinatura-digital|pant|verificar)/,
     mascots: [legacyMascots.celebrationArt, legacyMascots.consultorioSuperman, legacyMascots.consultorioFull, legacyMascots.ninoRetired],
   },
   {
@@ -109,7 +109,7 @@ function hasInlineNino(path: string): boolean {
 }
 
 function isDenseClinicalWorkspace(path: string): boolean {
-  return /^\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
+  return /^\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|laudo-super|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
 }
 
 /**

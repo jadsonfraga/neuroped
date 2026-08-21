@@ -9,13 +9,15 @@
  *   POST /api/auth/logout   → { ok }
  */
 
-import { hashPassword, verifyPassword } from "./_crypto";
+import { hashPassword } from "./_crypto";
 
 export interface Env {
   DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
   ADMIN_EMAIL?: string;
   ADMIN_INITIAL_PASSWORD?: string;
+  /** Migração única e explícita da senha admin existente; permanece desativada por padrão. */
+  ADMIN_FORCE_PASSWORD_RESET?: string;
   ADMIN_NAME?: string;
 }
 
@@ -130,10 +132,10 @@ export async function registerSuccessfulLogin(db: D1Database, u: UserRow): Promi
  * Bootstrap idempotente do admin a partir de variáveis de ambiente
  * (ADMIN_EMAIL / ADMIN_INITIAL_PASSWORD), definidas como secrets no Cloudflare.
  *
- * Além de criar contas novas, faz uma única migração de senha para uma conta
- * existente quando o marcador de bootstrap ainda não existe. Isso resolve o
- * caso em que a conta foi criada com uma senha anterior e o secret foi corrigido
- * depois, sem deixar a senha sendo sobrescrita em cada login.
+ * Além de criar contas novas, só migra a senha de uma conta existente quando
+ * ADMIN_FORCE_PASSWORD_RESET=true e o marcador de bootstrap ainda não existe.
+ * Sem essa flag, uma conta que já possui senha nunca é sobrescrita durante o
+ * login, mesmo que ADMIN_INITIAL_PASSWORD esteja definido ou divergente.
  */
 export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
   const email = env.ADMIN_EMAIL?.toLowerCase().trim();
@@ -143,18 +145,18 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
   const existing = await getUserByEmail(db, email);
   const now = new Date().toISOString();
   const markerKey = "auth.admin.bootstrap.v2";
-  const marker = await db
-    .prepare("SELECT value FROM app_settings WHERE key = ? LIMIT 1")
-    .bind(markerKey)
-    .first<{ value: string | null }>();
+  const forcePasswordReset = env.ADMIN_FORCE_PASSWORD_RESET?.trim().toLowerCase() === "true";
+  const marker = forcePasswordReset
+    ? await db
+        .prepare("SELECT value FROM app_settings WHERE key = ? LIMIT 1")
+        .bind(markerKey)
+        .first<{ value: string | null }>()
+    : null;
 
   if (existing) {
-    // PBKDF2 só é necessário quando já existe hash e marcador — nesses dois
-    // outros casos o bootstrap já é obrigatório e o resultado da verificação
-    // não muda a decisão, então evita o cálculo (100k iterações) à toa em
-    // todo login enquanto o secret de bootstrap permanecer configurado.
-    const needsPasswordBootstrap = !existing.password_hash || !marker
-      || !(await verifyPassword(password, existing.password_hash));
+    const needsPasswordBootstrap =
+      !existing.password_hash ||
+      (forcePasswordReset && !marker);
     if (needsPasswordBootstrap) {
       const hash = await hashPassword(password);
       await db.batch([

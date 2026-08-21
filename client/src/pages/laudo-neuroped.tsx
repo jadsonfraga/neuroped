@@ -1,47 +1,54 @@
-import { useState } from "react";
-import { FileText, Printer, RefreshCw, PenSquare } from "lucide-react";
+import { useMemo, useState } from "react";
+import { FileText, Printer, RefreshCw, PenSquare, Sparkles, Copy, ClipboardPaste, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { escapeHtml } from "@/lib/htmlEscape";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
+import { gerarEValidar, type EntradaLaudo } from "@/lib/laudo/gerador";
+import { laudoParaTexto } from "@/lib/laudo/paraTexto";
 
 /* ────────────────────────────────────────────────────────────
-   Laudo Neuropediátrico — texto integral + assinatura PAdES
+   Laudo Neuropediátrico — WebUI de geração assistida (embutida)
    Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17756
+   Geração 100% local (sem API externa), com a doutrina PANT:
+     CID-10/CID-11 em paralelo · sem perfumaria de IA · sem "(est.)"
 ──────────────────────────────────────────────────────────── */
 
-const DEFAULT_TEXT = `LAUDO MÉDICO NEUROPEDIÁTRICO
+const CAMPOS_IDENTIFICACAO: { key: keyof EntradaLaudo; label: string; placeholder: string }[] = [
+  { key: "paciente", label: "Nome do paciente", placeholder: "Ex.: Fulano de Tal" },
+  { key: "dataNascimento", label: "Data de nascimento", placeholder: "AAAA-MM-DD" },
+  { key: "idade", label: "Idade", placeholder: "Ex.: 7 anos" },
+  { key: "sexo", label: "Sexo", placeholder: "Ex.: masculino" },
+  { key: "cidade", label: "Cidade/UF", placeholder: "Ex.: Petrolina/PE" },
+  { key: "dataAvaliacao", label: "Data da avaliação", placeholder: "AAAA-MM-DD" },
+  { key: "protocolo", label: "Protocolo", placeholder: "Ex.: nº 2026-0145" },
+];
 
-Paciente:
-Data de nascimento:
-Idade:
-Data da avaliação:
+const CAMPOS_CLINICOS: { key: keyof EntradaLaudo; label: string; ajuda: string; placeholder: string }[] = [
+  { key: "motivoAvaliacao", label: "Motivo da avaliação", ajuda: "Demanda principal e encaminhamento.", placeholder: "Ex.: encaminhado pela escola para investigação de dificuldade de atenção e aprendizado…" },
+  { key: "historiaClinica", label: "História clínica", ajuda: "História clínica geral, familiar, escolar e social.", placeholder: "Ex.: gestação sem intercorrências; parto a termo…" },
+  { key: "historiaNeurodesenvolvimento", label: "História do neurodesenvolvimento", ajuda: "Marcos motores, de linguagem e sociais.", placeholder: "Ex.: sentou aos 8 meses, primeiros vocábulos aos 2 anos…" },
+  { key: "gestacaoPartoPuerperio", label: "Gestação, parto e puerpério", ajuda: "Antecedentes perinatais.", placeholder: "Ex.: pré-natal com 8 consultas; Apgar 9/10…" },
+  { key: "exameClinico", label: "Exame clínico", ajuda: "Estado geral, antropometria, cabeça, marcha etc.", placeholder: "Ex.: bom estado geral, perímetro cefálico no percentil 50…" },
+  { key: "exameNeurologico", label: "Exame neurológico", ajuda: "Tônus, reflexos, coordenação, pares cranianos.", placeholder: "Ex.: tônus normal, reflexos presentes e simétricos…" },
+  { key: "exameComportamental", label: "Exame comportamental / mental", ajuda: "Interação, atenção, linguagem, comportamento.", placeholder: "Ex.: contato visual fugaz, linguagem ecolálica parcial…" },
+  { key: "escalasInstrumentos", label: "Escalas e instrumentos aplicados", ajuda: "Quais escalas/instrumentos foram usados.", placeholder: "Ex.: M-CHAT-R/F, SNAP-IV, avaliação fonoaudiológica…" },
+  { key: "escalasResultado", label: "Resultado das escalas", ajuda: "Escores e classificação (números reais apenas).", placeholder: "Ex.: M-CHAT-R/F 6/23 — risco alto; SNAP-IV atenção 2.4…" },
+  { key: "documentosAnalisados", label: "Documentos analisados", ajuda: "Laudos anteriores, laudos de outros profissionais.", placeholder: "Ex.: laudo fonoaudiológico de 03/2026; relatório escolar…" },
+  { key: "hipoteseDiagnostica", label: "Hipótese / impressão diagnóstica (prosa)", ajuda: "Diagnósticos em prosa; o motor extrai os itens com CID.", placeholder: "Ex.: TEA nível 1 de gravidade (F84.0) associado a TDAH…; ou um por linha." },
+  { key: "cid10", label: "CID-10 (paralelo)", ajuda: "Códigos CID-10 separados por ' · ' ou ', '.", placeholder: "Ex.: F84.0 · F90.0" },
+  { key: "cid11", label: "CID-11 (paralelo)", ajuda: "Mesma ordem dos CID-10.", placeholder: "Ex.: 6A02.0 · 6A05.2" },
+  { key: "conduta", label: "Conduta", ajuda: "Tratamento, medicações (com posologia se houver), encaminhamentos.", placeholder: "Ex.: iniciar metilfenidato; encaminhamento para fonoaudiologia e terapia ocupacional…" },
+  { key: "recomendacoes", label: "Recomendações", ajuda: "Orientações à família e à escola.", placeholder: "Ex.: orientações de rotina, adaptações escolares…" },
+];
 
-1. MOTIVO DA AVALIAÇÃO
-
-
-2. HISTÓRIA CLÍNICA E DO NEURODESENVOLVIMENTO
-
-
-3. EXAME CLÍNICO / NEUROLÓGICO / COMPORTAMENTAL
-
-
-4. ESCALAS, INSTRUMENTOS E DOCUMENTOS ANALISADOS
-
-
-5. IMPRESSÃO DIAGNÓSTICA
-
-
-6. CONDUTA E RECOMENDAÇÕES
-
-
-Petrolina/PE, ____/____/______.
-
-Dr. Jadson Fraga Araújo Júnior
-Neurologista Infantil / Neuropediatra
-CRM-PE 25.227 | RQE 17.756`;
+function limpo(v: unknown): string {
+  return typeof v === "string" ? v.trim() : "";
+}
 
 function dateStamp(): string {
   const d = new Date();
@@ -127,12 +134,78 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 </html>`;
 }
 
+const ENTRADA_VAZIA: EntradaLaudo = {
+  paciente: "",
+  dataNascimento: "",
+  idade: "",
+  sexo: "",
+  cidade: "",
+  dataAvaliacao: "",
+  protocolo: "",
+  motivoAvaliacao: "",
+  historiaClinica: "",
+  historiaNeurodesenvolvimento: "",
+  gestacaoPartoPuerperio: "",
+  exameClinico: "",
+  exameNeurologico: "",
+  exameComportamental: "",
+  escalasInstrumentos: "",
+  escalasResultado: "",
+  documentosAnalisados: "",
+  hipoteseDiagnostica: "",
+  cid10: "",
+  cid11: "",
+  conduta: "",
+  recomendacoes: "",
+  diagnosticos: [],
+};
+
 export default function LaudoNeuropedPage() {
-  const [texto, setTexto] = useState(DEFAULT_TEXT);
+  const [entrada, setEntrada] = useState<EntradaLaudo>(ENTRADA_VAZIA);
+  const [texto, setTexto] = useState("");
+  const [editando, setEditando] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+
   const patientId = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("patientId")
     : null;
+
+  const configurado = useMemo(() => {
+    return (
+      limpo(entrada.paciente).length > 1 &&
+      (limpo(entrada.hipoteseDiagnostica).length > 2 ||
+        limpo(entrada.motivoAvaliacao).length > 2 ||
+        limpo(entrada.conduta).length > 2)
+    );
+  }, [entrada]);
+
+  const resultado = useMemo(() => {
+    if (!configurado) return null;
+    return gerarEValidar(entrada);
+  }, [entrada, configurado]);
+
+  const handleChange = (key: keyof EntradaLaudo) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => setEntrada((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const handleGerar = () => {
+    if (!resultado) return;
+    const textoIntegral = laudoParaTexto(resultado.laudo);
+    setTexto(textoIntegral);
+    setEditando(false);
+    setShowPreview(true);
+  };
+
+  const handleCopiar = async () => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      /* clipboard indisponível */
+    }
+  };
 
   const handlePrint = () => {
     const win = window.open("", "_blank");
@@ -146,28 +219,105 @@ export default function LaudoNeuropedPage() {
 
   const filename = `laudo-neuroped-${dateStamp()}`;
 
+  const aprovado = resultado?.qa.startsWith("APROVADO");
+  const aprovadoLabel = resultado
+    ? resultado.qa.startsWith("APROVADO")
+      ? "QA de doutrina: APROVADO — CID-10/CID-11 em paralelo, sem perfumaria de IA."
+      : resultado.qa.replace("REPROVADO:", "QA de doutrina — corrigir antes de emitir:")
+    : "";
+
   return (
     <div className="space-y-5 pb-8">
       <PageHero
         icon={FileText}
         eyebrow="documento clínico"
         title="Laudo Neuropediátrico"
-        subtitle="Cole o laudo completo em uma única área, já com identificação do paciente, história, exame, hipótese diagnóstica, conduta e assinatura textual. Use os botões para visualizar, imprimir ou assinar com seu certificado ICP-Brasil."
+        subtitle="Geração assistida embutida (100% local, sem API externa): preencha os dados clínicos, gere o laudo na estrutura PANT com QA automático de doutrina, revise e emita com assinatura ICP-Brasil."
         gradient="from-primary to-chart-2"
       >
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2">
+          <Button onClick={() => setEditando((v) => !v)} variant={editando ? "default" : "outline"} size="sm" className="gap-2">
+            <ClipboardPaste className="h-4 w-4" />
+            {editando ? "Preenchendo" : "Voltar ao preenchimento"}
+          </Button>
+          <Button onClick={handleGerar} disabled={!configurado} size="sm" className="gap-2">
+            <Sparkles className="h-4 w-4" /> Gerar laudo
+          </Button>
+          <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2" disabled={!texto}>
             <FileText className="h-4 w-4" />
             {showPreview ? "Fechar prévia" : "Visualizar"}
           </Button>
-          <Button onClick={handlePrint} size="sm" className="gap-2">
+          <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!texto}>
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
-          <Button variant="secondary" size="sm" className="gap-2" onClick={() => setTexto("")}>
+          <Button variant="secondary" size="sm" className="gap-2" onClick={() => { setEntrada(ENTRADA_VAZIA); setTexto(""); setShowPreview(false); }}>
             <RefreshCw className="h-4 w-4" /> Limpar
           </Button>
         </div>
       </PageHero>
+
+      {/* ── Preenchimento clínico (editor guiado) ─────────────── */}
+      {editando && (
+        <section className="rounded-2xl border border-border/70 bg-card/80 p-4 sm:p-6 space-y-6">
+          <div>
+            <h2 className="text-sm font-bold text-foreground">1 · Identificação do paciente</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Dados da capa do laudo. Preencha ao menos o nome.</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {CAMPOS_IDENTIFICACAO.map((c) => (
+                <div key={c.key} className="space-y-1">
+                  <Label htmlFor={`id-${c.key}`} className="text-xs">{c.label}</Label>
+                  <Input
+                    id={`id-${c.key}`}
+                    value={entrada[c.key] as string}
+                    onChange={handleChange(c.key)}
+                    placeholder={c.placeholder}
+                    data-testid={`input-${c.key}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-bold text-foreground">2 · Conteúdo clínico</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Texto livre: o motor preserva literalmente o que você escrever e compõe a prosa clínica ao redor. Preencha o que tiver; campos vazios recebem prosa neutra para revisão.
+            </p>
+            <div className="mt-3 space-y-3">
+              {CAMPOS_CLINICOS.map((c) => (
+                <div key={c.key} className="space-y-1">
+                  <Label htmlFor={`cl-${c.key}`} className="text-xs">
+                    {c.label}
+                    <span className="ml-2 font-normal text-muted-foreground">{c.ajuda}</span>
+                  </Label>
+                  <Textarea
+                    id={`cl-${c.key}`}
+                    value={entrada[c.key] as string}
+                    onChange={handleChange(c.key)}
+                    placeholder={c.placeholder}
+                    className="min-h-16 resize-y font-mono text-xs leading-relaxed"
+                    data-testid={`textarea-${c.key}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {configurado && resultado && (
+            <div
+              className={`rounded-xl border p-4 text-sm ${aprovado ? "border-emerald-400/60 bg-emerald-50/60 text-emerald-900" : "border-amber-400/70 bg-amber-50/70 text-amber-900"}`}
+            >
+              <div className="flex items-center gap-2 font-semibold">
+                {aprovado ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                {aprovadoLabel}
+              </div>
+              {!aprovado && (
+                <pre className="mt-2 whitespace-pre-wrap text-xs">{resultado.qa.replace("REPROVADO:", "")}</pre>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── Assinatura ICP-Brasil — bloco em destaque ─────────── */}
       <section
@@ -208,7 +358,7 @@ export default function LaudoNeuropedPage() {
             const { buildDocumentPdf } = await import("@/lib/documentPdf");
             return buildDocumentPdf({
               title: "Laudo Medico Neuropediatrico",
-              subtitle: "Texto integral colado pelo medico assistente",
+              subtitle: "Gerado pela assistente embarcada NeuroPed EDJ",
               credentials: [
                 "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
                 "Neurologista Infantil / Neuropediatra",
@@ -225,23 +375,34 @@ export default function LaudoNeuropedPage() {
         />
       </section>
 
+      {/* ── Texto integral do laudo (revisão + emissão) ───────── */}
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
-        <div>
-          <h2 className="text-sm font-bold text-foreground">Texto integral do laudo</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Use esta área como folha única: cole o documento já pronto, sem preencher campo por campo.
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-foreground">Texto integral do laudo</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Revise e ajuste o texto antes de imprimir ou assinar. O gerador produz a versão inicial; tudo é editável.
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" className="gap-2" onClick={handleCopiar} disabled={!texto}>
+            {copiado ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copiado ? "Copiado" : "Copiar"}
+          </Button>
         </div>
         <Textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          placeholder="Cole aqui o laudo médico completo, já com todos os dados do paciente…"
+          placeholder={
+            editando
+              ? "Preencha os campos clínicos acima e clique em \"Gerar laudo\"."
+              : "Cole aqui o laudo médico completo, já com todos os dados do paciente…"
+          }
           className="min-h-[520px] resize-y font-mono text-sm leading-relaxed"
           data-testid="textarea-laudo-integral"
         />
       </section>
 
-      {showPreview && (
+      {showPreview && texto && (
         <div className="rounded-2xl border border-border bg-card/80 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2 border-b border-border/60">
             <span className="text-sm font-semibold">Pré-visualização</span>

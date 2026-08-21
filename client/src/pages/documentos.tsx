@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { FileText, ClipboardList, Stethoscope, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { FileText, ClipboardList, Stethoscope, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,18 @@ const docCards = [
     path: "/laudo-neuroped",
     icon: Stethoscope,
     title: "Laudo Neuropediátrico",
-    desc: "Template completo — SuperNeuroPed. Preencha os campos, visualize e imprima em PDF.",
+    desc: "Laudo estruturado em 10 seções (padrão PANT). Preencha os campos, visualize e imprima em PDF.",
     badge: "Laudo",
+    badgeVariant: "default" as const,
+    status: "Disponível",
+    ok: true,
+  },
+  {
+    path: "/laudo-super",
+    icon: ShieldCheck,
+    title: "Laudo SuperNeuroPed",
+    desc: "Perfil premium do modelo PANT: 14 seções, mapa funcional, hipóteses com prós/contras, 3 cenários de prognóstico e assinatura Soli Deo Gloria.",
+    badge: "SuperNeuroPed",
     badgeVariant: "default" as const,
     status: "Disponível",
     ok: true,
@@ -102,7 +112,7 @@ export default function DocumentosPage() {
       <div className="rounded-2xl border border-border/50 bg-muted/30 p-4 text-xs text-muted-foreground space-y-1">
         <p>
           <strong className="text-foreground">Laudo Neuropediátrico:</strong>{" "}
-          Template SuperNeuroPed — anamnese, exame clínico, escalas, hipótese diagnóstica e conduta.
+          Estrutura PANT em 10 seções — anamnese, exame clínico, escalas, hipótese diagnóstica e conduta.
           Impressão/PDF direta pelo navegador.
         </p>
         <p>

@@ -9,6 +9,7 @@ export const SENSITIVE_ROUTES = [
   "/assinatura-digital",
   "/documentos",
   "/pacientes",
+  "/memoria-clinica",
   "/paciente",
   "/prontuario",
   "/calculadora-dose",
@@ -19,7 +20,7 @@ export const SENSITIVE_ROUTES = [
   "/plano-intervencao",
   "/avaliacao-multiprofissional",
   "/fichas-registro",
-  "/laudo-neuroped",
+  "/laudo-neuroped", "/laudo-super",
   "/receita-c1",
   "/receita-c1-express",
   "/diario-escola",
@@ -34,6 +35,7 @@ export const SENSITIVE_ROUTES = [
   "/recepcao",
   "/conecta",
   "/agenda",
+  "/manus",
 ] as const;
 
 /**
@@ -225,4 +227,26 @@ export function decideRouteAccess({
     return "forbidden";
   }
   return "allow";
+}
+
+export function canRenderNavigationItem({
+  path,
+  accessMode,
+  isAuthenticated,
+  isLoading,
+  userRole,
+  localPinConfigured = false,
+  localPinUnlocked = false,
+}: Omit<RouteAccessInput, "allowedRoles">): boolean {
+  return (
+    decideRouteAccess({
+      path,
+      accessMode,
+      isAuthenticated,
+      isLoading,
+      userRole,
+      localPinConfigured,
+      localPinUnlocked,
+    }) === "allow"
+  );
 }

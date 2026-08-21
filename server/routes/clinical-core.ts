@@ -39,7 +39,7 @@ interface SensitivePayload {
   capturedAt?: string;
 }
 
-function ensureClinicalCoreSchema(): void {
+export function ensureClinicalCoreSchema(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS clinical_events (
       id TEXT PRIMARY KEY,

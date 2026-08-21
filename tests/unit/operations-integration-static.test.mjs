@@ -178,6 +178,9 @@ assert.match(agenda, /Recepção vinculada/);
 assert.match(agenda, /action: "staff_link"/);
 assert.match(agenda, /Trilha operacional/);
 assert.match(agenda, /WhatsApp, SMS e e-mail externos não são simulados/);
+assert.match(agenda, /\/api\/patients\?limit=50&page=1&q=/, "o seletor de paciente deve usar busca server-side parametrizada");
+assert.match(agenda, /Buscar por nome ou identificador/, "a agenda deve oferecer busca incremental de paciente");
+assert.doesNotMatch(agenda, /\.slice\(0,\s*40\)/, "a lista de próximas consultas não pode truncar silenciosamente");
 assert.match(agenda, /pending_provider/);
 assert.doesNotMatch(agenda, /pagamento aprovado|pix gerado|teleconsulta ativa/i);
 
