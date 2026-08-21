@@ -11,7 +11,7 @@
  * - aceite: cria `clinic_memberships` se o usuário já existe ou pendencia o
  *   cadastro (o registro normal consulta `clinic_invitations` pelo e-mail).
  */
-import { randomBytes } from "crypto";
+import { sha256Hex } from "../auth/_crypto";
 import {
   canManageClinic,
   isClinicMembershipRole,
@@ -30,10 +30,17 @@ export interface InvitationInput {
   expiresAt?: Date;
 }
 
-export function generateInvitationToken(): { token: string; tokenHash: string } {
-  const token = randomBytes(INVITATION_TOKEN_BYTES).toString("base64url");
-  const { createHash } = require("crypto") as typeof import("crypto");
-  const tokenHash = createHash("sha256").update(token).digest("hex");
+/** base64url sem dependência de Node — mesmo runtime (Web Crypto) do resto das Functions. */
+function randomTokenBase64Url(byteLength: number): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export async function generateInvitationToken(): Promise<{ token: string; tokenHash: string }> {
+  const token = randomTokenBase64Url(INVITATION_TOKEN_BYTES);
+  const tokenHash = await sha256Hex(token);
   return { token, tokenHash };
 }
 
