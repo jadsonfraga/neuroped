@@ -160,14 +160,12 @@ export function MobilePrimaryDock() {
               <a
                 key={item.label}
                 href={item.externalHref}
-                target="_blank"
-                rel="noopener noreferrer"
                 className={commonClass}
                 onClick={() => {
                   softTap();
                   haptic.select();
                 }}
-                aria-label="Abrir site Nesplora em uma nova guia"
+                aria-label="Abrir site Nesplora"
                 data-testid="mobile-dock-nesplora"
               >
                 <span aria-hidden="true" className="absolute inset-1 rounded-[1rem] border border-amber-50/65 motion-safe:animate-pulse motion-reduce:animate-none" />
