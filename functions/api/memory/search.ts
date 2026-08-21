@@ -25,6 +25,21 @@ interface Env {
   VECTORIZE?: Vectorize; // Cloudflare Vectorize (futuro)
 }
 
+/**
+ * Tabela onde as notas realmente são gravadas: criada por
+ * db/migrations/0011_clinical_memory.sql e escrita/lida por
+ * functions/api/memory/index.ts e [id].ts.
+ *
+ * Esta busca lia de `memory_notes` — a tabela legada de db/schema.d1.sql, que
+ * continua existindo no D1 provisionado. Como as duas existem, não havia erro
+ * de SQL: a busca simplesmente varria uma tabela sempre vazia e nunca
+ * encontrava nenhuma nota salva pela API. Centralizado numa constante para as
+ * rotas de memória não voltarem a divergir.
+ */
+const MEMORY_TABLE = "clinical_memory_notes_demo";
+/** Índice FTS5 opcional: quando ausente, o fallback TF-IDF abaixo assume. */
+const MEMORY_FTS_TABLE = "clinical_memory_notes_fts";
+
 interface MemoryNote {
   id: string;
   title: string | null;
@@ -238,10 +253,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const ftsRows = await env.DB
       .prepare(
         `SELECT n.id, n.title, n.content, n.category, n.source, n.tags, n.created_at,
-                bm25(memory_notes_fts) * -1 AS score
-         FROM memory_notes_fts
-         JOIN memory_notes n ON memory_notes_fts.rowid = n.rowid
-         WHERE memory_notes_fts MATCH ?
+                bm25(${MEMORY_FTS_TABLE}) * -1 AS score
+         FROM ${MEMORY_FTS_TABLE}
+         JOIN ${MEMORY_TABLE} n ON ${MEMORY_FTS_TABLE}.rowid = n.rowid
+         WHERE ${MEMORY_FTS_TABLE} MATCH ?
            AND n.is_demo = 1 ${categoryClause}
            ${ownershipClause}
          ORDER BY score DESC
@@ -299,7 +314,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const likeRows = await env.DB
       .prepare(
         `SELECT n.id, n.title, n.content, n.category, n.source, n.tags, n.created_at
-         FROM memory_notes n
+         FROM ${MEMORY_TABLE} n
          WHERE (n.content LIKE ? OR n.title LIKE ?)
            AND n.is_demo = 1
            ${category ? "AND n.category = ?" : ""}

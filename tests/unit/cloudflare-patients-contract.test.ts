@@ -318,7 +318,7 @@ for (const table of [
   "consultations_demo",
   "scale_results_demo",
   "documents_demo",
-  "memory_notes",
+  "clinical_memory_notes_demo",
   "patients_demo",
 ]) {
   assert.match(deleteSql, new RegExp(`DELETE FROM ${table}`));
