@@ -55,13 +55,23 @@ assert.match(prCheck, /- name: Lint\s+id: lint\s+run: npm run lint/);
 assert.doesNotMatch(prCheck, /npm run lint --if-present/);
 assert.match(
   prCheck,
-  /const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus/,
+  /const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus/,
   "o PR Check deve exigir também o contrato do NeuroPed Conecta",
 );
 assert.match(
   prCheck,
   /id: access[\s\S]{0,240}npm run validate:public && npm run audit:access[\s\S]{0,160}route-guard-policy\.test\.ts/,
   "o status do PR deve incluir a política de acesso fail-closed",
+);
+assert.match(
+  prCheck,
+  /id: functions_build[\s\S]{0,400}wrangler@4 pages functions build functions/,
+  "o PR Check deve reproduzir o bundle real das Cloudflare Functions antes do merge",
+);
+assert.match(
+  prCheck,
+  /steps\.functions_build\.outcome.*!= "success"/,
+  "o gate de bundle das Functions precisa bloquear o merge quando falhar",
 );
 assert.match(prCheck, /<!-- neuroped-pr-check -->/);
 assert.match(prCheck, /github\.paginate\(github\.rest\.issues\.listComments/);
