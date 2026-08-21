@@ -269,6 +269,7 @@ async function openFilter(width) {
   await page
     .locator("#main-content")
     .waitFor({ state: "visible", timeout: 15000 });
+  await page.getByRole("button", { name: /TDAH/ }).click();
   await page
     .locator(".filter-260-card")
     .first()
