@@ -88,6 +88,7 @@ const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const ServicosClinicaPage = lazy(() => import("@/pages/servicos-clinica"));
+const EletroencefalogramaPage = lazy(() => import("@/pages/eletroencefalograma"));
 const TermosPage = lazy(() => import("@/pages/termos"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -341,6 +342,7 @@ function AppRouter() {
             <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
             <Route path="/sobre" component={SobrePage} />
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
+            <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
             <Route path="/termos" component={TermosPage} />
             <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
             <Route path="/pac" component={PacPage} />
