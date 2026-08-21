@@ -8,10 +8,11 @@ const app = await readFile(new URL("client/src/App.tsx", root), "utf8");
 
 test("EEG stays in an accessible internal handoff instead of auto-redirecting", () => {
   assert.doesNotMatch(source, /window\.location\.assign\(VIDEO_EEG_URL\)/);
-  assert.match(source, /document\.title = "Vídeo-EEG Domiciliar \| NeuroPed"/);
-  assert.match(source, /id="video-eeg-title"/);
-  assert.match(source, /target="_blank"/);
-  assert.match(source, /rel="noopener noreferrer"/);
+  assert.match(source, /<main /);
+  assert.match(source, /<h1 /);
+  assert.match(source, /href="#\/agendar"/);
+  assert.match(source, /href="#\/marcacao"/);
+  assert.match(source, /sem redirecionamento/);
   assert.ok(app.includes('if (location === "/eletroencefalograma")'));
   assert.match(app, /<RouteGuard>[\s\S]*?<Route path="\/eletroencefalograma" component=\{EletroencefalogramaPage\}/);
 });
