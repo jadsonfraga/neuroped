@@ -318,11 +318,12 @@ for (const table of [
   "consultations_demo",
   "scale_results_demo",
   "documents_demo",
-  "memory_notes",
+  "clinical_memory_notes_demo",
   "patients_demo",
 ]) {
   assert.match(deleteSql, new RegExp(`DELETE FROM ${table}`));
 }
+assert.doesNotMatch(deleteSql, /DELETE FROM memory_notes\b/);
 assert.match(deleteSql, /INSERT INTO audit_logs/);
 const patientDelete = deleteDb.batchStatements.find((statement) =>
   statement.sql.includes("DELETE FROM patients_demo"),
