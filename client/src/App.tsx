@@ -7,6 +7,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
+import { PageTransition } from "@/components/PageTransition";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
   AvisoLegalGate,
@@ -285,6 +286,7 @@ function AppRouter() {
     <Layout>
       <Suspense fallback={<LoadingSpinner />}>
         <RouteGuard>
+          <PageTransition>
           <Switch>
             <Route path="/login" component={LoginPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
@@ -563,6 +565,7 @@ function AppRouter() {
             <Route path="/paciente/:id" component={PacienteDetalhePage} />
             <Route component={NotFound} />
           </Switch>
+          </PageTransition>
         </RouteGuard>
       </Suspense>
     </Layout>

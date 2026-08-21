@@ -1,3 +1,4 @@
+// Design: navegação clínica de alta clareza, com um sinal dourado Nesplora pontual e motion reduzido quando necessário.
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,7 +66,7 @@ function FeaturedShortcuts({
         <span className="mt-0.5 block text-[10px] leading-tight text-amber-950/75">Experiência imersiva em VR</span>
       </span>
       <span className="relative z-10 flex items-center gap-1 text-amber-900">
-        <Sparkles className="h-3 w-3 animate-pulse" strokeWidth={2.4} aria-hidden="true" />
+        <Sparkles className="h-3 w-3 motion-safe:animate-pulse motion-reduce:animate-none" strokeWidth={2.4} aria-hidden="true" />
         <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
       </span>
     </a>
