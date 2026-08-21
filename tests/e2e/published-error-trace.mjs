@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const origins = ["https://neuroped.pages.dev", "https://superneuroped.vercel.app"];
-const routes = ["/#/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/prontuario"];
+const routes = ["/#/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/missao-saude", "/#/prontuario"];
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 const output = { startedAt: new Date().toISOString(), environments: [] };
 const browser = await chromium.launch(executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined);

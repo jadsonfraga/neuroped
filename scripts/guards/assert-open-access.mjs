@@ -92,6 +92,7 @@ const PUBLIC_ROUTE_SENTINELS = [
   "/eletroencefalograma",
   "/verificar",
   "/brincando-e-aprendendo",
+  "/missao-saude",
   "/filtro-escalas",
 ];
 await check("rotas clínicas permanecem fechadas por padrão", () => {

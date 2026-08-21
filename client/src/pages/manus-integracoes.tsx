@@ -15,7 +15,7 @@ type ManusSite = {
 
 const manusUrls = {
   secretaria: "/#/marcacao",
-  missao: import.meta.env.VITE_MANUS_MISSAO_URL || "https://drjadsongame-ko8qudqs.manus.space",
+  missao: "/#/missao-saude",
   institucional: import.meta.env.VITE_MANUS_INSTITUCIONAL_URL || "https://drjadsonmd-iqeiteek.manus.space",
 };
 
@@ -34,7 +34,7 @@ const sites: ManusSite[] = [
     shortLabel: "Jogo",
     url: manusUrls.missao,
     description: "Circuito educativo infantil com três estações sobre cuidados de saúde.",
-    note: "O progresso do jogo permanece isolado no domínio Manus e não altera pacientes, agenda ou prontuários.",
+    note: "A Missão Saúde foi incorporada ao NeuroPed. O progresso existe somente nesta sessão e não altera pacientes, agenda ou prontuários.",
   },
   {
     id: "institucional",
