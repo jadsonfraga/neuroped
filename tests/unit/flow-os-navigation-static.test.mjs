@@ -47,7 +47,7 @@ const polishCss = fs.readFileSync(
   "utf8",
 );
 
-for (const label of ["Início", "Pacientes", "Clínica", "Agenda", "Buscar"]) {
+for (const label of ["Início", "Pacientes", "Clínica", "Agenda"]) {
   assert.match(
     dock,
     new RegExp(`label: \\"${label}\\"`),
@@ -84,9 +84,9 @@ assert.match(
   "dock deve ter landmark acessível",
 );
 assert.match(
-  dock,
+  layout,
   /openCommandPalette\(\)/,
-  "busca do dock deve abrir a paleta global",
+  "busca global deve permanecer acessível fora do dock móvel enxuto",
 );
 assert.match(dock, /\/pacientes/, "dock deve dar acesso direto aos pacientes");
 assert.match(dock, /\/filtro/, "dock deve dar acesso direto ao fluxo clínico");
