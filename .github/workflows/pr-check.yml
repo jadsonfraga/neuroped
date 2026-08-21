@@ -46,6 +46,15 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      - name: Validar bundle das Cloudflare Functions
+        id: functions_build
+        # tsc/build:client não pegam módulos Node inexistentes no runtime Workers
+        # (ex.: import { randomBytes } from "crypto") — só o bundler do wrangler
+        # (esbuild, sem nodejs_compat) resolve isso, e antes disso só quebrava
+        # no deploy real em produção. Este passo reproduz esse bundle no PR.
+        run: npx wrangler@4 pages functions build functions --outdir=/tmp/pages-functions-check
+        continue-on-error: true
+
       - name: Validar política de acesso fail-closed
         id: access
         run: npm run validate:public && npm run audit:access && node --import tsx tests/unit/route-guard-policy.test.ts
@@ -81,11 +90,12 @@ jobs:
             const buildStatus = '${{ steps.build.outcome }}' === 'success';
             const typecheckStatus = '${{ steps.typecheck.outcome }}' === 'success';
             const lintStatus = '${{ steps.lint.outcome }}' === 'success';
+            const functionsBuildStatus = '${{ steps.functions_build.outcome }}' === 'success';
             const accessStatus = '${{ steps.access.outcome }}' === 'success';
             const conectaStatus = '${{ steps.conecta.outcome }}' === 'success';
             const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
             const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
-            const ready = buildStatus && typecheckStatus && lintStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus;
+            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus;
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -99,6 +109,7 @@ jobs:
             | ${icon(typecheckStatus)} TypeScript | ${label(typecheckStatus)} |
             | ${icon(buildStatus)} Build | ${label(buildStatus)} |
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
+            | ${icon(functionsBuildStatus)} Bundle Cloudflare Functions | ${label(functionsBuildStatus)} |
             | ${icon(accessStatus)} Acesso fail-closed | ${label(accessStatus)} |
             | ${icon(conectaStatus)} NeuroPed Conecta | ${label(conectaStatus)} |
             | ${icon(clinicalCoreStatus)} Clinical Core + Cockpit | ${label(clinicalCoreStatus)} |
@@ -106,7 +117,7 @@ jobs:
 
             ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
+              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
@@ -141,6 +152,7 @@ jobs:
           if [ "${{ steps.typecheck.outcome }}" != "success" ] || \
              [ "${{ steps.build.outcome }}" != "success" ] || \
              [ "${{ steps.lint.outcome }}" != "success" ] || \
+             [ "${{ steps.functions_build.outcome }}" != "success" ] || \
              [ "${{ steps.conecta.outcome }}" != "success" ] || \
              [ "${{ steps.clinical_core.outcome }}" != "success" ] || \
              [ "${{ steps.operations.outcome }}" != "success" ] || \
