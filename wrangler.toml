@@ -4,6 +4,8 @@
 
 name = "neuroped"
 compatibility_date = "2024-11-01"
+# Necessária para os módulos de segurança que usam APIs nativas do Node, como `crypto`.
+compatibility_flags = ["nodejs_compat"]
 
 # Diretório de output do frontend (usado pelo Cloudflare Pages)
 pages_build_output_dir = "dist/public"
