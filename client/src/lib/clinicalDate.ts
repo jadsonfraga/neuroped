@@ -1,3 +1,4 @@
+// Fonte única de data/hora para documentos clínicos exportados pelo app.
 export const CLINICAL_TIME_ZONE = "America/Bahia";
 
 function validDate(date: Date): Date {
