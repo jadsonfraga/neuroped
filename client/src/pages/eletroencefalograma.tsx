@@ -24,9 +24,9 @@ const steps = [
 
 export default function EletroencefalogramaPage() {
   return (
-    <main className="min-h-full bg-[#fbfaf7] px-4 py-8 text-slate-900 sm:px-6 lg:px-10 lg:py-12">
-      <section className="mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] border border-amber-200/80 bg-white shadow-[0_24px_70px_-36px_rgba(120,53,15,0.48)] lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="relative overflow-hidden bg-[#3a2718] px-7 py-10 text-amber-50 sm:px-10 sm:py-14">
+    <main className="min-h-full bg-stone-50 px-4 py-8 text-slate-900 sm:px-6 lg:px-10 lg:py-12">
+      <section className="mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] border border-amber-200/80 bg-white shadow-2xl lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative overflow-hidden bg-amber-950 px-7 py-10 text-amber-50 sm:px-10 sm:py-14">
           <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-amber-200/25" />
           <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full border border-amber-300/15" />
           <div className="relative">
