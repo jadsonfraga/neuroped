@@ -53,7 +53,7 @@ function FeaturedShortcuts({
       onClick={onPick}
       onMouseEnter={() => softHover()}
       data-testid="featured-nesplora"
-      className="group relative isolate flex items-center gap-3 overflow-hidden rounded-xl border border-amber-100/90 bg-[linear-gradient(135deg,#6a3308_0%,#c98219_51%,#f9e49a_118%)] px-3 py-3 text-amber-950 shadow-[0_8px_22px_-7px_rgba(214,157,37,0.85)] ring-1 ring-amber-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-50 hover:shadow-[0_11px_28px_-7px_rgba(214,157,37,0.95)]"
+      className="group relative isolate flex items-center gap-3 overflow-hidden rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-950 via-amber-600 to-amber-200 px-3 py-3 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-50 hover:shadow-xl hover:shadow-amber-700/55"
       aria-label="Abrir site Nesplora em uma nova guia"
     >
       <span aria-hidden="true" className="absolute -right-7 -top-7 h-20 w-20 rounded-full bg-amber-50/55 blur-2xl transition-transform duration-500 group-hover:scale-150" />
@@ -128,7 +128,7 @@ function FeaturedShortcuts({
         onClick={onPick}
         title="Nesplora — experiência imersiva em realidade virtual"
         aria-label="Abrir site Nesplora em uma nova guia"
-        className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-100/90 bg-[linear-gradient(135deg,#8c480b,#d79725,#f4d676)] text-amber-950 shadow-[0_6px_16px_-5px_rgba(214,157,37,0.88)] ring-1 ring-amber-300/45 transition-colors hover:border-amber-50"
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-900 via-amber-600 to-amber-200 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-300/45 transition-colors hover:border-amber-50"
       >
         <Glasses className="h-4 w-4" strokeWidth={2.1} aria-hidden="true" />
       </a>

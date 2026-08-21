@@ -156,7 +156,7 @@ export function MobilePrimaryDock() {
           const active = item.isActive?.(path) ?? false;
           const commonClass = `relative flex min-h-[3.45rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
             item.highlighted
-              ? "bg-[linear-gradient(135deg,#8c480b,#d79725,#f4d676)] text-amber-950 shadow-[0_5px_15px_-8px_rgba(214,157,37,0.95)] ring-1 ring-amber-100/85 hover:bg-[linear-gradient(135deg,#a85a0c,#e2ad38,#f8e3a0)]"
+              ? "bg-gradient-to-br from-amber-900 via-amber-600 to-amber-200 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-100/85 hover:from-amber-800 hover:via-amber-500 hover:to-amber-100"
               : active
               ? "bg-primary/12 text-primary"
               : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
