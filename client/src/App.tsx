@@ -7,6 +7,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
+import { PageTransition } from "@/components/PageTransition";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
   AvisoLegalGate,
@@ -88,6 +89,7 @@ const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const ServicosClinicaPage = lazy(() => import("@/pages/servicos-clinica"));
+const EletroencefalogramaPage = lazy(() => import("@/pages/eletroencefalograma"));
 const TermosPage = lazy(() => import("@/pages/termos"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -284,6 +286,7 @@ function AppRouter() {
     <Layout>
       <Suspense fallback={<LoadingSpinner />}>
         <RouteGuard>
+          <PageTransition>
           <Switch>
             <Route path="/login" component={LoginPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
@@ -341,6 +344,7 @@ function AppRouter() {
             <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
             <Route path="/sobre" component={SobrePage} />
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
+            <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
             <Route path="/termos" component={TermosPage} />
             <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
             <Route path="/pac" component={PacPage} />
@@ -561,6 +565,7 @@ function AppRouter() {
             <Route path="/paciente/:id" component={PacienteDetalhePage} />
             <Route component={NotFound} />
           </Switch>
+          </PageTransition>
         </RouteGuard>
       </Suspense>
     </Layout>

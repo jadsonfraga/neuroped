@@ -98,7 +98,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const now = isoUtc(new Date());
   const expiresAt = isoUtc(new Date(Date.now() + INVITATION_EXPIRY_MS));
-  const generated = generateInvitationToken();
+  const generated = await generateInvitationToken();
 
   if (action === "resend") {
     const existingId = clean(body.invitationId, 80);

@@ -34,6 +34,7 @@ import {
   Target,
   Thermometer,
   Users,
+  Waves,
   Zap,
   Globe2,
 } from "lucide-react";
@@ -42,6 +43,7 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  tone?: "golden";
 }
 
 export interface NavSection {
@@ -81,6 +83,7 @@ export const navSections: NavSection[] = [
     title: "CLÍNICA JADSON FRAGA",
     items: [
       { href: "/servicos-clinica", label: "Serviços e avaliação", icon: Stethoscope },
+      { href: "/eletroencefalograma", label: "Eletroencefalograma", icon: Waves, tone: "golden" },
     ],
   },
   {
