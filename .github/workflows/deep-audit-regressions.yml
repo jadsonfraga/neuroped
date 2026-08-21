@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 24]
+        node: [22, 24]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -117,7 +117,7 @@ jobs:
           for workflow in \
             .github/workflows/deploy-cloudflare.yml \
             .github/workflows/deploy-vercel.yml \
-            .github/workflows/deploy-github-pages.yml; do
+            .github/workflows/deploy.yml; do
             grep -q -- '- main' "$workflow"
             if grep -Eq '^[[:space:]]*pull_request:' "$workflow"; then
               echo "::error::$workflow não pode publicar em pull_request."
