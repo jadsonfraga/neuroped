@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
+  Glasses,
   Home,
   Search,
   Stethoscope,
@@ -18,10 +19,14 @@ import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
 interface DockItem {
   label: string;
   href?: string;
+  externalHref?: string;
   icon: LucideIcon;
   isActive?: (path: string) => boolean;
   action?: "search";
+  highlighted?: boolean;
 }
+
+const NESPLORA_SITE_URL = "https://nesplora-f6dubnnp.manus.space";
 
 // O dock é navegação do workspace clínico. Mesmo no host "full", fluxos
 // explicitamente familiares/públicos não devem receber atalhos para Pacientes,
@@ -64,6 +69,12 @@ const dockItems: DockItem[] = [
     href: "/filtro",
     icon: Stethoscope,
     isActive: (path) => path === "/filtro" || path.startsWith("/filtro/"),
+  },
+  {
+    label: "Nesplora",
+    externalHref: NESPLORA_SITE_URL,
+    icon: Glasses,
+    highlighted: true,
   },
   {
     label: "Agenda",
@@ -144,7 +155,9 @@ export function MobilePrimaryDock() {
           const Icon = item.icon;
           const active = item.isActive?.(path) ?? false;
           const commonClass = `relative flex min-h-[3.45rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
-            active
+            item.highlighted
+              ? "bg-[linear-gradient(135deg,#1b1e16,#394321)] text-lime-200 shadow-[0_5px_15px_-8px_rgba(163,191,72,0.85)] ring-1 ring-lime-300/55 hover:bg-[linear-gradient(135deg,#242a1b,#4a5629)] hover:text-lime-100"
+              : active
               ? "bg-primary/12 text-primary"
               : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
           }`;
@@ -170,6 +183,27 @@ export function MobilePrimaryDock() {
                 />
                 <span>{item.label}</span>
               </button>
+            );
+          }
+
+          if (item.externalHref) {
+            return (
+              <a
+                key={item.label}
+                href={item.externalHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={commonClass}
+                onClick={() => {
+                  softTap();
+                  haptic.select();
+                }}
+                aria-label="Abrir site Nesplora em uma nova guia"
+                data-testid="mobile-dock-nesplora"
+              >
+                <Icon className="h-[19px] w-[19px]" strokeWidth={2.1} aria-hidden="true" />
+                <span>{item.label}</span>
+              </a>
             );
           }
 

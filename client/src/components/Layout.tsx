@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap } from "lucide-react";
+import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap, Glasses, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
@@ -25,6 +25,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 
+const NESPLORA_SITE_URL = "https://nesplora-f6dubnnp.manus.space";
+
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
 // para que fiquem sempre à mão: o Filtro Clínico Inteligente e a Avaliação
@@ -43,8 +45,31 @@ function FeaturedShortcuts({
 
   const onPick = () => { softTap(); haptic.select(); };
 
+  const NesploraCard = (
+    <a
+      href={NESPLORA_SITE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onPick}
+      onMouseEnter={() => softHover()}
+      data-testid="featured-nesplora"
+      className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-lime-300/75 bg-[linear-gradient(135deg,#171a13_0%,#28301b_58%,#b7cf50_165%)] px-3 py-3 text-white shadow-md shadow-lime-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-lime-200 hover:shadow-lg hover:shadow-lime-950/30"
+      aria-label="Abrir site Nesplora em uma nova guia"
+    >
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-lime-200/50 bg-lime-300 text-[#151614] shadow-sm shadow-lime-200/20">
+        <Glasses className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-xs font-bold leading-tight tracking-wide">Nesplora</span>
+        <span className="mt-0.5 block text-[10px] leading-tight text-lime-100/80">Experiência imersiva em VR</span>
+      </span>
+      <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-lime-100 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+    </a>
+  );
+
   const FullCards = (
     <div className="space-y-1.5">
+      {NesploraCard}
       <Link href="/filtro">
         <div
           onClick={onPick}
@@ -92,6 +117,17 @@ function FeaturedShortcuts({
 
   const IconRail = (
     <div className="flex flex-col items-center gap-1.5">
+      <a
+        href={NESPLORA_SITE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onPick}
+        title="Nesplora — experiência imersiva em realidade virtual"
+        aria-label="Abrir site Nesplora em uma nova guia"
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-lime-300/70 bg-[linear-gradient(135deg,#1a1d15,#3b4720)] text-lime-200 shadow-sm shadow-lime-950/20 transition-colors hover:border-lime-200 hover:text-lime-100"
+      >
+        <Glasses className="h-4 w-4" strokeWidth={2.1} aria-hidden="true" />
+      </a>
       <Link href="/filtro">
         <div
           onClick={onPick}
