@@ -16,6 +16,7 @@ export const PUBLIC_ROUTES = [
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos
   "/agendar", // Perfil e autoagendamento público com dados mínimos cifrados
   "/marcacao", // Encaminhamento público para a Secretaria IA de triagem administrativa
+  "/eletroencefalograma", // Orientação institucional de Vídeo-EEG, sem conteúdo clínico individual
   "/pre-consulta", // Formulário pré-consulta para família/recepção
   "/pre-retorno", // Atualização familiar antes do retorno
   "/efeitos-colaterais", // Alias familiar seguro do pré-retorno

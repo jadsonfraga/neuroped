@@ -89,6 +89,7 @@ const PUBLIC_ROUTE_SENTINELS = [
   "/login",
   "/familia",
   "/agendar",
+  "/eletroencefalograma",
   "/verificar",
   "/brincando-e-aprendendo",
   "/filtro-escalas",

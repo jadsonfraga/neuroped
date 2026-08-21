@@ -1,13 +1,10 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { MotionConfig } from "framer-motion";
 import { Switch, Route, Router, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Layout } from "@/components/Layout";
-import { PageTransition } from "@/components/PageTransition";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
   AvisoLegalGate,
@@ -22,6 +19,21 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
 
 import NotFound from "@/pages/not-found";
+// O shell reúne ícones, menu longo e animações. Carregá-lo junto à rota ativa
+// preserva o primeiro frame e mantém o catálogo clínico fora do entrypoint.
+const Layout = lazy(() =>
+  import("@/components/Layout").then(({ Layout: Component }) => ({ default: Component })),
+);
+const PageTransition = lazy(() =>
+  import("@/components/PageTransition").then(({ PageTransition: Component }) => ({
+    default: Component,
+  })),
+);
+const MotionPreferences = lazy(() =>
+  import("@/components/MotionPreferences").then(({ MotionPreferences: Component }) => ({
+    default: Component,
+  })),
+);
 // Fluxos de exceção (login/sessão/LGPD) saem da carga inicial: raramente são a
 // primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
 const LoginPage = lazy(() => import("@/pages/login"));
@@ -283,11 +295,22 @@ function AppRouter() {
     );
   }
 
-  return (
-    <Layout>
+  // O Vídeo-EEG é um handoff institucional para famílias, sem dados clínicos
+  // nem redirecionamento externo. Ele não deve herdar o layout ou o gate médico.
+  if (location === "/eletroencefalograma") {
+    return (
       <Suspense fallback={<LoadingSpinner />}>
-        <RouteGuard>
-          <PageTransition>
+        <EletroencefalogramaPage />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Layout>
+        <Suspense fallback={<LoadingSpinner />}>
+          <RouteGuard>
+            <PageTransition>
           <Switch>
             <Route path="/login" component={LoginPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
@@ -567,10 +590,11 @@ function AppRouter() {
             <Route path="/paciente/:id" component={PacienteDetalhePage} />
             <Route component={NotFound} />
           </Switch>
-          </PageTransition>
-        </RouteGuard>
-      </Suspense>
-    </Layout>
+            </PageTransition>
+          </RouteGuard>
+        </Suspense>
+      </Layout>
+    </Suspense>
   );
 }
 
@@ -644,8 +668,9 @@ function App() {
 
   return (
     <AppErrorBoundary>
-      <MotionConfig reducedMotion="user">
-        <QueryClientProvider client={queryClient}>
+      <Suspense fallback={<LoadingSpinner />}>
+        <MotionPreferences>
+          <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <TooltipProvider>
               <ToastProvider>
@@ -700,8 +725,9 @@ function App() {
               </ToastProvider>
             </TooltipProvider>
           </AuthProvider>
-        </QueryClientProvider>
-      </MotionConfig>
+          </QueryClientProvider>
+        </MotionPreferences>
+      </Suspense>
     </AppErrorBoundary>
   );
 }

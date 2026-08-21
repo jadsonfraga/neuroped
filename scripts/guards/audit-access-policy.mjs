@@ -48,6 +48,7 @@ const passwordGate = read(passwordGatePath);
 const publicRoutes = [
   "/familia",
   "/marcacao",
+  "/eletroencefalograma",
   "/pre-consulta",
   "/pre-retorno",
   "/efeitos-colaterais",

@@ -44,11 +44,15 @@ for (const component of [
   "PrivateGate",
   "RouteGuard",
   "ServiceWorkerManager",
-  "MotionConfig",
+  "MotionPreferences",
 ]) {
   assert.match(app, new RegExp(component));
 }
-assert.match(app, /<MotionConfig reducedMotion="user">/);
+assert.match(app, /<MotionPreferences>/);
+assert.match(
+  read("client/src/components/MotionPreferences.tsx"),
+  /<MotionConfig reducedMotion="user">/,
+);
 assert.match(
   app,
   /if \(location === "\/brincando-e-aprendendo"\)[\s\S]*?<Route path="\/brincando-e-aprendendo" component=\{BrincandoAprendendoPage\} \/>[\s\S]*?<\/Switch>/,
