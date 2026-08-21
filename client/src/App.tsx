@@ -78,6 +78,7 @@ const GmfcsPage = lazy(() => import("@/pages/gmfcs"));
 const CshqPage = lazy(() => import("@/pages/cshq"));
 const YgtssPage = lazy(() => import("@/pages/ygtss"));
 const EpilepsyDiaryPage = lazy(() => import("@/pages/epilepsy-diary"));
+const NeuropedAcompanhamentoPage = lazy(() => import("@/pages/neuroped-acompanhamento"));
 const HeadacheCalendarPage = lazy(() => import("@/pages/headache-calendar"));
 const TeaPage = lazy(() => import("@/pages/tea"));
 const TeaBehaviorsPage = lazy(() => import("@/pages/tea-behaviors"));
@@ -360,6 +361,7 @@ function AppRouter() {
             <Route path="/cshq" component={CshqPage} />
             <Route path="/ygtss" component={YgtssPage} />
             <Route path="/epilepsia" component={EpilepsyDiaryPage} />
+            <Route path="/neuroacompanhamento" component={NeuropedAcompanhamentoPage} />
             <Route path="/cefaleia" component={HeadacheCalendarPage} />
             <Route path="/tea" component={TeaPage} />
             <Route path="/tea-comportamentos" component={TeaBehaviorsPage} />
