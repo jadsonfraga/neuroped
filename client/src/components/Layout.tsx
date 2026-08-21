@@ -53,7 +53,6 @@ function FeaturedShortcuts({
       onMouseEnter={() => softHover()}
       data-testid="featured-nesplora"
       className="group relative isolate flex items-center gap-3 overflow-hidden rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-950 via-amber-600 to-amber-200 px-3 py-3 text-amber-950 shadow-lg shadow-amber-800/45 ring-1 ring-amber-300/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-50 hover:shadow-xl hover:shadow-amber-700/55"
-      aria-label="Abrir site Nesplora"
     >
       <span aria-hidden="true" className="absolute -right-7 -top-7 h-20 w-20 rounded-full bg-amber-50/55 blur-2xl transition-transform duration-500 group-hover:scale-150" />
       <span className="relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-amber-50/90 bg-amber-50 text-amber-800 shadow-sm shadow-amber-950/20">
@@ -211,6 +210,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     "TRABALHO CLÍNICO": true,
     "REFERÊNCIA": true,
   }));
+  const [navHydrated, setNavHydrated] = useState(false);
+
+  useEffect(() => {
+    const idleCallback = window.requestIdleCallback;
+    if (idleCallback) {
+      const id = idleCallback(() => setNavHydrated(true), { timeout: 400 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setNavHydrated(true), 120);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -368,6 +378,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         .map((s) => ({ ...s, items: s.items.filter((i) => canRenderNavItem(i.href)) }))
         .filter((s) => s.items.length > 0);
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
+  const renderedSections = navHydrated
+    ? visibleSections
+    : visibleSections.filter(
+        (section) => !section.title || section.title === activeNavigation?.section.title,
+      );
 
   async function handleSessionAction() {
     softTap();
@@ -625,7 +640,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav id="sidebar-nav" className="flex-1 py-2 px-2 space-y-1 overflow-y-auto" aria-label="Navegação principal em grupos recolhíveis">
-          {visibleSections.map((section, si) => {
+          {renderedSections.map((section, si) => {
             const sectionKey = section.title || "principal";
             const sectionOpen = !section.title || collapsed || (openSections[sectionKey] ?? false);
             return (

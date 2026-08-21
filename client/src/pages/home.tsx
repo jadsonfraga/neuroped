@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -19,9 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
-import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { navigablePages } from "@/data/navigation";
-import { allScales } from "@/data/scaleFilter";
+import type { ScaleEntry } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
 import { softHover, softTap } from "@/lib/softSounds";
@@ -35,8 +34,6 @@ interface ClinicalFlow {
   icon: LucideIcon;
   emphasis: "primary" | "gold" | "teal" | "blue" | "slate";
 }
-
-const homeSearchCatalog = mergeFilterableCatalog(allScales);
 
 const clinicalFlows: ClinicalFlow[] = [
   {
@@ -151,21 +148,41 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [scaleSearchCatalog, setScaleSearchCatalog] = useState<ScaleEntry[]>([]);
   const q = normalize(searchQuery.trim());
+  const isSearching = q.length >= 2;
+
+  useEffect(() => {
+    if (!isSearching || scaleSearchCatalog.length > 0) return;
+    let cancelled = false;
+    void Promise.all([
+      import("@/data/filterableCatalog"),
+      import("@/data/scaleFilter"),
+    ])
+      .then(([{ mergeFilterableCatalog }, { allScales }]) => {
+        if (!cancelled) setScaleSearchCatalog(mergeFilterableCatalog(allScales));
+      })
+      .catch(() => {
+        // A Home continua navegável mesmo se o chunk opcional da busca falhar.
+        if (!cancelled) setScaleSearchCatalog([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSearching, scaleSearchCatalog.length, setScaleSearchCatalog]);
 
   const searchResults = useMemo(() => {
     if (q.length < 2) return [];
     const pages = navigablePages
       .filter((page) => normalize(`${page.label} ${page.href}`).includes(q))
       .map((page) => ({ href: page.href, title: page.label, detail: "Página do app" }));
-    const scales = homeSearchCatalog
+    const scales = scaleSearchCatalog
       .filter((scale) => normalize(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")}`).includes(q))
       .slice(0, 8)
       .map((scale) => ({ href: scale.appRoute || "/filtro", title: scale.name, detail: scale.fullName }));
     return [...pages, ...scales].slice(0, 10);
-  }, [q]);
+  }, [q, scaleSearchCatalog]);
 
-  const isSearching = q.length >= 2;
 
   return (
     <div className="page-enter proportion-safe-page space-y-9 pb-10">

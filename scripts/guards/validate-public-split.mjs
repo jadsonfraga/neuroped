@@ -36,7 +36,7 @@ const MUST_BE_GATED = [
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/agendar", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  "/login", "/sessao-expirada", "/familia", "/agendar", "/marcacao", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",

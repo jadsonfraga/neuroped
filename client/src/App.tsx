@@ -6,7 +6,9 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Layout } from "@/components/Layout";
+const Layout = lazy(() =>
+  import("@/components/Layout").then(({ Layout: Component }) => ({ default: Component })),
+);
 import { PageTransition } from "@/components/PageTransition";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
@@ -283,9 +285,27 @@ function AppRouter() {
     );
   }
 
-  return (
-    <Layout>
+  // A página EEG também é uma ponte externa completa e possui seu próprio
+  // landmark <main>. Mantemos o RouteGuard para preservar a exigência clínica,
+  // mas retiramos o Layout para não aninhar dois <main> no documento.
+  if (location === "/eletroencefalograma") {
+    return (
       <Suspense fallback={<LoadingSpinner />}>
+        <RouteGuard>
+          <PageTransition>
+            <Switch>
+              <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
+            </Switch>
+          </PageTransition>
+        </RouteGuard>
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Layout>
+        <Suspense fallback={<LoadingSpinner />}>
         <RouteGuard>
           <PageTransition>
           <Switch>
@@ -345,7 +365,6 @@ function AppRouter() {
             <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
             <Route path="/sobre" component={SobrePage} />
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
-            <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
             <Route path="/termos" component={TermosPage} />
             <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
             <Route path="/pac" component={PacPage} />
@@ -569,8 +588,9 @@ function AppRouter() {
           </Switch>
           </PageTransition>
         </RouteGuard>
-      </Suspense>
-    </Layout>
+        </Suspense>
+      </Layout>
+    </Suspense>
   );
 }
 

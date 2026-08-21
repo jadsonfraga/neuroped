@@ -2,7 +2,6 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { easing } from "@/lib/motion";
-import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 
 interface SplashScreenProps {
   /** Tempo minimo de exibicao (ms). Default 900ms. */
@@ -117,7 +116,7 @@ export function SplashScreen({
               >
                 {/* Master Shield Logo */}
                 <img
-                  src={drJadsonMasterShieldLogo}
+                  src="/dr-jadson-shield-logo.svg"
                   alt="Dr. Jadson Fraga Shield"
                   className="w-full h-full object-cover"
                 />
