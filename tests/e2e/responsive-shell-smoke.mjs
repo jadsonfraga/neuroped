@@ -142,6 +142,12 @@ async function verifyTouchPerformanceProfile(width = 1280) {
     await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
     await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
     await page.locator(".container-filtro").waitFor({ state: "visible", timeout: 15000 });
+
+    // O filtro não materializa ranking no estado vazio: isso é uma fronteira de
+    // performance intencional. Ativamos um cenário clínico real antes de medir
+    // cards/scroll, preservando o teste do caminho interativo sem exigir trabalho
+    // pesado no primeiro paint.
+    await page.getByRole("button", { name: /TDAH/i }).first().click();
     await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 15000 });
 
     const contract = await page.evaluate(() => {
