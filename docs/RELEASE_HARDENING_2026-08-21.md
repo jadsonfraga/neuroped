@@ -3,6 +3,7 @@
 **Data de referência:** 21 de agosto de 2026  
 **Base auditada:** `main@7df7eabccf2d0aba67d7922ae72563ed76a977b5`  
 **Candidato:** `hardening/release-2026-08-21`  
+**PR:** `#659` (draft)  
 **Regra de publicação:** nenhuma publicação externa do candidato sem autorização explícita após todos os gates obrigatórios verdes.
 
 ## Objetivo
@@ -13,13 +14,13 @@ Transformar o relatório de hardening em critérios binários de aceite. Um item
 
 | ID | Requisito | Critério objetivo de aceite | Evidência/gate | Estado do candidato |
 |---|---|---|---|---|
-| R01 | TypeScript íntegro | `npm run check` retorna 0 | CI `compatibility` Node 20/24 e `verify` | Aguardando CI |
-| R02 | Lint sem warnings | `npm run lint` retorna 0 | CI `compatibility` Node 20/24 | Aguardando CI |
-| R03 | Dependências sem vulnerabilidade high | `npm audit --audit-level=high` retorna 0 | CI `verify-release` | Aguardando CI |
-| R04 | Build frontend válido | `npm run build:client`/`verify` retornam 0 | `verify` | Aguardando CI |
-| R05 | Build fullstack válido | `npm run build` retorna 0 | CI `verify-release` | Aguardando CI |
-| R06 | Acessibilidade automatizada | auditoria Axe sem violações bloqueantes | `npm run verify` | Aguardando CI |
-| R07 | Performance preservada | Lighthouse mantém thresholds oficiais existentes | `npm run verify` | Aguardando CI |
+| R01 | TypeScript íntegro | `npm run check` retorna 0 | CI `compatibility` Node 22/24 e `verify` | Aguardando nova rodada CI |
+| R02 | Lint sem warnings | `npm run lint` retorna 0 | CI `compatibility` Node 22/24 | Aguardando nova rodada CI |
+| R03 | Dependências sem vulnerabilidade high | `npm audit --audit-level=high` retorna 0 | CI `verify-release` | Aguardando nova rodada CI |
+| R04 | Build frontend válido | `npm run build:client`/`verify` retornam 0 | `verify` | Aguardando nova rodada CI |
+| R05 | Build fullstack válido | `npm run build` retorna 0 | CI `verify-release` | Aguardando nova rodada CI |
+| R06 | Acessibilidade automatizada | auditoria Axe sem violações bloqueantes | `npm run verify` | Aguardando nova rodada CI |
+| R07 | Performance preservada | Lighthouse mantém thresholds oficiais existentes | `npm run verify` | Aguardando nova rodada CI |
 | R08 | Bundle clínico preservado | fronteiras de performance continuam passando | `performance-boundaries.test.mjs` | Integrado ao gate |
 | R09 | Busca da Home sob demanda | catálogo clínico não entra estaticamente no critical path | teste de performance existente | Presente na base |
 | R10 | Splash leve | splash usa SVG público, sem JPEG/base64 pesado no chunk | teste de performance existente | Presente na base |
@@ -33,15 +34,15 @@ Transformar o relatório de hardening em critérios binários de aceite. Um item
 | R18 | Memória clínica com tabela única | leitura, escrita, edição e exclusão usam `clinical_memory_notes_demo` | `memory-search-ownership.test.ts` + hardening | Implementado |
 | R19 | Exclusão LGPD efetiva | DELETE de paciente remove explicitamente memória clínica da tabela real | teste de memória + hardening | Implementado |
 | R20 | Ownership da memória | profissional só pesquisa pacientes autorizados; admin mantém regra própria | `memory-search-ownership.test.ts` | Integrado à CI |
-| R21 | Compatibilidade Node | check/lint/hardening passam em Node 20 e 24 | matrix CI | Aguardando CI |
+| R21 | Compatibilidade Node suportada | check/lint/hardening passam nas linhas Node 22 e 24 | matrix CI | Aguardando nova rodada CI |
 | R22 | Deploy Cloudflare main-only | workflow de produção não é disparado por PR | teste hardening + workflow review | Verificado por contrato |
 | R23 | Deploy Vercel main-only | workflow de produção não é disparado por PR e usa Cloudflare como backend canônico | teste hardening + workflow review | Verificado por contrato |
-| R24 | Deploy GitHub Pages main-only | workflow de produção não é disparado por PR | teste hardening + workflow review | Verificado por contrato |
+| R24 | Deploy GitHub Pages main-only | workflow `.github/workflows/deploy.yml` não é disparado por PR | teste hardening + workflow review | Verificado por contrato |
 | R25 | Mesmo SHA nos três destinos | sentinelas de deploy precisam declarar o SHA de `main` correspondente | workflows existentes | Já verde na base; repetir após publicação autorizada |
-| R26 | Homologação sem publicação | PR executa verificações completas, mas não chama deploy externo | `release-candidate-hardening.yml` | Implementado |
+| R26 | Homologação sem publicação | PR executa verificações completas, mas não chama deploy externo | `release-candidate-hardening.yml` e `deep-audit-regressions.yml` | Implementado |
 | R27 | Não baixar thresholds | mudanças não reduzem thresholds de Lighthouse/a11y/bundle | revisão do diff | Obrigatório |
 | R28 | Candidato atualizado com main | branch deve estar 0 commits atrás da `main` antes do merge | comparação GitHub | Confirmar antes da autorização |
-| R29 | PR revisável | um único PR draft contém diff, riscos, gates e regra de publicação | PR de release | Criar após consolidar branch |
+| R29 | PR revisável | um único PR draft contém diff, riscos, gates e regra de publicação | PR `#659` | Concluído |
 | R30 | Autorização explícita | merge/publicação só após mensagem inequívoca do responsável autorizando | decisão humana | BLOQUEIO FINAL |
 
 ## Problemas reproduzidos e corrigidos nesta rodada
@@ -66,10 +67,22 @@ O update da subscription buscava o checkout mais recente do customer. Com checko
 
 O owner inicial já ocupa o assento 1. A migration 0014 ajusta trials existentes para `max(seats atuais, membros ativos + 1, 2)` e recria o trigger de novas clínicas com 2 seats.
 
+### 5. Contrato de deploy referenciava nome inexistente
+
+A primeira execução nova da CI falhou corretamente porque o teste procurava `.github/workflows/deploy-github-pages.yml`. O workflow real do GitHub Pages é `.github/workflows/deploy.yml`.
+
+**Correção:** teste e workflows de homologação passaram a apontar para o arquivo real. A falha não foi ignorada nem mascarada.
+
+### 6. Node 20 não representa mais um runtime suportado pelo grafo atual
+
+A primeira matrix mostrou avisos de engine: dependências atuais de lint, Lighthouse e Puppeteer exigem Node 22+. O deploy Cloudflare já configura `node-version: "24"` apesar do rótulo histórico do step mencionar 20.
+
+**Correção de homologação:** a matrix passa a validar Node 22 e Node 24, cobrindo a linha mínima moderna e o runtime usado em produção, sem declarar suporte artificial a Node 20.
+
 ## Fluxo obrigatório de homologação
 
 1. PR draft sobre `main`.
-2. Matrix Node 20/24: TypeScript, ESLint, hardening, ownership de memória.
+2. Matrix Node 22/24: TypeScript, ESLint, hardening, ownership de memória.
 3. Gate integral: dependências, `npm run verify`, acessibilidade, Lighthouse, build frontend e controles clínicos já existentes.
 4. Build fullstack.
 5. Revisão do diff e confirmação de que os workflows de produção continuam restritos à `main`.
