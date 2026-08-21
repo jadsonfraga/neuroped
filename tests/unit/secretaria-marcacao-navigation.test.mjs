@@ -22,7 +22,7 @@ test("a jornada de marcação fica pública, navegável e é atendida pela Secre
   assert.match(navigation, /href: "\/marcacao", label: "Marcação · Secretaria IA"/);
   assert.match(publicRoutes, /"\/marcacao"/);
   assert.match(page, /<main className=/);
-  assert.match(page, /fetch\("\/api\/public-booking\?action=providers"/);
+  assert.match(page, /apiRequest\("GET", "\/api\/public-booking\?action=providers"\)/);
   assert.match(page, /href=\{`#\/agendar\?provider=\$\{encodeURIComponent\(provider\.slug\)\}`\}/);
   assert.doesNotMatch(page, /SECRETARIA_IA_URL|manus\.space/);
 });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, CircleHelp, LoaderCircle, ShieldCheck, UserRound } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -21,9 +22,7 @@ export default function MarcacaoPage() {
     let active = true;
     async function loadProviders() {
       try {
-        const response = await fetch("/api/public-booking?action=providers", {
-          headers: { Accept: "application/json" },
-        });
+        const response = await apiRequest("GET", "/api/public-booking?action=providers");
         if (!response.ok) throw new Error("PUBLIC_BOOKING_UNAVAILABLE");
         const data = (await response.json()) as { providers?: PublicProvider[] };
         if (!active) return;
