@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   CalendarCheck2,
-  ExternalLink,
   MessageCircleMore,
   ShieldCheck,
   UsersRound,
@@ -21,16 +20,16 @@ const journeySteps = [
   },
   {
     number: "02",
-    title: "Receba as orientações do fluxo",
+    title: "Escolha o horário e conclua a reserva",
     description:
-      "A plataforma apresenta o caminho administrativo adequado, sem fornecer diagnóstico ou orientação clínica.",
+      "O módulo consulta a disponibilidade, cria a reserva temporária e orienta o pagamento da caução quando aplicável.",
     icon: ShieldCheck,
   },
   {
     number: "03",
-    title: "Conclua com a equipe da clínica",
+    title: "Receba a confirmação da clínica",
     description:
-      "Após a confirmação da caução, a solicitação é encaminhada para a secretária responsável pelo agendamento.",
+      "Após a conferência do pagamento, a consulta é confirmada e fica disponível para acompanhamento pela equipe.",
     icon: UsersRound,
   },
 ];
@@ -60,26 +59,21 @@ export default function MarcacaoPage() {
                 Marcação de consulta
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                Para iniciar uma nova solicitação de atendimento, acesse a Secretaria IA.
-                Ela organiza a triagem administrativa e direciona o caso à equipe de
-                agendamento no momento apropriado.
+                O NeuroPed Connect reúne a Secretaria IA, a disponibilidade da agenda,
+                a reserva temporária do horário e a conferência administrativa da
+                caução em um único fluxo.
               </p>
             </div>
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button asChild size="lg" className="min-h-12 gap-2 px-5">
-              <a
-                href={SECRETARIA_IA_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="link-secretaria-ia-direto"
-              >
-                Acessar Secretaria IA
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              <a href={SECRETARIA_IA_URL} data-testid="link-secretaria-ia-direto">
+                Abrir agenda NeuroPed
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
             </Button>
             <p className="text-xs leading-5 text-muted-foreground">
-              O atendimento abre no domínio seguro da Secretaria IA, em uma nova guia.
+              O acesso continua no módulo oficial de agendamento da clínica.
             </p>
           </div>
         </div>
@@ -89,10 +83,9 @@ export default function MarcacaoPage() {
         <CardContent className="flex gap-3 p-5 text-sm leading-6 text-muted-foreground sm:p-6">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
           <p>
-            <strong className="text-foreground">Privacidade e segurança:</strong> a
-            conversa de marcação acontece diretamente na Secretaria IA. O NeuroPed não
-            copia mensagens, comprovantes ou informações administrativas para o ambiente
-            clínico.
+            <strong className="text-foreground">Privacidade e segurança:</strong> os
+            dados administrativos da marcação permanecem separados do ambiente clínico,
+            com acesso restrito à equipe autorizada e tratamento orientado pela LGPD.
           </p>
         </CardContent>
       </Card>
@@ -112,7 +105,10 @@ export default function MarcacaoPage() {
           {journeySteps.map((step) => {
             const Icon = step.icon;
             return (
-              <Card key={step.number} className="group border-border/80 transition-transform duration-200 hover:-translate-y-0.5">
+              <Card
+                key={step.number}
+                className="group border-border/80 transition-transform duration-200 hover:-translate-y-0.5"
+              >
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black tracking-[0.18em] text-primary">
@@ -137,13 +133,13 @@ export default function MarcacaoPage() {
         <div>
           <h2 className="font-bold tracking-tight">Pronto para iniciar a marcação?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            A equipe recebe o encaminhamento administrativo somente após a confirmação da
-            caução prevista no fluxo.
+            Consulte os horários disponíveis e prossiga pelo fluxo administrativo da
+            clínica.
           </p>
         </div>
         <Button asChild variant="outline" className="min-h-11 shrink-0 gap-2">
-          <a href={SECRETARIA_IA_URL} target="_blank" rel="noopener noreferrer">
-            Abrir Secretaria IA
+          <a href={SECRETARIA_IA_URL}>
+            Abrir NeuroPed Connect
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </a>
         </Button>
