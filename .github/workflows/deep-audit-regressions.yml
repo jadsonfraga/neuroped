@@ -8,7 +8,16 @@ on:
       - "client/src/components/MobilePrimaryDock.tsx"
       - "client/src/pages/agendar.tsx"
       - ".github/workflows/daily-authorial-static-sync.yml"
+      - "functions/api/billing/**"
+      - "functions/api/memory/**"
+      - "functions/api/patients/**"
+      - "db/migrations/**"
       - "tests/unit/deep-audit-regressions-static.test.mjs"
+      - "tests/unit/eeg-route-accessibility-static.test.mjs"
+      - "tests/unit/performance-boundaries.test.mjs"
+      - "tests/unit/release-contract-hardening.test.mjs"
+      - "tests/unit/memory-search-ownership.test.ts"
+      - ".github/workflows/release-candidate-hardening.yml"
       - ".github/workflows/deep-audit-regressions.yml"
   push:
     branches:
@@ -17,30 +26,102 @@ on:
       - "client/src/components/MobilePrimaryDock.tsx"
       - "client/src/pages/agendar.tsx"
       - ".github/workflows/daily-authorial-static-sync.yml"
+      - "functions/api/billing/**"
+      - "functions/api/memory/**"
+      - "functions/api/patients/**"
+      - "db/migrations/**"
       - "tests/unit/deep-audit-regressions-static.test.mjs"
+      - "tests/unit/eeg-route-accessibility-static.test.mjs"
+      - "tests/unit/performance-boundaries.test.mjs"
+      - "tests/unit/release-contract-hardening.test.mjs"
+      - "tests/unit/memory-search-ownership.test.ts"
+      - ".github/workflows/release-candidate-hardening.yml"
       - ".github/workflows/deep-audit-regressions.yml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: deep-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  regressions:
+  compatibility:
+    name: Compatibility / Node ${{ matrix.node }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 24]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Configure Node.js
+
+      - name: Configure Node.js ${{ matrix.node }}
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: ${{ matrix.node }}
           cache: npm
+
       - name: Install dependencies
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
       - name: Deep audit regression contracts
         run: node tests/unit/deep-audit-regressions-static.test.mjs
+
+      - name: Release hardening contracts
+        run: npm run test:hardening-regressions
+
+      - name: Memory ownership and LGPD regression
+        run: node --import tsx tests/unit/memory-search-ownership.test.ts
+
       - name: TypeScript
         run: npm run check
+
       - name: Lint
         run: npm run lint
+
+  full-release-gate:
+    name: Full release gate
+    runs-on: ubuntu-latest
+    needs: compatibility
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          npm_config_ignore_scripts: false
+
+      - name: Audit dependency graph
+        run: npm audit --audit-level=high
+
+      - name: Full release verification
+        run: npm run verify
+
+      - name: Fullstack build
+        run: npm run build
+
+      - name: Assert production workflows remain main-only
+        run: |
+          set -euo pipefail
+          for workflow in \
+            .github/workflows/deploy-cloudflare.yml \
+            .github/workflows/deploy-vercel.yml \
+            .github/workflows/deploy-github-pages.yml; do
+            grep -q -- '- main' "$workflow"
+            if grep -Eq '^[[:space:]]*pull_request:' "$workflow"; then
+              echo "::error::$workflow não pode publicar em pull_request."
+              exit 1
+            fi
+          done
+          echo "Candidato homologado sem publicar externamente."
