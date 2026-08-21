@@ -5,6 +5,8 @@ import {
   loginRequest,
   logoutRequest,
   authFetch,
+  getAccessToken,
+  getRefreshToken,
   getAuthCapability,
 } from "@/lib/authClient";
 import { queryClient } from "@/lib/queryClient";
@@ -61,6 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const stored = getStoredUser();
+      const hasSessionCredentials = Boolean(getAccessToken() || getRefreshToken());
+      if (!hasSessionCredentials) {
+        // Sem credenciais não há sessão a validar. Evita um 401 esperado no
+        // console do navegador e mantém o acesso anônimo explicitamente fechado.
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
       if (stored) setUser(stored);
       try {
         const response = await authFetch("/api/auth/me");

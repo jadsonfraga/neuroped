@@ -78,6 +78,16 @@ assert.match(
 );
 assert.match(
   authContextSource,
+  /const hasSessionCredentials = Boolean\(getAccessToken\(\) \|\| getRefreshToken\(\)\)/,
+  "sessão anônima não deve gerar probe autenticado desnecessário",
+);
+assert.match(
+  authContextSource,
+  /if \(!hasSessionCredentials\)[\s\S]{0,240}setUser\(null\);[\s\S]{0,120}setIsLoading\(false\)/,
+  "sem credenciais o bootstrap deve permanecer fail-closed",
+);
+assert.match(
+  authContextSource,
   /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,260}queryClient\.clear\(\);[\s\S]{0,80}secureClearAll\(\);/,
   "limpeza explícita deve eliminar credenciais e cache clínico",
 );
