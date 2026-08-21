@@ -145,6 +145,14 @@ export function ServiceWorkerManager() {
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
     let pollTimer: ReturnType<typeof setInterval> | undefined;
     let registrationRef: ServiceWorkerRegistration | null = null;
+    // Se um worker antigo respondeu a página estática com o shell do app, esta
+    // própria tela é a oportunidade de atualizar o worker e recarregar uma vez
+    // no documento correto. O marcador evita qualquer ciclo de recarga caso a
+    // atualização seja bloqueada pelo navegador.
+    const isNesploraMicrositePath =
+      window.location.pathname === "/nesplora" ||
+      window.location.pathname.startsWith("/nesplora/");
+    const nesploraRecoveryKey = "neuroped:nesplora-sw-recovery";
 
     const rememberVersion = (version: string) => {
       let previous: string | null = null;
@@ -169,6 +177,22 @@ export function ServiceWorkerManager() {
       navigator.serviceWorker.controller?.postMessage({ type: "GET_VERSION" });
     };
 
+    const recoverNesploraMicrosite = () => {
+      if (!isNesploraMicrositePath) return;
+      try {
+        if (sessionStorage.getItem(nesploraRecoveryKey) === "1") return;
+        sessionStorage.setItem(nesploraRecoveryKey, "1");
+      } catch {
+        // Sem sessionStorage, uma única recarga continua sendo preferível ao 404.
+      }
+      window.location.reload();
+    };
+
+    const onControllerChange = () => {
+      askCurrentVersion();
+      recoverNesploraMicrosite();
+    };
+
     // Reconsulta o navegador por uma versão nova do sw.js. Sozinho, o registro
     // inicial só verifica UMA vez no carregamento — uma aba/PWA que fica aberta
     // em segundo plano por horas (comum em tablet de consultório) nunca mais
@@ -182,7 +206,14 @@ export function ServiceWorkerManager() {
     const register = () => {
       if (cancelled) return;
       navigator.serviceWorker
-        .register("./sw.js")
+        // O shell legado pode ser servido, por engano, dentro de /nesplora/.
+        // Nesse caso `./sw.js` apontaria para /nesplora/sw.js; registramos o
+        // worker canônico do domínio para que ele consiga assumir a página.
+        .register(
+          isNesploraMicrositePath
+            ? new URL("/sw.js", window.location.origin).toString()
+            : "./sw.js",
+        )
         .then(async (registration) => {
           registrationRef = registration;
           askCurrentVersion();
@@ -212,11 +243,14 @@ export function ServiceWorkerManager() {
       }, 10_000);
     };
 
-    if (document.readyState === "complete") scheduleRegistration();
+    // A recuperação do microsite é um caso excepcional: não espera a janela
+    // ociosa, pois o usuário já está vendo um fallback incorreto da versão antiga.
+    if (isNesploraMicrositePath) register();
+    else if (document.readyState === "complete") scheduleRegistration();
     else window.addEventListener("load", scheduleRegistration, { once: true });
 
     navigator.serviceWorker.addEventListener("message", handleMessage);
-    navigator.serviceWorker.addEventListener("controllerchange", askCurrentVersion);
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", checkForUpdate);
 
@@ -227,7 +261,7 @@ export function ServiceWorkerManager() {
       if (fallbackTimer !== undefined) globalThis.clearTimeout(fallbackTimer);
       if (pollTimer !== undefined) globalThis.clearInterval(pollTimer);
       navigator.serviceWorker.removeEventListener("message", handleMessage);
-      navigator.serviceWorker.removeEventListener("controllerchange", askCurrentVersion);
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", checkForUpdate);
     };
