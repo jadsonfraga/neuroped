@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Activity,
@@ -10,13 +11,15 @@ import {
   ClipboardCheck,
   Info,
   ShieldCheck,
+  School,
   Waves,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DiarioClinico, type DiarioConfig } from "@/components/DiarioClinico";
+import { DiarioClinico, type DiarioConfig, type DiarioEntry } from "@/components/DiarioClinico";
+import { secureGet } from "@/lib/secureStorage";
 
 const developmentConfig: DiarioConfig = {
   id: "neuroped-desenvolvimento-brasil-v1",
@@ -124,6 +127,134 @@ function ModuleCard({ href, icon: Icon, eyebrow, title, description, tone }: Mod
   );
 }
 
+function dateKey(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.slice(0, 10);
+}
+
+function dateLabel(value: unknown): string {
+  const key = dateKey(value);
+  if (!key) return "Data não informada";
+  const parsed = new Date(`${key}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? key : parsed.toLocaleDateString("pt-BR");
+}
+
+function scoreLabel(value: unknown): string {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number}/5` : "—";
+}
+
+function ClinicalSchoolCorrelation() {
+  const [schoolEntries, setSchoolEntries] = useState<DiarioEntry[]>([]);
+  const [developmentEntries, setDevelopmentEntries] = useState<DiarioEntry[]>([]);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.all([
+      secureGet<DiarioEntry[]>("diario:diario-escola"),
+      secureGet<DiarioEntry[]>("diario:neuroped-desenvolvimento-brasil-v1"),
+    ]).then(([school, development]) => {
+      if (!active) return;
+      setSchoolEntries(Array.isArray(school) ? school : []);
+      setDevelopmentEntries(Array.isArray(development) ? development : []);
+      setReady(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const school = useMemo(
+    () => [...schoolEntries].sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)),
+    [schoolEntries],
+  );
+  const development = useMemo(
+    () => [...developmentEntries].sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)),
+    [developmentEntries],
+  );
+
+  const sameDayCount = useMemo(() => {
+    const developmentDates = new Set(development.map((entry) => dateKey(entry.date)));
+    return school.filter((entry) => developmentDates.has(dateKey(entry.date))).length;
+  }, [development, school]);
+
+  const attentionAlerts = school.filter((entry) => Number(entry.atencao) <= 2).length;
+  const behaviorAlerts = school.filter((entry) => Number(entry.comportamento) <= 2).length;
+  const regressionNotes = development.filter((entry) => entry.regression === "Sim — requer avaliação clínica").length;
+
+  if (!ready) {
+    return (
+      <Card role="status" aria-live="polite">
+        <CardContent className="p-5 text-sm text-muted-foreground">Lendo registros protegidos para preparar o resumo descritivo…</CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-sky-200/80 dark:border-sky-900/50" data-testid="clinical-school-correlation">
+      <CardHeader className="gap-3 pb-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base"><Activity className="h-4 w-4 text-sky-600" /> Relação clínica–escola</CardTitle>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Resumo descritivo dos registros já salvos. A coincidência de datas organiza a revisão; não prova relação causal entre eventos.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="gap-2"><Link href="/diario-escola"><School className="h-4 w-4" /> Abrir diário escolar</Link></Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl bg-sky-50 p-3 dark:bg-sky-950/30"><p className="text-xs text-muted-foreground">Observações escolares</p><p className="mt-1 text-2xl font-bold">{school.length}</p></div>
+          <div className="rounded-xl bg-cyan-50 p-3 dark:bg-cyan-950/30"><p className="text-xs text-muted-foreground">Registros de desenvolvimento</p><p className="mt-1 text-2xl font-bold">{development.length}</p></div>
+          <div className="rounded-xl bg-violet-50 p-3 dark:bg-violet-950/30"><p className="text-xs text-muted-foreground">Mesma data</p><p className="mt-1 text-2xl font-bold">{sameDayCount}</p></div>
+          <div className="rounded-xl bg-amber-50 p-3 dark:bg-amber-950/30"><p className="text-xs text-muted-foreground">Pontos para revisar</p><p className="mt-1 text-2xl font-bold">{attentionAlerts + behaviorAlerts + regressionNotes}</p></div>
+        </div>
+
+        {school.length === 0 && development.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground">
+            Ainda não há registros suficientes para relacionar. Comece pelo diário escolar ou pela linha do tempo do desenvolvimento.
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border p-4">
+              <div className="mb-3 flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">Últimas observações escolares</h3><Badge variant="outline">{school.length}</Badge></div>
+              {school.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma observação escolar registrada.</p> : (
+                <div className="space-y-3">
+                  {school.slice(0, 3).map((entry) => (
+                    <div key={entry.id} className="rounded-lg bg-muted/40 p-3 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{dateLabel(entry.date)}</span><span className="text-xs text-muted-foreground">Atenção {scoreLabel(entry.atencao)} · comportamento {scoreLabel(entry.comportamento)}</span></div>
+                      <p className="mt-1 text-muted-foreground">{entry.humor ? `Humor: ${entry.humor}. ` : ""}{entry.ocorrencias || entry.notes || "Sem descrição textual."}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rounded-xl border p-4">
+              <div className="mb-3 flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">Últimas observações do desenvolvimento</h3><Badge variant="outline">{development.length}</Badge></div>
+              {development.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma observação do desenvolvimento registrada.</p> : (
+                <div className="space-y-3">
+                  {development.slice(0, 3).map((entry) => (
+                    <div key={entry.id} className="rounded-lg bg-muted/40 p-3 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{dateLabel(entry.date)}</span><span className="text-xs text-muted-foreground">{entry.context || "Contexto não informado"} · {entry.ageMonths || "—"} meses</span></div>
+                      <p className="mt-1 text-muted-foreground">{entry.language || entry.motor || entry.social || entry.notes || "Sem descrição textual."}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm leading-6 text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100">
+          <p className="font-semibold">Como interpretar este painel</p>
+          <p className="mt-1">Ele mostra coocorrência de registros, não “conclusões” automáticas. Antes de qualquer decisão, revise antecedente, contexto, sono, medicações, intervenções escolares, qualidade do relato e evolução temporal.</p>
+          {(attentionAlerts > 0 || behaviorAlerts > 0 || regressionNotes > 0) && <p className="mt-2">Há {attentionAlerts + behaviorAlerts + regressionNotes} ponto(s) marcado(s) para revisão clínica: {attentionAlerts} de atenção, {behaviorAlerts} de comportamento e {regressionNotes} de perda de habilidade relatada.</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function NeuropedAcompanhamentoPage() {
   return (
     <div className="space-y-7 pb-12" data-testid="neuroacompanhamento-page">
@@ -194,6 +325,8 @@ export default function NeuropedAcompanhamentoPage() {
           tone="from-amber-500 to-orange-600"
         />
       </section>
+
+      <ClinicalSchoolCorrelation />
 
       <section className="space-y-4" aria-labelledby="development-title">
         <div className="flex flex-wrap items-end justify-between gap-3">

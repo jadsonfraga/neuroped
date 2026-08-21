@@ -79,6 +79,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },
       { href: "/neuroacompanhamento", label: "NeuroAcompanhamento", icon: Baby },
+      { href: "/diario-escola", label: "Diário escolar", icon: ClipboardList },
     ],
   },
   {

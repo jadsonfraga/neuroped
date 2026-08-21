@@ -80,6 +80,27 @@ async function main() {
     await page.getByRole("button", { name: "Histórico" }).click();
     await page.getByText("Corre, sobe escadas e participa das brincadeiras.", { exact: true }).waitFor();
 
+    await page.goto(`${base}/#/diario-escola`, { waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: "Diário Escolar" }).waitFor({ state: "visible", timeout: 15000 });
+    await page.getByLabel("Rendimento acadêmico (1–5)").fill("3");
+    await page.getByLabel("Comportamento (1–5)").fill("3");
+    await page.getByLabel("Atenção / foco (1–5)").fill("2");
+    await page.getByLabel("Humor predominante").selectOption({ label: "tranquilo" });
+    await page.getByLabel("Ocorrências").fill("Precisou de duas retomadas durante a atividade.");
+    await page.getByLabel("Antecedente (o que veio antes)").fill("Atividade longa após o recreio.");
+    await page.getByRole("button", { name: "Salvar registro" }).click();
+    await page.getByText("1 registro", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
+    await page.waitForTimeout(1000);
+
+    await page.goto(`${base}/#/neuroacompanhamento`, { waitUntil: "domcontentloaded" });
+    const correlation = page.getByTestId("clinical-school-correlation");
+    await correlation.waitFor({ state: "visible", timeout: 15000 });
+    const correlationText = await correlation.innerText();
+    if (!/Observações escolares\s*1/.test(correlationText) || !/Mesma data\s*1/.test(correlationText)) {
+      throw new Error(`relação clínica–escola não consolidada: ${correlationText}`);
+    }
+
+    await page.getByRole("button", { name: "Histórico" }).click();
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Exportar CSV" }).click();
     const download = await downloadPromise;
@@ -89,11 +110,17 @@ async function main() {
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.getByTestId("neuroacompanhamento-page").waitFor({ state: "visible", timeout: 15000 });
+    const persistedCorrelation = page.getByTestId("clinical-school-correlation");
+    await persistedCorrelation.waitFor({ state: "visible", timeout: 15000 });
+    const persistedText = await persistedCorrelation.innerText();
+    if (!/Observações escolares\s*1/.test(persistedText) || !/Mesma data\s*1/.test(persistedText)) {
+      throw new Error(`relação não persistiu após recarregar: ${persistedText}`);
+    }
     await page.getByRole("button", { name: "Histórico" }).click();
     await page.getByText("1 registro", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
     await page.getByText("Corre, sobe escadas e participa das brincadeiras.", { exact: true }).waitFor();
 
-    console.log("[neuroped-acompanhamento] ✓ fluxo E2E verde: criar, persistir, recarregar e exportar");
+    console.log("[neuroped-acompanhamento] ✓ fluxo E2E verde: desenvolvimento + escola relacionados, persistidos e exportados");
   } finally {
     await browser.close();
     if (server) server.close();
