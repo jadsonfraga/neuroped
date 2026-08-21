@@ -381,7 +381,9 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       env.DB.prepare(
         "DELETE FROM documents_demo WHERE patient_id = ? AND is_demo = 1",
       ).bind(id),
-      env.DB.prepare("DELETE FROM memory_notes WHERE patient_id = ?").bind(id),
+      env.DB.prepare(
+        "DELETE FROM clinical_memory_notes_demo WHERE patient_id = ?",
+      ).bind(id),
       deletePatient,
       env.DB.prepare(
         `INSERT INTO audit_logs
