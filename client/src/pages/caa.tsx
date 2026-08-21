@@ -41,6 +41,8 @@ const SECURE_CAA_KEY = "caa:workspace:v3";
 const MAX_CAA_CATEGORIES = 40;
 const MAX_CAA_ITEMS_PER_CATEGORY = 100;
 const MAX_MESSAGES = 12;
+const CAA_INITIAL_VISIBLE_CARDS = 24;
+const CAA_VISIBLE_CARD_BATCH = 24;
 
 type Board = Record<string, CaaCategory>;
 type Token = { icon: string; label: string; text: string };
@@ -287,6 +289,20 @@ export default function CaaPage() {
     }
     return (board[cat]?.items || []).map((item) => ({ cat, item }));
   }, [allItems, board, cat, favs, hist, mode, search]);
+
+  const [visibleCardCount, setVisibleCardCount] = useState(CAA_INITIAL_VISIBLE_CARDS);
+  const renderedItems = useMemo(
+    () => visibleItems.slice(0, visibleCardCount),
+    [visibleItems, visibleCardCount],
+  );
+  const hasMoreCards = visibleCardCount < visibleItems.length;
+  const revealMoreCards = () => {
+    setVisibleCardCount((current) => Math.min(current + CAA_VISIBLE_CARD_BATCH, visibleItems.length));
+  };
+
+  useEffect(() => {
+    setVisibleCardCount(Math.min(CAA_INITIAL_VISIBLE_CARDS, visibleItems.length));
+  }, [cat, mode, search, visibleItems.length]);
 
   const coreItems = useMemo(() => board.Essencial?.items.slice(0, 10) || [], [board]);
 
@@ -901,12 +917,12 @@ export default function CaaPage() {
             </Card>
           ) : (
             <div className={gridClass}>
-              {visibleItems.map(({ item }, index) => {
+              {renderedItems.map(({ item }, index) => {
                 const isFav = favs.includes(symKey(item));
                 return (
                   <div
                     key={`${symKey(item)}-${index}`}
-                    className={`group relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/45 hover:shadow-lg ${cardMinHeight}`}
+                    className={`np-scale-item group relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/45 hover:shadow-lg ${cardMinHeight}`}
                   >
                     <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-primary to-teal-500 opacity-60" aria-hidden="true" />
                     <button
@@ -932,6 +948,16 @@ export default function CaaPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+          {hasMoreCards && (
+            <div className="rounded-xl border border-border/70 bg-muted/25 p-4 text-center" role="status" aria-live="polite">
+              <p className="mb-3 text-xs text-muted-foreground">
+                Mostrando {renderedItems.length} de {visibleItems.length} cartões disponíveis.
+              </p>
+              <Button type="button" variant="outline" onClick={revealMoreCards} data-testid="caa-load-more">
+                Carregar mais cartões
+              </Button>
             </div>
           )}
 

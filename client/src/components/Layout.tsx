@@ -213,13 +213,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [navHydrated, setNavHydrated] = useState(false);
 
   useEffect(() => {
-    const idleCallback = window.requestIdleCallback;
-    if (idleCallback) {
-      const id = idleCallback(() => setNavHydrated(true), { timeout: 400 });
-      return () => window.cancelIdleCallback?.(id);
-    }
-    const id = window.setTimeout(() => setNavHydrated(true), 120);
-    return () => window.clearTimeout(id);
+    let idleId: number | undefined;
+    const timerId = window.setTimeout(() => {
+      const idleCallback = window.requestIdleCallback;
+      if (idleCallback) {
+        idleId = idleCallback(() => setNavHydrated(true), { timeout: 2000 });
+      } else {
+        setNavHydrated(true);
+      }
+    }, 1500);
+    return () => {
+      window.clearTimeout(timerId);
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
+    };
   }, []);
 
   useEffect(() => {

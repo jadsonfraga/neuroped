@@ -69,10 +69,10 @@ assert.deepEqual(JSON.parse(storage.getItem(FILTER_PREFERENCES_KEY) ?? "{}"), {
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
-const filtro = readFileSync(
-  resolve(root, "client/src/pages/filtro.tsx"),
-  "utf8",
-);
+const filtro = [
+  readFileSync(resolve(root, "client/src/pages/filtro.tsx"), "utf8"),
+  readFileSync(resolve(root, "client/src/pages/filtro-engine.tsx"), "utf8"),
+].join("\n");
 const fluxograma = readFileSync(
   resolve(root, "client/src/pages/fluxograma.tsx"),
   "utf8",

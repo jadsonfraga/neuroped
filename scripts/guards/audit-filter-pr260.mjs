@@ -4,7 +4,10 @@ import { join } from "node:path";
 const root = process.cwd();
 
 const targets = {
-  "filtro.tsx": join(root, "client/src/pages/filtro.tsx"),
+  "filtro.tsx": [
+    join(root, "client/src/pages/filtro.tsx"),
+    join(root, "client/src/pages/filtro-engine.tsx"),
+  ],
   "index.css": join(root, "client/src/index.css"),
   "GOLDEN_RULE_FILTRO_PR260.md": join(root, "docs/GOLDEN_RULE_FILTRO_PR260.md"),
 };
@@ -82,7 +85,9 @@ const requiredTokens = {
 
 function readTarget(label) {
   try {
-    return readFileSync(targets[label], "utf8");
+    const target = targets[label];
+    const paths = Array.isArray(target) ? target : [target];
+    return paths.map((filePath) => readFileSync(filePath, "utf8")).join("\n");
   } catch (error) {
     console.error(`❌ Filtro PR260 não conseguiu ler arquivo obrigatório ${label}: ${error.message}`);
     process.exit(1);

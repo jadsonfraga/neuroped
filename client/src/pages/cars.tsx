@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { carsCategories } from "@/data/cars";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,9 @@ const LazySaveToPatient = lazy(() =>
   import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
 );
 import { hasRecordEntries, sanitizeNumberRecord } from "@/lib/scaleDraftCore";
+
+const CARS_INITIAL_VISIBLE_ITEMS = 5;
+const CARS_VISIBLE_BATCH_SIZE = 5;
 
 const CARS_DRAFT_VALUES = Object.fromEntries(
   carsCategories.map((category, index) => [
@@ -49,6 +52,14 @@ export default function CarsPage() {
   });
 
   const total = carsCategories.length;
+  const [visibleItemCount, setVisibleItemCount] = useState(() =>
+    Math.min(total, CARS_INITIAL_VISIBLE_ITEMS),
+  );
+  const [pendingFocusIndex, setPendingFocusIndex] = useState<number | null>(null);
+  const hasMoreCategories = visibleItemCount < total;
+  const revealMoreCategories = () => {
+    setVisibleItemCount((current) => Math.min(current + CARS_VISIBLE_BATCH_SIZE, total));
+  };
   const answered = carsCategories.reduce(
     (count, _, i) => count + (answers[i] !== undefined ? 1 : 0),
     0,
@@ -60,20 +71,30 @@ export default function CarsPage() {
   );
   const missingCount = Math.max(total - answered, 0);
 
+  useEffect(() => {
+    if (pendingFocusIndex === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      itemRefs.current[pendingFocusIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => itemRefs.current[pendingFocusIndex]?.focus({ preventScroll: true }), 250);
+      setPendingFocusIndex(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingFocusIndex, visibleItemCount]);
+
+  function focusCategory(index: number) {
+    if (index >= visibleItemCount) {
+      setVisibleItemCount(Math.min(index + 1, total));
+      setPendingFocusIndex(index);
+      return;
+    }
+    itemRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => itemRefs.current[index]?.focus({ preventScroll: true }), 250);
+  }
+
   function handleSubmit() {
     setSubmitAttempted(true);
     if (!allAnswered) {
-      if (firstMissingIndex >= 0) {
-        itemRefs.current[firstMissingIndex]?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-        window.setTimeout(
-          () =>
-            itemRefs.current[firstMissingIndex]?.focus({ preventScroll: true }),
-          250,
-        );
-      }
+      if (firstMissingIndex >= 0) focusCategory(firstMissingIndex);
       return;
     }
     setShowResult(true);
@@ -220,7 +241,7 @@ export default function CarsPage() {
 
       {/* Categories */}
       <div className="space-y-4">
-        {carsCategories.map((cat, i) => {
+        {carsCategories.slice(0, visibleItemCount).map((cat, i) => {
           const pending = submitAttempted && answers[i] === undefined;
           return (
             <Card
@@ -231,7 +252,7 @@ export default function CarsPage() {
               tabIndex={-1}
               aria-invalid={pending}
               data-testid={`card-category-${i}`}
-              className={`border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
+              className={`np-scale-item border-card-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pending ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20" : ""}`}
             >
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center gap-2">
@@ -280,6 +301,17 @@ export default function CarsPage() {
           );
         })}
       </div>
+
+      {hasMoreCategories && (
+        <div className="rounded-xl border border-border/70 bg-muted/25 p-4 text-center" role="status" aria-live="polite">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Mostrando {visibleItemCount} de {total} categorias. As próximas aparecem sem alterar o que já foi respondido.
+          </p>
+          <Button type="button" variant="outline" onClick={revealMoreCategories}>
+            Carregar próximas categorias
+          </Button>
+        </div>
+      )}
 
       {submitAttempted && !allAnswered && (
         <div

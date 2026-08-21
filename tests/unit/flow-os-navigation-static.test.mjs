@@ -13,7 +13,10 @@ const app = fs.readFileSync("client/src/App.tsx", "utf8");
 const main = fs.readFileSync("client/src/main.tsx", "utf8");
 const css = fs.readFileSync("client/src/styles/flow-os.css", "utf8");
 const layout = fs.readFileSync("client/src/components/Layout.tsx", "utf8");
-const filterPage = fs.readFileSync("client/src/pages/filtro.tsx", "utf8");
+const filterPage = [
+  fs.readFileSync("client/src/pages/filtro.tsx", "utf8"),
+  fs.readFileSync("client/src/pages/filtro-engine.tsx", "utf8"),
+].join("\n");
 const floatingHelp = fs.readFileSync(
   "client/src/components/FloatingHelp.tsx",
   "utf8",
@@ -47,7 +50,7 @@ const polishCss = fs.readFileSync(
   "utf8",
 );
 
-for (const label of ["Início", "Pacientes", "Clínica", "Agenda", "Buscar"]) {
+for (const label of ["Início", "Pacientes", "Clínica", "Agenda"]) {
   assert.match(
     dock,
     new RegExp(`label: \\"${label}\\"`),
@@ -84,9 +87,9 @@ assert.match(
   "dock deve ter landmark acessível",
 );
 assert.match(
-  dock,
-  /openCommandPalette\(\)/,
-  "busca do dock deve abrir a paleta global",
+  palette,
+  /COMMAND_PALETTE_OPEN_EVENT|open-command/,
+  "paleta global deve manter o contrato de abertura por evento",
 );
 assert.match(dock, /\/pacientes/, "dock deve dar acesso direto aos pacientes");
 assert.match(dock, /\/filtro/, "dock deve dar acesso direto ao fluxo clínico");

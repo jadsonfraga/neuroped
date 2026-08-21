@@ -45,8 +45,8 @@ function startStaticServer() {
   });
 }
 
-// Escalas que renderizam pelo contrato GenericScale (radiogroups + button-submit
-// + ClinicalReport + SaveToPatient). Cobre todas as páginas com rota dedicada.
+// Escalas com radiogroups + button-submit + ClinicalReport + SaveToPatient.
+// Cobre tanto o contrato GenericScale quanto a CARS dedicada.
 const ALL_ROUTES = [
   { path: "/#/gad7", name: "GAD-7" },
   { path: "/#/vanderbilt", name: "Vanderbilt" },
@@ -57,6 +57,7 @@ const ALL_ROUTES = [
   // itens), não segue o contrato radiogroup→submit direto. Smoke próprio se preciso.
   { path: "/#/brief2", name: "BRIEF-2" },
   { path: "/#/cbcl", name: "CBCL" },
+  { path: "/#/cars", name: "CARS" },
   { path: "/#/cshq", name: "CSHQ" },
   { path: "/#/eaf", name: "EAF" },
   { path: "/#/eai", name: "EAI" },
@@ -85,14 +86,22 @@ if (requestedRoute && ROUTES.length === 0) {
 const OPTION_INDEX = 1; // segunda opção de cada item (clinicamente neutra p/ smoke)
 
 async function answerAll(page, optionIndex) {
-  const groups = page.locator('[role="radiogroup"]');
-  const groupCount = await groups.count();
-  if (groupCount === 0) throw new Error("nenhum radiogroup (questão) encontrado");
-  for (let g = 0; g < groupCount; g += 1) {
-    const labels = groups.nth(g).locator("label");
-    const n = await labels.count();
-    if (n === 0) continue;
-    await labels.nth(Math.min(optionIndex, n - 1)).click();
+  let answeredGroups = 0;
+  for (let pass = 0; pass < 100; pass += 1) {
+    const groups = page.locator('[role="radiogroup"]');
+    const groupCount = await groups.count();
+    if (groupCount === 0) throw new Error("nenhum radiogroup (questão) encontrado");
+    for (let g = answeredGroups; g < groupCount; g += 1) {
+      const labels = groups.nth(g).locator("label");
+      const n = await labels.count();
+      if (n === 0) continue;
+      await labels.nth(Math.min(optionIndex, n - 1)).click();
+    }
+    answeredGroups = groupCount;
+    const more = page.getByRole("button", { name: /Carregar próximas (perguntas|categorias)/, exact: true });
+    if (await more.count() === 0 || !(await more.isVisible())) break;
+    await more.click();
+    await page.waitForTimeout(0);
   }
 }
 

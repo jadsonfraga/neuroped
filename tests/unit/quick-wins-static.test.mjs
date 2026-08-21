@@ -209,7 +209,7 @@ assert.match(
 );
 assert.doesNotMatch(layout, /clearAuth\(\)/);
 
-const filter = read("client/src/pages/filtro.tsx");
+const filter = `${read("client/src/pages/filtro.tsx")}\n${read("client/src/pages/filtro-engine.tsx")}`;
 assert.match(filter, /type AvailabilityMode = "complete" \| "all"/);
 assert.match(filter, /aria-pressed=\{availabilityMode === "all"\}/);
 
