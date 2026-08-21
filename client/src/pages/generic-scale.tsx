@@ -1,18 +1,13 @@
 import { useParams, useLocation, Link } from "wouter";
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { ArrowLeft, Copy, Download, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
-import { GenericScale } from "@/components/GenericScale";
-import {
-  getInteractiveScale as getInteractiveItemScale,
-  makeInteractiveConfig,
-} from "@/data/interactiveScaleItems";
-import { getInteractiveScale as getInteractiveRunnerScale } from "@/data/interactiveScales";
-import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
+import type { ScaleConfig } from "@/components/GenericScale";
+import type { InteractiveScaleDef as RunnerScaleDef } from "@/data/interactiveScales";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import {
@@ -28,6 +23,17 @@ import {
   isMasterPinUnlocked,
   verifyMasterPin,
 } from "@/lib/masterPin";
+
+const LazyGenericScale = lazy(() =>
+  import("@/components/GenericScale").then(({ GenericScale: Component }) => ({
+    default: Component,
+  })),
+);
+const LazyInteractiveScaleRunner = lazy(() =>
+  import("@/components/InteractiveScaleRunner").then(
+    ({ InteractiveScaleRunner: Component }) => ({ default: Component }),
+  ),
+);
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
   questionario_pais: "Questionário — pais/cuidador",
@@ -413,6 +419,19 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
   );
 }
 
+function InteractiveLoading() {
+  return (
+    <div className="min-h-[45vh] flex items-center justify-center p-6">
+      <div
+        role="status"
+        className="rounded-xl border border-slate-700 bg-slate-800/80 px-5 py-4 text-sm font-semibold text-slate-200"
+      >
+        Carregando aplicação da escala…
+      </div>
+    </div>
+  );
+}
+
 export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
   const [_location, navigate] = useLocation();
@@ -420,17 +439,72 @@ export default function GenericScalePage() {
 
   const scale = allScales.find((s) => s.id === scaleId);
   const [copied, setCopied] = useState(false);
+  const [runnerDef, setRunnerDef] = useState<
+    RunnerScaleDef | null | undefined
+  >(undefined);
+  const [itemConfig, setItemConfig] = useState<ScaleConfig | null | undefined>(
+    undefined,
+  );
   const implStatus = scale ? getImplementationStatus(scale) : null;
 
-  // Escalas interativas "runner" (acervo novo: dor/FPS-R, Q-CHAT, Viking, MACS…)
-  // — renderizadas pelo InteractiveScaleRunner. Conjunto à parte do acervo de
-  // itens (interactiveScaleItems), por isso é checado primeiro e independe de allScales.
-  const runnerDef = getInteractiveRunnerScale(scaleId);
+  // Os dois acervos interativos são grandes e mutuamente exclusivos na rota.
+  // Carregá-los estaticamente fazia /generic-scale materializar >1 MB mesmo
+  // quando a escala usava apenas um motor. Resolve runner primeiro; só se não
+  // houver definição carrega o acervo de itens. Itens, escores e contratos não
+  // mudam — apenas a fronteira de carregamento.
+  useEffect(() => {
+    let cancelled = false;
+    setRunnerDef(undefined);
+    setItemConfig(undefined);
+
+    void (async () => {
+      try {
+        const runnerModule = await import("@/data/interactiveScales");
+        if (cancelled) return;
+        const nextRunner = runnerModule.getInteractiveScale(scaleId);
+        if (nextRunner) {
+          setRunnerDef(nextRunner);
+          setItemConfig(null);
+          return;
+        }
+
+        setRunnerDef(null);
+        if (!scale) {
+          setItemConfig(null);
+          return;
+        }
+
+        const itemModule = await import("@/data/interactiveScaleItems");
+        if (cancelled) return;
+        const itemDef = itemModule.getInteractiveScale(scaleId);
+        setItemConfig(
+          itemDef ? itemModule.makeInteractiveConfig(scale, itemDef) : null,
+        );
+      } catch (error) {
+        console.error("[generic-scale] falha ao carregar motor interativo", error);
+        if (!cancelled) {
+          setRunnerDef(null);
+          setItemConfig(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scaleId, scale]);
+
+  if (runnerDef === undefined || itemConfig === undefined) {
+    return <InteractiveLoading />;
+  }
+
   if (runnerDef) {
     return (
-      <div className="p-1">
-        <InteractiveScaleRunner def={runnerDef} />
-      </div>
+      <Suspense fallback={<InteractiveLoading />}>
+        <div className="p-1">
+          <LazyInteractiveScaleRunner def={runnerDef} />
+        </div>
+      </Suspense>
     );
   }
 
@@ -456,22 +530,21 @@ export default function GenericScalePage() {
     );
   }
 
-  // Quando a escala já tem itens interativos cadastrados (acervo de 257), renderiza
-  // a APLICAÇÃO REAL (itens respondíveis + cálculo de escore) no lugar da ficha.
-  const itemDef = getInteractiveItemScale(scaleId);
-  if (itemDef) {
+  if (itemConfig) {
     return (
-      <div className="max-w-2xl mx-auto p-3 sm:p-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/filtro")}
-          className="mb-3 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar ao Filtro
-        </Button>
-        <GenericScale config={makeInteractiveConfig(scale, itemDef)} />
-      </div>
+      <Suspense fallback={<InteractiveLoading />}>
+        <div className="max-w-2xl mx-auto p-3 sm:p-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/filtro")}
+            className="mb-3 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Filtro
+          </Button>
+          <LazyGenericScale config={itemConfig} />
+        </div>
+      </Suspense>
     );
   }
 
