@@ -3,7 +3,6 @@ import { ExternalLink, Globe2, RefreshCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SECRETARIA_IA_URL } from "@/lib/manusLinks";
 
 type ManusSite = {
   id: "secretaria" | "missao" | "institucional";
@@ -15,7 +14,7 @@ type ManusSite = {
 };
 
 const manusUrls = {
-  secretaria: SECRETARIA_IA_URL,
+  secretaria: "/#/marcacao",
   missao: import.meta.env.VITE_MANUS_MISSAO_URL || "https://drjadsongame-ko8qudqs.manus.space",
   institucional: import.meta.env.VITE_MANUS_INSTITUCIONAL_URL || "https://drjadsonmd-iqeiteek.manus.space",
 };
@@ -26,8 +25,8 @@ const sites: ManusSite[] = [
     label: "Secretaria IA",
     shortLabel: "Secretaria",
     url: manusUrls.secretaria,
-    description: "Triagem administrativa, informações de serviços e encaminhamento para a equipe.",
-    note: "A área de equipe pode solicitar login Google. O acesso é feito dentro do próprio site, sem armazenar credenciais no NeuroPed.",
+    description: "Encaminhamento administrativo e acesso à agenda pública integrada ao NeuroPed.",
+    note: "A Secretaria IA foi incorporada ao NeuroPed. Ela não coleta informações clínicas nesta etapa.",
   },
   {
     id: "missao",

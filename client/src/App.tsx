@@ -6,9 +6,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-const Layout = lazy(() =>
-  import("@/components/Layout").then(({ Layout: Component }) => ({ default: Component })),
-);
+import { Layout } from "@/components/Layout";
 import { PageTransition } from "@/components/PageTransition";
 import { AuthProvider } from "@/contexts/AuthContext";
 import {
@@ -192,9 +190,9 @@ const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
 const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
-const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
+const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
@@ -285,27 +283,9 @@ function AppRouter() {
     );
   }
 
-  // A página EEG também é uma ponte externa completa e possui seu próprio
-  // landmark <main>. Mantemos o RouteGuard para preservar a exigência clínica,
-  // mas retiramos o Layout para não aninhar dois <main> no documento.
-  if (location === "/eletroencefalograma") {
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <RouteGuard>
-          <PageTransition>
-            <Switch>
-              <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
-            </Switch>
-          </PageTransition>
-        </RouteGuard>
-      </Suspense>
-    );
-  }
-
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <Layout>
-        <Suspense fallback={<LoadingSpinner />}>
+    <Layout>
+      <Suspense fallback={<LoadingSpinner />}>
         <RouteGuard>
           <PageTransition>
           <Switch>
@@ -365,6 +345,7 @@ function AppRouter() {
             <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
             <Route path="/sobre" component={SobrePage} />
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
+            <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
             <Route path="/termos" component={TermosPage} />
             <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
             <Route path="/pac" component={PacPage} />
@@ -588,9 +569,8 @@ function AppRouter() {
           </Switch>
           </PageTransition>
         </RouteGuard>
-        </Suspense>
-      </Layout>
-    </Suspense>
+      </Suspense>
+    </Layout>
   );
 }
 
