@@ -27,10 +27,7 @@ import {
   type ScaleResponseItem,
   type ScaleResponseReport,
 } from "@/lib/scaleResponseReport";
-import {
-  formatClinicalDate,
-  formatClinicalDateTime,
-} from "@/lib/clinicalDate";
+import { formatClinicalDate, formatClinicalDateTime } from "@/lib/clinicalDate";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import {
   copyText,
@@ -62,7 +59,11 @@ interface ClinicalReportProps {
 }
 
 function resolveApplicationDate(value?: string | Date): Date {
-  const date = value ? (typeof value === "string" ? new Date(value) : value) : new Date();
+  const date = value
+    ? typeof value === "string"
+      ? new Date(value)
+      : value
+    : new Date();
   return Number.isFinite(date.getTime()) ? date : new Date();
 }
 
@@ -126,9 +127,10 @@ function generateReportText(
 
 export function ClinicalReport(rawProps: ClinicalReportProps) {
   const props = normalizeReportProps(rawProps);
-  const applicationDate = props.applicationDate instanceof Date
-    ? props.applicationDate
-    : resolveApplicationDate(props.applicationDate);
+  const applicationDate =
+    props.applicationDate instanceof Date
+      ? props.applicationDate
+      : resolveApplicationDate(props.applicationDate);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);

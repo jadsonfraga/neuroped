@@ -1250,7 +1250,9 @@ export default function FiltroPage() {
     (id) => validSessionSignalIds.has(id),
   );
   const [search, setSearch] = useState<string>(
-    flashMode || useNavigationPrefill ? "" : (sessionFilters?.search ?? navigationPrefill.search),
+    flashMode || useNavigationPrefill
+      ? ""
+      : (sessionFilters?.search ?? navigationPrefill.search),
   );
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>(
     flashMode
@@ -1271,28 +1273,36 @@ export default function FiltroPage() {
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedRespondente ?? navigationPrefill.selectedRespondente ?? null),
+      : (sessionFilters?.selectedRespondente ??
+          navigationPrefill.selectedRespondente ??
+          null),
   );
   const [selectedCommunication, setSelectedCommunication] = useState<
     "verbal" | "nonverbal" | null
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedCommunication ?? navigationPrefill.selectedCommunication ?? null),
+      : (sessionFilters?.selectedCommunication ??
+          navigationPrefill.selectedCommunication ??
+          null),
   );
   const [selectedLiteracy, setSelectedLiteracy] = useState<
     "literate" | "preliterate" | null
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedLiteracy ?? navigationPrefill.selectedLiteracy ?? null),
+      : (sessionFilters?.selectedLiteracy ??
+          navigationPrefill.selectedLiteracy ??
+          null),
   );
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<
     "diagnostic" | "monitoring" | null
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedAssessmentType ?? navigationPrefill.selectedAssessmentType ?? null),
+      : (sessionFilters?.selectedAssessmentType ??
+          navigationPrefill.selectedAssessmentType ??
+          null),
   );
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(
     flashMode || useNavigationPrefill ? [] : sessionSignalIds,

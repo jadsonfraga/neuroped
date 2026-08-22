@@ -26,7 +26,7 @@ test("o PDF recebe o instante de conclusão e não reinterpreta a opção marcad
   assert.match(report, /applicationDate\?: string \| Date/);
   assert.match(
     report,
-    /Data da aplicação: \$\{formatScaleResponseDateTime\(props\.applicationDate/,
+    /Data da aplicação: \$\{formatClinicalDateTime\(applicationDate\)/,
   );
   assert.match(generic, /setApplicationDate\(new Date\(\)\.toISOString\(\)\)/);
   assert.match(generic, /applicationDate=\{applicationDate \?\? undefined\}/);
@@ -44,7 +44,10 @@ test("o PDF recebe o instante de conclusão e não reinterpreta a opção marcad
   );
   assert.match(interactive, /item\.options\[answers\[index\]\]\.label/);
   assert.match(save, /applicationDate/);
-  assert.match(save, /Data da aplicação: \$\{formatScaleResponseDateTime\(/);
+  assert.match(
+    save,
+    /Data da aplicação: \$\{formatClinicalDateTime\(applicationDate\)/,
+  );
 });
 
 test("o backend persiste a data recebida e o histórico devolve a origem remota", () => {
