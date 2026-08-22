@@ -1,0 +1,61 @@
+name: SaaS tenant lifecycle
+
+on:
+  pull_request:
+    paths:
+      - "shared/tenantLifecycle.ts"
+      - "shared/billing.ts"
+      - "server/lib/billingEntitlement.ts"
+      - "db/migrations/0014_saas_tenant_lifecycle.sql"
+      - "functions/api/billing/_guard.ts"
+      - "functions/api/billing/_provider.ts"
+      - "functions/api/tenants/**"
+      - "tests/unit/saas-tenant-lifecycle.test.ts"
+      - ".github/workflows/saas-tenant-lifecycle.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "shared/tenantLifecycle.ts"
+      - "server/lib/billingEntitlement.ts"
+      - "db/migrations/0014_saas_tenant_lifecycle.sql"
+      - "functions/api/billing/_guard.ts"
+      - "functions/api/billing/_provider.ts"
+      - "functions/api/tenants/**"
+      - "tests/unit/saas-tenant-lifecycle.test.ts"
+      - ".github/workflows/saas-tenant-lifecycle.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Lifecycle contract
+        run: node --import tsx tests/unit/saas-tenant-lifecycle.test.ts
+
+      - name: Diff hygiene
+        run: git diff --check
