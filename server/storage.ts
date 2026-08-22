@@ -273,19 +273,30 @@ sqlite.exec(`
  * ========================================================================= */
 
 export interface IStorage {
-  saveResult(result: InsertScaleResult): ScaleResult;
+  saveResult(result: InsertScaleResult, createdAt?: string): ScaleResult;
   getResults(): ScaleResult[];
-  getResultsAccessibleBy(user: { id: string; role: string }, limit?: number): ScaleResult[];
+  getResultsAccessibleBy(
+    user: { id: string; role: string },
+    limit?: number,
+  ): ScaleResult[];
   getResult(id: string): ScaleResult | undefined;
-  getResultsByPatient(patientId: string, limit?: number, offset?: number): ScaleResult[];
+  getResultsByPatient(
+    patientId: string,
+    limit?: number,
+    offset?: number,
+  ): ScaleResult[];
   countResultsByPatient(patientId: string): number;
   deleteResult(id: string): boolean;
   deletePatient(id: string): boolean;
 }
 
 export class SqliteStorage implements IStorage {
-  saveResult(insert: InsertScaleResult): ScaleResult {
-    return db.insert(scaleResults).values(insert).returning().get();
+  saveResult(insert: InsertScaleResult, createdAt?: string): ScaleResult {
+    return db
+      .insert(scaleResults)
+      .values(createdAt ? { ...insert, createdAt } : insert)
+      .returning()
+      .get();
   }
 
   getResults(): ScaleResult[] {
@@ -305,9 +316,17 @@ export class SqliteStorage implements IStorage {
    * duas contas, um paciente cada, resultado vinculado e órfão — cada conta
    * só vê o que é dela.
    */
-  getResultsAccessibleBy(user: { id: string; role: string }, limit = 50): ScaleResult[] {
+  getResultsAccessibleBy(
+    user: { id: string; role: string },
+    limit = 50,
+  ): ScaleResult[] {
     if (user.role === "admin") {
-      return db.select().from(scaleResults).orderBy(desc(scaleResults.createdAt)).limit(limit).all();
+      return db
+        .select()
+        .from(scaleResults)
+        .orderBy(desc(scaleResults.createdAt))
+        .limit(limit)
+        .all();
     }
     return db
       .select(getTableColumns(scaleResults))
@@ -316,7 +335,10 @@ export class SqliteStorage implements IStorage {
       .where(
         or(
           eq(patients.ownerUserId, user.id),
-          and(isNull(scaleResults.patientId), eq(scaleResults.appliedByUserId, user.id)),
+          and(
+            isNull(scaleResults.patientId),
+            eq(scaleResults.appliedByUserId, user.id),
+          ),
         ),
       )
       .orderBy(desc(scaleResults.createdAt))
@@ -401,5 +423,7 @@ export async function bootstrapAdmin(): Promise<void> {
     )
     .run(id, adminEmail, adminName, hash, now, now);
 
-  console.log(`[bootstrap] Usuario admin criado: ${adminEmail} (deve trocar senha no primeiro login)`);
+  console.log(
+    `[bootstrap] Usuario admin criado: ${adminEmail} (deve trocar senha no primeiro login)`,
+  );
 }

@@ -60,6 +60,24 @@ function queryInteger(
   return Math.min(Math.max(parsed, minimum), maximum);
 }
 
+function parseResultJson(value: unknown): any {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function parseApplicationDate(value: unknown): string | undefined {
+  if (value == null || value === "") return undefined;
+  if (typeof value !== "string") throw new Error("APPLICATION_DATE_INVALID");
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime()))
+    throw new Error("APPLICATION_DATE_INVALID");
+  return parsed.toISOString();
+}
+
 function normalizeScaleResponses(
   value: unknown,
 ): Array<{ question: string; answer: string }> {
@@ -90,11 +108,18 @@ function normalizeScaleResponses(
 function presentScaleResponseRecord(result: any) {
   const safe = { ...result };
   const responses = normalizeScaleResponses(safe.answers);
+  const details = parseResultJson(safe.details);
+  const origin =
+    safe.scaleVersion === "family-link-v1" ||
+    safe.scale_version === "family-link-v1" ||
+    details?.source === "family-link"
+      ? "family-link"
+      : null;
   delete safe.answers;
   delete safe.totalScore;
   delete safe.classification;
   delete safe.domainScores;
-  return { ...safe, responses };
+  return { ...safe, ...(origin ? { origin } : {}), responses };
 }
 
 export async function registerRoutes(
@@ -174,17 +199,27 @@ export async function registerRoutes(
     const ctx = getAuditContextFromRequest(req);
     // Clamp inferior obrigatório: LIMIT negativo no SQLite significa "sem
     // limite" e furaria o teto de 100 itens por página.
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit as string) || 50, 1),
+      100,
+    );
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
     const query = isAdmin(req.user!)
       ? db.select().from(patients)
-      : db.select().from(patients).where(eq(patients.ownerUserId, req.user!.id));
+      : db
+          .select()
+          .from(patients)
+          .where(eq(patients.ownerUserId, req.user!.id));
 
     const rows = query.limit(limit).offset(offset).all();
     const countResult = isAdmin(req.user!)
       ? db.select({ count: count() }).from(patients).all()
-      : db.select({ count: count() }).from(patients).where(eq(patients.ownerUserId, req.user!.id)).all();
+      : db
+          .select({ count: count() })
+          .from(patients)
+          .where(eq(patients.ownerUserId, req.user!.id))
+          .all();
 
     const total = countResult[0]?.count || 0;
 
@@ -312,62 +347,81 @@ export async function registerRoutes(
   // =========================================================================
   // RESULTADOS DE ESCALAS
   // =========================================================================
-  app.post("/api/results", requireAuth, requireProfessional, writeRateLimit, async (req, res) => {
-    const ctx = getAuditContextFromRequest(req);
-    try {
-      const responses = normalizeScaleResponses(
-        req.body?.responses ?? req.body?.answers,
-      );
-      if (responses.length === 0) {
-        return res.status(400).json({
-          error: "Envie todas as perguntas e respostas por extenso.",
-          code: "RESPONSES_REQUIRED",
+  app.post(
+    "/api/results",
+    requireAuth,
+    requireProfessional,
+    writeRateLimit,
+    async (req, res) => {
+      const ctx = getAuditContextFromRequest(req);
+      try {
+        let applicationDate: string | undefined;
+        try {
+          applicationDate = parseApplicationDate(req.body?.applicationDate);
+        } catch {
+          return res.status(400).json({
+            error: "A data de conclusão da aplicação é inválida.",
+            code: "APPLICATION_DATE_INVALID",
+          });
+        }
+        const responses = normalizeScaleResponses(
+          req.body?.responses ?? req.body?.answers,
+        );
+        if (responses.length === 0) {
+          return res.status(400).json({
+            error: "Envie todas as perguntas e respostas por extenso.",
+            code: "RESPONSES_REQUIRED",
+          });
+        }
+        const parsed = insertScaleResultSchema.parse({
+          ...req.body,
+          answers: JSON.stringify(responses),
+          // Colunas legadas obrigatórias permanecem neutras no armazenamento e
+          // nunca são devolvidas pela API. O produto entrega somente respostas.
+          totalScore: 0,
+          classification: "Respostas registradas",
+          domainScores: null,
+          appliedByUserId: req.user!.id,
         });
-      }
-      const parsed = insertScaleResultSchema.parse({
-        ...req.body,
-        answers: JSON.stringify(responses),
-        // Colunas legadas obrigatórias permanecem neutras no armazenamento e
-        // nunca são devolvidas pela API. O produto entrega somente respostas.
-        totalScore: 0,
-        classification: "Respostas registradas",
-        domainScores: null,
-        appliedByUserId: req.user!.id,
-      });
-      if (parsed.patientId) {
-        const patient = db
-          .select()
-          .from(patients)
-          .where(eq(patients.id, parsed.patientId))
-          .get();
-        const decision = patientReferenceDecision(req.user!, patient);
-        if (decision === "not_found") {
-          return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+        if (parsed.patientId) {
+          const patient = db
+            .select()
+            .from(patients)
+            .where(eq(patients.id, parsed.patientId))
+            .get();
+          const decision = patientReferenceDecision(req.user!, patient);
+          if (decision === "not_found") {
+            return res
+              .status(404)
+              .json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+          }
+          if (decision === "forbidden") {
+            return res
+              .status(403)
+              .json({ error: "Sem permissao", code: "FORBIDDEN" });
+          }
         }
-        if (decision === "forbidden") {
-          return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
-        }
+        const created = storage.saveResult(parsed, applicationDate);
+        await logAudit({
+          eventType: "result.create",
+          context: ctx,
+          targetType: "scale_result",
+          targetId: created.id,
+          metadata: {
+            scaleName: created.scaleName,
+            patientId: created.patientId,
+          },
+        });
+        return res.status(201).json(presentScaleResponseRecord(created));
+      } catch (e: any) {
+        if (e instanceof z.ZodError)
+          return res
+            .status(400)
+            .json({ error: "Dados invalidos", details: e.errors });
+        return res.status(500).json({ error: "Erro interno" });
       }
-      const created = storage.saveResult(parsed);
-      await logAudit({
-        eventType: "result.create",
-        context: ctx,
-        targetType: "scale_result",
-        targetId: created.id,
-        metadata: {
-          scaleName: created.scaleName,
-          patientId: created.patientId,
-        },
-      });
-      return res.status(201).json(presentScaleResponseRecord(created));
-    } catch (e: any) {
-      if (e instanceof z.ZodError)
-        return res
-          .status(400)
-          .json({ error: "Dados invalidos", details: e.errors });
-      return res.status(500).json({ error: "Erro interno" });
-    }
-  });
+    },
+  );
 
   app.get("/api/results", requireAuth, (req, res) => {
     // Antes: getResults() trazia a tabela INTEIRA para memória e, por linha,
@@ -451,9 +505,10 @@ export async function registerRoutes(
       MAX_PATIENT_RESULTS_PAGE_SIZE,
     );
     const requestedPage = queryInteger(req.query.page, 1, 1, 10_000);
-    const explicitOffset = req.query.offset === undefined
-      ? null
-      : queryInteger(req.query.offset, 0, 0, 2_000_000);
+    const explicitOffset =
+      req.query.offset === undefined
+        ? null
+        : queryInteger(req.query.offset, 0, 0, 2_000_000);
     const offset = explicitOffset ?? (requestedPage - 1) * limit;
     const page = Math.floor(offset / limit) + 1;
     const total = storage.countResultsByPatient(patientId);
@@ -479,7 +534,9 @@ export async function registerRoutes(
       .strict()
       .safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.errors });
+      return res
+        .status(400)
+        .json({ error: "Dados invalidos", details: parsed.error.errors });
     }
     if (parsed.data.patientId) {
       const patient = db
@@ -489,10 +546,14 @@ export async function registerRoutes(
         .get();
       const decision = patientReferenceDecision(req.user!, patient);
       if (decision === "not_found") {
-        return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+        return res
+          .status(404)
+          .json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
       }
       if (decision === "forbidden") {
-        return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+        return res
+          .status(403)
+          .json({ error: "Sem permissao", code: "FORBIDDEN" });
       }
     }
     const created = db
@@ -530,7 +591,9 @@ export async function registerRoutes(
       .strict()
       .safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Dados invalidos", details: parsed.error.errors });
+      return res
+        .status(400)
+        .json({ error: "Dados invalidos", details: parsed.error.errors });
     }
     if (parsed.data.patientId) {
       const patient = db
@@ -540,10 +603,14 @@ export async function registerRoutes(
         .get();
       const decision = patientReferenceDecision(req.user!, patient);
       if (decision === "not_found") {
-        return res.status(404).json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
+        return res
+          .status(404)
+          .json({ error: "Paciente nao encontrado", code: "NOT_FOUND" });
       }
       if (decision === "forbidden") {
-        return res.status(403).json({ error: "Sem permissao", code: "FORBIDDEN" });
+        return res
+          .status(403)
+          .json({ error: "Sem permissao", code: "FORBIDDEN" });
       }
     }
     const created = db

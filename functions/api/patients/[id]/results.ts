@@ -33,15 +33,26 @@ function errorResponse(
   return json({ error: message, code }, status);
 }
 
-function parseResponses(details: unknown): unknown[] {
-  if (typeof details !== "string") return [];
+function parseDetails(details: unknown): Record<string, unknown> | null {
+  if (typeof details !== "string") return null;
   try {
     const parsed = JSON.parse(details);
-    const responses = parsed?.responses ?? parsed?.answers;
-    return Array.isArray(responses) ? responses : [];
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
   } catch {
-    return [];
+    return null;
   }
+}
+
+function parseResponses(details: unknown): unknown[] {
+  const parsed = parseDetails(details);
+  const responses = parsed?.responses ?? parsed?.answers;
+  return Array.isArray(responses) ? responses : [];
+}
+
+function isFamilyLinkResult(details: unknown): boolean {
+  return parseDetails(details)?.source === "family-link";
 }
 
 const MAX_RESULTS_PAGE_SIZE = 200;
@@ -144,6 +155,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       scaleId: row.scale_id,
       scaleName: row.scale_name,
       responses: parseResponses(row.details),
+      origin: isFamilyLinkResult(row.details) ? "family-link" : undefined,
       createdAt: row.applied_at,
       isDemo: row.is_demo === true || row.is_demo === 1 || row.is_demo === "1",
     }));

@@ -96,15 +96,26 @@ function invalidIdResponse(id: string): Response | null {
   return null;
 }
 
-function parseScaleResponses(details: unknown): unknown[] {
-  if (typeof details !== "string") return [];
+function parseScaleDetails(details: unknown): Record<string, unknown> | null {
+  if (typeof details !== "string") return null;
   try {
     const parsed = JSON.parse(details);
-    const responses = parsed?.responses ?? parsed?.answers;
-    return Array.isArray(responses) ? responses : [];
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
   } catch {
-    return [];
+    return null;
   }
+}
+
+function parseScaleResponses(details: unknown): unknown[] {
+  const parsed = parseScaleDetails(details);
+  const responses = parsed?.responses ?? parsed?.answers;
+  return Array.isArray(responses) ? responses : [];
+}
+
+function isFamilyLinkResult(details: unknown): boolean {
+  return parseScaleDetails(details)?.source === "family-link";
 }
 
 // GET /api/patients/:id
@@ -188,6 +199,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           scaleId: row.scale_id,
           scaleName: row.scale_name,
           responses: parseScaleResponses(row.details),
+          origin: isFamilyLinkResult(row.details) ? "family-link" : undefined,
           createdAt: row.applied_at,
         }),
       ),

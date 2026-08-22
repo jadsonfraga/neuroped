@@ -33,7 +33,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
-import { ParentScaleSharePanel, type ParentShareScale } from "@/components/ParentScaleSharePanel";
+import {
+  ParentScaleSharePanel,
+  type ParentShareScale,
+} from "@/components/ParentScaleSharePanel";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import {
   allScales,
@@ -228,9 +231,13 @@ function rowToScale(row: Row): ScaleEntry {
   // evidência nas colunas 12 e 11; quando ausentes, mantém a inferência por
   // heurística (guessQueixas) como backup.
   const queixasCuradas =
-    row.length >= 13 && String(row[12] ?? "") ? String(row[12]).split("|").filter(Boolean) : guessQueixas(categoria, `${sigla} ${nome}`);
+    row.length >= 13 && String(row[12] ?? "")
+      ? String(row[12]).split("|").filter(Boolean)
+      : guessQueixas(categoria, `${sigla} ${nome}`);
   const sintomasCurados =
-    row.length >= 12 && String(row[11] ?? "") ? String(row[11]).split("|").filter(Boolean) : undefined;
+    row.length >= 12 && String(row[11] ?? "")
+      ? String(row[11]).split("|").filter(Boolean)
+      : undefined;
   return {
     id: `world-registry-${String(n).padStart(3, "0")}`,
     name: sigla,
@@ -1080,21 +1087,60 @@ function buildQualitativeFilterReport(args: {
   return paragraphs.join("\n\n");
 }
 
+const FILTER_NAVIGATION_STORAGE_KEY = "neuroped:filter-navigation-prefill-v1";
+
+type FilterNavigationRespondente =
+  "teste_direto_crianca" | "pais" | "professor" | "clinico";
+type FilterNavigationCommunication = "verbal" | "nonverbal";
+type FilterNavigationLiteracy = "literate" | "preliterate";
+type FilterNavigationAssessment = "diagnostic" | "monitoring";
+
 interface FilterNavigationPrefill {
   age: string | null;
   queixas: string[];
+  search: string;
+  selectedRespondente: FilterNavigationRespondente | null;
+  selectedCommunication: FilterNavigationCommunication | null;
+  selectedLiteracy: FilterNavigationLiteracy | null;
+  selectedAssessmentType: FilterNavigationAssessment | null;
+  selectedSignalIds: string[];
+  availabilityMode: AvailabilityMode | null;
+  compareIds: string[];
   present: boolean;
 }
 
+function emptyFilterNavigationPrefill(): FilterNavigationPrefill {
+  return {
+    age: null,
+    queixas: [],
+    search: "",
+    selectedRespondente: null,
+    selectedCommunication: null,
+    selectedLiteracy: null,
+    selectedAssessmentType: null,
+    selectedSignalIds: [],
+    availabilityMode: null,
+    compareIds: [],
+    present: false,
+  };
+}
+
 function readFilterNavigationPrefill(): FilterNavigationPrefill {
-  if (typeof window === "undefined")
-    return { age: null, queixas: [], present: false };
+  if (typeof window === "undefined") return emptyFilterNavigationPrefill();
 
   const state = window.history.state as {
-    filterPrefill?: { age?: unknown; queixas?: unknown };
+    filterPrefill?: Record<string, unknown>;
   } | null;
-  const prefill = state?.filterPrefill;
-  if (!prefill) return { age: null, queixas: [], present: false };
+  let prefill = state?.filterPrefill;
+  if (!prefill) {
+    try {
+      const raw = sessionStorage.getItem(FILTER_NAVIGATION_STORAGE_KEY);
+      if (raw) prefill = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      prefill = undefined;
+    }
+  }
+  if (!prefill) return emptyFilterNavigationPrefill();
 
   const age =
     typeof prefill.age === "string" &&
@@ -1107,23 +1153,75 @@ function readFilterNavigationPrefill(): FilterNavigationPrefill {
         (id): id is string => typeof id === "string" && validQueixaIds.has(id),
       )
     : [];
+  const selectedRespondente = [
+    "teste_direto_crianca",
+    "pais",
+    "professor",
+    "clinico",
+  ].includes(String(prefill.selectedRespondente))
+    ? (prefill.selectedRespondente as FilterNavigationRespondente)
+    : null;
+  const selectedCommunication = ["verbal", "nonverbal"].includes(
+    String(prefill.selectedCommunication),
+  )
+    ? (prefill.selectedCommunication as FilterNavigationCommunication)
+    : null;
+  const selectedLiteracy = ["literate", "preliterate"].includes(
+    String(prefill.selectedLiteracy),
+  )
+    ? (prefill.selectedLiteracy as FilterNavigationLiteracy)
+    : null;
+  const selectedAssessmentType = ["diagnostic", "monitoring"].includes(
+    String(prefill.selectedAssessmentType),
+  )
+    ? (prefill.selectedAssessmentType as FilterNavigationAssessment)
+    : null;
+  const boundedStringArray = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? value.filter(
+          (item): item is string =>
+            typeof item === "string" && item.length > 0 && item.length <= 128,
+        )
+      : [];
+  const availabilityMode = ["complete", "all"].includes(
+    String(prefill.availabilityMode),
+  )
+    ? (prefill.availabilityMode as AvailabilityMode)
+    : null;
 
-  return { age, queixas: selectedQueixas, present: true };
+  return {
+    age,
+    queixas: selectedQueixas,
+    search:
+      typeof prefill.search === "string" ? prefill.search.slice(0, 300) : "",
+    selectedRespondente,
+    selectedCommunication,
+    selectedLiteracy,
+    selectedAssessmentType,
+    selectedSignalIds: boundedStringArray(prefill.selectedSignalIds),
+    availabilityMode,
+    compareIds: boundedStringArray(prefill.compareIds),
+    present: true,
+  };
 }
 
 function clearFilterNavigationPrefill(): void {
   if (typeof window === "undefined") return;
   const state = window.history.state;
-  if (!state || typeof state !== "object" || !("filterPrefill" in state))
-    return;
-
-  const nextState = { ...state } as Record<string, unknown>;
-  delete nextState.filterPrefill;
-  window.history.replaceState(
-    Object.keys(nextState).length > 0 ? nextState : null,
-    "",
-    window.location.href,
-  );
+  if (state && typeof state === "object" && "filterPrefill" in state) {
+    const nextState = { ...state } as Record<string, unknown>;
+    delete nextState.filterPrefill;
+    window.history.replaceState(
+      Object.keys(nextState).length > 0 ? nextState : null,
+      "",
+      window.location.href,
+    );
+  }
+  try {
+    sessionStorage.removeItem(FILTER_NAVIGATION_STORAGE_KEY);
+  } catch {
+    /* sessionStorage indisponível — o fluxo segue sem prefill */
+  }
 }
 
 export default function FiltroPage() {
@@ -1152,7 +1250,7 @@ export default function FiltroPage() {
     (id) => validSessionSignalIds.has(id),
   );
   const [search, setSearch] = useState<string>(
-    flashMode || useNavigationPrefill ? "" : (sessionFilters?.search ?? ""),
+    flashMode || useNavigationPrefill ? "" : (sessionFilters?.search ?? navigationPrefill.search),
   );
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>(
     flashMode
@@ -1173,37 +1271,41 @@ export default function FiltroPage() {
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedRespondente ?? null),
+      : (sessionFilters?.selectedRespondente ?? navigationPrefill.selectedRespondente ?? null),
   );
   const [selectedCommunication, setSelectedCommunication] = useState<
     "verbal" | "nonverbal" | null
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedCommunication ?? null),
+      : (sessionFilters?.selectedCommunication ?? navigationPrefill.selectedCommunication ?? null),
   );
   const [selectedLiteracy, setSelectedLiteracy] = useState<
     "literate" | "preliterate" | null
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedLiteracy ?? null),
+      : (sessionFilters?.selectedLiteracy ?? navigationPrefill.selectedLiteracy ?? null),
   );
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<
     "diagnostic" | "monitoring" | null
   >(
     flashMode || useNavigationPrefill
       ? null
-      : (sessionFilters?.selectedAssessmentType ?? null),
+      : (sessionFilters?.selectedAssessmentType ?? navigationPrefill.selectedAssessmentType ?? null),
   );
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(
     flashMode || useNavigationPrefill ? [] : sessionSignalIds,
   );
   const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
-    flashMode ? "complete" : preferences.availability,
+    flashMode
+      ? "complete"
+      : (navigationPrefill.availabilityMode ?? preferences.availability),
   );
   const [copiedRec, setCopiedRec] = useState(false);
-  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareIds, setCompareIds] = useState<string[]>(
+    flashMode ? [] : navigationPrefill.compareIds,
+  );
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -1254,6 +1356,35 @@ export default function FiltroPage() {
       /* sessionStorage indisponível — modo flash segue sem persistir */
     }
   }, [flashMode, search, selectedAge, selectedQueixas]);
+
+  const preserveFilterNavigationState = () => {
+    if (flashMode || typeof window === "undefined") return;
+    const filterPrefill = {
+      age: selectedAge,
+      queixas: selectedQueixas,
+      search,
+      selectedRespondente,
+      selectedCommunication,
+      selectedLiteracy,
+      selectedAssessmentType,
+      selectedSignalIds,
+      availabilityMode,
+      compareIds,
+    };
+    try {
+      sessionStorage.setItem(
+        FILTER_NAVIGATION_STORAGE_KEY,
+        JSON.stringify(filterPrefill),
+      );
+    } catch {
+      /* sessionStorage indisponível — o state da navegação ainda tenta preservar */
+    }
+    window.history.replaceState(
+      { ...(window.history.state ?? {}), filterPrefill },
+      "",
+      window.location.href,
+    );
+  };
 
   // Auto-close welcome tour on /filtro — ensures filter content is visible immediately
   useEffect(() => {
@@ -1402,13 +1533,10 @@ export default function FiltroPage() {
   ]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
-  const refinedMatches = useMemo(
-    () => {
-      if (!hasSearch) return [];
-      return rankSafely(catalog, filterContext, search);
-    },
-    [catalog, filterContext, search, hasSearch],
-  );
+  const refinedMatches = useMemo(() => {
+    if (!hasSearch) return [];
+    return rankSafely(catalog, filterContext, search);
+  }, [catalog, filterContext, search, hasSearch]);
   const refinedById = useMemo(
     () => new Map(refinedMatches.map((m) => [m.scale.id, m])),
     [refinedMatches],
@@ -1646,14 +1774,17 @@ export default function FiltroPage() {
       const scale = item.scale;
       if (!item.hasScale || !scale || seen.has(scale.id)) continue;
       const isParentRespondent =
-        scale.respondente.includes("pais") || scale.applicationMode === "questionario_pais";
+        scale.respondente.includes("pais") ||
+        scale.applicationMode === "questionario_pais";
       if (!isParentRespondent || !INTERACTIVE_SCALE_IDS.has(scale.id)) continue;
       seen.add(scale.id);
       candidates.push({
         id: scale.id,
         name: scale.name,
         fullName: scale.fullName,
-        respondentLabel: scale.respondente.includes("pais") ? "Pais / cuidador" : "Questionário familiar",
+        respondentLabel: scale.respondente.includes("pais")
+          ? "Pais / cuidador"
+          : "Questionário familiar",
       });
       if (candidates.length >= 8) break;
     }
@@ -1908,11 +2039,18 @@ export default function FiltroPage() {
                 <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Idade da criança
                 </p>
-                <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75 sm:hidden" aria-hidden="true">
+                <span
+                  className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75 sm:hidden"
+                  aria-hidden="true"
+                >
                   Deslize →
                 </span>
               </div>
-              <div className="np-horizontal-chips flex gap-1 sm:gap-2 overflow-x-auto pb-1" data-testid="age-band-scroll" aria-label="Faixas etárias; deslize horizontalmente para ver todas">
+              <div
+                className="np-horizontal-chips flex gap-1 sm:gap-2 overflow-x-auto pb-1"
+                data-testid="age-band-scroll"
+                aria-label="Faixas etárias; deslize horizontalmente para ver todas"
+              >
                 {faixasEtarias.map((age) => (
                   <button
                     key={age.id}
@@ -2684,6 +2822,7 @@ export default function FiltroPage() {
                     <Link
                       key={item.slot}
                       href={item.route}
+                      onClick={preserveFilterNavigationState}
                       className="block h-full"
                     >
                       {cardInner}
@@ -3013,6 +3152,7 @@ export default function FiltroPage() {
               <Link
                 key={s.id}
                 href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`}
+                onClick={preserveFilterNavigationState}
                 className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:bg-background hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
               >
                 <div className="filter-260-card-content compact">

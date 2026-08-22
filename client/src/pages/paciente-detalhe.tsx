@@ -39,7 +39,7 @@ import {
   Pill,
   Users,
 } from "lucide-react";
-import { differenceInYears, parseISO, format } from "date-fns";
+import { differenceInYears, parseISO } from "date-fns";
 import html2canvas from "html2canvas";
 
 function calcAge(birthDate: string | null | undefined): string | null {
@@ -56,7 +56,8 @@ function fmtDate(d: string | Date | null | undefined): string {
   if (!d) return "—";
   try {
     const date = typeof d === "string" ? new Date(d) : d;
-    return format(date, "dd/MM/yyyy");
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("pt-BR", { timeZone: "America/Recife" });
   } catch {
     return "—";
   }
@@ -127,6 +128,19 @@ function resultScaleName(result: any): string {
 
 function resultCreatedAt(result: any): string | Date | null {
   return result.createdAt ?? result.applied_at ?? null;
+}
+
+function isFamilyLinkResult(result: any): boolean {
+  if (result.origin === "family-link") return true;
+  if (
+    result.scaleVersion === "family-link-v1" ||
+    result.scale_version === "family-link-v1"
+  )
+    return true;
+  const details = parseJson(result.details);
+  return Boolean(
+    details && typeof details === "object" && details.source === "family-link",
+  );
 }
 
 function isNotFoundError(error: unknown): boolean {
@@ -391,17 +405,34 @@ export default function PacienteDetalhePage() {
             </Button>
           </Link>
           <Link href={`/prontuario?patientId=${encodeURIComponent(patientId)}`}>
-            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-prontuario">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+              data-testid="button-open-prontuario"
+            >
               <ClipboardList className="w-3.5 h-3.5" /> Prontuário
             </Button>
           </Link>
-          <Link href={`/laudo-neuroped?patientId=${encodeURIComponent(patientId)}`}>
-            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-laudo">
+          <Link
+            href={`/laudo-neuroped?patientId=${encodeURIComponent(patientId)}`}
+          >
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+              data-testid="button-open-laudo"
+            >
               <FileText className="w-3.5 h-3.5" /> Laudo
             </Button>
           </Link>
           <Link href={`/receita-c1?patientId=${encodeURIComponent(patientId)}`}>
-            <Button size="sm" variant="outline" className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100" data-testid="button-open-receita-c1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+              data-testid="button-open-receita-c1"
+            >
               <Pill className="w-3.5 h-3.5" /> Receita C1
             </Button>
           </Link>
@@ -500,6 +531,7 @@ export default function PacienteDetalhePage() {
           ) : (
             sortedResultsDesc.map((r: any) => {
               const responses = storedResponses(r);
+              const isFamilyLink = isFamilyLinkResult(r);
               return (
                 <Card key={r.id} className="border-card-border">
                   <CardContent className="space-y-4 p-4">
@@ -513,6 +545,17 @@ export default function PacienteDetalhePage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
+                        {isFamilyLink && (
+                          <Badge
+                            variant="outline"
+                            className="inline-flex items-center gap-1 border-sky-300 bg-sky-50 text-[11px] font-bold text-sky-800 dark:border-sky-700 dark:bg-sky-950/30 dark:text-sky-200"
+                            data-testid="badge-parent-submitted"
+                            title="Resultado preenchido por responsável através de link remoto"
+                          >
+                            <Users className="h-3 w-3" aria-hidden="true" />
+                            Enviado pelos pais
+                          </Badge>
+                        )}
                         <Badge variant="secondary" className="text-xs">
                           {responses.length}{" "}
                           {responses.length === 1 ? "resposta" : "respostas"}
@@ -622,7 +665,10 @@ export default function PacienteDetalhePage() {
                       </p>
                     )}
                     <p className="text-xs text-gray-400">
-                      Data do relatório: {format(new Date(), "dd/MM/yyyy")}
+                      Data do relatório:{" "}
+                      {new Date().toLocaleDateString("pt-BR", {
+                        timeZone: "America/Recife",
+                      })}
                     </p>
                   </div>
 

@@ -1,5 +1,5 @@
 import { escapeHtml } from "./htmlEscape";
-import { formatClinicalLongDate } from "./clinicalDate";
+import { formatClinicalDateTime, formatClinicalLongDate } from "./clinicalDate";
 
 export interface ScaleResponseItem {
   question: string;
@@ -10,6 +10,8 @@ export interface ScaleResponseReport {
   scaleName: string;
   scaleFullName?: string;
   patientAge?: string;
+  /** Instante em que a aplicação foi concluída, não o instante da exportação. */
+  applicationDate?: string | Date;
   items: ScaleResponseItem[];
 }
 
@@ -46,7 +48,9 @@ export function normalizeScaleResponseItems(
 ): ScaleResponseItem[] {
   return items.map((item, index) => ({
     question: clean(item.question, `Pergunta ${index + 1}`),
-    answer: formatScaleResponseAnswer(item.answer),
+    // O relatório deve repetir exatamente o rótulo selecionado, inclusive
+    // códigos/prefixos que façam parte da opção original.
+    answer: clean(item.answer, "Não respondida"),
   }));
 }
 
@@ -54,14 +58,23 @@ export function formatScaleResponseDate(date = new Date()): string {
   return formatClinicalLongDate(date);
 }
 
+export function formatScaleResponseDateTime(
+  date: string | Date = new Date(),
+): string {
+  const value = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(value.getTime())) return "Data não informada";
+  return formatClinicalDateTime(value);
+}
+
 export function buildScaleResponseText(
   report: ScaleResponseReport,
   date = new Date(),
 ): string {
   const items = normalizeScaleResponseItems(report.items);
+  const applicationDate = report.applicationDate ?? date;
   let text = "REGISTRO INTEGRAL DE RESPOSTAS\n";
   text += `Escala: ${report.scaleName}${report.scaleFullName ? ` (${report.scaleFullName})` : ""}\n`;
-  text += `Data da aplicação: ${formatScaleResponseDate(date)}\n`;
+  text += `Data da aplicação: ${formatScaleResponseDateTime(applicationDate)}\n`;
   if (report.patientAge) text += `Faixa etária: ${report.patientAge}\n`;
   text += `Itens registrados: ${items.length}\n\n`;
   text += "PERGUNTAS E RESPOSTAS\n\n";
@@ -86,7 +99,8 @@ export function buildScaleResponsePrintHtml(
   date = new Date(),
 ): string {
   const items = normalizeScaleResponseItems(report.items);
-  const dateLabel = formatScaleResponseDate(date);
+  const applicationDate = report.applicationDate ?? date;
+  const dateLabel = formatScaleResponseDateTime(applicationDate);
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
