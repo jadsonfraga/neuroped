@@ -301,10 +301,7 @@ function AppRouter() {
     return (
       <Suspense fallback={<LoadingSpinner />}>
         <Switch>
-          <Route
-            path="/brincando-e-aprendendo"
-            component={BrincandoAprendendoPage}
-          />
+          <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
         </Switch>
       </Suspense>
     );
