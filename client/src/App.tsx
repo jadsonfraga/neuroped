@@ -170,6 +170,7 @@ const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const MedicamentosPage = lazy(() => import("@/pages/medicamentos"));
 const Eusm10Page = lazy(() => import("@/pages/eusm10"));
 const GenericScalePage = lazy(() => import("@/pages/generic-scale"));
+const ResponderEscalasPage = lazy(() => import("@/pages/responder-escalas"));
 const BayleyPage = lazy(() => import("@/pages/bayley"));
 const GriffithsPage = lazy(() => import("@/pages/griffiths"));
 const RcadsPage = lazy(() => import("@/pages/rcads"));
@@ -321,6 +322,18 @@ function AppRouter() {
     return (
       <Suspense fallback={<LoadingSpinner />}>
         <EletroencefalogramaPage />
+      </Suspense>
+    );
+  }
+
+  // Link temporário de escala: experiência própria para pais, sem menu clínico,
+  // PIN ou exposição do shell interno. O token continua validado no backend.
+  if (location.startsWith("/responder-escalas/")) {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Switch>
+          <Route path="/responder-escalas/:token" component={ResponderEscalasPage} />
+        </Switch>
       </Suspense>
     );
   }
@@ -484,6 +497,7 @@ function AppRouter() {
               component={AvaliacaoMultiprofissionalPage}
             />
             <Route path="/generic-scale/:id" component={GenericScalePage} />
+            <Route path="/responder-escalas/:token" component={ResponderEscalasPage} />
             <Route path="/bayley" component={BayleyPage} />
             <Route path="/griffiths" component={GriffithsPage} />
             <Route path="/rcads" component={RcadsPage} />

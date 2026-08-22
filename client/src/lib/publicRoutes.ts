@@ -29,6 +29,7 @@ export const PUBLIC_ROUTES = [
   "/portal-familia", // Portal da Família (home pública)
   "/portal-familia/novidades", // Conteúdo editorial público do portal
   "/portal-familia/acesso", // Orientação pública de acesso ao portal
+  "/responder-escalas", // Shell público para links temporários de escalas
   "/marcos-desenvolvimento", // Marcos do Desenvolvimento
   "/curvas-crescimento", // Curvas de Crescimento (OMS)
   "/caa", // CAA · Vou Falar
@@ -42,6 +43,7 @@ export const PUBLIC_ROUTES = [
 ] as const;
 
 const PUBLIC_ROUTE_SET = new Set<string>(PUBLIC_ROUTES);
+const FAMILY_SCALE_LINK_ROUTE = /^\/responder-escalas\/[A-Za-z0-9_-]{20,256}$/;
 
 /** Home pública para onde mandamos as famílias a partir da tela do PIN. */
 export const PUBLIC_HOME = "/familia";
@@ -55,7 +57,8 @@ export function normalizePath(input: string | null | undefined): string {
 
 /** Rota pública? Somente igualdade após normalização; subrotas não herdam acesso. */
 export function isPublicRoute(input: string | null | undefined): boolean {
-  return PUBLIC_ROUTE_SET.has(normalizePath(input));
+  const normalized = normalizePath(input);
+  return PUBLIC_ROUTE_SET.has(normalized) || FAMILY_SCALE_LINK_ROUTE.test(normalized);
 }
 
 /** Caminho da rota atual a partir do hash (roteamento por hash). */

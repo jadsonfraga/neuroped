@@ -115,6 +115,26 @@ CREATE INDEX IF NOT EXISTS idx_scale_results_patient ON scale_results_demo(patie
 CREATE INDEX IF NOT EXISTS idx_scale_results_scale_id ON scale_results_demo(scale_id);
 
 -- ============================================================
+-- Sessões de links temporários para respostas dos responsáveis
+-- ============================================================
+CREATE TABLE IF NOT EXISTS scale_share_sessions_demo (
+  id TEXT PRIMARY KEY,
+  patient_id TEXT NOT NULL REFERENCES patients_demo(id) ON DELETE CASCADE,
+  created_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  token_hash TEXT UNIQUE NOT NULL,
+  selected_scales TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','submitted','revoked')),
+  expires_at DATETIME NOT NULL,
+  submitted_at DATETIME,
+  respondent_name TEXT,
+  result_ids TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_scale_share_sessions_demo_patient ON scale_share_sessions_demo(patient_id);
+CREATE INDEX IF NOT EXISTS idx_scale_share_sessions_demo_token ON scale_share_sessions_demo(token_hash);
+CREATE INDEX IF NOT EXISTS idx_scale_share_sessions_demo_status ON scale_share_sessions_demo(status);
+
+-- ============================================================
 -- Documentos clínicos (laudos, relatórios, encaminhamentos)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS documents_demo (
