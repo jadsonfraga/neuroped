@@ -23,6 +23,7 @@ test("o PDF recebe o instante de conclusão e não reinterpreta a opção marcad
   const generic = read("client/src/components/GenericScale.tsx");
   const interactive = read("client/src/components/InteractiveScaleRunner.tsx");
   const save = read("client/src/components/SaveToPatient.tsx");
+  const reportHelper = read("client/src/lib/scaleResponseReport.ts");
   assert.match(report, /applicationDate\?: string \| Date/);
   assert.match(
     report,
@@ -44,6 +45,8 @@ test("o PDF recebe o instante de conclusão e não reinterpreta a opção marcad
   );
   assert.match(interactive, /item\.options\[answers\[index\]\]\.label/);
   assert.match(save, /applicationDate/);
+  assert.match(reportHelper, /formatClinicalLongDate/);
+  assert.match(reportHelper, /timeLabel/);
   assert.match(
     save,
     /Data da aplicação: \$\{formatClinicalDateTime\(applicationDate\)/,
