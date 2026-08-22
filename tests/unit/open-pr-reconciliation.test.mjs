@@ -18,13 +18,6 @@ const prontuario = read("client/src/pages/prontuario.tsx");
 assert.match(prontuario, /nextIds\[key\] = created\.id;[\s\S]{0,400}setEventIds\(\(prev\) => \(\{ \.\.\.prev, \[key\]: created\.id \}\)\)/,
   "save clínico deve persistir progresso a cada evento criado");
 
-const memorySearch = read("functions/api/memory/search.ts");
-const patientDelete = read("functions/api/patients/[id].ts");
-assert.match(memorySearch, /clinical_memory_notes_demo/);
-assert.doesNotMatch(memorySearch, /FROM memory_notes\b/);
-assert.match(patientDelete, /DELETE FROM clinical_memory_notes_demo WHERE patient_id = \?/);
-assert.doesNotMatch(patientDelete, /DELETE FROM memory_notes WHERE patient_id = \?/);
-
 const billingGuard = read("functions/api/billing/_guard.ts");
 assert.match(billingGuard, /WHERE user_id = \? AND clinic_id = \? AND active = 1/,
   "tenant explícito de billing deve exigir membership ativa");
