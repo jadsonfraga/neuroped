@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { getAccessLevel, OPEN_ACCESS } from "../../client/src/security/accessPolicy.ts";
+import {
+  getAccessLevel,
+  OPEN_ACCESS,
+} from "../../client/src/security/accessPolicy.ts";
 import {
   decideRouteAccess,
   isReaderClinicalRoute,
@@ -13,16 +16,37 @@ import {
 // e o RouteGuard sempre libera. As asserções de fail-closed abaixo (o modelo
 // seguro por padrão) valem apenas quando OPEN_ACCESS === false.
 if (OPEN_ACCESS) {
-  for (const path of ["/", "/prontuario", "/pacientes", "/documentos", "/mchat", "/filtro", "/receita-c1"]) {
-    assert.equal(getAccessLevel(path), "public", `${path} deve abrir sem senha no modo aberto`);
+  for (const path of [
+    "/",
+    "/prontuario",
+    "/pacientes",
+    "/documentos",
+    "/mchat",
+    "/filtro",
+    "/receita-c1",
+  ]) {
     assert.equal(
-      decideRouteAccess({ path, accessMode: "remote", isAuthenticated: false, isLoading: false }),
+      getAccessLevel(path),
+      "public",
+      `${path} deve abrir sem senha no modo aberto`,
+    );
+    assert.equal(
+      decideRouteAccess({
+        path,
+        accessMode: "remote",
+        isAuthenticated: false,
+        isLoading: false,
+      }),
       "allow",
       `${path} deve liberar no modo aberto`,
     );
   }
   // Referencia os símbolos importados para não disparar no-unused sob o early-exit.
-  void isReaderClinicalRoute; void isRouteSensitive; void READER_CLINICAL_ROUTES; void SENSITIVE_ROUTES; void readFileSync;
+  void isReaderClinicalRoute;
+  void isRouteSensitive;
+  void READER_CLINICAL_ROUTES;
+  void SENSITIVE_ROUTES;
+  void readFileSync;
   console.log("✓ modo ACESSO ABERTO: app inteiro libera sem PIN nem login");
   process.exit(0);
 }
@@ -148,7 +172,11 @@ const registeredRouteSet = new Set(registeredRoutePatterns);
 assert.equal(registeredRouteSet.size, registeredRoutePatterns.length);
 
 const materializeRoute = (route: string) =>
-  route.replace(/:[^/]+/g, "__test_param__");
+  route.replace(/:[^/]+/g, "__test_token_1234567890__");
+assert.equal(
+  getAccessLevel("/responder-escalas/valid-token-1234567890"),
+  "public",
+);
 const clinicalRouteSamples = registeredRoutePatterns
   .map(materializeRoute)
   .filter((path) => getAccessLevel(path) === "clinical");
@@ -213,11 +241,22 @@ assert.equal(isReaderClinicalRoute("/classificacao/exemplo/extra"), false);
 assert.equal(isReaderClinicalRoute("/mchat?origem=menu"), true);
 assert.equal(isReaderClinicalRoute("/mchat/"), true);
 assert.equal(isReaderClinicalRoute("/mchat/interno"), false);
-assert.equal(isReaderClinicalRoute("/rota-clinica-adicionada-no-futuro"), false);
+assert.equal(
+  isReaderClinicalRoute("/rota-clinica-adicionada-no-futuro"),
+  false,
+);
 assert.equal(isRouteSensitive("/pant"), true);
 assert.equal(isRouteSensitive("/pant/relatorio?print=1"), true);
-assert.equal(isRouteSensitive("/pantanal"), false, "prefixo deve respeitar segmento");
-assert.equal(isRouteSensitive("/paciente-feliz"), false, "prefixo deve respeitar segmento");
+assert.equal(
+  isRouteSensitive("/pantanal"),
+  false,
+  "prefixo deve respeitar segmento",
+);
+assert.equal(
+  isRouteSensitive("/paciente-feliz"),
+  false,
+  "prefixo deve respeitar segmento",
+);
 assert.equal(
   decideRouteAccess({
     path: "/mchat",
