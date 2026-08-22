@@ -79,6 +79,11 @@ import {
   loadFilterPreferences,
   saveFilterPreferences,
 } from "@/lib/filterPreferences";
+import {
+  clearFilterSessionState,
+  loadFilterSessionState,
+  saveFilterSessionState,
+} from "@/lib/filterSessionState";
 
 type Slot =
   | "Ouro"
@@ -1124,26 +1129,75 @@ export default function FiltroPage() {
   const flashMode = isFlashRoute();
   const [preferences] = useState(loadFilterPreferences);
   const [navigationPrefill] = useState(readFilterNavigationPrefill);
-  const [search, setSearch] = useState<string>("");
+  const [sessionFilters] = useState(() =>
+    flashMode ? null : loadFilterSessionState(),
+  );
+  const useNavigationPrefill = !flashMode && navigationPrefill.present;
+  const validQueixaIds = new Set(queixas.map((item) => item.id));
+  const sessionAge =
+    sessionFilters?.selectedAge &&
+    faixasEtarias.some((item) => item.id === sessionFilters.selectedAge)
+      ? sessionFilters.selectedAge
+      : null;
+  const sessionQueixas = (sessionFilters?.selectedQueixas ?? []).filter((id) =>
+    validQueixaIds.has(id),
+  );
+  const validSessionSignalIds = new Set(
+    sessionQueixas.flatMap((queixaId) =>
+      getAllSignalsForQueixa(queixaId).map((signal) => signal.id),
+    ),
+  );
+  const sessionSignalIds = (sessionFilters?.selectedSignalIds ?? []).filter(
+    (id) => validSessionSignalIds.has(id),
+  );
+  const [search, setSearch] = useState<string>(
+    flashMode || useNavigationPrefill ? "" : (sessionFilters?.search ?? ""),
+  );
   const [selectedQueixas, setSelectedQueixas] = useState<string[]>(
-    flashMode ? [] : navigationPrefill.queixas,
+    flashMode
+      ? []
+      : useNavigationPrefill
+        ? navigationPrefill.queixas
+        : sessionQueixas,
   );
   const [selectedAge, setSelectedAge] = useState<string | null>(
-    flashMode ? null : navigationPrefill.age,
+    flashMode
+      ? null
+      : useNavigationPrefill
+        ? navigationPrefill.age
+        : sessionAge,
   );
   const [selectedRespondente, setSelectedRespondente] = useState<
     ScaleEntry["respondente"][number] | null
-  >(null);
+  >(
+    flashMode || useNavigationPrefill
+      ? null
+      : (sessionFilters?.selectedRespondente ?? null),
+  );
   const [selectedCommunication, setSelectedCommunication] = useState<
     "verbal" | "nonverbal" | null
-  >(null);
+  >(
+    flashMode || useNavigationPrefill
+      ? null
+      : (sessionFilters?.selectedCommunication ?? null),
+  );
   const [selectedLiteracy, setSelectedLiteracy] = useState<
     "literate" | "preliterate" | null
-  >(null);
+  >(
+    flashMode || useNavigationPrefill
+      ? null
+      : (sessionFilters?.selectedLiteracy ?? null),
+  );
   const [selectedAssessmentType, setSelectedAssessmentType] = useState<
     "diagnostic" | "monitoring" | null
-  >(null);
-  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
+  >(
+    flashMode || useNavigationPrefill
+      ? null
+      : (sessionFilters?.selectedAssessmentType ?? null),
+  );
+  const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(
+    flashMode || useNavigationPrefill ? [] : sessionSignalIds,
+  );
   const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
     flashMode ? "complete" : preferences.availability,
   );
@@ -1210,12 +1264,37 @@ export default function FiltroPage() {
     }
   }, []);
 
-  // Persiste somente a preferência não clínica de disponibilidade. Busca,
-  // idade, queixas e contexto assistencial permanecem apenas em memória.
+  // A disponibilidade segue como preferência não clínica persistente.
   useEffect(() => {
     if (flashMode) return;
     saveFilterPreferences(availabilityMode);
   }, [flashMode, availabilityMode]);
+
+  // O contexto clínico vive SOMENTE na sessão da aba: sobrevive ao abrir uma
+  // escala e voltar ao filtro, mas não é gravado em localStorage permanente.
+  useEffect(() => {
+    if (flashMode) return;
+    saveFilterSessionState({
+      search,
+      selectedAge,
+      selectedQueixas,
+      selectedRespondente,
+      selectedCommunication,
+      selectedLiteracy,
+      selectedAssessmentType,
+      selectedSignalIds,
+    });
+  }, [
+    flashMode,
+    search,
+    selectedAge,
+    selectedQueixas,
+    selectedRespondente,
+    selectedCommunication,
+    selectedLiteracy,
+    selectedAssessmentType,
+    selectedSignalIds,
+  ]);
 
   useEffect(() => {
     let alive = true;
@@ -1639,6 +1718,7 @@ export default function FiltroPage() {
   const clearAll = () => {
     softTap();
     haptic.tap();
+    clearFilterSessionState();
     setSearch("");
     setSelectedAge(null);
     setSelectedQueixas([]);

@@ -50,9 +50,9 @@ const html = buildScaleResponsePrintHtml(report, professional, fixedDate);
 
 for (const expected of [
   "Consegue aguardar a sua vez?",
-  "Resposta: Às vezes",
+  "Resposta: Às vezes (1)",
   "Conclui as tarefas propostas?",
-  "Resposta: Frequentemente",
+  "Resposta: 2 — Frequentemente",
 ]) {
   assert.ok(text.includes(expected), `texto deve conter: ${expected}`);
   assert.ok(
@@ -61,12 +61,18 @@ for (const expected of [
   );
 }
 
-assert.equal(formatScaleResponseAnswer("Nunca (0)"), "Nunca");
-assert.equal(formatScaleResponseAnswer("2 — Sempre"), "Sempre");
+assert.equal(formatScaleResponseAnswer("Nunca (0)"), "Nunca (0)");
+assert.equal(formatScaleResponseAnswer("2 — Sempre"), "2 — Sempre");
 assert.equal(
   formatScaleResponseAnswer("Raramente (0-1x/sem)"),
   "Raramente (0-1x/sem)",
   "frequência que faz parte da resposta deve ser preservada",
+);
+assert.ok(
+  buildScaleResponseText(report, new Date("2026-08-22T01:30:00.000Z")).includes(
+    "21 de agosto de 2026",
+  ),
+  "data da aplicação deve respeitar America/Bahia perto da meia-noite UTC",
 );
 
 const forbiddenOutput =
