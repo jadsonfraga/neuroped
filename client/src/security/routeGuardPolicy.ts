@@ -24,6 +24,7 @@ export const SENSITIVE_ROUTES = [
   "/receita-c1",
   "/receita-c1-express",
   "/diario-escola",
+  "/neuroacompanhamento",
   "/inventarios-escola",
   "/generic-scale",
   "/cognitive-lab",
