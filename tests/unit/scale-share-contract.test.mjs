@@ -42,4 +42,9 @@ test("rota tokenizada é pública somente com token em formato seguro", () => {
   assert.match(source, /A-Za-z0-9_-/);
   assert.match(source, /20,256/);
   assert.match(source, /FAMILY_SCALE_LINK_ROUTE\.test\(normalized\)/);
+  assert.doesNotMatch(
+    source,
+    /\n\s*"\/responder-escalas",/,
+    "a raiz sem token deve permanecer fechada",
+  );
 });
