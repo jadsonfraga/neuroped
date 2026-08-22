@@ -11,6 +11,16 @@ interface LiveEntitlementRow {
   trial_ends_at: string | null;
   customer_status: string | null;
   grace_ends_at: string | null;
+  clinic_status: "active" | "suspended" | "closed";
+}
+
+export function clinicStatusDenial(
+  clinicStatus: LiveEntitlementRow["clinic_status"] | null | undefined,
+  scope: BillingScope,
+): "TENANT_EXPORT_ONLY" | "TENANT_CLOSED" | null {
+  if (!clinicStatus || clinicStatus === "active") return null;
+  if (clinicStatus === "closed") return "TENANT_CLOSED";
+  return scope === "export" ? null : "TENANT_EXPORT_ONLY";
 }
 
 async function loadLiveEntitlement(
@@ -31,8 +41,10 @@ async function loadLiveEntitlement(
             cm.active AS is_active,
             bc.trial_ends_at,
             bc.status AS customer_status,
-            bc.grace_ends_at
+            bc.grace_ends_at,
+            c.status AS clinic_status
        FROM clinic_memberships cm
+       JOIN clinics c ON c.id = cm.clinic_id
        LEFT JOIN billing_customers bc ON bc.clinic_id = cm.clinic_id
        LEFT JOIN billing_subscriptions bs
          ON bs.customer_id = bc.id
@@ -52,6 +64,21 @@ export async function requireBillingEntitlement(
   scope: BillingScope,
 ): Promise<Response | null> {
   const row = await loadLiveEntitlement(db, userId, clinicId);
+  const tenantDenial = clinicStatusDenial(row?.clinic_status, scope);
+  if (tenantDenial) {
+    const closed = tenantDenial === "TENANT_CLOSED";
+    return new Response(JSON.stringify({
+      error: closed
+        ? "A clínica está encerrada."
+        : "A clínica está em modo de encerramento; somente exportação permanece disponível.",
+      code: tenantDenial,
+      accessMode: closed ? "blocked" : "export_only",
+    }), {
+      status: closed ? 410 : 423,
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    });
+  }
+
   const decision = evaluateEntitlement(row, scope);
   if (decision.deniedReason === null) return null;
   if (decision.deniedReason === "ENTITLEMENT_PAST_DUE" && !decision.isSuspended) return null;
@@ -82,7 +109,16 @@ export async function resolveBillingClinicId(
     ?? request.headers.get("x-clinic-id")
     ?? ""
   ).trim().slice(0, 80);
-  if (explicit) return explicit;
+
+  if (explicit) {
+    const membership = await db.prepare(
+      `SELECT clinic_id
+         FROM clinic_memberships
+        WHERE user_id = ? AND clinic_id = ? AND active = 1
+        LIMIT 1`,
+    ).bind(userId, explicit).first<{ clinic_id: string }>();
+    return membership?.clinic_id ?? null;
+  }
 
   const rows = await db.prepare(
     `SELECT clinic_id

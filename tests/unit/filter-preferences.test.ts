@@ -9,8 +9,16 @@ import {
   saveFilterPreferences,
   type FilterPreferenceStorage,
 } from "../../client/src/lib/filterPreferences";
+import {
+  FILTER_SESSION_STATE_KEY,
+  clearFilterSessionState,
+  loadFilterSessionState,
+  parseFilterSessionState,
+  saveFilterSessionState,
+  type FilterSessionStorage,
+} from "../../client/src/lib/filterSessionState";
 
-class MemoryStorage implements FilterPreferenceStorage {
+class MemoryStorage implements FilterPreferenceStorage, FilterSessionStorage {
   readonly values = new Map<string, string>();
 
   getItem(key: string): string | null {
@@ -67,12 +75,54 @@ assert.deepEqual(JSON.parse(storage.getItem(FILTER_PREFERENCES_KEY) ?? "{}"), {
   availability: "complete",
 });
 
+const sessionStorage = new MemoryStorage();
+const sessionState = {
+  search: "TDAH 7 anos",
+  selectedAge: "6-12a",
+  selectedQueixas: ["tdah", "sono"],
+  selectedRespondente: "pais" as const,
+  selectedCommunication: "verbal" as const,
+  selectedLiteracy: "literate" as const,
+  selectedAssessmentType: "diagnostic" as const,
+  selectedSignalIds: ["desatencao", "impulsividade"],
+};
+saveFilterSessionState(sessionState, sessionStorage);
+assert.deepEqual(loadFilterSessionState(sessionStorage), sessionState);
+assert.ok(sessionStorage.getItem(FILTER_SESSION_STATE_KEY));
+clearFilterSessionState(sessionStorage);
+assert.equal(sessionStorage.getItem(FILTER_SESSION_STATE_KEY), null);
+
+assert.deepEqual(
+  parseFilterSessionState(
+    JSON.stringify({
+      search: "x".repeat(400),
+      selectedAge: "6-12a",
+      selectedQueixas: ["tdah", "tdah", 123, "sono"],
+      selectedRespondente: "invalido",
+      selectedCommunication: "verbal",
+      selectedLiteracy: "invalido",
+      selectedAssessmentType: "monitoring",
+      selectedSignalIds: ["s1", "s1", null, "s2"],
+    }),
+  ),
+  {
+    search: "x".repeat(300),
+    selectedAge: "6-12a",
+    selectedQueixas: ["tdah", "sono"],
+    selectedRespondente: null,
+    selectedCommunication: "verbal",
+    selectedLiteracy: null,
+    selectedAssessmentType: "monitoring",
+    selectedSignalIds: ["s1", "s2"],
+  },
+);
+
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
-const filtro = readFileSync(
-  resolve(root, "client/src/pages/filtro.tsx"),
-  "utf8",
-);
+const filtro = [
+  readFileSync(resolve(root, "client/src/pages/filtro.tsx"), "utf8"),
+  readFileSync(resolve(root, "client/src/pages/filtro-engine.tsx"), "utf8"),
+].join("\n");
 const fluxograma = readFileSync(
   resolve(root, "client/src/pages/fluxograma.tsx"),
   "utf8",
@@ -80,6 +130,9 @@ const fluxograma = readFileSync(
 const main = readFileSync(resolve(root, "client/src/main.tsx"), "utf8");
 
 assert.match(filtro, /saveFilterPreferences\(availabilityMode\)/);
+assert.match(filtro, /loadFilterSessionState/);
+assert.match(filtro, /saveFilterSessionState\(\{/);
+assert.match(filtro, /clearFilterSessionState\(\)/);
 assert.doesNotMatch(filtro, /localStorage\.setItem\(FILTER_STATE_KEY/);
 assert.doesNotMatch(fluxograma, /localStorage\.(?:getItem|setItem)/);
 assert.equal(
@@ -95,5 +148,5 @@ assert.doesNotMatch(
 );
 
 console.log(
-  "✓ filtro: somente disponibilidade não clínica persiste; contexto clínico é descartado",
+  "✓ filtro: disponibilidade persiste localmente; filtros clínicos sobrevivem apenas na sessão da aba",
 );

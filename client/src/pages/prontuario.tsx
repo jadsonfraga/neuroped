@@ -20,6 +20,8 @@ import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -582,6 +584,10 @@ function defaultAnamnese(): Anamnese {
 
 export default function ProntuarioPage() {
   const { toast } = useToast();
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
+  const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const patientId = patientIdFromQuery();
 
   const [identificacao, setId] = useState<Identificacao>(defaultId);
@@ -596,15 +602,26 @@ export default function ProntuarioPage() {
   const [eventIds, setEventIds] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || (isRemoteClinical && !liveContextReady)) return;
     let cancelled = false;
     setRecordLoading(true);
+    const patientUrl = isRemoteClinical
+      ? `/api/live/patients/${encodeURIComponent(patientId)}?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+      : `/api/patients/${encodeURIComponent(patientId)}`;
+    const eventsUrl = isRemoteClinical
+      ? `/api/live/events?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
+      : `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`;
     Promise.all([
-      apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`).then((response) => response.json()),
-      apiRequest("GET", `/api/clinical-core/events?patient_id=${encodeURIComponent(patientId)}&days=3650`).then((response) => response.json()),
-    ]).then(([patient, eventPayload]) => {
+      apiRequest("GET", patientUrl).then((response) => response.json()),
+      apiRequest("GET", eventsUrl).then((response) => response.json()),
+    ]).then(([patientPayload, eventPayload]) => {
       if (cancelled) return;
-      const events = Array.isArray(eventPayload?.data) ? eventPayload.data as StoredClinicalEvent[] : [];
+      const patient = isRemoteClinical ? { ...(patientPayload?.profile ?? {}), ...patientPayload } : patientPayload;
+      const events = Array.isArray(eventPayload?.data)
+        ? (eventPayload.data as any[]).map((event) => isRemoteClinical
+          ? ({ ...event, data: event.payload ?? {}, note: event.encounterId ?? "" } as StoredClinicalEvent)
+          : event as StoredClinicalEvent)
+        : [];
       const activeEvents = events.filter((event) => event.status === "active");
       const nextIds: Record<string, string> = {};
       const nextAnamnese = defaultAnamnese();
@@ -612,39 +629,53 @@ export default function ProntuarioPage() {
       const nextMedications: Medicacao[] = [];
       const nextTerapias: Terapia[] = [];
       const nextExames: Exame[] = [];
-      let nextId = { ...defaultId(), nomeCompleto: patient.name ?? "", dataNascimento: patient.birthDate ?? "", cid: patient.cid ?? "" };
+      let nextId = {
+        ...defaultId(),
+        nomeCompleto: patient.name ?? "",
+        dataNascimento: patient.birthDate ?? "",
+        cid: patient.cid ?? patient.diagnosisCode ?? "",
+      };
 
       for (const event of activeEvents) {
-        const meta = parseClinicalNote(event.note);
+        const meta = isRemoteClinical
+          ? { key: event.note ?? "" }
+          : parseClinicalNote(event.note);
         const eventKey = typeof meta.key === "string" ? meta.key : "";
         if (eventKey) nextIds[eventKey] = event.id;
         const data = event.data ?? {};
         if (event.eventType === "encounter") {
-          const savedIdentification = meta.identificacao;
+          let savedIdentification = meta.identificacao;
+          if (isRemoteClinical && typeof data.subjective === "string") {
+            const stored = parseClinicalNote(data.subjective);
+            savedIdentification = stored.identificacao;
+          }
           if (savedIdentification && typeof savedIdentification === "object" && !Array.isArray(savedIdentification)) {
             nextId = { ...nextId, ...(savedIdentification as Partial<Identificacao>) };
           }
           if (event.occurredAt) nextId.dataConsulta = event.occurredAt.slice(0, 10);
         }
-        if (event.eventType === "observation" && meta.section === "anamnese" && typeof meta.field === "string") {
-          if (meta.field in nextAnamnese) nextAnamnese[meta.field as keyof Anamnese] = String(meta.value ?? data.valueText ?? "");
+        if (event.eventType === "observation" && eventKey.startsWith("anamnese:")) {
+          const field = eventKey.slice("anamnese:".length);
+          if (field in nextAnamnese) nextAnamnese[field as keyof Anamnese] = String(data.valueText ?? "");
         }
-        if (event.eventType === "observation" && meta.section === "marcos" && typeof meta.field === "string") {
-          if (meta.field in nextMarcos) nextMarcos[meta.field as keyof Marcos] = String(meta.value ?? data.valueText ?? "");
+        if (event.eventType === "observation" && eventKey.startsWith("marcos:")) {
+          const field = eventKey.slice("marcos:".length);
+          if (field in nextMarcos) nextMarcos[field as keyof Marcos] = String(data.valueText ?? "");
         }
-        if (event.eventType === "medication" && meta.section === "medicacao") {
-          const item = meta.item;
-          if (item && typeof item === "object" && !Array.isArray(item)) {
-            nextMedications.push(item as Medicacao);
-          }
+        if (event.eventType === "medication" && eventKey.startsWith("medicacao:")) {
+          const stored = isRemoteClinical ? parseClinicalNote(String(data.reason ?? "")) : parseClinicalNote(event.note);
+          const item = stored.item;
+          if (item && typeof item === "object" && !Array.isArray(item) && !stored.removed) nextMedications.push(item as Medicacao);
         }
-        if (event.eventType === "plan" && meta.section === "terapia") {
-          const item = meta.item;
-          if (item && typeof item === "object" && !Array.isArray(item)) nextTerapias.push(item as Terapia);
+        if (event.eventType === "plan" && eventKey.startsWith("terapia:")) {
+          const stored = isRemoteClinical ? parseClinicalNote(String(data.successCriterion ?? "")) : parseClinicalNote(event.note);
+          const item = stored.item;
+          if (item && typeof item === "object" && !Array.isArray(item) && !stored.removed) nextTerapias.push(item as Terapia);
         }
-        if (event.eventType === "plan" && meta.section === "exame") {
-          const item = meta.item;
-          if (item && typeof item === "object" && !Array.isArray(item)) nextExames.push(item as Exame);
+        if (event.eventType === "plan" && eventKey.startsWith("exame:")) {
+          const stored = isRemoteClinical ? parseClinicalNote(String(data.successCriterion ?? "")) : parseClinicalNote(event.note);
+          const item = stored.item;
+          if (item && typeof item === "object" && !Array.isArray(item) && !stored.removed) nextExames.push(item as Exame);
         }
       }
 
@@ -662,7 +693,7 @@ export default function ProntuarioPage() {
       toast({ title: "Não foi possível carregar o prontuário persistente.", description: String(error), variant: "destructive" });
     });
     return () => { cancelled = true; };
-  }, [patientId, toast]);
+  }, [activeClinicId, isRemoteClinical, liveContextReady, patientId, toast]);
 
   // ── updaters ──
   const updId = useCallback((field: keyof Identificacao, val: string) =>
@@ -707,6 +738,10 @@ export default function ProntuarioPage() {
   };
 
   const handleSave = async () => {
+    if (isRemoteClinical && !activeClinicId) {
+      toast({ title: "Selecione uma clínica ativa", description: "O prontuário LIVE não pode ser salvo sem um tenant explícito.", variant: "destructive" });
+      return;
+    }
     if (!patientId) {
       toast({ title: "Selecione um paciente", description: "Abra o prontuário a partir de um cadastro em Pacientes para habilitar a persistência.", variant: "destructive" });
       return;
@@ -718,25 +753,58 @@ export default function ProntuarioPage() {
 
     setRecordSaving(true);
     try {
-      await apiRequest("PATCH", `/api/patients/${encodeURIComponent(patientId)}`, {
-        name: identificacao.nomeCompleto.trim(),
-        birthDate: identificacao.dataNascimento || null,
-        cid: identificacao.cid.trim() || null,
-      });
+      await apiRequest(
+        "PATCH",
+        isRemoteClinical ? `/api/live/patients/${encodeURIComponent(patientId)}` : `/api/patients/${encodeURIComponent(patientId)}`,
+        isRemoteClinical
+          ? {
+              clinicId: activeClinicId,
+              name: identificacao.nomeCompleto.trim(),
+              birthDate: identificacao.dataNascimento || null,
+              diagnosisCode: identificacao.cid.trim() || null,
+            }
+          : {
+              name: identificacao.nomeCompleto.trim(),
+              birthDate: identificacao.dataNascimento || null,
+              cid: identificacao.cid.trim() || null,
+            },
+      );
 
       const occurredAt = new Date(`${identificacao.dataConsulta || today}T12:00:00`).toISOString();
       const nextIds = { ...eventIds };
       const postEvent = async (key: string, payload: Record<string, unknown>) => {
         const previousId = nextIds[key];
-        const response = await apiRequest("POST", "/api/clinical-core/events", {
-          patientId,
-          occurredAt,
-          ...(previousId ? { supersedesEventId: previousId } : {}),
-          provenance: { kind: "documented", source: "clinician", sourceLabel: "Prontuário NeuroPed" },
-          ...payload,
-        });
+        const requestBody = isRemoteClinical
+          ? {
+              clinicId: activeClinicId,
+              patientId,
+              eventType: payload.eventType,
+              occurredAt,
+              encounterId: key,
+              ...(previousId ? { supersedesEventId: previousId } : {}),
+              provenanceKind: "documented",
+              provenanceSource: "clinician",
+              payload: payload.data,
+            }
+          : {
+              patientId,
+              occurredAt,
+              encounterId: key,
+              ...(previousId ? { supersedesEventId: previousId } : {}),
+              provenance: { kind: "documented", source: "clinician", sourceLabel: "Prontuário NeuroPed" },
+              ...payload,
+            };
+        const response = await apiRequest(
+          "POST",
+          isRemoteClinical ? "/api/live/events" : "/api/clinical-core/events",
+          requestBody,
+        );
         const created = await response.json() as StoredClinicalEvent;
         nextIds[key] = created.id;
+        // Comita o progresso no estado a cada evento salvo (não só ao final):
+        // se uma falha no meio do loop interromper o save, um retry precisa
+        // ver os ids já criados para superseder em vez de duplicar eventos.
+        setEventIds((prev) => ({ ...prev, [key]: created.id }));
       };
 
       await postEvent("encounter", {
@@ -745,6 +813,7 @@ export default function ProntuarioPage() {
           encounterType: "followup",
           reason: anamnese.queixaPrincipal.trim() || identificacao.hipoteseDiagnostica.trim() || "Consulta neuropediátrica",
           setting: "clinic",
+          subjective: JSON.stringify({ identificacao }),
         },
         note: JSON.stringify({ key: "encounter", identificacao }),
       });
@@ -782,6 +851,7 @@ export default function ProntuarioPage() {
             ...(Number.isFinite(doseMg) ? { doseMg } : {}),
             frequency: item.posologia.trim() || undefined,
             indication: item.objetivo.trim() || undefined,
+            reason: JSON.stringify({ item }),
             effectiveFrom: item.dataInicio ? new Date(`${item.dataInicio}T12:00:00`).toISOString() : undefined,
           },
           note: JSON.stringify({ key, section: "medicacao", item }),
@@ -790,7 +860,7 @@ export default function ProntuarioPage() {
       for (const key of Object.keys(nextIds).filter((item) => item.startsWith("medicacao:") && !activeMedicationKeys.has(item))) {
         await postEvent(key, {
           eventType: "medication",
-          data: { action: "stop", genericName: "Medicação registrada anteriormente", reason: "Removida no prontuário atual" },
+          data: { action: "stop", genericName: "Medicação registrada anteriormente", reason: JSON.stringify({ removed: true }) },
           note: JSON.stringify({ key, section: "medicacao", removed: true }),
         });
       }
@@ -802,14 +872,14 @@ export default function ProntuarioPage() {
         activeTherapyKeys.add(key);
         await postEvent(key, {
           eventType: "plan",
-          data: { kind: "therapy", target: item.tipo.trim(), status: "planned", priority: "routine", responsibleRole: item.profissional.trim() || undefined },
+          data: { kind: "therapy", target: item.tipo.trim(), status: "planned", priority: "routine", responsibleRole: item.profissional.trim() || undefined, successCriterion: JSON.stringify({ item }) },
           note: JSON.stringify({ key, section: "terapia", item }),
         });
       }
       for (const key of Object.keys(nextIds).filter((item) => item.startsWith("terapia:") && !activeTherapyKeys.has(item))) {
         await postEvent(key, {
           eventType: "plan",
-          data: { kind: "therapy", target: "Plano terapêutico registrado anteriormente", status: "cancelled", priority: "routine" },
+          data: { kind: "therapy", target: "Plano terapêutico registrado anteriormente", status: "cancelled", priority: "routine", successCriterion: JSON.stringify({ removed: true }) },
           note: JSON.stringify({ key, section: "terapia", removed: true }),
         });
       }
@@ -821,14 +891,14 @@ export default function ProntuarioPage() {
         activeExamKeys.add(key);
         await postEvent(key, {
           eventType: "plan",
-          data: { kind: "exam", target: item.tipo.trim(), status: item.status === "Concluído" ? "completed" : "planned", priority: "routine" },
+          data: { kind: "exam", target: item.tipo.trim(), status: item.status === "Concluído" ? "completed" : "planned", priority: "routine", successCriterion: JSON.stringify({ item }) },
           note: JSON.stringify({ key, section: "exame", item }),
         });
       }
       for (const key of Object.keys(nextIds).filter((item) => item.startsWith("exame:") && !activeExamKeys.has(item))) {
         await postEvent(key, {
           eventType: "plan",
-          data: { kind: "exam", target: "Exame registrado anteriormente", status: "cancelled", priority: "routine" },
+          data: { kind: "exam", target: "Exame registrado anteriormente", status: "cancelled", priority: "routine", successCriterion: JSON.stringify({ removed: true }) },
           note: JSON.stringify({ key, section: "exame", removed: true }),
         });
       }
@@ -898,13 +968,14 @@ export default function ProntuarioPage() {
               >
                 Prontuário Clínico
               </h1>
-              <p className="truncate text-[11px] italic text-muted-foreground sm:text-xs">Neuropediatria — sessão local</p>
+              <p className="truncate text-[11px] italic text-muted-foreground sm:text-xs">Neuropediatria — {isRemoteClinical ? "sessão LIVE" : "sessão DEMO/local"}
+</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant="outline" className="hidden border-violet-300 text-xs text-violet-700 dark:text-violet-300 sm:flex">
               <Clock className="mr-1 h-3 w-3" />
-              Sessão temporária
+              {isRemoteClinical ? "Sessão LIVE auditada" : "Sessão DEMO/local"}
             </Badge>
             <Button
               size="sm"
@@ -1767,7 +1838,7 @@ export default function ProntuarioPage() {
               </div>
 
               <p className="text-[10px] text-muted-foreground text-center mt-3">
-                O botão Salvar grava o cadastro e os eventos clínicos no backend persistente com trilha de auditoria. Imprimir ou copiar gera apenas uma saída documental.
+                {isRemoteClinical ? "O botão Salvar grava no domínio LIVE da clínica ativa, com payload cifrado, supersession e trilha de auditoria. Imprimir ou copiar gera apenas uma saída documental." : "O botão Salvar grava no backend persistente DEMO/local. Imprimir ou copiar gera apenas uma saída documental."}
               </p>
             </CardContent>
           </Card>

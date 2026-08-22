@@ -22,6 +22,7 @@ const vercelDeploy = read(".github/workflows/deploy-vercel.yml");
 const verify = read(".github/workflows/verify.yml");
 const prCheck = read(".github/workflows/pr-check.yml");
 const vercelConfig = read("vercel.json");
+const cloudflareHeaders = read("client/public/_headers");
 
 assert.match(boaConsultaPr, /on:\s*\n\s*pull_request:/);
 assert.doesNotMatch(
@@ -284,13 +285,18 @@ assert.match(
 assert.doesNotMatch(vercelDeploy, /vercel@latest/);
 assert.match(
   vercelConfig,
-  /connect-src 'self' https:\/\/neuroped\.pages\.dev https:\/\/raw\.githubusercontent\.com/,
+  /connect-src 'self' https:\/\/neuroped\.pages\.dev/,
   "o mirror Vercel deve autorizar somente os destinos de rede necessários",
 );
 assert.doesNotMatch(
   vercelConfig,
   /connect-src 'self' https:;/,
   "o mirror Vercel não pode liberar conexões para qualquer origem HTTPS",
+);
+assert.doesNotMatch(
+  cloudflareHeaders,
+  /raw\.githubusercontent\.com/,
+  "o header canônico não pode autorizar o host Raw sem uso em produção",
 );
 
 assert.match(cloudflareDeploy, /A project with this name already exists\./);

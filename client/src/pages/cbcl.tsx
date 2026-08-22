@@ -1,6 +1,6 @@
 import { GenericScale } from "@/components/GenericScale";
 import { ListChecks } from "lucide-react";
-import { cbclDomains, cbclLabels, classifyCbcl } from "@/data/expandedScales";
+import { cbclDomains, cbclLabels, classifyCbcl } from "@/data/cbcl";
 
 export default function CbclPage() {
   return (

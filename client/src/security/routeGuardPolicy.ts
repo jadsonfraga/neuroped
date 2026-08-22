@@ -24,6 +24,7 @@ export const SENSITIVE_ROUTES = [
   "/receita-c1",
   "/receita-c1-express",
   "/diario-escola",
+  "/neuroacompanhamento",
   "/inventarios-escola",
   "/generic-scale",
   "/cognitive-lab",
@@ -108,8 +109,6 @@ export const READER_CLINICAL_ROUTES = [
   "/classificacao/:id",
   "/ballard",
   "/biblioteca-instrumentos",
-  // Rota de saída para o site público de vídeo-EEG; não expõe dados clínicos.
-  "/eletroencefalograma",
   "/espasticidade",
   "/classificacoes",
   "/fluxogramas",

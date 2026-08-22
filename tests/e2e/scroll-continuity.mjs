@@ -249,7 +249,7 @@ function assertUnlocked(lock, label) {
   );
 }
 
-async function openFilter(width) {
+async function openFilter(width, selectQuickStart = true) {
   const context = await browser.newContext({
     viewport: { width, height: VIEWPORT_HEIGHT },
     hasTouch: true,
@@ -269,10 +269,18 @@ async function openFilter(width) {
   await page
     .locator("#main-content")
     .waitFor({ state: "visible", timeout: 15000 });
-  await page
-    .locator(".filter-260-card")
-    .first()
-    .waitFor({ state: "visible", timeout: 15000 });
+  const filterOpenButton = page.getByTestId("button-open-filter");
+  await filterOpenButton.waitFor({ state: "visible", timeout: 15000 });
+  await filterOpenButton.click();
+  if (selectQuickStart) {
+    await page
+      .getByRole("button", { name: "TDAH · 6–12 anos", exact: true })
+      .click();
+    await page
+      .locator(".filter-260-card")
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 });
+  }
   await page.evaluate(() => {
     const main = document.querySelector("#main-content");
     if (!(main instanceof HTMLElement))
@@ -403,7 +411,7 @@ async function proveNativeScroll(width) {
 }
 
 async function proveSafeResultsReachability(width) {
-  const { context, page } = await openFilter(width);
+  const { context, page } = await openFilter(width, false);
   const session = await context.newCDPSession(page);
   try {
     const quickStart = page.getByRole("button", { name: /TEA.*2.*4 anos/i });

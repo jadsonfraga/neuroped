@@ -64,7 +64,15 @@ function calcResult(weight: number, med: MedDose) {
   if (med.fixedDose) return null;
   const dailyDose = weight * med.dosePerKg;
   const cappedDailyDose = Math.min(dailyDose, med.maxDose);
-  const timesPerDay = med.frequency.includes("8/8h") ? 3 : med.frequency.includes("12/12h") ? 2 : 1;
+  const idx8 = med.frequency.indexOf("8/8h");
+  const idx12 = med.frequency.indexOf("12/12h");
+  const timesPerDay = idx8 !== -1 && idx12 !== -1
+    ? (idx8 < idx12 ? 3 : 2)
+    : idx8 !== -1
+      ? 3
+      : idx12 !== -1
+        ? 2
+        : 1;
   const dosePerIntake = cappedDailyDose / timesPerDay;
   const volumePerIntake = med.liquidConc ? dosePerIntake / med.liquidConc : null;
   const exceedsMax = dailyDose > med.maxDose;

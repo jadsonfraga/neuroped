@@ -332,6 +332,23 @@
   }
 }
 
+/*
+ * Escalas longas: mantém todos os campos no DOM e na árvore de acessibilidade,
+ * mas permite que o navegador adie pintura/layout de cartões fora da viewport.
+ * O tamanho intrínseco evita saltos quando o paciente rola; impressão reativa
+ * todos os itens para preservar PDFs e cópias clínicas.
+ */
+.np-scale-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+@media print {
+  .np-scale-item {
+    content-visibility: visible;
+    contain-intrinsic-size: none;
+  }
+}
+
 @layer components {
   .np-home-hero {
     background:

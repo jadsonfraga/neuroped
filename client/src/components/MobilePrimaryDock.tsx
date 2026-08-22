@@ -36,6 +36,7 @@ const hiddenRoutePrefixes = [
   "/consentimento-lgpd",
   "/familia",
   "/agendar",
+  "/marcacao",
   "/pre-consulta",
   "/pre-retorno",
   "/efeitos-colaterais",
@@ -165,7 +166,6 @@ export function MobilePrimaryDock() {
                   softTap();
                   haptic.select();
                 }}
-                aria-label="Abrir site Nesplora"
                 data-testid="mobile-dock-nesplora"
               >
                 <span aria-hidden="true" className="absolute inset-1 rounded-[1rem] border border-amber-50/65 motion-safe:animate-pulse motion-reduce:animate-none" />

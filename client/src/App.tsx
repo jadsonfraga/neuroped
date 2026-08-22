@@ -1,14 +1,12 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { MotionConfig } from "framer-motion";
 import { Switch, Route, Router, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Layout } from "@/components/Layout";
-import { PageTransition } from "@/components/PageTransition";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ClinicProvider } from "@/contexts/ClinicContext";
 import {
   AvisoLegalGate,
   hasAcceptedLegalNotice,
@@ -20,8 +18,24 @@ import { PrivateGate } from "@/components/PrivateGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
+import { MobilePrimaryDock } from "@/components/MobilePrimaryDock";
 
 import NotFound from "@/pages/not-found";
+// O shell reúne ícones, menu longo e animações. Carregá-lo junto à rota ativa
+// preserva o primeiro frame e mantém o catálogo clínico fora do entrypoint.
+const Layout = lazy(() =>
+  import("@/components/Layout").then(({ Layout: Component }) => ({ default: Component })),
+);
+const PageTransition = lazy(() =>
+  import("@/components/PageTransition").then(({ PageTransition: Component }) => ({
+    default: Component,
+  })),
+);
+const MotionPreferences = lazy(() =>
+  import("@/components/MotionPreferences").then(({ MotionPreferences: Component }) => ({
+    default: Component,
+  })),
+);
 // Fluxos de exceção (login/sessão/LGPD) saem da carga inicial: raramente são a
 // primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
 const LoginPage = lazy(() => import("@/pages/login"));
@@ -35,6 +49,7 @@ const PreferencesPanel = lazy(() =>
 
 const HomePage = lazy(() => import("@/pages/home"));
 const BrincandoAprendendoPage = lazy(() => import("@/pages/brincando-e-aprendendo"));
+const MissaoSaudePage = lazy(() => import("@/pages/missao-saude"));
 const SplashScreen = lazy(() =>
   import("@/components/SplashScreen").then(({ SplashScreen }) => ({
     default: SplashScreen,
@@ -64,6 +79,7 @@ const GmfcsPage = lazy(() => import("@/pages/gmfcs"));
 const CshqPage = lazy(() => import("@/pages/cshq"));
 const YgtssPage = lazy(() => import("@/pages/ygtss"));
 const EpilepsyDiaryPage = lazy(() => import("@/pages/epilepsy-diary"));
+const NeuropedAcompanhamentoPage = lazy(() => import("@/pages/neuroped-acompanhamento"));
 const HeadacheCalendarPage = lazy(() => import("@/pages/headache-calendar"));
 const TeaPage = lazy(() => import("@/pages/tea"));
 const TeaBehaviorsPage = lazy(() => import("@/pages/tea-behaviors"));
@@ -192,6 +208,7 @@ const AgendaPage = lazy(() => import("@/pages/agenda"));
 const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
+const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
@@ -242,12 +259,6 @@ const CommandPalette = lazy(() =>
   })),
 );
 
-const MobilePrimaryDock = lazy(() =>
-  import("@/components/MobilePrimaryDock").then(({ MobilePrimaryDock: Component }) => ({
-    default: Component,
-  })),
-);
-
 function LoadingSpinner() {
   return (
     <div className="py-2">
@@ -282,11 +293,45 @@ function AppRouter() {
     );
   }
 
-  return (
-    <Layout>
+  // A Missão Saúde é uma experiência educativa pública, com landmarks próprios,
+  // estado somente em memória e sem acesso à navegação clínica do Neuroped.
+  if (location === "/missao-saude") {
+    return (
       <Suspense fallback={<LoadingSpinner />}>
-        <RouteGuard>
-          <PageTransition>
+        <Switch>
+          <Route path="/missao-saude" component={MissaoSaudePage} />
+        </Switch>
+      </Suspense>
+    );
+  }
+
+  // A marcação pública é uma porta administrativa independente do shell clínico.
+  // A página já possui seu próprio landmark <main>; mantê-la fora do Layout evita
+  // duplicidade de landmarks e não expõe navegação ou dados clínicos.
+  if (location === "/marcacao") {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <MarcacaoPage />
+      </Suspense>
+    );
+  }
+
+  // O Vídeo-EEG é um handoff institucional para famílias, sem dados clínicos
+  // nem redirecionamento externo. Ele não deve herdar o layout ou o gate médico.
+  if (location === "/eletroencefalograma") {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <EletroencefalogramaPage />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Layout>
+        <Suspense fallback={<LoadingSpinner />}>
+          <RouteGuard>
+            <PageTransition>
           <Switch>
             <Route path="/login" component={LoginPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
@@ -317,6 +362,7 @@ function AppRouter() {
             <Route path="/cshq" component={CshqPage} />
             <Route path="/ygtss" component={YgtssPage} />
             <Route path="/epilepsia" component={EpilepsyDiaryPage} />
+            <Route path="/neuroacompanhamento" component={NeuropedAcompanhamentoPage} />
             <Route path="/cefaleia" component={HeadacheCalendarPage} />
             <Route path="/tea" component={TeaPage} />
             <Route path="/tea-comportamentos" component={TeaBehaviorsPage} />
@@ -545,6 +591,7 @@ function AppRouter() {
               </RouteGuard>
             </Route>
             <Route path="/agendar" component={AgendarPage} />
+            <Route path="/marcacao" component={MarcacaoPage} />
 
             <Route path="/familia" component={FamiliaPage} />
             <Route path="/portal-familia" component={PortalFamiliaPage} />
@@ -565,10 +612,11 @@ function AppRouter() {
             <Route path="/paciente/:id" component={PacienteDetalhePage} />
             <Route component={NotFound} />
           </Switch>
-          </PageTransition>
-        </RouteGuard>
-      </Suspense>
-    </Layout>
+            </PageTransition>
+          </RouteGuard>
+        </Suspense>
+      </Layout>
+    </Suspense>
   );
 }
 
@@ -642,9 +690,11 @@ function App() {
 
   return (
     <AppErrorBoundary>
-      <MotionConfig reducedMotion="user">
-        <QueryClientProvider client={queryClient}>
+      <Suspense fallback={<LoadingSpinner />}>
+        <MotionPreferences>
+          <QueryClientProvider client={queryClient}>
           <AuthProvider>
+            <ClinicProvider>
             <TooltipProvider>
               <ToastProvider>
                 <Suspense fallback={null}>
@@ -692,14 +742,14 @@ function App() {
                   </>
                 )}
                 <ServiceWorkerManager />
-                <Suspense fallback={null}>
-                  <MobilePrimaryDock />
-                </Suspense>
+                <MobilePrimaryDock />
               </ToastProvider>
             </TooltipProvider>
+            </ClinicProvider>
           </AuthProvider>
-        </QueryClientProvider>
-      </MotionConfig>
+          </QueryClientProvider>
+        </MotionPreferences>
+      </Suspense>
     </AppErrorBoundary>
   );
 }

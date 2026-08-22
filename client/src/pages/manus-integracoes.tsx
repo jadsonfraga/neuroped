@@ -14,8 +14,8 @@ type ManusSite = {
 };
 
 const manusUrls = {
-  secretaria: import.meta.env.VITE_MANUS_SECRETARIA_URL || "https://secretariaia-7jubr6nq.manus.space",
-  missao: import.meta.env.VITE_MANUS_MISSAO_URL || "https://drjadsongame-ko8qudqs.manus.space",
+  secretaria: "/#/marcacao",
+  missao: "/#/missao-saude",
   institucional: import.meta.env.VITE_MANUS_INSTITUCIONAL_URL || "https://drjadsonmd-iqeiteek.manus.space",
 };
 
@@ -25,8 +25,8 @@ const sites: ManusSite[] = [
     label: "Secretaria IA",
     shortLabel: "Secretaria",
     url: manusUrls.secretaria,
-    description: "Triagem administrativa, informações de serviços e encaminhamento para a equipe.",
-    note: "A área de equipe pode solicitar login Google. O acesso é feito dentro do próprio site, sem armazenar credenciais no NeuroPed.",
+    description: "Encaminhamento administrativo e acesso à agenda pública integrada ao NeuroPed.",
+    note: "A Secretaria IA foi incorporada ao NeuroPed. Ela não coleta informações clínicas nesta etapa.",
   },
   {
     id: "missao",
@@ -34,7 +34,7 @@ const sites: ManusSite[] = [
     shortLabel: "Jogo",
     url: manusUrls.missao,
     description: "Circuito educativo infantil com três estações sobre cuidados de saúde.",
-    note: "O progresso do jogo permanece isolado no domínio Manus e não altera pacientes, agenda ou prontuários.",
+    note: "A Missão Saúde foi incorporada ao NeuroPed. O progresso existe somente nesta sessão e não altera pacientes, agenda ou prontuários.",
   },
   {
     id: "institucional",

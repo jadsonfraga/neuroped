@@ -1,6 +1,9 @@
 import { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
+
+// O App inclui o shell clínico e suas rotas; iniciá-lo após o bootstrap do host
+// mantém o primeiro pacote concentrado na proteção de domínio e no feedback visual.
+const App = lazy(() => import("./App"));
 
 const UnauthorizedCopyScreen = lazy(() =>
   import("./components/UnauthorizedCopyScreen").then(({ UnauthorizedCopyScreen: Component }) => ({
@@ -55,7 +58,13 @@ const isDevelopmentBuild =
 
 if (isAuthorizedHost(hostname, { allowPrivateNetwork: isDevelopmentBuild })) {
     root.render(
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-background p-6 text-sm font-semibold text-muted-foreground" role="status">
+            Preparando o NeuroPed…
+          </div>
+        }
+      >
         <App />
       </Suspense>,
     );

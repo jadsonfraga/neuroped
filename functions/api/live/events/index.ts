@@ -5,6 +5,7 @@ import {
   clinicalSources,
 } from "../../../../shared/clinical-core";
 import { getContextUser } from "../../auth/_authorization";
+import { requireBillingEntitlement } from "../../billing/_guard";
 import {
   clinicalLiveEnabled,
   getClinicMembership,
@@ -160,6 +161,8 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (!membership || !membershipCanReadClinical(membership)) {
     return tenantError("Acesso clínico negado para esta clínica.", "TENANT_FORBIDDEN", 403);
   }
+  const billingReadError = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
+  if (billingReadError) return billingReadError;
   if (!(await patientBelongsToClinic(db, clinicId, patientId))) {
     return tenantError("Paciente não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
   }
@@ -287,6 +290,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   if (!membership || !membershipCanWriteClinical(membership)) {
     return tenantError("Escrita clínica negada para esta clínica.", "TENANT_FORBIDDEN", 403);
   }
+  const billingWriteError = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
+  if (billingWriteError) return billingWriteError;
   if (!(await patientBelongsToClinic(db, clinicId, patientId))) {
     return tenantError("Paciente não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
   }

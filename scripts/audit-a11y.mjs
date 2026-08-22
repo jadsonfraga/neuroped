@@ -44,13 +44,18 @@ function reportAndExit(violations, mode, details = {}) {
 }
 
 async function runAxe() {
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
   // Evita iniciar servidor/abrir porta quando o binário não foi instalado.
   // O lint estático abaixo é o fallback determinístico oficial desse ambiente.
-  if (!existsSync(chromium.executablePath())) return false;
+  if (!executablePath && !existsSync(chromium.executablePath())) return false;
   const server = await startStaticServer(ensureClientBuild(repoRoot));
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch(
+      executablePath
+        ? { headless: true, executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+        : { headless: true },
+    );
   } catch (error) {
     await server.close();
     if (isMissingBrowserError(error)) return false;

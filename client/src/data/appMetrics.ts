@@ -1,21 +1,20 @@
-import { pharmCategories } from "@/data/farmacologia";
-import { allScales } from "@/data/scaleFilter";
-import { mergeFilterableCatalog, supplementalFilterableInstruments } from "@/data/filterableCatalog";
-import { navigablePages } from "@/data/navigation";
-import { novidadesConteudoStats } from "@/data/novidadesConteudoAmpliado";
-
-const uniquePages = new Set(navigablePages.map((page) => page.href));
-const allFilterable = mergeFilterableCatalog(allScales);
-
+/**
+ * Métricas institucionais exibidas no shell e na Home.
+ *
+ * Este módulo é deliberadamente leve: importar a Home não deve materializar o
+ * catálogo clínico inteiro nem a base farmacológica. Os valores são atualizados
+ * pelo inventário/guards de catálogo no release; não são usados para decisão
+ * clínica, cálculo, triagem ou autorização.
+ */
 export const appMetrics = {
-  scaleCount: allScales.length,
-  filterableInstrumentCount: allFilterable.length,
-  supplementalFilterableCount: supplementalFilterableInstruments.length,
-  directTestCount: allFilterable.filter((item) => Boolean(item.appRoute)).length,
-  medicationCount: pharmCategories.reduce((total, category) => total + category.drugs.length, 0),
-  medicationCategoryCount: pharmCategories.length,
-  pageCount: uniquePages.size,
-  parentEducationCount: novidadesConteudoStats.artigosTotal,
+  scaleCount: 253,
+  filterableInstrumentCount: 269,
+  supplementalFilterableCount: 21,
+  directTestCount: 269,
+  medicationCount: 142,
+  medicationCategoryCount: 27,
+  pageCount: 95,
+  parentEducationCount: 33,
 } as const;
 
 export function metricLabel(value: number, suffix = "") {

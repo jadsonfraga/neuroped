@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import {
   UserPlus,
   Save,
@@ -27,6 +29,7 @@ import {
   type ScaleResponseItem,
 } from "@/lib/scaleResponseReport";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
+import { formatClinicalDateTime } from "@/lib/clinicalDate";
 
 interface SaveToPatientProps {
   scaleName?: string;
@@ -39,33 +42,47 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const scaleName = rawProps.scaleName ?? rawProps.testName ?? "Teste";
   const patientAge = rawProps.patientAge;
   const { toast } = useToast();
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const selectId = useId();
   const newPatientId = useId();
+  const [applicationDate] = useState(() => new Date());
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [newPatientName, setNewPatientName] = useState("");
   const [savedPatientId, setSavedPatientId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const patientQueryKey = isRemoteClinical
+    ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+    : "/api/patients";
   const {
     data: patientsRaw,
     isLoading: loadingPatients,
     isError: patientsError,
   } = useQuery<any>({
-    queryKey: ["/api/patients"],
+    queryKey: [patientQueryKey],
+    enabled: !isRemoteClinical || Boolean(activeClinicId),
   });
   // A API retorna { data: [...] }; aceita também array puro por robustez.
-  const patients: any[] = Array.isArray(patientsRaw)
-    ? patientsRaw
-    : (patientsRaw?.data ?? []);
+  const patients: any[] = (Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? [])).map((patient: any) =>
+    isRemoteClinical
+      ? { ...patient, name: patient.profile?.name ?? "Paciente sem nome", birthDate: patient.profile?.birthDate ?? null }
+      : patient,
+  );
 
   const createPatientMutation = useMutation({
     mutationFn: async (name: string) => {
-      const res = await apiRequest("POST", "/api/patients", { name });
+      const res = await apiRequest(
+        "POST",
+        isRemoteClinical ? "/api/live/patients" : "/api/patients",
+        isRemoteClinical ? { clinicId: activeClinicId, name } : { name },
+      );
       return res.json();
     },
     onSuccess: () => {
       setErrorMessage(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
     },
     onError: () => {
       setErrorMessage(
@@ -86,6 +103,49 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         throw new Error(
           "A escala precisa fornecer perguntas e respostas por extenso antes de ser salva.",
         );
+      }
+      if (isRemoteClinical) {
+        if (!activeClinicId) throw new Error("Selecione uma clínica ativa antes de salvar a avaliação.");
+        const instrumentId = scaleName.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 120) || "instrumento";
+        const responseRows = responses.map((item, index) => ({
+          itemId: `item-${index + 1}`,
+          itemPosition: index,
+          value: { question: item.question, answer: item.answer },
+        }));
+        const assessmentResponse = await apiRequest("POST", "/api/live/assessments", {
+          clinicId: activeClinicId,
+          patientId,
+          instrumentId,
+          instrumentVersion: "client-v1",
+          appliedAt: new Date().toISOString(),
+          provenanceSource: "instrument",
+          payload: {
+            title: scaleName,
+            patientAge: patientAge || null,
+            responseCount: responseRows.length,
+          },
+          responses: responseRows,
+        });
+        const assessment = await assessmentResponse.json();
+        const documentResponse = await apiRequest("POST", "/api/live/documents", {
+          clinicId: activeClinicId,
+          patientId,
+          documentType: "scale",
+          origin: "instrument",
+          status: "published",
+          familyVisibility: false,
+          issuedAt: new Date().toISOString(),
+          content: {
+            title: `Resultado da escala — ${scaleName}`,
+            assessmentId: assessment.id,
+            instrumentId,
+            instrumentVersion: "client-v1",
+            patientAge: patientAge || null,
+            responses: responseRows,
+          },
+        });
+        const document = await documentResponse.json();
+        return { result: assessment, archivedDocumentId: document.id, archiveError: null };
       }
       const res = await apiRequest("POST", "/api/results", {
         patientId,
@@ -117,7 +177,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
                 `Paciente: ${patient?.name || "Paciente vinculado"}`,
                 `Idade informada: ${patientAge || "Não informada"}`,
                 `Escala: ${scaleName}`,
-                `Data de emissão: ${new Date().toLocaleString("pt-BR")}`,
+                `Data da aplicação: ${formatClinicalDateTime(applicationDate)}`,
               ].join("\n"),
             },
             {
@@ -142,6 +202,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             scaleName,
             patientAge: patientAge || null,
             answerCount: responses.length,
+            appliedAt: applicationDate.toISOString(),
           },
         });
         archivedDocumentId = archived.document.id;
@@ -153,7 +214,9 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     onSuccess: (data, patientId) => {
       setSavedPatientId(patientId);
       queryClient.invalidateQueries({
-        queryKey: [`/api/patients/${patientId}/results`],
+        queryKey: [isRemoteClinical
+          ? `/api/live/assessments?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
+          : `/api/patients/${patientId}/results`],
       });
       if (data.archiveError) {
         setErrorMessage(`Resultado salvo, mas o PDF premium não foi arquivado: ${data.archiveError}`);

@@ -258,6 +258,43 @@ jobs:
           }
           echo "Tabela de memória clínica persistente OK."
 
+      - name: Migrar D1 — lifecycle, retenção e exportação do tenant
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0014_saas_tenant_lifecycle.sql
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('tenant_lifecycle','tenant_export_events') ORDER BY name;" \
+            > /tmp/tenant-lifecycle-tables.txt 2>&1
+          cat /tmp/tenant-lifecycle-tables.txt
+          grep -q "tenant_lifecycle" /tmp/tenant-lifecycle-tables.txt || { echo "::error::tenant_lifecycle ausente"; exit 1; }
+          grep -q "tenant_export_events" /tmp/tenant-lifecycle-tables.txt || { echo "::error::tenant_export_events ausente"; exit 1; }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM pragma_table_info('tenant_lifecycle');" \
+            > /tmp/tenant-lifecycle-cols.txt 2>&1
+          cat /tmp/tenant-lifecycle-cols.txt
+          for column in status previous_clinic_status previous_billing_status retention_until legal_hold; do
+            grep -q "\b$column\b" /tmp/tenant-lifecycle-cols.txt || {
+              echo "::error::coluna lifecycle ausente: $column"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_clinic_create_tenant_lifecycle';" \
+            > /tmp/tenant-lifecycle-trigger.txt 2>&1
+          cat /tmp/tenant-lifecycle-trigger.txt
+          grep -q "trg_clinic_create_tenant_lifecycle" /tmp/tenant-lifecycle-trigger.txt || {
+            echo "::error::trigger de lifecycle ausente"
+            exit 1
+          }
+          echo "✅ Lifecycle SaaS e trilha de exportação migrados antes do deploy."
+
       - name: Configurar secrets/vars de auth no Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

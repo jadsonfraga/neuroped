@@ -51,6 +51,40 @@ export function normalizeInvitationEmail(email: string): string | null {
   return value;
 }
 
+/**
+ * Constrói o link público do convite somente a partir de uma origem HTTPS
+ * explicitamente configurada. Não existe fallback de domínio: ausência ou URL
+ * ambígua deve bloquear a emissão do convite.
+ */
+export function buildInvitationUrl(base: string | undefined, token: string): string | null {
+  const raw = base?.trim() ?? "";
+  const cleanToken = token.trim();
+  if (!raw || !cleanToken) return null;
+
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+
+  if (
+    url.protocol !== "https:" ||
+    !url.hostname ||
+    url.username.length > 0 ||
+    url.password.length > 0 ||
+    url.search.length > 0 ||
+    url.hash.length > 0
+  ) {
+    return null;
+  }
+
+  const basePath = url.pathname.replace(/\/+$/, "");
+  url.pathname = `${basePath}/invite`;
+  url.searchParams.set("token", cleanToken);
+  return url.toString();
+}
+
 export function validateRoleForInvitation(role: string): role is ClinicMembershipRole {
   return isClinicMembershipRole(role);
 }

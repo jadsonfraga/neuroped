@@ -18,6 +18,7 @@ interface BillingContext {
   grace_ends_at: string | null;
   subscription_id: string;
   subscription_status: string;
+  lifecycle_status: string;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -57,9 +58,11 @@ async function activeSubscriptionContext(db: D1Database, customerId: string): Pr
   return db.prepare(
     `SELECT bc.id AS customer_id, bc.status AS customer_status,
             bc.canceled_at, bc.grace_ends_at,
-            bs.id AS subscription_id, bs.status AS subscription_status
+            bs.id AS subscription_id, bs.status AS subscription_status,
+            COALESCE(tl.status, 'active') AS lifecycle_status
        FROM billing_customers bc
        JOIN billing_subscriptions bs ON bs.customer_id = bc.id
+       LEFT JOIN tenant_lifecycle tl ON tl.clinic_id = bc.clinic_id
       WHERE bc.id = ?
       ORDER BY CASE bs.status
         WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
@@ -95,6 +98,35 @@ async function resolveContext(db: D1Database, event: AsaasWebhookEvent): Promise
     if (row) return activeSubscriptionContext(db, row.billing_customer_id);
   }
   return null;
+}
+
+async function checkoutSeatsForEvent(
+  db: D1Database,
+  event: AsaasWebhookEvent,
+  customerId: string,
+): Promise<number | null> {
+  const externalReference = webhookExternalReference(event) ?? "";
+  const checkoutId = event.checkout?.id?.trim() ?? "";
+  if (!externalReference && !checkoutId) return null;
+
+  const row = await db.prepare(
+    `SELECT seats
+       FROM billing_provider_checkouts
+      WHERE billing_customer_id = ?
+        AND ((? <> '' AND external_reference = ?)
+          OR (? <> '' AND provider_checkout_id = ?))
+      ORDER BY created_at DESC
+      LIMIT 1`,
+  ).bind(
+    customerId,
+    externalReference,
+    externalReference,
+    checkoutId,
+    checkoutId,
+  ).first<{ seats: number }>();
+
+  const seats = Number(row?.seats);
+  return Number.isInteger(seats) && seats > 0 ? seats : null;
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
@@ -135,11 +167,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const occurredAt = eventDate(event.dateCreated);
   const eventInstant = new Date(occurredAt);
   const kind = classify(name);
+  const eventCheckoutSeats = kind === "paid"
+    ? await checkoutSeatsForEvent(env.DB, event, billing.customer_id)
+    : null;
   let nextStatus = billing.customer_status;
   let nextGrace = billing.grace_ends_at;
   let canceledAt = billing.canceled_at;
+  const lifecycleLocked = billing.lifecycle_status === "closure_requested" || billing.lifecycle_status === "closed";
 
-  if (billing.customer_status !== "canceled") {
+  // Webhooks tardios nunca reabrem cobrança/acesso enquanto o tenant está em
+  // encerramento. O evento financeiro continua auditado, mas o customer fica
+  // suspenso; uma eventual desistência exige reativação explícita.
+  if (lifecycleLocked && billing.customer_status !== "canceled") {
+    nextStatus = "suspended";
+    nextGrace = null;
+  } else if (billing.customer_status !== "canceled") {
     if (kind === "paid") {
       nextStatus = "active";
       nextGrace = null;
@@ -203,18 +245,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(checkoutStatus, event.checkout.id));
   }
 
-  if (kind === "paid") {
+  if (lifecycleLocked && kind !== "ignore") {
+    statements.push(env.DB.prepare(
+      `UPDATE billing_subscriptions
+          SET last_provider_event_at = ?, updated_at = datetime('now')
+        WHERE id = ?
+          AND (last_provider_event_at IS NULL OR julianday(last_provider_event_at) <= julianday(?))`,
+    ).bind(occurredAt, billing.subscription_id, occurredAt));
+  } else if (kind === "paid") {
     statements.push(env.DB.prepare(
       `UPDATE billing_subscriptions
           SET status = 'active',
-              seats = COALESCE((SELECT seats FROM billing_provider_checkouts
-                WHERE billing_customer_id = ? AND status IN ('active','paid')
-                ORDER BY created_at DESC LIMIT 1), seats),
+              seats = COALESCE(?, seats),
               provider_subscription_id = COALESCE(?, provider_subscription_id),
               last_provider_event_at = ?, updated_at = datetime('now')
         WHERE id = ? AND status IN ('trial','active','past_due')
           AND (last_provider_event_at IS NULL OR julianday(last_provider_event_at) <= julianday(?))`,
-    ).bind(billing.customer_id, event.payment?.subscription ?? null, occurredAt, billing.subscription_id, occurredAt));
+    ).bind(
+      eventCheckoutSeats,
+      event.payment?.subscription ?? null,
+      occurredAt,
+      billing.subscription_id,
+      occurredAt,
+    ));
   } else if (kind === "past_due") {
     statements.push(env.DB.prepare(
       `UPDATE billing_subscriptions SET status = 'past_due', last_provider_event_at = ?, updated_at = datetime('now')

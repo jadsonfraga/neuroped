@@ -21,6 +21,7 @@ import {
   slotLockStatements,
   slotLockStatementsForAppointmentState,
   type OperationsEnv,
+  type ProviderRow,
   type ServiceRow,
 } from "./operations/_core";
 import { ensureOperationsHardeningSchema } from "./operations/_access";
@@ -97,6 +98,30 @@ async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
   };
 }
 
+async function publicProviders(db: D1Database) {
+  const result = await db
+    .prepare(
+      `SELECT p.slug, p.display_name, p.specialty, p.location_label
+         FROM booking_provider_profiles p
+        WHERE p.booking_enabled = 1
+          AND EXISTS (
+            SELECT 1
+              FROM booking_services s
+             WHERE s.provider_user_id = p.user_id
+               AND s.active = 1
+               AND s.public_visible = 1
+          )
+        ORDER BY p.display_name COLLATE NOCASE`,
+    )
+    .all<Pick<ProviderRow, "slug" | "display_name" | "specialty" | "location_label">>();
+  return (result.results ?? []).map((provider) => ({
+    slug: provider.slug,
+    displayName: provider.display_name,
+    specialty: provider.specialty,
+    locationLabel: provider.location_label,
+  }));
+}
+
 export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request }) => {
   if (!env.DB) return errorResponse("Agendamento online indisponível.", "DB_REQUIRED", 503);
   const url = new URL(request.url);
@@ -106,6 +131,10 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
   try {
     await ensureOperationsSchema(env.DB);
     await ensureOperationsHardeningSchema(env.DB);
+
+    if (action === "providers") {
+      return jsonResponse({ providers: await publicProviders(env.DB) });
+    }
 
     if (!slug) return errorResponse("Profissional não informado.", "VALIDATION_ERROR", 400);
     const provider = await getProviderBySlug(env.DB, slug);

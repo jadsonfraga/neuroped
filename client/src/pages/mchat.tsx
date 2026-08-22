@@ -1,18 +1,23 @@
-import { useRef, useState } from "react";
-import { mchatQuestions } from "@/data/scales";
+import { lazy, Suspense, useRef, useState } from "react";
+import { mchatQuestions } from "@/data/mchat";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Baby, RotateCcw } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
-import { SaveToPatient } from "@/components/SaveToPatient";
-import { ClinicalReport } from "@/components/ClinicalReport";
 import {
   ScaleDraftLoading,
   ScaleDraftRestoredNotice,
 } from "@/components/ScaleDraftLoading";
 import { useSecureTypedScaleDraft } from "@/hooks/useSecureScaleDraft";
+
+const LazyClinicalReport = lazy(() =>
+  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+);
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 import {
   hasRecordEntries,
   indexedKeys,
@@ -137,17 +142,21 @@ export default function MchatPage() {
           </CardContent>
         </Card>
 
-        <ClinicalReport
-          scaleName="M-CHAT-R/F"
-          scaleFullName="Modified Checklist for Autism in Toddlers, Revised with Follow-Up"
-          items={reportItems}
-          patientAge="16-30 meses"
-        />
-        <SaveToPatient
-          scaleName="M-CHAT-R/F"
-          responses={reportItems}
-          patientAge="16-30 meses"
-        />
+        <Suspense
+          fallback={<div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">Carregando relatório seguro…</div>}
+        >
+          <LazyClinicalReport
+            scaleName="M-CHAT-R/F"
+            scaleFullName="Modified Checklist for Autism in Toddlers, Revised with Follow-Up"
+            items={reportItems}
+            patientAge="16-30 meses"
+          />
+          <LazySaveToPatient
+            scaleName="M-CHAT-R/F"
+            responses={reportItems}
+            patientAge="16-30 meses"
+          />
+        </Suspense>
         <Button
           onClick={handleReset}
           variant="outline"

@@ -8,8 +8,7 @@ import {
   Filter,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { allScales } from "@/data/scaleFilter";
-import { getImplementationStatus } from "@/data/advancedFilterLogic";
+import { resolveFluxoScaleRoute } from "@/data/fluxoScaleRoutes";
 import {
   fluxoBands,
   fluxoMasterRule,
@@ -23,11 +22,7 @@ import {
 // escala existe no app E é preenchível (mesma regra do filtro: só abre o que
 // dá para usar de verdade). Caso contrário, vira chip de referência sem link.
 function pickRoute(pick: FluxoPick): string | null {
-  if (!pick.id) return null;
-  const scale = allScales.find((s) => s.id === pick.id);
-  if (!scale) return null;
-  if (getImplementationStatus(scale) !== "complete") return null;
-  return scale.appRoute ?? `/generic-scale/${scale.id}`;
+  return resolveFluxoScaleRoute(pick.id);
 }
 
 function PickChip({

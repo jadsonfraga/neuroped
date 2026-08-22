@@ -17,6 +17,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import {
   Users,
   Plus,
@@ -161,6 +163,10 @@ async function loadAllPatientsForBackup(): Promise<any[]> {
 
 export default function PacientesPage() {
   const { toast } = useToast();
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
+  const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [patientPage, setPatientPage] = useState(1);
@@ -187,6 +193,9 @@ export default function PacientesPage() {
   }, [searchQuery]);
 
   const PATIENT_PAGE_SIZE = 50;
+  const patientQueryKey = isRemoteClinical
+    ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+    : `/api/patients?q=${encodeURIComponent(searchQuery)}&page=${patientPage}&limit=${PATIENT_PAGE_SIZE}`;
   const {
     data: patientsRaw,
     isLoading,
@@ -194,31 +203,48 @@ export default function PacientesPage() {
     isError,
     refetch: refetchPatients,
   } = useQuery<any>({
-    queryKey: [
-      `/api/patients?q=${encodeURIComponent(searchQuery)}&page=${patientPage}&limit=${PATIENT_PAGE_SIZE}`,
-    ],
-    enabled: true,
+    queryKey: [patientQueryKey],
+    enabled: !isRemoteClinical || liveContextReady,
     placeholderData: (previousData: any) => previousData,
   });
   // A API retorna { data, total, page, limit }; aceita array puro por robustez.
   const patientPayload: any = patientsRaw;
-  const patients: any[] = Array.isArray(patientPayload)
+  const rawPatients: any[] = Array.isArray(patientPayload)
     ? patientPayload
     : (patientPayload?.data ?? []);
-  const patientTotal = Array.isArray(patientPayload)
-    ? patientPayload.length
-    : typeof patientPayload?.total === "number" && Number.isFinite(patientPayload.total)
-      ? Math.max(0, patientPayload.total)
-      : patients.length;
+  const patients: any[] = isRemoteClinical
+    ? rawPatients
+        .map((patient) => ({
+          ...patient,
+          name: patient.profile?.name ?? "Paciente sem nome",
+          birthDate: patient.profile?.birthDate ?? null,
+          notes: patient.profile?.notes ?? null,
+        }))
+        .filter((patient) => {
+          const needle = searchQuery.toLocaleLowerCase("pt-BR");
+          return !needle || String(patient.name ?? "").toLocaleLowerCase("pt-BR").includes(needle);
+        })
+    : rawPatients;
+  const patientTotal = isRemoteClinical
+    ? patients.length
+    : Array.isArray(patientPayload)
+      ? patientPayload.length
+      : typeof patientPayload?.total === "number" && Number.isFinite(patientPayload.total)
+        ? Math.max(0, patientPayload.total)
+        : patients.length;
   const totalPatientPages = Math.max(1, Math.ceil(patientTotal / PATIENT_PAGE_SIZE));
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/patients", data);
+      const res = await apiRequest(
+        "POST",
+        isRemoteClinical ? "/api/live/patients" : "/api/patients",
+        isRemoteClinical ? { ...data, clinicId: activeClinicId } : data,
+      );
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
       setPatientPage(1);
       resetForm();
       softSuccess();
@@ -234,11 +260,15 @@ export default function PacientesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const res = await apiRequest("PATCH", `/api/patients/${id}`, data);
+      const res = await apiRequest(
+        "PATCH",
+        isRemoteClinical ? `/api/live/patients/${encodeURIComponent(id)}` : `/api/patients/${id}`,
+        isRemoteClinical ? { ...data, clinicId: activeClinicId } : data,
+      );
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
       resetForm();
       softSuccess();
       haptic.success();
@@ -253,14 +283,17 @@ export default function PacientesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/patients/${id}`);
+      const url = isRemoteClinical
+        ? `/api/live/patients/${encodeURIComponent(id)}?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+        : `/api/patients/${id}`;
+      await apiRequest("DELETE", url);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
       setPatientPage((current) => (current > 1 && patients.length === 1 ? current - 1 : current));
       softSuccess();
       haptic.success();
-      toast({ title: "Paciente removido." });
+      toast({ title: isRemoteClinical ? "Paciente arquivado." : "Paciente removido." });
       setConfirmingDelete(null);
     },
     onError: () => {
@@ -287,6 +320,29 @@ export default function PacientesPage() {
   }
 
   async function handleBackup() {
+    if (isRemoteClinical) {
+      if (!activeClinicId) {
+        toast({ title: "Selecione uma clínica ativa antes de exportar.", variant: "destructive" });
+        return;
+      }
+      setBackupLoading(true);
+      try {
+        await apiRequest("POST", "/api/live/governance", {
+          clinicId: activeClinicId,
+          requestType: "export",
+          scope: "clinic",
+        });
+        toast({
+          title: "Solicitação de exportação registrada.",
+          description: "A exportação LIVE seguirá o workflow auditável da clínica.",
+        });
+      } catch {
+        toast({ title: "Não foi possível solicitar a exportação LIVE.", variant: "destructive" });
+      } finally {
+        setBackupLoading(false);
+      }
+      return;
+    }
     if (patientTotal === 0) {
       toast({
         title: "Nenhum paciente para exportar.",
@@ -341,6 +397,15 @@ export default function PacientesPage() {
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (isRemoteClinical) {
+      e.target.value = "";
+      toast({
+        title: "Importação LIVE indisponível nesta etapa.",
+        description: "Use o fluxo controlado de migração para não contornar a fronteira tenant-aware.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!file) return;
     e.target.value = "";
     setImportLoading(true);
@@ -436,6 +501,10 @@ export default function PacientesPage() {
   }
 
   function handleSubmit() {
+    if (isRemoteClinical && !activeClinicId) {
+      toast({ title: "Selecione uma clínica ativa antes de salvar.", variant: "destructive" });
+      return;
+    }
     const data: any = { name: formName.trim() };
     if (formBirth) data.birthDate = formBirth;
     if (formNotes.trim()) data.notes = formNotes.trim();

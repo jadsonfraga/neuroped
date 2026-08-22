@@ -44,11 +44,15 @@ for (const component of [
   "PrivateGate",
   "RouteGuard",
   "ServiceWorkerManager",
-  "MotionConfig",
+  "MotionPreferences",
 ]) {
   assert.match(app, new RegExp(component));
 }
-assert.match(app, /<MotionConfig reducedMotion="user">/);
+assert.match(app, /<MotionPreferences>/);
+assert.match(
+  read("client/src/components/MotionPreferences.tsx"),
+  /<MotionConfig reducedMotion="user">/,
+);
 assert.match(
   app,
   /if \(location === "\/brincando-e-aprendendo"\)[\s\S]*?<Route path="\/brincando-e-aprendendo" component=\{BrincandoAprendendoPage\} \/>[\s\S]*?<\/Switch>/,
@@ -205,7 +209,7 @@ assert.match(
 );
 assert.doesNotMatch(layout, /clearAuth\(\)/);
 
-const filter = read("client/src/pages/filtro.tsx");
+const filter = `${read("client/src/pages/filtro.tsx")}\n${read("client/src/pages/filtro-engine.tsx")}`;
 assert.match(filter, /type AvailabilityMode = "complete" \| "all"/);
 assert.match(filter, /aria-pressed=\{availabilityMode === "all"\}/);
 

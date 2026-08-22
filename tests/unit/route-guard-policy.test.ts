@@ -68,6 +68,7 @@ for (const path of [
   "/termos",
   "/familia",
   "/brincando-e-aprendendo",
+  "/missao-saude",
   "/pre-consulta",
   "/pre-retorno",
   "/efeitos-colaterais",

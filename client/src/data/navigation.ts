@@ -64,6 +64,7 @@ export const navSections: NavSection[] = [
   {
     title: "ACESSO RÁPIDO",
     items: [
+      { href: "/marcacao", label: "Marcação · Secretaria IA", icon: Calendar },
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
@@ -77,6 +78,8 @@ export const navSections: NavSection[] = [
     title: "ACOMPANHAMENTO",
     items: [
       { href: "/conecta", label: "NeuroPed Conecta", icon: Activity },
+      { href: "/neuroacompanhamento", label: "NeuroAcompanhamento", icon: Baby },
+      { href: "/diario-escola", label: "Diário escolar", icon: ClipboardList },
     ],
   },
   {
@@ -90,6 +93,7 @@ export const navSections: NavSection[] = [
     title: "BRINCAR E APRENDER",
     items: [
       { href: "/brincando-e-aprendendo", label: "Brincando e Aprendendo", icon: Sparkles },
+      { href: "/missao-saude", label: "Missão Saúde", icon: HeartPulse },
     ],
   },
   {

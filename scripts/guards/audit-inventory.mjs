@@ -81,6 +81,13 @@ for (const base of [
  */
 const intentionalPageReplacements = new Map([
   [
+    "filtro-engine",
+    {
+      replacementRoute: "/filtro",
+      reason: "engine lazy interno da rota do filtro; não é página independente",
+    },
+  ],
+  [
     "bloco3-showcase",
     {
       replacementRoute: null,

@@ -14,7 +14,7 @@ const importTs = (relativePath) =>
   import(pathToFileURL(resolve(root, relativePath)).href);
 
 const pickerSource = read("client/src/components/PopularSymptomPicker.tsx");
-const filterSource = read("client/src/pages/filtro.tsx");
+const filterSource = `${read("client/src/pages/filtro.tsx")}\n${read("client/src/pages/filtro-engine.tsx")}`;
 
 assert.match(
   filterSource,

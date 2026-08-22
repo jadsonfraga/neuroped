@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,8 +16,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ScaleReference } from "@/components/ScaleReference";
-import { SaveToPatient } from "@/components/SaveToPatient";
-import { ClinicalReport } from "@/components/ClinicalReport";
 import { WhatsAppShare } from "@/components/WhatsAppShare";
 import { Mascote } from "@/components/Mascote";
 import { celebrate } from "@/lib/confetti";
@@ -30,6 +28,13 @@ import {
   useSecureTypedScaleDraft,
 } from "@/hooks/useSecureScaleDraft";
 import { hasRecordEntries } from "@/lib/scaleDraftCore";
+
+const LazyClinicalReport = lazy(() =>
+  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+);
+const LazySaveToPatient = lazy(() =>
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+);
 
 /**
  * Item de escala. Pode ser uma string simples (compatível com todo o acervo
@@ -121,6 +126,9 @@ interface DomainConfig {
   items: ScaleItem[];
 }
 
+const INITIAL_VISIBLE_SCALE_ITEMS = 12;
+const SCALE_ITEM_BATCH_SIZE = 12;
+
 interface ResultDomain {
   domain: string;
   score: number;
@@ -176,6 +184,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       ),
     [config.domains],
   );
+  const domainOffsets = useMemo(() => {
+    let offset = 0;
+    return config.domains.map((domain) => {
+      const current = offset;
+      offset += domain.items.length;
+      return current;
+    });
+  }, [config.domains]);
   const validDraftOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -231,7 +247,42 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       void Promise.all([clearPersistedDraft(), clearPersistedTextDraft()]);
     }
   }, [showResult, clearPersistedDraft, clearPersistedTextDraft]);
+
   const total = allItems.length;
+  const [visibleItemCount, setVisibleItemCount] = useState(() =>
+    Math.min(allItems.length, INITIAL_VISIBLE_SCALE_ITEMS),
+  );
+  const [pendingFocusKey, setPendingFocusKey] = useState<string | null>(null);
+  const visibleItems = useMemo(
+    () => allItems.slice(0, visibleItemCount),
+    [allItems, visibleItemCount],
+  );
+  const visibleItemsByDomain = useMemo(() => {
+    const visibleKeys = new Set(visibleItems.map((item) => item.key));
+    return config.domains
+      .map((domain, di) => ({
+        domain,
+        domainIndex: di,
+        items: domain.items.flatMap((item, ii) =>
+          visibleKeys.has(`${di}-${ii}`) ? [{ item, index: ii }] : [],
+        ),
+      }))
+      .filter((entry) => entry.items.length > 0);
+  }, [config.domains, visibleItems]);
+  const hasMoreItems = visibleItemCount < total;
+  const revealMoreItems = () => {
+    setVisibleItemCount((current) => Math.min(current + SCALE_ITEM_BATCH_SIZE, total));
+  };
+
+  useEffect(() => {
+    if (!pendingFocusKey) return;
+    const frame = window.requestAnimationFrame(() => {
+      itemRefs.current[pendingFocusKey]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => itemRefs.current[pendingFocusKey]?.focus({ preventScroll: true }), 250);
+      setPendingFocusKey(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingFocusKey, visibleItemCount]);
   const hasResponse = (item: (typeof allItems)[number]) =>
     item.responseType === "text"
       ? Boolean(textAnswers[item.key]?.trim())
@@ -266,22 +317,24 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           ? "saved"
           : "idle";
 
+  function focusItem(key: string) {
+    const itemIndex = allItems.findIndex((item) => item.key === key);
+    if (itemIndex < 0) return;
+    if (itemIndex >= visibleItemCount) {
+      setVisibleItemCount(Math.min(itemIndex + 1, total));
+      setPendingFocusKey(key);
+      return;
+    }
+    itemRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => itemRefs.current[key]?.focus({ preventScroll: true }), 250);
+  }
+
   function handleSubmit() {
     setSubmitAttempted(true);
     if (!allAnswered) {
       softTap();
       haptic.notify();
-      if (firstMissing) {
-        itemRefs.current[firstMissing.key]?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-        window.setTimeout(
-          () =>
-            itemRefs.current[firstMissing.key]?.focus({ preventScroll: true }),
-          250,
-        );
-      }
+      if (firstMissing) focusItem(firstMissing.key);
       return;
     }
     if (triggeredSafetyItems.length > 0) {
@@ -312,10 +365,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     if (!firstMissing) return;
     softTap();
     haptic.tap();
-    itemRefs.current[firstMissing.key]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
+    focusItem(firstMissing.key);
   }
 
   if (!draftReady || !textDraftReady) {
@@ -581,7 +631,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           </CardContent>
         </Card>
 
-        <ClinicalReport
+        <LazyClinicalReport
           scaleName={config.title}
           scaleFullName={config.subtitle}
           items={qaItems}
@@ -592,7 +642,15 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           reportText={`${config.title}\n\nPerguntas e respostas:\n\n${qaTranscript}`}
         />
 
-        <SaveToPatient scaleName={config.title} responses={qaItems} />
+        <Suspense
+          fallback={
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">
+              Carregando salvamento seguro…
+            </div>
+          }
+        >
+          <LazySaveToPatient scaleName={config.title} responses={qaItems} />
+        </Suspense>
 
         <Button
           onClick={handleReset}
@@ -724,7 +782,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         </p>
       </div>
 
-      {config.domains.map((domain, di) => {
+      {visibleItemsByDomain.map(({ domain, domainIndex: di, items: visibleDomainItems }) => {
         const domTotal = domain.items.length;
         const domAnswered = domain.items.reduce((s, item, ii) => {
           const key = `${di}-${ii}`;
@@ -776,7 +834,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               </span>
             </div>
 
-            {domain.items.map((item, ii) => {
+            {visibleDomainItems.map(({ item, index: ii }) => {
               const key = `${di}-${ii}`;
               const itemHasResponse =
                 itemResponseType(item) === "text"
@@ -791,7 +849,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                   }}
                   tabIndex={-1}
                   aria-invalid={submitAttempted && !itemComplete}
-                  className={`rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`np-scale-item rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     submitAttempted && !itemComplete
                       ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
                       : itemHasResponse
@@ -805,11 +863,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         variant="outline"
                         className="text-xs font-mono flex-shrink-0 mt-0.5"
                       >
-                        {config.domains
-                          .slice(0, di)
-                          .reduce((s, d) => s + d.items.length, 0) +
-                          ii +
-                          1}
+                        {domainOffsets[di] + ii + 1}
                       </Badge>
                       <div className="flex-1 space-y-1.5">
                         <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">
@@ -917,6 +971,17 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           </div>
         );
       })}
+
+      {hasMoreItems && (
+        <div className="rounded-xl border border-border/70 bg-muted/25 p-4 text-center" role="status" aria-live="polite">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Mostrando {visibleItemCount} de {total} perguntas. As próximas aparecem sem alterar o que já foi respondido.
+          </p>
+          <Button type="button" variant="outline" onClick={revealMoreItems}>
+            Carregar próximas perguntas
+          </Button>
+        </div>
+      )}
 
       {submitAttempted && !allAnswered && (
         <div

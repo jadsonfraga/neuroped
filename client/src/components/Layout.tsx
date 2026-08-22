@@ -25,6 +25,7 @@ import {
 } from "@/lib/openWorkspaceCleanup";
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
+import { ClinicSwitcher } from "@/components/ClinicSwitcher";
 
 const NESPLORA_SITE_URL = "/nesplora/";
 
@@ -210,6 +211,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
     "TRABALHO CLÍNICO": true,
     "REFERÊNCIA": true,
   }));
+  const [navHydrated, setNavHydrated] = useState(false);
+
+  useEffect(() => {
+    let idleId: number | undefined;
+    const timerId = window.setTimeout(() => {
+      const idleCallback = window.requestIdleCallback;
+      if (idleCallback) {
+        idleId = idleCallback(() => setNavHydrated(true), { timeout: 2000 });
+      } else {
+        setNavHydrated(true);
+      }
+    }, 1500);
+    return () => {
+      window.clearTimeout(timerId);
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId);
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -367,6 +385,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         .map((s) => ({ ...s, items: s.items.filter((i) => canRenderNavItem(i.href)) }))
         .filter((s) => s.items.length > 0);
   const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
+  const renderedSections = navHydrated
+    ? visibleSections
+    : visibleSections.filter(
+        (section) => !section.title || section.title === activeNavigation?.section.title,
+      );
 
   async function handleSessionAction() {
     softTap();
@@ -614,6 +637,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
+        {/* Contexto SaaS: o servidor continua sendo a autoridade de autorização. */}
+        <ClinicSwitcher collapsed={collapsed} />
+
         {/* Atalhos em destaque */}
         <FeaturedShortcuts
           collapsed={collapsed}
@@ -624,7 +650,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav id="sidebar-nav" className="flex-1 py-2 px-2 space-y-1 overflow-y-auto" aria-label="Navegação principal em grupos recolhíveis">
-          {visibleSections.map((section, si) => {
+          {renderedSections.map((section, si) => {
             const sectionKey = section.title || "principal";
             const sectionOpen = !section.title || collapsed || (openSections[sectionKey] ?? false);
             return (

@@ -681,10 +681,10 @@ head("L) Fallback de triagem ampla — seguro e fail-closed em risco agudo");
 // ---------- M) OPB não pode contornar o conjunto seguro ----------
 head("M) OPB — somente resultados refinados e seguros");
 {
-  const filtroSource = readFileSync(
-    resolve(repoRoot, "client/src/pages/filtro.tsx"),
-    "utf8",
-  );
+  const filtroSource = [
+    readFileSync(resolve(repoRoot, "client/src/pages/filtro.tsx"), "utf8"),
+    readFileSync(resolve(repoRoot, "client/src/pages/filtro-engine.tsx"), "utf8"),
+  ].join("\n");
   ok(
     /if \(!hasSafeResults \|\| selectedQueixas\.length !== 1\) return null;/.test(
       filtroSource,
