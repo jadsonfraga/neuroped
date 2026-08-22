@@ -63,7 +63,9 @@ export function formatScaleResponseDateTime(
 ): string {
   const value = typeof date === "string" ? new Date(date) : date;
   if (Number.isNaN(value.getTime())) return "Data não informada";
-  return formatClinicalDateTime(value);
+  const dateLabel = formatClinicalLongDate(value);
+  const timeLabel = formatClinicalDateTime(value).match(/\d{2}:\d{2}:\d{2}/)?.[0];
+  return timeLabel ? `${dateLabel} às ${timeLabel}` : dateLabel;
 }
 
 export function buildScaleResponseText(
