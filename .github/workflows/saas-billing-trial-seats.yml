@@ -1,0 +1,97 @@
+name: NeuroPed SaaS Billing Trial Seats
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
+      - "functions/api/billing/**"
+      - "tests/unit/saas-billing*.test.ts"
+      - ".github/workflows/saas-billing-trial-seats.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-trial-seats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          [ "$GITHUB_REF" = "refs/heads/main" ] || {
+            echo "::error::Migração de billing permitida somente a partir de main."
+            exit 1
+          }
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Catraca de billing antes do D1 remoto
+        run: |
+          set -euo pipefail
+          npm run check
+          npm run lint
+          node --import tsx tests/unit/saas-billing-contract.test.ts
+          node --import tsx tests/unit/saas-billing-provider.test.ts
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar hardening 0015 de assentos do trial
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0015_saas_billing_trial_seats_hardening.sql
+
+      - name: Verificar contrato físico do trial
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_clinic_create_billing_trial';" \
+            > /tmp/trial-trigger.txt 2>&1
+          cat /tmp/trial-trigger.txt
+          grep -q "trg_clinic_create_billing_trial" /tmp/trial-trigger.txt || {
+            echo "::error::Trigger de criação do trial ausente."
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS invalid_trials FROM billing_subscriptions bs JOIN billing_customers bc ON bc.id = bs.customer_id WHERE bs.status = 'trial' AND bc.status = 'trial' AND COALESCE(bs.seats, 0) < MAX(2, (SELECT COUNT(*) + 1 FROM clinic_memberships cm WHERE cm.clinic_id = bc.clinic_id AND cm.active = 1));" \
+            > /tmp/trial-seats.txt 2>&1
+          cat /tmp/trial-seats.txt
+          grep -Eq 'invalid_trials[^0-9]*0|"invalid_trials"[^0-9]*0' /tmp/trial-seats.txt || {
+            echo "::error::Há trial sem a vaga adicional exigida pelo contrato 0015."
+            exit 1
+          }
+          echo "✅ Assentos de trial reconciliados no D1 remoto."
