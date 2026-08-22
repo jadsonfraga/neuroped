@@ -56,6 +56,10 @@ assert.equal(
 );
 assert.equal(professional.queries.length, 2, "FTS vazio cai no LIKE");
 for (const query of professional.queries) {
+  assert.match(query.sql, /clinical_memory_notes_demo/,
+    "FTS e LIKE devem ler da mesma tabela usada para gravar as notas");
+  assert.doesNotMatch(query.sql, /(?:FROM|JOIN)\s+memory_notes\b/,
+    "a busca não pode voltar para a tabela legada memory_notes");
   assert.match(query.sql, /n\.patient_id IN/);
   assert.match(query.sql, /p\.owner_user_id = \?/);
   assert.ok(query.binds.includes("owner-a"));
@@ -74,7 +78,9 @@ assert.match(
 const admin = captureDb();
 assert.equal((await invoke(admin.db, authUser("admin", "admin-1"))).status, 200);
 for (const query of admin.queries) {
+  assert.match(query.sql, /clinical_memory_notes_demo/);
+  assert.doesNotMatch(query.sql, /(?:FROM|JOIN)\s+memory_notes\b/);
   assert.doesNotMatch(query.sql, /owner_user_id/);
 }
 
-console.log("✓ memory search isola owner em FTS/LIKE e reserva notas globais ao admin");
+console.log("✓ memory search usa tabela canônica e isola owner em FTS/LIKE");
