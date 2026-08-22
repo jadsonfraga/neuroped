@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ClinicProvider } from "@/contexts/ClinicContext";
 import {
   AvisoLegalGate,
   hasAcceptedLegalNotice,
@@ -693,6 +694,7 @@ function App() {
         <MotionPreferences>
           <QueryClientProvider client={queryClient}>
           <AuthProvider>
+            <ClinicProvider>
             <TooltipProvider>
               <ToastProvider>
                 <Suspense fallback={null}>
@@ -743,6 +745,7 @@ function App() {
                 <MobilePrimaryDock />
               </ToastProvider>
             </TooltipProvider>
+            </ClinicProvider>
           </AuthProvider>
           </QueryClientProvider>
         </MotionPreferences>

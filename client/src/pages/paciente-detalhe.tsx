@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { differenceInYears, parseISO, format } from "date-fns";
 import html2canvas from "html2canvas";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -141,6 +143,10 @@ function isNotFoundError(error: unknown): boolean {
 
 export default function PacienteDetalhePage() {
   const { toast } = useToast();
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
+  const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const [, navigate] = useLocation();
   const [, params] = useRoute("/paciente/:id");
   const patientId = params?.id || "";
@@ -158,41 +164,65 @@ export default function PacienteDetalhePage() {
     scaleName: string;
   } | null>(null);
 
+  const patientQueryKey = isRemoteClinical
+    ? `/api/live/patients/${encodeURIComponent(patientId)}?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+    : `/api/patients/${patientId}`;
   const {
-    data: patient,
+    data: patientPayload,
     isLoading: patientLoading,
     isError: patientIsError,
     error: patientError,
     refetch: refetchPatient,
   } = useQuery<any>({
-    queryKey: [`/api/patients/${patientId}`],
-    enabled: !!patientId,
+    queryKey: [patientQueryKey],
+    enabled: !!patientId && (!isRemoteClinical || liveContextReady),
   });
+  const patient = isRemoteClinical && patientPayload?.profile
+    ? { ...patientPayload.profile, ...patientPayload }
+    : patientPayload;
 
+  const resultsQueryKey = isRemoteClinical
+    ? `/api/live/assessments?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
+    : `/api/patients/${patientId}/results`;
   const {
-    data: resultsRaw,
+    data: resultsPayload,
     isLoading: resultsLoading,
     isError: resultsIsError,
     refetch: refetchResults,
-  } = useQuery<any[]>({
-    queryKey: [`/api/patients/${patientId}/results`],
-    queryFn: () => loadAllPatientResults(patientId),
-    enabled: !!patientId && Boolean(patient),
+  } = useQuery<any>({
+    queryKey: [resultsQueryKey],
+    ...(isRemoteClinical ? {} : { queryFn: () => loadAllPatientResults(patientId) }),
+    enabled: !!patientId && Boolean(patient) && (!isRemoteClinical || liveContextReady),
   });
+  const resultsRaw = isRemoteClinical ? resultsPayload?.data : resultsPayload;
+  const results = isRemoteClinical
+    ? (Array.isArray(resultsRaw) ? resultsRaw : []).map((assessment: any) => ({
+        id: assessment.id,
+        scaleName: assessment.instrumentId,
+        scaleVersion: assessment.instrumentVersion,
+        responses: assessment.responses,
+        answers: assessment.responses,
+        classification: assessment.payload?.classification ?? "Apoio clínico",
+        totalScore: assessment.payload?.totalScore ?? assessment.payload?.score ?? null,
+        createdAt: assessment.appliedAt,
+        status: assessment.status,
+      }))
+    : (Array.isArray(resultsRaw) ? resultsRaw : []);
   const resultsShapeIsInvalid =
-    resultsRaw !== undefined && !Array.isArray(resultsRaw);
+    !isRemoteClinical && resultsRaw !== undefined && !Array.isArray(resultsRaw);
   const resultsUnavailable = resultsIsError || resultsShapeIsInvalid;
-  const results = Array.isArray(resultsRaw) ? resultsRaw : [];
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("PATCH", `/api/patients/${patientId}`, data);
+      const res = await apiRequest(
+        "PATCH",
+        isRemoteClinical ? `/api/live/patients/${encodeURIComponent(patientId)}` : `/api/patients/${patientId}`,
+        isRemoteClinical ? { ...data, clinicId: activeClinicId } : data,
+      );
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [`/api/patients/${patientId}`],
-      });
+      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
       setEditOpen(false);
       toast({ title: "Paciente atualizado!" });
     },
@@ -200,6 +230,9 @@ export default function PacienteDetalhePage() {
 
   const deleteResultMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (isRemoteClinical) {
+        throw new Error("Avaliações LIVE são append-only e não podem ser apagadas.");
+      }
       await apiRequest("DELETE", `/api/results/${encodeURIComponent(id)}`);
     },
     onSuccess: () => {
@@ -215,9 +248,7 @@ export default function PacienteDetalhePage() {
       });
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [`/api/patients/${patientId}/results`],
-      });
+      await queryClient.invalidateQueries({ queryKey: [resultsQueryKey] });
     },
   });
 
@@ -517,22 +548,24 @@ export default function PacienteDetalhePage() {
                           {responses.length}{" "}
                           {responses.length === 1 ? "resposta" : "respostas"}
                         </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                          aria-label={`Excluir avaliação ${resultScaleName(r)} de ${fmtDate(resultCreatedAt(r))}`}
-                          disabled={deleteResultMutation.isPending}
-                          onClick={() =>
-                            setResultPendingDeletion({
-                              id: String(r.id),
-                              scaleName: resultScaleName(r),
-                            })
-                          }
-                          data-testid={`button-delete-result-${r.id}`}
-                        >
-                          <Trash2 className="w-3 h-3" aria-hidden="true" />
-                        </Button>
+                        {!isRemoteClinical && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                            aria-label={`Excluir avaliação ${resultScaleName(r)} de ${fmtDate(resultCreatedAt(r))}`}
+                            disabled={deleteResultMutation.isPending}
+                            onClick={() =>
+                              setResultPendingDeletion({
+                                id: String(r.id),
+                                scaleName: resultScaleName(r),
+                              })
+                            }
+                            data-testid={`button-delete-result-${r.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" aria-hidden="true" />
+                          </Button>
+                        )}
                       </div>
                     </div>
 

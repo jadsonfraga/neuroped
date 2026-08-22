@@ -25,6 +25,7 @@ import {
 } from "@/lib/openWorkspaceCleanup";
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
+import { ClinicSwitcher } from "@/components/ClinicSwitcher";
 
 const NESPLORA_SITE_URL = "/nesplora/";
 
@@ -635,6 +636,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {collapsed && <span className="text-xs lg:hidden">Buscar escala, teste ou módulo</span>}
           </button>
         </div>
+
+        {/* Contexto SaaS: o servidor continua sendo a autoridade de autorização. */}
+        <ClinicSwitcher collapsed={collapsed} />
 
         {/* Atalhos em destaque */}
         <FeaturedShortcuts

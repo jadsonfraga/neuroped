@@ -13,6 +13,7 @@ import { requireBillingEntitlement } from "./_guard";
 interface Env {
   DB?: D1Database;
   APP_BASE_URL?: string;
+  ENVIRONMENT?: string;
 }
 
 function clean(value: unknown, max: number): string {
