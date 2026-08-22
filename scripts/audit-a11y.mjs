@@ -74,6 +74,18 @@ async function runAxe() {
       }, ACCEPTED_FIRST_VISIT_STORAGE);
       const page = await context.newPage();
       await page.goto(`${server.origin}${route}`, { waitUntil: "networkidle" });
+      // Páginas de passagem (ex.: /#/eletroencefalograma) chamam
+      // window.location.assign() para um site externo assim que montam. O
+      // goto acima navega para a SPA, mas o efeito da própria página pode
+      // completar a navegação de verdade antes daqui — e o axe passaria a
+      // auditar o DOM do site de terceiros, não o nosso. Mesma fronteira de
+      // segurança do <iframe> excluído abaixo: violações do site externo não
+      // são atribuídas ao NeuroPed, então essas rotas saem do escopo do axe.
+      if (!page.url().startsWith(server.origin)) {
+        routeSummary[route] = { total: 0, seriousCritical: 0, violations: [], skipped: "navegação externa" };
+        await context.close();
+        continue;
+      }
       await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 10_000 });
       // Conteúdo incorporado de terceiros é uma fronteira de segurança: o gate
       // verifica o elemento iframe (inclusive seu título via lint estático), mas
