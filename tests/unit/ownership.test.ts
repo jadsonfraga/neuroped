@@ -77,7 +77,7 @@ assert.equal(patchedStorage.ownerUserId, "user-a", "atualização criptografada 
 const routesSource = readFileSync(new URL("../../server/routes.ts", import.meta.url), "utf8");
 assert.match(
   routesSource,
-  /app\.post\("\/api\/results", requireAuth, requireProfessional, writeRateLimit/,
+  /app\.post\(\s*"\/api\/results",\s*requireAuth,\s*requireProfessional,\s*writeRateLimit/,
   "criação de resultado exige perfil profissional",
 );
 assert.match(
