@@ -113,7 +113,7 @@ function normalizar(texto: string) {
 function badgeSelo(selo: Selo) {
   if (selo === "Ouro") return "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100";
   if (selo === "Prata") return "border-slate-300 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100";
-  return "border-orange-300 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-amber-950/30 dark:text-orange-100";
+  return "border-orange-300 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-100";
 }
 
 function badgePolitica(politica: Politica) {
@@ -127,16 +127,26 @@ function badgePolitica(politica: Politica) {
  * meses. Retorna { min, max } com máximo limitado a 216 meses (18 anos).
  */
 function parseIdadeMeses(texto: string): { min: number; max: number } {
-  const t = texto.toLowerCase();
-  const itens = t.match(/(\d+(?:[.,]\d+)?)\s*(dias?|meses?|anos?|a\b|sem)/g) ?? [];
+  // Em "N a M unidade" / "N–M unidade" o primeiro número não traz unidade
+  // própria — ele herda a unidade do segundo (ex.: "3 a 22 anos" = 3 a 22
+  // anos, não 3 meses a 22 anos). Sem essa expansão o número inicial ficava
+  // sem conversão (ou, em ranges com travessão, era descartado), produzindo
+  // faixas invertidas (min > max) que excluíam a escala de qualquer filtro.
+  const t = texto
+    .toLowerCase()
+    .replace(
+      /(\d+(?:[.,]\d+)?)\s*(?:a|-|–|—)\s*(\d+(?:[.,]\d+)?)\s*(dias?|semanas?|meses?|anos?)/g,
+      "$1 $3 a $2 $3",
+    );
+  const itens = t.match(/(\d+(?:[.,]\d+)?)\s*(dias?|semanas?|meses?|anos?)/g) ?? [];
   const pares = itens.map((it) => {
-    const m = it.match(/([\d.,]+)\s*(dias?|meses?|anos?|a\b|sem)/);
+    const m = it.match(/([\d.,]+)\s*(dias?|semanas?|meses?|anos?)/);
     if (!m) return null;
     const v = Number(m[1].replace(",", "."));
     const u = m[2];
-    if (u.startsWith("dia")) return 0;
+    if (u.startsWith("dia")) return v / 30;
+    if (u.startsWith("sem")) return v / 4.345;
     if (u.startsWith("mes")) return v;
-    if (u === "a") return v;
     return v * 12;
   }).filter((x): x is number => x !== null);
   if (pares.length === 0) return { min: 0, max: 216 };
