@@ -381,7 +381,15 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       env.DB.prepare(
         "DELETE FROM documents_demo WHERE patient_id = ? AND is_demo = 1",
       ).bind(id),
-      env.DB.prepare("DELETE FROM memory_notes WHERE patient_id = ?").bind(id),
+      // Apagava de `memory_notes`, a tabela legada de db/schema.d1.sql, e não
+      // de onde as notas realmente são gravadas — o log de auditoria declarava
+      // memoryNotes entre os recursos cascateados enquanto as notas do paciente
+      // sobreviviam à exclusão. A FK de 0011_clinical_memory.sql tem ON DELETE
+      // CASCADE, então este DELETE é redundante quando as foreign keys estão
+      // ativas; mantido explícito para a exclusão não depender desse pragma.
+      env.DB.prepare(
+        "DELETE FROM clinical_memory_notes_demo WHERE patient_id = ?",
+      ).bind(id),
       deletePatient,
       env.DB.prepare(
         `INSERT INTO audit_logs
