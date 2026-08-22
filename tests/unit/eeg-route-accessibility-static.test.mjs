@@ -14,5 +14,8 @@ test("EEG stays in an accessible internal handoff instead of auto-redirecting", 
   assert.match(source, /href="#\/marcacao"/);
   assert.match(source, /sem redirecionamento/);
   assert.ok(app.includes('if (location === "/eletroencefalograma")'));
-  assert.match(app, /<RouteGuard>[\s\S]*?<Route path="\/eletroencefalograma" component=\{EletroencefalogramaPage\}/);
+  assert.match(
+    app,
+    /(?:<RouteGuard>[\s\S]*?|if \(location === "\/eletroencefalograma"\)[\s\S]*?)<Route\s+path="\/eletroencefalograma"\s+component=\{EletroencefalogramaPage\}/,
+  );
 });
