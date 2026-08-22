@@ -202,8 +202,8 @@ export default function PacienteDetalhePage() {
         scaleVersion: assessment.instrumentVersion,
         responses: assessment.responses,
         answers: assessment.responses,
-        classification: assessment.payload?.classification ?? "Apoio clínico",
-        totalScore: assessment.payload?.totalScore ?? assessment.payload?.score ?? null,
+        classification: "Resultado registrado",
+        totalScore: null,
         createdAt: assessment.appliedAt,
         status: assessment.status,
       }))
