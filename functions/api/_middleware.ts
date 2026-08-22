@@ -59,6 +59,8 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/logout",
   "/api/public-booking",
+  "/api/scale-shares/open",
+  "/api/scale-shares/submit",
 ]);
 
 function apiError(message: string, code: string, status: number): Response {

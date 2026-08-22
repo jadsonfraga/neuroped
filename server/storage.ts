@@ -153,6 +153,26 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS scale_results_scale_idx ON scale_results(scale_name);
   CREATE INDEX IF NOT EXISTS scale_results_created_at_idx ON scale_results(created_at);
 
+  CREATE TABLE IF NOT EXISTS scale_share_sessions (
+    id TEXT PRIMARY KEY,
+    patient_id TEXT NOT NULL,
+    created_by_user_id TEXT,
+    token_hash TEXT UNIQUE NOT NULL,
+    selected_scales TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    expires_at TEXT NOT NULL,
+    submitted_at TEXT,
+    respondent_name TEXT,
+    result_ids TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+    FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX IF NOT EXISTS scale_share_sessions_patient_idx ON scale_share_sessions(patient_id);
+  CREATE INDEX IF NOT EXISTS scale_share_sessions_token_idx ON scale_share_sessions(token_hash);
+  CREATE INDEX IF NOT EXISTS scale_share_sessions_status_idx ON scale_share_sessions(status);
+  CREATE INDEX IF NOT EXISTS scale_share_sessions_expires_idx ON scale_share_sessions(expires_at);
+
   CREATE TABLE IF NOT EXISTS data_requests (
     id TEXT PRIMARY KEY,
     requester_email TEXT NOT NULL,

@@ -207,6 +207,8 @@ export const auditEventTypes = [
   "result.read",
   "result.update",
   "result.delete",
+  "share.create",
+  "share.submit",
   "consent.batch.granted",
   "consent.granted",
   "consent.revoked",
@@ -338,6 +340,57 @@ export const insertScaleResultSchema = createInsertSchema(scaleResults).omit({
 });
 export type InsertScaleResult = z.infer<typeof insertScaleResultSchema>;
 export type ScaleResult = typeof scaleResults.$inferSelect;
+
+/* =====================================================================
+ * SCALE SHARE SESSIONS — links temporários para respostas familiares
+ * O token bruto nunca é armazenado; apenas seu hash SHA-256.
+ * ===================================================================== */
+
+export const scaleShareStatuses = ["pending", "submitted", "revoked"] as const;
+export type ScaleShareStatus = (typeof scaleShareStatuses)[number];
+
+export const scaleShareSessions = sqliteTable(
+  "scale_share_sessions",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    patientId: text("patient_id")
+      .notNull()
+      .references(() => patients.id, { onDelete: "cascade" }),
+    createdByUserId: text("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    tokenHash: text("token_hash").notNull().unique(),
+    selectedScales: text("selected_scales").notNull(),
+    status: text("status", { enum: scaleShareStatuses })
+      .notNull()
+      .default("pending"),
+    expiresAt: text("expires_at").notNull(),
+    submittedAt: text("submitted_at"),
+    respondentName: text("respondent_name"),
+    resultIds: text("result_ids"),
+    createdAt: text("created_at")
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()),
+  },
+  (t) => ({
+    patientIdx: index("scale_share_sessions_patient_idx").on(t.patientId),
+    tokenIdx: index("scale_share_sessions_token_idx").on(t.tokenHash),
+    statusIdx: index("scale_share_sessions_status_idx").on(t.status),
+    expiresIdx: index("scale_share_sessions_expires_idx").on(t.expiresAt),
+  }),
+);
+
+export const insertScaleShareSessionSchema = createInsertSchema(
+  scaleShareSessions,
+  { status: z.enum(scaleShareStatuses) },
+).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertScaleShareSession = z.infer<
+  typeof insertScaleShareSessionSchema
+>;
+export type ScaleShareSession = typeof scaleShareSessions.$inferSelect;
 
 /* =====================================================================
  * DATA EXPORT REQUESTS — pedidos LGPD art. 18 (portabilidade/exclusao)

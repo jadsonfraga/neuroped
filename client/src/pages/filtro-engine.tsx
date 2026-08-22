@@ -33,6 +33,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
+import { ParentScaleSharePanel, type ParentShareScale } from "@/components/ParentScaleSharePanel";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
 import {
   allScales,
@@ -1635,6 +1636,30 @@ export default function FiltroPage() {
     }
   };
 
+  // Escalas que podem ser respondidas por pais no formulário remoto. O manifesto
+  // leve evita carregar as definições completas no filtro; a página pública resolve
+  // os itens apenas depois que o link é aberto.
+  const parentShareCandidates: ParentShareScale[] = (() => {
+    const seen = new Set<string>();
+    const candidates: ParentShareScale[] = [];
+    for (const item of ranking) {
+      const scale = item.scale;
+      if (!item.hasScale || !scale || seen.has(scale.id)) continue;
+      const isParentRespondent =
+        scale.respondente.includes("pais") || scale.applicationMode === "questionario_pais";
+      if (!isParentRespondent || !INTERACTIVE_SCALE_IDS.has(scale.id)) continue;
+      seen.add(scale.id);
+      candidates.push({
+        id: scale.id,
+        name: scale.name,
+        fullName: scale.fullName,
+        respondentLabel: scale.respondente.includes("pais") ? "Pais / cuidador" : "Questionário familiar",
+      });
+      if (candidates.length >= 8) break;
+    }
+    return candidates;
+  })();
+
   // Pool comparável = escalas preenchíveis do pódio, deduplicadas. Permite
   // comparar, p.ex., SCARED-pais × SCARED-criança — só instrumentos aplicáveis.
   const comparablePool: ScaleEntry[] = (() => {
@@ -2448,6 +2473,7 @@ export default function FiltroPage() {
                   selectedAge={selectedAge}
                   faixasEtarias={faixasEtarias}
                 />
+                <ParentScaleSharePanel scales={parentShareCandidates} />
               </>
             )}
 
