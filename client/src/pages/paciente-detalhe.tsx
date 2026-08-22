@@ -248,7 +248,11 @@ export default function PacienteDetalhePage() {
       });
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: [resultsQueryKey] });
+      if (isRemoteClinical) {
+        await queryClient.invalidateQueries({ queryKey: [resultsQueryKey] });
+      } else {
+        await queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}/results`] });
+      }
     },
   });
 
