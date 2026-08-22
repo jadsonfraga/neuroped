@@ -30,6 +30,8 @@ const CASES = [
   { id: "help-desktop-dark", state: "help", width: 1440, height: 1000, theme: "dark" },
 ];
 
+const ASSET_SETTLE_TIMEOUT_MS = 5_000;
+
 /** @param {import("playwright").Page} page @param {string} state */
 async function openAssistanceState(page, state) {
   await page.getByTestId("button-floating-help").waitFor({ state: "visible", timeout: 15_000 });
@@ -85,15 +87,21 @@ try {
 
     await page.goto(`${server.origin}/#/`, { waitUntil: "networkidle" });
     await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15_000 });
-    await page.evaluate(async () => {
-      if (document.fonts?.ready) await document.fonts.ready;
-      await Promise.all([...document.images].map((image) => image.complete
+    await page.evaluate(async (assetTimeoutMs) => {
+      const bounded = (promise) => Promise.race([
+        promise,
+        new Promise((resolveTimeout) => setTimeout(resolveTimeout, assetTimeoutMs)),
+      ]);
+
+      if (document.fonts?.ready) await bounded(document.fonts.ready);
+      const imagesReady = Promise.all([...document.images].map((image) => image.complete
         ? Promise.resolve()
         : new Promise((resolveImage) => {
             image.addEventListener("load", resolveImage, { once: true });
             image.addEventListener("error", resolveImage, { once: true });
           })));
-    });
+      await bounded(imagesReady);
+    }, ASSET_SETTLE_TIMEOUT_MS);
 
     await openAssistanceState(page, testCase.state);
     await page.waitForTimeout(100);

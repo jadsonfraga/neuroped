@@ -801,6 +801,10 @@ export default function ProntuarioPage() {
         );
         const created = await response.json() as StoredClinicalEvent;
         nextIds[key] = created.id;
+        // Comita o progresso no estado a cada evento salvo (não só ao final):
+        // se uma falha no meio do loop interromper o save, um retry precisa
+        // ver os ids já criados para superseder em vez de duplicar eventos.
+        setEventIds((prev) => ({ ...prev, [key]: created.id }));
       };
 
       await postEvent("encounter", {

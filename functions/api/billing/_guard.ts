@@ -109,7 +109,16 @@ export async function resolveBillingClinicId(
     ?? request.headers.get("x-clinic-id")
     ?? ""
   ).trim().slice(0, 80);
-  if (explicit) return explicit;
+
+  if (explicit) {
+    const membership = await db.prepare(
+      `SELECT clinic_id
+         FROM clinic_memberships
+        WHERE user_id = ? AND clinic_id = ? AND active = 1
+        LIMIT 1`,
+    ).bind(userId, explicit).first<{ clinic_id: string }>();
+    return membership?.clinic_id ?? null;
+  }
 
   const rows = await db.prepare(
     `SELECT clinic_id

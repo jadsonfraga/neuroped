@@ -100,6 +100,35 @@ async function resolveContext(db: D1Database, event: AsaasWebhookEvent): Promise
   return null;
 }
 
+async function checkoutSeatsForEvent(
+  db: D1Database,
+  event: AsaasWebhookEvent,
+  customerId: string,
+): Promise<number | null> {
+  const externalReference = webhookExternalReference(event) ?? "";
+  const checkoutId = event.checkout?.id?.trim() ?? "";
+  if (!externalReference && !checkoutId) return null;
+
+  const row = await db.prepare(
+    `SELECT seats
+       FROM billing_provider_checkouts
+      WHERE billing_customer_id = ?
+        AND ((? <> '' AND external_reference = ?)
+          OR (? <> '' AND provider_checkout_id = ?))
+      ORDER BY created_at DESC
+      LIMIT 1`,
+  ).bind(
+    customerId,
+    externalReference,
+    externalReference,
+    checkoutId,
+    checkoutId,
+  ).first<{ seats: number }>();
+
+  const seats = Number(row?.seats);
+  return Number.isInteger(seats) && seats > 0 ? seats : null;
+}
+
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (!env.DB) return json({ error: "Billing DB indisponível.", code: "DB_REQUIRED" }, 503);
 
@@ -138,6 +167,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const occurredAt = eventDate(event.dateCreated);
   const eventInstant = new Date(occurredAt);
   const kind = classify(name);
+  const eventCheckoutSeats = kind === "paid"
+    ? await checkoutSeatsForEvent(env.DB, event, billing.customer_id)
+    : null;
   let nextStatus = billing.customer_status;
   let nextGrace = billing.grace_ends_at;
   let canceledAt = billing.canceled_at;
@@ -224,14 +256,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     statements.push(env.DB.prepare(
       `UPDATE billing_subscriptions
           SET status = 'active',
-              seats = COALESCE((SELECT seats FROM billing_provider_checkouts
-                WHERE billing_customer_id = ? AND status IN ('active','paid')
-                ORDER BY created_at DESC LIMIT 1), seats),
+              seats = COALESCE(?, seats),
               provider_subscription_id = COALESCE(?, provider_subscription_id),
               last_provider_event_at = ?, updated_at = datetime('now')
         WHERE id = ? AND status IN ('trial','active','past_due')
           AND (last_provider_event_at IS NULL OR julianday(last_provider_event_at) <= julianday(?))`,
-    ).bind(billing.customer_id, event.payment?.subscription ?? null, occurredAt, billing.subscription_id, occurredAt));
+    ).bind(
+      eventCheckoutSeats,
+      event.payment?.subscription ?? null,
+      occurredAt,
+      billing.subscription_id,
+      occurredAt,
+    ));
   } else if (kind === "past_due") {
     statements.push(env.DB.prepare(
       `UPDATE billing_subscriptions SET status = 'past_due', last_provider_event_at = ?, updated_at = datetime('now')
