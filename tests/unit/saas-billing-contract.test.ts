@@ -16,6 +16,7 @@ import {
 } from "../../shared/billing";
 import { evaluateEntitlement, type EntitlementResult } from "../../server/lib/billingEntitlement";
 import {
+  buildInvitationUrl,
   INVITATION_EXPIRY_MS,
   normalizeInvitationEmail,
   validateInvitationForAccept,
@@ -73,6 +74,29 @@ assert.throws(() => monthlyPriceCents(PLAN, 0), /BILLING_INVALID_SEATS/);
   assert.equal(normalizeInvitationEmail("invalido"), null);
   assert.equal(normalizeInvitationEmail("a".repeat(330) + "@x.com"), null);
   assert.deepEqual(validateInvitationForAccept({ status: "pending", expires_at: future }), { ok: true });
+}
+
+{
+  const token = "token_teste";
+  assert.equal(
+    buildInvitationUrl("https://superneuroped.vercel.app", token),
+    "https://superneuroped.vercel.app/invite?token=token_teste",
+  );
+  assert.equal(
+    buildInvitationUrl("https://example.com/app/", token),
+    "https://example.com/app/invite?token=token_teste",
+  );
+  for (const base of [
+    undefined,
+    "",
+    "http://superneuroped.vercel.app",
+    "https://user:pass@superneuroped.vercel.app",
+    "https://superneuroped.vercel.app?next=x",
+    "javascript:alert(1)",
+  ]) {
+    assert.equal(buildInvitationUrl(base, token), null);
+  }
+  assert.equal(buildInvitationUrl("https://superneuroped.vercel.app", ""), null);
 }
 
 const baseRow = (overrides: Partial<Record<string, unknown>> = {}) => ({

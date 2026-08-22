@@ -2,6 +2,7 @@ import { getContextUser } from "../auth/_authorization";
 import { isClinicMembershipRole, type ClinicMembershipRole } from "../../../shared/tenant";
 import { getClinicMembership, membershipCanManage, tenantError, tenantJson } from "../tenant/_core";
 import {
+  buildInvitationUrl,
   generateInvitationToken,
   INVITATION_EXPIRY_MS,
   isoUtc,
@@ -59,12 +60,6 @@ async function assertSeatAvailable(db: D1Database, clinicId: string): Promise<bo
   return Number(row.active_members) < Number(row.seats);
 }
 
-function invitationLink(base: string | undefined, token: string): string {
-  const url = new URL((base?.trim() || "https://superneuroped.vercel.app").replace(/\/+$/, "") + "/invite");
-  url.searchParams.set("token", token);
-  return url.toString();
-}
-
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const clinicId = clean(new URL(context.request.url).searchParams.get("clinicId"), 80);
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
@@ -95,10 +90,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
   const auth = await manager(context, clinicId);
   if ("error" in auth) return auth.error;
+  if (action !== "create" && action !== "resend") {
+    return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
+  }
 
   const now = isoUtc(new Date());
   const expiresAt = isoUtc(new Date(Date.now() + INVITATION_EXPIRY_MS));
   const generated = await generateInvitationToken();
+  const invitationUrl = buildInvitationUrl(context.env.APP_BASE_URL, generated.token);
+  if (!invitationUrl) {
+    return tenantError(
+      "URL pública HTTPS do onboarding não configurada.",
+      "ONBOARDING_BASE_URL_NOT_CONFIGURED",
+      503,
+    );
+  }
 
   if (action === "resend") {
     const existingId = clean(body.invitationId, 80);
@@ -140,11 +146,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       email: existing.email,
       role: existing.role,
       expiresAt,
-      invitationUrl: invitationLink(context.env.APP_BASE_URL, generated.token),
+      invitationUrl,
     });
   }
-
-  if (action !== "create") return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
 
   const email = normalizeInvitationEmail(clean(body.email, 320));
   const roleRaw = clean(body.role, 40);
@@ -208,7 +212,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     email,
     role,
     expiresAt,
-    invitationUrl: invitationLink(context.env.APP_BASE_URL, generated.token),
+    invitationUrl,
   }, 201);
 };
 
