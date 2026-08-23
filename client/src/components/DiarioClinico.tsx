@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Plus, Trash2, FileDown, TrendingUp, ListChecks, BarChart3, Info,
+  Plus, Trash2, FileDown, TrendingUp, ListChecks, BarChart3, Info, ShieldAlert,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { MAX_SECURE_PLAINTEXT_BYTES, secureGet, secureSet } from "@/lib/secureStorage";
 import { neutralizeCsvFormula } from "@/lib/csv";
 
@@ -19,6 +20,11 @@ import { neutralizeCsvFormula } from "@/lib/csv";
  * Motor genérico de diários clínicos longitudinais.
  * Portado de neuroped-diary-engine.js + neuroped-diarios.js (app legado).
  * NÃO pontua: registra episódios e produz histórico + tendência.
+ *
+ * Em sessão clínica remota autenticada, o diário falha fechado: nenhum dado é
+ * lido, migrado ou gravado no dispositivo. Isso impede a criação silenciosa de
+ * um prontuário paralelo fora do tenant LIVE. Dados locais preexistentes são
+ * preservados no dispositivo e não são migrados automaticamente para LIVE.
  */
 
 export type DiarioFieldType = "date" | "time" | "number" | "text" | "textarea" | "select";
@@ -118,6 +124,8 @@ function fmtDate(entry: DiarioEntry): string {
 
 export function DiarioClinico({ config }: { config: DiarioConfig }) {
   const { toast } = useToast();
+  const { accessMode, isAuthenticated } = useAuth();
+  const localDraftEnabled = !(accessMode === "remote" && isAuthenticated);
   const [entries, setEntries] = useState<DiarioEntry[]>([]);
   const [entriesReady, setEntriesReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -127,6 +135,13 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
 
   useEffect(() => {
     let active = true;
+    if (!localDraftEnabled) {
+      setEntries([]);
+      setStorageError(false);
+      setEntriesReady(true);
+      return () => { active = false; };
+    }
+
     const secureKey = `diario:${config.id}`;
     setEntriesReady(false);
     void (async () => {
@@ -158,10 +173,10 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
       setEntriesReady(true);
     })();
     return () => { active = false; };
-  }, [config.fields, config.id, config.storageKey]);
+  }, [config.fields, config.id, config.storageKey, localDraftEnabled]);
 
   useEffect(() => {
-    if (!entriesReady) return;
+    if (!entriesReady || !localDraftEnabled) return;
     const secureKey = `diario:${config.id}`;
     const snapshot = sanitizeEntries(entries, config.fields);
     const operation = saveQueue.current
@@ -170,7 +185,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
       .catch(() => false);
     saveQueue.current = operation;
     void operation.then((stored) => setStorageError(stored !== true));
-  }, [config.fields, config.id, entries, entriesReady]);
+  }, [config.fields, config.id, entries, entriesReady, localDraftEnabled]);
 
   const Icon = config.icon;
   const trendField = config.fields.find((f) => f.trend);
@@ -194,6 +209,14 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
 
   function saveEntry(e: React.FormEvent) {
     e.preventDefault();
+    if (!localDraftEnabled) {
+      toast({
+        title: "Registro local bloqueado no modo clínico LIVE",
+        description: "Use somente fluxos vinculados à clínica e ao paciente.",
+        variant: "destructive",
+      });
+      return;
+    }
     const missing = config.fields.filter((f) => f.required && !form[f.key]?.trim());
     if (missing.length) {
       toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
@@ -206,7 +229,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     };
     setEntries((prev) => [...prev, entry]);
     setForm(emptyForm(config.fields));
-    toast({ title: "Registro adicionado à sessão" });
+    toast({ title: "Rascunho local salvo neste dispositivo" });
     setTab("history");
   }
 
@@ -246,11 +269,30 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     );
   }
 
+  if (!localDraftEnabled) {
+    return (
+      <Card
+        className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+        data-testid="diario-local-persistence-disabled"
+      >
+        <CardContent className="flex items-start gap-3 p-5 text-sm leading-6 text-amber-950 dark:text-amber-100">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Persistência local bloqueada no modo clínico LIVE.</p>
+            <p className="mt-1">
+              Este diário não lê, migra nem grava dados clínicos no dispositivo durante uma sessão remota autenticada. Use apenas fluxos tenant-aware vinculados à clínica e ao paciente. Dados locais preexistentes não foram apagados nem enviados automaticamente.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12">
       {storageError && (
         <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
-          Os registros continuam visíveis, mas não puderam ser salvos neste dispositivo. Exporte o CSV antes de sair da tela.
+          Os rascunhos continuam visíveis, mas não puderam ser salvos neste dispositivo. Exporte o CSV antes de sair da tela.
         </div>
       )}
       {/* Header */}
@@ -325,7 +367,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
                 ))}
               </div>
               <Button type="submit">
-                <Plus className="w-4 h-4 mr-1" /> Salvar registro
+                <Plus className="w-4 h-4 mr-1" /> Salvar rascunho local
               </Button>
             </form>
           </CardContent>
@@ -348,7 +390,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
           {sorted.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Nenhum registro ainda. Clique em “Novo registro”.
+                Nenhum rascunho local ainda. Clique em “Novo registro”.
               </CardContent>
             </Card>
           ) : (
@@ -434,8 +476,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
 
       <p className="text-[11px] text-muted-foreground border-t border-border pt-3 flex items-start gap-1.5">
         <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-        Diário longitudinal local — os dados ficam apenas neste dispositivo. Padrões são
-        insumo para o médico; leve o histórico completo (Exportar CSV) à consulta.
+        Rascunho longitudinal local — os dados ficam apenas neste dispositivo e não integram o prontuário LIVE. Padrões são insumo para o médico; leve o histórico completo (Exportar CSV) à consulta.
       </p>
     </div>
   );
