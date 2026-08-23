@@ -12,6 +12,7 @@ on:
       - "client/src/lib/persistentSecureStorage.ts"
       - "client/src/lib/secureStorage.ts"
       - "client/src/lib/previsitLocalPersistence.ts"
+      - "client/src/components/RouteGuard.tsx"
       - "client/src/features/cognitive-lab/**"
       - "client/src/pages/caa.tsx"
       - "client/src/pages/assinatura-digital.tsx"
@@ -59,7 +60,7 @@ jobs:
       - name: Audit dependency graph
         run: npm audit --audit-level=high
 
-      - name: Prove central persistence decisions
+      - name: Prove central persistence decisions and fail-closed routes
         run: node --import tsx tests/unit/clinical-browser-persistence-policy.test.ts
 
       - name: Prove browser boundary and service-worker contract
