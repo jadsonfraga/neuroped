@@ -12,6 +12,7 @@ const UnauthorizedCopyScreen = lazy(() =>
 );
 import { installChunkRecovery } from "./lib/chunkRecovery";
 import { purgeLegacyCertificateCache } from "./lib/certificateSession";
+import { installClinicalBrowserPersistenceBoundary } from "./lib/clinicalBrowserPersistencePolicy";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
 import "./index.css";
 import "./styles/proportion-guards.css";
@@ -22,6 +23,9 @@ import "./styles/premium-app-shell-v12.css";
 // Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
 import "./styles/tablet-coarse-perf.css";
 
+// Instalada antes de qualquer rota clínica: após login remoto, namespaces de PHI
+// conhecidos falham fechados inclusive quando código legado usa Storage direto.
+installClinicalBrowserPersistenceBoundary();
 installChunkRecovery();
 void purgeLegacyCertificateCache();
 // Falha fechado no startup: versões antigas persistiam narrativa clínica do
