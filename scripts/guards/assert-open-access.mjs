@@ -219,13 +219,29 @@ await check("somente superfícies de autenticação/segurança explicitamente ap
 
 const passwordChangeGateSrc = read("client/src/components/RequiredPasswordChangeGate.tsx");
 const preferencesSrc = read("client/src/components/PreferencesPanel.tsx");
-await check("troca de senha da conta usa somente o endpoint canônico e não persiste segredo", () => {
+const authContextSrc = read("client/src/contexts/AuthContext.tsx");
+await check("troca de senha da conta usa somente a cadeia canônica e não persiste segredo", () => {
+  // A UI pode chamar o cliente diretamente (Preferências) ou o método exposto
+  // pelo AuthContext (gate obrigatório). O contexto, por sua vez, é obrigado a
+  // delegar ao mesmo changePasswordRequest e a limpar cache clínico antes de
+  // expor a nova sessão. Assim o guard valida a cadeia completa sem duplicar
+  // implementação de autenticação na tela.
+  assert.match(preferencesSrc, /changePasswordRequest/,
+    "PreferencesPanel deve usar o cliente canônico de troca de senha");
+  assert.match(passwordChangeGateSrc, /useAuth\(\)/,
+    "RequiredPasswordChangeGate deve usar o contexto canônico de autenticação");
+  assert.match(passwordChangeGateSrc, /await\s+changePassword\(currentPassword,\s*newPassword\)/,
+    "RequiredPasswordChangeGate deve delegar a rotação ao AuthContext");
+  assert.match(authContextSrc, /changePasswordRequest\(currentPassword,\s*newPassword\)/,
+    "AuthContext deve delegar a rotação ao cliente canônico");
+  assert.match(authContextSrc, /await\s+clearSessionScopedClientState\(\)/,
+    "AuthContext deve limpar cache clínico ao trocar a família de sessão");
+
   for (const [label, source] of [
     ["RequiredPasswordChangeGate", passwordChangeGateSrc],
     ["PreferencesPanel", preferencesSrc],
+    ["AuthContext", authContextSrc],
   ]) {
-    assert.match(source, /changePasswordRequest/,
-      `${label} deve usar o cliente canônico de troca de senha`);
     assert.doesNotMatch(source, /localStorage\.(?:setItem|getItem)\([^\n]*password/i,
       `${label} não pode persistir senha em localStorage`);
     assert.doesNotMatch(source, /sessionStorage\.(?:setItem|getItem)\([^\n]*password/i,
