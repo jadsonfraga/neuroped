@@ -1,3 +1,5 @@
+import { isClinicalBrowserPersistenceDenied } from "@/lib/clinicalBrowserPersistencePolicy";
+
 export type FilterAvailabilityPreference = "complete" | "all";
 
 export interface FilterPreferences {
@@ -26,6 +28,14 @@ function browserLocalStorage(): FilterPreferenceStorage | undefined {
   }
 }
 
+function mayReadLegacyFilterState(): boolean {
+  return !isClinicalBrowserPersistenceDenied(LEGACY_FILTER_STATE_KEY, "read");
+}
+
+function mayRemoveLegacyFilterState(): boolean {
+  return !isClinicalBrowserPersistenceDenied(LEGACY_FILTER_STATE_KEY, "remove");
+}
+
 export function parseFilterPreferences(raw: string | null): FilterPreferences {
   if (!raw) return { ...DEFAULT_FILTER_PREFERENCES };
 
@@ -52,12 +62,18 @@ export function loadFilterPreferences(
 
   try {
     const currentRaw = storage.getItem(FILTER_PREFERENCES_KEY);
-    const legacyRaw = storage.getItem(LEGACY_FILTER_STATE_KEY);
+    // O legado continha busca, idade, queixas e outros dados potencialmente
+    // identificáveis. Em LIVE remoto autenticado não consultar sequer a chave.
+    const legacyRaw = mayReadLegacyFilterState()
+      ? storage.getItem(LEGACY_FILTER_STATE_KEY)
+      : null;
     const preferences = parseFilterPreferences(currentRaw ?? legacyRaw);
 
-    // O estado legado continha busca, idade, queixas e outros dados clínicos em
-    // texto puro. Migra somente a preferência não clínica e elimina o payload.
-    if (legacyRaw !== null) storage.removeItem(LEGACY_FILTER_STATE_KEY);
+    // Migração/limpeza continua disponível nos modos local/offline/demo. LIVE
+    // ignora bytes legados sem lê-los ou removê-los.
+    if (legacyRaw !== null && mayRemoveLegacyFilterState()) {
+      storage.removeItem(LEGACY_FILTER_STATE_KEY);
+    }
     if (currentRaw !== null || legacyRaw !== null) {
       storage.setItem(
         FILTER_PREFERENCES_KEY,
@@ -78,7 +94,7 @@ export function saveFilterPreferences(
   if (!storage) return;
 
   try {
-    storage.removeItem(LEGACY_FILTER_STATE_KEY);
+    if (mayRemoveLegacyFilterState()) storage.removeItem(LEGACY_FILTER_STATE_KEY);
     storage.setItem(
       FILTER_PREFERENCES_KEY,
       serializeFilterPreferences(availability),
