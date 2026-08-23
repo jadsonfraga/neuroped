@@ -10,6 +10,7 @@ import {
   hasConfiguredMasterPin,
   isMasterPinUnlocked,
 } from "@/lib/masterPin";
+import { isLiveBrowserLocalClinicalRouteDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 
 export { isRouteSensitive, SENSITIVE_ROUTES };
 
@@ -72,6 +73,26 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
         <h1 className="text-lg font-bold text-foreground">Acesso não autorizado</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Seu perfil não possui permissão para abrir esta área restrita.
+        </p>
+      </section>
+    );
+  }
+
+  if (isLiveBrowserLocalClinicalRouteDenied(location, accessMode, isAuthenticated)) {
+    return (
+      <section
+        className="mx-auto my-10 max-w-xl rounded-2xl border border-amber-500/30 bg-card p-6 shadow-sm"
+        role="status"
+        data-testid="live-browser-local-clinical-route-blocked"
+      >
+        <h1 className="text-lg font-bold text-foreground">Recurso local bloqueado no LIVE</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Esta ferramenta mantém workspace ou histórico clínico no navegador e ainda não possui
+          uma fonte tenant-aware equivalente no backend canônico. Em sessão LIVE remota ela não é
+          montada, não lê dados antigos e não cria prontuário local paralelo.
+        </p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          O recurso permanece disponível nos modos local/offline explicitamente destinados a esse uso.
         </p>
       </section>
     );
