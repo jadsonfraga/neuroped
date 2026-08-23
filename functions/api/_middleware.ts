@@ -83,13 +83,20 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
 
   const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
+  const isOwnPasswordChange = path === "/api/auth/change-password" && method === "POST";
   // `operator` pode escrever somente no endpoint operacional. A própria função
   // /api/operations resolve o vínculo com o profissional e filtra as ações;
   // nenhuma rota clínica herda esta exceção.
   const isDelegatedOperationalWrite =
     user.role === "operator" && path === "/api/operations" && method === "POST";
 
-  if (isWrite && !isOwnConsentWrite && !isDelegatedOperationalWrite && !canWriteClinicalData(user)) {
+  if (
+    isWrite &&
+    !isOwnConsentWrite &&
+    !isOwnPasswordChange &&
+    !isDelegatedOperationalWrite &&
+    !canWriteClinicalData(user)
+  ) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
   }
   return null;
