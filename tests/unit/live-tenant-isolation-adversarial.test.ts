@@ -54,7 +54,6 @@ class D1DatabaseMock {
 
   async batch(statements: D1StatementMock[]) {
     return this.db.transaction(() => statements.map((statement) => {
-      const anyStatement = statement as unknown as { run(): Promise<unknown> };
       // Os handlers aguardam o resultado depois do batch. O mock precisa manter
       // `changes()` na mesma conexão e ordem; portanto reproduzimos o statement
       // de forma síncrona pela implementação interna abaixo.
