@@ -1,7 +1,11 @@
 import { allScales, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
-import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
+import {
+  clearClinicalSessionRecords,
+  loadClinicalSessionRecords,
+  saveClinicalSessionRecords,
+} from "@/lib/clinicalSessionStorage";
 
 export type PreConsultaStatus = "aguardando" | "respondendo" | "concluido" | "precisa-ajuda" | "pronto-medico";
 export type PreConsultaRespondente = "pais" | "adolescente" | "professor" | "secretaria";
@@ -40,7 +44,12 @@ export interface AgeValidationResult {
 }
 
 export const PRE_CONSULTA_STORAGE_KEY = "neuroped:pre-consultas";
-const PRE_CONSULTA_SECURE_KEY = "pre-consultas";
+export const PRE_CONSULTA_SECURE_KEY = "pre-consultas";
+
+const preConsultaStorageConfig = {
+  secureKey: PRE_CONSULTA_SECURE_KEY,
+  legacyLocalStorageKey: PRE_CONSULTA_STORAGE_KEY,
+} as const;
 
 export const preConsultaQueixas = [
   { id: "linguagem", label: "Atraso de fala / linguagem" },
@@ -152,53 +161,15 @@ export function recommendPreConsultaScales(form: Pick<PreConsultaRecord, "idadeM
 }
 
 export async function loadPreConsultas(): Promise<PreConsultaRecord[]> {
-  const protectedRecords = await secureGet<PreConsultaRecord[]>(PRE_CONSULTA_SECURE_KEY);
-  if (Array.isArray(protectedRecords)) return protectedRecords;
-
-  // Migração única do formato legado em texto puro. Só apaga a origem depois
-  // que a cópia cifrada foi confirmada, evitando perda silenciosa por quota,
-  // modo privado ou falha transitória do Web Crypto.
-  try {
-    const raw = localStorage.getItem(PRE_CONSULTA_STORAGE_KEY);
-    const legacy = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(legacy) && legacy.length > 0) {
-      const migrated = await secureSet(PRE_CONSULTA_SECURE_KEY, legacy);
-      if (migrated && localStorage.getItem(PRE_CONSULTA_STORAGE_KEY) === raw) {
-        localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
-      }
-      return legacy;
-    }
-    if (raw !== null) localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
-    return [];
-  } catch {
-    return [];
-  }
+  return loadClinicalSessionRecords<PreConsultaRecord>(preConsultaStorageConfig);
 }
 
 export async function savePreConsultas(items: PreConsultaRecord[]): Promise<boolean> {
-  let stored: boolean;
-  try {
-    stored = await secureSet(PRE_CONSULTA_SECURE_KEY, items);
-  } catch {
-    // A interface informa a falha e mantém o registro somente no formulário.
-    return false;
-  }
-  if (!stored) return false;
-  try {
-    localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
-  } catch {
-    // A cópia cifrada já foi confirmada; a limpeza legada é best-effort.
-  }
-  return true;
+  return saveClinicalSessionRecords(preConsultaStorageConfig, items);
 }
 
 export async function clearPreConsultas(): Promise<void> {
-  try {
-    localStorage.removeItem(PRE_CONSULTA_STORAGE_KEY);
-  } catch {
-    // O armazenamento protegido ainda será limpo abaixo.
-  }
-  await secureClear(PRE_CONSULTA_SECURE_KEY);
+  await clearClinicalSessionRecords(preConsultaStorageConfig);
 }
 
 export function buildPreConsultaSummary(record: PreConsultaRecord, recommendations = recommendPreConsultaScales(record)) {
