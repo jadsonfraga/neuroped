@@ -9,6 +9,7 @@
  *   · id duplicado no catálogo unificado (allScales)
  *   · faixaEtaria invertida (ageMin > ageMax)
  *   · campos obrigatórios ausentes (id, name, fullName, ageMin, ageMax)
+ *   · divergência entre as duas cópias físicas do catálogo neuropsiquiátrico
  *
  * PROVENIÊNCIA (não bloqueante, por decisão documentada):
  *   A especificação pede "falhar se qualquer instrumento não tiver campo
@@ -21,7 +22,7 @@
  *
  * Efeito colateral: (re)gera docs/PROVENIENCIA_CLINICA.md (E3).
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -37,6 +38,26 @@ const errors = [];
 /** @type {{id:string,name:string,fonte:string,semFonte:boolean,aguardaValidacao:boolean}[]} */
 const provRows = [];
 const seen = new Map();
+
+// O mesmo catálogo é consumido por superfícies diferentes do repositório.
+// Enquanto as duas cópias físicas existirem, qualquer edição precisa chegar às
+// duas no mesmo commit. Comparar bytes evita que JSON semanticamente parecido,
+// mas efetivamente divergente, seja publicado em uma das superfícies.
+const publicCatalogPath = resolve(
+  repoRoot,
+  "client/public/data/neuroped_escalas_neuropsiquiatria_infantil_100.json",
+);
+const dataCatalogPath = resolve(
+  repoRoot,
+  "data/neuroped_escalas_neuropsiquiatria_infantil_100.json",
+);
+const publicCatalogBytes = readFileSync(publicCatalogPath);
+const dataCatalogBytes = readFileSync(dataCatalogPath);
+if (!publicCatalogBytes.equals(dataCatalogBytes)) {
+  errors.push(
+    "Catálogo neuropsiquiátrico divergente: sincronize client/public/data/neuroped_escalas_neuropsiquiatria_infantil_100.json e data/neuroped_escalas_neuropsiquiatria_infantil_100.json no mesmo commit.",
+  );
+}
 
 for (const s of allScales) {
   // Campos obrigatórios
@@ -114,6 +135,9 @@ writeFileSync(resolve(repoRoot, "docs/PROVENIENCIA_CLINICA.md"), docLines.join("
 
 console.log(`[validate-catalog] ${total} instrumentos | ${comFonte} com fonte | ${semFonte} sem fonte | ${aguardandoValidacao} aguardando validação`);
 console.log(`[validate-catalog] docs/PROVENIENCIA_CLINICA.md regenerado.`);
+if (publicCatalogBytes.equals(dataCatalogBytes)) {
+  console.log("[validate-catalog] ✓ cópias físicas do catálogo neuropsiquiátrico sincronizadas.");
+}
 
 if (errors.length > 0) {
   console.error(`\n[validate-catalog] ${errors.length} ERRO(S) ESTRUTURAL(IS):`);
