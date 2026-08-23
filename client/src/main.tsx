@@ -12,7 +12,10 @@ const UnauthorizedCopyScreen = lazy(() =>
 );
 import { installChunkRecovery } from "./lib/chunkRecovery";
 import { purgeLegacyCertificateCache } from "./lib/certificateSession";
-import { installClinicalBrowserPersistenceBoundary } from "./lib/clinicalBrowserPersistencePolicy";
+import {
+  installClinicalBrowserPersistenceBoundary,
+  isClinicalBrowserPersistenceDenied,
+} from "./lib/clinicalBrowserPersistencePolicy";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
 import "./index.css";
 import "./styles/proportion-guards.css";
@@ -29,11 +32,15 @@ installClinicalBrowserPersistenceBoundary();
 installChunkRecovery();
 void purgeLegacyCertificateCache();
 // Falha fechado no startup: versões antigas persistiam narrativa clínica do
-// filtro. A única preferência não sensível passa a usar uma chave separada.
-try {
-  window.localStorage.removeItem("np_filtro_state_v1");
-} catch {
-  /* storage indisponível */
+// filtro. Em LIVE autenticado nem a limpeza toca a chave proibida; o conteúdo
+// preexistente fica preservado até logout/limpeza de segurança. Nos modos
+// local/offline, a migração/limpeza histórica continua permitida.
+if (!isClinicalBrowserPersistenceDenied("np_filtro_state_v1", "remove")) {
+  try {
+    window.localStorage.removeItem("np_filtro_state_v1");
+  } catch {
+    /* storage indisponível */
+  }
 }
 
 try {
