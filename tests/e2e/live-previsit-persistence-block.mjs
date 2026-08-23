@@ -12,6 +12,10 @@ const SECURE_SENTINELS = {
   "neuroped:secure:pre-consultas": "e2e-secure-preconsulta-sentinel",
   "neuroped:secure:pre-retornos": "e2e-secure-preretorno-sentinel",
 };
+const TARGET_STORAGE_KEYS = [
+  ...Object.keys(LEGACY_SENTINELS),
+  ...Object.keys(SECURE_SENTINELS),
+];
 
 const MIME = {
   ".html": "text/html",
@@ -96,6 +100,38 @@ async function seed(page, base) {
   }, { legacy: LEGACY_SENTINELS, secure: SECURE_SENTINELS });
 }
 
+async function installStorageTouchAudit(page) {
+  await page.addInitScript(({ targetKeys }) => {
+    const targets = new Set(targetKeys);
+    const originalGetItem = Storage.prototype.getItem;
+    const originalSetItem = Storage.prototype.setItem;
+    const originalRemoveItem = Storage.prototype.removeItem;
+    window.__neuropedPrevisitStorageTouches = [];
+
+    const record = (operation, storage, key) => {
+      if (!targets.has(String(key))) return;
+      window.__neuropedPrevisitStorageTouches.push({
+        operation,
+        storage: storage === localStorage ? "localStorage" : "sessionStorage",
+        key: String(key),
+      });
+    };
+
+    Storage.prototype.getItem = function patchedGetItem(key) {
+      record("getItem", this, key);
+      return originalGetItem.call(this, key);
+    };
+    Storage.prototype.setItem = function patchedSetItem(key, value) {
+      record("setItem", this, key);
+      return originalSetItem.call(this, key, value);
+    };
+    Storage.prototype.removeItem = function patchedRemoveItem(key) {
+      record("removeItem", this, key);
+      return originalRemoveItem.call(this, key);
+    };
+  }, { targetKeys: TARGET_STORAGE_KEYS });
+}
+
 async function snapshot(page) {
   return page.evaluate(({ legacyKeys, secureKeys }) => ({
     legacy: Object.fromEntries(legacyKeys.map((key) => [key, localStorage.getItem(key)])),
@@ -123,6 +159,7 @@ async function main() {
 
   try {
     await seed(page, base);
+    await installStorageTouchAudit(page);
 
     await page.goto(`${base}/#/pre-consulta`, { waitUntil: "domcontentloaded" });
     await page.getByTestId("pre-consulta-local-persistence-disabled").waitFor({ state: "visible", timeout: 15000 });
@@ -147,6 +184,13 @@ async function main() {
       throw new Error("recepção exibiu dado local legado no LIVE");
     }
 
+    // Verificar o auditor ANTES do snapshot: o snapshot usa getItem de propósito
+    // para comparar os sentinelas e não deve contaminar a prova de zero toque.
+    const touches = await page.evaluate(() => window.__neuropedPrevisitStorageTouches || []);
+    if (touches.length > 0) {
+      throw new Error(`storage clínico de pré-visita foi tocado em LIVE: ${JSON.stringify(touches)}`);
+    }
+
     const stored = await snapshot(page);
     if (JSON.stringify(stored.legacy) !== JSON.stringify(LEGACY_SENTINELS)) {
       throw new Error(`localStorage legado foi alterado em LIVE: ${JSON.stringify(stored.legacy)}`);
@@ -158,7 +202,7 @@ async function main() {
     const loginVisible = await page.getByRole("heading", { name: /entrar|login/i }).isVisible().catch(() => false);
     if (loginVisible) throw new Error("sessão remota E2E não foi reconhecida como autenticada");
 
-    console.log("[live-previsit-block] ✓ LIVE: pré-consulta/pré-retorno só em memória, recepção sem fila local e storages preservados byte-a-byte");
+    console.log("[live-previsit-block] ✓ LIVE: zero toque nas chaves clínicas de pré-visita, formulários só em memória, recepção sem fila local e sentinelas preservadas byte-a-byte");
   } finally {
     await browser.close();
     server.close();
