@@ -1,0 +1,37 @@
+name: Apply LIVE storage source guards
+
+on:
+  push:
+    branches:
+      - manus/production-readiness-2026-08-23
+    paths:
+      - "scripts/apply-live-storage-source-guards.mjs"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: manus/production-readiness-2026-08-23
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Apply exact source guards
+        run: node scripts/apply-live-storage-source-guards.mjs
+      - name: Commit only guarded source edits
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --exit-code -- client/src/pages/caa.tsx client/src/pages/assinatura-digital.tsx && {
+            echo "::error::Expected source transformations produced no diff."
+            exit 1
+          }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/caa.tsx client/src/pages/assinatura-digital.tsx
+          git commit -m "security(live): skip CAA and signature legacy storage before browser API"
+          git push origin HEAD:manus/production-readiness-2026-08-23
