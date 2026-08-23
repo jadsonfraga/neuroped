@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
-import { existsSync, extname, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { extname, join } from "node:path";
 import { chromium } from "playwright";
 
 const DIST = "dist/public";
