@@ -302,11 +302,19 @@ for (const trigger of [
   assert.ok(migration.includes(trigger), `trigger tenant ausente: ${trigger}`);
 }
 
-// 9) Cache/memória: troca de clínica zera identidade ativa antes de limpar e
-// ativar o novo tenant; logout/login destrói cache e cofre persistente.
+// 9) Cache/memória: o contexto é esvaziado antes da limpeza e o novo tenant só é
+// ativado depois de cancelar/limpar todas as queries. Logout/login também destrói
+// Query cache e o cofre persistente.
 const clinicContext = readFileSync("client/src/contexts/ClinicContext.tsx", "utf8");
 const authContext = readFileSync("client/src/contexts/AuthContext.tsx", "utf8");
-assert.match(clinicContext, /setActiveClinicId\(null\)[\s\S]*queryClient\.clear\(\)[\s\S]*setActiveClinicId\(clinicId\)/);
+assert.match(
+  clinicContext,
+  /async function clearClinicalClientCaches\(\)[\s\S]*queryClient\.cancelQueries\(\)[\s\S]*queryClient\.clear\(\)/,
+);
+assert.match(
+  clinicContext,
+  /setActiveClinicIdState\(null\)[\s\S]*persistClinicId\(null\)[\s\S]*await clearClinicalClientCaches\(\)[\s\S]*setActiveClinicIdState\(clinicId\)[\s\S]*persistClinicId\(clinicId\)/,
+);
 assert.match(authContext, /queryClient\.clear\(\)/);
 assert.match(authContext, /secureClearAll\(\)/);
 
