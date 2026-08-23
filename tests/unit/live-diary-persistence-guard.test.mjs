@@ -6,6 +6,8 @@ const read = (path) =>
 
 const diary = read("client/src/components/DiarioClinico.tsx");
 const acompanhamento = read("client/src/pages/neuroped-acompanhamento.tsx");
+const epilepsy = read("client/src/pages/epilepsy-diary.tsx");
+const headache = read("client/src/pages/headache-calendar.tsx");
 
 assert.match(diary, /useAuth/);
 assert.match(
@@ -50,4 +52,36 @@ assert.match(acompanhamento, /data-testid="clinical-school-correlation-live-bloc
 assert.match(acompanhamento, /LIVE · sem prontuário local paralelo/);
 assert.match(acompanhamento, /Nenhum dado local é lido, apagado ou migrado automaticamente/);
 
-console.log("✓ LIVE diary guard: leitura, migração, escrita e correlação locais permanecem bloqueadas no modo remoto");
+function assertStandaloneDiaryGuard(source, { name, entryType, disabledTestId }) {
+  assert.match(source, /useAuth/);
+  assert.match(
+    source,
+    /const localDraftEnabled = !\(accessMode === "remote" && isAuthenticated\)/,
+    `${name}: modo remoto autenticado deve bloquear rascunho local`,
+  );
+
+  const guard = source.indexOf("if (!localDraftEnabled) {");
+  const readAt = source.indexOf(`secureGet<${entryType}[]>(STORAGE_KEY)`);
+  assert.ok(guard >= 0 && readAt >= 0 && guard < readAt, `${name}: guard deve anteceder secureGet`);
+
+  const saveGuard = source.indexOf("if (!entriesReady || !localDraftEnabled) return;");
+  const writeAt = source.indexOf("secureSet(STORAGE_KEY, snapshot)");
+  assert.ok(saveGuard >= 0 && writeAt >= 0 && saveGuard < writeAt, `${name}: guard deve anteceder secureSet`);
+
+  assert.match(source, new RegExp(`data-testid="${disabledTestId}"`));
+  assert.match(source, /não lê nem grava o histórico deste dispositivo/);
+  assert.match(source, /não são migrados automaticamente para o prontuário tenant-aware/);
+}
+
+assertStandaloneDiaryGuard(epilepsy, {
+  name: "epilepsia",
+  entryType: "EpilepsyEntry",
+  disabledTestId: "epilepsy-diary-local-persistence-disabled",
+});
+assertStandaloneDiaryGuard(headache, {
+  name: "cefaleia",
+  entryType: "HeadacheEntry",
+  disabledTestId: "headache-diary-local-persistence-disabled",
+});
+
+console.log("✓ LIVE diary guard: diários genéricos, epilepsia, cefaleia e correlação local permanecem fail-closed no remoto");
