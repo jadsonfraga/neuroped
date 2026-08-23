@@ -1,0 +1,69 @@
+name: LIVE diary persistence guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/components/DiarioClinico.tsx"
+      - "client/src/pages/neuroped-acompanhamento.tsx"
+      - "tests/unit/live-diary-persistence-guard.test.mjs"
+      - "tests/e2e/neuroped-acompanhamento.mjs"
+      - ".github/workflows/live-diary-persistence-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/components/DiarioClinico.tsx"
+      - "client/src/pages/neuroped-acompanhamento.tsx"
+      - "tests/unit/live-diary-persistence-guard.test.mjs"
+      - "tests/e2e/neuroped-acompanhamento.mjs"
+      - ".github/workflows/live-diary-persistence-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-diary-persistence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fail-closed-diary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Audit dependency graph
+        run: npm audit --audit-level=high
+
+      - name: Prove LIVE diary fail-closed contract
+        run: node tests/unit/live-diary-persistence-guard.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build client
+        run: npm run build:client
+
+      - name: Install Chromium for NeuroAcompanhamento E2E
+        run: npx playwright install --with-deps chromium
+
+      - name: Run NeuroAcompanhamento browser regression
+        run: npm run test:e2e:neuroped-acompanhamento
