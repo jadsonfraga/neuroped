@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { AlertTriangle, BrainCog, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
+import { AlertTriangle, BrainCog, Plus, Trash2, FileDown, Info, Calendar, ShieldAlert } from "lucide-react";
 import {
   headacheTypes, headacheLocations, headacheTriggers,
   headacheSymptoms, headacheAuraTypes,
   type HeadacheEntry
 } from "@/data/expandedScales";
+import { useAuth } from "@/contexts/AuthContext";
 import { secureGet, secureSet } from "@/lib/secureStorage";
 import { neutralizeCsvFormula } from "@/lib/csv";
 
@@ -76,6 +77,8 @@ function csvCell(value: unknown): string {
 }
 
 export default function HeadacheCalendarPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const localDraftEnabled = !(accessMode === "remote" && isAuthenticated);
   const [entries, setEntries] = useState<HeadacheEntry[]>([]);
   const [entriesReady, setEntriesReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -85,6 +88,15 @@ export default function HeadacheCalendarPage() {
 
   useEffect(() => {
     let active = true;
+    if (!localDraftEnabled) {
+      setEntries([]);
+      setStorageError(false);
+      setAdding(false);
+      setEntriesReady(true);
+      return () => { active = false; };
+    }
+
+    setEntriesReady(false);
     void (async () => {
       const restored = sanitizeEntries(await secureGet<HeadacheEntry[]>(STORAGE_KEY));
       if (!active) return;
@@ -92,20 +104,20 @@ export default function HeadacheCalendarPage() {
       setEntriesReady(true);
     })();
     return () => { active = false; };
-  }, []);
+  }, [localDraftEnabled]);
 
   useEffect(() => {
-    if (!entriesReady) return;
+    if (!entriesReady || !localDraftEnabled) return;
     const snapshot = sanitizeEntries(entries);
     const operation = saveQueue.current
       .catch(() => undefined)
       .then(() => secureSet(STORAGE_KEY, snapshot));
     saveQueue.current = operation.then(() => undefined, () => undefined);
     void operation.then((stored) => setStorageError(stored !== true));
-  }, [entries, entriesReady]);
+  }, [entries, entriesReady, localDraftEnabled]);
 
   function saveEntry() {
-    if (!current.type) return;
+    if (!localDraftEnabled || !current.type) return;
     setEntries((previous) => [current, ...previous].slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
     setAdding(false);
@@ -149,6 +161,25 @@ export default function HeadacheCalendarPage() {
     );
   }
 
+  if (!localDraftEnabled) {
+    return (
+      <Card
+        className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+        data-testid="headache-diary-local-persistence-disabled"
+      >
+        <CardContent className="flex items-start gap-3 p-5 text-sm leading-6 text-amber-950 dark:text-amber-100">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Calendário local de cefaleia bloqueado no modo clínico LIVE.</p>
+            <p className="mt-1">
+              A sessão remota não lê nem grava o histórico deste dispositivo. Registros locais preexistentes permanecem preservados e não são migrados automaticamente para o prontuário tenant-aware.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -157,7 +188,7 @@ export default function HeadacheCalendarPage() {
         </div>
         <div>
           <h1 className="text-lg font-bold">Calendário de Cefaleia</h1>
-          <p className="text-xs text-muted-foreground">Registro diário de episódios de dor de cabeça</p>
+          <p className="text-xs text-muted-foreground">Rascunho local de episódios de dor de cabeça</p>
         </div>
       </div>
 
@@ -165,7 +196,7 @@ export default function HeadacheCalendarPage() {
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-rose-800 dark:text-rose-300 leading-relaxed">
-            Registre cada episódio com detalhes. O histórico fica cifrado neste dispositivo e é apagado no logout; exporte o CSV quando precisar compartilhar com a equipe clínica.
+            Registre cada episódio com detalhes. Este é um rascunho local cifrado e não integra o prontuário LIVE; exporte o CSV quando precisar compartilhar com a equipe clínica.
           </p>
         </div>
       </div>
@@ -173,7 +204,7 @@ export default function HeadacheCalendarPage() {
       {storageError && (
         <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200" role="alert">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>O episódio está visível nesta tela, mas o cofre local não confirmou a gravação. Exporte o CSV antes de sair.</span>
+          <span>O rascunho está visível nesta tela, mas o cofre local não confirmou a gravação. Exporte o CSV antes de sair.</span>
         </div>
       )}
 
@@ -324,7 +355,7 @@ export default function HeadacheCalendarPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={saveEntry} disabled={!current.type} className="flex-1">Salvar Registro</Button>
+              <Button onClick={saveEntry} disabled={!current.type} className="flex-1">Salvar Rascunho</Button>
               <Button onClick={() => { setCurrent(newEntry()); setAdding(false); }} variant="outline">Cancelar</Button>
             </div>
           </CardContent>
@@ -336,14 +367,14 @@ export default function HeadacheCalendarPage() {
           <CardContent className="p-8 text-center space-y-3">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground">Nenhum episódio registrado ainda.</p>
-            <p className="text-xs text-muted-foreground">Clique em “Novo Episódio” para começar o registro.</p>
+            <p className="text-xs text-muted-foreground">Clique em “Novo Episódio” para começar o rascunho local.</p>
           </CardContent>
         </Card>
       )}
 
       {entries.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-foreground">Registros ({entries.length})</h3>
+          <h3 className="text-sm font-bold text-foreground">Rascunhos ({entries.length})</h3>
           {entries.map((e, i) => (
             <Card key={`${e.date}-${e.type}-${i}`} className="border-card-border">
               <CardContent className="p-4 space-y-2">

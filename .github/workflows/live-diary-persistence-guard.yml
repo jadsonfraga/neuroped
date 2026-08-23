@@ -1,0 +1,91 @@
+name: LIVE diary persistence guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/components/DiarioClinico.tsx"
+      - "client/src/pages/neuroped-acompanhamento.tsx"
+      - "client/src/pages/epilepsy-diary.tsx"
+      - "client/src/pages/headache-calendar.tsx"
+      - "client/src/lib/persistentSecureStorage.ts"
+      - "tests/unit/live-diary-persistence-guard.test.mjs"
+      - "tests/e2e/neuroped-acompanhamento.mjs"
+      - "tests/e2e/live-diary-persistence-block.mjs"
+      - ".github/workflows/live-diary-persistence-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/components/DiarioClinico.tsx"
+      - "client/src/pages/neuroped-acompanhamento.tsx"
+      - "client/src/pages/epilepsy-diary.tsx"
+      - "client/src/pages/headache-calendar.tsx"
+      - "client/src/lib/persistentSecureStorage.ts"
+      - "tests/unit/live-diary-persistence-guard.test.mjs"
+      - "tests/e2e/neuroped-acompanhamento.mjs"
+      - "tests/e2e/live-diary-persistence-block.mjs"
+      - ".github/workflows/live-diary-persistence-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-diary-persistence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fail-closed-diary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Audit dependency graph
+        run: npm audit --audit-level=high
+
+      - name: Prove LIVE diary fail-closed contract
+        run: node tests/unit/live-diary-persistence-guard.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Install Chromium for browser regressions
+        run: npx playwright install --with-deps chromium
+
+      - name: Build explicit local/offline client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: local
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Prove local diaries still persist and export
+        run: npm run test:e2e:neuroped-acompanhamento
+
+      - name: Build explicit remote/LIVE client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Prove remote diaries fail closed without touching local IndexedDB
+        run: node tests/e2e/live-diary-persistence-block.mjs

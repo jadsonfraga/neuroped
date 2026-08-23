@@ -74,7 +74,7 @@ async function main() {
     await page.getByLabel("Comunicação e linguagem").fill("Usa frases curtas e compreende instruções simples.");
     await page.getByLabel("Interação social e comportamento").fill("Busca o cuidador e aceita turnos breves na brincadeira.");
     await page.getByLabel("Houve perda de habilidade percebida?").selectOption({ label: "Não observado" });
-    await page.getByRole("button", { name: "Salvar registro" }).click();
+    await page.getByRole("button", { name: "Salvar rascunho local" }).click();
 
     await page.getByText("1 registro", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
     await page.getByRole("button", { name: "Histórico" }).click();
@@ -88,7 +88,7 @@ async function main() {
     await page.getByLabel("Humor predominante").selectOption({ label: "tranquilo" });
     await page.getByLabel("Ocorrências").fill("Precisou de duas retomadas durante a atividade.");
     await page.getByLabel("Antecedente (o que veio antes)").fill("Atividade longa após o recreio.");
-    await page.getByRole("button", { name: "Salvar registro" }).click();
+    await page.getByRole("button", { name: "Salvar rascunho local" }).click();
     await page.getByText("1 registro", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
     await page.waitForTimeout(1000);
 
@@ -120,7 +120,7 @@ async function main() {
     await page.getByText("1 registro", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
     await page.getByText("Corre, sobe escadas e participa das brincadeiras.", { exact: true }).waitFor();
 
-    console.log("[neuroped-acompanhamento] ✓ fluxo E2E verde: desenvolvimento + escola relacionados, persistidos e exportados");
+    console.log("[neuroped-acompanhamento] ✓ modo local: desenvolvimento + escola relacionados, persistidos e exportados");
   } finally {
     await browser.close();
     if (server) server.close();
