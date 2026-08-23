@@ -4,26 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - "client/src/lib/clinicalBrowserPersistencePolicy.ts"
-      - "client/src/lib/persistentSecureStorage.ts"
-      - "client/src/lib/secureStorage.ts"
-      - "client/src/lib/previsitLocalPersistence.ts"
-      - "client/src/features/cognitive-lab/**"
-      - "client/src/pages/caa.tsx"
-      - "client/src/pages/assinatura-digital.tsx"
-      - "client/src/lib/agendaCore.ts"
-      - "client/src/pages/conecta.tsx"
-      - "client/src/components/DiarioClinico.tsx"
-      - "client/src/pages/epilepsy-diary.tsx"
-      - "client/src/pages/headache-calendar.tsx"
-      - "client/src/hooks/useSecureScaleDraft.ts"
-      - "client/src/main.tsx"
-      - "client/public/sw.js"
-      - "tests/unit/clinical-browser-persistence-policy.test.ts"
-      - "tests/unit/clinical-browser-persistence-boundary.test.mjs"
-      - "tests/e2e/live-browser-persistence-block.mjs"
-      - ".github/workflows/live-browser-persistence-guard.yml"
   push:
     branches:
       - main
