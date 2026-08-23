@@ -37,6 +37,12 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      # O gate abaixo precisa provar comportamento em DOM real. O download é
+      # explícito e restrito ao Chromium para manter o CI reproduzível e evitar
+      # que ausência de browser seja convertida silenciosamente em lint estático.
+      - name: Install Chromium for mandatory browser smoke
+        run: npx playwright install --with-deps chromium
+
       - name: Audit full dependency graph
         run: npm audit --audit-level=high
 
@@ -48,6 +54,14 @@ jobs:
 
       - name: Build application
         run: npm run build
+
+      # Smoke real e obrigatório: abre uma escala publicada no build, responde
+      # os itens em Chromium e exige resultado + relatório clínico + ação de
+      # vínculo. Qualquer falha de browser ou DOM reprova o workflow.
+      - name: Run mandatory Chromium clinical smoke
+        env:
+          E2E_ROUTE: gad7
+        run: npm run test:e2e:scales
 
       - name: Audit real initial JavaScript payload
         run: npm run test:bundle-audit && npm run audit:bundle
