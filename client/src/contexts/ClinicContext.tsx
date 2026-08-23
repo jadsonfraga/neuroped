@@ -55,14 +55,14 @@ async function clearClinicalClientCaches(): Promise<void> {
 }
 
 export function ClinicProvider({ children }: { children: ReactNode }) {
-  const { accessMode, isAuthenticated } = useAuth();
+  const { accessMode, isAuthenticated, user } = useAuth();
   const [clinics, setClinics] = useState<ClinicMembership[]>([]);
   const [activeClinicId, setActiveClinicIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reloadClinics = useCallback(async () => {
-    if (accessMode !== "remote" || !isAuthenticated) {
+    if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword) {
       setClinics([]);
       setActiveClinicIdState(null);
       persistClinicId(null);
@@ -93,7 +93,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [accessMode, isAuthenticated]);
+  }, [accessMode, isAuthenticated, user?.mustChangePassword]);
 
   useEffect(() => {
     void reloadClinics();
