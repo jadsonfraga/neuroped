@@ -7,6 +7,8 @@ on:
     paths:
       - "client/src/components/DiarioClinico.tsx"
       - "client/src/pages/neuroped-acompanhamento.tsx"
+      - "client/src/pages/epilepsy-diary.tsx"
+      - "client/src/pages/headache-calendar.tsx"
       - "tests/unit/live-diary-persistence-guard.test.mjs"
       - "tests/e2e/neuroped-acompanhamento.mjs"
       - ".github/workflows/live-diary-persistence-guard.yml"
@@ -16,6 +18,8 @@ on:
     paths:
       - "client/src/components/DiarioClinico.tsx"
       - "client/src/pages/neuroped-acompanhamento.tsx"
+      - "client/src/pages/epilepsy-diary.tsx"
+      - "client/src/pages/headache-calendar.tsx"
       - "tests/unit/live-diary-persistence-guard.test.mjs"
       - "tests/e2e/neuroped-acompanhamento.mjs"
       - ".github/workflows/live-diary-persistence-guard.yml"
