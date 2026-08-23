@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Info,
+  ShieldAlert,
   ShieldCheck,
   School,
   Waves,
@@ -19,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DiarioClinico, type DiarioConfig, type DiarioEntry } from "@/components/DiarioClinico";
+import { useAuth } from "@/contexts/AuthContext";
 import { secureGet } from "@/lib/secureStorage";
 
 const developmentConfig: DiarioConfig = {
@@ -144,13 +146,21 @@ function scoreLabel(value: unknown): string {
   return Number.isFinite(number) ? `${number}/5` : "—";
 }
 
-function ClinicalSchoolCorrelation() {
+function ClinicalSchoolCorrelation({ localDraftsEnabled }: { localDraftsEnabled: boolean }) {
   const [schoolEntries, setSchoolEntries] = useState<DiarioEntry[]>([]);
   const [developmentEntries, setDevelopmentEntries] = useState<DiarioEntry[]>([]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let active = true;
+    if (!localDraftsEnabled) {
+      setSchoolEntries([]);
+      setDevelopmentEntries([]);
+      setReady(true);
+      return () => { active = false; };
+    }
+
+    setReady(false);
     void Promise.all([
       secureGet<DiarioEntry[]>("diario:diario-escola"),
       secureGet<DiarioEntry[]>("diario:neuroped-desenvolvimento-brasil-v1"),
@@ -161,7 +171,7 @@ function ClinicalSchoolCorrelation() {
       setReady(true);
     });
     return () => { active = false; };
-  }, []);
+  }, [localDraftsEnabled]);
 
   const school = useMemo(
     () => [...schoolEntries].sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)),
@@ -181,10 +191,29 @@ function ClinicalSchoolCorrelation() {
   const behaviorAlerts = school.filter((entry) => Number(entry.comportamento) <= 2).length;
   const regressionNotes = development.filter((entry) => entry.regression === "Sim — requer avaliação clínica").length;
 
+  if (!localDraftsEnabled) {
+    return (
+      <Card
+        className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+        data-testid="clinical-school-correlation-live-blocked"
+      >
+        <CardContent className="flex items-start gap-3 p-5 text-sm leading-6 text-amber-950 dark:text-amber-100">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Correlação com rascunhos locais desativada em LIVE.</p>
+            <p className="mt-1">
+              A sessão remota não lê históricos clínicos armazenados apenas neste dispositivo. A correlação deve usar dados tenant-aware vinculados ao paciente quando esse fluxo estiver disponível.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!ready) {
     return (
       <Card role="status" aria-live="polite">
-        <CardContent className="p-5 text-sm text-muted-foreground">Lendo registros protegidos para preparar o resumo descritivo…</CardContent>
+        <CardContent className="p-5 text-sm text-muted-foreground">Lendo rascunhos locais protegidos para preparar o resumo descritivo…</CardContent>
       </Card>
     );
   }
@@ -196,7 +225,7 @@ function ClinicalSchoolCorrelation() {
           <div>
             <CardTitle className="flex items-center gap-2 text-base"><Activity className="h-4 w-4 text-sky-600" /> Relação clínica–escola</CardTitle>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Resumo descritivo dos registros já salvos. A coincidência de datas organiza a revisão; não prova relação causal entre eventos.
+              Resumo descritivo dos rascunhos locais já salvos. A coincidência de datas organiza a revisão; não prova relação causal entre eventos.
             </p>
           </div>
           <Button asChild variant="outline" size="sm" className="gap-2"><Link href="/diario-escola"><School className="h-4 w-4" /> Abrir diário escolar</Link></Button>
@@ -212,7 +241,7 @@ function ClinicalSchoolCorrelation() {
 
         {school.length === 0 && development.length === 0 ? (
           <div className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground">
-            Ainda não há registros suficientes para relacionar. Comece pelo diário escolar ou pela linha do tempo do desenvolvimento.
+            Ainda não há rascunhos locais suficientes para relacionar. Comece pelo diário escolar ou pela linha do tempo do desenvolvimento.
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -256,6 +285,9 @@ function ClinicalSchoolCorrelation() {
 }
 
 export default function NeuropedAcompanhamentoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
+
   return (
     <div className="space-y-7 pb-12" data-testid="neuroacompanhamento-page">
       <header className="relative overflow-hidden rounded-3xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-background to-cyan-50 p-6 shadow-sm dark:border-sky-900/50 dark:from-sky-950/30 dark:via-background dark:to-cyan-950/20 md:p-8">
@@ -264,6 +296,7 @@ export default function NeuropedAcompanhamentoPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-sky-600 text-white hover:bg-sky-600">Neuroped · versão brasileira</Badge>
             <Badge variant="outline" className="border-sky-300 text-sky-800 dark:border-sky-800 dark:text-sky-200">Acompanhamento longitudinal</Badge>
+            {isRemoteClinical && <Badge variant="outline" className="border-amber-400 text-amber-800 dark:border-amber-700 dark:text-amber-200">LIVE · sem prontuário local paralelo</Badge>}
           </div>
           <div className="flex items-start gap-4">
             <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-sm sm:flex">
@@ -272,7 +305,9 @@ export default function NeuropedAcompanhamentoPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">NeuroAcompanhamento</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
-                Um centro de controle para registrar desenvolvimento, crises e evolução clínica com linguagem brasileira, histórico protegido e próximos passos claros.
+                {isRemoteClinical
+                  ? "Centro de controle clínico com persistência local de diários bloqueada durante a sessão LIVE."
+                  : "Um centro de controle para registrar desenvolvimento, crises e evolução clínica com linguagem brasileira, rascunhos locais protegidos e próximos passos claros."}
               </p>
             </div>
           </div>
@@ -287,6 +322,11 @@ export default function NeuropedAcompanhamentoPage() {
             <p>
               Os registros organizam informações relatadas por família, escola ou equipe. Eles não substituem exame clínico, EEG, avaliação neuropsicológica, escalas licenciadas ou julgamento profissional.
             </p>
+            {isRemoteClinical && (
+              <p className="font-medium">
+                Em LIVE, diários locais são bloqueados para evitar divergência entre o dispositivo e o prontuário tenant-aware.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -326,7 +366,7 @@ export default function NeuropedAcompanhamentoPage() {
         />
       </section>
 
-      <ClinicalSchoolCorrelation />
+      <ClinicalSchoolCorrelation localDraftsEnabled={!isRemoteClinical} />
 
       <section className="space-y-4" aria-labelledby="development-title">
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -334,12 +374,14 @@ export default function NeuropedAcompanhamentoPage() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">Módulo próprio</p>
             <h2 id="development-title" className="mt-1 text-xl font-bold text-foreground">Linha do tempo brasileira do desenvolvimento</h2>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Registro longitudinal protegido neste dispositivo. Use uma entrada por observação relevante e leve o histórico exportado para a consulta quando necessário.
+              {isRemoteClinical
+                ? "No modo LIVE, a persistência local deste diário permanece bloqueada até existir um fluxo tenant-aware próprio. Nenhum dado local é lido, apagado ou migrado automaticamente."
+                : "Rascunho longitudinal protegido neste dispositivo. Use uma entrada por observação relevante e leve o histórico exportado para a consulta quando necessário."}
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-            Cofre local cifrado
+            {isRemoteClinical ? <ShieldAlert className="h-4 w-4 text-amber-600" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
+            {isRemoteClinical ? "Persistência local desativada" : "Cofre local cifrado · rascunho"}
           </div>
         </div>
         <DiarioClinico config={developmentConfig} />
@@ -347,8 +389,12 @@ export default function NeuropedAcompanhamentoPage() {
 
       <section className="grid gap-4 md:grid-cols-3" aria-label="Próximos passos">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Registro seguro</CardTitle></CardHeader>
-          <CardContent className="text-sm leading-6 text-muted-foreground">Os registros longitudinais usam o cofre local protegido do Neuroped e permanecem neste dispositivo.</CardContent>
+          <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Separação de dados</CardTitle></CardHeader>
+          <CardContent className="text-sm leading-6 text-muted-foreground">
+            {isRemoteClinical
+              ? "A sessão LIVE não lê nem cria diários clínicos no cofre local; dados persistidos devem seguir os fluxos tenant-aware."
+              : "Os diários são rascunhos locais cifrados, restritos a este dispositivo, e não equivalem ao prontuário LIVE."}
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><CalendarDays className="h-4 w-4 text-sky-600" /> Próxima consulta</CardTitle></CardHeader>
