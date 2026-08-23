@@ -1,15 +1,23 @@
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Copy, MessageCircle, Printer, Save, Trash2 } from "lucide-react";
+import { ClipboardCheck, Copy, MessageCircle, Printer, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 import { sanitizeAgeInput, validateAge } from "@/lib/preConsultaCore";
+import {
+  PREVISIT_SECURE_KEYS,
+  previsitLegacyGet,
+  previsitLegacyRemove,
+  previsitSecureClear,
+  previsitSecureGet,
+  previsitSecureSet,
+} from "@/lib/previsitLocalPersistence";
 import { copyText, formatForWhatsApp, openWhatsAppShare } from "@/lib/shareText";
-import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
 
 const STORAGE_KEY = "neuroped:pre-retornos";
-const SECURE_STORAGE_KEY = "pre-retornos";
+const SECURE_STORAGE_KEY = PREVISIT_SECURE_KEYS.preRetorno;
 
 interface PreRetornoRecord {
   id: string;
@@ -40,19 +48,20 @@ const opcoesCrises = ["não tem", "sem crises", "reduziu", "aumentou", "mudou pa
 const opcoesMedicacao = ["sem medicação", "usando corretamente", "esquece doses", "suspendeu", "mudou por conta própria", "teve efeitos colaterais"];
 
 async function loadRecords(): Promise<PreRetornoRecord[]> {
-  const protectedRecords = await secureGet<PreRetornoRecord[]>(SECURE_STORAGE_KEY);
+  const protectedRecords = await previsitSecureGet<PreRetornoRecord[]>(SECURE_STORAGE_KEY);
   if (Array.isArray(protectedRecords)) return protectedRecords;
+  const raw = previsitLegacyGet(STORAGE_KEY);
+  if (raw === null) return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const legacy = raw ? JSON.parse(raw) : [];
+    const legacy = JSON.parse(raw);
     if (Array.isArray(legacy) && legacy.length > 0) {
-      const migrated = await secureSet(SECURE_STORAGE_KEY, legacy);
-      if (migrated && localStorage.getItem(STORAGE_KEY) === raw) {
-        localStorage.removeItem(STORAGE_KEY);
+      const migrated = await previsitSecureSet(SECURE_STORAGE_KEY, legacy);
+      if (migrated && previsitLegacyGet(STORAGE_KEY) === raw) {
+        previsitLegacyRemove(STORAGE_KEY);
       }
       return legacy;
     }
-    if (raw !== null) localStorage.removeItem(STORAGE_KEY);
+    previsitLegacyRemove(STORAGE_KEY);
     return [];
   } catch {
     return [];
@@ -62,26 +71,18 @@ async function loadRecords(): Promise<PreRetornoRecord[]> {
 async function saveRecords(items: PreRetornoRecord[]): Promise<boolean> {
   let stored: boolean;
   try {
-    stored = await secureSet(SECURE_STORAGE_KEY, items);
+    stored = await previsitSecureSet(SECURE_STORAGE_KEY, items);
   } catch {
     return false;
   }
   if (!stored) return false;
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // A cópia cifrada já foi confirmada; a limpeza legada é best-effort.
-  }
+  previsitLegacyRemove(STORAGE_KEY);
   return true;
 }
 
 async function clearRecords(): Promise<void> {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // A entrada protegida ainda será removida abaixo.
-  }
-  await secureClear(SECURE_STORAGE_KEY);
+  previsitLegacyRemove(STORAGE_KEY);
+  await previsitSecureClear(SECURE_STORAGE_KEY);
 }
 
 function buildRecord(data: Omit<PreRetornoRecord, "id" | "createdAt">): PreRetornoRecord {
@@ -128,6 +129,8 @@ function FieldSelect({ label, value, onChange, options, id }: { label: string; v
 }
 
 export default function PreRetornoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
   const [meses, setMeses] = useState("0");
@@ -159,6 +162,10 @@ export default function PreRetornoPage() {
 
   async function salvar() {
     setStorageError("");
+    if (!localPersistenceEnabled) {
+      setSaved(null);
+      return;
+    }
     if (!ageValidation.isValid) {
       setSaved(null);
       return;
@@ -175,6 +182,7 @@ export default function PreRetornoPage() {
   }
 
   async function apagarDadosLocais() {
+    if (!localPersistenceEnabled) return;
     if (!window.confirm("Apagar todos os pré-retornos protegidos deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearRecords();
     setSaved(null);
@@ -204,12 +212,29 @@ export default function PreRetornoPage() {
             <ClipboardCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">pré-retorno · família</Badge>
+            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">
+              {localPersistenceEnabled ? "pré-retorno · rascunho local" : "LIVE · não armazenado no dispositivo"}
+            </Badge>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Pré-retorno familiar</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Registro simples do que mudou desde a última consulta, pronto para recepção e médico.</p>
           </div>
         </div>
       </header>
+
+      {!localPersistenceEnabled && (
+        <Card
+          className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+          data-testid="pre-retorno-local-persistence-disabled"
+        >
+          <CardContent className="flex items-start gap-3 p-4 text-sm leading-6 text-amber-950 dark:text-amber-100">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-semibold">Persistência local bloqueada no modo clínico LIVE.</p>
+              <p>O formulário permanece em memória para gerar, copiar, compartilhar ou imprimir o resumo, mas não lê, migra, grava nem apaga pré-retornos deste dispositivo. Dados locais preexistentes permanecem intocados.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <Card><CardContent className="space-y-4 p-4">
@@ -217,40 +242,14 @@ export default function PreRetornoPage() {
             <label htmlFor="pre-retorno-paciente" className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Paciente</span><Input id="pre-retorno-paciente" value={paciente} onChange={(e) => setPaciente(e.target.value)} placeholder="Nome ou identificação" /></label>
             <label htmlFor="pre-retorno-anos" className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Anos</span>
-              <Input
-                id="pre-retorno-anos"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                min={0}
-                max={18}
-                value={anos}
-                aria-invalid={!ageValidation.isValid}
-                aria-describedby="pre-retorno-age-error"
-                onChange={(e) => setAnos(sanitizeAgeInput(e.target.value))}
-                className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
-              />
+              <Input id="pre-retorno-anos" type="text" inputMode="numeric" pattern="[0-9]*" min={0} max={18} value={anos} aria-invalid={!ageValidation.isValid} aria-describedby="pre-retorno-age-error" onChange={(e) => setAnos(sanitizeAgeInput(e.target.value))} className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined} />
             </label>
             <label htmlFor="pre-retorno-meses" className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Meses</span>
-              <Input
-                id="pre-retorno-meses"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                min={0}
-                max={11}
-                value={meses}
-                aria-invalid={!ageValidation.isValid}
-                aria-describedby="pre-retorno-age-error"
-                onChange={(e) => setMeses(sanitizeAgeInput(e.target.value))}
-                className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined}
-              />
+              <Input id="pre-retorno-meses" type="text" inputMode="numeric" pattern="[0-9]*" min={0} max={11} value={meses} aria-invalid={!ageValidation.isValid} aria-describedby="pre-retorno-age-error" onChange={(e) => setMeses(sanitizeAgeInput(e.target.value))} className={!ageValidation.isValid ? "border-destructive focus-visible:ring-destructive" : undefined} />
             </label>
             {!ageValidation.isValid && (
-              <div id="pre-retorno-age-error" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive md:col-span-2" role="alert">
-                {ageValidation.errors.join(" ")}
-              </div>
+              <div id="pre-retorno-age-error" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive md:col-span-2" role="alert">{ageValidation.errors.join(" ")}</div>
             )}
             <label htmlFor="pre-retorno-ultima-consulta" className="space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Última consulta</span><Input id="pre-retorno-ultima-consulta" value={ultimaConsulta} onChange={(e) => setUltimaConsulta(e.target.value)} placeholder="Data aproximada" /></label>
             <label htmlFor="pre-retorno-motivo" className="space-y-1 md:col-span-2"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Motivo do retorno</span><Input id="pre-retorno-motivo" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Principal motivo" /></label>
@@ -273,16 +272,18 @@ export default function PreRetornoPage() {
           <label htmlFor="pre-retorno-observacoes" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea id="pre-retorno-observacoes" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
+            {localPersistenceEnabled && (
+              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
+            )}
             <Button variant="outline" onClick={copiarResumo} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
             <Button variant="outline" onClick={compartilharWhatsApp} aria-disabled={!ageValidation.isValid} className="gap-2"><MessageCircle className="h-4 w-4" /> Copiar para WhatsApp</Button>
             <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
-            <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+            {localPersistenceEnabled && (
+              <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+            )}
           </div>
           {storageError && (
-            <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
-              {storageError}
-            </p>
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">{storageError}</p>
           )}
         </CardContent></Card>
 
