@@ -3,6 +3,7 @@ import {
   type AuthUser,
   getStoredUser,
   loginRequest,
+  changePasswordRequest,
   logoutRequest,
   authFetch,
   getAccessToken,
@@ -21,6 +22,7 @@ interface AuthContextValue {
   accessMode: AccessMode;
   remoteConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -106,6 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
+  const changePassword = useCallback(async (
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> => {
+    const data = await changePasswordRequest(currentPassword, newPassword);
+    // A família anterior foi revogada no servidor e os tokens já foram trocados
+    // pelo authClient. Nenhum cache clínico pré-rotação pode sobreviver à sessão nova.
+    await clearSessionScopedClientState();
+    setUser(data.user);
+  }, []);
+
   const logout = useCallback(async (): Promise<void> => {
     setUser(null);
     try {
@@ -134,10 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accessMode,
       remoteConfigured,
       login,
+      changePassword,
       logout,
       refreshUser,
     }),
-    [user, isLoading, accessMode, remoteConfigured, login, logout, refreshUser],
+    [user, isLoading, accessMode, remoteConfigured, login, changePassword, logout, refreshUser],
   );
 
   return (
