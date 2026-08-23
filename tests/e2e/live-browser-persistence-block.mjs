@@ -214,31 +214,52 @@ async function installAudit(page) {
       ].some((prefix) => key.startsWith(prefix));
     };
 
-    const originalGet = Storage.prototype.getItem;
-    const originalSet = Storage.prototype.setItem;
-    const originalRemove = Storage.prototype.removeItem;
-    const originalOpen = indexedDB.open.bind(indexedDB);
-    const originalCachePut = globalThis.Cache?.prototype?.put;
-
     window.__neuropedGlobalPersistenceTouches = [];
     const touch = (entry) => window.__neuropedGlobalPersistenceTouches.push(entry);
 
-    Storage.prototype.getItem = function auditedGet(key) {
-      if (clinicalKey(key)) touch({ surface: "Storage", op: "get", key: String(key) });
-      return originalGet.call(this, key);
+    // O app instala sua própria fronteira de Storage. O auditor precisa permanecer
+    // do lado de fora dela para provar a TENTATIVA de chamada, e não apenas o
+    // acesso que conseguiu ultrapassar o guard. Um accessor preserva essa camada
+    // mesmo quando o app reassina Storage.prototype.{get,set,remove}Item.
+    const installStorageAudit = (method, operation) => {
+      const descriptor = Object.getOwnPropertyDescriptor(Storage.prototype, method);
+      let implementation = descriptor?.value;
+      if (typeof implementation !== "function") return;
+
+      Object.defineProperty(Storage.prototype, method, {
+        configurable: true,
+        enumerable: descriptor?.enumerable ?? false,
+        get() {
+          const captured = implementation;
+          return function auditedStorageMethod(...args) {
+            const key = args[0];
+            if (clinicalKey(key)) {
+              touch({ surface: "Storage", op: operation, key: String(key) });
+            }
+            return captured.apply(this, args);
+          };
+        },
+        set(next) {
+          if (typeof next === "function") implementation = next;
+        },
+      });
     };
-    Storage.prototype.setItem = function auditedSet(key, value) {
-      if (clinicalKey(key)) touch({ surface: "Storage", op: "set", key: String(key) });
-      return originalSet.call(this, key, value);
-    };
-    Storage.prototype.removeItem = function auditedRemove(key) {
-      if (clinicalKey(key)) touch({ surface: "Storage", op: "remove", key: String(key) });
-      return originalRemove.call(this, key);
-    };
+
+    installStorageAudit("getItem", "get");
+    installStorageAudit("setItem", "set");
+    installStorageAudit("removeItem", "remove");
+
+    const originalOpen = indexedDB.open.bind(indexedDB);
+    const originalDeleteDatabase = indexedDB.deleteDatabase.bind(indexedDB);
+    const originalCachePut = globalThis.Cache?.prototype?.put;
 
     indexedDB.open = function auditedOpen(name, version) {
       if (String(name) === dbName) touch({ surface: "IndexedDB", op: "open", key: String(name) });
       return version === undefined ? originalOpen(name) : originalOpen(name, version);
+    };
+    indexedDB.deleteDatabase = function auditedDeleteDatabase(name) {
+      if (String(name) === dbName) touch({ surface: "IndexedDB", op: "deleteDatabase", key: String(name) });
+      return originalDeleteDatabase(name);
     };
 
     if (originalCachePut) {
