@@ -4,11 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, Zap, Plus, Trash2, FileDown, Info, Calendar } from "lucide-react";
+import { AlertTriangle, Zap, Plus, Trash2, FileDown, Info, Calendar, ShieldAlert } from "lucide-react";
 import {
   epilepsyTypes, epilepsyTriggers, postIctalSymptoms,
   type EpilepsyEntry
 } from "@/data/expandedScales";
+import { useAuth } from "@/contexts/AuthContext";
 import { secureGet, secureSet } from "@/lib/secureStorage";
 import { neutralizeCsvFormula } from "@/lib/csv";
 
@@ -67,6 +68,8 @@ function csvCell(value: unknown): string {
 }
 
 export default function EpilepsyDiaryPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const localDraftEnabled = !(accessMode === "remote" && isAuthenticated);
   const [entries, setEntries] = useState<EpilepsyEntry[]>([]);
   const [entriesReady, setEntriesReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -76,6 +79,15 @@ export default function EpilepsyDiaryPage() {
 
   useEffect(() => {
     let active = true;
+    if (!localDraftEnabled) {
+      setEntries([]);
+      setStorageError(false);
+      setAdding(false);
+      setEntriesReady(true);
+      return () => { active = false; };
+    }
+
+    setEntriesReady(false);
     void (async () => {
       const restored = sanitizeEntries(await secureGet<EpilepsyEntry[]>(STORAGE_KEY));
       if (!active) return;
@@ -83,20 +95,20 @@ export default function EpilepsyDiaryPage() {
       setEntriesReady(true);
     })();
     return () => { active = false; };
-  }, []);
+  }, [localDraftEnabled]);
 
   useEffect(() => {
-    if (!entriesReady) return;
+    if (!entriesReady || !localDraftEnabled) return;
     const snapshot = sanitizeEntries(entries);
     const operation = saveQueue.current
       .catch(() => undefined)
       .then(() => secureSet(STORAGE_KEY, snapshot));
     saveQueue.current = operation.then(() => undefined, () => undefined);
     void operation.then((stored) => setStorageError(stored !== true));
-  }, [entries, entriesReady]);
+  }, [entries, entriesReady, localDraftEnabled]);
 
   function saveEntry() {
-    if (!current.type || !current.duration) return;
+    if (!localDraftEnabled || !current.type || !current.duration) return;
     setEntries((previous) => [current, ...previous].slice(0, MAX_ENTRIES));
     setCurrent(newEntry());
     setAdding(false);
@@ -137,6 +149,25 @@ export default function EpilepsyDiaryPage() {
     );
   }
 
+  if (!localDraftEnabled) {
+    return (
+      <Card
+        className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+        data-testid="epilepsy-diary-local-persistence-disabled"
+      >
+        <CardContent className="flex items-start gap-3 p-5 text-sm leading-6 text-amber-950 dark:text-amber-100">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Diário local de crises bloqueado no modo clínico LIVE.</p>
+            <p className="mt-1">
+              A sessão remota não lê nem grava o histórico deste dispositivo. Registros locais preexistentes permanecem preservados e não são migrados automaticamente para o prontuário tenant-aware.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -145,7 +176,7 @@ export default function EpilepsyDiaryPage() {
         </div>
         <div>
           <h1 className="text-lg font-bold">Diário de Crises Epilépticas</h1>
-          <p className="text-xs text-muted-foreground">Registro e acompanhamento de crises</p>
+          <p className="text-xs text-muted-foreground">Rascunho local para acompanhamento de crises</p>
         </div>
       </div>
 
@@ -153,7 +184,7 @@ export default function EpilepsyDiaryPage() {
         <div className="flex items-start gap-2">
           <Info className="w-4 h-4 text-violet-600 dark:text-violet-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-violet-800 dark:text-violet-300 leading-relaxed">
-            Registre cada crise epiléptica com detalhes. Os dados ficam cifrados neste dispositivo e são apagados no logout. Exporte o diário em CSV quando precisar levá-lo à consulta.
+            Registre cada crise com detalhes. Este é um rascunho local cifrado e não integra o prontuário LIVE. Exporte o diário em CSV quando precisar levá-lo à consulta.
           </p>
         </div>
       </div>
@@ -161,7 +192,7 @@ export default function EpilepsyDiaryPage() {
       {storageError && (
         <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200" role="alert">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>O registro está visível nesta tela, mas o cofre local não confirmou a gravação. Exporte o CSV antes de sair.</span>
+          <span>O rascunho está visível nesta tela, mas o cofre local não confirmou a gravação. Exporte o CSV antes de sair.</span>
         </div>
       )}
 
@@ -292,7 +323,7 @@ export default function EpilepsyDiaryPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={saveEntry} disabled={!current.type || !current.duration} className="flex-1">Salvar Registro</Button>
+              <Button onClick={saveEntry} disabled={!current.type || !current.duration} className="flex-1">Salvar Rascunho</Button>
               <Button onClick={() => { setCurrent(newEntry()); setAdding(false); }} variant="outline">Cancelar</Button>
             </div>
           </CardContent>
@@ -304,14 +335,14 @@ export default function EpilepsyDiaryPage() {
           <CardContent className="p-8 text-center space-y-3">
             <Calendar className="w-10 h-10 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground">Nenhuma crise registrada ainda.</p>
-            <p className="text-xs text-muted-foreground">Clique em “Nova Crise” para começar o registro.</p>
+            <p className="text-xs text-muted-foreground">Clique em “Nova Crise” para começar o rascunho local.</p>
           </CardContent>
         </Card>
       )}
 
       {entries.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-foreground">Registros ({entries.length})</h3>
+          <h3 className="text-sm font-bold text-foreground">Rascunhos ({entries.length})</h3>
           {entries.map((e, i) => (
             <Card key={`${e.date}-${e.time}-${i}`} className="border-card-border">
               <CardContent className="p-4 space-y-2">
