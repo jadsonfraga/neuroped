@@ -8,9 +8,10 @@
  * dispensa a sessão. Este guard falha o CI se o modo aberto voltar a ser ligado
  * por literal ou se uma catraca de acesso clínico desaparecer.
  *
- * A senha local do certificado A1 (.p12/.pfx) é a única exceção: ela pertence ao
- * arquivo criptográfico escolhido pelo próprio usuário, é processada em memória
- * e não funciona como credencial de entrada no aplicativo.
+ * Campos de senha são permitidos apenas em superfícies explicitamente revisadas:
+ * login nominal, troca de senha da conta, gate de senha obrigatória, certificado
+ * A1 local e compatibilidade legada já neutralizada. Qualquer novo type=password
+ * fora dessa lista falha fechado.
  *
  * A autorização dos dados persistidos permanece na API e não é alterada por
  * esta política de interface.
@@ -201,12 +202,14 @@ const passwordInputFiles = walk(clientSourceRoot)
 
 const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/AssinaturaIcpPanel.tsx",
+  "client/src/components/PreferencesPanel.tsx",
   "client/src/components/PrivateGate.tsx",
+  "client/src/components/RequiredPasswordChangeGate.tsx",
   "client/src/pages/generic-scale.tsx",
   "client/src/pages/login.tsx",
 ].sort();
 
-await check("somente a tela nominal de login e o certificado podem receber senha", () => {
+await check("somente superfícies de autenticação/segurança explicitamente aprovadas podem receber senha", () => {
   assert.deepEqual(
     passwordInputFiles,
     EXPECTED_PASSWORD_INPUT_FILES,
@@ -214,8 +217,24 @@ await check("somente a tela nominal de login e o certificado podem receber senha
   );
 });
 
+const passwordChangeGateSrc = read("client/src/components/RequiredPasswordChangeGate.tsx");
+const preferencesSrc = read("client/src/components/PreferencesPanel.tsx");
+await check("troca de senha da conta usa somente o endpoint canônico e não persiste segredo", () => {
+  for (const [label, source] of [
+    ["RequiredPasswordChangeGate", passwordChangeGateSrc],
+    ["PreferencesPanel", preferencesSrc],
+  ]) {
+    assert.match(source, /changePasswordRequest/,
+      `${label} deve usar o cliente canônico de troca de senha`);
+    assert.doesNotMatch(source, /localStorage\.(?:setItem|getItem)\([^\n]*password/i,
+      `${label} não pode persistir senha em localStorage`);
+    assert.doesNotMatch(source, /sessionStorage\.(?:setItem|getItem)\([^\n]*password/i,
+      `${label} não pode persistir senha em sessionStorage`);
+  }
+});
+
 const certificatePanelSrc = read("client/src/components/AssinaturaIcpPanel.tsx");
-await check("única senha operacional é a do certificado A1 local", () => {
+await check("senha do certificado A1 continua isolada do login da conta", () => {
   assert.match(certificatePanelSrc, /Senha do certificado/);
   assert.match(certificatePanelSrc, /accept="\.p12,\.pfx"/);
   assert.match(certificatePanelSrc, /input-p12-senha/);
@@ -229,7 +248,7 @@ const pageAndComponentFiles = walk(clientSourceRoot)
     source: readFileSync(path, "utf8"),
   }));
 
-await check("somente o contexto e a tela de login chamam a API de autenticação", () => {
+await check("somente o contexto e a tela de login chamam a API de autenticação nominal", () => {
   const offenders = pageAndComponentFiles
     .filter(({ path }) => !["client/src/contexts/AuthContext.tsx", "client/src/pages/login.tsx"].includes(path))
     .filter(({ source }) => /loginRequest\s*\(|\/api\/auth\/login/.test(source))
@@ -248,5 +267,5 @@ if (errors.length) {
 }
 
 console.log(
-  "[open-access] ✓ modo aberto é opt-in; rotas clínicas permanecem protegidas e o login remoto não contém segredos",
+  "[open-access] ✓ modo aberto é opt-in; rotas clínicas permanecem protegidas e superfícies de senha ficam explicitamente allowlisted",
 );
