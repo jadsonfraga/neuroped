@@ -17,6 +17,7 @@ import {
   type FluxoPick,
   type FluxoNode,
 } from "@/data/fluxograma";
+import { applyFilterSessionNavigationPrefill } from "@/lib/filterSessionState";
 
 // Rota preenchível de uma referência do fluxograma — só cria link quando a
 // escala existe no app E é preenchível (mesma regra do filtro: só abre o que
@@ -106,11 +107,14 @@ export default function FluxogramaPage() {
   const [, navigate] = useLocation();
   function openInFilter(ageBandId: string, queixaId?: string) {
     if (!queixaId) return;
-    // O contexto atravessa apenas a navegação atual e é removido do histórico
-    // assim que o filtro o consome; nada clínico é gravado em localStorage.
-    navigate("/filtro", {
-      state: { filterPrefill: { age: ageBandId, queixas: [queixaId] } },
+    // Mescla idade/queixa com os filtros já escolhidos nesta aba. Assim a
+    // navegação pelo Fluxograma não apaga busca, respondente, comunicação,
+    // alfabetização ou finalidade clínica previamente selecionados.
+    applyFilterSessionNavigationPrefill({
+      selectedAge: ageBandId,
+      selectedQueixas: [queixaId],
     });
+    navigate("/filtro");
   }
   return (
     <div className="page-enter pb-8 space-y-5">
