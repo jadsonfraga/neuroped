@@ -12,6 +12,7 @@ on:
       - "client/src/lib/persistentSecureStorage.ts"
       - "tests/unit/live-diary-persistence-guard.test.mjs"
       - "tests/e2e/neuroped-acompanhamento.mjs"
+      - "tests/e2e/live-diary-persistence-block.mjs"
       - ".github/workflows/live-diary-persistence-guard.yml"
   push:
     branches:
@@ -24,6 +25,7 @@ on:
       - "client/src/lib/persistentSecureStorage.ts"
       - "tests/unit/live-diary-persistence-guard.test.mjs"
       - "tests/e2e/neuroped-acompanhamento.mjs"
+      - "tests/e2e/live-diary-persistence-block.mjs"
       - ".github/workflows/live-diary-persistence-guard.yml"
 
 permissions:
@@ -36,7 +38,7 @@ concurrency:
 jobs:
   fail-closed-diary:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -65,11 +67,25 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build client
-        run: npm run build:client
-
-      - name: Install Chromium for NeuroAcompanhamento E2E
+      - name: Install Chromium for browser regressions
         run: npx playwright install --with-deps chromium
 
-      - name: Run NeuroAcompanhamento browser regression
+      - name: Build explicit local/offline client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: local
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Prove local diaries still persist and export
         run: npm run test:e2e:neuroped-acompanhamento
+
+      - name: Build explicit remote/LIVE client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Prove remote diaries fail closed without touching local IndexedDB
+        run: node tests/e2e/live-diary-persistence-block.mjs
