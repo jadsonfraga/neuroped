@@ -13,9 +13,13 @@ on:
       - "client/src/lib/secureStorage.ts"
       - "client/src/lib/previsitLocalPersistence.ts"
       - "client/src/components/RouteGuard.tsx"
+      - "client/src/contexts/AuthContext.tsx"
+      - "client/src/contexts/ClinicContext.tsx"
+      - "client/src/components/ClinicSwitcher.tsx"
       - "client/src/features/cognitive-lab/**"
       - "client/src/pages/caa.tsx"
       - "client/src/pages/assinatura-digital.tsx"
+      - "client/src/pages/pacientes.tsx"
       - "client/src/lib/agendaCore.ts"
       - "client/src/pages/conecta.tsx"
       - "client/src/components/DiarioClinico.tsx"
@@ -27,6 +31,7 @@ on:
       - "tests/unit/clinical-browser-persistence-policy.test.ts"
       - "tests/unit/clinical-browser-persistence-boundary.test.mjs"
       - "tests/e2e/live-browser-persistence-block.mjs"
+      - "tests/e2e/live-tenant-session-boundary.mjs"
       - ".github/workflows/live-browser-persistence-guard.yml"
 
 permissions:
@@ -92,3 +97,6 @@ jobs:
 
       - name: Run adversarial global persistence journey
         run: node tests/e2e/live-browser-persistence-block.mjs
+
+      - name: Prove clinic switch and logout login session boundaries
+        run: node tests/e2e/live-tenant-session-boundary.mjs
