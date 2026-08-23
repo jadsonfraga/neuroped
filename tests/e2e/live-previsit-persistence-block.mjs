@@ -103,52 +103,62 @@ async function seed(page, base) {
 async function installTargetedStorageAudit(page) {
   await page.addInitScript(({ targets }) => {
     const targetSet = new Set(targets);
-    const originalGet = Storage.prototype.getItem;
-    const originalSet = Storage.prototype.setItem;
-    const originalRemove = Storage.prototype.removeItem;
+    const nativeGet = Storage.prototype.getItem;
 
     window.__neuropedPrevisitStorageTouches = [];
+    window.__neuropedPrevisitPhysicalRead = (scope, key) =>
+      nativeGet.call(scope === "local" ? localStorage : sessionStorage, key);
 
-    Storage.prototype.getItem = function auditedGetItem(key) {
-      if (targetSet.has(String(key))) {
-        window.__neuropedPrevisitStorageTouches.push({
-          op: "get",
-          key: String(key),
-          scope: this === localStorage ? "local" : "session",
-        });
-      }
-      return originalGet.call(this, key);
+    const touch = (operation, key, storage) => {
+      if (!targetSet.has(String(key))) return;
+      window.__neuropedPrevisitStorageTouches.push({
+        op: operation,
+        key: String(key),
+        scope: storage === localStorage ? "local" : "session",
+      });
     };
 
-    Storage.prototype.setItem = function auditedSetItem(key, value) {
-      if (targetSet.has(String(key))) {
-        window.__neuropedPrevisitStorageTouches.push({
-          op: "set",
-          key: String(key),
-          scope: this === localStorage ? "local" : "session",
-        });
-      }
-      return originalSet.call(this, key, value);
+    // O app pode substituir Storage.prototype para aplicar sua própria fronteira.
+    // O accessor mantém o auditor como camada externa mesmo após essa substituição,
+    // de modo que toda TENTATIVA nas chaves-alvo seja registrada antes do guard.
+    const installMethodAudit = (method, operation) => {
+      const descriptor = Object.getOwnPropertyDescriptor(Storage.prototype, method);
+      let implementation = descriptor?.value;
+      if (typeof implementation !== "function") return;
+
+      Object.defineProperty(Storage.prototype, method, {
+        configurable: true,
+        enumerable: descriptor?.enumerable ?? false,
+        get() {
+          const captured = implementation;
+          return function auditedStorageMethod(...args) {
+            touch(operation, args[0], this);
+            return captured.apply(this, args);
+          };
+        },
+        set(next) {
+          if (typeof next === "function") implementation = next;
+        },
+      });
     };
 
-    Storage.prototype.removeItem = function auditedRemoveItem(key) {
-      if (targetSet.has(String(key))) {
-        window.__neuropedPrevisitStorageTouches.push({
-          op: "remove",
-          key: String(key),
-          scope: this === localStorage ? "local" : "session",
-        });
-      }
-      return originalRemove.call(this, key);
-    };
+    installMethodAudit("getItem", "get");
+    installMethodAudit("setItem", "set");
+    installMethodAudit("removeItem", "remove");
   }, { targets: AUDITED_STORAGE_KEYS });
 }
 
 async function snapshot(page) {
-  return page.evaluate(({ legacyKeys, secureKeys }) => ({
-    legacy: Object.fromEntries(legacyKeys.map((key) => [key, localStorage.getItem(key)])),
-    secure: Object.fromEntries(secureKeys.map((key) => [key, sessionStorage.getItem(key)])),
-  }), {
+  return page.evaluate(({ legacyKeys, secureKeys }) => {
+    const physicalRead = window.__neuropedPrevisitPhysicalRead;
+    if (typeof physicalRead !== "function") {
+      throw new Error("leitor físico E2E não foi instalado");
+    }
+    return {
+      legacy: Object.fromEntries(legacyKeys.map((key) => [key, physicalRead("local", key)])),
+      secure: Object.fromEntries(secureKeys.map((key) => [key, physicalRead("session", key)])),
+    };
+  }, {
     legacyKeys: Object.keys(LEGACY_SENTINELS),
     secureKeys: Object.keys(SECURE_SENTINELS),
   });
@@ -196,9 +206,9 @@ async function main() {
       throw new Error("recepção exibiu dado local legado no LIVE");
     }
 
-    // Esta leitura do auditor ocorre antes do snapshot porque o próprio snapshot
-    // usa getItem deliberadamente. Até este ponto, qualquer GET/SET/REMOVE nas
-    // quatro chaves clínicas-alvo indica regressão de isolamento em LIVE.
+    // Toda tentativa GET/SET/REMOVE é registrada na camada externa, mesmo quando
+    // a fronteira do app a bloqueia. O snapshot abaixo usa a referência nativa
+    // capturada antes do app e, por isso, mede os bytes físicos sem gerar toque.
     const touches = await page.evaluate(() => window.__neuropedPrevisitStorageTouches || []);
     if (touches.length > 0) {
       throw new Error(`storage clínico de pré-visita foi tocado em LIVE: ${JSON.stringify(touches)}`);
