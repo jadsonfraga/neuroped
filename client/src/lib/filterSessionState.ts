@@ -27,6 +27,11 @@ export interface FilterSessionStorage {
   removeItem(key: string): void;
 }
 
+export interface FilterSessionNavigationPrefill {
+  selectedAge: string | null;
+  selectedQueixas: string[];
+}
+
 export const FILTER_SESSION_STATE_KEY = "np_filtro_session_v1";
 
 const EMPTY_FILTER_SESSION_STATE: FilterSessionState = {
@@ -157,6 +162,25 @@ export function saveFilterSessionState(
   } catch {
     // sessionStorage bloqueado: mantém o estado apenas em memória React.
   }
+}
+
+export function applyFilterSessionNavigationPrefill(
+  prefill: FilterSessionNavigationPrefill,
+  storage = browserSessionStorage(),
+): FilterSessionState {
+  const current = loadFilterSessionState(storage);
+  const next = parseFilterSessionState(
+    JSON.stringify({
+      ...current,
+      selectedAge: prefill.selectedAge,
+      selectedQueixas: prefill.selectedQueixas,
+      // Sinais são dependentes da queixa. Ao trocar a queixa pelo Fluxograma,
+      // descarta apenas esse subfiltro para não carregar ids incompatíveis.
+      selectedSignalIds: [],
+    }),
+  );
+  saveFilterSessionState(next, storage);
+  return next;
 }
 
 export function clearFilterSessionState(
