@@ -58,6 +58,18 @@ const clinicalNamespacePrefixes: Array<[string, ClinicalBrowserDataType]> = [
   ["conecta:events:", "CLINICAL_LONGITUDINAL"],
 ];
 
+/**
+ * Superfícies cuja função clínica depende de um workspace/histórico local e
+ * que ainda não possuem fonte tenant-aware equivalente no backend canônico.
+ * Em LIVE remoto elas falham fechadas ANTES do mount, em vez de montar e
+ * depender apenas do guard de Storage para neutralizar tentativas legadas.
+ */
+export const LIVE_BROWSER_LOCAL_CLINICAL_ROUTES = [
+  "/caa",
+  "/assinatura-digital",
+  "/cognitive-lab",
+] as const;
+
 function stripSecureNamespace(namespace: string): string {
   return namespace.startsWith(SECURE_NAMESPACE)
     ? namespace.slice(SECURE_NAMESPACE.length)
@@ -96,6 +108,18 @@ export function clinicalBrowserPersistencePolicy(
 
   if (input.dataType === "CLINICAL_EPHEMERAL") return "EPHEMERAL_ONLY";
   return "ALLOW";
+}
+
+export function isLiveBrowserLocalClinicalRouteDenied(
+  path: string,
+  accessMode: "remote" | "local",
+  authenticated: boolean,
+): boolean {
+  if (accessMode !== "remote" || !authenticated) return false;
+  const normalized = String(path || "/").split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
+  return LIVE_BROWSER_LOCAL_CLINICAL_ROUTES.some((route) =>
+    normalized === route || normalized.startsWith(`${route}/`),
+  );
 }
 
 function configuredEnvironment(): ClinicalBrowserPersistenceInput["environment"] {
