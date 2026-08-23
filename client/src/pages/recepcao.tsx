@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { CalendarClock, ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, Users } from "lucide-react";
+import { CalendarClock, ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, ShieldAlert, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
+import { useAuth } from "@/contexts/AuthContext";
 import { buildPreConsultaSummary, loadPreConsultas, savePreConsultas, type PreConsultaRecord, type PreConsultaStatus } from "@/lib/preConsultaCore";
 
 const statusLabels: Record<PreConsultaStatus, string> = {
@@ -23,6 +24,8 @@ function idade(record: PreConsultaRecord) {
 }
 
 export default function RecepcaoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [items, setItems] = useState<PreConsultaRecord[]>([]);
   const [selected, setSelected] = useState<PreConsultaRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +33,14 @@ export default function RecepcaoPage() {
 
   useEffect(() => {
     let active = true;
+    if (!localPersistenceEnabled) {
+      setItems([]);
+      setSelected(null);
+      setStorageError("");
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+    setIsLoading(true);
     void loadPreConsultas().then((loaded) => {
       if (!active) return;
       setItems(loaded);
@@ -39,11 +50,12 @@ export default function RecepcaoPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [localPersistenceEnabled]);
 
   const resumo = useMemo(() => selected ? buildPreConsultaSummary(selected) : "Nenhuma pré-consulta selecionada.", [selected]);
 
   async function refresh() {
+    if (!localPersistenceEnabled) return;
     setIsLoading(true);
     const loaded = await loadPreConsultas();
     setItems(loaded);
@@ -52,6 +64,7 @@ export default function RecepcaoPage() {
   }
 
   async function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
+    if (!localPersistenceEnabled) return;
     const updated = items.map((item) => item.id === record.id ? { ...item, status } : item);
     setStorageError("");
     const stored = await savePreConsultas(updated);
@@ -75,7 +88,9 @@ export default function RecepcaoPage() {
             <Users className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">recepção · fluxo operacional</Badge>
+            <Badge className="mb-2 rounded-full bg-primary/10 text-primary hover:bg-primary/10">
+              {localPersistenceEnabled ? "recepção · rascunhos locais" : "recepção LIVE · sem fila local"}
+            </Badge>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Painel da recepção</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               Organize pré-consultas e fluxo de chegada e acesse a Agenda & Gestão compartilhada sem abrir prontuário, prescrição ou áreas clínicas sensíveis.
@@ -84,17 +99,30 @@ export default function RecepcaoPage() {
         </div>
       </header>
 
+      {!localPersistenceEnabled && (
+        <Card
+          className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+          data-testid="recepcao-local-preconsulta-disabled"
+        >
+          <CardContent className="flex items-start gap-3 p-4 text-sm leading-6 text-amber-950 dark:text-amber-100">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-semibold">Fila local de pré-consultas bloqueada no LIVE.</p>
+              <p>Esta sessão não lê, migra, altera nem apaga pré-consultas armazenadas no dispositivo. Use apenas fontes operacionais vinculadas à clínica; os formulários de pré-consulta e pré-retorno continuam disponíveis em memória, sem persistência local.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <section className="grid gap-3 md:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">pré-consultas</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">pré-consultas locais</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos locais</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo local</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
         <Card><CardContent className="flex h-full flex-col gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Pré-consulta</Link></Button><Button asChild variant="outline" className="w-full gap-2"><Link href="/pre-retorno"><ClipboardCheck className="h-4 w-4" />Pré-retorno</Link></Button></CardContent></Card>
       </section>
 
       {storageError && (
-        <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
-          {storageError}
-        </p>
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">{storageError}</p>
       )}
 
       <PremiumVisualPanel
@@ -108,75 +136,68 @@ export default function RecepcaoPage() {
       <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.08] via-card to-chart-2/[0.06]">
         <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <CalendarClock className="h-4 w-4" />
-            </div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"><CalendarClock className="h-4 w-4" /></div>
             <div>
               <p className="text-sm font-semibold text-foreground">Agenda oficial: Agenda & Gestão</p>
-              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                A agenda cloud agora é a única fonte operacional editável. A antiga agenda local permanece preservada no cofre do dispositivo para evitar perda silenciosa, mas não é mais editada nesta tela.
-              </p>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">A agenda cloud agora é a única fonte operacional editável. A antiga agenda local permanece preservada no cofre do dispositivo para evitar perda silenciosa, mas não é mais editada nesta tela.</p>
             </div>
           </div>
-          <Button asChild className="shrink-0 gap-2">
-            <Link href="/agenda"><CalendarClock className="h-4 w-4" />Abrir Agenda & Gestão</Link>
-          </Button>
+          <Button asChild className="shrink-0 gap-2"><Link href="/agenda"><CalendarClock className="h-4 w-4" />Abrir Agenda & Gestão</Link></Button>
         </CardContent>
       </Card>
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Card>
-          <CardContent className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-foreground">Pré-consultas salvas</p>
-              <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
-            </div>
-            {isLoading ? (
-              <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground" role="status">
-                Carregando pré-consultas protegidas…
+      {localPersistenceEnabled ? (
+        <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-foreground">Pré-consultas salvas neste dispositivo</p>
+                <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
               </div>
-            ) : items.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-                Nenhuma pré-consulta salva neste dispositivo. Clique em “Pré-consulta”.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {items.map((record) => (
-                  <button key={record.id} type="button" onClick={() => setSelected(record)} className={`w-full rounded-2xl border p-3 text-left transition ${selected?.id === record.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{record.paciente || "Paciente sem nome"}</p>
-                        <p className="text-xs text-muted-foreground">{idade(record)} · {record.queixa} · {record.respondente}</p>
+              {isLoading ? (
+                <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground" role="status">Carregando pré-consultas protegidas…</div>
+              ) : items.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">Nenhuma pré-consulta salva neste dispositivo. Clique em “Pré-consulta”.</div>
+              ) : (
+                <div className="space-y-2">
+                  {items.map((record) => (
+                    <button key={record.id} type="button" onClick={() => setSelected(record)} className={`w-full rounded-2xl border p-3 text-left transition ${selected?.id === record.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div><p className="text-sm font-semibold text-foreground">{record.paciente || "Paciente sem nome"}</p><p className="text-xs text-muted-foreground">{idade(record)} · {record.queixa} · {record.respondente}</p></div>
+                        <Badge variant="outline">{statusLabels[record.status]}</Badge>
                       </div>
-                      <Badge variant="outline">{statusLabels[record.status]}</Badge>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {nextStatus.map((status) => (
-                        <span key={status} onClick={(event) => { event.stopPropagation(); updateStatus(record, status); }} className="rounded-full border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground hover:border-primary hover:text-primary">
-                          {statusLabels[status]}
-                        </span>
-                      ))}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {nextStatus.map((status) => (
+                          <span key={status} onClick={(event) => { event.stopPropagation(); updateStatus(record, status); }} className="rounded-full border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground hover:border-primary hover:text-primary">{statusLabels[status]}</span>
+                        ))}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
-                <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
+                  <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
+                </div>
               </div>
-            </div>
-            <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{resumo}</pre>
+              <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{resumo}</pre>
+            </CardContent>
+          </Card>
+        </section>
+      ) : (
+        <Card data-testid="recepcao-live-tenant-source-required">
+          <CardContent className="p-5 text-sm text-muted-foreground">
+            Nenhuma fila clínica local é exibida no LIVE. A próxima evolução funcional deve consumir uma fonte tenant-aware vinculada à clínica antes de reativar esta área operacional.
           </CardContent>
         </Card>
-      </section>
+      )}
     </div>
   );
 }

@@ -1,0 +1,91 @@
+name: LIVE previsit persistence guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/lib/previsitLocalPersistence.ts"
+      - "client/src/lib/preConsultaCore.ts"
+      - "client/src/pages/pre-consulta.tsx"
+      - "client/src/pages/pre-retorno.tsx"
+      - "client/src/pages/recepcao.tsx"
+      - "tests/unit/live-previsit-persistence-guard.test.mjs"
+      - "tests/e2e/previsit-local-persistence.mjs"
+      - "tests/e2e/live-previsit-persistence-block.mjs"
+      - ".github/workflows/live-previsit-persistence-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/lib/previsitLocalPersistence.ts"
+      - "client/src/lib/preConsultaCore.ts"
+      - "client/src/pages/pre-consulta.tsx"
+      - "client/src/pages/pre-retorno.tsx"
+      - "client/src/pages/recepcao.tsx"
+      - "tests/unit/live-previsit-persistence-guard.test.mjs"
+      - "tests/e2e/previsit-local-persistence.mjs"
+      - "tests/e2e/live-previsit-persistence-block.mjs"
+      - ".github/workflows/live-previsit-persistence-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-previsit-persistence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fail-closed-previsit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Audit dependency graph
+        run: npm audit --audit-level=high
+
+      - name: Prove previsit fail-closed contract
+        run: node tests/unit/live-previsit-persistence-guard.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Install Chromium for browser regressions
+        run: npx playwright install --with-deps chromium
+
+      - name: Build explicit local/offline client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: local
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Prove local previsit persistence still works
+        run: node tests/e2e/previsit-local-persistence.mjs
+
+      - name: Build explicit remote/LIVE client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Prove remote previsit is memory-only and local data remains untouched
+        run: node tests/e2e/live-previsit-persistence-block.mjs
