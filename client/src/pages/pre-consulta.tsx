@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   buildPreConsultaSummary,
   clearPreConsultas,
@@ -38,6 +39,8 @@ const respondentes: Array<{ id: PreConsultaRespondente; label: string }> = [
 ];
 
 export default function PreConsultaPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const liveMemoryOnly = accessMode === "remote" && isAuthenticated;
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
   const [meses, setMeses] = useState("0");
@@ -74,6 +77,12 @@ export default function PreConsultaPage() {
       return;
     }
     const record = { ...draft, status: "pronto-medico" as const };
+
+    if (liveMemoryOnly) {
+      setSaved(record);
+      return;
+    }
+
     const current = await loadPreConsultas();
     const stored = await savePreConsultas([record, ...current].slice(0, 50));
     if (!stored) {
@@ -85,6 +94,11 @@ export default function PreConsultaPage() {
   }
 
   async function apagarDadosLocais() {
+    if (liveMemoryOnly) {
+      setSaved(null);
+      setStorageError("");
+      return;
+    }
     if (!window.confirm("Apagar todas as pré-consultas protegidas deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearPreConsultas();
     setSaved(null);
@@ -117,6 +131,19 @@ export default function PreConsultaPage() {
           </div>
         </div>
       </header>
+
+      {liveMemoryOnly && (
+        <div
+          data-testid="pre-consulta-live-memory-only"
+          className="rounded-2xl border border-primary/25 bg-primary/[0.07] p-4"
+          role="status"
+        >
+          <p className="text-sm font-semibold text-foreground">LIVE · não armazenado neste dispositivo</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            O formulário funciona somente em memória nesta tela. Nenhuma pré-consulta local é lida, migrada, restaurada ou gravada durante a sessão autenticada.
+          </p>
+        </div>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <Card>
@@ -205,10 +232,12 @@ export default function PreConsultaPage() {
             </label>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-consulta</Button>
+              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> {liveMemoryOnly ? "Preparar resumo" : "Salvar pré-consulta"}</Button>
               <Button variant="outline" onClick={copiar} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
               <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
-              <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+              {!liveMemoryOnly && (
+                <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+              )}
             </div>
             {storageError && (
               <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
