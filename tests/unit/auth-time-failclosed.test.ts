@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import "./must-change-password-gate.test";
 import { isLocked, type UserRow } from "../../functions/api/auth/_shared";
 import { isAccountLocked, isExpiredOrInvalidTimestamp } from "../../server/lib/password";
 
