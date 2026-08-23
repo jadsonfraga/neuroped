@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import {
   classifyClinicalBrowserNamespace,
   clinicalBrowserPersistencePolicy,
+  isLiveBrowserLocalClinicalRouteDenied,
+  LIVE_BROWSER_LOCAL_CLINICAL_ROUTES,
 } from "../../client/src/lib/clinicalBrowserPersistencePolicy";
 
 const base = {
@@ -84,4 +86,39 @@ for (const namespace of [
   );
 }
 
-console.log("✓ clinical browser persistence policy: LIVE remoto nega PHI e preserva UI/auth/local explícito");
+assert.deepEqual(
+  [...LIVE_BROWSER_LOCAL_CLINICAL_ROUTES],
+  ["/caa", "/assinatura-digital", "/cognitive-lab"],
+  "a lista fail-closed deve ser explícita e revisável",
+);
+for (const route of [
+  "/caa",
+  "/assinatura-digital",
+  "/cognitive-lab",
+  "/cognitive-lab/go-no-go",
+]) {
+  assert.equal(
+    isLiveBrowserLocalClinicalRouteDenied(route, "remote", true),
+    true,
+    `${route} não pode montar prontuário browser-local em LIVE autenticado`,
+  );
+  assert.equal(
+    isLiveBrowserLocalClinicalRouteDenied(route, "local", true),
+    false,
+    `${route} deve permanecer disponível em modo local explícito`,
+  );
+  assert.equal(
+    isLiveBrowserLocalClinicalRouteDenied(route, "remote", false),
+    false,
+    `${route} não deve interferir no fluxo de autenticação antes da sessão`,
+  );
+}
+for (const route of ["/agenda", "/conecta", "/pre-consulta", "/diario-sono"] ) {
+  assert.equal(
+    isLiveBrowserLocalClinicalRouteDenied(route, "remote", true),
+    false,
+    `${route} não é uma superfície browser-local inteira e deve manter seu contrato próprio`,
+  );
+}
+
+console.log("✓ clinical browser persistence policy: LIVE remoto nega PHI, bloqueia superfícies locais antes do mount e preserva UI/auth/local explícito");
