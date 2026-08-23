@@ -78,7 +78,10 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     );
   }
 
-  if (isLiveBrowserLocalClinicalRouteDenied(location, accessMode, isAuthenticated)) {
+  if (
+    accessMode !== "checking" &&
+    isLiveBrowserLocalClinicalRouteDenied(location, accessMode, isAuthenticated)
+  ) {
     return (
       <section
         className="mx-auto my-10 max-w-xl rounded-2xl border border-amber-500/30 bg-card p-6 shadow-sm"
