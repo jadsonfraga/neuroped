@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
+import { useAuth } from "@/contexts/AuthContext";
 import { buildPreConsultaSummary, loadPreConsultas, savePreConsultas, type PreConsultaRecord, type PreConsultaStatus } from "@/lib/preConsultaCore";
 
 const statusLabels: Record<PreConsultaStatus, string> = {
@@ -23,6 +24,8 @@ function idade(record: PreConsultaRecord) {
 }
 
 export default function RecepcaoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const [items, setItems] = useState<PreConsultaRecord[]>([]);
   const [selected, setSelected] = useState<PreConsultaRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +33,15 @@ export default function RecepcaoPage() {
 
   useEffect(() => {
     let active = true;
+    if (isRemoteClinical) {
+      // A recepção LIVE não usa fila clínica do navegador como fonte oficial.
+      setItems([]);
+      setSelected(null);
+      setStorageError("");
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+
     void loadPreConsultas().then((loaded) => {
       if (!active) return;
       setItems(loaded);
@@ -39,11 +51,12 @@ export default function RecepcaoPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isRemoteClinical]);
 
   const resumo = useMemo(() => selected ? buildPreConsultaSummary(selected) : "Nenhuma pré-consulta selecionada.", [selected]);
 
   async function refresh() {
+    if (isRemoteClinical) return;
     setIsLoading(true);
     const loaded = await loadPreConsultas();
     setItems(loaded);
@@ -52,6 +65,7 @@ export default function RecepcaoPage() {
   }
 
   async function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
+    if (isRemoteClinical) return;
     const updated = items.map((item) => item.id === record.id ? { ...item, status } : item);
     setStorageError("");
     const stored = await savePreConsultas(updated);
@@ -64,6 +78,7 @@ export default function RecepcaoPage() {
   }
 
   async function copiarResumo() {
+    if (isRemoteClinical || !selected) return;
     await navigator.clipboard?.writeText(resumo);
   }
 
@@ -84,10 +99,23 @@ export default function RecepcaoPage() {
         </div>
       </header>
 
+      {isRemoteClinical && (
+        <div
+          data-testid="recepcao-local-queue-disabled"
+          className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-4 text-sm text-foreground"
+          role="status"
+        >
+          <p className="font-semibold">LIVE · fila clínica local desativada</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            A Recepção não lê, restaura, migra nem altera pré-consultas armazenadas neste navegador. A fila oficial deve vir de uma fonte tenant-aware vinculada à clínica e ao paciente.
+          </p>
+        </div>
+      )}
+
       <section className="grid gap-3 md:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">pré-consultas</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">pré-consultas locais</p><p className="text-2xl font-semibold text-foreground">{isRemoteClinical ? "—" : items.length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos locais</p><p className="text-2xl font-semibold text-foreground">{isRemoteClinical ? "—" : items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">respondendo local</p><p className="text-2xl font-semibold text-foreground">{isRemoteClinical ? "—" : items.filter((i) => i.status === "respondendo").length}</p></CardContent></Card>
         <Card><CardContent className="flex h-full flex-col gap-2 p-4"><Button asChild className="w-full gap-2"><Link href="/pre-consulta"><PlayCircle className="h-4 w-4" />Pré-consulta</Link></Button><Button asChild variant="outline" className="w-full gap-2"><Link href="/pre-retorno"><ClipboardCheck className="h-4 w-4" />Pré-retorno</Link></Button></CardContent></Card>
       </section>
 
@@ -101,7 +129,9 @@ export default function RecepcaoPage() {
         src={brandAssets.illustrations.teamMultiprofessional}
         badge="Recepção organizada"
         title="Família, equipe e médico chegam à consulta falando a mesma língua."
-        subtitle="O painel reúne o que foi respondido antes da entrada no consultório e mantém a agenda operacional em uma única fonte compartilhada."
+        subtitle={isRemoteClinical
+          ? "No LIVE, dados clínicos do navegador não são tratados como fila oficial. O próximo passo é ligar esta superfície a uma fonte tenant-aware."
+          : "O painel reúne o que foi respondido antes da entrada no consultório e mantém a agenda operacional em uma única fonte compartilhada."}
         className="min-h-44"
       />
 
@@ -129,9 +159,15 @@ export default function RecepcaoPage() {
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-foreground">Pré-consultas salvas</p>
-              <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
+              {!isRemoteClinical && (
+                <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
+              )}
             </div>
-            {isLoading ? (
+            {isRemoteClinical ? (
+              <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/[0.04] p-4 text-sm text-muted-foreground">
+                Nenhuma fila clínica é restaurada deste dispositivo em LIVE. Dados locais preexistentes permanecem intocados até um fluxo explícito e tenant-aware ser implementado.
+              </div>
+            ) : isLoading ? (
               <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground" role="status">
                 Carregando pré-consultas protegidas…
               </div>
@@ -168,12 +204,14 @@ export default function RecepcaoPage() {
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
-                <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
-              </div>
+              {!isRemoteClinical && selected && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
+                  <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
+                </div>
+              )}
             </div>
-            <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{resumo}</pre>
+            <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{isRemoteClinical ? "LIVE: nenhum resumo local carregado. Use a fonte clínica tenant-aware quando disponível." : resumo}</pre>
           </CardContent>
         </Card>
       </section>
