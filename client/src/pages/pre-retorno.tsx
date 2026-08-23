@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import { isLiveLocalPersistenceDenied } from "@/lib/clinicalStoragePolicy";
 import { sanitizeAgeInput, validateAge } from "@/lib/preConsultaCore";
 import { copyText, formatForWhatsApp, openWhatsAppShare } from "@/lib/shareText";
 import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
@@ -40,6 +42,8 @@ const opcoesCrises = ["não tem", "sem crises", "reduziu", "aumentou", "mudou pa
 const opcoesMedicacao = ["sem medicação", "usando corretamente", "esquece doses", "suspendeu", "mudou por conta própria", "teve efeitos colaterais"];
 
 async function loadRecords(): Promise<PreRetornoRecord[]> {
+  if (isLiveLocalPersistenceDenied(SECURE_STORAGE_KEY)) return [];
+
   const protectedRecords = await secureGet<PreRetornoRecord[]>(SECURE_STORAGE_KEY);
   if (Array.isArray(protectedRecords)) return protectedRecords;
   try {
@@ -60,6 +64,8 @@ async function loadRecords(): Promise<PreRetornoRecord[]> {
 }
 
 async function saveRecords(items: PreRetornoRecord[]): Promise<boolean> {
+  if (isLiveLocalPersistenceDenied(SECURE_STORAGE_KEY)) return false;
+
   let stored: boolean;
   try {
     stored = await secureSet(SECURE_STORAGE_KEY, items);
@@ -76,6 +82,8 @@ async function saveRecords(items: PreRetornoRecord[]): Promise<boolean> {
 }
 
 async function clearRecords(): Promise<void> {
+  if (isLiveLocalPersistenceDenied(SECURE_STORAGE_KEY)) return;
+
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
@@ -128,6 +136,8 @@ function FieldSelect({ label, value, onChange, options, id }: { label: string; v
 }
 
 export default function PreRetornoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const localPersistenceEnabled = !(accessMode === "remote" && isAuthenticated);
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
   const [meses, setMeses] = useState("0");
@@ -159,6 +169,10 @@ export default function PreRetornoPage() {
 
   async function salvar() {
     setStorageError("");
+    if (!localPersistenceEnabled) {
+      setSaved(null);
+      return;
+    }
     if (!ageValidation.isValid) {
       setSaved(null);
       return;
@@ -175,6 +189,7 @@ export default function PreRetornoPage() {
   }
 
   async function apagarDadosLocais() {
+    if (!localPersistenceEnabled) return;
     if (!window.confirm("Apagar todos os pré-retornos protegidos deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearRecords();
     setSaved(null);
@@ -210,6 +225,19 @@ export default function PreRetornoPage() {
           </div>
         </div>
       </header>
+
+      {!localPersistenceEnabled && (
+        <div
+          data-testid="pre-retorno-local-persistence-disabled"
+          className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-4 text-sm text-foreground"
+          role="status"
+        >
+          <p className="font-semibold">LIVE · não armazenado neste dispositivo</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            O formulário continua disponível em memória para gerar, copiar, compartilhar ou imprimir o resumo. Dados locais preexistentes não são lidos, apagados nem migrados automaticamente.
+          </p>
+        </div>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <Card><CardContent className="space-y-4 p-4">
@@ -273,11 +301,15 @@ export default function PreRetornoPage() {
           <label htmlFor="pre-retorno-observacoes" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea id="pre-retorno-observacoes" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
+            {localPersistenceEnabled && (
+              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
+            )}
             <Button variant="outline" onClick={copiarResumo} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
             <Button variant="outline" onClick={compartilharWhatsApp} aria-disabled={!ageValidation.isValid} className="gap-2"><MessageCircle className="h-4 w-4" /> Copiar para WhatsApp</Button>
             <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
-            <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+            {localPersistenceEnabled && (
+              <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+            )}
           </div>
           {storageError && (
             <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
