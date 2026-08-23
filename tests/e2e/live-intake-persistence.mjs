@@ -236,6 +236,13 @@ async function runRemote(page, base) {
     throw new Error("remote: Recepção exibiu fila proveniente do navegador");
   }
 
+  // O auditor precisa ser lido antes do snapshot, pois o próprio snapshot faz
+  // getItem deliberado para comparar os sentinelas após provar ausência de toque.
+  const touches = await page.evaluate(() => window.__neuropedStorageTouches || []);
+  if (touches.length) {
+    throw new Error(`remote: storage clínico de intake foi tocado em LIVE: ${JSON.stringify(touches)}`);
+  }
+
   const snapshot = await storageSnapshot(page);
   if (snapshot.legacyPreConsulta !== SENTINELS[LEGACY.preConsulta]) {
     throw new Error("remote: legado de pré-consulta foi lido/migrado/alterado");
@@ -245,11 +252,6 @@ async function runRemote(page, base) {
   }
   if (snapshot.securePreConsulta !== null || snapshot.securePreRetorno !== null) {
     throw new Error("remote: foi criada persistência cifrada local para intake");
-  }
-
-  const touches = await page.evaluate(() => window.__neuropedStorageTouches || []);
-  if (touches.length) {
-    throw new Error(`remote: storage clínico de intake foi tocado em LIVE: ${JSON.stringify(touches)}`);
   }
 
   const loginVisible = await page.getByRole("heading", { name: /entrar|login/i }).isVisible().catch(() => false);
