@@ -84,6 +84,12 @@ if (requestedRoute && ROUTES.length === 0) {
   throw new Error(`E2E_ROUTE sem correspondência: ${process.env.E2E_ROUTE}`);
 }
 const OPTION_INDEX = 1; // segunda opção de cada item (clinicamente neutra p/ smoke)
+const E2E_USER = {
+  id: "e2e-reader",
+  email: "e2e-reader@neuroped.invalid",
+  name: "E2E Reader",
+  role: "reader",
+};
 
 async function answerAll(page, optionIndex) {
   let answeredGroups = 0;
@@ -125,14 +131,36 @@ async function main() {
   );
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
-  // O smoke valida as escalas, não o fluxo de primeira visita. Prepara somente
-  // os aceites locais para que splash/onboarding/aviso não cubram os controles.
-  await page.addInitScript(() => {
+  // O smoke valida escalas clínicas protegidas. Em build de produção o modo de
+  // autenticação é fail-closed (`remote`), portanto o teste cria uma sessão E2E
+  // mínima de papel `reader` e mantém o RouteGuard ativo, em vez de contorná-lo.
+  await page.addInitScript((user) => {
     localStorage.setItem("neuroped:aviso-educativo-aceito-v1", "e2e");
     localStorage.setItem("neuroped:onboarding-seen", "1");
     localStorage.setItem("np_tour_intro_v2", "done");
     localStorage.setItem("np_tour_v2_done", "1");
-  });
+    sessionStorage.setItem("neuroped:access", "e2e-access-token");
+    sessionStorage.setItem("neuroped:refresh", "e2e-refresh-token");
+    sessionStorage.setItem("neuroped:user", JSON.stringify(user));
+  }, E2E_USER);
+
+  await page.route("**/api/health", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ok",
+        authentication: { required: true, configured: true },
+      }),
+    }),
+  );
+  await page.route("**/api/auth/me", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(E2E_USER),
+    }),
+  );
 
   // Sem rede real: SaveToPatient/listas respondem vazio/ok.
   await page.route("**/api/patients**", (route) =>
@@ -182,7 +210,9 @@ async function main() {
       } catch (e) {
         failures.push(scale.name);
         const details = String(e?.message ?? e).split("\n").slice(0, 30).join("\n    ");
+        const bodySample = await page.locator("body").innerText().catch(() => "");
         console.log(`  ✗ ${scale.name}: ${details}`);
+        console.log(`    url=${page.url()} body=${JSON.stringify(bodySample.replace(/\s+/g, " ").slice(0, 240))}`);
       }
     }
     console.log(`\n[scale-smoke] ${ok}/${ROUTES.length} verdes${failures.length ? ` — falhas: ${failures.join(", ")}` : ""}.`);
