@@ -11,6 +11,7 @@ import {
 } from "../../client/src/lib/filterPreferences";
 import {
   FILTER_SESSION_STATE_KEY,
+  applyFilterSessionNavigationPrefill,
   clearFilterSessionState,
   loadFilterSessionState,
   parseFilterSessionState,
@@ -89,6 +90,26 @@ const sessionState = {
 saveFilterSessionState(sessionState, sessionStorage);
 assert.deepEqual(loadFilterSessionState(sessionStorage), sessionState);
 assert.ok(sessionStorage.getItem(FILTER_SESSION_STATE_KEY));
+
+const navigationMerged = applyFilterSessionNavigationPrefill(
+  {
+    selectedAge: "2-4a",
+    selectedQueixas: ["tea"],
+  },
+  sessionStorage,
+);
+assert.deepEqual(navigationMerged, {
+  search: "TDAH 7 anos",
+  selectedAge: "2-4a",
+  selectedQueixas: ["tea"],
+  selectedRespondente: "pais",
+  selectedCommunication: "verbal",
+  selectedLiteracy: "literate",
+  selectedAssessmentType: "diagnostic",
+  selectedSignalIds: [],
+});
+assert.deepEqual(loadFilterSessionState(sessionStorage), navigationMerged);
+
 clearFilterSessionState(sessionStorage);
 assert.equal(sessionStorage.getItem(FILTER_SESSION_STATE_KEY), null);
 
@@ -134,6 +155,8 @@ assert.match(filtro, /loadFilterSessionState/);
 assert.match(filtro, /saveFilterSessionState\(\{/);
 assert.match(filtro, /clearFilterSessionState\(\)/);
 assert.doesNotMatch(filtro, /localStorage\.setItem\(FILTER_STATE_KEY/);
+assert.match(fluxograma, /applyFilterSessionNavigationPrefill\(\{/);
+assert.doesNotMatch(fluxograma, /filterPrefill/);
 assert.doesNotMatch(fluxograma, /localStorage\.(?:getItem|setItem)/);
 assert.equal(
   (main.match(/localStorage\.removeItem\("np_filtro_state_v1"\)/g) ?? [])
@@ -148,5 +171,5 @@ assert.doesNotMatch(
 );
 
 console.log(
-  "✓ filtro: disponibilidade persiste localmente; filtros clínicos sobrevivem apenas na sessão da aba",
+  "✓ filtro: disponibilidade persiste localmente; filtros clínicos sobrevivem apenas na sessão da aba e prefill preserva contexto",
 );
