@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
+import { useAuth } from "@/contexts/AuthContext";
 import { buildPreConsultaSummary, loadPreConsultas, savePreConsultas, type PreConsultaRecord, type PreConsultaStatus } from "@/lib/preConsultaCore";
 
 const statusLabels: Record<PreConsultaStatus, string> = {
@@ -23,12 +24,22 @@ function idade(record: PreConsultaRecord) {
 }
 
 export default function RecepcaoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const liveLocalQueueBlocked = accessMode === "remote" && isAuthenticated;
   const [items, setItems] = useState<PreConsultaRecord[]>([]);
   const [selected, setSelected] = useState<PreConsultaRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [storageError, setStorageError] = useState("");
 
   useEffect(() => {
+    if (liveLocalQueueBlocked) {
+      setItems([]);
+      setSelected(null);
+      setIsLoading(false);
+      setStorageError("");
+      return;
+    }
+
     let active = true;
     void loadPreConsultas().then((loaded) => {
       if (!active) return;
@@ -39,11 +50,18 @@ export default function RecepcaoPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [liveLocalQueueBlocked]);
 
   const resumo = useMemo(() => selected ? buildPreConsultaSummary(selected) : "Nenhuma pré-consulta selecionada.", [selected]);
 
   async function refresh() {
+    if (liveLocalQueueBlocked) {
+      setItems([]);
+      setSelected(null);
+      setIsLoading(false);
+      setStorageError("");
+      return;
+    }
     setIsLoading(true);
     const loaded = await loadPreConsultas();
     setItems(loaded);
@@ -52,6 +70,7 @@ export default function RecepcaoPage() {
   }
 
   async function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
+    if (liveLocalQueueBlocked) return;
     const updated = items.map((item) => item.id === record.id ? { ...item, status } : item);
     setStorageError("");
     const stored = await savePreConsultas(updated);
@@ -84,6 +103,19 @@ export default function RecepcaoPage() {
         </div>
       </header>
 
+      {liveLocalQueueBlocked && (
+        <div
+          data-testid="recepcao-live-local-queue-disabled"
+          className="rounded-2xl border border-primary/25 bg-primary/[0.07] p-4"
+          role="status"
+        >
+          <p className="text-sm font-semibold text-foreground">LIVE · fila clínica local desativada</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Pré-consultas armazenadas no navegador não são lidas, restauradas, migradas nem apresentadas como fila oficial. Em LIVE, a recepção deve usar apenas fontes tenant-aware da clínica.
+          </p>
+        </div>
+      )}
+
       <section className="grid gap-3 md:grid-cols-4">
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">pré-consultas</p><p className="text-2xl font-semibold text-foreground">{items.length}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">prontos</p><p className="text-2xl font-semibold text-foreground">{items.filter((i) => i.status === "pronto-medico").length}</p></CardContent></Card>
@@ -101,7 +133,9 @@ export default function RecepcaoPage() {
         src={brandAssets.illustrations.teamMultiprofessional}
         badge="Recepção organizada"
         title="Família, equipe e médico chegam à consulta falando a mesma língua."
-        subtitle="O painel reúne o que foi respondido antes da entrada no consultório e mantém a agenda operacional em uma única fonte compartilhada."
+        subtitle={liveLocalQueueBlocked
+          ? "No LIVE, a recepção mantém o fluxo operacional sem transformar registros do navegador em fonte clínica oficial."
+          : "O painel reúne o que foi respondido antes da entrada no consultório e mantém a agenda operacional em uma única fonte compartilhada."}
         className="min-h-44"
       />
 
@@ -128,12 +162,16 @@ export default function RecepcaoPage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-foreground">Pré-consultas salvas</p>
-              <Button variant="outline" size="sm" onClick={refresh} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
+              <p className="text-sm font-semibold text-foreground">{liveLocalQueueBlocked ? "Fila clínica oficial" : "Pré-consultas salvas"}</p>
+              <Button variant="outline" size="sm" onClick={refresh} disabled={liveLocalQueueBlocked} className="gap-2"><RefreshCw className="h-4 w-4" />Atualizar</Button>
             </div>
             {isLoading ? (
               <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground" role="status">
                 Carregando pré-consultas protegidas…
+              </div>
+            ) : liveLocalQueueBlocked ? (
+              <div data-testid="recepcao-live-local-queue-empty" className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                Nenhuma fila clínica é carregada do navegador no modo LIVE. Registros locais preexistentes permanecem intocados neste dispositivo.
               </div>
             ) : items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
@@ -169,8 +207,8 @@ export default function RecepcaoPage() {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ClipboardCheck className="h-4 w-4 text-primary" /> Resumo para o médico</div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copiarResumo} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
-                <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
+                <Button variant="outline" size="sm" onClick={copiarResumo} disabled={!selected} className="gap-2"><Copy className="h-4 w-4" />Copiar</Button>
+                <Button variant="outline" size="sm" onClick={() => window.print()} disabled={!selected} className="gap-2"><Printer className="h-4 w-4" />Imprimir</Button>
               </div>
             </div>
             <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{resumo}</pre>
