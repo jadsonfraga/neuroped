@@ -4,12 +4,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  clearClinicalSessionRecords,
+  loadClinicalSessionRecords,
+  saveClinicalSessionRecords,
+} from "@/lib/clinicalSessionStorage";
 import { sanitizeAgeInput, validateAge } from "@/lib/preConsultaCore";
 import { copyText, formatForWhatsApp, openWhatsAppShare } from "@/lib/shareText";
-import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
 
 const STORAGE_KEY = "neuroped:pre-retornos";
 const SECURE_STORAGE_KEY = "pre-retornos";
+const preRetornoStorageConfig = {
+  secureKey: SECURE_STORAGE_KEY,
+  legacyLocalStorageKey: STORAGE_KEY,
+} as const;
 
 interface PreRetornoRecord {
   id: string;
@@ -40,48 +49,15 @@ const opcoesCrises = ["não tem", "sem crises", "reduziu", "aumentou", "mudou pa
 const opcoesMedicacao = ["sem medicação", "usando corretamente", "esquece doses", "suspendeu", "mudou por conta própria", "teve efeitos colaterais"];
 
 async function loadRecords(): Promise<PreRetornoRecord[]> {
-  const protectedRecords = await secureGet<PreRetornoRecord[]>(SECURE_STORAGE_KEY);
-  if (Array.isArray(protectedRecords)) return protectedRecords;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const legacy = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(legacy) && legacy.length > 0) {
-      const migrated = await secureSet(SECURE_STORAGE_KEY, legacy);
-      if (migrated && localStorage.getItem(STORAGE_KEY) === raw) {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-      return legacy;
-    }
-    if (raw !== null) localStorage.removeItem(STORAGE_KEY);
-    return [];
-  } catch {
-    return [];
-  }
+  return loadClinicalSessionRecords<PreRetornoRecord>(preRetornoStorageConfig);
 }
 
 async function saveRecords(items: PreRetornoRecord[]): Promise<boolean> {
-  let stored: boolean;
-  try {
-    stored = await secureSet(SECURE_STORAGE_KEY, items);
-  } catch {
-    return false;
-  }
-  if (!stored) return false;
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // A cópia cifrada já foi confirmada; a limpeza legada é best-effort.
-  }
-  return true;
+  return saveClinicalSessionRecords(preRetornoStorageConfig, items);
 }
 
 async function clearRecords(): Promise<void> {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // A entrada protegida ainda será removida abaixo.
-  }
-  await secureClear(SECURE_STORAGE_KEY);
+  await clearClinicalSessionRecords(preRetornoStorageConfig);
 }
 
 function buildRecord(data: Omit<PreRetornoRecord, "id" | "createdAt">): PreRetornoRecord {
@@ -128,6 +104,8 @@ function FieldSelect({ label, value, onChange, options, id }: { label: string; v
 }
 
 export default function PreRetornoPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const liveMemoryOnly = accessMode === "remote" && isAuthenticated;
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
   const [meses, setMeses] = useState("0");
@@ -164,6 +142,12 @@ export default function PreRetornoPage() {
       return;
     }
     const record = buildRecord({ paciente, idade, ultimaConsulta, motivo, evolucao, sono, comportamento, escola, alimentacao, comunicacao, crises, medicacao, sintomasTratamento, duvida, prioridade, observacoes });
+
+    if (liveMemoryOnly) {
+      setSaved(record);
+      return;
+    }
+
     const current = await loadRecords();
     const stored = await saveRecords([record, ...current].slice(0, 50));
     if (!stored) {
@@ -175,6 +159,11 @@ export default function PreRetornoPage() {
   }
 
   async function apagarDadosLocais() {
+    if (liveMemoryOnly) {
+      setSaved(null);
+      setStorageError("");
+      return;
+    }
     if (!window.confirm("Apagar todos os pré-retornos protegidos deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearRecords();
     setSaved(null);
@@ -210,6 +199,19 @@ export default function PreRetornoPage() {
           </div>
         </div>
       </header>
+
+      {liveMemoryOnly && (
+        <div
+          data-testid="pre-retorno-live-memory-only"
+          className="rounded-2xl border border-primary/25 bg-primary/[0.07] p-4"
+          role="status"
+        >
+          <p className="text-sm font-semibold text-foreground">LIVE · não armazenado neste dispositivo</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            O formulário funciona somente em memória nesta tela. Nenhum pré-retorno local é lido, migrado, restaurado ou gravado durante a sessão autenticada.
+          </p>
+        </div>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <Card><CardContent className="space-y-4 p-4">
@@ -273,11 +275,13 @@ export default function PreRetornoPage() {
           <label htmlFor="pre-retorno-observacoes" className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observações livres</span><textarea id="pre-retorno-observacoes" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="min-h-24 w-full rounded-2xl border border-border bg-background p-3 text-sm" /></label>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-retorno</Button>
+            <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> {liveMemoryOnly ? "Preparar resumo" : "Salvar pré-retorno"}</Button>
             <Button variant="outline" onClick={copiarResumo} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
             <Button variant="outline" onClick={compartilharWhatsApp} aria-disabled={!ageValidation.isValid} className="gap-2"><MessageCircle className="h-4 w-4" /> Copiar para WhatsApp</Button>
             <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
-            <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+            {!liveMemoryOnly && (
+              <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+            )}
           </div>
           {storageError && (
             <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
