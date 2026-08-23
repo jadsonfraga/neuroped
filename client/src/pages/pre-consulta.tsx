@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ClipboardCheck, Copy, Printer, Save, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowRight, ClipboardCheck, Copy, Printer, Save, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { brandAssets } from "@/components/BrandAssets";
+import { useAuth } from "@/contexts/AuthContext";
+import { isClinicalLocalPersistenceBlocked } from "@/lib/clinicalStoragePolicy";
 import {
   buildPreConsultaSummary,
   clearPreConsultas,
   createPreConsultaRecord,
   loadPreConsultas,
+  PRE_CONSULTA_SECURE_KEY,
   preConsultaQueixas,
   recommendPreConsultaScales,
   sanitizeAgeInput,
@@ -38,6 +41,11 @@ const respondentes: Array<{ id: PreConsultaRespondente; label: string }> = [
 ];
 
 export default function PreConsultaPage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const localPersistenceBlocked = isClinicalLocalPersistenceBlocked(
+    PRE_CONSULTA_SECURE_KEY,
+    { accessMode, isAuthenticated },
+  );
   const [paciente, setPaciente] = useState("");
   const [anos, setAnos] = useState("4");
   const [meses, setMeses] = useState("0");
@@ -74,6 +82,11 @@ export default function PreConsultaPage() {
       return;
     }
     const record = { ...draft, status: "pronto-medico" as const };
+    if (localPersistenceBlocked) {
+      // Snapshot somente em memória React. Não toca secureStorage/localStorage.
+      setSaved(record);
+      return;
+    }
     const current = await loadPreConsultas();
     const stored = await savePreConsultas([record, ...current].slice(0, 50));
     if (!stored) {
@@ -85,6 +98,7 @@ export default function PreConsultaPage() {
   }
 
   async function apagarDadosLocais() {
+    if (localPersistenceBlocked) return;
     if (!window.confirm("Apagar todas as pré-consultas protegidas deste dispositivo? Esta ação não pode ser desfeita.")) return;
     await clearPreConsultas();
     setSaved(null);
@@ -117,6 +131,23 @@ export default function PreConsultaPage() {
           </div>
         </div>
       </header>
+
+      {localPersistenceBlocked && (
+        <Card
+          className="border-amber-300 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/20"
+          data-testid="pre-consulta-live-memory-only"
+        >
+          <CardContent className="flex items-start gap-3 p-4 text-sm leading-6 text-amber-950 dark:text-amber-100">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-semibold">LIVE · não armazenado neste dispositivo</p>
+              <p className="mt-1">
+                O formulário permanece utilizável somente em memória para gerar, copiar ou imprimir o resumo. Nesta sessão não há leitura, restauração, migração, gravação ou limpeza de dados clínicos locais.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
         <Card>
@@ -205,10 +236,12 @@ export default function PreConsultaPage() {
             </label>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> Salvar pré-consulta</Button>
+              <Button onClick={salvar} aria-disabled={!ageValidation.isValid} className="gap-2"><Save className="h-4 w-4" /> {localPersistenceBlocked ? "Manter nesta sessão" : "Salvar pré-consulta"}</Button>
               <Button variant="outline" onClick={copiar} aria-disabled={!ageValidation.isValid} className="gap-2"><Copy className="h-4 w-4" /> Copiar resumo</Button>
               <Button variant="outline" onClick={imprimir} aria-disabled={!ageValidation.isValid} className="gap-2"><Printer className="h-4 w-4" /> Imprimir</Button>
-              <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+              {!localPersistenceBlocked && (
+                <Button variant="ghost" onClick={apagarDadosLocais} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Apagar deste dispositivo</Button>
+              )}
             </div>
             {storageError && (
               <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
