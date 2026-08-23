@@ -1,0 +1,113 @@
+name: LIVE browser persistence guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/lib/clinicalBrowserPersistencePolicy.ts"
+      - "client/src/lib/persistentSecureStorage.ts"
+      - "client/src/lib/secureStorage.ts"
+      - "client/src/lib/previsitLocalPersistence.ts"
+      - "client/src/features/cognitive-lab/**"
+      - "client/src/pages/caa.tsx"
+      - "client/src/pages/assinatura-digital.tsx"
+      - "client/src/lib/agendaCore.ts"
+      - "client/src/pages/conecta.tsx"
+      - "client/src/components/DiarioClinico.tsx"
+      - "client/src/pages/epilepsy-diary.tsx"
+      - "client/src/pages/headache-calendar.tsx"
+      - "client/src/hooks/useSecureScaleDraft.ts"
+      - "client/src/main.tsx"
+      - "client/public/sw.js"
+      - "tests/unit/clinical-browser-persistence-policy.test.ts"
+      - "tests/unit/clinical-browser-persistence-boundary.test.mjs"
+      - "tests/e2e/live-browser-persistence-block.mjs"
+      - ".github/workflows/live-browser-persistence-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/lib/clinicalBrowserPersistencePolicy.ts"
+      - "client/src/lib/persistentSecureStorage.ts"
+      - "client/src/lib/secureStorage.ts"
+      - "client/src/lib/previsitLocalPersistence.ts"
+      - "client/src/features/cognitive-lab/**"
+      - "client/src/pages/caa.tsx"
+      - "client/src/pages/assinatura-digital.tsx"
+      - "client/src/lib/agendaCore.ts"
+      - "client/src/pages/conecta.tsx"
+      - "client/src/components/DiarioClinico.tsx"
+      - "client/src/pages/epilepsy-diary.tsx"
+      - "client/src/pages/headache-calendar.tsx"
+      - "client/src/hooks/useSecureScaleDraft.ts"
+      - "client/src/main.tsx"
+      - "client/public/sw.js"
+      - "tests/unit/clinical-browser-persistence-policy.test.ts"
+      - "tests/unit/clinical-browser-persistence-boundary.test.mjs"
+      - "tests/e2e/live-browser-persistence-block.mjs"
+      - ".github/workflows/live-browser-persistence-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-browser-persistence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zero-phi-browser-live:
+    name: Zero PHI browser-side in LIVE
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Audit dependency graph
+        run: npm audit --audit-level=high
+
+      - name: Prove central persistence decisions
+        run: node --import tsx tests/unit/clinical-browser-persistence-policy.test.ts
+
+      - name: Prove browser boundary and service-worker contract
+        run: node tests/unit/clinical-browser-persistence-boundary.test.mjs
+
+      - name: Preserve existing diary and previsit regressions
+        run: |
+          node tests/unit/live-diary-persistence-guard.test.mjs
+          node tests/unit/live-previsit-persistence-guard.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Preserve Cognitive Lab unit behavior
+        run: npm run test:cognitive
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build explicit remote LIVE client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+        run: npm run build:client
+
+      - name: Run adversarial global persistence journey
+        run: node tests/e2e/live-browser-persistence-block.mjs
