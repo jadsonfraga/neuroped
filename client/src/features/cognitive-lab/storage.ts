@@ -5,6 +5,7 @@
  */
 import type { CognitiveSession } from "./types";
 import { MAX_SECURE_PLAINTEXT_BYTES, secureGet, secureSet } from "@/lib/secureStorage";
+import { isClinicalBrowserPersistenceDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 
 const LEGACY_KEY = "neuroped:cognitive-lab:sessions";
 const SECURE_KEY = "cognitive-lab:sessions:v2";
@@ -56,8 +57,20 @@ function fitStorageBudget(value: unknown): CognitiveSession[] {
 export async function listSessions(): Promise<CognitiveSession[]> {
   const protectedSessions = await secureGet<CognitiveSession[]>(SECURE_KEY);
   if (protectedSessions !== null) {
-    try { localStorage.removeItem(LEGACY_KEY); } catch { /* legado indisponível */ }
+    if (!isClinicalBrowserPersistenceDenied(LEGACY_KEY, "remove")) {
+      try { localStorage.removeItem(LEGACY_KEY); } catch { /* legado indisponível */ }
+    }
     return fitStorageBudget(protectedSessions);
+  }
+
+  // Em LIVE remoto autenticado, nem sequer consulte o storage legado. A
+  // fronteira global continua como defesa em profundidade, mas esta camada
+  // evita a tentativa na entrada da API do navegador e impede restore/migrate.
+  if (
+    isClinicalBrowserPersistenceDenied(LEGACY_KEY, "read") ||
+    isClinicalBrowserPersistenceDenied(LEGACY_KEY, "migrate")
+  ) {
+    return [];
   }
 
   try {
@@ -65,12 +78,23 @@ export async function listSessions(): Promise<CognitiveSession[]> {
     const legacy = fitStorageBudget(raw ? JSON.parse(raw) : []);
     if (legacy.length > 0) {
       const migrated = await secureSet(SECURE_KEY, legacy);
-      if (migrated && localStorage.getItem(LEGACY_KEY) === raw) {
+      if (
+        migrated &&
+        !isClinicalBrowserPersistenceDenied(LEGACY_KEY, "read") &&
+        !isClinicalBrowserPersistenceDenied(LEGACY_KEY, "remove") &&
+        localStorage.getItem(LEGACY_KEY) === raw
+      ) {
         localStorage.removeItem(LEGACY_KEY);
       }
       return legacy;
     }
-    if (raw !== null && legacy.length === 0) localStorage.removeItem(LEGACY_KEY);
+    if (
+      raw !== null &&
+      legacy.length === 0 &&
+      !isClinicalBrowserPersistenceDenied(LEGACY_KEY, "remove")
+    ) {
+      localStorage.removeItem(LEGACY_KEY);
+    }
   } catch {
     // Sem armazenamento, o resultado atual continua exportável na tela.
   }
