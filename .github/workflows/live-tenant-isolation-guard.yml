@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   tenant-isolation-live:
-    name: RED BLUE tenant isolation
+    name: test:tenant-isolation:live
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
