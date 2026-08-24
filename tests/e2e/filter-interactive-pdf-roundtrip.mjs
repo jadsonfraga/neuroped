@@ -23,10 +23,10 @@ const MIME = {
 };
 
 const E2E_USER = {
-  id: "filter-roundtrip-reader",
+  id: "filter-roundtrip-professional",
   email: "filter-roundtrip@neuroped.invalid",
   name: "Filter Roundtrip",
-  role: "reader",
+  role: "professional",
 };
 
 const FILTER_STATE = {
