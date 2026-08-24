@@ -1,0 +1,68 @@
+name: LIVE tenant isolation guard
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/api/live/**"
+      - "functions/api/tenant/**"
+      - "functions/api/billing/_guard.ts"
+      - "shared/tenant.ts"
+      - "db/migrations/0009_saas_phase1_foundation.sql"
+      - "db/migrations/0010_saas_phase1_hardening.sql"
+      - "db/migrations/0014_saas_tenant_lifecycle.sql"
+      - "client/src/contexts/AuthContext.tsx"
+      - "client/src/contexts/ClinicContext.tsx"
+      - "tests/unit/live-tenant-isolation-adversarial.test.ts"
+      - "tests/unit/live-tenant-client-boundary.test.mjs"
+      - ".github/workflows/live-tenant-isolation-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-tenant-isolation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tenant-isolation-live:
+    name: test:tenant-isolation:live
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Adversarial RED x BLUE handler and storage test
+        run: node --import tsx tests/unit/live-tenant-isolation-adversarial.test.ts
+
+      - name: Prove hard client boundary on clinic switch
+        run: node tests/unit/live-tenant-client-boundary.test.mjs
+
+      - name: Preserve existing SaaS tenant invariants
+        run: |
+          node --import tsx tests/unit/saas-phase1-foundation.test.ts
+          node --import tsx tests/unit/saas-live-clinical-domains.test.ts
+          node --import tsx tests/unit/saas-tenant-lifecycle.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint

@@ -1,4 +1,4 @@
-import { getAccessToken } from "@/lib/authClient";
+import { isClinicalBrowserPersistenceDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
 
 export const PREVISIT_SECURE_KEYS = {
@@ -11,35 +11,32 @@ export type PrevisitSecureKey = typeof PREVISIT_SECURE_KEYS[keyof typeof PREVISI
 /**
  * Regra canônica: dados operacionais de pré-consulta/pré-retorno nunca podem
  * virar um prontuário paralelo no navegador durante uma sessão LIVE remota.
- *
- * A presença do token é deliberadamente exigida para preservar o modo local
- * e telas públicas/sem sessão. Em LIVE autenticado, leitura, migração, escrita
- * e exclusão local falham fechadas. Dados locais preexistentes são preservados.
+ * A decisão é delegada à política central para que o contrato não divirja das
+ * demais superfícies clínicas.
  */
-export function isRemotePrevisitPersistenceBlocked(): boolean {
-  return (
-    import.meta.env?.VITE_AUTH_MODE === "remote" &&
-    Boolean(getAccessToken())
-  );
+export function isRemotePrevisitPersistenceBlocked(
+  key: PrevisitSecureKey = PREVISIT_SECURE_KEYS.preConsulta,
+): boolean {
+  return isClinicalBrowserPersistenceDenied(key, "read");
 }
 
 export async function previsitSecureGet<T>(key: PrevisitSecureKey): Promise<T | null> {
-  if (isRemotePrevisitPersistenceBlocked()) return null;
+  if (isClinicalBrowserPersistenceDenied(key, "read")) return null;
   return secureGet<T>(key);
 }
 
 export async function previsitSecureSet<T>(key: PrevisitSecureKey, value: T): Promise<boolean> {
-  if (isRemotePrevisitPersistenceBlocked()) return false;
+  if (isClinicalBrowserPersistenceDenied(key, "write")) return false;
   return secureSet(key, value);
 }
 
 export async function previsitSecureClear(key: PrevisitSecureKey): Promise<void> {
-  if (isRemotePrevisitPersistenceBlocked()) return;
+  if (isClinicalBrowserPersistenceDenied(key, "remove")) return;
   await secureClear(key);
 }
 
 export function previsitLegacyGet(key: string): string | null {
-  if (isRemotePrevisitPersistenceBlocked()) return null;
+  if (isClinicalBrowserPersistenceDenied(key, "read")) return null;
   try {
     return localStorage.getItem(key);
   } catch {
@@ -48,7 +45,7 @@ export function previsitLegacyGet(key: string): string | null {
 }
 
 export function previsitLegacyRemove(key: string): void {
-  if (isRemotePrevisitPersistenceBlocked()) return;
+  if (isClinicalBrowserPersistenceDenied(key, "remove")) return;
   try {
     localStorage.removeItem(key);
   } catch {

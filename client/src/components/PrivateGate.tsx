@@ -9,6 +9,7 @@ import {
 import { currentHashPath, isPublicRoute, PUBLIC_HOME } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE, MEDICAL_URL } from "@/lib/zone";
 import { useAuth } from "@/contexts/AuthContext";
+import { RequiredPasswordChangeGate } from "@/components/RequiredPasswordChangeGate";
 import { OPEN_ACCESS } from "@/security/accessPolicy";
 
 // Estilos compartilhados entre o PIN, o bloqueio de configuração e o aviso da
@@ -50,7 +51,7 @@ function GateCard({ children }: { children: React.ReactNode }) {
 }
 
 export function PrivateGate({ children }: { children: React.ReactNode }) {
-  const { accessMode } = useAuth();
+  const { accessMode, isAuthenticated, user } = useAuth();
   const [unlocked, setUnlocked] = useState<boolean>(() => isMasterPinUnlocked());
   const [pin, setPin] = useState("");
   const [remember, setRemember] = useState(false);
@@ -85,12 +86,20 @@ export function PrivateGate({ children }: { children: React.ReactNode }) {
     accessMode === "checking" &&
     !IS_PUBLIC_ZONE &&
     !onPublicRoute;
+  const showRequiredPasswordChange =
+    accessMode === "remote" && isAuthenticated && user?.mustChangePassword === true;
 
   useEffect(() => {
     if (showGate) {
       document.title = "NeuroPed — área médica (acesso restrito)";
     }
   }, [showGate]);
+
+  // Esta barreira não depende de OPEN_ACCESS: must_change_password é estado de
+  // segurança imposto pelo backend canônico e não uma preferência de navegação.
+  if (showRequiredPasswordChange) {
+    return <RequiredPasswordChangeGate />;
+  }
 
   // Não renderiza conteúdo médico enquanto o app decide se esta instalação
   // exige login remoto ou PIN local. Isso evita um flash de dados protegidos.

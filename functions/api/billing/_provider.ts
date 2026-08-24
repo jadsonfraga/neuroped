@@ -133,7 +133,9 @@ export async function createAsaasRecurringCheckout(
   }
 
   if (!response.ok || !parsed || typeof parsed !== "object") {
-    console.error("[billing.asaas.checkout]", response.status, text.slice(0, 800));
+    // Respostas do provedor podem ecoar customerData (nome/e-mail). Logs de
+    // produção registram somente metadados não clínicos e não identificáveis.
+    console.error("[billing.asaas.checkout] provider_failure", { status: response.status });
     throw new Error(`ASAAS_CHECKOUT_FAILED_${response.status}`);
   }
 
@@ -197,8 +199,12 @@ async function asaasLifecycleRequest(
     body: body ? JSON.stringify(body) : undefined,
   });
   if (response.ok || (allowNotFound && response.status === 404)) return;
-  const text = await response.text();
-  console.error("[billing.asaas.lifecycle]", method, path, response.status, text.slice(0, 500));
+  // `path` contém IDs do provedor e a resposta pode conter customerData. Não
+  // serializar nenhum dos dois em log; status + método bastam para observação.
+  console.error("[billing.asaas.lifecycle] provider_failure", {
+    method,
+    status: response.status,
+  });
   throw new Error(`ASAAS_LIFECYCLE_FAILED_${response.status}`);
 }
 

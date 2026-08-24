@@ -7,6 +7,7 @@ on:
     paths:
       - "db/migrations/0012_saas_billing_onboarding.sql"
       - "db/migrations/0013_saas_billing_provider.sql"
+      - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
       - "shared/billing.ts"
       - "server/lib/billingEntitlement.ts"
       - "functions/api/billing/**"
@@ -56,6 +57,7 @@ jobs:
           npm run lint
           node --import tsx tests/unit/saas-billing-contract.test.ts
           node --import tsx tests/unit/saas-billing-provider.test.ts
+          node --import tsx tests/unit/saas-billing-adversarial.test.ts
           node tests/unit/saas-billing-production-wiring.test.mjs
 
       - name: Validar credenciais Cloudflare
@@ -124,6 +126,17 @@ jobs:
           test -s /tmp/0013-post-alter.sql
           npx wrangler@4 d1 execute neuroped-db --remote --yes --file=/tmp/0013-post-alter.sql
 
+      - name: Aplicar hardening 0015 de trial e assentos
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          # 0015 é reexecutável: ele apenas eleva trials para a capacidade mínima
+          # segura e recria o trigger canônico de bootstrap com 2 assentos.
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0015_saas_billing_trial_seats_hardening.sql
+
       - name: Verificar contrato físico de billing
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -152,4 +165,16 @@ jobs:
             }
           done
 
-          echo "✅ Billing SaaS reconciliado no D1 remoto."
+          # Prova física de 0015 sem imprimir clinic_id, usuários ou qualquer PHI.
+          # Todos os trials devem ter no mínimo 2 assentos e capacidade estritamente
+          # maior que o total de memberships ativas no instante da reconciliação.
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT CASE WHEN COUNT(*) = 0 THEN 'TRIAL_SEAT_POLICY_OK' ELSE 'TRIAL_SEAT_POLICY_VIOLATION' END AS status FROM billing_subscriptions bs JOIN billing_customers bc ON bc.id = bs.customer_id WHERE bs.status = 'trial' AND (COALESCE(bs.seats,0) < 2 OR COALESCE(bs.seats,0) <= (SELECT COUNT(*) FROM clinic_memberships cm WHERE cm.clinic_id = bc.clinic_id AND cm.active = 1));" \
+            > /tmp/billing-0015-policy.txt 2>&1
+          grep -q "TRIAL_SEAT_POLICY_OK" /tmp/billing-0015-policy.txt || {
+            echo "::error::Contrato físico da migration 0015 não foi comprovado."
+            exit 1
+          }
+          echo "✓ migration 0015 comprovada por invariantes metadata-only"
+
+          echo "✅ Billing SaaS reconciliado no D1 remoto (0012 + 0013 + 0015)."

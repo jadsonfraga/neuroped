@@ -61,6 +61,11 @@ const PUBLIC_API_PATHS = new Set([
   "/api/public-booking",
 ]);
 
+const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([
+  "/api/auth/me",
+  "/api/auth/change-password",
+]);
+
 function apiError(message: string, code: string, status: number): Response {
   return new Response(JSON.stringify({ error: message, code }), {
     status,
@@ -73,6 +78,17 @@ interface AuthorizationResult {
   user: PublicUser | null;
 }
 
+function passwordChangeFailure(request: Request, user: PublicUser): Response | null {
+  if (!user.mustChangePassword) return null;
+  const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  if (PASSWORD_CHANGE_ALLOWED_PATHS.has(path)) return null;
+  return apiError(
+    "Troca de senha obrigatória antes de acessar dados clínicos.",
+    "PASSWORD_CHANGE_REQUIRED",
+    403,
+  );
+}
+
 function roleFailure(request: Request, user: PublicUser): Response | null {
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
   const method = request.method.toUpperCase();
@@ -83,13 +99,20 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
 
   const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
+  const isOwnPasswordChange = path === "/api/auth/change-password" && method === "POST";
   // `operator` pode escrever somente no endpoint operacional. A própria função
   // /api/operations resolve o vínculo com o profissional e filtra as ações;
   // nenhuma rota clínica herda esta exceção.
   const isDelegatedOperationalWrite =
     user.role === "operator" && path === "/api/operations" && method === "POST";
 
-  if (isWrite && !isOwnConsentWrite && !isDelegatedOperationalWrite && !canWriteClinicalData(user)) {
+  if (
+    isWrite &&
+    !isOwnConsentWrite &&
+    !isOwnPasswordChange &&
+    !isDelegatedOperationalWrite &&
+    !canWriteClinicalData(user)
+  ) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);
   }
   return null;
@@ -124,7 +147,10 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   }
 
   const user = publicUser(row);
-  return { failure: roleFailure(request, user), user };
+  return {
+    failure: passwordChangeFailure(request, user) ?? roleFailure(request, user),
+    user,
+  };
 }
 
 function getRateLimitKey(request: Request): string {

@@ -70,6 +70,13 @@ function writeToken(key: string, value: string | null): void {
   } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
 }
 
+function replaceAuthSession(data: LoginResponse): void {
+  authEpoch += 1;
+  writeToken(ACCESS_KEY, data.accessToken);
+  writeToken(REFRESH_KEY, data.refreshToken);
+  writeToken(USER_KEY, JSON.stringify(data.user));
+}
+
 export function getAccessToken(): string | null {
   return readToken(ACCESS_KEY);
 }
@@ -162,10 +169,29 @@ export async function loginRequest(email: string, password: string): Promise<Log
     throw new Error(err.error || `Login falhou (${r.status})`);
   }
   const data: LoginResponse = await r.json();
-  authEpoch += 1;
-  writeToken(ACCESS_KEY, data.accessToken);
-  writeToken(REFRESH_KEY, data.refreshToken);
-  writeToken(USER_KEY, JSON.stringify(data.user));
+  replaceAuthSession(data);
+  return data;
+}
+
+/**
+ * Troca a senha no runtime Cloudflare e substitui atomicamente a família local
+ * de tokens pela sessão nova emitida pelo servidor. A senha nunca é persistida.
+ */
+export async function changePasswordRequest(
+  currentPassword: string,
+  newPassword: string,
+): Promise<LoginResponse> {
+  const r = await authFetch("/api/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.error || `Troca de senha falhou (${r.status})`);
+  }
+  const data: LoginResponse = await r.json();
+  replaceAuthSession(data);
   return data;
 }
 

@@ -10,7 +10,7 @@
 // JavaScript malicioso executando na mesma origem (XSS).
 // ============================================================
 
-import { getAccessToken } from "@/lib/authClient";
+import { isClinicalBrowserPersistenceDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 
 const DB_NAME = "neuroped-persistent-secure-v1";
 const DB_VERSION = 1;
@@ -18,7 +18,6 @@ const KEY_STORE = "keys";
 const VALUE_STORE = "values";
 const MASTER_KEY_ID = "aes-gcm-master-v1";
 const AAD_PREFIX = "neuroped:persistent-secure:";
-const DIARY_PREFIX = "diario:";
 const MAX_PERSISTENT_PLAINTEXT_BYTES = 2_000_000;
 
 interface PersistentEnvelope {
@@ -31,20 +30,19 @@ interface PersistentEnvelope {
 /**
  * Defesa em profundidade para impedir prontuário local paralelo em LIVE.
  *
- * Os componentes clínicos também bloqueiam seus diários em sessão remota,
- * porém a proteção do cofre é deliberadamente independente da UI: qualquer
- * código futuro que tente usar uma chave `diario:*` durante um build remoto
- * autenticado recebe falha fechada antes de abrir o IndexedDB.
+ * A política central classifica namespaces clínicos (diários, Cognitive Lab,
+ * CAA, assinatura, agenda, Conecta etc.) e falha fechado em sessão remota
+ * autenticada ANTES de abrir o IndexedDB. Isso evita que uma tela futura burle
+ * a regra apenas por esquecer um guard de UI.
  *
  * `persistentSecureClearAll()` não usa esta trava. Logout/troca de conta deve
  * continuar capaz de destruir o cofre inteiro e sua CryptoKey.
  */
-export function isRemoteClinicalDiaryPersistenceBlocked(key: string): boolean {
-  return (
-    key.startsWith(DIARY_PREFIX) &&
-    import.meta.env?.VITE_AUTH_MODE === "remote" &&
-    Boolean(getAccessToken())
-  );
+function isRemoteClinicalPersistenceBlocked(
+  key: string,
+  purpose: "read" | "write" | "remove",
+): boolean {
+  return isClinicalBrowserPersistenceDenied(key, purpose);
 }
 
 function idbAvailable(): boolean {
@@ -152,7 +150,7 @@ export async function persistentSecureSet<T>(
   key: string,
   value: T,
 ): Promise<boolean> {
-  if (isRemoteClinicalDiaryPersistenceBlocked(key)) return false;
+  if (isRemoteClinicalPersistenceBlocked(key, "write")) return false;
 
   const db = await openDatabase();
   if (!db) return false;
@@ -189,7 +187,7 @@ export async function persistentSecureSet<T>(
 
 /** Recupera um valor persistente; corrupção/falha de cifra nunca vira plaintext. */
 export async function persistentSecureGet<T>(key: string): Promise<T | null> {
-  if (isRemoteClinicalDiaryPersistenceBlocked(key)) return null;
+  if (isRemoteClinicalPersistenceBlocked(key, "read")) return null;
 
   const db = await openDatabase();
   if (!db) return null;
@@ -229,7 +227,7 @@ async function deleteValue(db: IDBDatabase, key: string): Promise<void> {
 }
 
 export async function persistentSecureClear(key: string): Promise<void> {
-  if (isRemoteClinicalDiaryPersistenceBlocked(key)) return;
+  if (isRemoteClinicalPersistenceBlocked(key, "remove")) return;
 
   const db = await openDatabase();
   if (!db) return;

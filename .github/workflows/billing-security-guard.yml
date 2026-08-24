@@ -1,0 +1,73 @@
+name: Billing security guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "functions/api/billing/**"
+      - "shared/billing.ts"
+      - "server/lib/billingEntitlement.ts"
+      - "db/migrations/0012_saas_billing_onboarding.sql"
+      - "db/migrations/0013_saas_billing_provider.sql"
+      - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
+      - "tests/unit/saas-billing*.test.ts"
+      - ".github/workflows/billing-security-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/api/billing/**"
+      - "shared/billing.ts"
+      - "server/lib/billingEntitlement.ts"
+      - "db/migrations/0012_saas_billing_onboarding.sql"
+      - "db/migrations/0013_saas_billing_provider.sql"
+      - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
+      - "tests/unit/saas-billing*.test.ts"
+      - ".github/workflows/billing-security-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: billing-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  billing-server-authority:
+    name: Billing server-side attacks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Domain and entitlement contract
+        run: node --import tsx tests/unit/saas-billing-contract.test.ts
+
+      - name: Provider and D1 trigger contract
+        run: node --import tsx tests/unit/saas-billing-provider.test.ts
+
+      - name: Adversarial webhook and seat attacks
+        run: node --import tsx tests/unit/saas-billing-adversarial.test.ts
+
+      - name: Production wiring remains server authoritative
+        run: node tests/unit/saas-billing-production-wiring.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint

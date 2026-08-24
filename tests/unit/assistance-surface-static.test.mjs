@@ -43,10 +43,14 @@ assert.match(
   /addEventListener\(OPEN_PREFERENCES_EVENT, openPreferences\)/,
   "o painel deve escutar o canal explícito do shell",
 );
+assert.match(preferencesPanel, /<Dialog[\s>]/, "preferências devem continuar usando Dialog");
+assert.match(preferencesPanel, /open=\{open\}/, "Dialog deve permanecer controlado pelo estado open");
+assert.match(preferencesPanel, /onOpenChange=\{/, "Dialog deve manter handoff controlado de abertura/fechamento");
+assert.match(preferencesPanel, /<DialogContent\b/, "DialogContent preserva foco, Escape e retorno de foco");
 assert.match(
   preferencesPanel,
-  /<Dialog open=\{open\} onOpenChange=\{setOpen\}>/,
-  "preferências devem usar Dialog com foco, Escape e retorno de foco",
+  /passwordChangeRequired\s*&&\s*!nextOpen\)\s*return/,
+  "troca de senha obrigatória não pode ser dispensada fechando preferências",
 );
 assert.match(
   preferencesPanel,

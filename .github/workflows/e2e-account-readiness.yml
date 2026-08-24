@@ -1,0 +1,92 @@
+name: Dedicated E2E account readiness
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-account-readiness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dedicated-e2e-account:
+    name: Dedicated E2E account only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Provar credenciais técnicas exclusivas no backend canônico
+        env:
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+        run: |
+          set -euo pipefail
+          BASE="https://neuroped.pages.dev"
+
+          [ -n "${E2E_MAIL:-}" ] && [ -n "${E2E_PW:-}" ] || {
+            echo "::error::NEUROPED_E2E_EMAIL/NEUROPED_E2E_PASSWORD não estão provisionados para este workflow."
+            exit 1
+          }
+          [ "${#E2E_PW}" -ge 12 ] || {
+            echo "::error::NEUROPED_E2E_PASSWORD não atende ao mínimo operacional."
+            exit 1
+          }
+
+          payload=$(jq -nc --arg email "$E2E_MAIL" --arg password "$E2E_PW" \
+            '{email:$email,password:$password}')
+          response_file=$(mktemp)
+          code=$(curl -sS -o "$response_file" -w "%{http_code}" \
+            -X POST "$BASE/api/auth/login" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+          [ "$code" = "200" ] || {
+            echo "::error::Conta E2E dedicada não autenticou no backend canônico (HTTP $code)."
+            exit 1
+          }
+
+          access=$(jq -r '.accessToken // empty' "$response_file")
+          refresh=$(jq -r '.refreshToken // empty' "$response_file")
+          returned_mail=$(jq -r '.user.email // empty' "$response_file")
+          must_change=$(jq -r '.user.mustChangePassword // false' "$response_file")
+          [ -n "$access" ] && [ -n "$refresh" ] || {
+            echo "::error::Login E2E não retornou par de tokens."
+            exit 1
+          }
+          [ "$returned_mail" = "$E2E_MAIL" ] || {
+            echo "::error::Backend retornou identidade diferente da conta técnica configurada."
+            exit 1
+          }
+          [ "$must_change" = "false" ] || {
+            echo "::error::Conta E2E ainda exige troca de senha; não está pronta para smoke autônomo."
+            exit 1
+          }
+
+          me_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "$BASE/api/auth/me" -H "Authorization: Bearer $access")
+          [ "$me_code" = "200" ] || {
+            echo "::error::Conta E2E autenticou, mas /api/auth/me não confirmou a sessão."
+            exit 1
+          }
+
+          logout_payload=$(jq -nc --arg refreshToken "$refresh" '{refreshToken:$refreshToken}')
+          logout_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -X POST "$BASE/api/auth/logout" \
+            -H "Content-Type: application/json" \
+            --data "$logout_payload")
+          [ "$logout_code" = "200" ] || {
+            echo "::error::Conta E2E não conseguiu revogar a família de refresh."
+            exit 1
+          }
+
+          revoked_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "$BASE/api/auth/me" -H "Authorization: Bearer $access")
+          [ "$revoked_code" = "401" ] || {
+            echo "::error::Access token E2E permaneceu válido depois do logout."
+            exit 1
+          }
+
+          unset E2E_MAIL E2E_PW access refresh payload
+          rm -f "$response_file"
+          echo "✅ Conta E2E dedicada: login, identidade, sessão e revogação comprovados sem fallback ADMIN."

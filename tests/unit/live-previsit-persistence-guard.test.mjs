@@ -14,14 +14,16 @@ function before(text, first, second, label) {
 }
 
 const policy = source("client/src/lib/previsitLocalPersistence.ts");
+const centralPolicy = source("client/src/lib/clinicalBrowserPersistencePolicy.ts");
 const preConsultaCore = source("client/src/lib/preConsultaCore.ts");
 const preConsultaPage = source("client/src/pages/pre-consulta.tsx");
 const preRetornoPage = source("client/src/pages/pre-retorno.tsx");
 const recepcaoPage = source("client/src/pages/recepcao.tsx");
 
-assert.match(policy, /getAccessToken/);
-assert.match(policy, /VITE_AUTH_MODE\s*===\s*["']remote["']/);
-assert.match(policy, /Boolean\(getAccessToken\(\)\)/);
+assert.match(policy, /isClinicalBrowserPersistenceDenied/);
+assert.match(centralPolicy, /input\.authMode === "remote" && input\.authenticated && clinical/);
+assert.match(centralPolicy, /"pre-consultas": "CLINICAL_EPHEMERAL"/);
+assert.match(centralPolicy, /"pre-retornos": "CLINICAL_EPHEMERAL"/);
 assert.match(policy, /preConsulta:\s*["']pre-consultas["']/);
 assert.match(policy, /preRetorno:\s*["']pre-retornos["']/);
 
@@ -29,11 +31,11 @@ for (const fn of ["previsitSecureGet", "previsitSecureSet", "previsitSecureClear
   assert.match(policy, new RegExp(`function ${fn}|async function ${fn}|export async function ${fn}|export function ${fn}`));
 }
 
-before(policy, "if (isRemotePrevisitPersistenceBlocked()) return null;", "return secureGet<T>(key);", "policy secureGet fail-closed");
-before(policy, "if (isRemotePrevisitPersistenceBlocked()) return false;", "return secureSet(key, value);", "policy secureSet fail-closed");
-before(policy, "if (isRemotePrevisitPersistenceBlocked()) return;", "await secureClear(key);", "policy secureClear fail-closed");
-before(policy, "if (isRemotePrevisitPersistenceBlocked()) return null;", "localStorage.getItem(key)", "policy legacy read fail-closed");
-before(policy, "if (isRemotePrevisitPersistenceBlocked()) return;", "localStorage.removeItem(key)", "policy legacy delete fail-closed");
+before(policy, 'if (isClinicalBrowserPersistenceDenied(key, "read")) return null;', "return secureGet<T>(key);", "policy secureGet fail-closed");
+before(policy, 'if (isClinicalBrowserPersistenceDenied(key, "write")) return false;', "return secureSet(key, value);", "policy secureSet fail-closed");
+before(policy, 'if (isClinicalBrowserPersistenceDenied(key, "remove")) return;', "await secureClear(key);", "policy secureClear fail-closed");
+before(policy, 'if (isClinicalBrowserPersistenceDenied(key, "read")) return null;', "localStorage.getItem(key)", "policy legacy read fail-closed");
+before(policy, 'if (isClinicalBrowserPersistenceDenied(key, "remove")) return;', "localStorage.removeItem(key)", "policy legacy delete fail-closed");
 
 assert.doesNotMatch(preConsultaCore, /from\s+["']@\/lib\/secureStorage["']/);
 assert.doesNotMatch(preConsultaCore, /\blocalStorage\b/);

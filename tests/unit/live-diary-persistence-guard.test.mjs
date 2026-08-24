@@ -9,6 +9,7 @@ const acompanhamento = read("client/src/pages/neuroped-acompanhamento.tsx");
 const epilepsy = read("client/src/pages/epilepsy-diary.tsx");
 const headache = read("client/src/pages/headache-calendar.tsx");
 const persistentStorage = read("client/src/lib/persistentSecureStorage.ts");
+const persistencePolicy = read("client/src/lib/clinicalBrowserPersistencePolicy.ts");
 
 // Defesa 1: os componentes clínicos devem falhar fechado antes de tocar o cofre.
 assert.match(diary, /useAuth/);
@@ -86,25 +87,29 @@ assertStandaloneDiaryGuard(headache, {
   disabledTestId: "headache-diary-local-persistence-disabled",
 });
 
-// Defesa 2: o próprio cofre persistente deve recusar qualquer diario:* em build
-// remoto com token, mesmo que uma tela futura esqueça completamente o guard de UI.
-assert.match(persistentStorage, /import \{ getAccessToken \} from "@\/lib\/authClient"/);
-assert.match(persistentStorage, /const DIARY_PREFIX = "diario:"/);
+// Defesa 2: o cofre persistente agora usa a política central para TODOS os
+// namespaces clínicos, mantendo diario:* explicitamente classificado.
 assert.match(
   persistentStorage,
-  /key\.startsWith\(DIARY_PREFIX\)[\s\S]*import\.meta\.env\?\.VITE_AUTH_MODE === "remote"[\s\S]*Boolean\(getAccessToken\(\)\)/,
-  "cofre deve identificar diário + build remoto + credencial antes de bloquear",
+  /import \{ isClinicalBrowserPersistenceDenied \} from "@\/lib\/clinicalBrowserPersistencePolicy"/,
+);
+assert.match(persistencePolicy, /\["diario:", "CLINICAL_LONGITUDINAL"\]/);
+assert.match(persistencePolicy, /\["neuroped:diario:", "CLINICAL_LONGITUDINAL"\]/);
+assert.match(
+  persistencePolicy,
+  /input\.authMode === "remote" && input\.authenticated && clinical/,
+  "política central deve negar PHI somente após reconhecer sessão LIVE remota autenticada",
 );
 
-for (const [name, signature, deniedReturn] of [
-  ["set", "export async function persistentSecureSet", "return false;"],
-  ["get", "export async function persistentSecureGet", "return null;"],
-  ["clear", "export async function persistentSecureClear", "return;"],
+for (const [name, signature, purpose, deniedReturn] of [
+  ["set", "export async function persistentSecureSet", "write", "return false;"],
+  ["get", "export async function persistentSecureGet", "read", "return null;"],
+  ["clear", "export async function persistentSecureClear", "remove", "return;"],
 ]) {
   const start = persistentStorage.indexOf(signature);
   assert.ok(start >= 0, `cofre: função ${name} ausente`);
   const openDb = persistentStorage.indexOf("openDatabase()", start);
-  const guardAt = persistentStorage.indexOf("isRemoteClinicalDiaryPersistenceBlocked(key)", start);
+  const guardAt = persistentStorage.indexOf(`isRemoteClinicalPersistenceBlocked(key, "${purpose}")`, start);
   const deniedAt = persistentStorage.indexOf(deniedReturn, guardAt);
   assert.ok(guardAt >= start && deniedAt >= guardAt, `cofre: ${name} deve falhar fechado`);
   if (openDb >= 0) {
@@ -117,9 +122,9 @@ assert.ok(clearAllStart >= 0, "cofre: limpeza global precisa continuar disponív
 const clearAllBody = persistentStorage.slice(clearAllStart);
 assert.doesNotMatch(
   clearAllBody,
-  /isRemoteClinicalDiaryPersistenceBlocked/,
+  /isRemoteClinicalPersistenceBlocked/,
   "logout/troca de conta não pode ser impedido de destruir o cofre",
 );
 assert.match(clearAllBody, /indexedDB\.deleteDatabase\(DB_NAME\)/);
 
-console.log("✓ LIVE diary guard: UI + cofre persistente bloqueiam prontuário local paralelo no remoto");
+console.log("✓ LIVE diary guard: UI + política central bloqueiam prontuário local paralelo no remoto");
