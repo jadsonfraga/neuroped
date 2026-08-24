@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { authFetch } from "@/lib/authClient";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,7 +49,8 @@ async function clearClinicalClientCaches(): Promise<void> {
     await queryClient.cancelQueries();
   } finally {
     // A troca de tenant não pode deixar dados da clínica anterior em cache ou na
-    // árvore de observers. As páginas serão recarregadas pela navegação/queries.
+    // árvore de observers. O reload posterior recria todos os observers já sob o
+    // novo clinic_id e evita qualquer reaproveitamento de memória React anterior.
     queryClient.clear();
   }
 }
@@ -60,6 +61,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   const [activeClinicId, setActiveClinicIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const switchGeneration = useRef(0);
 
   const reloadClinics = useCallback(async () => {
     if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword) {
@@ -102,14 +104,27 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   const setActiveClinicId = useCallback((clinicId: string) => {
     if (!clinics.some((clinic) => clinic.id === clinicId && clinic.status === "active")) return;
     if (clinicId === activeClinicId) return;
-    // O contexto fica vazio durante a limpeza. Nenhuma tela deve continuar
-    // identificando a clínica anterior enquanto seus caches são descartados.
+
+    // Troca de clínica é uma fronteira de segurança, não apenas uma preferência
+    // de UI. Primeiro removemos o contexto antigo para que nenhuma nova query
+    // possa sair com o tenant anterior enquanto os caches são descartados.
+    const generation = ++switchGeneration.current;
     setActiveClinicIdState(null);
     persistClinicId(null);
+
     void (async () => {
       await clearClinicalClientCaches();
-      setActiveClinicIdState(clinicId);
+      if (generation !== switchGeneration.current) return;
+
+      // O clinic_id não contém PHI e serve somente para reidratar o contexto.
+      // Recarregar o shell descarta memória React, observers e closures do tenant
+      // anterior por construção. O backend continua sendo a autoridade de acesso.
       persistClinicId(clinicId);
+      if (typeof window !== "undefined") {
+        window.location.reload();
+        return;
+      }
+      setActiveClinicIdState(clinicId);
     })();
   }, [activeClinicId, clinics]);
 
