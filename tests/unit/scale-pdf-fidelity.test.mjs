@@ -53,8 +53,22 @@ assert.match(interactive, /setApplicationDate\(new Date\(\)\.toISOString\(\)\)/)
 assert.match(interactive, /<LazyClinicalReport[\s\S]*applicationDate=\{applicationDate \?\? undefined\}/);
 assert.match(interactive, /<LazySaveToPatient[\s\S]*applicationDate=\{applicationDate \?\? undefined\}/);
 assert.match(report, /applicationDate\?: string \| Date/);
+assert.match(
+  report,
+  /const \[fallbackApplicationDate\] = useState\(\(\) => new Date\(\)\)/,
+  "escala dedicada deve congelar a data ao montar o resultado, sem recalcular ao clicar PDF",
+);
+assert.match(
+  report,
+  /resolveApplicationDate\(\s*rawProps\.applicationDate,\s*fallbackApplicationDate,?\s*\)/,
+);
 assert.match(report, /Data da aplicação: \$\{formatClinicalDateTime\(applicationDate\)\}/);
 assert.match(save, /applicationDate\?: string \| Date/);
+assert.match(
+  save,
+  /const \[fallbackApplicationDate\] = useState\(\(\) => new Date\(\)\)/,
+  "salvamento deve manter o mesmo fallback temporal durante re-renders",
+);
 assert.match(save, /appliedAt: applicationDate\.toISOString\(\)/);
 assert.match(save, /Data da aplicação: \$\{formatClinicalDateTime\(applicationDate\)\}/);
 assert.doesNotMatch(
@@ -64,5 +78,5 @@ assert.doesNotMatch(
 );
 
 console.log(
-  "✓ escala/PDF: rótulo literal + instante real de conclusão atravessam relatório, PDF e salvamento",
+  "✓ escala/PDF: respostas literais + instante estável de conclusão atravessam relatório, PDF e salvamento",
 );
