@@ -39,4 +39,24 @@ assert.doesNotMatch(
   "LIVE não deve voltar ao padrão frágil de reciclar o mesmo shell React entre tenants",
 );
 
-console.log("[live-tenant-client-boundary] ✓ troca de clínica zera contexto, limpa caches, evita corrida e recria o shell antes do novo tenant");
+assert.match(
+  clinicContext,
+  /isLoading:\s*isAuthLoading/,
+  "ClinicProvider precisa observar o estado transitório do bootstrap de autenticação",
+);
+assert.match(
+  clinicContext,
+  /if\s*\(accessMode\s*===\s*"checking"\s*\|\|\s*isAuthLoading\)\s*return;/,
+  "bootstrap de auth não pode apagar a seleção tenant persistida antes da revalidação da sessão",
+);
+const bootstrapGuard = clinicContext.indexOf('if (accessMode === "checking" || isAuthLoading) return;');
+const definitiveClear = clinicContext.indexOf('if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword)');
+assert.ok(bootstrapGuard >= 0 && definitiveClear > bootstrapGuard, "guard transitório deve preceder a limpeza definitiva de tenant");
+const betweenBootstrapAndDefinitiveClear = clinicContext.slice(bootstrapGuard, definitiveClear);
+assert.doesNotMatch(
+  betweenBootstrapAndDefinitiveClear,
+  /persistClinicId\(null\)|setActiveClinicIdState\(null\)/,
+  "estado auth transitório não pode limpar clinic_id nem contexto ativo",
+);
+
+console.log("[live-tenant-client-boundary] ✓ troca zera/cache-clears/recarrega e bootstrap preserva a seleção até auth ficar definitivo");
