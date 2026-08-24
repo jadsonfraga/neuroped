@@ -70,6 +70,16 @@ async function waitForApp(page) {
     .catch(() => {});
 }
 
+async function openFilterEngine(page) {
+  const open = page.getByTestId("button-open-filter");
+  if (await open.isVisible().catch(() => false)) {
+    await open.click();
+  }
+  await page
+    .getByTestId("age-band-scroll")
+    .waitFor({ state: "visible", timeout: 15_000 });
+}
+
 async function assertPressed(page, locator, label) {
   await locator.waitFor({ state: "visible", timeout: 15_000 });
   const value = await locator.getAttribute("aria-pressed");
@@ -203,6 +213,7 @@ async function main() {
 
     await page.goto(`${base}/#/filtro`, { waitUntil: "domcontentloaded" });
     await waitForApp(page);
+    await openFilterEngine(page);
     await assertFilterUi(page);
 
     const before = await page.evaluate((key) => sessionStorage.getItem(key), SESSION_KEY);
@@ -224,6 +235,7 @@ async function main() {
 
     await page.goBack({ waitUntil: "domcontentloaded" });
     await waitForApp(page);
+    await openFilterEngine(page);
     await assertFilterUi(page);
 
     const after = await page.evaluate((key) => sessionStorage.getItem(key), SESSION_KEY);
