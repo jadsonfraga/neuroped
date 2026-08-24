@@ -27,10 +27,7 @@ import {
   type ScaleResponseItem,
   type ScaleResponseReport,
 } from "@/lib/scaleResponseReport";
-import {
-  formatClinicalDate,
-  formatClinicalDateTime,
-} from "@/lib/clinicalDate";
+import { formatClinicalDate, formatClinicalDateTime } from "@/lib/clinicalDate";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import {
   copyText,
@@ -58,18 +55,32 @@ interface ClinicalReportProps {
   scaleFullName?: string;
   items: ReportItem[];
   patientAge?: string;
+  applicationDate?: string | Date;
+}
+
+function resolveApplicationDate(
+  value: string | Date | undefined,
+  fallback: Date,
+): Date {
+  if (!value) return fallback;
+  const date = typeof value === "string" ? new Date(value) : value;
+  return Number.isFinite(date.getTime()) ? date : fallback;
 }
 
 // Forma interna garantidamente completa consumida pelo render e helpers.
 type NormalizedReport = ScaleResponseReport;
 
-function normalizeReportProps(p: ClinicalReportProps): NormalizedReport {
+function normalizeReportProps(
+  p: ClinicalReportProps,
+  applicationDate: Date,
+): NormalizedReport {
   const items: ScaleResponseItem[] = normalizeScaleResponseItems(p.items);
   return {
     scaleName: p.scaleName,
     scaleFullName: p.scaleFullName,
     items,
     patientAge: p.patientAge,
+    applicationDate,
   };
 }
 
@@ -118,8 +129,15 @@ function generateReportText(
 }
 
 export function ClinicalReport(rawProps: ClinicalReportProps) {
-  const props = normalizeReportProps(rawProps);
-  const [applicationDate] = useState(() => new Date());
+  // Escalas dedicadas legadas não passam applicationDate. Nelas, a montagem do
+  // resultado é o instante de conclusão; este fallback precisa permanecer
+  // imutável durante re-renders disparados por PDF, copiar, email ou share.
+  const [fallbackApplicationDate] = useState(() => new Date());
+  const applicationDate = resolveApplicationDate(
+    rawProps.applicationDate,
+    fallbackApplicationDate,
+  );
+  const props = normalizeReportProps(rawProps, applicationDate);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -204,7 +222,10 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
     try {
       const { buildDocumentPdf } = await import("@/lib/documentPdf");
       const answerBody = props.items
-        .map((item, index) => `${index + 1}. ${item.question}\nResposta: ${item.answer || "Não respondida"}`)
+        .map(
+          (item, index) =>
+            `${index + 1}. ${item.question}\nResposta: ${item.answer || "Não respondida"}`,
+        )
         .join("\n\n");
       const bytes = await buildDocumentPdf({
         title: `Resultado da escala — ${props.scaleName}`,
@@ -221,12 +242,13 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
               `Escala: ${props.scaleName}`,
               `Idade informada: ${props.patientAge || "Não informada"}`,
               `Data da aplicação: ${formatClinicalDateTime(applicationDate)}`,
-              `Total de itens respondidos: ${props.items.length}`,
+              `Itens registrados no relatório: ${props.items.length}`,
             ].join("\n"),
           },
           { heading: "Perguntas e respostas completas", body: answerBody },
         ],
-        footer: "PDF premium gerado pelo NeuroPed. Contém todas as informações apresentadas no resultado desta aplicação.",
+        footer:
+          "PDF premium gerado pelo NeuroPed. Contém todas as informações apresentadas no resultado desta aplicação.",
       });
       const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -237,12 +259,16 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
       URL.revokeObjectURL(url);
       toast({
         title: "PDF premium exportado",
-        description: "O arquivo contém todas as perguntas, respostas e metadados da escala.",
+        description:
+          "O arquivo contém todas as perguntas, respostas e metadados da escala.",
       });
     } catch (error) {
       toast({
         title: "Falha ao gerar PDF",
-        description: error instanceof Error ? error.message : "Não foi possível gerar o PDF premium.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível gerar o PDF premium.",
         variant: "destructive",
       });
     } finally {
@@ -360,7 +386,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
                 </div>
                 <Badge variant="secondary" className="text-xs">
                   {props.items.length}{" "}
-                  {props.items.length === 1 ? "resposta" : "respostas"}
+                  {props.items.length === 1 ? "item registrado" : "itens registrados"}
                 </Badge>
               </div>
 
@@ -409,8 +435,14 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
             disabled={!reportReady || generatingPremiumPdf}
             data-testid="button-print-report"
           >
-            {generatingPremiumPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
-            {generatingPremiumPdf ? "Gerando PDF premium..." : "Exportar PDF Premium Completo"}
+            {generatingPremiumPdf ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <FileText className="h-5 w-5" />
+            )}
+            {generatingPremiumPdf
+              ? "Gerando PDF premium..."
+              : "Exportar PDF Premium Completo"}
           </Button>
 
           <Button
