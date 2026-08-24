@@ -56,7 +56,7 @@ async function clearClinicalClientCaches(): Promise<void> {
 }
 
 export function ClinicProvider({ children }: { children: ReactNode }) {
-  const { accessMode, isAuthenticated, user } = useAuth();
+  const { accessMode, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [clinics, setClinics] = useState<ClinicMembership[]>([]);
   const [activeClinicId, setActiveClinicIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +64,13 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   const switchGeneration = useRef(0);
 
   const reloadClinics = useCallback(async () => {
+    // Durante o bootstrap remoto, AuthProvider ainda está descobrindo capacidade
+    // e revalidando a sessão. Apagar ACTIVE_CLINIC_KEY nesse intervalo faria um
+    // hard reload de troca de tenant esquecer a seleção recém-persistida e voltar
+    // silenciosamente para a primeira clínica da lista. Estado transitório de auth
+    // nunca pode mutar a fronteira tenant persistida.
+    if (accessMode === "checking" || isAuthLoading) return;
+
     if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword) {
       setClinics([]);
       setActiveClinicIdState(null);
@@ -95,7 +102,7 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [accessMode, isAuthenticated, user?.mustChangePassword]);
+  }, [accessMode, isAuthenticated, isAuthLoading, user?.mustChangePassword]);
 
   useEffect(() => {
     void reloadClinics();
