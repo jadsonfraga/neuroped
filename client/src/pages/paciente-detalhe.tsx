@@ -5,6 +5,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { loadAllPatientResults } from "@/lib/patientResultsPagination";
+import {
+  savedScaleAppliedAt as resultCreatedAt,
+  savedScaleName as resultScaleName,
+  savedScaleResponses as storedResponses,
+} from "@/lib/savedScaleResult";
+import { safeTextFilename } from "@/lib/shareText";
+import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,73 +71,6 @@ function fmtDate(d: string | Date | null | undefined): string {
   }
 }
 
-interface StoredResponse {
-  question: string;
-  answer: string;
-}
-
-const ANALYSIS_FIELD =
-  /^(?:score|totalScore|classification|interpretation|domainScores|maxScore|total)$/i;
-
-function parseJson(value: unknown): any {
-  if (typeof value !== "string") return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
-function answerText(value: unknown): string {
-  if (value === true) return "Sim";
-  if (value === false) return "Não";
-  if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
-function storedResponses(result: any): StoredResponse[] {
-  const details = parseJson(result.details);
-  const source = parseJson(
-    result.responses ?? result.answers ?? details?.responses ?? [],
-  );
-
-  if (Array.isArray(source)) {
-    return source
-      .map((item, index) => {
-        if (item && typeof item === "object" && "question" in item) {
-          return {
-            question: String(item.question || `Pergunta ${index + 1}`),
-            answer: answerText(item.answer),
-          };
-        }
-        return { question: `Item ${index + 1}`, answer: answerText(item) };
-      })
-      .filter((item) => item.question.trim().length > 0);
-  }
-
-  if (source && typeof source === "object") {
-    return Object.entries(source)
-      .filter(([key]) => !ANALYSIS_FIELD.test(key))
-      .map(([key, value], index) => ({
-        question: /^\d+$/.test(key)
-          ? `Item ${Number(key) + 1}`
-          : key || `Item ${index + 1}`,
-        answer: answerText(value),
-      }));
-  }
-
-  return [];
-}
-
-function resultScaleName(result: any): string {
-  return result.scaleName ?? result.scale_name ?? "Escala";
-}
-
-function resultCreatedAt(result: any): string | Date | null {
-  return result.createdAt ?? result.applied_at ?? null;
-}
-
 function isNotFoundError(error: unknown): boolean {
   if (error && typeof error === "object" && "status" in error) {
     const status = Number((error as { status?: unknown }).status);
@@ -159,6 +99,7 @@ export default function PacienteDetalhePage() {
   const [specialty, setSpecialty] = useState("Neuropediatra");
   const [imageExporting, setImageExporting] = useState(false);
   const [reportCopying, setReportCopying] = useState(false);
+  const [pdfExportingId, setPdfExportingId] = useState<string | null>(null);
   const [resultPendingDeletion, setResultPendingDeletion] = useState<{
     id: string;
     scaleName: string;
@@ -198,12 +139,15 @@ export default function PacienteDetalhePage() {
   const results = isRemoteClinical
     ? (Array.isArray(resultsRaw) ? resultsRaw : []).map((assessment: any) => ({
         id: assessment.id,
-        scaleName: assessment.instrumentId,
+        payload: assessment.payload,
+        scaleName: assessment.payload?.title ?? assessment.instrumentId,
+        instrumentId: assessment.instrumentId,
         scaleVersion: assessment.instrumentVersion,
         responses: assessment.responses,
         answers: assessment.responses,
         classification: "Resultado registrado",
         totalScore: null,
+        appliedAt: assessment.appliedAt,
         createdAt: assessment.appliedAt,
         status: assessment.status,
       }))
@@ -298,6 +242,82 @@ export default function PacienteDetalhePage() {
     }
   }
 
+  async function downloadResultPdf(result: any) {
+    const resultId = String(result?.id ?? "resultado");
+    if (pdfExportingId) return;
+    setPdfExportingId(resultId);
+    try {
+      const responses = storedResponses(result);
+      if (responses.length === 0) {
+        throw new Error("Este registro não possui respostas integrais para gerar o PDF.");
+      }
+      const scaleName = resultScaleName(result);
+      const appliedAt = resultCreatedAt(result);
+      const appliedAtLabel = appliedAt
+        ? formatClinicalDateTime(
+            typeof appliedAt === "string" ? new Date(appliedAt) : appliedAt,
+          )
+        : "Não informada";
+      const answerBody = responses
+        .map(
+          (item, index) =>
+            `${index + 1}. ${item.question}\nResposta: ${item.answer}`,
+        )
+        .join("\n\n");
+      const { buildDocumentPdf } = await import("@/lib/documentPdf");
+      const bytes = await buildDocumentPdf({
+        title: `Resultado da escala — ${scaleName}`,
+        subtitle: "Registro clínico reemitido a partir do resultado salvo",
+        credentials: [
+          `${doctorName} — ${specialty}`,
+          "NeuroPed SDG — registro vinculado ao paciente",
+        ],
+        sections: [
+          {
+            heading: "Identificação da aplicação",
+            body: [
+              `Paciente: ${patient?.name || "Paciente vinculado"}`,
+              `Idade atual: ${calcAge(patient?.birthDate) || "Não informada"}`,
+              `Escala: ${scaleName}`,
+              `Data da aplicação: ${appliedAtLabel}`,
+              `Itens registrados: ${responses.length}`,
+            ].join("\n"),
+          },
+          {
+            heading: "Perguntas e respostas completas",
+            body: answerBody,
+          },
+        ],
+        footer:
+          "PDF reconstruído exclusivamente a partir do snapshot clínico já salvo. As respostas acima correspondem ao registro persistido do paciente.",
+      });
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      try {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `${safeTextFilename(scaleName)}-resultado-salvo.pdf`;
+        anchor.click();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      toast({
+        title: "PDF conferido e exportado",
+        description:
+          "O PDF foi gerado do registro salvo, com as mesmas perguntas e respostas exibidas no paciente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível gerar o PDF",
+        description:
+          error instanceof Error ? error.message : "Falha inesperada na exportação.",
+        variant: "destructive",
+      });
+    } finally {
+      setPdfExportingId(null);
+    }
+  }
+
   async function copyReportText() {
     if (!patient || reportCopying) return;
     setReportCopying(true);
@@ -384,14 +404,12 @@ export default function PacienteDetalhePage() {
 
   return (
     <div className="space-y-6">
-      {/* Back link */}
       <Link href="/pacientes">
         <Button variant="ghost" size="sm" className="gap-1.5 -ml-2">
           <ArrowLeft className="w-3.5 h-3.5" /> Pacientes
         </Button>
       </Link>
 
-      {/* Patient header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-lg font-bold text-foreground">{patient.name}</h1>
@@ -503,14 +521,12 @@ export default function PacienteDetalhePage() {
         }
       />
 
-      {/* Legacy modules remain available while the Clinical OS becomes the primary patient view. */}
       <Tabs defaultValue="avaliacoes">
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="avaliacoes">Respostas</TabsTrigger>
           <TabsTrigger value="relatorio">Registro completo</TabsTrigger>
         </TabsList>
 
-        {/* Tab: Avaliações */}
         <TabsContent value="avaliacoes" className="space-y-4 mt-4">
           {resultsLoading ? (
             <LoadingState rows={3} label="Carregando avaliações..." />
@@ -547,11 +563,24 @@ export default function PacienteDetalhePage() {
                           {fmtDate(resultCreatedAt(r))}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         <Badge variant="secondary" className="text-xs">
                           {responses.length}{" "}
                           {responses.length === 1 ? "resposta" : "respostas"}
                         </Badge>
+                        {responses.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 px-2 text-xs"
+                            disabled={pdfExportingId !== null}
+                            onClick={() => void downloadResultPdf(r)}
+                            data-testid={`button-pdf-saved-result-${r.id}`}
+                          >
+                            <Download className="h-3 w-3" />
+                            {pdfExportingId === String(r.id) ? "Gerando…" : "PDF"}
+                          </Button>
+                        )}
                         {!isRemoteClinical && (
                           <Button
                             variant="ghost"
@@ -604,7 +633,6 @@ export default function PacienteDetalhePage() {
           )}
         </TabsContent>
 
-        {/* Tab: Relatório */}
         <TabsContent value="relatorio" className="space-y-4 mt-4">
           {resultsLoading ? (
             <LoadingState rows={4} label="Carregando dados do relatório..." />
@@ -631,13 +659,11 @@ export default function PacienteDetalhePage() {
                 />
               </div>
 
-              {/* Report preview */}
               <Card className="border-card-border overflow-hidden">
                 <div
                   id="report-content"
                   className="bg-white p-6 space-y-4 text-black"
                 >
-                  {/* Header */}
                   <div className="border-b-2 border-purple-600 pb-3">
                     <h2 className="text-base font-bold text-purple-700">
                       {doctorName}
@@ -645,7 +671,6 @@ export default function PacienteDetalhePage() {
                     <p className="text-xs text-gray-500">{specialty}</p>
                   </div>
 
-                  {/* Patient info */}
                   <div className="space-y-1">
                     <h3 className="text-sm font-bold">
                       Paciente: {patient.name}
@@ -663,7 +688,6 @@ export default function PacienteDetalhePage() {
                     </p>
                   </div>
 
-                  {/* Registros integrais */}
                   {sortedResultsDesc.length > 0 && (
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold uppercase text-gray-500">
@@ -717,7 +741,6 @@ export default function PacienteDetalhePage() {
                 </div>
               </Card>
 
-              {/* Export buttons */}
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   onClick={exportAsImage}
