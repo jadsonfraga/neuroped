@@ -135,11 +135,23 @@ async function answerInteractiveScale(page) {
 async function assertPdf(page) {
   const button = page.getByTestId("button-print-report");
   await button.waitFor({ state: "visible", timeout: 15_000 });
+
+  const reportSnapshot = page.locator("[data-scale-response-report] pre").first();
+  await reportSnapshot.waitFor({ state: "attached", timeout: 15_000 });
+  const beforePdf = await reportSnapshot.textContent();
+  if (!beforePdf?.trim()) throw new Error("Q-CHAT-10 PDF: snapshot textual vazio");
+
   const pending = page.waitForEvent("download", { timeout: 20_000 });
   await button.click();
   const download = await pending;
   const failure = await download.failure();
   if (failure) throw new Error(`Q-CHAT-10 PDF: ${failure}`);
+
+  const afterPdf = await reportSnapshot.textContent();
+  if (afterPdf !== beforePdf) {
+    throw new Error("Q-CHAT-10 PDF: data/perguntas/respostas mudaram durante exportação");
+  }
+
   const path = await download.path();
   if (!path) throw new Error("Q-CHAT-10 PDF: arquivo temporário ausente");
   const bytes = readFileSync(path);
@@ -250,7 +262,7 @@ async function main() {
     }
 
     console.log(
-      "[filter-interactive-pdf-roundtrip] ✓ filtro restaurado + Q-CHAT-10 concluído + PDF válido + retorno sem perda de contexto",
+      "[filter-interactive-pdf-roundtrip] ✓ filtro restaurado + Q-CHAT-10 concluído + PDF/snapshot estáveis + retorno sem perda de contexto",
     );
   } finally {
     await browser.close();
