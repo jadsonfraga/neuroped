@@ -35,7 +35,14 @@ interface SaveToPatientProps {
   scaleName?: string;
   patientAge?: string;
   responses: ScaleResponseItem[];
+  applicationDate?: string | Date;
   testName?: string;
+}
+
+function validApplicationDate(value: string | Date | undefined, fallback: Date): Date {
+  if (!value) return fallback;
+  const date = typeof value === "string" ? new Date(value) : value;
+  return Number.isFinite(date.getTime()) ? date : fallback;
 }
 
 export function SaveToPatient(rawProps: SaveToPatientProps) {
@@ -47,7 +54,11 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const selectId = useId();
   const newPatientId = useId();
-  const [applicationDate] = useState(() => new Date());
+  const [fallbackApplicationDate] = useState(() => new Date());
+  const applicationDate = validApplicationDate(
+    rawProps.applicationDate,
+    fallbackApplicationDate,
+  );
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [newPatientName, setNewPatientName] = useState("");
   const [savedPatientId, setSavedPatientId] = useState<string | null>(null);
@@ -65,9 +76,16 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     enabled: !isRemoteClinical || Boolean(activeClinicId),
   });
   // A API retorna { data: [...] }; aceita também array puro por robustez.
-  const patients: any[] = (Array.isArray(patientsRaw) ? patientsRaw : (patientsRaw?.data ?? [])).map((patient: any) =>
+  const patients: any[] = (Array.isArray(patientsRaw)
+    ? patientsRaw
+    : (patientsRaw?.data ?? [])
+  ).map((patient: any) =>
     isRemoteClinical
-      ? { ...patient, name: patient.profile?.name ?? "Paciente sem nome", birthDate: patient.profile?.birthDate ?? null }
+      ? {
+          ...patient,
+          name: patient.profile?.name ?? "Paciente sem nome",
+          birthDate: patient.profile?.birthDate ?? null,
+        }
       : patient,
   );
 
@@ -105,47 +123,71 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         );
       }
       if (isRemoteClinical) {
-        if (!activeClinicId) throw new Error("Selecione uma clínica ativa antes de salvar a avaliação.");
-        const instrumentId = scaleName.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 120) || "instrumento";
+        if (!activeClinicId) {
+          throw new Error(
+            "Selecione uma clínica ativa antes de salvar a avaliação.",
+          );
+        }
+        const instrumentId =
+          scaleName
+            .toLocaleLowerCase("pt-BR")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "")
+            .slice(0, 120) || "instrumento";
         const responseRows = responses.map((item, index) => ({
           itemId: `item-${index + 1}`,
           itemPosition: index,
           value: { question: item.question, answer: item.answer },
         }));
-        const assessmentResponse = await apiRequest("POST", "/api/live/assessments", {
-          clinicId: activeClinicId,
-          patientId,
-          instrumentId,
-          instrumentVersion: "client-v1",
-          appliedAt: new Date().toISOString(),
-          provenanceSource: "instrument",
-          payload: {
-            title: scaleName,
-            patientAge: patientAge || null,
-            responseCount: responseRows.length,
-          },
-          responses: responseRows,
-        });
-        const assessment = await assessmentResponse.json();
-        const documentResponse = await apiRequest("POST", "/api/live/documents", {
-          clinicId: activeClinicId,
-          patientId,
-          documentType: "scale",
-          origin: "instrument",
-          status: "published",
-          familyVisibility: false,
-          issuedAt: new Date().toISOString(),
-          content: {
-            title: `Resultado da escala — ${scaleName}`,
-            assessmentId: assessment.id,
+        const assessmentResponse = await apiRequest(
+          "POST",
+          "/api/live/assessments",
+          {
+            clinicId: activeClinicId,
+            patientId,
             instrumentId,
             instrumentVersion: "client-v1",
-            patientAge: patientAge || null,
+            appliedAt: applicationDate.toISOString(),
+            provenanceSource: "instrument",
+            payload: {
+              title: scaleName,
+              patientAge: patientAge || null,
+              responseCount: responseRows.length,
+            },
             responses: responseRows,
           },
-        });
+        );
+        const assessment = await assessmentResponse.json();
+        const documentResponse = await apiRequest(
+          "POST",
+          "/api/live/documents",
+          {
+            clinicId: activeClinicId,
+            patientId,
+            documentType: "scale",
+            origin: "instrument",
+            status: "published",
+            familyVisibility: false,
+            issuedAt: new Date().toISOString(),
+            content: {
+              title: `Resultado da escala — ${scaleName}`,
+              assessmentId: assessment.id,
+              instrumentId,
+              instrumentVersion: "client-v1",
+              patientAge: patientAge || null,
+              appliedAt: applicationDate.toISOString(),
+              responses: responseRows,
+            },
+          },
+        );
         const document = await documentResponse.json();
-        return { result: assessment, archivedDocumentId: document.id, archiveError: null };
+        return {
+          result: assessment,
+          archivedDocumentId: document.id,
+          archiveError: null,
+        };
       }
       const res = await apiRequest("POST", "/api/results", {
         patientId,
@@ -153,6 +195,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         responses,
         answers: responses,
         patientAge: patientAge || null,
+        applicationDate: applicationDate.toISOString(),
       });
       const result = await res.json();
       let archivedDocumentId: string | null = null;
@@ -161,7 +204,10 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         const { buildDocumentPdf } = await import("@/lib/documentPdf");
         const patient = patients.find((item: any) => item.id === patientId);
         const answerBody = responses
-          .map((item, index) => `${index + 1}. ${item.question}\nResposta: ${item.answer || "Não respondida"}`)
+          .map(
+            (item, index) =>
+              `${index + 1}. ${item.question}\nResposta: ${item.answer || "Não respondida"}`,
+          )
           .join("\n\n");
         const pdfBytes = await buildDocumentPdf({
           title: `Resultado da escala — ${scaleName}`,
@@ -185,7 +231,8 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
               body: answerBody || "Nenhuma resposta registrada.",
             },
           ],
-          footer: "Documento clínico exportável. O PDF arquivado permanece vinculado ao resultado e ao paciente conforme a política de retenção permanente do NeuroPed.",
+          footer:
+            "Documento clínico exportável. O PDF arquivado permanece vinculado ao resultado e ao paciente conforme a política de retenção permanente do NeuroPed.",
         });
         const archived = await archiveClinicalPdf({
           bytes: pdfBytes,
@@ -201,28 +248,37 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             resultId: result.id,
             scaleName,
             patientAge: patientAge || null,
+            applicationDate: applicationDate.toISOString(),
             answerCount: responses.length,
             appliedAt: applicationDate.toISOString(),
           },
         });
         archivedDocumentId = archived.document.id;
       } catch (error) {
-        archiveError = error instanceof Error ? error.message : "Não foi possível arquivar o PDF premium.";
+        archiveError =
+          error instanceof Error
+            ? error.message
+            : "Não foi possível arquivar o PDF premium.";
       }
       return { result, archivedDocumentId, archiveError };
     },
     onSuccess: (data, patientId) => {
       setSavedPatientId(patientId);
       queryClient.invalidateQueries({
-        queryKey: [isRemoteClinical
-          ? `/api/live/assessments?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
-          : `/api/patients/${patientId}/results`],
+        queryKey: [
+          isRemoteClinical
+            ? `/api/live/assessments?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
+            : `/api/patients/${patientId}/results`,
+        ],
       });
       if (data.archiveError) {
-        setErrorMessage(`Resultado salvo, mas o PDF premium não foi arquivado: ${data.archiveError}`);
+        setErrorMessage(
+          `Resultado salvo, mas o PDF premium não foi arquivado: ${data.archiveError}`,
+        );
         toast({
           title: "Resultado salvo com alerta",
-          description: "O PDF premium não foi persistido; verifique o storage e tente exportar novamente.",
+          description:
+            "O PDF premium não foi persistido; verifique o storage e tente exportar novamente.",
           variant: "destructive",
         });
       } else {
@@ -316,7 +372,12 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
         </div>
 
         <div className="space-y-1">
-          <label htmlFor={selectId} className="text-xs font-semibold text-muted-foreground">Paciente</label>
+          <label
+            htmlFor={selectId}
+            className="text-xs font-semibold text-muted-foreground"
+          >
+            Paciente
+          </label>
           <Select
             value={selectedPatientId}
             onValueChange={(value) => {
@@ -333,30 +394,35 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
                 }
               />
             </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__new__">+ Criar novo paciente</SelectItem>
-            {patients.length === 0 && !loadingPatients && (
-              <SelectItem value="__empty__" disabled>
-                Nenhum paciente cadastrado
-              </SelectItem>
-            )}
-            {patients.map((p: any) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
+            <SelectContent>
+              <SelectItem value="__new__">+ Criar novo paciente</SelectItem>
+              {patients.length === 0 && !loadingPatients && (
+                <SelectItem value="__empty__" disabled>
+                  Nenhum paciente cadastrado
+                </SelectItem>
+              )}
+              {patients.map((p: any) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
 
         {selectedPatientId === "__new__" && (
           <div className="space-y-1">
-            <label htmlFor={newPatientId} className="text-xs font-semibold text-muted-foreground">Nome do paciente</label>
+            <label
+              htmlFor={newPatientId}
+              className="text-xs font-semibold text-muted-foreground"
+            >
+              Nome do paciente
+            </label>
             <Input
               id={newPatientId}
-            placeholder="Nome do paciente"
-            value={newPatientName}
-            onChange={(e) => setNewPatientName(e.target.value)}
+              placeholder="Nome do paciente"
+              value={newPatientName}
+              onChange={(e) => setNewPatientName(e.target.value)}
               data-testid="input-new-patient-name"
             />
           </div>
