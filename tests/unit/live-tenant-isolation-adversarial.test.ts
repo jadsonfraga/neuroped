@@ -302,9 +302,10 @@ for (const trigger of [
   assert.ok(migration.includes(trigger), `trigger tenant ausente: ${trigger}`);
 }
 
-// 9) Cache/memória: o contexto é esvaziado antes da limpeza e o novo tenant só é
-// ativado depois de cancelar/limpar todas as queries. Logout/login também destrói
-// Query cache e o cofre persistente.
+// 9) Cache/memória: o contexto antigo é removido antes da limpeza; o novo
+// tenant só é persistido depois de cancelar/limpar as queries e o shell é
+// recriado, eliminando observers/closures React do tenant anterior. Logout/login
+// também destrói Query cache e o cofre persistente.
 const clinicContext = readFileSync("client/src/contexts/ClinicContext.tsx", "utf8");
 const authContext = readFileSync("client/src/contexts/AuthContext.tsx", "utf8");
 assert.match(
@@ -313,10 +314,10 @@ assert.match(
 );
 assert.match(
   clinicContext,
-  /setActiveClinicIdState\(null\)[\s\S]*persistClinicId\(null\)[\s\S]*await clearClinicalClientCaches\(\)[\s\S]*setActiveClinicIdState\(clinicId\)[\s\S]*persistClinicId\(clinicId\)/,
+  /setActiveClinicIdState\(null\)[\s\S]*persistClinicId\(null\)[\s\S]*await clearClinicalClientCaches\(\)[\s\S]*generation !== switchGeneration\.current[\s\S]*persistClinicId\(clinicId\)[\s\S]*window\.location\.reload\(\)/,
 );
 assert.match(authContext, /queryClient\.clear\(\)/);
 assert.match(authContext, /secureClearAll\(\)/);
 
 sqlite.close();
-console.log("✓ TENANT_RED × TENANT_BLUE: header spoof, GET, PATCH, DELETE, subordinados e cache fail-closed");
+console.log("✓ TENANT_RED × TENANT_BLUE: header spoof, GET, PATCH, DELETE, subordinados e hard client boundary fail-closed");
