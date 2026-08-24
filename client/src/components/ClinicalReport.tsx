@@ -58,26 +58,29 @@ interface ClinicalReportProps {
   applicationDate?: string | Date;
 }
 
-function resolveApplicationDate(value?: string | Date): Date {
-  const date = value
-    ? typeof value === "string"
-      ? new Date(value)
-      : value
-    : new Date();
-  return Number.isFinite(date.getTime()) ? date : new Date();
+function resolveApplicationDate(
+  value: string | Date | undefined,
+  fallback: Date,
+): Date {
+  if (!value) return fallback;
+  const date = typeof value === "string" ? new Date(value) : value;
+  return Number.isFinite(date.getTime()) ? date : fallback;
 }
 
 // Forma interna garantidamente completa consumida pelo render e helpers.
 type NormalizedReport = ScaleResponseReport;
 
-function normalizeReportProps(p: ClinicalReportProps): NormalizedReport {
+function normalizeReportProps(
+  p: ClinicalReportProps,
+  applicationDate: Date,
+): NormalizedReport {
   const items: ScaleResponseItem[] = normalizeScaleResponseItems(p.items);
   return {
     scaleName: p.scaleName,
     scaleFullName: p.scaleFullName,
     items,
     patientAge: p.patientAge,
-    applicationDate: resolveApplicationDate(p.applicationDate),
+    applicationDate,
   };
 }
 
@@ -126,11 +129,15 @@ function generateReportText(
 }
 
 export function ClinicalReport(rawProps: ClinicalReportProps) {
-  const props = normalizeReportProps(rawProps);
-  const applicationDate =
-    props.applicationDate instanceof Date
-      ? props.applicationDate
-      : resolveApplicationDate(props.applicationDate);
+  // Escalas dedicadas legadas não passam applicationDate. Nelas, a montagem do
+  // resultado é o instante de conclusão; este fallback precisa permanecer
+  // imutável durante re-renders disparados por PDF, copiar, email ou share.
+  const [fallbackApplicationDate] = useState(() => new Date());
+  const applicationDate = resolveApplicationDate(
+    rawProps.applicationDate,
+    fallbackApplicationDate,
+  );
+  const props = normalizeReportProps(rawProps, applicationDate);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
