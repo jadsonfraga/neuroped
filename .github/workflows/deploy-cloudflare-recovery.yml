@@ -1,0 +1,155 @@
+name: Cloudflare production recovery
+
+# Recovery path for a rare GitHub Actions trigger gap. It runs automatically
+# only when this workflow file itself changes on main, and remains manually
+# dispatchable afterwards. It does not replace the canonical deploy workflow.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-cloudflare-recovery.yml"
+
+concurrency:
+  group: cloudflare-pages-recovery
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  recover-cloudflare-production:
+    name: Recover canonical Cloudflare deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Publish recovery status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="pending" \
+            -f context="NeuroPed / Cloudflare production" \
+            -f description="Recovery deploy do backend canônico em execução." \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Validate Cloudflare deployment credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+          echo "Credenciais Cloudflare presentes (valores não exibidos)."
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Audit dependency graph
+        run: npm audit --audit-level=high
+
+      - name: Run hard release verification gate
+        run: npm run verify
+
+      - name: Create exact-SHA deployment sentinel
+        run: |
+          set -euo pipefail
+          mkdir -p client/public
+          cat > client/public/deploy-check.json <<EOF
+          {
+            "app": "NeuroPed",
+            "provider": "cloudflare-pages",
+            "branch": "${GITHUB_REF_NAME}",
+            "commit": "${GITHUB_SHA}",
+            "run_id": "${GITHUB_RUN_ID}",
+            "run_number": "${GITHUB_RUN_NUMBER}",
+            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat client/public/deploy-check.json
+
+      - name: Build explicit remote LIVE client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+        run: VITE_PIN_HASH= npm run build:client
+
+      - name: Audit real production bundle
+        run: npm run test:bundle-audit && npm run audit:bundle && npm run audit:built-pin
+
+      - name: Deploy current main to canonical Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 pages deploy dist/public \
+            --project-name neuroped \
+            --branch main \
+            --commit-hash "$GITHUB_SHA"
+
+      - name: Prove exact SHA and backend health from public runtime
+        run: |
+          set -euo pipefail
+          sentinel="https://neuroped.pages.dev/deploy-check.json"
+          health="https://neuroped.pages.dev/api/health"
+          for attempt in $(seq 1 30); do
+            cache_buster="recovery=${GITHUB_RUN_ID}&attempt=$attempt"
+            if curl -fsSL "$sentinel?$cache_buster" -o /tmp/recovery-sentinel.json \
+              && jq -e --arg sha "$GITHUB_SHA" \
+                '.provider == "cloudflare-pages" and .commit == $sha' \
+                /tmp/recovery-sentinel.json >/dev/null \
+              && curl -fsSL "$health?$cache_buster" -o /tmp/recovery-health.json \
+              && jq -e \
+                '.database == "ok" and .authentication.required == true and .authentication.configured == true' \
+                /tmp/recovery-health.json >/dev/null; then
+              echo "✅ Cloudflare canônico serve exatamente ${GITHUB_SHA} com D1/auth saudáveis."
+              exit 0
+            fi
+            sleep 10
+          done
+          cat /tmp/recovery-sentinel.json 2>/dev/null || true
+          cat /tmp/recovery-health.json 2>/dev/null || true
+          echo "::error::Runtime canônico não confirmou o SHA esperado."
+          exit 1
+
+      - name: Publish consolidated recovery status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          state=failure
+          description="Recovery Cloudflare falhou; consulte o workflow."
+          if [ "$JOB_STATUS" = "success" ]; then
+            state=success
+            description="Backend canônico publicado e validado no SHA exato."
+          fi
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="$state" \
+            -f context="NeuroPed / Cloudflare production" \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
