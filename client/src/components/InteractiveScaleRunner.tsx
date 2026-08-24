@@ -17,14 +17,17 @@ import { haptic } from "@/lib/haptic";
 import { celebrate } from "@/lib/confetti";
 import { easing, duration, staggerContainer, staggerItem } from "@/lib/motion";
 import { type InteractiveScaleDef } from "@/data/interactiveScales";
-import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
 import { useSecureScaleDraft } from "@/hooks/useSecureScaleDraft";
 
 const LazyClinicalReport = lazy(() =>
-  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+  import("@/components/ClinicalReport").then(
+    ({ ClinicalReport: Component }) => ({ default: Component }),
+  ),
 );
 const LazySaveToPatient = lazy(() =>
-  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({
+    default: Component,
+  })),
 );
 
 /**
@@ -37,6 +40,7 @@ const LazySaveToPatient = lazy(() =>
 export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
   const [, navigate] = useLocation();
   const [showResult, setShowResult] = useState(false);
+  const [applicationDate, setApplicationDate] = useState<string | null>(null);
   const validDraftOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -87,11 +91,13 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
     softSuccess();
     haptic.success();
     celebrate();
+    setApplicationDate(new Date().toISOString());
     setShowResult(true);
   }
 
   function handleReset() {
     setShowResult(false);
+    setApplicationDate(null);
     void clearDraft();
   }
 
@@ -110,7 +116,7 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
       question: item.text,
       answer:
         answers[index] != null
-          ? formatScaleResponseAnswer(item.options[answers[index]].label)
+          ? item.options[answers[index]].label
           : "Não respondida",
     }));
 
@@ -158,7 +164,7 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
               {def.items.map((item, i) => {
                 const answeredItem = answers[i] != null;
                 const resp = answeredItem
-                  ? formatScaleResponseAnswer(item.options[answers[i]].label)
+                  ? item.options[answers[i]].label
                   : "Não respondida";
                 return (
                   <li
@@ -206,7 +212,10 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
 
         <Suspense
           fallback={
-            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">
+            <div
+              className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground"
+              role="status"
+            >
               Carregando relatório seguro…
             </div>
           }
@@ -216,11 +225,13 @@ export function InteractiveScaleRunner({ def }: { def: InteractiveScaleDef }) {
             scaleFullName={def.fullName}
             items={reportItems}
             patientAge={def.ageLabel}
+            applicationDate={applicationDate ?? undefined}
           />
           <LazySaveToPatient
             scaleName={def.name}
             responses={reportItems}
             patientAge={def.ageLabel}
+            applicationDate={applicationDate ?? undefined}
           />
         </Suspense>
 

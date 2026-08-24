@@ -30,10 +30,14 @@ import {
 import { hasRecordEntries } from "@/lib/scaleDraftCore";
 
 const LazyClinicalReport = lazy(() =>
-  import("@/components/ClinicalReport").then(({ ClinicalReport: Component }) => ({ default: Component })),
+  import("@/components/ClinicalReport").then(
+    ({ ClinicalReport: Component }) => ({ default: Component }),
+  ),
 );
 const LazySaveToPatient = lazy(() =>
-  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({ default: Component })),
+  import("@/components/SaveToPatient").then(({ SaveToPatient: Component }) => ({
+    default: Component,
+  })),
 );
 
 /**
@@ -160,6 +164,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   const draftSlug = config.title.replace(/\s+/g, "-").toLowerCase();
   const legacyDraftKey = `neuroped:scale-draft:${draftSlug}`;
   const [showResult, setShowResult] = useState(false);
+  const [applicationDate, setApplicationDate] = useState<string | null>(null);
   const [showSafetyGate, setShowSafetyGate] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -271,14 +276,22 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
   }, [config.domains, visibleItems]);
   const hasMoreItems = visibleItemCount < total;
   const revealMoreItems = () => {
-    setVisibleItemCount((current) => Math.min(current + SCALE_ITEM_BATCH_SIZE, total));
+    setVisibleItemCount((current) =>
+      Math.min(current + SCALE_ITEM_BATCH_SIZE, total),
+    );
   };
 
   useEffect(() => {
     if (!pendingFocusKey) return;
     const frame = window.requestAnimationFrame(() => {
-      itemRefs.current[pendingFocusKey]?.scrollIntoView({ behavior: "smooth", block: "center" });
-      window.setTimeout(() => itemRefs.current[pendingFocusKey]?.focus({ preventScroll: true }), 250);
+      itemRefs.current[pendingFocusKey]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      window.setTimeout(
+        () => itemRefs.current[pendingFocusKey]?.focus({ preventScroll: true }),
+        250,
+      );
       setPendingFocusKey(null);
     });
     return () => window.cancelAnimationFrame(frame);
@@ -325,8 +338,19 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       setPendingFocusKey(key);
       return;
     }
-    itemRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => itemRefs.current[key]?.focus({ preventScroll: true }), 250);
+    itemRefs.current[key]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    window.setTimeout(
+      () => itemRefs.current[key]?.focus({ preventScroll: true }),
+      250,
+    );
+  }
+
+  function finishApplication() {
+    setApplicationDate(new Date().toISOString());
+    setShowResult(true);
   }
 
   function handleSubmit() {
@@ -347,13 +371,14 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     softSuccess();
     haptic.success();
     celebrate();
-    setShowResult(true);
+    finishApplication();
   }
 
   function handleReset() {
     softTap();
     haptic.tap();
     setShowResult(false);
+    setApplicationDate(null);
     setShowSafetyGate(false);
     setSubmitAttempted(false);
     void Promise.all([clearDraft(), clearTextDraft()]);
@@ -426,7 +451,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             <Button
               onClick={() => {
                 setShowSafetyGate(false);
-                setShowResult(true);
+                finishApplication();
               }}
               className="bg-red-700 text-white hover:bg-red-800"
             >
@@ -445,9 +470,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       const answer =
         item.responseType === "text"
           ? textAnswers[item.key]?.trim() || "Não respondida"
-          : formatScaleResponseAnswer(
-              config.labels[answers[item.key] ?? -1] ?? "Não respondida",
-            );
+          : (config.labels[answers[item.key] ?? -1] ?? "Não respondida");
       const isPositiveSentinel =
         item.sentinel?.positiveOptionIndexes.includes(
           answers[item.key] ?? Number.NaN,
@@ -635,6 +658,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           scaleName={config.title}
           scaleFullName={config.subtitle}
           items={qaItems}
+          applicationDate={applicationDate ?? undefined}
         />
 
         <WhatsAppShare
@@ -644,12 +668,19 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
 
         <Suspense
           fallback={
-            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground" role="status">
+            <div
+              className="rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground"
+              role="status"
+            >
               Carregando salvamento seguro…
             </div>
           }
         >
-          <LazySaveToPatient scaleName={config.title} responses={qaItems} />
+          <LazySaveToPatient
+            scaleName={config.title}
+            responses={qaItems}
+            applicationDate={applicationDate ?? undefined}
+          />
         </Suspense>
 
         <Button
@@ -782,200 +813,207 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
         </p>
       </div>
 
-      {visibleItemsByDomain.map(({ domain, domainIndex: di, items: visibleDomainItems }) => {
-        const domTotal = domain.items.length;
-        const domAnswered = domain.items.reduce((s, item, ii) => {
-          const key = `${di}-${ii}`;
-          const itemAnswered =
-            itemResponseType(item) === "text"
-              ? Boolean(textAnswers[key]?.trim())
-              : answers[key] !== undefined;
-          return s + (itemAnswered ? 1 : 0);
-        }, 0);
-        const domComplete = domTotal > 0 && domAnswered === domTotal;
-        return (
-          <div key={di} className="space-y-3">
-            <div className="flex items-center gap-2 py-2">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  domain.color.includes("red")
-                    ? "bg-red-500"
-                    : domain.color.includes("blue")
-                      ? "bg-blue-500"
-                      : domain.color.includes("green")
-                        ? "bg-green-500"
-                        : domain.color.includes("purple")
-                          ? "bg-purple-500"
-                          : domain.color.includes("orange")
-                            ? "bg-orange-500"
-                            : domain.color.includes("pink")
-                              ? "bg-pink-500"
-                              : domain.color.includes("amber")
-                                ? "bg-amber-500"
-                                : domain.color.includes("teal")
-                                  ? "bg-teal-500"
-                                  : domain.color.includes("indigo")
-                                    ? "bg-indigo-500"
-                                    : "bg-gray-500"
-                }`}
-              />
-              <h2 className={`text-sm font-semibold ${domain.color}`}>
-                {domain.name}
-              </h2>
-              <span
-                className={`ml-auto flex items-center gap-1 text-[11px] tabular-nums ${
-                  domComplete
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {domComplete && <CheckCircle2 className="h-3.5 w-3.5" />}
-                {domAnswered}/{domTotal}
-              </span>
-            </div>
-
-            {visibleDomainItems.map(({ item, index: ii }) => {
-              const key = `${di}-${ii}`;
-              const itemHasResponse =
-                itemResponseType(item) === "text"
-                  ? Boolean(textAnswers[key]?.trim())
-                  : answers[key] !== undefined;
-              const itemComplete = !itemRequired(item) || itemHasResponse;
-              return (
-                <Card
-                  key={key}
-                  ref={(node) => {
-                    itemRefs.current[key] = node;
-                  }}
-                  tabIndex={-1}
-                  aria-invalid={submitAttempted && !itemComplete}
-                  className={`np-scale-item rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    submitAttempted && !itemComplete
-                      ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
-                      : itemHasResponse
-                        ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
-                        : "bg-card/70 hover:bg-card hover:shadow-md"
+      {visibleItemsByDomain.map(
+        ({ domain, domainIndex: di, items: visibleDomainItems }) => {
+          const domTotal = domain.items.length;
+          const domAnswered = domain.items.reduce((s, item, ii) => {
+            const key = `${di}-${ii}`;
+            const itemAnswered =
+              itemResponseType(item) === "text"
+                ? Boolean(textAnswers[key]?.trim())
+                : answers[key] !== undefined;
+            return s + (itemAnswered ? 1 : 0);
+          }, 0);
+          const domComplete = domTotal > 0 && domAnswered === domTotal;
+          return (
+            <div key={di} className="space-y-3">
+              <div className="flex items-center gap-2 py-2">
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    domain.color.includes("red")
+                      ? "bg-red-500"
+                      : domain.color.includes("blue")
+                        ? "bg-blue-500"
+                        : domain.color.includes("green")
+                          ? "bg-green-500"
+                          : domain.color.includes("purple")
+                            ? "bg-purple-500"
+                            : domain.color.includes("orange")
+                              ? "bg-orange-500"
+                              : domain.color.includes("pink")
+                                ? "bg-pink-500"
+                                : domain.color.includes("amber")
+                                  ? "bg-amber-500"
+                                  : domain.color.includes("teal")
+                                    ? "bg-teal-500"
+                                    : domain.color.includes("indigo")
+                                      ? "bg-indigo-500"
+                                      : "bg-gray-500"
+                  }`}
+                />
+                <h2 className={`text-sm font-semibold ${domain.color}`}>
+                  {domain.name}
+                </h2>
+                <span
+                  className={`ml-auto flex items-center gap-1 text-[11px] tabular-nums ${
+                    domComplete
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground"
                   }`}
                 >
-                  <CardContent className="p-4 sm:p-5 space-y-3.5">
-                    <div className="flex items-start gap-2.5">
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-mono flex-shrink-0 mt-0.5"
-                      >
-                        {domainOffsets[di] + ii + 1}
-                      </Badge>
-                      <div className="flex-1 space-y-1.5">
-                        <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">
-                          {itemEmoji(item) && (
-                            <span
-                              className="mr-1.5 text-sm opacity-60 align-middle"
-                              aria-hidden="true"
-                            >
-                              {itemEmoji(item)}
-                            </span>
-                          )}
-                          {itemText(item)}
-                        </p>
-                        {itemExample(item) && (
-                          <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">
-                            {itemExample(item)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {submitAttempted && !itemComplete && (
-                      <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                        Resposta obrigatória para concluir a escala.
-                      </p>
-                    )}
-                    {itemResponseType(item) === "text" ? (
-                      <Textarea
-                        value={textAnswers[key] ?? ""}
-                        maxLength={itemMaxLength(item)}
-                        placeholder={
-                          itemPlaceholder(item) ??
-                          "Descreva de forma concreta e objetiva."
-                        }
-                        aria-label={`Resposta aberta: ${itemText(item)}`}
-                        aria-required={itemRequired(item)}
-                        onChange={(event) => {
-                          setTextAnswers((current) => ({
-                            ...current,
-                            [key]: event.target.value,
-                          }));
-                        }}
-                        className="min-h-24 resize-y"
-                      />
-                    ) : (
-                      <RadioGroup
-                        value={answers[key]?.toString()}
-                        onValueChange={(val) => {
-                          const selectedIndex = Number.parseInt(val, 10);
-                          softTick();
-                          haptic.select();
-                          setAnswers((current) => ({
-                            ...current,
-                            [key]: selectedIndex,
-                          }));
-                          if (
-                            itemSentinel(item)?.positiveOptionIndexes.includes(
-                              selectedIndex,
-                            )
-                          ) {
-                            softTap();
-                            haptic.notify();
-                            setShowSafetyGate(true);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }
-                        }}
-                        className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
-                      >
-                        {config.labels.map((label, j) => {
-                          const maxIdx = config.labels.length - 1;
-                          const ratio = maxIdx > 0 ? j / maxIdx : 0;
-                          const selectedColor =
-                            ratio === 0
-                              ? "bg-emerald-500 text-white border-emerald-500"
-                              : ratio <= 0.33
-                                ? "bg-lime-500 text-white border-lime-500"
-                                : ratio <= 0.66
-                                  ? "bg-amber-500 text-white border-amber-500"
-                                  : "bg-red-500 text-white border-red-500";
-                          return (
-                            <div key={j} className="flex items-stretch">
-                              <RadioGroupItem
-                                value={j.toString()}
-                                id={`q-${key}-o${j}`}
-                                className="peer sr-only"
-                              />
-                              <Label
-                                htmlFor={`q-${key}-o${j}`}
-                                className={`inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] leading-snug transition-all duration-200 active:scale-[0.98] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background sm:w-auto sm:rounded-full sm:text-sm ${
-                                  answers[key] === j
-                                    ? `${selectedColor} font-semibold shadow-sm`
-                                    : "bg-card text-foreground border-border hover:bg-muted"
-                                }`}
+                  {domComplete && <CheckCircle2 className="h-3.5 w-3.5" />}
+                  {domAnswered}/{domTotal}
+                </span>
+              </div>
+
+              {visibleDomainItems.map(({ item, index: ii }) => {
+                const key = `${di}-${ii}`;
+                const itemHasResponse =
+                  itemResponseType(item) === "text"
+                    ? Boolean(textAnswers[key]?.trim())
+                    : answers[key] !== undefined;
+                const itemComplete = !itemRequired(item) || itemHasResponse;
+                return (
+                  <Card
+                    key={key}
+                    ref={(node) => {
+                      itemRefs.current[key] = node;
+                    }}
+                    tabIndex={-1}
+                    aria-invalid={submitAttempted && !itemComplete}
+                    className={`np-scale-item rounded-2xl border-card-border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      submitAttempted && !itemComplete
+                        ? "border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
+                        : itemHasResponse
+                          ? "bg-card ring-1 ring-emerald-400/40 hover:shadow-md"
+                          : "bg-card/70 hover:bg-card hover:shadow-md"
+                    }`}
+                  >
+                    <CardContent className="p-4 sm:p-5 space-y-3.5">
+                      <div className="flex items-start gap-2.5">
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-mono flex-shrink-0 mt-0.5"
+                        >
+                          {domainOffsets[di] + ii + 1}
+                        </Badge>
+                        <div className="flex-1 space-y-1.5">
+                          <p className="text-[15px] font-medium text-foreground leading-relaxed sm:text-base">
+                            {itemEmoji(item) && (
+                              <span
+                                className="mr-1.5 text-sm opacity-60 align-middle"
+                                aria-hidden="true"
                               >
-                                {label}
-                              </Label>
-                            </div>
-                          );
-                        })}
-                      </RadioGroup>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        );
-      })}
+                                {itemEmoji(item)}
+                              </span>
+                            )}
+                            {itemText(item)}
+                          </p>
+                          {itemExample(item) && (
+                            <p className="border-l-2 border-primary/25 pl-2.5 text-xs italic leading-snug text-muted-foreground">
+                              {itemExample(item)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {submitAttempted && !itemComplete && (
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          Resposta obrigatória para concluir a escala.
+                        </p>
+                      )}
+                      {itemResponseType(item) === "text" ? (
+                        <Textarea
+                          value={textAnswers[key] ?? ""}
+                          maxLength={itemMaxLength(item)}
+                          placeholder={
+                            itemPlaceholder(item) ??
+                            "Descreva de forma concreta e objetiva."
+                          }
+                          aria-label={`Resposta aberta: ${itemText(item)}`}
+                          aria-required={itemRequired(item)}
+                          onChange={(event) => {
+                            setTextAnswers((current) => ({
+                              ...current,
+                              [key]: event.target.value,
+                            }));
+                          }}
+                          className="min-h-24 resize-y"
+                        />
+                      ) : (
+                        <RadioGroup
+                          value={answers[key]?.toString()}
+                          onValueChange={(val) => {
+                            const selectedIndex = Number.parseInt(val, 10);
+                            softTick();
+                            haptic.select();
+                            setAnswers((current) => ({
+                              ...current,
+                              [key]: selectedIndex,
+                            }));
+                            if (
+                              itemSentinel(
+                                item,
+                              )?.positiveOptionIndexes.includes(selectedIndex)
+                            ) {
+                              softTap();
+                              haptic.notify();
+                              setShowSafetyGate(true);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }
+                          }}
+                          className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+                        >
+                          {config.labels.map((label, j) => {
+                            const maxIdx = config.labels.length - 1;
+                            const ratio = maxIdx > 0 ? j / maxIdx : 0;
+                            const selectedColor =
+                              ratio === 0
+                                ? "bg-emerald-500 text-white border-emerald-500"
+                                : ratio <= 0.33
+                                  ? "bg-lime-500 text-white border-lime-500"
+                                  : ratio <= 0.66
+                                    ? "bg-amber-500 text-white border-amber-500"
+                                    : "bg-red-500 text-white border-red-500";
+                            return (
+                              <div key={j} className="flex items-stretch">
+                                <RadioGroupItem
+                                  value={j.toString()}
+                                  id={`q-${key}-o${j}`}
+                                  className="peer sr-only"
+                                />
+                                <Label
+                                  htmlFor={`q-${key}-o${j}`}
+                                  className={`inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-xl border px-4 py-2.5 text-center text-[13px] leading-snug transition-all duration-200 active:scale-[0.98] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background sm:w-auto sm:rounded-full sm:text-sm ${
+                                    answers[key] === j
+                                      ? `${selectedColor} font-semibold shadow-sm`
+                                      : "bg-card text-foreground border-border hover:bg-muted"
+                                  }`}
+                                >
+                                  {label}
+                                </Label>
+                              </div>
+                            );
+                          })}
+                        </RadioGroup>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        },
+      )}
 
       {hasMoreItems && (
-        <div className="rounded-xl border border-border/70 bg-muted/25 p-4 text-center" role="status" aria-live="polite">
+        <div
+          className="rounded-xl border border-border/70 bg-muted/25 p-4 text-center"
+          role="status"
+          aria-live="polite"
+        >
           <p className="mb-3 text-xs text-muted-foreground">
-            Mostrando {visibleItemCount} de {total} perguntas. As próximas aparecem sem alterar o que já foi respondido.
+            Mostrando {visibleItemCount} de {total} perguntas. As próximas
+            aparecem sem alterar o que já foi respondido.
           </p>
           <Button type="button" variant="outline" onClick={revealMoreItems}>
             Carregar próximas perguntas
