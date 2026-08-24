@@ -235,7 +235,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
               `Escala: ${props.scaleName}`,
               `Idade informada: ${props.patientAge || "Não informada"}`,
               `Data da aplicação: ${formatClinicalDateTime(applicationDate)}`,
-              `Total de itens respondidos: ${props.items.length}`,
+              `Itens registrados no relatório: ${props.items.length}`,
             ].join("\n"),
           },
           { heading: "Perguntas e respostas completas", body: answerBody },
@@ -379,7 +379,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
                 </div>
                 <Badge variant="secondary" className="text-xs">
                   {props.items.length}{" "}
-                  {props.items.length === 1 ? "resposta" : "respostas"}
+                  {props.items.length === 1 ? "item registrado" : "itens registrados"}
                 </Badge>
               </div>
 
