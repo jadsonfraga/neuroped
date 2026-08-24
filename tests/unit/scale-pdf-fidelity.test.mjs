@@ -7,6 +7,11 @@ import {
   formatScaleResponseDateTime,
   normalizeScaleResponseItems,
 } from "../../client/src/lib/scaleResponseReport.ts";
+import {
+  savedScaleAppliedAt,
+  savedScaleName,
+  savedScaleResponses,
+} from "../../client/src/lib/savedScaleResult.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -40,10 +45,48 @@ assert.equal(
 );
 for (const item of literalItems) assert.ok(reportText.includes(item.answer));
 
+// Contrato LIVE real: o backend devolve cada item como
+// { itemId, itemPosition, value: { question, answer } }. O paciente/PDF deve
+// reconstruir exatamente as alternativas marcadas, na ordem clínica original.
+const liveAssessment = {
+  instrumentId: "escala-sintetica-v1",
+  appliedAt: applicationDate,
+  payload: { title: "ESCALA SINTÉTICA HUMANA" },
+  responses: [
+    {
+      itemId: "q-2",
+      itemPosition: 1,
+      value: { question: "Ocorrência", answer: "Nunca (0)" },
+    },
+    {
+      itemId: "q-1",
+      itemPosition: 0,
+      value: { question: "Frequência", answer: "2 — Sempre" },
+    },
+  ],
+};
+assert.equal(savedScaleName(liveAssessment), "ESCALA SINTÉTICA HUMANA");
+assert.equal(savedScaleAppliedAt(liveAssessment), applicationDate);
+assert.deepEqual(savedScaleResponses(liveAssessment), [
+  { question: "Frequência", answer: "2 — Sempre" },
+  { question: "Ocorrência", answer: "Nunca (0)" },
+]);
+
+const localAssessment = {
+  scaleName: "LOCAL",
+  responses: [
+    { question: "Pergunta A", answer: "Marcado A" },
+    { question: "Pergunta B", answer: "Marcado B" },
+  ],
+};
+assert.deepEqual(savedScaleResponses(localAssessment), localAssessment.responses);
+
 const generic = read("client/src/components/GenericScale.tsx");
 const interactive = read("client/src/components/InteractiveScaleRunner.tsx");
 const report = read("client/src/components/ClinicalReport.tsx");
 const save = read("client/src/components/SaveToPatient.tsx");
+const patientDetail = read("client/src/pages/paciente-detalhe.tsx");
+const draftHook = read("client/src/hooks/useSecureScaleDraft.ts");
 
 assert.match(generic, /function finishApplication\(\)/);
 assert.match(generic, /setApplicationDate\(new Date\(\)\.toISOString\(\)\)/);
@@ -77,6 +120,22 @@ assert.doesNotMatch(
   "o resultado da escala deve identificar a aplicação, não substituir pela hora de exportação",
 );
 
+// A tela do paciente e o PDF reemitido precisam consumir a MESMA normalização
+// do snapshot persistido, nunca reconstruir LIVE por um parser paralelo.
+assert.match(patientDetail, /savedScaleResponses as storedResponses/);
+assert.match(patientDetail, /savedScaleName as resultScaleName/);
+assert.match(patientDetail, /savedScaleAppliedAt as resultCreatedAt/);
+assert.match(patientDetail, /buildDocumentPdf/);
+assert.match(patientDetail, /resultado-salvo\.pdf/);
+
+// Segurança + continuidade: LIVE não volta a persistir PHI em Storage; usa
+// memória da sessão e sela o último snapshot em vez de apagá-lo ao concluir.
+assert.match(draftHook, /const inMemoryScaleDrafts = new Map<string, unknown>\(\)/);
+assert.match(draftHook, /browserPersistenceDenied\(key, "write"\)/);
+assert.match(draftHook, /inMemoryScaleDrafts\.set\(key, value\)/);
+assert.match(draftHook, /const sealed = sanitizeRef\.current\(latestValueRef\.current\)/);
+assert.match(draftHook, /persistScaleDraft\(\{[\s\S]{0,500}value: sealed/);
+
 console.log(
-  "✓ escala/PDF: respostas literais + instante estável de conclusão atravessam relatório, PDF e salvamento",
+  "✓ escala/PDF: resposta marcada → snapshot salvo LIVE/local → histórico → PDF usa o mesmo dado literal",
 );

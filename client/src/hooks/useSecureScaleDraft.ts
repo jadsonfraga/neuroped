@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { secureClear, secureGet, secureSet } from "@/lib/secureStorage";
+import { isClinicalBrowserPersistenceDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 import {
   clearScaleDraft,
   hasRecordEntries,
@@ -26,10 +27,45 @@ export type ScaleDraftStatus =
   | "saved"
   | "error";
 
+/**
+ * Em LIVE remoto a política de segurança proíbe persistir PHI no Storage do
+ * navegador. Ainda assim, navegar dentro do SPA não deve apagar o que acabou de
+ * ser marcado. Este Map mantém somente o rascunho da sessão JS em memória; não
+ * sobrevive a reload/fechamento e é zerado em logout/troca de conta.
+ */
+const inMemoryScaleDrafts = new Map<string, unknown>();
+
+export function clearInMemoryScaleDrafts(): void {
+  inMemoryScaleDrafts.clear();
+}
+
+function browserPersistenceDenied(
+  key: string,
+  purpose: "read" | "write" | "remove",
+): boolean {
+  return isClinicalBrowserPersistenceDenied(key, purpose);
+}
+
 const secureDraftStore: ScaleDraftStore = {
-  get: (key) => secureGet(key),
-  set: (key, value) => secureSet(key, value),
-  clear: (key) => secureClear(key),
+  get: async (key) => {
+    if (browserPersistenceDenied(key, "read")) {
+      return inMemoryScaleDrafts.get(key) ?? null;
+    }
+    return secureGet(key);
+  },
+  set: async (key, value) => {
+    if (browserPersistenceDenied(key, "write")) {
+      inMemoryScaleDrafts.set(key, value);
+      return true;
+    }
+    return secureSet(key, value);
+  },
+  clear: async (key) => {
+    inMemoryScaleDrafts.delete(key);
+    if (!browserPersistenceDenied(key, "remove")) {
+      await secureClear(key);
+    }
+  },
 };
 
 interface SecureTypedScaleDraftOptions<T> {
@@ -52,7 +88,10 @@ export interface SecureTypedScaleDraftState<T> {
   restored: boolean;
   status: ScaleDraftStatus;
   clearDraft: () => Promise<void>;
-  /** Apaga só o armazenamento (mantém o valor em memória). Ver hook. */
+  /**
+   * Congela o snapshot concluído no armazenamento permitido para a sessão.
+   * O nome é mantido por compatibilidade com os runners antigos.
+   */
   clearPersistedDraft: () => Promise<void>;
 }
 
@@ -84,6 +123,10 @@ function readLegacyDraft(key: string | undefined): unknown | null {
 /**
  * Rascunho cifrado genérico para formulários clínicos tipados. A tela de
  * resultado não faz parte do payload e, portanto, nunca é restaurada.
+ *
+ * Local/offline: usa secureStorage cifrado e efêmero.
+ * LIVE remoto autenticado: a política bloqueia Storage e o snapshot fica só em
+ * memória até logout/reload, sem reintroduzir PHI persistente no navegador.
  */
 export function useSecureTypedScaleDraft<T>({
   draftId,
@@ -114,10 +157,9 @@ export function useSecureTypedScaleDraft<T>({
   const lastSerializedRef = useRef(stableDraftSerialization(sanitize(value)));
   const writeRevisionRef = useRef(0);
   const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
-  // Suspende a persistência após a escala ser CONCLUÍDA: o rascunho armazenado é
-  // apagado (evita vazar respostas de um paciente para o próximo ao reabrir a
-  // mesma escala), mas as respostas em memória seguem intactas para a tela de
-  // resultado. Qualquer NOVA edição real re-arma a persistência.
+  // Após CONCLUIR, o snapshot final é selado e novas escritas automáticas ficam
+  // suspensas. Ele só é apagado quando o usuário aciona explicitamente
+  // "Nova avaliação"/"Começar do zero" ou encerra a sessão clínica.
   const suppressPersistRef = useRef(false);
   latestValueRef.current = value;
 
@@ -189,14 +231,12 @@ export function useSecureTypedScaleDraft<T>({
     const normalized = sanitizeRef.current(value);
     const nextSerialized = stableDraftSerialization(normalized);
     if (nextSerialized === lastSerializedRef.current) return;
-    // Uma mudança real de conteúdo após a conclusão re-arma a persistência.
+    // Uma mudança real após voltar ao formulário re-arma a persistência.
     suppressPersistRef.current = false;
 
     const revision = ++writeRevisionRef.current;
     setStatus(hasContentRef.current(normalized) ? "saving" : "idle");
     const timer = window.setTimeout(() => {
-      // Um clear por conclusão (clearPersistedDraft) avança a revisão e cancela
-      // este save pendente — senão a última resposta re-criaria o rascunho.
       if (revision !== writeRevisionRef.current) return;
       saveQueueRef.current = saveQueueRef.current
         .catch(() => undefined)
@@ -225,9 +265,6 @@ export function useSecureTypedScaleDraft<T>({
   // Ao trocar de rota, enfileira a última resposta ainda dentro do debounce.
   useEffect(
     () => () => {
-      // Se a leitura inicial ainda não acabou, o estado vazio local não pode
-      // apagar um rascunho válido já existente. E, após a conclusão, não
-      // re-persistimos ao trocar de rota (senão o rascunho apagado voltaria).
       if (!readyRef.current || suppressPersistRef.current) return;
       const latest = sanitizeRef.current(latestValueRef.current);
       saveQueueRef.current = saveQueueRef.current
@@ -262,21 +299,44 @@ export function useSecureTypedScaleDraft<T>({
     await saveQueueRef.current;
   }, [legacyKey, storageKey]);
 
-  // Apaga APENAS o rascunho armazenado, preservando as respostas em memória.
-  // Usado ao concluir a escala: o resultado continua exibido, mas nada fica
-  // guardado para restaurar no próximo paciente. A persistência fica suspensa
-  // até uma nova edição real.
+  /**
+   * Compatibilidade com os runners que chamavam clearPersistedDraft ao concluir.
+   * Agora a conclusão SELA o último snapshot em vez de apagá-lo. Isso corrige a
+   * perda das marcações ao sair/voltar da escala sem relaxar a política LIVE:
+   * quando Storage é proibido, o mesmo snapshot permanece somente no Map em
+   * memória. O reset explícito continua sendo o único caminho que apaga.
+   */
   const clearPersistedDraft = useCallback(async () => {
+    const sealed = sanitizeRef.current(latestValueRef.current);
+    const sealedSerialized = stableDraftSerialization(sealed);
+    const revision = ++writeRevisionRef.current;
     suppressPersistRef.current = true;
-    ++writeRevisionRef.current;
-    lastSerializedRef.current = stableDraftSerialization(createEmptyRef.current());
-    setRestored(false);
     removeLegacyDraft(legacyKey);
+    setRestored(false);
+    setStatus(hasContentRef.current(sealed) ? "saving" : "idle");
     saveQueueRef.current = saveQueueRef.current
       .catch(() => undefined)
-      .then(() => clearScaleDraft(secureDraftStore, storageKey));
+      .then(() =>
+        persistScaleDraft({
+          store: secureDraftStore,
+          storageKey,
+          schemaVersion,
+          value: sealed,
+          sanitize: (candidate) => sanitizeRef.current(candidate),
+          hasContent: (candidate) => hasContentRef.current(candidate),
+        }),
+      )
+      .then(() => {
+        if (revision === writeRevisionRef.current) {
+          lastSerializedRef.current = sealedSerialized;
+          setStatus(hasContentRef.current(sealed) ? "saved" : "idle");
+        }
+      })
+      .catch(() => {
+        if (revision === writeRevisionRef.current) setStatus("error");
+      });
     await saveQueueRef.current;
-  }, [legacyKey, storageKey]);
+  }, [legacyKey, schemaVersion, storageKey]);
 
   return {
     value,
