@@ -71,13 +71,32 @@ async function waitForApp(page) {
 }
 
 async function openFilterEngine(page) {
-  const open = page.getByTestId("button-open-filter");
-  if (await open.isVisible().catch(() => false)) {
+  const ageBands = page.getByTestId("age-band-scroll");
+  if (await ageBands.isVisible().catch(() => false)) return;
+
+  try {
+    await page.waitForFunction(
+      () =>
+        Boolean(
+          document.querySelector('[data-testid="age-band-scroll"]') ||
+            document.querySelector('[data-testid="button-open-filter"]'),
+        ),
+      undefined,
+      { timeout: 20_000 },
+    );
+
+    if (await ageBands.isVisible().catch(() => false)) return;
+
+    const open = page.getByTestId("button-open-filter");
+    await open.waitFor({ state: "visible", timeout: 10_000 });
     await open.click();
+    await ageBands.waitFor({ state: "visible", timeout: 20_000 });
+  } catch (error) {
+    const body = await page.locator("body").innerText().catch(() => "");
+    throw new Error(
+      `filtro não abriu; url=${page.url()} body=${body.replace(/\s+/g, " ").slice(0, 500)}; ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
-  await page
-    .getByTestId("age-band-scroll")
-    .waitFor({ state: "visible", timeout: 15_000 });
 }
 
 async function assertPressed(page, locator, label) {
