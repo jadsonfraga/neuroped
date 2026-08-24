@@ -44,6 +44,13 @@ const accounts = new Map([
 const byAccess = new Map(Array.from(accounts.values(), (account) => [account.accessToken, account]));
 const requestLog = [];
 
+function tokenLabel(token) {
+  if (!token) return "anonymous";
+  if (token === "switch-access") return "switch-account";
+  if (token === "blue-access") return "blue-account";
+  return "unknown-synthetic-token";
+}
+
 function json(res, status, body) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -103,7 +110,12 @@ function startServer() {
       const pathname = decodeURIComponent(url.pathname);
       const token = bearer(req);
       const account = byAccess.get(token);
-      requestLog.push({ method: req.method || "GET", pathname, search: url.search, token: token || "anonymous" });
+      requestLog.push({
+        method: req.method || "GET",
+        pathname,
+        search: url.search,
+        auth: tokenLabel(token),
+      });
 
       if (pathname === "/__e2e_blank__") {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
@@ -205,6 +217,72 @@ async function openPatients(page, base, expectedSentinel) {
   await page.getByText(expectedSentinel, { exact: true }).waitFor({ state: "visible", timeout: 15_000 });
 }
 
+async function syntheticDiagnostics(page, phase) {
+  const browserState = await page.evaluate(() => ({
+    url: location.href,
+    storedClinicId: sessionStorage.getItem("neuroped:active-clinic-id"),
+    hasAccessToken: Boolean(sessionStorage.getItem("neuroped:access")),
+    hasStoredUser: Boolean(sessionStorage.getItem("neuroped:user")),
+    timeOrigin: performance.timeOrigin,
+  })).catch(() => ({
+    url: page.url(),
+    storedClinicId: "page-evaluation-failed",
+    hasAccessToken: false,
+    hasStoredUser: false,
+    timeOrigin: null,
+  }));
+
+  const switcher = page.getByTestId("select-active-clinic");
+  const switcherVisible = await switcher.isVisible().catch(() => false);
+  const switcherValue = switcherVisible ? await switcher.inputValue().catch(() => "unreadable") : "not-visible";
+  const redVisible = await page.getByText(RED_SENTINEL, { exact: true }).isVisible().catch(() => false);
+  const blueVisible = await page.getByText(BLUE_SENTINEL, { exact: true }).isVisible().catch(() => false);
+
+  return {
+    phase,
+    browserState,
+    switcherValue,
+    redVisible,
+    blueVisible,
+    requests: requestLog.slice(-30),
+  };
+}
+
+async function waitForHardReload(page, previousTimeOrigin, phase) {
+  try {
+    await page.waitForFunction(
+      (before) => performance.timeOrigin !== before,
+      previousTimeOrigin,
+      { timeout: 15_000 },
+    );
+    await page.waitForLoadState("domcontentloaded");
+  } catch (error) {
+    console.error(
+      `[live-tenant-session-boundary] ${phase} sem hard reload:`,
+      JSON.stringify(await syntheticDiagnostics(page, phase)),
+    );
+    throw error;
+  }
+}
+
+async function switchClinic(page, clinicId, expectedSentinel, phase) {
+  const select = page.getByTestId("select-active-clinic");
+  await select.waitFor({ state: "visible", timeout: 15_000 });
+  const previousTimeOrigin = await page.evaluate(() => performance.timeOrigin);
+  await select.selectOption(clinicId);
+  await waitForHardReload(page, previousTimeOrigin, phase);
+
+  try {
+    await page.getByText(expectedSentinel, { exact: true }).waitFor({ state: "visible", timeout: 15_000 });
+  } catch (error) {
+    console.error(
+      `[live-tenant-session-boundary] ${phase} sem sentinela esperada:`,
+      JSON.stringify(await syntheticDiagnostics(page, phase)),
+    );
+    throw error;
+  }
+}
+
 async function scanForNeedle(page, needle) {
   return page.evaluate(async (needleValue) => {
     const hits = [];
@@ -289,14 +367,11 @@ async function main() {
   try {
     await prepareBrowser(page, base);
 
-    // 1) Clinic switch no mesmo SPA: RED renderiza, BLUE recebe o contexto e RED
-    // deixa de estar acessível sem reload do navegador.
+    // 1) Troca RED→BLUE é uma fronteira forte: limpa queries/memória, persiste
+    // somente o novo clinic_id não clínico e recria o shell antes de consultar BLUE.
     await login(page, base, "switch@example.test");
     await openPatients(page, base, RED_SENTINEL);
-    const clinicSelect = page.getByTestId("select-active-clinic");
-    await clinicSelect.waitFor({ state: "visible", timeout: 15_000 });
-    await clinicSelect.selectOption(BLUE_CLINIC);
-    await page.getByText(BLUE_SENTINEL, { exact: true }).waitFor({ state: "visible", timeout: 15_000 });
+    await switchClinic(page, BLUE_CLINIC, BLUE_SENTINEL, "clinic switch RED→BLUE");
     if (await page.getByText(RED_SENTINEL, { exact: true }).count()) {
       throw new Error("clinic switch: paciente RED continuou renderizado após troca para BLUE");
     }
@@ -305,8 +380,7 @@ async function main() {
     if (blueFetches.length === 0) throw new Error("clinic switch: BLUE não disparou nova consulta tenant-scoped");
 
     // Volta a RED para provar o boundary de logout exatamente RED -> login BLUE.
-    await clinicSelect.selectOption(RED_CLINIC);
-    await page.getByText(RED_SENTINEL, { exact: true }).waitFor({ state: "visible", timeout: 15_000 });
+    await switchClinic(page, RED_CLINIC, RED_SENTINEL, "clinic switch BLUE→RED");
 
     // 2) Logout RED e login BLUE no MESMO BrowserContext. O botão executa
     // logout, clear do React Query/secure store e reload. Depois do relogin, RED
@@ -327,7 +401,7 @@ async function main() {
       throw new Error("relogin: paciente RED reapareceu para usuário BLUE");
     }
 
-    console.log("[live-tenant-session-boundary] ✓ clinic switch RED→BLUE limpa visão/cache comportamental e dispara nova consulta BLUE");
+    console.log("[live-tenant-session-boundary] ✓ hard reload RED→BLUE/BLUE→RED recria shell e consulta somente o tenant selecionado");
     console.log("[live-tenant-session-boundary] ✓ logout RED→login BLUE no mesmo Chromium sem RED em DOM/Storage/IndexedDB/Cache");
   } finally {
     await browser.close();
