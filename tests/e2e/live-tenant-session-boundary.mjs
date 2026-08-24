@@ -248,29 +248,30 @@ async function syntheticDiagnostics(page, phase) {
   };
 }
 
-async function waitForHardReload(page, previousTimeOrigin, phase) {
-  try {
-    await page.waitForFunction(
-      (before) => performance.timeOrigin !== before,
-      previousTimeOrigin,
-      { timeout: 15_000 },
-    );
-    await page.waitForLoadState("domcontentloaded");
-  } catch (error) {
-    console.error(
-      `[live-tenant-session-boundary] ${phase} sem hard reload:`,
-      JSON.stringify(await syntheticDiagnostics(page, phase)),
-    );
-    throw error;
-  }
-}
-
 async function switchClinic(page, clinicId, expectedSentinel, phase) {
   const select = page.getByTestId("select-active-clinic");
   await select.waitFor({ state: "visible", timeout: 15_000 });
   const previousTimeOrigin = await page.evaluate(() => performance.timeOrigin);
-  await select.selectOption(clinicId);
-  await waitForHardReload(page, previousTimeOrigin, phase);
+  const navigation = page.waitForEvent("framenavigated", {
+    predicate: (frame) => frame === page.mainFrame(),
+    timeout: 15_000,
+  });
+
+  try {
+    await select.selectOption(clinicId);
+    await navigation;
+    await page.waitForLoadState("domcontentloaded");
+    const nextTimeOrigin = await page.evaluate(() => performance.timeOrigin);
+    if (nextTimeOrigin === previousTimeOrigin) {
+      throw new Error(`${phase}: navegação ocorreu sem recriar o documento`);
+    }
+  } catch (error) {
+    console.error(
+      `[live-tenant-session-boundary] ${phase} sem hard reload válido:`,
+      JSON.stringify(await syntheticDiagnostics(page, phase)),
+    );
+    throw error;
+  }
 
   try {
     await page.getByText(expectedSentinel, { exact: true }).waitFor({ state: "visible", timeout: 15_000 });
