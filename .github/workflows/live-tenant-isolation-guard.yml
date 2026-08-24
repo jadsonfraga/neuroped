@@ -18,6 +18,7 @@ on:
       - "client/src/contexts/AuthContext.tsx"
       - "client/src/contexts/ClinicContext.tsx"
       - "tests/unit/live-tenant-isolation-adversarial.test.ts"
+      - "tests/unit/live-tenant-client-boundary.test.mjs"
       - ".github/workflows/live-tenant-isolation-guard.yml"
 
 permissions:
@@ -50,6 +51,9 @@ jobs:
 
       - name: Adversarial RED x BLUE handler and storage test
         run: node --import tsx tests/unit/live-tenant-isolation-adversarial.test.ts
+
+      - name: Prove hard client boundary on clinic switch
+        run: node tests/unit/live-tenant-client-boundary.test.mjs
 
       - name: Preserve existing SaaS tenant invariants
         run: |
