@@ -209,7 +209,16 @@ async function login(page, base, email) {
   await page.getByLabel("E-mail profissional").fill(email);
   await page.getByLabel("Senha").fill(SYNTHETIC_PASSWORD);
   await page.getByRole("button", { name: "Entrar com segurança" }).click();
-  await page.waitForFunction(() => sessionStorage.getItem("neuroped:access") !== null);
+  await page.waitForFunction((expectedEmail) => {
+    const access = sessionStorage.getItem("neuroped:access");
+    const rawUser = sessionStorage.getItem("neuroped:user");
+    if (!access || !rawUser) return false;
+    try {
+      return JSON.parse(rawUser)?.email === expectedEmail;
+    } catch {
+      return false;
+    }
+  }, email);
 }
 
 async function openPatients(page, base, expectedSentinel) {
@@ -390,9 +399,10 @@ async function main() {
     await page.getByRole("heading", { name: "Entrar na área profissional" }).waitFor({ state: "visible", timeout: 15_000 });
     requireNoHits(await scanForNeedle(page, RED_SENTINEL), "post-logout RED");
 
-    await page.getByLabel("E-mail profissional").fill("blue@example.test");
-    await page.getByLabel("Senha").fill(SYNTHETIC_PASSWORD);
-    await page.getByRole("button", { name: "Entrar com segurança" }).click();
+    // Reutiliza a mesma rotina de login e só avança quando a identidade BLUE
+    // estiver de fato persistida. Isso impede que page.goto() aborte o POST de
+    // autenticação e transforme uma condição de corrida do teste em falso P0.
+    await login(page, base, "blue@example.test");
     await openPatients(page, base, BLUE_SENTINEL);
     requireNoHits(await scanForNeedle(page, RED_SENTINEL), "BLUE after RED logout");
 
