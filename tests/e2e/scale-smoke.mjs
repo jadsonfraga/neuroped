@@ -4,26 +4,36 @@
  * Autossuficiente: serve `dist/public` num servidor estático efêmero (ou usa
  * E2E_BASE_URL se definido) e dirige um Chromium headless (Playwright).
  *
- * Para cada escala: abre a rota → responde TODAS as questões (clicando nos
- * <Label> das opções, pois o RadioGroupItem do Radix é sr-only) → aguarda o
- * submit habilitar (aria-disabled=false) → "Ver Resultado" → confere o bloco de
- * resultado, o botão de imprimir (ClinicalReport) e o vínculo a paciente
- * (SaveToPatient). Sem rede real: /api é mockado.
+ * Para cada escala: abre a rota → responde TODAS as questões → conclui → confere
+ * o resultado e SaveToPatient → exporta o PDF premium de verdade → valida o
+ * download, o cabeçalho %PDF e a estrutura com pdf-lib. Também exige que o
+ * snapshot textual do resultado (data + perguntas + respostas) seja exatamente
+ * o mesmo antes e depois do clique em PDF. Sem rede clínica real: /api é mockado.
  *
- * Uso:  npm run build:client && npm run test:e2e:scales
+ * Uso: npm run build:client && npm run test:e2e:scales
  */
 import { createServer } from "node:http";
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join, extname } from "node:path";
 import { chromium } from "playwright";
+import { PDFDocument } from "pdf-lib";
 
 const DIST = "dist/public";
 const MIME = {
-  ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript",
-  ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml",
-  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-  ".webp": "image/webp", ".ico": "image/x-icon", ".woff": "font/woff",
-  ".woff2": "font/woff2", ".webmanifest": "application/manifest+json",
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".mjs": "text/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".webmanifest": "application/manifest+json",
 };
 
 function startStaticServer() {
@@ -32,9 +42,13 @@ function startStaticServer() {
       try {
         const p = decodeURIComponent((req.url || "/").split("?")[0]);
         let file = join(DIST, p);
-        if (!existsSync(file) || statSync(file).isDirectory()) file = join(DIST, "index.html");
+        if (!existsSync(file) || statSync(file).isDirectory()) {
+          file = join(DIST, "index.html");
+        }
         const body = readFileSync(file);
-        res.writeHead(200, { "Content-Type": MIME[extname(file)] || "application/octet-stream" });
+        res.writeHead(200, {
+          "Content-Type": MIME[extname(file)] || "application/octet-stream",
+        });
         res.end(body);
       } catch {
         res.writeHead(404);
@@ -96,7 +110,9 @@ async function answerAll(page, optionIndex) {
   for (let pass = 0; pass < 100; pass += 1) {
     const groups = page.locator('[role="radiogroup"]');
     const groupCount = await groups.count();
-    if (groupCount === 0) throw new Error("nenhum radiogroup (questão) encontrado");
+    if (groupCount === 0) {
+      throw new Error("nenhum radiogroup (questão) encontrado");
+    }
     for (let g = answeredGroups; g < groupCount; g += 1) {
       const labels = groups.nth(g).locator("label");
       const n = await labels.count();
@@ -104,16 +120,67 @@ async function answerAll(page, optionIndex) {
       await labels.nth(Math.min(optionIndex, n - 1)).click();
     }
     answeredGroups = groupCount;
-    const more = page.getByRole("button", { name: /Carregar próximas (perguntas|categorias)/, exact: true });
-    if (await more.count() === 0 || !(await more.isVisible())) break;
+    const more = page.getByRole("button", {
+      name: /Carregar próximas (perguntas|categorias)/,
+      exact: true,
+    });
+    if ((await more.count()) === 0 || !(await more.isVisible())) break;
     await more.click();
     await page.waitForTimeout(0);
   }
 }
 
+async function assertPdfDownload(page, scaleName) {
+  const pdfButton = page.getByTestId("button-print-report");
+  await pdfButton.waitFor({ state: "visible", timeout: 10_000 });
+
+  const reportSnapshot = page.locator("[data-scale-response-report] pre").first();
+  await reportSnapshot.waitFor({ state: "attached", timeout: 10_000 });
+  const beforePdf = await reportSnapshot.textContent();
+  if (!beforePdf?.trim()) {
+    throw new Error(`PDF ${scaleName}: snapshot textual vazio antes da exportação`);
+  }
+
+  const downloadPromise = page.waitForEvent("download", { timeout: 20_000 });
+  await pdfButton.click();
+  const download = await downloadPromise;
+  const failure = await download.failure();
+  if (failure) throw new Error(`PDF ${scaleName}: download falhou: ${failure}`);
+
+  const afterPdf = await reportSnapshot.textContent();
+  if (afterPdf !== beforePdf) {
+    throw new Error(
+      `PDF ${scaleName}: data/perguntas/respostas mudaram durante a exportação`,
+    );
+  }
+
+  const suggestedFilename = download.suggestedFilename();
+  if (!suggestedFilename.toLowerCase().endsWith(".pdf")) {
+    throw new Error(
+      `PDF ${scaleName}: nome de arquivo inesperado: ${suggestedFilename}`,
+    );
+  }
+
+  const path = await download.path();
+  if (!path) throw new Error(`PDF ${scaleName}: arquivo temporário indisponível`);
+  const bytes = readFileSync(path);
+  if (bytes.length < 2_000) {
+    throw new Error(`PDF ${scaleName}: arquivo suspeitamente pequeno (${bytes.length} bytes)`);
+  }
+  if (bytes.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    throw new Error(`PDF ${scaleName}: assinatura %PDF ausente`);
+  }
+  const pdf = await PDFDocument.load(bytes);
+  if (pdf.getPageCount() < 1) {
+    throw new Error(`PDF ${scaleName}: documento sem páginas`);
+  }
+}
+
 async function main() {
   if (!existsSync(join(DIST, "index.html"))) {
-    console.error(`[scale-smoke] build ausente em ${DIST}/. Rode 'npm run build:client' antes.`);
+    console.error(
+      `[scale-smoke] build ausente em ${DIST}/. Rode 'npm run build:client' antes.`,
+    );
     process.exit(1);
   }
 
@@ -121,15 +188,19 @@ async function main() {
   const server = external ? null : await startStaticServer();
   const base = external || `http://127.0.0.1:${server.address().port}`;
 
-  // Paridade com audit-screens: permite Chromium fora do caminho padrão do
-  // Playwright (ex.: ambientes remotos com binário pré-instalado).
   const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
   const browser = await chromium.launch(
     executablePath
-      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+      ? {
+          executablePath,
+          args: ["--no-sandbox", "--disable-dev-shm-usage"],
+        }
       : undefined,
   );
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 900 },
+    acceptDownloads: true,
+  });
 
   // O smoke valida escalas clínicas protegidas. Em build de produção o modo de
   // autenticação é fail-closed (`remote`), portanto o teste cria uma sessão E2E
@@ -167,11 +238,18 @@ async function main() {
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: route.request().method() === "GET" ? "[]" : JSON.stringify({ id: "e2e-patient" }),
+      body:
+        route.request().method() === "GET"
+          ? "[]"
+          : JSON.stringify({ id: "e2e-patient" }),
     }),
   );
   await page.route("**/api/results**", (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "e2e-result" }) }),
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: "e2e-result" }),
+    }),
   );
 
   const failures = [];
@@ -180,42 +258,58 @@ async function main() {
     for (const scale of ROUTES) {
       try {
         console.log(`  … ${scale.name}`);
-        await page.goto(`${base}${scale.path}`, { waitUntil: "domcontentloaded" });
-        await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 10000 });
-        // Espera a escala montar (primeiro grupo de opções), sem depender do título.
-        await page.locator('[role="radiogroup"]').first().waitFor({ timeout: 15000 });
+        await page.goto(`${base}${scale.path}`, {
+          waitUntil: "domcontentloaded",
+        });
+        await page
+          .getByTestId("splash-screen")
+          .waitFor({ state: "detached", timeout: 10_000 });
+        await page
+          .locator('[role="radiogroup"]')
+          .first()
+          .waitFor({ timeout: 15_000 });
 
         await answerAll(page, OPTION_INDEX);
 
         const submit = page.getByTestId("button-submit");
-        await submit.waitFor({ timeout: 10000 });
+        await submit.waitFor({ timeout: 10_000 });
         await page.waitForFunction(
           () => {
             const b = document.querySelector('[data-testid="button-submit"]');
             return !!b && b.getAttribute("aria-disabled") !== "true";
           },
-          { timeout: 10000 },
+          { timeout: 10_000 },
         );
         await submit.click();
 
-        // "Resultado" também existe em elementos de navegação visual que podem
-        // permanecer ocultos. O relatório clínico possui um marcador estrutural
-        // próprio; esperar por ele valida o estado real pós-submit sem falso timeout.
-        await page.locator("[data-scale-response-report]").waitFor({ state: "visible", timeout: 10000 });
-        await page.getByTestId("button-print-report").waitFor({ state: "visible", timeout: 10000 });
-        await page.locator("[data-scale-response-action]").waitFor({ state: "visible", timeout: 10000 });
+        await page
+          .locator("[data-scale-response-report]")
+          .waitFor({ state: "visible", timeout: 10_000 });
+        await page
+          .locator("[data-scale-response-action]")
+          .waitFor({ state: "visible", timeout: 10_000 });
+        await assertPdfDownload(page, scale.name);
 
         ok += 1;
-        console.log(`  ✓ ${scale.name}`);
+        console.log(`  ✓ ${scale.name} + PDF estável`);
       } catch (e) {
         failures.push(scale.name);
-        const details = String(e?.message ?? e).split("\n").slice(0, 30).join("\n    ");
+        const details = String(e?.message ?? e)
+          .split("\n")
+          .slice(0, 30)
+          .join("\n    ");
         const bodySample = await page.locator("body").innerText().catch(() => "");
         console.log(`  ✗ ${scale.name}: ${details}`);
-        console.log(`    url=${page.url()} body=${JSON.stringify(bodySample.replace(/\s+/g, " ").slice(0, 240))}`);
+        console.log(
+          `    url=${page.url()} body=${JSON.stringify(bodySample.replace(/\s+/g, " ").slice(0, 240))}`,
+        );
       }
     }
-    console.log(`\n[scale-smoke] ${ok}/${ROUTES.length} verdes${failures.length ? ` — falhas: ${failures.join(", ")}` : ""}.`);
+    console.log(
+      `\n[scale-smoke] ${ok}/${ROUTES.length} verdes com PDF válido e snapshot estável${
+        failures.length ? ` — falhas: ${failures.join(", ")}` : ""
+      }.`,
+    );
     if (failures.length) process.exitCode = 1;
   } finally {
     await browser.close();
