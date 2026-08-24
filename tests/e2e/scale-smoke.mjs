@@ -6,8 +6,9 @@
  *
  * Para cada escala: abre a rota → responde TODAS as questões → conclui → confere
  * o resultado e SaveToPatient → exporta o PDF premium de verdade → valida o
- * download, o cabeçalho %PDF e a estrutura com pdf-lib. Sem rede clínica real:
- * /api é mockado.
+ * download, o cabeçalho %PDF e a estrutura com pdf-lib. Também exige que o
+ * snapshot textual do resultado (data + perguntas + respostas) seja exatamente
+ * o mesmo antes e depois do clique em PDF. Sem rede clínica real: /api é mockado.
  *
  * Uso: npm run build:client && npm run test:e2e:scales
  */
@@ -133,11 +134,25 @@ async function assertPdfDownload(page, scaleName) {
   const pdfButton = page.getByTestId("button-print-report");
   await pdfButton.waitFor({ state: "visible", timeout: 10_000 });
 
+  const reportSnapshot = page.locator("[data-scale-response-report] pre").first();
+  await reportSnapshot.waitFor({ state: "attached", timeout: 10_000 });
+  const beforePdf = await reportSnapshot.textContent();
+  if (!beforePdf?.trim()) {
+    throw new Error(`PDF ${scaleName}: snapshot textual vazio antes da exportação`);
+  }
+
   const downloadPromise = page.waitForEvent("download", { timeout: 20_000 });
   await pdfButton.click();
   const download = await downloadPromise;
   const failure = await download.failure();
   if (failure) throw new Error(`PDF ${scaleName}: download falhou: ${failure}`);
+
+  const afterPdf = await reportSnapshot.textContent();
+  if (afterPdf !== beforePdf) {
+    throw new Error(
+      `PDF ${scaleName}: data/perguntas/respostas mudaram durante a exportação`,
+    );
+  }
 
   const suggestedFilename = download.suggestedFilename();
   if (!suggestedFilename.toLowerCase().endsWith(".pdf")) {
@@ -276,7 +291,7 @@ async function main() {
         await assertPdfDownload(page, scale.name);
 
         ok += 1;
-        console.log(`  ✓ ${scale.name} + PDF`);
+        console.log(`  ✓ ${scale.name} + PDF estável`);
       } catch (e) {
         failures.push(scale.name);
         const details = String(e?.message ?? e)
@@ -291,7 +306,7 @@ async function main() {
       }
     }
     console.log(
-      `\n[scale-smoke] ${ok}/${ROUTES.length} verdes com PDF válido${
+      `\n[scale-smoke] ${ok}/${ROUTES.length} verdes com PDF válido e snapshot estável${
         failures.length ? ` — falhas: ${failures.join(", ")}` : ""
       }.`,
     );
