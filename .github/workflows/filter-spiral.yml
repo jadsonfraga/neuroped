@@ -18,9 +18,9 @@ concurrency:
 
 jobs:
   filter-spiral:
-    name: Filter, scales, aesthetics and lifecycle contracts
+    name: Filter, scales, PDF and lifecycle contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
@@ -40,6 +40,33 @@ jobs:
 
       - name: Install Chromium for real browser gates
         run: npx playwright install --with-deps chromium
+
+      - name: Prove scale result and PDF fidelity contracts
+        run: node --import tsx tests/unit/scale-pdf-fidelity.test.mjs
+
+      - name: Build client for real scale and PDF journeys
+        run: npm run build:client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+
+      - name: Execute scales and validate real PDF downloads
+        run: npm run test:e2e:scales
+
+      - name: Prove filter roundtrip and InteractiveScaleRunner PDF
+        run: node tests/e2e/filter-interactive-pdf-roundtrip.mjs
+
+      # Os gates históricos de shell/scroll/filtro abaixo validam o modo local/offline.
+      # O bloco de PDF acima usa deliberadamente build remote/LIVE; portanto é
+      # obrigatório reconstruir o cliente antes de reutilizar dist/public, evitando
+      # que um RouteGuard remoto sem sessão transforme o smoke de layout em falso negativo.
+      - name: Rebuild client for local/offline shell gates
+        run: npm run build:client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: local
+          VITE_API_URL: ""
 
       - name: Validate tablet shell breakpoints and print isolation
         run: node tests/e2e/responsive-shell-smoke.mjs
