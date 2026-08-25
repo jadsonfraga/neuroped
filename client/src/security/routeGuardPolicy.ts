@@ -7,6 +7,7 @@ export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 export const SENSITIVE_ROUTES = [
   "/pant",
   "/assinatura-digital",
+  "/assinatura", // Gestão comercial: plano, assentos e convites
   "/documentos",
   "/pacientes",
   "/memoria-clinica",

@@ -16,6 +16,13 @@ function readableLoginError(error: unknown): string {
   return "Não foi possível iniciar a sessão. Verifique a conexão e tente novamente.";
 }
 
+function requestedNextPath(): string {
+  if (typeof window === "undefined") return "/";
+  const hashQuery = window.location.hash.split("?")[1] ?? "";
+  const next = new URLSearchParams(hashQuery).get("next")?.trim() ?? "";
+  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
+}
+
 export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { login, isLoading, remoteConfigured } = useAuth();
@@ -30,7 +37,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-      setLocation("/");
+      setLocation(requestedNextPath());
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {
