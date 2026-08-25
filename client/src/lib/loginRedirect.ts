@@ -14,6 +14,13 @@ function hashSearchParams(url: URL): URLSearchParams {
   return new URLSearchParams(queryIndex >= 0 ? hash.slice(queryIndex + 1) : "");
 }
 
+function hasControlCharacters(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code === 127;
+  });
+}
+
 export function safeLoginDestination(candidate: string | null | undefined): string {
   const value = candidate?.trim() ?? "";
   if (
@@ -21,7 +28,7 @@ export function safeLoginDestination(candidate: string | null | undefined): stri
     value.startsWith("//") ||
     value.includes("\\") ||
     value.includes("#") ||
-    /[\u0000-\u001f\u007f]/.test(value)
+    hasControlCharacters(value)
   ) {
     return "/";
   }
