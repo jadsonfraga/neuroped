@@ -15,7 +15,7 @@ function errorMessage(reason: unknown): string {
 
 /** Reconhece os erros emitidos pelos navegadores quando um chunk antigo sumiu. */
 export function isRecoverableChunkError(reason: unknown): boolean {
-  return /(?:ChunkLoadError|Loading chunk [\w-]+ failed|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module)/i.test(
+  return /(?:ChunkLoadError|Loading chunk [\w-]+ failed|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Unable to preload (?:CSS|dependency))/i.test(
     errorMessage(reason),
   );
 }
