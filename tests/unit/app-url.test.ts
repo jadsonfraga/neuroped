@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { buildAppHashUrl } from "../../client/src/lib/appUrl";
+import {
+  buildAppHashUrl,
+  currentAppSearchParams,
+} from "../../client/src/lib/appUrl";
 import {
   resolveLoginDestination,
   safeLoginDestination,
@@ -17,6 +20,20 @@ assert.equal(
 assert.equal(
   buildAppHashUrl("verificar", {}, "https://neuroped.pages.dev/#/"),
   "https://neuroped.pages.dev/#/verificar",
+);
+assert.equal(
+  currentAppSearchParams({
+    hash: "#/receita-c1?patientId=live-patient-1&origin=record",
+    search: "?ignored=1",
+  }).get("patientId"),
+  "live-patient-1",
+);
+assert.equal(
+  currentAppSearchParams({
+    hash: "#/receita-c1",
+    search: "?patientId=legacy-1",
+  }).get("patientId"),
+  "legacy-1",
 );
 
 assert.equal(
