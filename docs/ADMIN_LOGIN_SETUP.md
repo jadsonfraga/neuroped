@@ -11,7 +11,14 @@ Configure em **GitHub → Settings → Secrets and variables → Actions**:
 - `ADMIN_INITIAL_PASSWORD`: senha inicial do administrador;
 - `ADMIN_EMAIL`: e-mail do administrador;
 - `ADMIN_NAME`: nome de exibição opcional;
-- `NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD`: conta sentinela sintética, ativa e obrigatória para os deploys automáticos;
+- `NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD` (`NEUROPED_E2E_NAME`
+  opcional): conta sentinela sintética, ativa e obrigatória para os deploys
+  automáticos. O workflow de deploy publica os dois primeiros como secret do
+  Cloudflare Pages e o backend provisiona a conta (role `reader`, sem
+  membership de clínica) no primeiro login bem-sucedido, sem exigir troca de
+  senha — igual ao bootstrap do admin, nunca sobrescreve uma conta já
+  existente. Sem esse provisionamento a conta nunca existe em produção e o
+  gate "Dedicated E2E account readiness" falha com 401 em qualquer PR;
 - credenciais Cloudflare e Vercel exigidas pelos workflows oficiais.
 
 Nunca registre os valores em arquivos, commits, logs ou documentação.

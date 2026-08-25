@@ -16,7 +16,7 @@
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc --noEmit",
     "test:patient-safety": "node --import tsx tests/unit/cloudflare-patients-contract.test.ts && node --import tsx tests/unit/patient-results-pagination.test.ts && node tests/unit/patient-ui-safety-static.test.mjs",
-    "test:auth-bootstrap": "node --import tsx tests/unit/admin-bootstrap-regression.test.ts",
+    "test:auth-bootstrap": "node --import tsx tests/unit/admin-bootstrap-regression.test.ts && node --import tsx tests/unit/e2e-account-bootstrap-regression.test.ts",
     "test:express-auth-session": "node --import tsx tests/unit/express-auth-session.test.ts",
     "test:clinical": "node --import tsx tests/clinical/test-clinical.mjs && node --import tsx tests/clinical/test-cssrs-skip-logic.ts && node --import tsx tests/clinical/test-phqa-sentinel.ts",
     "test:ownership": "node --import tsx tests/unit/ownership.test.ts",

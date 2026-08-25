@@ -19,6 +19,10 @@ export interface Env {
   /** Migração única e explícita da senha admin existente; permanece desativada por padrão. */
   ADMIN_FORCE_PASSWORD_RESET?: string;
   ADMIN_NAME?: string;
+  /** Conta técnica sentinela para smoke tests pós-deploy — nunca vinculada a uma clínica. */
+  NEUROPED_E2E_EMAIL?: string;
+  NEUROPED_E2E_PASSWORD?: string;
+  NEUROPED_E2E_NAME?: string;
 }
 
 export interface UserRow {
@@ -200,4 +204,42 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
       )
       .bind(markerKey, "completed", now),
   ]);
+}
+
+/**
+ * Bootstrap idempotente de uma conta técnica sentinela (NEUROPED_E2E_EMAIL /
+ * NEUROPED_E2E_PASSWORD) usada exclusivamente pelos smoke tests pós-deploy
+ * para provar login/sessão/revogação no backend canônico sem depender do
+ * admin real nem expor PHI.
+ *
+ * Role mínima ('reader') e nenhuma membership de clínica é criada aqui: sem
+ * vínculo com nenhum tenant, a fronteira de isolamento multi-clínica nega por
+ * padrão qualquer leitura clínica dessa conta, mesmo que a role em si
+ * permita leitura dentro de uma clínica da qual ela participasse.
+ *
+ * must_change_password fica 0: é uma conta de máquina, sem operador humano
+ * para completar a troca nominal de primeiro acesso que o admin exige. Assim
+ * como o bootstrap do admin, nunca sobrescreve a senha de uma conta já
+ * existente — só cria a conta quando ela ainda não existe.
+ */
+export async function bootstrapE2EAccount(db: D1Database, env: Env): Promise<void> {
+  const email = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  const password = env.NEUROPED_E2E_PASSWORD;
+  if (!email || !password) return;
+
+  const existing = await getUserByEmail(db, email);
+  if (existing) return;
+
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  const name = env.NEUROPED_E2E_NAME || "Conta técnica E2E";
+  const hash = await hashPassword(password);
+  await db
+    .prepare(
+      `INSERT INTO users (id, name, email, role, is_active, password_hash,
+              must_change_password, failed_login_attempts, created_at, updated_at)
+       VALUES (?, ?, ?, 'reader', 1, ?, 0, 0, ?, ?)`,
+    )
+    .bind(id, name, email, hash, now, now)
+    .run();
 }
