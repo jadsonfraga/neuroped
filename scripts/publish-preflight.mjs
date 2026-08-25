@@ -131,6 +131,10 @@ function loadSeal(stateSealArgument, head, baseSha) {
   return { stateSeal, manifest };
 }
 
+function stripAnsi(value) {
+  return value.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
 function readGitHubInstallations() {
   const result = run("gh", ["api", "user/installations", "--paginate", "--slurp"], {
     allowFailure: true,
@@ -140,7 +144,7 @@ function readGitHubInstallations() {
   }
   let pages;
   try {
-    pages = JSON.parse(result.stdout);
+    pages = JSON.parse(stripAnsi(result.stdout));
   } catch {
     throw new Error("a resposta de permissões do GitHub não é JSON válido");
   }
