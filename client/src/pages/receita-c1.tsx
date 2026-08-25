@@ -9,6 +9,8 @@ import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -475,6 +477,9 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 }
 
 export default function ReceitaC1Page() {
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const [f, setF] = useState<ReceitaFields>({ ...EMPTY, data: todayBR() });
   const [showPreview, setShowPreview] = useState(false);
   const [patientLoading, setPatientLoading] = useState(false);
@@ -484,14 +489,19 @@ export default function ReceitaC1Page() {
   const filename = `receita-c1-${dateStamp()}`;
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || (isRemoteClinical && !activeClinicId)) return;
     let cancelled = false;
     setPatientLoading(true);
-    apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`)
+    const endpoint = isRemoteClinical
+      ? `/api/live/patients/${encodeURIComponent(patientId)}?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+      : `/api/patients/${encodeURIComponent(patientId)}`;
+    apiRequest("GET", endpoint)
       .then((response) => response.json())
       .then((payload) => {
         if (cancelled) return;
-        const patient = payload?.patient ?? payload?.data ?? payload;
+        const patient = isRemoteClinical
+          ? payload?.profile
+          : (payload?.patient ?? payload?.data ?? payload);
         setF((current) => ({
           ...current,
           pac: current.pac || patient?.name || "",
@@ -504,7 +514,7 @@ export default function ReceitaC1Page() {
         if (!cancelled) setPatientLoading(false);
       });
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [activeClinicId, isRemoteClinical, patientId]);
 
   function set(k: keyof ReceitaFields) {
     return ({ target }: { target: { value: string } }) =>
