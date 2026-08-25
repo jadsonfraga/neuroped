@@ -188,6 +188,7 @@ export function CommandPalette() {
   const patientMatches = useMemo(() => {
     if (normalizedSearch.length < 2) return [];
     return [...patients]
+      .filter((patient) => normalize(patient.name).includes(normalizedSearch))
       .sort((a, b) => {
         const aStarts = normalize(a.name).startsWith(normalizedSearch) ? 1 : 0;
         const bStarts = normalize(b.name).startsWith(normalizedSearch) ? 1 : 0;
