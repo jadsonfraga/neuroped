@@ -11,7 +11,7 @@ Configure em **GitHub → Settings → Secrets and variables → Actions**:
 - `ADMIN_INITIAL_PASSWORD`: senha inicial do administrador;
 - `ADMIN_EMAIL`: e-mail do administrador;
 - `ADMIN_NAME`: nome de exibição opcional;
-- `NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD`: conta sentinela opcional;
+- `NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD`: conta sentinela sintética, ativa e obrigatória para os deploys automáticos;
 - credenciais Cloudflare e Vercel exigidas pelos workflows oficiais.
 
 Nunca registre os valores em arquivos, commits, logs ou documentação.
@@ -26,7 +26,9 @@ Não execute deploy manual. Após PR aprovado e merge em `main`, os workflows:
 4. confirmam a sentinela do mesmo commit.
 
 O bootstrap administrativo é idempotente e não sobrescreve uma conta já
-existente. Trocas de senha devem usar o fluxo autenticado do aplicativo.
+existente. Ele serve ao provisionamento manual e não é fallback da sentinela E2E.
+Trocas de senha devem usar o fluxo autenticado do aplicativo; a senha criada por
+bootstrap fica marcada para troca no primeiro acesso nominal.
 
 Consulte [`DEPLOY_OFICIAL.md`](DEPLOY_OFICIAL.md) e
 [`SEGURANCA-ACESSO.md`](SEGURANCA-ACESSO.md).

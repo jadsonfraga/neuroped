@@ -9,8 +9,8 @@ O bootstrap do NeuroPed cria o administrador inicial a partir de `ADMIN_EMAIL` e
 3. Atualize `ADMIN_INITIAL_PASSWORD` com uma nova senha forte. Essa senha deve ser inserida diretamente no campo protegido do GitHub; não deve ser enviada pelo chat nem adicionada a arquivos.
 4. Se a conta existente precisar de uma migração única de senha, defina também `ADMIN_FORCE_PASSWORD_RESET=true`; não habilite essa flag como configuração permanente.
 5. Abra **Actions** → **Provision D1 backend** → **Run workflow** na branch `main`.
-6. Aguarde a conclusão com sucesso. O workflow publica os secrets no projeto Pages e faz o deploy do backend. A migração de uma conta existente só ocorrerá com a flag explícita e ainda não marcada no D1; nesse caso, ela limpa bloqueio por tentativas e invalida sessões de refresh antigas.
-7. Acesse `https://neuroped.pages.dev/#/login` e use o valor atual de `ADMIN_EMAIL` e a nova senha.
+6. Aguarde a conclusão com sucesso. O workflow publica os secrets no projeto Pages e faz o deploy do backend. A migração de uma conta existente só ocorrerá com a flag explícita e ainda não marcada no D1; nesse caso, ela limpa bloqueio por tentativas, invalida sessões de refresh antigas e marca a conta para troca nominal da senha.
+7. Acesse `https://neuroped.pages.dev/#/login` e use o valor atual de `ADMIN_EMAIL` e a nova senha. O backend deve bloquear qualquer rota clínica até a troca ser concluída em Preferências; o fluxo emite uma nova sessão e revoga a sessão de provisionamento.
 8. Depois de confirmar o acesso, remova `ADMIN_INITIAL_PASSWORD` e `ADMIN_FORCE_PASSWORD_RESET` do ambiente quando o bootstrap não for mais necessário. Não publique a senha em commits, logs, documentos ou mensagens.
 
 ## Se ainda aparecer “Credenciais inválidas”

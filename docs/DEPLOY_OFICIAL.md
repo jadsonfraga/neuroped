@@ -12,16 +12,19 @@ O backend canônico de produção é Cloudflare Pages Functions (`functions/api`
 
 Secrets de bootstrap: `NEUROPED_JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_NAME` e
 `ADMIN_INITIAL_PASSWORD`. O par administrativo nunca é sobrescrito quando a
-conta já possui senha. Para a jornada sentinela de cada deploy, prefira uma
-conta técnica ativa e sem dados clínicos, configurada em
-`NEUROPED_E2E_EMAIL` e `NEUROPED_E2E_PASSWORD`; enquanto ela não existir, o
-workflow usa o par administrativo como compatibilidade. Depois de validar a
-conta sentinela, remova `ADMIN_INITIAL_PASSWORD` do GitHub e do Cloudflare — o
-deploy deixa de depender dele quando os dois secrets E2E estiverem presentes.
+conta já possui senha e é usado somente pelo workflow manual de provisionamento
+ou por uma migração explicitamente autorizada. Para a jornada sentinela de cada
+deploy, a conta técnica deve ser ativa, sintética e sem dados clínicos, sempre
+configurada separadamente em `NEUROPED_E2E_EMAIL` e
+`NEUROPED_E2E_PASSWORD`. Os workflows automáticos falham fechado quando os
+secrets E2E estão ausentes ou incompletos e **nunca** usam o par administrativo
+como fallback. Depois de validar a conta sentinela, remova
+`ADMIN_INITIAL_PASSWORD` do GitHub e do Cloudflare quando o bootstrap não for
+mais necessário.
 
 ## Express local
 
-`server/index.ts` é o backend de desenvolvimento/local e usa um único SQLite (`DATABASE_PATH`). Ele não oferece suporte de produção a `DATABASE_URL`/Postgres. Não configure `DATABASE_URL` esperando migração automática e não use SQLite efêmero para dados clínicos.
+`server/index.ts` é o backend de desenvolvimento/local e usa um único SQLite (`DATABASE_PATH`). Ele não oferece suporte de produção a `DATABASE_URL`/Postgres. Não configure `DATABASE_URL` esperando migração automática e não use SQLite efêmero para dados clínicos. O runtime Express agora vincula cada access token ao refresh ativo: logout, rotação e troca de senha invalidam imediatamente sessões antigas, mantendo o mesmo contrato fail-closed do backend canônico.
 
 ## Frontends oficiais
 

@@ -42,6 +42,8 @@ export interface AccessTokenClaims {
   type: "access";
   iat: number;
   exp: number;
+  /** Hash/id do refresh token que mantém esta sessão ativa. */
+  sid: string;
 }
 
 export function signAccessToken(params: {
@@ -49,6 +51,7 @@ export function signAccessToken(params: {
   email: string;
   role: string;
   name: string;
+  sessionId: string;
 }): string {
   return jwt.sign(
     {
@@ -57,6 +60,7 @@ export function signAccessToken(params: {
       role: params.role,
       name: params.name,
       type: "access",
+      sid: params.sessionId,
     },
     getJwtSecret(),
     {
@@ -81,6 +85,7 @@ export function verifyAccessToken(token: string): AccessTokenClaims {
       typeof decoded.email !== "string" || decoded.email.length === 0 ||
       typeof decoded.role !== "string" || decoded.role.length === 0 ||
       typeof decoded.name !== "string" || decoded.name.length === 0 ||
+      typeof decoded.sid !== "string" || decoded.sid.length === 0 ||
       !Number.isInteger(decoded.iat) || !Number.isInteger(decoded.exp) ||
       decoded.exp <= decoded.iat
     ) {
@@ -93,18 +98,21 @@ export function verifyAccessToken(token: string): AccessTokenClaims {
 }
 
 /**
- * Gera novo refresh token. Retorna o valor em texto (para enviar ao cliente)
- * e o hash (para gravar em DB).
+ * Gera novo refresh token. Retorna também o id persistido que vincula o
+ * access token à sessão revogável. O valor em texto é enviado ao cliente e
+ * somente o hash é gravado no DB.
  */
 export function issueRefreshToken(): {
+  id: string;
   token: string;
   tokenHash: string;
   expiresAt: string;
 } {
+  const id = crypto.randomUUID();
   const token = generateRandomToken(32);
   const tokenHash = sha256(token);
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000).toISOString();
-  return { token, tokenHash, expiresAt };
+  return { id, token, tokenHash, expiresAt };
 }
 
 export function hashRefreshToken(token: string): string {

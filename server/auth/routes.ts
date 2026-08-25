@@ -161,6 +161,7 @@ export function registerAuthRoutes(app: Express): void {
         if (!live) return false;
         tx.insert(refreshTokens)
           .values({
+            id: refresh.id,
             userId: user.id,
             tokenHash: refresh.tokenHash,
             expiresAt: refresh.expiresAt,
@@ -179,6 +180,7 @@ export function registerAuthRoutes(app: Express): void {
         email: user.email,
         role: user.role,
         name: user.name,
+        sessionId: refresh.id,
       });
 
       await logAudit({
@@ -265,6 +267,7 @@ export function registerAuthRoutes(app: Express): void {
           const newRefreshRow = tx
             .insert(refreshTokens)
             .values({
+              id: newRefresh.id,
               userId: liveUser.id,
               tokenHash: newRefresh.tokenHash,
               expiresAt: newRefresh.expiresAt,
@@ -313,6 +316,7 @@ export function registerAuthRoutes(app: Express): void {
         email: user.email,
         role: user.role,
         name: user.name,
+        sessionId: newRefresh.id,
       });
 
       await logAudit({
@@ -412,30 +416,96 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ error: "Senha atual incorreta", code: "WRONG_PASSWORD" });
       }
 
-      const newHash = await hashPassword(newPassword);
-      db.update(users)
-        .set({
-          passwordHash: newHash,
-          mustChangePassword: false,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(users.id, user.id))
-        .run();
+      if (await verifyPassword(newPassword, user.passwordHash)) {
+        return res.status(409).json({
+          error: "A nova senha deve ser diferente da senha atual",
+          code: "PASSWORD_REUSE",
+        });
+      }
 
-      // Revoga todas as sessoes ativas
-      db.update(refreshTokens)
-        .set({ revokedAt: new Date().toISOString() })
-        .where(and(eq(refreshTokens.userId, user.id), isNull(refreshTokens.revokedAt)))
-        .run();
+      const newHash = await hashPassword(newPassword);
+      const newRefresh = issueRefreshToken();
+      const changedAt = new Date().toISOString();
+      let changed = false;
+      try {
+        changed = db.transaction((tx) => {
+          const updated = tx
+            .update(users)
+            .set({
+              passwordHash: newHash,
+              mustChangePassword: false,
+              failedLoginAttempts: 0,
+              lockedUntil: null,
+              updatedAt: changedAt,
+            })
+            .where(and(
+              eq(users.id, user.id),
+              eq(users.passwordHash, user.passwordHash),
+              eq(users.isActive, true),
+            ))
+            .run();
+          if (updated.changes !== 1) return false;
+
+          tx.update(refreshTokens)
+            .set({ revokedAt: changedAt })
+            .where(and(eq(refreshTokens.userId, user.id), isNull(refreshTokens.revokedAt)))
+            .run();
+
+          tx.insert(refreshTokens)
+            .values({
+              id: newRefresh.id,
+              userId: user.id,
+              tokenHash: newRefresh.tokenHash,
+              expiresAt: newRefresh.expiresAt,
+              ipAddress: ctx.ipAddress,
+              userAgent: ctx.userAgent,
+            })
+            .run();
+          return true;
+        });
+      } catch (error) {
+        console.error("[auth.password.change] transação indisponível", error);
+        return res.status(503).json({
+          error: "Não foi possível trocar a senha",
+          code: "PASSWORD_CHANGE_UNAVAILABLE",
+        });
+      }
+
+      if (!changed) {
+        return res.status(409).json({
+          error: "A conta mudou durante a operação. Entre novamente.",
+          code: "PASSWORD_CHANGE_RACE",
+        });
+      }
+
+      const accessToken = signAccessToken({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        sessionId: newRefresh.id,
+      });
 
       await logAudit({
         eventType: "auth.password.change",
         context: { ...ctx, userId: user.id },
         targetType: "user",
         targetId: user.id,
+        metadata: { oldSessionsRevoked: true, newSessionIssued: true },
       });
 
-      return res.json({ ok: true, message: "Senha alterada. Faca login novamente." });
+      return res.json({
+        accessToken,
+        refreshToken: newRefresh.token,
+        expiresIn: 15 * 60,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          mustChangePassword: false,
+        },
+      });
     } catch (e: any) {
       if (e instanceof z.ZodError) {
         return res.status(400).json({
