@@ -88,14 +88,14 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
         role="status"
         data-testid="live-browser-local-clinical-route-blocked"
       >
-        <h1 className="text-lg font-bold text-foreground">Recurso local bloqueado no LIVE</h1>
+        <h1 className="text-lg font-bold text-foreground">Recurso clínico ainda não canônico no LIVE</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Esta ferramenta mantém workspace ou histórico clínico no navegador e ainda não possui
-          uma fonte tenant-aware equivalente no backend canônico. Em sessão LIVE remota ela não é
-          montada, não lê dados antigos e não cria prontuário local paralelo.
+          Esta ferramenta ainda depende de workspace no navegador ou de tabelas D1 demonstrativas,
+          sem fonte tenant-aware cifrada equivalente no backend canônico. Em sessão LIVE remota ela
+          não é montada, não lê dados legados e não cria prontuário paralelo.
         </p>
         <p className="mt-3 text-xs text-muted-foreground">
-          O recurso permanece disponível nos modos local/offline explicitamente destinados a esse uso.
+          O recurso permanece disponível somente nos modos local/demonstração explicitamente destinados a esse uso.
         </p>
       </section>
     );
