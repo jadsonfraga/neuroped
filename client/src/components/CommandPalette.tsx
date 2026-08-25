@@ -23,6 +23,7 @@ import { COMMAND_PALETTE_OPEN_EVENT } from "@/lib/commandPaletteBus";
 import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
 
@@ -82,6 +83,8 @@ export function CommandPalette() {
   const [navigableScales, setNavigableScales] = useState<NavScale[]>([]);
   const { recents, pushRecent } = useRecents();
   const { accessMode, isAuthenticated, isLoading, user } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const normalizedSearch = normalize(search);
   const onPublicRoute = isPublicRoute(path);
   const privateToolsAllowed = !IS_PUBLIC_ZONE && !onPublicRoute;
@@ -102,12 +105,17 @@ export function CommandPalette() {
   const canOpenAgenda = canRenderClinicalItem("/agenda");
   const canOpenFilter = canRenderClinicalItem("/filtro");
   const patientSearchReady =
-    privateToolsAllowed && canOpenPatients && open && normalizedSearch.length >= 2;
+    privateToolsAllowed &&
+    canOpenPatients &&
+    open &&
+    normalizedSearch.length >= 2 &&
+    (!isRemoteClinical || Boolean(activeClinicId));
+  const patientQueryKey = isRemoteClinical
+    ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+    : `/api/patients?q=${encodeURIComponent(normalizedSearch)}&page=1&limit=20`;
 
   const patientQuery = useQuery<any>({
-    queryKey: [
-      `/api/patients?q=${encodeURIComponent(normalizedSearch)}&page=1&limit=20`,
-    ],
+    queryKey: [patientQueryKey],
     enabled: patientSearchReady,
     staleTime: 30_000,
   });
@@ -166,12 +174,16 @@ export function CommandPalette() {
     const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
     if (!Array.isArray(list)) return [];
     return list
+      .map((patient: any) => ({
+        id: patient?.id,
+        name: isRemoteClinical ? patient?.profile?.name : patient?.name,
+      }))
       .filter(
         (patient: any) =>
           patient?.id != null && typeof patient?.name === "string",
       )
       .map((patient: any) => ({ id: String(patient.id), name: patient.name }));
-  }, [patientQuery.data]);
+  }, [isRemoteClinical, patientQuery.data]);
 
   const patientMatches = useMemo(() => {
     if (normalizedSearch.length < 2) return [];
