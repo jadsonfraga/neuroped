@@ -82,17 +82,6 @@ async function readResponse<T>(response: Response): Promise<T> {
   return body as T;
 }
 
-export async function registerOwnerAccount(input: {
-  name: string;
-  email: string;
-  password: string;
-}): Promise<{ ok: true; user: { id: string; name: string; email: string; role: "professional" } }> {
-  return readResponse(await authFetch("/api/auth/signup", {
-    method: "POST",
-    body: JSON.stringify(input),
-  }));
-}
-
 export async function getBillingSnapshot(clinicId: string): Promise<BillingSnapshot> {
   const query = new URLSearchParams({ clinicId, scope: "admin" });
   return readResponse<BillingSnapshot>(await authFetch(`/api/billing/me?${query.toString()}`));
