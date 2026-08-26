@@ -1,7 +1,7 @@
 import { hashPassword } from "../auth/_crypto";
 import { getUserByEmail } from "../auth/_shared";
 import { validateInvitationForAccept } from "./_onboarding";
-import { isClinicMembershipRole } from "../../../shared/tenant";
+import { isClinicMembershipRole, type ClinicMembershipRole } from "../../../shared/tenant";
 
 interface Env {
   DB?: D1Database;
@@ -18,6 +18,8 @@ interface InvitationRow {
   expires_at: string;
 }
 
+type GlobalRole = "admin" | "professional" | "operator" | "reader";
+
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -27,6 +29,26 @@ function json(data: unknown, status = 200): Response {
 
 function text(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function requiredGlobalRoleForMembership(role: ClinicMembershipRole): GlobalRole {
+  if (role === "assistant") return "operator";
+  if (role === "financial") return "reader";
+  return "professional";
+}
+
+function strongestGlobalRole(current: string, required: GlobalRole): GlobalRole {
+  const rank: Record<GlobalRole, number> = {
+    reader: 0,
+    operator: 1,
+    professional: 2,
+    admin: 3,
+  };
+  const normalizedCurrent: GlobalRole =
+    current === "admin" || current === "professional" || current === "operator" || current === "reader"
+      ? current
+      : "reader";
+  return rank[normalizedCurrent] >= rank[required] ? normalizedCurrent : required;
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -61,6 +83,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (!invitation || !isClinicMembershipRole(invitation.role)) {
     return json({ error: "Convite inválido.", code: "INVITATION_INVALID" }, 409);
   }
+  const membershipRole = invitation.role as ClinicMembershipRole;
   const validity = validateInvitationForAccept(invitation);
   if (!validity.ok) {
     return json({ error: "Convite expirado, revogado ou já utilizado.", code: validity.reason ?? "INVITATION_INVALID" }, 409);
@@ -112,14 +135,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     passwordHash = await hashPassword(password);
   }
 
+  const requiredGlobalRole = requiredGlobalRoleForMembership(membershipRole);
+  const effectiveGlobalRole = existing
+    ? strongestGlobalRole(existing.role, requiredGlobalRole)
+    : requiredGlobalRole;
+
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
   if (!existing) {
-    const globalRole = invitation.role === "assistant"
-      ? "operator"
-      : ["owner", "clinic_admin", "professional"].includes(invitation.role)
-        ? "professional"
-        : "reader";
     statements.push(
       env.DB.prepare(
         `INSERT INTO users
@@ -135,7 +158,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
         userId,
         name,
         invitation.email,
-        globalRole,
+        effectiveGlobalRole,
         passwordHash,
         now,
         now,
@@ -143,6 +166,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
         tokenHash,
         now,
       ),
+    );
+  } else if (effectiveGlobalRole !== existing.role) {
+    statements.push(
+      env.DB.prepare(
+        `UPDATE users SET role = ?, updated_at = ?
+          WHERE id = ? AND is_active = 1 AND role = ?`,
+      ).bind(effectiveGlobalRole, now, existing.id, existing.role),
     );
   }
 
@@ -164,7 +194,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(
       invitation.clinic_id,
       userId,
-      invitation.role,
+      membershipRole,
       invitation.invited_by_user_id,
       now,
       now,
@@ -187,7 +217,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       invitation.clinic_id,
       userId,
       invitation.id,
-      JSON.stringify({ role: invitation.role }),
+      JSON.stringify({ role: membershipRole, globalRole: effectiveGlobalRole }),
       now,
     ),
   );
@@ -214,7 +244,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ok: true,
     clinicId: invitation.clinic_id,
     userId,
-    role: invitation.role,
+    role: membershipRole,
     accountCreated: !existing,
   }, 201);
 };
