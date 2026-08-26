@@ -227,6 +227,81 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.ok(runs[0].binds.includes("novo-e2e@example.com"));
 }
 
+// Corrida na criação inicial: dois smokes do mesmo deploy (Cloudflare e
+// Vercel) podem ler existing === null antes de qualquer um inserir. O
+// perdedor deve reconciliar com a sentinela vencedora em vez de propagar
+// a violação de UNIQUE(email) como falha de login.
+{
+  let usersReads = 0;
+  let insertAttempts = 0;
+  const winnerEmail = "novo-e2e-race@example.com";
+  const winner = {
+    ...existingUser,
+    id: "e2e-race-winner",
+    email: winnerEmail,
+    role: "reader",
+  };
+  const raceDb = {
+    prepare(sql: string) {
+      return {
+        bind(..._args: unknown[]) {
+          return {
+            async first() {
+              if (sql.includes("FROM users")) {
+                usersReads += 1;
+                // 1ª leitura: ninguém existe ainda. 2ª leitura (após a
+                // falha do INSERT): o vencedor da corrida já foi persistido.
+                return usersReads === 1 ? null : winner;
+              }
+              return null;
+            },
+            async run() {
+              insertAttempts += 1;
+              throw new Error("UNIQUE constraint failed: users.email");
+            },
+          };
+        },
+      };
+    },
+  };
+  await bootstrapE2EAccount(
+    raceDb as never,
+    { NEUROPED_E2E_EMAIL: winnerEmail, NEUROPED_E2E_PASSWORD: e2ePassword },
+    e2ePassword,
+  );
+  assert.equal(insertAttempts, 1, "deve tentar inserir exatamente uma vez antes de reconciliar");
+  assert.equal(usersReads, 2, "deve reler o e-mail após a falha do INSERT para achar o vencedor");
+}
+
+// Corrida sem vencedor válido: se a releitura pós-falha não encontra uma
+// sentinela `reader`, o erro original do INSERT deve continuar propagando.
+{
+  const raceDb = {
+    prepare(sql: string) {
+      return {
+        bind(..._args: unknown[]) {
+          return {
+            async first() {
+              return sql.includes("FROM users") ? null : null;
+            },
+            async run() {
+              throw new Error("disco cheio");
+            },
+          };
+        },
+      };
+    },
+  };
+  await assert.rejects(
+    bootstrapE2EAccount(
+      raceDb as never,
+      { NEUROPED_E2E_EMAIL: "outro-e2e@example.com", NEUROPED_E2E_PASSWORD: e2ePassword },
+      e2ePassword,
+    ),
+    /disco cheio/,
+  );
+}
+
 // Sentinela pronta ainda passa por guarda atômica de ausência de membership.
 {
   const currentHash = await hashPassword(e2ePassword);

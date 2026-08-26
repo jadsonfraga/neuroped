@@ -325,12 +325,24 @@ export async function bootstrapE2EAccount(
   const id = crypto.randomUUID();
   const name = env.NEUROPED_E2E_NAME || "Conta técnica E2E";
   const hash = await hashPassword(password);
-  await db
-    .prepare(
-      `INSERT INTO users (id, name, email, role, is_active, password_hash,
-              must_change_password, failed_login_attempts, created_at, updated_at)
-       VALUES (?, ?, ?, 'reader', 1, ?, 0, 0, ?, ?)`,
-    )
-    .bind(id, name, email, hash, now, now)
-    .run();
+  try {
+    await db
+      .prepare(
+        `INSERT INTO users (id, name, email, role, is_active, password_hash,
+                must_change_password, failed_login_attempts, created_at, updated_at)
+         VALUES (?, ?, ?, 'reader', 1, ?, 0, 0, ?, ?)`,
+      )
+      .bind(id, name, email, hash, now, now)
+      .run();
+  } catch (error) {
+    // Dois smokes concorrentes do mesmo deploy (Cloudflare e Vercel) podem
+    // observar existing === null antes de qualquer um inserir. A restrição
+    // UNIQUE de e-mail rejeita a segunda tentativa; se a sentinela vencedora
+    // já existe com a role mínima, trata como criação idempotente em vez de
+    // propagar a falha para o login do outro workflow.
+    const winner = await getUserByEmail(db, email);
+    if (!winner || winner.role !== "reader") {
+      throw error;
+    }
+  }
 }
