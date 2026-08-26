@@ -16,6 +16,8 @@ import {
   Trash2,
   Zap,
   ArrowUpRight,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
@@ -44,6 +46,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 import { ClinicSwitcher } from "@/components/ClinicSwitcher";
+import { useUiPreferences } from "@/hooks/useUiPreferences";
 
 const NESPLORA_SITE_URL = "/nesplora/";
 
@@ -229,6 +232,7 @@ const priorityNavHrefs = new Set([
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { accessMode, isAuthenticated, isLoading, logout, user } = useAuth();
+  const { soundOn, toggleSound } = useUiPreferences();
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("neuroped:theme");
@@ -309,6 +313,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const drawerOpen = mobileOpen && !isDesktop;
+    // prettier-ignore
     document.documentElement.classList.toggle("np-mobile-drawer-open", drawerOpen);
     document.body.classList.toggle("np-mobile-drawer-open", drawerOpen);
     return () => {
@@ -582,6 +587,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Sun className="w-4 h-4" aria-hidden="true" />
             ) : (
               <Moon className="w-4 h-4" aria-hidden="true" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="px-2"
+            onClick={toggleSound}
+            data-testid="button-sound-toggle-mobile"
+            aria-label={
+              soundOn
+                ? "Desativar sons da interface"
+                : "Ativar sons da interface"
+            }
+            aria-pressed={soundOn}
+            title={soundOn ? "Sons ligados" : "Sons desligados"}
+          >
+            {soundOn ? (
+              <Volume2 className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <VolumeX className="w-4 h-4" aria-hidden="true" />
             )}
           </Button>
           <Button
@@ -924,6 +949,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             size="sm"
             className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
+            onClick={toggleSound}
+            data-testid="button-sound-toggle"
+            aria-label={
+              soundOn
+                ? "Desativar sons da interface"
+                : "Ativar sons da interface"
+            }
+            aria-pressed={soundOn}
+          >
+            {soundOn ? (
+              <Volume2 className="w-4 h-4" />
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
+            {!collapsed && (
+              <span className="ml-2 text-sm">
+                {soundOn ? "Sons da interface" : "Som desligado"}
+              </span>
+            )}
+            {collapsed && (
+              <span className="ml-2 text-sm lg:hidden">
+                {soundOn ? "Sons" : "Som desligado"}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
             onClick={() => {
               softTap();
               haptic.tap();
@@ -1092,6 +1146,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
             />
             <span>NeuroPed é um projeto autoral de</span>
+            {/* prettier-ignore */}
             <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               Dr. Jadson Fraga
             </Link>
