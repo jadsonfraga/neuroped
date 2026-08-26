@@ -260,17 +260,44 @@ export async function bootstrapE2EAccount(
     const hash = passwordMatches && existing.password_hash
       ? existing.password_hash
       : await hashPassword(password);
-    await db.batch([
+
+    // O NOT EXISTS no próprio UPDATE fecha o TOCTOU entre a leitura acima e a
+    // rotação: uma membership criada concorrentemente faz o write alterar 0 rows.
+    // O DELETE de sessões também é condicionado ao mesmo invariante, evitando
+    // tocar sessões de uma identidade humana caso a guarda falhe.
+    const results = await db.batch([
       db
         .prepare(
-          `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 0,
-                  failed_login_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?`,
+          `UPDATE users
+              SET password_hash = ?, is_active = 1, must_change_password = 0,
+                  failed_login_attempts = 0, locked_until = NULL, updated_at = ?
+            WHERE id = ?
+              AND role = 'reader'
+              AND NOT EXISTS (
+                SELECT 1 FROM clinic_memberships cm WHERE cm.user_id = users.id
+              )`,
         )
         .bind(hash, now, existing.id),
       db
-        .prepare("DELETE FROM auth_refresh_sessions WHERE user_id = ?")
-        .bind(existing.id),
+        .prepare(
+          `DELETE FROM auth_refresh_sessions
+            WHERE user_id = ?
+              AND EXISTS (
+                SELECT 1 FROM users u
+                 WHERE u.id = ?
+                   AND u.role = 'reader'
+                   AND u.password_hash = ?
+                   AND NOT EXISTS (
+                     SELECT 1 FROM clinic_memberships cm WHERE cm.user_id = u.id
+                   )
+              )`,
+        )
+        .bind(existing.id, existing.id, hash),
     ]);
+
+    if ((results[0]?.meta?.changes ?? 0) !== 1) {
+      throw new Error("E2E_ACCOUNT_MEMBERSHIP_RACE");
+    }
     return;
   }
 
