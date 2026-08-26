@@ -1,44 +1,52 @@
 /**
- * Vibration API wrapper para feedback tatil em dispositivos moveis.
+ * Vibration API wrapper para feedback tátil em dispositivos móveis.
  *
- * Padroes definidos:
- *  - tap     [10ms]              clique simples
- *  - select  [5ms]               seleção mais leve
- *  - success [12, 50, 12]        confirmação alegre
- *  - warning [30, 50, 30]        atenção
- *  - error   [80, 30, 80, 30, 80] erro distintivo
- *  - notify  [15, 60, 15]        notificação suave
+ * Política:
+ * - opt-in: nasce desligado;
+ * - controle independente do áudio;
+ * - falha silenciosa em navegadores sem Vibration API;
+ * - uso complementar a feedback visual/textual.
  *
- * Persistencia: localStorage["neuroped:haptic"] = "on" | "off"
- *
- * Compatibilidade:
- *  - Suportado: Chrome Android, Edge Android, Samsung Internet, Firefox Android
- *  - Nao suportado: Safari iOS (silenciosamente ignorado)
+ * Persistência: localStorage["neuroped:haptic"] = "on" | "off"
  */
 
 const STORAGE_KEY = "neuroped:haptic";
+export const HAPTIC_PREFERENCE_EVENT = "neuroped:haptic-preference-changed";
+
+function emitPreferenceChange(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(HAPTIC_PREFERENCE_EVENT));
+}
 
 export function isHapticEnabled(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== "off";
+    return localStorage.getItem(STORAGE_KEY) === "on";
   } catch {
-    return true;
+    return false;
   }
 }
 
 export function setHapticEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
-  } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
+  } catch {
+    /* storage indisponível (modo privado/cota) — silencioso */
+  }
+  emitPreferenceChange();
 }
 
 function vibrate(pattern: number | number[]): void {
   if (!isHapticEnabled()) return;
   if (typeof navigator === "undefined") return;
   if (typeof navigator.vibrate !== "function") return;
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+    return;
+  }
   try {
     navigator.vibrate(pattern);
-  } catch { /* Vibration API ausente/bloqueada — silencioso */ }
+  } catch {
+    /* Vibration API ausente/bloqueada — silencioso */
+  }
 }
 
 export const haptic = {
