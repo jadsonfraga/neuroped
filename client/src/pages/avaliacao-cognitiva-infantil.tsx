@@ -1260,8 +1260,8 @@ const COGNITIVE_AGE_BANKS: Partial<Record<number, Record<Domain, MCQ[]>>> = {
   8: {
     visual: [
       ageMcq(
-        "Qual figura é a mesma depois de girar?",
-        ["↗️", "↘️", "↖️", "↙️"],
+        "Observe a figura ↗️. Se ela girar 90° no sentido horário, qual resultado aparece?",
+        ["↘️", "↖️", "↙️", "↗️"],
         "↘️",
       ),
       ageMcq(
@@ -1270,7 +1270,7 @@ const COGNITIVE_AGE_BANKS: Partial<Record<number, Record<Domain, MCQ[]>>> = {
         "🔵",
       ),
       ageMcq(
-        "Qual forma está escondida no desenho?",
+        "Observe o desenho: 🔷🔷🔷 / 🔷🔷⬜ / 🔷⬜⬜. Qual forma está sendo desenhada?",
         ["triângulo", "círculo", "quadrado", "estrela"],
         "triângulo",
       ),
@@ -1580,6 +1580,113 @@ const COGNITIVE_AGE_BANKS: Partial<Record<number, Record<Domain, MCQ[]>>> = {
         "Em uma escola, 3 de cada 5 alunos foram de ônibus. Em 20 alunos, quantos aproximadamente?",
         ["8", "10", "12", "15"],
         "12",
+      ),
+    ],
+  },
+  11: {
+    visual: [
+      ageMcq(
+        "Observe a sequência: 🔺🔵🔺🔵🔺 __. Qual símbolo continua o padrão?",
+        ["🔵", "🔺", "🟢", "⭐"],
+        "🔵",
+      ),
+      ageMcq(
+        "Observe a matriz: 🔴🔵 / 🔵🟢 / 🔴__. Qual cor completa a regra?",
+        ["🟢", "🔵", "🔴", "🟡"],
+        "🟢",
+      ),
+      ageMcq(
+        "A seta ↗️ gira 180°. Qual é a nova direção?",
+        ["↖️", "↘️", "↙️", "⬆️"],
+        "↙️",
+      ),
+      ageMcq(
+        "Qual par mantém a mesma relação de objeto e função?",
+        ["termômetro–medir", "janela–correr", "lápis–dormir", "sapato–beber"],
+        "termômetro–medir",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Leia: 'A turma criou uma horta na escola. Além de colher verduras, os alunos passaram a registrar a quantidade de água usada.' Qual é a ideia principal?",
+        [
+          "A turma deixou de estudar",
+          "A horta uniu cultivo e acompanhamento do uso de água",
+          "Os alunos só queriam colher verduras",
+          "A escola proibiu o uso de água",
+        ],
+        "A horta uniu cultivo e acompanhamento do uso de água",
+      ),
+      ageMcq(
+        "No texto, por que os alunos registravam a água usada?",
+        [
+          "Para controlar e evitar desperdício",
+          "Para escolher novas sementes",
+          "Para medir o tamanho da horta",
+          "Para substituir as aulas",
+        ],
+        "Para controlar e evitar desperdício",
+      ),
+      ageMcq(
+        "Qual palavra tem sentido mais próximo de 'acompanhar' no contexto?",
+        ["observar", "esconder", "interromper", "apagar"],
+        "observar",
+      ),
+      ageMcq(
+        "Qual conclusão é apoiada pelo texto?",
+        [
+          "Registrar dados pode ajudar a cuidar melhor da horta",
+          "Toda horta precisa de pouca água",
+          "A turma não aprendeu nada",
+          "Colher verduras dispensa planejamento",
+        ],
+        "Registrar dados pode ajudar a cuidar melhor da horta",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual frase está pontuada corretamente?",
+        [
+          "Quando terminou a aula, Pedro guardou o material.",
+          "Quando terminou a aula Pedro, guardou o material.",
+          "Quando, terminou a aula Pedro guardou o material.",
+          "quando terminou a aula, Pedro guardou o material",
+        ],
+        "Quando terminou a aula, Pedro guardou o material.",
+      ),
+      ageMcq(
+        "Complete: 'Os resultados da experiência ___ registrados no caderno.'",
+        ["foi", "foram", "era", "será"],
+        "foram",
+      ),
+      ageMcq(
+        "Qual opção organiza melhor as ideias?",
+        [
+          "Lia revisou o texto. Depois, corrigiu duas palavras.",
+          "Depois, duas palavras corrigiu Lia texto o revisou.",
+          "Corrigiu Lia. Texto depois revisou palavras.",
+          "O texto duas Lia depois palavras revisou corrigiu.",
+        ],
+        "Lia revisou o texto. Depois, corrigiu duas palavras.",
+      ),
+      ageMcq(
+        "Qual palavra está escrita corretamente?",
+        ["exceção", "escessão", "excessão", "eceção"],
+        "exceção",
+      ),
+    ],
+    aritmetica: [
+      ageMcq("3/4 de 20 = ?", ["12", "15", "16", "18"], "15"),
+      ageMcq("2,5 + 1,75 = ?", ["3,25", "4,25", "4,15", "5,25"], "4,25"),
+      ageMcq(
+        "Um retângulo tem 8 cm de comprimento e 3 cm de largura. Qual é o perímetro?",
+        ["11 cm", "22 cm", "24 cm", "16 cm"],
+        "22 cm",
+      ),
+      ageMcq(
+        "Uma receita usa 3 xícaras para 6 pessoas. Quantas xícaras são necessárias para 10 pessoas, mantendo a proporção?",
+        ["4", "5", "6", "8"],
+        "5",
       ),
     ],
   },
