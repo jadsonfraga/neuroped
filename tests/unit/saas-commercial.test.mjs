@@ -33,14 +33,27 @@ assert.match(main, /window\.location\.hash = `#\$\{pathname\}\$\{window\.locatio
 assert.match(login, /resolveLoginDestination\(window\.location\.href\)/);
 assert.match(login, /stripLoginNextParameter\(window\.location\.href\)/);
 assert.doesNotMatch(login, /requestedNextPath/);
+
+// Aquisição pública não pode fingir um cadastro self-service sem verificação de e-mail.
 assert.match(pricing, /CANONICAL_PRICE_CENTS/);
 assert.match(pricing, /CANONICAL_TRIAL_DAYS/);
+assert.match(pricing, /após ativação/);
+assert.match(pricing, /href="\/ajuda"/);
 assert.match(pricing, /\/login\?next=\/assinatura/);
+assert.doesNotMatch(pricing, /registerOwnerAccount|professional-signup-form|\/api\/auth\/signup/);
+assert.doesNotMatch(client, /registerOwnerAccount|\/api\/auth\/signup/);
+
 assert.match(subscription, /getBillingSnapshot\(activeClinicId\)/);
 assert.match(subscription, /startCheckout\(activeClinicId, seats\)/);
 assert.match(subscription, /createInvitation\(\{ clinicId: activeClinicId/);
 assert.match(subscription, /listInvitations\(activeClinicId\)/);
+
+// O backend devolve o papel aceito e a UI não manda assistant/financial para billing.
 assert.match(invitation, /acceptInvitation\(token, name\.trim\(\), password\)/);
+assert.match(invitation, /setAcceptedRole\(result\.role\)/);
+assert.match(invitation, /role === "owner" \|\| role === "clinic_admin" \? "\/assinatura" : "\/"/);
+assert.match(client, /role: ClinicMembershipRole;[\s\S]*accountCreated: boolean/);
+
 assert.match(client, /authFetch\("\/api\/billing\/checkout"/);
 assert.match(client, /authFetch\("\/api\/billing\/accept"/);
 assert.doesNotMatch(client, /(^|\n)\s*fetch\(/);
@@ -48,4 +61,4 @@ assert.match(billingMe, /clinicIdFromRequest/);
 assert.match(billingMe, /cm\.clinic_id = \?/);
 assert.match(billingMe, /TENANT_FORBIDDEN/);
 
-console.log("SaaS commercial UI and tenant-aware billing contracts passed.");
+console.log("SaaS commercial UI, safe acquisition, invitation routing and tenant-aware billing contracts passed.");
