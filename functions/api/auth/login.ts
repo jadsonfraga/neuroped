@@ -83,13 +83,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   // A conta técnica é reconciliada apenas quando ela própria tenta autenticar
   // e somente se a senha apresentada coincide com o secret técnico atual.
-  // Assim, tentativas erradas nunca destravam, criam ou rotacionam o sentinela.
+  // Violações de identidade E2E são fail-closed: não podem cair no login normal
+  // e herdar por acidente memberships de uma conta humana com o mesmo e-mail.
   const e2eEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
   if (e2eEmail && email === e2eEmail) {
     try {
       await bootstrapE2EAccount(env.DB, env, password);
     } catch {
-      /* best-effort; a validação normal abaixo permanece fail-closed */
+      return json(INVALID, 401);
     }
   }
 
