@@ -206,15 +206,20 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
 
 /**
  * Mantém uma conta técnica sentinela dedicada aos smoke tests pós-deploy.
- * A conta nasce com role mínima e sem membership de clínica. Quando o secret
- * técnico é rotacionado, a senha da conta sentinela acompanha a rotação e as
- * sessões anteriores são revogadas; credenciais administrativas nunca entram
- * neste fluxo.
+ * A conta nasce com role mínima e sem membership de clínica. Criação, rotação
+ * e recuperação de lockout só podem ocorrer quando a própria credencial E2E
+ * correta foi apresentada no login; tentativas incorretas nunca destravam nem
+ * alteram a conta. Uma conta humana com membership clínica jamais é capturada
+ * por este fluxo, mesmo que possua role global `reader`.
  */
-export async function bootstrapE2EAccount(db: D1Database, env: Env): Promise<void> {
+export async function bootstrapE2EAccount(
+  db: D1Database,
+  env: Env,
+  presentedPassword?: string,
+): Promise<void> {
   const email = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
   const password = env.NEUROPED_E2E_PASSWORD;
-  if (!email || !password) return;
+  if (!email || !password || presentedPassword !== password) return;
 
   const adminEmail = env.ADMIN_EMAIL?.toLowerCase().trim();
   if (adminEmail && email === adminEmail) {
@@ -228,13 +233,28 @@ export async function bootstrapE2EAccount(db: D1Database, env: Env): Promise<voi
     if (existing.role !== "reader") {
       throw new Error("E2E_ACCOUNT_ROLE_INVALID");
     }
+
+    const membership = await db
+      .prepare(
+        `SELECT 1 AS has_membership
+           FROM clinic_memberships
+          WHERE user_id = ?
+          LIMIT 1`,
+      )
+      .bind(existing.id)
+      .first<{ has_membership: number }>();
+    if (membership) {
+      throw new Error("E2E_ACCOUNT_HAS_CLINIC_MEMBERSHIP");
+    }
+
     const passwordMatches = existing.password_hash
       ? await verifyPassword(password, existing.password_hash)
       : false;
     const ready =
       passwordMatches &&
       existing.is_active === 1 &&
-      !existing.must_change_password;
+      !existing.must_change_password &&
+      !isLocked(existing);
     if (ready) return;
 
     const hash = passwordMatches && existing.password_hash
