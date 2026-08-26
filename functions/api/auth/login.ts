@@ -100,7 +100,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // O e-mail E2E é uma identidade reservada. Qualquer tentativa com esse e-mail
   // precisa apresentar exatamente o secret técnico atual; nunca pode cair no
   // fluxo humano normal, ainda que exista uma conta humana colidindo no banco.
-  if (e2eEmail && email === e2eEmail) {
+  const isReservedE2EIdentity = !!e2eEmail && email === e2eEmail;
+  if (isReservedE2EIdentity) {
     if (!e2ePassword || password !== e2ePassword) {
       try {
         await registerLoginAbuseFailure(env, request, secret);
@@ -147,7 +148,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json(INVALID, 401);
   }
   try {
-    const tokens = await createSessionTokens(env.DB, user, secret);
+    // Para a identidade E2E reservada, a ausência de clinic_membership entra
+    // na própria SQL que emite a sessão inicial: uma membership criada entre
+    // a revalidação atômica do bootstrap e este ponto zera as linhas afetadas
+    // em vez de emitir tokens para uma sentinela que acabou de ganhar acesso.
+    const tokens = await createSessionTokens(env.DB, user, secret, {
+      requireNoClinicMembership: isReservedE2EIdentity,
+    });
     return json({ ...tokens, user: publicUser(user) }, 200);
   } catch (error) {
     console.error("[auth/login] não foi possível criar sessão revogável:", error);

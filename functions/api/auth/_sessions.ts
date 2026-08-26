@@ -89,6 +89,7 @@ export async function createSessionTokens(
   db: D1Database,
   user: UserRow,
   secret: string,
+  options?: { requireNoClinicMembership?: boolean },
 ): Promise<SessionTokens> {
   const now = new Date();
   const familyId = crypto.randomUUID();
@@ -102,6 +103,17 @@ export async function createSessionTokens(
     expiresAt,
   );
 
+  // Para a identidade E2E reservada, a ausência de clinic_membership entra na
+  // própria condição do INSERT: uma membership criada entre a revalidação do
+  // bootstrap e esta emissão de sessão zera as linhas afetadas em vez de
+  // deixar a checagem anterior, já stale, emitir tokens para uma sentinela
+  // que acabou de ganhar acesso clínico.
+  const membershipGuard = options?.requireNoClinicMembership
+    ? `
+          AND NOT EXISTS (
+            SELECT 1 FROM clinic_memberships cm WHERE cm.user_id = users.id
+          )`
+    : "";
   const inserted = await db
     .prepare(
       `INSERT INTO auth_refresh_sessions
@@ -111,7 +123,7 @@ export async function createSessionTokens(
        SELECT ?, id, ?, ?, NULL, NULL, ?, NULL, NULL, ?, NULL
          FROM users
         WHERE id = ? AND is_active = 1
-          AND (locked_until IS NULL OR julianday(locked_until) <= julianday(?))`,
+          AND (locked_until IS NULL OR julianday(locked_until) <= julianday(?))${membershipGuard}`,
     )
     .bind(
       refreshId,
