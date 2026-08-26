@@ -54,13 +54,18 @@ const NESPLORA_SITE_URL = "/nesplora/";
 function FeaturedShortcuts({
   collapsed,
   activeHref,
-  canRenderClinicalLinks,
+  canRenderNavItem,
 }: {
   collapsed: boolean;
   activeHref?: string;
-  canRenderClinicalLinks: boolean;
+  canRenderNavItem: (path: string) => boolean;
 }) {
-  if (IS_PUBLIC_ZONE || !canRenderClinicalLinks) return null;
+  if (IS_PUBLIC_ZONE) return null;
+
+  const visibleFeaturedNavigation = featuredNavigation.filter((item) =>
+    canRenderNavItem(item.href),
+  );
+  if (visibleFeaturedNavigation.length === 0) return null;
 
   const onPick = () => {
     softTap();
@@ -138,9 +143,9 @@ function FeaturedShortcuts({
     );
   };
 
-  const primary = featuredNavigation.slice(0, 2);
-  const supporting = featuredNavigation.slice(2);
-  const iconRail = featuredNavigation.map((item) => {
+  const primary = visibleFeaturedNavigation.slice(0, 2);
+  const supporting = visibleFeaturedNavigation.slice(2);
+  const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
     const tone = item.tone ?? "priority";
@@ -738,7 +743,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <FeaturedShortcuts
           collapsed={collapsed}
           activeHref={activeNavigation?.item.href}
-          canRenderClinicalLinks={canRenderNavItem("/filtro")}
+          canRenderNavItem={canRenderNavItem}
         />
         <div className="mx-3 mt-2 border-t border-sidebar-border/60" />
 

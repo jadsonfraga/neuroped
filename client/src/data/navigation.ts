@@ -279,10 +279,14 @@ const featuredSection: NavSection = {
 };
 const allNavigationSections = [featuredSection, ...navSections];
 
+/** Destinos estáticos não devem ser enviados para o roteador hash da SPA. */
+const staticExternalNavigationRoutes = new Set(["/nesplora/"]);
+
 export const navigablePages = Array.from(
   new Map(
     allNavigationSections
       .flatMap((section) => section.items)
+      .filter((item) => !staticExternalNavigationRoutes.has(item.href))
       .map((item) => [item.href, item]),
   ).values(),
 );
