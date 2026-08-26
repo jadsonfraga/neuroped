@@ -64,6 +64,14 @@ assert.match(invitationAccept, /function strongestGlobalRole/);
 assert.match(invitationAccept, /effectiveGlobalRole !== existing\.role/);
 assert.match(invitationAccept, /UPDATE users SET role = \?, updated_at = \?/);
 
+// Convite de assistente precisa criar a ponte operacional usada pela Agenda.
+assert.match(invitationAccept, /function resolveAssistantProvider/);
+assert.match(invitationAccept, /FROM booking_staff_links/);
+assert.match(invitationAccept, /INSERT INTO booking_staff_links/);
+assert.match(invitationAccept, /ASSISTANT_PROVIDER_REQUIRED/);
+assert.match(invitationAccept, /STAFF_ALREADY_LINKED/);
+assert.match(invitationAccept, /operationsProviderId: assistantProviderId/);
+
 assert.match(client, /authFetch\("\/api\/billing\/checkout"/);
 assert.match(client, /authFetch\("\/api\/billing\/accept"/);
 assert.doesNotMatch(client, /(^|\n)\s*fetch\(/);
@@ -71,4 +79,4 @@ assert.match(billingMe, /clinicIdFromRequest/);
 assert.match(billingMe, /cm\.clinic_id = \?/);
 assert.match(billingMe, /TENANT_FORBIDDEN/);
 
-console.log("SaaS commercial UI, safe acquisition, invitation routing, role reconciliation, operator Agenda and tenant-aware billing contracts passed.");
+console.log("SaaS commercial UI, safe acquisition, invitation routing, role reconciliation, assistant operations bridge, operator Agenda and tenant-aware billing contracts passed.");
