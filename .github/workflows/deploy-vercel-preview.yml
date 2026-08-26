@@ -1,30 +1,35 @@
 name: Deploy Vercel Preview
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/mission-2026-08-25
+      - main
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: vercel-preview-${{ github.ref }}
+  group: vercel-preview-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   preview:
-    if: github.ref != 'refs/heads/main'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       VERCEL_PROJECT_ID: prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PREVIEW_REF: ${{ github.head_ref || github.ref_name }}
 
     steps:
       - name: Checkout exact preview commit
         uses: actions/checkout@v7
+        with:
+          ref: ${{ env.PREVIEW_SHA }}
 
       - name: Configure Node.js 24
         uses: actions/setup-node@v6
@@ -35,7 +40,7 @@ jobs:
       - name: Assert preview-only execution
         run: |
           set -euo pipefail
-          test "$GITHUB_REF" != "refs/heads/main"
+          test "$PREVIEW_REF" != "main"
           test -n "${VERCEL_ORG_ID:-}" || { echo "::error::VERCEL_ORG_ID ausente"; exit 1; }
           test -n "${{ secrets.VERCEL_TOKEN }}" || { echo "::error::VERCEL_TOKEN ausente"; exit 1; }
 
@@ -56,8 +61,8 @@ jobs:
           {
             "app": "NeuroPed",
             "provider": "vercel-preview",
-            "branch": "${GITHUB_REF_NAME}",
-            "commit": "${GITHUB_SHA}",
+            "branch": "${PREVIEW_REF}",
+            "commit": "${PREVIEW_SHA}",
             "run_id": "${GITHUB_RUN_ID}",
             "status": "preview"
           }
@@ -93,8 +98,8 @@ jobs:
           VITE_PIN_HASH= \
           VITE_ZONE=full \
           VITE_ALLOWED_HOSTS= \
-          VERCEL_GIT_COMMIT_SHA="$GITHUB_SHA" \
-          VERCEL_GIT_COMMIT_REF="$GITHUB_REF_NAME" \
+          VERCEL_GIT_COMMIT_SHA="$PREVIEW_SHA" \
+          VERCEL_GIT_COMMIT_REF="$PREVIEW_REF" \
             vercel build --token="$token"
           npm run audit:built-pin
           url=$(vercel deploy --prebuilt --token="$token")
@@ -116,7 +121,7 @@ jobs:
           node -e '
             const fs = require("node:fs");
             const check = JSON.parse(fs.readFileSync("/tmp/preview-sentinel.json", "utf8"));
-            if (check.app !== "NeuroPed" || check.provider !== "vercel-preview" || check.status !== "preview" || check.commit !== process.env.GITHUB_SHA) {
+            if (check.app !== "NeuroPed" || check.provider !== "vercel-preview" || check.status !== "preview" || check.commit !== process.env.PREVIEW_SHA) {
               console.error("Sentinela de preview não corresponde ao commit atual.", check);
               process.exit(1);
             }
@@ -128,8 +133,8 @@ jobs:
           {
             echo "## NeuroPed — Vercel Preview"
             echo
-            echo "- Branch: \`$GITHUB_REF_NAME\`"
-            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Branch: \`$PREVIEW_REF\`"
+            echo "- Commit: \`$PREVIEW_SHA\`"
             echo "- URL: $PREVIEW_URL"
             echo "- Production alias: **não alterado**"
           } >> "$GITHUB_STEP_SUMMARY"
