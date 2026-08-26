@@ -85,13 +85,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "golden",
     description: "Agendamento e contato",
   },
-  {
-    href: "/conecta",
-    label: "NeuroPed Conecta",
-    icon: Activity,
-    tone: "golden",
-    description: "Portais e conexões",
-  },
+  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {
     href: "/servicos-clinica",
     label: "Serviços da Clínica",
