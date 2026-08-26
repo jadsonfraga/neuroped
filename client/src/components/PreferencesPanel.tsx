@@ -283,6 +283,7 @@ function PrefRow({
   description,
   on,
   onToggle,
+  feedback,
 }: {
   icon: React.ElementType;
   label: string;
