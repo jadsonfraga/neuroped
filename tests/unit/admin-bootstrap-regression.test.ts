@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   bootstrapAdmin,
   bootstrapE2EAccount,
@@ -63,17 +64,30 @@ assert.equal(
 );
 console.log("✓ bootstrap administrativo exige flag explícita para migração");
 
-function e2eDb(existing: typeof existingUser | null, hasMembership = false) {
+type BoundStatement = {
+  __sql: string;
+  __binds: unknown[];
+  first: () => Promise<unknown>;
+  run: () => Promise<{ success: boolean; meta: { changes: number } }>;
+};
+
+function e2eDb(
+  existing: typeof existingUser | null,
+  hasMembership = false,
+  conditionalUpdateChanges = 1,
+) {
   const runs: Array<{ sql: string; binds: unknown[] }> = [];
-  const batches: unknown[][] = [];
+  const batches: BoundStatement[][] = [];
   return {
     runs,
     batches,
     db: {
       prepare(sql: string) {
         return {
-          bind(...binds: unknown[]) {
+          bind(...binds: unknown[]): BoundStatement {
             return {
+              __sql: sql,
+              __binds: binds,
               async first() {
                 if (sql.includes("FROM users")) return existing;
                 if (sql.includes("FROM clinic_memberships")) {
@@ -89,9 +103,12 @@ function e2eDb(existing: typeof existingUser | null, hasMembership = false) {
           },
         };
       },
-      async batch(statements: unknown[]) {
+      async batch(statements: BoundStatement[]) {
         batches.push(statements);
-        return [];
+        return statements.map((_statement, index) => ({
+          success: true,
+          meta: { changes: index === 0 ? conditionalUpdateChanges : 1 },
+        }));
       },
     },
   };
@@ -264,6 +281,7 @@ const e2ePassword = "senha-tecnica-e2e-123";
   );
   assert.equal(correct.batches.length, 1, "senha E2E correta deve recuperar lockout técnico");
   assert.equal(correct.batches[0].length, 2, "recuperação deve limpar estado e revogar sessões antigas");
+  assert.match(correct.batches[0][0].__sql, /NOT EXISTS[\s\S]*clinic_memberships/);
 }
 
 // Rotação do secret: atualiza exclusivamente a conta técnica e revoga sessões antigas.
@@ -287,6 +305,46 @@ const e2ePassword = "senha-tecnica-e2e-123";
   );
   assert.equal(batches.length, 1, "rotação E2E deve ser aplicada atomicamente");
   assert.equal(batches[0].length, 2, "rotação deve atualizar senha e revogar refresh sessions");
+  assert.match(batches[0][0].__sql, /role = 'reader'/);
+  assert.match(batches[0][0].__sql, /NOT EXISTS[\s\S]*clinic_memberships/);
 }
 
-console.log("✓ bootstrap E2E cria, preserva, protege memberships e recupera/rotaciona com credencial válida");
+// TOCTOU: membership criada entre o SELECT inicial e o UPDATE deve zerar changes e abortar.
+{
+  const oldHash = await hashPassword("senha-tecnica-antiga-race");
+  const racingE2E = {
+    ...existingUser,
+    id: "e2e-race",
+    email: "e2e-race@example.com",
+    role: "reader",
+    password_hash: oldHash,
+  };
+  const { db, batches } = e2eDb(racingE2E, false, 0);
+  await assert.rejects(
+    bootstrapE2EAccount(
+      db as never,
+      {
+        NEUROPED_E2E_EMAIL: racingE2E.email,
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      e2ePassword,
+    ),
+    /E2E_ACCOUNT_MEMBERSHIP_RACE/,
+  );
+  assert.equal(batches.length, 1, "a corrida deve chegar ao write condicional uma única vez");
+  assert.match(batches[0][0].__sql, /NOT EXISTS[\s\S]*clinic_memberships/);
+}
+
+// Rejeições de identidade E2E não podem ser engolidas e cair no login humano normal.
+{
+  const loginSource = readFileSync("functions/api/auth/login.ts", "utf8");
+  assert.match(
+    loginSource,
+    /await bootstrapE2EAccount\(env\.DB, env, password\);\s*\} catch \{\s*return json\(INVALID, 401\);/s,
+    "falha do bootstrap E2E deve encerrar autenticação com resposta genérica",
+  );
+}
+
+console.log(
+  "✓ bootstrap E2E cria, preserva, protege memberships, fecha TOCTOU e recupera/rotaciona com credencial válida",
+);
