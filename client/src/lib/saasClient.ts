@@ -146,7 +146,12 @@ export async function startCheckout(clinicId: string, seats: number): Promise<Ch
   }));
 }
 
-export async function acceptInvitation(token: string, name: string, password: string): Promise<{ ok: true; clinicId: string; accountCreated: boolean }> {
+export async function acceptInvitation(token: string, name: string, password: string): Promise<{
+  ok: true;
+  clinicId: string;
+  role: ClinicMembershipRole;
+  accountCreated: boolean;
+}> {
   return readResponse(await authFetch("/api/billing/accept", {
     method: "POST",
     body: JSON.stringify({ token, name, password }),
