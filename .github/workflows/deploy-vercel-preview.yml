@@ -119,6 +119,7 @@ jobs:
           set -euo pipefail
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
+          export VERCEL_PROJECT_ID="prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
           vercel inspect "$PREVIEW_URL" --token="$token"
           vercel curl / --deployment "$PREVIEW_URL" --token="$token" -o /tmp/preview-root.html
           test -s /tmp/preview-root.html
