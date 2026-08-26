@@ -1,23 +1,13 @@
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { softTap, softError } from "@/lib/softSounds";
-import { haptic } from "@/lib/haptic";
+import { uiFeedback } from "@/lib/uiFeedback";
 
 /**
  * Modal de confirmação premium. Substituto elegante do confirm() nativo.
  *
- * Uso:
- *   const [confirming, setConfirming] = useState(false);
- *   <ConfirmDialog
- *     open={confirming}
- *     onClose={() => setConfirming(false)}
- *     onConfirm={async () => { await deleteIt(); setConfirming(false); }}
- *     title="Apagar paciente?"
- *     description="Esta ação não pode ser desfeita."
- *     confirmLabel="Apagar"
- *     variant="destructive"
- *   />
+ * O diálogo mantém título, descrição e estado visual como canais primários.
+ * Feedback sensorial é complementar e reservado a ações relevantes.
  */
 
 interface ConfirmDialogProps {
@@ -78,6 +68,7 @@ export function ConfirmDialog({
                     variant === "destructive" ? "text-rose-500" : "text-primary"
                   }`}
                   strokeWidth={1.75}
+                  aria-hidden="true"
                 />
               </div>
               <div className="min-w-0 flex-1">
@@ -111,15 +102,7 @@ export function ConfirmDialog({
 
             <div className="mt-7 flex items-center justify-end gap-2">
               <AlertDialogPrimitive.Cancel asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={loading}
-                  onClick={() => {
-                    softTap();
-                    haptic.tap();
-                  }}
-                >
+                <Button type="button" variant="ghost" disabled={loading}>
                   {cancelLabel}
                 </Button>
               </AlertDialogPrimitive.Cancel>
@@ -136,13 +119,7 @@ export function ConfirmDialog({
                     // A mutation controla `open`; impedir o auto-close nativo
                     // mantém foco/inert até sucesso ou cancelamento explícito.
                     event.preventDefault();
-                    if (variant === "destructive") {
-                      softError();
-                      haptic.warning();
-                    } else {
-                      softTap();
-                      haptic.tap();
-                    }
+                    if (variant === "destructive") uiFeedback.warning();
                     await onConfirm();
                   }}
                 >
