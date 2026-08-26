@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "VITE_PIN_HASH= npm run build:client && npm run audit:built-pin",
+  "buildCommand": "if [ \"${NEUROPED_VERCEL_PREVIEW_PROXY:-0}\" = \"1\" ]; then VITE_API_URL=; else VITE_API_URL=https://neuroped.pages.dev; fi; VITE_AUTH_MODE=remote VITE_API_URL=\"$VITE_API_URL\" VITE_PIN_HASH= VITE_ZONE=full VITE_ALLOWED_HOSTS= npm run build:client && npm run audit:built-pin",
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",
   "framework": "vite",
