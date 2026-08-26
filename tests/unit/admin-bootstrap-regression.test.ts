@@ -63,7 +63,7 @@ assert.equal(
 );
 console.log("✓ bootstrap administrativo exige flag explícita para migração");
 
-function e2eDb(existing: typeof existingUser | null) {
+function e2eDb(existing: typeof existingUser | null, hasMembership = false) {
   const runs: Array<{ sql: string; binds: unknown[] }> = [];
   const batches: unknown[][] = [];
   return {
@@ -75,7 +75,11 @@ function e2eDb(existing: typeof existingUser | null) {
           bind(...binds: unknown[]) {
             return {
               async first() {
-                return sql.includes("FROM users") ? existing : null;
+                if (sql.includes("FROM users")) return existing;
+                if (sql.includes("FROM clinic_memberships")) {
+                  return hasMembership ? { has_membership: 1 } : null;
+                }
+                return null;
               },
               async run() {
                 runs.push({ sql, binds });
@@ -98,7 +102,22 @@ const e2ePassword = "senha-tecnica-e2e-123";
 // Sem o par técnico, o bootstrap permanece no-op e nunca recorre a ADMIN_*.
 {
   const { db, runs, batches } = e2eDb(null);
-  await bootstrapE2EAccount(db as never, {});
+  await bootstrapE2EAccount(db as never, {}, e2ePassword);
+  assert.equal(runs.length, 0);
+  assert.equal(batches.length, 0);
+}
+
+// Uma tentativa com senha errada jamais cria, destrava ou rotaciona a sentinela.
+{
+  const { db, runs, batches } = e2eDb(null);
+  await bootstrapE2EAccount(
+    db as never,
+    {
+      NEUROPED_E2E_EMAIL: "novo-e2e@example.com",
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    },
+    "senha-incorreta",
+  );
   assert.equal(runs.length, 0);
   assert.equal(batches.length, 0);
 }
@@ -107,11 +126,15 @@ const e2ePassword = "senha-tecnica-e2e-123";
 {
   const { db } = e2eDb(null);
   await assert.rejects(
-    bootstrapE2EAccount(db as never, {
-      ADMIN_EMAIL: "same@example.com",
-      NEUROPED_E2E_EMAIL: "same@example.com",
-      NEUROPED_E2E_PASSWORD: e2ePassword,
-    }),
+    bootstrapE2EAccount(
+      db as never,
+      {
+        ADMIN_EMAIL: "same@example.com",
+        NEUROPED_E2E_EMAIL: "same@example.com",
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      e2ePassword,
+    ),
     /E2E_ACCOUNT_COLLIDES_WITH_ADMIN/,
   );
 }
@@ -126,11 +149,39 @@ const e2ePassword = "senha-tecnica-e2e-123";
   };
   const { db, runs, batches } = e2eDb(privileged);
   await assert.rejects(
-    bootstrapE2EAccount(db as never, {
-      NEUROPED_E2E_EMAIL: privileged.email,
-      NEUROPED_E2E_PASSWORD: e2ePassword,
-    }),
+    bootstrapE2EAccount(
+      db as never,
+      {
+        NEUROPED_E2E_EMAIL: privileged.email,
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      e2ePassword,
+    ),
     /E2E_ACCOUNT_ROLE_INVALID/,
+  );
+  assert.equal(runs.length, 0);
+  assert.equal(batches.length, 0);
+}
+
+// Role global `reader` não basta: qualquer membership clínica bloqueia captura.
+{
+  const tenantMember = {
+    ...existingUser,
+    id: "human-reader-1",
+    email: "reader@example.com",
+    role: "reader",
+  };
+  const { db, runs, batches } = e2eDb(tenantMember, true);
+  await assert.rejects(
+    bootstrapE2EAccount(
+      db as never,
+      {
+        NEUROPED_E2E_EMAIL: tenantMember.email,
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      e2ePassword,
+    ),
+    /E2E_ACCOUNT_HAS_CLINIC_MEMBERSHIP/,
   );
   assert.equal(runs.length, 0);
   assert.equal(batches.length, 0);
@@ -139,10 +190,14 @@ const e2ePassword = "senha-tecnica-e2e-123";
 // Ambiente novo: cria somente a conta sentinela com role mínima e sem troca nominal.
 {
   const { db, runs, batches } = e2eDb(null);
-  await bootstrapE2EAccount(db as never, {
-    NEUROPED_E2E_EMAIL: "novo-e2e@example.com",
-    NEUROPED_E2E_PASSWORD: e2ePassword,
-  });
+  await bootstrapE2EAccount(
+    db as never,
+    {
+      NEUROPED_E2E_EMAIL: "novo-e2e@example.com",
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    },
+    e2ePassword,
+  );
   assert.equal(batches.length, 0);
   assert.equal(runs.length, 1, "conta E2E ausente deve ser criada uma única vez");
   assert.match(runs[0].sql, /INSERT INTO users/);
@@ -151,7 +206,7 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.ok(runs[0].binds.includes("novo-e2e@example.com"));
 }
 
-// Secret inalterado: nenhuma escrita nem revogação de sessão.
+// Secret inalterado e conta desbloqueada: nenhuma escrita nem revogação de sessão.
 {
   const currentHash = await hashPassword(e2ePassword);
   const currentE2E = {
@@ -162,12 +217,53 @@ const e2ePassword = "senha-tecnica-e2e-123";
     password_hash: currentHash,
   };
   const { db, runs, batches } = e2eDb(currentE2E);
-  await bootstrapE2EAccount(db as never, {
-    NEUROPED_E2E_EMAIL: currentE2E.email,
-    NEUROPED_E2E_PASSWORD: e2ePassword,
-  });
+  await bootstrapE2EAccount(
+    db as never,
+    {
+      NEUROPED_E2E_EMAIL: currentE2E.email,
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    },
+    e2ePassword,
+  );
   assert.equal(runs.length, 0);
   assert.equal(batches.length, 0, "bootstrap E2E idempotente não deve tocar conta pronta");
+}
+
+// Lockout ativo só é recuperado pela credencial técnica correta.
+{
+  const currentHash = await hashPassword(e2ePassword);
+  const lockedE2E = {
+    ...existingUser,
+    id: "e2e-locked",
+    email: "e2e-locked@example.com",
+    role: "reader",
+    password_hash: currentHash,
+    failed_login_attempts: 5,
+    locked_until: new Date(Date.now() + 15 * 60_000).toISOString(),
+  };
+
+  const wrong = e2eDb(lockedE2E);
+  await bootstrapE2EAccount(
+    wrong.db as never,
+    {
+      NEUROPED_E2E_EMAIL: lockedE2E.email,
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    },
+    "senha-incorreta",
+  );
+  assert.equal(wrong.batches.length, 0, "senha errada não pode limpar lockout E2E");
+
+  const correct = e2eDb(lockedE2E);
+  await bootstrapE2EAccount(
+    correct.db as never,
+    {
+      NEUROPED_E2E_EMAIL: lockedE2E.email,
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    },
+    e2ePassword,
+  );
+  assert.equal(correct.batches.length, 1, "senha E2E correta deve recuperar lockout técnico");
+  assert.equal(correct.batches[0].length, 2, "recuperação deve limpar estado e revogar sessões antigas");
 }
 
 // Rotação do secret: atualiza exclusivamente a conta técnica e revoga sessões antigas.
@@ -181,12 +277,16 @@ const e2ePassword = "senha-tecnica-e2e-123";
     password_hash: oldHash,
   };
   const { db, batches } = e2eDb(staleE2E);
-  await bootstrapE2EAccount(db as never, {
-    NEUROPED_E2E_EMAIL: staleE2E.email,
-    NEUROPED_E2E_PASSWORD: e2ePassword,
-  });
+  await bootstrapE2EAccount(
+    db as never,
+    {
+      NEUROPED_E2E_EMAIL: staleE2E.email,
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    },
+    e2ePassword,
+  );
   assert.equal(batches.length, 1, "rotação E2E deve ser aplicada atomicamente");
   assert.equal(batches[0].length, 2, "rotação deve atualizar senha e revogar refresh sessions");
 }
 
-console.log("✓ bootstrap E2E cria, preserva e rotaciona a conta técnica sem fallback ADMIN");
+console.log("✓ bootstrap E2E cria, preserva, protege memberships e recupera/rotaciona com credencial válida");
