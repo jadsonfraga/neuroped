@@ -87,9 +87,8 @@ export async function registerOwnerAccount(input: {
   email: string;
   password: string;
 }): Promise<{ ok: true; user: { id: string; name: string; email: string; role: "professional" } }> {
-  return readResponse(await fetch("/api/auth/signup", {
+  return readResponse(await authFetch("/api/auth/signup", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   }));
 }
