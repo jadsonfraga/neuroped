@@ -15,6 +15,14 @@ const patientDetailPage = fs.readFileSync(path.join(root, "client/src/pages/paci
 const prontuarioPage = fs.readFileSync(path.join(root, "client/src/pages/prontuario.tsx"), "utf8");
 const scaleSaver = fs.readFileSync(path.join(root, "client/src/components/SaveToPatient.tsx"), "utf8");
 const invitations = fs.readFileSync(path.join(root, "functions/api/billing/invitations.ts"), "utf8");
+const commandPalette = fs.readFileSync(path.join(root, "client/src/components/CommandPalette.tsx"), "utf8");
+const agendaPage = fs.readFileSync(path.join(root, "client/src/pages/agenda.tsx"), "utf8");
+const prescriptionPage = fs.readFileSync(path.join(root, "client/src/pages/receita-c1.tsx"), "utf8");
+const familyPortalPage = fs.readFileSync(path.join(root, "client/src/pages/portal-familia.tsx"), "utf8");
+const persistencePolicy = fs.readFileSync(
+  path.join(root, "client/src/lib/clinicalBrowserPersistencePolicy.ts"),
+  "utf8",
+);
 
 for (const table of [
   "live_assessments",
@@ -75,6 +83,17 @@ assert.match(invitations, /buildInvitationUrl/);
 assert.match(invitations, /ONBOARDING_BASE_URL_NOT_CONFIGURED/);
 assert.match(invitations, /invitationUrl/);
 assert.doesNotMatch(invitations, /https:\/\/superneuroped\.vercel\.app/);
+
+for (const source of [commandPalette, agendaPage, prescriptionPage]) {
+  assert.match(source, /\/api\/live\/patients/);
+  assert.match(source, /useClinic/);
+}
+assert.match(prescriptionPage, /currentAppSearchParams/);
+assert.match(familyPortalPage, /\/api\/live\/documents/);
+assert.match(familyPortalPage, /familyVisibility === true/);
+assert.match(patientDetailPage, /!isRemoteClinical[\s\S]*<PatientCockpit/);
+assert.match(persistencePolicy, /"\/conecta"/);
+assert.match(persistencePolicy, /"\/memoria-clinica"/);
 
 const db = new Database(":memory:");
 db.pragma("foreign_keys = ON");

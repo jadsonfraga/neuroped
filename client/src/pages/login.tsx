@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUBLIC_HOME } from "@/lib/publicRoutes";
 import { MEDICAL_URL } from "@/lib/zone";
+import { resolveLoginDestination, stripLoginNextParameter } from "@/lib/loginRedirect";
 
 function readableLoginError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -14,13 +15,6 @@ function readableLoginError(error: unknown): string {
   if (/429|rate|muitas tentativas/i.test(message)) return "Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente.";
   if (/network|fetch|failed|backend|configur/i.test(message)) return "O servidor de autenticação não está disponível neste endereço. Abra a área médica protegida ou tente novamente mais tarde.";
   return "Não foi possível iniciar a sessão. Verifique a conexão e tente novamente.";
-}
-
-function requestedNextPath(): string {
-  if (typeof window === "undefined") return "/";
-  const hashQuery = window.location.hash.split("?")[1] ?? "";
-  const next = new URLSearchParams(hashQuery).get("next")?.trim() ?? "";
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
 export default function LoginPage() {
@@ -36,8 +30,13 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
+      const destination = resolveLoginDestination(window.location.href);
       await login(email.trim(), password);
-      setLocation(requestedNextPath());
+      const cleanHref = stripLoginNextParameter(window.location.href);
+      if (cleanHref !== window.location.href) {
+        window.history.replaceState(window.history.state, "", cleanHref);
+      }
+      setLocation(destination);
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {

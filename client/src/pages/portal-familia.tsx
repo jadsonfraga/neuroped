@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +54,12 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   prescricao: "Prescrição",
   atestado: "Atestado",
   orientacao: "Orientação",
+  clinical_note: "Nota clínica",
+  report: "Relatório",
+  prescription: "Prescrição",
+  scale: "Escala",
+  school: "Documento escolar",
+  other: "Outro",
 };
 
 const DOC_TYPE_COLORS: Record<string, string> = {
@@ -99,6 +106,8 @@ const parentResources = [
 
 export default function PortalFamiliaPage() {
   const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const [patientId, setPatientId] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -107,7 +116,10 @@ export default function PortalFamiliaPage() {
   // demonstração local fictícia ou prévia de um profissional autenticado.
   const canPreviewDocuments =
     accessMode === "local" ||
-    (accessMode === "remote" && isAuthenticated);
+    (isRemoteClinical && Boolean(activeClinicId));
+  const documentsEndpoint = isRemoteClinical
+    ? `/api/live/documents?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`
+    : `/api/documents?patient_id=${encodeURIComponent(patientId)}&family_only=true`;
 
   const {
     data: documents = [],
@@ -115,20 +127,48 @@ export default function PortalFamiliaPage() {
     isError,
     refetch,
   } = useQuery<FamilyDocument[]>({
-    queryKey: [`/api/documents?patient_id=${patientId}&family_only=true`],
+    queryKey: [documentsEndpoint],
     enabled: canPreviewDocuments && !!patientId,
     queryFn: async () => {
-      const res = await apiRequest(
-        "GET",
-        `/api/documents?patient_id=${patientId}&family_only=true`,
-      );
+      const res = await apiRequest("GET", documentsEndpoint);
       if (!res.ok) throw new Error("Erro ao buscar documentos.");
       const data = await res.json();
-      // A API retorna { data: [...] }; aceita 'documents' e array puro por robustez.
       const list = Array.isArray(data) ? data : (data.data ?? data.documents ?? []);
-      return list.filter(
-        (d: any) => d.is_family_visible === 1 || d.is_family_visible === true,
-      );
+      if (!isRemoteClinical) {
+        return list.filter(
+          (document: any) =>
+            document.is_family_visible === 1 ||
+            document.is_family_visible === true,
+        );
+      }
+      return list
+        .filter((document: any) => document.familyVisibility === true)
+        .map((document: any) => {
+          const content = document.version?.content;
+          const textContent =
+            typeof content === "string"
+              ? content
+              : typeof content?.body === "string"
+                ? content.body
+                : typeof content?.text === "string"
+                  ? content.text
+                  : null;
+          return {
+            id: String(document.id),
+            patient_id: String(document.patientId),
+            type: String(document.documentType),
+            title:
+              typeof content?.title === "string"
+                ? content.title
+                : DOC_TYPE_LABELS[String(document.documentType)] ?? "Documento",
+            content: textContent,
+            is_family_visible: 1 as const,
+            created_at:
+              document.version?.issuedAt ??
+              document.updatedAt ??
+              document.createdAt,
+          };
+        });
     },
   });
 
