@@ -208,9 +208,8 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
  * Mantém uma conta técnica sentinela dedicada aos smoke tests pós-deploy.
  * A conta nasce com role mínima e sem membership de clínica. Criação, rotação
  * e recuperação de lockout só podem ocorrer quando a própria credencial E2E
- * correta foi apresentada no login; tentativas incorretas nunca destravam nem
- * alteram a conta. Uma conta humana com membership clínica jamais é capturada
- * por este fluxo, mesmo que possua role global `reader`.
+ * correta foi apresentada no login. Uma conta humana com membership clínica
+ * jamais é capturada por este fluxo, mesmo que possua role global `reader`.
  */
 export async function bootstrapE2EAccount(
   db: D1Database,
@@ -219,7 +218,10 @@ export async function bootstrapE2EAccount(
 ): Promise<void> {
   const email = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
   const password = env.NEUROPED_E2E_PASSWORD;
-  if (!email || !password || presentedPassword !== password) return;
+  if (!email || !password) return;
+  if (presentedPassword !== password) {
+    throw new Error("E2E_CREDENTIAL_MISMATCH");
+  }
 
   const adminEmail = env.ADMIN_EMAIL?.toLowerCase().trim();
   if (adminEmail && email === adminEmail) {
@@ -255,16 +257,35 @@ export async function bootstrapE2EAccount(
       existing.is_active === 1 &&
       !existing.must_change_password &&
       !isLocked(existing);
-    if (ready) return;
+
+    // Mesmo a sentinela já pronta passa por uma guarda atômica. Isso fecha a
+    // janela entre o SELECT de membership e o retorno rápido: se um vínculo for
+    // criado nesse intervalo, o UPDATE casa zero linhas e o login falha fechado.
+    if (ready) {
+      const guard = await db
+        .prepare(
+          `UPDATE users
+              SET updated_at = updated_at
+            WHERE id = ?
+              AND role = 'reader'
+              AND NOT EXISTS (
+                SELECT 1 FROM clinic_memberships cm WHERE cm.user_id = users.id
+              )`,
+        )
+        .bind(existing.id)
+        .run();
+      if ((guard.meta?.changes ?? 0) !== 1) {
+        throw new Error("E2E_ACCOUNT_MEMBERSHIP_RACE");
+      }
+      return;
+    }
 
     const hash = passwordMatches && existing.password_hash
       ? existing.password_hash
       : await hashPassword(password);
 
-    // O NOT EXISTS no próprio UPDATE fecha o TOCTOU entre a leitura acima e a
-    // rotação: uma membership criada concorrentemente faz o write alterar 0 rows.
-    // O DELETE de sessões também é condicionado ao mesmo invariante, evitando
-    // tocar sessões de uma identidade humana caso a guarda falhe.
+    // O NOT EXISTS no próprio UPDATE fecha o TOCTOU durante rotação/recuperação.
+    // O DELETE de sessões também é condicionado ao mesmo invariante.
     const results = await db.batch([
       db
         .prepare(
