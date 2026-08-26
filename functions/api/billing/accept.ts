@@ -51,6 +51,33 @@ function strongestGlobalRole(current: string, required: GlobalRole): GlobalRole 
   return rank[normalizedCurrent] >= rank[required] ? normalizedCurrent : required;
 }
 
+async function resolveAssistantProvider(
+  db: D1Database,
+  clinicId: string,
+  invitedByUserId: string | null,
+): Promise<string | null> {
+  const preferred = invitedByUserId ?? "";
+  const row = await db.prepare(
+    `SELECT u.id
+       FROM clinic_memberships cm
+       JOIN users u ON u.id = cm.user_id
+      WHERE cm.clinic_id = ?
+        AND cm.active = 1
+        AND u.is_active = 1
+        AND u.role IN ('admin','professional')
+      ORDER BY
+        CASE
+          WHEN u.id = ? THEN 0
+          WHEN cm.role = 'owner' THEN 1
+          WHEN cm.role = 'clinic_admin' THEN 2
+          ELSE 3
+        END,
+        cm.created_at ASC
+      LIMIT 1`,
+  ).bind(clinicId, preferred).first<{ id: string }>();
+  return row?.id ?? null;
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -140,6 +167,33 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ? strongestGlobalRole(existing.role, requiredGlobalRole)
     : requiredGlobalRole;
 
+  let assistantProviderId: string | null = null;
+  if (membershipRole === "assistant") {
+    assistantProviderId = await resolveAssistantProvider(
+      env.DB,
+      invitation.clinic_id,
+      invitation.invited_by_user_id,
+    );
+    if (!assistantProviderId) {
+      return json(
+        { error: "Não há profissional ativo da clínica para vincular este assistente.", code: "ASSISTANT_PROVIDER_REQUIRED" },
+        409,
+      );
+    }
+    const existingStaffLink = await env.DB.prepare(
+      `SELECT provider_user_id
+         FROM booking_staff_links
+        WHERE staff_user_id = ?
+        LIMIT 1`,
+    ).bind(userId).first<{ provider_user_id: string }>();
+    if (existingStaffLink && existingStaffLink.provider_user_id !== assistantProviderId) {
+      return json(
+        { error: "Esta conta de assistente já está vinculada a outro profissional da Agenda.", code: "STAFF_ALREADY_LINKED" },
+        409,
+      );
+    }
+  }
+
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
   if (!existing) {
@@ -202,6 +256,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       tokenHash,
       now,
     ),
+  );
+
+  if (membershipRole === "assistant" && assistantProviderId) {
+    statements.push(
+      env.DB.prepare(
+        `INSERT INTO booking_staff_links
+          (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
+         VALUES (?, ?, 1, ?, ?, ?)
+         ON CONFLICT(provider_user_id, staff_user_id) DO UPDATE SET
+           active = 1,
+           created_by_user_id = excluded.created_by_user_id,
+           updated_at = excluded.updated_at`,
+      ).bind(
+        assistantProviderId,
+        userId,
+        invitation.invited_by_user_id ?? assistantProviderId,
+        now,
+        now,
+      ),
+    );
+  }
+
+  statements.push(
     env.DB.prepare(
       `UPDATE clinic_invitations
           SET status = 'accepted', accepted_at = ?
@@ -217,7 +294,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       invitation.clinic_id,
       userId,
       invitation.id,
-      JSON.stringify({ role: membershipRole, globalRole: effectiveGlobalRole }),
+      JSON.stringify({
+        role: membershipRole,
+        globalRole: effectiveGlobalRole,
+        operationsProviderId: assistantProviderId,
+      }),
       now,
     ),
   );
@@ -232,6 +313,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     const message = String(error);
     if (message.includes("SEAT_LIMIT_REACHED") || message.includes("BILLING_ENTITLEMENT_DENIED")) {
       return json({ error: "Limite de assentos ou entitlement alterado durante o aceite.", code: "SEAT_LIMIT_REACHED" }, 409);
+    }
+    if (message.includes("booking_staff_links") || message.includes("STAFF_ALREADY_LINKED")) {
+      return json({ error: "Não foi possível vincular o assistente à Agenda deste profissional.", code: "STAFF_ALREADY_LINKED" }, 409);
     }
     if (/UNIQUE|constraint/i.test(message)) {
       return json({ error: "Conta ou membership já existe em estado incompatível.", code: "ACCOUNT_CONFLICT" }, 409);
