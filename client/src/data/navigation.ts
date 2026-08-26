@@ -114,12 +114,7 @@ export const navSections: NavSection[] = [
   {
     title: "ATENDIMENTO",
     items: [
-      {
-        href: "/agenda",
-        label: "Agenda & Gestão",
-        icon: Calendar,
-        tone: "priority",
-      },
+      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       {
         href: "/pacientes",
         label: "Pacientes / Prontuário",
