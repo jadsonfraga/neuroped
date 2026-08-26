@@ -195,7 +195,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   const now = new Date().toISOString();
+  const pendingInvitationClause = `EXISTS (
+    SELECT 1 FROM clinic_invitations
+     WHERE id = ? AND token_hash = ? AND status = 'pending'
+       AND julianday(expires_at) > julianday(?)
+  )`;
   const statements: D1PreparedStatement[] = [];
+
   if (!existing) {
     statements.push(
       env.DB.prepare(
@@ -203,11 +209,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
           (id, name, email, role, is_active, password_hash, must_change_password,
            failed_login_attempts, created_at, updated_at)
          SELECT ?, ?, ?, ?, 1, ?, 0, 0, ?, ?
-          WHERE EXISTS (
-            SELECT 1 FROM clinic_invitations
-             WHERE id = ? AND token_hash = ? AND status = 'pending'
-               AND julianday(expires_at) > julianday(?)
-          )`,
+          WHERE ${pendingInvitationClause}`,
       ).bind(
         userId,
         name,
@@ -225,8 +227,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     statements.push(
       env.DB.prepare(
         `UPDATE users SET role = ?, updated_at = ?
-          WHERE id = ? AND is_active = 1 AND role = ?`,
-      ).bind(effectiveGlobalRole, now, existing.id, existing.role),
+          WHERE id = ? AND is_active = 1 AND role = ?
+            AND ${pendingInvitationClause}`,
+      ).bind(
+        effectiveGlobalRole,
+        now,
+        existing.id,
+        existing.role,
+        invitation.id,
+        tokenHash,
+        now,
+      ),
     );
   }
 
@@ -235,11 +246,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       `INSERT INTO clinic_memberships
         (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
        SELECT ?, ?, ?, 1, ?, ?, ?
-        WHERE EXISTS (
-          SELECT 1 FROM clinic_invitations
-           WHERE id = ? AND token_hash = ? AND status = 'pending'
-             AND julianday(expires_at) > julianday(?)
-        )
+        WHERE ${pendingInvitationClause}
        ON CONFLICT(clinic_id, user_id) DO UPDATE SET
          role = excluded.role,
          active = 1,
@@ -263,7 +270,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       env.DB.prepare(
         `INSERT INTO booking_staff_links
           (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
-         VALUES (?, ?, 1, ?, ?, ?)
+         SELECT ?, ?, 1, ?, ?, ?
+          WHERE ${pendingInvitationClause}
          ON CONFLICT(provider_user_id, staff_user_id) DO UPDATE SET
            active = 1,
            created_by_user_id = excluded.created_by_user_id,
@@ -273,6 +281,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
         userId,
         invitation.invited_by_user_id ?? assistantProviderId,
         now,
+        now,
+        invitation.id,
+        tokenHash,
         now,
       ),
     );
@@ -288,7 +299,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     env.DB.prepare(
       `INSERT INTO saas_audit_events
         (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
-       VALUES (?, ?, ?, 'invitation.accepted', 'clinic_invitation', ?, ?, ?)`,
+       SELECT ?, ?, ?, 'invitation.accepted', 'clinic_invitation', ?, ?, ?
+        WHERE EXISTS (
+          SELECT 1 FROM clinic_invitations
+           WHERE id = ? AND token_hash = ? AND status = 'accepted' AND accepted_at = ?
+        )`,
     ).bind(
       crypto.randomUUID(),
       invitation.clinic_id,
@@ -299,6 +314,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
         globalRole: effectiveGlobalRole,
         operationsProviderId: assistantProviderId,
       }),
+      now,
+      invitation.id,
+      tokenHash,
       now,
     ),
   );
