@@ -313,10 +313,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const drawerOpen = mobileOpen && !isDesktop;
-    document.documentElement.classList.toggle(
-      "np-mobile-drawer-open",
-      drawerOpen,
-    );
+    // prettier-ignore
+    document.documentElement.classList.toggle("np-mobile-drawer-open", drawerOpen);
     document.body.classList.toggle("np-mobile-drawer-open", drawerOpen);
     return () => {
       document.documentElement.classList.remove("np-mobile-drawer-open");
