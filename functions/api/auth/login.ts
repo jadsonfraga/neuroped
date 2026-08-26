@@ -13,6 +13,7 @@ import {
   registerFailedAttempt,
   registerSuccessfulLogin,
   bootstrapAdmin,
+  bootstrapE2EAccount,
 } from "./_shared";
 import { DUMMY_PASSWORD_HASH, verifyPassword } from "./_crypto";
 import { createSessionTokens } from "./_sessions";
@@ -78,6 +79,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     await bootstrapAdmin(env.DB, env);
   } catch {
     /* bootstrap é best-effort; não bloqueia login de usuários já existentes */
+  }
+
+  // A conta técnica é reconciliada apenas quando ela própria tenta autenticar.
+  // Isso permite bootstrap/rotação do sentinela sem acrescentar PBKDF2 a todo
+  // login humano e sem reutilizar credenciais administrativas no smoke.
+  const e2eEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  if (e2eEmail && email === e2eEmail) {
+    try {
+      await bootstrapE2EAccount(env.DB, env);
+    } catch {
+      /* best-effort; a validação normal abaixo permanece fail-closed */
+    }
   }
 
   const user = await getUserByEmail(env.DB, email);
