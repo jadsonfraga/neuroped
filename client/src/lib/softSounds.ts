@@ -146,13 +146,17 @@ function play(spec: {
  * Compatibilidade com componentes antigos.
  * Cliques rotineiros ficam silenciosos por política de produto.
  */
-export function softTap(): void {}
+export function softTap(): void {
+  /* intencionalmente silencioso */
+}
 
 /**
  * Compatibilidade com componentes antigos.
  * Hover nunca produz áudio no fluxo clínico.
  */
-export function softHover(): void {}
+export function softHover(): void {
+  /* intencionalmente silencioso */
+}
 
 /** Confirmação relevante para salvar, concluir ou autenticar. */
 export function softSuccess(): void {
@@ -207,7 +211,9 @@ export function softBell(): void {
  * Compatibilidade com componentes antigos.
  * Mudança de rota permanece silenciosa para preservar concentração.
  */
-export function softWhoosh(): void {}
+export function softWhoosh(): void {
+  /* intencionalmente silencioso */
+}
 
 /** Seleção explícita de checkbox/radio ou escolha equivalente. */
 export function softTick(): void {
