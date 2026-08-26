@@ -63,7 +63,7 @@ jobs:
         env:
           NODE_ENV: production
           VITE_AUTH_MODE: remote
-          VITE_API_URL: https://neuroped.pages.dev
+          VITE_API_URL: ""
           VITE_ZONE: full
           VITE_ALLOWED_HOSTS: ""
           VERCEL_GIT_COMMIT_SHA: ${{ env.PREVIEW_SHA }}
@@ -87,7 +87,7 @@ jobs:
           rm -rf .vercel
           vercel pull --yes --environment=preview --token="$token"
           VITE_AUTH_MODE=remote \
-          VITE_API_URL=https://neuroped.pages.dev \
+          VITE_API_URL= \
           VITE_PIN_HASH= \
           VITE_ZONE=full \
           VITE_ALLOWED_HOSTS= \
@@ -128,6 +128,23 @@ jobs:
             console.log("Preview validado no commit", check.commit, "branch", check.branch);
           '
 
+          # O preview usa /api same-origin; o Vercel faz proxy server-side para o
+          # backend Cloudflare canônico sem ampliar a allowlist CORS de produção.
+          VERCEL_TOKEN="$token" vercel curl /api/health --deployment "$PREVIEW_URL" -o /tmp/preview-api-health.json
+          node -e '
+            const fs = require("node:fs");
+            const health = JSON.parse(fs.readFileSync("/tmp/preview-api-health.json", "utf8"));
+            if (
+              health.database !== "ok" ||
+              health.authentication?.required !== true ||
+              health.authentication?.configured !== true
+            ) {
+              console.error("Proxy /api do preview não alcançou backend canônico saudável.", health);
+              process.exit(1);
+            }
+            console.log("Proxy same-origin /api validado contra Cloudflare.");
+          '
+
       - name: Publish preview URL in job summary
         if: success()
         run: |
@@ -137,6 +154,7 @@ jobs:
             echo "- Branch: \`$PREVIEW_REF\`"
             echo "- Commit: \`$PREVIEW_SHA\`"
             echo "- URL: $PREVIEW_URL"
+            echo "- API: **same-origin proxy validado**"
             echo "- Production alias: **não alterado**"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -159,7 +177,8 @@ jobs:
           - URL: $PREVIEW_URL
           - Commit: \`$PREVIEW_SHA\`
           - Produção: **não alterada**
-          - Gate: \`check + public/access + publish-safety + build + artifact audit + vercel inspect/curl + canonical deploy-check\`
+          - API: **proxy same-origin para Cloudflare validado**
+          - Gate: \`check + public/access + publish-safety + build + artifact audit + vercel inspect/curl + canonical deploy-check + /api/health\`
           - Execução: $actions_url
           EOF
           )
