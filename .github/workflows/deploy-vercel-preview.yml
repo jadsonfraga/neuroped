@@ -21,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VERCEL_PROJECT_ID: prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       PREVIEW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREVIEW_REF: ${{ github.head_ref || github.ref_name }}
@@ -92,6 +91,7 @@ jobs:
           set -euo pipefail
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
+          export VERCEL_PROJECT_ID="prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
           rm -rf .vercel
           vercel pull --yes --environment=preview --token="$token"
           VITE_AUTH_MODE=remote \
