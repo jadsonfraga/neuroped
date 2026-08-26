@@ -59,21 +59,6 @@ jobs:
           npm run audit:access
           npm run test:publish-safety
 
-      - name: Create immutable preview sentinel
-        run: |
-          set -euo pipefail
-          mkdir -p client/public
-          cat > client/public/deploy-check.json <<EOF
-          {
-            "app": "NeuroPed",
-            "provider": "vercel-preview",
-            "branch": "${PREVIEW_REF}",
-            "commit": "${PREVIEW_SHA}",
-            "run_id": "${GITHUB_RUN_ID}",
-            "status": "preview"
-          }
-          EOF
-
       - name: Build preview artifact
         env:
           NODE_ENV: production
@@ -81,6 +66,8 @@ jobs:
           VITE_API_URL: https://neuroped.pages.dev
           VITE_ZONE: full
           VITE_ALLOWED_HOSTS: ""
+          VERCEL_GIT_COMMIT_SHA: ${{ env.PREVIEW_SHA }}
+          VERCEL_GIT_COMMIT_REF: ${{ env.PREVIEW_REF }}
         run: VITE_PIN_HASH= npm run build:client
 
       - name: Audit built artifact
@@ -127,11 +114,18 @@ jobs:
           node -e '
             const fs = require("node:fs");
             const check = JSON.parse(fs.readFileSync("/tmp/preview-sentinel.json", "utf8"));
-            if (check.app !== "NeuroPed" || check.provider !== "vercel-preview" || check.status !== "preview" || check.commit !== process.env.PREVIEW_SHA) {
-              console.error("Sentinela de preview não corresponde ao commit atual.", check);
+            const expectedCommit = process.env.PREVIEW_SHA.slice(0, 12);
+            if (
+              check.app !== "NeuroPed" ||
+              check.provider !== "vercel" ||
+              check.status !== "deployed" ||
+              check.branch !== process.env.PREVIEW_REF ||
+              check.commit !== expectedCommit
+            ) {
+              console.error("Sentinela canônica não corresponde ao preview atual.", { check, expectedCommit, expectedBranch: process.env.PREVIEW_REF });
               process.exit(1);
             }
-            console.log("Preview validado no commit", check.commit);
+            console.log("Preview validado no commit", check.commit, "branch", check.branch);
           '
 
       - name: Publish preview URL in job summary
@@ -165,7 +159,7 @@ jobs:
           - URL: $PREVIEW_URL
           - Commit: \`$PREVIEW_SHA\`
           - Produção: **não alterada**
-          - Gate: \`check + public/access + publish-safety + build + artifact audit + vercel inspect/curl + sentinel\`
+          - Gate: \`check + public/access + publish-safety + build + artifact audit + vercel inspect/curl + canonical deploy-check\`
           - Execução: $actions_url
           EOF
           )
