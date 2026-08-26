@@ -1089,6 +1089,771 @@ function QuizModule({
   );
 }
 
+// ─────────────────────────────── PERFIS EXATOS 6–13 ───────────────────────────────
+const ageMcq = (prompt: string, options: string[], answer: string): MCQ => ({
+  kind: "mcq",
+  prompt,
+  options,
+  answer,
+});
+
+const COGNITIVE_AGE_BANKS: Partial<Record<number, Record<Domain, MCQ[]>>> = {
+  6: {
+    visual: [
+      ageMcq(
+        "Qual figura é igual à primeira? ⭐",
+        ["⭐", "🔺", "🔵", "🟩"],
+        "⭐",
+      ),
+      ageMcq("Qual vem depois? 🔴 🔵 🔴 __", ["🟡", "🔵", "🔴", "🟢"], "🔵"),
+      ageMcq(
+        "Qual objeto pertence ao grupo de alimentos?",
+        ["🍎", "🚗", "👟", "✏️"],
+        "🍎",
+      ),
+      ageMcq("Qual é o menor?", ["🐘", "🐶", "🐭", "🦒"], "🐭"),
+    ],
+    leitura: [
+      ageMcq(
+        "Qual palavra começa com o som /m/?",
+        ["mesa", "sapo", "foca", "rato"],
+        "mesa",
+      ),
+      ageMcq(
+        "Leia: 'A bola é azul.' Qual é a cor da bola?",
+        ["Verde", "Azul", "Amarela", "Vermelha"],
+        "Azul",
+      ),
+      ageMcq(
+        "Qual palavra rima com GATO?",
+        ["pato", "mesa", "bola", "casa"],
+        "pato",
+      ),
+      ageMcq(
+        "Qual palavra está escrita? B-O-L-A",
+        ["BALA", "BOLA", "BELA", "COLA"],
+        "BOLA",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual frase começa do jeito correto?",
+        ["ana brinca.", "Ana brinca.", "ANA brinca", "ana Brinca."],
+        "Ana brinca.",
+      ),
+      ageMcq(
+        "Qual palavra está escrita corretamente?",
+        ["caza", "casa", "kasa", "cassa"],
+        "casa",
+      ),
+      ageMcq(
+        "Complete: 'Eu ___ uma história.'",
+        ["leio", "leem", "ler", "leu"],
+        "leio",
+      ),
+      ageMcq("Qual sinal termina uma pergunta?", [".", ",", "?", "!"], "?"),
+    ],
+    aritmetica: [
+      ageMcq(
+        "Qual número vem depois? 7, 8, 9, __",
+        ["10", "11", "6", "12"],
+        "10",
+      ),
+      ageMcq("6 + 7 = ?", ["12", "13", "14", "11"], "13"),
+      ageMcq("15 − 8 = ?", ["6", "7", "8", "9"], "7"),
+      ageMcq("Qual é maior?", ["28", "18", "8", "2"], "28"),
+    ],
+  },
+  7: {
+    visual: [
+      ageMcq(
+        "Qual figura completa o padrão? 🔺 🔵 🔺 🔵 __",
+        ["🔵", "🔺", "🟢", "⭐"],
+        "🔺",
+      ),
+      ageMcq(
+        "Qual par tem a mesma relação de parte e todo?",
+        ["roda–carro", "sol–lua", "gato–cão", "mesa–cadeira"],
+        "roda–carro",
+      ),
+      ageMcq(
+        "Qual NÃO pertence ao grupo?",
+        ["triângulo", "quadrado", "círculo", "banana"],
+        "banana",
+      ),
+      ageMcq(
+        "Qual detalhe está diferente? 🔴🔵🔴🟡",
+        ["1º", "2º", "3º", "4º"],
+        "4º",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Leia: 'Lia levou o guarda-chuva porque o céu estava escuro.' Por que Lia levou o guarda-chuva?",
+        [
+          "Porque estava calor",
+          "Porque poderia chover",
+          "Porque ia dormir",
+          "Porque perdeu a mochila",
+        ],
+        "Porque poderia chover",
+      ),
+      ageMcq("Quantas sílabas tem JA-NE-LA?", ["2", "3", "4", "5"], "3"),
+      ageMcq(
+        "Qual frase está na ordem correta?",
+        [
+          "Parque foi ao João",
+          "João ao parque foi",
+          "João foi ao parque",
+          "Foi parque João ao",
+        ],
+        "João foi ao parque",
+      ),
+      ageMcq(
+        "O que significa 'rápido' em 'O coelho correu rápido'?",
+        ["Devagar", "Com velocidade", "Com medo", "Em silêncio"],
+        "Com velocidade",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual frase tem pontuação adequada?",
+        [
+          "Hoje, fomos ao parque.",
+          "Hoje fomos ao parque",
+          "hoje, Fomos ao parque.",
+          "Hoje fomos ao parque?",
+        ],
+        "Hoje, fomos ao parque.",
+      ),
+      ageMcq(
+        "Qual é o plural de 'flor'?",
+        ["flors", "flore", "flores", "floris"],
+        "flores",
+      ),
+      ageMcq(
+        "Complete: 'As meninas ___ no pátio.'",
+        ["brinca", "brincam", "brinco", "brincou"],
+        "brincam",
+      ),
+      ageMcq(
+        "Qual palavra está escrita corretamente?",
+        ["girafa", "jirafa", "girrafa", "jirafa"],
+        "girafa",
+      ),
+    ],
+    aritmetica: [
+      ageMcq("34 + 28 = ?", ["52", "62", "72", "60"], "62"),
+      ageMcq("70 − 36 = ?", ["34", "44", "36", "24"], "34"),
+      ageMcq(
+        "Há 4 caixas com 3 lápis em cada. Quantos lápis?",
+        ["7", "12", "9", "16"],
+        "12",
+      ),
+      ageMcq(
+        "Qual é o valor do algarismo 5 em 50?",
+        ["5 unidades", "5 dezenas", "5 centenas", "50 centenas"],
+        "5 dezenas",
+      ),
+    ],
+  },
+  8: {
+    visual: [
+      ageMcq(
+        "Qual figura é a mesma depois de girar?",
+        ["↗️", "↘️", "↖️", "↙️"],
+        "↘️",
+      ),
+      ageMcq(
+        "Qual figura completa a matriz? 🔴🔵 / 🔵🔴 / 🔴__",
+        ["🔴", "🔵", "🟡", "🟢"],
+        "🔵",
+      ),
+      ageMcq(
+        "Qual forma está escondida no desenho?",
+        ["triângulo", "círculo", "quadrado", "estrela"],
+        "triângulo",
+      ),
+      ageMcq(
+        "MÃO está para LUVA assim como PÉ está para:",
+        ["meia", "chapéu", "camisa", "cinto"],
+        "meia",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Leia: 'A horta da escola economiza água usando regadores pequenos.' Qual é a ideia principal?",
+        [
+          "A escola pintou a horta",
+          "A horta usa água de forma cuidadosa",
+          "Os regadores são grandes",
+          "A escola não tem horta",
+        ],
+        "A horta usa água de forma cuidadosa",
+      ),
+      ageMcq(
+        "O que podemos inferir sobre o uso de regadores pequenos?",
+        [
+          "Ajuda a controlar a quantidade de água",
+          "Impede o crescimento das plantas",
+          "Serve apenas para decorar",
+          "Faz a água desaparecer",
+        ],
+        "Ajuda a controlar a quantidade de água",
+      ),
+      ageMcq(
+        "No texto, 'economiza' significa:",
+        ["gasta mais", "usa com cuidado", "joga fora", "esquece"],
+        "usa com cuidado",
+      ),
+      ageMcq(
+        "Qual título combina melhor com o texto?",
+        [
+          "Uma horta cuidadosa",
+          "O passeio de bicicleta",
+          "A chuva forte",
+          "O brinquedo novo",
+        ],
+        "Uma horta cuidadosa",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual sequência forma um pequeno parágrafo?",
+        [
+          "Conclusão–título–início",
+          "Início–desenvolvimento–final",
+          "Final–início–título",
+          "Título–final–início",
+        ],
+        "Início–desenvolvimento–final",
+      ),
+      ageMcq(
+        "Qual frase tem concordância correta?",
+        [
+          "As criança brinca.",
+          "As crianças brincam.",
+          "A crianças brincam.",
+          "As crianças brincou.",
+        ],
+        "As crianças brincam.",
+      ),
+      ageMcq(
+        "Qual palavra precisa de acento?",
+        ["cafe", "mesa", "bola", "gato"],
+        "cafe",
+      ),
+      ageMcq(
+        "Complete: 'Estava chovendo, ___ levei guarda-chuva.'",
+        ["por isso", "mas", "ou", "embora"],
+        "por isso",
+      ),
+    ],
+    aritmetica: [
+      ageMcq("7 × 4 = ?", ["21", "24", "28", "32"], "28"),
+      ageMcq("36 ÷ 6 = ?", ["5", "6", "7", "8"], "6"),
+      ageMcq(
+        "Qual fração representa uma de quatro partes iguais?",
+        ["1/2", "1/3", "1/4", "4/1"],
+        "1/4",
+      ),
+      ageMcq(
+        "Uma caixa tem 8 lápis. Quantos lápis há em 3 caixas?",
+        ["11", "16", "24", "32"],
+        "24",
+      ),
+    ],
+  },
+  9: {
+    visual: [
+      ageMcq(
+        "Qual regra organiza a sequência? 2, 4, 8, 16, __",
+        ["somar 2", "dobrar", "subtrair 2", "somar 4"],
+        "dobrar",
+      ),
+      ageMcq("Qual figura é simétrica?", ["◐", "★", "◒", "◩"], "★"),
+      ageMcq(
+        "Qual item não pertence por dois critérios: é animal e voa?",
+        ["pássaro", "borboleta", "avião", "abelha"],
+        "avião",
+      ),
+      ageMcq(
+        "Qual sequência visual vem depois? 🟩🟩🔵 / 🟩🔵🔵 / __",
+        ["🔵🔵🔵", "🟩🟩🟩", "🔵🟩🟩", "🟩🔵🟩"],
+        "🔵🔵🔵",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Leia: 'As árvores ajudam a diminuir o calor nas cidades.' Qual é a ideia principal?",
+        [
+          "Árvores aumentam o calor",
+          "Árvores podem tornar a cidade mais fresca",
+          "Cidades não têm árvores",
+          "O calor só existe no campo",
+        ],
+        "Árvores podem tornar a cidade mais fresca",
+      ),
+      ageMcq(
+        "Qual informação apoia a ideia principal?",
+        [
+          "As árvores fazem sombra",
+          "As árvores são sempre pequenas",
+          "As cidades ficam vazias",
+          "O calor não incomoda ninguém",
+        ],
+        "As árvores fazem sombra",
+      ),
+      ageMcq(
+        "No texto, 'diminuir' é o mesmo que:",
+        ["aumentar", "reduzir", "esconder", "criar"],
+        "reduzir",
+      ),
+      ageMcq(
+        "Qual resumo é melhor?",
+        [
+          "Árvores ajudam a reduzir o calor urbano.",
+          "Árvores são objetos de decoração.",
+          "Cidades devem retirar plantas.",
+          "O calor só depende da chuva.",
+        ],
+        "Árvores ajudam a reduzir o calor urbano.",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual conectivo completa melhor? 'Estudei bastante, ___ consegui resolver.'",
+        ["porém", "por isso", "ou", "embora"],
+        "por isso",
+      ),
+      ageMcq(
+        "Qual frase está correta?",
+        [
+          "Nós foi ao cinema.",
+          "Nós fomos ao cinema.",
+          "Nós foram ao cinema.",
+          "Nós vai ao cinema.",
+        ],
+        "Nós fomos ao cinema.",
+      ),
+      ageMcq(
+        "Qual grafia está correta?",
+        ["excessão", "exceção", "esceção", "exeção"],
+        "exceção",
+      ),
+      ageMcq(
+        "Qual frase tem melhor clareza?",
+        [
+          "O menino viu o cachorro com o binóculo.",
+          "Com o binóculo, o menino viu o cachorro.",
+          "Viu o cachorro menino binóculo.",
+          "O cachorro com menino viu.",
+        ],
+        "Com o binóculo, o menino viu o cachorro.",
+      ),
+    ],
+    aritmetica: [
+      ageMcq(
+        "Qual fração é equivalente a 1/2?",
+        ["2/4", "1/3", "3/5", "4/6"],
+        "2/4",
+      ),
+      ageMcq(
+        "Um retângulo mede 5 cm por 3 cm. Qual é o perímetro?",
+        ["8 cm", "15 cm", "16 cm", "20 cm"],
+        "16 cm",
+      ),
+      ageMcq(
+        "Ana tinha 48 figurinhas, ganhou 17 e deu 25. Com quantas ficou?",
+        ["30", "40", "50", "90"],
+        "40",
+      ),
+      ageMcq("2,5 + 1,3 = ?", ["3,8", "3,5", "2,8", "4,8"], "3,8"),
+    ],
+  },
+  10: {
+    visual: [
+      ageMcq(
+        "Qual relação é semelhante a LIVRO:LER?",
+        ["garfo:comer", "janela:parede", "sapato:meia", "mesa:casa"],
+        "garfo:comer",
+      ),
+      ageMcq(
+        "Qual regra completa? 1, 3, 6, 10, __",
+        ["12", "14", "15", "16"],
+        "15",
+      ),
+      ageMcq(
+        "Qual figura mantém a mesma transformação? △ → ▲; ○ →",
+        ["●", "□", "◇", "☆"],
+        "●",
+      ),
+      ageMcq(
+        "Qual item é diferente por não ter eixo de simetria?",
+        ["quadrado", "retângulo", "círculo", "triângulo escaleno"],
+        "triângulo escaleno",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Leia: 'A água potável precisa ser tratada antes de chegar às casas.' Qual relação está explícita?",
+        [
+          "Tratamento e segurança para consumo",
+          "Chuva e trânsito",
+          "Casa e escola",
+          "Plantas e animais",
+        ],
+        "Tratamento e segurança para consumo",
+      ),
+      ageMcq(
+        "Por que o tratamento é importante?",
+        [
+          "Para tornar a água própria para beber",
+          "Para mudar sua cor sempre",
+          "Para impedir seu uso",
+          "Para aumentar a poeira",
+        ],
+        "Para tornar a água própria para beber",
+      ),
+      ageMcq(
+        "Qual palavra pode substituir 'potável'?",
+        ["própria para beber", "muito salgada", "congelada", "barulhenta"],
+        "própria para beber",
+      ),
+      ageMcq(
+        "Qual conclusão é sustentada pelo texto?",
+        [
+          "A água deve ser cuidada antes do consumo.",
+          "Toda água é automaticamente segura.",
+          "O tratamento é desnecessário.",
+          "A água potável não chega às casas.",
+        ],
+        "A água deve ser cuidada antes do consumo.",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual parágrafo apresenta melhor estrutura?",
+        [
+          "Ideia sem explicação",
+          "Ideia, explicação e fechamento",
+          "Apenas uma lista de palavras",
+          "Frases sem relação",
+        ],
+        "Ideia, explicação e fechamento",
+      ),
+      ageMcq(
+        "Qual frase usa pontuação correta?",
+        [
+          "Quando chegou, Maria abriu o livro.",
+          "Quando chegou Maria abriu o livro",
+          "Quando, chegou Maria abriu o livro.",
+          "Quando chegou Maria, abriu o livro.",
+        ],
+        "Quando chegou, Maria abriu o livro.",
+      ),
+      ageMcq(
+        "Complete: 'Ele estudou, ___ ainda ficou com dúvida.'",
+        ["portanto", "porém", "porque", "assim"],
+        "porém",
+      ),
+      ageMcq(
+        "Qual revisão melhora a frase 'Os aluno fez a tarefa'?",
+        [
+          "Os aluno fizeram a tarefa.",
+          "Os alunos fizeram a tarefa.",
+          "O alunos fez a tarefa.",
+          "Os alunos fez tarefas.",
+        ],
+        "Os alunos fizeram a tarefa.",
+      ),
+    ],
+    aritmetica: [
+      ageMcq("0,75 é igual a:", ["3/4", "1/4", "7/5", "75/10"], "3/4"),
+      ageMcq("25% de 80 = ?", ["10", "20", "25", "40"], "20"),
+      ageMcq(
+        "Uma receita para 4 pessoas usa 2 xícaras. Para 8 pessoas, usa:",
+        ["2", "3", "4", "6"],
+        "4",
+      ),
+      ageMcq(
+        "Em uma escola, 3 de cada 5 alunos foram de ônibus. Em 20 alunos, quantos aproximadamente?",
+        ["8", "10", "12", "15"],
+        "12",
+      ),
+    ],
+  },
+  12: {
+    visual: [
+      ageMcq(
+        "Se a regra é alternar direção e cor, qual é o próximo símbolo?",
+        ["↗️🔴", "↘️🔵", "↗️🔵", "↘️🔴"],
+        "↘️🔵",
+      ),
+      ageMcq(
+        "Qual analogia é mais próxima de MAPA:CAMINHO?",
+        ["receita:prato", "janela:parede", "livro:estante", "tênis:esporte"],
+        "receita:prato",
+      ),
+      ageMcq(
+        "Qual figura representa uma rotação de 180°?",
+        ["↗️ para ↙️", "↗️ para ↘️", "↗️ para ↖️", "↗️ para ⬆️"],
+        "↗️ para ↙️",
+      ),
+      ageMcq(
+        "Qual classificação depende de duas regras simultâneas?",
+        ["objetos azuis e redondos", "objetos grandes", "animais", "frutas"],
+        "objetos azuis e redondos",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Em um texto que defende leitura diária, qual evidência apoia melhor a tese?",
+        [
+          "Ler amplia contato com vocabulário e ideias",
+          "Livros têm capas coloridas",
+          "Toda leitura precisa ser longa",
+          "Ler substitui conversar",
+        ],
+        "Ler amplia contato com vocabulário e ideias",
+      ),
+      ageMcq(
+        "O ponto de vista do autor é provavelmente:",
+        [
+          "favorável à leitura frequente",
+          "contrário a livros",
+          "indiferente a qualquer texto",
+          "favorável apenas a imagens",
+        ],
+        "favorável à leitura frequente",
+      ),
+      ageMcq(
+        "Qual informação seria necessária para avaliar a força do argumento?",
+        [
+          "a fonte ou evidência apresentada",
+          "a cor do papel",
+          "o tamanho da sala",
+          "o nome do leitor",
+        ],
+        "a fonte ou evidência apresentada",
+      ),
+      ageMcq(
+        "Qual é a melhor síntese?",
+        [
+          "A leitura diária pode apoiar vocabulário e compreensão quando há prática significativa.",
+          "Ler é apenas decorar palavras.",
+          "Textos não precisam de sentido.",
+          "Todo leitor aprende no mesmo ritmo.",
+        ],
+        "A leitura diária pode apoiar vocabulário e compreensão quando há prática significativa.",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual frase apresenta uma tese?",
+        [
+          "A biblioteca tem duas salas.",
+          "A leitura diária deve fazer parte da rotina escolar.",
+          "Ontem fui à biblioteca.",
+          "O livro tem 80 páginas.",
+        ],
+        "A leitura diária deve fazer parte da rotina escolar.",
+      ),
+      ageMcq(
+        "Qual argumento sustenta essa tese?",
+        [
+          "A prática frequente favorece fluência e compreensão.",
+          "A biblioteca tem janelas.",
+          "O livro é azul.",
+          "A escola fica perto.",
+        ],
+        "A prática frequente favorece fluência e compreensão.",
+      ),
+      ageMcq(
+        "Qual conectivo introduz oposição?",
+        ["portanto", "além disso", "porém", "porque"],
+        "porém",
+      ),
+      ageMcq(
+        "Qual frase é mais adequada ao registro formal?",
+        [
+          "A gente acha que é muito legal.",
+          "Consideramos a proposta relevante.",
+          "Tá tudo bem com a proposta.",
+          "A proposta é tipo boa.",
+        ],
+        "Consideramos a proposta relevante.",
+      ),
+    ],
+    aritmetica: [
+      ageMcq(
+        "Se 3 cadernos custam R$ 27, quanto custam 5 pelo mesmo preço unitário?",
+        ["R$ 35", "R$ 45", "R$ 54", "R$ 60"],
+        "R$ 45",
+      ),
+      ageMcq("30% de 150 = ?", ["30", "45", "50", "60"], "45"),
+      ageMcq(
+        "Resolva: 2x + 6 = 16",
+        ["x = 4", "x = 5", "x = 6", "x = 11"],
+        "x = 5",
+      ),
+      ageMcq("A média de 6, 8 e 10 é:", ["7", "8", "9", "10"], "8"),
+    ],
+  },
+  13: {
+    visual: [
+      ageMcq(
+        "Qual regra composta continua a sequência? 2A, 4C, 8E, 16G, __",
+        ["32H", "32I", "18I", "24J"],
+        "32I",
+      ),
+      ageMcq(
+        "Qual analogia mantém a relação função–resultado?",
+        ["hipótese:conclusão", "caneta:estojo", "janela:parede", "sapato:chão"],
+        "hipótese:conclusão",
+      ),
+      ageMcq(
+        "Qual transformação ocorre em cada passo? 🔺→🔻→🔺→__",
+        ["🔺", "🔻", "🔵", "⬛"],
+        "🔻",
+      ),
+      ageMcq(
+        "Qual item não pertence ao grupo por uma regra abstrata?",
+        ["2, 4, 8", "3, 6, 12", "5, 10, 20", "4, 8, 14"],
+        "4, 8, 14",
+      ),
+    ],
+    leitura: [
+      ageMcq(
+        "Um texto apresenta dados e depois afirma que uma política é necessária. O que deve ser verificado primeiro?",
+        [
+          "Se os dados realmente sustentam a conclusão",
+          "Se o texto tem título curto",
+          "Se há muitas cores",
+          "Se o autor usa letra grande",
+        ],
+        "Se os dados realmente sustentam a conclusão",
+      ),
+      ageMcq(
+        "Qual elemento indica possível viés do autor?",
+        [
+          "selecionar apenas evidências favoráveis e ignorar contrapontos",
+          "apresentar fonte verificável",
+          "definir os termos",
+          "admitir limites",
+        ],
+        "selecionar apenas evidências favoráveis e ignorar contrapontos",
+      ),
+      ageMcq(
+        "Uma inferência válida deve:",
+        [
+          "ser compatível com as evidências do texto",
+          "contradizer todos os dados",
+          "depender apenas de opinião",
+          "ignorar o contexto",
+        ],
+        "ser compatível com as evidências do texto",
+      ),
+      ageMcq(
+        "Qual síntese é mais completa?",
+        [
+          "apresenta ideia central, evidências e limite do argumento",
+          "repete uma frase do título",
+          "lista palavras isoladas",
+          "resume só o primeiro exemplo",
+        ],
+        "apresenta ideia central, evidências e limite do argumento",
+      ),
+    ],
+    escrita: [
+      ageMcq(
+        "Qual estrutura argumentativa é mais consistente?",
+        [
+          "tese–evidência–explicação–conclusão",
+          "conclusão–palavras soltas–tese",
+          "exemplo sem ideia central",
+          "título–título–título",
+        ],
+        "tese–evidência–explicação–conclusão",
+      ),
+      ageMcq(
+        "Qual revisão melhora a coesão? 'A escola criou uma horta. A escola usa a horta nas aulas.'",
+        [
+          "A escola criou uma horta e a utiliza nas aulas.",
+          "A escola criou horta escola aulas.",
+          "A horta escola usa a escola.",
+          "A escola. Aulas. Horta.",
+        ],
+        "A escola criou uma horta e a utiliza nas aulas.",
+      ),
+      ageMcq(
+        "Qual frase apresenta relação causal clara?",
+        [
+          "Como choveu, o jogo foi adiado.",
+          "Choveu e jogo.",
+          "O jogo, chuva, foi.",
+          "Jogo ou chuva talvez.",
+        ],
+        "Como choveu, o jogo foi adiado.",
+      ),
+      ageMcq(
+        "Qual opção é uma revisão de clareza, não apenas de ortografia?",
+        [
+          "substituir pronome ambíguo por um nome claro",
+          "trocar uma letra",
+          "colocar acento",
+          "corrigir uma vírgula",
+        ],
+        "substituir pronome ambíguo por um nome claro",
+      ),
+    ],
+    aritmetica: [
+      ageMcq(
+        "Resolva: 3x − 4 = 17",
+        ["x = 5", "x = 6", "x = 7", "x = 8"],
+        "x = 7",
+      ),
+      ageMcq(
+        "Uma razão 2:3 mantém a proporção. Se a primeira parte é 10, a segunda é:",
+        ["12", "15", "18", "20"],
+        "15",
+      ),
+      ageMcq(
+        "Um produto de R$ 240 tem desconto de 15%. O preço final é:",
+        ["R$ 204", "R$ 210", "R$ 225", "R$ 276"],
+        "R$ 204",
+      ),
+      ageMcq(
+        "Uma viagem tem 180 km. Após 2/3 do percurso, faltam:",
+        ["60 km", "90 km", "120 km", "150 km"],
+        "60 km",
+      ),
+    ],
+  },
+};
+
+function getQuestionsForAge(
+  domain: Domain,
+  age: number,
+  band: Band,
+): Question[] {
+  return (
+    COGNITIVE_AGE_BANKS[age]?.[domain] ??
+    (domain === "visual"
+      ? VISUAL_BANK[band]
+      : domain === "leitura"
+        ? LEITURA_BANK[band]
+        : domain === "escrita"
+          ? ESCRITA_BANK[band]
+          : ARITMETICA_BANK[band])
+  );
+}
+
+function ageProfileLabel(age: number, band: Band): string {
+  if (age >= 6 && age <= 13) return `${age} anos · perfil graduado`;
+  return BAND_LABEL[band];
+}
+
 // ─────────────────────────────── DOMAIN WRAPPER ───────────────────────────────
 const DOMAIN_LABELS: Record<Domain, string> = {
   visual: "Reconhecimento Visual",
@@ -1099,11 +1864,13 @@ const DOMAIN_LABELS: Record<Domain, string> = {
 
 function DomainModule({
   domain,
+  age,
   band,
   onComplete,
   result,
 }: {
   domain: Domain;
+  age: number;
   band: Band;
   onComplete: (r: DomainResult) => void;
   result?: DomainResult;
@@ -1111,12 +1878,7 @@ function DomainModule({
   const [started, setStarted] = useState(false);
   const [reset, setReset] = useState(0);
 
-  const bank = {
-    visual: VISUAL_BANK[band],
-    leitura: LEITURA_BANK[band],
-    escrita: ESCRITA_BANK[band],
-    aritmetica: ARITMETICA_BANK[band],
-  }[domain];
+  const bank = getQuestionsForAge(domain, age, band);
 
   const handleComplete = useCallback(
     (score: number, max: number, answers: AnswerRecord[]) => {
@@ -1171,7 +1933,7 @@ function DomainModule({
       escrita:
         band <= "B"
           ? "Lista de observação das habilidades de pré-escrita. Marque o que a criança demonstra."
-          : "Tarefas de ortografia, gramática e estrutura textual adequadas à série.",
+          : "Tarefas de ortografia, gramática e estrutura textual adequadas à idade e à escolarização.",
       aritmetica:
         "Operações matemáticas, raciocínio numérico e resolução de problemas por nível de escolaridade.",
     };
@@ -1274,10 +2036,10 @@ export default function AvaliacaoCognitivaInfantilPage() {
               Avaliação Cognitiva Infantil
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Bateria enxuta adaptada por faixa etária: 4 itens em cada área —
+              Bateria enxuta adaptada por idade: 4 itens em cada área —
               reconhecimento visual, leitura, escrita e aritmética — com
-              relatório qualitativo ao final. Triagem educativa — não substitui
-              avaliação psicométrica formal.
+              dificuldade progressiva e relatório qualitativo ao final. Triagem
+              educativa — não substitui avaliação psicométrica formal.
             </p>
           </div>
         </div>
@@ -1316,7 +2078,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
           </Button>
           {band && confirmed && (
             <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-              {BAND_LABEL[band]}
+              {ageProfileLabel(age, band)}
             </Badge>
           )}
         </div>
@@ -1371,12 +2133,13 @@ export default function AvaliacaoCognitivaInfantilPage() {
                   {DOMAINS.find((x) => x.id === activeDomain)?.label}
                 </h2>
                 <Badge variant="outline" className="ml-auto text-[11px]">
-                  {BAND_LABEL[band]}
+                  {ageProfileLabel(age, band)}
                 </Badge>
               </div>
               <DomainModule
-                key={`${activeDomain}-${band}`}
+                key={`${activeDomain}-${age}-${band}`}
                 domain={activeDomain}
+                age={age}
                 band={band}
                 onComplete={handleResult}
                 result={results[activeDomain]}
@@ -1390,12 +2153,12 @@ export default function AvaliacaoCognitivaInfantilPage() {
                 scaleName="Avaliação Cognitiva Infantil"
                 scaleFullName="Reconhecimento visual, leitura, escrita e aritmética"
                 items={reportItems}
-                patientAge={band ? BAND_LABEL[band] : undefined}
+                patientAge={band ? ageProfileLabel(age, band) : undefined}
               />
               <SaveToPatient
                 scaleName="Avaliação Cognitiva Infantil"
                 responses={reportItems}
-                patientAge={band ? BAND_LABEL[band] : undefined}
+                patientAge={band ? ageProfileLabel(age, band) : undefined}
               />
             </div>
           )}

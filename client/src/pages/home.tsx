@@ -8,9 +8,9 @@ import {
   ClipboardCheck,
   Clock3,
   FileText,
+  Eye,
   Filter,
   LineChart,
-  Pill,
   Search,
   Stethoscope,
   X,
@@ -39,7 +39,8 @@ const clinicalFlows: ClinicalFlow[] = [
   {
     href: "/mchat",
     title: "Aplicar escala",
-    subtitle: "Abra um instrumento implementado e registre o resultado no atendimento.",
+    subtitle:
+      "Abra um instrumento implementado e registre o resultado no atendimento.",
     action: "Avaliar agora",
     useCase: "Consulta em andamento",
     icon: ClipboardCheck,
@@ -57,25 +58,28 @@ const clinicalFlows: ClinicalFlow[] = [
   {
     href: "/avaliacao-cognitiva-infantil",
     title: "Avaliação Cognitiva Infantil",
-    subtitle: "Triagem lúdica por faixa etária: visual, leitura, escrita e aritmética.",
+    subtitle:
+      "Triagem lúdica por faixa etária: visual, leitura, escrita e aritmética.",
     action: "Abrir avaliação",
     useCase: "Triagem 2–19 anos",
     icon: ClipboardCheck,
     emphasis: "blue",
   },
   {
-    href: "/medicamentos",
-    title: "Medicamentos e doses",
-    subtitle: "Farmacologia prática, calculadora de dose e monitorização.",
-    action: "Abrir medicamentos",
-    useCase: "Referência clínica",
-    icon: Pill,
-    emphasis: "teal",
+    href: "/testes-reconhecimento",
+    title: "Reconhecimento Visual Infantil",
+    subtitle:
+      "Triagem lúdica com frutas, transportes, corpo e conhecimentos gerais.",
+    action: "Iniciar teste visual",
+    useCase: "1–5 anos",
+    icon: Eye,
+    emphasis: "gold",
   },
   {
     href: "/marcos-desenvolvimento",
     title: "Marcos do Desenvolvimento",
-    subtitle: "Checklist por idade (base OMS/CDC) para acompanhar o desenvolvimento.",
+    subtitle:
+      "Checklist por idade (base OMS/CDC) para acompanhar o desenvolvimento.",
     action: "Ver marcos",
     useCase: "Desenvolvimento",
     icon: LineChart,
@@ -94,14 +98,29 @@ const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
 };
 
 const metricCards = [
-  { label: "Escalas no catálogo", value: appMetrics.scaleCount, icon: ClipboardCheck },
-  { label: "Itens no filtro inteligente", value: appMetrics.filterableInstrumentCount, icon: Filter },
-  { label: "Medicações", value: appMetrics.medicationCount, icon: Pill },
+  {
+    label: "Escalas no catálogo",
+    value: appMetrics.scaleCount,
+    icon: ClipboardCheck,
+  },
+  {
+    label: "Itens no filtro inteligente",
+    value: appMetrics.filterableInstrumentCount,
+    icon: Filter,
+  },
+  {
+    label: "Testes diretos",
+    value: appMetrics.directTestCount,
+    icon: ClipboardCheck,
+  },
   { label: "Páginas", value: appMetrics.pageCount, icon: FileText },
 ];
 
 function normalize(text: string) {
-  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
@@ -111,7 +130,11 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05, duration: duration.normal, ease: easing.smooth }}
+        transition={{
+          delay: index * 0.05,
+          duration: duration.normal,
+          ease: easing.smooth,
+        }}
         whileHover={{ y: -4 }}
         whileTap={{ scale: 0.99 }}
         onMouseEnter={() => softHover()}
@@ -123,10 +146,19 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
         data-testid={`home-flow-${index + 1}`}
       >
         <div className="flex items-start justify-between">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 transition-transform duration-300 group-hover:scale-105 ${accentClasses[flow.emphasis]}`}>
-            <Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden="true" />
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 transition-transform duration-300 group-hover:scale-105 ${accentClasses[flow.emphasis]}`}
+          >
+            <Icon
+              className="h-[22px] w-[22px]"
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
           </div>
-          <ArrowUpRight className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+          <ArrowUpRight
+            className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            aria-hidden="true"
+          />
         </div>
         <div className="flex flex-1 flex-col">
           <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -135,10 +167,15 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">
             {flow.title}
           </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{flow.subtitle}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+            {flow.subtitle}
+          </p>
           <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/70 transition-colors group-hover:text-primary">
             {flow.action}
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+            <ArrowRight
+              className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
           </span>
         </div>
       </motion.div>
@@ -148,7 +185,9 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [scaleSearchCatalog, setScaleSearchCatalog] = useState<ScaleEntry[]>([]);
+  const [scaleSearchCatalog, setScaleSearchCatalog] = useState<ScaleEntry[]>(
+    [],
+  );
   const q = normalize(searchQuery.trim());
   const isSearching = q.length >= 2;
 
@@ -160,7 +199,8 @@ export default function HomePage() {
       import("@/data/scaleFilter"),
     ])
       .then(([{ mergeFilterableCatalog }, { allScales }]) => {
-        if (!cancelled) setScaleSearchCatalog(mergeFilterableCatalog(allScales));
+        if (!cancelled)
+          setScaleSearchCatalog(mergeFilterableCatalog(allScales));
       })
       .catch(() => {
         // A Home continua navegável mesmo se o chunk opcional da busca falhar.
@@ -175,14 +215,25 @@ export default function HomePage() {
     if (q.length < 2) return [];
     const pages = navigablePages
       .filter((page) => normalize(`${page.label} ${page.href}`).includes(q))
-      .map((page) => ({ href: page.href, title: page.label, detail: "Página do app" }));
+      .map((page) => ({
+        href: page.href,
+        title: page.label,
+        detail: "Página do app",
+      }));
     const scales = scaleSearchCatalog
-      .filter((scale) => normalize(`${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")}`).includes(q))
+      .filter((scale) =>
+        normalize(
+          `${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")}`,
+        ).includes(q),
+      )
       .slice(0, 8)
-      .map((scale) => ({ href: scale.appRoute || "/filtro", title: scale.name, detail: scale.fullName }));
+      .map((scale) => ({
+        href: scale.appRoute || "/filtro",
+        title: scale.name,
+        detail: scale.fullName,
+      }));
     return [...pages, ...scales].slice(0, 10);
   }, [q, scaleSearchCatalog]);
-
 
   return (
     <div className="page-enter proportion-safe-page space-y-9 pb-10">
@@ -212,10 +263,12 @@ export default function HomePage() {
                 style={{ fontFamily: "var(--font-display)" }}
                 data-testid="text-page-title"
               >
-                Menos ruído. <span className="np-title-gradient">Mais clareza clínica.</span>
+                Menos ruído.{" "}
+                <span className="np-title-gradient">Mais clareza clínica.</span>
               </h1>
               <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
-                Escalas, triagem e acompanhamento em uma jornada segura, acolhedora e feita para o ritmo do consultório.
+                Escalas, triagem e acompanhamento em uma jornada segura,
+                acolhedora e feita para o ritmo do consultório.
               </p>
             </div>
 
@@ -241,11 +294,17 @@ export default function HomePage() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Link href="/filtro" className="np-primary-cta inline-flex min-h-11 items-center gap-2 rounded-2xl px-5 py-2.5 text-[13px] font-semibold text-white">
+              <Link
+                href="/filtro"
+                className="np-primary-cta inline-flex min-h-11 items-center gap-2 rounded-2xl px-5 py-2.5 text-[13px] font-semibold text-white"
+              >
                 Encontrar escala ideal
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
-              <Link href="/filtro-escalas?mode=flash" className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-primary/15 bg-white/55 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10">
+              <Link
+                href="/filtro-escalas?mode=flash"
+                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-primary/15 bg-white/55 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10"
+              >
                 <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
                 Triagem rápida
               </Link>
@@ -256,15 +315,26 @@ export default function HomePage() {
               aria-label="Métricas do app"
             >
               {metricCards.map((metric) => (
-                <div key={metric.label} className="bg-white/35 px-3.5 py-3.5 dark:bg-slate-950/20">
-                  <div className="text-xl font-semibold tracking-[-0.03em] text-foreground sm:text-2xl">{metric.value}<span className="ml-0.5 text-primary">+</span></div>
-                  <p className="mt-0.5 text-[10.5px] font-medium leading-tight text-muted-foreground">{metric.label}</p>
+                <div
+                  key={metric.label}
+                  className="bg-white/35 px-3.5 py-3.5 dark:bg-slate-950/20"
+                >
+                  <div className="text-xl font-semibold tracking-[-0.03em] text-foreground sm:text-2xl">
+                    {metric.value}
+                    <span className="ml-0.5 text-primary">+</span>
+                  </div>
+                  <p className="mt-0.5 text-[10.5px] font-medium leading-tight text-muted-foreground">
+                    {metric.label}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
           <div className="relative hidden min-h-[27rem] items-center justify-center lg:flex">
-            <div className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]" aria-hidden="true" />
+            <div
+              className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]"
+              aria-hidden="true"
+            />
             <Mascote contexto="home" size="lg" className="relative z-10" />
           </div>
         </div>
@@ -273,26 +343,43 @@ export default function HomePage() {
       {isSearching ? (
         <section className="space-y-4" aria-label="Resultados da busca da home">
           <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Resultados rápidos</h2>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{searchResults.length}</span>
+            <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
+              Resultados rápidos
+            </h2>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {searchResults.length}
+            </span>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {searchResults.length > 0 ? searchResults.map((item) => (
-              <Link key={`${item.href}-${item.title}`} href={item.href}>
-                <div className="group flex cursor-pointer items-center gap-3.5 rounded-2xl border border-border/60 bg-card/80 p-3.5 transition-all duration-200 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Stethoscope className="h-[18px] w-[18px]" />
+            {searchResults.length > 0 ? (
+              searchResults.map((item) => (
+                <Link key={`${item.href}-${item.title}`} href={item.href}>
+                  <div className="group flex cursor-pointer items-center gap-3.5 rounded-2xl border border-border/60 bg-card/80 p-3.5 transition-all duration-200 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Stethoscope className="h-[18px] w-[18px]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-[14px] font-medium text-foreground">
+                        {item.title}
+                      </h3>
+                      <p className="truncate text-[12px] text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-[14px] font-medium text-foreground">{item.title}</h3>
-                    <p className="truncate text-[12px] text-muted-foreground">{item.detail}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
-                </div>
-              </Link>
-            )) : (
+                </Link>
+              ))
+            ) : (
               <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
-                Nenhum atalho direto. Use o <Link href="/filtro" className="font-medium text-primary underline-offset-2 hover:underline">Filtro Clínico</Link> para aproximar por idade e queixa.
+                Nenhum atalho direto. Use o{" "}
+                <Link
+                  href="/filtro"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Filtro Clínico
+                </Link>{" "}
+                para aproximar por idade e queixa.
               </div>
             )}
           </div>
@@ -302,22 +389,34 @@ export default function HomePage() {
           <section className="space-y-4" aria-labelledby="fluxos-principais">
             <div className="flex items-end justify-between gap-3">
               <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Sua jornada</p>
-                <h2 id="fluxos-principais" className="text-2xl font-semibold tracking-[-0.03em] text-foreground">O cuidado começa por aqui</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                  Sua jornada
+                </p>
+                <h2
+                  id="fluxos-principais"
+                  className="text-2xl font-semibold tracking-[-0.03em] text-foreground"
+                >
+                  O cuidado começa por aqui
+                </h2>
               </div>
               <span className="shrink-0 rounded-full border border-border/70 bg-card/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden">
                 Deslize →
               </span>
             </div>
             <div className="np-home-flow-grid grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-              {clinicalFlows.map((flow, index) => <FlowCard key={flow.href} flow={flow} index={index} />)}
+              {clinicalFlows.map((flow, index) => (
+                <FlowCard key={flow.href} flow={flow} index={index} />
+              ))}
             </div>
           </section>
 
           <section className="grid gap-3.5 lg:grid-cols-[1fr_0.8fr]">
             <div className="rounded-2xl border border-amber-200/50 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/15">
               <p className="text-[12.5px] leading-relaxed text-amber-900/90 dark:text-amber-100/90">
-                <strong className="font-semibold">Uso responsável.</strong> As escalas orientam rastreio, documentação e monitorização — não substituem julgamento clínico, anamnese, exame neurológico e integração com família e escola.
+                <strong className="font-semibold">Uso responsável.</strong> As
+                escalas orientam rastreio, documentação e monitorização — não
+                substituem julgamento clínico, anamnese, exame neurológico e
+                integração com família e escola.
               </p>
             </div>
             <FavoritesRecents />
