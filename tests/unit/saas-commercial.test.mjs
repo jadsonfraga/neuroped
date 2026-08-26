@@ -55,7 +55,14 @@ assert.match(invitation, /acceptInvitation\(token, name\.trim\(\), password\)/);
 assert.match(invitation, /setAcceptedRole\(result\.role\)/);
 assert.match(invitation, /role === "owner" \|\| role === "clinic_admin" \? "\/assinatura" : "\/ajuda"/);
 assert.match(client, /role: ClinicMembershipRole;[\s\S]*accountCreated: boolean/);
-assert.match(invitationAccept, /invitation\.role === "assistant"[\s\S]*\? "operator"/);
+
+// Papel global precisa acompanhar a membership sem rebaixar contas mais privilegiadas.
+assert.match(invitationAccept, /function requiredGlobalRoleForMembership/);
+assert.match(invitationAccept, /role === "assistant"\) return "operator"/);
+assert.match(invitationAccept, /role === "financial"\) return "reader"/);
+assert.match(invitationAccept, /function strongestGlobalRole/);
+assert.match(invitationAccept, /effectiveGlobalRole !== existing\.role/);
+assert.match(invitationAccept, /UPDATE users SET role = \?, updated_at = \?/);
 
 assert.match(client, /authFetch\("\/api\/billing\/checkout"/);
 assert.match(client, /authFetch\("\/api\/billing\/accept"/);
@@ -64,4 +71,4 @@ assert.match(billingMe, /clinicIdFromRequest/);
 assert.match(billingMe, /cm\.clinic_id = \?/);
 assert.match(billingMe, /TENANT_FORBIDDEN/);
 
-console.log("SaaS commercial UI, safe acquisition, invitation routing, operator Agenda and tenant-aware billing contracts passed.");
+console.log("SaaS commercial UI, safe acquisition, invitation routing, role reconciliation, operator Agenda and tenant-aware billing contracts passed.");
