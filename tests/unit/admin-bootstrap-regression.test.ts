@@ -403,6 +403,19 @@ const e2ePassword = "senha-tecnica-e2e-123";
   }
 }
 
+// Famílias de refresh emitidas antes da reserva também não podem manter uma identidade humana colidida.
+{
+  const refreshSource = readFileSync("functions/api/auth/refresh.ts", "utf8");
+  assert.match(refreshSource, /NEUROPED_E2E_EMAIL/);
+  assert.match(refreshSource, /FROM clinic_memberships/);
+  assert.match(refreshSource, /user\.role !== "reader" \|\| membership/);
+  assert.match(
+    refreshSource,
+    /revokeRefreshToken\(env\.DB, payload, token, "account_disabled"\)/,
+    "refresh legado da identidade E2E inválida deve revogar a família antes de rotacionar",
+  );
+}
+
 console.log(
-  "✓ bootstrap E2E reserva identidade, protege memberships/ready-path, fecha TOCTOU e recupera/rotaciona com credencial válida",
+  "✓ bootstrap E2E reserva identidade, protege memberships/ready-path, fecha TOCTOU e revoga refresh legado colidido",
 );
