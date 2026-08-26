@@ -1,0 +1,44 @@
+# Especificação clínica e visual — Avaliação Infantil NeuroPed
+
+**Objetivo:** retirar o cartão de medicamentos da abertura, inserir no mesmo espaço um acesso lúdico a Reconhecimento Visual 1–5 anos, manter medicamentos/farmacologia/calculadora na área clínica da sidebar e fortalecer a Avaliação Cognitiva Infantil com blocos curtos e graduados.
+
+> Os módulos são triagem estruturada e observação de desempenho. Não são instrumentos psicométricos normatizados, não estabelecem diagnóstico isoladamente e não devem gerar ponto de corte clínico sem estudo de validade, amostra normativa, análise de itens, confiabilidade e revisão ética.
+
+## Reconhecimento Visual — 1 a 5 anos
+
+O formato será aplicado pelo avaliador, com emojis grandes, alto contraste, linguagem curta e três itens por domínio, totalizando no máximo 12 registros por criança. Para 1 e 2 anos, a resposta esperada prioriza olhar, alcançar, apontar, escolher entre duas figuras ou tentativa de vocalização; não exige nomeação verbal quando a tarefa não for apropriada ao desenvolvimento linguístico. Para 3–5 anos, a tarefa progride para nomeação, função e classificação simples.
+
+| Idade  | Frutas                                                                  | Meios de transporte                                      | Partes do corpo                                | Conhecimentos gerais                                                           | Princípio de dificuldade                                                 |
+| ------ | ----------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| 1 ano  | Banana, maçã, laranja como escolhas/objetos familiares                  | Carro, ônibus, bicicleta como reconhecimento de figuras  | Olho, mão, boca por apontar no próprio corpo   | Bola/objeto familiar, colher, animal familiar                                  | 2 escolhas, resposta por apontar/olhar; sem exigir fala                  |
+| 2 anos | Identifica banana, maçã e laranja em figuras/objetos                    | Reconhece carro, ônibus e bicicleta                      | Aponta olho, mão e boca sob comando            | Identifica objeto de comer, animal familiar e objeto de brincar                | Nomeação opcional; instrução de uma etapa                                |
+| 3 anos | Nomeia frutas familiares e diferencia fruta de não fruta                | Nomeia carro, ônibus e avião                             | Identifica nariz, orelha e pé além de olho/mão | Reconhece cor, tamanho e função de objetos cotidianos                          | 3–4 escolhas; uma regra por vez                                          |
+| 4 anos | Nomeia frutas menos frequentes e classifica fruta versus objeto         | Classifica transporte de terra, água e ar                | Relaciona olho/ver, ouvido/ouvir e mão/pegar   | Reconhece dia/noite, sequência simples e regra de segurança                    | 3–4 escolhas; classificação concreta                                     |
+| 5 anos | Identifica, nomeia e classifica frutas; explica uma preferência simples | Relaciona veículo ao ambiente e reconhece cinto/capacete | Localiza partes e associa funções básicas      | Reconhece números 1–5, rima simples, sequência temporal curta e conduta segura | 4 escolhas; função e justificativa curta, sem escolarizar excessivamente |
+
+**Regra de pontuação:** manter 0 = não observado/não realizou, 1 = parcial/com ajuda, 2 = realizou de forma independente. Registrar observação qualitativa e permitir “não aplicável” quando visão, audição, linguagem, comunicação alternativa, escolarização, fadiga ou contexto impedirem interpretação justa. O relatório deve separar desempenho observado de conclusão clínica.
+
+## Avaliação Cognitiva Infantil — 6 a 13 anos
+
+A bateria deve ter quatro domínios: **Reconhecimento Visual**, **Leitura**, **Escrita** e **Aritmética**. Cada domínio terá quatro itens principais, com um item opcional de observação apenas quando necessário. O tempo-alvo é de aproximadamente 10–15 minutos para a bateria completa, com pausa permitida. A idade cronológica seleciona o perfil, mas o relatório deve solicitar contexto de série/escolarização e indicar que a oportunidade de aprendizagem pode modificar o desempenho.
+
+| Idade | Visual/reconhecimento                                    | Leitura                                                      | Escrita                                                 | Aritmética                                                               |
+| ----- | -------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 6     | Categorias, sequência visual e detalhes simples          | Relação som-letra, palavras regulares e frase curta          | Nome, cópia funcional e frase simples                   | Contagem, comparação e adição/subtração até 20                           |
+| 7     | Padrões, figura-fundo e classificação por dois atributos | Decodificação de frases e compreensão literal                | Ortografia regular, segmentação e frase com pontuação   | Operações até 100 e problema de uma etapa                                |
+| 8     | Rotação/simetria, sequência e regra visual               | Parágrafo curto, ideia principal e inferência simples        | Parágrafo curto, concordância e revisão de grafia       | Multiplicação/divisão inicial, fração unitária e problema de duas etapas |
+| 9     | Relações, analogias visuais e atenção a detalhes         | Fluência funcional, vocabulário em contexto e inferência     | Coesão entre frases, acentuação e resumo curto          | Operações combinadas, frações equivalentes e medidas                     |
+| 10    | Matriz visual, transformação e regra composta            | Texto informativo, evidência explícita e inferência          | Parágrafo organizado, pontuação e revisão autônoma      | Decimais, frações, porcentagens introdutórias e problemas multi-etapas   |
+| 11    | Estratégia visual, relações e exclusão por regra         | Síntese de dois trechos e vocabulário contextual             | Organização textual, conectivos e ortografia contextual | Razão intuitiva, frações/decimais e proporcionalidade simples            |
+| 12    | Abstração visual, analogias e mudança de regra           | Inferência com evidência, argumento do texto e síntese       | Texto argumentativo curto, tese e justificativa         | Razão, porcentagem, expressão numérica e proporcionalidade               |
+| 13    | Regra abstrata, analogia e flexibilidade cognitiva       | Inferência múltipla, ponto de vista e avaliação de evidência | Texto coeso com revisão de clareza e estrutura          | Equações simples, razão/proporção e problema contextual multi-etapas     |
+
+**Critério de dificuldade:** aumentar gradualmente a complexidade da linguagem, o número de relações simultâneas, a necessidade de justificativa e a quantidade de etapas; não aumentar apenas o tamanho do enunciado. As alternativas devem ser semanticamente plausíveis, com ordem embaralhada e sem pistas de posição.
+
+## Referências de desenho
+
+1. CDC, _Learn the Signs. Act Early._ — marcos são habilidades que a maioria das crianças realiza em como brinca, aprende, fala, age e se move; as listas por idade são instrumentos de monitoramento, não diagnóstico isolado: https://www.cdc.gov/act-early/milestones/index.html.
+2. CDC, _Milestones by 2 Years_ — exemplos de apontar itens em livros, apontar partes do corpo sob solicitação, usar gestos e manipular brinquedos: https://www.cdc.gov/act-early/milestones/2-years.html.
+3. CDC, _Milestones by 5 Years_ — exemplos de responder perguntas sobre histórias, reconhecer rimas simples, contar até 10, nomear alguns números de 1–5, manter atenção por 5–10 minutos e escrever algumas letras do nome: https://www.cdc.gov/act-early/milestones/5-years.html.
+4. IES/What Works Clearinghouse, _Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade_ — linguagem acadêmica, consciência dos segmentos sonoros, relação som-letra, decodificação, escrita/reconhecimento de palavras e texto conectado: https://ies.ed.gov/ncee/wwc/practiceguide/21.
+5. IES/What Works Clearinghouse, _Assisting Students Struggling with Mathematics: Intervention in the Elementary Grades_ — referência para organizar progressão de número, operações e resolução de problemas: https://ies.ed.gov/ncee/wwc/practiceguide/26.

@@ -1721,6 +1721,570 @@ const DOMAIN_DEFS: Record<AgeGroup, DomainDef[]> = {
   ],
 };
 
+// ─── Banco infantil 1–5 anos ────────────────────────────────────────────────
+// Este banco é uma triagem observacional curta: a resposta pode ser olhar,
+// alcançar, apontar, escolher, vocalizar ou nomear conforme a idade e o perfil.
+type InfantAgeGroup = "1" | "2" | "3" | "4" | "5";
+type InfantDomainKey = "frutas" | "transportes" | "corpo" | "gerais";
+
+interface InfantDomainDef {
+  key: InfantDomainKey;
+  title: string;
+  emoji: string;
+  items: TestItem[];
+}
+
+const INFANT_DOMAIN_DEFS: Record<InfantAgeGroup, InfantDomainDef[]> = {
+  "1": [
+    {
+      key: "frutas",
+      title: "Frutas",
+      emoji: "🍎",
+      items: [
+        {
+          id: "f1",
+          emoji: "🍌",
+          label: "Banana",
+          instruction:
+            "Mostre banana e outra figura familiar. Convide: 'Mostre a banana'. Aceite olhar, alcançar ou apontar.",
+        },
+        {
+          id: "f2",
+          emoji: "🍎",
+          label: "Maçã",
+          instruction:
+            "Mostre maçã e outra figura familiar. Convide: 'Onde está a maçã?' Aceite resposta não verbal.",
+        },
+        {
+          id: "f3",
+          emoji: "🍊",
+          label: "Laranja",
+          instruction:
+            "Mostre laranja e outra fruta. Convide a escolher a laranja, sem exigir nomeação.",
+        },
+      ],
+    },
+    {
+      key: "transportes",
+      title: "Transportes",
+      emoji: "🚗",
+      items: [
+        {
+          id: "t1",
+          emoji: "🚗",
+          label: "Carro",
+          instruction:
+            "Mostre carro e outro objeto. Convide: 'Cadê o carro?' Aceite olhar, tocar ou apontar.",
+        },
+        {
+          id: "t2",
+          emoji: "🚌",
+          label: "Ônibus",
+          instruction:
+            "Mostre ônibus e outro veículo. Convide a escolher o ônibus, sem exigir fala.",
+        },
+        {
+          id: "t3",
+          emoji: "🚲",
+          label: "Bicicleta",
+          instruction:
+            "Mostre bicicleta e outro veículo. Observe se a criança reconhece a figura familiar.",
+        },
+      ],
+    },
+    {
+      key: "corpo",
+      title: "Partes do corpo",
+      emoji: "🧍",
+      items: [
+        {
+          id: "b1",
+          emoji: "👁️",
+          label: "Olho",
+          instruction:
+            "Peça: 'Mostre o olho'. Aceite apontar no próprio corpo, no cuidador ou em uma figura.",
+        },
+        {
+          id: "b2",
+          emoji: "✋",
+          label: "Mão",
+          instruction:
+            "Peça: 'Mostre a mão'. Aceite apontar ou levantar a mão.",
+        },
+        {
+          id: "b3",
+          emoji: "👄",
+          label: "Boca",
+          instruction: "Peça: 'Onde está a boca?' Não exija nomeação verbal.",
+        },
+      ],
+    },
+    {
+      key: "gerais",
+      title: "Conhecimentos gerais",
+      emoji: "🌟",
+      items: [
+        {
+          id: "g1",
+          emoji: "⚽",
+          label: "Objeto de brincar",
+          instruction:
+            "Mostre bola e outro objeto. Observe escolha, interesse e reconhecimento funcional.",
+        },
+        {
+          id: "g2",
+          emoji: "🥄",
+          label: "Objeto de comer",
+          instruction:
+            "Mostre colher e outro objeto. Convide a escolher o que usamos para comer.",
+        },
+        {
+          id: "g3",
+          emoji: "🐶",
+          label: "Animal familiar",
+          instruction:
+            "Mostre cachorro e outra figura. Convide a identificar por olhar, gesto ou vocalização.",
+        },
+      ],
+    },
+  ],
+  "2": [
+    {
+      key: "frutas",
+      title: "Frutas",
+      emoji: "🍎",
+      items: [
+        {
+          id: "f1",
+          emoji: "🍌",
+          label: "Banana",
+          instruction:
+            "Mostre 3 figuras e pergunte: 'Qual é a banana?' Aceite apontar ou nomear.",
+        },
+        {
+          id: "f2",
+          emoji: "🍎",
+          label: "Maçã",
+          instruction: "Mostre 3 figuras e pergunte: 'Onde está a maçã?'",
+        },
+        {
+          id: "f3",
+          emoji: "🍊",
+          label: "Laranja",
+          instruction: "Mostre 3 figuras e pergunte: 'Mostre a laranja'.",
+        },
+      ],
+    },
+    {
+      key: "transportes",
+      title: "Transportes",
+      emoji: "🚗",
+      items: [
+        {
+          id: "t1",
+          emoji: "🚗",
+          label: "Carro",
+          instruction:
+            "Mostre 3 figuras e pergunte: 'Qual anda na rua e leva pessoas?'",
+        },
+        {
+          id: "t2",
+          emoji: "🚌",
+          label: "Ônibus",
+          instruction: "Mostre 3 figuras e pergunte: 'Onde está o ônibus?'",
+        },
+        {
+          id: "t3",
+          emoji: "🚲",
+          label: "Bicicleta",
+          instruction: "Mostre 3 figuras e pergunte: 'Mostre a bicicleta'.",
+        },
+      ],
+    },
+    {
+      key: "corpo",
+      title: "Partes do corpo",
+      emoji: "🧍",
+      items: [
+        {
+          id: "b1",
+          emoji: "👁️",
+          label: "Olho",
+          instruction: "Peça: 'Mostre o olho'.",
+        },
+        {
+          id: "b2",
+          emoji: "✋",
+          label: "Mão",
+          instruction: "Peça: 'Mostre a mão'.",
+        },
+        {
+          id: "b3",
+          emoji: "👄",
+          label: "Boca",
+          instruction: "Peça: 'Mostre a boca'.",
+        },
+      ],
+    },
+    {
+      key: "gerais",
+      title: "Conhecimentos gerais",
+      emoji: "🌟",
+      items: [
+        {
+          id: "g1",
+          emoji: "🥄",
+          label: "Para que serve a colher?",
+          instruction:
+            "Mostre colher e outro objeto. Pergunte: 'Qual usamos para comer?'",
+        },
+        {
+          id: "g2",
+          emoji: "🐶",
+          label: "Animal familiar",
+          instruction:
+            "Mostre cachorro e outra figura. Pergunte: 'Qual é o cachorro?'",
+        },
+        {
+          id: "g3",
+          emoji: "🧸",
+          label: "Brinquedo",
+          instruction:
+            "Mostre ursinho e outro objeto. Pergunte: 'Qual é o brinquedo?'",
+        },
+      ],
+    },
+  ],
+  "3": [
+    {
+      key: "frutas",
+      title: "Frutas",
+      emoji: "🍎",
+      items: [
+        {
+          id: "f1",
+          emoji: "🍌",
+          label: "Nomeia banana",
+          instruction: "Mostre a figura e pergunte: 'O que é isso?'",
+        },
+        {
+          id: "f2",
+          emoji: "🍎",
+          label: "Nomeia maçã",
+          instruction: "Mostre a figura e pergunte: 'Que fruta é essa?'",
+        },
+        {
+          id: "f3",
+          emoji: "🍊",
+          label: "Diferencia fruta",
+          instruction:
+            "Mostre frutas e um objeto. Pergunte: 'Qual não é fruta?'",
+        },
+      ],
+    },
+    {
+      key: "transportes",
+      title: "Transportes",
+      emoji: "🚗",
+      items: [
+        {
+          id: "t1",
+          emoji: "✈️",
+          label: "Avião",
+          instruction: "Mostre 3 figuras e pergunte: 'Qual voa no céu?'",
+        },
+        {
+          id: "t2",
+          emoji: "⛵",
+          label: "Barco",
+          instruction: "Mostre 3 figuras e pergunte: 'Qual anda na água?'",
+        },
+        {
+          id: "t3",
+          emoji: "🚲",
+          label: "Bicicleta",
+          instruction: "Mostre a figura e pergunte: 'O que é isso?'",
+        },
+      ],
+    },
+    {
+      key: "corpo",
+      title: "Partes do corpo",
+      emoji: "🧍",
+      items: [
+        {
+          id: "b1",
+          emoji: "👃",
+          label: "Nariz",
+          instruction: "Peça: 'Mostre o nariz'.",
+        },
+        {
+          id: "b2",
+          emoji: "👂",
+          label: "Orelha",
+          instruction: "Peça: 'Mostre a orelha'.",
+        },
+        {
+          id: "b3",
+          emoji: "🦶",
+          label: "Pé",
+          instruction: "Peça: 'Mostre o pé'.",
+        },
+      ],
+    },
+    {
+      key: "gerais",
+      title: "Conhecimentos gerais",
+      emoji: "🌟",
+      items: [
+        {
+          id: "g1",
+          emoji: "🔴",
+          label: "Cor",
+          instruction:
+            "Mostre duas cores fortes e pergunte: 'Qual é vermelho?'",
+        },
+        {
+          id: "g2",
+          emoji: "🔺",
+          label: "Forma",
+          instruction:
+            "Mostre círculo, quadrado e triângulo. Pergunte: 'Qual é o triângulo?'",
+        },
+        {
+          id: "g3",
+          emoji: "🍎",
+          label: "Função",
+          instruction:
+            "Pergunte: 'O que fazemos com a maçã?' Aceite resposta funcional simples.",
+        },
+      ],
+    },
+  ],
+  "4": [
+    {
+      key: "frutas",
+      title: "Frutas",
+      emoji: "🍎",
+      items: [
+        {
+          id: "f1",
+          emoji: "🍓",
+          label: "Morango",
+          instruction: "Mostre 4 figuras e pergunte: 'Qual é o morango?'",
+        },
+        {
+          id: "f2",
+          emoji: "🍉",
+          label: "Melancia",
+          instruction: "Mostre 4 figuras e pergunte: 'Que fruta é essa?'",
+        },
+        {
+          id: "f3",
+          emoji: "🍎❌",
+          label: "Fruta ou não fruta",
+          instruction:
+            "Apresente frutas e um objeto. Peça para separar o que é fruta.",
+        },
+      ],
+    },
+    {
+      key: "transportes",
+      title: "Transportes",
+      emoji: "🚗",
+      items: [
+        {
+          id: "t1",
+          emoji: "🚗",
+          label: "Terra",
+          instruction:
+            "Classifique carro, barco e avião: 'Qual anda na terra?'",
+        },
+        {
+          id: "t2",
+          emoji: "⛵",
+          label: "Água",
+          instruction: "Classifique carro, barco e avião: 'Qual anda na água?'",
+        },
+        {
+          id: "t3",
+          emoji: "🪖",
+          label: "Segurança",
+          instruction:
+            "Pergunte: 'O que usamos na cabeça para andar de bicicleta?'",
+        },
+      ],
+    },
+    {
+      key: "corpo",
+      title: "Partes do corpo",
+      emoji: "🧍",
+      items: [
+        {
+          id: "b1",
+          emoji: "👁️",
+          label: "Ver",
+          instruction:
+            "Pergunte: 'Para que servem os olhos?' Aceite 'ver/enxergar'.",
+        },
+        {
+          id: "b2",
+          emoji: "👂",
+          label: "Ouvir",
+          instruction:
+            "Pergunte: 'Para que serve a orelha?' Aceite 'ouvir/escutar'.",
+        },
+        {
+          id: "b3",
+          emoji: "✋",
+          label: "Pegar",
+          instruction:
+            "Pergunte: 'Para que usamos as mãos?' Aceite função adequada.",
+        },
+      ],
+    },
+    {
+      key: "gerais",
+      title: "Conhecimentos gerais",
+      emoji: "🌟",
+      items: [
+        {
+          id: "g1",
+          emoji: "🌞🌙",
+          label: "Dia e noite",
+          instruction:
+            "Mostre sol e lua. Pergunte: 'Quando dormimos: de dia ou à noite?'",
+        },
+        {
+          id: "g2",
+          emoji: "🧼",
+          label: "Higiene",
+          instruction: "Pergunte: 'O que usamos para lavar as mãos?'",
+        },
+        {
+          id: "g3",
+          emoji: "1️⃣2️⃣3️⃣",
+          label: "Quantidade pequena",
+          instruction: "Peça para apontar 3 objetos em um grupo de até 5.",
+        },
+      ],
+    },
+  ],
+  "5": [
+    {
+      key: "frutas",
+      title: "Frutas",
+      emoji: "🍎",
+      items: [
+        {
+          id: "f1",
+          emoji: "🍍",
+          label: "Abacaxi",
+          instruction: "Mostre 4 figuras e pergunte: 'Qual é o abacaxi?'",
+        },
+        {
+          id: "f2",
+          emoji: "🍇",
+          label: "Uva",
+          instruction:
+            "Pergunte: 'Que fruta é essa?' e aceite nomeação ou descrição funcional.",
+        },
+        {
+          id: "f3",
+          emoji: "🍎🧺",
+          label: "Classificação",
+          instruction:
+            "Peça para separar frutas de objetos e explicar uma escolha simples.",
+        },
+      ],
+    },
+    {
+      key: "transportes",
+      title: "Transportes",
+      emoji: "🚗",
+      items: [
+        {
+          id: "t1",
+          emoji: "✈️",
+          label: "Ar",
+          instruction:
+            "Relacione avião ao lugar onde se desloca: terra, água ou ar.",
+        },
+        {
+          id: "t2",
+          emoji: "🚦",
+          label: "Regra de segurança",
+          instruction:
+            "Pergunte o que devemos fazer antes de atravessar a rua. Aceite resposta segura.",
+        },
+        {
+          id: "t3",
+          emoji: "🚌",
+          label: "Uso do transporte",
+          instruction:
+            "Pergunte por que usamos ônibus/carro. Aceite finalidade coerente.",
+        },
+      ],
+    },
+    {
+      key: "corpo",
+      title: "Partes do corpo",
+      emoji: "🧍",
+      items: [
+        {
+          id: "b1",
+          emoji: "❤️",
+          label: "Coração",
+          instruction:
+            "Pergunte: 'Você conhece o coração? O que ele faz?' Aceite noção funcional simples.",
+        },
+        {
+          id: "b2",
+          emoji: "🦵",
+          label: "Joelho",
+          instruction:
+            "Peça para apontar o joelho e mostrar como ele ajuda a dobrar a perna.",
+        },
+        {
+          id: "b3",
+          emoji: "👉👈",
+          label: "Direita e esquerda",
+          instruction:
+            "Peça mão direita e depois esquerda; registre apenas como observação, sem conclusão isolada.",
+        },
+      ],
+    },
+    {
+      key: "gerais",
+      title: "Conhecimentos gerais",
+      emoji: "🌟",
+      items: [
+        {
+          id: "g1",
+          emoji: "🔢",
+          label: "Números 1–5",
+          instruction:
+            "Aponte números de 1 a 5 e peça para nomear alguns, sem exigir todos.",
+        },
+        {
+          id: "g2",
+          emoji: "🐱🐶",
+          label: "Rima simples",
+          instruction:
+            "Pergunte qual palavra combina com 'gato' entre duas opções lúdicas.",
+        },
+        {
+          id: "g3",
+          emoji: "🌞➡️🌙",
+          label: "Sequência temporal",
+          instruction:
+            "Peça para ordenar duas ou três cenas simples: acordar, brincar, dormir.",
+        },
+      ],
+    },
+  ],
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function progressColor(pct: number) {
@@ -1787,7 +2351,7 @@ function ScoreButtons({ value, onChange }: ScoreBtnProps) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function TestesReconhecimentoPage() {
+function LegacyRecognitionPage() {
   // Step 1 state
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [childName, setChildName] = useState("");
@@ -2294,6 +2858,541 @@ export default function TestesReconhecimentoPage() {
           >
             <RotateCcw className="w-4 h-4" />
             Nova Avaliação
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+void LegacyRecognitionPage;
+
+// ─── Experiência infantil 1–5 anos ───────────────────────────────────────────
+const INFANT_AGE_GROUPS: {
+  value: InfantAgeGroup;
+  label: string;
+  emoji: string;
+  note: string;
+}[] = [
+  {
+    value: "1",
+    label: "1 ano",
+    emoji: "👶",
+    note: "Olhar, alcançar e apontar",
+  },
+  {
+    value: "2",
+    label: "2 anos",
+    emoji: "🧸",
+    note: "Escolhas e reconhecimento",
+  },
+  { value: "3", label: "3 anos", emoji: "🧒", note: "Nomeação simples" },
+  { value: "4", label: "4 anos", emoji: "🎨", note: "Classificação e função" },
+  { value: "5", label: "5 anos", emoji: "🌟", note: "Relações e sequência" },
+];
+
+function InfantScoreButtons({ value, onChange }: ScoreBtnProps) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      <button
+        type="button"
+        onClick={() => onChange(2)}
+        className={`rounded-xl border px-2 py-2 text-[11px] font-bold transition-all ${value === 2 ? "border-emerald-500 bg-emerald-500 text-white shadow-sm" : "border-border bg-background text-muted-foreground hover:border-emerald-400 hover:text-emerald-600"}`}
+        aria-label="Acertou ou realizou de forma independente"
+      >
+        ✅ 2
+        <span className="mt-0.5 block text-[9px] font-medium opacity-80">
+          Fez sozinho
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(1)}
+        className={`rounded-xl border px-2 py-2 text-[11px] font-bold transition-all ${value === 1 ? "border-amber-500 bg-amber-500 text-white shadow-sm" : "border-border bg-background text-muted-foreground hover:border-amber-400 hover:text-amber-600"}`}
+        aria-label="Resposta parcial ou com ajuda"
+      >
+        🔶 1
+        <span className="mt-0.5 block text-[9px] font-medium opacity-80">
+          Com ajuda
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(0)}
+        className={`rounded-xl border px-2 py-2 text-[11px] font-bold transition-all ${value === 0 ? "border-rose-500 bg-rose-500 text-white shadow-sm" : "border-border bg-background text-muted-foreground hover:border-rose-400 hover:text-rose-600"}`}
+        aria-label="Não observado ou não realizou"
+      >
+        ❌ 0
+        <span className="mt-0.5 block text-[9px] font-medium opacity-80">
+          Não observado
+        </span>
+      </button>
+    </div>
+  );
+}
+
+export default function TestesReconhecimentoPage() {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [ageGroup, setAgeGroup] = useState<InfantAgeGroup | null>(null);
+  const [scores, setScores] = useState<Record<string, Score | null>>({});
+  const [activeTab, setActiveTab] = useState<InfantDomainKey>("frutas");
+
+  const domains = ageGroup ? INFANT_DOMAIN_DEFS[ageGroup] : [];
+  const itemKey = (domain: InfantDomainKey, item: TestItem) =>
+    `${domain}:${item.id}`;
+
+  const results = useMemo(() => {
+    if (!ageGroup) return null;
+    const domainResults = INFANT_DOMAIN_DEFS[ageGroup].map((domain) => {
+      const max = domain.items.length * 2;
+      const earned = domain.items.reduce(
+        (sum, item) => sum + (scores[itemKey(domain.key, item)] ?? 0),
+        0,
+      );
+      const answered = domain.items.filter((item) => {
+        const value = scores[itemKey(domain.key, item)];
+        return value !== undefined && value !== null;
+      }).length;
+      return { ...domain, max, earned, answered };
+    });
+    const totalMax = domainResults.reduce((sum, domain) => sum + domain.max, 0);
+    const totalEarned = domainResults.reduce(
+      (sum, domain) => sum + domain.earned,
+      0,
+    );
+    const totalAnswered = domainResults.reduce(
+      (sum, domain) => sum + domain.answered,
+      0,
+    );
+    return {
+      domainResults,
+      totalMax,
+      totalEarned,
+      totalAnswered,
+      totalItems: totalMax / 2,
+    };
+  }, [ageGroup, scores]);
+
+  const reportItems = useMemo(() => {
+    if (!ageGroup) return [];
+    return INFANT_DOMAIN_DEFS[ageGroup].flatMap((domain) =>
+      domain.items.map((item) => {
+        const value = scores[itemKey(domain.key, item)];
+        const answer =
+          value === undefined || value === null
+            ? "Não observado"
+            : value === 2
+              ? "Realizou de forma independente"
+              : value === 1
+                ? "Realizou com ajuda / parcialmente"
+                : "Não realizou / não observado";
+        return {
+          question: `[${domain.title}] ${item.label} — ${item.instruction}`,
+          answer,
+        };
+      }),
+    );
+  }, [ageGroup, scores]);
+
+  function resetInfantTest() {
+    setStep(1);
+    setChildName("");
+    setChildAge("");
+    setAgeGroup(null);
+    setScores({});
+    setActiveTab("frutas");
+  }
+
+  if (step === 1) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-5">
+        <header className="relative overflow-hidden rounded-[2rem] border border-amber-200/70 bg-gradient-to-br from-amber-50 via-card to-rose-50 p-5 shadow-sm dark:border-amber-900/40 dark:from-amber-950/30 dark:via-card dark:to-rose-950/20 sm:p-7">
+          <div
+            className="pointer-events-none absolute -right-10 -top-10 text-[8rem] opacity-20"
+            aria-hidden="true"
+          >
+            🌈
+          </div>
+          <div className="relative flex items-start gap-3">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 text-3xl shadow-lg">
+              🧠
+            </div>
+            <div>
+              <Badge className="mb-2 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-200">
+                triagem lúdica · 1–5 anos
+              </Badge>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Reconhecimento Visual Infantil
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Uma bateria curtinha para observar reconhecimento de frutas,
+                transportes, partes do corpo e conhecimentos gerais por meio de
+                imagens grandes e linguagem acolhedora.
+              </p>
+            </div>
+          </div>
+          <div className="relative mt-4 grid grid-cols-4 gap-2 text-center text-2xl sm:gap-3">
+            <div className="rounded-2xl bg-white/70 p-3 shadow-sm dark:bg-white/5">
+              🍎
+              <span className="mt-1 block text-[10px] font-bold text-muted-foreground">
+                Frutas
+              </span>
+            </div>
+            <div className="rounded-2xl bg-white/70 p-3 shadow-sm dark:bg-white/5">
+              🚗
+              <span className="mt-1 block text-[10px] font-bold text-muted-foreground">
+                Transportes
+              </span>
+            </div>
+            <div className="rounded-2xl bg-white/70 p-3 shadow-sm dark:bg-white/5">
+              🧍
+              <span className="mt-1 block text-[10px] font-bold text-muted-foreground">
+                Corpo
+              </span>
+            </div>
+            <div className="rounded-2xl bg-white/70 p-3 shadow-sm dark:bg-white/5">
+              🌟
+              <span className="mt-1 block text-[10px] font-bold text-muted-foreground">
+                Gerais
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <User className="h-4 w-4 text-amber-500" /> Dados da criança
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="infant-child-name"
+                className="text-xs font-medium"
+              >
+                Nome (opcional)
+              </Label>
+              <Input
+                id="infant-child-name"
+                value={childName}
+                onChange={(event) => setChildName(event.target.value)}
+                placeholder="Nome ou iniciais"
+                data-testid="infant-input-child-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="infant-child-age" className="text-xs font-medium">
+                Idade / meses (opcional)
+              </Label>
+              <Input
+                id="infant-child-age"
+                value={childAge}
+                onChange={(event) => setChildAge(event.target.value)}
+                placeholder="Ex.: 2 anos e 6 meses"
+                data-testid="infant-input-child-age"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Star className="h-4 w-4 text-amber-500" /> Escolha a idade para
+              graduar as tarefas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {INFANT_AGE_GROUPS.map((age) => (
+              <button
+                key={age.value}
+                type="button"
+                onClick={() => setAgeGroup(age.value)}
+                data-testid={`infant-btn-age-${age.value}`}
+                className={`rounded-2xl border-2 p-3 text-center transition-all ${ageGroup === age.value ? "border-amber-500 bg-amber-50 shadow-md dark:bg-amber-950/30" : "border-border bg-background hover:border-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/20"}`}
+              >
+                <span className="block text-3xl">{age.emoji}</span>
+                <span className="mt-1 block text-xs font-bold text-foreground">
+                  {age.label}
+                </span>
+                <span className="mt-1 block text-[9px] leading-tight text-muted-foreground">
+                  {age.note}
+                </span>
+                {ageGroup === age.value && (
+                  <CheckCircle2 className="mx-auto mt-2 h-4 w-4 text-amber-600" />
+                )}
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-100">
+          <strong>Como aplicar:</strong> mostre a figura, faça a pergunta
+          indicada e registre a melhor resposta da criança. Este é um recurso de
+          triagem educativa e não substitui avaliação clínica do
+          desenvolvimento. Para 1–2 anos, olhar, alcançar, tocar, apontar ou
+          vocalizar podem ser respostas válidas conforme o item; não force
+          nomeação verbal. Use “com ajuda” ou “não observado” quando a tarefa
+          não for aplicável ao contexto.
+        </div>
+        <Button
+          onClick={() => setStep(2)}
+          disabled={!ageGroup}
+          className="w-full gap-2 bg-amber-500 text-white hover:bg-amber-600"
+          data-testid="infant-btn-start-test"
+        >
+          Começar a brincadeira <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (step === 2 && ageGroup && results) {
+    const totalPct =
+      results.totalItems > 0
+        ? Math.round((results.totalEarned / results.totalMax) * 100)
+        : 0;
+    return (
+      <div className="mx-auto max-w-3xl space-y-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-rose-400 text-2xl shadow-sm">
+              🌈
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">
+                Reconhecimento Visual Infantil
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {childName || "Criança"}
+                {childAge ? ` · ${childAge}` : ""} ·{" "}
+                {
+                  INFANT_AGE_GROUPS.find((item) => item.value === ageGroup)
+                    ?.label
+                }
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setStep(1)}
+            className="gap-1 text-xs"
+          >
+            <ArrowLeft className="h-3 w-3" /> Voltar
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {results.domainResults.map((domain) => (
+            <div
+              key={domain.key}
+              className="rounded-2xl border border-border bg-card p-3"
+            >
+              <div className="flex items-center gap-1.5 text-lg">
+                <span>{domain.emoji}</span>
+                <span className="truncate text-xs font-bold text-foreground">
+                  {domain.title}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {domain.answered}/{domain.items.length} observados
+              </p>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-amber-400 transition-all"
+                  style={{
+                    width: `${domain.answered ? Math.round((domain.earned / domain.max) * 100) : 0}%`,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as InfantDomainKey)}
+        >
+          <TabsList className="grid w-full grid-cols-4">
+            {domains.map((domain) => (
+              <TabsTrigger
+                key={domain.key}
+                value={domain.key}
+                className="gap-1 text-[11px]"
+                data-testid={`infant-tab-${domain.key}`}
+              >
+                <span>{domain.emoji}</span>
+                <span className="hidden sm:inline">{domain.title}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {domains.map((domain) => (
+            <TabsContent
+              key={domain.key}
+              value={domain.key}
+              className="mt-3 space-y-3"
+            >
+              <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-r from-amber-50 to-rose-50 p-4 dark:border-amber-900/40 dark:from-amber-950/20 dark:to-rose-950/20">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">{domain.emoji}</span>
+                  <div>
+                    <h2 className="font-bold text-foreground">
+                      {domain.title}
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      {domain.items.length} tarefas curtas · observe sem pressa
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {domain.items.map((item, index) => {
+                const key = itemKey(domain.key, item);
+                const score = scores[key];
+                return (
+                  <Card
+                    key={key}
+                    className={`transition-all ${score === 2 ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-800/50 dark:bg-emerald-950/10" : score === 1 ? "border-amber-200 bg-amber-50/30 dark:border-amber-800/50 dark:bg-amber-950/10" : score === 0 ? "border-rose-200 bg-rose-50/30 dark:border-rose-800/50 dark:bg-rose-950/10" : "border-border"}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-4xl dark:bg-amber-950/30">
+                          {item.emoji}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-bold text-foreground">
+                                {index + 1}. {item.label}
+                              </p>
+                              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                {item.instruction}
+                              </p>
+                            </div>
+                            {score !== null && score !== undefined && (
+                              <Badge
+                                variant={
+                                  score === 2
+                                    ? "default"
+                                    : score === 1
+                                      ? "secondary"
+                                      : "destructive"
+                                }
+                              >
+                                {score === 2
+                                  ? "✅ 2"
+                                  : score === 1
+                                    ? "🔶 1"
+                                    : "❌ 0"}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="mt-3">
+                            <InfantScoreButtons
+                              value={score ?? null}
+                              onChange={(value) =>
+                                setScores((previous) => ({
+                                  ...previous,
+                                  [key]: value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              <div className="flex justify-end pt-1">
+                <Button
+                  size="sm"
+                  className="gap-1 bg-amber-500 text-white hover:bg-amber-600"
+                  onClick={() => setStep(3)}
+                  disabled={results.totalAnswered === 0}
+                  data-testid="infant-btn-view-results"
+                >
+                  Ver resultados ({results.totalAnswered}/{results.totalItems}){" "}
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+        <div className="sticky bottom-4 z-10">
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/90 p-3 shadow-lg backdrop-blur dark:border-amber-900/40 dark:bg-card/90">
+            <div className="flex-1">
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="font-medium text-muted-foreground">
+                  Progresso da brincadeira
+                </span>
+                <span className="font-bold text-foreground">
+                  {results.totalAnswered}/{results.totalItems} itens ·{" "}
+                  {totalPct}%
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 transition-all"
+                  style={{
+                    width: `${(results.totalAnswered / results.totalItems) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3 && ageGroup && results) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-5">
+        <div className="rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-rose-50 p-5 text-center dark:border-amber-900/40 dark:from-amber-950/20 dark:to-rose-950/20">
+          <div className="text-5xl">🎉</div>
+          <h1 className="mt-2 text-xl font-bold text-foreground">
+            Observação registrada
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            A bateria foi organizada por idade e os resultados ficam disponíveis
+            no relatório abaixo.
+          </p>
+        </div>
+        <ClinicalReport
+          scaleName="Reconhecimento Visual Infantil"
+          scaleFullName="Triagem lúdica de frutas, transportes, partes do corpo e conhecimentos gerais — 1–5 anos"
+          items={reportItems}
+          patientAge={
+            childAge ||
+            INFANT_AGE_GROUPS.find((item) => item.value === ageGroup)?.label
+          }
+        />
+        <SaveToPatient
+          scaleName="Reconhecimento Visual Infantil"
+          responses={reportItems}
+          patientAge={
+            childAge ||
+            INFANT_AGE_GROUPS.find((item) => item.value === ageGroup)?.label
+          }
+        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={() => setStep(2)}
+          >
+            <ArrowLeft className="h-4 w-4" /> Editar
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={resetInfantTest}
+          >
+            <RotateCcw className="h-4 w-4" /> Nova avaliação
           </Button>
         </div>
       </div>
