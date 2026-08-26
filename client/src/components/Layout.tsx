@@ -1087,10 +1087,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
             />
             <span>NeuroPed é um projeto autoral de</span>
-            <Link
-              href="/sobre"
-              className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
+            <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               Dr. Jadson Fraga
             </Link>
             <span>· Conteúdo educativo e proprietário.</span>
