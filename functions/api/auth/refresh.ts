@@ -58,7 +58,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // com membership clínica revoga imediatamente a família em vez de permitir
     // que uma sessão humana preexistente sobreviva ao bloqueio do login.
     const reservedE2EEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
-    if (reservedE2EEmail && user.email.toLowerCase().trim() === reservedE2EEmail) {
+    const isReservedE2EIdentity =
+      !!reservedE2EEmail && user.email.toLowerCase().trim() === reservedE2EEmail;
+    if (isReservedE2EIdentity) {
       const membership = await env.DB
         .prepare(
           `SELECT 1 AS has_membership
@@ -74,7 +76,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
-    const rotated = await rotateRefreshSession(env.DB, user, secret, payload, token);
+    // A leitura acima fecha o caso comum, mas uma membership pode ser criada
+    // entre ela e a rotação abaixo. Para a identidade reservada, a ausência de
+    // clinic_membership entra na própria SQL que consome o refresh: qualquer
+    // membership criada nesse intervalo zera as linhas afetadas e falha fechado.
+    const rotated = await rotateRefreshSession(env.DB, user, secret, payload, token, {
+      requireNoClinicMembership: isReservedE2EIdentity,
+    });
     if (!rotated.ok) {
       const message = rotated.code === "REFRESH_REUSE_DETECTED"
         ? "Reutilização de credencial detectada; a sessão foi revogada."

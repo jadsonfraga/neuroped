@@ -181,6 +181,7 @@ export async function rotateRefreshSession(
   secret: string,
   payload: JwtPayload,
   rawToken: string,
+  options?: { requireNoClinicMembership?: boolean },
 ): Promise<RotationResult> {
   if (!hasSessionClaims(payload) || payload.sub !== user.id) {
     return { ok: false, code: "INVALID_REFRESH" };
@@ -219,7 +220,17 @@ export async function rotateRefreshSession(
 
   // O INSERT condicional consome apenas uma sessão ainda ativa. D1 batch é
   // transacional; uma segunda requisição concorrente não consegue criar outro
-  // descendente do mesmo refresh.
+  // descendente do mesmo refresh. Para a identidade E2E reservada, a ausência
+  // de clinic_membership entra na própria condição do INSERT: uma membership
+  // criada entre a leitura anterior do caller e esta rotação zera as linhas
+  // afetadas em vez de deixar a checagem stale emitir tokens novos.
+  const membershipGuard = options?.requireNoClinicMembership
+    ? `
+            AND NOT EXISTS (
+              SELECT 1 FROM clinic_memberships cm
+               WHERE cm.user_id = auth_refresh_sessions.user_id
+            )`
+    : "";
   const results = await db.batch([
     db
       .prepare(
@@ -235,7 +246,7 @@ export async function rotateRefreshSession(
             AND EXISTS (
               SELECT 1 FROM users u
                WHERE u.id = auth_refresh_sessions.user_id AND u.is_active = 1
-            )`,
+            )${membershipGuard}`,
       )
       .bind(
         nextId,

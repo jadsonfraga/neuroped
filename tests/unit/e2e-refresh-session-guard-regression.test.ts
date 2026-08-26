@@ -28,6 +28,12 @@ function createFakeD1() {
   const users = new Map<string, UserRow>();
   const memberships = new Set<string>();
   const sessions = new Map<string, Session>();
+  // Quando armado, simula uma membership sendo criada exatamente entre a
+  // leitura explícita de refresh.ts e a rotação: a leitura ainda responde
+  // "sem membership" (estado real no momento da leitura), mas a escrita
+  // concorrente já aconteceu por baixo, então a guarda atômica embutida no
+  // INSERT de rotateRefreshSession deve encontrá-la.
+  let armMembershipRaceAfterPrecheck = false;
 
   function prepare(sql: string) {
     let values: unknown[] = [];
@@ -41,7 +47,10 @@ function createFakeD1() {
           return (users.get(String(values[0])) ?? null) as T | null;
         }
         if (sql.includes("FROM clinic_memberships")) {
-          return (memberships.has(String(values[0])) ? { has_membership: 1 } : null) as T | null;
+          const userId = String(values[0]);
+          const wasMember = memberships.has(userId);
+          if (armMembershipRaceAfterPrecheck) memberships.add(userId);
+          return (wasMember ? { has_membership: 1 } : null) as T | null;
         }
         if (sql.includes("FROM auth_refresh_sessions") && sql.includes("WHERE id = ?")) {
           return (sessions.get(String(values[0])) ?? null) as T | null;
@@ -83,6 +92,7 @@ function createFakeD1() {
             values.map(String);
           const current = sessions.get(currentId);
           const activeUser = users.get(userId);
+          const membershipGuardRequired = sql.includes("clinic_memberships");
           if (
             !current ||
             !activeUser ||
@@ -92,7 +102,8 @@ function createFakeD1() {
             current.token_hash !== rawHash ||
             current.revoked_at ||
             current.replaced_by_session_id ||
-            current.expires_at <= cutoff
+            current.expires_at <= cutoff ||
+            (membershipGuardRequired && memberships.has(userId))
           ) {
             return { meta: { changes: 0 } };
           }
@@ -133,7 +144,11 @@ function createFakeD1() {
     return results;
   }
 
-  return { users, memberships, sessions, prepare, batch };
+  function armMembershipRace() {
+    armMembershipRaceAfterPrecheck = true;
+  }
+
+  return { users, memberships, sessions, prepare, batch, armMembershipRace };
 }
 
 type FakeD1 = ReturnType<typeof createFakeD1>;
@@ -259,6 +274,29 @@ async function callRefresh(
 
   const response = await callRefresh(db, initial.refreshToken, {});
   assert.equal(response.status, 200, "sem E2E configurado, refresh normal não deve ser afetado");
+}
+
+// 6) TOCTOU: a sentinela é válida (role reader, sem membership) no momento
+//    da leitura explícita, mas uma membership é criada exatamente entre essa
+//    leitura e a rotação. A guarda atômica embutida no INSERT de
+//    rotateRefreshSession deve fechar essa janela em vez de confiar apenas
+//    na leitura anterior — refresh deve falhar fechado e não rotacionar.
+{
+  const db = createFakeD1();
+  const sentinel = userRow({ id: "e2e-race", email: e2eEmail, role: "reader" });
+  db.users.set(sentinel.id, sentinel);
+  const initial = await createSessionTokens(db as never, sentinel, secret);
+  db.armMembershipRace();
+
+  const response = await callRefresh(db, initial.refreshToken, { NEUROPED_E2E_EMAIL: e2eEmail });
+  assert.equal(
+    response.status,
+    401,
+    "membership criada entre a leitura e a rotação deve falhar fechado",
+  );
+  const family = [...db.sessions.values()].filter((s) => s.user_id === sentinel.id);
+  assert.equal(family.length, 1, "nenhuma sessão nova deve ter sido criada pela rotação");
+  assert.ok(family[0].revoked_at, "a sessão original deve ser revogada após a falha da guarda");
 }
 
 console.log(

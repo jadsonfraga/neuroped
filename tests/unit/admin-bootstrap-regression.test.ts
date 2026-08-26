@@ -229,11 +229,12 @@ const e2ePassword = "senha-tecnica-e2e-123";
 
 // Corrida na criação inicial: dois smokes do mesmo deploy (Cloudflare e
 // Vercel) podem ler existing === null antes de qualquer um inserir. O
-// perdedor deve reconciliar com a sentinela vencedora em vez de propagar
-// a violação de UNIQUE(email) como falha de login.
+// perdedor deve reconciliar com a sentinela vencedora (revalidando ausência
+// de membership atomicamente) em vez de propagar a violação de UNIQUE(email)
+// como falha de login.
 {
   let usersReads = 0;
-  let insertAttempts = 0;
+  let runCalls = 0;
   const winnerEmail = "novo-e2e-race@example.com";
   const winner = {
     ...existingUser,
@@ -256,8 +257,13 @@ const e2ePassword = "senha-tecnica-e2e-123";
               return null;
             },
             async run() {
-              insertAttempts += 1;
-              throw new Error("UNIQUE constraint failed: users.email");
+              runCalls += 1;
+              // 1ª chamada: o INSERT perde a corrida (UNIQUE constraint).
+              // 2ª chamada: a guarda atômica revalida o vencedor sem membership.
+              if (runCalls === 1) {
+                throw new Error("UNIQUE constraint failed: users.email");
+              }
+              return { success: true, meta: { changes: 1 } };
             },
           };
         },
@@ -269,8 +275,59 @@ const e2ePassword = "senha-tecnica-e2e-123";
     { NEUROPED_E2E_EMAIL: winnerEmail, NEUROPED_E2E_PASSWORD: e2ePassword },
     e2ePassword,
   );
-  assert.equal(insertAttempts, 1, "deve tentar inserir exatamente uma vez antes de reconciliar");
+  assert.equal(runCalls, 2, "deve tentar inserir e depois revalidar o vencedor com a guarda atômica");
   assert.equal(usersReads, 2, "deve reler o e-mail após a falha do INSERT para achar o vencedor");
+}
+
+// Corrida com vencedor capturado por membership entre o INSERT vencedor e a
+// releitura do perdedor: a guarda atômica de revalidação deve falhar fechado
+// em vez de aceitar o vencedor apenas pela role já lida.
+{
+  const winnerEmail = "e2e-race-captured@example.com";
+  const winner = {
+    ...existingUser,
+    id: "e2e-race-captured-winner",
+    email: winnerEmail,
+    role: "reader",
+  };
+  let usersReads = 0;
+  let runCalls = 0;
+  const raceDb = {
+    prepare(sql: string) {
+      return {
+        bind(..._args: unknown[]) {
+          return {
+            async first() {
+              if (sql.includes("FROM users")) {
+                usersReads += 1;
+                return usersReads === 1 ? null : winner;
+              }
+              return null;
+            },
+            async run() {
+              runCalls += 1;
+              if (runCalls === 1) {
+                throw new Error("UNIQUE constraint failed: users.email");
+              }
+              // Guarda atômica de revalidação: uma membership foi criada
+              // entre o INSERT vencedor e esta releitura, então nenhuma
+              // linha casa a condição NOT EXISTS clinic_memberships.
+              return { success: true, meta: { changes: 0 } };
+            },
+          };
+        },
+      };
+    },
+  };
+  await assert.rejects(
+    bootstrapE2EAccount(
+      raceDb as never,
+      { NEUROPED_E2E_EMAIL: winnerEmail, NEUROPED_E2E_PASSWORD: e2ePassword },
+      e2ePassword,
+    ),
+    /E2E_ACCOUNT_MEMBERSHIP_RACE/,
+  );
+  assert.equal(runCalls, 2, "deve tentar inserir e depois revalidar via guarda atômica");
 }
 
 // Corrida sem vencedor válido: se a releitura pós-falha não encontra uma

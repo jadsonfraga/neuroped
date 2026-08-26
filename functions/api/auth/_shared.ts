@@ -344,5 +344,24 @@ export async function bootstrapE2EAccount(
     if (!winner || winner.role !== "reader") {
       throw error;
     }
+    // O SELECT acima ainda deixa uma janela entre a criação vencedora e esta
+    // releitura. A mesma guarda atômica do caminho "ready" reconfirma
+    // ausência de clinic_membership no momento da reconciliação, em vez de
+    // aceitar o vencedor apenas pela role já lida.
+    const guard = await db
+      .prepare(
+        `UPDATE users
+            SET updated_at = updated_at
+          WHERE id = ?
+            AND role = 'reader'
+            AND NOT EXISTS (
+              SELECT 1 FROM clinic_memberships cm WHERE cm.user_id = users.id
+            )`,
+      )
+      .bind(winner.id)
+      .run();
+    if ((guard.meta?.changes ?? 0) !== 1) {
+      throw new Error("E2E_ACCOUNT_MEMBERSHIP_RACE", { cause: error });
+    }
   }
 }
