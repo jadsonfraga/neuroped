@@ -115,9 +115,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
   if (!existing) {
-    const globalRole = ["owner", "clinic_admin", "professional"].includes(invitation.role)
-      ? "professional"
-      : "reader";
+    const globalRole = invitation.role === "assistant"
+      ? "operator"
+      : ["owner", "clinic_admin", "professional"].includes(invitation.role)
+        ? "professional"
+        : "reader";
     statements.push(
       env.DB.prepare(
         `INSERT INTO users
