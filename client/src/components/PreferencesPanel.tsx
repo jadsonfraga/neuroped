@@ -273,7 +273,8 @@ export function PreferencesPanel() {
           <p className="text-[10px] leading-relaxed text-muted-foreground">
             Som e vibração ficam desligados até ativação explícita. Feedback
             visual e textual permanece disponível. A redução de movimento do
-            sistema é respeitada automaticamente neste dispositivo.
+            sistema é respeitada automaticamente neste dispositivo. Senhas nunca
+            são persistidas pelo NeuroPed.
           </p>
         </div>
       </DialogContent>
