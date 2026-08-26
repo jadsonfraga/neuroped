@@ -120,10 +120,10 @@ jobs:
           token="$VERCEL_TOKEN"
           unset VERCEL_TOKEN
           export VERCEL_PROJECT_ID="prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
-          vercel inspect "$PREVIEW_URL" --token="$token"
-          vercel curl / --deployment "$PREVIEW_URL" --token="$token" -o /tmp/preview-root.html
+          VERCEL_TOKEN="$token" vercel inspect "$PREVIEW_URL"
+          VERCEL_TOKEN="$token" vercel curl / --deployment "$PREVIEW_URL" -o /tmp/preview-root.html
           test -s /tmp/preview-root.html
-          vercel curl /deploy-check.json --deployment "$PREVIEW_URL" --token="$token" -o /tmp/preview-sentinel.json
+          VERCEL_TOKEN="$token" vercel curl /deploy-check.json --deployment "$PREVIEW_URL" -o /tmp/preview-sentinel.json
           node -e '
             const fs = require("node:fs");
             const check = JSON.parse(fs.readFileSync("/tmp/preview-sentinel.json", "utf8"));
