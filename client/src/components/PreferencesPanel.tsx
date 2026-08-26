@@ -35,6 +35,7 @@ export function PreferencesPanel() {
     soundOn,
     soundVolume,
     hapticOn,
+    reducedMotion,
     toggleSound,
     updateSoundVolume,
     toggleHaptic,
@@ -215,10 +216,11 @@ export function PreferencesPanel() {
             <PrefRow
               icon={soundOn ? Volume2 : VolumeX}
               label="Sons da interface"
-              description="Toques sutis ao clicar e navegar"
+              description="Breves e opcionais, só em confirmações e alertas relevantes"
               on={soundOn}
               onToggle={toggleSound}
               feedback={false}
+              reducedMotion={reducedMotion}
             />
             <div className="px-3 pb-3 pt-0" data-testid="sound-volume-control">
               <div className="mb-1 flex items-center justify-between gap-3 text-[11px]">
@@ -259,17 +261,19 @@ export function PreferencesPanel() {
             <PrefRow
               icon={Vibrate}
               label="Vibração tátil"
-              description="Feedback no celular, quando disponível"
+              description="Independente do som e usada apenas quando disponível"
               on={hapticOn}
               onToggle={toggleHaptic}
+              reducedMotion={reducedMotion}
             />
           </div>
         )}
 
         <div className="border-t border-card-border p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Preferências visuais ficam neste dispositivo. Senhas nunca são
-            persistidas pelo NeuroPed.
+            Som e vibração ficam desligados até ativação explícita. Feedback
+            visual e textual permanece disponível. A redução de movimento do
+            sistema é respeitada automaticamente neste dispositivo.
           </p>
         </div>
       </DialogContent>
@@ -284,6 +288,7 @@ function PrefRow({
   on,
   onToggle,
   feedback,
+  reducedMotion,
 }: {
   icon: React.ElementType;
   label: string;
@@ -291,6 +296,7 @@ function PrefRow({
   on: boolean;
   onToggle: () => void;
   feedback?: boolean;
+  reducedMotion: boolean;
 }) {
   return (
     <button
@@ -326,7 +332,11 @@ function PrefRow({
       >
         <motion.div
           animate={{ x: on ? 16 : 2 }}
-          transition={{ duration: 0.2, ease: easing.smooth }}
+          transition={
+            reducedMotion
+              ? { duration: 0 }
+              : { duration: 0.2, ease: easing.smooth }
+          }
           className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm"
         />
       </div>
