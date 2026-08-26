@@ -3112,7 +3112,12 @@ export default function TestesReconhecimentoPage() {
               <button
                 key={age.value}
                 type="button"
-                onClick={() => setAgeGroup(age.value)}
+                onClick={() => {
+                  if (ageGroup === age.value) return;
+                  setAgeGroup(age.value);
+                  setScores({});
+                  setActiveTab("frutas");
+                }}
                 data-testid={`infant-btn-age-${age.value}`}
                 className={`rounded-2xl border-2 p-3 text-center transition-all ${ageGroup === age.value ? "border-amber-500 bg-amber-50 shadow-md dark:bg-amber-950/30" : "border-border bg-background hover:border-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/20"}`}
               >

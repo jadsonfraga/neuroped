@@ -189,6 +189,9 @@ export const navSections: NavSection[] = [
   {
     title: "ACOMPANHAMENTO CLÍNICO",
     items: [
+      { href: "/medicamentos", label: "Medicamentos", icon: Pill, tone: "priority" },
+      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
+      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
       { href: "/diario-sono", label: "Diário do sono", icon: Moon },
       {
         href: "/diario-alimentar",
@@ -208,13 +211,6 @@ export const navSections: NavSection[] = [
   {
     title: "REFERÊNCIA",
     items: [
-      { href: "/medicamentos", label: "Medicamentos", icon: Pill },
-      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      {
-        href: "/calculadora-dose",
-        label: "Calculadora de dose",
-        icon: Calculator,
-      },
       {
         href: "/instrumentos-padronizados",
         label: "Instrumentos padronizados",
