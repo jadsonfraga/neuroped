@@ -224,9 +224,10 @@ assert.match(
   cloudflareWorkflow,
   /E2E_MAIL:\s*\$\{\{ secrets\.NEUROPED_E2E_EMAIL \}\}/,
 );
-assert.match(
+assert.doesNotMatch(
   cloudflareWorkflow,
-  /FALLBACK_MAIL:\s*\$\{\{ secrets\.ADMIN_EMAIL \}\}/,
+  /FALLBACK_MAIL|FALLBACK_PW|ACTIVE_MAIL="?\$BOOTSTRAP_MAIL"?|ACTIVE_PW="?\$BOOTSTRAP_PW"?/,
+  "Cloudflare não pode reutilizar credenciais administrativas como E2E",
 );
 assert.doesNotMatch(
   cloudflareWorkflow,
@@ -234,7 +235,13 @@ assert.doesNotMatch(
 );
 assert.match(
   cloudflareWorkflow,
-  /if \[ -n "\$E2E_MAIL" \] \|\| \[ -n "\$E2E_PW" \]/,
+  /A conta E2E dedicada é obrigatória/,
+  "Cloudflare deve falhar fechado sem a conta E2E dedicada",
+);
+assert.doesNotMatch(
+  cloudflareWorkflow,
+  /FALLBACK_MAIL|FALLBACK_PW/,
+  "Cloudflare não pode injetar fallback administrativo no login E2E",
 );
 assert.match(
   cloudflareWorkflow,
