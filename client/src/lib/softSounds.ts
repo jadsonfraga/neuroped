@@ -1,21 +1,18 @@
 /**
- * Sons UI premium para fluxos profissionais (login, consentimento, navegacao adulta).
+ * Sistema de som de interface do NeuroPed.
  *
- * Filosofia: sons sintetizados via Web Audio com envelopes suaves (attack/release
- * lentos), oitavas medias e altas em tons "warm" (sem dissonancia). Volume baixo
- * (0.04-0.08) para nao incomodar em uso prolongado.
- *
- * Conviventes com sounds.ts (retro 8-bit, usado em testes ludicos infantis).
- *
- * Mute toggle:
- *  - Persistido em localStorage["neuroped:sounds"] = "on" | "off"
- *  - Default: "on" (mas respeita prefers-reduced-motion como hint)
- *  - Hook useSoundEnabled() em React
+ * O som é feedback funcional — não música de fundo. Os eventos são breves,
+ * com volume baixo, envelopes suaves e canais equivalentes visuais/hápticos.
+ * A preferência fica no dispositivo e nunca interfere no conteúdo clínico.
  */
 
 let _ctx: AudioContext | null = null;
+let _lastHoverAt = 0;
 
 const STORAGE_KEY = "neuroped:sounds";
+const VOLUME_STORAGE_KEY = "neuroped:sound-volume";
+export const SOUND_PREFERENCE_EVENT = "neuroped:sound-preference-changed";
+const DEFAULT_VOLUME = 0.58;
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -30,11 +27,19 @@ function getCtx(): AudioContext | null {
   }
 }
 
+function emitPreferenceChange(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SOUND_PREFERENCE_EVENT));
+}
+
+function clampVolume(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_VOLUME;
+  return Math.min(1, Math.max(0, value));
+}
+
 export function isSoundEnabled(): boolean {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v === "off") return false;
-    return true;
+    return localStorage.getItem(STORAGE_KEY) !== "off";
   } catch {
     return true;
   }
@@ -43,7 +48,30 @@ export function isSoundEnabled(): boolean {
 export function setSoundEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
-  } catch { /* storage indisponível (modo privado/cota) — silencioso */ }
+  } catch {
+    /* storage indisponível (modo privado/cota) — silencioso */
+  }
+  emitPreferenceChange();
+}
+
+export function getSoundVolume(): number {
+  try {
+    const stored = localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (stored === null) return DEFAULT_VOLUME;
+    return clampVolume(Number(stored));
+  } catch {
+    return DEFAULT_VOLUME;
+  }
+}
+
+export function setSoundVolume(value: number): void {
+  const nextValue = clampVolume(value);
+  try {
+    localStorage.setItem(VOLUME_STORAGE_KEY, String(nextValue));
+  } catch {
+    /* storage indisponível (modo privado/cota) — silencioso */
+  }
+  emitPreferenceChange();
 }
 
 function play(spec: {
@@ -55,11 +83,11 @@ function play(spec: {
   release?: number;
   filterFreq?: number;
 }) {
-  if (!isSoundEnabled()) return;
+  if (!isSoundEnabled() || getSoundVolume() === 0) return;
   const ctx = getCtx();
   if (!ctx) return;
 
-  // Resume context se suspenso (Chrome auto-suspend antes de user gesture)
+  // Resume context se suspenso (Chrome auto-suspend antes de user gesture).
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
   }
@@ -81,8 +109,7 @@ function play(spec: {
 
     const now = ctx.currentTime;
     const attack = spec.attack ?? 0.005;
-    const _release = spec.release ?? spec.duration * 0.6;
-    const peak = spec.volume ?? 0.06;
+    const peak = (spec.volume ?? 0.06) * getSoundVolume();
 
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(peak, now + attack);
@@ -91,70 +118,100 @@ function play(spec: {
 
     if (Array.isArray(spec.freq)) {
       osc.frequency.setValueAtTime(spec.freq[0], now);
-      osc.frequency.exponentialRampToValueAtTime(spec.freq[1], now + spec.duration);
+      osc.frequency.exponentialRampToValueAtTime(
+        spec.freq[1],
+        now + spec.duration,
+      );
     } else {
       osc.frequency.setValueAtTime(spec.freq, now);
     }
 
     osc.start(now);
     osc.stop(now + spec.duration + 0.05);
-  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
+  } catch {
+    /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */
+  }
 }
 
-/** Toque suave em botao primario / clique de CTA. ~80ms warm. */
+/** Toque suave em botão primário / clique de CTA. */
 export function softTap(): void {
-  play({ type: "sine", freq: 880, duration: 0.08, volume: 0.05, attack: 0.002, release: 0.07 });
+  play({
+    type: "sine",
+    freq: 880,
+    duration: 0.08,
+    volume: 0.05,
+    attack: 0.002,
+  });
 }
 
-/** Hover/foco discreto. Quase imperceptivel mas presente. */
+/** Hover/foco discreto, limitado para não criar uma sequência de bipes. */
 export function softHover(): void {
-  play({ type: "sine", freq: 1320, duration: 0.05, volume: 0.025, attack: 0.001, release: 0.045 });
+  const now =
+    typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (now - _lastHoverAt < 160) return;
+  _lastHoverAt = now;
+  play({
+    type: "sine",
+    freq: 1320,
+    duration: 0.05,
+    volume: 0.025,
+    attack: 0.001,
+  });
 }
 
-/** Sucesso geral (login OK, save). Acorde menor maior asc. */
+/** Confirmação geral para salvar, concluir ou autenticar. */
 export function softSuccess(): void {
-  if (!isSoundEnabled()) return;
+  if (!isSoundEnabled() || getSoundVolume() === 0) return;
   const ctx = getCtx();
   if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
-  // Acorde C-E-G ascendente em sine warm
-  const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-  notes.forEach((freq, i) => {
-    setTimeout(() => {
-      play({ type: "sine", freq, duration: 0.18, volume: 0.045, attack: 0.01, release: 0.16 });
-    }, i * 60);
+  const notes = [523.25, 659.25, 783.99];
+  notes.forEach((freq, index) => {
+    window.setTimeout(() => {
+      play({ type: "sine", freq, duration: 0.18, volume: 0.045, attack: 0.01 });
+    }, index * 60);
   });
 }
 
-/** Erro/alerta. Tom medio, decay rapido, com filtro mais fechado. */
+/** Erro/alerta: tom médio, curto e filtrado. */
 export function softError(): void {
   play({
     type: "triangle",
-    freq: [440, 294], // A4 -> D4 desc
+    freq: [440, 294],
     duration: 0.22,
     volume: 0.06,
     attack: 0.003,
-    release: 0.2,
     filterFreq: 4000,
   });
 }
 
-/** Notificacao sutil (toast info). Sino warm. */
+/** Notificação sutil para informação contextual. */
 export function softBell(): void {
-  if (!isSoundEnabled()) return;
+  if (!isSoundEnabled() || getSoundVolume() === 0) return;
   const ctx = getCtx();
   if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
-  // Combinacao de fundamental + harmonica
-  play({ type: "sine", freq: 1046.5, duration: 0.4, volume: 0.045, attack: 0.005, release: 0.38 });
-  setTimeout(() => {
-    play({ type: "sine", freq: 1568, duration: 0.3, volume: 0.025, attack: 0.005, release: 0.28 });
+  play({
+    type: "sine",
+    freq: 1046.5,
+    duration: 0.4,
+    volume: 0.045,
+    attack: 0.005,
+  });
+  window.setTimeout(() => {
+    play({
+      type: "sine",
+      freq: 1568,
+      duration: 0.3,
+      volume: 0.025,
+      attack: 0.005,
+    });
   }, 30);
 }
 
-/** Transicao de pagina (page enter). Sweep curto warm. */
+/** Transição de página curta, usada somente em mudança de rota. */
 export function softWhoosh(): void {
   play({
     type: "sine",
@@ -162,21 +219,28 @@ export function softWhoosh(): void {
     duration: 0.14,
     volume: 0.035,
     attack: 0.01,
-    release: 0.12,
     filterFreq: 6000,
   });
 }
 
-/** Selecao de checkbox / radio. Tic curto. */
+/** Seleção de checkbox/radio e confirmação leve de escolha. */
 export function softTick(): void {
-  play({ type: "sine", freq: 2200, duration: 0.04, volume: 0.04, attack: 0.001, release: 0.038 });
+  play({
+    type: "sine",
+    freq: 2200,
+    duration: 0.04,
+    volume: 0.04,
+    attack: 0.001,
+  });
 }
 
-/** Ao colocar mute, toca um som suave avisando. */
+/** Alias semântico para componentes novos. */
+export const softSelect = softTick;
+
+/** Feedback de mute/desmute: toca apenas ao habilitar ou a pedido explícito. */
 export function softMuteHint(): void {
-  // Toca mesmo se mute estiver "off", para confirmacao ao usuario
   const ctx = getCtx();
-  if (!ctx) return;
+  if (!ctx || getSoundVolume() === 0) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   try {
@@ -186,12 +250,15 @@ export function softMuteHint(): void {
     gain.connect(ctx.destination);
     osc.type = "sine";
     const now = ctx.currentTime;
+    const peak = 0.05 * getSoundVolume();
     gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.05, now + 0.01);
+    gain.gain.linearRampToValueAtTime(peak, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
     osc.frequency.setValueAtTime(880, now);
     osc.frequency.exponentialRampToValueAtTime(440, now + 0.13);
     osc.start(now);
     osc.stop(now + 0.18);
-  } catch { /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */ }
+  } catch {
+    /* áudio indisponível (Web Audio bloqueado/sem suporte) — silencioso */
+  }
 }
