@@ -9,7 +9,7 @@
  *   POST /api/auth/logout   → { ok }
  */
 
-import { hashPassword } from "./_crypto";
+import { hashPassword, verifyPassword } from "./_crypto";
 
 export interface Env {
   DB?: D1Database;
@@ -19,6 +19,10 @@ export interface Env {
   /** Migração única e explícita da senha admin existente; permanece desativada por padrão. */
   ADMIN_FORCE_PASSWORD_RESET?: string;
   ADMIN_NAME?: string;
+  /** Conta técnica sentinela para smoke tests pós-deploy — nunca vinculada a uma clínica. */
+  NEUROPED_E2E_EMAIL?: string;
+  NEUROPED_E2E_PASSWORD?: string;
+  NEUROPED_E2E_NAME?: string;
 }
 
 export interface UserRow {
@@ -198,4 +202,59 @@ export async function bootstrapAdmin(db: D1Database, env: Env): Promise<void> {
       )
       .bind(markerKey, "completed", now),
   ]);
+}
+
+/**
+ * Mantém uma conta técnica sentinela dedicada aos smoke tests pós-deploy.
+ * A conta nasce com role mínima e sem membership de clínica. Quando o secret
+ * técnico é rotacionado, a senha da conta sentinela acompanha a rotação e as
+ * sessões anteriores são revogadas; credenciais administrativas nunca entram
+ * neste fluxo.
+ */
+export async function bootstrapE2EAccount(db: D1Database, env: Env): Promise<void> {
+  const email = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  const password = env.NEUROPED_E2E_PASSWORD;
+  if (!email || !password) return;
+
+  const existing = await getUserByEmail(db, email);
+  const now = new Date().toISOString();
+
+  if (existing) {
+    const passwordMatches = existing.password_hash
+      ? await verifyPassword(password, existing.password_hash)
+      : false;
+    const ready =
+      passwordMatches &&
+      existing.is_active === 1 &&
+      !existing.must_change_password;
+    if (ready) return;
+
+    const hash = passwordMatches && existing.password_hash
+      ? existing.password_hash
+      : await hashPassword(password);
+    await db.batch([
+      db
+        .prepare(
+          `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 0,
+                  failed_login_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?`,
+        )
+        .bind(hash, now, existing.id),
+      db
+        .prepare("DELETE FROM auth_refresh_sessions WHERE user_id = ?")
+        .bind(existing.id),
+    ]);
+    return;
+  }
+
+  const id = crypto.randomUUID();
+  const name = env.NEUROPED_E2E_NAME || "Conta técnica E2E";
+  const hash = await hashPassword(password);
+  await db
+    .prepare(
+      `INSERT INTO users (id, name, email, role, is_active, password_hash,
+              must_change_password, failed_login_attempts, created_at, updated_at)
+       VALUES (?, ?, ?, 'reader', 1, ?, 0, 0, ?, ?)`,
+    )
+    .bind(id, name, email, hash, now, now)
+    .run();
 }
