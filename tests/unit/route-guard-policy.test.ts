@@ -21,7 +21,6 @@ if (OPEN_ACCESS) {
       `${path} deve liberar no modo aberto`,
     );
   }
-  // Referencia os símbolos importados para não disparar no-unused sob o early-exit.
   void isReaderClinicalRoute; void isRouteSensitive; void READER_CLINICAL_ROUTES; void SENSITIVE_ROUTES; void readFileSync;
   console.log("✓ modo ACESSO ABERTO: app inteiro libera sem PIN nem login");
   process.exit(0);
@@ -33,6 +32,7 @@ for (const path of [
   "/cars",
   "/generic-scale/smfq",
   "/recepcao",
+  "/agenda",
   "/prontuario",
   "/documentos",
   "/assinatura-digital",
@@ -125,6 +125,7 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/diario-sono",
   "/diario-alimentar",
   "/recepcao",
+  "/agenda",
 ] as const;
 const sensitiveRouteSet = new Set<string>(SENSITIVE_ROUTES);
 assert.equal(sensitiveRouteSet.size, SENSITIVE_ROUTES.length);
@@ -175,10 +176,11 @@ for (const path of clinicalRouteSamples) {
   );
 
   for (const userRole of ["reader", "operator"] as const) {
+    const operatorRoute = path === "/recepcao" || path === "/agenda";
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : path === "/recepcao" && userRole === "operator"
+        : operatorRoute && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -288,6 +290,28 @@ assert.equal(
     allowedRoles: ["admin", "professional", "operator"],
   }),
   "allow",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/agenda",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "operator precisa atravessar o guard externo da Agenda",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/agenda/interno",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "forbidden",
+  "descendente futuro da Agenda não pode herdar a exceção de operator",
 );
 assert.equal(
   decideRouteAccess({
