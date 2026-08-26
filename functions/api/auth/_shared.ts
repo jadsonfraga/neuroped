@@ -216,10 +216,18 @@ export async function bootstrapE2EAccount(db: D1Database, env: Env): Promise<voi
   const password = env.NEUROPED_E2E_PASSWORD;
   if (!email || !password) return;
 
+  const adminEmail = env.ADMIN_EMAIL?.toLowerCase().trim();
+  if (adminEmail && email === adminEmail) {
+    throw new Error("E2E_ACCOUNT_COLLIDES_WITH_ADMIN");
+  }
+
   const existing = await getUserByEmail(db, email);
   const now = new Date().toISOString();
 
   if (existing) {
+    if (existing.role !== "reader") {
+      throw new Error("E2E_ACCOUNT_ROLE_INVALID");
+    }
     const passwordMatches = existing.password_hash
       ? await verifyPassword(password, existing.password_hash)
       : false;
