@@ -247,7 +247,7 @@ export function PreferencesPanel() {
                 }
                 disabled={!soundOn}
                 aria-label="Intensidade dos sons da interface"
-                className="h-1.5 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-11 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
                 data-testid="range-sound-volume"
               />
               <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/80">
