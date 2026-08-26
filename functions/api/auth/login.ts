@@ -81,12 +81,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     /* bootstrap é best-effort; não bloqueia login de usuários já existentes */
   }
 
-  // A conta técnica é reconciliada apenas quando ela própria tenta autenticar
-  // e somente se a senha apresentada coincide com o secret técnico atual.
-  // Violações de identidade E2E são fail-closed: não podem cair no login normal
-  // e herdar por acidente memberships de uma conta humana com o mesmo e-mail.
+  // O e-mail E2E é uma identidade reservada. Qualquer tentativa com esse e-mail
+  // precisa apresentar exatamente o secret técnico atual; nunca pode cair no
+  // fluxo humano normal, ainda que exista uma conta humana colidindo no banco.
   const e2eEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  const e2ePassword = env.NEUROPED_E2E_PASSWORD;
   if (e2eEmail && email === e2eEmail) {
+    if (!e2ePassword || password !== e2ePassword) {
+      try {
+        await registerLoginAbuseFailure(env, request, secret);
+      } catch {
+        // Resposta externa permanece genérica mesmo se o bucket auxiliar falhar.
+      }
+      return json(INVALID, 401);
+    }
     try {
       await bootstrapE2EAccount(env.DB, env, password);
     } catch {
