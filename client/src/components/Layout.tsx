@@ -128,7 +128,7 @@ function FeaturedShortcuts({
     );
 
     return isExternalShortcut(item.href) ? (
-      <a key={item.href} href={item.href} aria-label={item.label}>
+      <a key={item.href} href={item.href}>
         {card}
       </a>
     ) : (
