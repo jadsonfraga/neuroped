@@ -258,8 +258,13 @@ function routeSourceBlock(routePath) {
     : app.slice(start, closingEnd + "</Route>".length);
 }
 
+// O microsite Nesplora é servido diretamente pelo servidor/CDN, sem <Route>
+// no App.tsx. A exceção é explícita e não relaxa a validação dos módulos React.
+const staticMicrositeHrefs = new Set(["/nesplora/"]);
 const missingNavRoutes = navEntries.filter(
-  (entry) => !hasRegisteredRoute(routePaths, entry.href),
+  (entry) =>
+    !staticMicrositeHrefs.has(entry.href) &&
+    !hasRegisteredRoute(routePaths, entry.href),
 );
 const missingImportedPages = lazyImports.filter(
   ({ page }) => !exists(`client/src/pages/${page}.tsx`),

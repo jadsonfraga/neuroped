@@ -8,11 +8,21 @@ const appPath = resolve("client/src/App.tsx");
 const navigationSource = readFileSync(navigationPath, "utf8");
 const appSource = readFileSync(appPath, "utf8");
 
-const hrefs = [...navigationSource.matchAll(/href:\s*["']([^"']+)["']/g)].map((match) => match[1]);
-const routePaths = [...appSource.matchAll(/<Route\b[^>]*\bpath=["']([^"']+)["']/g)].map((match) => match[1]);
+const hrefs = [...navigationSource.matchAll(/href:\s*["']([^"']+)["']/g)].map(
+  (match) => match[1],
+);
+const routePaths = [
+  ...appSource.matchAll(/<Route\b[^>]*\bpath=["']([^"']+)["']/g),
+].map((match) => match[1]);
 
+// Microsites estáticos são servidos diretamente pelo servidor/CDN e não
+// aparecem como <Route> no App.tsx. Mantemos a exceção explícita para que a
+// auditoria continue acusando links React quebrados.
+const staticMicrositeHrefs = new Set(["/nesplora/"]);
 const missingHrefs = [...new Set(hrefs)].filter(
-  (href) => !routePaths.some((routePath) => routePatternMatches(routePath, href)),
+  (href) =>
+    !staticMicrositeHrefs.has(href) &&
+    !routePaths.some((routePath) => routePatternMatches(routePath, href)),
 );
 
 if (missingHrefs.length > 0) {
@@ -22,4 +32,6 @@ if (missingHrefs.length > 0) {
   process.exit(1);
 }
 
-console.log("✅ Navegação aprovada: todos os itens do menu apontam para rotas registradas.");
+console.log(
+  "✅ Navegação aprovada: todos os itens do menu apontam para rotas registradas.",
+);

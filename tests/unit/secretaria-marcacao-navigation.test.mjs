@@ -19,7 +19,7 @@ test("a jornada de marcação fica pública, navegável e é atendida pela Secre
   assert.match(app, /import\("@\/pages\/marcacao"\)/);
   assert.match(app, /path="\/marcacao" component=\{MarcacaoPage\}/);
   assert.match(app, /if \(location === "\/marcacao"\) \{[\s\S]*?<MarcacaoPage \/>[\s\S]*?\n  \}/);
-  assert.match(navigation, /href: "\/marcacao", label: "Marcação · Secretaria IA"/);
+  assert.match(navigation, /href: "\/marcacao",\s*label: "Marcação · Secretaria IA"/);
   assert.match(publicRoutes, /"\/marcacao"/);
   assert.match(page, /<main className=/);
   assert.match(page, /apiRequest\("GET", "\/api\/public-booking\?action=providers"\)/);
