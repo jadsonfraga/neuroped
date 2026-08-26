@@ -81,9 +81,21 @@ html {
 body {
   min-height: 100dvh;
   background:
-    radial-gradient(72rem 38rem at 78% -8%, var(--np-app-ambient-1), transparent 68%),
-    radial-gradient(58rem 34rem at 14% 92%, var(--np-app-ambient-2), transparent 72%),
-    radial-gradient(42rem 24rem at 55% 45%, var(--np-app-ambient-warm), transparent 75%),
+    radial-gradient(
+      72rem 38rem at 78% -8%,
+      var(--np-app-ambient-1),
+      transparent 68%
+    ),
+    radial-gradient(
+      58rem 34rem at 14% 92%,
+      var(--np-app-ambient-2),
+      transparent 72%
+    ),
+    radial-gradient(
+      42rem 24rem at 55% 45%,
+      var(--np-app-ambient-warm),
+      transparent 75%
+    ),
     hsl(var(--background));
   background-attachment: fixed;
 }
@@ -108,7 +120,11 @@ body {
   height: min(42vw, 38rem);
   right: -16vw;
   top: 16vh;
-  background: radial-gradient(circle, hsl(var(--primary) / 0.07), transparent 66%);
+  background: radial-gradient(
+    circle,
+    hsl(var(--primary) / 0.07),
+    transparent 66%
+  );
 }
 
 #root::after {
@@ -116,7 +132,11 @@ body {
   height: min(36vw, 32rem);
   left: -14vw;
   bottom: 3vh;
-  background: radial-gradient(circle, hsl(var(--chart-2) / 0.055), transparent 68%);
+  background: radial-gradient(
+    circle,
+    hsl(var(--chart-2) / 0.055),
+    transparent 68%
+  );
 }
 
 main,
@@ -127,8 +147,11 @@ main,
 /* ───────────────────────── Shell desktop ───────────────────────── */
 @media screen and (min-width: 1024px) {
   aside[aria-label="Menu de navegação"] {
-    background:
-      linear-gradient(180deg, hsl(var(--sidebar) / 0.985), hsl(var(--sidebar) / 0.94)) !important;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--sidebar) / 0.985),
+      hsl(var(--sidebar) / 0.94)
+    ) !important;
     border-right-color: hsl(var(--sidebar-border) / 0.72) !important;
     box-shadow:
       12px 0 34px -30px hsl(var(--foreground) / 0.42),
@@ -142,8 +165,11 @@ main,
     margin-bottom: 1.25rem;
     border: 1px solid var(--np-app-stroke);
     border-radius: 2rem;
-    background:
-      linear-gradient(180deg, hsl(var(--card) / 0.58), hsl(var(--background) / 0.82));
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.58),
+      hsl(var(--background) / 0.82)
+    );
     box-shadow: var(--np-app-shadow-float), var(--np-app-inner);
     backdrop-filter: blur(16px) saturate(112%);
     overflow: clip;
@@ -156,7 +182,11 @@ main,
     height: 7rem;
     pointer-events: none;
     background:
-      radial-gradient(38rem 8rem at 78% -20%, hsl(var(--primary) / 0.085), transparent 68%),
+      radial-gradient(
+        38rem 8rem at 78% -20%,
+        hsl(var(--primary) / 0.085),
+        transparent 68%
+      ),
       linear-gradient(180deg, hsl(0 0% 100% / 0.13), transparent);
     z-index: 0;
   }
@@ -227,8 +257,16 @@ aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
 
 .np-home-hero {
   background:
-    radial-gradient(34rem 22rem at 88% 18%, hsl(var(--primary) / 0.13), transparent 66%),
-    radial-gradient(24rem 18rem at 18% 92%, hsl(var(--chart-2) / 0.08), transparent 70%),
+    radial-gradient(
+      34rem 22rem at 88% 18%,
+      hsl(var(--primary) / 0.13),
+      transparent 66%
+    ),
+    radial-gradient(
+      24rem 18rem at 18% 92%,
+      hsl(var(--chart-2) / 0.08),
+      transparent 70%
+    ),
     linear-gradient(145deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.78)) !important;
   border-radius: 2rem !important;
 }
@@ -257,13 +295,18 @@ aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
 
 /* Microinteração premium nos cartões da jornada (hover-only, sem JS). */
 [data-testid^="home-flow-"] {
-  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+  transition:
+    transform 0.24s ease,
+    box-shadow 0.24s ease,
+    border-color 0.24s ease;
 }
 
 [data-testid^="home-flow-"]:hover {
   transform: translateY(-3px);
   border-color: hsl(var(--np-brand-gold) / 0.34) !important;
-  box-shadow: var(--np-app-shadow-float), inset 0 1px 0 hsl(var(--np-brand-gold) / 0.28) !important;
+  box-shadow:
+    var(--np-app-shadow-float),
+    inset 0 1px 0 hsl(var(--np-brand-gold) / 0.28) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -278,7 +321,11 @@ aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
 
 .np-page-hero {
   background:
-    radial-gradient(20rem 12rem at 92% 0%, hsl(var(--primary) / 0.09), transparent 72%),
+    radial-gradient(
+      20rem 12rem at 92% 0%,
+      hsl(var(--primary) / 0.09),
+      transparent 72%
+    ),
     linear-gradient(135deg, hsl(var(--card) / 0.98), hsl(var(--card) / 0.82)) !important;
   border-radius: 1.55rem !important;
 }
@@ -289,7 +336,12 @@ aside[aria-label="Menu de navegação"] [data-testid="button-command-palette"] {
   pointer-events: none;
   inset: auto 1.1rem 0 1.1rem;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.16), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.16),
+    transparent
+  );
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -354,8 +406,11 @@ a[class*="inline-flex"]:active {
   }
 
   header.fixed.lg\:hidden {
-    background:
-      linear-gradient(180deg, hsl(var(--card) / 0.97), hsl(var(--card) / 0.88)) !important;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.97),
+      hsl(var(--card) / 0.88)
+    ) !important;
     border-bottom-color: hsl(var(--border) / 0.58) !important;
     box-shadow: 0 14px 42px -34px hsl(var(--foreground) / 0.5) !important;
   }
@@ -375,8 +430,11 @@ a[class*="inline-flex"]:active {
     overflow: hidden;
     border-radius: 1.55rem !important;
     border-color: hsl(var(--border) / 0.52) !important;
-    background:
-      linear-gradient(180deg, hsl(var(--card) / 0.94), hsl(var(--card) / 0.86)) !important;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.94),
+      hsl(var(--card) / 0.86)
+    ) !important;
     box-shadow:
       0 -1px 0 hsl(0 0% 100% / 0.36),
       0 18px 46px -18px hsl(var(--foreground) / 0.34) !important;
@@ -388,7 +446,12 @@ a[class*="inline-flex"]:active {
     position: absolute;
     inset: 0 14% auto 14%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.42), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.42),
+      transparent
+    );
     pointer-events: none;
   }
 
@@ -398,8 +461,11 @@ a[class*="inline-flex"]:active {
   }
 
   [data-testid="mobile-primary-dock"] button[aria-current="page"] {
-    background:
-      linear-gradient(180deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.075)) !important;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.15),
+      hsl(var(--primary) / 0.075)
+    ) !important;
     box-shadow:
       inset 0 1px 0 hsl(0 0% 100% / 0.32),
       0 10px 22px -18px hsl(var(--primary) / 0.58);
@@ -412,7 +478,11 @@ a[class*="inline-flex"]:active {
     width: 1.45rem;
     height: 2px;
     border-radius: 999px;
-    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--chart-2)));
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--chart-2))
+    );
     box-shadow: 0 0 10px hsl(var(--primary) / 0.35);
   }
 
@@ -431,7 +501,6 @@ a[class*="inline-flex"]:active {
     border-radius: 1.3rem !important;
   }
 }
-
 
 /* ───────────────────────── Composição responsiva verificável ───────────────────────── */
 @media screen and (min-width: 768px) and (max-width: 1023px) {
@@ -527,7 +596,11 @@ a[class*="inline-flex"]:active {
   border-radius: 999px;
   background:
     radial-gradient(circle at 38% 32%, hsl(0 0% 100% / 0.68), transparent 30%),
-    radial-gradient(circle at 72% 84%, hsl(var(--np-brand-gold) / 0.17), transparent 56%),
+    radial-gradient(
+      circle at 72% 84%,
+      hsl(var(--np-brand-gold) / 0.17),
+      transparent 56%
+    ),
     radial-gradient(circle, var(--np-mascot-halo), transparent 66%);
   filter: blur(1px);
 }
@@ -548,7 +621,9 @@ a[class*="inline-flex"]:active {
   border-radius: 999px;
   padding: 0.35rem 0.55rem;
   background: hsl(var(--card) / 0.86);
-  box-shadow: 0 10px 26px -18px hsl(var(--foreground) / 0.42), inset 0 1px 0 hsl(0 0% 100% / 0.38);
+  box-shadow:
+    0 10px 26px -18px hsl(var(--foreground) / 0.42),
+    inset 0 1px 0 hsl(0 0% 100% / 0.38);
   backdrop-filter: blur(18px);
   color: hsl(var(--foreground) / 0.78);
   font-size: 0.625rem;
@@ -571,8 +646,11 @@ a[class*="inline-flex"]:active {
   border: 1px solid hsl(var(--np-brand-gold) / 0.36);
   border-radius: 1.15rem;
   padding: 0.28rem;
-  background:
-    linear-gradient(145deg, hsl(var(--card) / 0.9), hsl(var(--card) / 0.68));
+  background: linear-gradient(
+    145deg,
+    hsl(var(--card) / 0.9),
+    hsl(var(--card) / 0.68)
+  );
   box-shadow:
     0 16px 34px -22px hsl(var(--foreground) / 0.4),
     0 0 0 3px hsl(var(--np-brand-gold) / 0.08),
@@ -642,5 +720,80 @@ a[class*="inline-flex"]:active {
     border: 0 !important;
     box-shadow: none !important;
     background: white !important;
+  }
+}
+
+/* ───────────────────────── NeuroPed App Shell — navegação orientada ───────────────────────── */
+.np-app-shell {
+  --np-sidebar-gap: 0.375rem;
+}
+
+@media screen and (min-width: 1024px) {
+  .np-app-sidebar {
+    border-right-width: 1px;
+    box-shadow:
+      14px 0 42px -34px hsl(var(--foreground) / 0.48),
+      inset -1px 0 0 hsl(0 0% 100% / 0.16);
+  }
+
+  .np-app-sidebar > div:first-of-type {
+    padding-top: 1.15rem;
+    padding-bottom: 1.15rem;
+    background:
+      radial-gradient(
+        12rem 7rem at 12% 0%,
+        hsl(var(--primary) / 0.12),
+        transparent 72%
+      ),
+      linear-gradient(180deg, hsl(var(--card) / 0.34), transparent);
+  }
+
+  .np-app-sidebar > nav {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--sidebar-foreground) / 0.18) transparent;
+  }
+
+  .np-app-sidebar > nav > div > button {
+    min-height: 2rem;
+    letter-spacing: 0.15em;
+  }
+
+  .np-app-sidebar [data-testid^="featured-"] {
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.3),
+      0 10px 22px -22px hsl(var(--foreground) / 0.65);
+  }
+
+  .np-app-sidebar [data-testid^="featured-"]:hover {
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.42),
+      0 16px 28px -22px hsl(var(--foreground) / 0.6);
+  }
+
+  .np-app-sidebar #sidebar-nav {
+    padding-top: 0.65rem;
+  }
+
+  .np-app-sidebar #sidebar-nav [data-testid^="nav-"] {
+    min-height: 2.75rem !important;
+    border-radius: 0.95rem !important;
+  }
+
+  .np-app-main {
+    min-height: 100dvh;
+  }
+
+  .np-app-content {
+    width: min(100%, 1680px);
+  }
+}
+
+.np-app-mobile-header {
+  box-shadow: 0 10px 26px -24px hsl(var(--foreground) / 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-app-sidebar [data-testid^="featured-"] {
+    transition: none !important;
   }
 }
