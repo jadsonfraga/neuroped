@@ -19,6 +19,7 @@ const subscription = read("client/src/pages/assinatura.tsx");
 const invitation = read("client/src/pages/convite.tsx");
 const client = read("client/src/lib/saasClient.ts");
 const billingMe = read("functions/api/billing/me.ts");
+const invitationAccept = read("functions/api/billing/accept.ts");
 
 assert.match(app, /const PlanosPage = lazy\(\(\) => import\("@\/pages\/planos"\)\)/);
 assert.match(app, /const ConvitePage = lazy\(\(\) => import\("@\/pages\/convite"\)\)/);
@@ -28,6 +29,7 @@ assert.match(publicRoutes, /"\/planos"/);
 assert.match(publicRoutes, /"\/invite"/);
 assert.doesNotMatch(publicRoutes, /"\/convite"/);
 assert.match(routePolicy, /"\/assinatura"/);
+assert.match(routePolicy, /route: "\/agenda", roles: \["admin", "professional", "operator"\]/);
 assert.match(main, /pathname === "\/invite" \|\| pathname === "\/planos"/);
 assert.match(main, /window\.location\.hash = `#\$\{pathname\}\$\{window\.location\.search\}`/);
 assert.match(login, /resolveLoginDestination\(window\.location\.href\)/);
@@ -48,11 +50,12 @@ assert.match(subscription, /startCheckout\(activeClinicId, seats\)/);
 assert.match(subscription, /createInvitation\(\{ clinicId: activeClinicId/);
 assert.match(subscription, /listInvitations\(activeClinicId\)/);
 
-// O backend devolve o papel aceito e a UI não manda assistant/financial para billing.
+// O backend devolve o papel aceito e a UI não manda perfis não gestores ao home clínico.
 assert.match(invitation, /acceptInvitation\(token, name\.trim\(\), password\)/);
 assert.match(invitation, /setAcceptedRole\(result\.role\)/);
-assert.match(invitation, /role === "owner" \|\| role === "clinic_admin" \? "\/assinatura" : "\/"/);
+assert.match(invitation, /role === "owner" \|\| role === "clinic_admin" \? "\/assinatura" : "\/ajuda"/);
 assert.match(client, /role: ClinicMembershipRole;[\s\S]*accountCreated: boolean/);
+assert.match(invitationAccept, /invitation\.role === "assistant"[\s\S]*\? "operator"/);
 
 assert.match(client, /authFetch\("\/api\/billing\/checkout"/);
 assert.match(client, /authFetch\("\/api\/billing\/accept"/);
@@ -61,4 +64,4 @@ assert.match(billingMe, /clinicIdFromRequest/);
 assert.match(billingMe, /cm\.clinic_id = \?/);
 assert.match(billingMe, /TENANT_FORBIDDEN/);
 
-console.log("SaaS commercial UI, safe acquisition, invitation routing and tenant-aware billing contracts passed.");
+console.log("SaaS commercial UI, safe acquisition, invitation routing, operator Agenda and tenant-aware billing contracts passed.");
