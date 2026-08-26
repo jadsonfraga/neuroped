@@ -103,6 +103,39 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.equal(batches.length, 0);
 }
 
+// O sentinela nunca pode compartilhar identidade com o bootstrap administrativo.
+{
+  const { db } = e2eDb(null);
+  await assert.rejects(
+    bootstrapE2EAccount(db as never, {
+      ADMIN_EMAIL: "same@example.com",
+      NEUROPED_E2E_EMAIL: "same@example.com",
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    }),
+    /E2E_ACCOUNT_COLLIDES_WITH_ADMIN/,
+  );
+}
+
+// Uma conta humana/privilegiada preexistente não pode ser convertida em sentinela.
+{
+  const privileged = {
+    ...existingUser,
+    id: "human-1",
+    email: "human@example.com",
+    role: "admin",
+  };
+  const { db, runs, batches } = e2eDb(privileged);
+  await assert.rejects(
+    bootstrapE2EAccount(db as never, {
+      NEUROPED_E2E_EMAIL: privileged.email,
+      NEUROPED_E2E_PASSWORD: e2ePassword,
+    }),
+    /E2E_ACCOUNT_ROLE_INVALID/,
+  );
+  assert.equal(runs.length, 0);
+  assert.equal(batches.length, 0);
+}
+
 // Ambiente novo: cria somente a conta sentinela com role mínima e sem troca nominal.
 {
   const { db, runs, batches } = e2eDb(null);
