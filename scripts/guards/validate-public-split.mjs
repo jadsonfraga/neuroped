@@ -29,7 +29,7 @@ const MUST_BE_GATED = [
   "/receita-c1", "/receita-c1-express", "/laudo-neuroped", "/documentos",
   "/medicamentos", "/farmacologia", "/calculadora-dose", "/valores-referencia",
   "/pant", "/fichas-registro", "/prescricao",
-  "/diario-escola", "/inventarios-escola", "/assinatura-digital",
+  "/diario-escola", "/inventarios-escola", "/assinatura-digital", "/assinatura",
   "/plano-terapeutico", "/plano-intervencao",
   "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
 ];
@@ -41,7 +41,7 @@ const MUST_BE_PUBLIC = [
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
   "/brincando-e-aprendendo", "/missao-saude",
-  "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
+  "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd", "/planos", "/invite",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",

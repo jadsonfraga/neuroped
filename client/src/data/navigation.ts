@@ -3,6 +3,7 @@ import {
   Accessibility,
   Activity,
   Baby,
+  CreditCard,
   BarChart3,
   BookOpen,
   Brain,
@@ -65,6 +66,8 @@ export const navSections: NavSection[] = [
     title: "ACESSO RÁPIDO",
     items: [
       { href: "/marcacao", label: "Marcação · Secretaria IA", icon: Calendar },
+      { href: "/planos", label: "Planos NeuroPed", icon: CreditCard },
+      { href: "/assinatura", label: "Assinatura e equipe", icon: CreditCard },
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar },
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
