@@ -75,6 +75,7 @@ function e2eDb(
   existing: typeof existingUser | null,
   hasMembership = false,
   conditionalUpdateChanges = 1,
+  directRunChanges = 1,
 ) {
   const runs: Array<{ sql: string; binds: unknown[] }> = [];
   const batches: BoundStatement[][] = [];
@@ -97,7 +98,7 @@ function e2eDb(
               },
               async run() {
                 runs.push({ sql, binds });
-                return { success: true, meta: { changes: 1 } };
+                return { success: true, meta: { changes: directRunChanges } };
               },
             };
           },
@@ -124,16 +125,19 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.equal(batches.length, 0);
 }
 
-// Uma tentativa com senha errada jamais cria, destrava ou rotaciona a sentinela.
+// No e-mail técnico, senha diferente do secret é rejeitada — nunca cai no login humano.
 {
   const { db, runs, batches } = e2eDb(null);
-  await bootstrapE2EAccount(
-    db as never,
-    {
-      NEUROPED_E2E_EMAIL: "novo-e2e@example.com",
-      NEUROPED_E2E_PASSWORD: e2ePassword,
-    },
-    "senha-incorreta",
+  await assert.rejects(
+    bootstrapE2EAccount(
+      db as never,
+      {
+        NEUROPED_E2E_EMAIL: "novo-e2e@example.com",
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      "senha-incorreta",
+    ),
+    /E2E_CREDENTIAL_MISMATCH/,
   );
   assert.equal(runs.length, 0);
   assert.equal(batches.length, 0);
@@ -223,7 +227,7 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.ok(runs[0].binds.includes("novo-e2e@example.com"));
 }
 
-// Secret inalterado e conta desbloqueada: nenhuma escrita nem revogação de sessão.
+// Sentinela pronta ainda passa por guarda atômica de ausência de membership.
 {
   const currentHash = await hashPassword(e2ePassword);
   const currentE2E = {
@@ -242,8 +246,35 @@ const e2ePassword = "senha-tecnica-e2e-123";
     },
     e2ePassword,
   );
-  assert.equal(runs.length, 0);
-  assert.equal(batches.length, 0, "bootstrap E2E idempotente não deve tocar conta pronta");
+  assert.equal(runs.length, 1, "sentinela pronta deve validar atomicamente ausência de membership");
+  assert.match(runs[0].sql, /NOT EXISTS[\s\S]*clinic_memberships/);
+  assert.equal(batches.length, 0, "sentinela pronta não deve rotacionar senha nem sessões");
+}
+
+// Ready-path TOCTOU: membership criada antes da guarda atômica deve abortar login.
+{
+  const currentHash = await hashPassword(e2ePassword);
+  const currentE2E = {
+    ...existingUser,
+    id: "e2e-ready-race",
+    email: "e2e-ready-race@example.com",
+    role: "reader",
+    password_hash: currentHash,
+  };
+  const { db, runs } = e2eDb(currentE2E, false, 1, 0);
+  await assert.rejects(
+    bootstrapE2EAccount(
+      db as never,
+      {
+        NEUROPED_E2E_EMAIL: currentE2E.email,
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      e2ePassword,
+    ),
+    /E2E_ACCOUNT_MEMBERSHIP_RACE/,
+  );
+  assert.equal(runs.length, 1);
+  assert.match(runs[0].sql, /NOT EXISTS[\s\S]*clinic_memberships/);
 }
 
 // Lockout ativo só é recuperado pela credencial técnica correta.
@@ -260,15 +291,19 @@ const e2ePassword = "senha-tecnica-e2e-123";
   };
 
   const wrong = e2eDb(lockedE2E);
-  await bootstrapE2EAccount(
-    wrong.db as never,
-    {
-      NEUROPED_E2E_EMAIL: lockedE2E.email,
-      NEUROPED_E2E_PASSWORD: e2ePassword,
-    },
-    "senha-incorreta",
+  await assert.rejects(
+    bootstrapE2EAccount(
+      wrong.db as never,
+      {
+        NEUROPED_E2E_EMAIL: lockedE2E.email,
+        NEUROPED_E2E_PASSWORD: e2ePassword,
+      },
+      "senha-incorreta",
+    ),
+    /E2E_CREDENTIAL_MISMATCH/,
   );
   assert.equal(wrong.batches.length, 0, "senha errada não pode limpar lockout E2E");
+  assert.equal(wrong.runs.length, 0, "senha errada não pode tocar a conta técnica");
 
   const correct = e2eDb(lockedE2E);
   await bootstrapE2EAccount(
@@ -309,7 +344,7 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.match(batches[0][0].__sql, /NOT EXISTS[\s\S]*clinic_memberships/);
 }
 
-// TOCTOU: membership criada entre o SELECT inicial e o UPDATE deve zerar changes e abortar.
+// TOCTOU na rotação: membership criada entre o SELECT e o UPDATE zera changes e aborta.
 {
   const oldHash = await hashPassword("senha-tecnica-antiga-race");
   const racingE2E = {
@@ -335,9 +370,14 @@ const e2ePassword = "senha-tecnica-e2e-123";
   assert.match(batches[0][0].__sql, /NOT EXISTS[\s\S]*clinic_memberships/);
 }
 
-// Rejeições de identidade E2E não podem ser engolidas e cair no login humano normal.
+// A fronteira de login reserva o e-mail E2E e nunca permite fallback para senha humana.
 {
   const loginSource = readFileSync("functions/api/auth/login.ts", "utf8");
+  assert.match(
+    loginSource,
+    /if \(!e2ePassword \|\| password !== e2ePassword\) \{[\s\S]*return json\(INVALID, 401\);/,
+    "senha diferente do secret no e-mail E2E deve ser rejeitada antes do login normal",
+  );
   assert.match(
     loginSource,
     /await bootstrapE2EAccount\(env\.DB, env, password\);\s*\} catch \{\s*return json\(INVALID, 401\);/s,
@@ -345,6 +385,24 @@ const e2ePassword = "senha-tecnica-e2e-123";
   );
 }
 
+// As duas rotas runtime que vinculam usuário existente a clínica bloqueiam a identidade E2E.
+{
+  const membersSource = readFileSync("functions/api/tenants/[id]/members.ts", "utf8");
+  const acceptSource = readFileSync("functions/api/billing/accept.ts", "utf8");
+  for (const [name, source] of [
+    ["tenants.members", membersSource],
+    ["billing.accept", acceptSource],
+  ] as const) {
+    assert.match(source, /NEUROPED_E2E_EMAIL/, `${name} deve receber a identidade E2E reservada`);
+    assert.match(source, /TECHNICAL_ACCOUNT_RESERVED/, `${name} deve rejeitar explicitamente a conta técnica`);
+    assert.match(
+      source,
+      /NOT EXISTS[\s\S]*users u[\s\S]*lower\(u\.email\)/,
+      `${name} deve revalidar a identidade reservada no próprio write`,
+    );
+  }
+}
+
 console.log(
-  "✓ bootstrap E2E cria, preserva, protege memberships, fecha TOCTOU e recupera/rotaciona com credencial válida",
+  "✓ bootstrap E2E reserva identidade, protege memberships/ready-path, fecha TOCTOU e recupera/rotaciona com credencial válida",
 );
