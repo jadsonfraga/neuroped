@@ -37,6 +37,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Banco indisponível.", code: "DB_UNAVAILABLE" }, 503);
   }
 
+  // ADMIN_EMAIL e NEUROPED_E2E_EMAIL são identidades mutuamente exclusivas.
+  // Esta validação precisa ocorrer antes de bootstrapAdmin(): em banco novo,
+  // detectar a colisão somente depois criaria uma conta privilegiada no e-mail
+  // reservado à sentinela técnica antes de falhar fechado.
+  const adminEmail = env.ADMIN_EMAIL?.toLowerCase().trim();
+  const e2eEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  const e2ePassword = env.NEUROPED_E2E_PASSWORD;
+  if (adminEmail && e2eEmail && adminEmail === e2eEmail) {
+    console.error("[auth/login] ADMIN_EMAIL colide com NEUROPED_E2E_EMAIL reservado");
+    return json(
+      { error: "Autenticação temporariamente indisponível.", code: "AUTH_CONFIGURATION_INVALID" },
+      503,
+    );
+  }
+
   let parsed: unknown;
   try {
     parsed = await request.json();
@@ -74,7 +89,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // transforma indisponibilidade de telemetria em indisponibilidade de login.
   }
 
-  // Provisiona o admin inicial (idempotente) antes de buscar o usuário.
+  // Provisiona o admin inicial (idempotente) antes de buscar o usuário, somente
+  // depois de provar que sua identidade não colide com a sentinela E2E.
   try {
     await bootstrapAdmin(env.DB, env);
   } catch {
@@ -84,8 +100,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // O e-mail E2E é uma identidade reservada. Qualquer tentativa com esse e-mail
   // precisa apresentar exatamente o secret técnico atual; nunca pode cair no
   // fluxo humano normal, ainda que exista uma conta humana colidindo no banco.
-  const e2eEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
-  const e2ePassword = env.NEUROPED_E2E_PASSWORD;
   if (e2eEmail && email === e2eEmail) {
     if (!e2ePassword || password !== e2ePassword) {
       try {
