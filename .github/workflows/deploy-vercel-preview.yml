@@ -19,7 +19,7 @@ jobs:
   preview:
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       PREVIEW_SHA: ${{ github.sha }}
@@ -51,8 +51,13 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
-      - name: Re-run release verification before preview
-        run: npm run verify
+      - name: Run preview safety gates
+        run: |
+          set -euo pipefail
+          npm run check
+          npm run validate:public
+          npm run audit:access
+          npm run test:publish-safety
 
       - name: Create immutable preview sentinel
         run: |
@@ -129,6 +134,7 @@ jobs:
           '
 
       - name: Publish preview URL in job summary
+        if: success()
         run: |
           {
             echo "## NeuroPed — Vercel Preview"
@@ -139,27 +145,41 @@ jobs:
             echo "- Production alias: **não alterado**"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Comment validated preview on matching PR
+      - name: Comment preview result on matching PR
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
           pr_number=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$PREVIEW_REF" --base main --state open --json number --jq '.[0].number // empty')
-          if [ -z "$pr_number" ]; then
-            echo "Nenhum PR aberto encontrado para $PREVIEW_REF; preview permanece válido sem comentário."
-            exit 0
-          fi
+          [ -n "$pr_number" ] || exit 0
           marker='<!-- neuroped-vercel-preview -->'
-          body=$(cat <<EOF
+          actions_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "$JOB_STATUS" = "success" ] && [ -n "${PREVIEW_URL:-}" ]; then
+            body=$(cat <<EOF
           $marker
           ## NeuroPed — Preview Vercel validado
 
           - URL: $PREVIEW_URL
           - Commit: \`$PREVIEW_SHA\`
           - Produção: **não alterada**
-          - Gate: \`verify + build + artifact audit + vercel inspect + vercel curl + sentinel\`
+          - Gate: \`check + public/access + publish-safety + build + artifact audit + vercel inspect/curl + sentinel\`
+          - Execução: $actions_url
           EOF
           )
+          else
+            body=$(cat <<EOF
+          $marker
+          ## NeuroPed — Preview Vercel não liberado
+
+          - Commit: \`$PREVIEW_SHA\`
+          - Produção: **não alterada**
+          - Estado do job: \`$JOB_STATUS\`
+          - Execução para diagnóstico: $actions_url
+          EOF
+          )
+          fi
           existing_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$pr_number/comments" --paginate --jq ".[] | select(.user.type == \"Bot\" and (.body | contains(\"$marker\"))) | .id" | head -n1)
           if [ -n "$existing_id" ]; then
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing_id" -f body="$body" >/dev/null
