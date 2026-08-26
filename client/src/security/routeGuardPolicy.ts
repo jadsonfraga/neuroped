@@ -145,8 +145,9 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   route: string;
   roles: readonly RouteUserRole[];
 }> = [
-  // A recepção opera a fila, mas não recebe acesso às demais áreas clínicas.
+  // A recepção e a agenda operacional aceitam operator sem abrir as demais áreas clínicas.
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  { route: "/agenda", roles: ["admin", "professional", "operator"] },
 ];
 
 function normalizePathname(path: string): string {
