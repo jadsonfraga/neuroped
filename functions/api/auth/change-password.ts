@@ -42,6 +42,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!env.DB) return json({ error: "Banco indisponível.", code: "DB_UNAVAILABLE" }, 503);
   if (!userContext) return json({ error: "Não autenticado.", code: "UNAUTHENTICATED" }, 401);
 
+  // A identidade E2E reservada é uma conta de máquina: seu ciclo de vida de
+  // credencial é gerenciado exclusivamente pela rotação de
+  // NEUROPED_E2E_PASSWORD, nunca pelo fluxo humano de troca de senha. Aceitar
+  // aqui abriria um caminho de emissão de sessão paralelo, sem os guards
+  // atômicos de clinic_membership já aplicados a login/refresh.
+  const reservedE2EEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  if (reservedE2EEmail && userContext.email.toLowerCase().trim() === reservedE2EEmail) {
+    return json(
+      { error: "Conta técnica não pode alterar senha pelo fluxo humano.", code: "E2E_ACCOUNT_RESERVED" },
+      403,
+    );
+  }
+
   const secret = env.NEUROPED_JWT_SECRET;
   if (!secret || secret.trim().length < 32) {
     return json({ error: "Autenticação não configurada.", code: "AUTH_NOT_CONFIGURED" }, 503);
