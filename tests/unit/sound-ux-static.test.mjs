@@ -23,9 +23,18 @@ assert.match(softSounds, /return false;/);
 assert.match(haptic, /return false;/);
 
 // Rotinas clínicas não devem produzir sons de hover, navegação ou clique genérico.
-assert.match(softSounds, /export function softTap\(\): void \{\}/);
-assert.match(softSounds, /export function softHover\(\): void \{\}/);
-assert.match(softSounds, /export function softWhoosh\(\): void \{\}/);
+assert.match(
+  softSounds,
+  /export function softTap\(\): void \{\s*\/\* intencionalmente silencioso \*\/\s*\}/,
+);
+assert.match(
+  softSounds,
+  /export function softHover\(\): void \{\s*\/\* intencionalmente silencioso \*\/\s*\}/,
+);
+assert.match(
+  softSounds,
+  /export function softWhoosh\(\): void \{\s*\/\* intencionalmente silencioso \*\/\s*\}/,
+);
 assert.match(softSounds, /document\.visibilityState === "hidden"/);
 
 // A camada semântica central expõe somente feedbacks relevantes e limita repetição.
@@ -52,6 +61,7 @@ assert.match(layout, /data-testid="button-sound-toggle-mobile"/);
 assert.match(panel, /data-testid="range-sound-volume"/);
 assert.match(panel, /confirmações e alertas relevantes/);
 assert.match(panel, /Som e vibração ficam desligados até ativação explícita/);
+assert.match(panel, /Senhas nunca\s+ são persistidas pelo NeuroPed|Senhas nunca\s*são persistidas pelo NeuroPed/);
 assert.match(panel, /reducedMotion/);
 
 // Feedback visual/textual continua primário; erros têm anúncio mais forte.
