@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { bootstrapAdmin } from "../../functions/api/auth/_shared";
 
 const existingUser = {
@@ -57,4 +58,11 @@ assert.equal(
   1,
   "a flag explícita deve permitir somente a migração controlada de uma conta existente",
 );
-console.log("✓ bootstrap administrativo exige flag explícita para migração");
+
+const bootstrapSource = readFileSync(
+  new URL("../../functions/api/auth/_shared.ts", import.meta.url),
+  "utf8",
+);
+assert.match(bootstrapSource, /must_change_password = 1/);
+assert.match(bootstrapSource, /VALUES \(\?, \?, \?, 'admin', 1, \?, 1, 0/);
+console.log("✓ bootstrap administrativo exige flag explícita e troca da senha provisionada");

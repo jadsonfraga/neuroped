@@ -6,7 +6,7 @@ assert.match(auth, /failedLoginAttempts: sql`COALESCE/);
 assert.match(auth, /PASSWORD_POLICY\.maxFailedAttempts/);
 assert.match(auth, /const accepted = db\.transaction/);
 assert.match(auth, /eq\(users\.isActive, true\)/);
-assert.match(auth, /const newRefreshRow = tx[\s\S]{0,800}const revoked = tx\.update/);
+assert.match(auth, /const newRefreshRow = tx[\s\S]{0,1400}const revoked = tx\s*\.update/);
 assert.match(auth, /revoked\.changes !== 1/);
 assert.match(auth, /REFRESH_RACE/);
 assert.match(auth, /refresh_race_or_reuse_detected/);

@@ -39,25 +39,16 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
-          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
-          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           missing=()
           [ -n "$VERCEL_TOKEN" ] || missing+=("VERCEL_TOKEN")
           [ -n "$VERCEL_ORG_ID" ] || missing+=("VERCEL_ORG_ID")
-          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
-            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] \
-              || missing+=("NEUROPED_E2E_EMAIL+NEUROPED_E2E_PASSWORD")
-            ACTIVE_MAIL="$E2E_MAIL"
-            ACTIVE_PW="$E2E_PW"
-          else
-            ACTIVE_MAIL="$FALLBACK_MAIL"
-            ACTIVE_PW="$FALLBACK_PW"
-          fi
-          [ -n "$ACTIVE_MAIL" ] || missing+=("NEUROPED_E2E_EMAIL/ADMIN_EMAIL")
-          [ -n "$ACTIVE_PW" ] || missing+=("NEUROPED_E2E_PASSWORD/ADMIN_INITIAL_PASSWORD")
-          unset VERCEL_TOKEN VERCEL_ORG_ID E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW ACTIVE_MAIL ACTIVE_PW
+          ACTIVE_MAIL="$E2E_MAIL"
+          ACTIVE_PW="$E2E_PW"
+          [ -n "$ACTIVE_MAIL" ] && [ -n "$ACTIVE_PW" ] \
+            || missing+=("NEUROPED_E2E_EMAIL+NEUROPED_E2E_PASSWORD")
+          unset VERCEL_TOKEN VERCEL_ORG_ID E2E_MAIL E2E_PW ACTIVE_MAIL ACTIVE_PW
 
           target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -259,20 +250,16 @@ jobs:
         env:
           E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
-          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
-          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           api_base="https://neuroped.pages.dev"
-          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
-            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
-            admin_mail="$E2E_MAIL"
-            admin_pw="$E2E_PW"
-          else
-            admin_mail="$FALLBACK_MAIL"
-            admin_pw="$FALLBACK_PW"
-          fi
-          unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
+          [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || {
+            echo "::error::A conta E2E dedicada é obrigatória; ADMIN_* nunca é fallback de smoke."
+            exit 1
+          }
+          admin_mail="$E2E_MAIL"
+          admin_pw="$E2E_PW"
+          unset E2E_MAIL E2E_PW
 
           header_value() {
             tr -d '\r' < "$1" | awk -F': ' -v target="$2" \

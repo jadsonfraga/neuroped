@@ -7,8 +7,10 @@
  */
 
 import type { Request, Response, NextFunction } from "express";
+import { and, eq, isNull } from "drizzle-orm";
+import { refreshTokens, type UserRole } from "@shared/schema";
+import { db } from "../storage.js";
 import { verifyAccessToken } from "../lib/jwt.js";
-import type { UserRole } from "@shared/schema";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -33,6 +35,22 @@ function extractBearerToken(req: Request): string | null {
   return null;
 }
 
+function hasActiveSession(sessionId: string): boolean {
+  try {
+    const session = db
+      .select({ expiresAt: refreshTokens.expiresAt })
+      .from(refreshTokens)
+      .where(and(eq(refreshTokens.id, sessionId), isNull(refreshTokens.revokedAt)))
+      .get();
+    if (!session) return false;
+    const expiresAt = Date.parse(session.expiresAt);
+    return Number.isFinite(expiresAt) && expiresAt > Date.now();
+  } catch {
+    // A falha no armazenamento não pode abrir uma API protegida.
+    return false;
+  }
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const token = extractBearerToken(req);
   if (!token) {
@@ -42,6 +60,10 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   try {
     const claims = verifyAccessToken(token);
+    if (!hasActiveSession(claims.sid)) {
+      res.status(401).json({ error: "Invalid or expired token", code: "AUTH_SESSION_REVOKED" });
+      return;
+    }
     req.user = {
       id: claims.sub,
       email: claims.email,
@@ -66,12 +88,14 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   }
   try {
     const claims = verifyAccessToken(token);
-    req.user = {
-      id: claims.sub,
-      email: claims.email,
-      role: claims.role,
-      name: claims.name,
-    };
+    if (hasActiveSession(claims.sid)) {
+      req.user = {
+        id: claims.sub,
+        email: claims.email,
+        role: claims.role,
+        name: claims.name,
+      };
+    }
   } catch {
     // Ignora token invalido em rotas opcionais
   }

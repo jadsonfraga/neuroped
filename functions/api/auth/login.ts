@@ -13,6 +13,7 @@ import {
   registerFailedAttempt,
   registerSuccessfulLogin,
   bootstrapAdmin,
+  bootstrapE2EAccount,
 } from "./_shared";
 import { DUMMY_PASSWORD_HASH, verifyPassword } from "./_crypto";
 import { createSessionTokens } from "./_sessions";
@@ -73,11 +74,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // transforma indisponibilidade de telemetria em indisponibilidade de login.
   }
 
-  // Provisiona o admin inicial (idempotente) antes de buscar o usuário.
+  // Provisiona o admin inicial e a conta técnica E2E (ambos idempotentes)
+  // antes de buscar o usuário.
   try {
     await bootstrapAdmin(env.DB, env);
   } catch {
     /* bootstrap é best-effort; não bloqueia login de usuários já existentes */
+  }
+  try {
+    await bootstrapE2EAccount(env.DB, env);
+  } catch {
+    /* idem: best-effort, nunca bloqueia login de contas já existentes */
   }
 
   const user = await getUserByEmail(env.DB, email);

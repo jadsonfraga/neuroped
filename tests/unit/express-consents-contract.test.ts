@@ -222,11 +222,27 @@ const address = server.address() as AddressInfo;
 const baseUrl = `http://127.0.0.1:${address.port}`;
 
 function tokenFor(userId: string, email: string): string {
+  const sessionId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  sqlite
+    .prepare(
+      `INSERT INTO refresh_tokens
+        (id, user_id, token_hash, issued_at, expires_at)
+       VALUES (?, ?, ?, ?, ?)`,
+    )
+    .run(
+      sessionId,
+      userId,
+      `fixture-session-${sessionId}`,
+      now,
+      new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    );
   return signAccessToken({
     userId,
     email,
     role: "reader",
     name: "Leitor",
+    sessionId,
   });
 }
 
