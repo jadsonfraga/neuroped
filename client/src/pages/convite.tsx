@@ -16,7 +16,7 @@ function invitationToken(): string {
 }
 
 function postInviteDestination(role: ClinicMembershipRole | null): string {
-  return role === "owner" || role === "clinic_admin" ? "/assinatura" : "/";
+  return role === "owner" || role === "clinic_admin" ? "/assinatura" : "/ajuda";
 }
 
 export default function ConvitePage() {
@@ -65,10 +65,10 @@ export default function ConvitePage() {
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
           <h1 className="mt-5 text-2xl font-black text-foreground">Convite aceito</h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            {accountCreated ? "Sua conta profissional foi criada e já está vinculada à clínica." : "Sua conta já existia e foi vinculada à clínica."} Agora entre com seu e-mail e senha para continuar.
+            {accountCreated ? "Sua conta de equipe foi criada e já está vinculada à clínica." : "Sua conta já existia e foi vinculada à clínica."} Agora entre com seu e-mail e senha para continuar com as permissões do seu papel.
           </p>
           <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="mt-7 inline-flex">
-            <Button className="gap-2 rounded-xl">Entrar na área profissional <ArrowRight className="h-4 w-4" aria-hidden="true" /></Button>
+            <Button className="gap-2 rounded-xl">Entrar no NeuroPed <ArrowRight className="h-4 w-4" aria-hidden="true" /></Button>
           </Link>
         </section>
       </main>
