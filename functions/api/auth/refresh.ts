@@ -52,6 +52,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       if (user) await revokeRefreshToken(env.DB, payload, token, "account_disabled");
       return json({ error: "Sessão inválida.", code: "INVALID_SESSION" }, 401);
     }
+
+    // O e-mail E2E é uma identidade reservada, inclusive para famílias de
+    // refresh emitidas antes da reserva. Uma colisão com conta privilegiada ou
+    // com membership clínica revoga imediatamente a família em vez de permitir
+    // que uma sessão humana preexistente sobreviva ao bloqueio do login.
+    const reservedE2EEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+    if (reservedE2EEmail && user.email.toLowerCase().trim() === reservedE2EEmail) {
+      const membership = await env.DB
+        .prepare(
+          `SELECT 1 AS has_membership
+             FROM clinic_memberships
+            WHERE user_id = ?
+            LIMIT 1`,
+        )
+        .bind(user.id)
+        .first<{ has_membership: number }>();
+      if (user.role !== "reader" || membership) {
+        await revokeRefreshToken(env.DB, payload, token, "account_disabled");
+        return json({ error: "Sessão inválida.", code: "INVALID_SESSION" }, 401);
+      }
+    }
+
     const rotated = await rotateRefreshSession(env.DB, user, secret, payload, token);
     if (!rotated.ok) {
       const message = rotated.code === "REFRESH_REUSE_DETECTED"
