@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SaasApiError, acceptInvitation } from "@/lib/saasClient";
+import type { ClinicMembershipRole } from "@shared/tenant";
 
 function invitationToken(): string {
   if (typeof window === "undefined") return "";
@@ -12,6 +13,10 @@ function invitationToken(): string {
   if (fromSearch) return fromSearch.trim();
   const hashQuery = window.location.hash.split("?")[1] ?? "";
   return new URLSearchParams(hashQuery).get("token")?.trim() ?? "";
+}
+
+function postInviteDestination(role: ClinicMembershipRole | null): string {
+  return role === "owner" || role === "clinic_admin" ? "/assinatura" : "/";
 }
 
 export default function ConvitePage() {
@@ -22,6 +27,7 @@ export default function ConvitePage() {
   const [error, setError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
+  const [acceptedRole, setAcceptedRole] = useState<ClinicMembershipRole | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,6 +40,7 @@ export default function ConvitePage() {
     try {
       const result = await acceptInvitation(token, name.trim(), password);
       setAccountCreated(result.accountCreated);
+      setAcceptedRole(result.role);
       setAccepted(true);
     } catch (cause) {
       if (cause instanceof SaasApiError && cause.code === "ACCOUNT_DATA_REQUIRED") {
@@ -51,6 +58,7 @@ export default function ConvitePage() {
   }
 
   if (accepted) {
+    const nextPath = postInviteDestination(acceptedRole);
     return (
       <main className="mx-auto flex min-h-[70vh] w-full max-w-xl items-center justify-center px-4 py-10">
         <section className="w-full rounded-3xl border border-emerald-500/20 bg-card p-7 text-center shadow-xl shadow-emerald-500/5 sm:p-10" data-testid="invitation-accepted">
@@ -59,7 +67,7 @@ export default function ConvitePage() {
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             {accountCreated ? "Sua conta profissional foi criada e já está vinculada à clínica." : "Sua conta já existia e foi vinculada à clínica."} Agora entre com seu e-mail e senha para continuar.
           </p>
-          <Link href="/login?next=/assinatura" className="mt-7 inline-flex">
+          <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="mt-7 inline-flex">
             <Button className="gap-2 rounded-xl">Entrar na área profissional <ArrowRight className="h-4 w-4" aria-hidden="true" /></Button>
           </Link>
         </section>
