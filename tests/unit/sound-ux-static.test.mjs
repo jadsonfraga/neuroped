@@ -61,7 +61,7 @@ assert.match(layout, /data-testid="button-sound-toggle-mobile"/);
 assert.match(panel, /data-testid="range-sound-volume"/);
 assert.match(panel, /confirmações e alertas relevantes/);
 assert.match(panel, /Som e vibração ficam desligados até ativação explícita/);
-assert.match(panel, /Senhas nunca\s+ são persistidas pelo NeuroPed|Senhas nunca\s*são persistidas pelo NeuroPed/);
+assert.match(panel, /Senhas nunca\s+são persistidas pelo NeuroPed/);
 assert.match(panel, /reducedMotion/);
 
 // Feedback visual/textual continua primário; erros têm anúncio mais forte.
