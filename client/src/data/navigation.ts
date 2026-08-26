@@ -85,13 +85,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "golden",
     description: "Agendamento e contato",
   },
-  {
-    href: "/conecta",
-    label: "NeuroPed Conecta",
-    icon: Activity,
-    tone: "golden",
-    description: "Portais e conexões",
-  },
+  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {
     href: "/servicos-clinica",
     label: "Serviços da Clínica",
@@ -114,12 +108,7 @@ export const navSections: NavSection[] = [
   {
     title: "ATENDIMENTO",
     items: [
-      {
-        href: "/agenda",
-        label: "Agenda & Gestão",
-        icon: Calendar,
-        tone: "priority",
-      },
+      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       {
         href: "/pacientes",
         label: "Pacientes / Prontuário",
@@ -145,18 +134,6 @@ export const navSections: NavSection[] = [
   {
     title: "CLÍNICA E ACOMPANHAMENTO",
     items: [
-      {
-        href: "/medicamentos",
-        label: "Medicamentos",
-        icon: Pill,
-        tone: "priority",
-      },
-      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      {
-        href: "/calculadora-dose",
-        label: "Calculadora de dose",
-        icon: Calculator,
-      },
       {
         href: "/neuroacompanhamento",
         label: "NeuroAcompanhamento",
@@ -220,12 +197,24 @@ export const navSections: NavSection[] = [
       },
       { href: "/epilepsia", label: "Diário de epilepsia", icon: Activity },
       { href: "/cefaleia", label: "Calendário de cefaleia", icon: Calendar },
-      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden" },
+      {
+        href: "/conecta",
+        label: "NeuroPed Conecta",
+        icon: Activity,
+        tone: "golden",
+      },
     ],
   },
   {
     title: "REFERÊNCIA",
     items: [
+      { href: "/medicamentos", label: "Medicamentos", icon: Pill },
+      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
+      {
+        href: "/calculadora-dose",
+        label: "Calculadora de dose",
+        icon: Calculator,
+      },
       {
         href: "/instrumentos-padronizados",
         label: "Instrumentos padronizados",
