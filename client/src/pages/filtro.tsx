@@ -1121,6 +1121,12 @@ function clearFilterNavigationPrefill(): void {
 }
 
 export default function FiltroPage() {
+  useEffect(() => {
+    try {
+      localStorage.setItem("np_tour_v2_done", "1");
+    } catch {}
+  }, []);
+
   const flashMode = isFlashRoute();
   const [preferences] = useState(loadFilterPreferences);
   const [navigationPrefill] = useState(readFilterNavigationPrefill);
