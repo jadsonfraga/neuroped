@@ -17,10 +17,12 @@ const login = read("client/src/pages/login.tsx");
 const pricing = read("client/src/pages/planos.tsx");
 const subscription = read("client/src/pages/assinatura.tsx");
 const invitation = read("client/src/pages/convite.tsx");
+const agenda = read("client/src/pages/agenda.tsx");
 const client = read("client/src/lib/saasClient.ts");
 const billingMe = read("functions/api/billing/me.ts");
 const invitationAccept = read("functions/api/billing/accept.ts");
 const apiMiddleware = read("functions/api/_middleware.ts");
+const operations = read("functions/api/operations/index.ts");
 const operationsAccess = read("functions/api/operations/_access.ts");
 
 assert.match(app, /const PlanosPage = lazy\(\(\) => import\("@\/pages\/planos"\)\)/);
@@ -52,6 +54,22 @@ assert.match(subscription, /startCheckout\(activeClinicId, seats\)/);
 assert.match(subscription, /createInvitation\(\{ clinicId: activeClinicId/);
 assert.match(subscription, /listInvitations\(activeClinicId\)/);
 
+// Membership ativa não equivale a assinatura paga/trial.
+assert.match(subscription, /function hasUsableSubscription/);
+assert.match(subscription, /ENTITLEMENT_NO_SUBSCRIPTION/);
+assert.match(subscription, /subscriptionStatus === "active"/);
+assert.doesNotMatch(
+  subscription,
+  /subscriptionStatus === "active" \|\| entitlement\.isActive/,
+  "status comercial não pode promover membership ativa para assinatura ativa",
+);
+assert.doesNotMatch(
+  subscription,
+  /entitlement\?\.isActive \? "Atualizar cobrança"/,
+  "CTA de cobrança não pode depender de membership ativa",
+);
+assert.match(subscription, /hasBillingPlan \? "Atualizar cobrança" : "Iniciar contratação"/);
+
 // O backend devolve o papel aceito e a UI não manda perfis não gestores ao home clínico.
 assert.match(invitation, /acceptInvitation\(token, name\.trim\(\), password\)/);
 assert.match(invitation, /setAcceptedRole\(result\.role\)/);
@@ -66,7 +84,7 @@ assert.match(invitationAccept, /function strongestGlobalRole/);
 assert.match(invitationAccept, /effectiveGlobalRole !== existing\.role/);
 assert.match(invitationAccept, /UPDATE users SET role = \?, updated_at = \?/);
 
-// Convite de assistente precisa criar a ponte operacional usada pela Agenda.
+// Convite de assistente cria a ponte operacional, mas a Agenda resolve essa ponte pela clínica ativa.
 assert.match(invitationAccept, /function resolveAssistantProvider/);
 assert.match(invitationAccept, /FROM booking_staff_links/);
 assert.match(invitationAccept, /INSERT INTO booking_staff_links/);
@@ -74,10 +92,15 @@ assert.match(invitationAccept, /ASSISTANT_PROVIDER_REQUIRED/);
 assert.match(invitationAccept, /STAFF_ALREADY_LINKED/);
 assert.match(invitationAccept, /operationsProviderId: assistantProviderId/);
 assert.match(apiMiddleware, /"\/api\/billing\/accept"/);
-assert.ok(
-  operationsAccess.indexOf("FROM booking_staff_links") < operationsAccess.indexOf('user.role === "admin"'),
-  "vínculo operacional deve ser resolvido antes do fallback para Agenda própria",
-);
+assert.match(operations, /searchParams\.get\("clinicId"\)/);
+assert.match(operations, /resolveOperationsPrincipal\(context\.env\.DB, user, clinicId\)/);
+assert.match(agenda, /DASHBOARD_KEY}&clinicId=\$\{encodeURIComponent\(activeClinicId\)\}/);
+assert.match(agenda, /\/api\/operations\?clinicId=\$\{encodeURIComponent\(activeClinicId\)\}/);
+assert.match(operationsAccess, /FROM clinic_memberships/);
+assert.match(operationsAccess, /membership\.role !== "assistant"/);
+assert.match(operationsAccess, /JOIN clinic_memberships provider_membership/);
+assert.match(operationsAccess, /provider_membership\.clinic_id = \?/);
+assert.match(operationsAccess, /provider_membership\.active = 1/);
 
 assert.match(client, /authFetch\("\/api\/billing\/checkout"/);
 assert.match(client, /authFetch\("\/api\/billing\/accept"/);
@@ -86,4 +109,4 @@ assert.match(billingMe, /clinicIdFromRequest/);
 assert.match(billingMe, /cm\.clinic_id = \?/);
 assert.match(billingMe, /TENANT_FORBIDDEN/);
 
-console.log("SaaS commercial UI, safe acquisition, invitation routing, role reconciliation, assistant operations bridge, operator Agenda and tenant-aware billing contracts passed.");
+console.log("SaaS commercial UI, billing entitlement, safe acquisition, invitation routing, role reconciliation, assistant operations bridge and tenant-aware Agenda contracts passed.");
