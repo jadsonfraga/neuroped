@@ -1,4 +1,4 @@
-import { ensureSaasHubSchema } from "../saas/_core";
+import { clinicIdFromRequest, ensureSaasHubSchema } from "../saas/_core";
 import {
   addMinutesLocal,
   appointmentSlotKeys,
@@ -18,6 +18,7 @@ export interface OperationsEnv {
   DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
   OPERATIONAL_DATA_KEY?: string;
+  APP_BASE_URL?: string;
 }
 
 interface ProviderIdentity {
@@ -52,6 +53,7 @@ export interface ServiceRow {
 
 export interface AppointmentRow {
   id: string;
+  clinic_id: string | null;
   provider_user_id: string;
   service_id: string;
   patient_id: string | null;
@@ -127,6 +129,7 @@ const SCHEMA_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_booking_blocks_provider_time ON booking_blocks(provider_user_id, starts_at_local, ends_at_local)`,
   `CREATE TABLE IF NOT EXISTS appointments (
     id TEXT PRIMARY KEY,
+    clinic_id TEXT REFERENCES clinics(id) ON DELETE SET NULL,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     service_id TEXT NOT NULL REFERENCES booking_services(id) ON DELETE RESTRICT,
     patient_id TEXT,
@@ -203,9 +206,79 @@ const SCHEMA_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_notification_outbox_provider_status ON notification_outbox(provider_user_id, status, created_at DESC)`,
 ] as const;
 
+async function ensureAppointmentClinicSchema(db: D1Database): Promise<void> {
+  try {
+    await db.prepare("ALTER TABLE appointments ADD COLUMN clinic_id TEXT REFERENCES clinics(id) ON DELETE SET NULL").run();
+  } catch (error) {
+    const message = String(error).toLowerCase();
+    if (!message.includes("duplicate column") && !message.includes("already exists")) throw error;
+  }
+  await db.batch([
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_appointments_clinic_provider_time ON appointments(clinic_id, provider_user_id, starts_at_local)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_appointments_clinic_status_time ON appointments(clinic_id, status, starts_at_local)"),
+    db.prepare(`CREATE TRIGGER IF NOT EXISTS trg_appointments_clinic_provider_same_tenant
+      BEFORE INSERT ON appointments
+      FOR EACH ROW WHEN NEW.clinic_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM clinic_memberships cm WHERE cm.clinic_id = NEW.clinic_id AND cm.user_id = NEW.provider_user_id AND cm.active = 1
+      ) BEGIN SELECT RAISE(ABORT, 'APPOINTMENT_CLINIC_PROVIDER_MISMATCH'); END`),
+    db.prepare(`CREATE TRIGGER IF NOT EXISTS trg_appointments_clinic_provider_same_tenant_update
+      BEFORE UPDATE OF clinic_id, provider_user_id ON appointments
+      FOR EACH ROW WHEN NEW.clinic_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM clinic_memberships cm WHERE cm.clinic_id = NEW.clinic_id AND cm.user_id = NEW.provider_user_id AND cm.active = 1
+      ) BEGIN SELECT RAISE(ABORT, 'APPOINTMENT_CLINIC_PROVIDER_MISMATCH'); END`),
+  ]);
+  await db.prepare(`UPDATE appointments SET clinic_id = (
+    SELECT CASE WHEN COUNT(*) = 1 THEN MAX(cm.clinic_id) END
+      FROM clinic_memberships cm WHERE cm.user_id = appointments.provider_user_id AND cm.active = 1
+  ) WHERE clinic_id IS NULL`).run();
+}
+
+async function ensureCommunicationReferenceTriggers(db: D1Database): Promise<void> {
+  await db.batch([
+    db.prepare(`CREATE TRIGGER IF NOT EXISTS trg_communication_delivery_appointment_same_clinic
+      BEFORE INSERT ON communication_deliveries
+      WHEN NEW.appointment_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM appointments a WHERE a.id = NEW.appointment_id AND a.clinic_id = NEW.clinic_id
+      ) BEGIN SELECT RAISE(ABORT, 'COMMUNICATION_APPOINTMENT_TENANT_MISMATCH'); END`),
+    db.prepare(`CREATE TRIGGER IF NOT EXISTS trg_communication_delivery_survey_same_clinic
+      BEFORE INSERT ON communication_deliveries
+      WHEN NEW.survey_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM feedback_surveys s WHERE s.id = NEW.survey_id AND s.clinic_id = NEW.clinic_id
+      ) BEGIN SELECT RAISE(ABORT, 'COMMUNICATION_SURVEY_TENANT_MISMATCH'); END`),
+  ]);
+}
+
 export async function ensureOperationsSchema(db: D1Database): Promise<void> {
   await db.batch(SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)));
+  await ensureAppointmentClinicSchema(db);
   await ensureSaasHubSchema(db);
+  await ensureCommunicationReferenceTriggers(db);
+}
+
+export async function countOperationsClinics(db: D1Database, providerUserId: string): Promise<number> {
+  const row = await db.prepare(
+    `SELECT COUNT(*) AS total FROM clinic_memberships WHERE user_id = ? AND active = 1`,
+  ).bind(providerUserId).first<{ total: number }>();
+  return Number(row?.total ?? 0);
+}
+
+export async function resolveOperationsClinic(
+  db: D1Database,
+  request: Request,
+  providerUserId: string,
+): Promise<string | null> {
+  const explicit = clinicIdFromRequest(request);
+  if (explicit) {
+    const row = await db.prepare(
+      `SELECT clinic_id FROM clinic_memberships WHERE clinic_id = ? AND user_id = ? AND active = 1 LIMIT 1`,
+    ).bind(explicit, providerUserId).first<{ clinic_id: string }>();
+    return row?.clinic_id ?? null;
+  }
+  const rows = await db.prepare(
+    `SELECT clinic_id FROM clinic_memberships WHERE user_id = ? AND active = 1 ORDER BY created_at LIMIT 2`,
+  ).bind(providerUserId).all<{ clinic_id: string }>();
+  const memberships = rows.results ?? [];
+  return memberships.length === 1 ? memberships[0].clinic_id : null;
 }
 
 export function jsonResponse(data: unknown, status = 200): Response {

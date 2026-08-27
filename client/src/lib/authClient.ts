@@ -24,6 +24,7 @@ const ACCESS_KEY = "neuroped:access";
 const REFRESH_KEY = "neuroped:refresh";
 const USER_KEY = "neuroped:user";
 const CAPABILITY_KEY = "neuroped:auth-capability";
+const ACTIVE_CLINIC_KEY = "neuroped:active-clinic-id";
 interface RefreshFlight {
   epoch: number;
   refreshToken: string;
@@ -61,6 +62,10 @@ function readToken(key: string): string | null {
   } catch {
     return null;
   }
+}
+
+function readActiveClinicId(): string | null {
+  return readToken(ACTIVE_CLINIC_KEY);
 }
 
 function writeToken(key: string, value: string | null): void {
@@ -271,6 +276,8 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
   let token = getAccessToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  const activeClinicId = readActiveClinicId();
+  if (activeClinicId && !headers.has("X-Clinic-Id")) headers.set("X-Clinic-Id", activeClinicId);
   if (!headers.has("Content-Type") && init.body && typeof init.body === "string") {
     headers.set("Content-Type", "application/json");
   }

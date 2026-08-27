@@ -222,12 +222,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       try {
         const insertAppointment = env.DB.prepare(
           `INSERT INTO appointments
-            (id, provider_user_id, service_id, starts_at_local, ends_at_local, timezone,
+            (id, clinic_id, provider_user_id, service_id, starts_at_local, ends_at_local, timezone,
              status, source, booking_token_hash, guardian_name_encrypted, guardian_email_encrypted,
              guardian_phone_encrypted, patient_name_encrypted, amount_cents, payment_status, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'requested', 'public', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+           VALUES (?, (SELECT CASE WHEN COUNT(*) = 1 THEN MAX(clinic_id) END FROM clinic_memberships WHERE user_id = ? AND active = 1), ?, ?, ?, ?, ?, 'requested', 'public', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
         ).bind(
           appointmentId,
+          provider.user_id,
           provider.user_id,
           service.id,
           chosen.startsAtLocal,

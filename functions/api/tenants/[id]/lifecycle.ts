@@ -481,8 +481,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     } catch (error) {
       console.error("[tenant.lifecycle] reactivation webhook", error);
     }
+    const updated = await loadLifecycle(db, clinicId);
     const latest = await loadReactivation(db, clinicId);
-    return tenantJson({ ok: true, ...lifecyclePayload(row, membership.clinicStatus, billing, latest) });
+    if (!updated) return tenantError("Lifecycle indisponível após a solicitação.", "TENANT_LIFECYCLE_INCONSISTENT", 500);
+    return tenantJson({ ok: true, ...lifecyclePayload(updated, membership.clinicStatus, billing, latest) });
   }
 
   if (["approve_reactivation", "reject_reactivation"].includes(action)) {

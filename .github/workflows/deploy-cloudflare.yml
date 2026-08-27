@@ -299,6 +299,18 @@ jobs:
           done
           echo "Hub SaaS 0016 verificado: onboarding, parceiros, comunicação, NPS e reativação."
 
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0017_appointment_clinic_context.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM pragma_table_info('appointments') WHERE name='clinic_id';" \
+            > /tmp/appointment-clinic-column.txt 2>&1
+          cat /tmp/appointment-clinic-column.txt
+          grep -q "clinic_id" /tmp/appointment-clinic-column.txt || {
+            echo "::error::appointments.clinic_id ausente após migration 0017"
+            exit 1
+          }
+          echo "Contexto clínico dos appointments verificado."
+
           npx wrangler@4 d1 execute neuroped-db --remote \
             --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_clinic_create_tenant_lifecycle';" \
             > /tmp/tenant-lifecycle-trigger.txt 2>&1

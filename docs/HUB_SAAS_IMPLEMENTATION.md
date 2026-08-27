@@ -14,9 +14,9 @@ As três opções do plano foram implementadas no repositório: o hardening dos 
 
 O onboarding agora tem etapas persistidas em `onboarding_steps`. O GET reconcilia automaticamente etapas observáveis, como perfil da clínica, equipe, serviços, disponibilidade e primeiro agendamento. A conclusão manual continua disponível para os administradores, com registro de auditoria em `saas_audit_log`.
 
-O módulo operacional passou a expor modelos de disponibilidade em `availability_templates`, com validação de fuso horário, limites de intervalo e tamanho de payload. Os modelos são restritos ao profissional autenticado e as mutações seguem o RBAC operacional já existente.
+O módulo operacional passou a expor modelos de disponibilidade em `availability_templates`, com validação de fuso horário, limites de intervalo e tamanho de payload. Os modelos são restritos ao profissional autenticado e as mutações seguem o RBAC operacional já existente. A migration `0017_appointment_clinic_context.sql` adiciona `appointments.clinic_id`, reconcilia automaticamente somente appointments legados não ambíguos e exige contexto explícito para profissionais com múltiplas clínicas. O cliente autenticado transporta a clínica ativa no cabeçalho `X-Clinic-Id`, e o dashboard é filtrado por esse contexto.
 
-Quando uma consulta chega a `completed`, o sistema cria no máximo uma pesquisa NPS por agendamento. O token é opaco e apenas seu hash é persistido em `feedback_surveys`. A resposta pública é aceita uma única vez, possui expiração e grava o comentário cifrado. A visão autenticada em `/api/feedback/summary` calcula taxa de resposta, promotores, passivos, detratores, distribuição e NPS.
+Quando uma consulta chega a `completed`, o sistema cria no máximo uma pesquisa NPS por agendamento. O token é opaco e apenas seu hash é persistido em `feedback_surveys`. O convite enviado à família contém uma URL completa em `/feedback?token=...`, derivada de `APP_BASE_URL` ou da origem canônica da requisição. A página pública não exige login, aceita a resposta uma única vez, aplica expiração e grava o comentário cifrado. A visão autenticada em `/api/feedback/summary` calcula taxa de resposta, promotores, passivos, detratores, distribuição e NPS. A auditoria da resposta registra `actorType: anonymous_token` no evento da pesquisa, sem atribuir a ação ao profissional.
 
 O lifecycle recebeu o estado `reactivation_requested`. O fluxo é idempotente e mantém `closed` como estado terminal. A solicitação, aprovação, rejeição e conclusão da reativação geram auditoria e eventos na fila `tenant_webhook_events`. A migration 0016 reconstrói a tabela de lifecycle preservando os dados e pode ser reexecutada com segurança.
 
@@ -30,7 +30,7 @@ As transições são controladas no backend. Um encaminhamento em rascunho pode 
 
 A central inclui templates de sistema e templates personalizados, com canais `email`, `whatsapp`, `sms` e `manual`. Templates de sistema são imutáveis. Campanhas são tenant-scoped, possuem filtro de público em JSON limitado e podem ser colocadas em fila com até 500 destinatários por operação.
 
-As entregas são persistidas em `communication_deliveries`, com destinatário, assunto e corpo cifrados. O backend verifica se o canal escolhido está autorizado pelo template e permite atualizar o status para envio, entrega, falha ou cancelamento. A resposta da API também apresenta métricas agregadas de pendências, envios e falhas.
+As entregas são persistidas em `communication_deliveries`, com destinatário, assunto e corpo cifrados. O backend verifica se o canal escolhido está autorizado pelo template, valida `appointmentId` e `surveyId` contra a clínica ativa e permite atualizar o status para envio, entrega, falha ou cancelamento. Triggers físicos repetem as validações de tenant. A resposta da API também apresenta métricas agregadas de pendências, envios e falhas.
 
 ## Frontend
 
@@ -38,7 +38,7 @@ Foi adicionada a rota protegida `/hub-saas`, integrada ao contexto de clínica a
 
 ## Migração e deploy
 
-A migration `db/migrations/0016_saas_hub.sql` cria as novas tabelas, índices e triggers e atualiza o check de lifecycle para aceitar `reactivation_requested`. O workflow de billing aplica e verifica a migration 0016, enquanto o deploy principal e a provisão inicial também foram atualizados. O runtime faz bootstrap idempotente para reduzir risco de ambientes que ainda não receberam a migration remota.
+As migrations `db/migrations/0016_saas_hub.sql` e `db/migrations/0017_appointment_clinic_context.sql` criam as novas tabelas, índices e triggers, atualizam o check de lifecycle para aceitar `reactivation_requested` e associam appointments à clínica correta. Os workflows operacional e de billing aplicam e verificam as migrations 0016 e 0017, enquanto o deploy principal e a provisão inicial também foram atualizados. O runtime faz bootstrap idempotente para reduzir risco de ambientes que ainda não receberam a migration remota.
 
 ## Validação executada
 

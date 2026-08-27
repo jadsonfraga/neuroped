@@ -206,6 +206,7 @@ const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
 const HubSaasPage = lazy(() => import("@/pages/hub-saas"));
+const FeedbackPage = lazy(() => import("@/pages/feedback"));
 const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
@@ -323,6 +324,16 @@ function AppRouter() {
     return (
       <Suspense fallback={<LoadingSpinner />}>
         <EletroencefalogramaPage />
+      </Suspense>
+    );
+  }
+
+  // O NPS é uma jornada pública tokenizada enviada à família. Não pode herdar
+  // o shell clínico nem exigir login para abrir o link recebido.
+  if (location === "/feedback") {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <FeedbackPage />
       </Suspense>
     );
   }
@@ -596,6 +607,7 @@ function AppRouter() {
                 <HubSaasPage />
               </RouteGuard>
             </Route>
+            <Route path="/feedback" component={FeedbackPage} />
             <Route path="/agendar" component={AgendarPage} />
             <Route path="/marcacao" component={MarcacaoPage} />
 

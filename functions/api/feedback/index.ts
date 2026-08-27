@@ -71,10 +71,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
         WHERE id = ? AND token_hash = ? AND status = 'pending' AND julianday(expires_at) > julianday(?)`,
     ).bind(score, await encryptText(env, comment || null), now, now, row.id, tokenHash, now).run();
     if ((result.meta?.changes ?? 0) !== 1) return hubError("Pesquisa já respondida ou expirada.", "FEEDBACK_STALE", 409);
-    await env.DB.batch([
-      env.DB.prepare(`INSERT INTO feedback_survey_events (id, survey_id, event_type, metadata_json) VALUES (?, ?, 'answered', ?)`).bind(`sve-${crypto.randomUUID()}`, row.id, JSON.stringify({ scoreBand: score <= 6 ? "detractor" : score <= 8 ? "passive" : "promoter" })),
-      env.DB.prepare(`INSERT INTO saas_audit_log (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json) SELECT ?, ?, u.id, 'feedback_answered', 'feedback_survey', ?, ? FROM users u WHERE u.id = (SELECT provider_user_id FROM feedback_surveys WHERE id = ?) LIMIT 1`).bind(`sal-${crypto.randomUUID()}`, row.clinic_id, row.id, JSON.stringify({ score }), row.id),
-    ]);
+    await env.DB.prepare(
+      `INSERT INTO feedback_survey_events (id, survey_id, event_type, metadata_json)
+       VALUES (?, ?, 'answered', ?)`,
+    ).bind(
+      `sve-${crypto.randomUUID()}`,
+      row.id,
+      JSON.stringify({
+        actorType: "anonymous_token",
+        scoreBand: score <= 6 ? "detractor" : score <= 8 ? "passive" : "promoter",
+      }),
+    ).run();
     return hubJson({ ok: true, status: "answered" });
   } catch (error) {
     console.error("[feedback.POST]", error);

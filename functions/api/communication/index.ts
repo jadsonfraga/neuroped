@@ -181,6 +181,20 @@ async function loadTemplate(db: D1Database, clinicId: string, templateId: string
   ).bind(templateId, clinicId).first<TemplateRow>();
 }
 
+async function appointmentBelongsToClinic(db: D1Database, appointmentId: string, clinicId: string): Promise<boolean> {
+  const row = await db.prepare(
+    `SELECT id FROM appointments WHERE id = ? AND clinic_id = ? LIMIT 1`,
+  ).bind(appointmentId, clinicId).first<{ id: string }>();
+  return Boolean(row?.id);
+}
+
+async function surveyBelongsToClinic(db: D1Database, surveyId: string, clinicId: string): Promise<boolean> {
+  const row = await db.prepare(
+    `SELECT id FROM feedback_surveys WHERE id = ? AND clinic_id = ? LIMIT 1`,
+  ).bind(surveyId, clinicId).first<{ id: string }>();
+  return Boolean(row?.id);
+}
+
 async function queueDelivery(
   db: D1Database,
   env: Env,
@@ -293,14 +307,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       const template = await loadTemplate(db, clinicId, templateId);
       const recipient = cleanHubText(body.recipient, 320);
       const channel = cleanHubText(body.channel, 20);
+      const appointmentId = cleanOptionalHubText(body.appointmentId, 100);
+      const surveyId = cleanOptionalHubText(body.surveyId, 100);
       if (!template || !recipient || !parseChannels(JSON.parse(template.channels_json)).includes(channel)) return hubError("Entrega ou canal inválido.", "DELIVERY_VALIDATION_ERROR", 400);
+      if (appointmentId && !(await appointmentBelongsToClinic(db, appointmentId, clinicId))) return hubError("A consulta não pertence à clínica ativa.", "DELIVERY_APPOINTMENT_TENANT_MISMATCH", 409);
+      if (surveyId && !(await surveyBelongsToClinic(db, surveyId, clinicId))) return hubError("A pesquisa não pertence à clínica ativa.", "DELIVERY_SURVEY_TENANT_MISMATCH", 409);
       const variables = body.variables && typeof body.variables === "object" && !Array.isArray(body.variables)
         ? Object.fromEntries(Object.entries(body.variables as Record<string, unknown>).filter(([, value]) => typeof value === "string").map(([key, value]) => [key, String(value).slice(0, 500)]))
         : {};
       targetId = await queueDelivery(db, context.env, {
         clinicId, template, channel, recipient,
-        appointmentId: cleanOptionalHubText(body.appointmentId, 100),
-        surveyId: cleanOptionalHubText(body.surveyId, 100),
+        appointmentId,
+        surveyId,
         variables,
       });
       targetType = "communication_delivery";

@@ -24,9 +24,11 @@ import {
   slotLockStatements,
   slugify,
   validSlug,
+  countOperationsClinics,
   type AppointmentRow,
   type OperationsEnv,
   type ServiceRow,
+  resolveOperationsClinic,
 } from "./_core";
 import {
   ensureOperationsHardeningSchema,
@@ -39,7 +41,7 @@ import {
   type OperationsPrincipal,
 } from "./_access";
 import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
-import { createNpsSurvey } from "../saas/_core";
+import { clinicIdFromRequest, createNpsSurvey, feedbackUrl } from "../saas/_core";
 
 function canConfigure(role: string): boolean {
   return role === "admin" || role === "professional";
@@ -124,6 +126,7 @@ async function getDashboard(
   env: OperationsEnv,
   provider: { id: string; name: string },
   principal: OperationsPrincipal,
+  clinicId: string | null,
 ) {
   const profile = await ensureProviderProfile(db, provider);
   const nowMinute = localNow(profile.timezone);
@@ -153,6 +156,7 @@ async function getDashboard(
          FROM appointments a
          JOIN booking_services s ON s.id = a.service_id
         WHERE a.provider_user_id = ?
+          AND (? IS NULL OR a.clinic_id = ?)
         ORDER BY
           CASE
             WHEN a.starts_at_local >= ?
@@ -167,7 +171,7 @@ async function getDashboard(
           a.starts_at_local DESC
         LIMIT 250`,
     )
-    .bind(provider.id, nowMinute, nowMinute)
+    .bind(provider.id, clinicId, clinicId, nowMinute, nowMinute)
     .all<AppointmentRow>();
   const waitlistResult = await db
     .prepare(
@@ -356,7 +360,12 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
         403,
       );
     }
-    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal));
+    const requestedClinicId = clinicIdFromRequest(context.request);
+    const clinicCount = await countOperationsClinics(env.DB, prepared.provider.id);
+    const clinicId = await resolveOperationsClinic(env.DB, context.request, prepared.provider.id);
+    if (requestedClinicId && !clinicId) return errorResponse("Clínica ativa inválida para este profissional.", "CLINIC_CONTEXT_FORBIDDEN", 403);
+    if (!requestedClinicId && clinicCount > 1) return errorResponse("Selecione a clínica ativa antes de carregar a agenda.", "CLINIC_CONTEXT_REQUIRED", 409);
+    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal, clinicId));
   } catch (error) {
     console.error("[operations.GET]", error);
     return errorResponse("Não foi possível carregar a gestão operacional.", "OPERATIONS_LOAD_FAILED", 500);
@@ -384,6 +393,11 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
     }
     const { authUser, principal, provider } = prepared;
     const user = { ...authUser, id: provider.id, name: provider.name };
+    const requestedClinicId = clinicIdFromRequest(request);
+    const operationsClinicCount = await countOperationsClinics(env.DB, provider.id);
+    const operationsClinicId = await resolveOperationsClinic(env.DB, request, provider.id);
+    if (requestedClinicId && !operationsClinicId) return errorResponse("Clínica ativa inválida para este profissional.", "CLINIC_CONTEXT_FORBIDDEN", 403);
+    if (!requestedClinicId && operationsClinicCount > 1) return errorResponse("Selecione a clínica ativa antes de operar a agenda.", "CLINIC_CONTEXT_REQUIRED", 409);
     const profile = await ensureProviderProfile(env.DB, provider);
     const now = new Date().toISOString();
     let auditTargetType = "operations";
@@ -603,13 +617,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         return errorResponse("Paciente não encontrado ou sem vínculo com este profissional.", "PATIENT_NOT_FOUND", 404);
       }
       const insertAppointment = env.DB.prepare(
-        `INSERT INTO appointments
-          (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
+          `INSERT INTO appointments
+          (id, clinic_id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
            status, source, booking_token_hash, guardian_name_encrypted, guardian_email_encrypted,
            guardian_phone_encrypted, patient_name_encrypted, amount_cents, payment_status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       ).bind(
-        appointmentId, user.id, service.id, patientId, starts, endsAtLocal,
+        appointmentId, operationsClinicId, user.id, service.id, patientId, starts, endsAtLocal,
         profile.timezone, await sha256(token), await encryptText(env, cleanOptionalText(body.guardianName, 120)),
         await encryptText(env, cleanOptionalText(body.guardianEmail, 180)), await encryptText(env, cleanOptionalText(body.guardianPhone, 40)),
         await encryptText(env, cleanOptionalText(body.patientName, 120)), service.price_cents, now, now,
@@ -624,6 +638,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!id || !status) return errorResponse("Status inválido.", "VALIDATION_ERROR", 400);
       const current = await env.DB.prepare(`SELECT * FROM appointments WHERE id = ? AND provider_user_id = ? LIMIT 1`).bind(id, user.id).first<AppointmentRow>();
       if (!current) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
+      if (current.clinic_id && current.clinic_id !== operationsClinicId) return errorResponse("A consulta pertence a outra clínica ativa.", "CLINIC_CONTEXT_FORBIDDEN", 403);
+      if (current.clinic_id && !operationsClinicId) return errorResponse("Informe a clínica ativa para operar esta consulta.", "CLINIC_CONTEXT_REQUIRED", 409);
+      if (!current.clinic_id && operationsClinicCount > 0) return errorResponse("Esta consulta legada precisa de reconciliação explícita com uma clínica.", "APPOINTMENT_CLINIC_CONTEXT_REQUIRED", 409);
       const allowed: Record<AppointmentStatus, AppointmentStatus[]> = {
         requested: ["confirmed", "cancelled", "no_show"],
         confirmed: ["checked_in", "cancelled", "no_show"],
@@ -636,7 +653,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const completedAt = status === "completed" ? now : current.completed_at;
       const cancelledAt = status === "cancelled" ? now : current.cancelled_at;
       const updateStatus = env.DB.prepare(
-        `UPDATE appointments
+          `UPDATE appointments
             SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
           WHERE id = ? AND provider_user_id = ? AND status = ?
             AND starts_at_local = ? AND ends_at_local = ?`,
@@ -662,27 +679,22 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         return errorResponse("A consulta mudou durante a atualização. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
       }
       let npsSurveyId: string | null = null;
-      if (status === "completed") {
-        const clinicRows = await env.DB.prepare(
-          `SELECT clinic_id FROM clinic_memberships WHERE user_id = ? AND active = 1 ORDER BY created_at LIMIT 2`,
-        ).bind(user.id).all<{ clinic_id: string }>();
-        const clinicIds = clinicRows.results ?? [];
-        if (clinicIds.length === 1) {
-          const survey = await createNpsSurvey(env.DB, {
-            clinicId: clinicIds[0].clinic_id,
+      if (status === "completed" && (current.clinic_id || operationsClinicId)) {
+        const clinicId = current.clinic_id || operationsClinicId!;
+        const survey = await createNpsSurvey(env.DB, {
+          clinicId,
+          appointmentId: id,
+          providerUserId: user.id,
+        });
+        if (survey) {
+          npsSurveyId = survey.surveyId;
+          await enqueueNotification(env.DB, env, {
             appointmentId: id,
             providerUserId: user.id,
+            template: "nps_request",
+            recipient: await decryptText(env, current.guardian_phone_encrypted) || await decryptText(env, current.guardian_email_encrypted),
+            message: `Pesquisa de satisfação criada. Acesse: ${feedbackUrl(env, request, survey.token)}`,
           });
-          if (survey) {
-            npsSurveyId = survey.surveyId;
-            await enqueueNotification(env.DB, env, {
-              appointmentId: id,
-              providerUserId: user.id,
-              template: "nps_request",
-              recipient: await decryptText(env, current.guardian_phone_encrypted) || await decryptText(env, current.guardian_email_encrypted),
-              message: `Pesquisa de satisfação criada. Token de acesso: ${survey.token}`,
-            });
-          }
         }
       } else {
         await enqueueNotification(env.DB, env, {
@@ -746,7 +758,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       targetId: auditTargetId,
       metadata: auditMetadata,
     });
-    return jsonResponse(await getDashboard(env.DB, env, provider, principal));
+    return jsonResponse(await getDashboard(env.DB, env, provider, principal, operationsClinicId));
   } catch (error) {
     console.error(`[operations.POST:${action}]`, error);
     if (String(error).includes("SCHEDULE_CONFLICT")) {

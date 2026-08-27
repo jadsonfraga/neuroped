@@ -10,6 +10,7 @@ import type { PublicUser } from "../auth/_shared";
 
 export type HubEnv = TenantEnv & {
   OPERATIONAL_DATA_KEY?: string;
+  APP_BASE_URL?: string;
 };
 
 export const ONBOARDING_STEP_DEFINITIONS = [
@@ -424,6 +425,20 @@ export function base64UrlToken(byteLength = 32): string {
 
 export async function hashOpaqueToken(token: string): Promise<string> {
   return sha256Hex(token);
+}
+
+export function feedbackUrl(env: { APP_BASE_URL?: string }, request: Request, token: string): string {
+  const configured = env.APP_BASE_URL?.trim();
+  let base = new URL(request.url).origin;
+  if (configured) {
+    try {
+      const candidate = new URL(configured);
+      if (["http:", "https:"].includes(candidate.protocol)) base = candidate.origin;
+    } catch {
+      // Configuração inválida não pode impedir a resposta; usa a origem canônica.
+    }
+  }
+  return `${base.replace(/\/$/, "")}/feedback?token=${encodeURIComponent(token)}`;
 }
 
 export function renderCommunicationTemplate(

@@ -161,7 +161,7 @@ jobs:
             --file=./db/migrations/0011_clinical_memory.sql
           # Uma provisão nova recebe o contrato SaaS completo em ordem, incluindo
           # o Hub de parceiros, comunicação, NPS e reativação.
-          for migration in 0012_saas_billing_onboarding.sql 0013_saas_billing_provider.sql 0014_saas_tenant_lifecycle.sql 0015_saas_billing_trial_seats_hardening.sql 0016_saas_hub.sql; do
+          for migration in 0012_saas_billing_onboarding.sql 0013_saas_billing_provider.sql 0014_saas_tenant_lifecycle.sql 0015_saas_billing_trial_seats_hardening.sql 0016_saas_hub.sql 0017_appointment_clinic_context.sql; do
             $WRANGLER d1 execute "$D1_NAME" --remote --yes --file="./db/migrations/$migration"
           done
           consent_columns="$($WRANGLER d1 execute "$D1_NAME" --remote \

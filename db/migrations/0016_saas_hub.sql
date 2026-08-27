@@ -209,7 +209,6 @@ CREATE TRIGGER IF NOT EXISTS trg_communication_delivery_campaign_same_clinic
 BEFORE INSERT ON communication_deliveries
 WHEN NEW.campaign_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM communication_campaigns c WHERE c.id = NEW.campaign_id AND c.clinic_id = NEW.clinic_id)
 BEGIN SELECT RAISE(ABORT, 'COMMUNICATION_CAMPAIGN_TENANT_MISMATCH'); END;
-
 CREATE TABLE IF NOT EXISTS feedback_surveys (
   id TEXT PRIMARY KEY,
   clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
