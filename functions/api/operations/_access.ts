@@ -100,12 +100,75 @@ export async function ensureOperationsHardeningSchema(db: D1Database): Promise<v
 export async function resolveOperationsPrincipal(
   db: D1Database,
   user: PublicUser,
+  clinicId?: string | null,
 ): Promise<OperationsPrincipal | null> {
   if (
     user.role !== "operator"
     && user.role !== "admin"
     && user.role !== "professional"
   ) return null;
+
+  if (clinicId) {
+    const membership = await db
+      .prepare(
+        `SELECT role
+           FROM clinic_memberships
+          WHERE clinic_id = ? AND user_id = ? AND active = 1
+          LIMIT 1`,
+      )
+      .bind(clinicId, user.id)
+      .first<{ role: string }>();
+
+    if (!membership) return null;
+
+    if (["owner", "clinic_admin", "professional"].includes(membership.role)) {
+      if (user.role !== "admin" && user.role !== "professional") return null;
+      return {
+        actorUserId: user.id,
+        actorRole: user.role,
+        providerUserId: user.id,
+        providerName: user.name,
+        delegated: false,
+        canConfigure: true,
+      };
+    }
+
+    if (membership.role !== "assistant") return null;
+
+    const scoped = await db
+      .prepare(
+        `SELECT l.provider_user_id, p.name AS provider_name, p.role AS provider_role, p.is_active
+           FROM booking_staff_links l
+           JOIN users p ON p.id = l.provider_user_id
+           JOIN clinic_memberships provider_membership
+             ON provider_membership.user_id = l.provider_user_id
+            AND provider_membership.clinic_id = ?
+            AND provider_membership.active = 1
+            AND provider_membership.role IN ('owner','clinic_admin','professional')
+          WHERE l.staff_user_id = ? AND l.active = 1
+          LIMIT 1`,
+      )
+      .bind(clinicId, user.id)
+      .first<{
+        provider_user_id: string;
+        provider_name: string;
+        provider_role: string;
+        is_active: number;
+      }>();
+
+    if (!scoped || !scoped.is_active || !["admin", "professional"].includes(scoped.provider_role)) {
+      return null;
+    }
+
+    return {
+      actorUserId: user.id,
+      actorRole: user.role,
+      providerUserId: scoped.provider_user_id,
+      providerName: scoped.provider_name,
+      delegated: true,
+      canConfigure: false,
+    };
+  }
 
   const row = await db
     .prepare(
@@ -137,9 +200,6 @@ export async function resolveOperationsPrincipal(
     return null;
   }
 
-  // O vínculo operacional é mais específico que o papel global. Isso preserva
-  // a delegação quando um profissional de uma clínica aceita atuar como
-  // assistente em outra, sem rebaixar seu papel global.
   return {
     actorUserId: user.id,
     actorRole: user.role,
