@@ -10,6 +10,7 @@ import {
   FileText,
   Eye,
   Filter,
+  Grid2X2,
   LineChart,
   Search,
   Stethoscope,
@@ -84,6 +85,16 @@ const clinicalFlows: ClinicalFlow[] = [
     useCase: "Desenvolvimento",
     icon: LineChart,
     emphasis: "slate",
+  },
+  {
+    href: "/explorar",
+    title: "Explorar tudo",
+    subtitle:
+      "Encontre prontuário, documentos, checklists, portais e recursos avançados em um catálogo único.",
+    action: "Abrir catálogo",
+    useCase: "Todo o ecossistema",
+    icon: Grid2X2,
+    emphasis: "teal",
   },
 ];
 
@@ -296,6 +307,11 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/filtro"
+                onMouseEnter={() => softHover()}
+                onClick={() => {
+                  softTap();
+                  haptic.tap();
+                }}
                 className="np-primary-cta inline-flex min-h-11 items-center gap-2 rounded-2xl px-5 py-2.5 text-[13px] font-semibold text-white"
               >
                 Encontrar escala ideal
@@ -303,10 +319,27 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/filtro-escalas?mode=flash"
+                onMouseEnter={() => softHover()}
+                onClick={() => {
+                  softTap();
+                  haptic.tap();
+                }}
                 className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-primary/15 bg-white/55 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10"
               >
                 <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
                 Triagem rápida
+              </Link>
+              <Link
+                href="/explorar"
+                onMouseEnter={() => softHover()}
+                onClick={() => {
+                  softTap();
+                  haptic.tap();
+                }}
+                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-teal-500/20 bg-teal-500/10 px-4 py-2.5 text-[13px] font-semibold text-teal-800 transition-colors hover:bg-teal-500/15 dark:text-teal-200"
+              >
+                <Grid2X2 className="h-4 w-4" aria-hidden="true" />
+                Explorar tudo
               </Link>
             </div>
 

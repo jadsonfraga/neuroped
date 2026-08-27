@@ -12,6 +12,7 @@ import {
   FileText,
   Filter,
   Globe2,
+  Grid2X2,
   HeartPulse,
   HelpCircle,
   Home,
@@ -109,7 +110,16 @@ export const featuredNavigation: NavItem[] = [
 export const navSections: NavSection[] = [
   {
     title: "",
-    items: [{ href: "/", label: "Início", icon: Home }],
+    items: [
+      { href: "/", label: "Início", icon: Home },
+      {
+        href: "/explorar",
+        label: "Explorar tudo",
+        icon: Grid2X2,
+        tone: "golden",
+        description: "Catálogo completo do NeuroPed",
+      },
+    ],
   },
   {
     title: "CLÍNICA",
@@ -122,6 +132,15 @@ export const navSections: NavSection[] = [
         tone: "priority",
       },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
+      {
+        href: "/prontuario",
+        label: "Prontuário clínico",
+        icon: ClipboardList,
+        tone: "priority",
+      },
+      { href: "/recepcao", label: "Recepção e fila", icon: Users },
+      { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
+      { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
       {
         href: "/neuroacompanhamento",
         label: "NeuroAcompanhamento",
@@ -180,6 +199,26 @@ export const navSections: NavSection[] = [
         label: "Assinatura digital",
         icon: ShieldCheck,
       },
+      {
+        href: "/satisfacao-medicacao",
+        label: "Satisfação com medicação",
+        icon: HeartPulse,
+      },
+      {
+        href: "/plano-terapeutico",
+        label: "Plano terapêutico",
+        icon: Target,
+      },
+      {
+        href: "/plano-intervencao",
+        label: "Plano de intervenção",
+        icon: Target,
+      },
+      {
+        href: "/fichas-registro",
+        label: "Fichas de registro",
+        icon: ListChecks,
+      },
     ],
   },
   {
@@ -191,6 +230,12 @@ export const navSections: NavSection[] = [
         href: "/bateria-jadson",
         label: "Bateria Jadson",
         icon: ClipboardCheck,
+      },
+      {
+        href: "/assistente-clinico",
+        label: "Assistente clínico inteligente",
+        icon: Sparkles,
+        description: "Monte baterias por contexto e tempo",
       },
       { href: "/pac", label: "PAC", icon: Brain },
       {
@@ -212,6 +257,36 @@ export const navSections: NavSection[] = [
         icon: Brain,
       },
       { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
+      {
+        href: "/escalas-neuropsiquiatria",
+        label: "Escalas de neuropsiquiatria",
+        icon: BrainCog,
+      },
+      {
+        href: "/tea-checklists",
+        label: "Checklists TEA",
+        icon: ClipboardCheck,
+      },
+      {
+        href: "/testes-academicos",
+        label: "Testes acadêmicos",
+        icon: BookOpen,
+      },
+      {
+        href: "/pdae",
+        label: "PDAE-NEXUS escolar",
+        icon: BookOpen,
+      },
+      {
+        href: "/testes-reconhecimento",
+        label: "Reconhecimento visual",
+        icon: Sparkles,
+      },
+      {
+        href: "/academico-interativo",
+        label: "Acadêmico interativo",
+        icon: Brain,
+      },
     ],
   },
   {
@@ -237,6 +312,11 @@ export const navSections: NavSection[] = [
       },
       { href: "/epilepsia", label: "Diário de epilepsia", icon: Activity },
       { href: "/cefaleia", label: "Calendário de cefaleia", icon: Calendar },
+      {
+        href: "/inventarios-escola",
+        label: "Inventários escolares",
+        icon: ClipboardList,
+      },
       {
         href: "/conecta",
         label: "NeuroPed Conecta",
@@ -269,6 +349,7 @@ export const navSections: NavSection[] = [
         label: "Valores de referência",
         icon: Thermometer,
       },
+      { href: "/ballard", label: "Ballard neonatal", icon: Baby },
       {
         href: "/curvas-crescimento",
         label: "Curvas de crescimento",
@@ -297,6 +378,22 @@ export const navSections: NavSection[] = [
         label: "Política de acesso",
         icon: KeyRound,
       },
+      { href: "/familia", label: "Área da família", icon: HeartPulse },
+      { href: "/portal-familia", label: "Portal da família", icon: Users },
+      {
+        href: "/portal-familia/novidades",
+        label: "Novidades do portal",
+        icon: Sparkles,
+      },
+      { href: "/agendar", label: "Autoagendamento", icon: Calendar },
+      {
+        href: "/efeitos-colaterais",
+        label: "Efeitos colaterais",
+        icon: HeartPulse,
+      },
+      { href: "/verificar", label: "Verificar documento", icon: ShieldCheck },
+      { href: "/glossario", label: "Glossário", icon: BookOpen },
+      { href: "/termos", label: "Termos de uso", icon: FileText },
       { href: "/ajuda", label: "Ajuda", icon: HelpCircle },
       { href: "/sobre", label: "Sobre", icon: ShieldCheck },
       { href: "/sobre-neuroped", label: "Sobre o NeuroPed", icon: ShieldCheck },

@@ -40,7 +40,7 @@ const MUST_BE_PUBLIC = [
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
-  "/brincando-e-aprendendo", "/missao-saude",
+  "/brincando-e-aprendendo", "/missao-saude", "/explorar",
   "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.

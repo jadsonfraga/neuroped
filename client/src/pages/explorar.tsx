@@ -1,0 +1,358 @@
+import { useMemo, useState } from "react";
+import { Link } from "wouter";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  BookOpen,
+  Calendar,
+  Check,
+  FileText,
+  Grid2X2,
+  LockKeyhole,
+  Search,
+  Sparkles,
+  Stethoscope,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { featuredNavigation, navSections } from "@/data/navigation";
+import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes";
+import { useAuth } from "@/contexts/AuthContext";
+import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
+import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
+import { easing, duration } from "@/lib/motion";
+import { haptic } from "@/lib/haptic";
+import { softHover, softTap } from "@/lib/softSounds";
+import type { NavItem, NavSection } from "@/data/navigation";
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+const sectionDescriptions: Record<string, string> = {
+  CLÍNICA: "Atendimento, agenda, pacientes e operação diária do consultório.",
+  "LAUDOS E RECEITAS":
+    "Documentos, laudos, prescrições e assinatura para fechar o ciclo clínico.",
+  "TRIAGEM E FERRAMENTAS":
+    "Instrumentos, filtros e experiências para conduzir a avaliação.",
+  "ACOMPANHAMENTO CLÍNICO":
+    "Medicamentos, diários e indicadores que acompanham a evolução.",
+  REFERÊNCIA:
+    "Biblioteca de consulta rápida para apoiar decisões e orientações.",
+  "PORTAIS E SUPORTE":
+    "Experiências públicas, família, ajuda, acessibilidade e suporte.",
+};
+
+const sectionIcons: Record<string, typeof Grid2X2> = {
+  CLÍNICA: Stethoscope,
+  "LAUDOS E RECEITAS": FileText,
+  "TRIAGEM E FERRAMENTAS": Sparkles,
+  "ACOMPANHAMENTO CLÍNICO": Calendar,
+  REFERÊNCIA: BookOpen,
+  "PORTAIS E SUPORTE": Grid2X2,
+};
+
+function uniqueItems(items: NavItem[]): NavItem[] {
+  return Array.from(new Map(items.map((item) => [item.href, item])).values());
+}
+
+function CatalogCard({
+  item,
+  index,
+  locked,
+}: {
+  item: NavItem;
+  index: number;
+  locked: boolean;
+}) {
+  const Icon = item.icon;
+  const target = item.href === "/nesplora/" ? item.href : item.href;
+  const content = (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: Math.min(index * 0.018, 0.24),
+        duration: duration.fast,
+        ease: easing.smooth,
+      }}
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.985 }}
+      onMouseEnter={() => softHover()}
+      onClick={() => {
+        softTap();
+        haptic.select();
+      }}
+      className={`group relative flex min-h-[92px] cursor-pointer items-center gap-3 overflow-hidden rounded-2xl border p-3.5 transition-[border-color,box-shadow,background-color] duration-200 ${
+        locked
+          ? "border-border/70 bg-muted/25 hover:border-primary/20 hover:bg-muted/40"
+          : "border-white/75 bg-card/85 shadow-[0_14px_38px_-30px_hsl(var(--foreground)/0.46)] hover:border-primary/25 hover:shadow-[0_22px_48px_-28px_hsl(var(--primary)/0.3)] dark:border-white/10"
+      }`}
+      data-testid={`explore-item-${item.href.replace(/[^a-z0-9]+/gi, "-")}`}
+    >
+      <div
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 ${
+          locked
+            ? "bg-muted text-muted-foreground"
+            : "bg-primary/10 text-primary"
+        }`}
+      >
+        <Icon
+          className="h-[18px] w-[18px]"
+          strokeWidth={1.9}
+          aria-hidden="true"
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="truncate text-[13px] font-semibold text-foreground">
+            {item.label}
+          </h3>
+          {locked && (
+            <Badge
+              variant="outline"
+              className="shrink-0 gap-1 px-1.5 py-0 text-[9px] font-semibold"
+            >
+              <LockKeyhole className="h-2.5 w-2.5" aria-hidden="true" />
+              Seguro
+            </Badge>
+          )}
+        </div>
+        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+          {item.description ??
+            (locked
+              ? "Disponível após autenticação ou desbloqueio clínico."
+              : "Abrir recurso no NeuroPed.")}
+        </p>
+      </div>
+      {locked ? (
+        <LockKeyhole
+          className="h-4 w-4 shrink-0 text-muted-foreground/55"
+          aria-hidden="true"
+        />
+      ) : (
+        <ArrowRight
+          className="h-4 w-4 shrink-0 text-muted-foreground/45 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary"
+          aria-hidden="true"
+        />
+      )}
+    </motion.div>
+  );
+
+  return item.href === "/nesplora/" ? (
+    <a href={target} aria-label={`Abrir ${item.label}`}>
+      {content}
+    </a>
+  ) : (
+    <Link href={target} aria-label={`Abrir ${item.label}`}>
+      {content}
+    </Link>
+  );
+}
+
+function CatalogSection({
+  section,
+  query,
+  canOpen,
+  offset,
+}: {
+  section: NavSection;
+  query: string;
+  canOpen: (path: string) => boolean;
+  offset: number;
+}) {
+  const normalizedQuery = normalize(query);
+  const items = uniqueItems(section.items).filter((item) => {
+    if (!normalizedQuery) return true;
+    return normalize(
+      `${item.label} ${item.href} ${item.description ?? ""}`,
+    ).includes(normalizedQuery);
+  });
+  if (items.length === 0) return null;
+  const Icon = sectionIcons[section.title] ?? Grid2X2;
+
+  return (
+    <section
+      className="space-y-3"
+      aria-labelledby={`explore-${section.title || "principal"}`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <h2
+            id={`explore-${section.title || "principal"}`}
+            className="text-base font-semibold tracking-tight text-foreground"
+          >
+            {section.title || "Início"}
+          </h2>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            {sectionDescriptions[section.title] ??
+              "Acesso rápido ao ecossistema NeuroPed."}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((item, index) => (
+          <CatalogCard
+            key={`${section.title}-${item.href}`}
+            item={item}
+            index={offset + index}
+            locked={!isPublicRoute(item.href) && !canOpen(item.href)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function ExplorarPage() {
+  const [query, setQuery] = useState("");
+  const { accessMode, isAuthenticated, isLoading, user } = useAuth();
+  const currentPath = currentHashPath();
+  const canOpen = (path: string) =>
+    canRenderNavigationItem({
+      path,
+      accessMode,
+      isAuthenticated,
+      isLoading,
+      userRole: user?.role,
+      localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
+      localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
+    });
+  const sections = useMemo<NavSection[]>(() => {
+    const highlights: NavSection = {
+      title: "DESTAQUES",
+      items: featuredNavigation.filter((item) => item.href !== "/nesplora/"),
+    };
+    return [highlights, ...navSections];
+  }, []);
+  const destinationCount = useMemo(
+    () => uniqueItems(sections.flatMap((section) => section.items)).length,
+    [sections],
+  );
+  const publicCount = useMemo(
+    () =>
+      uniqueItems(sections.flatMap((section) => section.items)).filter((item) =>
+        isPublicRoute(item.href),
+      ).length,
+    [sections],
+  );
+
+  return (
+    <div className="page-enter proportion-safe-page space-y-8 pb-12">
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: duration.normal, ease: easing.smooth }}
+        className="relative overflow-hidden rounded-[2rem] border border-white/75 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.15),transparent_42%),linear-gradient(135deg,hsl(var(--card)/0.95),hsl(var(--secondary)/0.42))] p-6 shadow-[0_30px_90px_-52px_hsl(var(--foreground)/0.45)] dark:border-white/10 sm:p-9"
+      >
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="relative max-w-3xl space-y-5">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-card/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-primary backdrop-blur">
+            <Grid2X2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Catálogo NeuroPed
+          </div>
+          <div>
+            <h1
+              className="text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Tudo o que o app sabe fazer, em um só lugar.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Uma central de descoberta para localizar ferramentas de triagem,
+              acompanhamento, documentos, portais e recursos avançados. Nada
+              fica escondido por falta de uma aba.
+            </p>
+          </div>
+          <div className="relative max-w-2xl">
+            <Search
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
+              aria-hidden="true"
+            />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar por função, página ou ferramenta…"
+              aria-label="Buscar em todo o catálogo NeuroPed"
+              className="h-12 rounded-2xl border-white/80 bg-card/80 pl-11 pr-4 text-sm shadow-sm backdrop-blur focus-visible:ring-primary/25 dark:border-white/10"
+              data-testid="input-explore-search"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5">
+              <Check className="h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
+              {destinationCount} destinos mapeados
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5">
+              <Sparkles
+                className="h-3.5 w-3.5 text-amber-500"
+                aria-hidden="true"
+              />
+              {publicCount} acessos públicos
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5">
+              <LockKeyhole
+                className="h-3.5 w-3.5 text-primary"
+                aria-hidden="true"
+              />
+              Recursos clínicos protegidos sem desaparecer
+            </span>
+          </div>
+        </div>
+      </motion.section>
+
+      <section
+        className="rounded-2xl border border-primary/15 bg-primary/[0.045] p-4 text-sm leading-relaxed text-muted-foreground sm:p-5"
+        aria-label="Orientação de acesso"
+      >
+        <div className="flex items-start gap-3">
+          <LockKeyhole
+            className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+            aria-hidden="true"
+          />
+          <p>
+            <strong className="font-semibold text-foreground">
+              Descoberta pública, dados protegidos.
+            </strong>{" "}
+            Este catálogo mostra também as áreas profissionais para que nenhuma
+            capacidade fique invisível. Ao abrir uma área clínica, o próprio
+            sistema conduz para autenticação, PIN ou perfil autorizado, sem
+            liberar prontuários ou dados sensíveis.
+          </p>
+        </div>
+      </section>
+
+      <div className="space-y-10">
+        {sections.map((section, index) => (
+          <CatalogSection
+            key={section.title || "principal"}
+            section={section}
+            query={query}
+            canOpen={canOpen}
+            offset={index * 12}
+          />
+        ))}
+      </div>
+
+      {currentPath !== "/" && (
+        <Link
+          href="/"
+          className="mx-auto inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary/25 hover:text-primary"
+        >
+          Voltar ao início
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
+    </div>
+  );
+}

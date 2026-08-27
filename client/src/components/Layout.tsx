@@ -13,6 +13,7 @@ import {
   Search,
   ClipboardList,
   KeyRound,
+  LockKeyhole,
   Trash2,
   Zap,
   ArrowUpRight,
@@ -457,12 +458,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           items: s.items.filter((i) => isPublicRoute(i.href)),
         }))
         .filter((s) => s.items.length > 0)
-    : navSections
-        .map((s) => ({
-          ...s,
-          items: s.items.filter((i) => canRenderNavItem(i.href)),
-        }))
-        .filter((s) => s.items.length > 0);
+    : navSections.filter((s) => s.items.length > 0);
   const flowSteps = [
     "Paciente",
     "Queixa",
@@ -833,6 +829,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           item.tone === "priority";
                         const connection = item.tone === "connection";
                         const golden = item.tone === "golden";
+                        const accessChecking =
+                          accessMode === "checking" || isLoading;
+                        const locked =
+                          !IS_PUBLIC_ZONE &&
+                          !isPublicRoute(item.href) &&
+                          !accessChecking &&
+                          !canRenderNavItem(item.href);
                         return (
                           <Link
                             key={`${sectionKey}-${item.href}-${item.label}`}
@@ -840,13 +843,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           >
                             <div
                               title={
-                                golden
-                                  ? `${item.label} — Vídeo-EEG domiciliar`
-                                  : priority
-                                    ? `${item.label} — acesso prioritário`
-                                    : undefined
+                                locked
+                                  ? `${item.label} — requer acesso clínico`
+                                  : golden
+                                    ? `${item.label}${item.description ? ` — ${item.description}` : " — acesso destacado"}`
+                                    : priority
+                                      ? `${item.label} — acesso prioritário`
+                                      : undefined
                               }
                               data-testid={`nav-${item.label}`}
+                              data-nav-locked={locked ? "true" : undefined}
                               onMouseEnter={() => softHover()}
                               onClick={() => {
                                 softTap();
@@ -868,7 +874,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                       : active
                                         ? "border-transparent bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
                                         : "border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
-                              } ${collapsed ? "lg:justify-center" : ""}`}
+                              } ${collapsed ? "lg:justify-center" : ""} ${locked ? "opacity-70" : ""}`}
                             >
                               <item.icon
                                 className={`w-4 h-4 flex-shrink-0 transition-transform ${
@@ -923,7 +929,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                   aria-label="Acesso integrado"
                                 />
                               )}
-                              {active && !collapsed && (
+                              {locked && !collapsed ? (
+                                <LockKeyhole
+                                  className="ml-auto h-3.5 w-3.5 text-muted-foreground/70"
+                                  aria-label="Acesso clínico necessário"
+                                />
+                              ) : active && !collapsed ? (
                                 <motion.div
                                   layoutId="nav-active-dot"
                                   className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
@@ -932,7 +943,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                     ease: easing.smooth,
                                   }}
                                 />
-                              )}
+                              ) : null}
                             </div>
                           </Link>
                         );

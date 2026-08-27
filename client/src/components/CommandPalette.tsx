@@ -16,10 +16,12 @@ import {
   Clock,
   Filter,
   Loader2,
+  LockKeyhole,
   Search,
   UsersRound,
 } from "lucide-react";
 import { COMMAND_PALETTE_OPEN_EVENT } from "@/lib/commandPaletteBus";
+import { softTap } from "@/lib/softSounds";
 import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes";
 import { IS_PUBLIC_ZONE } from "@/lib/zone";
 import { useAuth } from "@/contexts/AuthContext";
@@ -155,10 +157,10 @@ export function CommandPalette() {
 
   const visiblePages = useMemo(
     () =>
-      IS_PUBLIC_ZONE || onPublicRoute
+      IS_PUBLIC_ZONE
         ? navigablePages.filter((page) => isPublicRoute(page.href))
-        : navigablePages.filter((page) => canRenderClinicalItem(page.href)),
-    [canRenderClinicalItem, onPublicRoute],
+        : navigablePages,
+    [],
   );
 
   const patients = useMemo<NavPatient[]>(() => {
@@ -203,6 +205,7 @@ export function CommandPalette() {
   const goScale = useCallback(
     (id: string, href: string) => {
       pushRecent(id);
+      softTap();
       navigate(href);
       setOpen(false);
     },
@@ -210,6 +213,7 @@ export function CommandPalette() {
   );
 
   const goPage = useCallback((href: string) => {
+    softTap();
     navigate(href);
     setOpen(false);
   }, []);
@@ -352,22 +356,32 @@ export function CommandPalette() {
         )}
 
         <CommandGroup heading="Páginas">
-          {visiblePages.map((page) => (
-            <CommandItem
-              key={`page-${page.href}`}
-              value={`pagina ${page.label}`}
-              onSelect={() => goPage(page.href)}
-            >
-              <page.icon
-                className="mr-2 h-4 w-4 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Highlight text={page.label} query={search} />
-              {page.href === "/filtro" && (
-                <CommandShortcut>Filtro</CommandShortcut>
-              )}
-            </CommandItem>
-          ))}
+          {visiblePages.map((page) => {
+            const locked = !isPublicRoute(page.href) && !canRenderClinicalItem(page.href);
+            return (
+              <CommandItem
+                key={`page-${page.href}`}
+                value={`pagina ${page.label} ${locked ? "acesso seguro login" : ""}`}
+                onSelect={() => goPage(page.href)}
+              >
+                <page.icon
+                  className={`mr-2 h-4 w-4 ${locked ? "text-muted-foreground/60" : "text-muted-foreground"}`}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 flex-1 truncate">
+                  <Highlight text={page.label} query={search} />
+                </span>
+                {locked ? (
+                  <LockKeyhole
+                    className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/60"
+                    aria-label="Acesso clínico necessário"
+                  />
+                ) : page.href === "/filtro" ? (
+                  <CommandShortcut>Filtro</CommandShortcut>
+                ) : null}
+              </CommandItem>
+            );
+          })}
         </CommandGroup>
       </CommandList>
     </CommandDialog>
