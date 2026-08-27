@@ -8,7 +8,7 @@ A auditoria cruza páginas, rotas, navegação, aliases e política de acesso. R
 |---|---:|
 | Arquivos de páginas | 156 |
 | Entradas de rota | 153 |
-| Itens atuais de navegação | 84 |
+| Itens atuais de navegação | 82 |
 | Rotas sensíveis | 34 |
 | Literais na allowlist pública | 42 |
 | Rotas filhas cobertas por hubs | 72 |

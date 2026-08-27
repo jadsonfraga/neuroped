@@ -2,7 +2,7 @@
   "summary": {
     "page_files": 156,
     "route_entries": 153,
-    "navigation_items": 84,
+    "navigation_items": 82,
     "sensitive_routes": 34,
     "public_route_literals": 42,
     "hub_owned_routes": 72,
@@ -777,28 +777,12 @@
   ],
   "navigation_items": [
     {
-      "href": "/nesplora",
-      "label": "Nesplora"
+      "href": "/agenda",
+      "label": "Agenda"
     },
     {
-      "href": "/eletroencefalograma",
-      "label": "EEG & Vídeo-EEG"
-    },
-    {
-      "href": "/filtro",
-      "label": "Filtro de Escalas"
-    },
-    {
-      "href": "/marcacao",
-      "label": "Marcação · Secretaria IA"
-    },
-    {
-      "href": "/conecta",
-      "label": "NeuroPed Conecta"
-    },
-    {
-      "href": "/servicos-clinica",
-      "label": "Serviços da Clínica"
+      "href": "/pacientes",
+      "label": "Pacientes"
     },
     {
       "href": "/",
@@ -806,23 +790,7 @@
     },
     {
       "href": "/explorar",
-      "label": "Explorar tudo"
-    },
-    {
-      "href": "/agenda",
-      "label": "Agenda"
-    },
-    {
-      "href": "/pacientes",
-      "label": "Pacientes / Prontuário"
-    },
-    {
-      "href": "/memoria-clinica",
-      "label": "Memória clínica"
-    },
-    {
-      "href": "/prontuario",
-      "label": "Prontuário clínico"
+      "label": "Todos os recursos"
     },
     {
       "href": "/recepcao",
@@ -837,8 +805,8 @@
       "label": "Pré-retorno"
     },
     {
-      "href": "/neuroacompanhamento",
-      "label": "NeuroAcompanhamento"
+      "href": "/memoria-clinica",
+      "label": "Memória clínica"
     },
     {
       "href": "/diario-escola",
@@ -853,68 +821,20 @@
       "label": "Neuropsicologia"
     },
     {
-      "href": "/servicos-clinica",
-      "label": "Serviços da Clínica"
-    },
-    {
-      "href": "/manus",
-      "label": "Integrações Manus"
-    },
-    {
-      "href": "/laudo-neuroped",
-      "label": "Laudos neuropediátricos"
-    },
-    {
-      "href": "/laudo-super",
-      "label": "Laudo SuperNeuroPed"
-    },
-    {
-      "href": "/receita-c1",
-      "label": "Receita C1"
-    },
-    {
-      "href": "/receita-c1-express",
-      "label": "Receita C1 Express"
-    },
-    {
-      "href": "/documentos",
-      "label": "Documentos clínicos"
-    },
-    {
-      "href": "/assinatura-digital",
-      "label": "Assinatura digital"
-    },
-    {
-      "href": "/satisfacao-medicacao",
-      "label": "Satisfação com medicação"
-    },
-    {
-      "href": "/plano-terapeutico",
-      "label": "Plano terapêutico"
-    },
-    {
-      "href": "/plano-intervencao",
-      "label": "Plano de intervenção"
-    },
-    {
-      "href": "/fichas-registro",
-      "label": "Fichas de registro"
-    },
-    {
-      "href": "/fluxograma",
-      "label": "Fluxograma Clínico"
+      "href": "/filtro",
+      "label": "Encontrar uma escala"
     },
     {
       "href": "/filtro-escalas",
       "label": "Triar sem cadastrar"
     },
     {
-      "href": "/bateria-jadson",
-      "label": "Bateria Jadson"
+      "href": "/assistente-clinico",
+      "label": "Assistente clínico"
     },
     {
-      "href": "/assistente-clinico",
-      "label": "Assistente clínico inteligente"
+      "href": "/bateria-jadson",
+      "label": "Bateria Jadson"
     },
     {
       "href": "/pac",
@@ -973,6 +893,54 @@
       "label": "Acadêmico interativo"
     },
     {
+      "href": "/prontuario",
+      "label": "Prontuário clínico"
+    },
+    {
+      "href": "/laudo-neuroped",
+      "label": "Laudos neuropediátricos"
+    },
+    {
+      "href": "/laudo-super",
+      "label": "Laudo SuperNeuroPed"
+    },
+    {
+      "href": "/receita-c1",
+      "label": "Receita C1"
+    },
+    {
+      "href": "/receita-c1-express",
+      "label": "Receita C1 Express"
+    },
+    {
+      "href": "/documentos",
+      "label": "Documentos clínicos"
+    },
+    {
+      "href": "/assinatura-digital",
+      "label": "Assinatura digital"
+    },
+    {
+      "href": "/satisfacao-medicacao",
+      "label": "Satisfação com medicação"
+    },
+    {
+      "href": "/plano-terapeutico",
+      "label": "Plano terapêutico"
+    },
+    {
+      "href": "/plano-intervencao",
+      "label": "Plano de intervenção"
+    },
+    {
+      "href": "/fichas-registro",
+      "label": "Fichas de registro"
+    },
+    {
+      "href": "/neuroacompanhamento",
+      "label": "NeuroAcompanhamento"
+    },
+    {
       "href": "/medicamentos",
       "label": "Medicamentos"
     },
@@ -1005,10 +973,6 @@
       "label": "Inventários escolares"
     },
     {
-      "href": "/conecta",
-      "label": "NeuroPed Conecta"
-    },
-    {
       "href": "/instrumentos-padronizados",
       "label": "Instrumentos padronizados"
     },
@@ -1019,6 +983,10 @@
     {
       "href": "/fluxogramas",
       "label": "Fluxogramas"
+    },
+    {
+      "href": "/fluxograma",
+      "label": "Fluxograma clínico"
     },
     {
       "href": "/marcos-desenvolvimento",
@@ -1049,16 +1017,36 @@
       "label": "Orientação parental"
     },
     {
+      "href": "/nesplora",
+      "label": "Nesplora"
+    },
+    {
+      "href": "/eletroencefalograma",
+      "label": "EEG & Vídeo-EEG"
+    },
+    {
+      "href": "/marcacao",
+      "label": "Marcação · Secretaria IA"
+    },
+    {
+      "href": "/conecta",
+      "label": "NeuroPed Conecta"
+    },
+    {
+      "href": "/servicos-clinica",
+      "label": "Serviços da Clínica"
+    },
+    {
+      "href": "/manus",
+      "label": "Integrações Manus"
+    },
+    {
       "href": "/brincando-e-aprendendo",
       "label": "Brincando e Aprendendo"
     },
     {
       "href": "/missao-saude",
       "label": "Missão Saúde"
-    },
-    {
-      "href": "/portal-familia/acesso",
-      "label": "Política de acesso"
     },
     {
       "href": "/familia",
@@ -1071,6 +1059,10 @@
     {
       "href": "/portal-familia/novidades",
       "label": "Novidades do portal"
+    },
+    {
+      "href": "/portal-familia/acesso",
+      "label": "Política de acesso"
     },
     {
       "href": "/agendar",

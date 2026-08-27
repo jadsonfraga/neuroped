@@ -48,24 +48,25 @@ function itemMatchesQuery(item: NavItem, query: string): boolean {
 }
 
 const sectionDescriptions: Record<string, string> = {
-  CLÍNICA: "Atendimento, agenda, pacientes e operação diária do consultório.",
-  "LAUDOS E RECEITAS":
-    "Documentos, laudos, prescrições e assinatura para fechar o ciclo clínico.",
-  "TRIAGEM E FERRAMENTAS":
-    "Instrumentos, filtros e experiências para conduzir a avaliação.",
-  "ACOMPANHAMENTO CLÍNICO":
-    "Medicamentos, diários e indicadores que acompanham a evolução.",
+  "TRABALHO DE HOJE":
+    "Agenda, pacientes, fila e contexto para conduzir o atendimento sem perder o fio.",
+  AVALIAR:
+    "Encontre o instrumento certo e conduza triagens, baterias e testes com clareza.",
+  DOCUMENTAR:
+    "Transforme o raciocínio clínico em laudos, receitas, planos, fichas e documentos.",
+  ACOMPANHAR:
+    "Monitore tratamento, sintomas, diários e evolução ao longo do tempo.",
   REFERÊNCIA:
-    "Biblioteca de consulta rápida para apoiar decisões e orientações.",
+    "Biblioteca de consulta rápida para apoiar decisões, orientações e desenvolvimento.",
   "PORTAIS E SUPORTE":
-    "Experiências públicas, família, ajuda, acessibilidade e suporte.",
+    "Família, secretaria, experiências públicas, integração e ajuda.",
 };
 
 const sectionIcons: Record<string, typeof Grid2X2> = {
-  CLÍNICA: Stethoscope,
-  "LAUDOS E RECEITAS": FileText,
-  "TRIAGEM E FERRAMENTAS": Sparkles,
-  "ACOMPANHAMENTO CLÍNICO": Calendar,
+  "TRABALHO DE HOJE": Stethoscope,
+  AVALIAR: Sparkles,
+  DOCUMENTAR: FileText,
+  ACOMPANHAR: Calendar,
   REFERÊNCIA: BookOpen,
   "PORTAIS E SUPORTE": Grid2X2,
 };
@@ -238,7 +239,10 @@ export default function ExplorarPage() {
       title: "DESTAQUES",
       items: featuredNavigation.filter((item) => item.href !== "/nesplora/"),
     };
-    return [highlights, ...navSections];
+    return [
+      highlights,
+      ...navSections.filter((section) => section.title.trim().length > 0),
+    ];
   }, []);
   const destinations = useMemo(
     () => uniqueItems(sections.flatMap((section) => section.items)),

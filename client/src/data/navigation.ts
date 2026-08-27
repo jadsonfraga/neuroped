@@ -41,6 +41,8 @@ export interface NavItem {
   icon: LucideIcon;
   tone?: NavTone;
   description?: string;
+  /** Mantém o recurso no catálogo e na busca, sem ocupar a primeira camada da sidebar. */
+  sidebar?: boolean;
 }
 
 export interface NavSection {
@@ -54,58 +56,30 @@ export interface NavigationMatch {
 }
 
 /**
- * Atalhos que ficam no topo do shell clínico. São os destinos de uso mais
- * frequente e as conexões institucionais que não devem se perder no catálogo.
+ * Dois atalhos de alta frequência. O restante continua acessível nos grupos
+ * e no catálogo, mas não compete com o trabalho que começa todos os dias.
  */
 export const featuredNavigation: NavItem[] = [
   {
-    href: "/nesplora/",
-    label: "Nesplora",
-    icon: Brain,
-    tone: "golden",
-    description: "Experiência imersiva em VR",
-  },
-  {
-    href: "/eletroencefalograma",
-    label: "EEG & Vídeo-EEG",
-    icon: Waves,
-    tone: "golden",
-    description: "Exames e orientação clínica",
-  },
-  {
-    href: "/filtro",
-    label: "Filtro de Escalas",
-    icon: Filter,
-    tone: "golden",
-    description: "Por idade e queixa",
-  },
-  {
-    href: "/marcacao",
-    label: "Marcação · Secretaria IA",
+    href: "/agenda",
+    label: "Agenda",
     icon: Calendar,
-    tone: "golden",
-    description: "Agendamento e contato",
+    tone: "priority",
+    description: "Hoje, fila e compromissos",
   },
   {
-    href: "/conecta",
-    label: "NeuroPed Conecta",
-    icon: Activity,
-    tone: "golden",
-    description: "Portais e conexões",
-  },
-  {
-    href: "/servicos-clinica",
-    label: "Serviços da Clínica",
-    icon: Stethoscope,
-    tone: "golden",
-    description: "Avaliações e serviços",
+    href: "/pacientes",
+    label: "Pacientes",
+    icon: Users,
+    tone: "priority",
+    description: "Busca e prontuários",
   },
 ];
 
 /**
- * A sidebar apresenta módulos e famílias de ferramentas. As escalas e testes
- * individuais continuam acessíveis pelas próprias rotas e pelo Filtro de
- * Escalas, mas não ocupam mais a navegação estrutural um a um.
+ * Primeiro nível da informação. Os nomes respondem ao que a pessoa veio fazer,
+ * não à tecnologia que implementa a função. Destinos raros entram nos mesmos
+ * hubs e continuam encontráveis pela busca global e pelo catálogo completo.
  */
 export const navSections: NavSection[] = [
   {
@@ -114,7 +88,7 @@ export const navSections: NavSection[] = [
       { href: "/", label: "Início", icon: Home },
       {
         href: "/explorar",
-        label: "Explorar tudo",
+        label: "Todos os recursos",
         icon: Grid2X2,
         tone: "golden",
         description: "Catálogo completo do NeuroPed",
@@ -122,30 +96,12 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: "CLÍNICA",
+    title: "TRABALHO DE HOJE",
     items: [
-      { href: "/agenda", label: "Agenda", icon: Calendar, tone: "priority" },
-      {
-        href: "/pacientes",
-        label: "Pacientes / Prontuário",
-        icon: Users,
-        tone: "priority",
-      },
-      { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
-      {
-        href: "/prontuario",
-        label: "Prontuário clínico",
-        icon: ClipboardList,
-        tone: "priority",
-      },
       { href: "/recepcao", label: "Recepção e fila", icon: Users },
       { href: "/pre-consulta", label: "Pré-consulta", icon: ClipboardCheck },
       { href: "/pre-retorno", label: "Pré-retorno", icon: ClipboardCheck },
-      {
-        href: "/neuroacompanhamento",
-        label: "NeuroAcompanhamento",
-        icon: Baby,
-      },
+      { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
       { href: "/diario-escola", label: "Diário escolar", icon: ClipboardList },
       {
         href: "/avaliacao-multiprofissional",
@@ -153,18 +109,113 @@ export const navSections: NavSection[] = [
         icon: ClipboardCheck,
       },
       { href: "/neuropsicologia", label: "Neuropsicologia", icon: BrainCog },
-      {
-        href: "/servicos-clinica",
-        label: "Serviços da Clínica",
-        icon: Stethoscope,
-        tone: "golden",
-      },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
   },
   {
-    title: "LAUDOS E RECEITAS",
+    title: "AVALIAR",
     items: [
+      {
+        href: "/filtro",
+        label: "Encontrar uma escala",
+        icon: Filter,
+        tone: "golden",
+        description: "Por idade, queixa e objetivo",
+      },
+      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter },
+      {
+        href: "/assistente-clinico",
+        label: "Assistente clínico",
+        icon: Sparkles,
+        tone: "golden",
+        description: "Monte uma bateria orientada",
+      },
+      {
+        href: "/bateria-jadson",
+        label: "Bateria Jadson",
+        icon: ClipboardCheck,
+      },
+      { href: "/pac", label: "PAC", icon: Brain, sidebar: false },
+      {
+        href: "/inventarios-auto",
+        label: "Autoavaliação",
+        icon: ClipboardList,
+        sidebar: false,
+      },
+      {
+        href: "/ahsd-tea",
+        label: "AH/SD × TEA",
+        icon: Sparkles,
+        sidebar: false,
+      },
+      {
+        href: "/psiquiatria",
+        label: "Guia psiquiátrico",
+        icon: BrainCog,
+        sidebar: false,
+      },
+      {
+        href: "/testes-diretos",
+        label: "Testes por faixa etária",
+        icon: ClipboardCheck,
+      },
+      { href: "/cognitive-lab", label: "Cognitive Lab", icon: BrainCog },
+      {
+        href: "/avaliacao-cognitiva-infantil",
+        label: "Avaliação cognitiva infantil",
+        icon: Brain,
+      },
+      {
+        href: "/caa",
+        label: "CAA · Vou Falar",
+        icon: MessageCircle,
+        sidebar: false,
+      },
+      {
+        href: "/escalas-neuropsiquiatria",
+        label: "Escalas de neuropsiquiatria",
+        icon: BrainCog,
+        sidebar: false,
+      },
+      {
+        href: "/tea-checklists",
+        label: "Checklists TEA",
+        icon: ClipboardCheck,
+      },
+      {
+        href: "/testes-academicos",
+        label: "Testes acadêmicos",
+        icon: BookOpen,
+        sidebar: false,
+      },
+      {
+        href: "/pdae",
+        label: "PDAE-NEXUS escolar",
+        icon: BookOpen,
+        sidebar: false,
+      },
+      {
+        href: "/testes-reconhecimento",
+        label: "Reconhecimento visual",
+        icon: Sparkles,
+        sidebar: false,
+      },
+      {
+        href: "/academico-interativo",
+        label: "Acadêmico interativo",
+        icon: Brain,
+        sidebar: false,
+      },
+    ],
+  },
+  {
+    title: "DOCUMENTAR",
+    items: [
+      {
+        href: "/prontuario",
+        label: "Prontuário clínico",
+        icon: ClipboardList,
+        tone: "priority",
+      },
       {
         href: "/laudo-neuroped",
         label: "Laudos neuropediátricos",
@@ -183,12 +234,7 @@ export const navSections: NavSection[] = [
         icon: Pill,
         tone: "priority",
       },
-      {
-        href: "/receita-c1-express",
-        label: "Receita C1 Express",
-        icon: Pill,
-        tone: "priority",
-      },
+      { href: "/receita-c1-express", label: "Receita C1 Express", icon: Pill },
       {
         href: "/documentos",
         label: "Documentos clínicos",
@@ -204,11 +250,7 @@ export const navSections: NavSection[] = [
         label: "Satisfação com medicação",
         icon: HeartPulse,
       },
-      {
-        href: "/plano-terapeutico",
-        label: "Plano terapêutico",
-        icon: Target,
-      },
+      { href: "/plano-terapeutico", label: "Plano terapêutico", icon: Target },
       {
         href: "/plano-intervencao",
         label: "Plano de intervenção",
@@ -222,76 +264,13 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: "TRIAGEM E FERRAMENTAS",
+    title: "ACOMPANHAR",
     items: [
-      { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
-      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter },
       {
-        href: "/bateria-jadson",
-        label: "Bateria Jadson",
-        icon: ClipboardCheck,
+        href: "/neuroacompanhamento",
+        label: "NeuroAcompanhamento",
+        icon: Baby,
       },
-      {
-        href: "/assistente-clinico",
-        label: "Assistente clínico inteligente",
-        icon: Sparkles,
-        description: "Monte baterias por contexto e tempo",
-      },
-      { href: "/pac", label: "PAC", icon: Brain },
-      {
-        href: "/inventarios-auto",
-        label: "Autoavaliação",
-        icon: ClipboardList,
-      },
-      { href: "/ahsd-tea", label: "AH/SD × TEA", icon: Sparkles },
-      { href: "/psiquiatria", label: "Guia psiquiátrico", icon: BrainCog },
-      {
-        href: "/testes-diretos",
-        label: "Testes por faixa etária",
-        icon: ClipboardCheck,
-      },
-      { href: "/cognitive-lab", label: "Cognitive Lab", icon: BrainCog },
-      {
-        href: "/avaliacao-cognitiva-infantil",
-        label: "Avaliação cognitiva infantil",
-        icon: Brain,
-      },
-      { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
-      {
-        href: "/escalas-neuropsiquiatria",
-        label: "Escalas de neuropsiquiatria",
-        icon: BrainCog,
-      },
-      {
-        href: "/tea-checklists",
-        label: "Checklists TEA",
-        icon: ClipboardCheck,
-      },
-      {
-        href: "/testes-academicos",
-        label: "Testes acadêmicos",
-        icon: BookOpen,
-      },
-      {
-        href: "/pdae",
-        label: "PDAE-NEXUS escolar",
-        icon: BookOpen,
-      },
-      {
-        href: "/testes-reconhecimento",
-        label: "Reconhecimento visual",
-        icon: Sparkles,
-      },
-      {
-        href: "/academico-interativo",
-        label: "Acadêmico interativo",
-        icon: Brain,
-      },
-    ],
-  },
-  {
-    title: "ACOMPANHAMENTO CLÍNICO",
-    items: [
       {
         href: "/medicamentos",
         label: "Medicamentos",
@@ -317,12 +296,6 @@ export const navSections: NavSection[] = [
         label: "Inventários escolares",
         icon: ClipboardList,
       },
-      {
-        href: "/conecta",
-        label: "NeuroPed Conecta",
-        icon: Activity,
-        tone: "golden",
-      },
     ],
   },
   {
@@ -339,6 +312,7 @@ export const navSections: NavSection[] = [
         icon: ListChecks,
       },
       { href: "/fluxogramas", label: "Fluxogramas", icon: Brain },
+      { href: "/fluxograma", label: "Fluxograma clínico", icon: Brain },
       {
         href: "/marcos-desenvolvimento",
         label: "Marcos do desenvolvimento",
@@ -368,22 +342,49 @@ export const navSections: NavSection[] = [
     title: "PORTAIS E SUPORTE",
     items: [
       {
+        href: "/nesplora/",
+        label: "Nesplora",
+        icon: Brain,
+        tone: "golden",
+        description: "Experiência imersiva em VR",
+      },
+      {
+        href: "/eletroencefalograma",
+        label: "EEG & Vídeo-EEG",
+        icon: Waves,
+        tone: "golden",
+        description: "Exames e orientação clínica",
+      },
+      { href: "/marcacao", label: "Marcação · Secretaria IA", icon: Calendar },
+      {
+        href: "/conecta",
+        label: "NeuroPed Conecta",
+        icon: Activity,
+        tone: "connection",
+      },
+      {
+        href: "/servicos-clinica",
+        label: "Serviços da Clínica",
+        icon: Stethoscope,
+      },
+      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
+      {
         href: "/brincando-e-aprendendo",
         label: "Brincando e Aprendendo",
         icon: Sparkles,
       },
       { href: "/missao-saude", label: "Missão Saúde", icon: HeartPulse },
-      {
-        href: "/portal-familia/acesso",
-        label: "Política de acesso",
-        icon: KeyRound,
-      },
       { href: "/familia", label: "Área da família", icon: HeartPulse },
       { href: "/portal-familia", label: "Portal da família", icon: Users },
       {
         href: "/portal-familia/novidades",
         label: "Novidades do portal",
         icon: Sparkles,
+      },
+      {
+        href: "/portal-familia/acesso",
+        label: "Política de acesso",
+        icon: KeyRound,
       },
       { href: "/agendar", label: "Autoagendamento", icon: Calendar },
       {
@@ -404,12 +405,10 @@ export const navSections: NavSection[] = [
 ];
 
 const featuredSection: NavSection = {
-  title: "DESTAQUES",
+  title: "ATALHOS",
   items: featuredNavigation,
 };
 const allNavigationSections = [featuredSection, ...navSections];
-
-/** Destinos estáticos não devem ser enviados para o roteador hash da SPA. */
 const staticExternalNavigationRoutes = new Set(["/nesplora/"]);
 
 export const navigablePages = Array.from(
@@ -435,10 +434,6 @@ function matchesNavigationItem(pathname: string, href: string): boolean {
   return path === normalizedHref || path.startsWith(`${normalizedHref}/`);
 }
 
-/**
- * Rotas de instrumentos individuais continuam profundas para links salvos e
- * favoritos, mas aparecem semanticamente como parte do Filtro de Escalas.
- */
 const filterOwnedRoutes = new Set([
   "/mchat",
   "/cars",
@@ -459,11 +454,6 @@ const filterOwnedRoutes = new Set([
   "/gmfcs",
   "/cshq",
   "/ygtss",
-  "/crafft",
-  "/pedsql",
-  "/psc17",
-  "/gad7",
-  "/aq10",
   "/tea",
   "/tea-comportamentos",
   "/emdi",
@@ -477,14 +467,36 @@ const filterOwnedRoutes = new Set([
   "/ems",
   "/etare",
   "/eaah",
-  "/testes-academicos",
+  "/tde2",
   "/escrita-desenho",
   "/conhecimento-visual",
   "/testes-reconhecimento",
   "/motricidade-teste",
   "/conhecimentos-gerais",
-  "/tde2",
+  "/psc17",
+  "/gad7",
+  "/aq10",
+  "/aq50",
+  "/crafft",
+  "/pedsql",
   "/pant",
+  "/eusm10",
+  "/generic-scale/:id",
+  "/bayley",
+  "/griffiths",
+  "/rcads",
+  "/masc2",
+  "/leiter3",
+  "/nepsy2",
+  "/raven",
+  "/wisc5",
+  "/wppsi",
+  "/pedicat",
+  "/tde",
+  "/confias",
+  "/portage",
+  "/vineland-completo",
+  "/cbcl-interativo",
 ]);
 
 export function findNavigationMatch(
@@ -495,7 +507,6 @@ export function findNavigationMatch(
       .filter((item) => matchesNavigationItem(pathname, item.href))
       .map((item) => ({ section, item })),
   );
-
   const directMatch = matches.sort(
     (a, b) => b.item.href.length - a.item.href.length,
   )[0];
@@ -508,10 +519,8 @@ export function findNavigationMatch(
     );
     if (item) return { section: featuredSection, item };
   }
-
   return undefined;
 }
 
 export const getNavigationMatch = findNavigationMatch;
-
 export { filterOwnedRoutes };

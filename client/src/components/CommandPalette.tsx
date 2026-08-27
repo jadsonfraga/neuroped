@@ -104,7 +104,10 @@ export function CommandPalette() {
   const canOpenAgenda = canRenderClinicalItem("/agenda");
   const canOpenFilter = canRenderClinicalItem("/filtro");
   const patientSearchReady =
-    privateToolsAllowed && canOpenPatients && open && normalizedSearch.length >= 2;
+    privateToolsAllowed &&
+    canOpenPatients &&
+    open &&
+    normalizedSearch.length >= 2;
 
   const patientQuery = useQuery<any>({
     queryKey: [
@@ -228,7 +231,7 @@ export function CommandPalette() {
       <CommandInput
         placeholder={
           privateToolsAllowed
-            ? "Buscar paciente, escala ou página…"
+            ? "Buscar paciente, escala, documento ou página…"
             : "Buscar conteúdo público…"
         }
         value={search}
@@ -237,41 +240,48 @@ export function CommandPalette() {
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
 
-        {privateToolsAllowed && (canOpenPatients || canOpenAgenda || canOpenFilter) && (
-          <CommandGroup heading="Ações rápidas">
-            {canOpenPatients && <CommandItem
-              value="meus pacientes prontuario paciente"
-              onSelect={() => goPage("/pacientes")}
-            >
-              <UsersRound
-                className="mr-2 h-4 w-4 text-muted-foreground"
-                aria-hidden="true"
-              />
-              Meus pacientes
-            </CommandItem>}
-            {canOpenAgenda && <CommandItem
-              value="agenda gestao consultas"
-              onSelect={() => goPage("/agenda")}
-            >
-              <CalendarDays
-                className="mr-2 h-4 w-4 text-muted-foreground"
-                aria-hidden="true"
-              />
-              Agenda & Gestão
-            </CommandItem>}
-            {canOpenFilter && <CommandItem
-              value="filtro clinico escala ideal"
-              onSelect={() => goPage("/filtro")}
-            >
-              <Filter
-                className="mr-2 h-4 w-4 text-muted-foreground"
-                aria-hidden="true"
-              />
-              Filtro Clínico Inteligente
-              <CommandShortcut>Clínica</CommandShortcut>
-            </CommandItem>}
-          </CommandGroup>
-        )}
+        {privateToolsAllowed &&
+          (canOpenPatients || canOpenAgenda || canOpenFilter) && (
+            <CommandGroup heading="Ações rápidas">
+              {canOpenPatients && (
+                <CommandItem
+                  value="meus pacientes prontuario paciente"
+                  onSelect={() => goPage("/pacientes")}
+                >
+                  <UsersRound
+                    className="mr-2 h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  Meus pacientes
+                </CommandItem>
+              )}
+              {canOpenAgenda && (
+                <CommandItem
+                  value="agenda gestao consultas"
+                  onSelect={() => goPage("/agenda")}
+                >
+                  <CalendarDays
+                    className="mr-2 h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  Agenda & Gestão
+                </CommandItem>
+              )}
+              {canOpenFilter && (
+                <CommandItem
+                  value="filtro clinico escala ideal"
+                  onSelect={() => goPage("/filtro")}
+                >
+                  <Filter
+                    className="mr-2 h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  Filtro Clínico Inteligente
+                  <CommandShortcut>Clínica</CommandShortcut>
+                </CommandItem>
+              )}
+            </CommandGroup>
+          )}
 
         {patientSearchReady &&
           patientQuery.isFetching &&
@@ -357,7 +367,8 @@ export function CommandPalette() {
 
         <CommandGroup heading="Páginas">
           {visiblePages.map((page) => {
-            const locked = !isPublicRoute(page.href) && !canRenderClinicalItem(page.href);
+            const locked =
+              !isPublicRoute(page.href) && !canRenderClinicalItem(page.href);
             return (
               <CommandItem
                 key={`page-${page.href}`}
