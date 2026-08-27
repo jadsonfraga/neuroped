@@ -175,6 +175,16 @@ assert.doesNotMatch(
 );
 
 const cloudflareWorkflow = read(".github/workflows/deploy-cloudflare.yml");
+assert.match(
+  cloudflareWorkflow,
+  /- name: Configurar Node\.js 24[\s\S]*?node-version: ["']24["']/,
+  "o workflow deve declarar a mesma versão do Node.js que configura",
+);
+assert.doesNotMatch(
+  cloudflareWorkflow,
+  /- name: Configurar Node\.js 20/,
+  "o rótulo legado Node.js 20 não pode reaparecer no deploy",
+);
 assert.match(cloudflareWorkflow, /denied_ok=0/);
 assert.match(
   cloudflareWorkflow,
