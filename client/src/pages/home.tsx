@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   ArrowUpRight,
+  Brain,
   ClipboardCheck,
   Clock3,
   Compass,
@@ -60,18 +61,28 @@ const clinicalFlows: ClinicalFlow[] = [
     href: "/avaliacao-cognitiva-infantil",
     title: "Avaliação Cognitiva Infantil",
     subtitle:
-      "Triagem lúdica por faixa etária: visual, leitura, escrita e aritmética.",
-    action: "Abrir avaliação",
-    useCase: "Triagem 2–19 anos",
+      "Experiência original de triagem por faixa etária e domínio escolar.",
+    action: "Abrir avaliação original",
+    useCase: "Experiência legada",
     icon: ClipboardCheck,
     emphasis: "blue",
+  },
+  {
+    href: "/nova-avaliacao-cognitiva",
+    title: "Nova avaliação cognitiva",
+    subtitle:
+      "Bateria pedagógica guiada em até 15 minutos, com contexto e resumo.",
+    action: "Iniciar nova bateria",
+    useCase: "Pré-consulta 2–19 anos",
+    icon: Brain,
+    emphasis: "primary",
   },
   {
     href: "/testes-reconhecimento",
     title: "Reconhecimento Visual Infantil",
     subtitle:
-      "Triagem lúdica com frutas, transportes, corpo e conhecimentos gerais.",
-    action: "Iniciar teste visual",
+      "Experiência original separada para reconhecimento visual e conhecimentos gerais.",
+    action: "Iniciar teste visual original",
     useCase: "1–5 anos",
     icon: Eye,
     emphasis: "gold",

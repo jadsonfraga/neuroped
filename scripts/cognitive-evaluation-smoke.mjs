@@ -8,7 +8,7 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const pageErrors = [];
 page.on("pageerror", (error) => pageErrors.push(error.message));
-await page.goto("http://localhost:5173/#/avaliacao-cognitiva-infantil", {
+await page.goto("http://localhost:5173/#/nova-avaliacao-cognitiva", {
   waitUntil: "domcontentloaded",
 });
 await page.waitForTimeout(1200);
@@ -22,7 +22,7 @@ await page.evaluate(() => {
 });
 const beforeStart = {
   title: await page
-    .getByRole("heading", { name: "Mapa de aprendizagem escolar" })
+    .getByRole("heading", { name: "Nova avaliação cognitiva" })
     .count(),
   age: await page.locator("#idade-av").count(),
   stage: await page.getByRole("combobox", { name: "Etapa escolar" }).count(),

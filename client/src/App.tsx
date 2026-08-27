@@ -24,17 +24,23 @@ import NotFound from "@/pages/not-found";
 // O shell reúne ícones, menu longo e animações. Carregá-lo junto à rota ativa
 // preserva o primeiro frame e mantém o catálogo clínico fora do entrypoint.
 const Layout = lazy(() =>
-  import("@/components/Layout").then(({ Layout: Component }) => ({ default: Component })),
+  import("@/components/Layout").then(({ Layout: Component }) => ({
+    default: Component,
+  })),
 );
 const PageTransition = lazy(() =>
-  import("@/components/PageTransition").then(({ PageTransition: Component }) => ({
-    default: Component,
-  })),
+  import("@/components/PageTransition").then(
+    ({ PageTransition: Component }) => ({
+      default: Component,
+    }),
+  ),
 );
 const MotionPreferences = lazy(() =>
-  import("@/components/MotionPreferences").then(({ MotionPreferences: Component }) => ({
-    default: Component,
-  })),
+  import("@/components/MotionPreferences").then(
+    ({ MotionPreferences: Component }) => ({
+      default: Component,
+    }),
+  ),
 );
 // Fluxos de exceção (login/sessão/LGPD) saem da carga inicial: raramente são a
 // primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
@@ -48,7 +54,9 @@ const PreferencesPanel = lazy(() =>
 );
 
 const HomePage = lazy(() => import("@/pages/home"));
-const BrincandoAprendendoPage = lazy(() => import("@/pages/brincando-e-aprendendo"));
+const BrincandoAprendendoPage = lazy(
+  () => import("@/pages/brincando-e-aprendendo"),
+);
 const MissaoSaudePage = lazy(() => import("@/pages/missao-saude"));
 const SplashScreen = lazy(() =>
   import("@/components/SplashScreen").then(({ SplashScreen }) => ({
@@ -79,7 +87,9 @@ const GmfcsPage = lazy(() => import("@/pages/gmfcs"));
 const CshqPage = lazy(() => import("@/pages/cshq"));
 const YgtssPage = lazy(() => import("@/pages/ygtss"));
 const EpilepsyDiaryPage = lazy(() => import("@/pages/epilepsy-diary"));
-const NeuropedAcompanhamentoPage = lazy(() => import("@/pages/neuroped-acompanhamento"));
+const NeuropedAcompanhamentoPage = lazy(
+  () => import("@/pages/neuroped-acompanhamento"),
+);
 const HeadacheCalendarPage = lazy(() => import("@/pages/headache-calendar"));
 const TeaPage = lazy(() => import("@/pages/tea"));
 const TeaBehaviorsPage = lazy(() => import("@/pages/tea-behaviors"));
@@ -106,7 +116,9 @@ const DiarioSonoPage = lazy(() => import("@/pages/diario-sono"));
 const DiarioAlimentarPage = lazy(() => import("@/pages/diario-alimentar"));
 const SobrePage = lazy(() => import("@/pages/sobre"));
 const ServicosClinicaPage = lazy(() => import("@/pages/servicos-clinica"));
-const EletroencefalogramaPage = lazy(() => import("@/pages/eletroencefalograma"));
+const EletroencefalogramaPage = lazy(
+  () => import("@/pages/eletroencefalograma"),
+);
 const TermosPage = lazy(() => import("@/pages/termos"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
@@ -121,6 +133,9 @@ const CognitiveLabPage = lazy(() => import("@/pages/cognitive-lab"));
 const CognitiveTaskPage = lazy(() => import("@/pages/cognitive-task"));
 const AvaliacaoCognitivaInfantilPage = lazy(
   () => import("@/pages/avaliacao-cognitiva-infantil"),
+);
+const NovaAvaliacaoCognitivaPage = lazy(
+  () => import("@/pages/nova-avaliacao-cognitiva"),
 );
 const AcademicoInterativoPage = lazy(
   () => import("@/pages/academico-interativo"),
@@ -240,9 +255,11 @@ const WelcomeTour = lazy(() =>
   })),
 );
 const AmbientEffects = lazy(() =>
-  import("@/components/AmbientEffects").then(({ AmbientEffects: Component }) => ({
-    default: Component,
-  })),
+  import("@/components/AmbientEffects").then(
+    ({ AmbientEffects: Component }) => ({
+      default: Component,
+    }),
+  ),
 );
 const InstallPrompt = lazy(() =>
   import("@/components/InstallPrompt").then(({ InstallPrompt: Component }) => ({
@@ -288,7 +305,10 @@ function AppRouter() {
     return (
       <Suspense fallback={<LoadingSpinner />}>
         <Switch>
-          <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
+          <Route
+            path="/brincando-e-aprendendo"
+            component={BrincandoAprendendoPage}
+          />
         </Switch>
       </Suspense>
     );
@@ -333,287 +353,330 @@ function AppRouter() {
         <Suspense fallback={<LoadingSpinner />}>
           <RouteGuard>
             <PageTransition>
-          <Switch>
-            <Route path="/login" component={LoginPage} />
-            <Route path="/sessao-expirada" component={SessionExpiredPage} />
-            <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
+              <Switch>
+                <Route path="/login" component={LoginPage} />
+                <Route path="/sessao-expirada" component={SessionExpiredPage} />
+                <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
-            <Route path="/" component={HomePage} />
-            <Route path="/explorar" component={ExplorarPage} />
-            <Route path="/mchat" component={MchatPage} />
-            <Route path="/cars" component={CarsPage} />
-            <Route path="/snap" component={SnapPage} />
-            <Route path="/denver" component={DenverPage} />
-            <Route path="/sdq" component={SdqPage} />
-            <Route path="/scared" component={ScaredPage} />
-            <Route path="/conners" component={ConnersPage} />
-            <Route path="/vineland" component={VinelandPage} />
-            <Route path="/pant" component={PantPage} />
-            <Route path="/fluxograma" component={FluxogramaPage} />
-            <Route path="/cdi2" component={Cdi2Page} />
-            <Route path="/phqa" component={PhqaPage} />
-            <Route path="/cssrs" component={CssrsPage} />
-            <Route path="/crafft" component={CrafftPage} />
-            <Route path="/cbcl" component={CbclPage} />
-            <Route path="/vanderbilt" component={VanderbiltPage} />
-            <Route path="/brief2" component={Brief2Page} />
-            <Route path="/abc" component={AbcPage} />
-            <Route path="/asq3" component={Asq3Page} />
-            <Route path="/pedsql" component={PedsqlPage} />
-            <Route path="/gmfcs" component={GmfcsPage} />
-            <Route path="/cshq" component={CshqPage} />
-            <Route path="/ygtss" component={YgtssPage} />
-            <Route path="/epilepsia" component={EpilepsyDiaryPage} />
-            <Route path="/neuroacompanhamento" component={NeuropedAcompanhamentoPage} />
-            <Route path="/cefaleia" component={HeadacheCalendarPage} />
-            <Route path="/tea" component={TeaPage} />
-            <Route path="/tea-comportamentos" component={TeaBehaviorsPage} />
-            <Route path="/psiquiatria" component={PsiquiatriaGuiaPage} />
-            <Route path="/bateria-jadson" component={BateriaJadsonPage} />
-            <Route path="/emdi" component={EmdiPage} />
-            <Route path="/eaf" component={EafPage} />
-            <Route path="/ecsm" component={EcsmPage} />
-            <Route path="/ips" component={IpsPage} />
-            <Route path="/ecar-si" component={EcarSiPage} />
-            <Route path="/edi" component={EdiPage} />
-            <Route path="/eai" component={EaiPage} />
-            <Route path="/easi" component={EasiPage} />
-            <Route path="/ems" component={EmsPage} />
-            <Route path="/etare" component={EtarePage} />
-            <Route path="/eaah" component={EaahPage} />
-            <Route path="/filtro" component={FiltroPage} />
-            <Route path="/filtro-escalas" component={FiltroPage} />
-            <Route
-              path="/escalas-neuropsiquiatria"
-              component={EscalasNeuropsiquiatriaPage}
-            />
-            <Route path="/caa" component={CaaPage} />
-            <Route path="/diario-sono" component={DiarioSonoPage} />
-            <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
-            <Route path="/sobre" component={SobrePage} />
-            <Route path="/servicos-clinica" component={ServicosClinicaPage} />
-            <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
-            <Route path="/termos" component={TermosPage} />
-            <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
-            <Route path="/pac" component={PacPage} />
-            <Route path="/ahsd-tea" component={AhsdTeaPage} />
-            <Route path="/tde2" component={Tde2Page} />
-            <Route
-              path="/testes-reconhecimento"
-              component={TestesReconhecimentoPage}
-            />
-            <Route path="/testes-academicos" component={TestesAcademicosPage} />
-            <Route path="/testes-diretos" component={TestesDiretosPage} />
-            <Route path="/cognitive-lab" component={CognitiveLabPage} />
-            <Route
-              path="/cognitive-lab/:taskId"
-              component={CognitiveTaskPage}
-            />
-            <Route
-              path="/avaliacao-cognitiva-infantil"
-              component={AvaliacaoCognitivaInfantilPage}
-            />
-            <Route
-              path="/academico-interativo"
-              component={AcademicoInterativoPage}
-            />
-            <Route path="/escrita-desenho" component={EscritaDesenhoPage} />
-            <Route
-              path="/conhecimento-visual"
-              component={ConhecimentoVisualPage}
-            />
-            <Route path="/motricidade-teste" component={MotricidadeTestePage} />
-            <Route
-              path="/conhecimentos-gerais"
-              component={ConhecimentosGeraisPage}
-            />
-            <Route
-              path="/funcoes-executivas"
-              component={FuncoesExecutivasPage}
-            />
-            <Route
-              path="/atencao-concentracao"
-              component={AtencaoConcentracaoPage}
-            />
-            <Route
-              path="/linguagem-fonologia"
-              component={LinguagemFonologiaPage}
-            />
-            <Route path="/memoria-teste" component={MemoriaTestePage} />
-            <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
-            <Route
-              path="/processamento-visuoauditivo"
-              component={ProcessamentoVisuoauditivoPage}
-            />
-            <Route path="/inventarios-auto" component={InventariosAutoPage} />
-            <Route path="/ajuda" component={AjudaPage} />
-            <Route
-              path="/curvas-crescimento"
-              component={CurvasCrescimentoPage}
-            />
-            <Route
-              path="/orientacao-parental"
-              component={OrientacaoParentalPage}
-            />
-            <Route path="/psc17" component={Psc17Page} />
-            <Route path="/gad7" component={Gad7Page} />
-            <Route path="/aq10" component={Aq10Page} />
-            <Route path="/aq50" component={Aq50Page} />
-            <Route path="/classificacao/:id" component={ClassificacaoPage} />
-            <Route path="/ballard" component={BallardPage} />
-            <Route
-              path="/biblioteca-instrumentos"
-              component={BibliotecaInstrumentosPage}
-            />
-            <Route path="/espasticidade" component={EspasticidadePage} />
-            <Route path="/classificacoes" component={ClassificacoesPage} />
-            <Route path="/fluxogramas" component={FluxogramasPage} />
-            <Route
-              path="/marcos-desenvolvimento"
-              component={MarcosDesenvolvimentoPage}
-            />
-            <Route
-              path="/valores-referencia"
-              component={ValoresReferenciaPage}
-            />
-            <Route path="/pdae" component={PdaePage} />
+                <Route path="/" component={HomePage} />
+                <Route path="/explorar" component={ExplorarPage} />
+                <Route path="/mchat" component={MchatPage} />
+                <Route path="/cars" component={CarsPage} />
+                <Route path="/snap" component={SnapPage} />
+                <Route path="/denver" component={DenverPage} />
+                <Route path="/sdq" component={SdqPage} />
+                <Route path="/scared" component={ScaredPage} />
+                <Route path="/conners" component={ConnersPage} />
+                <Route path="/vineland" component={VinelandPage} />
+                <Route path="/pant" component={PantPage} />
+                <Route path="/fluxograma" component={FluxogramaPage} />
+                <Route path="/cdi2" component={Cdi2Page} />
+                <Route path="/phqa" component={PhqaPage} />
+                <Route path="/cssrs" component={CssrsPage} />
+                <Route path="/crafft" component={CrafftPage} />
+                <Route path="/cbcl" component={CbclPage} />
+                <Route path="/vanderbilt" component={VanderbiltPage} />
+                <Route path="/brief2" component={Brief2Page} />
+                <Route path="/abc" component={AbcPage} />
+                <Route path="/asq3" component={Asq3Page} />
+                <Route path="/pedsql" component={PedsqlPage} />
+                <Route path="/gmfcs" component={GmfcsPage} />
+                <Route path="/cshq" component={CshqPage} />
+                <Route path="/ygtss" component={YgtssPage} />
+                <Route path="/epilepsia" component={EpilepsyDiaryPage} />
+                <Route
+                  path="/neuroacompanhamento"
+                  component={NeuropedAcompanhamentoPage}
+                />
+                <Route path="/cefaleia" component={HeadacheCalendarPage} />
+                <Route path="/tea" component={TeaPage} />
+                <Route
+                  path="/tea-comportamentos"
+                  component={TeaBehaviorsPage}
+                />
+                <Route path="/psiquiatria" component={PsiquiatriaGuiaPage} />
+                <Route path="/bateria-jadson" component={BateriaJadsonPage} />
+                <Route path="/emdi" component={EmdiPage} />
+                <Route path="/eaf" component={EafPage} />
+                <Route path="/ecsm" component={EcsmPage} />
+                <Route path="/ips" component={IpsPage} />
+                <Route path="/ecar-si" component={EcarSiPage} />
+                <Route path="/edi" component={EdiPage} />
+                <Route path="/eai" component={EaiPage} />
+                <Route path="/easi" component={EasiPage} />
+                <Route path="/ems" component={EmsPage} />
+                <Route path="/etare" component={EtarePage} />
+                <Route path="/eaah" component={EaahPage} />
+                <Route path="/filtro" component={FiltroPage} />
+                <Route path="/filtro-escalas" component={FiltroPage} />
+                <Route
+                  path="/escalas-neuropsiquiatria"
+                  component={EscalasNeuropsiquiatriaPage}
+                />
+                <Route path="/caa" component={CaaPage} />
+                <Route path="/diario-sono" component={DiarioSonoPage} />
+                <Route
+                  path="/diario-alimentar"
+                  component={DiarioAlimentarPage}
+                />
+                <Route path="/sobre" component={SobrePage} />
+                <Route
+                  path="/servicos-clinica"
+                  component={ServicosClinicaPage}
+                />
+                <Route
+                  path="/eletroencefalograma"
+                  component={EletroencefalogramaPage}
+                />
+                <Route path="/termos" component={TermosPage} />
+                <Route
+                  path="/neuropsicologia"
+                  component={NeuropsicologiaPage}
+                />
+                <Route path="/pac" component={PacPage} />
+                <Route path="/ahsd-tea" component={AhsdTeaPage} />
+                <Route path="/tde2" component={Tde2Page} />
+                <Route
+                  path="/testes-reconhecimento"
+                  component={TestesReconhecimentoPage}
+                />
+                <Route
+                  path="/testes-academicos"
+                  component={TestesAcademicosPage}
+                />
+                <Route path="/testes-diretos" component={TestesDiretosPage} />
+                <Route path="/cognitive-lab" component={CognitiveLabPage} />
+                <Route
+                  path="/cognitive-lab/:taskId"
+                  component={CognitiveTaskPage}
+                />
+                <Route
+                  path="/avaliacao-cognitiva-infantil"
+                  component={AvaliacaoCognitivaInfantilPage}
+                />
+                <Route
+                  path="/nova-avaliacao-cognitiva"
+                  component={NovaAvaliacaoCognitivaPage}
+                />
+                <Route
+                  path="/academico-interativo"
+                  component={AcademicoInterativoPage}
+                />
+                <Route path="/escrita-desenho" component={EscritaDesenhoPage} />
+                <Route
+                  path="/conhecimento-visual"
+                  component={ConhecimentoVisualPage}
+                />
+                <Route
+                  path="/motricidade-teste"
+                  component={MotricidadeTestePage}
+                />
+                <Route
+                  path="/conhecimentos-gerais"
+                  component={ConhecimentosGeraisPage}
+                />
+                <Route
+                  path="/funcoes-executivas"
+                  component={FuncoesExecutivasPage}
+                />
+                <Route
+                  path="/atencao-concentracao"
+                  component={AtencaoConcentracaoPage}
+                />
+                <Route
+                  path="/linguagem-fonologia"
+                  component={LinguagemFonologiaPage}
+                />
+                <Route path="/memoria-teste" component={MemoriaTestePage} />
+                <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
+                <Route
+                  path="/processamento-visuoauditivo"
+                  component={ProcessamentoVisuoauditivoPage}
+                />
+                <Route
+                  path="/inventarios-auto"
+                  component={InventariosAutoPage}
+                />
+                <Route path="/ajuda" component={AjudaPage} />
+                <Route
+                  path="/curvas-crescimento"
+                  component={CurvasCrescimentoPage}
+                />
+                <Route
+                  path="/orientacao-parental"
+                  component={OrientacaoParentalPage}
+                />
+                <Route path="/psc17" component={Psc17Page} />
+                <Route path="/gad7" component={Gad7Page} />
+                <Route path="/aq10" component={Aq10Page} />
+                <Route path="/aq50" component={Aq50Page} />
+                <Route
+                  path="/classificacao/:id"
+                  component={ClassificacaoPage}
+                />
+                <Route path="/ballard" component={BallardPage} />
+                <Route
+                  path="/biblioteca-instrumentos"
+                  component={BibliotecaInstrumentosPage}
+                />
+                <Route path="/espasticidade" component={EspasticidadePage} />
+                <Route path="/classificacoes" component={ClassificacoesPage} />
+                <Route path="/fluxogramas" component={FluxogramasPage} />
+                <Route
+                  path="/marcos-desenvolvimento"
+                  component={MarcosDesenvolvimentoPage}
+                />
+                <Route
+                  path="/valores-referencia"
+                  component={ValoresReferenciaPage}
+                />
+                <Route path="/pdae" component={PdaePage} />
 
-            <Route path="/medicamentos" component={MedicamentosPage} />
-            <Route path="/farmacologia" component={FarmacologiaPage} />
-            <Route path="/calculadora-dose" component={CalculadoraDosePage} />
-            <Route path="/eusm10" component={Eusm10Page} />
-            <Route
-              path="/avaliacao-multiprofissional"
-              component={AvaliacaoMultiprofissionalPage}
-            />
-            <Route path="/generic-scale/:id" component={GenericScalePage} />
-            <Route path="/bayley" component={BayleyPage} />
-            <Route path="/griffiths" component={GriffithsPage} />
-            <Route path="/rcads" component={RcadsPage} />
-            <Route path="/masc2" component={Masc2Page} />
-            <Route path="/leiter3" component={Leiter3Page} />
-            <Route path="/nepsy2" component={Nepsy2Page} />
-            <Route path="/raven" component={RavenPage} />
-            <Route path="/wisc5" component={Wisc5Page} />
-            <Route path="/wppsi" component={WppsiPage} />
-            <Route path="/pedicat" component={PedicatPage} />
-            <Route path="/tde" component={TdePage} />
-            <Route path="/confias" component={ConfiasPage} />
-            <Route path="/portage" component={PortagePage} />
-            <Route path="/vineland-completo" component={VinelandCompletePage} />
-            <Route path="/cbcl-interativo" component={CbclInterativoPage} />
+                <Route path="/medicamentos" component={MedicamentosPage} />
+                <Route path="/farmacologia" component={FarmacologiaPage} />
+                <Route
+                  path="/calculadora-dose"
+                  component={CalculadoraDosePage}
+                />
+                <Route path="/eusm10" component={Eusm10Page} />
+                <Route
+                  path="/avaliacao-multiprofissional"
+                  component={AvaliacaoMultiprofissionalPage}
+                />
+                <Route path="/generic-scale/:id" component={GenericScalePage} />
+                <Route path="/bayley" component={BayleyPage} />
+                <Route path="/griffiths" component={GriffithsPage} />
+                <Route path="/rcads" component={RcadsPage} />
+                <Route path="/masc2" component={Masc2Page} />
+                <Route path="/leiter3" component={Leiter3Page} />
+                <Route path="/nepsy2" component={Nepsy2Page} />
+                <Route path="/raven" component={RavenPage} />
+                <Route path="/wisc5" component={Wisc5Page} />
+                <Route path="/wppsi" component={WppsiPage} />
+                <Route path="/pedicat" component={PedicatPage} />
+                <Route path="/tde" component={TdePage} />
+                <Route path="/confias" component={ConfiasPage} />
+                <Route path="/portage" component={PortagePage} />
+                <Route
+                  path="/vineland-completo"
+                  component={VinelandCompletePage}
+                />
+                <Route path="/cbcl-interativo" component={CbclInterativoPage} />
 
-            <Route path="/pre-consulta" component={PreConsultaPage} />
-            <Route path="/pre-retorno" component={PreRetornoPage} />
-            <Route path="/efeitos-colaterais" component={PreRetornoPage} />
-            <Route path="/recepcao">
-              <RouteGuard roles={["admin", "professional", "operator"]}>
-                <RecepcaoPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/prontuario">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ProntuarioPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/manus">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ManusIntegracoesPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/documentos">
-              <RouteGuard roles={["admin", "professional"]}>
-                <DocumentosPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/assinatura-digital">
-              <RouteGuard roles={["admin", "professional"]}>
-                <AssinaturaDigitalPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/satisfacao-medicacao">
-              <RouteGuard roles={["admin", "professional"]}>
-                <SatisfacaoMedicacaoPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/plano-terapeutico">
-              <RouteGuard roles={["admin", "professional"]}>
-                <PlanoTerapeuticoPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/plano-intervencao">
-              <RouteGuard roles={["admin", "professional"]}>
-                <PlanoIntervencaoPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/fichas-registro">
-              <RouteGuard roles={["admin", "professional"]}>
-                <FichasRegistroPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/laudo-neuroped">
-              <RouteGuard roles={["admin", "professional"]}>
-                <LaudoNeuropedPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/laudo-super">
-              <RouteGuard roles={["admin", "professional"]}>
-                <LaudoSuperPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/receita-c1">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ReceitaC1Page />
-              </RouteGuard>
-            </Route>
-            <Route path="/receita-c1-express">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ReceitaC1ExpressPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/verificar" component={VerificarPage} />
-            <Route path="/diario-escola">
-              <RouteGuard roles={["admin", "professional"]}>
-                <DiarioEscolaPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/inventarios-escola">
-              <RouteGuard roles={["admin", "professional"]}>
-                <InventariosEscolaPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/conecta">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ConectaPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/agenda">
-              <RouteGuard roles={["admin", "professional"]}>
-                <AgendaPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/agendar" component={AgendarPage} />
-            <Route path="/marcacao" component={MarcacaoPage} />
+                <Route path="/pre-consulta" component={PreConsultaPage} />
+                <Route path="/pre-retorno" component={PreRetornoPage} />
+                <Route path="/efeitos-colaterais" component={PreRetornoPage} />
+                <Route path="/recepcao">
+                  <RouteGuard roles={["admin", "professional", "operator"]}>
+                    <RecepcaoPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/prontuario">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <ProntuarioPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/manus">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <ManusIntegracoesPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/documentos">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <DocumentosPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/assinatura-digital">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <AssinaturaDigitalPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/satisfacao-medicacao">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <SatisfacaoMedicacaoPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/plano-terapeutico">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <PlanoTerapeuticoPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/plano-intervencao">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <PlanoIntervencaoPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/fichas-registro">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <FichasRegistroPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/laudo-neuroped">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <LaudoNeuropedPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/laudo-super">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <LaudoSuperPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/receita-c1">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <ReceitaC1Page />
+                  </RouteGuard>
+                </Route>
+                <Route path="/receita-c1-express">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <ReceitaC1ExpressPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/verificar" component={VerificarPage} />
+                <Route path="/diario-escola">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <DiarioEscolaPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/inventarios-escola">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <InventariosEscolaPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/conecta">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <ConectaPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/agenda">
+                  <RouteGuard roles={["admin", "professional"]}>
+                    <AgendaPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/agendar" component={AgendarPage} />
+                <Route path="/marcacao" component={MarcacaoPage} />
 
-            <Route path="/familia" component={FamiliaPage} />
-            <Route path="/portal-familia" component={PortalFamiliaPage} />
-            <Route
-              path="/portal-familia/novidades"
-              component={PortalNovidadesPage}
-            />
-            <Route path="/portal-familia/acesso" component={PortalAcessoPage} />
-            <Route path="/acessibilidade" component={AcessibilidadePage} />
-            <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
-            <Route path="/glossario" component={GlossarioPage} />
-            <Route
-              path="/instrumentos-padronizados"
-              component={InstrumentosPadronizadosPage}
-            />
-            <Route path="/qualidade" component={QualidadePage} />
-            <Route path="/pacientes" component={PacientesPage} />
-            <Route path="/paciente/:id" component={PacienteDetalhePage} />
-            <Route component={NotFound} />
-          </Switch>
+                <Route path="/familia" component={FamiliaPage} />
+                <Route path="/portal-familia" component={PortalFamiliaPage} />
+                <Route
+                  path="/portal-familia/novidades"
+                  component={PortalNovidadesPage}
+                />
+                <Route
+                  path="/portal-familia/acesso"
+                  component={PortalAcessoPage}
+                />
+                <Route path="/acessibilidade" component={AcessibilidadePage} />
+                <Route path="/sobre-neuroped" component={SobreNeuropedPage} />
+                <Route path="/glossario" component={GlossarioPage} />
+                <Route
+                  path="/instrumentos-padronizados"
+                  component={InstrumentosPadronizadosPage}
+                />
+                <Route path="/qualidade" component={QualidadePage} />
+                <Route path="/pacientes" component={PacientesPage} />
+                <Route path="/paciente/:id" component={PacienteDetalhePage} />
+                <Route component={NotFound} />
+              </Switch>
             </PageTransition>
           </RouteGuard>
         </Suspense>
@@ -695,60 +758,62 @@ function App() {
       <Suspense fallback={<LoadingSpinner />}>
         <MotionPreferences>
           <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ClinicProvider>
-            <TooltipProvider>
-              <ToastProvider>
-                <Suspense fallback={null}>
-                  <AmbientEffects />
-                </Suspense>
-                <Toaster />
-                {!splashComplete && (
-                  <Suspense fallback={null}>
-                    <SplashScreen
-                      awaiting={!appReady}
-                      onComplete={() => setSplashComplete(true)}
-                    />
-                  </Suspense>
-                )}
-                {onboardingVisible && (
-                  <Suspense fallback={null}>
-                    <Onboarding onComplete={dismissOnboarding} />
-                  </Suspense>
-                )}
-                <PrivateGate>
-                  <Router hook={useHashLocation}>
-                    <AppRouter />
-                  </Router>
-                  {auxiliarySurfacesVisible && (
+            <AuthProvider>
+              <ClinicProvider>
+                <TooltipProvider>
+                  <ToastProvider>
                     <Suspense fallback={null}>
-                      <CommandPalette />
+                      <AmbientEffects />
                     </Suspense>
-                  )}
-                  {auxiliarySurfacesVisible && (
-                    <Suspense fallback={null}>
-                      <WelcomeTour />
-                    </Suspense>
-                  )}
-                </PrivateGate>
-                {splashComplete && (
-                  <AvisoLegalGate onAccepted={() => setLegalAccepted(true)} />
-                )}
-                {auxiliarySurfacesVisible && (
-                  <>
-                    <Suspense fallback={null}>
-                      <InstallPrompt />
-                      <PreferencesPanel />
-                      <FloatingHelp />
-                    </Suspense>
-                  </>
-                )}
-                <ServiceWorkerManager />
-                <MobilePrimaryDock />
-              </ToastProvider>
-            </TooltipProvider>
-            </ClinicProvider>
-          </AuthProvider>
+                    <Toaster />
+                    {!splashComplete && (
+                      <Suspense fallback={null}>
+                        <SplashScreen
+                          awaiting={!appReady}
+                          onComplete={() => setSplashComplete(true)}
+                        />
+                      </Suspense>
+                    )}
+                    {onboardingVisible && (
+                      <Suspense fallback={null}>
+                        <Onboarding onComplete={dismissOnboarding} />
+                      </Suspense>
+                    )}
+                    <PrivateGate>
+                      <Router hook={useHashLocation}>
+                        <AppRouter />
+                      </Router>
+                      {auxiliarySurfacesVisible && (
+                        <Suspense fallback={null}>
+                          <CommandPalette />
+                        </Suspense>
+                      )}
+                      {auxiliarySurfacesVisible && (
+                        <Suspense fallback={null}>
+                          <WelcomeTour />
+                        </Suspense>
+                      )}
+                    </PrivateGate>
+                    {splashComplete && (
+                      <AvisoLegalGate
+                        onAccepted={() => setLegalAccepted(true)}
+                      />
+                    )}
+                    {auxiliarySurfacesVisible && (
+                      <>
+                        <Suspense fallback={null}>
+                          <InstallPrompt />
+                          <PreferencesPanel />
+                          <FloatingHelp />
+                        </Suspense>
+                      </>
+                    )}
+                    <ServiceWorkerManager />
+                    <MobilePrimaryDock />
+                  </ToastProvider>
+                </TooltipProvider>
+              </ClinicProvider>
+            </AuthProvider>
           </QueryClientProvider>
         </MotionPreferences>
       </Suspense>

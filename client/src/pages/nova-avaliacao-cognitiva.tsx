@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -14,6 +14,10 @@ import {
   Brain,
   CheckCircle2,
   ChevronRight,
+  Clock3,
+  Info,
+  LockKeyhole,
+  TimerReset,
 } from "lucide-react";
 
 // ─────────────────────────────── types ───────────────────────────────
@@ -37,17 +41,21 @@ interface ObsBlock {
 }
 type Question = MCQ | ObsBlock;
 
+type ResponseType = "respondida" | "nao_informada" | "observada";
+
 interface AnswerRecord {
   prompt: string; // enunciado da pergunta ou habilidade observada
   correct?: string; // resposta correta (apenas MCQ)
   selected: string | null; // o que a criança escolheu / "Observado" no bloco de observação
   isCorrect: boolean;
+  responseType?: ResponseType;
 }
 interface DomainResult {
   domain: Domain;
   label: string;
   score: number;
   max: number;
+  notInformed: number;
   answers: AnswerRecord[]; // registro item-a-item de todas as perguntas e respostas
 }
 
@@ -274,21 +282,10 @@ const LEITURA_BANK: Record<Band, MCQ[]> = {
   A: [
     {
       kind: "mcq",
-      prompt: "Qual desses você usa para ESCREVER palavras?",
+      prompt: "Qual figura combina com o som 'miau'?",
       big: true,
-      options: ["🐱", "A", "★", "🚗"],
-      answer: "A",
-    },
-    {
-      kind: "mcq",
-      prompt: "Em que direção lemos em português? →",
-      options: [
-        "Da direita para esquerda",
-        "De cima para baixo",
-        "Da esquerda para direita",
-        "Tanto faz",
-      ],
-      answer: "Da esquerda para direita",
+      options: ["🐱", "🐶", "🚗", "🍎"],
+      answer: "🐱",
     },
     {
       kind: "mcq",
@@ -299,9 +296,21 @@ const LEITURA_BANK: Record<Band, MCQ[]> = {
     },
     {
       kind: "mcq",
-      prompt: "O que fica no COMEÇO de uma frase?",
-      options: ["Ponto final", "Vírgula", "Nada", "Letra maiúscula"],
-      answer: "Letra maiúscula",
+      prompt: "Depois de ouvir uma história, o que podemos fazer com o livro?",
+      options: [
+        "Virar a página",
+        "Colocar no sapato",
+        "Jogar na água",
+        "Esconder a mesa",
+      ],
+      answer: "Virar a página",
+    },
+    {
+      kind: "mcq",
+      prompt: "Qual figura mostra uma BOLA?",
+      big: true,
+      options: ["⚽", "🧦", "🍌", "🚲"],
+      answer: "⚽",
     },
   ],
   B: [
@@ -701,15 +710,17 @@ const ARITMETICA_BANK: Record<Band, MCQ[]> = {
     },
     {
       kind: "mcq",
-      prompt: "Quantos dedos tem UMA mão?",
-      options: ["5", "4", "6", "3"],
-      answer: "5",
+      prompt: "Qual grupo tem MENOS?",
+      big: true,
+      options: ["🍓🍓🍓", "🍓", "🍓🍓", "São iguais"],
+      answer: "🍓",
     },
     {
       kind: "mcq",
-      prompt: "1 + 1 = ?",
-      options: ["3", "1", "4", "2"],
-      answer: "2",
+      prompt: "Qual grupo tem DOIS?",
+      big: true,
+      options: ["🟡", "🟡🟡", "🟡🟡🟡", "Nenhum"],
+      answer: "🟡🟡",
     },
   ],
   B: [
@@ -896,8 +907,9 @@ function ObsModule({
     const score = answers.filter(Boolean).length;
     const records: AnswerRecord[] = block.items.map((it, i) => ({
       prompt: it.label,
-      selected: answers[i] ? "Observado" : "Não observado",
+      selected: answers[i] ? "Observado" : "Não informado / não observado",
       isCorrect: Boolean(answers[i]),
+      responseType: answers[i] ? "observada" : "nao_informada",
     }));
     setDone(true);
     onComplete(score, block.items.length, records);
@@ -984,7 +996,29 @@ function QuizModule({
     if (ok) setScore((s) => s + 1);
     setAnswers((a) => [
       ...a,
-      { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok },
+      {
+        prompt: q.prompt,
+        correct: q.answer,
+        selected: opt,
+        isCorrect: ok,
+        responseType: "respondida",
+      },
+    ]);
+  }
+
+  function markNotInformed() {
+    if (phase !== "question") return;
+    setSelected(null);
+    setPhase("feedback");
+    setAnswers((a) => [
+      ...a,
+      {
+        prompt: q.prompt,
+        correct: q.answer,
+        selected: null,
+        isCorrect: false,
+        responseType: "nao_informada",
+      },
     ]);
   }
 
@@ -1016,7 +1050,7 @@ function QuizModule({
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 transition-all duration-500 ease-out"
-          style={{ width: `${(idx / questions.length) * 100}%` }}
+          style={{ width: `${((idx + 1) / questions.length) * 100}%` }}
         />
       </div>
 
@@ -1033,7 +1067,7 @@ function QuizModule({
           let cls =
             "rounded-2xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97]";
           if (phase === "feedback") {
-            if (opt === selected)
+            if (selected !== null && opt === selected)
               cls +=
                 " border-primary bg-primary/10 shadow-sm shadow-primary/10";
             else cls += " border-border bg-background opacity-50";
@@ -1060,11 +1094,33 @@ function QuizModule({
         })}
       </div>
 
+      {phase === "question" && (
+        <button
+          type="button"
+          onClick={markNotInformed}
+          className="mx-auto block rounded-xl border border-dashed border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:border-primary/50 hover:bg-primary/[0.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Não sei / prefiro não responder
+        </button>
+      )}
+
       {phase === "feedback" && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+          {selected === null ? (
+            <Info
+              className="h-4 w-4 text-primary flex-shrink-0"
+              aria-hidden="true"
+            />
+          ) : (
+            <CheckCircle2
+              className="h-4 w-4 text-primary flex-shrink-0"
+              aria-hidden="true"
+            />
+          )}
           <span className="text-xs font-semibold text-foreground">
-            Resposta registrada
+            {selected === null
+              ? "Resposta não informada — não será interpretada como erro"
+              : "Resposta registrada"}
           </span>
           <Button
             size="sm"
@@ -1962,6 +2018,22 @@ function ageProfileLabel(age: number, band: Band): string {
 }
 
 // ─────────────────────────────── DOMAIN WRAPPER ───────────────────────────────
+const SCHOOL_STAGE_OPTIONS = [
+  "Educação infantil",
+  "1º–2º ano do Ensino Fundamental",
+  "3º–5º ano do Ensino Fundamental",
+  "6º–9º ano do Ensino Fundamental",
+  "Ensino Médio",
+  "Não frequenta / não informado",
+] as const;
+
+const INFORMANT_OPTIONS = [
+  "Criança respondeu com autonomia",
+  "Adulto leu ou mediou parte das instruções",
+  "Adulto respondeu por observação",
+  "Não informado",
+] as const;
+
 const DOMAIN_LABELS: Record<Domain, string> = {
   visual: "Reconhecimento Visual",
   leitura: "Leitura",
@@ -1989,7 +2061,16 @@ function DomainModule({
 
   const handleComplete = useCallback(
     (score: number, max: number, answers: AnswerRecord[]) => {
-      onComplete({ domain, label: DOMAIN_LABELS[domain], score, max, answers });
+      onComplete({
+        domain,
+        label: DOMAIN_LABELS[domain],
+        score,
+        max,
+        notInformed: answers.filter(
+          (answer) => answer.responseType === "nao_informada",
+        ).length,
+        answers,
+      });
     },
     [domain, onComplete],
   );
@@ -2019,6 +2100,7 @@ function DomainModule({
                   label: DOMAIN_LABELS[domain],
                   score: 0,
                   max: 0,
+                  notInformed: 0,
                   answers: [],
                 });
               }}
@@ -2089,7 +2171,12 @@ const DOMAINS: {
 
 export default function AvaliacaoCognitivaInfantilPage() {
   const [ageStr, setAgeStr] = useState("");
+  const [schoolStage, setSchoolStage] = useState("");
+  const [informant, setInformant] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [assessmentFinished, setAssessmentFinished] = useState(false);
+  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [activeDomain, setActiveDomain] = useState<Domain>("visual");
   const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>(
     {},
@@ -2098,26 +2185,83 @@ export default function AvaliacaoCognitivaInfantilPage() {
   const age = parseInt(ageStr, 10);
   const validAge = !isNaN(age) && age >= 2 && age <= 19;
   const band: Band | null = validAge ? getBand(age) : null;
+  const canStart = validAge && Boolean(schoolStage) && Boolean(informant);
+  const maxAssessmentSeconds = 15 * 60;
+
+  useEffect(() => {
+    if (!confirmed || !startedAtMs || assessmentFinished) return;
+    const updateClock = () => {
+      const next = Math.min(
+        maxAssessmentSeconds,
+        Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000)),
+      );
+      setElapsedSeconds(next);
+      if (next >= maxAssessmentSeconds) setAssessmentFinished(true);
+    };
+    updateClock();
+    const timer = window.setInterval(updateClock, 1000);
+    return () => window.clearInterval(timer);
+  }, [assessmentFinished, confirmed, maxAssessmentSeconds, startedAtMs]);
+
+  function resetAssessment() {
+    setAgeStr("");
+    setSchoolStage("");
+    setInformant("");
+    setConfirmed(false);
+    setAssessmentFinished(false);
+    setStartedAtMs(null);
+    setElapsedSeconds(0);
+    setActiveDomain("visual");
+    setResults({});
+  }
 
   function handleResult(r: DomainResult) {
     if (r.max === 0) {
+      setAssessmentFinished(false);
       setResults((prev) => {
         const n = { ...prev };
         delete n[r.domain];
         return n;
       });
     } else {
-      setResults((prev) => ({ ...prev, [r.domain]: r }));
+      setResults((prev) => {
+        const next = { ...prev, [r.domain]: r };
+        if (Object.keys(next).length === DOMAINS.length) {
+          setAssessmentFinished(true);
+        }
+        return next;
+      });
     }
   }
 
   const completedDomains = Object.values(results).filter((r) => r && r.max > 0);
-  const reportItems = completedDomains.flatMap((result) =>
-    result!.answers.map((answer) => ({
-      question: `[${result!.label}] ${answer.prompt}`,
-      answer: answer.selected ?? "Não respondida",
-    })),
+  const completedCount = completedDomains.length;
+  const notInformedCount = completedDomains.reduce(
+    (total, result) => total + (result?.notInformed ?? 0),
+    0,
   );
+  const descriptiveResults = completedDomains.map((result) => ({
+    label: result!.label,
+    score: result!.score,
+    attempted: Math.max(0, result!.max - result!.notInformed),
+    notInformed: result!.notInformed,
+  }));
+  const reportItems = [
+    { question: "[Contexto] Etapa escolar", answer: schoolStage },
+    { question: "[Contexto] Quem acompanhou", answer: informant },
+    ...completedDomains.flatMap((result) =>
+      result!.answers.map((answer) => ({
+        question: `[${result!.label}] ${answer.prompt}`,
+        answer:
+          answer.responseType === "nao_informada"
+            ? "Não informado / não observado"
+            : (answer.selected ?? "Não respondida"),
+      })),
+    ),
+  ];
+  const remainingSeconds = Math.max(0, maxAssessmentSeconds - elapsedSeconds);
+  const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
+  const remainingLabel = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
 
   return (
     <div className="space-y-5 pb-8">
@@ -2137,28 +2281,28 @@ export default function AvaliacaoCognitivaInfantilPage() {
           </div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300 hover:bg-violet-100">
-              avaliação cognitiva · 2–19 anos
+              nova bateria · 2–19 anos
             </Badge>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Avaliação Cognitiva Infantil
+              Nova avaliação cognitiva
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Bateria enxuta adaptada por idade: 4 itens em cada área —
-              reconhecimento visual, leitura, escrita e aritmética — com
-              dificuldade progressiva e relatório qualitativo ao final. Triagem
-              educativa — não substitui avaliação psicométrica formal.
+              Bateria pedagógica guiada para a pré-consulta: contexto escolar,
+              reconhecimento visual, leitura, escrita e aritmética em até 15
+              minutos. O resultado descreve habilidades observadas e pontos para
+              conversar na consulta — não produz QI, percentil ou diagnóstico.
             </p>
           </div>
         </div>
 
-        {/* Age input */}
-        <div className="mt-4 flex items-end gap-3 flex-wrap">
+        {/* Contexto mínimo antes da bateria */}
+        <div className="relative mt-4 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
           <div>
             <label
               htmlFor="idade-av"
-              className="text-xs font-semibold text-muted-foreground block mb-1"
+              className="mb-1 block text-xs font-semibold text-muted-foreground"
             >
-              Idade da criança (anos)
+              Idade (anos)
             </label>
             <Input
               id="idade-av"
@@ -2167,32 +2311,149 @@ export default function AvaliacaoCognitivaInfantilPage() {
               onChange={(e) => {
                 setAgeStr(e.target.value.replace(/\D/g, "").slice(0, 2));
                 setConfirmed(false);
+                setAssessmentFinished(false);
+                setStartedAtMs(null);
+                setElapsedSeconds(0);
                 setResults({});
               }}
               placeholder="ex.: 7"
-              className="h-9 w-24"
+              className="h-10 w-full sm:w-24"
             />
           </div>
-          <Button
-            size="sm"
-            disabled={!validAge}
-            onClick={() => {
-              setConfirmed(true);
-              setActiveDomain("visual");
-            }}
-          >
-            Iniciar avaliação
-          </Button>
-          {band && confirmed && (
-            <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-              {ageProfileLabel(age, band)}
-            </Badge>
-          )}
+          <label className="block min-w-0">
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Etapa escolar
+            </span>
+            <select
+              value={schoolStage}
+              onChange={(e) => {
+                setSchoolStage(e.target.value);
+                setConfirmed(false);
+                setResults({});
+              }}
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Selecione a etapa</option>
+              {SCHOOL_STAGE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block min-w-0">
+            <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+              Quem acompanha a resposta
+            </span>
+            <select
+              value={informant}
+              onChange={(e) => {
+                setInformant(e.target.value);
+                setConfirmed(false);
+                setResults({});
+              }}
+              className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Selecione o contexto</option>
+              {INFORMANT_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex flex-wrap items-center gap-2 sm:col-span-3">
+            <Button
+              size="sm"
+              disabled={!canStart}
+              onClick={() => {
+                setConfirmed(true);
+                setAssessmentFinished(false);
+                setStartedAtMs(Date.now());
+                setElapsedSeconds(0);
+                setActiveDomain("visual");
+              }}
+            >
+              Iniciar amostra de 15 min
+            </Button>
+            {band && confirmed && (
+              <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                {ageProfileLabel(age, band)}
+              </Badge>
+            )}
+            {!canStart && (
+              <span className="text-xs text-muted-foreground">
+                Informe idade, etapa e contexto para interpretar melhor a
+                amostra.
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="relative mt-4 flex items-start gap-2 rounded-2xl border border-violet-200/70 bg-violet-50/70 px-3 py-2.5 text-xs leading-relaxed text-violet-950 dark:border-violet-900/60 dark:bg-violet-950/20 dark:text-violet-100">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p>
+            <strong>Uso pedagógico.</strong> Esta é uma amostra breve de
+            aprendizagem escolar. Não é teste de QI, não gera diagnóstico e não
+            deve ser comparada com outra criança sem considerar escolarização,
+            idioma, atenção, fadiga, visão, audição e ajuda recebida.
+          </p>
         </div>
       </header>
 
-      {/* Assessment */}
       {confirmed && band && (
+        <section
+          className="sticky top-2 z-20 flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-background/95 px-3 py-2.5 shadow-sm backdrop-blur"
+          aria-label="Tempo da amostra pedagógica"
+          aria-live="polite"
+        >
+          <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
+          <div className="min-w-[150px] flex-1">
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold">
+              <span>
+                {assessmentFinished ? "Sessão encerrada" : "Tempo da amostra"}
+              </span>
+              <span
+                className={
+                  remainingSeconds <= 120 && !assessmentFinished
+                    ? "text-amber-700 dark:text-amber-300"
+                    : "text-muted-foreground"
+                }
+              >
+                {assessmentFinished
+                  ? `Realizado ${elapsedLabel}`
+                  : `${elapsedLabel} · restam ${remainingLabel}`}
+              </span>
+            </div>
+            <div
+              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"
+              aria-hidden="true"
+            >
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${remainingSeconds <= 120 && !assessmentFinished ? "bg-amber-500" : "bg-primary"}`}
+                style={{
+                  width: `${Math.min(100, (elapsedSeconds / maxAssessmentSeconds) * 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+          {!assessmentFinished && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setAssessmentFinished(true)}
+            >
+              <TimerReset className="h-3.5 w-3.5" aria-hidden="true" />
+              Encerrar e gerar resumo
+            </Button>
+          )}
+        </section>
+      )}
+
+      {/* Assessment */}
+      {confirmed && band && !assessmentFinished && (
         <>
           {/* Domain tabs */}
           <nav
@@ -2228,7 +2489,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
           </nav>
 
           {/* Active domain */}
-          <Card>
+          <Card id="cognitive-active-domain" className="scroll-mt-24">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-4">
                 {(() => {
@@ -2253,31 +2514,124 @@ export default function AvaliacaoCognitivaInfantilPage() {
               />
             </CardContent>
           </Card>
+        </>
+      )}
 
+      {confirmed && band && assessmentFinished && (
+        <section
+          className="space-y-4 rounded-3xl border border-primary/20 bg-primary/[0.04] p-4 sm:p-5"
+          aria-labelledby="resumo-pedagogico-title"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <LockKeyhole className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h2
+                id="resumo-pedagogico-title"
+                className="font-bold text-foreground"
+              >
+                Resumo para a consulta
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {completedCount === DOMAINS.length
+                  ? "Os quatro domínios foram concluídos dentro da sessão. Este é um mapa pedagógico breve, não um diagnóstico."
+                  : `Sessão encerrada com ${completedCount} de ${DOMAINS.length} domínios concluídos. Este resumo pedagógico não é um diagnóstico; o que não foi aplicado permanece não informado.`}
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Tempo
+              </p>
+              <p className="mt-1 text-sm font-bold">{elapsedLabel} de 15:00</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Domínios
+              </p>
+              <p className="mt-1 text-sm font-bold">
+                {completedCount} de {DOMAINS.length} concluídos
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Sem informação
+              </p>
+              <p className="mt-1 text-sm font-bold">
+                {notInformedCount} itens não interpretados
+              </p>
+            </div>
+          </div>
+          {descriptiveResults.length > 0 && (
+            <div className="rounded-2xl border border-border/70 bg-background/70 p-3.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Leitura descritiva da amostra
+              </p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {descriptiveResults.map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-3 py-2"
+                  >
+                    <span className="text-xs font-semibold text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      {item.attempted > 0
+                        ? `${item.score}/${item.attempted} respondidos corretamente`
+                        : "sem resposta interpretável"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                Estes números descrevem somente esta amostra e não são
+                comparação normativa. Itens “não informados” ficaram fora da
+                leitura de acerto/erro.
+              </p>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetAssessment}
+              className="gap-2"
+            >
+              <TimerReset className="h-4 w-4" aria-hidden="true" /> Nova amostra
+            </Button>
+            <span className="text-xs leading-relaxed text-muted-foreground">
+              Leve este resumo e as observações do contexto para o profissional
+              responsável.
+            </span>
+          </div>
           {completedDomains.length > 0 && (
             <div className="space-y-4">
               <ClinicalReport
-                scaleName="Avaliação Cognitiva Infantil"
-                scaleFullName="Reconhecimento visual, leitura, escrita e aritmética"
+                scaleName="Nova avaliação cognitiva"
+                scaleFullName="Bateria pedagógica guiada de reconhecimento visual, leitura, escrita e aritmética"
                 items={reportItems}
                 patientAge={band ? ageProfileLabel(age, band) : undefined}
               />
               <SaveToPatient
-                scaleName="Avaliação Cognitiva Infantil"
+                scaleName="Nova avaliação cognitiva"
                 responses={reportItems}
                 patientAge={band ? ageProfileLabel(age, band) : undefined}
               />
             </div>
           )}
-        </>
+        </section>
       )}
 
       {!confirmed && (
         <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
           <Brain className="h-8 w-8 text-muted-foreground mx-auto" />
           <p className="text-sm text-muted-foreground">
-            Digite a idade da criança (2–19 anos) e clique em{" "}
-            <strong>Iniciar avaliação</strong> para ver a bateria adaptada.
+            Informe idade, etapa escolar e contexto de resposta para iniciar uma
+            amostra pedagógica adaptada. O fluxo é interrompível e tem limite de
+            15 minutos.
           </p>
         </div>
       )}

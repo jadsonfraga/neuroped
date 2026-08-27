@@ -95,6 +95,13 @@ export const featuredNavigation: NavItem[] = [
     tone: "golden",
     description: "Triagem lúdica e observação visual",
   },
+  {
+    href: "/nova-avaliacao-cognitiva",
+    label: "Nova avaliação cognitiva",
+    icon: Brain,
+    tone: "priority",
+    description: "Bateria pedagógica guiada em 15 minutos",
+  },
 ];
 
 /**
@@ -198,6 +205,18 @@ export const navSections: NavSection[] = [
         href: "/avaliacao-cognitiva-infantil",
         label: "Avaliação cognitiva infantil",
         icon: Brain,
+      },
+      {
+        href: "/conhecimento-visual",
+        label: "Reconhecimento visual",
+        icon: Eye,
+      },
+      {
+        href: "/nova-avaliacao-cognitiva",
+        label: "Nova avaliação cognitiva",
+        icon: Brain,
+        tone: "priority",
+        description: "Bateria pedagógica guiada em 15 minutos",
       },
       { href: "/caa", label: "CAA · Vou Falar", icon: MessageCircle },
     ],
