@@ -56,7 +56,7 @@ export interface NavigationMatch {
 }
 
 /**
- * Três atalhos de alta frequência. O restante continua acessível nos grupos
+ * Cinco atalhos de alta frequência. O restante continua acessível nos grupos
  * e no catálogo, mas não compete com o trabalho que começa todos os dias.
  */
 export const featuredNavigation: NavItem[] = [
@@ -73,6 +73,20 @@ export const featuredNavigation: NavItem[] = [
     icon: Users,
     tone: "priority",
     description: "Busca e prontuários",
+  },
+  {
+    href: "/filtro",
+    label: "Encontrar uma escala",
+    icon: Filter,
+    tone: "priority",
+    description: "Por idade, queixa e objetivo",
+  },
+  {
+    href: "/avaliacao-cognitiva-infantil",
+    label: "Avaliação cognitiva infantil",
+    icon: BrainCog,
+    tone: "priority",
+    description: "Perfil cognitivo por domínio",
   },
   {
     href: "/documentos",

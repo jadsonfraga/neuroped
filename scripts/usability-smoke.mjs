@@ -1,13 +1,18 @@
 import { chromium } from "playwright";
 
 const browser = await chromium.launch({ headless: true, executablePath: "/usr/bin/chromium", args: ["--no-sandbox"] });
-const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
 await page.goto("http://localhost:5173/#/", { waitUntil: "networkidle" });
-await page.waitForTimeout(2200);
+await page.waitForTimeout(3500);
 await page.evaluate(() => document.querySelector('[role="dialog"]')?.remove());
 
+const featuredLabels = await page.locator('[data-testid^="featured-"]').evaluateAll((items) => items.map((item) => item.textContent?.replace(/\s+/g, " ").trim()));
+await page.setViewportSize({ width: 390, height: 844 });
+await page.goto("http://localhost:5173/#/", { waitUntil: "networkidle" });
+await page.waitForTimeout(2200);
+await page.evaluate(() => document.querySelector('[role="dialog"]')?.remove());
 const input = page.getByTestId("input-search");
 await input.fill("laudo");
 await page.keyboard.press("Enter");
@@ -46,6 +51,6 @@ const focused = await page.evaluate(() => {
   return document.activeElement?.getAttribute("role");
 });
 
-console.log(JSON.stringify({ searchNavigation, beforeOpen, afterOpen, searchState, horizontalOverflow, focused, errors }, null, 2));
+console.log(JSON.stringify({ featuredLabels, searchNavigation, beforeOpen, afterOpen, searchState, horizontalOverflow, focused, errors }, null, 2));
 await browser.close();
 if (errors.length || horizontalOverflow.scrollWidth > horizontalOverflow.width || searchNavigation === "#/") process.exit(1);
