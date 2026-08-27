@@ -34,13 +34,13 @@ const MUST_BE_GATED = [
   "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
 ];
 
-// Rotas que DEVEM ficar públicas (para as famílias).
+// Rotas que DEVEM ficar públicas (para as famílias e aquisição).
 const MUST_BE_PUBLIC = [
   "/login", "/sessao-expirada", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
-  "/brincando-e-aprendendo", "/missao-saude",
+  "/brincando-e-aprendendo", "/missao-saude", "/explorar",
   "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd", "/planos", "/invite",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
