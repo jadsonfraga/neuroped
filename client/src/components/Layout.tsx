@@ -52,6 +52,17 @@ import { useUiPreferences } from "@/hooks/useUiPreferences";
 
 const NESPLORA_SITE_URL = "/nesplora/";
 
+const SECTION_GUIDANCE: Record<string, string> = {
+  "TRABALHO DE HOJE": "O que move o atendimento agora.",
+  AVALIAR: "Escolha e conduza o instrumento certo.",
+  DOCUMENTAR: "Registre, finalize e compartilhe com segurança.",
+  ACOMPANHAR: "Veja evolução, tratamento e sinais ao longo do tempo.",
+  REFERÊNCIA: "Consulte bases e parâmetros quando precisar.",
+  CONECTAR: "Conecte pessoas, serviços e recursos públicos.",
+  "AJUDA E CONTA":
+    "Encontre ajuda, conformidade, acessibilidade e informações do produto.",
+};
+
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Recursos de alta frequência e conexões institucionais ficam acima da lista
 // estrutural. O catálogo de escalas permanece acessível pelo filtro, sem ocupar
@@ -263,7 +274,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       DOCUMENTAR: false,
       ACOMPANHAR: false,
       REFERÊNCIA: false,
-      "PORTAIS E SUPORTE": false,
+      CONECTAR: false,
+      "AJUDA E CONTA": false,
     }),
   );
   const [navHydrated, setNavHydrated] = useState(false);
@@ -807,11 +819,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         [sectionKey]: !(prev[sectionKey] ?? false),
                       }))
                     }
-                    className="flex w-full items-center gap-2 rounded-lg px-3 pt-3 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 pt-2.5 pb-1 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-expanded={sectionOpen}
                     aria-controls={`nav-section-${si}`}
                   >
-                    <span className="flex-1 truncate">{section.title}</span>
+                    <span className="flex min-w-0 flex-1 items-center gap-2 truncate">
+                      <span className="truncate">{section.title}</span>
+                      <span className="rounded-full bg-sidebar-accent/70 px-1.5 py-0.5 text-[9px] font-medium tracking-normal text-muted-foreground/80">
+                        {section.items.length}
+                      </span>
+                    </span>
                     <ChevronDown
                       className={`h-3.5 w-3.5 transition-transform ${sectionOpen ? "rotate-180" : ""}`}
                       style={{
@@ -821,6 +838,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       aria-hidden="true"
                     />
                   </button>
+                )}
+                {section.title && !collapsed && sectionOpen && (
+                  <p className="px-3 pb-1 text-[10px] leading-relaxed text-muted-foreground/75">
+                    {SECTION_GUIDANCE[section.title]}
+                  </p>
                 )}
                 {collapsed && section.title && (
                   <div className="border-t border-sidebar-border my-1 hidden lg:block" />
@@ -854,6 +876,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           <Link
                             key={`${sectionKey}-${item.href}-${item.label}`}
                             href={item.href}
+                            aria-current={active ? "page" : undefined}
                           >
                             <div
                               title={
@@ -886,8 +909,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                         ? "border-amber-400 bg-amber-200/90 text-amber-950 font-semibold shadow-sm dark:border-amber-600 dark:bg-amber-950/60 dark:text-amber-100"
                                         : "border-amber-300/80 bg-amber-100/70 text-amber-950 hover:bg-amber-200/90 hover:translate-x-0.5 dark:border-amber-700/70 dark:bg-amber-950/35 dark:text-amber-100 dark:hover:bg-amber-950/60"
                                       : active
-                                        ? "border-transparent bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
-                                        : "border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
+                                        ? "border-primary/20 bg-primary/10 text-primary font-semibold shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                                        : "border-transparent text-sidebar-foreground hover:border-sidebar-border/70 hover:bg-sidebar-accent/70 hover:translate-x-0.5"
                               } ${collapsed ? "lg:justify-center" : ""} ${locked ? "opacity-70" : ""}`}
                             >
                               <item.icon

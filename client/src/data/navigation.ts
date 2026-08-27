@@ -339,7 +339,7 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: "PORTAIS E SUPORTE",
+    title: "CONECTAR",
     items: [
       {
         href: "/nesplora/",
@@ -392,6 +392,11 @@ export const navSections: NavSection[] = [
         label: "Efeitos colaterais",
         icon: HeartPulse,
       },
+    ],
+  },
+  {
+    title: "AJUDA E CONTA",
+    items: [
       { href: "/verificar", label: "Verificar documento", icon: ShieldCheck },
       { href: "/glossario", label: "Glossário", icon: BookOpen },
       { href: "/termos", label: "Termos de uso", icon: FileText },

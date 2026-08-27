@@ -10,6 +10,7 @@ import {
   Grid2X2,
   LockKeyhole,
   Search,
+  ShieldCheck,
   Sparkles,
   Stethoscope,
 } from "lucide-react";
@@ -58,8 +59,9 @@ const sectionDescriptions: Record<string, string> = {
     "Monitore tratamento, sintomas, diários e evolução ao longo do tempo.",
   REFERÊNCIA:
     "Biblioteca de consulta rápida para apoiar decisões, orientações e desenvolvimento.",
-  "PORTAIS E SUPORTE":
-    "Família, secretaria, experiências públicas, integração e ajuda.",
+  CONECTAR: "Família, secretaria, experiências públicas e integração.",
+  "AJUDA E CONTA":
+    "Ajuda, acessibilidade, conformidade e informações do produto.",
 };
 
 const sectionIcons: Record<string, typeof Grid2X2> = {
@@ -68,7 +70,8 @@ const sectionIcons: Record<string, typeof Grid2X2> = {
   DOCUMENTAR: FileText,
   ACOMPANHAR: Calendar,
   REFERÊNCIA: BookOpen,
-  "PORTAIS E SUPORTE": Grid2X2,
+  CONECTAR: Grid2X2,
+  "AJUDA E CONTA": ShieldCheck,
 };
 
 function uniqueItems(items: NavItem[]): NavItem[] {
