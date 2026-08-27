@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo, useCallback } from "react";
 import { FileText, Printer, RefreshCw, PenSquare, Sparkles, Copy, ClipboardPaste, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
@@ -49,6 +49,97 @@ const CAMPOS_CLINICOS: { key: keyof EntradaLaudo; label: string; ajuda: string; 
 function limpo(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
+
+// Memoized component: Identification fields section
+const LaudoIdentificationFields = memo(({
+  entrada,
+  handleChange,
+}: {
+  entrada: EntradaLaudo;
+  handleChange: (key: keyof EntradaLaudo) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+}) => (
+  <div>
+    <h2 className="text-sm font-bold text-foreground">1 · Identificação do paciente</h2>
+    <p className="mt-1 text-xs text-muted-foreground">Dados da capa do laudo. Preencha ao menos o nome.</p>
+    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {CAMPOS_IDENTIFICACAO.map((c) => (
+        <div key={c.key} className="space-y-1">
+          <Label htmlFor={`id-${c.key}`} className="text-xs">{c.label}</Label>
+          <Input
+            id={`id-${c.key}`}
+            value={entrada[c.key] as string}
+            onChange={handleChange(c.key)}
+            placeholder={c.placeholder}
+            data-testid={`input-${c.key}`}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+));
+LaudoIdentificationFields.displayName = "LaudoIdentificationFields";
+
+// Memoized component: Clinical fields section
+const LaudoClinicalFields = memo(({
+  entrada,
+  handleChange,
+}: {
+  entrada: EntradaLaudo;
+  handleChange: (key: keyof EntradaLaudo) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+}) => (
+  <div>
+    <h2 className="text-sm font-bold text-foreground">2 · Conteúdo clínico</h2>
+    <p className="mt-1 text-xs text-muted-foreground">
+      Texto livre: o motor preserva literalmente o que você escrever e compõe a prosa clínica ao redor. Preencha o que tiver; campos vazios recebem prosa neutra para revisão.
+    </p>
+    <div className="mt-3 space-y-3">
+      {CAMPOS_CLINICOS.map((c) => (
+        <div key={c.key} className="space-y-1">
+          <Label htmlFor={`cl-${c.key}`} className="text-xs">
+            {c.label}
+            <span className="ml-2 font-normal text-muted-foreground">{c.ajuda}</span>
+          </Label>
+          <Textarea
+            id={`cl-${c.key}`}
+            value={entrada[c.key] as string}
+            onChange={handleChange(c.key)}
+            placeholder={c.placeholder}
+            className="min-h-16 resize-y font-mono text-xs leading-relaxed"
+            data-testid={`textarea-${c.key}`}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+));
+LaudoClinicalFields.displayName = "LaudoClinicalFields";
+
+// Memoized component: QA status section
+const LaudoQAStatus = memo(({
+  aprovado,
+  aprovadoLabel,
+  resultado,
+}: {
+  aprovado: boolean | undefined;
+  aprovadoLabel: string;
+  resultado: any;
+}) => {
+  if (!resultado) return null;
+  return (
+    <div
+      className={`rounded-xl border p-4 text-sm ${aprovado ? "border-emerald-400/60 bg-emerald-50/60 text-emerald-900" : "border-amber-400/70 bg-amber-50/70 text-amber-900"}`}
+    >
+      <div className="flex items-center gap-2 font-semibold">
+        {aprovado ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+        {aprovadoLabel}
+      </div>
+      {!aprovado && (
+        <pre className="mt-2 whitespace-pre-wrap text-xs">{resultado.qa.replace("REPROVADO:", "")}</pre>
+      )}
+    </div>
+  );
+});
+LaudoQAStatus.displayName = "LaudoQAStatus";
 
 function dateStamp(): string {
   const d = new Date();
@@ -185,9 +276,9 @@ export default function LaudoNeuropedPage() {
     return gerarEValidar(entrada);
   }, [entrada, configurado]);
 
-  const handleChange = (key: keyof EntradaLaudo) => (
+  const handleChange = useCallback((key: keyof EntradaLaudo) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => setEntrada((prev) => ({ ...prev, [key]: e.target.value }));
+  ) => setEntrada((prev) => ({ ...prev, [key]: e.target.value })), []);
 
   const handleGerar = () => {
     if (!resultado) return;
@@ -259,62 +350,10 @@ export default function LaudoNeuropedPage() {
       {/* ── Preenchimento clínico (editor guiado) ─────────────── */}
       {editando && (
         <section className="rounded-2xl border border-border/70 bg-card/80 p-4 sm:p-6 space-y-6">
-          <div>
-            <h2 className="text-sm font-bold text-foreground">1 · Identificação do paciente</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Dados da capa do laudo. Preencha ao menos o nome.</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {CAMPOS_IDENTIFICACAO.map((c) => (
-                <div key={c.key} className="space-y-1">
-                  <Label htmlFor={`id-${c.key}`} className="text-xs">{c.label}</Label>
-                  <Input
-                    id={`id-${c.key}`}
-                    value={entrada[c.key] as string}
-                    onChange={handleChange(c.key)}
-                    placeholder={c.placeholder}
-                    data-testid={`input-${c.key}`}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-bold text-foreground">2 · Conteúdo clínico</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Texto livre: o motor preserva literalmente o que você escrever e compõe a prosa clínica ao redor. Preencha o que tiver; campos vazios recebem prosa neutra para revisão.
-            </p>
-            <div className="mt-3 space-y-3">
-              {CAMPOS_CLINICOS.map((c) => (
-                <div key={c.key} className="space-y-1">
-                  <Label htmlFor={`cl-${c.key}`} className="text-xs">
-                    {c.label}
-                    <span className="ml-2 font-normal text-muted-foreground">{c.ajuda}</span>
-                  </Label>
-                  <Textarea
-                    id={`cl-${c.key}`}
-                    value={entrada[c.key] as string}
-                    onChange={handleChange(c.key)}
-                    placeholder={c.placeholder}
-                    className="min-h-16 resize-y font-mono text-xs leading-relaxed"
-                    data-testid={`textarea-${c.key}`}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <LaudoIdentificationFields entrada={entrada} handleChange={handleChange} />
+          <LaudoClinicalFields entrada={entrada} handleChange={handleChange} />
           {configurado && resultado && (
-            <div
-              className={`rounded-xl border p-4 text-sm ${aprovado ? "border-emerald-400/60 bg-emerald-50/60 text-emerald-900" : "border-amber-400/70 bg-amber-50/70 text-amber-900"}`}
-            >
-              <div className="flex items-center gap-2 font-semibold">
-                {aprovado ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                {aprovadoLabel}
-              </div>
-              {!aprovado && (
-                <pre className="mt-2 whitespace-pre-wrap text-xs">{resultado.qa.replace("REPROVADO:", "")}</pre>
-              )}
-            </div>
+            <LaudoQAStatus aprovado={aprovado} aprovadoLabel={aprovadoLabel} resultado={resultado} />
           )}
         </section>
       )}
