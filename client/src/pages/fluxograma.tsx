@@ -20,6 +20,25 @@ import {
   type FluxoNode,
 } from "@/data/fluxograma";
 
+// Safe idle callback fallback for cross-browser compatibility (Safari/iOS)
+function scheduleIdleWork(callback: () => void): () => void {
+  let handle: ReturnType<typeof requestIdleCallback | typeof setTimeout> | null = null;
+
+  if (typeof requestIdleCallback !== "undefined") {
+    handle = requestIdleCallback(() => {
+      callback();
+    }, { timeout: 2000 });
+    return () => {
+      if (handle !== null) cancelIdleCallback(handle as number);
+    };
+  } else {
+    handle = setTimeout(callback, 100);
+    return () => {
+      if (handle !== null) clearTimeout(handle as number);
+    };
+  }
+}
+
 // Rota preenchível de uma referência do fluxograma — só cria link quando a
 // escala existe no app E é preenchível (mesma regra do filtro: só abre o que
 // dá para usar de verdade). Caso contrário, vira chip de referência sem link.
@@ -114,10 +133,10 @@ export default function FluxogramaPage() {
 
   useEffect(() => {
     if (visibleBands < fluxoBands.length) {
-      const handle = requestIdleCallback(() => {
+      const cancel = scheduleIdleWork(() => {
         setVisibleBands(fluxoBands.length);
       });
-      return () => cancelIdleCallback(handle);
+      return cancel;
     }
   }, [visibleBands]);
 

@@ -18,7 +18,26 @@ import { laudoParaTexto } from "@/lib/laudo/paraTexto";
      CID-10/CID-11 em paralelo · sem perfumaria de IA · sem "(est.)"
 ──────────────────────────────────────────────────────────── */
 
-const CAMPOS_IDENTIFICACAO: { key: keyof EntradaLaudo; label: string; placeholder: string }[] = [
+type IdentificationKey = "paciente" | "dataNascimento" | "idade" | "sexo" | "cidade" | "dataAvaliacao" | "protocolo";
+
+type ClinicalKey =
+  | "motivoAvaliacao"
+  | "historiaClinica"
+  | "historiaNeurodesenvolvimento"
+  | "gestacaoPartoPuerperio"
+  | "exameClinico"
+  | "exameNeurologico"
+  | "exameComportamental"
+  | "escalasInstrumentos"
+  | "escalasResultado"
+  | "documentosAnalisados"
+  | "hipoteseDiagnostica"
+  | "cid10"
+  | "cid11"
+  | "conduta"
+  | "recomendacoes";
+
+const CAMPOS_IDENTIFICACAO: { key: IdentificationKey; label: string; placeholder: string }[] = [
   { key: "paciente", label: "Nome do paciente", placeholder: "Ex.: Fulano de Tal" },
   { key: "dataNascimento", label: "Data de nascimento", placeholder: "AAAA-MM-DD" },
   { key: "idade", label: "Idade", placeholder: "Ex.: 7 anos" },
@@ -28,7 +47,7 @@ const CAMPOS_IDENTIFICACAO: { key: keyof EntradaLaudo; label: string; placeholde
   { key: "protocolo", label: "Protocolo", placeholder: "Ex.: nº 2026-0145" },
 ];
 
-const CAMPOS_CLINICOS: { key: keyof EntradaLaudo; label: string; ajuda: string; placeholder: string }[] = [
+const CAMPOS_CLINICOS: { key: ClinicalKey; label: string; ajuda: string; placeholder: string }[] = [
   { key: "motivoAvaliacao", label: "Motivo da avaliação", ajuda: "Demanda principal e encaminhamento.", placeholder: "Ex.: encaminhado pela escola para investigação de dificuldade de atenção e aprendizado…" },
   { key: "historiaClinica", label: "História clínica", ajuda: "História clínica geral, familiar, escolar e social.", placeholder: "Ex.: gestação sem intercorrências; parto a termo…" },
   { key: "historiaNeurodesenvolvimento", label: "História do neurodesenvolvimento", ajuda: "Marcos motores, de linguagem e sociais.", placeholder: "Ex.: sentou aos 8 meses, primeiros vocábulos aos 2 anos…" },
@@ -51,95 +70,97 @@ function limpo(v: unknown): string {
 }
 
 // Memoized component: Identification fields section
-const LaudoIdentificationFields = memo(({
-  entrada,
-  handleChange,
-}: {
-  entrada: EntradaLaudo;
-  handleChange: (key: keyof EntradaLaudo) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-}) => (
-  <div>
-    <h2 className="text-sm font-bold text-foreground">1 · Identificação do paciente</h2>
-    <p className="mt-1 text-xs text-muted-foreground">Dados da capa do laudo. Preencha ao menos o nome.</p>
-    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {CAMPOS_IDENTIFICACAO.map((c) => (
-        <div key={c.key} className="space-y-1">
-          <Label htmlFor={`id-${c.key}`} className="text-xs">{c.label}</Label>
-          <Input
-            id={`id-${c.key}`}
-            value={entrada[c.key] as string}
-            onChange={handleChange(c.key)}
-            placeholder={c.placeholder}
-            data-testid={`input-${c.key}`}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-));
-LaudoIdentificationFields.displayName = "LaudoIdentificationFields";
+interface IdentificationFieldsProps {
+  values: Pick<EntradaLaudo, IdentificationKey>;
+  onChange: (key: IdentificationKey) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
 
-// Memoized component: Clinical fields section
-const LaudoClinicalFields = memo(({
-  entrada,
-  handleChange,
-}: {
-  entrada: EntradaLaudo;
-  handleChange: (key: keyof EntradaLaudo) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-}) => (
-  <div>
-    <h2 className="text-sm font-bold text-foreground">2 · Conteúdo clínico</h2>
-    <p className="mt-1 text-xs text-muted-foreground">
-      Texto livre: o motor preserva literalmente o que você escrever e compõe a prosa clínica ao redor. Preencha o que tiver; campos vazios recebem prosa neutra para revisão.
-    </p>
-    <div className="mt-3 space-y-3">
-      {CAMPOS_CLINICOS.map((c) => (
-        <div key={c.key} className="space-y-1">
-          <Label htmlFor={`cl-${c.key}`} className="text-xs">
-            {c.label}
-            <span className="ml-2 font-normal text-muted-foreground">{c.ajuda}</span>
-          </Label>
-          <Textarea
-            id={`cl-${c.key}`}
-            value={entrada[c.key] as string}
-            onChange={handleChange(c.key)}
-            placeholder={c.placeholder}
-            className="min-h-16 resize-y font-mono text-xs leading-relaxed"
-            data-testid={`textarea-${c.key}`}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-));
-LaudoClinicalFields.displayName = "LaudoClinicalFields";
-
-// Memoized component: QA status section
-const LaudoQAStatus = memo(({
-  aprovado,
-  aprovadoLabel,
-  resultado,
-}: {
-  aprovado: boolean | undefined;
-  aprovadoLabel: string;
-  resultado: any;
-}) => {
-  if (!resultado) return null;
+const IdentificationFields = memo(function IdentificationFields({
+  values,
+  onChange,
+}: IdentificationFieldsProps) {
   return (
-    <div
-      className={`rounded-xl border p-4 text-sm ${aprovado ? "border-emerald-400/60 bg-emerald-50/60 text-emerald-900" : "border-amber-400/70 bg-amber-50/70 text-amber-900"}`}
-    >
-      <div className="flex items-center gap-2 font-semibold">
-        {aprovado ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-        {aprovadoLabel}
+    <div>
+      <h2 className="text-sm font-bold text-foreground">1 · Identificação do paciente</h2>
+      <p className="mt-1 text-xs text-muted-foreground">Dados da capa do laudo. Preencha ao menos o nome.</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {CAMPOS_IDENTIFICACAO.map((c) => (
+          <div key={c.key} className="space-y-1">
+            <Label htmlFor={`id-${c.key}`} className="text-xs">
+              {c.label}
+            </Label>
+            <Input
+              id={`id-${c.key}`}
+              value={values[c.key] as string}
+              onChange={onChange(c.key)}
+              placeholder={c.placeholder}
+              data-testid={`input-${c.key}`}
+            />
+          </div>
+        ))}
       </div>
-      {!aprovado && (
-        <pre className="mt-2 whitespace-pre-wrap text-xs">{resultado.qa.replace("REPROVADO:", "")}</pre>
-      )}
     </div>
   );
 });
-LaudoQAStatus.displayName = "LaudoQAStatus";
+
+interface ClinicalFieldsProps {
+  values: Pick<EntradaLaudo, ClinicalKey>;
+  onChange: (key: ClinicalKey) => (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  qaStatus: { aprovado: boolean; label: string; qa: string } | null;
+}
+
+const ClinicalFields = memo(function ClinicalFields({
+  values,
+  onChange,
+  qaStatus,
+}: ClinicalFieldsProps) {
+  return (
+    <>
+      <div>
+        <h2 className="text-sm font-bold text-foreground">2 · Conteúdo clínico</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Texto livre: o motor preserva literalmente o que você escrever e compõe a prosa clínica ao redor. Preencha o que tiver; campos vazios recebem prosa neutra para revisão.
+        </p>
+        <div className="mt-3 space-y-3">
+          {CAMPOS_CLINICOS.map((c) => (
+            <div key={c.key} className="space-y-1">
+              <Label htmlFor={`cl-${c.key}`} className="text-xs">
+                {c.label}
+                <span className="ml-2 font-normal text-muted-foreground">{c.ajuda}</span>
+              </Label>
+              <Textarea
+                id={`cl-${c.key}`}
+                value={values[c.key] as string}
+                onChange={onChange(c.key)}
+                placeholder={c.placeholder}
+                className="min-h-16 resize-y font-mono text-xs leading-relaxed"
+                data-testid={`textarea-${c.key}`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {qaStatus && (
+        <div
+          className={`rounded-xl border p-4 text-sm ${qaStatus.aprovado ? "border-emerald-400/60 bg-emerald-50/60 text-emerald-900" : "border-amber-400/70 bg-amber-50/70 text-amber-900"}`}
+        >
+          <div className="flex items-center gap-2 font-semibold">
+            {qaStatus.aprovado ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            {qaStatus.label}
+          </div>
+          {!qaStatus.aprovado && (
+            <pre className="mt-2 whitespace-pre-wrap text-xs">{qaStatus.qa.replace("REPROVADO:", "")}</pre>
+          )}
+        </div>
+      )}
+    </>
+  );
+});
 
 function dateStamp(): string {
   const d = new Date();
@@ -350,11 +371,47 @@ export default function LaudoNeuropedPage() {
       {/* ── Preenchimento clínico (editor guiado) ─────────────── */}
       {editando && (
         <section className="rounded-2xl border border-border/70 bg-card/80 p-4 sm:p-6 space-y-6">
-          <LaudoIdentificationFields entrada={entrada} handleChange={handleChange} />
-          <LaudoClinicalFields entrada={entrada} handleChange={handleChange} />
-          {configurado && resultado && (
-            <LaudoQAStatus aprovado={aprovado} aprovadoLabel={aprovadoLabel} resultado={resultado} />
-          )}
+          <IdentificationFields
+            values={{
+              paciente: entrada.paciente,
+              dataNascimento: entrada.dataNascimento,
+              idade: entrada.idade,
+              sexo: entrada.sexo,
+              cidade: entrada.cidade,
+              dataAvaliacao: entrada.dataAvaliacao,
+              protocolo: entrada.protocolo,
+            }}
+            onChange={(key: IdentificationKey) => handleChange(key)}
+          />
+          <ClinicalFields
+            values={{
+              motivoAvaliacao: entrada.motivoAvaliacao,
+              historiaClinica: entrada.historiaClinica,
+              historiaNeurodesenvolvimento: entrada.historiaNeurodesenvolvimento,
+              gestacaoPartoPuerperio: entrada.gestacaoPartoPuerperio,
+              exameClinico: entrada.exameClinico,
+              exameNeurologico: entrada.exameNeurologico,
+              exameComportamental: entrada.exameComportamental,
+              escalasInstrumentos: entrada.escalasInstrumentos,
+              escalasResultado: entrada.escalasResultado,
+              documentosAnalisados: entrada.documentosAnalisados,
+              hipoteseDiagnostica: entrada.hipoteseDiagnostica,
+              cid10: entrada.cid10,
+              cid11: entrada.cid11,
+              conduta: entrada.conduta,
+              recomendacoes: entrada.recomendacoes,
+            }}
+            onChange={(key: ClinicalKey) => handleChange(key)}
+            qaStatus={
+              configurado && resultado
+                ? {
+                    aprovado: aprovado ?? false,
+                    label: aprovadoLabel,
+                    qa: resultado.qa || "",
+                  }
+                : null
+            }
+          />
         </section>
       )}
 
