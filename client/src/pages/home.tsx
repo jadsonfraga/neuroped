@@ -356,7 +356,6 @@ export default function HomePage() {
             }}
             onMouseEnter={() => softHover()}
             className="inline-flex h-14 shrink-0 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-card/75 px-4 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/25 hover:text-primary"
-            aria-label="Abrir busca avançada"
           >
             <Search className="h-4 w-4" aria-hidden="true" />
             <span>Busca avançada</span>
