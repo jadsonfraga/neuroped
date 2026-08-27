@@ -40,7 +40,10 @@ await page
 await page
   .getByRole("combobox", { name: "Quem acompanha a resposta" })
   .selectOption({ label: "Criança respondeu com autonomia" });
-const start = page.getByRole("button", { name: "Iniciar amostra de 15 min" });
+const start = page.getByRole("button", {
+  name: "Iniciar amostra de 15 min",
+  exact: true,
+});
 const canStart = await start.isEnabled();
 await start.click();
 await page.waitForTimeout(180);
@@ -50,10 +53,15 @@ const afterStart = {
     .getByRole("navigation", { name: "Módulos de avaliação" })
     .count(),
   visualModule: await page
-    .getByRole("button", { name: /Iniciar módulo/i })
+    .getByRole("button", { name: "Iniciar amostra", exact: true })
+    .count(),
+  guidedCopy: await page
+    .getByText(/Passagem equilibrada em andamento/i)
     .count(),
 };
-await page.getByRole("button", { name: /Iniciar módulo/i }).click();
+await page
+  .getByRole("button", { name: "Iniciar amostra", exact: true })
+  .click();
 await page.waitForTimeout(100);
 const notInformed = page.getByRole("button", {
   name: /Não sei \/ prefiro não responder/i,
@@ -66,6 +74,18 @@ const neutralFeedback = await page
 const next = page.getByRole("button", { name: /Próxima/i });
 const canAdvance = (await next.count()) === 1;
 await next.click();
+const answerButton = page
+  .locator("#cognitive-active-domain button")
+  .filter({ hasNotText: /Próxima|Não sei|Refazer|Iniciar|Aprofundar/i })
+  .first();
+await answerButton.click();
+await page.getByRole("button", { name: /Próxima/i }).click();
+await page.waitForTimeout(180);
+const advancedToNextDomain =
+  (await page
+    .locator("#cognitive-active-domain")
+    .getByRole("heading", { name: "Leitura" })
+    .count()) === 1;
 const finishEarly = page.getByRole("button", {
   name: /Encerrar e gerar resumo/i,
 });
@@ -77,12 +97,14 @@ const partialSummary = {
     (await page
       .getByRole("heading", { name: "Resumo para a consulta" })
       .count()) === 1,
-  partial: (await page.getByText(/0 de 4 domínios concluídos/i).count()) === 1,
+  partial: (await page.getByText(/1 de 4 domínios concluídos/i).count()) === 1,
   notDiagnostic:
     (await page.getByText(/não (é )?um diagnóstico/i).count()) >= 1,
 
   noClinicalReport:
-    (await page.getByText(/Leitura descritiva da amostra/i).count()) === 0,
+    (await page
+      .getByRole("button", { name: /Exportar PDF Premium Completo/i })
+      .count()) === 0,
 };
 const result = {
   passed:
@@ -96,9 +118,11 @@ const result = {
     afterStart.timer === 1 &&
     afterStart.domains === 1 &&
     afterStart.visualModule === 1 &&
+    afterStart.guidedCopy === 1 &&
     canSkip &&
     neutralFeedback === 1 &&
     canAdvance &&
+    advancedToNextDomain &&
     canFinishEarly &&
     partialSummary.visible &&
     partialSummary.partial &&
@@ -112,6 +136,7 @@ const result = {
   canSkip,
   neutralFeedback,
   canAdvance,
+  advancedToNextDomain,
   canFinishEarly,
   partialSummary,
 };

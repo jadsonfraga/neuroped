@@ -12,13 +12,13 @@ A BNCC descreve aprendizagens como progressivas e organizadas por etapas, habili
 
 ## 2. O que a implementação faz hoje
 
-| Faixa | Seleção atual | Cobertura efetiva | Leitura neutra |
-|---|---|---|---|
-| 2–3 anos | Banco A, quatro itens por domínio | 16 respostas; escrita é observação | A observação de pré-escrita é pertinente, mas parte de leitura e aritmética exige habilidades escolares que podem não estar consolidadas nessa idade. |
-| 4–5 anos | Banco B, quatro itens por domínio | 16 respostas; escrita é observação | Há bons itens de consciência fonológica e contagem, mas “leitura” e “escrita” misturam exposição escolar com capacidade cognitiva. |
-| 6–13 anos | Banco específico por idade, quatro itens em cada um dos quatro domínios | 16 questões de múltipla escolha | Existe progressão aparente, porém quatro itens por área são insuficientes para sustentar um nível de habilidade; não há calibração por ano escolar. |
-| 14–15 anos | Banco F por faixa | 16 questões | O banco é mais genérico e pode não representar a etapa escolar, trajetória, idioma ou conteúdo efetivamente ensinado. |
-| 16–19 anos | Banco G por faixa | 16 questões | Os itens têm maior abstração, mas continuam sendo uma amostra curta e heterogênea de conhecimentos, não uma avaliação cognitiva de adolescentes. |
+| Faixa      | Seleção atual                                                           | Cobertura efetiva                  | Leitura neutra                                                                                                                                        |
+| ---------- | ----------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2–3 anos   | Banco A, quatro itens por domínio                                       | 16 respostas; escrita é observação | A observação de pré-escrita é pertinente, mas parte de leitura e aritmética exige habilidades escolares que podem não estar consolidadas nessa idade. |
+| 4–5 anos   | Banco B, quatro itens por domínio                                       | 16 respostas; escrita é observação | Há bons itens de consciência fonológica e contagem, mas “leitura” e “escrita” misturam exposição escolar com capacidade cognitiva.                    |
+| 6–13 anos  | Banco específico por idade, quatro itens em cada um dos quatro domínios | 16 questões de múltipla escolha    | Existe progressão aparente, porém quatro itens por área são insuficientes para sustentar um nível de habilidade; não há calibração por ano escolar.   |
+| 14–15 anos | Banco F por faixa                                                       | 16 questões                        | O banco é mais genérico e pode não representar a etapa escolar, trajetória, idioma ou conteúdo efetivamente ensinado.                                 |
+| 16–19 anos | Banco G por faixa                                                       | 16 questões                        | Os itens têm maior abstração, mas continuam sendo uma amostra curta e heterogênea de conhecimentos, não uma avaliação cognitiva de adolescentes.      |
 
 A fonte contém bancos graduados para as idades de 6 a 13 e bancos por faixa para as demais idades. O fluxo sempre apresenta quatro domínios, mas a pessoa precisa iniciar cada módulo manualmente. Assim, o tempo real depende de cliques, leitura do adulto e eventual ajuda, e não existe ainda uma política clara para “não sabe”, “não respondeu”, dificuldade de leitura, idioma, deficiência sensorial ou baixa familiaridade escolar.
 
@@ -28,17 +28,17 @@ A adaptação etária, a separação entre reconhecimento visual, leitura, escri
 
 ## 4. Problemas que impedem uma avaliação razoável hoje
 
-| Prioridade | Problema | Impacto | Decisão recomendada |
-|---|---|---|---|
-| P0 | O rótulo cognitivo é mais amplo que os construtos medidos | Pode induzir interpretação clínica indevida | Renomear a experiência como triagem pedagógica/academic screening e explicitar limites no resultado. |
-| P0 | Não há contexto de escolarização, ano/série, idioma, oportunidade de aprendizagem ou informante | Um erro pode refletir contexto e não habilidade | Coletar contexto mínimo antes da bateria e separar “não informado” de “incorreto”. |
-| P0 | Escores de 0–4 por domínio não são normativos | Não permitem dizer normal, atraso, percentil ou diagnóstico | Usar descritores qualitativos e uma faixa de confiança/necessidade de aprofundamento, sem corte diagnóstico. |
-| P1 | Quatro itens por domínio são poucos | Alta instabilidade: um erro altera 25% da área | Usar itens-âncora, follow-up adaptativo e marcar o resultado como amostra curta. |
-| P1 | O formulário é sequencial e não orienta claramente os próximos passos | A pré-consulta pode estourar 15 minutos | Cronometrar a sessão, mostrar progresso global e autoavançar para o próximo domínio. |
-| P1 | Múltipla escolha mistura leitura, linguagem, visão e conhecimento escolar | Pode medir o formato da questão em vez do construto | Classificar cada item por habilidade-alvo e oferecer “não sabe/não respondeu” sem penalizar como erro interpretativo. |
-| P1 | Não há bloco de observação para 6–19 nem medida de processo | Perde estratégias, tempo, autocorreção e necessidade de ajuda | Registrar pistas, autonomia, tempo aproximado e observações do adulto/profissional. |
-| P2 | O relatório aparece depois de apenas um domínio concluído | Um resultado parcial pode parecer bateria completa | Separar claramente resumo parcial de bateria concluída e bloquear salvamento como avaliação completa. |
-| P2 | O conteúdo não é uma representação completa da BNCC | “Conhecimento geral escolar” fica reduzido a quatro áreas | Mapear cada item a descritor pedagógico local e deixar explícito que é uma amostra, não cobertura curricular. |
+| Prioridade | Problema                                                                                        | Impacto                                                       | Decisão recomendada                                                                                                   |
+| ---------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| P0         | O rótulo cognitivo é mais amplo que os construtos medidos                                       | Pode induzir interpretação clínica indevida                   | Renomear a experiência como triagem pedagógica/academic screening e explicitar limites no resultado.                  |
+| P0         | Não há contexto de escolarização, ano/série, idioma, oportunidade de aprendizagem ou informante | Um erro pode refletir contexto e não habilidade               | Coletar contexto mínimo antes da bateria e separar “não informado” de “incorreto”.                                    |
+| P0         | Escores de 0–4 por domínio não são normativos                                                   | Não permitem dizer normal, atraso, percentil ou diagnóstico   | Usar descritores qualitativos e uma faixa de confiança/necessidade de aprofundamento, sem corte diagnóstico.          |
+| P1         | Quatro itens por domínio são poucos                                                             | Alta instabilidade: um erro altera 25% da área                | Usar itens-âncora, follow-up adaptativo e marcar o resultado como amostra curta.                                      |
+| P1         | O formulário é sequencial e não orienta claramente os próximos passos                           | A pré-consulta pode estourar 15 minutos                       | Cronometrar a sessão, mostrar progresso global e autoavançar para o próximo domínio.                                  |
+| P1         | Múltipla escolha mistura leitura, linguagem, visão e conhecimento escolar                       | Pode medir o formato da questão em vez do construto           | Classificar cada item por habilidade-alvo e oferecer “não sabe/não respondeu” sem penalizar como erro interpretativo. |
+| P1         | Não há bloco de observação para 6–19 nem medida de processo                                     | Perde estratégias, tempo, autocorreção e necessidade de ajuda | Registrar pistas, autonomia, tempo aproximado e observações do adulto/profissional.                                   |
+| P2         | O relatório aparece depois de apenas um domínio concluído                                       | Um resultado parcial pode parecer bateria completa            | Separar claramente resumo parcial de bateria concluída e bloquear salvamento como avaliação completa.                 |
+| P2         | O conteúdo não é uma representação completa da BNCC                                             | “Conhecimento geral escolar” fica reduzido a quatro áreas     | Mapear cada item a descritor pedagógico local e deixar explícito que é uma amostra, não cobertura curricular.         |
 
 Há ainda problemas de conteúdo que precisam de revisão pedagógica por especialista: algumas tarefas de leitura para 2–3 anos pressupõem direção de leitura, letra maiúscula e uso de escrita convencional; isso não é um bom teste de conhecimento geral dessa faixa. Para crianças pequenas, o eixo deve ser linguagem oral emergente, atenção compartilhada, compreensão de instruções, reconhecimento funcional, noções de quantidade e observação de desenho/pré-escrita — sempre com resposta mediada e sem transformar não escolarização em déficit.
 
@@ -46,14 +46,14 @@ Há ainda problemas de conteúdo que precisam de revisão pedagógica por especi
 
 O objetivo deve ser **chegar à consulta com um mapa inicial**, não concluir um diagnóstico. A bateria precisa ser curta, interrompível e interpretável mesmo quando incompleta.
 
-| Janela | Ação | Saída |
-|---|---|---|
-| 0:00–1:30 | Contexto mínimo: idade, ano/série ou “não frequenta”, idioma principal, quem respondeu e se houve ajuda | Permite interpretar oportunidade de aprendizagem e contexto. |
-| 1:30–2:30 | Instrução simples e um item de prática por formato | Confirma compreensão do formato antes de contar desempenho. |
-| 2:30–10:30 | Oito a doze itens curtos, distribuídos entre visual/raciocínio, linguagem/leitura, escrita emergente ou convencional e matemática | Amostra equilibrada com progresso global visível. |
-| 10:30–13:00 | Até dois itens de aprofundamento escolhidos pelas respostas ou pela idade/série | Aumenta informação onde há sinal de habilidade emergente, sem transformar em prova longa. |
-| 13:00–14:30 | Observação estruturada: autonomia, necessidade de repetição, estratégia, tempo, frustração e autocorreção | Contextualiza o acerto/erro. |
-| 14:30–15:00 | Resumo seguro e preparação da consulta | Mostra forças, habilidades emergentes, lacunas de informação e perguntas para o profissional. |
+| Janela      | Ação                                                                                                                              | Saída                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 0:00–1:30   | Contexto mínimo: idade, ano/série ou “não frequenta”, idioma principal, quem respondeu e se houve ajuda                           | Permite interpretar oportunidade de aprendizagem e contexto.                                  |
+| 1:30–2:30   | Instrução simples e um item de prática por formato                                                                                | Confirma compreensão do formato antes de contar desempenho.                                   |
+| 2:30–10:30  | Oito a doze itens curtos, distribuídos entre visual/raciocínio, linguagem/leitura, escrita emergente ou convencional e matemática | Amostra equilibrada com progresso global visível.                                             |
+| 10:30–13:00 | Até dois itens de aprofundamento escolhidos pelas respostas ou pela idade/série                                                   | Aumenta informação onde há sinal de habilidade emergente, sem transformar em prova longa.     |
+| 13:00–14:30 | Observação estruturada: autonomia, necessidade de repetição, estratégia, tempo, frustração e autocorreção                         | Contextualiza o acerto/erro.                                                                  |
+| 14:30–15:00 | Resumo seguro e preparação da consulta                                                                                            | Mostra forças, habilidades emergentes, lacunas de informação e perguntas para o profissional. |
 
 Para 2–5 anos, o formato deve privilegiar interação do adulto com a criança, apontar, nomear, combinar, contar pequenas quantidades, compreender instruções e observar traços/desenho. Para 6–10 anos, deve priorizar leitura funcional, compreensão curta, escrita/ortografia inicial, número/operação e raciocínio visual. Para 11–19 anos, deve incluir compreensão de texto, produção/revisão de linguagem, proporcionalidade/álgebra inicial e raciocínio, sempre calibrado por ano escolar e exposição curricular.
 
@@ -78,9 +78,7 @@ O relatório deve separar quatro estados: **observado com autonomia**, **observa
 ## Referências
 
 [1]: https://basenacionalcomum.mec.gov.br/images/BNCC_20dez_site.pdf "Base Nacional Comum Curricular — Ministério da Educação"
-
 [2]: https://basenacionalcomum.mec.gov.br/abase/ "Base Nacional Comum Curricular — Educação é a base"
-
 [3]: https://www.cdc.gov/act-early/milestones/index.html "CDC's Developmental Milestones"
 
 ## Validação visual do novo início — mobile
@@ -94,3 +92,25 @@ O estado preenchido comunica claramente idade, etapa e informante. A primeira do
 O feedback “Resposta não informada — não será interpretada como erro” ficou claro e o timer mostra 00:00, 15 minutos restantes e encerramento manual. O ponto de atrito visual mais importante é o shell móvel fixo: o cabeçalho e o dock aparecem sobrepostos à jornada longa e podem cobrir a leitura ou as alternativas quando a pessoa rola. Isso não é falha do instrumento, mas pode prejudicar a validade da aplicação remota. A correção recomendada é reservar `scroll-padding-top` e `scroll-padding-bottom` e garantir que o cartão ativo tenha margem segura para não ficar atrás do header/dock.
 
 Outro achado é que as opções ficam muito altas e separadas em tela estreita quando o enunciado quebra linha. O layout preserva toque confortável, mas pode reduzir a sensação de continuidade; um cartão por pergunta com opções em grid compacto para itens textuais e modo 2x2 apenas para emojis tende a ser mais adequado ao teto de 15 minutos.
+
+## Nova rodada — diagnóstico e ação executada
+
+### Diagnóstico atualizado
+
+A Nova avaliação cognitiva já apresenta bons pilares de segurança — contexto mínimo, limite de 15 minutos, resposta não informada e resumo parcial —, mas ainda exige uma sequência longa de decisões manuais. Cada domínio começa como um módulo independente, a pessoa precisa escolher a aba seguinte e o fluxo não distingue claramente uma amostra-base rápida de um aprofundamento opcional. Isso torna a experiência menos didática e aumenta o risco de gastar tempo demais em uma área antes de obter uma visão equilibrada das quatro áreas.
+
+A bateria também informa que é adaptada, mas oferece pouca orientação prática sobre como responder. O usuário vê o enunciado e as opções, porém não recebe uma trilha explícita de “o que observar”, nem uma indicação clara de que pode concluir uma amostra-base e aprofundar somente um domínio que mereça atenção. Esse é um problema de produto e de ergonomia, não uma autorização para inferir diagnóstico.
+
+### Ação executada nesta rodada
+
+Foi definido um modo de **amostra guiada inteligente**. Cada domínio começa com dois itens-base, distribuindo a primeira passagem em oito itens no total e deixando até dois itens adicionais disponíveis por domínio. Ao concluir um domínio, o fluxo avança automaticamente para o próximo domínio ainda não aplicado. O cartão de cada domínio informa a estratégia de resposta e o resumo permite retomar um domínio específico para aprofundamento enquanto ainda houver tempo.
+
+A ação preserva as respostas, mantém “não sei / prefiro não responder” fora do cálculo de acerto/erro, soma corretamente o aprofundamento ao resultado anterior e conserva o limite de 15 minutos. O relatório continua descrevendo somente a amostra aplicada; não cria QI, percentil, normalidade, atraso ou diagnóstico. Para 2–5 anos, o bloco de observação permanece integral e não é artificialmente convertido em múltipla escolha.
+
+### Critério de qualidade
+
+A melhoria será considerada aprovada se a bateria puder ser iniciada com orientação explícita, concluir a primeira passagem de forma equilibrada entre os quatro domínios, avançar automaticamente sem perder contexto, permitir aprofundamento seletivo e continuar produzindo resumo parcial honesto quando encerrada antes da conclusão. A interpretação permanece pedagógica e contextual, nunca normativa ou diagnóstica.
+
+### Referência de desenho
+
+A decisão segue princípios de avaliação formativa, divulgação progressiva e adequação por etapa escolar: primeiro obter uma amostra equilibrada e compreensível; depois aprofundar apenas onde houver motivo operacional para observar mais, sem transformar a interface em uma prova extensa.

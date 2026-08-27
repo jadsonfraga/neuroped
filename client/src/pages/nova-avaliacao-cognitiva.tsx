@@ -959,9 +959,13 @@ function ObsModule({
 function QuizModule({
   questions,
   onComplete,
+  modeLabel,
+  guidance,
 }: {
   questions: MCQ[];
   onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
+  modeLabel: string;
+  guidance: string;
 }) {
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -1044,7 +1048,7 @@ function QuizModule({
         <Badge variant="outline">
           Questão {idx + 1} / {questions.length}
         </Badge>
-        <Badge variant="outline">Resposta por resposta</Badge>
+        <Badge variant="outline">{modeLabel}</Badge>
       </div>
 
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -1055,6 +1059,12 @@ function QuizModule({
       </div>
 
       <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-muted/50 to-transparent p-4 sm:p-5 shadow-sm">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Como observar
+        </p>
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          {guidance}
+        </p>
         <p
           className={`relative text-foreground leading-relaxed whitespace-pre-line ${q.big ? "text-xl font-bold text-center" : "text-sm font-semibold"}`}
         >
@@ -2047,12 +2057,16 @@ function DomainModule({
   band,
   onComplete,
   result,
+  pass,
+  guidance,
 }: {
   domain: Domain;
   age: number;
   band: Band;
   onComplete: (r: DomainResult) => void;
   result?: DomainResult;
+  pass: "amostra" | "aprofundamento";
+  guidance: string;
 }) {
   const [started, setStarted] = useState(false);
   const [reset, setReset] = useState(0);
@@ -2079,34 +2093,50 @@ function DomainModule({
     return (
       <div className="space-y-3">
         <Card className="border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
+          <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" /> {result.label} — concluído
+                <CheckCircle2 className="h-4 w-4" /> {result.label} —{" "}
+                {pass === "amostra"
+                  ? "amostra-base registrada"
+                  : "módulo aprofundado"}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Todas as perguntas e respostas deste módulo foram registradas.
+                {pass === "amostra"
+                  ? "A primeira passagem está equilibrada entre os domínios."
+                  : "A amostra e os itens adicionais deste módulo foram registrados."}
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1 text-xs"
-              onClick={() => {
-                setStarted(false);
-                setReset((r) => r + 1);
-                onComplete({
-                  domain,
-                  label: DOMAIN_LABELS[domain],
-                  score: 0,
-                  max: 0,
-                  notInformed: 0,
-                  answers: [],
-                });
-              }}
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Refazer
-            </Button>
+            <div className="flex items-center gap-2">
+              {pass === "aprofundamento" && (
+                <Button
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={() => setStarted(true)}
+                >
+                  Aprofundar <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-xs"
+                onClick={() => {
+                  setStarted(false);
+                  setReset((r) => r + 1);
+                  onComplete({
+                    domain,
+                    label: DOMAIN_LABELS[domain],
+                    score: 0,
+                    max: 0,
+                    notInformed: 0,
+                    answers: [],
+                  });
+                }}
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Refazer
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -2127,10 +2157,27 @@ function DomainModule({
         "Operações matemáticas, raciocínio numérico e resolução de problemas por nível de escolaridade.",
     };
     return (
-      <div className="space-y-3 text-center py-4">
+      <div className="space-y-3 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <Badge variant="outline">
+            {pass === "amostra"
+              ? "Passagem equilibrada"
+              : "Aprofundamento opcional"}
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            {pass === "amostra" ? "2 itens-base" : "até 2 itens adicionais"}
+          </span>
+        </div>
         <p className="text-sm text-muted-foreground">{descriptions[domain]}</p>
-        <Button onClick={() => setStarted(true)} className="gap-2">
-          Iniciar módulo <ChevronRight className="h-4 w-4" />
+        <div className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          <strong className="text-foreground">Orientação:</strong> {guidance}
+        </div>
+        <Button
+          onClick={() => setStarted(true)}
+          className="w-full gap-2 sm:w-auto"
+        >
+          Iniciar {pass === "amostra" ? "amostra" : "aprofundamento"}{" "}
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     );
@@ -2139,13 +2186,26 @@ function DomainModule({
   // escrita Band A or B → observation checklist
   if (domain === "escrita" && (band === "A" || band === "B")) {
     const block = ESCRITA_BANK[band][0] as ObsBlock;
-    return <ObsModule key={reset} block={block} onComplete={handleComplete} />;
+    const observationItems =
+      pass === "amostra" ? block.items.slice(0, 2) : block.items.slice(2);
+    return (
+      <ObsModule
+        key={`${reset}-${pass}`}
+        block={{ ...block, items: observationItems }}
+        onComplete={handleComplete}
+      />
+    );
   }
+
+  const questionSet =
+    pass === "amostra" ? (bank as MCQ[]).slice(0, 2) : (bank as MCQ[]).slice(2);
 
   return (
     <QuizModule
       key={reset}
-      questions={bank as MCQ[]}
+      questions={questionSet}
+      modeLabel={pass === "amostra" ? "Amostra-base" : "Aprofundamento"}
+      guidance={guidance}
       onComplete={handleComplete}
     />
   );
@@ -2157,15 +2217,39 @@ const DOMAINS: {
   label: string;
   icon: typeof Eye;
   color: string;
+  guidance: string;
 }[] = [
-  { id: "visual", label: "Visual", icon: Eye, color: "text-violet-600" },
-  { id: "leitura", label: "Leitura", icon: BookOpen, color: "text-blue-600" },
-  { id: "escrita", label: "Escrita", icon: PenTool, color: "text-amber-600" },
+  {
+    id: "visual",
+    label: "Visual",
+    icon: Eye,
+    color: "text-violet-600",
+    guidance:
+      "Observe padrões, relações e detalhes. Repita a instrução somente se necessário e evite dar pistas.",
+  },
+  {
+    id: "leitura",
+    label: "Leitura",
+    icon: BookOpen,
+    color: "text-blue-600",
+    guidance:
+      "Leia o enunciado com calma. Registre se houve leitura autônoma, mediação ou repetição da instrução.",
+  },
+  {
+    id: "escrita",
+    label: "Escrita",
+    icon: PenTool,
+    color: "text-amber-600",
+    guidance:
+      "Observe a tentativa e a estratégia. Para crianças pequenas, valorize a aprendizagem emergente e a mediação.",
+  },
   {
     id: "aritmetica",
     label: "Aritmética",
     icon: Calculator,
     color: "text-emerald-600",
+    guidance:
+      "Dê tempo para a criança resolver no próprio ritmo e registre se usou contagem, cálculo mental ou ajuda.",
   },
 ];
 
@@ -2223,19 +2307,43 @@ export default function AvaliacaoCognitivaInfantilPage() {
         delete n[r.domain];
         return n;
       });
-    } else {
-      setResults((prev) => {
-        const next = { ...prev, [r.domain]: r };
-        if (Object.keys(next).length === DOMAINS.length) {
-          setAssessmentFinished(true);
-        }
-        return next;
-      });
+      return;
+    }
+
+    const basePassStillRunning = completedCount < DOMAINS.length;
+    setResults((prev) => {
+      const previous = prev[r.domain];
+      const merged: DomainResult = previous
+        ? {
+            ...r,
+            score: previous.score + r.score,
+            max: previous.max + r.max,
+            notInformed: previous.notInformed + r.notInformed,
+            answers: [...previous.answers, ...r.answers],
+          }
+        : r;
+      const next = { ...prev, [r.domain]: merged };
+      return next;
+    });
+
+    if (basePassStillRunning) {
+      const nextDomain = DOMAINS.find(
+        (candidate) => candidate.id !== r.domain && !results[candidate.id]?.max,
+      );
+      if (nextDomain) setActiveDomain(nextDomain.id);
     }
   }
 
   const completedDomains = Object.values(results).filter((r) => r && r.max > 0);
   const completedCount = completedDomains.length;
+  const basePassComplete = DOMAINS.every((domain) =>
+    Boolean(results[domain.id]?.max),
+  );
+  const activeResult = results[activeDomain];
+  const activePass: "amostra" | "aprofundamento" =
+    basePassComplete && activeResult && activeResult.max < 4
+      ? "aprofundamento"
+      : "amostra";
   const notInformedCount = completedDomains.reduce(
     (total, result) => total + (result?.notInformed ?? 0),
     0,
@@ -2491,6 +2599,25 @@ export default function AvaliacaoCognitivaInfantilPage() {
           {/* Active domain */}
           <Card id="cognitive-active-domain" className="scroll-mt-24">
             <CardContent className="p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/30 px-3 py-2">
+                <div>
+                  <p className="text-xs font-bold text-foreground">
+                    {basePassComplete
+                      ? "Amostra-base concluída"
+                      : "Passagem equilibrada em andamento"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {basePassComplete
+                      ? "Você pode encerrar agora ou aprofundar um domínio com até 2 itens adicionais."
+                      : `${completedCount} de ${DOMAINS.length} domínios visitados; o próximo abre automaticamente.`}
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-[10px]">
+                  {basePassComplete
+                    ? "Aprofundamento opcional"
+                    : "Amostra-base"}
+                </Badge>
+              </div>
               <div className="flex items-center gap-2 mb-4">
                 {(() => {
                   const d = DOMAINS.find((x) => x.id === activeDomain)!;
@@ -2505,10 +2632,14 @@ export default function AvaliacaoCognitivaInfantilPage() {
                 </Badge>
               </div>
               <DomainModule
-                key={`${activeDomain}-${age}-${band}`}
+                key={`${activeDomain}-${age}-${band}-${activePass}`}
                 domain={activeDomain}
                 age={age}
                 band={band}
+                pass={activePass}
+                guidance={
+                  DOMAINS.find((domain) => domain.id === activeDomain)!.guidance
+                }
                 onComplete={handleResult}
                 result={results[activeDomain]}
               />
@@ -2607,7 +2738,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
               responsável.
             </span>
           </div>
-          {completedDomains.length > 0 && (
+          {completedCount === DOMAINS.length && (
             <div className="space-y-4">
               <ClinicalReport
                 scaleName="Nova avaliação cognitiva"
