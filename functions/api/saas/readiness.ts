@@ -3,6 +3,7 @@ import { requireBillingEntitlement } from "../billing/_guard";
 import {
   clinicalLiveEnabled,
   getClinicMembership,
+  operationalCryptoReady,
   membershipCanManage,
   tenantError,
   tenantJson,
@@ -15,8 +16,24 @@ const REQUIRED_TABLES = [
   "saas_audit_log",
   "saas_module_settings",
   "saas_backup_evidence",
+  "saas_membership_invites",
+  "saas_privacy_requests",
+  "saas_retention_policies",
+  "saas_integration_connections",
+  "saas_integration_idempotency",
   "live_patient_search_tokens",
 ] as const;
+
+const CHECK_ACTIONS = {
+  membership: "Confirmar membership administrativa ativa para esta clínica.",
+  migration: "Aplicar migrations SaaS 0016–0020 em ordem e repetir o readiness.",
+  keyring: "Configurar o keyring clínico dedicado com IDs separados.",
+  operationalKey: "Configurar OPERATIONAL_DATA_KEY no secret manager.",
+  clinicalFlag: "Manter Clinical LIVE desabilitado até concluir os gates; o ambiente de produção deve definir a flag explicitamente.",
+  billing: "Confirmar entitlement administrativo e assento disponível para o tenant.",
+  audit: "Aplicar a trilha SaaS append-only e validar a escrita de auditoria.",
+  restore: "Registrar evidência real de restore com digest SHA-256, RPO e RTO.",
+} as const;
 
 interface LatestBackupRow {
   status: "recorded" | "verified" | "failed";
@@ -84,24 +101,30 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
     const billingError = await requireBillingEntitlement(authorized.db, authorized.user.id, clinicId, "admin");
     const checks = {
-      membership: { ok: true, label: "Membership administrativa ativa" },
-      migration: { ok: migrationReady, label: "Migration 0016 aplicada" },
-      keyring: { ok: clinicalCryptoReady(context.env), label: "Keyring clínico dedicado" },
-      clinicalFlag: { ok: clinicalLiveEnabled(context.env), label: "Clinical LIVE habilitado" },
-      billing: { ok: !billingError, label: "Entitlement administrativo válido" },
-      audit: { ok: existingTables.has("saas_audit_log"), label: "Trilha SaaS disponível" },
-      restore: { ok: latestBackup?.status === "verified" && Boolean(latestBackup.restore_verified_at), label: "Restore verificado" },
+      membership: { ok: true, label: "Membership administrativa ativa", action: CHECK_ACTIONS.membership },
+      migration: { ok: migrationReady, label: "Migrations SaaS operacionais aplicadas", action: CHECK_ACTIONS.migration },
+      keyring: { ok: clinicalCryptoReady(context.env), label: "Keyring clínico dedicado", action: CHECK_ACTIONS.keyring },
+      operationalKey: { ok: operationalCryptoReady(context.env), label: "Chave operacional disponível", action: CHECK_ACTIONS.operationalKey },
+      clinicalFlag: { ok: clinicalLiveEnabled(context.env), label: "Clinical LIVE habilitado", action: CHECK_ACTIONS.clinicalFlag },
+      billing: { ok: !billingError, label: "Entitlement administrativo válido", action: CHECK_ACTIONS.billing },
+      audit: { ok: existingTables.has("saas_audit_log"), label: "Trilha SaaS disponível", action: CHECK_ACTIONS.audit },
+      restore: { ok: latestBackup?.status === "verified" && Boolean(latestBackup.restore_verified_at), label: "Restore verificado", action: CHECK_ACTIONS.restore },
     };
     const missing = Object.values(checks).filter((check) => !check.ok).map((check) => check.label);
+    const preEnablementMissing = Object.entries(checks).filter(([id, check]) => id !== "clinicalFlag" && !check.ok).map(([, check]) => check.label);
 
     return tenantJson({
       clinicId,
       readyForProduction: missing.length === 0,
+      eligibleForClinicalEnablement: preEnablementMissing.length === 0,
+      preEnablementMissing,
       checks,
       missing,
       enabledModules,
-      requiredModules: 20,
-      latestBackup: latestBackup
+            requiredModules: 20,
+      correctiveActions: Object.values(checks).filter((check) => !check.ok).map((check) => check.action),
+      latestBackup:
+ latestBackup
         ? { status: latestBackup.status, restoreVerifiedAt: latestBackup.restore_verified_at, createdAt: latestBackup.created_at }
         : null,
     });

@@ -4,8 +4,8 @@ Este runbook descreve como liberar as 20 abas em ambiente real sem tratar a tela
 
 ## Ordem de aplicação
 
-1. Aplicar as migrations D1 em ordem, incluindo `0016_saas_control_plane_hardening.sql`, `0017_saas_membership_invites.sql`, `0018_saas_privacy_governance.sql` e `0019_saas_integrations_control.sql`.
-2. Confirmar que `saas_module_settings`, `saas_backup_evidence`, `saas_membership_invites`, `saas_privacy_requests`, `saas_retention_policies`, `saas_integration_connections` e `live_patient_search_tokens` existem no banco de produção.
+1. Aplicar as migrations D1 em ordem, incluindo `0016_saas_control_plane_hardening.sql`, `0017_saas_membership_invites.sql`, `0018_saas_privacy_governance.sql`, `0019_saas_integrations_control.sql` e `0020_saas_integration_idempotency.sql`.
+2. Confirmar que `saas_module_settings`, `saas_backup_evidence`, `saas_membership_invites`, `saas_privacy_requests`, `saas_retention_policies`, `saas_integration_connections`, `saas_integration_idempotency` e `live_patient_search_tokens` existem no banco de produção.
 3. Configurar os segredos no secret manager, nunca no frontend: `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY`, `OPERATIONAL_DATA_KEY`, `APP_BASE_URL` HTTPS e `ENVIRONMENT=production`. Durante rotação, `CLINICAL_DATA_KEY_PREVIOUS` e seu identificador devem apontar somente para a chave anterior.
 4. Manter `CLINICAL_LIVE_ENABLED=false` até o keyring, backup/restore e smoke tenant-aware passarem. O sistema deve falhar fechado se o keyring faltar ou se houver colisão/separação inválida de chaves.
 5. Criar ou validar uma clínica de staging com memberships explícitas, entitlement válido e dados sintéticos. Nunca usar PHI real em staging.
@@ -13,6 +13,7 @@ Este runbook descreve como liberar as 20 abas em ambiente real sem tratar a tela
 7. Habilitar módulos individualmente por tenant. O toggle da central usa controle de versão otimista e auditoria; ele não bypassa billing, membership, escopo clínico ou consentimento.
 8. Criar convites com URL HTTPS. O token é exibido uma única vez, armazenado apenas como hash e aceito somente quando o e-mail da sessão coincide com o hash do convite.
 9. Habilitar cada integração em sandbox antes de produção. API keys devem ter scopes, quota, expiração/rotação e tenant explícito. Webhooks precisam de assinatura, idempotência e proteção contra replay.
+10. Toda mutação de integração deve enviar `X-Idempotency-Key` entre 16 e 128 caracteres. Reusar a chave com o mesmo payload deve devolver a mesma resposta operacional; reusar a chave com payload diferente deve falhar com conflito. O catálogo deve aplicar redaction, tenant scope, assinatura e janela anti-replay, sem payload clínico.
 
 ## Variáveis e postura esperada
 

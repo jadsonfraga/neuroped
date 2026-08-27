@@ -2,6 +2,7 @@ import { getContextUser } from "../auth/_authorization";
 import {
   getClinicMembership,
   membershipCanManage,
+  operationalCryptoReady,
   tenantError,
   tenantJson,
   type TenantEnv,
@@ -23,6 +24,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (!membership || !membershipCanManage(membership)) return tenantError("Acesso administrativo negado para esta clínica.", "TENANT_FORBIDDEN", 403);
 
   const ready = clinicalCryptoReady(context.env);
+  const operationalReady = operationalCryptoReady(context.env);
   let encryptionVersion: string | null = null;
   if (ready) {
     try {
@@ -33,12 +35,17 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   }
   return tenantJson({
     clinicId,
-    ready,
+    ready: ready && operationalReady,
     encryptionVersion,
     keyMaterialExposed: false,
+    missing: [
+      ...(!ready ? ["Configure CLINICAL_DATA_KEY, CLINICAL_INDEX_KEY e IDs separados."] : []),
+      ...(!operationalReady ? ["Configure OPERATIONAL_DATA_KEY no secret manager."] : []),
+    ],
     controls: {
       tenantDerivedAesGcm: ready,
       blindIndexSeparated: ready,
+      operationalHmac: operationalReady,
       previousKeyRotationSupported: ready,
       failClosedOnMissingKey: true,
     },

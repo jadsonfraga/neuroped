@@ -8,7 +8,7 @@ import {
   tenantJson,
   type TenantEnv,
 } from "../tenant/_core";
-import { operationalBlindHash } from "./_invite";
+import { operationalBlindHash, sha256Hex } from "./_invite";
 import {
   INTEGRATION_SCOPES,
   OPERATIONAL_INTEGRATIONS,
@@ -16,6 +16,7 @@ import {
   isIntegrationScope,
   type IntegrationId,
   type IntegrationScope,
+  isValidIdempotencyKey,
 } from "../../../shared/saas-operational";
 
 const CONNECTION_STATUSES = ["draft", "connected", "paused", "revoked"] as const;
@@ -73,7 +74,6 @@ function integrationToApi(row: IntegrationRow) {
     status: row.status,
     scopes,
     credentialConfigured: Boolean(row.credential_ref),
-    credentialRef: row.credential_ref,
     endpointConfigured: Boolean(row.endpoint_hash),
     lastVerifiedAt: row.last_verified_at,
     version: row.version,
@@ -128,6 +128,19 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const idempotencyKey = cleanText(context.request.headers.get("x-idempotency-key"), 128);
+  if (!isValidIdempotencyKey(idempotencyKey)) return tenantError("X-Idempotency-Key é obrigatório e deve ter 16–128 caracteres seguros.", "IDEMPOTENCY_KEY_REQUIRED", 400);
+  const requestHash = await sha256Hex(JSON.stringify({ clinicId, body }));
+  try {
+    const replay = await authorized.db.prepare(`SELECT request_hash, response_json FROM saas_integration_idempotency WHERE clinic_id = ? AND idempotency_key = ? LIMIT 1`).bind(clinicId, idempotencyKey).first<{ request_hash: string; response_json: string }>();
+    if (replay) {
+      if (replay.request_hash !== requestHash) return tenantError("A chave de idempotência já foi usada com outro payload.", "IDEMPOTENCY_KEY_REUSE", 409);
+      return tenantJson(JSON.parse(replay.response_json));
+    }
+  } catch (error) {
+    if (String(error).toLowerCase().includes("no such table")) return tenantError("Migration de idempotência não aplicada.", "INTEGRATION_IDEMPOTENCY_NOT_CONFIGURED", 503);
+    throw error;
+  }
 
   const integrationId = cleanText(body.integrationId, 40);
   const environment = cleanText(body.environment, 20);
@@ -157,6 +170,7 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   const endpointHash = endpoint ? await operationalBlindHash(context.env, clinicId, `integration-endpoint:${integrationId}`, endpoint) : null;
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
+  const responsePayload = { data: { clinicId, integrationId, environment, status, scopes, credentialConfigured: Boolean(credentialRef), endpointConfigured: Boolean(endpointHash), lastVerifiedAt, version: expectedVersion + 1, updatedAt: now } };
   try {
     const results = await authorized.db.batch([
       authorized.db
@@ -190,11 +204,16 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
         },
         true,
       ),
+      authorized.db
+        .prepare(`INSERT INTO saas_integration_idempotency(id, clinic_id, idempotency_key, request_hash, response_json, created_at) SELECT ?, ?, ?, ?, ?, ? WHERE changes() = 1`)
+        .bind(crypto.randomUUID(), clinicId, idempotencyKey, requestHash, JSON.stringify(responsePayload), now),
     ]);
     if ((results[0]?.meta?.changes ?? 0) !== 1) return tenantError("Conexão mudou durante a atualização.", "INTEGRATION_STALE", 409);
     if ((results[1]?.meta?.changes ?? 0) !== 1) return tenantError("A conexão não pôde ser auditada.", "AUDIT_WRITE_FAILED", 500);
-    return tenantJson({ data: { clinicId, integrationId, environment, status, scopes, credentialConfigured: Boolean(credentialRef), endpointConfigured: Boolean(endpointHash), lastVerifiedAt, version: expectedVersion + 1, updatedAt: now } });
+    if ((results[2]?.meta?.changes ?? 0) !== 1) return tenantError("A idempotência não pôde ser registrada.", "IDEMPOTENCY_WRITE_FAILED", 500);
+    return tenantJson(responsePayload);
   } catch (error) {
+    if (String(error).toLowerCase().includes("unique") && String(error).toLowerCase().includes("idempotency")) return tenantError("A chave de idempotência já está em processamento ou foi usada.", "IDEMPOTENCY_CONFLICT", 409);
     if (String(error).includes("SAAS_INTEGRATION_VERSION_CONFLICT")) return tenantError("Conexão mudou durante a atualização.", "INTEGRATION_STALE", 409);
     console.error("[saas.integrations.PUT] failed", error);
     return tenantError("Não foi possível salvar a integração.", "INTEGRATION_UPSERT_FAILED", 500);

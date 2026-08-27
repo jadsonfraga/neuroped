@@ -26,6 +26,7 @@ for (const migration of [
   "db/migrations/0017_saas_membership_invites.sql",
   "db/migrations/0018_saas_privacy_governance.sql",
   "db/migrations/0019_saas_integrations_control.sql",
+  "db/migrations/0020_saas_integration_idempotency.sql",
 ]) db.exec(read(migration));
 
 db.prepare(`INSERT INTO saas_module_settings(id, clinic_id, module_id, enabled, version) VALUES ('m1', 'clinic-a', 'privacy', 0, 0)`).run();
@@ -42,5 +43,11 @@ assert.throws(() => db.prepare(`UPDATE saas_integration_connections SET clinic_i
 assert.throws(() => db.prepare(`UPDATE saas_integration_connections SET version = 4 WHERE id = 'i1'`).run(), /SAAS_INTEGRATION_VERSION_CONFLICT/);
 assert.throws(() => insertIntegration.run('i2', 'clinic-a', 'webhooks', 'sandbox', 'draft', '["module.read"]', 0), /UNIQUE/);
 
+const insertIdempotency = db.prepare(`INSERT INTO saas_integration_idempotency(id, clinic_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`);
+insertIdempotency.run('idem-a', 'clinic-a', 'idempotency-key-0001', "a".repeat(64), '{"data":{"status":"draft"}}');
+assert.throws(() => db.prepare(`UPDATE saas_integration_idempotency SET clinic_id = 'clinic-b' WHERE id = 'idem-a'`).run(), /SAAS_IDEMPOTENCY_IMMUTABLE/);
+assert.throws(() => db.prepare(`DELETE FROM saas_integration_idempotency WHERE id = 'idem-a'`).run(), /SAAS_IDEMPOTENCY_APPEND_ONLY/);
+assert.throws(() => insertIdempotency.run('idem-b', 'clinic-a', 'idempotency-key-0001', "b".repeat(64), '{}'), /UNIQUE/);
+
 db.close();
-console.log("[saas-migrations-smoke] ✓ migrations 0016–0019, FKs, triggers e versionamento validados");
+console.log("[saas-migrations-smoke] ✓ migrations 0016–0020, FKs, triggers, idempotência e versionamento validados");

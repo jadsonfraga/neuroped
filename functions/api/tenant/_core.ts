@@ -73,6 +73,15 @@ export function clinicalLiveEnabled(env: TenantEnv): boolean {
   return env.CLINICAL_LIVE_ENABLED?.trim().toLowerCase() === "true";
 }
 
+export function operationalCryptoReady(env: TenantEnv): boolean {
+  const operational = env.OPERATIONAL_DATA_KEY?.trim() ?? "";
+  if (operational.length < 32) return false;
+  const clinicalSecrets = [env.CLINICAL_DATA_KEY, env.CLINICAL_DATA_KEY_PREVIOUS, env.CLINICAL_INDEX_KEY]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+  return !clinicalSecrets.includes(operational);
+}
+
 /**
  * Resolve acesso exclusivamente por membership explícita.
  * O role global `admin` NÃO é bypass entre clínicas: um administrador técnico

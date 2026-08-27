@@ -3,6 +3,7 @@ import { requireBillingEntitlement } from "../../billing/_guard";
 import {
   getClinicMembership,
   membershipCanManage,
+  operationalCryptoReady,
   prepareSaasAudit,
   tenantError,
   tenantJson,
@@ -64,7 +65,22 @@ async function authorizeInviteAdmin(context: Parameters<PagesFunction<TenantEnv>
   if (!membership || !membershipCanManage(membership)) return { error: tenantError("Acesso administrativo negado para esta clínica.", "TENANT_FORBIDDEN", 403) } as const;
   const billingError = await requireBillingEntitlement(db, user.id, clinicId, "admin");
   if (billingError) return { error: billingError } as const;
+  if (!operationalCryptoReady(context.env)) return { error: tenantError("Chave operacional não configurada.", "OPERATIONAL_CRYPTO_NOT_CONFIGURED", 503) } as const;
   return { db, user } as const;
+}
+
+async function parseBody(request: Request): Promise<Record<string, unknown> | null> {
+  try {
+    const parsed = await request.json();
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
+  } catch {
+    return null;
+  }
+}
+
+function expirationFrom(body: Record<string, unknown>): number | null {
+  const expirationDays = Number(body.expirationDays ?? 7);
+  return Number.isInteger(expirationDays) && expirationDays >= 1 && expirationDays <= 30 ? expirationDays : null;
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -96,12 +112,8 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
   const url = new URL(context.request.url);
   let inviteId = cleanText(url.searchParams.get("inviteId"), 80);
   if (!inviteId) {
-    try {
-      const parsed = await context.request.json() as Record<string, unknown>;
-      inviteId = cleanText(parsed?.inviteId, 80);
-    } catch {
-      // Query param remains the canonical fallback for DELETE clients.
-    }
+    const parsed = await parseBody(context.request);
+    inviteId = cleanText(parsed?.inviteId, 80);
   }
   if (!inviteId) return tenantError("inviteId é obrigatório.", "VALIDATION_ERROR", 400);
   const now = new Date().toISOString();
@@ -129,6 +141,66 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
   }
 };
 
+export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
+  const clinicId = clinicIdFrom(context);
+  const authorized = await authorizeInviteAdmin(context, clinicId);
+  if ("error" in authorized) return authorized.error;
+  const body = await parseBody(context.request);
+  if (!body) return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);
+  const inviteId = cleanText(body.inviteId, 80);
+  const expirationDays = expirationFrom(body);
+  if (!inviteId || expirationDays === null) return tenantError("inviteId ou expirationDays inválido.", "VALIDATION_ERROR", 400);
+  const previous = await authorized.db
+    .prepare(`SELECT id, email_hash, role, expires_at, accepted_at, revoked_at FROM saas_membership_invites WHERE id = ? AND clinic_id = ? LIMIT 1`)
+    .bind(inviteId, clinicId)
+    .first<InviteRow>();
+  if (!previous) return tenantError("Convite não encontrado nesta clínica.", "INVITE_NOT_FOUND", 404);
+  if (previous.accepted_at || previous.revoked_at) return tenantError("Somente convite pendente ou expirado pode ser reenviado.", "INVITE_NOT_RESENDABLE", 409);
+
+  const baseUrl = inviteBaseUrl(context.env);
+  if (!baseUrl) return tenantError("APP_BASE_URL HTTPS não configurada para convites.", "INVITE_BASE_URL_NOT_CONFIGURED", 503);
+  const token = randomInviteToken();
+  const tokenHash = await sha256Hex(token);
+  const now = new Date();
+  const createdAt = now.toISOString();
+  const expiresAt = new Date(now.getTime() + expirationDays * 24 * 60 * 60 * 1000).toISOString();
+  const replacementId = crypto.randomUUID();
+  try {
+    const results = await authorized.db.batch([
+      authorized.db
+        .prepare(`UPDATE saas_membership_invites SET revoked_at = ? WHERE id = ? AND clinic_id = ? AND accepted_at IS NULL AND revoked_at IS NULL`)
+        .bind(createdAt, inviteId, clinicId),
+      authorized.db
+        .prepare(
+          `INSERT INTO saas_membership_invites
+             (id, clinic_id, email_hash, role, token_hash, expires_at, invited_by_user_id, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(replacementId, clinicId, previous.email_hash, previous.role, tokenHash, expiresAt, authorized.user.id, createdAt),
+      prepareSaasAudit(
+        authorized.db,
+        {
+          clinicId,
+          actorUserId: authorized.user.id,
+          action: "saas_membership_invite_resend",
+          targetType: "membership_invite",
+          targetId: replacementId,
+          metadata: { replacedInviteId: inviteId, role: previous.role, expirationDays },
+        },
+        true,
+      ),
+    ]);
+    if ((results[0]?.meta?.changes ?? 0) !== 1 || (results[1]?.meta?.changes ?? 0) !== 1 || (results[2]?.meta?.changes ?? 0) !== 1) {
+      return tenantError("O reenvio não pôde ser aplicado e auditado.", "INVITE_RESEND_CONFLICT", 409);
+    }
+    return tenantJson({ data: { id: replacementId, clinicId, role: previous.role, expiresAt, replacedInviteId: inviteId, inviteUrl: `${baseUrl}/#/convite?token=${encodeURIComponent(token)}` } }, 200);
+  } catch (error) {
+    if (String(error).toLowerCase().includes("unique")) return tenantError("Já existe token de convite equivalente.", "INVITE_RESEND_CONFLICT", 409);
+    console.error("[tenants.invites.PATCH] failed", error);
+    return tenantError("Não foi possível reenviar o convite.", "INVITE_RESEND_FAILED", 500);
+  }
+};
+
 export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context);
   const db = context.env.DB;
@@ -143,28 +215,20 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
   const billingError = await requireBillingEntitlement(db, user.id, clinicId, "admin");
   if (billingError) return billingError;
+  if (!operationalCryptoReady(context.env)) return tenantError("Chave operacional não configurada.", "OPERATIONAL_CRYPTO_NOT_CONFIGURED", 503);
 
-  let body: Record<string, unknown>;
-  try {
-    const parsed = await context.request.json();
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);
-    body = parsed as Record<string, unknown>;
-  } catch {
-    return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);
-  }
+  const body = await parseBody(context.request);
+  if (!body) return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);
 
   const email = normalizeInviteEmail(body.email);
   const role = cleanText(body.role, 30);
-  const expirationDays = Number(body.expirationDays ?? 7);
+  const expirationDays = expirationFrom(body);
   if (!email.includes("@") || email.length < 6) return tenantError("E-mail de convite inválido.", "VALIDATION_ERROR", 400);
   if (!isInvitableRole(role)) return tenantError("Papel de convite inválido.", "VALIDATION_ERROR", 400);
-  if (!Number.isInteger(expirationDays) || expirationDays < 1 || expirationDays > 30) return tenantError("expirationDays deve estar entre 1 e 30.", "VALIDATION_ERROR", 400);
+  if (expirationDays === null) return tenantError("expirationDays deve estar entre 1 e 30.", "VALIDATION_ERROR", 400);
 
   const baseUrl = inviteBaseUrl(context.env);
   if (!baseUrl) return tenantError("APP_BASE_URL HTTPS não configurada para convites.", "INVITE_BASE_URL_NOT_CONFIGURED", 503);
-  const operationalKey = context.env.OPERATIONAL_DATA_KEY?.trim() ?? "";
-  if (operationalKey.length < 32) return tenantError("Chave operacional não configurada.", "OPERATIONAL_CRYPTO_NOT_CONFIGURED", 503);
-
   const targetUser = await db
     .prepare(`SELECT id, role FROM users WHERE lower(email) = lower(?) LIMIT 1`)
     .bind(email)
@@ -221,16 +285,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     if ((results[1]?.meta?.changes ?? 0) !== 1 || (results[2]?.meta?.changes ?? 0) !== 1) {
       return tenantError("O convite não pôde ser auditado.", "AUDIT_WRITE_FAILED", 500);
     }
-    return tenantJson({
-      data: {
-        id,
-        clinicId,
-        email,
-        role,
-        expiresAt,
-        inviteUrl: `${baseUrl}/#/convite?token=${encodeURIComponent(token)}`,
-      },
-    }, 201);
+    return tenantJson({ data: { id, clinicId, email, role, expiresAt, inviteUrl: `${baseUrl}/#/convite?token=${encodeURIComponent(token)}` } }, 201);
   } catch (error) {
     if (String(error).toLowerCase().includes("unique")) return tenantError("Já existe um convite ativo para este destinatário.", "INVITE_EXISTS", 409);
     console.error("[tenants.invites.POST] failed", error);

@@ -99,11 +99,22 @@ type RemoteModuleState = {
 
 type ReadinessState = {
   readyForProduction: boolean;
+  eligibleForClinicalEnablement?: boolean;
+  preEnablementMissing?: string[];
   missing: string[];
-  checks: Record<string, { ok: boolean; label: string }>;
+  correctiveActions?: string[];
+  checks: Record<string, { ok: boolean; label: string; action?: string }>;
   enabledModules: number;
   requiredModules: number;
   latestBackup: { status: string; restoreVerifiedAt: string | null; createdAt: string } | null;
+};
+
+type KeyringState = {
+  ready: boolean;
+  encryptionVersion: string | null;
+  keyMaterialExposed: false;
+  missing: string[];
+  controls: Record<string, boolean>;
 };
 
 type PrivacyRequest = {
@@ -140,7 +151,6 @@ type IntegrationConnection = {
   status: "draft" | "connected" | "paused" | "revoked";
   scopes: string[];
   credentialConfigured: boolean;
-  credentialRef: string | null;
   endpointConfigured: boolean;
   lastVerifiedAt: string | null;
   version: number;
@@ -525,10 +535,13 @@ export default function SaasCentralPage() {
   const [state, setState] = useState<ConsoleState>(() => loadState(tenantScope));
   const [remoteModuleStates, setRemoteModuleStates] = useState<Record<ModuleId, RemoteModuleState> | null>(null);
   const [readiness, setReadiness] = useState<ReadinessState | null>(null);
+  const [keyring, setKeyring] = useState<KeyringState | null>(null);
   const [privacySnapshot, setPrivacySnapshot] = useState<PrivacySnapshot | null>(null);
+  const [retentionDrafts, setRetentionDrafts] = useState<Record<string, { retentionDays: number; purgeMode: string; legalHold: boolean; enabled: boolean }>>({});
   const [inviteRows, setInviteRows] = useState<InviteRow[]>([]);
   const [integrationConnections, setIntegrationConnections] = useState<IntegrationConnection[]>([]);
   const [remoteStatus, setRemoteStatus] = useState<"demo" | "loading" | "synced" | "error">("demo");
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
@@ -555,11 +568,14 @@ export default function SaasCentralPage() {
     setState(loadState(tenantScope));
     setRemoteModuleStates(null);
     setReadiness(null);
+    setKeyring(null);
     setPrivacySnapshot(null);
+    setRetentionDrafts({});
     setInviteRows([]);
     setLastInviteUrl(null);
     setIntegrationConnections([]);
     setRemoteStatus(activeClinicId ? "loading" : "demo");
+    setPendingAction(null);
   }, [activeClinicId, tenantScope]);
 
   useEffect(() => {
@@ -616,6 +632,19 @@ export default function SaasCentralPage() {
   useEffect(() => {
     if (!activeClinicId) return;
     let cancelled = false;
+    void authFetch(`/api/saas/keyring?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Keyring indisponível.");
+        if (!cancelled) setKeyring(body as KeyringState);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Keyring indisponível."); });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
     void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites`)
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
@@ -646,7 +675,11 @@ export default function SaasCentralPage() {
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Governança LGPD indisponível.");
-        if (!cancelled) setPrivacySnapshot({ requests: Array.isArray(body?.requests) ? body.requests : [], retention: Array.isArray(body?.retention) ? body.retention : [] });
+        if (!cancelled) {
+          const retention = (Array.isArray(body?.retention) ? body.retention : []) as PrivacySnapshot["retention"];
+          setPrivacySnapshot({ requests: Array.isArray(body?.requests) ? body.requests : [], retention });
+          setRetentionDrafts(Object.fromEntries(retention.map((policy) => [policy.dataClass, { retentionDays: policy.retentionDays, purgeMode: policy.purgeMode, legalHold: policy.legalHold, enabled: policy.enabled }])));
+        }
       })
       .catch((cause) => {
         if (!cancelled) setToast(cause instanceof Error ? cause.message : "Governança LGPD indisponível.");
@@ -699,6 +732,7 @@ export default function SaasCentralPage() {
       return;
     }
     const expectedVersion = remoteModuleStates[id]?.version ?? 0;
+    setPendingAction(`module:${id}`);
     void authFetch("/api/saas/modules", {
       method: "PATCH",
       body: JSON.stringify({ clinicId: activeClinicId, moduleId: id, enabled, expectedVersion }),
@@ -707,14 +741,16 @@ export default function SaasCentralPage() {
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível salvar o módulo.");
         const saved = body?.data as RemoteModuleState;
-        setRemoteModuleStates((current) => current ? { ...current, [id]: saved } : current);
+                  setRemoteModuleStates((current) => current ? { ...current, [id]: saved } : current);
+
         updateModule(id, { enabled: saved.enabled, lastAction: `Sincronizado em ${new Date(saved.updatedAt ?? Date.now()).toLocaleString()}` });
         setToast(`Aba ${moduleById[id].number} sincronizada com o tenant.`);
       })
       .catch((cause) => {
         updateModule(id, { enabled: previous, lastAction: "Falha ao sincronizar — rollback aplicado" });
         setToast(cause instanceof Error ? cause.message : "Não foi possível salvar o módulo.");
-      });
+      })
+      .finally(() => setPendingAction(null));
   };
 
   const announce = (message: string) => setToast(message);
@@ -728,6 +764,7 @@ export default function SaasCentralPage() {
       setToast("Informe o provedor e o digest SHA-256 de 64 caracteres hexadecimais.");
       return;
     }
+    setPendingAction("backup-evidence");
     void authFetch("/api/saas/backup-evidence", {
       method: "POST",
       body: JSON.stringify({ clinicId: activeClinicId, provider: backupProvider.trim(), snapshotDigestSha256: backupDigest.trim(), status: backupStatus, rpoMinutes: Number(backupRpo), rtoMinutes: Number(backupRto), restoreVerifiedAt: backupStatus === "verified" ? new Date().toISOString() : null }),
@@ -744,7 +781,8 @@ export default function SaasCentralPage() {
         });
         setToast("Evidência de backup/restore registrada e auditada.");
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar a evidência."));
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar a evidência."))
+      .finally(() => setPendingAction(null));
   };
 
   const createPrivacyRequest = () => {
@@ -758,6 +796,7 @@ export default function SaasCentralPage() {
       setToast("Informe um e-mail válido do titular; ele será transformado em hash no servidor.");
       return;
     }
+    setPendingAction("privacy-create");
     void authFetch("/api/saas/privacy", {
       method: "POST",
       body: JSON.stringify({ clinicId: activeClinicId, requestType: "access", subjectType: "account", subjectReference }),
@@ -769,7 +808,8 @@ export default function SaasCentralPage() {
         setPrivacySnapshot((current) => current ? { ...current, requests: [body.data as PrivacyRequest, ...current.requests] } : current);
         recordAction("Pedido do titular registrado no tenant e auditado.", 2);
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar o pedido."));
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar o pedido."))
+      .finally(() => setPendingAction(null));
   };
 
   const createInvite = () => {
@@ -783,6 +823,7 @@ export default function SaasCentralPage() {
       setToast("Informe e-mail e expiração válidos para o convite.");
       return;
     }
+    setPendingAction("invite-create");
     void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites`, {
       method: "POST",
       body: JSON.stringify({ email, role: inviteRole, expirationDays }),
@@ -795,11 +836,31 @@ export default function SaasCentralPage() {
         setInviteRows((current) => [{ id: body.data.id, emailHashPrefix: "token exibido uma vez", role: body.data.role, status: "pending", expiresAt: body.data.expiresAt, acceptedAt: null, revokedAt: null, createdAt: new Date().toISOString() }, ...current]);
         setToast("Convite criado. Copie a URL segura agora; ela não será recuperada depois.");
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível criar o convite."));
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível criar o convite."))
+      .finally(() => setPendingAction(null));
+  };
+
+  const resendInvite = (inviteId: string) => {
+    if (!activeClinicId) return;
+    setPendingAction(`invite-resend:${inviteId}`);
+    void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites`, {
+      method: "PATCH",
+      body: JSON.stringify({ inviteId, expirationDays: Number(inviteExpirationDays) }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível reenviar o convite.");
+        setLastInviteUrl(typeof body.data?.inviteUrl === "string" ? body.data.inviteUrl : null);
+        setInviteRows((current) => [{ id: body.data.id, emailHashPrefix: "token exibido uma vez", role: body.data.role, status: "pending", expiresAt: body.data.expiresAt, acceptedAt: null, revokedAt: null, createdAt: new Date().toISOString() }, ...current.map((invite) => invite.id === inviteId ? { ...invite, status: "revoked" as const, revokedAt: new Date().toISOString() } : invite)]);
+        setToast("Convite reenviado com token novo. Copie a URL agora.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível reenviar o convite."))
+      .finally(() => setPendingAction(null));
   };
 
   const revokeInvite = (inviteId: string) => {
     if (!activeClinicId) return;
+    setPendingAction(`invite-revoke:${inviteId}`);
     void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites?inviteId=${encodeURIComponent(inviteId)}`, { method: "DELETE" })
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
@@ -807,12 +868,14 @@ export default function SaasCentralPage() {
         setInviteRows((current) => current.map((invite) => invite.id === inviteId ? { ...invite, status: "revoked", revokedAt: body.data.revokedAt } : invite));
         setToast("Convite revogado e auditado.");
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível revogar o convite."));
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível revogar o convite."))
+      .finally(() => setPendingAction(null));
   };
 
   const transitionPrivacyRequest = (request: PrivacyRequest, nextStatus: string) => {
     if (!activeClinicId) return;
     const resolutionCode = nextStatus === "completed" ? "operator_review_completed" : null;
+    setPendingAction(`privacy:${request.id}`);
     void authFetch("/api/saas/privacy", {
       method: "PATCH",
       body: JSON.stringify({ clinicId: activeClinicId, requestId: request.id, status: nextStatus, resolutionCode }),
@@ -823,23 +886,30 @@ export default function SaasCentralPage() {
         setPrivacySnapshot((current) => current ? { ...current, requests: current.requests.map((item) => item.id === request.id ? { ...item, status: body.data.status } : item) } : current);
         setToast(`Pedido ${request.requestType} avançado para ${body.data.status}.`);
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível avançar o pedido."));
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível avançar o pedido."))
+      .finally(() => setPendingAction(null));
   };
 
   const saveRetentionPolicy = (policy: PrivacySnapshot["retention"][number], patch: { legalHold?: boolean; enabled?: boolean; purgeMode?: string }) => {
     if (!activeClinicId) return;
+    const draft = retentionDrafts[policy.dataClass] ?? { retentionDays: policy.retentionDays, purgeMode: policy.purgeMode, legalHold: policy.legalHold, enabled: policy.enabled };
+    const next = { ...draft, ...patch };
+    setRetentionDrafts((current) => ({ ...current, [policy.dataClass]: next }));
+    setPendingAction(`retention:${policy.dataClass}`);
     void authFetch("/api/saas/privacy", {
       method: "PUT",
-      body: JSON.stringify({ clinicId: activeClinicId, dataClass: policy.dataClass, retentionDays: policy.retentionDays, purgeMode: patch.purgeMode ?? policy.purgeMode, legalHold: patch.legalHold ?? policy.legalHold, enabled: patch.enabled ?? policy.enabled, expectedVersion: policy.version }),
+      body: JSON.stringify({ clinicId: activeClinicId, dataClass: policy.dataClass, retentionDays: next.retentionDays, purgeMode: next.purgeMode, legalHold: next.legalHold, enabled: next.enabled, expectedVersion: policy.version }),
     })
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível salvar a retenção.");
         const saved = body.data;
         setPrivacySnapshot((current) => current ? { ...current, retention: current.retention.map((item) => item.dataClass === policy.dataClass ? { ...item, ...saved } : item) } : current);
+        setRetentionDrafts((current) => ({ ...current, [policy.dataClass]: { retentionDays: saved.retentionDays, purgeMode: saved.purgeMode, legalHold: saved.legalHold, enabled: saved.enabled } }));
         setToast(`Política ${policy.dataClass} atualizada e auditada.`);
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível salvar a retenção."));
+      .catch((cause) => { setRetentionDrafts((current) => ({ ...current, [policy.dataClass]: { retentionDays: policy.retentionDays, purgeMode: policy.purgeMode, legalHold: policy.legalHold, enabled: policy.enabled } })); setToast(cause instanceof Error ? cause.message : "Não foi possível salvar a retenção."); })
+      .finally(() => setPendingAction(null));
   };
 
   const saveIntegration = () => {
@@ -849,8 +919,10 @@ export default function SaasCentralPage() {
     }
     const existing = integrationConnections.find((connection) => connection.integrationId === integrationId && connection.environment === integrationEnvironment);
     const scopes = integrationScopes.split(",").map((scope) => scope.trim()).filter(Boolean);
+    setPendingAction("integration-save");
     void authFetch("/api/saas/integrations", {
       method: "PUT",
+      headers: { "X-Idempotency-Key": crypto.randomUUID() },
       body: JSON.stringify({ clinicId: activeClinicId, integrationId, environment: integrationEnvironment, status: integrationStatus, scopes, credentialRef: integrationCredentialRef.trim() || null, endpoint: integrationEndpoint.trim() || null, lastVerifiedAt: integrationStatus === "connected" ? new Date().toISOString() : null, expectedVersion: existing?.version ?? 0 }),
     })
       .then(async (response) => {
@@ -858,14 +930,29 @@ export default function SaasCentralPage() {
         if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível salvar a integração.");
         setIntegrationConnections((current) => {
           const saved = body.data as IntegrationConnection;
-          const next: IntegrationConnection = { ...saved, id: existing?.id ?? `${integrationId}:${integrationEnvironment}`, clinicId: activeClinicId, credentialConfigured: Boolean(saved.credentialConfigured), credentialRef: integrationCredentialRef.trim() || null, endpointConfigured: Boolean(integrationEndpoint.trim()), version: saved.version, updatedAt: saved.updatedAt };
+          const next: IntegrationConnection = { ...saved, id: existing?.id ?? `${integrationId}:${integrationEnvironment}`, clinicId: activeClinicId, credentialConfigured: Boolean(saved.credentialConfigured), endpointConfigured: Boolean(integrationEndpoint.trim()), version: saved.version, updatedAt: saved.updatedAt };
           return [...current.filter((item) => !(item.integrationId === integrationId && item.environment === integrationEnvironment)), next];
         });
         setIntegrationCredentialRef("");
         setIntegrationEndpoint("");
         setToast("Conexão de integração salva com escopo e auditoria.");
       })
-      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível salvar a integração."));
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível salvar a integração."))
+      .finally(() => setPendingAction(null));
+  };
+
+  const recalculateReadiness = () => {
+    if (!activeClinicId) return;
+    setPendingAction("readiness");
+    void authFetch(`/api/saas/readiness?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Readiness indisponível.");
+        setReadiness(body as ReadinessState);
+        setToast("Readiness recalculado no servidor.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Readiness indisponível."))
+      .finally(() => setPendingAction(null));
   };
 
   const recordAction = (message: string, completed = 1) => {
@@ -952,10 +1039,10 @@ export default function SaasCentralPage() {
               <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b text-xs uppercase tracking-wide text-muted-foreground"><th className="pb-3">Perfil</th><th className="pb-3">Workspace</th><th className="pb-3">Pacientes</th><th className="pb-3">Documentos</th><th className="pb-3">Admin</th></tr></thead><tbody>{[["Admin", "Total", "Escopo", "Total", "Sim"], ["Profissional", "Leitura", "Vínculo", "Vínculo", "Não"], ["Operador", "Leitura", "Agenda", "Fluxo", "Não"], ["Reader", "Leitura", "Somente leitura", "Não", "Não"]].map((row) => <tr key={row[0]} className="border-b last:border-0"><td className="py-3 font-semibold">{row[0]}</td>{row.slice(1).map((cell, cellIndex) => <td key={`${row[0]}-${cellIndex}`} className="py-3 text-muted-foreground">{cell}</td>)}</tr>)}</tbody></table></div>
               <Button className="mt-4 gap-2" variant="outline" onClick={() => recordAction("Revisão de privilégios registrada.", 3)}><ShieldCheck className="h-4 w-4" />Registrar revisão</Button>
             </ActionCard>
-            <ActionCard title="Convites de equipe" description="A URL aparece somente na criação. A lista usa prefixo de hash e permite revogação por clínica.">
-              <div className="grid gap-3 sm:grid-cols-[1fr_160px_120px_auto]"><Input aria-label="E-mail do convite" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="profissional@clinica.com" type="email" /><select aria-label="Papel do convite" value={inviteRole} onChange={(event) => setInviteRole(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="professional">Profissional</option><option value="assistant">Assistente</option><option value="financial">Financeiro</option><option value="clinic_admin">Admin da clínica</option></select><Input aria-label="Expiração em dias" value={inviteExpirationDays} onChange={(event) => setInviteExpirationDays(event.target.value)} type="number" min="1" max="30" /><Button onClick={createInvite}>Criar convite</Button></div>
+            <ActionCard title="Convites de equipe" description="A URL aparece somente na criação ou reenvio. A lista usa prefixo de hash e permite revogação e reenvio controlados por clínica.">
+              <div className="grid gap-3 sm:grid-cols-[1fr_160px_120px_auto]"><Input aria-label="E-mail do convite" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="profissional@clinica.com" type="email" /><select aria-label="Papel do convite" value={inviteRole} onChange={(event) => setInviteRole(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="professional">Profissional</option><option value="assistant">Assistente</option><option value="financial">Financeiro</option><option value="clinic_admin">Admin da clínica</option></select><Input aria-label="Expiração em dias" value={inviteExpirationDays} onChange={(event) => setInviteExpirationDays(event.target.value)} type="number" min="1" max="30" /><Button disabled={pendingAction === "invite-create"} onClick={createInvite}>{pendingAction === "invite-create" ? "Criando…" : "Criar convite"}</Button></div>
               {lastInviteUrl && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs dark:border-emerald-900/50 dark:bg-emerald-950/20"><p className="font-semibold">URL segura do último convite — copie agora</p><div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center"><code className="min-w-0 flex-1 break-all rounded-lg bg-background p-2 font-mono">{lastInviteUrl}</code><Button size="sm" variant="outline" onClick={() => { void navigator.clipboard?.writeText(lastInviteUrl); setToast("URL copiada para a área de transferência."); }}>Copiar URL</Button></div></div>}
-              <div className="mt-4 space-y-2">{inviteRows.slice(0, 8).map((invite) => <div key={invite.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm"><span className="font-mono text-xs">{invite.emailHashPrefix}…</span><Badge variant="outline">{invite.role}</Badge><Badge variant={invite.status === "pending" ? "default" : "outline"}>{invite.status}</Badge><span className="text-xs text-muted-foreground">expira {new Date(invite.expiresAt).toLocaleDateString()}</span>{invite.status === "pending" && activeClinicId && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => revokeInvite(invite.id)}>Revogar</Button>}</div>)}{activeClinicId && inviteRows.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhum convite registrado para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar convites reais.</p>}</div>
+              <div className="mt-4 space-y-2">{inviteRows.slice(0, 8).map((invite) => <div key={invite.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm"><span className="font-mono text-xs">{invite.emailHashPrefix}…</span><Badge variant="outline">{invite.role}</Badge><Badge variant={invite.status === "pending" ? "default" : "outline"}>{invite.status}</Badge><span className="text-xs text-muted-foreground">expira {new Date(invite.expiresAt).toLocaleDateString()}</span>{activeClinicId && (invite.status === "pending" || invite.status === "expired") && <div className="ml-auto flex gap-2"><Button size="sm" variant="ghost" disabled={pendingAction === `invite-resend:${invite.id}`} onClick={() => resendInvite(invite.id)}>{pendingAction === `invite-resend:${invite.id}` ? "Reenviando…" : "Reenviar"}</Button>{invite.status === "pending" && <Button size="sm" variant="ghost" disabled={pendingAction === `invite-revoke:${invite.id}`} onClick={() => revokeInvite(invite.id)}>{pendingAction === `invite-revoke:${invite.id}` ? "Revogando…" : "Revogar"}</Button>}</div>}</div>)}{activeClinicId && inviteRows.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhum convite registrado para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar convites reais.</p>}</div>
             </ActionCard>
           </div>
         );
@@ -981,21 +1068,21 @@ export default function SaasCentralPage() {
             <div className="grid gap-4 sm:grid-cols-2"><div><FieldLabel htmlFor="backup-frequency">Frequência</FieldLabel><select id="backup-frequency" className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-sm"><option>A cada 4 horas</option><option>Diário</option><option>Semanal</option></select></div><div><FieldLabel htmlFor="backup-retention">Retenção</FieldLabel><select id="backup-retention" className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-sm"><option>90 dias</option><option>1 ano</option><option>Política permanente</option></select></div></div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2"><div><FieldLabel htmlFor="backup-provider">Provedor</FieldLabel><Input id="backup-provider" value={backupProvider} onChange={(event) => setBackupProvider(event.target.value)} placeholder="Cloudflare R2 / S3" /></div><div><FieldLabel htmlFor="backup-digest">SHA-256 do snapshot</FieldLabel><Input id="backup-digest" value={backupDigest} onChange={(event) => setBackupDigest(event.target.value)} placeholder="64 caracteres hexadecimais" className="font-mono text-xs" /></div><div><FieldLabel htmlFor="backup-rpo">RPO (minutos)</FieldLabel><Input id="backup-rpo" type="number" min="0" max="10080" value={backupRpo} onChange={(event) => setBackupRpo(event.target.value)} /></div><div><FieldLabel htmlFor="backup-rto">RTO (minutos)</FieldLabel><Input id="backup-rto" type="number" min="0" max="10080" value={backupRto} onChange={(event) => setBackupRto(event.target.value)} /></div></div>
             <div className="mt-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100"><Database className="h-5 w-5 shrink-0" /><div><p className="font-semibold">Último readiness</p><p className="mt-1 text-xs opacity-80">{readiness?.latestBackup ? `${readiness.latestBackup.status} · ${new Date(readiness.latestBackup.createdAt).toLocaleString()}` : "Nenhuma evidência registrada para este tenant."}</p></div></div>
-            <div className="mt-4 flex flex-wrap gap-3"><select aria-label="Status da evidência" value={backupStatus} onChange={(event) => setBackupStatus(event.target.value as typeof backupStatus)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="verified">Restore verificado</option><option value="recorded">Snapshot registrado</option><option value="failed">Falha no restore</option></select><Button className="gap-2" onClick={recordBackupEvidence}><Database className="h-4 w-4" />Registrar evidência</Button></div>
+            <div className="mt-4 flex flex-wrap gap-3"><select aria-label="Status da evidência" value={backupStatus} onChange={(event) => setBackupStatus(event.target.value as typeof backupStatus)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="verified">Restore verificado</option><option value="recorded">Snapshot registrado</option><option value="failed">Falha no restore</option></select><Button className="gap-2" disabled={pendingAction === "backup-evidence"} onClick={recordBackupEvidence}><Database className="h-4 w-4" />{pendingAction === "backup-evidence" ? "Registrando…" : "Registrar evidência"}</Button></div>
           </ActionCard>
         );
       case "privacy":
         return (
           <ActionCard title="Fila de direitos do titular" description="Use dados mínimos. O e-mail é transformado em hash no servidor; a execução real exige verificação de identidade e revisão autorizada.">
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><Input aria-label="E-mail do titular" value={privacyEmail} onChange={(event) => setPrivacyEmail(event.target.value)} placeholder="titular@exemplo.com" type="email" /><Button onClick={createPrivacyRequest}>Registrar solicitação</Button></div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><Input aria-label="E-mail do titular" value={privacyEmail} onChange={(event) => setPrivacyEmail(event.target.value)} placeholder="titular@exemplo.com" type="email" /><Button disabled={pendingAction === "privacy-create"} onClick={createPrivacyRequest}>{pendingAction === "privacy-create" ? "Registrando…" : "Registrar solicitação"}</Button></div>
             <div className="mt-4 space-y-2 text-sm">
               {privacySnapshot?.requests.slice(0, 8).map((request) => (
                 <div key={request.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
                   <span className="min-w-[180px]"><strong>{request.requestType}</strong><span className="ml-2 text-xs text-muted-foreground">{request.subjectReferenceHash.slice(0, 10)}…</span></span>
                   <Badge variant={request.status === "completed" ? "default" : "outline"}>{request.status}</Badge>
-                  {activeClinicId && request.status === "open" && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => transitionPrivacyRequest(request, "verified")}>Verificar</Button>}
-                  {activeClinicId && request.status === "verified" && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => transitionPrivacyRequest(request, "in_progress")}>Iniciar</Button>}
-                  {activeClinicId && request.status === "in_progress" && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => transitionPrivacyRequest(request, "completed")}>Concluir</Button>}
+                  {activeClinicId && request.status === "open" && <Button size="sm" variant="ghost" className="ml-auto" disabled={pendingAction === `privacy:${request.id}`} onClick={() => transitionPrivacyRequest(request, "verified")}>{pendingAction === `privacy:${request.id}` ? "Salvando…" : "Verificar"}</Button>}
+                  {activeClinicId && request.status === "verified" && <Button size="sm" variant="ghost" className="ml-auto" disabled={pendingAction === `privacy:${request.id}`} onClick={() => transitionPrivacyRequest(request, "in_progress")}>{pendingAction === `privacy:${request.id}` ? "Salvando…" : "Iniciar"}</Button>}
+                  {activeClinicId && request.status === "in_progress" && <Button size="sm" variant="ghost" className="ml-auto" disabled={pendingAction === `privacy:${request.id}`} onClick={() => transitionPrivacyRequest(request, "completed")}>{pendingAction === `privacy:${request.id}` ? "Salvando…" : "Concluir"}</Button>}
                 </div>
               ))}
               {(!privacySnapshot || privacySnapshot.requests.length === 0) && (
@@ -1006,7 +1093,7 @@ export default function SaasCentralPage() {
                 </>
               )}
             </div>
-            {privacySnapshot?.retention.length ? <div className="mt-4 rounded-xl border bg-muted/20 p-3 text-xs"><p className="font-semibold">Políticas carregadas do tenant</p><div className="mt-2 space-y-2">{privacySnapshot.retention.map((policy) => <div key={policy.dataClass} className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2"><Pill>{policy.dataClass}: {policy.retentionDays}d · {policy.purgeMode}</Pill><Badge variant={policy.legalHold ? "default" : "outline"}>{policy.legalHold ? "legal hold" : "sem hold"}</Badge>{activeClinicId && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => saveRetentionPolicy(policy, { legalHold: !policy.legalHold })}>{policy.legalHold ? "Liberar hold" : "Aplicar hold"}</Button>}</div>)}</div></div> : null}
+            {privacySnapshot?.retention.length ? <div className="mt-4 rounded-xl border bg-muted/20 p-3 text-xs"><p className="font-semibold">Políticas carregadas do tenant</p><div className="mt-2 space-y-3">{privacySnapshot.retention.map((policy) => { const draft = retentionDrafts[policy.dataClass] ?? { retentionDays: policy.retentionDays, purgeMode: policy.purgeMode, legalHold: policy.legalHold, enabled: policy.enabled }; const busy = pendingAction === `retention:${policy.dataClass}`; return <div key={policy.dataClass} className="rounded-lg border bg-background p-3"><div className="flex flex-wrap items-center gap-2"><Pill>{policy.dataClass} · v{policy.version}</Pill><Badge variant={draft.legalHold ? "default" : "outline"}>{draft.legalHold ? "legal hold" : "sem hold"}</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-3"><Input aria-label={`Dias de retenção ${policy.dataClass}`} type="number" min="0" max="36500" value={draft.retentionDays} onChange={(event) => setRetentionDrafts((current) => ({ ...current, [policy.dataClass]: { ...draft, retentionDays: Number(event.target.value) } }))} /><select aria-label={`Modo de purge ${policy.dataClass}`} value={draft.purgeMode} onChange={(event) => setRetentionDrafts((current) => ({ ...current, [policy.dataClass]: { ...draft, purgeMode: event.target.value } }))} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="archive">Arquivar</option><option value="anonymize">Anonimizar</option><option value="delete">Excluir após revisão</option></select><label className="flex items-center gap-2 rounded-xl border px-3 text-xs"><input type="checkbox" aria-label={`Ativar política ${policy.dataClass}`} checked={draft.enabled} onChange={(event) => setRetentionDrafts((current) => ({ ...current, [policy.dataClass]: { ...draft, enabled: event.target.checked } }))} className="h-4 w-4 accent-primary" />Ativa</label></div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" disabled={busy || !activeClinicId} onClick={() => saveRetentionPolicy(policy, draft)}>{busy ? "Salvando…" : "Salvar política"}</Button><Button size="sm" variant="outline" disabled={busy || !activeClinicId} onClick={() => saveRetentionPolicy(policy, { legalHold: !draft.legalHold })}>{draft.legalHold ? "Liberar hold" : "Aplicar hold"}</Button></div></div>; })}</div></div> : null}
           </ActionCard>
         );
       case "messaging":
@@ -1078,10 +1165,10 @@ export default function SaasCentralPage() {
       case "developer":
         return (
           <div className="space-y-4">
-            <ActionCard title="Integrações tenant-aware" description="Nenhum segredo é armazenado nesta tela. Produção exige referência no secret manager, sandbox verificado, escopo mínimo e auditoria.">
+            <ActionCard title="Integrações tenant-aware" description="Nenhum segredo, endpoint ou PHI é devolvido nesta tela. Produção exige secret manager, sandbox verificado, escopo mínimo, idempotência, redaction e auditoria.">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><select aria-label="Integração" value={integrationId} onChange={(event) => setIntegrationId(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="email">Mensageria transacional</option><option value="webhooks">Webhooks assinados</option><option value="fhir">Interoperabilidade FHIR</option><option value="object-storage">Object storage</option><option value="observability">Observabilidade</option></select><select aria-label="Ambiente da integração" value={integrationEnvironment} onChange={(event) => setIntegrationEnvironment(event.target.value as typeof integrationEnvironment)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="sandbox">Sandbox</option><option value="production">Produção</option></select><select aria-label="Status da integração" value={integrationStatus} onChange={(event) => setIntegrationStatus(event.target.value as typeof integrationStatus)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="draft">Rascunho</option><option value="connected">Conectada</option><option value="paused">Pausada</option><option value="revoked">Revogada</option></select><Input aria-label="Escopos separados por vírgula" value={integrationScopes} onChange={(event) => setIntegrationScopes(event.target.value)} placeholder="module.read" /></div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2"><Input aria-label="Referência no secret manager" value={integrationCredentialRef} onChange={(event) => setIntegrationCredentialRef(event.target.value)} placeholder="vault://neuro/tenant/integration" /><Input aria-label="Endpoint da integração" value={integrationEndpoint} onChange={(event) => setIntegrationEndpoint(event.target.value)} placeholder="https://sandbox.exemplo.com/webhook" /></div>
-              <Button className="mt-4 gap-2" onClick={saveIntegration}><KeyRound className="h-4 w-4" />Salvar conexão</Button>
+              <Button className="mt-4 gap-2" disabled={pendingAction === "integration-save"} onClick={saveIntegration}><KeyRound className="h-4 w-4" />{pendingAction === "integration-save" ? "Salvando…" : "Salvar conexão"}</Button>
               <div className="mt-4 space-y-2">{integrationConnections.map((connection) => <div key={`${connection.integrationId}:${connection.environment}`} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm"><span className="font-semibold">{connection.integrationId}</span><Badge variant="outline">{connection.environment}</Badge><Badge variant={connection.status === "connected" ? "default" : "outline"}>{connection.status}</Badge><span className="text-xs text-muted-foreground">{connection.scopes.join(", ")}</span><span className="ml-auto text-xs text-muted-foreground">{connection.credentialConfigured ? "secret ref" : "sem credencial"} · v{connection.version}</span></div>)}{activeClinicId && integrationConnections.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhuma integração configurada para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar integrações reais.</p>}</div>
             </ActionCard>
             <ActionCard title="Credencial de sandbox legada" description="Mantida somente como demonstração local; não concede acesso a dados clínicos identificáveis.">
@@ -1111,7 +1198,9 @@ export default function SaasCentralPage() {
 
       <Card className="border-amber-200/70 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/15"><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" /><p className="leading-6 text-amber-950 dark:text-amber-100"><strong>Guardrail:</strong> a central separa configuração de tenant, habilitação de módulo e fonte clínica canônica. Nenhum toggle local concede acesso a PHI; produção exige membership, entitlement, keyring, auditoria, consentimento e evidência de restore.</p></CardContent></Card>
 
-      {activeClinicId && readiness && <Card className={readiness.readyForProduction ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className={readiness.readyForProduction ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><p className="font-semibold">{readiness.readyForProduction ? "Tenant pronto para liberação controlada" : "Readiness bloqueado antes da produção"}<span className="ml-2 text-xs font-normal text-muted-foreground">{readiness.enabledModules}/{readiness.requiredModules} módulos habilitados</span></p><Button size="sm" variant="outline" className="ml-auto" onClick={() => { if (!activeClinicId) return; void authFetch(`/api/saas/readiness?clinicId=${encodeURIComponent(activeClinicId)}`).then(async (response) => { const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Readiness indisponível."); setReadiness(body as ReadinessState); setToast("Readiness recalculado no servidor."); }).catch((cause) => setToast(cause instanceof Error ? cause.message : "Readiness indisponível.")); }}>Recalcular</Button></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{readiness.readyForProduction ? "Todos os gates mínimos de infraestrutura, acesso e continuidade foram comprovados." : `Pendências: ${readiness.missing.join(" · ")}`}</p><div className="mt-3 flex flex-wrap gap-2">{Object.values(readiness.checks).map((check) => <Pill key={check.label}>{check.ok ? "✓" : "○"} {check.label}</Pill>)}</div></div></CardContent></Card>}
+      {activeClinicId && readiness && <Card className={readiness.readyForProduction ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className={readiness.readyForProduction ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><p className="font-semibold">{readiness.readyForProduction ? "Tenant pronto para liberação controlada" : "Readiness bloqueado antes da produção"}<span className="ml-2 text-xs font-normal text-muted-foreground">{readiness.enabledModules}/{readiness.requiredModules} módulos habilitados</span></p><Button size="sm" variant="outline" className="ml-auto" disabled={pendingAction === "readiness"} onClick={recalculateReadiness}>{pendingAction === "readiness" ? "Recalculando…" : "Recalcular"}</Button></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{readiness.readyForProduction ? "Todos os gates mínimos de infraestrutura, acesso e continuidade foram comprovados." : readiness.eligibleForClinicalEnablement ? "Os gates prévios estão prontos; habilite Clinical LIVE somente no procedimento aprovado." : `Pendências: ${readiness.missing.join(" · ")}`}</p><div className="mt-3 flex flex-wrap gap-2">{Object.values(readiness.checks).map((check) => <Pill key={check.label}>{check.ok ? "✓" : "○"} {check.label}</Pill>)}</div>{readiness.correctiveActions?.length ? <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100"><p className="font-semibold">Ações corretivas antes do go-live</p><ul className="mt-1 list-disc space-y-1 pl-4">{readiness.correctiveActions.map((action) => <li key={action}>{action}</li>)}</ul></div> : null}</div></CardContent></Card>}
+
+      {activeClinicId && keyring && <Card className={keyring.ready ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex items-start gap-3 py-4 text-sm"><KeyRound className={keyring.ready ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div><p className="font-semibold">Postura criptográfica {keyring.ready ? "aprovada" : "bloqueada"}</p><p className="mt-1 text-xs text-muted-foreground">{keyring.encryptionVersion ? `Versão identificável: ${keyring.encryptionVersion}` : "Versão clínica indisponível"} · material exposto: não</p>{keyring.missing.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-950 dark:text-amber-100">{keyring.missing.map((item) => <li key={item}>{item}</li>)}</ul> : null}</div></CardContent></Card>}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><ModuleMetric label="Abas disponíveis" value="20" /><ModuleMetric label="Módulos habilitados" value={`${enabledCount}/20`} tone="success" /><ModuleMetric label="Marcos registrados" value={`${completedCount}`} /><ModuleMetric label="Workspace" value={activeClinic?.name ?? state.organizationName} /></div>
 
@@ -1119,7 +1208,7 @@ export default function SaasCentralPage() {
         <div className="space-y-3 lg:sticky lg:top-4 lg:self-start"><div className="rounded-2xl border bg-card p-3"><FieldLabel htmlFor="module-search">Filtrar abas</FieldLabel><Input id="module-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ex.: acesso, agenda, API" className="mt-2" /></div><TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 bg-muted/35 p-2 lg:grid-cols-1 lg:items-stretch lg:justify-start">{visibleModules.map((module) => <TabsTrigger key={module.id} value={module.id} className="justify-start gap-2 px-2.5 py-2 text-left text-xs data-[state=active]:bg-card"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[10px] font-bold text-primary">{module.number}</span><span className="min-w-0 truncate">{module.shortLabel}</span></TabsTrigger>)}</TabsList>{visibleModules.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhuma aba encontrada.</p>}</div>
         <TabsContent value={state.activeModule} className="mt-0 min-w-0">
           <div className="space-y-5">
-            <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm md:flex-row md:items-start md:justify-between"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><active.icon className="h-6 w-6" /></div><div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Aba {active.number} · {active.eyebrow}</span><StatusBadge status={active.status} /></div><h2 className="text-2xl font-semibold tracking-tight">{active.title}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{active.description}</p></div></div><label className="flex shrink-0 items-center gap-3 rounded-xl border px-3 py-2 text-xs font-semibold"><input type="checkbox" aria-label={`Habilitar ${active.title} no piloto`} checked={state.moduleStates[active.id].enabled} onChange={(event) => toggleModule(active.id, event.target.checked)} className="h-4 w-4 accent-primary" />Habilitar no piloto</label></div>
+            <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm md:flex-row md:items-start md:justify-between"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><active.icon className="h-6 w-6" /></div><div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Aba {active.number} · {active.eyebrow}</span><StatusBadge status={active.status} /></div><h2 className="text-2xl font-semibold tracking-tight">{active.title}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{active.description}</p></div></div><label className="flex shrink-0 items-center gap-3 rounded-xl border px-3 py-2 text-xs font-semibold"><input type="checkbox" aria-label={`Habilitar ${active.title} no piloto`} checked={state.moduleStates[active.id].enabled} disabled={pendingAction === `module:${active.id}`} onChange={(event) => toggleModule(active.id, event.target.checked)} className="h-4 w-4 accent-primary" />Habilitar no piloto</label></div>
             <div className="grid gap-3 sm:grid-cols-3"><ModuleMetric label="Indicador do módulo" value={active.metric} /><ModuleMetric label="Unidade" value={active.metricLabel} /><ModuleMetric label="Última ação" value={state.moduleStates[active.id].lastAction} tone={state.moduleStates[active.id].lastAction === "Ainda não configurado" ? "warning" : "success"} /></div>
             {renderWorkspace()}
             <div className="rounded-2xl border border-dashed bg-muted/20 p-4 text-xs leading-5 text-muted-foreground"><strong className="text-foreground">Fronteira desta aba:</strong> {active.boundary} <span className="mx-1">·</span> <strong className="text-foreground">Fonte canônica:</strong> Clinical Core, pacientes, documentos, agenda, Conecta ou autenticação existentes, conforme o contrato do módulo.</div>
