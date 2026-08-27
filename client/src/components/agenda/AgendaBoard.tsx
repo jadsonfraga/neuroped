@@ -371,7 +371,7 @@ export function AgendaBoard() {
           <div className="flex gap-2 rounded-2xl border border-amber-500/25 bg-amber-500/[0.08] p-3 text-xs leading-relaxed text-muted-foreground">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
             <p>
-              <strong className="text-foreground">Escopo seguro desta versão:</strong> armazenamento local cifrado neste dispositivo, sem sincronização automática com servidor. Use apenas identificação mínima e notas operacionais. Não registre diagnóstico, medicação, laudo ou informação clínica sensível na agenda.
+              <strong className="text-foreground">Agenda operacional:</strong> esta grade permanece local e cifrada neste dispositivo. Para informações que precisam ser compartilhadas pela clínica e pela secretaria, use a <Link href="/memoria-clinica" className="font-semibold text-primary underline underline-offset-2">Memória da clínica</Link>, que confirma a persistência na nuvem. Não registre diagnóstico, medicação ou laudo diretamente na agenda.
             </p>
           </div>
         </CardContent>

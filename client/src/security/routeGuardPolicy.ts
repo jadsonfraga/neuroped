@@ -151,6 +151,9 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
 }> = [
   // A recepção opera a fila, mas não recebe acesso às demais áreas clínicas.
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  // A secretaria pode consultar e registrar memória operacional compartilhada;
+  // o backend continua bloqueando memória clínica para esse perfil.
+  { route: "/memoria-clinica", roles: ["admin", "professional", "operator"] },
 ];
 
 function normalizePathname(path: string): string {

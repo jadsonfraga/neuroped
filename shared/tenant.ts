@@ -30,6 +30,22 @@ export function canAccessClinicFinance(role: ClinicMembershipRole): boolean {
   return role === "owner" || role === "clinic_admin" || role === "financial";
 }
 
+/**
+ * Memória operacional compartilhada: secretarias podem registrar e consultar
+ * informações administrativas da própria clínica, sem receber acesso clínico
+ * amplo ao prontuário.
+ */
+export function canReadClinicMemory(role: ClinicMembershipRole): boolean {
+  return role === "owner" || role === "clinic_admin" || role === "professional" || role === "assistant";
+}
+
+export function canWriteClinicMemory(role: ClinicMembershipRole, kind: "operational" | "clinical"): boolean {
+  if (kind === "operational") {
+    return role === "owner" || role === "clinic_admin" || role === "professional" || role === "assistant";
+  }
+  return role === "owner" || role === "clinic_admin" || role === "professional";
+}
+
 export function normalizeClinicSlug(value: string): string {
   return value
     .normalize("NFD")
