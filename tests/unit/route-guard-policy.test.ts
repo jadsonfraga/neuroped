@@ -178,7 +178,8 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : path === "/recepcao" && userRole === "operator"
+        : (path === "/recepcao" || path === "/memoria-clinica") &&
+            userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
