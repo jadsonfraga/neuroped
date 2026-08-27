@@ -154,6 +154,7 @@ export default function PortalFamiliaPage() {
         subtitle="Imagens e mascotes oficiais usados com proporção estável, sem corte agressivo em celular."
         max={6}
         compact
+        priority
       />
 
       <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-950/20">

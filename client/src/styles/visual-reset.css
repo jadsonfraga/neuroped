@@ -455,6 +455,31 @@ header.fixed.md\:hidden {
 }
 
 /* ── PageHero / headers editoriais ────────────────────────────── */
+.np-page-hero {
+  isolation: isolate;
+  background:
+    radial-gradient(320px 180px at 100% 0%, hsl(var(--primary) / 0.06), transparent 72%),
+    linear-gradient(145deg, hsl(var(--card) / 0.98), hsl(var(--background) / 0.84)) !important;
+}
+
+.np-page-hero::after {
+  content: "";
+  position: absolute;
+  right: 1.1rem;
+  bottom: 1rem;
+  width: 7rem;
+  height: 4rem;
+  border-right: 1px solid hsl(var(--primary) / 0.12);
+  border-bottom: 1px solid hsl(var(--chart-2) / 0.12);
+  border-radius: 0 0 1.2rem 0;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.np-page-hero > .relative {
+  z-index: 1;
+}
+
 #main-content header[class*="bg-gradient-to-br"] {
   background-image: none !important;
   background-color: hsl(var(--card) / 0.94) !important;
@@ -498,6 +523,30 @@ header.fixed.md\:hidden {
 }
 
 /* ── Estados e densidade operacional ──────────────────────────── */
+.np-app-sidebar {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.np-app-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: auto -5rem 4.5rem -4rem;
+  height: 15rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 35%, hsl(var(--primary) / 0.1), transparent 54%),
+    radial-gradient(circle at 72% 68%, hsl(var(--chart-2) / 0.06), transparent 58%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.np-app-sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
 #main-content .shadcn-card > div[class*="p-4"],
 #main-content .shadcn-card > div[class*="p-5"] {
   border-radius: inherit;
@@ -509,13 +558,125 @@ header.fixed.md\:hidden {
   box-shadow: var(--np-premium-shadow) !important;
 }
 
-.animate-pulse {
-  animation-duration: 1.7s !important;
-  animation-timing-function: ease-in-out !important;
+  .animate-pulse {
+    animation-duration: 1.7s !important;
+    animation-timing-function: ease-in-out !important;
+  }
+
+  /* ── Fallback operacional ────────────────────────────────────── */
+.np-error-surface {
+  isolation: isolate;
+  background:
+    radial-gradient(600px 380px at 50% 0%, hsl(var(--primary) / 0.1), transparent 72%),
+    hsl(var(--background));
 }
 
-/* ── Mobile: premium sem encolher demais ─────────────────────── */
+.np-error-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.08;
+  mix-blend-mode: multiply;
+  filter: saturate(0.72) contrast(1.05);
+  pointer-events: none;
+}
+
+.dark .np-error-art {
+  opacity: 0.16;
+  mix-blend-mode: screen;
+}
+
+.np-error-card {
+  max-width: 32rem;
+  border-color: hsl(var(--border) / 0.8) !important;
+  background: hsl(var(--card) / 0.92) !important;
+  box-shadow: var(--np-premium-shadow-raised), var(--np-premium-inset) !important;
+  backdrop-filter: blur(18px);
+}
+
+/* ── Ativos visuais ──────────────────────────────────────────── */
+.asset-proportion-box {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border) / 0.55);
+  background:
+    radial-gradient(circle at 18% 12%, hsl(var(--primary) / 0.1), transparent 46%),
+    linear-gradient(145deg, hsl(var(--card) / 0.78), hsl(var(--muted) / 0.58));
+}
+
+.asset-proportion-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(135deg, hsl(var(--card) / 0.22), transparent 45%, hsl(var(--primary) / 0.04));
+  pointer-events: none;
+}
+
+.asset-proportion-box .asset-image {
+  position: relative;
+  z-index: 1;
+  filter: saturate(0.96) contrast(1.01);
+}
+
+/* ── Login Narrativo ────────────────────────────────────────── */
+  .np-login-stage {
+    align-items: stretch;
+  }
+
+  .np-login-panel {
+    padding: clamp(0rem, 1vw, 1.2rem) clamp(0rem, 2vw, 2.4rem);
+  }
+
+  .np-login-form {
+    border-color: hsl(var(--border) / 0.82) !important;
+    background: hsl(var(--card) / 0.92) !important;
+    box-shadow: 0 20px 56px -38px hsl(var(--foreground) / 0.44), var(--np-premium-inset) !important;
+  }
+
+  .np-login-story {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .np-login-story-art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.38;
+    mix-blend-mode: lighten;
+    filter: saturate(0.8) contrast(1.1);
+  }
+
+  .np-login-story-art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, hsl(var(--foreground) / 0.24) 0%, hsl(var(--foreground) / 0.78) 100%);
+  }
+
+  .np-login-pillar {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .np-login-pillar:hover {
+    background-color: hsl(var(--foreground) / 0.08);
+    border-color: hsl(var(--foreground) / 0.16);
+  }
+
+  /* ── Mobile: premium sem encolher demais ─────────────────────── */
 @media (max-width: 767px) {
+  .np-login-stage {
+    min-height: 0;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .np-login-story {
+    min-height: 24rem;
+  }
+
   .np-home-hero {
     padding: 1.35rem !important;
     border-radius: 1.25rem !important;

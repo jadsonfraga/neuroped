@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { attemptChunkRecovery } from "@/lib/chunkRecovery";
+import neuralAbstract from "@assets/images/neural-abstract.webp";
 
 interface Props {
   children: ReactNode;
@@ -66,10 +67,16 @@ export class AppErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background p-5">
-        <section className="w-full max-w-lg rounded-3xl border border-destructive/20 bg-card p-6 text-center shadow-xl" role="alert">
+      <main className="np-error-surface relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-5">
+        <div className="np-error-art" aria-hidden="true">
+          <img src={neuralAbstract} alt="" className="h-full w-full object-cover" />
+        </div>
+        <section className="np-error-card relative z-10 w-full max-w-lg rounded-3xl border border-destructive/20 bg-card p-6 text-center shadow-xl" role="alert">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
             <AlertTriangle className="h-7 w-7" />
+          </div>
+          <div className="mx-auto mt-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/15 bg-primary/5 p-1.5">
+            <img src="/dr-jadson-mascot-guide.webp" alt="" className="h-full w-full object-contain" loading="lazy" />
           </div>
           <h1 className="mt-4 text-xl font-bold text-foreground">O NeuroPed encontrou uma falha</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

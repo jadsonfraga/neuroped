@@ -214,6 +214,7 @@ interface SafeAssetImageProps {
   alt: string;
   className?: string;
   fallbackClassName?: string;
+  priority?: boolean;
   onLoadStateChange?: (loaded: boolean) => void;
 }
 
@@ -222,6 +223,7 @@ export function SafeAssetImage({
   alt,
   className = "",
   fallbackClassName = "",
+  priority = false,
   onLoadStateChange,
 }: SafeAssetImageProps) {
   const [failed, setFailed] = useState(false);
@@ -230,13 +232,13 @@ export function SafeAssetImage({
   if (failed) {
     return (
       <div
-        className={`flex h-full min-h-[96px] w-full items-center justify-center rounded-2xl border border-destructive/40 bg-destructive/10 text-destructive ${fallbackClassName}`}
+        className={`relative flex h-full min-h-[96px] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-[radial-gradient(circle_at_50%_20%,hsl(var(--primary)/0.12),transparent_58%),hsl(var(--muted)/0.52)] text-muted-foreground ${fallbackClassName}`}
         role="img"
         aria-label={`Imagem indisponível: ${alt}`}
       >
         <div className="flex flex-col items-center gap-2 text-center text-xs font-semibold">
-          <ImageOff className="h-5 w-5" />
-          <span>Imagem não abriu</span>
+          <ImageOff className="h-5 w-5 opacity-70" />
+          <span className="max-w-24 leading-relaxed">Visual de apoio indisponível</span>
         </div>
       </div>
     );
@@ -246,9 +248,9 @@ export function SafeAssetImage({
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
       decoding="async"
-      className={`${className} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-200`}
+      className={`asset-image ${className} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
       onLoad={() => {
         setLoaded(true);
         onLoadStateChange?.(true);
@@ -344,6 +346,7 @@ interface AssetShowcaseProps {
   subtitle?: string;
   max?: number;
   compact?: boolean;
+  priority?: boolean;
   className?: string;
 }
 
@@ -353,6 +356,7 @@ export function AssetShowcase({
   subtitle = "Mascotes e ilustrações oficiais reaproveitados com proporção preservada.",
   max = 6,
   compact = false,
+  priority = false,
   className = "",
 }: AssetShowcaseProps) {
   const allowed = new Set(showcaseIds[variant]);
@@ -374,7 +378,7 @@ export function AssetShowcase({
         {assets.map((asset) => (
           <div key={asset.id} className="group overflow-hidden rounded-2xl border border-border/70 bg-background/60 p-2">
             <div className="asset-proportion-box aspect-card-safe rounded-xl bg-muted/40">
-              <SafeAssetImage src={asset.src} alt={asset.name} className="no-zoom-media h-full w-full rounded-xl object-contain" />
+              <SafeAssetImage src={asset.src} alt={asset.name} priority={priority} className="no-zoom-media h-full w-full rounded-xl object-contain" />
             </div>
             {!compact && (
               <p className="mt-2 line-clamp-2 text-[10px] font-semibold leading-tight text-muted-foreground group-hover:text-foreground">
