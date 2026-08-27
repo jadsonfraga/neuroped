@@ -5,6 +5,8 @@ import { isClinicMembershipRole, type ClinicMembershipRole } from "../../../shar
 
 interface Env {
   DB?: D1Database;
+  /** Identidade técnica reservada; nunca pode aceitar convite de clínica. */
+  NEUROPED_E2E_EMAIL?: string;
 }
 
 interface InvitationRow {
@@ -116,6 +118,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return json({ error: "Convite expirado, revogado ou já utilizado.", code: validity.reason ?? "INVITATION_INVALID" }, 409);
   }
 
+  const reservedEmail = env.NEUROPED_E2E_EMAIL?.trim().toLowerCase() ?? "";
+  if (reservedEmail && invitation.email.trim().toLowerCase() === reservedEmail) {
+    return json(
+      { error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" },
+      409,
+    );
+  }
+
   const billing = await env.DB.prepare(
     `SELECT bc.status, bc.trial_ends_at,
             COALESCE(bs.seats, 0) AS seats,
@@ -147,6 +157,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const existing = await getUserByEmail(env.DB, invitation.email);
   if (existing && existing.is_active !== 1) {
     return json({ error: "Conta existente está inativa.", code: "ACCOUNT_INACTIVE" }, 409);
+  }
+  if (existing && reservedEmail && existing.email.trim().toLowerCase() === reservedEmail) {
+    return json(
+      { error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" },
+      409,
+    );
   }
 
   let userId = existing?.id ?? "";
@@ -201,8 +217,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
        AND julianday(expires_at) > julianday(?)
   )`;
   const statements: D1PreparedStatement[] = [];
+  const requiredResultIndexes: number[] = [];
 
   if (!existing) {
+    requiredResultIndexes.push(statements.length);
     statements.push(
       env.DB.prepare(
         `INSERT INTO users
@@ -224,6 +242,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       ),
     );
   } else if (effectiveGlobalRole !== existing.role) {
+    requiredResultIndexes.push(statements.length);
     statements.push(
       env.DB.prepare(
         `UPDATE users SET role = ?, updated_at = ?
@@ -241,12 +260,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     );
   }
 
+  const membershipIndex = statements.length;
+  requiredResultIndexes.push(membershipIndex);
   statements.push(
     env.DB.prepare(
       `INSERT INTO clinic_memberships
         (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
        SELECT ?, ?, ?, 1, ?, ?, ?
         WHERE ${pendingInvitationClause}
+          AND NOT EXISTS (
+            SELECT 1 FROM users u
+             WHERE u.id = ? AND lower(u.email) = ?
+          )
        ON CONFLICT(clinic_id, user_id) DO UPDATE SET
          role = excluded.role,
          active = 1,
@@ -262,16 +287,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       invitation.id,
       tokenHash,
       now,
+      userId,
+      reservedEmail,
     ),
   );
 
   if (membershipRole === "assistant" && assistantProviderId) {
+    const assistantLinkIndex = statements.length;
+    requiredResultIndexes.push(assistantLinkIndex);
     statements.push(
       env.DB.prepare(
         `INSERT INTO booking_staff_links
           (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
          SELECT ?, ?, 1, ?, ?, ?
-          WHERE ${pendingInvitationClause}
+          WHERE changes() = 1
+            AND ${pendingInvitationClause}
          ON CONFLICT(provider_user_id, staff_user_id) DO UPDATE SET
            active = 1,
            created_by_user_id = excluded.created_by_user_id,
@@ -289,13 +319,33 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     );
   }
 
+  const invitationUpdateIndex = statements.length;
+  requiredResultIndexes.push(invitationUpdateIndex);
   statements.push(
     env.DB.prepare(
       `UPDATE clinic_invitations
           SET status = 'accepted', accepted_at = ?
         WHERE id = ? AND token_hash = ? AND status = 'pending'
-          AND julianday(expires_at) > julianday(?)`,
-    ).bind(now, invitation.id, tokenHash, now),
+          AND julianday(expires_at) > julianday(?)
+          AND EXISTS (
+            SELECT 1 FROM clinic_memberships cm
+             WHERE cm.clinic_id = ? AND cm.user_id = ?
+               AND cm.active = 1 AND cm.role = ?
+          )`,
+    ).bind(
+      now,
+      invitation.id,
+      tokenHash,
+      now,
+      invitation.clinic_id,
+      userId,
+      membershipRole,
+    ),
+  );
+
+  const auditIndex = statements.length;
+  requiredResultIndexes.push(auditIndex);
+  statements.push(
     env.DB.prepare(
       `INSERT INTO saas_audit_events
         (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
@@ -323,9 +373,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   try {
     const results = await env.DB.batch(statements);
-    const invitationUpdate = results[results.length - 2];
-    if ((invitationUpdate?.meta?.changes ?? 0) !== 1) {
-      return json({ error: "Convite mudou durante o aceite.", code: "INVITATION_STALE" }, 409);
+    const incomplete = requiredResultIndexes.some(
+      (index) => (results[index]?.meta?.changes ?? 0) !== 1,
+    );
+    if (incomplete) {
+      return json(
+        { error: "Convite mudou durante o aceite ou a identidade está reservada.", code: "INVITATION_STALE" },
+        409,
+      );
     }
   } catch (error) {
     const message = String(error);
