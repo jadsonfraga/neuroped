@@ -316,7 +316,8 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   if (!user || !canOperate(user.role) || !context.env.DB) return null;
   await ensureOperationsSchema(context.env.DB);
   await ensureOperationsHardeningSchema(context.env.DB);
-  const principal = await resolveOperationsPrincipal(context.env.DB, user);
+  const clinicId = cleanOptionalText(new URL(context.request.url).searchParams.get("clinicId"), 100);
+  const principal = await resolveOperationsPrincipal(context.env.DB, user, clinicId);
   if (!principal) return null;
   return {
     authUser: user,
@@ -513,7 +514,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       if (!id) return errorResponse("Bloqueio inválido.", "VALIDATION_ERROR", 400);
       const result = await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
-      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Bloqueio não encontrado.", "NOT_FOUND", 404);
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Regra não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "availability_block";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
