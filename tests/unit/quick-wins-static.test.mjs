@@ -55,7 +55,7 @@ assert.match(
 );
 assert.match(
   app,
-  /if \(location === "\/brincando-e-aprendendo"\)[\s\S]*?<Route path="\/brincando-e-aprendendo" component=\{BrincandoAprendendoPage\} \/>[\s\S]*?<\/Switch>/,
+  /if \(location === "\/brincando-e-aprendendo"\)[\s\S]*?<Route\s+path="\/brincando-e-aprendendo"\s+component=\{BrincandoAprendendoPage\}\s*\/>[\s\S]*?<\/Switch>/,
   "a experiência educativa deve ser renderizada como microsite público fora do Layout clínico",
 );
 assert.doesNotMatch(
