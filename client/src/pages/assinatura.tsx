@@ -69,13 +69,21 @@ function apiErrorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : "Não foi possível concluir a operação.";
 }
 
+function hasUsableSubscription(entitlement: BillingSnapshot["entitlement"] | null | undefined): boolean {
+  if (!entitlement) return false;
+  if (entitlement.deniedReason === "ENTITLEMENT_NO_SUBSCRIPTION") return false;
+  if (entitlement.trialActive) return true;
+  return entitlement.subscriptionStatus === "active" || entitlement.subscriptionStatus === "past_due";
+}
+
 function statusCopy(snapshot: BillingSnapshot | null): { label: string; tone: "success" | "warning" | "danger" | "neutral" } {
   const entitlement = snapshot?.entitlement;
   if (!entitlement) return { label: "Aguardando configuração", tone: "neutral" };
   if (entitlement.isSuspended) return { label: "Suspensa", tone: "danger" };
   if (entitlement.isPastDue) return { label: "Pagamento pendente", tone: "warning" };
   if (entitlement.trialActive) return { label: "Trial ativo", tone: "success" };
-  if (entitlement.subscriptionStatus === "active" || entitlement.isActive) return { label: "Ativa", tone: "success" };
+  if (entitlement.deniedReason === "ENTITLEMENT_NO_SUBSCRIPTION") return { label: "Sem assinatura ativa", tone: "warning" };
+  if (entitlement.subscriptionStatus === "active") return { label: "Ativa", tone: "success" };
   return { label: "Sem assinatura ativa", tone: "warning" };
 }
 
@@ -268,6 +276,7 @@ export default function AssinaturaPage() {
   }
 
   const entitlement = billing?.entitlement;
+  const hasBillingPlan = hasUsableSubscription(entitlement);
   const pendingInvitations = invitations.filter((invitation) => invitation.status === "pending");
 
   return (
@@ -299,7 +308,7 @@ export default function AssinaturaPage() {
           {!canManage ? <p className="mt-5 rounded-xl border border-border bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">Seu papel pode usar o espaço de trabalho, mas somente Owner ou Administrador da clínica pode alterar plano, assentos e convites.</p> : (
             <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-primary/15 bg-primary/[0.05] p-4 sm:flex-row sm:items-end">
               <div className="flex-1 space-y-2"><Label htmlFor="seat-count">Quantidade de assentos</Label><Input id="seat-count" type="number" min={Math.max(activeMemberCount, 1)} max={500} value={seats} onChange={(event) => setSeats(Math.max(Math.max(activeMemberCount, 1), Number(event.target.value) || 1))} /></div>
-              <Button type="button" onClick={() => void handleCheckout()} disabled={busy === "checkout"} className="gap-2 rounded-xl">{busy === "checkout" ? "Abrindo checkout…" : entitlement?.isActive ? "Atualizar cobrança" : "Iniciar contratação"}<CreditCard className="h-4 w-4" aria-hidden="true" /></Button>
+              <Button type="button" onClick={() => void handleCheckout()} disabled={busy === "checkout"} className="gap-2 rounded-xl">{busy === "checkout" ? "Abrindo checkout…" : hasBillingPlan ? "Atualizar cobrança" : "Iniciar contratação"}<CreditCard className="h-4 w-4" aria-hidden="true" /></Button>
             </div>
           )}
           <p className="mt-4 text-xs leading-relaxed text-muted-foreground">O frontend apenas inicia o checkout. O servidor revalida clínica, papel, assentos e entitlement antes de criar a cobrança.</p>
