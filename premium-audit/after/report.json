@@ -1,0 +1,796 @@
+[
+  {
+    "name": "home-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/home-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1421,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Início"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "primeira impressão"
+  },
+  {
+    "name": "home-sidebar-documentar-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/home-sidebar-documentar-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1421,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Início"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "true"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "sidebar com grupo Documentar expandido"
+  },
+  {
+    "name": "home-search-laudo-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/home-search-laudo-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1181,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Início"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "true"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "busca contextual por laudo"
+  },
+  {
+    "name": "home-command-palette-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/home-command-palette-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1181,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Início"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "true"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "paleta de comando aberta"
+  },
+  {
+    "name": "explorar-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/explorar-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 2411,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Todos os recursos"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "catálogo por seções"
+  },
+  {
+    "name": "explorar-documentar-open-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/explorar-documentar-open-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 2825,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Todos os recursos"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "catálogo com Documentar aberto"
+  },
+  {
+    "name": "agenda-tab-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/agenda-tab-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1042,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "Agenda com aba secundária selecionada"
+  },
+  {
+    "name": "tea-checklists-tab-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/tea-checklists-tab-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 5399,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [
+        "Checklists TEA"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "true"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [
+        {
+          "label": "ADOS-2",
+          "selected": "false"
+        },
+        {
+          "label": "ADI-R",
+          "selected": "false"
+        },
+        {
+          "label": "CARS-2",
+          "selected": "true"
+        },
+        {
+          "label": "GARS-3",
+          "selected": "false"
+        },
+        {
+          "label": "SRS-2",
+          "selected": "false"
+        }
+      ],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "Checklists TEA com aba ativa"
+  },
+  {
+    "name": "home-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/home-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2494,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [
+        "Início"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "primeira impressão"
+  },
+  {
+    "name": "home-sidebar-open-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/home-sidebar-open-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2494,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [
+        "Início"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "sidebar móvel aberta"
+  },
+  {
+    "name": "explorar-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/explorar-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 3781,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [
+        "Todos os recursos"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "catálogo por seções"
+  },
+  {
+    "name": "explorar-documentar-open-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/explorar-documentar-open-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 4909,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [
+        "Todos os recursos"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "catálogo com Documentar aberto"
+  },
+  {
+    "name": "agenda-tab-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/agenda-tab-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 1199,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "Agenda com aba secundária selecionada"
+  },
+  {
+    "name": "tea-checklists-tab-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/after/tea-checklists-tab-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 6636,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [
+        "Checklists TEA"
+      ],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "true"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [
+        {
+          "label": "ADOS-2",
+          "selected": "false"
+        },
+        {
+          "label": "ADI-R",
+          "selected": "false"
+        },
+        {
+          "label": "CARS-2",
+          "selected": "true"
+        },
+        {
+          "label": "GARS-3",
+          "selected": "false"
+        },
+        {
+          "label": "SRS-2",
+          "selected": "false"
+        }
+      ],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários",
+        "Encontrar uma escalaPor idade, queixa e objetivo",
+        "Avaliação cognitiva infantilPerfil cognitivo por domínio",
+        "Reconhecimento visualFormas, cores e percepção visual",
+        "Documentar"
+      ]
+    },
+    "scenario": "Checklists TEA com aba ativa"
+  }
+]
