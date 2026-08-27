@@ -18,6 +18,7 @@ import { PrivateGate } from "@/components/PrivateGate";
 import { RouteGuard } from "@/components/RouteGuard";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
+import { RouteRecoveryBoundary } from "@/components/RouteRecoveryBoundary";
 import { MobilePrimaryDock } from "@/components/MobilePrimaryDock";
 
 import NotFound from "@/pages/not-found";
@@ -285,11 +286,13 @@ function AppRouter() {
   // carregaria navegação clínica desnecessária para uma rota sem dados sensíveis.
   if (location === "/brincando-e-aprendendo") {
     return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <Switch>
-          <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
-        </Switch>
-      </Suspense>
+      <RouteRecoveryBoundary key={location} route={location}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Switch>
+            <Route path="/brincando-e-aprendendo" component={BrincandoAprendendoPage} />
+          </Switch>
+        </Suspense>
+      </RouteRecoveryBoundary>
     );
   }
 
@@ -297,11 +300,13 @@ function AppRouter() {
   // estado somente em memória e sem acesso à navegação clínica do Neuroped.
   if (location === "/missao-saude") {
     return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <Switch>
-          <Route path="/missao-saude" component={MissaoSaudePage} />
-        </Switch>
-      </Suspense>
+      <RouteRecoveryBoundary key={location} route={location}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Switch>
+            <Route path="/missao-saude" component={MissaoSaudePage} />
+          </Switch>
+        </Suspense>
+      </RouteRecoveryBoundary>
     );
   }
 
@@ -310,9 +315,11 @@ function AppRouter() {
   // duplicidade de landmarks e não expõe navegação ou dados clínicos.
   if (location === "/marcacao") {
     return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <MarcacaoPage />
-      </Suspense>
+      <RouteRecoveryBoundary key={location} route={location}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <MarcacaoPage />
+        </Suspense>
+      </RouteRecoveryBoundary>
     );
   }
 
@@ -320,15 +327,18 @@ function AppRouter() {
   // nem redirecionamento externo. Ele não deve herdar o layout ou o gate médico.
   if (location === "/eletroencefalograma") {
     return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <EletroencefalogramaPage />
-      </Suspense>
+      <RouteRecoveryBoundary key={location} route={location}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <EletroencefalogramaPage />
+        </Suspense>
+      </RouteRecoveryBoundary>
     );
   }
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <Layout>
+    <RouteRecoveryBoundary key={location} route={location}>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Layout>
         <Suspense fallback={<LoadingSpinner />}>
           <RouteGuard>
             <PageTransition>
@@ -615,8 +625,9 @@ function AppRouter() {
             </PageTransition>
           </RouteGuard>
         </Suspense>
-      </Layout>
-    </Suspense>
+        </Layout>
+      </Suspense>
+    </RouteRecoveryBoundary>
   );
 }
 

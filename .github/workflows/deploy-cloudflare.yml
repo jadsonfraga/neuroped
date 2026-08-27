@@ -375,6 +375,14 @@ jobs:
           [ "$ok" -eq 1 ] || { echo "::error::Backend publicado sem D1/auth plenamente configurados"; exit 1; }
           echo "✅ HEALTH OK — D1 e autenticação nominal configurados."
 
+      - name: Instalar Chromium para smoke test publicado
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke test das rotas públicas no runtime publicado
+        env:
+          PUBLISHED_ORIGIN: https://neuroped.pages.dev
+        run: npm run test:e2e:published-availability
+
       - name: Validar CORS restrito do mirror oficial
         run: |
           set -euo pipefail

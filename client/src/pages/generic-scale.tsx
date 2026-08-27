@@ -1,17 +1,14 @@
 import { useParams, useLocation, Link } from "wouter";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Copy, Download, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import type { QueixaCategory, ScaleEntry } from "@/data/scaleFilter";
 import { GenericScale } from "@/components/GenericScale";
-import {
-  getInteractiveScale as getInteractiveItemScale,
-  makeInteractiveConfig,
-} from "@/data/interactiveScaleItems";
-import { getInteractiveScale as getInteractiveRunnerScale } from "@/data/interactiveScales";
+import type { InteractiveScaleDef as InteractiveItemDef } from "@/data/interactiveScaleItems";
+import type { InteractiveScaleDef as InteractiveRunnerDef } from "@/data/interactiveScales";
 import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
@@ -59,17 +56,17 @@ const VERBAL_LABEL: Record<string, string> = {
 
 // Rótulos legíveis de queixa (id -> label). Cobre as categorias do filtro e os
 // usos pós-consulta mais comuns; o resto cai num prettify simples.
-const QUEIXA_LABEL: Record<string, string> = {
-  ...Object.fromEntries(queixas.map((q) => [q.id, q.label])),
+const QUEIXA_LABEL_OVERRIDES: Record<string, string> = {
   evolucao: "Evolução / Seguimento",
   efeitos: "Efeitos de medicação",
   adesao: "Adesão ao tratamento",
   qualidade_vida: "Qualidade de vida",
   triagem: "Triagem ampla",
 };
-function queixaLabel(id: string): string {
+function queixaLabel(id: string, categories: QueixaCategory[]): string {
   return (
-    QUEIXA_LABEL[id] ??
+    QUEIXA_LABEL_OVERRIDES[id] ??
+    categories.find((category) => category.id === id)?.label ??
     id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ")
   );
 }
@@ -136,11 +133,14 @@ const USAGE_DEFAULT = [
 ];
 
 // Resolve a rota real de uma escala (mesma regra do filtro) para os links de
-// instrumentos relacionados.
-const ALL_IDS = new Set(allScales.map((s) => s.id));
-function routeFor(s: { id: string; appRoute?: string }): string {
+// instrumentos relacionados. O conjunto é fornecido pelo catálogo lazy para
+// manter a tela genérica fora do bundle inicial.
+function routeFor(
+  s: { id: string; appRoute?: string },
+  allIds: ReadonlySet<string>,
+): string {
   if (s.appRoute) return s.appRoute;
-  if (ALL_IDS.has(s.id)) return `/generic-scale/${s.id}`;
+  if (allIds.has(s.id)) return `/generic-scale/${s.id}`;
   if (s.id.startsWith("world-")) return "/escalas-neuropsiquiatria";
   return "/filtro";
 }
@@ -417,15 +417,82 @@ export default function GenericScalePage() {
   const params = useParams<{ id: string }>();
   const [_location, navigate] = useLocation();
   const scaleId = params?.id;
-
-  const scale = allScales.find((s) => s.id === scaleId);
+  const [catalog, setCatalog] = useState<{
+    allScales: ScaleEntry[];
+    queixas: QueixaCategory[];
+  } | null>(null);
+  const [itemModule, setItemModule] = useState<{
+    getInteractiveScale: (id: string | undefined) => InteractiveItemDef | undefined;
+    makeInteractiveConfig: (scale: ScaleEntry, def: InteractiveItemDef) => Parameters<typeof GenericScale>[0]["config"];
+  } | null>(null);
+  const [runnerModule, setRunnerModule] = useState<{
+    getInteractiveScale: (id: string | undefined) => InteractiveRunnerDef | null;
+  } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setLoadError(false);
+    void Promise.all([
+      import("@/data/scaleFilter"),
+      import("@/data/interactiveScaleItems"),
+      import("@/data/interactiveScales"),
+    ])
+      .then(([catalogModule, itemModuleValue, runnerModuleValue]) => {
+        if (!active) return;
+        setCatalog({ allScales: catalogModule.allScales, queixas: catalogModule.queixas });
+        setItemModule({
+          getInteractiveScale: itemModuleValue.getInteractiveScale,
+          makeInteractiveConfig: itemModuleValue.makeInteractiveConfig,
+        });
+        setRunnerModule({ getInteractiveScale: runnerModuleValue.getInteractiveScale });
+      })
+      .catch(() => {
+        if (active) setLoadError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [loadAttempt]);
+
+  if (loadError) {
+    return (
+      <section className="mx-auto flex min-h-[55vh] w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-3xl border border-destructive/20 bg-card p-8 text-center shadow-sm" role="alert">
+        <h1 className="text-xl font-bold text-foreground">Não foi possível carregar esta escala</h1>
+        <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+          Nenhum dado clínico foi perdido. Atualize somente os recursos desta seção ou volte ao filtro para escolher outra escala.
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+            Tentar novamente
+          </Button>
+          <Button type="button" variant="outline" onClick={() => navigate("/filtro")}>
+            Voltar ao filtro
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  if (!catalog || !itemModule || !runnerModule) {
+    return (
+      <section className="mx-auto flex min-h-[55vh] w-full max-w-2xl items-center justify-center rounded-3xl border border-border/70 bg-card/80 p-8 text-center" role="status" aria-live="polite" aria-busy="true">
+        <p className="text-sm text-muted-foreground">Carregando a ficha clínica segura…</p>
+      </section>
+    );
+  }
+
+  const { allScales, queixas } = catalog;
+  const allIds = new Set(allScales.map((scaleEntry) => scaleEntry.id));
+  const scale = allScales.find((s) => s.id === scaleId);
   const implStatus = scale ? getImplementationStatus(scale) : null;
 
   // Escalas interativas "runner" (acervo novo: dor/FPS-R, Q-CHAT, Viking, MACS…)
   // — renderizadas pelo InteractiveScaleRunner. Conjunto à parte do acervo de
   // itens (interactiveScaleItems), por isso é checado primeiro e independe de allScales.
-  const runnerDef = getInteractiveRunnerScale(scaleId);
+  const runnerDef = runnerModule.getInteractiveScale(scaleId);
   if (runnerDef) {
     return (
       <div className="p-1">
@@ -458,7 +525,7 @@ export default function GenericScalePage() {
 
   // Quando a escala já tem itens interativos cadastrados (acervo de 257), renderiza
   // a APLICAÇÃO REAL (itens respondíveis + cálculo de escore) no lugar da ficha.
-  const itemDef = getInteractiveItemScale(scaleId);
+  const itemDef = itemModule.getInteractiveScale(scaleId);
   if (itemDef) {
     return (
       <div className="max-w-2xl mx-auto p-3 sm:p-4">
@@ -470,7 +537,7 @@ export default function GenericScalePage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Filtro
         </Button>
-        <GenericScale config={makeInteractiveConfig(scale, itemDef)} />
+        <GenericScale config={itemModule.makeInteractiveConfig(scale, itemDef)} />
       </div>
     );
   }
@@ -610,7 +677,7 @@ export default function GenericScalePage() {
                       key={q}
                       className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-200 text-sm border border-blue-700"
                     >
-                      {queixaLabel(q)}
+                      {queixaLabel(q, queixas)}
                     </span>
                   ))}
                 </div>
@@ -764,7 +831,7 @@ export default function GenericScalePage() {
                 {related.map((o) => (
                   <Link
                     key={o.id}
-                    href={routeFor(o)}
+                    href={routeFor(o, allIds)}
                     className="block rounded-lg border border-slate-700 bg-slate-700/30 p-3 transition hover:border-blue-500 hover:bg-slate-700/60"
                   >
                     <p className="text-sm font-semibold text-slate-100">

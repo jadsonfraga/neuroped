@@ -127,12 +127,20 @@ jobs:
               echo "✅ Cloudflare canônico serve exatamente ${GITHUB_SHA} com D1/auth saudáveis."
               exit 0
             fi
-            sleep 10
+              sleep 10
           done
           cat /tmp/recovery-sentinel.json 2>/dev/null || true
           cat /tmp/recovery-health.json 2>/dev/null || true
           echo "::error::Runtime canônico não confirmou o SHA esperado."
           exit 1
+
+      - name: Install Chromium for published smoke test
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke test public routes on recovered runtime
+        env:
+          PUBLISHED_ORIGIN: https://neuroped.pages.dev
+        run: npm run test:e2e:published-availability
 
       - name: Publish consolidated recovery status
         if: always()
