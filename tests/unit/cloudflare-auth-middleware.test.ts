@@ -93,12 +93,12 @@ const healthResponse = await healthCheck({
 } as never);
 const healthBody = await healthResponse.json() as {
   database: string;
-  authentication: { required: boolean; configured: boolean };
+  authentication: { required: boolean; configured: boolean; schemaReady: boolean | null };
 };
 assert.equal(healthBody.database, "error");
 assert.deepEqual(
   healthBody.authentication,
-  { required: true, configured: true },
+  { required: true, configured: true, schemaReady: null },
   "binding D1 indisponível ainda deve falhar fechado no cliente",
 );
 
