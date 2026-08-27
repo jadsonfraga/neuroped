@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/auditoria-total-ui-backend-memoria
+      - feat/saas-next-hardening-e2e
 
 permissions:
   contents: read
