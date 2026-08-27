@@ -37,7 +37,7 @@ export default function MarcacaoPage() {
   }, []);
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:py-12">
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:py-12">
       <section className="overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-6 sm:p-9">
         <div className="max-w-3xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/85 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm">
@@ -69,6 +69,6 @@ export default function MarcacaoPage() {
 
         {state === "unavailable" && <Card><CardContent className="space-y-3 p-6"><div className="flex items-center gap-2 font-bold"><CircleHelp className="h-5 w-5 text-primary" />Agenda online indisponível</div><p className="text-sm leading-6 text-muted-foreground">Não foi possível consultar a agenda agora. Tente novamente mais tarde ou entre em contato pelos canais institucionais da clínica.</p><Button variant="outline" onClick={() => window.location.reload()}>Tentar novamente</Button></CardContent></Card>}
       </section>
-    </main>
+    </div>
   );
 }
