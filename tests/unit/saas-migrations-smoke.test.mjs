@@ -25,6 +25,7 @@ for (const migration of [
   "db/migrations/0016_saas_control_plane_hardening.sql",
   "db/migrations/0017_saas_membership_invites.sql",
   "db/migrations/0018_saas_privacy_governance.sql",
+  "db/migrations/0019_saas_integrations_control.sql",
 ]) db.exec(read(migration));
 
 db.prepare(`INSERT INTO saas_module_settings(id, clinic_id, module_id, enabled, version) VALUES ('m1', 'clinic-a', 'privacy', 0, 0)`).run();
@@ -35,5 +36,11 @@ db.prepare(`INSERT INTO saas_audit_log(id, clinic_id, actor_user_id, action, tar
 assert.throws(() => db.prepare(`DELETE FROM saas_audit_log WHERE id = 'a1'`).run(), /SAAS_AUDIT_APPEND_ONLY/);
 assert.throws(() => db.prepare(`INSERT INTO saas_audit_log(id, actor_user_id, action, target_type, metadata_json) VALUES ('a2', 'user-a', 'x', 'y', '${"x".repeat(4001)}')`).run(), /SAAS_AUDIT_METADATA_TOO_LARGE/);
 
+const insertIntegration = db.prepare(`INSERT INTO saas_integration_connections(id, clinic_id, integration_id, environment, status, scopes_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`);
+insertIntegration.run('i1', 'clinic-a', 'webhooks', 'sandbox', 'draft', '["module.read"]', 0);
+assert.throws(() => db.prepare(`UPDATE saas_integration_connections SET clinic_id = 'clinic-b' WHERE id = 'i1'`).run(), /SAAS_INTEGRATION_SCOPE_IMMUTABLE/);
+assert.throws(() => db.prepare(`UPDATE saas_integration_connections SET version = 4 WHERE id = 'i1'`).run(), /SAAS_INTEGRATION_VERSION_CONFLICT/);
+assert.throws(() => insertIntegration.run('i2', 'clinic-a', 'webhooks', 'sandbox', 'draft', '["module.read"]', 0), /UNIQUE/);
+
 db.close();
-console.log("[saas-migrations-smoke] ✓ migrations 0016–0018, FKs, triggers e versionamento validados");
+console.log("[saas-migrations-smoke] ✓ migrations 0016–0019, FKs, triggers e versionamento validados");

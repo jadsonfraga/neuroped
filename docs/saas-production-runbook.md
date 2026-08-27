@@ -4,8 +4,8 @@ Este runbook descreve como liberar as 20 abas em ambiente real sem tratar a tela
 
 ## Ordem de aplicação
 
-1. Aplicar as migrations D1 em ordem, incluindo `0016_saas_control_plane_hardening.sql`, `0017_saas_membership_invites.sql` e `0018_saas_privacy_governance.sql`.
-2. Confirmar que `saas_module_settings`, `saas_backup_evidence`, `saas_membership_invites`, `saas_privacy_requests`, `saas_retention_policies` e `live_patient_search_tokens` existem no banco de produção.
+1. Aplicar as migrations D1 em ordem, incluindo `0016_saas_control_plane_hardening.sql`, `0017_saas_membership_invites.sql`, `0018_saas_privacy_governance.sql` e `0019_saas_integrations_control.sql`.
+2. Confirmar que `saas_module_settings`, `saas_backup_evidence`, `saas_membership_invites`, `saas_privacy_requests`, `saas_retention_policies`, `saas_integration_connections` e `live_patient_search_tokens` existem no banco de produção.
 3. Configurar os segredos no secret manager, nunca no frontend: `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY`, `OPERATIONAL_DATA_KEY`, `APP_BASE_URL` HTTPS e `ENVIRONMENT=production`. Durante rotação, `CLINICAL_DATA_KEY_PREVIOUS` e seu identificador devem apontar somente para a chave anterior.
 4. Manter `CLINICAL_LIVE_ENABLED=false` até o keyring, backup/restore e smoke tenant-aware passarem. O sistema deve falhar fechado se o keyring faltar ou se houver colisão/separação inválida de chaves.
 5. Criar ou validar uma clínica de staging com memberships explícitas, entitlement válido e dados sintéticos. Nunca usar PHI real em staging.
@@ -39,3 +39,13 @@ As políticas da aba LGPD são configuração operacional, não uma decisão jur
 ## Evidências mínimas por clínica
 
 O pacote de go-live deve conter: versão das migrations, resultado do TypeScript/lint/testes, resultado do `readiness`, evidência de restore com digest, matriz RBAC, teste cross-tenant, teste de expiração/rotação de convite, evidência de keyring sem segredos, revisão do registro de tratamento e aprovação do controlador/encarregado. Os artefatos não devem conter nomes de pacientes, prontuários, tokens ou segredos.
+
+## Operação de integrações tenant-aware
+
+As conexões são configuradas pela aba Developer API e persistem apenas postura operacional: integração, ambiente, status, escopos, hash do endpoint, timestamp de verificação e referência no secret manager. Tokens, chaves privadas e payloads clínicos não são aceitos pela API nem pela Central.
+
+Cada integração deve começar em `sandbox`. Uma conexão de produção exige sandbox conectado, módulo correspondente habilitado, escopo mínimo compatível, referência de segredo e verificação recente. FHIR, object storage e qualquer transporte que lide com dados de saúde exigem escopo clínico explícito, consentimento, provenance e contrato de operador.
+
+A atualização utiliza versão otimista e falha com conflito quando outra operação alterou a conexão. Revogação, pausa e reconexão devem ser auditadas por clínica. O endpoint externo, quando necessário, é armazenado somente como HMAC tenant-aware; a URL original deve permanecer no provedor de segredos ou configuração protegida.
+
+A lista de convites retorna somente prefixo de hash e estado operacional. O token completo aparece uma vez na criação e não pode ser recuperado, listado ou reenviado automaticamente sem uma nova emissão auditada.

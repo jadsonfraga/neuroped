@@ -37,6 +37,98 @@ function inviteBaseUrl(env: TenantEnv): string | null {
   }
 }
 
+interface InviteRow {
+  id: string;
+  email_hash: string;
+  role: string;
+  expires_at: string;
+  accepted_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+}
+
+function inviteStatus(row: InviteRow): "pending" | "accepted" | "expired" | "revoked" {
+  if (row.accepted_at) return "accepted";
+  if (row.revoked_at) return "revoked";
+  if (new Date(row.expires_at).getTime() <= Date.now()) return "expired";
+  return "pending";
+}
+
+async function authorizeInviteAdmin(context: Parameters<PagesFunction<TenantEnv>>[0], clinicId: string) {
+  const db = context.env.DB;
+  const user = getContextUser(context);
+  if (!db) return { error: tenantError("Banco SaaS não configurado.", "SAAS_DB_NOT_CONFIGURED", 503) } as const;
+  if (!user) return { error: tenantError("Não autenticado.", "UNAUTHENTICATED", 401) } as const;
+  if (!clinicId) return { error: tenantError("clinicId inválido.", "VALIDATION_ERROR", 400) } as const;
+  const membership = await getClinicMembership(db, clinicId, user);
+  if (!membership || !membershipCanManage(membership)) return { error: tenantError("Acesso administrativo negado para esta clínica.", "TENANT_FORBIDDEN", 403) } as const;
+  const billingError = await requireBillingEntitlement(db, user.id, clinicId, "admin");
+  if (billingError) return { error: billingError } as const;
+  return { db, user } as const;
+}
+
+export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
+  const clinicId = clinicIdFrom(context);
+  const authorized = await authorizeInviteAdmin(context, clinicId);
+  if ("error" in authorized) return authorized.error;
+  try {
+    const result = await authorized.db
+      .prepare(
+        `SELECT id, email_hash, role, expires_at, accepted_at, revoked_at, created_at
+           FROM saas_membership_invites
+          WHERE clinic_id = ?
+          ORDER BY created_at DESC
+          LIMIT 100`,
+      )
+      .bind(clinicId)
+      .all<InviteRow>();
+    return tenantJson({ clinicId, data: (result.results ?? []).map((row) => ({ id: row.id, emailHashPrefix: row.email_hash.slice(0, 10), role: row.role, status: inviteStatus(row), expiresAt: row.expires_at, acceptedAt: row.accepted_at, revokedAt: row.revoked_at, createdAt: row.created_at })) });
+  } catch (error) {
+    console.error("[tenants.invites.GET] failed", error);
+    return tenantError("Não foi possível carregar os convites.", "INVITES_LOAD_FAILED", 500);
+  }
+};
+
+export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
+  const clinicId = clinicIdFrom(context);
+  const authorized = await authorizeInviteAdmin(context, clinicId);
+  if ("error" in authorized) return authorized.error;
+  const url = new URL(context.request.url);
+  let inviteId = cleanText(url.searchParams.get("inviteId"), 80);
+  if (!inviteId) {
+    try {
+      const parsed = await context.request.json() as Record<string, unknown>;
+      inviteId = cleanText(parsed?.inviteId, 80);
+    } catch {
+      // Query param remains the canonical fallback for DELETE clients.
+    }
+  }
+  if (!inviteId) return tenantError("inviteId é obrigatório.", "VALIDATION_ERROR", 400);
+  const now = new Date().toISOString();
+  try {
+    const results = await authorized.db.batch([
+      authorized.db
+        .prepare(
+          `UPDATE saas_membership_invites
+              SET revoked_at = ?
+            WHERE id = ? AND clinic_id = ? AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > ?`,
+        )
+        .bind(now, inviteId, clinicId, now),
+      prepareSaasAudit(
+        authorized.db,
+        { clinicId, actorUserId: authorized.user.id, action: "saas_membership_invite_revoke", targetType: "membership_invite", targetId: inviteId },
+        true,
+      ),
+    ]);
+    if ((results[0]?.meta?.changes ?? 0) !== 1) return tenantError("Convite não encontrado ou já encerrado.", "INVITE_NOT_ACTIVE", 409);
+    if ((results[1]?.meta?.changes ?? 0) !== 1) return tenantError("A revogação não pôde ser auditada.", "AUDIT_WRITE_FAILED", 500);
+    return tenantJson({ data: { id: inviteId, clinicId, status: "revoked", revokedAt: now } });
+  } catch (error) {
+    console.error("[tenants.invites.DELETE] failed", error);
+    return tenantError("Não foi possível revogar o convite.", "INVITE_REVOKE_FAILED", 500);
+  }
+};
+
 export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context);
   const db = context.env.DB;

@@ -121,6 +121,32 @@ type PrivacySnapshot = {
   retention: Array<{ dataClass: string; retentionDays: number; purgeMode: string; legalHold: boolean; enabled: boolean; version: number }>;
 };
 
+type InviteRow = {
+  id: string;
+  emailHashPrefix: string;
+  role: string;
+  status: "pending" | "accepted" | "expired" | "revoked";
+  expiresAt: string;
+  acceptedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+};
+
+type IntegrationConnection = {
+  id: string;
+  clinicId: string;
+  integrationId: string;
+  environment: "sandbox" | "production";
+  status: "draft" | "connected" | "paused" | "revoked";
+  scopes: string[];
+  credentialConfigured: boolean;
+  credentialRef: string | null;
+  endpointConfigured: boolean;
+  lastVerifiedAt: string | null;
+  version: number;
+  updatedAt: string;
+};
+
 type ConsoleState = {
   activeModule: ModuleId;
   organizationName: string;
@@ -500,12 +526,17 @@ export default function SaasCentralPage() {
   const [remoteModuleStates, setRemoteModuleStates] = useState<Record<ModuleId, RemoteModuleState> | null>(null);
   const [readiness, setReadiness] = useState<ReadinessState | null>(null);
   const [privacySnapshot, setPrivacySnapshot] = useState<PrivacySnapshot | null>(null);
+  const [inviteRows, setInviteRows] = useState<InviteRow[]>([]);
+  const [integrationConnections, setIntegrationConnections] = useState<IntegrationConnection[]>([]);
   const [remoteStatus, setRemoteStatus] = useState<"demo" | "loading" | "synced" | "error">("demo");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [messageTemplate, setMessageTemplate] = useState("Olá, {{responsavel}}. Temos uma atualização segura da clínica NeuroPed para você.");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("professional");
+  const [inviteExpirationDays, setInviteExpirationDays] = useState("7");
+  const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
   const [privacyEmail, setPrivacyEmail] = useState("");
   const [backupProvider, setBackupProvider] = useState("");
   const [backupDigest, setBackupDigest] = useState("");
@@ -513,12 +544,21 @@ export default function SaasCentralPage() {
   const [backupRto, setBackupRto] = useState("240");
   const [backupStatus, setBackupStatus] = useState<"recorded" | "verified" | "failed">("verified");
   const [apiKeyCreated, setApiKeyCreated] = useState(false);
+  const [integrationId, setIntegrationId] = useState("webhooks");
+  const [integrationEnvironment, setIntegrationEnvironment] = useState<"sandbox" | "production">("sandbox");
+  const [integrationStatus, setIntegrationStatus] = useState<"draft" | "connected" | "paused" | "revoked">("draft");
+  const [integrationScopes, setIntegrationScopes] = useState("module.read");
+  const [integrationCredentialRef, setIntegrationCredentialRef] = useState("");
+  const [integrationEndpoint, setIntegrationEndpoint] = useState("");
 
   useEffect(() => {
     setState(loadState(tenantScope));
     setRemoteModuleStates(null);
     setReadiness(null);
     setPrivacySnapshot(null);
+    setInviteRows([]);
+    setLastInviteUrl(null);
+    setIntegrationConnections([]);
     setRemoteStatus(activeClinicId ? "loading" : "demo");
   }, [activeClinicId, tenantScope]);
 
@@ -570,6 +610,32 @@ export default function SaasCentralPage() {
       .catch((cause) => {
         if (!cancelled) setToast(cause instanceof Error ? cause.message : "Readiness indisponível.");
       });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Convites indisponíveis.");
+        if (!cancelled) setInviteRows(Array.isArray(body?.data) ? body.data : []);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Convites indisponíveis."); });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/integrations?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Integrações indisponíveis.");
+        if (!cancelled) setIntegrationConnections(Array.isArray(body?.data) ? body.data : []);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Integrações indisponíveis."); });
     return () => { cancelled = true; };
   }, [activeClinicId]);
 
@@ -670,7 +736,12 @@ export default function SaasCentralPage() {
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível registrar a evidência.");
         setBackupDigest("");
-        setReadiness((current) => current ? { ...current, latestBackup: body.data, checks: current.checks, missing: current.missing } : current);
+        setReadiness((current) => {
+          if (!current) return current;
+          const checks = { ...current.checks, restore: { ok: backupStatus === "verified", label: "Restore verificado" } };
+          const missing = Object.values(checks).filter((check) => !check.ok).map((check) => check.label);
+          return { ...current, latestBackup: body.data, checks, missing, readyForProduction: missing.length === 0 };
+        });
         setToast("Evidência de backup/restore registrada e auditada.");
       })
       .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar a evidência."));
@@ -699,6 +770,102 @@ export default function SaasCentralPage() {
         recordAction("Pedido do titular registrado no tenant e auditado.", 2);
       })
       .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar o pedido."));
+  };
+
+  const createInvite = () => {
+    if (!activeClinicId) {
+      setToast("Convites exigem um tenant ativo; nada foi enviado no modo demo.");
+      return;
+    }
+    const email = inviteEmail.trim();
+    const expirationDays = Number(inviteExpirationDays);
+    if (!email.includes("@") || !Number.isInteger(expirationDays) || expirationDays < 1 || expirationDays > 30) {
+      setToast("Informe e-mail e expiração válidos para o convite.");
+      return;
+    }
+    void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites`, {
+      method: "POST",
+      body: JSON.stringify({ email, role: inviteRole, expirationDays }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível criar o convite.");
+        setInviteEmail("");
+        setLastInviteUrl(typeof body.data?.inviteUrl === "string" ? body.data.inviteUrl : null);
+        setInviteRows((current) => [{ id: body.data.id, emailHashPrefix: "token exibido uma vez", role: body.data.role, status: "pending", expiresAt: body.data.expiresAt, acceptedAt: null, revokedAt: null, createdAt: new Date().toISOString() }, ...current]);
+        setToast("Convite criado. Copie a URL segura agora; ela não será recuperada depois.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível criar o convite."));
+  };
+
+  const revokeInvite = (inviteId: string) => {
+    if (!activeClinicId) return;
+    void authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}/invites?inviteId=${encodeURIComponent(inviteId)}`, { method: "DELETE" })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível revogar o convite.");
+        setInviteRows((current) => current.map((invite) => invite.id === inviteId ? { ...invite, status: "revoked", revokedAt: body.data.revokedAt } : invite));
+        setToast("Convite revogado e auditado.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível revogar o convite."));
+  };
+
+  const transitionPrivacyRequest = (request: PrivacyRequest, nextStatus: string) => {
+    if (!activeClinicId) return;
+    const resolutionCode = nextStatus === "completed" ? "operator_review_completed" : null;
+    void authFetch("/api/saas/privacy", {
+      method: "PATCH",
+      body: JSON.stringify({ clinicId: activeClinicId, requestId: request.id, status: nextStatus, resolutionCode }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível avançar o pedido.");
+        setPrivacySnapshot((current) => current ? { ...current, requests: current.requests.map((item) => item.id === request.id ? { ...item, status: body.data.status } : item) } : current);
+        setToast(`Pedido ${request.requestType} avançado para ${body.data.status}.`);
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível avançar o pedido."));
+  };
+
+  const saveRetentionPolicy = (policy: PrivacySnapshot["retention"][number], patch: { legalHold?: boolean; enabled?: boolean; purgeMode?: string }) => {
+    if (!activeClinicId) return;
+    void authFetch("/api/saas/privacy", {
+      method: "PUT",
+      body: JSON.stringify({ clinicId: activeClinicId, dataClass: policy.dataClass, retentionDays: policy.retentionDays, purgeMode: patch.purgeMode ?? policy.purgeMode, legalHold: patch.legalHold ?? policy.legalHold, enabled: patch.enabled ?? policy.enabled, expectedVersion: policy.version }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível salvar a retenção.");
+        const saved = body.data;
+        setPrivacySnapshot((current) => current ? { ...current, retention: current.retention.map((item) => item.dataClass === policy.dataClass ? { ...item, ...saved } : item) } : current);
+        setToast(`Política ${policy.dataClass} atualizada e auditada.`);
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível salvar a retenção."));
+  };
+
+  const saveIntegration = () => {
+    if (!activeClinicId) {
+      setToast("Integrações exigem um tenant ativo; nada foi salvo no modo demo.");
+      return;
+    }
+    const existing = integrationConnections.find((connection) => connection.integrationId === integrationId && connection.environment === integrationEnvironment);
+    const scopes = integrationScopes.split(",").map((scope) => scope.trim()).filter(Boolean);
+    void authFetch("/api/saas/integrations", {
+      method: "PUT",
+      body: JSON.stringify({ clinicId: activeClinicId, integrationId, environment: integrationEnvironment, status: integrationStatus, scopes, credentialRef: integrationCredentialRef.trim() || null, endpoint: integrationEndpoint.trim() || null, lastVerifiedAt: integrationStatus === "connected" ? new Date().toISOString() : null, expectedVersion: existing?.version ?? 0 }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível salvar a integração.");
+        setIntegrationConnections((current) => {
+          const saved = body.data as IntegrationConnection;
+          const next: IntegrationConnection = { ...saved, id: existing?.id ?? `${integrationId}:${integrationEnvironment}`, clinicId: activeClinicId, credentialConfigured: Boolean(saved.credentialConfigured), credentialRef: integrationCredentialRef.trim() || null, endpointConfigured: Boolean(integrationEndpoint.trim()), version: saved.version, updatedAt: saved.updatedAt };
+          return [...current.filter((item) => !(item.integrationId === integrationId && item.environment === integrationEnvironment)), next];
+        });
+        setIntegrationCredentialRef("");
+        setIntegrationEndpoint("");
+        setToast("Conexão de integração salva com escopo e auditoria.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível salvar a integração."));
   };
 
   const recordAction = (message: string, completed = 1) => {
@@ -780,10 +947,17 @@ export default function SaasCentralPage() {
         );
       case "access":
         return (
-          <ActionCard title="Matriz de acesso" description="A tabela é somente administrativa; decisões clínicas continuam no núcleo protegido.">
-            <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b text-xs uppercase tracking-wide text-muted-foreground"><th className="pb-3">Perfil</th><th className="pb-3">Workspace</th><th className="pb-3">Pacientes</th><th className="pb-3">Documentos</th><th className="pb-3">Admin</th></tr></thead><tbody>{[["Admin", "Total", "Escopo", "Total", "Sim"], ["Profissional", "Leitura", "Vínculo", "Vínculo", "Não"], ["Operador", "Leitura", "Agenda", "Fluxo", "Não"], ["Reader", "Leitura", "Somente leitura", "Não", "Não"]].map((row) => <tr key={row[0]} className="border-b last:border-0"><td className="py-3 font-semibold">{row[0]}</td>{row.slice(1).map((cell) => <td key={cell} className="py-3 text-muted-foreground">{cell}</td>)}</tr>)}</tbody></table></div>
-            <Button className="mt-4 gap-2" variant="outline" onClick={() => recordAction("Revisão de privilégios registrada.", 3)}><ShieldCheck className="h-4 w-4" />Registrar revisão</Button>
-          </ActionCard>
+          <div className="space-y-4">
+            <ActionCard title="Matriz de acesso" description="A tabela é somente administrativa; decisões clínicas continuam no núcleo protegido.">
+              <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b text-xs uppercase tracking-wide text-muted-foreground"><th className="pb-3">Perfil</th><th className="pb-3">Workspace</th><th className="pb-3">Pacientes</th><th className="pb-3">Documentos</th><th className="pb-3">Admin</th></tr></thead><tbody>{[["Admin", "Total", "Escopo", "Total", "Sim"], ["Profissional", "Leitura", "Vínculo", "Vínculo", "Não"], ["Operador", "Leitura", "Agenda", "Fluxo", "Não"], ["Reader", "Leitura", "Somente leitura", "Não", "Não"]].map((row) => <tr key={row[0]} className="border-b last:border-0"><td className="py-3 font-semibold">{row[0]}</td>{row.slice(1).map((cell, cellIndex) => <td key={`${row[0]}-${cellIndex}`} className="py-3 text-muted-foreground">{cell}</td>)}</tr>)}</tbody></table></div>
+              <Button className="mt-4 gap-2" variant="outline" onClick={() => recordAction("Revisão de privilégios registrada.", 3)}><ShieldCheck className="h-4 w-4" />Registrar revisão</Button>
+            </ActionCard>
+            <ActionCard title="Convites de equipe" description="A URL aparece somente na criação. A lista usa prefixo de hash e permite revogação por clínica.">
+              <div className="grid gap-3 sm:grid-cols-[1fr_160px_120px_auto]"><Input aria-label="E-mail do convite" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="profissional@clinica.com" type="email" /><select aria-label="Papel do convite" value={inviteRole} onChange={(event) => setInviteRole(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="professional">Profissional</option><option value="assistant">Assistente</option><option value="financial">Financeiro</option><option value="clinic_admin">Admin da clínica</option></select><Input aria-label="Expiração em dias" value={inviteExpirationDays} onChange={(event) => setInviteExpirationDays(event.target.value)} type="number" min="1" max="30" /><Button onClick={createInvite}>Criar convite</Button></div>
+              {lastInviteUrl && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs dark:border-emerald-900/50 dark:bg-emerald-950/20"><p className="font-semibold">URL segura do último convite — copie agora</p><div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center"><code className="min-w-0 flex-1 break-all rounded-lg bg-background p-2 font-mono">{lastInviteUrl}</code><Button size="sm" variant="outline" onClick={() => { void navigator.clipboard?.writeText(lastInviteUrl); setToast("URL copiada para a área de transferência."); }}>Copiar URL</Button></div></div>}
+              <div className="mt-4 space-y-2">{inviteRows.slice(0, 8).map((invite) => <div key={invite.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm"><span className="font-mono text-xs">{invite.emailHashPrefix}…</span><Badge variant="outline">{invite.role}</Badge><Badge variant={invite.status === "pending" ? "default" : "outline"}>{invite.status}</Badge><span className="text-xs text-muted-foreground">expira {new Date(invite.expiresAt).toLocaleDateString()}</span>{invite.status === "pending" && activeClinicId && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => revokeInvite(invite.id)}>Revogar</Button>}</div>)}{activeClinicId && inviteRows.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhum convite registrado para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar convites reais.</p>}</div>
+            </ActionCard>
+          </div>
         );
       case "white-label":
         return (
@@ -814,9 +988,25 @@ export default function SaasCentralPage() {
         return (
           <ActionCard title="Fila de direitos do titular" description="Use dados mínimos. O e-mail é transformado em hash no servidor; a execução real exige verificação de identidade e revisão autorizada.">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><Input aria-label="E-mail do titular" value={privacyEmail} onChange={(event) => setPrivacyEmail(event.target.value)} placeholder="titular@exemplo.com" type="email" /><Button onClick={createPrivacyRequest}>Registrar solicitação</Button></div>
-            <div className="mt-4 space-y-2 text-sm">{privacySnapshot?.requests.slice(0, 5).map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl border p-3"><span><strong>{request.requestType}</strong><span className="ml-2 text-xs text-muted-foreground">{request.subjectReferenceHash.slice(0, 10)}…</span></span><Badge variant={request.status === "completed" ? "default" : "outline"}>{request.status}</Badge></div>)}{(!privacySnapshot || privacySnapshot.requests.length === 0) && <><div className="flex items-center justify-between rounded-xl border p-3"><span>Acesso aos dados</span><Badge variant="outline">Em revisão</Badge></div><div className="flex items-center justify-between rounded-xl border p-3"><span>Correção</span><Badge variant="outline">Disponível</Badge></div><div className="flex items-center justify-between rounded-xl border p-3"><span>Revogação</span><Badge variant="outline">Disponível</Badge></div></>}
+            <div className="mt-4 space-y-2 text-sm">
+              {privacySnapshot?.requests.slice(0, 8).map((request) => (
+                <div key={request.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
+                  <span className="min-w-[180px]"><strong>{request.requestType}</strong><span className="ml-2 text-xs text-muted-foreground">{request.subjectReferenceHash.slice(0, 10)}…</span></span>
+                  <Badge variant={request.status === "completed" ? "default" : "outline"}>{request.status}</Badge>
+                  {activeClinicId && request.status === "open" && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => transitionPrivacyRequest(request, "verified")}>Verificar</Button>}
+                  {activeClinicId && request.status === "verified" && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => transitionPrivacyRequest(request, "in_progress")}>Iniciar</Button>}
+                  {activeClinicId && request.status === "in_progress" && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => transitionPrivacyRequest(request, "completed")}>Concluir</Button>}
+                </div>
+              ))}
+              {(!privacySnapshot || privacySnapshot.requests.length === 0) && (
+                <>
+                  <div className="flex items-center justify-between rounded-xl border p-3"><span>Acesso aos dados</span><Badge variant="outline">Em revisão</Badge></div>
+                  <div className="flex items-center justify-between rounded-xl border p-3"><span>Acessibilidade da fila</span><Badge variant="outline">Disponível</Badge></div>
+                  <div className="flex items-center justify-between rounded-xl border p-3"><span>Execução</span><Badge variant="outline">Requer verificação</Badge></div>
+                </>
+              )}
             </div>
-            {privacySnapshot?.retention.length ? <div className="mt-4 rounded-xl border bg-muted/20 p-3 text-xs"><p className="font-semibold">Políticas carregadas do tenant</p><div className="mt-2 flex flex-wrap gap-2">{privacySnapshot.retention.map((policy) => <Pill key={policy.dataClass}>{policy.dataClass}: {policy.retentionDays}d · {policy.purgeMode}{policy.legalHold ? " · legal hold" : ""}</Pill>)}</div></div> : null}
+            {privacySnapshot?.retention.length ? <div className="mt-4 rounded-xl border bg-muted/20 p-3 text-xs"><p className="font-semibold">Políticas carregadas do tenant</p><div className="mt-2 space-y-2">{privacySnapshot.retention.map((policy) => <div key={policy.dataClass} className="flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2"><Pill>{policy.dataClass}: {policy.retentionDays}d · {policy.purgeMode}</Pill><Badge variant={policy.legalHold ? "default" : "outline"}>{policy.legalHold ? "legal hold" : "sem hold"}</Badge>{activeClinicId && <Button size="sm" variant="ghost" className="ml-auto" onClick={() => saveRetentionPolicy(policy, { legalHold: !policy.legalHold })}>{policy.legalHold ? "Liberar hold" : "Aplicar hold"}</Button>}</div>)}</div></div> : null}
           </ActionCard>
         );
       case "messaging":
@@ -887,9 +1077,17 @@ export default function SaasCentralPage() {
         );
       case "developer":
         return (
-          <ActionCard title="Developer portal" description="A chave abaixo é apenas de sandbox. Produção exige KMS, scopes, quotas e rotação.">
-            <div className="rounded-2xl border bg-muted/20 p-4"><div className="flex items-center gap-3"><KeyRound className="h-5 w-5 text-primary" /><div><p className="font-semibold">Credencial de sandbox</p><p className="text-xs text-muted-foreground">Sem acesso a dados clínicos identificáveis</p></div></div>{apiKeyCreated && <code className="mt-4 block break-all rounded-xl bg-background p-3 text-xs">np_sandbox_demo_7b3c_••••••••••••</code>}</div><Button className="mt-4 gap-2" onClick={() => { setApiKeyCreated(true); recordAction("Chave de sandbox criada e auditada.", 2); }}><Code2 className="h-4 w-4" />{apiKeyCreated ? "Rotacionar chave" : "Gerar chave de sandbox"}</Button>
-          </ActionCard>
+          <div className="space-y-4">
+            <ActionCard title="Integrações tenant-aware" description="Nenhum segredo é armazenado nesta tela. Produção exige referência no secret manager, sandbox verificado, escopo mínimo e auditoria.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><select aria-label="Integração" value={integrationId} onChange={(event) => setIntegrationId(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="email">Mensageria transacional</option><option value="webhooks">Webhooks assinados</option><option value="fhir">Interoperabilidade FHIR</option><option value="object-storage">Object storage</option><option value="observability">Observabilidade</option></select><select aria-label="Ambiente da integração" value={integrationEnvironment} onChange={(event) => setIntegrationEnvironment(event.target.value as typeof integrationEnvironment)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="sandbox">Sandbox</option><option value="production">Produção</option></select><select aria-label="Status da integração" value={integrationStatus} onChange={(event) => setIntegrationStatus(event.target.value as typeof integrationStatus)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="draft">Rascunho</option><option value="connected">Conectada</option><option value="paused">Pausada</option><option value="revoked">Revogada</option></select><Input aria-label="Escopos separados por vírgula" value={integrationScopes} onChange={(event) => setIntegrationScopes(event.target.value)} placeholder="module.read" /></div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2"><Input aria-label="Referência no secret manager" value={integrationCredentialRef} onChange={(event) => setIntegrationCredentialRef(event.target.value)} placeholder="vault://neuro/tenant/integration" /><Input aria-label="Endpoint da integração" value={integrationEndpoint} onChange={(event) => setIntegrationEndpoint(event.target.value)} placeholder="https://sandbox.exemplo.com/webhook" /></div>
+              <Button className="mt-4 gap-2" onClick={saveIntegration}><KeyRound className="h-4 w-4" />Salvar conexão</Button>
+              <div className="mt-4 space-y-2">{integrationConnections.map((connection) => <div key={`${connection.integrationId}:${connection.environment}`} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm"><span className="font-semibold">{connection.integrationId}</span><Badge variant="outline">{connection.environment}</Badge><Badge variant={connection.status === "connected" ? "default" : "outline"}>{connection.status}</Badge><span className="text-xs text-muted-foreground">{connection.scopes.join(", ")}</span><span className="ml-auto text-xs text-muted-foreground">{connection.credentialConfigured ? "secret ref" : "sem credencial"} · v{connection.version}</span></div>)}{activeClinicId && integrationConnections.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhuma integração configurada para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar integrações reais.</p>}</div>
+            </ActionCard>
+            <ActionCard title="Credencial de sandbox legada" description="Mantida somente como demonstração local; não concede acesso a dados clínicos identificáveis.">
+              <div className="rounded-2xl border bg-muted/20 p-4"><div className="flex items-center gap-3"><Code2 className="h-5 w-5 text-primary" /><div><p className="font-semibold">Chave local de teste</p><p className="text-xs text-muted-foreground">Não é uma credencial de produção</p></div></div>{apiKeyCreated && <code className="mt-4 block break-all rounded-xl bg-background p-3 text-xs">np_sandbox_demo_7b3c_••••••••••••</code>}</div><Button className="mt-4 gap-2" variant="outline" onClick={() => { setApiKeyCreated(true); recordAction("Chave de sandbox criada apenas localmente.", 2); }}><KeyRound className="h-4 w-4" />{apiKeyCreated ? "Rotacionar demo" : "Gerar demo"}</Button>
+            </ActionCard>
+          </div>
         );
       default:
         return null;
@@ -913,7 +1111,7 @@ export default function SaasCentralPage() {
 
       <Card className="border-amber-200/70 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/15"><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" /><p className="leading-6 text-amber-950 dark:text-amber-100"><strong>Guardrail:</strong> a central separa configuração de tenant, habilitação de módulo e fonte clínica canônica. Nenhum toggle local concede acesso a PHI; produção exige membership, entitlement, keyring, auditoria, consentimento e evidência de restore.</p></CardContent></Card>
 
-      {activeClinicId && readiness && <Card className={readiness.readyForProduction ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className={readiness.readyForProduction ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div className="min-w-0"><p className="font-semibold">{readiness.readyForProduction ? "Tenant pronto para liberação controlada" : "Readiness bloqueado antes da produção"}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{readiness.readyForProduction ? "Todos os gates mínimos de infraestrutura, acesso e continuidade foram comprovados." : `Pendências: ${readiness.missing.join(" · ")}`}</p><div className="mt-3 flex flex-wrap gap-2">{Object.values(readiness.checks).map((check) => <Pill key={check.label}>{check.ok ? "✓" : "○"} {check.label}</Pill>)}</div></div></CardContent></Card>}
+      {activeClinicId && readiness && <Card className={readiness.readyForProduction ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className={readiness.readyForProduction ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><p className="font-semibold">{readiness.readyForProduction ? "Tenant pronto para liberação controlada" : "Readiness bloqueado antes da produção"}<span className="ml-2 text-xs font-normal text-muted-foreground">{readiness.enabledModules}/{readiness.requiredModules} módulos habilitados</span></p><Button size="sm" variant="outline" className="ml-auto" onClick={() => { if (!activeClinicId) return; void authFetch(`/api/saas/readiness?clinicId=${encodeURIComponent(activeClinicId)}`).then(async (response) => { const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Readiness indisponível."); setReadiness(body as ReadinessState); setToast("Readiness recalculado no servidor."); }).catch((cause) => setToast(cause instanceof Error ? cause.message : "Readiness indisponível.")); }}>Recalcular</Button></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{readiness.readyForProduction ? "Todos os gates mínimos de infraestrutura, acesso e continuidade foram comprovados." : `Pendências: ${readiness.missing.join(" · ")}`}</p><div className="mt-3 flex flex-wrap gap-2">{Object.values(readiness.checks).map((check) => <Pill key={check.label}>{check.ok ? "✓" : "○"} {check.label}</Pill>)}</div></div></CardContent></Card>}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><ModuleMetric label="Abas disponíveis" value="20" /><ModuleMetric label="Módulos habilitados" value={`${enabledCount}/20`} tone="success" /><ModuleMetric label="Marcos registrados" value={`${completedCount}`} /><ModuleMetric label="Workspace" value={activeClinic?.name ?? state.organizationName} /></div>
 

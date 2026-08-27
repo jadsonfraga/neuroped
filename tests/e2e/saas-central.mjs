@@ -51,6 +51,13 @@ async function main() {
     if (await page.getByRole("tab").count() !== 1) throw new Error("filtro de abas não reduziu a lista para API");
     await page.getByLabel("Filtrar abas").fill("");
 
+    await page.getByRole("tab", { name: /^04/ }).click();
+    await page.getByText("Convites de equipe", { exact: true }).waitFor({ state: "visible" });
+    await page.getByRole("tab", { name: /^08/ }).click();
+    await page.getByText("Fila de direitos do titular", { exact: true }).waitFor({ state: "visible" });
+    await page.getByRole("tab", { name: /^20/ }).click();
+    await page.getByText("Integrações tenant-aware", { exact: true }).waitFor({ state: "visible" });
+
     await page.getByRole("tab", { name: /^01/ }).click();
     await page.getByRole("button", { name: "Salvar workspace" }).click();
     await page.getByRole("status").filter({ hasText: "Workspace piloto salvo" }).waitFor({ state: "visible" });
