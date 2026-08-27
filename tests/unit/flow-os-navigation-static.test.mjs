@@ -235,7 +235,7 @@ assert.doesNotMatch(
 );
 assert.match(
   app,
-  /<AvisoLegalGate onAccepted=\{\(\) => setLegalAccepted\(true\)\} \/>/,
+  /<AvisoLegalGate\s+onAccepted=\{\(\) => setLegalAccepted\(true\)\}\s*\/>/,
   "aceite deve liberar o shell na mesma sessão",
 );
 for (const surface of ["InstallPrompt", "PreferencesPanel", "FloatingHelp"]) {
