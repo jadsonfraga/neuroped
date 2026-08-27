@@ -7,7 +7,12 @@ import {
   softMuteHint,
   SOUND_PREFERENCE_EVENT,
 } from "@/lib/softSounds";
-import { haptic, isHapticEnabled, setHapticEnabled } from "@/lib/haptic";
+import {
+  haptic,
+  HAPTIC_PREFERENCE_EVENT,
+  isHapticEnabled,
+  setHapticEnabled,
+} from "@/lib/haptic";
 
 /** Preferências locais de som, vibração e movimento do usuário. */
 export function useUiPreferences() {
@@ -32,6 +37,13 @@ export function useUiPreferences() {
     };
     window.addEventListener(SOUND_PREFERENCE_EVENT, syncSound);
     return () => window.removeEventListener(SOUND_PREFERENCE_EVENT, syncSound);
+  }, []);
+
+  useEffect(() => {
+    const syncHaptic = () => setHapticOn(isHapticEnabled());
+    window.addEventListener(HAPTIC_PREFERENCE_EVENT, syncHaptic);
+    return () =>
+      window.removeEventListener(HAPTIC_PREFERENCE_EVENT, syncHaptic);
   }, []);
 
   const toggleSound = useCallback(() => {

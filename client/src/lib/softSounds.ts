@@ -1,18 +1,53 @@
 /**
  * Sistema de som de interface do NeuroPed.
  *
- * O som é feedback funcional — não música de fundo. Os eventos são breves,
- * com volume baixo, envelopes suaves e canais equivalentes visuais/hápticos.
- * A preferência fica no dispositivo e nunca interfere no conteúdo clínico.
+ * Política clínica:
+ * - som funcional habilitado por padrão, com controle explícito para desligar;
+ * - áudio nunca é o único canal de feedback;
+ * - sem música, autoplay, hover, clique genérico ou transição de rota;
+ * - sons ficam reservados a seleção explícita, confirmação, informação e alerta;
+ * - preferências persistem apenas neste dispositivo.
  */
 
 let _ctx: AudioContext | null = null;
-let _lastHoverAt = 0;
 
 const STORAGE_KEY = "neuroped:sounds";
 const VOLUME_STORAGE_KEY = "neuroped:sound-volume";
 export const SOUND_PREFERENCE_EVENT = "neuroped:sound-preference-changed";
-const DEFAULT_VOLUME = 0.58;
+const DEFAULT_VOLUME = 0.35;
+const SELECTION_SOUND_MIN_INTERVAL_MS = 180;
+const SEMANTIC_SOUND_MIN_INTERVAL_MS = {
+  success: 450,
+  info: 650,
+  error: 800,
+} as const;
+let lastSelectionSoundAt = -Infinity;
+const lastSemanticSoundAt = new Map<
+  keyof typeof SEMANTIC_SOUND_MIN_INTERVAL_MS,
+  number
+>();
+
+function nowMs(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+function shouldEmitSelectionSound(): boolean {
+  const now = nowMs();
+  if (now - lastSelectionSoundAt < SELECTION_SOUND_MIN_INTERVAL_MS)
+    return false;
+  lastSelectionSoundAt = now;
+  return true;
+}
+
+function shouldEmitSemanticSound(
+  kind: keyof typeof SEMANTIC_SOUND_MIN_INTERVAL_MS,
+): boolean {
+  const now = nowMs();
+  const last = lastSemanticSoundAt.get(kind) ?? -Infinity;
+  if (now - last < SEMANTIC_SOUND_MIN_INTERVAL_MS[kind]) return false;
+  lastSemanticSoundAt.set(kind, now);
+  return true;
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -49,7 +84,7 @@ export function setSoundEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
   } catch {
-    /* storage indisponível (modo privado/cota) — silencioso */
+    /* storage indisponível (modo privado/cota) — mantém padrão habilitado */
   }
   emitPreferenceChange();
 }
@@ -69,9 +104,20 @@ export function setSoundVolume(value: number): void {
   try {
     localStorage.setItem(VOLUME_STORAGE_KEY, String(nextValue));
   } catch {
-    /* storage indisponível (modo privado/cota) — silencioso */
+    /* storage indisponível (modo privado/cota) — usa volume padrão */
   }
   emitPreferenceChange();
+}
+
+function canPlay(): boolean {
+  if (!isSoundEnabled() || getSoundVolume() === 0) return false;
+  if (
+    typeof document !== "undefined" &&
+    document.visibilityState === "hidden"
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function play(spec: {
@@ -83,11 +129,10 @@ function play(spec: {
   release?: number;
   filterFreq?: number;
 }) {
-  if (!isSoundEnabled() || getSoundVolume() === 0) return;
+  if (!canPlay()) return;
   const ctx = getCtx();
   if (!ctx) return;
 
-  // Resume context se suspenso (Chrome auto-suspend antes de user gesture).
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
   }
@@ -133,103 +178,88 @@ function play(spec: {
   }
 }
 
-/** Toque suave em botão primário / clique de CTA. */
+/**
+ * Compatibilidade com componentes antigos.
+ * Cliques rotineiros ficam silenciosos por política de produto.
+ */
 export function softTap(): void {
-  play({
-    type: "sine",
-    freq: 880,
-    duration: 0.08,
-    volume: 0.05,
-    attack: 0.002,
-  });
+  /* intencionalmente silencioso */
 }
 
-/** Hover/foco discreto, limitado para não criar uma sequência de bipes. */
+/**
+ * Compatibilidade com componentes antigos.
+ * Hover nunca produz áudio no fluxo clínico.
+ */
 export function softHover(): void {
-  const now =
-    typeof performance !== "undefined" ? performance.now() : Date.now();
-  if (now - _lastHoverAt < 160) return;
-  _lastHoverAt = now;
-  play({
-    type: "sine",
-    freq: 1320,
-    duration: 0.05,
-    volume: 0.025,
-    attack: 0.001,
-  });
+  /* intencionalmente silencioso */
 }
 
-/** Confirmação geral para salvar, concluir ou autenticar. */
+/** Confirmação relevante para salvar, concluir ou autenticar. */
 export function softSuccess(): void {
-  if (!isSoundEnabled() || getSoundVolume() === 0) return;
+  if (!canPlay()) return;
   const ctx = getCtx();
-  if (!ctx) return;
+  if (!ctx || !shouldEmitSemanticSound("success")) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   const notes = [523.25, 659.25, 783.99];
   notes.forEach((freq, index) => {
     window.setTimeout(() => {
-      play({ type: "sine", freq, duration: 0.18, volume: 0.045, attack: 0.01 });
+      play({
+        type: "sine",
+        freq,
+        duration: 0.18,
+        volume: 0.045,
+        attack: 0.01,
+      });
     }, index * 60);
   });
 }
 
-/** Erro/alerta: tom médio, curto e filtrado. */
+/** Erro/alerta relevante: tom curto e filtrado. */
 export function softError(): void {
+  if (!canPlay() || !shouldEmitSemanticSound("error")) return;
   play({
     type: "triangle",
     freq: [440, 294],
     duration: 0.22,
-    volume: 0.06,
+    volume: 0.055,
     attack: 0.003,
     filterFreq: 4000,
   });
 }
 
-/** Notificação sutil para informação contextual. */
+/** Informação contextual relevante e não urgente. */
 export function softBell(): void {
-  if (!isSoundEnabled() || getSoundVolume() === 0) return;
+  if (!canPlay()) return;
   const ctx = getCtx();
-  if (!ctx) return;
+  if (!ctx || !shouldEmitSemanticSound("info")) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   play({
     type: "sine",
     freq: 1046.5,
-    duration: 0.4,
-    volume: 0.045,
+    duration: 0.28,
+    volume: 0.035,
     attack: 0.005,
   });
-  window.setTimeout(() => {
-    play({
-      type: "sine",
-      freq: 1568,
-      duration: 0.3,
-      volume: 0.025,
-      attack: 0.005,
-    });
-  }, 30);
 }
 
-/** Transição de página curta, usada somente em mudança de rota. */
+/**
+ * Compatibilidade com componentes antigos.
+ * Mudança de rota permanece silenciosa para preservar concentração.
+ */
 export function softWhoosh(): void {
-  play({
-    type: "sine",
-    freq: [200, 800],
-    duration: 0.14,
-    volume: 0.035,
-    attack: 0.01,
-    filterFreq: 6000,
-  });
+  /* intencionalmente silencioso */
 }
 
-/** Seleção de checkbox/radio e confirmação leve de escolha. */
+/** Seleção explícita de checkbox/radio ou escolha equivalente. */
 export function softTick(): void {
+  if (!canPlay() || !shouldEmitSelectionSound()) return;
   play({
     type: "sine",
-    freq: 2200,
-    duration: 0.04,
-    volume: 0.04,
+    freq: 1800,
+    duration: 0.035,
+    volume: 0.03,
     attack: 0.001,
   });
 }
@@ -237,10 +267,11 @@ export function softTick(): void {
 /** Alias semântico para componentes novos. */
 export const softSelect = softTick;
 
-/** Feedback de mute/desmute: toca apenas ao habilitar ou a pedido explícito. */
+/** Feedback emitido quando o usuário habilita som novamente. */
 export function softMuteHint(): void {
+  if (!canPlay()) return;
   const ctx = getCtx();
-  if (!ctx || getSoundVolume() === 0) return;
+  if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   try {
@@ -250,11 +281,11 @@ export function softMuteHint(): void {
     gain.connect(ctx.destination);
     osc.type = "sine";
     const now = ctx.currentTime;
-    const peak = 0.05 * getSoundVolume();
+    const peak = 0.04 * getSoundVolume();
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(peak, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.setValueAtTime(660, now);
     osc.frequency.exponentialRampToValueAtTime(440, now + 0.13);
     osc.start(now);
     osc.stop(now + 0.18);

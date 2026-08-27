@@ -1,19 +1,23 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import type { ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
-import { softSuccess, softError, softBell } from "@/lib/softSounds";
-import { haptic } from "@/lib/haptic";
+import { uiFeedback } from "@/lib/uiFeedback";
 import { easing, duration } from "@/lib/motion";
 
 /**
- * Sistema de toast premium com som + haptic.
+ * Sistema de toast premium com feedback multimodal.
  *
- * Uso:
- *   const { toast } = useToast();
- *   toast.success("Salvo com sucesso");
- *   toast.error("Falha ao salvar");
- *   toast.info("Sincronização em andamento");
+ * O texto/estado visual é sempre o canal primário. Som e vibração, quando
+ * habilitados explicitamente, apenas complementam o significado do toast.
  */
 
 type ToastVariant = "success" | "error" | "info";
@@ -51,17 +55,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setToasts((prev) => [...prev, t]);
 
       if (variant === "success") {
-        softSuccess();
-        haptic.success();
+        uiFeedback.success();
       } else if (variant === "error") {
-        softError();
-        haptic.error();
+        uiFeedback.error();
       } else {
-        softBell();
-        haptic.notify();
+        uiFeedback.info();
       }
     },
-    []
+    [],
   );
 
   const api = useMemo(
@@ -77,7 +78,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm pointer-events-none">
+      <div className="fixed bottom-4 right-4 z-[100] flex max-w-sm flex-col gap-2 pointer-events-none">
         <AnimatePresence>
           {toasts.map((t) => (
             <ToastItem key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
@@ -90,6 +91,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
   const onDismissRef = useRef(onDismiss);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     onDismissRef.current = onDismiss;
@@ -122,38 +124,53 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   }[toast.variant];
 
   const Icon = config.icon;
+  const isError = toast.variant === "error";
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 24, scale: 0.96 }}
+      initial={
+        reducedMotion ? false : { opacity: 0, x: 24, scale: 0.96 }
+      }
       animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 24, scale: 0.96 }}
-      transition={{ duration: duration.normal, ease: easing.smooth }}
-      role="status"
-      aria-live="polite"
+      exit={
+        reducedMotion ? { opacity: 0 } : { opacity: 0, x: 24, scale: 0.96 }
+      }
+      transition={
+        reducedMotion
+          ? { duration: 0 }
+          : { duration: duration.normal, ease: easing.smooth }
+      }
+      role={isError ? "alert" : "status"}
+      aria-live={isError ? "assertive" : "polite"}
       className="pointer-events-auto"
     >
       <div
-        className={`flex items-start gap-3 px-4 py-3 rounded-2xl shadow-xl border backdrop-blur-md ${config.bg} ${config.border}`}
+        className={`flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md ${config.bg} ${config.border}`}
         style={{
           background: `linear-gradient(135deg, hsl(var(--card) / 0.92), hsl(var(--card) / 0.85))`,
         }}
       >
-        <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${config.iconColor}`} strokeWidth={1.75} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground leading-snug">{toast.message}</p>
+        <Icon
+          className={`mt-0.5 h-5 w-5 shrink-0 ${config.iconColor}`}
+          strokeWidth={1.75}
+          aria-hidden="true"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium leading-snug text-foreground">
+            {toast.message}
+          </p>
           {toast.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
               {toast.description}
             </p>
           )}
         </div>
         <button
           onClick={onDismiss}
-          className="shrink-0 -mr-1 -mt-1 p-1 rounded-md hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
+          className="-mr-1 -mt-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
           aria-label="Fechar"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
     </motion.div>
