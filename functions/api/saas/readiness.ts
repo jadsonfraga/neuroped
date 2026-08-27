@@ -1,13 +1,14 @@
 import { getContextUser } from "../auth/_authorization";
 import { requireBillingEntitlement } from "../billing/_guard";
 import {
+  clinicalLiveEnabled,
   getClinicMembership,
   membershipCanManage,
   tenantError,
   tenantJson,
   type TenantEnv,
 } from "../tenant/_core";
-import { clinicalCryptoReady, clinicalLiveEnabled } from "../tenant/_crypto";
+import { clinicalCryptoReady } from "../tenant/_crypto";
 
 const REQUIRED_TABLES = [
   "tenant_lifecycle",
