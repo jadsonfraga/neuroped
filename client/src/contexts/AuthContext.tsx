@@ -13,6 +13,7 @@ import {
 import { queryClient } from "@/lib/queryClient";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearInMemoryScaleDrafts } from "@/hooks/useSecureScaleDraft";
+import { clearLiveMutationQueue } from "@/lib/liveMutation";
 
 export type AccessMode = "checking" | "remote" | "local";
 
@@ -42,6 +43,7 @@ async function clearSessionScopedClientState(): Promise<void> {
   }
   queryClient.clear();
   clearInMemoryScaleDrafts();
+  clearLiveMutationQueue();
   await secureClearAll();
 }
 

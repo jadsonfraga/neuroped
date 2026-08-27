@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { calculateMedicationSafety } from "@shared/medicationSafety";
 
 interface MedDose {
   name: string;
@@ -62,22 +63,28 @@ const medications: MedDose[] = [
 
 function calcResult(weight: number, med: MedDose) {
   if (med.fixedDose) return null;
-  const dailyDose = weight * med.dosePerKg;
-  const cappedDailyDose = Math.min(dailyDose, med.maxDose);
   const idx8 = med.frequency.indexOf("8/8h");
   const idx12 = med.frequency.indexOf("12/12h");
-  const timesPerDay = idx8 !== -1 && idx12 !== -1
-    ? (idx8 < idx12 ? 3 : 2)
-    : idx8 !== -1
-      ? 3
-      : idx12 !== -1
-        ? 2
-        : 1;
-  const dosePerIntake = cappedDailyDose / timesPerDay;
-  const volumePerIntake = med.liquidConc ? dosePerIntake / med.liquidConc : null;
-  const exceedsMax = dailyDose > med.maxDose;
-  const nearMax = dailyDose > med.maxDose * 0.85;
-  return { dailyDose, cappedDailyDose, dosePerIntake, volumePerIntake, exceedsMax, nearMax, timesPerDay };
+  const timesPerDay = idx8 !== -1 && idx12 !== -1 ? (idx8 < idx12 ? 3 : 2) : idx8 !== -1 ? 3 : idx12 !== -1 ? 2 : 1;
+  const safety = calculateMedicationSafety({
+    weightKg: weight,
+    doseMgPerKgDay: med.dosePerKg,
+    maxMgDay: med.maxDose,
+    frequencyPerDay: timesPerDay,
+    concentrationMgPerMl: med.liquidConc,
+    activeIngredient: med.name,
+    source: "Catálogo local não normativo do NeuroPed; confirmar fonte clínica vigente antes de qualquer conduta.",
+  });
+  return {
+    ...safety,
+    dailyDose: safety.dailyMg ?? 0,
+    cappedDailyDose: safety.cappedDailyMg ?? 0,
+    dosePerIntake: safety.doseMg ?? 0,
+    volumePerIntake: safety.volumeMl,
+    exceedsMax: (safety.dailyMg ?? 0) > (safety.cappedDailyMg ?? 0),
+    nearMax: (safety.dailyMg ?? 0) > med.maxDose * 0.85,
+    timesPerDay,
+  };
 }
 
 export default function CalculadoraDosePage() {
@@ -121,7 +128,7 @@ export default function CalculadoraDosePage() {
         icon={Calculator}
         eyebrow="dose pediátrica"
         title="Calculadora de Dose Pediátrica"
-        subtitle="Cálculo por peso — neuropediatria."
+        subtitle="Apoio determinístico — não prescreve nem altera conduta."
         gradient="from-blue-500 to-cyan-500"
         mascotContext="resultado"
       />
@@ -240,7 +247,7 @@ export default function CalculadoraDosePage() {
                   <div className="bg-white/70 dark:bg-white/5 rounded-lg p-3 text-center">
                     <p className="text-xs text-muted-foreground">Dose a usar</p>
                     <p className={`text-xl font-bold ${result.exceedsMax ? "text-red-600" : "text-foreground"}`}>{(result.cappedDailyDose).toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">mg/dia (máx: {med.maxDose}mg)</p>
+                    <p className="text-xs text-muted-foreground">mg/dia (limite configurado: {med.maxDose}mg)</p>
                   </div>
                   <div className="bg-white/70 dark:bg-white/5 rounded-lg p-3 text-center">
                     <p className="text-xs text-muted-foreground">Por tomada</p>
@@ -257,6 +264,9 @@ export default function CalculadoraDosePage() {
                 </div>
 
                 <div className="rounded-lg bg-white/60 dark:bg-white/5 border border-border/50 p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Fórmula:</span> {result.formula}</p>
+                  <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Fonte:</span> {result.source}</p>
+                  {result.warnings.length > 0 && <p className="text-xs text-amber-700 dark:text-amber-300"><span className="font-medium">Alertas:</span> {result.warnings.join("; ")}</p>}
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                     <Info className="w-3.5 h-3.5" /> Observações Clínicas
                   </p>

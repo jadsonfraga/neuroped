@@ -243,3 +243,28 @@ export async function cancelAsaasCheckout(
     true,
   );
 }
+
+
+export type AsaasSubscriptionSnapshot = { id: string; status: string };
+
+export async function fetchAsaasSubscriptionSnapshot(
+  env: BillingProviderEnv,
+  providerSubscriptionId: string,
+): Promise<AsaasSubscriptionSnapshot> {
+  const id = providerSubscriptionId.trim();
+  if (!id) throw new Error("ASAAS_SUBSCRIPTION_ID_REQUIRED");
+  const apiKey = requireSecret(env.ASAAS_API_KEY, "ASAAS_API_KEY");
+  const response = await fetch(`${asaasBaseUrl(env)}/subscriptions/${encodeURIComponent(id)}`, {
+    method: "GET",
+    headers: { accept: "application/json", access_token: apiKey },
+  });
+  if (!response.ok) throw new Error(`ASAAS_RECONCILIATION_PROVIDER_${response.status}`);
+  let parsed: unknown;
+  try { parsed = await response.json(); } catch { throw new Error("ASAAS_RECONCILIATION_INVALID_RESPONSE"); }
+  if (!parsed || typeof parsed !== "object") throw new Error("ASAAS_RECONCILIATION_INVALID_RESPONSE");
+  const data = parsed as Record<string, unknown>;
+  const returnedId = typeof data.id === "string" ? data.id.trim() : "";
+  const status = typeof data.status === "string" ? data.status.trim().toUpperCase() : "";
+  if (returnedId !== id || !/^[A-Z_]{3,40}$/.test(status)) throw new Error("ASAAS_RECONCILIATION_INVALID_RESPONSE");
+  return { id: returnedId, status };
+}

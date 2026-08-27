@@ -59,6 +59,8 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/logout",
   "/api/public-booking",
+  "/api/public/previsit",
+  "/api/public/family-portal",
 ]);
 
 const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([
@@ -198,6 +200,7 @@ async function checkRateLimit(
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
+  const requestId = crypto.randomUUID();
   const origin = request.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin, new URL(request.url).origin);
 
@@ -283,8 +286,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const newHeaders = new Headers(response.headers);
   for (const [k, v] of Object.entries({ ...corsHeaders, ...SECURITY_HEADERS })) newHeaders.set(k, v);
   const requestPath = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-  if (requestPath === "/api/health") newHeaders.set("Cache-Control", "no-cache");
+  if (requestPath === "/api/health")     newHeaders.set("Cache-Control", "no-cache");
   newHeaders.set("X-RateLimit-Remaining", String(rl.remaining));
+  newHeaders.set("X-Request-ID", requestId);
 
   return new Response(response.body, {
     status: response.status,

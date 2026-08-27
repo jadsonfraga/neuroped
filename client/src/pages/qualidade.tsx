@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SafeAssetImage, visualAssetRegistry } from "@/components/BrandAssets";
+import { OperationalHealthPanel } from "@/components/OperationalHealthPanel";
 import {
   ShieldCheck,
   Lock,
@@ -26,7 +27,7 @@ import {
 
 const PRINCIPIOS = [
   { icon: Lock, titulo: "Dados sensíveis protegidos", texto: "Prontuário, documentos e dados identificáveis nunca são expostos publicamente. O acesso ao app é controlado pelo PIN master." },
-  { icon: Database, titulo: "Armazenamento local por padrão", texto: "Diários, CAA e registros ficam apenas no dispositivo (localStorage). Nada é enviado a servidores sem ação explícita do profissional." },
+  { icon: Database, titulo: "Persistência clínica controlada", texto: "No ambiente LIVE, dados clínicos são persistidos no backend autenticado e tenant-aware. O navegador não é fonte de verdade para PHI; preferências de interface podem permanecer locais." },
   { icon: KeyRound, titulo: "Acesso por PIN master", texto: "Todo o conteúdo é protegido pelo PIN master (PrivateGate). Nenhuma tela exige email, CPF ou senha adicional." },
   { icon: Smartphone, titulo: "PWA e responsividade", texto: "Funciona offline para conteúdos locais, instala como app e adapta-se a celular, tablet e desktop, com áreas de toque ampliadas." },
   { icon: Eye, titulo: "Acessibilidade", texto: "Compromisso WCAG 2.2 AA: contraste, foco visível, navegação por teclado e semântica HTML5. Ver a Declaração de Acessibilidade." },
@@ -61,6 +62,8 @@ export default function QualidadePage() {
           Compromissos de qualidade, segurança, privacidade e integridade visual que orientam o desenvolvimento do app.
         </p>
       </div>
+
+      <OperationalHealthPanel />
 
       <div className="grid sm:grid-cols-2 gap-3">
         {PRINCIPIOS.map((p) => {

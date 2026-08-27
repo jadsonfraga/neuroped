@@ -104,13 +104,18 @@ export function createLoggerMiddleware(req: any, res: any, next: any) {
 /**
  * Wrapper para endpoints que precisam de request-scoped logging
  */
+function safeErrorCode(error: unknown): string {
+  const message = error instanceof Error ? error.message : "HANDLER_FAILURE";
+  return /^[A-Z0-9_:-]{3,80}$/.test(message) ? message : "HANDLER_FAILURE";
+}
+
 export function withLogger(handler: (req: any, res: any, log: import("pino").Logger) => Promise<any>) {
   return async (req: any, res: any) => {
     const childLogger = req.logger || logger.child({ requestId: crypto.randomUUID() });
     try {
       return await handler(req, res, childLogger);
     } catch (error) {
-      childLogger.error({ error, msg: "Handler error" }, error);
+      childLogger.error({ errorCode: safeErrorCode(error), msg: "Handler error" });
       throw error;
     }
   };

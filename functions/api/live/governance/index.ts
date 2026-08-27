@@ -188,8 +188,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       if (Number(results[0]?.meta?.changes ?? 0) !== 1 || Number(results[1]?.meta?.changes ?? 0) !== 1) {
         return tenantError("A política de retençao mudou durante a operação.", "POLICY_STALE", 409);
       }
-    } catch (error) {
-      console.error("[live.governance.POST policy] DB error", error);
+    } catch {
+      console.error("[live.governance.POST policy] DB_ERROR");
       return tenantError("Não foi possível salvar a política de retenção.", "DB_ERROR", 500);
     }
     return tenantJson(
@@ -278,8 +278,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     if (Number(results[0]?.meta?.changes ?? 0) !== 1 || Number(results[1]?.meta?.changes ?? 0) !== 1) {
       return tenantError("A solicitação não foi persistida.", "DB_ERROR", 500);
     }
-  } catch (error) {
-    console.error("[live.governance.POST request] DB error", error);
+  } catch {
+    console.error("[live.governance.POST request] DB_ERROR");
     return tenantError("Não foi possível criar a solicitação.", "DB_ERROR", 500);
   }
 
@@ -302,7 +302,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 const ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
   requested: new Set(["approved", "rejected"]),
   approved: new Set(["processing", "rejected"]),
-  processing: new Set(["completed", "rejected"]),
+  processing: new Set(["rejected"]),
   completed: new Set(),
   rejected: new Set(),
 };
@@ -330,6 +330,9 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   const requestType = cleanText(body.requestType, 20);
   const requestId = cleanText(body.requestId, 120);
   const nextStatus = cleanText(body.status, 20);
+  if (nextStatus === "completed") {
+    return tenantError("Somente o worker operacional pode concluir solicitações.", "WORKER_COMPLETION_REQUIRED", 403);
+  }
   if (!clinicId || !requestId || !["export", "delete"].includes(requestType) || !REQUEST_STATUSES.has(nextStatus)) {
     return tenantError("clinicId, requestId, requestType e status válidos são obrigatórios.", "VALIDATION_ERROR", 400);
   }
@@ -363,11 +366,12 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
       db
         .prepare(
           `UPDATE ${table}
-              SET status = ?, completed_at = CASE WHEN ? = 'completed' THEN ? ELSE completed_at END,
+              SET status = ?,           completed_at = CASE WHEN ? = 'completed' THEN ? ELSE completed_at END,
+                  failure_code = CASE WHEN ? = 'rejected' THEN COALESCE(failure_code, 'REJECTED_BY_ADMIN') ELSE failure_code END,
                   updated_at = ?
             WHERE id = ? AND clinic_id = ? AND status = ?`,
         )
-        .bind(nextStatus, nextStatus, now, now, requestId, clinicId, current.status),
+        .bind(nextStatus, nextStatus, now, nextStatus, now, requestId, clinicId, current.status),
       prepareSaasAudit(
         db,
         {
@@ -384,8 +388,8 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
     if (Number(results[0]?.meta?.changes ?? 0) !== 1 || Number(results[1]?.meta?.changes ?? 0) !== 1) {
       return tenantError("A solicitação mudou durante a operação.", "REQUEST_STALE", 409);
     }
-  } catch (error) {
-    console.error("[live.governance.PATCH] DB error", error);
+  } catch {
+    console.error("[live.governance.PATCH] DB_ERROR");
     return tenantError("Não foi possível alterar o workflow.", "DB_ERROR", 500);
   }
 

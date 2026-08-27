@@ -83,6 +83,22 @@ jobs:
           node scripts/guards/audit-navigation-routes.mjs
         continue-on-error: true
 
+      - name: Validar hardening clínico e operacional
+        id: hardening
+        run: |
+          npm run audit:migrations
+          npm run audit:phi-leak
+          npm run test:medication-safety
+          npm run test:resilience
+          npm run test:dr
+        continue-on-error: true
+
+      - name: Validar performance budget
+        id: performance
+        if: steps.build.outcome == 'success'
+        run: npm run audit:performance
+        continue-on-error: true
+
       - name: Comentar resultado no PR
         uses: actions/github-script@v7
         with:
@@ -95,7 +111,9 @@ jobs:
             const conectaStatus = '${{ steps.conecta.outcome }}' === 'success';
             const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
             const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
-            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus;
+            const hardeningStatus = '${{ steps.hardening.outcome }}' === 'success';
+            const performanceStatus = '${{ steps.performance.outcome }}' === 'success';
+            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && hardeningStatus && performanceStatus;
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -108,6 +126,8 @@ jobs:
             |-------|--------|
             | ${icon(typecheckStatus)} TypeScript | ${label(typecheckStatus)} |
             | ${icon(buildStatus)} Build | ${label(buildStatus)} |
+            | ${icon(hardeningStatus)} Hardening clínico/operacional | ${label(hardeningStatus)} |
+            | ${icon(performanceStatus)} Performance budget | ${label(performanceStatus)} |
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
             | ${icon(functionsBuildStatus)} Bundle Cloudflare Functions | ${label(functionsBuildStatus)} |
             | ${icon(accessStatus)} Acesso fail-closed | ${label(accessStatus)} |
@@ -156,7 +176,9 @@ jobs:
              [ "${{ steps.conecta.outcome }}" != "success" ] || \
              [ "${{ steps.clinical_core.outcome }}" != "success" ] || \
              [ "${{ steps.operations.outcome }}" != "success" ] || \
-             [ "${{ steps.access.outcome }}" != "success" ]; then
+             [ "${{ steps.access.outcome }}" != "success" ] || \
+             [ "${{ steps.hardening.outcome }}" != "success" ] || \
+             [ "${{ steps.performance.outcome }}" != "success" ]; then
             echo "Uma ou mais verificações críticas falharam."
             exit 1
           fi

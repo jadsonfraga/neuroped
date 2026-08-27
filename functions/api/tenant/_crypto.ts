@@ -204,3 +204,55 @@ export async function clinicalBlindIndex(
   );
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+
+
+export async function encryptClinicalBytes(
+  env: TenantEnv,
+  clinicId: string,
+  purpose: string,
+  value: Uint8Array,
+): Promise<Uint8Array> {
+  const dataKey = currentDataKey(env);
+  const key = await deriveClinicAesKey(dataKey, clinicId);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipher = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData: aad(clinicId, purpose, dataKey.id) },
+    key,
+    value,
+  );
+  const envelope = `${FORMAT_VERSION}.${dataKey.id}.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(cipher))}`;
+  return new TextEncoder().encode(envelope);
+}
+
+export async function decryptClinicalBytes(
+  env: TenantEnv,
+  clinicId: string,
+  purpose: string,
+  payload: Uint8Array,
+): Promise<Uint8Array> {
+  const text = new TextDecoder().decode(payload);
+  const parts = text.split(".");
+  if (parts.length !== 4 || parts[0] !== FORMAT_VERSION) {
+    throw new Error("CLINICAL_CIPHERTEXT_INVALID");
+  }
+  const [, requestedKeyId, ivB64, cipherB64] = parts;
+  if (!requestedKeyId || !KEY_ID_PATTERN.test(requestedKeyId) || !ivB64 || !cipherB64) {
+    throw new Error("CLINICAL_CIPHERTEXT_INVALID");
+  }
+  const dataKey = dataKeyForId(env, requestedKeyId);
+  const key = await deriveClinicAesKey(dataKey, clinicId);
+  try {
+    const plain = await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: base64ToBytes(ivB64),
+        additionalData: aad(clinicId, purpose, dataKey.id),
+      },
+      key,
+      base64ToBytes(cipherB64),
+    );
+    return new Uint8Array(plain);
+  } catch {
+    throw new Error("CLINICAL_DECRYPT_FAILED");
+  }
+}
