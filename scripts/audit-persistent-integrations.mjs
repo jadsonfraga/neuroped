@@ -13,6 +13,7 @@ function assertCheck(label, condition, detail) {
 const nesploraHtml = await read("client/public/nesplora/index.html");
 const nesploraReadme = await read("client/public/nesplora/README.md");
 const integrationPage = await read("client/src/pages/manus-integracoes.tsx");
+const integrationManifest = await read("client/src/data/integrations.ts");
 const navigation = await read("client/src/data/navigation.ts");
 const syncScript = await read("scripts/sync-nesplora-static.mjs");
 const bundleFiles = await readdir("client/public/nesplora/assets");
@@ -52,11 +53,11 @@ assertCheck(
   "JavaScript e CSS versionados não devem carregar runtime, analytics ou storage externo.",
 );
 assertCheck(
-  "Hub com quatro experiências incorporadas",
-  ["secretaria", "missao", "nesplora", "institucional"].every((id) =>
-    integrationPage.includes(`id: \"${id}\"`),
-  ),
-  "O hub possui Secretaria, Missão Saúde, Nesplora e Institucional.",
+  "Manifesto com cinco experiências incorporadas",
+  ["secretaria", "missao", "nesplora", "video-eeg", "institucional"].every(
+    (id) => integrationManifest.includes(`id: \"${id}\"`),
+  ) && integrationPage.includes("integratedExperiences"),
+  "O manifesto possui Secretaria, Missão Saúde, Nesplora, Vídeo-EEG e Institucional.",
 );
 assertCheck(
   "Hub sem URL institucional Manus",

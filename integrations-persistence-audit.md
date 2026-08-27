@@ -6,18 +6,19 @@ As experiências que estavam agrupadas como sites relacionados ao Manus foram se
 
 ## Destinos tratados
 
-| Destino | Antes | Agora | Persistência |
-| --- | --- | --- | --- |
-| Secretaria IA | Aba no hub apontando para `/#/marcacao` | Mantida como rota interna | Código do NeuroPed |
-| Missão Saúde | Aba no hub apontando para `/#/missao-saude` | Mantida como rota interna | Código do NeuroPed |
-| Nesplora | Acesso estático com tratamento de “externo” | Incluída no hub como experiência incorporada | `client/public/nesplora`, com JavaScript, CSS e mídia versionados |
-| Página institucional | Fallback para `VITE_MANUS_INSTITUCIONAL_URL` e domínio `manus.space` | Usa `/#/sobre-neuroped` | Código e rota do NeuroPed |
+| Destino              | Antes                                                                | Agora                                              | Persistência                                                      |
+| -------------------- | -------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
+| Secretaria IA        | Aba no hub apontando para `/#/marcacao`                              | Mantida como rota interna                          | Código do NeuroPed                                                |
+| Missão Saúde         | Aba no hub apontando para `/#/missao-saude`                          | Mantida como rota interna                          | Código do NeuroPed                                                |
+| Nesplora             | Acesso estático com tratamento de “externo”                          | Incluída no hub como experiência incorporada       | `client/public/nesplora`, com JavaScript, CSS e mídia versionados |
+| Vídeo-EEG domiciliar | Página de serviço separada do hub                                    | Aba no hub apontando para `/#/eletroencefalograma` | Código e rota do NeuroPed                                         |
+| Página institucional | Fallback para `VITE_MANUS_INSTITUCIONAL_URL` e domínio `manus.space` | Usa `/#/sobre-neuroped`                            | Código e rota do NeuroPed                                         |
 
 ## Proteções adicionadas
 
 O HTML da Nesplora publicado no repositório não chama Google Fonts, `manus-analytics.com`, `manus.space`, `manus-runtime` ou `debug-collector`. O sincronizador também remove essas tags quando uma nova versão do microsite é importada, para evitar regressão futura.
 
-Foi criado o comando `npm run audit:integrations`. Ele verifica HTML, bundles JavaScript/CSS, assets, documentação, navegação e a ausência da URL institucional Manus. O smoke test `npm run test:integrations` abre o hub no Chromium e confirma as quatro abas: Secretaria, Jogo, Nesplora e Institucional.
+Foi criado o comando `npm run audit:integrations`. Ele verifica HTML, bundles JavaScript/CSS, assets, documentação, navegação e a ausência da URL institucional Manus. O smoke test `npm run test:integrations` abre o hub no Chromium e confirma as cinco abas: Secretaria, Jogo, Nesplora, Vídeo-EEG e Institucional.
 
 ## Links que permanecem externos por desenho
 
@@ -28,7 +29,7 @@ A incorporação de conteúdo de terceiros deve continuar condicionada à licen�
 ## Validações
 
 - Auditoria persistente: **13/13 verificações aprovadas**.
-- Smoke test do hub: **4/4 abas ativas**, sem erros de página.
+- Smoke test do hub: **5/5 abas ativas**, sem erros de página.
 - Auditoria de navegação: aprovada.
 - Divisão público/clínico: **30 rotas públicas exatas** e **27 rotas sensíveis protegidas**.
 - Lint dos arquivos alterados: aprovado.

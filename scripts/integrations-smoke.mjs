@@ -31,7 +31,13 @@ const localNotice = await page
   .count();
 
 const destinations = [];
-for (const label of ["Secretaria", "Jogo", "Nesplora", "Institucional"]) {
+for (const label of [
+  "Secretaria",
+  "Jogo",
+  "Nesplora",
+  "Vídeo-EEG",
+  "Institucional",
+]) {
   const tab = page.getByRole("tab", { name: label, exact: true });
   if ((await tab.count()) !== 1) continue;
   await tab.click();
@@ -53,8 +59,8 @@ const result = {
     pageErrors.length === 0 &&
     title === 1 &&
     localNotice === 1 &&
-    tabs.length === 4 &&
-    destinations.length === 4 &&
+    tabs.length === 5 &&
+    destinations.length === 5 &&
     destinations.every(
       (entry) =>
         entry.active === "true" &&

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Globe2, RefreshCcw, ShieldCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,71 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { integratedExperiences } from "@/data/integrations";
 
-type IntegratedSite = {
-  id: "secretaria" | "missao" | "nesplora" | "institucional";
-  label: string;
-  shortLabel: string;
-  url: string;
-  description: string;
-  note: string;
-};
-
-const integratedUrls = {
-  secretaria: "/#/marcacao",
-  missao: "/#/missao-saude",
-  nesplora: "/nesplora/",
-  institucional: "/#/sobre-neuroped",
-};
-
-const sites: IntegratedSite[] = [
-  {
-    id: "secretaria",
-    label: "Secretaria IA",
-    shortLabel: "Secretaria",
-    url: integratedUrls.secretaria,
-    description:
-      "Encaminhamento administrativo e acesso à agenda pública integrada ao NeuroPed.",
-    note: "A Secretaria IA foi incorporada ao NeuroPed. Ela não coleta informações clínicas nesta etapa.",
-  },
-  {
-    id: "missao",
-    label: "Missão Saúde",
-    shortLabel: "Jogo",
-    url: integratedUrls.missao,
-    description:
-      "Circuito educativo infantil com três estações sobre cuidados de saúde.",
-    note: "A Missão Saúde foi incorporada ao NeuroPed. O progresso existe somente nesta sessão e não altera pacientes, agenda ou prontuários.",
-  },
-  {
-    id: "nesplora",
-    label: "Nesplora incorporada",
-    shortLabel: "Nesplora",
-    url: integratedUrls.nesplora,
-    description:
-      "Experiência Nesplora publicada como microsite estático dentro do deploy do NeuroPed.",
-    note: "A interface, os scripts e as mídias desta experiência estão versionados em client/public/nesplora; ela não depende de um domínio Manus em runtime.",
-  },
-  {
-    id: "institucional",
-    label: "Página institucional",
-    shortLabel: "Institucional",
-    url: integratedUrls.institucional,
-    description:
-      "Página pública institucional do Dr. Jadson Fraga, servida pela rota do próprio NeuroPed.",
-    note: "Esta aba usa a página institucional versionada no app; não há fallback para domínio Manus.",
-  },
-];
+type FrameStatus = "loading" | "ready" | "timeout" | "error";
 
 export default function ManusIntegracoesPage() {
-  const [activeId, setActiveId] = useState<IntegratedSite["id"]>("secretaria");
+  const [activeId, setActiveId] = useState(integratedExperiences[0].id);
   const [frameKey, setFrameKey] = useState(0);
-  const [frameStatus, setFrameStatus] = useState<
-    "loading" | "ready" | "timeout" | "error"
-  >("loading");
+  const [frameStatus, setFrameStatus] = useState<FrameStatus>("loading");
   const activeSite = useMemo(
-    () => sites.find((site) => site.id === activeId) ?? sites[0],
+    () =>
+      integratedExperiences.find((site) => site.id === activeId) ??
+      integratedExperiences[0],
     [activeId],
   );
 
@@ -82,38 +30,43 @@ export default function ManusIntegracoesPage() {
     return () => window.clearTimeout(timeout);
   }, [activeSite.id, frameKey]);
 
+  const openActiveSite = () => {
+    window.open(activeSite.href, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
-            <Globe2 className="h-4 w-4" />
+            <Globe2 className="h-4 w-4" aria-hidden="true" />
             Integrações incorporadas
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">
             Experiências dentro do NeuroPed
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Acesse as experiências incorporadas em abas isoladas, sem misturar
-            sessões, dados clínicos ou armazenamento do aplicativo. O prontuário
-            e a agenda continuam sob o controle do NeuroPed.
+            Acesse experiências locais em abas isoladas, sem misturar sessões,
+            dados clínicos ou armazenamento do aplicativo. O prontuário e a
+            agenda continuam sob o controle do NeuroPed.
           </p>
         </div>
         <Button
           variant="outline"
           className="gap-2 self-start lg:self-auto"
-          onClick={() =>
-            window.open(activeSite.url, "_blank", "noopener,noreferrer")
-          }
+          onClick={openActiveSite}
         >
-          <ExternalLink className="h-4 w-4" />
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
           Abrir em nova guia
         </Button>
       </div>
 
       <Card className="border-primary/20 bg-primary/[0.03]">
         <CardContent className="flex flex-col gap-3 py-4 text-sm text-muted-foreground sm:flex-row sm:items-start">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <ShieldCheck
+            className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+            aria-hidden="true"
+          />
           <p>
             <strong className="text-foreground">Isolamento seguro:</strong> cada
             experiência roda em uma rota local ou em um microsite versionado no
@@ -129,7 +82,7 @@ export default function ManusIntegracoesPage() {
         role="tablist"
         aria-label="Experiências integradas"
       >
-        {sites.map((site) => {
+        {integratedExperiences.map((site) => {
           const active = site.id === activeId;
           return (
             <button
@@ -137,12 +90,12 @@ export default function ManusIntegracoesPage() {
               type="button"
               role="tab"
               aria-selected={active}
-              aria-controls={`manus-panel-${site.id}`}
+              aria-controls={`integrated-panel-${site.id}`}
               onClick={() => {
                 setActiveId(site.id);
                 setFrameKey((key) => key + 1);
               }}
-              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
             >
               {site.shortLabel}
             </button>
@@ -151,7 +104,7 @@ export default function ManusIntegracoesPage() {
       </div>
 
       <Card
-        id={`manus-panel-${activeSite.id}`}
+        id={`integrated-panel-${activeSite.id}`}
         role="tabpanel"
         aria-label={activeSite.label}
         className="overflow-hidden"
@@ -162,7 +115,7 @@ export default function ManusIntegracoesPage() {
               <div className="mb-2 flex items-center gap-2">
                 <Badge variant="outline">Integrado</Badge>
                 <span className="text-xs text-muted-foreground">
-                  {activeSite.url}
+                  {activeSite.href}
                 </span>
               </div>
               <CardTitle>{activeSite.label}</CardTitle>
@@ -179,7 +132,7 @@ export default function ManusIntegracoesPage() {
                 setFrameKey((key) => key + 1);
               }}
             >
-              <RefreshCcw className="h-4 w-4" />
+              <RefreshCcw className="h-4 w-4" aria-hidden="true" />
               Recarregar
             </Button>
           </div>
@@ -198,28 +151,22 @@ export default function ManusIntegracoesPage() {
               <div className="max-w-xl space-y-3">
                 <p className="text-sm font-semibold text-foreground">
                   {frameStatus === "loading"
-                    ? "Carregando site Manus…"
-                    : "Este site não pode ser exibido dentro do NeuroPed."}
+                    ? "Carregando experiência integrada…"
+                    : "Esta experiência não pode ser exibida dentro do NeuroPed."}
                 </p>
                 <p className="text-xs leading-5 text-muted-foreground">
                   {frameStatus === "loading"
-                    ? "Se o conteúdo não aparecer em alguns segundos, abra o site em uma nova guia."
-                    : "O domínio pode bloquear incorporação por política de segurança ou exigir login próprio. Seus dados clínicos continuam isolados."}
+                    ? "Se o conteúdo não aparecer em alguns segundos, abra a experiência em uma nova guia."
+                    : "O destino pode exigir uma janela própria ou estar temporariamente indisponível. Seus dados clínicos continuam isolados."}
                 </p>
                 {frameStatus !== "loading" && (
                   <Button
                     size="sm"
                     variant="outline"
                     className="gap-2"
-                    onClick={() =>
-                      window.open(
-                        activeSite.url,
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
+                    onClick={openActiveSite}
                   >
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                     Abrir em nova guia
                   </Button>
                 )}
@@ -229,7 +176,7 @@ export default function ManusIntegracoesPage() {
           <iframe
             key={`${activeSite.id}-${frameKey}`}
             title={activeSite.label}
-            src={activeSite.url}
+            src={activeSite.href}
             className="h-[min(76vh,850px)] min-h-[560px] w-full border-0 bg-background"
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
