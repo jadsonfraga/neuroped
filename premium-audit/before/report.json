@@ -1,0 +1,660 @@
+[
+  {
+    "name": "home-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/home-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1399,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "primeira impressão"
+  },
+  {
+    "name": "home-sidebar-documentar-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/home-sidebar-documentar-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1399,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "true"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "sidebar com grupo Documentar expandido"
+  },
+  {
+    "name": "home-search-laudo-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/home-search-laudo-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1181,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "true"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "busca contextual por laudo"
+  },
+  {
+    "name": "home-command-palette-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/home-command-palette-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1181,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "true"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "paleta de comando aberta"
+  },
+  {
+    "name": "explorar-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/explorar-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 4439,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "catálogo por seções"
+  },
+  {
+    "name": "explorar-documentar-open-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/explorar-documentar-open-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 4439,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "catálogo completo no estado anterior"
+  },
+  {
+    "name": "agenda-tab-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/agenda-tab-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 1042,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "Agenda com aba secundária selecionada"
+  },
+  {
+    "name": "tea-checklists-tab-desktop",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/tea-checklists-tab-desktop.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "scrollHeight": 5399,
+      "scrollWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "true"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [
+        {
+          "label": "ADOS-2",
+          "selected": "false"
+        },
+        {
+          "label": "ADI-R",
+          "selected": "false"
+        },
+        {
+          "label": "CARS-2",
+          "selected": "true"
+        },
+        {
+          "label": "GARS-3",
+          "selected": "false"
+        },
+        {
+          "label": "SRS-2",
+          "selected": "false"
+        }
+      ],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "Checklists TEA com aba ativa"
+  },
+  {
+    "name": "home-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/home-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2492,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "primeira impressão"
+  },
+  {
+    "name": "home-sidebar-open-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/home-sidebar-open-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 2492,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "sidebar móvel aberta"
+  },
+  {
+    "name": "explorar-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/explorar-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 10110,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "catálogo por seções"
+  },
+  {
+    "name": "explorar-documentar-open-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/explorar-documentar-open-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 10110,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "catálogo completo no estado anterior"
+  },
+  {
+    "name": "agenda-tab-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/agenda-tab-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 1199,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "Agenda com aba secundária selecionada"
+  },
+  {
+    "name": "tea-checklists-tab-mobile",
+    "path": "/home/ubuntu/neuroped/premium-audit/before/tea-checklists-tab-mobile.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "scrollHeight": 6636,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "activeNav": [],
+      "groups": [
+        {
+          "label": "TRABALHO DE HOJE",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR",
+          "expanded": "true"
+        },
+        {
+          "label": "DOCUMENTAR",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA",
+          "expanded": "false"
+        },
+        {
+          "label": "PORTAIS E SUPORTE",
+          "expanded": "false"
+        }
+      ],
+      "tabs": [
+        {
+          "label": "ADOS-2",
+          "selected": "false"
+        },
+        {
+          "label": "ADI-R",
+          "selected": "false"
+        },
+        {
+          "label": "CARS-2",
+          "selected": "true"
+        },
+        {
+          "label": "GARS-3",
+          "selected": "false"
+        },
+        {
+          "label": "SRS-2",
+          "selected": "false"
+        }
+      ],
+      "featured": [
+        "AgendaHoje, fila e compromissos",
+        "PacientesBusca e prontuários"
+      ]
+    },
+    "scenario": "Checklists TEA com aba ativa"
+  }
+]

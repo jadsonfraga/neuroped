@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   Baby,
+  Eye,
   BookOpen,
   Brain,
   BrainCog,
@@ -56,7 +57,7 @@ export interface NavigationMatch {
 }
 
 /**
- * Cinco atalhos de alta frequência. O restante continua acessível nos grupos
+ * Seis atalhos de alta frequência. O restante continua acessível nos grupos
  * e no catálogo, mas não compete com o trabalho que começa todos os dias.
  */
 export const featuredNavigation: NavItem[] = [
@@ -87,6 +88,13 @@ export const featuredNavigation: NavItem[] = [
     icon: BrainCog,
     tone: "priority",
     description: "Perfil cognitivo por domínio",
+  },
+  {
+    href: "/conhecimento-visual",
+    label: "Reconhecimento visual",
+    icon: Eye,
+    tone: "priority",
+    description: "Formas, cores e percepção visual",
   },
   {
     href: "/documentos",

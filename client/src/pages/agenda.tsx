@@ -202,19 +202,64 @@ export default function AgendaPage() {
   }
   if (dashboard.isError || !data) {
     const detail = dashboard.error instanceof Error ? dashboard.error.message : "";
+    const authRequired = detail.includes("401") || detail.includes("AUTH");
+    const staffLinkRequired = detail.includes("STAFF_LINK_REQUIRED");
+    const message = staffLinkRequired
+      ? "Esta conta da recepção ainda precisa ser vinculada pelo profissional responsável na aba Equipe da Agenda & Gestão."
+      : authRequired
+        ? "Sua sessão profissional não está disponível. Entre novamente para acessar a agenda persistente."
+        : "Nenhum dado foi simulado. Verifique autenticação, vínculo de equipe e banco persistente.";
+
     return (
-      <div className="space-y-3 rounded-3xl border border-destructive/30 bg-destructive/5 p-6">
-        <h1 className="text-xl font-bold">Agenda temporariamente indisponível</h1>
-        <p className="text-sm text-muted-foreground">
-          {detail.includes("STAFF_LINK_REQUIRED")
-            ? "Esta conta da recepção ainda precisa ser vinculada pelo profissional responsável na aba Equipe da Agenda & Gestão."
-            : detail.includes("401") || detail.includes("AUTH")
-              ? "Sua sessão profissional não está disponível. Entre novamente para acessar a agenda persistente."
-              : "Nenhum dado foi simulado. Verifique autenticação, vínculo de equipe e banco persistente."}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {(detail.includes("401") || detail.includes("AUTH")) && <Button asChild><Link href="/login">Entrar na área profissional</Link></Button>}
-          <Button variant="outline" onClick={() => dashboard.refetch()}>Tentar novamente</Button>
+      <div
+        className="relative isolate min-h-[30rem] overflow-hidden rounded-[2rem] border border-destructive/20 bg-[radial-gradient(circle_at_top_right,hsl(var(--destructive)/0.12),transparent_38%),linear-gradient(135deg,hsl(var(--card)/0.98),hsl(var(--secondary)/0.34))] p-6 shadow-[0_28px_80px_-48px_hsl(var(--foreground)/0.45)] sm:p-8"
+        data-testid="agenda-unavailable-state"
+      >
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-destructive/10 blur-3xl" aria-hidden="true" />
+        <div className="relative flex max-w-3xl items-start gap-4 sm:gap-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-destructive/10 text-destructive ring-1 ring-destructive/15 sm:h-14 sm:w-14">
+            <CalendarClock className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <Badge variant="outline" className="border-destructive/25 bg-destructive/[0.04] text-destructive">
+              Agenda segura · conexão necessária
+            </Badge>
+            <h1 className="mt-3 text-2xl font-black tracking-[-0.03em] text-foreground sm:text-3xl">
+              Agenda temporariamente indisponível
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              {message}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {authRequired && (
+                <Button asChild className="gap-2">
+                  <Link href="/login">Entrar na área profissional</Link>
+                </Button>
+              )}
+              <Button variant="outline" className="gap-2" onClick={() => dashboard.refetch()}>
+                <Activity className="h-4 w-4" aria-hidden="true" />
+                Tentar novamente
+              </Button>
+              <Button asChild variant="ghost" className="gap-2 text-muted-foreground hover:text-primary">
+                <Link href="/explorar">
+                  Ver caminhos disponíveis
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="relative mt-8 grid gap-3 border-t border-border/60 pt-6 sm:grid-cols-2">
+          <div className="rounded-2xl border border-border/65 bg-background/45 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">O que está protegido</p>
+            <p className="mt-2 text-sm font-semibold text-foreground">Atendimentos, equipe e disponibilidade</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">A agenda não exibe dados de exemplo. Isso evita confundir demonstração com informação clínica real.</p>
+          </div>
+          <div className="rounded-2xl border border-primary/15 bg-primary/[0.045] p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Próximo passo</p>
+            <p className="mt-2 text-sm font-semibold text-foreground">{staffLinkRequired ? "Vincule a recepção ao profissional responsável" : authRequired ? "Reative sua sessão profissional" : "Confirme o acesso e tente novamente"}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">A operação só continua quando a fonte persistente estiver disponível e autorizada.</p>
+          </div>
         </div>
       </div>
     );

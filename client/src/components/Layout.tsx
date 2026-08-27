@@ -167,8 +167,8 @@ function FeaturedShortcuts({
     );
   };
 
-  const primary = visibleFeaturedNavigation.slice(0, 4);
-  const supporting = visibleFeaturedNavigation.slice(4);
+  const primary = visibleFeaturedNavigation.slice(0, 5);
+  const supporting = visibleFeaturedNavigation.slice(5);
   const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
@@ -247,6 +247,7 @@ const priorityNavHrefs = new Set([
   "/receita-c1-express",
   "/filtro",
   "/avaliacao-cognitiva-infantil",
+  "/conhecimento-visual",
 ]);
 
 export function Layout({ children }: { children: React.ReactNode }) {
