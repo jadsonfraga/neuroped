@@ -31,14 +31,14 @@ const localNotice = await page
   .count();
 
 const destinations = [];
-for (const label of [
-  "Secretaria",
-  "Jogo",
-  "Nesplora",
-  "Vídeo-EEG",
-  "Institucional",
+for (const [id, label] of [
+  ["secretaria", "Secretaria"],
+  ["missao", "Jogo"],
+  ["nesplora", "Nesplora"],
+  ["video-eeg", "Vídeo-EEG"],
+  ["institucional", "Institucional"],
 ]) {
-  const tab = page.getByRole("tab", { name: label, exact: true });
+  const tab = page.locator(`[data-testid="integrated-tab-${id}"]`);
   if ((await tab.count()) !== 1) continue;
   await tab.click();
   await page.waitForTimeout(120);
