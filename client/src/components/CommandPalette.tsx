@@ -160,10 +160,10 @@ export function CommandPalette() {
 
   const visiblePages = useMemo(
     () =>
-      IS_PUBLIC_ZONE
+      IS_PUBLIC_ZONE || onPublicRoute
         ? navigablePages.filter((page) => isPublicRoute(page.href))
         : navigablePages,
-    [],
+    [onPublicRoute],
   );
 
   const patients = useMemo<NavPatient[]>(() => {
