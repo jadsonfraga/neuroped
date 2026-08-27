@@ -117,6 +117,20 @@ type KeyringState = {
   controls: Record<string, boolean>;
 };
 
+type IncidentEvent = {
+  id: string;
+  clinicId: string;
+  component: "auth" | "tenant" | "keyring" | "migration" | "backup" | "integration" | "privacy" | "frontend";
+  code: string;
+  severity: "low" | "medium" | "high" | "critical";
+  status: "open" | "acknowledged" | "resolved";
+  correlationId: string;
+  metadata: Record<string, string | number | boolean>;
+  createdAt: string;
+  redacted: true;
+  payloadStored: false;
+};
+
 type ObservabilityState = {
   requestId: string;
   window: string;
@@ -576,6 +590,10 @@ export default function SaasCentralPage() {
   const [keyring, setKeyring] = useState<KeyringState | null>(null);
   const [productionDiagnostics, setProductionDiagnostics] = useState<ProductionDiagnosticsState | null>(null);
   const [observability, setObservability] = useState<ObservabilityState | null>(null);
+  const [incidentEvents, setIncidentEvents] = useState<IncidentEvent[]>([]);
+  const [incidentComponent, setIncidentComponent] = useState<IncidentEvent["component"]>("integration");
+  const [incidentCode, setIncidentCode] = useState("WEBHOOK_DELIVERY_REUSE");
+  const [incidentSeverity, setIncidentSeverity] = useState<IncidentEvent["severity"]>("medium");
   const [privacySnapshot, setPrivacySnapshot] = useState<PrivacySnapshot | null>(null);
   const [retentionDrafts, setRetentionDrafts] = useState<Record<string, { retentionDays: number; purgeMode: string; legalHold: boolean; enabled: boolean }>>({});
   const [inviteRows, setInviteRows] = useState<InviteRow[]>([]);
@@ -616,6 +634,7 @@ export default function SaasCentralPage() {
     setKeyring(null);
     setProductionDiagnostics(null);
     setObservability(null);
+    setIncidentEvents([]);
     setPrivacySnapshot(null);
     setRetentionDrafts({});
     setInviteRows([]);
@@ -715,6 +734,19 @@ export default function SaasCentralPage() {
         if (!cancelled) setObservability(body as ObservabilityState);
       })
       .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Observabilidade indisponível."); });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/incidents?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Incidentes indisponíveis.");
+        if (!cancelled) setIncidentEvents(Array.isArray(body?.data) ? body.data : []);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Incidentes indisponíveis."); });
     return () => { cancelled = true; };
   }, [activeClinicId]);
 
@@ -1030,6 +1062,45 @@ export default function SaasCentralPage() {
       .finally(() => setPendingAction(null));
   };
 
+  const createIncident = () => {
+    if (!activeClinicId) {
+      setToast("Incidentes exigem um tenant ativo; nada foi registrado no modo demo.");
+      return;
+    }
+    setPendingAction("incident-create");
+    void authFetch("/api/saas/incidents", {
+      method: "POST",
+      body: JSON.stringify({ clinicId: activeClinicId, component: incidentComponent, code: incidentCode, severity: incidentSeverity, status: "open", correlationId: crypto.randomUUID(), metadata: { source: "central", environment: "production" } }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível registrar o incidente.");
+        setIncidentEvents((current) => [body.data as IncidentEvent, ...current]);
+        setToast("Incidente operacional registrado e auditado sem payload clínico.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar o incidente."))
+      .finally(() => setPendingAction(null));
+  };
+
+  const transitionIncident = (incident: IncidentEvent) => {
+    if (!activeClinicId) return;
+    const nextStatus = incident.status === "open" ? "acknowledged" : "resolved";
+    setPendingAction(`incident:${incident.id}`);
+    void authFetch("/api/saas/incidents", {
+      method: "PATCH",
+      body: JSON.stringify({ clinicId: activeClinicId, incidentId: incident.id, nextStatus, ...(nextStatus === "resolved" ? { resolutionCode: "MITIGATION_APPLIED" } : {}) }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível avançar o incidente.");
+        const updated = body.data as IncidentEvent;
+        setIncidentEvents((current) => [updated, ...current.filter((item) => item.correlationId !== updated.correlationId)]);
+        setToast(nextStatus === "resolved" ? "Incidente resolvido com código auditado." : "Incidente reconhecido e auditado.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível avançar o incidente."))
+      .finally(() => setPendingAction(null));
+  };
+
   const queueWebhook = () => {
     if (!activeClinicId) {
       setToast("Webhooks exigem um tenant ativo; nada foi registrado no modo demo.");
@@ -1172,12 +1243,19 @@ export default function SaasCentralPage() {
         );
       case "observability":
         return (
+          <div className="space-y-4">
           <ActionCard title="Painel operacional" description="Eventos agregados e redigidos do tenant. A Central não exibe PHI, payloads, tokens ou valores de segredo.">
             <div className="grid gap-3 sm:grid-cols-3"><ModuleMetric label="Eventos 24h" value={observability ? String(observability.totalEvents) : "—"} tone="success" /><ModuleMetric label="Schema" value={observability?.schemaReady ? "pronto" : "bloqueado"} /><ModuleMetric label="Escopo" value={observability ? "tenant" : "—"} /></div>
             <div className="mt-4 flex flex-wrap gap-2"><Pill>{observability?.redacted ? "redaction ativo" : "aguardando"}</Pill><Pill>{observability?.phiExposed === false ? "zero PHI" : "bloqueado"}</Pill><Pill>{observability?.crossTenantScope ?? "membership obrigatório"}</Pill></div>
             <div className="mt-4 space-y-2">{observability?.actions.slice(0, 8).map((item) => <div key={item.action} className="flex items-center justify-between rounded-xl border p-3 text-xs"><span className="font-medium">{item.action}</span><span className="text-muted-foreground">{item.count} · {item.lastAt ? new Date(item.lastAt).toLocaleString() : "sem timestamp"}</span></div>)}{!observability && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar observabilidade redigida.</p>}</div>
             <Button className="mt-4 gap-2" variant="outline" onClick={() => recordAction("Health check registrado sem payload clínico.", 3)}><Activity className="h-4 w-4" />Registrar health check</Button>
           </ActionCard>
+          <ActionCard title="Resposta a incidentes" description="Registre apenas códigos operacionais allowlistados. Incidentes são correlacionados, append-only e não aceitam texto livre, PHI, tokens ou secrets.">
+            <div className="grid gap-3 sm:grid-cols-3"><select aria-label="Componente do incidente" value={incidentComponent} onChange={(event) => setIncidentComponent(event.target.value as IncidentEvent["component"])} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="integration">Integração</option><option value="keyring">Keyring</option><option value="migration">Migration</option><option value="backup">Backup</option><option value="privacy">LGPD</option><option value="tenant">Tenant</option><option value="frontend">Frontend</option><option value="auth">Autenticação</option></select><select aria-label="Código do incidente" value={incidentCode} onChange={(event) => setIncidentCode(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="WEBHOOK_DELIVERY_REUSE">Reuso de delivery webhook</option><option value="KEYRING_NOT_READY">Keyring não pronto</option><option value="MIGRATION_MISSING">Migration ausente</option><option value="BACKUP_RESTORE_FAILED">Restore não verificado</option><option value="PRIVACY_REVIEW_REQUIRED">Revisão LGPD necessária</option></select><select aria-label="Severidade do incidente" value={incidentSeverity} onChange={(event) => setIncidentSeverity(event.target.value as IncidentEvent["severity"])} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option><option value="critical">Crítica</option></select></div>
+            <Button className="mt-4 gap-2" disabled={pendingAction === "incident-create"} onClick={createIncident}><Activity className="h-4 w-4" />{pendingAction === "incident-create" ? "Registrando…" : "Registrar incidente"}</Button>
+            <div className="mt-4 space-y-2">{incidentEvents.slice(0, 8).map((incident) => <div key={incident.correlationId} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-xs"><span className="font-semibold">{incident.code}</span><Badge variant={incident.severity === "critical" || incident.severity === "high" ? "destructive" : "outline"}>{incident.severity}</Badge><Badge variant={incident.status === "resolved" ? "default" : "outline"}>{incident.status}</Badge><span className="text-muted-foreground">{incident.component} · {incident.correlationId.slice(0, 12)}…</span>{incident.status !== "resolved" && <Button size="sm" variant="ghost" className="ml-auto" disabled={pendingAction === `incident:${incident.id}`} onClick={() => transitionIncident(incident)}>{pendingAction === `incident:${incident.id}` ? "Salvando…" : incident.status === "open" ? "Reconhecer" : "Resolver"}</Button>}</div>)}{activeClinicId && incidentEvents.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhum incidente operacional registrado para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar ou registrar incidentes.</p>}</div>
+          </ActionCard>
+          </div>
         );
       case "continuity":
         return (

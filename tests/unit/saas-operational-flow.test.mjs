@@ -26,6 +26,9 @@ for (const migration of [
   "db/migrations/0018_saas_privacy_governance.sql",
   "db/migrations/0019_saas_integrations_control.sql",
   "db/migrations/0020_saas_integration_idempotency.sql",
+  "db/migrations/0021_saas_backup_evidence_append_only.sql",
+  "db/migrations/0022_saas_webhook_deliveries.sql",
+  "db/migrations/0023_saas_incident_events.sql",
 ]) db.exec(read(migration));
 
 const insertInvite = db.prepare(`INSERT INTO saas_membership_invites(id, clinic_id, email_hash, role, token_hash, expires_at, invited_by_user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
@@ -52,12 +55,22 @@ assert.equal(replay.request_hash === "b".repeat(64), false, "a mesma chave deve 
 assert.throws(() => insertIdempotency.run("idem-2", "clinic-a", "request-key-000001", "b".repeat(64), "{}", "2026-08-27T12:01:00.000Z"), /UNIQUE/);
 assert.equal(db.prepare(`SELECT COUNT(*) AS count FROM saas_integration_idempotency WHERE clinic_id = 'clinic-b'`).get().count, 0);
 
+const incidentInsert = db.prepare(`INSERT INTO saas_incident_events(id, clinic_id, component, code, severity, status, correlation_id, metadata_json, actor_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+incidentInsert.run("incident-open", "clinic-a", "integration", "WEBHOOK_DELIVERY_REUSE", "medium", "open", "corr-000001", '{"source":"central"}', "user-a");
+incidentInsert.run("incident-ack", "clinic-a", "integration", "WEBHOOK_DELIVERY_REUSE", "medium", "acknowledged", "corr-000001", '{"source":"transition"}', "user-a");
+assert.throws(() => db.prepare(`UPDATE saas_incident_events SET clinic_id = 'clinic-b' WHERE id = 'incident-ack'`).run(), /SAAS_INCIDENT_SCOPE_IMMUTABLE/);
+assert.throws(() => db.prepare(`DELETE FROM saas_incident_events WHERE id = 'incident-ack'`).run(), /SAAS_INCIDENT_APPEND_ONLY/);
+assert.equal(db.prepare(`SELECT COUNT(*) AS count FROM saas_incident_events WHERE clinic_id = 'clinic-b'`).get().count, 0);
+
 const consoleSource = read("client/src/pages/saas-central.tsx");
 assert.match(consoleSource, /pendingAction/);
 assert.match(consoleSource, /recalculateReadiness/);
 assert.match(consoleSource, /retentionDrafts/);
 assert.match(consoleSource, /resendInvite/);
+assert.match(consoleSource, /createIncident/);
+assert.match(consoleSource, /transitionIncident/);
+assert.match(consoleSource, /incidentEvents/);
 assert.doesNotMatch(consoleSource, /localStorage\.setItem\([^\n]*lastInviteUrl/);
 
 db.close();
-console.log("[saas-operational-flow] ✓ reenvio, replay idempotente, isolamento e estados da Central validados");
+console.log("[saas-operational-flow] ✓ reenvio, replay idempotente, isolamento, incidentes e estados da Central validados");

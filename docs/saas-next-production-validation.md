@@ -32,3 +32,9 @@ A observabilidade foi conectada à Central como agregação de ações de audito
 ## Limites restantes
 
 O workflow `.github/workflows/saas-production-gates.yml` foi criado como entrada manual e fail-closed. Ele não foi executado contra um D1 real nesta sessão porque isso exige credenciais e aprovação do operador. Os gates humanos restantes são: configurar os environments `staging` e `production`, definir secrets/variables no secret manager, aplicar migrations 0016–0023 no D1 staging, executar backup/restore real, conectar provedor de e-mail e webhooks sandbox, testar LGPD com dados sintéticos e obter aprovação formal do controlador/encarregado. A flag `CLINICAL_LIVE_ENABLED` permanece fora de qualquer mutação automática.
+
+## Continuação: resposta a incidentes
+
+A continuação adicionou o ciclo operacional de incidentes à Central. O backend registra somente componente, código allowlist, severidade, status, correlation ID e metadata redigida. Reconhecimento e resolução não alteram o evento original: cada transição cria um novo evento correlacionado e exige auditoria; a resolução exige código allowlist. A consulta agrupa pela correlação e expõe apenas o estado mais recente, sem texto livre, payload, token, secret ou PHI.
+
+A rodada adicional foi validada com `npm run check`, `npm run lint`, migrations, fluxo operacional, contrato de hardening, build, bundle Wrangler, E2E das 20 abas e auditoria integral de acessibilidade. Todos os comandos retornaram código 0. O build continua emitindo somente o aviso conhecido de chunks grandes, sem erro de compilação.
