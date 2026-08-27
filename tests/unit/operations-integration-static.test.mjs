@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+const read = (path) =>
+  readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 const app = read("client/src/App.tsx");
 const nav = read("client/src/data/navigation.ts");
@@ -25,6 +26,7 @@ assert.match(app, /import\("@\/pages\/agendar"\)/);
 assert.match(app, /path="\/agenda"/);
 assert.match(app, /path="\/agendar"/);
 assert.match(nav, /href: "\/agenda",\s*label: "Agenda de hoje"/);
+assert.match(nav, /href: "\/agenda"[\s\S]{0,120}label: "Agenda & Gestão"/);
 
 assert.match(middleware, /"\/api\/public-booking"/);
 assert.match(
@@ -48,13 +50,25 @@ assert.match(professional, /waitlist_status/);
 assert.match(professional, /review_moderate/);
 assert.match(professional, /notification_status/);
 assert.match(professional, /logOperationsAudit/);
-assert.match(professional, /localNow\(profile\.timezone\)/, "métricas devem respeitar fuso da agenda");
-assert.match(professional, /isValidTimeZone\(timezone\)/, "perfil não pode persistir timezone IANA inválido");
+assert.match(
+  professional,
+  /localNow\(profile\.timezone\)/,
+  "métricas devem respeitar fuso da agenda",
+);
+assert.match(
+  professional,
+  /isValidTimeZone\(timezone\)/,
+  "perfil não pode persistir timezone IANA inválido",
+);
 assert.ok(
   (professional.match(/meta\?\.changes/g) ?? []).length >= 6,
   "mutações por ID devem confirmar linha afetada antes de retornar sucesso/auditar",
 );
-assert.match(professional, /amountCents: null/, "financeiro de consulta deve ser redigido para recepção");
+assert.match(
+  professional,
+  /amountCents: null/,
+  "financeiro de consulta deve ser redigido para recepção",
+);
 assert.match(
   professional,
   /fullServices\.map\(\(item\) => \(\{ \.\.\.item, priceCents: null \}\)\)/,
@@ -62,12 +76,24 @@ assert.match(
 );
 assert.match(
   professional,
-  /const patientId = principal\.delegated \? null : cleanOptionalText\(body\.patientId, 100\)/,
+  /const patientId = principal\.delegated[\s\S]{0,80}cleanOptionalText\(body\.patientId, 100\)/,
   "recepção não pode associar agendamento diretamente a identificador clínico",
 );
-assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
-assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
-assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
+assert.match(
+  professional,
+  /STAFF_ALREADY_LINKED/,
+  "API deve expor erro explícito de vínculo já pertencente a outro profissional",
+);
+assert.match(
+  professional,
+  /SCHEDULE_CONFLICT/,
+  "API privada deve converter conflito físico de agenda em 409",
+);
+assert.match(
+  professional,
+  /reviews: principal\.canConfigure \? fullReviews : \[\]/,
+  "recepção não deve receber reviews privados",
+);
 
 assert.match(access, /booking_staff_links/);
 assert.match(access, /staff_user_id TEXT NOT NULL UNIQUE/);
@@ -94,7 +120,11 @@ assert.match(access, /trg_blocks_respect_appointments_insert/);
 assert.match(access, /RAISE\(ABORT, 'SCHEDULE_CONFLICT'\)/);
 assert.match(access, /role !== "operator"/);
 assert.match(access, /safeAuditMetadata/);
-assert.doesNotMatch(access, /guardianName|patientName|phone|email.*metadata/i, "auditoria não deve copiar PII operacional");
+assert.doesNotMatch(
+  access,
+  /guardianName|patientName|phone|email.*metadata/i,
+  "auditoria não deve copiar PII operacional",
+);
 
 for (const table of [
   "booking_provider_profiles",
@@ -109,9 +139,15 @@ for (const table of [
 ]) {
   assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
 }
-assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS booking_staff_links/);
+assert.match(
+  hardeningMigration,
+  /CREATE TABLE IF NOT EXISTS booking_staff_links/,
+);
 assert.match(hardeningMigration, /staff_user_id TEXT NOT NULL UNIQUE/);
-assert.match(hardeningMigration, /CREATE TABLE IF NOT EXISTS operations_audit_log/);
+assert.match(
+  hardeningMigration,
+  /CREATE TABLE IF NOT EXISTS operations_audit_log/,
+);
 assert.match(hardeningMigration, /idx_operations_audit_provider_time/);
 assert.match(hardeningMigration, /idx_operations_audit_actor_time/);
 for (const trigger of [
@@ -120,7 +156,10 @@ for (const trigger of [
   "trg_blocks_respect_appointments_insert",
   "trg_blocks_respect_appointments_update",
 ]) {
-  assert.match(hardeningMigration, new RegExp(`CREATE TRIGGER IF NOT EXISTS ${trigger}`));
+  assert.match(
+    hardeningMigration,
+    new RegExp(`CREATE TRIGGER IF NOT EXISTS ${trigger}`),
+  );
   assert.match(workflow, new RegExp(trigger));
 }
 assert.match(hardeningMigration, /RAISE\(ABORT, 'SCHEDULE_CONFLICT'\)/);
@@ -137,38 +176,75 @@ assert.match(publicBooking, /ensureOperationsHardeningSchema/);
 assert.match(publicBooking, /SCHEDULE_CONFLICT/);
 assert.match(publicBooking, /selectFutureSlots/);
 assert.match(publicBooking, /isValidLocalDate\(preferredDate\)/);
-assert.match(publicBooking, /!isValidLocalDate\(date\)/, "consulta de slots deve rejeitar data calendárica impossível");
+assert.match(
+  publicBooking,
+  /!isValidLocalDate\(date\)/,
+  "consulta de slots deve rejeitar data calendárica impossível",
+);
 assert.match(
   professional,
   /value === null \|\| value === undefined \|\| value === ""/,
   "campos inteiros não podem converter ausência em zero silenciosamente",
 );
-assert.doesNotMatch(core, /return slots\.slice\(0, 96\)/, "cap de slots não pode ocorrer antes do filtro de horários passados");
+assert.doesNotMatch(
+  core,
+  /return slots\.slice\(0, 96\)/,
+  "cap de slots não pode ocorrer antes do filtro de horários passados",
+);
 assert.match(sharedOperations, /date\.getUTCFullYear\(\) === year/);
 assert.match(sharedOperations, /hour >= 0 && hour <= 23/);
-assert.doesNotMatch(publicBooking, /searchParams\.get\("token"\)/, "capability token não pode trafegar em query string");
+assert.doesNotMatch(
+  publicBooking,
+  /searchParams\.get\("token"\)/,
+  "capability token não pode trafegar em query string",
+);
 assert.match(publicBooking, /action === "manage"/);
-assert.match(booking, /apiRequest\("POST", "\/api\/public-booking", \{ action: "manage"/);
+assert.match(
+  booking,
+  /apiRequest\("POST", "\/api\/public-booking", \{ action: "manage"/,
+);
 assert.match(booking, /rescheduleBooking/);
 assert.match(migration, /booking_token_hash TEXT NOT NULL UNIQUE/);
 assert.match(core, /AES-GCM/);
 assert.match(core, /neuroped-operational-v1/);
 assert.match(core, /OPERATIONAL_DATA_KEY/);
-assert.doesNotMatch(core, /OPERATIONAL_DATA_KEY\?\.trim\(\) \|\| env\.NEUROPED_JWT_SECRET/);
+assert.doesNotMatch(
+  core,
+  /OPERATIONAL_DATA_KEY\?\.trim\(\) \|\| env\.NEUROPED_JWT_SECRET/,
+);
 assert.match(core, /OPERATIONAL_CRYPTO_NOT_CONFIGURED/);
 assert.match(bookingAdapter, /process\.env\.OPERATIONAL_DATA_KEY\?\.trim\(\)/);
-assert.doesNotMatch(bookingAdapter, /NEUROPED_MASTER_KEY|OPERATIONAL_DATA_KEY[\s\S]{0,120}NEUROPED_JWT_SECRET/);
+assert.doesNotMatch(
+  bookingAdapter,
+  /NEUROPED_MASTER_KEY|OPERATIONAL_DATA_KEY[\s\S]{0,120}NEUROPED_JWT_SECRET/,
+);
 assert.match(bookingAdapter, /OPERATIONAL_CRYPTO_NOT_CONFIGURED/);
 assert.match(core, /sha256\(token\)/);
-assert.doesNotMatch(migration, /guardian_name\s+TEXT/i, "contato do responsável não pode persistir em plaintext");
-assert.doesNotMatch(migration, /guardian_phone\s+TEXT/i, "telefone não pode persistir em plaintext");
-assert.doesNotMatch(migration, /patient_name\s+TEXT/i, "nome da criança não pode persistir em plaintext");
+assert.doesNotMatch(
+  migration,
+  /guardian_name\s+TEXT/i,
+  "contato do responsável não pode persistir em plaintext",
+);
+assert.doesNotMatch(
+  migration,
+  /guardian_phone\s+TEXT/i,
+  "telefone não pode persistir em plaintext",
+);
+assert.doesNotMatch(
+  migration,
+  /patient_name\s+TEXT/i,
+  "nome da criança não pode persistir em plaintext",
+);
 
 assert.match(publicBooking, /privacyAccepted/);
 assert.match(publicBooking, /SLOT_CONFLICT/);
 assert.match(publicBooking, /findAppointmentByToken/);
 assert.match(publicBooking, /status !== "completed"/);
-assert.doesNotMatch(publicBooking, /diagn[oó]stico|medica[cç][aã]o.*body/i, "booking público não deve pedir dado clínico livre");
+assert.doesNotMatch(
+  publicBooking,
+  /diagn[oó]stico|medica[cç][aã]o.*body/i,
+  "booking público não deve pedir dado clínico livre",
+);
 
 assert.match(routeGuard, /path !== "\/agenda"/);
 assert.match(routeGuard, /roles\.includes\("operator"\)/);
@@ -178,19 +254,48 @@ assert.match(agenda, /Recepção vinculada/);
 assert.match(agenda, /action: "staff_link"/);
 assert.match(agenda, /Trilha operacional/);
 assert.match(agenda, /WhatsApp, SMS e e-mail externos não são simulados/);
-assert.match(agenda, /\/api\/patients\?limit=50&page=1&q=/, "o seletor de paciente deve usar busca server-side parametrizada");
-assert.match(agenda, /Buscar por nome ou identificador/, "a agenda deve oferecer busca incremental de paciente");
-assert.doesNotMatch(agenda, /\.slice\(0,\s*40\)/, "a lista de próximas consultas não pode truncar silenciosamente");
+assert.match(
+  agenda,
+  /\/api\/patients\?limit=50&page=1&q=/,
+  "o seletor de paciente deve usar busca server-side parametrizada",
+);
+assert.match(
+  agenda,
+  /Buscar por nome ou identificador/,
+  "a agenda deve oferecer busca incremental de paciente",
+);
+assert.doesNotMatch(
+  agenda,
+  /\.slice\(0,\s*40\)/,
+  "a lista de próximas consultas não pode truncar silenciosamente",
+);
 assert.match(agenda, /pending_provider/);
-assert.doesNotMatch(agenda, /pagamento aprovado|pix gerado|teleconsulta ativa/i);
+assert.doesNotMatch(
+  agenda,
+  /pagamento aprovado|pix gerado|teleconsulta ativa/i,
+);
 
-assert.doesNotMatch(recepcao, /<AgendaBoard\s*\/>/, "Recepção não pode manter segunda agenda editável");
-assert.doesNotMatch(recepcao, /import \{ AgendaBoard \}/, "agenda local antiga não deve ser renderizada na Recepção");
+assert.doesNotMatch(
+  recepcao,
+  /<AgendaBoard\s*\/>/,
+  "Recepção não pode manter segunda agenda editável",
+);
+assert.doesNotMatch(
+  recepcao,
+  /import \{ AgendaBoard \}/,
+  "agenda local antiga não deve ser renderizada na Recepção",
+);
 assert.match(recepcao, /Agenda oficial: Agenda & Gestão/);
 assert.match(recepcao, /href="\/agenda"/);
 
-assert.match(booking, /Não informe diagnóstico, medicação ou detalhes clínicos/);
-assert.doesNotMatch(booking, /pagamento aprovado|pix gerado|teleconsulta ativa/i);
+assert.match(
+  booking,
+  /Não informe diagnóstico, medicação ou detalhes clínicos/,
+);
+assert.doesNotMatch(
+  booking,
+  /pagamento aprovado|pix gerado|teleconsulta ativa/i,
+);
 
 assert.match(workflow, /0007_operational_suite\.sql/);
 assert.match(workflow, /0008_operational_hardening\.sql/);
@@ -198,4 +303,6 @@ assert.match(workflow, /booking_provider_profiles/);
 assert.match(workflow, /ux_appointments_occupied_slot/);
 assert.doesNotMatch(workflow, /workflow_dispatch:/);
 
-console.log("✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, finanças/clinical boundary, conflitos físicos, auditoria, fuso, PII e locks aprovados");
+console.log(
+  "✓ Operational Suite hardening: fonte única, equipe, RBAC, anti-sequestro, finanças/clinical boundary, conflitos físicos, auditoria, fuso, PII e locks aprovados",
+);

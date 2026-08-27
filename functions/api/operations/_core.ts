@@ -209,11 +209,18 @@ export async function ensureOperationsSchema(db: D1Database): Promise<void> {
 export function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    },
   });
 }
 
-export function errorResponse(message: string, code: string, status: number): Response {
+export function errorResponse(
+  message: string,
+  code: string,
+  status: number,
+): Response {
   return jsonResponse({ error: message, code }, status);
 }
 
@@ -227,17 +234,60 @@ export function cleanOptionalText(value: unknown, max: number): string | null {
 }
 
 export function slugify(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase("pt-BR")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 50) || "neuroped";
+  return (
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("pt-BR")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 50) || "neuroped"
+  );
 }
 
 export function validSlug(value: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(value);
+}
+
+export async function ensureDefaultBookingSetup(
+  db: D1Database,
+  providerUserId: string,
+  now = new Date().toISOString(),
+): Promise<void> {
+  const service = await db
+    .prepare(
+      "SELECT id FROM booking_services WHERE provider_user_id = ? AND active = 1 LIMIT 1",
+    )
+    .bind(providerUserId)
+    .first<{ id: string }>();
+  if (!service) {
+    await db
+      .prepare(
+        `INSERT INTO booking_services
+      (id, provider_user_id, name, duration_minutes, price_cents, modality, active, public_visible, created_at, updated_at)
+      VALUES (?, ?, 'Consulta neuropediátrica', 60, NULL, 'in_person', 1, 1, ?, ?)`,
+      )
+      .bind(`svc-${crypto.randomUUID()}`, providerUserId, now, now)
+      .run();
+  }
+  const rules = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM booking_availability_rules WHERE provider_user_id = ? AND active = 1",
+    )
+    .bind(providerUserId)
+    .first<{ count: number }>();
+  if (Number(rules?.count ?? 0) === 0) {
+    const statements = [1, 2, 3, 4, 5].map((weekday) =>
+      db
+        .prepare(
+          `INSERT INTO booking_availability_rules
+      (id, provider_user_id, weekday, start_minute, end_minute, slot_minutes, active, created_at)
+      VALUES (?, ?, ?, 480, 1080, 60, 1, ?)`,
+        )
+        .bind(`rule-${crypto.randomUUID()}`, providerUserId, weekday, now),
+    );
+    await db.batch(statements);
+  }
 }
 
 export async function ensureProviderProfile(
@@ -245,7 +295,9 @@ export async function ensureProviderProfile(
   user: ProviderIdentity,
 ): Promise<ProviderRow> {
   const existing = await db
-    .prepare(`SELECT * FROM booking_provider_profiles WHERE user_id = ? LIMIT 1`)
+    .prepare(
+      `SELECT * FROM booking_provider_profiles WHERE user_id = ? LIMIT 1`,
+    )
     .bind(user.id)
     .first<ProviderRow>();
   if (existing) return existing;
@@ -253,7 +305,9 @@ export async function ensureProviderProfile(
   const base = slugify(user.name || "neuroped");
   let slug = base;
   const conflict = await db
-    .prepare(`SELECT user_id FROM booking_provider_profiles WHERE slug = ? LIMIT 1`)
+    .prepare(
+      `SELECT user_id FROM booking_provider_profiles WHERE slug = ? LIMIT 1`,
+    )
     .bind(slug)
     .first<{ user_id: string }>();
   if (conflict) slug = `${base.slice(0, 38)}-${user.id.slice(0, 8)}`;
@@ -268,7 +322,9 @@ export async function ensureProviderProfile(
     .run();
 
   return (await db
-    .prepare(`SELECT * FROM booking_provider_profiles WHERE user_id = ? LIMIT 1`)
+    .prepare(
+      `SELECT * FROM booking_provider_profiles WHERE user_id = ? LIMIT 1`,
+    )
     .bind(user.id)
     .first<ProviderRow>())!;
 }
@@ -288,13 +344,22 @@ function base64ToBytes(value: string): Uint8Array {
 
 async function operationalKey(env: OperationsEnv): Promise<CryptoKey> {
   const source = env.OPERATIONAL_DATA_KEY?.trim();
-  if (!source || source.length < 32) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
-  const material = new TextEncoder().encode(`neuroped-operational-v1:${source}`);
+  if (!source || source.length < 32)
+    throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
+  const material = new TextEncoder().encode(
+    `neuroped-operational-v1:${source}`,
+  );
   const digest = await crypto.subtle.digest("SHA-256", material);
-  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, [
+    "encrypt",
+    "decrypt",
+  ]);
 }
 
-export async function encryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
+export async function encryptText(
+  env: OperationsEnv,
+  value: string | null,
+): Promise<string | null> {
   if (!value) return null;
   const key = await operationalKey(env);
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -306,7 +371,10 @@ export async function encryptText(env: OperationsEnv, value: string | null): Pro
   return `v1.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(ciphertext))}`;
 }
 
-export async function decryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
+export async function decryptText(
+  env: OperationsEnv,
+  value: string | null,
+): Promise<string | null> {
   if (!value) return null;
   const [version, ivB64, cipherB64] = value.split(".");
   if (version !== "v1" || !ivB64 || !cipherB64) return null;
@@ -324,13 +392,21 @@ export async function decryptText(env: OperationsEnv, value: string | null): Pro
 }
 
 export async function sha256(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return Array.from(new Uint8Array(digest), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 export function randomAccessToken(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return bytesToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return bytesToBase64(bytes)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 export function serviceToApi(row: ServiceRow): BookingService {
@@ -361,7 +437,10 @@ export function profileToApi(row: ProviderRow) {
   };
 }
 
-export async function appointmentToApi(env: OperationsEnv, row: AppointmentRow) {
+export async function appointmentToApi(
+  env: OperationsEnv,
+  row: AppointmentRow,
+) {
   return {
     id: row.id,
     providerUserId: row.provider_user_id,
@@ -398,10 +477,12 @@ export function slotLockStatements(
   endsAtLocal: string,
 ): D1PreparedStatement[] {
   return appointmentSlotKeys(startsAtLocal, endsAtLocal).map((slotKey) =>
-    db.prepare(
-      `INSERT INTO appointment_slot_locks (provider_user_id, slot_key, appointment_id)
+    db
+      .prepare(
+        `INSERT INTO appointment_slot_locks (provider_user_id, slot_key, appointment_id)
        VALUES (?, ?, ?)`,
-    ).bind(providerUserId, slotKey, appointmentId),
+      )
+      .bind(providerUserId, slotKey, appointmentId),
   );
 }
 
@@ -409,7 +490,9 @@ export function releaseSlotLocksStatement(
   db: D1Database,
   appointmentId: string,
 ): D1PreparedStatement {
-  return db.prepare(`DELETE FROM appointment_slot_locks WHERE appointment_id = ?`).bind(appointmentId);
+  return db
+    .prepare(`DELETE FROM appointment_slot_locks WHERE appointment_id = ?`)
+    .bind(appointmentId);
 }
 
 /**
@@ -422,7 +505,9 @@ export function releaseSlotLocksAfterSuccessfulMutationStatement(
   appointmentId: string,
 ): D1PreparedStatement {
   return db
-    .prepare(`DELETE FROM appointment_slot_locks WHERE appointment_id = ? AND changes() = 1`)
+    .prepare(
+      `DELETE FROM appointment_slot_locks WHERE appointment_id = ? AND changes() = 1`,
+    )
     .bind(appointmentId);
 }
 
@@ -435,41 +520,46 @@ export function slotLockStatementsForAppointmentState(
   status: AppointmentStatus,
 ): D1PreparedStatement[] {
   return appointmentSlotKeys(startsAtLocal, endsAtLocal).map((slotKey) =>
-    db.prepare(
-      `INSERT INTO appointment_slot_locks (provider_user_id, slot_key, appointment_id)
+    db
+      .prepare(
+        `INSERT INTO appointment_slot_locks (provider_user_id, slot_key, appointment_id)
        SELECT ?, ?, ?
         WHERE EXISTS (
           SELECT 1 FROM appointments
            WHERE id = ? AND provider_user_id = ? AND status = ?
              AND starts_at_local = ? AND ends_at_local = ?
         )`,
-    ).bind(
-      providerUserId,
-      slotKey,
-      appointmentId,
-      appointmentId,
-      providerUserId,
-      status,
-      startsAtLocal,
-      endsAtLocal,
-    ),
+      )
+      .bind(
+        providerUserId,
+        slotKey,
+        appointmentId,
+        appointmentId,
+        providerUserId,
+        status,
+        startsAtLocal,
+        endsAtLocal,
+      ),
   );
 }
 
 export function parseStatus(value: unknown): AppointmentStatus | null {
-  return typeof value === "string" && appointmentStatuses.includes(value as AppointmentStatus)
+  return typeof value === "string" &&
+    appointmentStatuses.includes(value as AppointmentStatus)
     ? (value as AppointmentStatus)
     : null;
 }
 
 export function parsePaymentStatus(value: unknown) {
-  return typeof value === "string" && paymentStatuses.includes(value as (typeof paymentStatuses)[number])
+  return typeof value === "string" &&
+    paymentStatuses.includes(value as (typeof paymentStatuses)[number])
     ? (value as (typeof paymentStatuses)[number])
     : null;
 }
 
 export function parseModality(value: unknown): "in_person" | "remote" | null {
-  return typeof value === "string" && bookingModalities.includes(value as "in_person" | "remote")
+  return typeof value === "string" &&
+    bookingModalities.includes(value as "in_person" | "remote")
     ? (value as "in_person" | "remote")
     : null;
 }
@@ -532,13 +622,26 @@ export async function listAvailableSlots(
       minute += step
     ) {
       const startsAtLocal = localDateTime(date, minute);
-      const endsAtLocal = addMinutesLocal(startsAtLocal, service.duration_minutes);
+      const endsAtLocal = addMinutesLocal(
+        startsAtLocal,
+        service.duration_minutes,
+      );
       const blocked = (blocks.results ?? []).some((block) =>
-        overlapsLocal(startsAtLocal, endsAtLocal, block.starts_at_local, block.ends_at_local),
+        overlapsLocal(
+          startsAtLocal,
+          endsAtLocal,
+          block.starts_at_local,
+          block.ends_at_local,
+        ),
       );
       if (blocked) continue;
       const occupied = (appointments.results ?? []).some((appointment) =>
-        overlapsLocal(startsAtLocal, endsAtLocal, appointment.starts_at_local, appointment.ends_at_local),
+        overlapsLocal(
+          startsAtLocal,
+          endsAtLocal,
+          appointment.starts_at_local,
+          appointment.ends_at_local,
+        ),
       );
       if (!occupied) slots.push({ startsAtLocal, endsAtLocal });
     }
@@ -546,7 +649,10 @@ export async function listAvailableSlots(
   return slots;
 }
 
-export async function getProviderBySlug(db: D1Database, slug: string): Promise<ProviderRow | null> {
+export async function getProviderBySlug(
+  db: D1Database,
+  slug: string,
+): Promise<ProviderRow | null> {
   return (
     (await db
       .prepare(`SELECT * FROM booking_provider_profiles WHERE slug = ? LIMIT 1`)

@@ -78,6 +78,7 @@
     "test:cognitive-evaluation": "node scripts/cognitive-evaluation-smoke.mjs",
     "test:cognitive-separation": "node scripts/cognitive-separation-smoke.mjs",
     "test:operations": "node --import tsx tests/unit/operations-contract.test.ts && node tests/unit/operations-integration-static.test.mjs && node tests/unit/secretaria-marcacao-navigation.test.mjs",
+    "test:agenda-lifecycle": "node tests/unit/agenda-booking-lifecycle-static.test.mjs",
     "test:no-fake-clinical-write": "node --import tsx tests/unit/no-fake-clinical-write.test.ts",
     "test:loose-ends": "node tests/unit/loose-ends-regression.test.mjs",
     "test:therapy-goals": "node --import tsx tests/unit/therapy-goals.test.ts",
