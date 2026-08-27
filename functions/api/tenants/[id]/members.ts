@@ -5,6 +5,7 @@ import {
 } from "../../../../shared/tenant";
 import {
   getClinicMembership,
+  isReservedTechnicalEmail,
   membershipCanManage,
   prepareSaasAudit,
   tenantError,
@@ -50,7 +51,7 @@ async function managerContext(context: ManagerContextInput) {
   if (!membership || !membershipCanManage(membership)) {
     return { error: tenantError("Apenas gestores da clínica podem administrar a equipe.", "TENANT_FORBIDDEN", 403) } as const;
   }
-  return { db, user, clinicId, membership } as const;
+  return { db, user, clinicId, membership, env: context.env } as const;
 }
 
 function contextForManager(context: Parameters<PagesFunction<TenantEnv>>[0]): ManagerContextInput {
@@ -139,6 +140,14 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   if (!email || !isClinicMembershipRole(roleRaw)) {
     return tenantError("E-mail e role tenant válidos são obrigatórios.", "VALIDATION_ERROR", 400);
   }
+  if (isReservedTechnicalEmail(auth.env, email)) {
+    return tenantError(
+      "A conta técnica E2E é reservada e não pode integrar uma clínica.",
+      "TECHNICAL_ACCOUNT_RESERVED",
+      409,
+    );
+  }
+
   const role: ClinicMembershipRole = roleRaw;
   if (role === "owner" && auth.membership.role !== "owner") {
     return tenantError("Somente owner pode conceder papel owner.", "TENANT_FORBIDDEN", 403);
@@ -158,6 +167,13 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       "Usuário ainda não possui conta NeuroPed. O fluxo de convite por e-mail será adicionado antes do piloto.",
       "USER_NOT_REGISTERED",
       404,
+    );
+  }
+  if (isReservedTechnicalEmail(auth.env, target.email)) {
+    return tenantError(
+      "A conta técnica E2E é reservada e não pode integrar uma clínica.",
+      "TECHNICAL_ACCOUNT_RESERVED",
+      409,
     );
   }
 
@@ -197,20 +213,34 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const now = new Date().toISOString();
+  const reservedEmail = auth.env.NEUROPED_E2E_EMAIL?.trim().toLowerCase() ?? "";
   try {
     const results = await auth.db.batch([
       auth.db
         .prepare(
           `INSERT INTO clinic_memberships
             (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
-           VALUES (?, ?, ?, 1, ?, ?, ?)
+           SELECT ?, ?, ?, 1, ?, ?, ?
+            WHERE NOT EXISTS (
+              SELECT 1 FROM users u
+               WHERE u.id = ? AND lower(u.email) = ?
+            )
            ON CONFLICT(clinic_id, user_id) DO UPDATE SET
              role = excluded.role,
              active = 1,
              invited_by_user_id = excluded.invited_by_user_id,
              updated_at = excluded.updated_at`,
         )
-        .bind(auth.clinicId, target.id, role, auth.user.id, now, now),
+        .bind(
+          auth.clinicId,
+          target.id,
+          role,
+          auth.user.id,
+          now,
+          now,
+          target.id,
+          reservedEmail,
+        ),
       prepareSaasAudit(
         auth.db,
         {
@@ -228,7 +258,11 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       Number(results[0]?.meta?.changes ?? 0) !== 1 ||
       Number(results[1]?.meta?.changes ?? 0) !== 1
     ) {
-      return tenantError("Membership mudou durante a operação.", "MEMBERSHIP_STALE", 409);
+      return tenantError(
+        "Membership mudou durante a operação ou a identidade está reservada.",
+        "MEMBERSHIP_STALE",
+        409,
+      );
     }
   } catch (error) {
     if (isLastOwnerConstraintError(error)) {
