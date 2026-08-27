@@ -50,7 +50,7 @@ const polishCss = fs.readFileSync(
   "utf8",
 );
 
-for (const label of ["Início", "Pacientes", "Clínica", "Agenda"]) {
+for (const label of ["Início", "Pacientes", "Avaliar", "Agenda"]) {
   assert.match(
     dock,
     new RegExp(`label: \\"${label}\\"`),
