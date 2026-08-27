@@ -18,6 +18,7 @@ export const PUBLIC_ROUTES = [
   "/agendar", // Perfil e autoagendamento público com dados mínimos cifrados
   "/marcacao", // Encaminhamento público para a Secretaria IA de triagem administrativa
   "/eletroencefalograma", // Orientação institucional de Vídeo-EEG, sem conteúdo clínico individual
+  "/feedback", // Pesquisa NPS tokenizada, sem login e sem dados clínicos no link
   "/pre-consulta", // Formulário pré-consulta para família/recepção
   "/pre-retorno", // Atualização familiar antes do retorno
   "/efeitos-colaterais", // Alias familiar seguro do pré-retorno

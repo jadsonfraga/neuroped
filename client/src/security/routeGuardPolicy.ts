@@ -37,6 +37,7 @@ export const SENSITIVE_ROUTES = [
   "/conecta",
   "/agenda",
   "/manus",
+  "/hub-saas",
 ] as const;
 
 /**
