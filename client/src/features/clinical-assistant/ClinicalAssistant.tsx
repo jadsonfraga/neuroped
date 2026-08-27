@@ -3,18 +3,25 @@ import { Clock, Users, AlertCircle, ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { ClinicalAssistantInput } from "./types";
+import type { AssistantSuggestion, ClinicalAssistantInput } from "./types";
 import { suggestBattery } from "./suggestionEngine";
 
 interface ClinicalAssistantProps {
   initialAge?: number;
   onBatterySelected?: (scaleIds: string[]) => void;
+  onSuggestionSelected?: (suggestion: AssistantSuggestion) => void;
 }
 
-export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: ClinicalAssistantProps) {
+export function ClinicalAssistant({
+  initialAge = 60,
+  onBatterySelected,
+  onSuggestionSelected,
+}: ClinicalAssistantProps) {
   const [age, setAge] = useState(initialAge);
   const [complaint, setComplaint] = useState("tdah");
-  const [respondents, setRespondents] = useState<("pais" | "professor" | "clinico" | "crianca")[]>(["pais"]);
+  const [respondents, setRespondents] = useState<
+    ("pais" | "professor" | "clinico" | "crianca")[]
+  >(["pais"]);
   const [timeAvailable, setTimeAvailable] = useState(30);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [childCapabilities, setChildCapabilities] = useState({
@@ -33,9 +40,11 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
     { id: "comportamento", label: "Comportamento / Disruptivo" },
   ];
 
-  const toggleRespondent = (respondent: typeof respondents[number]) => {
+  const toggleRespondent = (respondent: (typeof respondents)[number]) => {
     setRespondents((prev) =>
-      prev.includes(respondent) ? prev.filter((r) => r !== respondent) : [...prev, respondent]
+      prev.includes(respondent)
+        ? prev.filter((r) => r !== respondent)
+        : [...prev, respondent],
     );
   };
 
@@ -52,8 +61,11 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
 
   const handleSelectBattery = () => {
     if (suggestion) {
-      const scaleIds = suggestion.battery.phases.flatMap((phase) => phase.scales.map((s) => s.id));
+      const scaleIds = suggestion.battery.phases.flatMap((phase) =>
+        phase.scales.map((s) => s.id),
+      );
       onBatterySelected?.(scaleIds);
+      onSuggestionSelected?.(suggestion);
     }
   };
 
@@ -70,8 +82,14 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
         <CardContent className="space-y-6">
           {/* Age Slider */}
           <div>
-            <label htmlFor="assistant-idade" className="block text-sm font-medium mb-2">
-              Idade: <span className="text-lg font-bold text-blue-600">{phrasedAge}</span>
+            <label
+              htmlFor="assistant-idade"
+              className="block text-sm font-medium mb-2"
+            >
+              Idade:{" "}
+              <span className="text-lg font-bold text-blue-600">
+                {phrasedAge}
+              </span>
             </label>
             <input
               id="assistant-idade"
@@ -87,7 +105,9 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
 
           {/* Main Complaint */}
           <div>
-            <label className="block text-sm font-medium mb-3">Queixa Principal</label>
+            <label className="block text-sm font-medium mb-3">
+              Queixa Principal
+            </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {commonComplaints.map((c) => (
                 <button
@@ -137,7 +157,10 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
 
           {/* Time Available */}
           <div>
-            <label htmlFor="assistant-tempo-disponivel" className="block text-sm font-medium mb-2 flex items-center gap-2">
+            <label
+              htmlFor="assistant-tempo-disponivel"
+              className="block text-sm font-medium mb-2 flex items-center gap-2"
+            >
               <Clock className="h-4 w-4" />
               Tempo Disponível na Consulta
             </label>
@@ -152,13 +175,17 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
                 onChange={(e) => setTimeAvailable(Number(e.target.value))}
                 className="flex-1"
               />
-              <span className="text-lg font-semibold text-blue-600 min-w-fit">{timeAvailable} min</span>
+              <span className="text-lg font-semibold text-blue-600 min-w-fit">
+                {timeAvailable} min
+              </span>
             </div>
           </div>
 
           {/* Child Capabilities */}
           <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <label className="block text-sm font-medium mb-3">Capacidades da Criança</label>
+            <label className="block text-sm font-medium mb-3">
+              Capacidades da Criança
+            </label>
             <div className="space-y-2">
               {[
                 { key: "canRead", label: "Consegue ler?" },
@@ -172,7 +199,9 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
                   <input
                     type="checkbox"
                     aria-label={c.label}
-                    checked={childCapabilities[c.key as keyof typeof childCapabilities]}
+                    checked={
+                      childCapabilities[c.key as keyof typeof childCapabilities]
+                    }
                     onChange={(e) =>
                       setChildCapabilities((prev) => ({
                         ...prev,
@@ -247,8 +276,12 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">{suggestion.battery.name}</CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">{suggestion.battery.explanation}</p>
+                  <CardTitle className="text-lg">
+                    {suggestion.battery.name}
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {suggestion.battery.explanation}
+                  </p>
                 </div>
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
@@ -261,9 +294,12 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
                 <div key={phase.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-blue-900">
-                      FASE {suggestion.battery.phases.indexOf(phase) + 1}: {phase.label}
+                      FASE {suggestion.battery.phases.indexOf(phase) + 1}:{" "}
+                      {phase.label}
                     </h4>
-                    <span className="text-sm font-medium text-gray-600">{phase.duration} min</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      {phase.duration} min
+                    </span>
                   </div>
 
                   <div className="space-y-2">
@@ -274,27 +310,39 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
                       >
                         <div className="flex-1">
                           <p className="font-medium text-sm">{scale.name}</p>
-                          <p className="text-xs text-gray-600 mt-0.5">{scale.reasoning}</p>
+                          <p className="text-xs text-gray-600 mt-0.5">
+                            {scale.reasoning}
+                          </p>
                           <div className="flex gap-2 mt-2">
                             <Badge variant="secondary" className="text-xs">
                               {scale.respondent}
                             </Badge>
                             <Badge
-                              variant={scale.priority === "essential" ? "default" : "outline"}
+                              variant={
+                                scale.priority === "essential"
+                                  ? "default"
+                                  : "outline"
+                              }
                               className="text-xs"
                             >
-                              {scale.priority === "essential" ? "Essencial" : "Complementar"}
+                              {scale.priority === "essential"
+                                ? "Essencial"
+                                : "Complementar"}
                             </Badge>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold text-gray-600 ml-2">{scale.duration}m</span>
+                        <span className="text-xs font-semibold text-gray-600 ml-2">
+                          {scale.duration}m
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
 
-              <p className="text-xs text-gray-600 italic">{suggestion.battery.clinicalNotes}</p>
+              <p className="text-xs text-gray-600 italic">
+                {suggestion.battery.clinicalNotes}
+              </p>
             </CardContent>
           </Card>
 
@@ -307,7 +355,11 @@ export function ClinicalAssistant({ initialAge = 60, onBatterySelected }: Clinic
               <ArrowRight className="h-4 w-4 mr-2" />
               Aplicar Esta Bateria
             </Button>
-            <Button onClick={() => setShowSuggestion(false)} variant="outline" className="flex-1">
+            <Button
+              onClick={() => setShowSuggestion(false)}
+              variant="outline"
+              className="flex-1"
+            >
               Editar Parâmetros
             </Button>
           </div>
