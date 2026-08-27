@@ -9,11 +9,12 @@ interface Env {
   ENVIRONMENT?: string;
   DEMO_API_WRITES_ENABLED?: string;
   NEUROPED_JWT_SECRET?: string;
+  NEUROPED_E2E_EMAIL?: string;
 }
 
 import { verifyJwt } from "./auth/_crypto";
 import { getUserById, publicUser, type PublicUser } from "./auth/_shared";
-import { isSessionFamilyActive } from "./auth/_sessions";
+import { isSessionFamilyActive, revokeSessionFamily } from "./auth/_sessions";
 import {
   canReadAuditLog,
   canWriteClinicalData,
@@ -142,6 +143,22 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
     if (!row || !row.is_active) return { failure: apiError("Sessão inválida.", "INVALID_SESSION", 401), user: null };
     if (!(await isSessionFamilyActive(env.DB, row.id, payload.sid))) {
       return { failure: apiError("Sessão revogada.", "INVALID_SESSION", 401), user: null };
+    }
+
+    const reservedE2EEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+    if (reservedE2EEmail && row.email.toLowerCase().trim() === reservedE2EEmail) {
+      const membership = await env.DB
+        .prepare(
+          `SELECT 1 AS has_membership FROM clinic_memberships WHERE user_id = ? LIMIT 1`,
+        )
+        .bind(row.id)
+        .first<{ has_membership: number }>();
+      if (row.role !== "reader" || membership) {
+        if (payload.sid) {
+          await revokeSessionFamily(env.DB, payload.sid, row.id, "account_disabled");
+        }
+        return { failure: apiError("Sessão inválida.", "INVALID_SESSION", 401), user: null };
+      }
     }
   } catch {
     return { failure: apiError("Autenticação temporariamente indisponível.", "AUTH_UNAVAILABLE", 503), user: null };
