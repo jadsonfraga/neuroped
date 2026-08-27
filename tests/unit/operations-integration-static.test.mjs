@@ -28,7 +28,19 @@ assert.match(app, /path="\/agendar"/);
 assert.match(nav, /href: "\/agenda",\s*label: "Agenda de hoje"/);
 assert.match(nav, /href: "\/agenda"[\s\S]{0,120}label: "Agenda & Gestão"/);
 
-assert.match(middleware, /"\/api\/public-booking"/);
+assert.doesNotMatch(
+  middleware,
+  /"\/api\/public-booking"\s*,/,
+  "public-booking não pode ser uma API aberta sem sessão",
+);
+assert.match(
+  bookingAdapter,
+  /app\.get\([\s\S]{0,160}"\/api\/public-booking"[\s\S]{0,80}requireAuth/,
+);
+assert.match(
+  bookingAdapter,
+  /app\.post\([\s\S]{0,160}"\/api\/public-booking"[\s\S]{0,80}requireAuth/,
+);
 assert.match(
   middleware,
   /user\.role === "operator" && path === "\/api\/operations" && method === "POST"/,

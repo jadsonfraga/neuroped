@@ -652,8 +652,16 @@ function AppRouter() {
                     <AgendaPage />
                   </RouteGuard>
                 </Route>
-                <Route path="/agendar" component={AgendarPage} />
-                <Route path="/marcacao" component={MarcacaoPage} />
+                <Route path="/agendar">
+                  <RouteGuard roles={["admin", "professional", "operator"]}>
+                    <AgendarPage />
+                  </RouteGuard>
+                </Route>
+                <Route path="/marcacao">
+                  <RouteGuard roles={["admin", "professional", "operator"]}>
+                    <MarcacaoPage />
+                  </RouteGuard>
+                </Route>
 
                 <Route path="/familia" component={FamiliaPage} />
                 <Route path="/portal-familia" component={PortalFamiliaPage} />

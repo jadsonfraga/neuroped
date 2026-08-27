@@ -214,7 +214,10 @@ function bridge(handler: PagesHandler) {
       });
       await sendWebResponse(response, res);
     } catch (error) {
-      if (error instanceof Error && error.message === "OPERATIONAL_CRYPTO_NOT_CONFIGURED") {
+      if (
+        error instanceof Error &&
+        error.message === "OPERATIONAL_CRYPTO_NOT_CONFIGURED"
+      ) {
         if (!res.headersSent) {
           res.status(503).json({
             error: "Criptografia operacional não configurada.",
@@ -248,10 +251,12 @@ export function registerBookingRoutes(app: Express): void {
 
   app.get(
     "/api/public-booking",
+    requireAuth,
     bridge(publicBookingGet as unknown as PagesHandler),
   );
   app.post(
     "/api/public-booking",
+    requireAuth,
     bridge(publicBookingPost as unknown as PagesHandler),
   );
 }
