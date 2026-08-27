@@ -47,6 +47,12 @@ assert.match(feedback, /MIN_INTERVAL_MS/);
 assert.doesNotMatch(feedback, /hover\(\)/);
 assert.doesNotMatch(feedback, /navigation\(\)/);
 
+// Chamadores legados também passam pelo limite, sem depender da nova camada.
+assert.match(softSounds, /SELECTION_SOUND_MIN_INTERVAL_MS = 180/);
+assert.match(softSounds, /softTick\(\): void \{\s*if \(!canPlay\(\) \|\| !shouldEmitSelectionSound\(\)\) return;/);
+assert.match(haptic, /SELECTION_HAPTIC_MIN_INTERVAL_MS = 180/);
+assert.match(haptic, /select: \(\) => vibrate\(5, SELECTION_HAPTIC_MIN_INTERVAL_MS\)/);
+
 // Som e háptico permanecem independentes; o hook antigo não usa mais arcade/8-bit.
 assert.match(useSound, /haptic\.tap\(\)/);
 assert.match(useSound, /uiFeedback\.success\(\)/);

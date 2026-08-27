@@ -15,6 +15,19 @@ const STORAGE_KEY = "neuroped:sounds";
 const VOLUME_STORAGE_KEY = "neuroped:sound-volume";
 export const SOUND_PREFERENCE_EVENT = "neuroped:sound-preference-changed";
 const DEFAULT_VOLUME = 0.35;
+const SELECTION_SOUND_MIN_INTERVAL_MS = 180;
+let lastSelectionSoundAt = -Infinity;
+
+function nowMs(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+function shouldEmitSelectionSound(): boolean {
+  const now = nowMs();
+  if (now - lastSelectionSoundAt < SELECTION_SOUND_MIN_INTERVAL_MS) return false;
+  lastSelectionSoundAt = now;
+  return true;
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -217,6 +230,7 @@ export function softWhoosh(): void {
 
 /** Seleção explícita de checkbox/radio ou escolha equivalente. */
 export function softTick(): void {
+  if (!canPlay() || !shouldEmitSelectionSound()) return;
   play({
     type: "sine",
     freq: 1800,

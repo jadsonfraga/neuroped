@@ -12,6 +12,12 @@
 
 const STORAGE_KEY = "neuroped:haptic";
 export const HAPTIC_PREFERENCE_EVENT = "neuroped:haptic-preference-changed";
+const SELECTION_HAPTIC_MIN_INTERVAL_MS = 180;
+let lastSelectionHapticAt = -Infinity;
+
+function nowMs(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
 
 function emitPreferenceChange(): void {
   if (typeof window === "undefined") return;
@@ -35,12 +41,17 @@ export function setHapticEnabled(enabled: boolean): void {
   emitPreferenceChange();
 }
 
-function vibrate(pattern: number | number[]): void {
+function vibrate(pattern: number | number[], minIntervalMs = 0): void {
   if (!isHapticEnabled()) return;
   if (typeof navigator === "undefined") return;
   if (typeof navigator.vibrate !== "function") return;
   if (typeof document !== "undefined" && document.visibilityState === "hidden") {
     return;
+  }
+  if (minIntervalMs > 0) {
+    const now = nowMs();
+    if (now - lastSelectionHapticAt < minIntervalMs) return;
+    lastSelectionHapticAt = now;
   }
   try {
     navigator.vibrate(pattern);
@@ -51,7 +62,7 @@ function vibrate(pattern: number | number[]): void {
 
 export const haptic = {
   tap: () => vibrate(10),
-  select: () => vibrate(5),
+  select: () => vibrate(5, SELECTION_HAPTIC_MIN_INTERVAL_MS),
   success: () => vibrate([12, 50, 12]),
   warning: () => vibrate([30, 50, 30]),
   error: () => vibrate([80, 30, 80, 30, 80]),
