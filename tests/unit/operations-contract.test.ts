@@ -90,6 +90,34 @@ const unlinkedDb = {
   prepare: () => ({ bind: () => ({ first: async () => null }) }),
 } as unknown as D1Database;
 
+function clinicScopedDb(
+  membershipRole: string | null,
+  providerInClinic = true,
+): D1Database {
+  return {
+    prepare: (sql: string) => ({
+      bind: (..._values: unknown[]) => ({
+        first: async () => {
+          if (sql.includes("FROM clinic_memberships") && !sql.includes("JOIN clinic_memberships")) {
+            return membershipRole ? { role: membershipRole } : null;
+          }
+          if (sql.includes("JOIN clinic_memberships provider_membership")) {
+            return providerInClinic
+              ? {
+                  provider_user_id: "provider-clinic-b",
+                  provider_name: "Profissional B",
+                  provider_role: "professional",
+                  is_active: 1,
+                }
+              : null;
+          }
+          return null;
+        },
+      }),
+    }),
+  } as unknown as D1Database;
+}
+
 assert.deepEqual(
   await resolveOperationsPrincipal(linkedDb, professional),
   {
@@ -100,7 +128,7 @@ assert.deepEqual(
     delegated: true,
     canConfigure: false,
   },
-  "vínculo de assistente deve prevalecer mesmo para conta profissional existente",
+  "fallback legado sem clinicId mantém o vínculo operacional existente",
 );
 assert.deepEqual(
   await resolveOperationsPrincipal(unlinkedDb, professional),
@@ -120,4 +148,44 @@ assert.equal(
   "vínculo inconsistente não pode elevar leitor ao contexto operacional",
 );
 
-console.log("✓ Operational contract: horários, sobreposição, status e dinheiro aprovados");
+assert.deepEqual(
+  await resolveOperationsPrincipal(clinicScopedDb("professional"), professional, "clinic-a"),
+  {
+    actorUserId: "professional-actor",
+    actorRole: "professional",
+    providerUserId: "professional-actor",
+    providerName: "Profissional",
+    delegated: false,
+    canConfigure: true,
+  },
+  "na clínica onde é profissional, a conta deve preservar a própria agenda",
+);
+assert.deepEqual(
+  await resolveOperationsPrincipal(clinicScopedDb("assistant"), professional, "clinic-b"),
+  {
+    actorUserId: "professional-actor",
+    actorRole: "professional",
+    providerUserId: "provider-clinic-b",
+    providerName: "Profissional B",
+    delegated: true,
+    canConfigure: false,
+  },
+  "na clínica onde é assistente, a mesma conta deve delegar apenas ao provider daquela clínica",
+);
+assert.equal(
+  await resolveOperationsPrincipal(clinicScopedDb("assistant", false), professional, "clinic-b"),
+  null,
+  "provider fora da clínica ativa não pode ser alcançado por vínculo operacional",
+);
+assert.equal(
+  await resolveOperationsPrincipal(clinicScopedDb(null), professional, "clinic-b"),
+  null,
+  "clinicId explícito sem membership ativa deve falhar fechado",
+);
+assert.equal(
+  await resolveOperationsPrincipal(clinicScopedDb("financial"), professional, "clinic-b"),
+  null,
+  "papel financeiro não pode adquirir contexto operacional da agenda",
+);
+
+console.log("✓ Operational contract: horários, sobreposição, status, dinheiro e escopo multi-clínica aprovados");
