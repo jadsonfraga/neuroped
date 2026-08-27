@@ -30,6 +30,16 @@ body.np-legal-gate-open {
     bottom: calc(6.6rem + env(safe-area-inset-bottom)) !important;
     pointer-events: none !important;
   }
+
+  .np-cognitive-evaluation {
+    scroll-padding-top: calc(var(--np-appbar-height, 3.5rem) + 1rem);
+    scroll-padding-bottom: calc(6.35rem + env(safe-area-inset-bottom) + 1rem);
+  }
+
+  .np-cognitive-evaluation [id="cognitive-active-domain"] {
+    scroll-margin-top: calc(var(--np-appbar-height, 3.5rem) + 1rem);
+    scroll-margin-bottom: calc(6.35rem + env(safe-area-inset-bottom) + 1rem);
+  }
 }
 
 @media print {
