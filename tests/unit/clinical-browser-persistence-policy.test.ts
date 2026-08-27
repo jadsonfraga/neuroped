@@ -88,7 +88,7 @@ for (const namespace of [
 
 assert.deepEqual(
   [...LIVE_BROWSER_LOCAL_CLINICAL_ROUTES],
-  ["/caa", "/assinatura-digital", "/cognitive-lab"],
+  ["/caa", "/assinatura-digital", "/cognitive-lab", "/conecta", "/memoria-clinica"],
   "a lista fail-closed deve ser explícita e revisável",
 );
 for (const route of [
@@ -96,6 +96,8 @@ for (const route of [
   "/assinatura-digital",
   "/cognitive-lab",
   "/cognitive-lab/go-no-go",
+  "/conecta",
+  "/memoria-clinica",
 ]) {
   assert.equal(
     isLiveBrowserLocalClinicalRouteDenied(route, "remote", true),
@@ -113,7 +115,7 @@ for (const route of [
     `${route} não deve interferir no fluxo de autenticação antes da sessão`,
   );
 }
-for (const route of ["/agenda", "/conecta", "/pre-consulta", "/diario-sono"] ) {
+for (const route of ["/agenda", "/pre-consulta", "/diario-sono"] ) {
   assert.equal(
     isLiveBrowserLocalClinicalRouteDenied(route, "remote", true),
     false,

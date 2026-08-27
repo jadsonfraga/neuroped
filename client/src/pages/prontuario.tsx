@@ -20,6 +20,7 @@ import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
 import { apiRequest } from "@/lib/queryClient";
+import { currentAppSearchParams } from "@/lib/appUrl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 
@@ -144,7 +145,7 @@ const marcoKeys: (keyof Marcos)[] = [
 
 function patientIdFromQuery(): string {
   if (typeof window === "undefined") return "";
-  return new URLSearchParams(window.location.search).get("patientId")?.trim() ?? "";
+  return currentAppSearchParams().get("patientId")?.trim() ?? "";
 }
 
 function parseClinicalNote(note: unknown): Record<string, unknown> {

@@ -1,0 +1,204 @@
+name: Deploy Vercel Preview
+
+on:
+  push:
+    branches:
+      - agent/mission-2026-08-25
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: vercel-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      PREVIEW_SHA: ${{ github.sha }}
+      PREVIEW_REF: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout exact preview commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.PREVIEW_SHA }}
+
+      - name: Configure Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Assert preview-only execution
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" != "refs/heads/main"
+          test "$PREVIEW_REF" != "main"
+          test -n "${VERCEL_ORG_ID:-}" || { echo "::error::VERCEL_ORG_ID ausente"; exit 1; }
+          test -n "${{ secrets.VERCEL_TOKEN }}" || { echo "::error::VERCEL_TOKEN ausente"; exit 1; }
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Run preview safety gates
+        run: |
+          set -euo pipefail
+          npm run check
+          npm run validate:public
+          npm run audit:access
+          npm run test:publish-safety
+
+      - name: Build preview artifact
+        env:
+          NODE_ENV: production
+          NEUROPED_VERCEL_PREVIEW_PROXY: "1"
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+          VITE_ZONE: full
+          VITE_ALLOWED_HOSTS: ""
+          VERCEL_GIT_COMMIT_SHA: ${{ env.PREVIEW_SHA }}
+          VERCEL_GIT_COMMIT_REF: ${{ env.PREVIEW_REF }}
+        run: VITE_PIN_HASH= npm run build:client
+
+      - name: Audit built artifact
+        run: npm run test:bundle-audit && npm run audit:bundle && npm run audit:built-pin
+
+      - name: Install pinned Vercel CLI
+        run: npm install --global vercel@56.4.1
+
+      - name: Deploy isolated preview
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          token="$VERCEL_TOKEN"
+          unset VERCEL_TOKEN
+          export VERCEL_PROJECT_ID="prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
+          rm -rf .vercel
+          vercel pull --yes --environment=preview --token="$token"
+          NEUROPED_VERCEL_PREVIEW_PROXY=1 \
+          VITE_AUTH_MODE=remote \
+          VITE_API_URL= \
+          VITE_PIN_HASH= \
+          VITE_ZONE=full \
+          VITE_ALLOWED_HOSTS= \
+          VERCEL_GIT_COMMIT_SHA="$PREVIEW_SHA" \
+          VERCEL_GIT_COMMIT_REF="$PREVIEW_REF" \
+            vercel build --token="$token"
+          npm run audit:built-pin
+          url=$(vercel deploy --prebuilt --token="$token")
+          echo "PREVIEW_URL=$url" >> "$GITHUB_ENV"
+          echo "Preview: $url"
+
+      - name: Inspect and smoke-test protected preview
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          token="$VERCEL_TOKEN"
+          unset VERCEL_TOKEN
+          export VERCEL_PROJECT_ID="prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b"
+          VERCEL_TOKEN="$token" vercel inspect "$PREVIEW_URL"
+          VERCEL_TOKEN="$token" vercel curl / --deployment "$PREVIEW_URL" -o /tmp/preview-root.html
+          test -s /tmp/preview-root.html
+          VERCEL_TOKEN="$token" vercel curl /deploy-check.json --deployment "$PREVIEW_URL" -o /tmp/preview-sentinel.json
+          node -e '
+            const fs = require("node:fs");
+            const check = JSON.parse(fs.readFileSync("/tmp/preview-sentinel.json", "utf8"));
+            const expectedCommit = process.env.PREVIEW_SHA.slice(0, 12);
+            if (
+              check.app !== "NeuroPed" ||
+              check.provider !== "vercel" ||
+              check.status !== "deployed" ||
+              check.branch !== process.env.PREVIEW_REF ||
+              check.commit !== expectedCommit
+            ) {
+              console.error("Sentinela canônica não corresponde ao preview atual.", { check, expectedCommit, expectedBranch: process.env.PREVIEW_REF });
+              process.exit(1);
+            }
+            console.log("Preview validado no commit", check.commit, "branch", check.branch);
+          '
+
+          # O preview usa /api same-origin; o Vercel faz proxy server-side para o
+          # backend Cloudflare canônico sem ampliar a allowlist CORS de produção.
+          VERCEL_TOKEN="$token" vercel curl /api/health --deployment "$PREVIEW_URL" -o /tmp/preview-api-health.json
+          node -e '
+            const fs = require("node:fs");
+            const health = JSON.parse(fs.readFileSync("/tmp/preview-api-health.json", "utf8"));
+            if (
+              health.database !== "ok" ||
+              health.authentication?.required !== true ||
+              health.authentication?.configured !== true
+            ) {
+              console.error("Proxy /api do preview não alcançou backend canônico saudável.", health);
+              process.exit(1);
+            }
+            console.log("Proxy same-origin /api validado contra Cloudflare.");
+          '
+
+      - name: Publish preview URL in job summary
+        if: success()
+        run: |
+          {
+            echo "## NeuroPed — Vercel Preview"
+            echo
+            echo "- Branch: \`$PREVIEW_REF\`"
+            echo "- Commit: \`$PREVIEW_SHA\`"
+            echo "- URL: $PREVIEW_URL"
+            echo "- API: **same-origin proxy validado**"
+            echo "- Production alias: **não alterado**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview result on matching PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          pr_number=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$PREVIEW_REF" --base main --state open --json number --jq '.[0].number // empty')
+          [ -n "$pr_number" ] || exit 0
+          marker='<!-- neuroped-vercel-preview -->'
+          actions_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "$JOB_STATUS" = "success" ] && [ -n "${PREVIEW_URL:-}" ]; then
+            body=$(cat <<EOF
+          $marker
+          ## NeuroPed — Preview Vercel validado
+
+          - URL: $PREVIEW_URL
+          - Commit: \`$PREVIEW_SHA\`
+          - Produção: **não alterada**
+          - API: **proxy same-origin para Cloudflare validado**
+          - Gate: \`check + public/access + publish-safety + build + artifact audit + vercel inspect/curl + canonical deploy-check + /api/health\`
+          - Execução: $actions_url
+          EOF
+          )
+          else
+            body=$(cat <<EOF
+          $marker
+          ## NeuroPed — Preview Vercel não liberado
+
+          - Commit: \`$PREVIEW_SHA\`
+          - Produção: **não alterada**
+          - Estado do job: \`$JOB_STATUS\`
+          - Execução para diagnóstico: $actions_url
+          EOF
+          )
+          fi
+          existing_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$pr_number/comments" --paginate --jq ".[] | select(.user.type == \"Bot\" and (.body | contains(\"$marker\"))) | .id" | head -n1)
+          if [ -n "$existing_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing_id" -f body="$body" >/dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$pr_number/comments" -f body="$body" >/dev/null
+          fi

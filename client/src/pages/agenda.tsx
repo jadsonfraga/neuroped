@@ -27,6 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   formatMoneyBRL,
@@ -113,16 +115,45 @@ function auditActionLabel(value: string): string {
 
 export default function AgendaPage() {
   const { toast } = useToast();
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
   const data = dashboard.data;
   const [patientSearch, setPatientSearch] = useState("");
   const patientSearchParam = encodeURIComponent(patientSearch.trim());
-  const patientsQuery = useQuery<{ data: Array<{ id: string; name: string; birthDate?: string | null }>; total?: number }>({
-    queryKey: [`/api/patients?limit=50&page=1&q=${patientSearchParam}`],
-    enabled: Boolean(data?.access.canConfigure),
+  const patientQueryKey = isRemoteClinical
+    ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+    : `/api/patients?limit=50&page=1&q=${patientSearchParam}`;
+  const patientsQuery = useQuery<any>({
+    queryKey: [patientQueryKey],
+    enabled:
+      Boolean(data?.access.canConfigure) &&
+      (!isRemoteClinical || Boolean(activeClinicId)),
     staleTime: 30_000,
   });
-  const patientOptions = patientsQuery.data?.data ?? [];
+  const patientOptions = useMemo(() => {
+    const raw = patientsQuery.data;
+    const list = Array.isArray(raw) ? raw : (raw?.data ?? []);
+    if (!Array.isArray(list)) return [];
+    const normalizedSearch = patientSearch.trim().toLocaleLowerCase("pt-BR");
+    return list
+      .map((patient: any) => ({
+        id: String(patient?.id ?? ""),
+        name: isRemoteClinical ? patient?.profile?.name : patient?.name,
+        birthDate: isRemoteClinical
+          ? patient?.profile?.birthDate
+          : patient?.birthDate,
+      }))
+      .filter(
+        (patient: any) =>
+          patient.id &&
+          typeof patient.name === "string" &&
+          (!normalizedSearch ||
+            patient.name.toLocaleLowerCase("pt-BR").includes(normalizedSearch)),
+      )
+      .slice(0, 50);
+  }, [isRemoteClinical, patientSearch, patientsQuery.data]);
   const [busy, setBusy] = useState(false);
   const [staffEmail, setStaffEmail] = useState("");
   const [agendaDate, setAgendaDate] = useState(localDateInput);

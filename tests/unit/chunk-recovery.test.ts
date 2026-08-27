@@ -11,6 +11,7 @@ for (const message of [
   "TypeError: Failed to fetch dynamically imported module",
   "Importing a module script failed",
   "error loading dynamically imported module: /assets/page.js",
+  "Unable to preload CSS for https://neuroped.pages.dev/assets/route.css",
 ]) {
   assert.equal(isRecoverableChunkError(new Error(message)), true, message);
 }
@@ -78,6 +79,16 @@ assert.match(
   boundarySource,
   /attemptChunkRecovery\(error,\s*online\)/,
   "AppErrorBoundary deve encaminhar falhas de chunk para a autocura",
+);
+
+const kidsStyles = readFileSync(
+  new URL("../../client/src/styles/brincando.css", import.meta.url),
+  "utf8",
+);
+assert.doesNotMatch(
+  kidsStyles,
+  /^\s*@import\s+url\(["']?https?:\/\//m,
+  "CSS lazy infantil deve ser autocontido para não derrubar a rota por fonte externa",
 );
 
 console.log("✓ recuperação automática reconhece chunks e cobre React.lazy/ErrorBoundary");

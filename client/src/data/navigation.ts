@@ -3,6 +3,7 @@ import {
   Activity,
   Baby,
   BookOpen,
+  CreditCard,
   Brain,
   BrainCog,
   Calculator,
@@ -108,6 +109,8 @@ export const navSections: NavSection[] = [
   {
     title: "ATENDIMENTO",
     items: [
+      { href: "/planos", label: "Planos NeuroPed", icon: CreditCard },
+      { href: "/assinatura", label: "Assinatura e equipe", icon: CreditCard },
       { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       {
         href: "/pacientes",

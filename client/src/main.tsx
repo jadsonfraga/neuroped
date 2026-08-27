@@ -56,9 +56,18 @@ try {
   );
 }
 
-if (!window.location.hash) {
+function seedHashRouteFromPublicPath(): void {
+  if (window.location.hash) return;
+  const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+  const publicPath = pathname === "/invite" || pathname === "/planos";
+  if (publicPath) {
+    window.location.hash = `#${pathname}${window.location.search}`;
+    return;
+  }
   window.location.hash = "#/";
 }
+
+seedHashRouteFromPublicPath();
 
 printProprietaryNotice();
 

@@ -59,15 +59,19 @@ const clinicalNamespacePrefixes: Array<[string, ClinicalBrowserDataType]> = [
 ];
 
 /**
- * Superfícies cuja função clínica depende de um workspace/histórico local e
- * que ainda não possuem fonte tenant-aware equivalente no backend canônico.
- * Em LIVE remoto elas falham fechadas ANTES do mount, em vez de montar e
- * depender apenas do guard de Storage para neutralizar tentativas legadas.
+ * Superfícies clínicas que ainda dependem de workspace browser-local ou de
+ * tabelas D1 demonstrativas, sem fonte tenant-aware equivalente no backend
+ * canônico. Em LIVE remoto elas falham fechadas ANTES do mount.
+ *
+ * O nome exportado é preservado por compatibilidade; a regra cobre qualquer
+ * persistência clínica não canônica, e não somente Storage do navegador.
  */
 export const LIVE_BROWSER_LOCAL_CLINICAL_ROUTES = [
   "/caa",
   "/assinatura-digital",
   "/cognitive-lab",
+  "/conecta",
+  "/memoria-clinica",
 ] as const;
 
 function stripSecureNamespace(namespace: string): string {

@@ -70,7 +70,23 @@ async function inspectEnvironment(browser, origin) {
     const item = { route, ok: false, url: null, title: null, bodySample: null, authWall: false, controls: {} };
     try {
       await page.goto(`${origin}${route}`, { waitUntil: "domcontentloaded", timeout: 30000 });
-      await page.waitForTimeout(2500);
+      const publicContentRoute = [
+        "/",
+        "/#/filtro",
+        "/#/marcacao",
+        "/#/missao-saude",
+        "/#/eletroencefalograma",
+      ].includes(route);
+      if (publicContentRoute) {
+        await page.locator("main").waitFor({ state: "visible", timeout: 20000 });
+      } else {
+        await page.waitForFunction(
+          () => (document.body?.innerText ?? "").trim().length > 20,
+          null,
+          { timeout: 20000 },
+        );
+      }
+      await page.waitForTimeout(500);
       item.url = page.url();
       item.title = await page.title();
       item.bodySample = (await page.locator("body").innerText()).replace(/\s+/g, " ").slice(0, 320);

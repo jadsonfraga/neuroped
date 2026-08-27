@@ -26,11 +26,13 @@ const pendingFileId = crypto.randomUUID();
 const pdfBytes = Buffer.from("%PDF-1.7\nclinical-test\n%%EOF\n", "utf8");
 const sha256 = crypto.createHash("sha256").update(pdfBytes).digest("hex");
 const now = new Date().toISOString();
+const sessionId = crypto.randomUUID();
 const token = signAccessToken({
   userId,
   email: "document-test@example.test",
   role: "professional",
   name: "Profissional Teste",
+  sessionId,
 });
 
 // O teste usa um arquivo confirmado no storage lógico; o upload remoto é coberto
@@ -45,6 +47,20 @@ db.insert(users).values({
   createdAt: now,
   updatedAt: now,
 }).run();
+
+sqlite
+  .prepare(
+    `INSERT INTO refresh_tokens
+      (id, user_id, token_hash, issued_at, expires_at)
+     VALUES (?, ?, ?, ?, ?)`,
+  )
+  .run(
+    sessionId,
+    userId,
+    `fixture-session-${sessionId}`,
+    now,
+    new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  );
 
 db.insert(files).values({
   id: fileId,

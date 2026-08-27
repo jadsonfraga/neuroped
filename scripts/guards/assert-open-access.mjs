@@ -10,7 +10,7 @@
  *
  * Campos de senha são permitidos apenas em superfícies explicitamente revisadas:
  * login nominal, troca de senha da conta, gate de senha obrigatória, certificado
- * A1 local e compatibilidade legada já neutralizada. Qualquer novo type=password
+ * A1 local, criação de conta por convite e compatibilidade legada já neutralizada. Qualquer novo type=password
  * fora dessa lista falha fechado.
  *
  * A autorização dos dados persistidos permanece na API e não é alterada por
@@ -207,6 +207,7 @@ const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/RequiredPasswordChangeGate.tsx",
   "client/src/pages/generic-scale.tsx",
   "client/src/pages/login.tsx",
+  "client/src/pages/convite.tsx",
 ].sort();
 
 await check("somente superfícies de autenticação/segurança explicitamente aprovadas podem receber senha", () => {

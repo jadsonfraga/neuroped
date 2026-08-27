@@ -195,6 +195,9 @@ const FamiliaPage = lazy(() => import("@/pages/familia"));
 const PortalNovidadesPage = lazy(() => import("@/pages/portal-novidades-safe"));
 const PortalAcessoPage = lazy(() => import("@/pages/portal-acesso"));
 const AcessibilidadePage = lazy(() => import("@/pages/acessibilidade"));
+const PlanosPage = lazy(() => import("@/pages/planos"));
+const ConvitePage = lazy(() => import("@/pages/convite"));
+const AssinaturaPage = lazy(() => import("@/pages/assinatura"));
 const SobreNeuropedPage = lazy(() => import("@/pages/sobre-neuroped"));
 const GlossarioPage = lazy(() => import("@/pages/glossario"));
 const InstrumentosPadronizadosPage = lazy(
@@ -316,6 +319,19 @@ function AppRouter() {
     );
   }
 
+  // As superfícies de aquisição e convite possuem landmarks próprios e não devem
+  // herdar a navegação clínica nem montar dados sensíveis por acidente.
+  if (location === "/planos" || location === "/invite") {
+    return (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Switch>
+          <Route path="/planos" component={PlanosPage} />
+          <Route path="/invite" component={ConvitePage} />
+        </Switch>
+      </Suspense>
+    );
+  }
+
   // O Vídeo-EEG é um handoff institucional para famílias, sem dados clínicos
   // nem redirecionamento externo. Ele não deve herdar o layout ou o gate médico.
   if (location === "/eletroencefalograma") {
@@ -335,6 +351,11 @@ function AppRouter() {
           <Switch>
             <Route path="/login" component={LoginPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
+            <Route path="/assinatura">
+              <RouteGuard roles={["admin", "professional"]}>
+                <AssinaturaPage />
+              </RouteGuard>
+            </Route>
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
             <Route path="/" component={HomePage} />

@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx cross-env VITE_AUTH_MODE=remote VITE_API_URL=https://neuroped.pages.dev VITE_PIN_HASH= VITE_ZONE=full VITE_ALLOWED_HOSTS= npm run build:client && npm run audit:built-pin",
+  "buildCommand": ": ${VITE_API_URL=https://neuroped.pages.dev}; VITE_AUTH_MODE=remote VITE_API_URL=\"$VITE_API_URL\" VITE_PIN_HASH= VITE_ZONE=full VITE_ALLOWED_HOSTS= npm run build:client&&npm run audit:built-pin",
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",
   "framework": "vite",
@@ -8,6 +8,10 @@
     "deploymentEnabled": false
   },
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://neuroped.pages.dev/api/:path*"
+    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"

@@ -11,6 +11,8 @@
 
 export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
+  "/planos", // Aquisição pública do SaaS sem dados clínicos
+  "/invite", // Aceite público de convite com token opaco
   "/sessao-expirada", // Recuperação de sessão remota
   "/familia", // Capa pública (home das famílias)
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos

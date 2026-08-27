@@ -81,6 +81,9 @@ drizzle/
 *.tmp
 *.bak
 
+# Recuperação local de estado-fonte (preservar fora do commit)
+.neuroped-state/
+
 # Claude Code agent worktrees
 .claude/worktrees/
 

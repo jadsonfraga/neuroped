@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUBLIC_HOME } from "@/lib/publicRoutes";
 import { MEDICAL_URL } from "@/lib/zone";
+import { resolveLoginDestination, stripLoginNextParameter } from "@/lib/loginRedirect";
 
 function readableLoginError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -29,8 +30,13 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
+      const destination = resolveLoginDestination(window.location.href);
       await login(email.trim(), password);
-      setLocation("/");
+      const cleanHref = stripLoginNextParameter(window.location.href);
+      if (cleanHref !== window.location.href) {
+        window.history.replaceState(window.history.state, "", cleanHref);
+      }
+      setLocation(destination);
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {
