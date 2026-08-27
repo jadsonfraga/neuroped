@@ -55,6 +55,8 @@
     "audit:security": "npm audit --omit=dev --audit-level=high",
     "audit:lighthouse": "node scripts/audit-lighthouse.mjs",
     "audit:visual:master": "node scripts/master-visual-audit.mjs",
+    "audit:integrations": "node scripts/audit-persistent-integrations.mjs",
+    "test:integrations": "node scripts/integrations-smoke.mjs",
     "test:ux:master": "node scripts/master-ux-smoke.mjs",
     "audit:a11y": "node scripts/audit-a11y.mjs",
     "audit:a11y:full": "cross-env A11Y_FULL=1 node scripts/audit-a11y.mjs",

@@ -151,7 +151,7 @@ export const navSections: NavSection[] = [
         icon: ShieldCheck,
       },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
+      { href: "/manus", label: "Experiências integradas", icon: Globe2 },
     ],
   },
   {
@@ -341,13 +341,13 @@ const featuredSection: NavSection = {
 const allNavigationSections = [featuredSection, ...navSections];
 
 /** Destinos estáticos não devem ser enviados para o roteador hash da SPA. */
-const staticExternalNavigationRoutes = new Set(["/nesplora/"]);
+const staticLocalNavigationRoutes = new Set(["/nesplora/"]);
 
 export const navigablePages = Array.from(
   new Map(
     allNavigationSections
       .flatMap((section) => section.items)
-      .filter((item) => !staticExternalNavigationRoutes.has(item.href))
+      .filter((item) => !staticLocalNavigationRoutes.has(item.href))
       .map((item) => [item.href, item]),
   ).values(),
 );
