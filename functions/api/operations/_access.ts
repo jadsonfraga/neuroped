@@ -101,18 +101,11 @@ export async function resolveOperationsPrincipal(
   db: D1Database,
   user: PublicUser,
 ): Promise<OperationsPrincipal | null> {
-  if (user.role === "admin" || user.role === "professional") {
-    return {
-      actorUserId: user.id,
-      actorRole: user.role,
-      providerUserId: user.id,
-      providerName: user.name,
-      delegated: false,
-      canConfigure: true,
-    };
-  }
-
-  if (user.role !== "operator") return null;
+  if (
+    user.role !== "operator"
+    && user.role !== "admin"
+    && user.role !== "professional"
+  ) return null;
 
   const row = await db
     .prepare(
@@ -131,9 +124,22 @@ export async function resolveOperationsPrincipal(
     }>();
 
   if (!row || !row.is_active || !["admin", "professional"].includes(row.provider_role)) {
+    if (user.role === "admin" || user.role === "professional") {
+      return {
+        actorUserId: user.id,
+        actorRole: user.role,
+        providerUserId: user.id,
+        providerName: user.name,
+        delegated: false,
+        canConfigure: true,
+      };
+    }
     return null;
   }
 
+  // O vínculo operacional é mais específico que o papel global. Isso preserva
+  // a delegação quando um profissional de uma clínica aceita atuar como
+  // assistente em outra, sem rebaixar seu papel global.
   return {
     actorUserId: user.id,
     actorRole: user.role,

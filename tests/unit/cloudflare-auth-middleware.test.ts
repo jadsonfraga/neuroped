@@ -69,6 +69,22 @@ assert.equal((await call("/api/patients", { DB: {} })).status, 503, "D1 sem segr
 assert.equal((await call("/api/patients", { DB: {}, NEUROPED_JWT_SECRET: secret })).status, 401);
 assert.equal((await call("/api/health", { DB: {} })).status, 200, "health é público");
 
+const publicInvitationAccept = await onRequest({
+  request: new Request("https://neuroped.test/api/billing/accept", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: "token-publico-de-convite-com-comprimento-suficiente" }),
+  }),
+  env: { DB: {} },
+  next,
+  data: {},
+} as never);
+assert.equal(
+  publicInvitationAccept.status,
+  200,
+  "aceite por capability token deve atravessar o middleware sem sessão prévia",
+);
+
 const distributedBlockUntil = Date.now() + 45_000;
 const blockedByKv = await onRequest({
   request: new Request("https://neuroped.test/api/health", {

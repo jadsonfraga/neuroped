@@ -20,6 +20,8 @@ const invitation = read("client/src/pages/convite.tsx");
 const client = read("client/src/lib/saasClient.ts");
 const billingMe = read("functions/api/billing/me.ts");
 const invitationAccept = read("functions/api/billing/accept.ts");
+const apiMiddleware = read("functions/api/_middleware.ts");
+const operationsAccess = read("functions/api/operations/_access.ts");
 
 assert.match(app, /const PlanosPage = lazy\(\(\) => import\("@\/pages\/planos"\)\)/);
 assert.match(app, /const ConvitePage = lazy\(\(\) => import\("@\/pages\/convite"\)\)/);
@@ -71,6 +73,11 @@ assert.match(invitationAccept, /INSERT INTO booking_staff_links/);
 assert.match(invitationAccept, /ASSISTANT_PROVIDER_REQUIRED/);
 assert.match(invitationAccept, /STAFF_ALREADY_LINKED/);
 assert.match(invitationAccept, /operationsProviderId: assistantProviderId/);
+assert.match(apiMiddleware, /"\/api\/billing\/accept"/);
+assert.ok(
+  operationsAccess.indexOf("FROM booking_staff_links") < operationsAccess.indexOf('user.role === "admin"'),
+  "vínculo operacional deve ser resolvido antes do fallback para Agenda própria",
+);
 
 assert.match(client, /authFetch\("\/api\/billing\/checkout"/);
 assert.match(client, /authFetch\("\/api\/billing\/accept"/);

@@ -14,6 +14,7 @@ import {
   selectFutureSlots,
 } from "../../shared/operations";
 import { validSlug } from "../../functions/api/operations/_core";
+import { resolveOperationsPrincipal } from "../../functions/api/operations/_access";
 
 assert.deepEqual(bookingModalities, ["in_person", "remote"]);
 assert.ok(appointmentStatuses.includes("checked_in"));
@@ -65,5 +66,58 @@ assert.deepEqual(
   "regras de disponibilidade sobrepostas não devem duplicar o mesmo horário público",
 );
 assert.match(formatMoneyBRL(50000), /500/);
+
+const professional = {
+  id: "professional-actor",
+  email: "professional@example.test",
+  name: "Profissional",
+  role: "professional",
+  mustChangePassword: false,
+};
+const linkedDb = {
+  prepare: () => ({
+    bind: () => ({
+      first: async () => ({
+        provider_user_id: "inviting-provider",
+        provider_name: "Profissional responsável",
+        provider_role: "professional",
+        is_active: 1,
+      }),
+    }),
+  }),
+} as unknown as D1Database;
+const unlinkedDb = {
+  prepare: () => ({ bind: () => ({ first: async () => null }) }),
+} as unknown as D1Database;
+
+assert.deepEqual(
+  await resolveOperationsPrincipal(linkedDb, professional),
+  {
+    actorUserId: "professional-actor",
+    actorRole: "professional",
+    providerUserId: "inviting-provider",
+    providerName: "Profissional responsável",
+    delegated: true,
+    canConfigure: false,
+  },
+  "vínculo de assistente deve prevalecer mesmo para conta profissional existente",
+);
+assert.deepEqual(
+  await resolveOperationsPrincipal(unlinkedDb, professional),
+  {
+    actorUserId: "professional-actor",
+    actorRole: "professional",
+    providerUserId: "professional-actor",
+    providerName: "Profissional",
+    delegated: false,
+    canConfigure: true,
+  },
+  "profissional sem vínculo mantém sua própria Agenda",
+);
+assert.equal(
+  await resolveOperationsPrincipal(linkedDb, { ...professional, role: "reader" }),
+  null,
+  "vínculo inconsistente não pode elevar leitor ao contexto operacional",
+);
 
 console.log("✓ Operational contract: horários, sobreposição, status e dinheiro aprovados");
