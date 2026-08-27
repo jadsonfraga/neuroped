@@ -11,6 +11,7 @@ import drSuperman from "@assets/images/dr-jadson-consultorio-superman.jpeg";
 import drFull from "@assets/images/dr-jadson-consultorio-full.jpeg";
 import drArte from "@assets/images/dr-jadson-arte.jpeg";
 import drLogoSuper from "@assets/images/dr-jadson-logo-super.jpeg";
+import { NationalSignature } from "@/components/NationalSignature";
 
 const photos = [
   { src: drSuperman, alt: "Dr. Jadson — SuperNeuroPed", caption: "O SuperNeuroPed no consultório" },
@@ -84,6 +85,8 @@ export default function SobrePage() {
           </div>
         </div>
       </div>
+
+      <NationalSignature />
 
       <Card className="overflow-hidden border-primary/20 shadow-lg">
         <div className="h-1.5 bg-gradient-to-r from-primary via-chart-2 to-primary" />

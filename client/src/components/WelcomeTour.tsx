@@ -227,7 +227,7 @@ export function WelcomeTour() {
           aria-label="Tour guiado"
         >
           <div
-            className="absolute inset-0 bg-[rgba(8,8,20,0.55)] backdrop-blur-[2px]"
+            className="np-tour-backdrop absolute inset-0 backdrop-blur-[3px]"
             onClick={finish}
             aria-hidden="true"
           />
@@ -241,8 +241,7 @@ export function WelcomeTour() {
                 top: rect.top - 6,
                 width: rect.width + 12,
                 height: rect.height + 12,
-                boxShadow:
-                  "0 0 0 9999px rgba(8,8,20,0.62), 0 0 0 3px hsl(243 85% 66%), 0 0 32px 4px hsl(243 85% 66% / 0.6)",
+                  boxShadow: "var(--np-tour-spotlight-shadow)",
               }}
             />
           )}
@@ -250,23 +249,23 @@ export function WelcomeTour() {
           <div
             ref={cardRef}
             tabIndex={-1}
-            className="absolute z-[100000] w-[min(344px,calc(100vw-36px))] rounded-2xl border border-indigo-400/40 bg-gradient-to-b from-[#15152a] to-[#101022] p-5 pr-12 text-indigo-50 shadow-2xl outline-none transition-[left,top] duration-300"
+            className="np-tour-card absolute z-[100000] w-[min(344px,calc(100vw-36px))] rounded-2xl border p-5 pr-12 outline-none transition-[left,top] duration-300"
             style={cardStyle}
           >
             <button
               type="button"
               onClick={finish}
               aria-label="Fechar o tour"
-              className="absolute right-1.5 top-1.5 grid h-11 w-11 place-items-center rounded-xl bg-white/10 text-indigo-100 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+              className="np-tour-close absolute right-1.5 top-1.5 grid h-11 w-11 place-items-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
 
             {step.emoji && <div className="mb-2 text-3xl leading-none">{step.emoji}</div>}
-            <h3 id="tour-step-title" className="mb-1.5 text-lg font-bold tracking-tight text-white">
+            <h3 id="tour-step-title" className="mb-1.5 text-lg font-bold tracking-tight text-foreground">
               {step.title}
             </h3>
-            <p id="tour-step-body" className="mb-4 text-sm leading-relaxed text-indigo-100/80">
+            <p id="tour-step-body" className="mb-4 text-sm leading-relaxed text-muted-foreground">
               {step.body}
             </p>
 
@@ -275,9 +274,7 @@ export function WelcomeTour() {
                 {STEPS.map((_, d) => (
                   <span
                     key={d}
-                    className={`h-1.5 w-1.5 rounded-full transition-all ${
-                      d === idx ? "bg-indigo-400 shadow-[0_0_8px] shadow-indigo-400" : "bg-indigo-400/30"
-                    }`}
+                    className={`np-tour-progress h-1.5 w-1.5 rounded-full transition-all ${d === idx ? "np-tour-progress-active" : ""}`}
                   />
                 ))}
               </div>
@@ -286,7 +283,7 @@ export function WelcomeTour() {
                   <button
                     type="button"
                     onClick={prev}
-                    className="flex min-h-11 items-center gap-1 rounded-xl bg-white/10 px-3 text-xs font-bold text-indigo-50 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+                    className="np-tour-secondary flex min-h-11 items-center gap-1 rounded-xl px-3 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" /> Anterior
                   </button>
@@ -294,14 +291,14 @@ export function WelcomeTour() {
                 <button
                   type="button"
                   onClick={finish}
-                  className="min-h-11 rounded-xl px-3 text-xs font-bold text-indigo-200/80 transition-colors hover:bg-white/10 hover:text-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+                  className="np-tour-secondary min-h-11 rounded-xl px-3 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Pular
                 </button>
                 <button
                   type="button"
                   onClick={next}
-                  className="flex min-h-11 items-center gap-1 rounded-xl bg-gradient-to-b from-indigo-500 to-violet-600 px-3 text-xs font-bold text-white shadow-[0_8px_28px_rgba(99,102,241,0.45),0_2px_8px_rgba(0,0,0,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+                  className="np-tour-primary flex min-h-11 items-center gap-1 rounded-xl px-3 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {idx === STEPS.length - 1 ? "Concluir" : "Próximo"}
                   {idx < STEPS.length - 1 && <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />}

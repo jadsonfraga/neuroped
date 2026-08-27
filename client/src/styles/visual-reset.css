@@ -462,6 +462,26 @@ header.fixed.md\:hidden {
     linear-gradient(145deg, hsl(var(--card) / 0.98), hsl(var(--background) / 0.84)) !important;
 }
 
+.np-page-hero-neural {
+  position: absolute;
+  right: 1.6rem;
+  top: .7rem;
+  width: 10rem;
+  height: 5.5rem;
+  opacity: .42;
+  background:
+    radial-gradient(circle at 12% 55%, hsl(var(--primary) / .32) 0 .16rem, transparent .2rem),
+    radial-gradient(circle at 48% 22%, hsl(var(--chart-2) / .26) 0 .13rem, transparent .18rem),
+    radial-gradient(circle at 78% 68%, hsl(var(--chart-3) / .28) 0 .15rem, transparent .2rem),
+    linear-gradient(22deg, transparent 47%, hsl(var(--primary) / .18) 48% 49%, transparent 50%),
+    linear-gradient(155deg, transparent 53%, hsl(var(--chart-2) / .14) 54% 55%, transparent 56%);
+  filter: blur(.1px);
+  pointer-events: none;
+  transition: transform .5s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+}
+
+.np-page-hero:hover .np-page-hero-neural { opacity: .7; transform: translate(-.3rem, .15rem) scale(1.04); }
+
 .np-page-hero::after {
   content: "";
   position: absolute;
@@ -718,3 +738,185 @@ header.fixed.md\:hidden {
     box-shadow: none !important;
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   CAMPANHA NACIONAL — Signature Clinical / Brasil contemporâneo
+   Decorativo, tokenizado, sem tocar contratos clínicos.
+   ───────────────────────────────────────────────────────────── */
+.np-national-signature {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1.16fr) minmax(250px, .84fr);
+    gap: clamp(1.4rem, 4vw, 4.5rem);
+    overflow: hidden;
+    min-height: 25rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    border: 1px solid hsl(var(--border) / .72);
+    border-radius: 2rem;
+    background:
+      radial-gradient(90% 120% at 100% 0%, hsl(var(--chart-3) / .14), transparent 58%),
+      linear-gradient(135deg, hsl(var(--primary) / .1), hsl(var(--card) / .92) 52%, hsl(var(--chart-2) / .06));
+    box-shadow: 0 28px 72px -48px hsl(var(--foreground) / .5), inset 0 1px 0 hsl(var(--foreground) / .05);
+  }
+
+  .np-national-signature::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: .24;
+    background-image:
+      linear-gradient(115deg, transparent 0 38%, hsl(var(--primary) / .12) 38.2%, transparent 38.5% 100%),
+      linear-gradient(24deg, transparent 0 58%, hsl(var(--chart-3) / .1) 58.2%, transparent 58.5% 100%);
+    pointer-events: none;
+  }
+
+  .dark .np-national-signature {
+    background:
+      radial-gradient(90% 120% at 100% 0%, hsl(var(--chart-3) / .16), transparent 58%),
+      linear-gradient(135deg, hsl(var(--primary) / .12), hsl(var(--card) / .96) 54%, hsl(var(--chart-2) / .08));
+    box-shadow: 0 28px 72px -48px hsl(0 0% 0% / .86), inset 0 1px 0 hsl(var(--foreground) / .07);
+  }
+
+  .np-national-signature-compact {
+    min-height: 19rem;
+    grid-template-columns: minmax(0, 1.25fr) minmax(190px, .75fr);
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border-radius: 1.65rem;
+  }
+
+  .np-national-signature-copy,
+  .np-national-signature-media { position: relative; z-index: 1; }
+
+  .np-national-signature-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .np-national-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    width: fit-content;
+    margin-bottom: 1.1rem;
+    color: hsl(var(--primary));
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
+
+  .np-national-mark {
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid hsl(var(--primary) / .24);
+    border-radius: .65rem;
+    background: hsl(var(--card) / .82);
+    box-shadow: 0 7px 18px -12px hsl(var(--primary) / .7);
+  }
+
+  .np-national-mark img { width: 100%; height: 100%; object-fit: contain; }
+
+  .np-national-signature h2 {
+    max-width: 34rem;
+    margin: 0;
+    color: hsl(var(--foreground));
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.2vw, 4.15rem);
+    font-weight: 600;
+    letter-spacing: -.052em;
+    line-height: .94;
+  }
+
+  .np-national-signature-compact h2 { font-size: clamp(1.85rem, 3.4vw, 3rem); }
+
+  .np-national-signature h2 em {
+    color: hsl(var(--primary));
+    font-style: normal;
+  }
+
+  .np-national-signature-copy > p {
+    max-width: 34rem;
+    margin: 1.25rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: .9rem;
+    line-height: 1.65;
+  }
+
+  .np-national-pillars {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .5rem;
+    max-width: 38rem;
+    margin-top: 1.55rem;
+  }
+
+  .np-national-pillar {
+    display: flex;
+    gap: .55rem;
+    min-width: 0;
+    padding: .65rem .6rem;
+    border: 1px solid hsl(var(--border) / .52);
+    border-radius: .95rem;
+    background: hsl(var(--card) / .42);
+    transition: transform .22s cubic-bezier(.22,1,.36,1), background-color .22s ease, border-color .22s ease;
+  }
+
+  .np-national-pillar:hover { transform: translateY(-2px); border-color: hsl(var(--primary) / .26); background: hsl(var(--card) / .68); }
+  .np-national-pillar-icon { display: grid; flex: 0 0 auto; width: 1.65rem; height: 1.65rem; place-items: center; border-radius: .6rem; color: hsl(var(--primary)); background: hsl(var(--primary) / .11); }
+  .np-national-pillar strong, .np-national-pillar span { display: block; }
+  .np-national-pillar strong { color: hsl(var(--foreground)); font-size: .7rem; font-weight: 800; }
+  .np-national-pillar span { margin-top: .16rem; color: hsl(var(--muted-foreground)); font-size: .62rem; line-height: 1.35; }
+
+  .np-national-signature-footer { display: flex; flex-wrap: wrap; align-items: center; gap: .85rem; margin-top: 1.45rem; }
+  .np-national-origin { display: inline-flex; align-items: center; gap: .4rem; color: hsl(var(--muted-foreground)); font-size: .66rem; }
+  .np-origin-dot { width: .4rem; height: .4rem; border-radius: 999px; background: hsl(var(--chart-4)); box-shadow: 0 0 0 4px hsl(var(--chart-4) / .12); }
+  .np-national-link { display: inline-flex; align-items: center; gap: .25rem; color: hsl(var(--primary)); font-size: .7rem; font-weight: 800; text-decoration: none; }
+  .np-national-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  .np-national-signature-media { display: grid; min-height: 17rem; place-items: center; }
+  .np-national-media-frame { position: relative; width: min(100%, 23rem); aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid hsl(var(--foreground) / .12); border-radius: 1.55rem; background: hsl(var(--card) / .55); box-shadow: 0 24px 48px -30px hsl(var(--foreground) / .56), inset 0 1px 0 hsl(var(--foreground) / .12); transform: rotate(2.2deg); }
+  .np-national-media-frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 42%, hsl(var(--foreground) / .45)); pointer-events: none; }
+  .np-national-media-frame img { width: 100%; height: 100%; object-fit: cover; }
+  .np-national-media-caption { position: absolute; right: .75rem; bottom: .7rem; left: .75rem; z-index: 1; display: flex; align-items: center; gap: .4rem; color: hsl(var(--primary-foreground)); font-size: .68rem; font-weight: 800; letter-spacing: .02em; }
+  .np-national-orbit { position: absolute; border: 1px solid hsl(var(--primary) / .22); border-radius: 999px; pointer-events: none; }
+  .np-national-orbit-one { width: 14rem; height: 14rem; border-right-color: transparent; border-bottom-color: transparent; transform: rotate(25deg); }
+  .np-national-orbit-two { width: 19rem; height: 7rem; border-left-color: transparent; border-right-color: transparent; transform: rotate(-30deg); }
+  .np-national-signature-glow { position: absolute; right: 17%; top: 12%; width: 14rem; height: 14rem; border-radius: 999px; background: hsl(var(--chart-3) / .16); filter: blur(42px); pointer-events: none; }
+
+  @media (max-width: 767px) {
+    .np-national-signature, .np-national-signature-compact { grid-template-columns: 1fr; min-height: 0; }
+    .np-national-signature-media { min-height: 12rem; margin-top: .55rem; }
+    .np-national-media-frame { width: min(100%, 20rem); transform: rotate(1.2deg); }
+    .np-national-pillars { grid-template-columns: 1fr; }
+    .np-national-pillar { align-items: center; }
+    .np-national-signature h2, .np-national-signature-compact h2 { font-size: clamp(2rem, 10vw, 3.2rem); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .np-national-pillar, .np-national-media-frame { transform: none; transition: none; }
+  }
+
+  @media print {
+    .np-national-signature { min-height: auto; box-shadow: none; }
+    .np-national-signature-media { display: none; }
+  }
+
+  /* Tour guiado — a mesma marca, com foco visível e sem hard-coded indigo. */
+  .np-tour-backdrop { background: hsl(var(--foreground) / .58); }
+  :root { --np-tour-spotlight-shadow: 0 0 0 9999px hsl(var(--foreground) / .66), 0 0 0 3px hsl(var(--primary)), 0 0 32px 4px hsl(var(--primary) / .45); }
+  .np-tour-spotlight { box-shadow: var(--np-tour-spotlight-shadow); }
+  .np-tour-card { border-color: hsl(var(--primary) / .38); background: linear-gradient(160deg, hsl(var(--card) / .98), hsl(var(--sidebar) / .98)); color: hsl(var(--card-foreground)); box-shadow: 0 26px 70px -28px hsl(var(--foreground) / .68), inset 0 1px 0 hsl(var(--foreground) / .08); backdrop-filter: blur(18px); }
+  .np-tour-close, .np-tour-secondary { color: hsl(var(--muted-foreground)); background: hsl(var(--foreground) / .06); }
+  .np-tour-close:hover, .np-tour-secondary:hover { background: hsl(var(--foreground) / .1); color: hsl(var(--foreground)); }
+  .np-tour-primary { color: hsl(var(--primary-foreground)); background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--chart-2))); box-shadow: 0 10px 28px -14px hsl(var(--primary) / .8), inset 0 1px 0 hsl(var(--foreground) / .18); }
+  .np-tour-progress { background: hsl(var(--primary) / .22); }
+.np-tour-progress-active { background: hsl(var(--primary)); box-shadow: 0 0 8px hsl(var(--primary) / .7); }

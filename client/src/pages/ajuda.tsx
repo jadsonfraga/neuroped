@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HelpCircle, Brain, ClipboardCheck, Pill, Users, Printer, Mail, Moon, Sun, Smartphone, Monitor, WifiOff, BookOpen, Filter, GraduationCap, Stethoscope, FileText, Lightbulb } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { NationalSignature } from "@/components/NationalSignature";
 import { appMetrics } from "@/data/appMetrics";
 
 const guiaRapido = [
@@ -49,6 +50,8 @@ export default function AjudaPage() {
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center shadow-lg shadow-primary/20"><HelpCircle className="w-5 h-5 text-white" /></div>
         <div><h1 className="text-lg font-bold">Central de Ajuda</h1><p className="text-xs text-muted-foreground">Como usar o NeuroPed — Guia completo</p></div>
       </div>
+
+      <NationalSignature compact />
 
       <div className="space-y-3"><h2 className="text-sm font-bold uppercase tracking-wider text-primary">Como Usar</h2><div className="grid sm:grid-cols-2 gap-3 stagger-in">{guiaRapido.map((item) => { const Icon = item.icon; return <Card key={item.title} className="card-hover border-card-border"><CardContent className="p-4 flex items-start gap-3"><div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center flex-shrink-0`}><Icon className="w-4 h-4 text-white" /></div><div><h3 className="text-sm font-bold text-foreground">{item.title}</h3><p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{item.desc}</p></div></CardContent></Card>; })}</div></div>
 

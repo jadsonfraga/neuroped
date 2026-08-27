@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, CheckCircle2, XCircle, BookMarked, ShieldCheck } from "lucide-react";
+import { NationalSignature } from "@/components/NationalSignature";
 
 /**
  * Natureza da ferramenta — portado de sobre-natureza.html (app legado).
@@ -22,6 +23,8 @@ export default function SobreNeuropedPage() {
           para profissionais e famílias.
         </p>
       </div>
+
+      <NationalSignature compact />
 
       <Card>
         <CardContent className="p-5">
@@ -78,9 +81,10 @@ export default function SobreNeuropedPage() {
             <ShieldCheck className="w-4 h-4 text-primary" /> Privacidade dos dados
           </h2>
           <p className="text-sm text-muted-foreground">
-            Os dados que você registra ficam <strong>apenas neste aparelho</strong> (armazenamento
-            local do navegador). Nada é enviado a servidores e não há rastreamento. Você pode
-            exportar um backup ou apagar tudo quando quiser.
+            No modo local, os dados ficam <strong>neste aparelho</strong> e podem ser exportados ou
+            apagados quando quiser. No modo LIVE, dados clínicos autorizados seguem o backend
+            protegido; o navegador não persiste PHI e documentos individualizados exigem liberação
+            específica.
           </p>
         </CardContent>
       </Card>

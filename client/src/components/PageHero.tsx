@@ -29,12 +29,13 @@ export function PageHero({
   children,
 }: PageHeroProps) {
   return (
-    <header className="np-page-hero relative overflow-hidden rounded-[1.4rem] border border-border/80 bg-card/92 p-5 shadow-[0_1px_1px_hsl(var(--foreground)/0.025),0_16px_42px_-34px_hsl(var(--foreground)/0.38)] sm:p-6">
+    <header className="np-page-hero group relative overflow-hidden rounded-[1.4rem] border border-border/80 bg-card/92 p-5 shadow-[0_1px_1px_hsl(var(--foreground)/0.025),0_16px_42px_-34px_hsl(var(--foreground)/0.38)] sm:p-6">
+      <div className="np-page-hero-neural" aria-hidden="true" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent"
       />
-      <div className="relative flex items-start gap-4">
+      <div className="relative z-10 flex items-start gap-4">
         <div
           className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[0.95rem] bg-gradient-to-br ${gradient} text-white shadow-[0_10px_24px_-17px_hsl(var(--foreground)/0.52)] ring-1 ring-white/20`}
         >

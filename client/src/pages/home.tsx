@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
+import { NationalSignature } from "@/components/NationalSignature";
 import { appMetrics } from "@/data/appMetrics";
 import { navigablePages } from "@/data/navigation";
 import type { ScaleEntry } from "@/data/scaleFilter";
@@ -339,6 +340,8 @@ export default function HomePage() {
           </div>
         </div>
       </motion.section>
+
+      <NationalSignature compact />
 
       {isSearching ? (
         <section className="space-y-4" aria-label="Resultados da busca da home">
