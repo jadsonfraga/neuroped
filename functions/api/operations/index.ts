@@ -39,6 +39,7 @@ import {
   type OperationsPrincipal,
 } from "./_access";
 import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
+import { createNpsSurvey } from "../saas/_core";
 
 function canConfigure(role: string): boolean {
   return role === "admin" || role === "professional";
@@ -140,6 +141,10 @@ async function getDashboard(
     .all<any>();
   const blocksResult = await db
     .prepare(`SELECT * FROM booking_blocks WHERE provider_user_id = ? ORDER BY starts_at_local DESC LIMIT 100`)
+    .bind(provider.id)
+    .all<any>();
+  const availabilityTemplatesResult = await db
+    .prepare(`SELECT * FROM availability_templates WHERE provider_user_id = ? ORDER BY active DESC, updated_at DESC LIMIT 100`)
     .bind(provider.id)
     .all<any>();
   const appointmentsResult = await db
@@ -300,6 +305,16 @@ async function getDashboard(
       reason: row.reason,
       createdAt: row.created_at,
     })),
+    availabilityTemplates: (availabilityTemplatesResult.results ?? []).map((row) => ({
+      id: row.id,
+      providerUserId: row.provider_user_id,
+      name: row.name,
+      timezone: row.timezone,
+      rules: (() => { try { return JSON.parse(row.rules_json); } catch { return []; } })(),
+      active: Boolean(row.active),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    })),
     appointments,
     waitlist,
     reviews: principal.canConfigure ? fullReviews : [],
@@ -383,6 +398,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       "delete_rule",
       "create_block",
       "delete_block",
+      "create_availability_template",
+      "update_availability_template",
+      "delete_availability_template",
       "review_moderate",
       "staff_link",
       "staff_active",
@@ -517,6 +535,59 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetType = "availability_block";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
+    } else if (["create_availability_template", "update_availability_template"].includes(action)) {
+      const name = cleanText(body.name, 100);
+      const timezone = cleanText(body.timezone, 80) || "America/Recife";
+      const rawRules = Array.isArray(body.rules) ? body.rules : [];
+      const validRules = rawRules.length > 0 && rawRules.length <= 50 && rawRules.every((rule) => {
+        if (!isPlainObject(rule)) return false;
+        const weekday = Number(rule.weekday);
+        const startMinute = Number(rule.startMinute);
+        const endMinute = Number(rule.endMinute);
+        const slotMinutes = Number(rule.slotMinutes);
+        return Number.isInteger(weekday) && weekday >= 0 && weekday <= 6
+          && Number.isInteger(startMinute) && startMinute >= 0 && startMinute <= 1439
+          && Number.isInteger(endMinute) && endMinute > startMinute && endMinute <= 1440
+          && Number.isInteger(slotMinutes) && slotMinutes >= 5 && slotMinutes <= 240;
+      });
+      if (!name || !isValidTimeZone(timezone) || !validRules) {
+        return errorResponse("Modelo de disponibilidade inválido.", "VALIDATION_ERROR", 400);
+      }
+      const rulesJson = JSON.stringify(rawRules);
+      if (rulesJson.length > 20_000) return errorResponse("Modelo de disponibilidade muito grande.", "VALIDATION_ERROR", 400);
+      const id = cleanText(body.id, 80);
+      if (action === "create_availability_template") {
+        const templateId = `avt-${crypto.randomUUID()}`;
+        await env.DB.prepare(
+          `INSERT INTO availability_templates
+            (id, provider_user_id, name, timezone, rules_json, active, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
+        ).bind(templateId, user.id, name, timezone, rulesJson, now, now).run();
+        auditTargetType = "availability_template";
+        auditTargetId = templateId;
+        auditMetadata = { rules: rawRules.length };
+      } else {
+        if (!id) return errorResponse("Modelo de disponibilidade inválido.", "VALIDATION_ERROR", 400);
+        const update = await env.DB.prepare(
+          `UPDATE availability_templates
+              SET name = ?, timezone = ?, rules_json = ?, active = CASE WHEN ? = 1 THEN 1 ELSE 0 END, updated_at = ?
+            WHERE id = ? AND provider_user_id = ?`,
+        ).bind(name, timezone, rulesJson, body.active === false ? 0 : 1, now, id, user.id).run();
+        if ((update.meta?.changes ?? 0) !== 1) return errorResponse("Modelo de disponibilidade não encontrado.", "NOT_FOUND", 404);
+        auditTargetType = "availability_template";
+        auditTargetId = id;
+        auditMetadata = { rules: rawRules.length };
+      }
+    } else if (action === "delete_availability_template") {
+      const id = cleanText(body.id, 80);
+      if (!id) return errorResponse("Modelo de disponibilidade inválido.", "VALIDATION_ERROR", 400);
+      const result = await env.DB.prepare(
+        `DELETE FROM availability_templates WHERE id = ? AND provider_user_id = ?`,
+      ).bind(id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Modelo de disponibilidade não encontrado.", "NOT_FOUND", 404);
+      auditTargetType = "availability_template";
+      auditTargetId = id;
+      auditMetadata = { status: "deleted" };
     } else if (action === "create_appointment") {
       const serviceId = cleanText(body.serviceId, 80);
       const service = await getService(env.DB, user.id, serviceId, false);
@@ -590,16 +661,41 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if ((transitionResults[0]?.meta?.changes ?? 0) !== 1) {
         return errorResponse("A consulta mudou durante a atualização. Recarregue a agenda.", "STALE_APPOINTMENT", 409);
       }
-      await enqueueNotification(env.DB, env, {
-        appointmentId: id,
-        providerUserId: user.id,
-        template: `appointment_${status}`,
-        recipient: await decryptText(env, current.guardian_phone_encrypted) || await decryptText(env, current.guardian_email_encrypted),
-        message: `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
-      });
+      let npsSurveyId: string | null = null;
+      if (status === "completed") {
+        const clinicRows = await env.DB.prepare(
+          `SELECT clinic_id FROM clinic_memberships WHERE user_id = ? AND active = 1 ORDER BY created_at LIMIT 2`,
+        ).bind(user.id).all<{ clinic_id: string }>();
+        const clinicIds = clinicRows.results ?? [];
+        if (clinicIds.length === 1) {
+          const survey = await createNpsSurvey(env.DB, {
+            clinicId: clinicIds[0].clinic_id,
+            appointmentId: id,
+            providerUserId: user.id,
+          });
+          if (survey) {
+            npsSurveyId = survey.surveyId;
+            await enqueueNotification(env.DB, env, {
+              appointmentId: id,
+              providerUserId: user.id,
+              template: "nps_request",
+              recipient: await decryptText(env, current.guardian_phone_encrypted) || await decryptText(env, current.guardian_email_encrypted),
+              message: `Pesquisa de satisfação criada. Token de acesso: ${survey.token}`,
+            });
+          }
+        }
+      } else {
+        await enqueueNotification(env.DB, env, {
+          appointmentId: id,
+          providerUserId: user.id,
+          template: `appointment_${status}`,
+          recipient: await decryptText(env, current.guardian_phone_encrypted) || await decryptText(env, current.guardian_email_encrypted),
+          message: `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
+        });
+      }
       auditTargetType = "appointment";
       auditTargetId = id;
-      auditMetadata = { previousStatus: current.status, status };
+      auditMetadata = { previousStatus: current.status, status, npsSurveyCreated: Boolean(npsSurveyId) };
     } else if (action === "appointment_payment") {
       if (!principal.canConfigure) return errorResponse("Pagamento restrito ao profissional.", "FORBIDDEN", 403);
       const id = cleanText(body.id, 80);

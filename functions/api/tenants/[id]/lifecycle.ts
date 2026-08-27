@@ -19,6 +19,7 @@ import {
   cancelAsaasSubscription,
   type BillingProviderEnv,
 } from "../../billing/_provider";
+import { ensureSaasHubSchema, queueTenantWebhook } from "../../saas/_core";
 
 type Env = TenantEnv & BillingProviderEnv;
 
@@ -46,6 +47,14 @@ interface BillingRow {
   provider_checkout_id: string | null;
 }
 
+interface ReactivationRow {
+  id: string;
+  status: "pending" | "approved" | "rejected" | "completed";
+  reason: string | null;
+  created_at: string;
+  resolved_at: string | null;
+}
+
 function clinicIdFrom(params: Record<string, string | string[]>): string {
   const raw = params.id;
   return String(Array.isArray(raw) ? raw[0] : (raw ?? "")).trim().slice(0, 80);
@@ -63,6 +72,14 @@ async function loadLifecycle(db: D1Database, clinicId: string): Promise<Lifecycl
        FROM tenant_lifecycle
       WHERE clinic_id = ? LIMIT 1`,
   ).bind(clinicId).first<LifecycleRow>();
+}
+
+async function loadReactivation(db: D1Database, clinicId: string): Promise<ReactivationRow | null> {
+  return db.prepare(
+    `SELECT id, status, reason, created_at, resolved_at
+       FROM tenant_reactivation_requests WHERE clinic_id = ?
+      ORDER BY created_at DESC LIMIT 1`,
+  ).bind(clinicId).first<ReactivationRow>();
 }
 
 async function loadBilling(db: D1Database, clinicId: string): Promise<BillingRow | null> {
@@ -84,7 +101,7 @@ async function loadBilling(db: D1Database, clinicId: string): Promise<BillingRow
   ).bind(clinicId).first<BillingRow>();
 }
 
-function lifecyclePayload(row: LifecycleRow, clinicStatus: string, billing: BillingRow | null) {
+function lifecyclePayload(row: LifecycleRow, clinicStatus: string, billing: BillingRow | null, reactivation: ReactivationRow | null = null) {
   const snapshot = {
     status: row.status,
     requestedAt: row.requested_at,
@@ -111,6 +128,15 @@ function lifecyclePayload(row: LifecycleRow, clinicStatus: string, billing: Bill
           provider: billing.provider,
           status: billing.customer_status,
           requiresReactivation: row.status === "active" && billing.customer_status === "pending",
+        }
+      : null,
+    reactivation: reactivation
+      ? {
+          id: reactivation.id,
+          status: reactivation.status,
+          reason: reactivation.reason,
+          createdAt: reactivation.created_at,
+          resolvedAt: reactivation.resolved_at,
         }
       : null,
   };
@@ -162,6 +188,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const user = getContextUser(context);
   if (!db) return tenantError("Banco SaaS não configurado.", "SAAS_DB_NOT_CONFIGURED", 503);
   if (!user) return tenantError("Não autenticado.", "UNAUTHENTICATED", 401);
+  try {
+    await ensureSaasHubSchema(db);
+  } catch (error) {
+    console.error("[tenant.lifecycle] hub schema", error);
+    return tenantError("Hub SaaS ainda não migrado.", "SAAS_HUB_NOT_CONFIGURED", 503);
+  }
 
   const clinicId = clinicIdFrom(context.params as Record<string, string | string[]>);
   if (!clinicId) return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
@@ -179,7 +211,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
   if (!row) return tenantError("Lifecycle do tenant não encontrado.", "TENANT_LIFECYCLE_NOT_FOUND", 409);
   const billing = await loadBilling(db, clinicId);
-  return tenantJson(lifecyclePayload(row, membership.clinicStatus, billing));
+  const reactivation = await loadReactivation(db, clinicId);
+  return tenantJson(lifecyclePayload(row, membership.clinicStatus, billing, reactivation));
 };
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -187,6 +220,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const user = getContextUser(context);
   if (!db) return tenantError("Banco SaaS não configurado.", "SAAS_DB_NOT_CONFIGURED", 503);
   if (!user) return tenantError("Não autenticado.", "UNAUTHENTICATED", 401);
+  try {
+    await ensureSaasHubSchema(db);
+  } catch (error) {
+    console.error("[tenant.lifecycle] hub schema", error);
+    return tenantError("Hub SaaS ainda não migrado.", "SAAS_HUB_NOT_CONFIGURED", 503);
+  }
 
   const clinicId = clinicIdFrom(context.params as Record<string, string | string[]>);
   if (!clinicId) return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
@@ -210,6 +249,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const row = await loadLifecycle(db, clinicId);
   if (!row) return tenantError("Lifecycle do tenant não encontrado.", "TENANT_LIFECYCLE_NOT_FOUND", 409);
   const billing = await loadBilling(db, clinicId);
+  const reactivation = await loadReactivation(db, clinicId);
+
+  if (["request_closure", "cancel_closure"].includes(action) && membership.role !== "owner") {
+    return tenantError("Somente o titular da clínica pode alterar o encerramento.", "TENANT_OWNER_REQUIRED", 403);
+  }
 
   if (action === "request_closure") {
     if (membership.clinicStatus === "closed" || row.status === "closed") {
@@ -302,10 +346,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
+    try {
+      await queueTenantWebhook(db, clinicId, "tenant.closure_requested", { reasonCode: String(body.reasonCode), retentionUntil });
+    } catch (error) {
+      console.error("[tenant.lifecycle] closure webhook", error);
+    }
     const updated = await loadLifecycle(db, clinicId);
     const updatedBilling = await loadBilling(db, clinicId);
+    const updatedReactivation = await loadReactivation(db, clinicId);
     if (!updated) return tenantError("Lifecycle indisponível após atualização.", "TENANT_LIFECYCLE_INCONSISTENT", 500);
-    return tenantJson({ ok: true, ...lifecyclePayload(updated, "suspended", updatedBilling) });
+    return tenantJson({ ok: true, ...lifecyclePayload(updated, "suspended", updatedBilling, updatedReactivation) });
   }
 
   if (action === "cancel_closure") {
@@ -387,14 +437,91 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return tenantError("Não foi possível cancelar o encerramento.", "TENANT_CLOSURE_CANCEL_FAILED", 500);
     }
 
+    try {
+      await queueTenantWebhook(db, clinicId, "tenant.closure_canceled", { billingRequiresReactivation });
+    } catch (error) {
+      console.error("[tenant.lifecycle] cancellation webhook", error);
+    }
     const updated = await loadLifecycle(db, clinicId);
     const updatedBilling = await loadBilling(db, clinicId);
+    const updatedReactivation = await loadReactivation(db, clinicId);
     if (!updated) return tenantError("Lifecycle indisponível após atualização.", "TENANT_LIFECYCLE_INCONSISTENT", 500);
     return tenantJson({
       ok: true,
       billingRequiresReactivation,
-      ...lifecyclePayload(updated, restoredClinicStatus, updatedBilling),
+      ...lifecyclePayload(updated, restoredClinicStatus, updatedBilling, updatedReactivation),
     });
+  }
+
+  if (action === "request_reactivation") {
+    if (!["closure_requested", "reactivation_requested"].includes(row.status) || membership.clinicStatus === "closed") {
+      return tenantError("A clínica não está em estado elegível para reativação.", "TENANT_REACTIVATION_NOT_ELIGIBLE", 409);
+    }
+    if (reactivation?.status === "pending") {
+      return tenantJson({ ok: true, idempotent: true, ...lifecyclePayload(row, membership.clinicStatus, billing, reactivation) });
+    }
+    const requestId = `rea-${crypto.randomUUID()}`;
+    const reason = cleanText(body.reason, 500) || null;
+    await db.batch([
+      db.prepare(
+        `UPDATE tenant_lifecycle SET status = 'reactivation_requested', updated_at = ?
+          WHERE clinic_id = ? AND status = 'closure_requested'`,
+      ).bind(new Date().toISOString(), clinicId),
+      db.prepare(
+        `INSERT INTO tenant_reactivation_requests (id, clinic_id, requested_by_user_id, reason, status)
+         VALUES (?, ?, ?, ?, 'pending')`,
+      ).bind(requestId, clinicId, user.id, reason),
+      db.prepare(
+        `INSERT INTO saas_audit_log (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json)
+         VALUES (?, ?, ?, 'tenant_reactivation_requested', 'clinic', ?, ?)`,
+      ).bind(`sal-${crypto.randomUUID()}`, clinicId, user.id, clinicId, JSON.stringify({ reasonProvided: Boolean(reason) })),
+    ]);
+    try {
+      await queueTenantWebhook(db, clinicId, "tenant.reactivation_requested", { requestId });
+    } catch (error) {
+      console.error("[tenant.lifecycle] reactivation webhook", error);
+    }
+    const latest = await loadReactivation(db, clinicId);
+    return tenantJson({ ok: true, ...lifecyclePayload(row, membership.clinicStatus, billing, latest) });
+  }
+
+  if (["approve_reactivation", "reject_reactivation"].includes(action)) {
+    if (membership.role !== "owner") return tenantError("Somente o titular pode resolver a reativação.", "TENANT_OWNER_REQUIRED", 403);
+    if (!["closure_requested", "reactivation_requested"].includes(row.status) || !reactivation || reactivation.status !== "pending") {
+      return tenantError("Não há uma reativação pendente para resolver.", "TENANT_REACTIVATION_NOT_FOUND", 409);
+    }
+    const nowIso = new Date().toISOString();
+    const approved = action === "approve_reactivation";
+    if (!approved) {
+      await db.batch([
+        db.prepare(`UPDATE tenant_reactivation_requests SET status = 'rejected', resolved_by_user_id = ?, resolved_at = ?, updated_at = ? WHERE id = ? AND status = 'pending'`).bind(user.id, nowIso, nowIso, reactivation.id),
+        db.prepare(`UPDATE tenant_lifecycle SET status = 'closure_requested', updated_at = ? WHERE clinic_id = ? AND status = 'reactivation_requested'`).bind(nowIso, clinicId),
+        db.prepare(`INSERT INTO saas_audit_log (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json) VALUES (?, ?, ?, 'tenant_reactivation_rejected', 'clinic', ?, '{}')`).bind(`sal-${crypto.randomUUID()}`, clinicId, user.id, clinicId),
+      ]);
+      const rejected = await loadReactivation(db, clinicId);
+      return tenantJson({ ok: true, ...lifecyclePayload(row, membership.clinicStatus, billing, rejected) });
+    }
+    const restoredClinicStatus = row.previous_clinic_status === "active" ? "active" : "suspended";
+    const trialStillValid = row.previous_billing_status === "trial" && Boolean(billing?.trial_ends_at) && Date.parse(billing?.trial_ends_at ?? "") > Date.now();
+    const restoredBillingStatus = trialStillValid ? "trial" : row.previous_billing_status === "active" ? "active" : "pending";
+    const results = await db.batch([
+      db.prepare(`UPDATE tenant_lifecycle SET status = 'active', previous_clinic_status = NULL, previous_billing_status = NULL, reason_code = NULL, requested_by_user_id = NULL, requested_at = NULL, retention_until = NULL, canceled_at = ?, finalized_at = NULL, updated_at = ? WHERE clinic_id = ? AND status IN ('closure_requested','reactivation_requested')`).bind(nowIso, nowIso, clinicId),
+      db.prepare(`UPDATE clinics SET status = ?, updated_at = ? WHERE id = ? AND status <> 'closed'`).bind(restoredClinicStatus, nowIso, clinicId),
+      db.prepare(`UPDATE billing_customers SET status = ?, grace_ends_at = NULL, updated_at = ? WHERE clinic_id = ? AND status <> 'canceled'`).bind(restoredBillingStatus, nowIso, clinicId),
+      db.prepare(`UPDATE tenant_reactivation_requests SET status = 'completed', resolved_by_user_id = ?, resolved_at = ?, updated_at = ? WHERE id = ? AND status = 'pending'`).bind(user.id, nowIso, nowIso, reactivation.id),
+      db.prepare(`INSERT INTO saas_audit_log (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json) SELECT ?, ?, ?, 'tenant_reactivation_completed', 'clinic', ?, ? WHERE changes() = 1`).bind(`sal-${crypto.randomUUID()}`, clinicId, user.id, clinicId, JSON.stringify({ billingStatus: restoredBillingStatus })),
+    ]);
+    if ((results[0]?.meta?.changes ?? 0) !== 1) return tenantError("Lifecycle mudou durante a reativação.", "TENANT_REACTIVATION_STALE", 409);
+    try {
+      await queueTenantWebhook(db, clinicId, "tenant.reactivated", { requestId: reactivation.id });
+    } catch (error) {
+      console.error("[tenant.lifecycle] reactivated webhook", error);
+    }
+    const updated = await loadLifecycle(db, clinicId);
+    const updatedBilling = await loadBilling(db, clinicId);
+    const completed = await loadReactivation(db, clinicId);
+    if (!updated) return tenantError("Lifecycle indisponível após reativação.", "TENANT_LIFECYCLE_INCONSISTENT", 500);
+    return tenantJson({ ok: true, ...lifecyclePayload(updated, restoredClinicStatus, updatedBilling, completed) });
   }
 
   return tenantError("Ação de lifecycle inválida.", "TENANT_LIFECYCLE_ACTION_INVALID", 400);

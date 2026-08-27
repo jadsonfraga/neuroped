@@ -8,11 +8,17 @@ on:
       - "db/migrations/0012_saas_billing_onboarding.sql"
       - "db/migrations/0013_saas_billing_provider.sql"
       - "db/migrations/0015_saas_billing_trial_seats_hardening.sql"
+      - "db/migrations/0016_saas_hub.sql"
       - "shared/billing.ts"
       - "server/lib/billingEntitlement.ts"
       - "functions/api/billing/**"
       - "functions/api/live/**"
       - "functions/api/tenants/**"
+      - "functions/api/saas/**"
+      - "functions/api/onboarding/**"
+      - "functions/api/partners/**"
+      - "functions/api/communication/**"
+      - "functions/api/feedback/**"
       - "tests/unit/saas-billing*.test.ts"
       - ".github/workflows/saas-billing-d1-migration.yml"
 
@@ -137,6 +143,14 @@ jobs:
           npx wrangler@4 d1 execute neuroped-db --remote --yes \
             --file=./db/migrations/0015_saas_billing_trial_seats_hardening.sql
 
+      - name: Aplicar Hub SaaS 0016
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes --file=./db/migrations/0016_saas_hub.sql
+
       - name: Verificar contrato físico de billing
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -177,4 +191,4 @@ jobs:
           }
           echo "✓ migration 0015 comprovada por invariantes metadata-only"
 
-          echo "✅ Billing SaaS reconciliado no D1 remoto (0012 + 0013 + 0015)."
+          echo "✅ Billing e Hub SaaS reconciliados no D1 remoto (0012 + 0013 + 0015 + 0016)."

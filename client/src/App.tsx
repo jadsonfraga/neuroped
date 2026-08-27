@@ -205,6 +205,7 @@ const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
+const HubSaasPage = lazy(() => import("@/pages/hub-saas"));
 const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
@@ -588,6 +589,11 @@ function AppRouter() {
             <Route path="/agenda">
               <RouteGuard roles={["admin", "professional"]}>
                 <AgendaPage />
+              </RouteGuard>
+            </Route>
+            <Route path="/hub-saas">
+              <RouteGuard roles={["admin", "professional"]}>
+                <HubSaasPage />
               </RouteGuard>
             </Route>
             <Route path="/agendar" component={AgendarPage} />

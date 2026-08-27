@@ -285,6 +285,20 @@ jobs:
             }
           done
 
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0016_saas_hub.sql
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('onboarding_steps','partner_directory','partner_referrals','communication_templates','communication_campaigns','communication_deliveries','feedback_surveys','tenant_reactivation_requests') ORDER BY name;" \
+            > /tmp/saas-hub-tables.txt 2>&1
+          cat /tmp/saas-hub-tables.txt
+          for table in onboarding_steps partner_directory partner_referrals communication_templates communication_campaigns communication_deliveries feedback_surveys tenant_reactivation_requests; do
+            grep -q "$table" /tmp/saas-hub-tables.txt || {
+              echo "::error::tabela do Hub SaaS ausente: $table"
+              exit 1
+            }
+          done
+          echo "Hub SaaS 0016 verificado: onboarding, parceiros, comunicação, NPS e reativação."
+
           npx wrangler@4 d1 execute neuroped-db --remote \
             --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_clinic_create_tenant_lifecycle';" \
             > /tmp/tenant-lifecycle-trigger.txt 2>&1

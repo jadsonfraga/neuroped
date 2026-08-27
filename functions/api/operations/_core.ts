@@ -1,3 +1,4 @@
+import { ensureSaasHubSchema } from "../saas/_core";
 import {
   addMinutesLocal,
   appointmentSlotKeys,
@@ -204,6 +205,7 @@ const SCHEMA_STATEMENTS = [
 
 export async function ensureOperationsSchema(db: D1Database): Promise<void> {
   await db.batch(SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)));
+  await ensureSaasHubSchema(db);
 }
 
 export function jsonResponse(data: unknown, status = 200): Response {

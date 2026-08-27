@@ -10,7 +10,7 @@ export const TENANT_SYNC_EXPORT_LIMITS = {
   outputBytes: 25_000_000,
 } as const;
 
-export const tenantLifecycleStatuses = ["active", "closure_requested", "closed"] as const;
+export const tenantLifecycleStatuses = ["active", "closure_requested", "reactivation_requested", "closed"] as const;
 export type TenantLifecycleStatus = (typeof tenantLifecycleStatuses)[number];
 
 export const tenantClosureReasonCodes = [
@@ -49,6 +49,7 @@ export function effectiveTenantLifecycleStatus(
 ): EffectiveTenantLifecycleStatus {
   if (snapshot.status === "closed") return "closed";
   if (snapshot.status === "active") return "active";
+  if (snapshot.status === "reactivation_requested") return "reactivation_requested";
   if (snapshot.legalHold) return "closure_requested";
   const retentionUntil = snapshot.retentionUntil ? Date.parse(snapshot.retentionUntil) : Number.NaN;
   if (!Number.isFinite(retentionUntil)) return "closure_requested";
