@@ -142,9 +142,16 @@ async function verifyTouchPerformanceProfile(width = 1280) {
     await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
     await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
     const filterOpenButton = page.getByTestId("button-open-filter");
-    await filterOpenButton.waitFor({ state: "visible", timeout: 15000 });
-    await filterOpenButton.click();
+    const ageBandScroll = page.getByTestId("age-band-scroll");
+    await Promise.race([
+      ageBandScroll.waitFor({ state: "visible", timeout: 15000 }),
+      filterOpenButton.waitFor({ state: "visible", timeout: 15000 }),
+    ]);
+    if (!(await ageBandScroll.isVisible().catch(() => false))) {
+      await filterOpenButton.click();
+    }
     await page.locator(".container-filtro").waitFor({ state: "visible", timeout: 15000 });
+    await ageBandScroll.waitFor({ state: "visible", timeout: 15000 });
     await page
       .getByRole("button", { name: "TDAH · 6–12 anos", exact: true })
       .click();
