@@ -24,7 +24,7 @@ assert.match(app, /import\("@\/pages\/agenda"\)/);
 assert.match(app, /import\("@\/pages\/agendar"\)/);
 assert.match(app, /path="\/agenda"/);
 assert.match(app, /path="\/agendar"/);
-assert.match(nav, /href: "\/agenda", label: "Agenda & Gestão"/);
+assert.match(nav, /href: "\/agenda", label: "Agenda"/);
 
 assert.match(middleware, /"\/api\/public-booking"/);
 assert.match(
