@@ -118,7 +118,13 @@ export default function AgendaPage() {
   const { accessMode, isAuthenticated } = useAuth();
   const { activeClinicId } = useClinic();
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
-  const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
+  const dashboardKey = activeClinicId
+    ? `${DASHBOARD_KEY}&clinicId=${encodeURIComponent(activeClinicId)}`
+    : DASHBOARD_KEY;
+  const operationsPath = activeClinicId
+    ? `/api/operations?clinicId=${encodeURIComponent(activeClinicId)}`
+    : "/api/operations";
+  const dashboard = useQuery<OperationsDashboard>({ queryKey: [dashboardKey] });
   const data = dashboard.data;
   const [patientSearch, setPatientSearch] = useState("");
   const patientSearchParam = encodeURIComponent(patientSearch.trim());
@@ -184,7 +190,7 @@ export default function AgendaPage() {
   async function mutate(payload: Record<string, unknown>, success: string): Promise<boolean> {
     setBusy(true);
     try {
-      await apiRequest("POST", "/api/operations", payload);
+      await apiRequest("POST", operationsPath, payload);
     } catch (error) {
       toast({ title: "Não foi possível concluir.", description: String(error), variant: "destructive" });
       setBusy(false);
@@ -192,7 +198,7 @@ export default function AgendaPage() {
     }
 
     try {
-      await queryClient.invalidateQueries({ queryKey: [DASHBOARD_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [dashboardKey] });
       const refreshed = await dashboard.refetch();
       if (refreshed.isError) throw refreshed.error ?? new Error("Falha ao atualizar a agenda.");
       toast({ title: success });
