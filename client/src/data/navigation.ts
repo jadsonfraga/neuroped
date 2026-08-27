@@ -129,6 +129,13 @@ export const navSections: NavSection[] = [
       },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
       { href: "/manus", label: "Integrações Manus", icon: Globe2 },
+      {
+        href: "/saas",
+        label: "NeuroPed OS · SaaS",
+        icon: Sparkles,
+        tone: "priority",
+        description: "20 módulos complementares",
+      },
     ],
   },
   {
