@@ -74,6 +74,7 @@ A execução final gerou nove capturas sem runtime error: seis desktop (`login`,
 | `npm run audit:performance` | Aprovado; 30,88 MB de JavaScript inicial/estático medido contra os budgets vigentes, sem violações |
 | `npm run audit:visual` | Aprovado; nove capturas, sem runtime error detectado |
 | `git diff --check` | Aprovado; sem whitespace error |
+| GitHub Actions do PR #718 | Aprovado; 18 Checks successful, 0 failing, 0 pending |
 
 O `audit:a11y` foi executado no modo estático porque o próprio script não encontrou Chromium no caminho que procura. A auditoria visual foi executada separadamente com o Chromium do sistema (`/usr/bin/chromium`) e produziu as imagens acima.
 
