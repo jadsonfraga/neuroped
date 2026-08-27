@@ -17,6 +17,11 @@ import {
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../../tenant/_crypto";
+import {
+  hasUsefulSearchValue,
+  preparePatientSearchTokenStatements,
+  searchTokensForQuery,
+} from "./_search";
 
 interface PatientProfile {
   name: string;
@@ -45,6 +50,22 @@ function cleanText(value: unknown, max: number): string {
 function cleanOptional(value: unknown, max: number): string | null {
   const cleaned = cleanText(value, max);
   return cleaned || null;
+}
+
+function decodeCursor(value: string | null): { createdAt: string; id: string } | null {
+  if (!value) return null;
+  const [createdAt, id] = value.split("|");
+  if (!createdAt || !id || createdAt.length > 80 || id.length > 120) return null;
+  return { createdAt, id };
+}
+
+function encodeCursor(createdAt: string, id: string): string {
+  return encodeURIComponent(`${createdAt}|${id}`);
+}
+
+function parseLimit(value: string | null): number {
+  const parsed = Number(value ?? "25");
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 100 ? parsed : 25;
 }
 
 function validIsoDate(value: string | null): boolean {
@@ -90,7 +111,19 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
   const url = new URL(context.request.url);
   const clinicId = cleanText(url.searchParams.get("clinicId"), 80);
+  const search = cleanText(url.searchParams.get("q"), 160);
+  const limit = parseLimit(url.searchParams.get("limit"));
+  const cursor = decodeCursor(url.searchParams.get("cursor"));
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
+  if (url.searchParams.has("limit") && !/^\d+$/.test(url.searchParams.get("limit") ?? "")) {
+    return tenantError("limit deve ser um inteiro entre 1 e 100.", "VALIDATION_ERROR", 400);
+  }
+  if (search && !hasUsefulSearchValue(search)) {
+    return tenantError("q deve conter ao menos dois caracteres úteis.", "VALIDATION_ERROR", 400);
+  }
+  if (url.searchParams.has("cursor") && !cursor) {
+    return tenantError("cursor inválido.", "VALIDATION_ERROR", 400);
+  }
 
   const membership = await getClinicMembership(db, clinicId, user);
   if (!membership || !membershipCanReadClinical(membership)) {
@@ -99,21 +132,40 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const billingReadError = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
   if (billingReadError) return billingReadError;
 
-  const rows = await db
-    .prepare(
-      `SELECT id, clinic_id, primary_professional_user_id, profile_encrypted,
-              encryption_version, status, created_at, updated_at
-         FROM live_patients
-        WHERE clinic_id = ? AND status != 'merged'
-        ORDER BY created_at DESC
-        LIMIT 100`,
-    )
-    .bind(clinicId)
-    .all<LivePatientRow>();
-
   try {
+    const queryTokens = search ? await searchTokensForQuery(context.env, clinicId, search) : [];
+    const tokenPlaceholders = queryTokens.map(() => "?").join(", ");
+    const searchClause = queryTokens.length
+      ? `AND EXISTS (
+           SELECT 1 FROM live_patient_search_tokens st
+            WHERE st.clinic_id = p.clinic_id
+              AND st.patient_id = p.id
+              AND st.token IN (${tokenPlaceholders})
+         )`
+      : "";
+    const cursorClause = cursor ? "AND (p.created_at < ? OR (p.created_at = ? AND p.id < ?))" : "";
+    const parameters: unknown[] = [clinicId, ...queryTokens];
+    if (cursor) parameters.push(cursor.createdAt, cursor.createdAt, cursor.id);
+    parameters.push(limit + 1);
+
+    const rows = await db
+      .prepare(
+        `SELECT p.id, p.clinic_id, p.primary_professional_user_id, p.profile_encrypted,
+                p.encryption_version, p.status, p.created_at, p.updated_at
+           FROM live_patients p
+          WHERE p.clinic_id = ? AND p.status != 'merged'
+            ${searchClause}
+            ${cursorClause}
+          ORDER BY p.created_at DESC, p.id DESC
+          LIMIT ?`,
+      )
+      .bind(...parameters)
+      .all<LivePatientRow>();
+
+    const pageRows = (rows.results ?? []).slice(0, limit);
+    const hasMore = (rows.results ?? []).length > limit;
     const data = await Promise.all(
-      (rows.results ?? []).map(async (row) => ({
+      pageRows.map(async (row) => ({
         id: row.id,
         clinicId: row.clinic_id,
         primaryProfessionalUserId: row.primary_professional_user_id,
@@ -129,9 +181,18 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
         updatedAt: row.updated_at,
       })),
     );
-    return tenantJson({ data });
+    const last = pageRows.at(-1);
+    return tenantJson({
+      data,
+      pagination: {
+        limit,
+        hasMore,
+        nextCursor: hasMore && last ? encodeCursor(last.created_at, last.id) : null,
+        searchApplied: Boolean(search),
+      },
+    });
   } catch (error) {
-    console.error("[live.patients.GET] decrypt failure", error);
+    console.error("[live.patients.GET] query/decrypt failure", error);
     return tenantError("Dados clínicos indisponíveis.", "CLINICAL_DECRYPT_FAILED", 500);
   }
 };
@@ -197,6 +258,14 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     ? await clinicalBlindIndex(context.env, clinicId, "external-reference", externalReference)
     : null;
   const now = new Date().toISOString();
+  const searchTokenStatements = await preparePatientSearchTokenStatements(
+    db,
+    context.env,
+    clinicId,
+    patientId,
+    profile,
+    externalReference,
+  );
 
   try {
     const results = await db.batch([
@@ -228,10 +297,11 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
           action: "live_patient_create",
           targetType: "patient",
           targetId: patientId,
-          metadata: { encryptionVersion },
+          metadata: { encryptionVersion, searchTokenCount: searchTokenStatements.length },
         },
         true,
       ),
+      ...searchTokenStatements,
     ]);
     if ((results[0]?.meta?.changes ?? 0) !== 1 || (results[1]?.meta?.changes ?? 0) !== 1) {
       return tenantError("Não foi possível criar o paciente LIVE.", "DB_ERROR", 500);

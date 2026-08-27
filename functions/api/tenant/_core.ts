@@ -15,6 +15,9 @@ export interface TenantEnv {
   CLINICAL_DATA_KEY_PREVIOUS?: string;
   CLINICAL_DATA_KEY_PREVIOUS_ID?: string;
   CLINICAL_INDEX_KEY?: string;
+  OPERATIONAL_DATA_KEY?: string;
+  APP_BASE_URL?: string;
+  ENVIRONMENT?: string;
   CLINICAL_LIVE_ENABLED?: string;
 }
 
@@ -46,10 +49,19 @@ export interface SaasAuditParams {
   metadata?: Record<string, string | number | boolean | null>;
 }
 
+const TENANT_RESPONSE_HEADERS = {
+  "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "no-store, max-age=0",
+  "Pragma": "no-cache",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+} as const;
+
 export function tenantJson(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: TENANT_RESPONSE_HEADERS,
   });
 }
 

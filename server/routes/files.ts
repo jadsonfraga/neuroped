@@ -71,6 +71,23 @@ const VALID_CATEGORIES = new Set([
   "outros",
 ]);
 
+/**
+ * O router Express legado usa SQLite e ownership por usuário, não membership
+ * tenant-aware. Ele não pode ser exposto quando o Clinical Core LIVE está ativo.
+ * A exceção só é possível em ambiente explicitamente não-LIVE, para migração ou
+ * desenvolvimento; não é um bypass de produção.
+ */
+function legacyFileRouteDisabled(res: Response): boolean {
+  const live = process.env.CLINICAL_LIVE_ENABLED?.trim().toLowerCase() === "true";
+  const explicitlyEnabled = process.env.ENABLE_LEGACY_FILE_ROUTES?.trim().toLowerCase() === "true";
+  if (!live || explicitlyEnabled) return false;
+  res.status(503).json({
+    error: "Rota legada de arquivos bloqueada no modo clínico LIVE; use o serviço de arquivos tenant-aware.",
+    code: "LEGACY_FILE_ROUTE_DISABLED_IN_LIVE",
+  });
+  return true;
+}
+
 export function registerFileRoutes(app: Express): void {
   /**
    * POST /api/files/sign-upload
@@ -78,6 +95,7 @@ export function registerFileRoutes(app: Express): void {
    * Resp: { fileId, key, url, method, expiresInSeconds }
    */
   app.post("/api/files/sign-upload", requireAuth, requireProfessional, writeRateLimit, async (req: Request, res: Response) => {
+    if (legacyFileRouteDisabled(res)) return;
     const ctx = getAuditContextFromRequest(req);
     const schema = z.object({
       filename: z.string().min(1).max(200),
@@ -202,6 +220,7 @@ export function registerFileRoutes(app: Express): void {
    * Verifica que o objeto realmente foi enviado ao bucket.
    */
   app.post("/api/files/:id/confirm", requireAuth, async (req: Request, res: Response) => {
+    if (legacyFileRouteDisabled(res)) return;
     const ctx = getAuditContextFromRequest(req);
     try {
       const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();
@@ -273,6 +292,7 @@ export function registerFileRoutes(app: Express): void {
    * Retorna metadata + URL assinada para download.
    */
   app.get("/api/files/:id", requireAuth, async (req: Request, res: Response) => {
+    if (legacyFileRouteDisabled(res)) return;
     const ctx = getAuditContextFromRequest(req);
     try {
       const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();
@@ -324,6 +344,7 @@ export function registerFileRoutes(app: Express): void {
    * Lista arquivos do usuario (filtravel por paciente).
    */
   app.get("/api/files", requireAuth, async (req: Request, res: Response) => {
+    if (legacyFileRouteDisabled(res)) return;
     const patientId = typeof req.query.patientId === "string" ? req.query.patientId : null;
     // Clamp inferior obrigatório: LIMIT negativo no SQLite significa "sem
     // limite" e furaria o teto de 100 itens por página.
@@ -364,6 +385,7 @@ export function registerFileRoutes(app: Express): void {
    * Soft-delete + remove do bucket (best-effort).
    */
   app.delete("/api/files/:id", requireAuth, requireProfessional, async (req: Request, res: Response) => {
+    if (legacyFileRouteDisabled(res)) return;
     const ctx = getAuditContextFromRequest(req);
     try {
       const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();

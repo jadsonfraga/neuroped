@@ -11,6 +11,7 @@
 
 export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
+  "/convite", // Aceite de membership; token é credencial efêmera e não contém PHI
   "/sessao-expirada", // Recuperação de sessão remota
   "/familia", // Capa pública (home das famílias)
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos

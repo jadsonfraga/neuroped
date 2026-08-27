@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
+import { useClinic } from "@/contexts/ClinicContext";
+import { authFetch } from "@/lib/authClient";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
@@ -37,6 +39,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 const STORAGE_KEY = "neuroped:saas-console-v1";
+
+function storageKey(scope: string): string {
+  const normalizedScope = scope.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80) || "demo";
+  return `${STORAGE_KEY}:${normalizedScope}`;
+}
 
 type ModuleId =
   | "workspace"
@@ -81,6 +88,37 @@ type ModuleState = {
   enabled: boolean;
   completed: number;
   lastAction: string;
+};
+
+type RemoteModuleState = {
+  moduleId: ModuleId;
+  enabled: boolean;
+  version: number;
+  updatedAt: string | null;
+};
+
+type ReadinessState = {
+  readyForProduction: boolean;
+  missing: string[];
+  checks: Record<string, { ok: boolean; label: string }>;
+  enabledModules: number;
+  requiredModules: number;
+  latestBackup: { status: string; restoreVerifiedAt: string | null; createdAt: string } | null;
+};
+
+type PrivacyRequest = {
+  id: string;
+  requestType: string;
+  subjectType: string;
+  subjectReferenceHash: string;
+  status: string;
+  dueAt: string | null;
+  createdAt: string;
+};
+
+type PrivacySnapshot = {
+  requests: PrivacyRequest[];
+  retention: Array<{ dataClass: string; retentionDays: number; purgeMode: string; legalHold: boolean; enabled: boolean; version: number }>;
 };
 
 type ConsoleState = {
@@ -399,10 +437,10 @@ function createInitialState(): ConsoleState {
   };
 }
 
-function loadState(): ConsoleState {
+function loadState(scope = "demo"): ConsoleState {
   if (typeof window === "undefined") return createInitialState();
   try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const saved = window.localStorage.getItem(storageKey(scope));
     if (!saved) return createInitialState();
     const parsed = JSON.parse(saved) as Partial<ConsoleState>;
     return {
@@ -456,22 +494,107 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 export default function SaasCentralPage() {
-  const [state, setState] = useState<ConsoleState>(loadState);
+  const { activeClinic, activeClinicId, error: clinicError, isLoading: clinicLoading } = useClinic();
+  const tenantScope = activeClinicId ?? "demo";
+  const [state, setState] = useState<ConsoleState>(() => loadState(tenantScope));
+  const [remoteModuleStates, setRemoteModuleStates] = useState<Record<ModuleId, RemoteModuleState> | null>(null);
+  const [readiness, setReadiness] = useState<ReadinessState | null>(null);
+  const [privacySnapshot, setPrivacySnapshot] = useState<PrivacySnapshot | null>(null);
+  const [remoteStatus, setRemoteStatus] = useState<"demo" | "loading" | "synced" | "error">("demo");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [messageTemplate, setMessageTemplate] = useState("Olá, {{responsavel}}. Temos uma atualização segura da clínica NeuroPed para você.");
   const [inviteEmail, setInviteEmail] = useState("");
   const [privacyEmail, setPrivacyEmail] = useState("");
+  const [backupProvider, setBackupProvider] = useState("");
+  const [backupDigest, setBackupDigest] = useState("");
+  const [backupRpo, setBackupRpo] = useState("240");
+  const [backupRto, setBackupRto] = useState("240");
+  const [backupStatus, setBackupStatus] = useState<"recorded" | "verified" | "failed">("verified");
   const [apiKeyCreated, setApiKeyCreated] = useState(false);
 
   useEffect(() => {
+    setState(loadState(tenantScope));
+    setRemoteModuleStates(null);
+    setReadiness(null);
+    setPrivacySnapshot(null);
+    setRemoteStatus(activeClinicId ? "loading" : "demo");
+  }, [activeClinicId, tenantScope]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/modules?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível sincronizar os módulos.");
+        const records = Array.isArray(body?.data) ? body.data : [];
+        const next = Object.fromEntries(
+          records.filter((item: RemoteModuleState) => moduleById[item.moduleId]).map((item: RemoteModuleState) => [item.moduleId, item]),
+        ) as Record<ModuleId, RemoteModuleState>;
+        if (cancelled) return;
+        setRemoteModuleStates(next);
+        setState((current) => ({
+          ...current,
+          moduleStates: Object.fromEntries(
+            modules.map((module) => {
+              const updatedAt = next[module.id]?.updatedAt;
+              return [module.id, {
+                ...current.moduleStates[module.id],
+                enabled: next[module.id]?.enabled ?? current.moduleStates[module.id].enabled,
+                lastAction: updatedAt ? `Sincronizado em ${new Date(updatedAt).toLocaleString()}` : current.moduleStates[module.id].lastAction,
+              }];
+            }),
+          ) as Record<ModuleId, ModuleState>,
+        }));
+        setRemoteStatus("synced");
+      })
+      .catch((cause) => {
+        if (cancelled) return;
+        setRemoteStatus("error");
+        setToast(cause instanceof Error ? cause.message : "Não foi possível sincronizar o control plane.");
+      });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/readiness?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Readiness indisponível.");
+        if (!cancelled) setReadiness(body as ReadinessState);
+      })
+      .catch((cause) => {
+        if (!cancelled) setToast(cause instanceof Error ? cause.message : "Readiness indisponível.");
+      });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/privacy?clinicId=${encodeURIComponent(activeClinicId)}&mode=all`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Governança LGPD indisponível.");
+        if (!cancelled) setPrivacySnapshot({ requests: Array.isArray(body?.requests) ? body.requests : [], retention: Array.isArray(body?.retention) ? body.retention : [] });
+      })
+      .catch((cause) => {
+        if (!cancelled) setToast(cause instanceof Error ? cause.message : "Governança LGPD indisponível.");
+      });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(storageKey(tenantScope), JSON.stringify(state));
     } catch {
       // Preferências não sensíveis não devem interromper a operação da tela.
     }
-  }, [state]);
+  }, [state, tenantScope]);
 
   useEffect(() => {
     if (!toast) return;
@@ -498,7 +621,85 @@ export default function SaasCentralPage() {
     }));
   };
 
+  const toggleModule = (id: ModuleId, enabled: boolean) => {
+    if (activeClinicId && !remoteModuleStates) {
+      setToast("Aguarde a sincronização do tenant antes de alterar um módulo.");
+      return;
+    }
+    const previous = state.moduleStates[id].enabled;
+    updateModule(id, { enabled, lastAction: enabled ? "Habilitação enviada ao tenant" : "Pausa enviada ao tenant" });
+    if (!activeClinicId || !remoteModuleStates) {
+      setToast(enabled ? "Módulo habilitado apenas na demonstração local." : "Módulo pausado apenas na demonstração local.");
+      return;
+    }
+    const expectedVersion = remoteModuleStates[id]?.version ?? 0;
+    void authFetch("/api/saas/modules", {
+      method: "PATCH",
+      body: JSON.stringify({ clinicId: activeClinicId, moduleId: id, enabled, expectedVersion }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível salvar o módulo.");
+        const saved = body?.data as RemoteModuleState;
+        setRemoteModuleStates((current) => current ? { ...current, [id]: saved } : current);
+        updateModule(id, { enabled: saved.enabled, lastAction: `Sincronizado em ${new Date(saved.updatedAt ?? Date.now()).toLocaleString()}` });
+        setToast(`Aba ${moduleById[id].number} sincronizada com o tenant.`);
+      })
+      .catch((cause) => {
+        updateModule(id, { enabled: previous, lastAction: "Falha ao sincronizar — rollback aplicado" });
+        setToast(cause instanceof Error ? cause.message : "Não foi possível salvar o módulo.");
+      });
+  };
+
   const announce = (message: string) => setToast(message);
+
+  const recordBackupEvidence = () => {
+    if (!activeClinicId) {
+      setToast("Evidência de backup exige um tenant ativo; nada foi registrado localmente.");
+      return;
+    }
+    if (!backupProvider.trim() || !/^[a-f0-9]{64}$/i.test(backupDigest.trim())) {
+      setToast("Informe o provedor e o digest SHA-256 de 64 caracteres hexadecimais.");
+      return;
+    }
+    void authFetch("/api/saas/backup-evidence", {
+      method: "POST",
+      body: JSON.stringify({ clinicId: activeClinicId, provider: backupProvider.trim(), snapshotDigestSha256: backupDigest.trim(), status: backupStatus, rpoMinutes: Number(backupRpo), rtoMinutes: Number(backupRto), restoreVerifiedAt: backupStatus === "verified" ? new Date().toISOString() : null }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível registrar a evidência.");
+        setBackupDigest("");
+        setReadiness((current) => current ? { ...current, latestBackup: body.data, checks: current.checks, missing: current.missing } : current);
+        setToast("Evidência de backup/restore registrada e auditada.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar a evidência."));
+  };
+
+  const createPrivacyRequest = () => {
+    if (!activeClinicId) {
+      recordAction("Pedido de acesso preparado apenas na demonstração local.", 2);
+      setPrivacyEmail("");
+      return;
+    }
+    const subjectReference = privacyEmail.trim();
+    if (!subjectReference || !subjectReference.includes("@")) {
+      setToast("Informe um e-mail válido do titular; ele será transformado em hash no servidor.");
+      return;
+    }
+    void authFetch("/api/saas/privacy", {
+      method: "POST",
+      body: JSON.stringify({ clinicId: activeClinicId, requestType: "access", subjectType: "account", subjectReference }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível registrar o pedido.");
+        setPrivacyEmail("");
+        setPrivacySnapshot((current) => current ? { ...current, requests: [body.data as PrivacyRequest, ...current.requests] } : current);
+        recordAction("Pedido do titular registrado no tenant e auditado.", 2);
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar o pedido."));
+  };
 
   const recordAction = (message: string, completed = 1) => {
     updateModule(state.activeModule, {
@@ -602,17 +803,20 @@ export default function SaasCentralPage() {
         );
       case "continuity":
         return (
-          <ActionCard title="Política de continuidade" description="A demonstração registra intenção operacional; o backup real deve ser conectado ao provedor aprovado.">
+          <ActionCard title="Política de continuidade" description="Registre somente evidências fornecidas pelo provedor. O digest é validado no servidor e a prova fica vinculada ao tenant.">
             <div className="grid gap-4 sm:grid-cols-2"><div><FieldLabel htmlFor="backup-frequency">Frequência</FieldLabel><select id="backup-frequency" className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-sm"><option>A cada 4 horas</option><option>Diário</option><option>Semanal</option></select></div><div><FieldLabel htmlFor="backup-retention">Retenção</FieldLabel><select id="backup-retention" className="mt-2 h-10 w-full rounded-xl border bg-background px-3 text-sm"><option>90 dias</option><option>1 ano</option><option>Política permanente</option></select></div></div>
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-100"><p className="font-semibold">Último teste de restore</p><p className="mt-1 text-xs opacity-80">Simulado · integridade prevista · sem dados clínicos nesta tela</p></div>
-            <Button className="mt-4 gap-2" onClick={() => recordAction("Teste de restore agendado para staging.", 3)}><Database className="h-4 w-4" />Agendar teste</Button>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2"><div><FieldLabel htmlFor="backup-provider">Provedor</FieldLabel><Input id="backup-provider" value={backupProvider} onChange={(event) => setBackupProvider(event.target.value)} placeholder="Cloudflare R2 / S3" /></div><div><FieldLabel htmlFor="backup-digest">SHA-256 do snapshot</FieldLabel><Input id="backup-digest" value={backupDigest} onChange={(event) => setBackupDigest(event.target.value)} placeholder="64 caracteres hexadecimais" className="font-mono text-xs" /></div><div><FieldLabel htmlFor="backup-rpo">RPO (minutos)</FieldLabel><Input id="backup-rpo" type="number" min="0" max="10080" value={backupRpo} onChange={(event) => setBackupRpo(event.target.value)} /></div><div><FieldLabel htmlFor="backup-rto">RTO (minutos)</FieldLabel><Input id="backup-rto" type="number" min="0" max="10080" value={backupRto} onChange={(event) => setBackupRto(event.target.value)} /></div></div>
+            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100"><Database className="h-5 w-5 shrink-0" /><div><p className="font-semibold">Último readiness</p><p className="mt-1 text-xs opacity-80">{readiness?.latestBackup ? `${readiness.latestBackup.status} · ${new Date(readiness.latestBackup.createdAt).toLocaleString()}` : "Nenhuma evidência registrada para este tenant."}</p></div></div>
+            <div className="mt-4 flex flex-wrap gap-3"><select aria-label="Status da evidência" value={backupStatus} onChange={(event) => setBackupStatus(event.target.value as typeof backupStatus)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="verified">Restore verificado</option><option value="recorded">Snapshot registrado</option><option value="failed">Falha no restore</option></select><Button className="gap-2" onClick={recordBackupEvidence}><Database className="h-4 w-4" />Registrar evidência</Button></div>
           </ActionCard>
         );
       case "privacy":
         return (
-          <ActionCard title="Fila de direitos do titular" description="Use dados mínimos. A execução real deve passar pelo módulo LGPD e por revisão autorizada.">
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><Input aria-label="E-mail do titular" value={privacyEmail} onChange={(event) => setPrivacyEmail(event.target.value)} placeholder="titular@exemplo.com" type="email" /><Button onClick={() => { setPrivacyEmail(""); recordAction("Solicitação de acesso registrada para revisão.", 2); }}>Registrar solicitação</Button></div>
-            <div className="mt-4 space-y-2 text-sm"><div className="flex items-center justify-between rounded-xl border p-3"><span>Acesso aos dados</span><Badge variant="outline">Em revisão</Badge></div><div className="flex items-center justify-between rounded-xl border p-3"><span>Correção</span><Badge variant="outline">Disponível</Badge></div><div className="flex items-center justify-between rounded-xl border p-3"><span>Revogação</span><Badge variant="outline">Disponível</Badge></div></div>
+          <ActionCard title="Fila de direitos do titular" description="Use dados mínimos. O e-mail é transformado em hash no servidor; a execução real exige verificação de identidade e revisão autorizada.">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><Input aria-label="E-mail do titular" value={privacyEmail} onChange={(event) => setPrivacyEmail(event.target.value)} placeholder="titular@exemplo.com" type="email" /><Button onClick={createPrivacyRequest}>Registrar solicitação</Button></div>
+            <div className="mt-4 space-y-2 text-sm">{privacySnapshot?.requests.slice(0, 5).map((request) => <div key={request.id} className="flex items-center justify-between gap-3 rounded-xl border p-3"><span><strong>{request.requestType}</strong><span className="ml-2 text-xs text-muted-foreground">{request.subjectReferenceHash.slice(0, 10)}…</span></span><Badge variant={request.status === "completed" ? "default" : "outline"}>{request.status}</Badge></div>)}{(!privacySnapshot || privacySnapshot.requests.length === 0) && <><div className="flex items-center justify-between rounded-xl border p-3"><span>Acesso aos dados</span><Badge variant="outline">Em revisão</Badge></div><div className="flex items-center justify-between rounded-xl border p-3"><span>Correção</span><Badge variant="outline">Disponível</Badge></div><div className="flex items-center justify-between rounded-xl border p-3"><span>Revogação</span><Badge variant="outline">Disponível</Badge></div></>}
+            </div>
+            {privacySnapshot?.retention.length ? <div className="mt-4 rounded-xl border bg-muted/20 p-3 text-xs"><p className="font-semibold">Políticas carregadas do tenant</p><div className="mt-2 flex flex-wrap gap-2">{privacySnapshot.retention.map((policy) => <Pill key={policy.dataClass}>{policy.dataClass}: {policy.retentionDays}d · {policy.purgeMode}{policy.legalHold ? " · legal hold" : ""}</Pill>)}</div></div> : null}
           </ActionCard>
         );
       case "messaging":
@@ -698,23 +902,26 @@ export default function SaasCentralPage() {
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
         <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-4xl">
-            <div className="mb-3 flex flex-wrap items-center gap-2"><Badge className="gap-1.5"><Sparkles className="h-3.5 w-3.5" />NeuroPed OS</Badge><Badge variant="outline">20 áreas em abas</Badge><Badge variant="outline">MVP seguro</Badge></div>
+            <div className="mb-3 flex flex-wrap items-center gap-2"><Badge className="gap-1.5"><Sparkles className="h-3.5 w-3.5" />NeuroPed OS</Badge><Badge variant="outline">20 áreas em abas</Badge><Badge variant="outline">MVP seguro</Badge><Badge variant={remoteStatus === "synced" ? "default" : "outline"}>{clinicLoading ? "Carregando tenant…" : activeClinic ? `Tenant: ${activeClinic.name}` : "Demo local"}</Badge></div>
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Central SaaS complementar</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">Uma central administrativa para organizar as 20 expansões sem duplicar pacientes, escalas, Clinical Core, documentos, agenda, Conecta ou portais existentes.</p>
+          <p className="mt-3 text-xs font-medium text-muted-foreground">{remoteStatus === "synced" ? "Configuração sincronizada no servidor para o tenant ativo." : remoteStatus === "loading" ? "Sincronizando configuração tenant-aware…" : remoteStatus === "error" ? (clinicError ?? "Control plane indisponível; nenhum toggle de produção foi alterado.") : "Nenhum tenant ativo: preferências ficam restritas à demonstração local."}</p>
           </div>
           <div className="flex flex-wrap gap-2"><Button asChild variant="outline" className="gap-2"><Link href="/">Abrir núcleo NeuroPed<ChevronRight className="h-4 w-4" /></Link></Button><Button variant="outline" className="gap-2" onClick={() => { setState(createInitialState()); setApiKeyCreated(false); announce("Preferências da central restauradas."); }}><ShieldCheck className="h-4 w-4" />Restaurar demo</Button></div>
         </div>
       </header>
 
-      <Card className="border-amber-200/70 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/15"><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" /><p className="leading-6 text-amber-950 dark:text-amber-100"><strong>Escopo desta entrega:</strong> as 20 abas e seus fluxos de demonstração estão implementados sem gravar dados clínicos identificáveis. As integrações de produção devem entrar por APIs tenant-aware, feature flags, auditoria, consentimento e testes próprios de cada módulo.</p></CardContent></Card>
+      <Card className="border-amber-200/70 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/15"><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" /><p className="leading-6 text-amber-950 dark:text-amber-100"><strong>Guardrail:</strong> a central separa configuração de tenant, habilitação de módulo e fonte clínica canônica. Nenhum toggle local concede acesso a PHI; produção exige membership, entitlement, keyring, auditoria, consentimento e evidência de restore.</p></CardContent></Card>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><ModuleMetric label="Abas disponíveis" value="20" /><ModuleMetric label="Módulos habilitados" value={`${enabledCount}/20`} tone="success" /><ModuleMetric label="Marcos registrados" value={`${completedCount}`} /><ModuleMetric label="Workspace" value={state.organizationName} /></div>
+      {activeClinicId && readiness && <Card className={readiness.readyForProduction ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className={readiness.readyForProduction ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div className="min-w-0"><p className="font-semibold">{readiness.readyForProduction ? "Tenant pronto para liberação controlada" : "Readiness bloqueado antes da produção"}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{readiness.readyForProduction ? "Todos os gates mínimos de infraestrutura, acesso e continuidade foram comprovados." : `Pendências: ${readiness.missing.join(" · ")}`}</p><div className="mt-3 flex flex-wrap gap-2">{Object.values(readiness.checks).map((check) => <Pill key={check.label}>{check.ok ? "✓" : "○"} {check.label}</Pill>)}</div></div></CardContent></Card>}
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><ModuleMetric label="Abas disponíveis" value="20" /><ModuleMetric label="Módulos habilitados" value={`${enabledCount}/20`} tone="success" /><ModuleMetric label="Marcos registrados" value={`${completedCount}`} /><ModuleMetric label="Workspace" value={activeClinic?.name ?? state.organizationName} /></div>
 
       <Tabs value={state.activeModule} onValueChange={(value) => setState((current) => ({ ...current, activeModule: value as ModuleId }))} orientation="vertical" className="grid gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
         <div className="space-y-3 lg:sticky lg:top-4 lg:self-start"><div className="rounded-2xl border bg-card p-3"><FieldLabel htmlFor="module-search">Filtrar abas</FieldLabel><Input id="module-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ex.: acesso, agenda, API" className="mt-2" /></div><TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 bg-muted/35 p-2 lg:grid-cols-1 lg:items-stretch lg:justify-start">{visibleModules.map((module) => <TabsTrigger key={module.id} value={module.id} className="justify-start gap-2 px-2.5 py-2 text-left text-xs data-[state=active]:bg-card"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[10px] font-bold text-primary">{module.number}</span><span className="min-w-0 truncate">{module.shortLabel}</span></TabsTrigger>)}</TabsList>{visibleModules.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhuma aba encontrada.</p>}</div>
         <TabsContent value={state.activeModule} className="mt-0 min-w-0">
           <div className="space-y-5">
-            <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm md:flex-row md:items-start md:justify-between"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><active.icon className="h-6 w-6" /></div><div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Aba {active.number} · {active.eyebrow}</span><StatusBadge status={active.status} /></div><h2 className="text-2xl font-semibold tracking-tight">{active.title}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{active.description}</p></div></div><label className="flex shrink-0 items-center gap-3 rounded-xl border px-3 py-2 text-xs font-semibold"><input type="checkbox" checked={state.moduleStates[active.id].enabled} onChange={(event) => updateModule(active.id, { enabled: event.target.checked, lastAction: event.target.checked ? "Módulo habilitado no piloto" : "Módulo pausado" })} className="h-4 w-4 accent-primary" />Habilitar no piloto</label></div>
+            <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm md:flex-row md:items-start md:justify-between"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><active.icon className="h-6 w-6" /></div><div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Aba {active.number} · {active.eyebrow}</span><StatusBadge status={active.status} /></div><h2 className="text-2xl font-semibold tracking-tight">{active.title}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{active.description}</p></div></div><label className="flex shrink-0 items-center gap-3 rounded-xl border px-3 py-2 text-xs font-semibold"><input type="checkbox" checked={state.moduleStates[active.id].enabled} onChange={(event) => toggleModule(active.id, event.target.checked)} className="h-4 w-4 accent-primary" />Habilitar no piloto</label></div>
             <div className="grid gap-3 sm:grid-cols-3"><ModuleMetric label="Indicador do módulo" value={active.metric} /><ModuleMetric label="Unidade" value={active.metricLabel} /><ModuleMetric label="Última ação" value={state.moduleStates[active.id].lastAction} tone={state.moduleStates[active.id].lastAction === "Ainda não configurado" ? "warning" : "success"} /></div>
             {renderWorkspace()}
             <div className="rounded-2xl border border-dashed bg-muted/20 p-4 text-xs leading-5 text-muted-foreground"><strong className="text-foreground">Fronteira desta aba:</strong> {active.boundary} <span className="mx-1">·</span> <strong className="text-foreground">Fonte canônica:</strong> Clinical Core, pacientes, documentos, agenda, Conecta ou autenticação existentes, conforme o contrato do módulo.</div>

@@ -33,6 +33,8 @@
     "test:e2e:scales": "node tests/e2e/scale-smoke.mjs",
     "test:e2e:neuroped-acompanhamento": "node tests/e2e/neuroped-acompanhamento.mjs",
     "test:e2e:saas": "node tests/e2e/saas-central.mjs",
+    "test:saas-hardening": "node tests/unit/saas-production-hardening.test.mjs",
+    "test:saas-migrations": "node tests/unit/saas-migrations-smoke.test.mjs",
     "test:e2e:missao-saude": "node tests/e2e/missao-saude-accessibility.mjs",
     "test:e2e:published": "node tests/e2e/published-clinical-journey.mjs",
     "test:e2e:published-errors": "node tests/e2e/published-error-trace.mjs",

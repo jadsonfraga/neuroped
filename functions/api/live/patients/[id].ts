@@ -17,6 +17,7 @@ import {
   decryptClinicalJson,
   encryptClinicalJson,
 } from "../../tenant/_crypto";
+import { preparePatientSearchTokenStatements } from "./_search";
 
 interface PatientProfile {
   name: string;
@@ -136,6 +137,17 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
     ? await clinicalBlindIndex(context.env, clinicId, "patient-identity", `${profile.name}|${profile.birthDate}`)
     : null;
   const now = new Date().toISOString();
+  const searchTokenStatements = await preparePatientSearchTokenStatements(
+    db,
+    context.env,
+    clinicId,
+    patientId,
+    profile,
+    null,
+    false,
+    now,
+    now,
+  );
   try {
     const results = await db.batch([
       db
@@ -154,10 +166,24 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
           action: "live_patient_update",
           targetType: "patient",
           targetId: patientId,
-          metadata: { encryptionVersion: currentClinicalEncryptionVersion(context.env) },
+          metadata: {
+            encryptionVersion: currentClinicalEncryptionVersion(context.env),
+            searchTokenCount: searchTokenStatements.length,
+          },
         },
         true,
       ),
+      db
+        .prepare(
+          `DELETE FROM live_patient_search_tokens
+            WHERE clinic_id = ? AND patient_id = ? AND field IN ('name', 'guardian_name')
+              AND EXISTS (
+                SELECT 1 FROM live_patients
+                 WHERE id = ? AND clinic_id = ? AND updated_at = ?
+              )`,
+        )
+        .bind(clinicId, patientId, patientId, clinicId, now),
+      ...searchTokenStatements,
     ]);
     if (Number(results[0]?.meta?.changes ?? 0) !== 1 || Number(results[1]?.meta?.changes ?? 0) !== 1) return tenantError("Paciente mudou durante a edição.", "PATIENT_STALE", 409);
   } catch (error) {
