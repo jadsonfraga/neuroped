@@ -256,7 +256,7 @@ export async function ensureDefaultBookingSetup(
 ): Promise<void> {
   const service = await db
     .prepare(
-      "SELECT id FROM booking_services WHERE provider_user_id = ? AND active = 1 LIMIT 1",
+      "SELECT id FROM booking_services WHERE provider_user_id = ? AND active = 1 AND duration_minutes = 60 LIMIT 1",
     )
     .bind(providerUserId)
     .first<{ id: string }>();
