@@ -89,7 +89,7 @@ export function CommandPalette() {
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const normalizedSearch = normalize(search);
   const onPublicRoute = isPublicRoute(path);
-  const privateToolsAllowed = !IS_PUBLIC_ZONE && !onPublicRoute;
+  const privateToolsAllowed = !(IS_PUBLIC_ZONE || onPublicRoute);
   const canRenderClinicalItem = useCallback(
     (href: string) =>
       canRenderNavigationItem({
