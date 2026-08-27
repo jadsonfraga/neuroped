@@ -1,6 +1,9 @@
 name: PR Check
 
 on:
+  push:
+    branches:
+      - feat/saas-production-gates-ops
   pull_request:
     branches:
       - main
