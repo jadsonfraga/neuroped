@@ -31,7 +31,7 @@ import type { ScaleEntry } from "./scaleFilter";
 export interface ScaleEntryV2 extends ScaleEntry {
   respondente_novo?: RespondentType;
   tarefa_tipo?: TarefaTipo;
-  migration_batch?: "1a" | "1b" | "1c" | "1d" | "1e";
+  migration_batch?: "1A" | "1B" | "1C" | "1D" | "1E";
   migration_status?: "success" | "validation_warning" | "validation_error";
   migration_notes?: string;
 }
@@ -62,8 +62,8 @@ export interface MigrationSummary {
   total_warnings: number;
   total_errors: number;
   distribution_by_lote: Record<string, number>;
-  distribution_by_respondent: Record<RespondentType, number>;
-  distribution_by_tarefa: Record<TarefaTipo, number>;
+  distribution_by_respondent: Partial<Record<RespondentType, number>>;
+  distribution_by_tarefa: Partial<Record<TarefaTipo, number>>;
 }
 
 /**
@@ -85,13 +85,12 @@ export function applyBatch1Classification(
   // Validate using absolute rules
   const validationResult = validateAbsoluteRule(
     batch1Entry.respondente_novo,
-    batch1Entry.tarefa_tipo,
-    scaleId
+    batch1Entry.tarefa_tipo
   );
 
   v2.migration_status = validationResult.valid ? "success" : "validation_error";
   if (!validationResult.valid) {
-    v2.migration_notes = validationResult.errors.join("; ");
+    v2.migration_notes = validationResult.error || "Unknown validation error";
   }
 
   return v2;
@@ -140,11 +139,8 @@ export function generateMigrationAudit(
 
     const validation = validateAbsoluteRule(
       batch1Entry.respondente_novo,
-      batch1Entry.tarefa_tipo,
-      batch1Entry.id
+      batch1Entry.tarefa_tipo
     );
-
-    summary.total_validated++;
 
     const auditEntry: MigrationAuditEntry = {
       id: batch1Entry.id,
@@ -156,7 +152,7 @@ export function generateMigrationAudit(
       validation_status: validation.valid ? "pass" : "error",
       validation_message: validation.valid
         ? undefined
-        : validation.errors.join("; "),
+        : validation.error,
       justificacao: batch1Entry.justificacao,
     };
 
