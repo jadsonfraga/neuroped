@@ -30,18 +30,19 @@ const MUST_BE_GATED = [
   "/medicamentos", "/farmacologia", "/calculadora-dose", "/valores-referencia",
   "/pant", "/fichas-registro", "/prescricao",
   "/diario-escola", "/inventarios-escola", "/assinatura-digital", "/assinatura",
+  "/assistente-clinico", "/tea-checklists",
   "/plano-terapeutico", "/plano-intervencao",
   "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
 ];
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  "/login", "/planos", "/invite", "/sessao-expirada", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
-  "/brincando-e-aprendendo", "/missao-saude",
-  "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd", "/planos", "/invite",
+  "/brincando-e-aprendendo", "/missao-saude", "/explorar",
+  "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",

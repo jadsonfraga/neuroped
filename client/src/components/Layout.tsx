@@ -13,6 +13,7 @@ import {
   Search,
   ClipboardList,
   KeyRound,
+  LockKeyhole,
   Trash2,
   Zap,
   ArrowUpRight,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { openCommandPalette } from "@/lib/commandPaletteBus";
+import { MOBILE_MENU_OPEN_EVENT } from "@/lib/mobileMenuBus";
 import { softTap, softHover, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration, fadeIn } from "@/lib/motion";
@@ -81,7 +83,7 @@ function FeaturedShortcuts({
     connection:
       "border-cyan-300/55 bg-gradient-to-br from-cyan-50/90 via-sky-50/70 to-primary/10 text-foreground shadow-[0_10px_24px_-20px_rgba(8,145,178,.7)] hover:border-cyan-400/75 hover:shadow-[0_14px_28px_-18px_rgba(8,145,178,.65)] dark:border-cyan-800/70 dark:from-cyan-950/55 dark:via-sky-950/40 dark:to-primary/10",
     priority:
-      "border-primary/30 bg-gradient-to-br from-primary/15 via-primary/[0.08] to-chart-2/10 text-foreground shadow-sm hover:border-primary/50 hover:shadow-md",
+      "border-sidebar-border/80 bg-sidebar-accent/45 text-sidebar-foreground shadow-none hover:border-primary/30 hover:bg-sidebar-accent/75",
   } as const;
 
   const renderCard = (
@@ -96,7 +98,7 @@ function FeaturedShortcuts({
         onClick={onPick}
         onMouseEnter={() => softHover()}
         data-testid={`featured-${item.label}`}
-        className={`group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-[1rem] border px-3 transition-all duration-200 hover:-translate-y-0.5 ${compact ? "min-h-[58px] py-2" : "min-h-[68px] py-2.5"} ${toneClasses[tone]} ${active ? "ring-2 ring-primary/25 ring-offset-1 ring-offset-sidebar" : ""}`}
+        className={`group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-[1rem] border px-3 transition-all duration-200 hover:-translate-y-0.5 ${compact ? "min-h-[52px] py-1.5" : "min-h-[58px] py-2"} ${toneClasses[tone]} ${active ? "ring-2 ring-primary/25 ring-offset-1 ring-offset-sidebar" : ""}`}
       >
         {tone === "golden" && (
           <span
@@ -181,11 +183,8 @@ function FeaturedShortcuts({
         <>
           <div className="flex items-center justify-between px-1 pb-1.5">
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              Acessos prioritários
+              Começar
             </p>
-            <span className="rounded-full border border-sidebar-border bg-sidebar-accent/45 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
-              app
-            </span>
           </div>
           <div className="space-y-1.5">
             {primary.map((item) => renderCard(item))}
@@ -199,11 +198,8 @@ function FeaturedShortcuts({
           <div className="lg:hidden">
             <div className="flex items-center justify-between px-1 pb-1.5">
               <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                Acessos prioritários
+                Começar
               </p>
-              <span className="rounded-full border border-sidebar-border bg-sidebar-accent/45 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
-                app
-              </span>
             </div>
             <div className="space-y-1.5">
               {primary.map((item) => renderCard(item))}
@@ -257,14 +253,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const mobileHeaderRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
   const mobileMenuWasOpen = useRef(false);
-  // As seções essenciais começam abertas; o restante permanece recolhido para
-  // que a sidebar preserve ritmo de aplicativo mesmo com muitos módulos.
+  // A sidebar começa focada no trabalho diário; os demais universos ficam
+  // disponíveis sob demanda para preservar ritmo e reduzir a sobrecarga visual.
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     () => ({
       principal: true,
-      CLÍNICA: true,
-      "LAUDOS E RECEITAS": true,
-      "TRIAGEM E FERRAMENTAS": true,
+      "TRABALHO DE HOJE": true,
+      AVALIAR: false,
+      DOCUMENTAR: false,
+      ACOMPANHAR: false,
+      REFERÊNCIA: false,
+      "PORTAIS E SUPORTE": false,
     }),
   );
   const [navHydrated, setNavHydrated] = useState(false);
@@ -301,6 +300,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       /* storage indisponível (modo privado/cota) — silencioso */
     }
   }, [collapsed]);
+
+  useEffect(() => {
+    const openFromDock = () => setMobileOpen(true);
+    window.addEventListener(MOBILE_MENU_OPEN_EVENT, openFromDock);
+    return () =>
+      window.removeEventListener(MOBILE_MENU_OPEN_EVENT, openFromDock);
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1024px)");
@@ -454,13 +460,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ? navSections
         .map((s) => ({
           ...s,
-          items: s.items.filter((i) => isPublicRoute(i.href)),
+          items: s.items.filter(
+            (i) => i.sidebar !== false && isPublicRoute(i.href),
+          ),
         }))
         .filter((s) => s.items.length > 0)
     : navSections
         .map((s) => ({
           ...s,
-          items: s.items.filter((i) => canRenderNavItem(i.href)),
+          items: s.items.filter((i) => i.sidebar !== false),
         }))
         .filter((s) => s.items.length > 0);
   const flowSteps = [
@@ -569,7 +577,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               openCommandPalette();
             }}
             data-testid="button-command-palette-mobile"
-            aria-label="Buscar escala, teste ou módulo"
+            aria-label="Buscar paciente, escala ou documento"
           >
             <Search className="w-4 h-4" aria-hidden="true" />
           </Button>
@@ -740,7 +748,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             onMouseEnter={() => softHover()}
             data-testid="button-command-palette"
             aria-label={
-              collapsed ? "Buscar escala, teste ou módulo" : undefined
+              collapsed ? "Buscar paciente, escala ou documento" : undefined
             }
             className={`flex items-center gap-2 w-full min-h-[40px] rounded-lg border border-sidebar-border bg-sidebar-accent/40 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors ${
               collapsed ? "lg:justify-center lg:px-0 px-3" : "px-3"
@@ -749,7 +757,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Search className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             {!collapsed && (
               <>
-                <span className="text-xs">Buscar escala, teste ou módulo</span>
+                <span className="text-xs">
+                  Buscar paciente, escala ou documento
+                </span>
                 <kbd className="ml-auto hidden text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-background/50 lg:inline-flex">
                   Ctrl K
                 </kbd>
@@ -757,7 +767,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}
             {collapsed && (
               <span className="text-xs lg:hidden">
-                Buscar escala, teste ou módulo
+                Buscar paciente, escala ou documento
               </span>
             )}
           </button>
@@ -833,6 +843,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           item.tone === "priority";
                         const connection = item.tone === "connection";
                         const golden = item.tone === "golden";
+                        const accessChecking =
+                          accessMode === "checking" || isLoading;
+                        const locked =
+                          !IS_PUBLIC_ZONE &&
+                          !isPublicRoute(item.href) &&
+                          !accessChecking &&
+                          !canRenderNavItem(item.href);
                         return (
                           <Link
                             key={`${sectionKey}-${item.href}-${item.label}`}
@@ -840,13 +857,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           >
                             <div
                               title={
-                                golden
-                                  ? `${item.label} — Vídeo-EEG domiciliar`
-                                  : priority
-                                    ? `${item.label} — acesso prioritário`
-                                    : undefined
+                                locked
+                                  ? `${item.label} — requer acesso clínico`
+                                  : golden
+                                    ? `${item.label}${item.description ? ` — ${item.description}` : " — acesso destacado"}`
+                                    : priority
+                                      ? `${item.label} — acesso prioritário`
+                                      : undefined
                               }
                               data-testid={`nav-${item.label}`}
+                              data-nav-locked={locked ? "true" : undefined}
                               onMouseEnter={() => softHover()}
                               onClick={() => {
                                 softTap();
@@ -868,7 +888,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                       : active
                                         ? "border-transparent bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
                                         : "border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
-                              } ${collapsed ? "lg:justify-center" : ""}`}
+                              } ${collapsed ? "lg:justify-center" : ""} ${locked ? "opacity-70" : ""}`}
                             >
                               <item.icon
                                 className={`w-4 h-4 flex-shrink-0 transition-transform ${
@@ -923,7 +943,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                   aria-label="Acesso integrado"
                                 />
                               )}
-                              {active && !collapsed && (
+                              {locked && !collapsed ? (
+                                <LockKeyhole
+                                  className="ml-auto h-3.5 w-3.5 text-muted-foreground/70"
+                                  aria-label="Acesso clínico necessário"
+                                />
+                              ) : active && !collapsed ? (
                                 <motion.div
                                   layoutId="nav-active-dot"
                                   className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
@@ -932,7 +957,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                     ease: easing.smooth,
                                   }}
                                 />
-                              )}
+                              ) : null}
                             </div>
                           </Link>
                         );

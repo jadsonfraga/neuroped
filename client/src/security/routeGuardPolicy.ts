@@ -21,13 +21,15 @@ export const SENSITIVE_ROUTES = [
   "/plano-intervencao",
   "/avaliacao-multiprofissional",
   "/fichas-registro",
-  "/laudo-neuroped", "/laudo-super",
+  "/laudo-neuroped",
+  "/laudo-super",
   "/receita-c1",
   "/receita-c1-express",
   "/diario-escola",
   "/neuroacompanhamento",
   "/inventarios-escola",
   "/generic-scale",
+  "/assistente-clinico",
   "/cognitive-lab",
   "/testes-diretos",
   "/epilepsia",
@@ -70,6 +72,7 @@ export const READER_CLINICAL_ROUTES = [
   "/cshq",
   "/ygtss",
   "/tea",
+  "/tea-checklists",
   "/tea-comportamentos",
   "/psiquiatria",
   "/bateria-jadson",
@@ -135,7 +138,10 @@ export const READER_CLINICAL_ROUTES = [
   "/qualidade",
 ] as const;
 
-const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
+const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = [
+  "admin",
+  "professional",
+];
 const READER_CLINICAL_ROLES: readonly RouteUserRole[] = [
   "admin",
   "professional",
@@ -161,7 +167,8 @@ function matchesExactRoutePattern(pathname: string, pattern: string): boolean {
   return (
     pathSegments.length === patternSegments.length &&
     patternSegments.every(
-      (segment, index) => segment.startsWith(":") || segment === pathSegments[index],
+      (segment, index) =>
+        segment.startsWith(":") || segment === pathSegments[index],
     )
   );
 }
@@ -226,7 +233,10 @@ export function decideRouteAccess({
   }
   if (!isAuthenticated) return "login";
   const effectiveRoles = allowedRoles ?? getDefaultClinicalRoles(path);
-  if (effectiveRoles?.length && (!userRole || !effectiveRoles.includes(userRole))) {
+  if (
+    effectiveRoles?.length &&
+    (!userRole || !effectiveRoles.includes(userRole))
+  ) {
     return "forbidden";
   }
   return "allow";
