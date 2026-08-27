@@ -77,6 +77,7 @@ const CLINICAL_ROUTE_SENTINELS = [
   "/receita-c1-express",
   "/laudo-neuroped",
   "/recepcao",
+  "/agendar",
   "/mchat",
   "/cars",
   "/wisc5",
@@ -89,7 +90,6 @@ const CLINICAL_ROUTE_SENTINELS = [
 const PUBLIC_ROUTE_SENTINELS = [
   "/login",
   "/familia",
-  "/agendar",
   "/eletroencefalograma",
   "/verificar",
   "/brincando-e-aprendendo",
