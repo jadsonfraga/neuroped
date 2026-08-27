@@ -16,11 +16,11 @@ const panel = read("client/src/components/PreferencesPanel.tsx");
 const toast = read("client/src/components/Toast.tsx");
 const confirmDialog = read("client/src/components/ConfirmDialog.tsx");
 
-// Som e vibração são opt-in: sem chave explícita "on", permanecem desligados.
-assert.match(softSounds, /localStorage\.getItem\(STORAGE_KEY\) === "on"/);
+// Som nasce habilitado, preservando "off" explícito; vibração continua opt-in.
+assert.match(softSounds, /localStorage\.getItem\(STORAGE_KEY\) !== "off"/);
+assert.match(softSounds, /catch \{\s*return true;/);
 assert.match(haptic, /localStorage\.getItem\(STORAGE_KEY\) === "on"/);
-assert.match(softSounds, /return false;/);
-assert.match(haptic, /return false;/);
+assert.match(haptic, /catch \{\s*return false;/);
 
 // Rotinas clínicas não devem produzir sons de hover, navegação ou clique genérico.
 assert.match(
@@ -59,9 +59,10 @@ assert.match(preferences, /prefers-reduced-motion: reduce/);
 assert.match(layout, /data-testid="button-sound-toggle"/);
 assert.match(layout, /data-testid="button-sound-toggle-mobile"/);
 assert.match(panel, /data-testid="range-sound-volume"/);
-assert.match(panel, /confirmações e alertas relevantes/);
-assert.match(panel, /Som e vibração ficam desligados até ativação explícita/);
-assert.match(panel, /Senhas nunca\s+são persistidas pelo NeuroPed/);
+assert.match(panel, /Ativos por padrão, breves e restritos a confirmações e alertas relevantes/);
+assert.match(panel, /Sons da interface vêm habilitados e podem ser desligados/);
+assert.match(panel, /Vibração exige ativação explícita/);
+assert.match(panel, /Senhas nunca\s+são persistidas pelo\s+NeuroPed/);
 assert.match(panel, /reducedMotion/);
 
 // Feedback visual/textual continua primário; erros têm anúncio mais forte.
