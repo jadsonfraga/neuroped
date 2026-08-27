@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import {
   Target,
   ArrowRight,
@@ -109,6 +110,17 @@ function NodeBanner({ node }: { node: FluxoNode }) {
 
 export default function FluxogramaPage() {
   const [, navigate] = useLocation();
+  const [visibleBands, setVisibleBands] = useState(3);
+
+  useEffect(() => {
+    if (visibleBands < fluxoBands.length) {
+      const handle = requestIdleCallback(() => {
+        setVisibleBands(fluxoBands.length);
+      });
+      return () => cancelIdleCallback(handle);
+    }
+  }, [visibleBands]);
+
   function openInFilter(ageBandId: string, queixaId?: string) {
     if (!queixaId) return;
     // O contexto atravessa apenas a navegação atual e é removido do histórico
@@ -163,7 +175,7 @@ export default function FluxogramaPage() {
 
       {/* Matriz por faixa etária */}
       <div className="grid gap-4 md:grid-cols-2">
-        {fluxoBands.map((band) => (
+        {fluxoBands.slice(0, visibleBands).map((band) => (
           <Card key={band.id} className="border-border/70 bg-card/80">
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center gap-2.5 border-b border-border/50 pb-2.5">
