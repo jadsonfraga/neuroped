@@ -123,6 +123,7 @@ Para deploy completo, ver `DEPLOY.md`.
 - [LGPD.md](./LGPD.md) — conformidade LGPD substantiva
 - [SECURITY.md](./SECURITY.md) — politica e checklist de seguranca
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — regras de contribuicao
+- [docs/qwen-pant/README.md](./docs/qwen-pant/README.md) — pacote Qwen/PANT, schema, fontes, checklist e exemplo sintético
 
 ## API resumo
 

@@ -150,6 +150,19 @@ const MEDICO = {
 const DISCLAIMER_S8 =
   "Nenhum diagnóstico é firmado por este documento. Todas as hipóteses descritas na Seção 6 permanecem em investigação, condicionadas à avaliação complementar, instrumento validado específico e, quando aplicável, ao resultado de exames já solicitados por outras especialidades.";
 
+function statusDiagnosticoFirmado(status: string): boolean {
+  const s = status.trim().toLowerCase();
+  if (!s || /(não|nao|hip[oó]tese|investiga|pendente|diferencial|rastreio|triagem)/i.test(s)) return false;
+  return /(firmad|confirmad|estabelecid|diagn[oó]stico)/i.test(s);
+}
+
+function avisoStatusDiagnostico(cids: SuperCid[]): string {
+  if (cids.length > 0 && cids.every((c) => statusDiagnosticoFirmado(c.status))) {
+    return "Os diagnósticos acima refletem o juízo clínico informado pelo médico responsável. Este documento deve ser conferido quanto à correspondência entre achados, status e códigos classificatórios.";
+  }
+  return DISCLAIMER_S8;
+}
+
 export function gerarLaudoSuper(e: SuperEntrada): SuperLaudo {
   const quemE =
     e.quemE ||
@@ -227,7 +240,7 @@ export function gerarLaudoSuper(e: SuperEntrada): SuperLaudo {
           aPonderar: (h.aPonderar || []).map((t) => normaliza(t)).filter(Boolean),
         })),
       achadosComplementares: e.achadosComplementares ||
-        "Não há, até esta data, exame de eletroencefalograma ou neuroimagem solicitado ou realizado no contexto deste seguimento.",
+        "Exames complementares e documentos externos não foram informados nesta consulta.",
       cids,
       planoMulti: (e.planoMulti || []).map((p) => ({
         titulo: p.titulo || "Acompanhamento",
@@ -236,7 +249,7 @@ export function gerarLaudoSuper(e: SuperEntrada): SuperLaudo {
       })),
       condutaFarmaco: {
         texto: e.condutaFarmaco ||
-          "Não há alteração farmacológica instituída nesta consulta; o esquema em uso é mantido conforme prescrição do médico assistente.",
+          "Conduta farmacológica não informada nesta consulta.",
         solicitacoes: (e.solicitacoes || []).map((t) => normaliza(t)).filter(Boolean),
       },
       prognosticoLeitura,
@@ -247,7 +260,7 @@ export function gerarLaudoSuper(e: SuperEntrada): SuperLaudo {
       },
       sinaisAlerta: (e.sinaisAlerta || []).map((t) => normaliza(t)),
       retornoCondicao: e.retornoCondicao ||
-        "Retorno sugerido após conclusão das investigações em curso, ou antes disso, caso surja qualquer sinal de alerta listado na Seção 13.",
+        "Condição de retorno e critérios de procura antecipada não informados nesta consulta.",
       sintese: e.sintese ||
         `${e.nome ? primeiroNome(e.nome) + ", " : ""}este documento não fecha o que ainda está em aberto. As próximas etapas do acompanhamento seguirão o plano descrito nas seções anteriores.`,
     },
@@ -399,7 +412,7 @@ export function laudoSuperParaTexto(l: SuperLaudo): string {
   add("=".repeat(60));
   add("08  Diagnósticos firmados");
   add("");
-  add(`[DISCLAIMER] ${DISCLAIMER_S8}`);
+  add(`[DISCLAIMER] ${avisoStatusDiagnostico(s.cids)}`);
   add("");
   for (const c of s.cids) {
     add(`· ${c.hipotese || "Hipótese"} — CID-10 ${c.cid10} · CID-11 ${c.cid11} — ${c.status || "hipótese em avaliação, não firmada"}`);

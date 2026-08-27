@@ -1,0 +1,402 @@
+{
+  "schema_version": "neuroped-pant-1.0",
+  "document_status": "draft_for_clinician_review",
+  "case_metadata": {
+    "patient_label": "CASO-SINTETICO-001",
+    "date_of_birth": "2018-04-12",
+    "age": "7 anos",
+    "sex": "masculino",
+    "city_state": "Petrolina/PE",
+    "evaluation_date": "2026-08-27",
+    "consultation_type": "avaliação inicial",
+    "protocol": "DEMO-2026-0001",
+    "purpose": "Exemplo de rascunho para validação do fluxo PANT.",
+    "consent_state": "pseudonymized"
+  },
+  "cover": {
+    "summary": "Caso sintético de criança em avaliação por queixas de desatenção e impacto escolar, com informações de família e escola a serem confirmadas pelo médico.",
+    "cid_box": "CID-10 pendente de confirmação · CID-11 pendente de confirmação · hipótese de trabalho, não firmada"
+  },
+  "sections": {
+    "section_01": {
+      "status": "complete",
+      "narrative": "CASO-SINTETICO-001 é uma criança de sete anos em avaliação inicial.",
+      "accompanied_by": "Acompanhante e vínculo não informados no conjunto sintético.",
+      "interview_observation": "Observação direta da entrevista não informada.",
+      "provenance": {
+        "source_kind": "not_provided",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "não informado",
+        "confidence": "not_assessed"
+      }
+    },
+    "section_02": {
+      "status": "complete",
+      "narrative": "Há queixa de desatenção e impacto no funcionamento escolar, conforme síntese sintética fornecida.",
+      "context": "A demanda e o contexto precisam ser confirmados na entrevista clínica.",
+      "provenance": {
+        "source_kind": "family_report",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "responsável não identificado",
+        "confidence": "medium"
+      }
+    },
+    "section_03": {
+      "status": "partial",
+      "narrative": "História gestacional, perinatal, do desenvolvimento, escolar, familiar, de sono e de saúde não foi fornecida no exemplo.",
+      "subsections": [
+        {
+          "title": "Desenvolvimento",
+          "narrative": "[completar] marcos motores, linguagem, comunicação social e autonomia.",
+          "provenance": {
+            "source_kind": "not_provided",
+            "source_label": "exemplo sintético",
+            "source_date": "2026-08-27",
+            "informant": "não informado",
+            "confidence": "not_assessed"
+          }
+        }
+      ],
+      "provenance": {
+        "source_kind": "not_provided",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "não informado",
+        "confidence": "not_assessed"
+      }
+    },
+    "section_04": {
+      "status": "partial",
+      "narrative": "A fonte sintética não permite avaliar convergência entre família, escola, paciente ou terapeutas.",
+      "divergences": "Não informado.",
+      "documents": "Nenhum documento externo foi fornecido.",
+      "provenance": {
+        "source_kind": "not_provided",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "não informado",
+        "confidence": "not_assessed"
+      }
+    },
+    "section_05": {
+      "status": "partial",
+      "narrative": "O mapa funcional registra somente os domínios descritos no conjunto sintético.",
+      "functioning": [
+        {
+          "text": "Impacto funcional escolar é o único domínio descrito no exemplo; demais áreas não foram avaliadas.",
+          "clinical_status": "reported",
+          "provenance": {
+            "source_kind": "school_report",
+            "source_label": "exemplo sintético",
+            "source_date": "2026-08-27",
+            "informant": "escola não identificada",
+            "confidence": "medium"
+          }
+        }
+      ],
+      "needs_attention": [
+        {
+          "text": "Desatenção com impacto escolar referido.",
+          "clinical_status": "reported",
+          "provenance": {
+            "source_kind": "family_report",
+            "source_label": "exemplo sintético",
+            "source_date": "2026-08-27",
+            "informant": "responsável não identificado",
+            "confidence": "medium"
+          }
+        }
+      ],
+      "provenance": {
+        "source_kind": "clinical_inference",
+        "source_label": "síntese de exemplo",
+        "source_date": "2026-08-27",
+        "informant": "modelo de teste",
+        "confidence": "low"
+      }
+    },
+    "section_06": {
+      "status": "partial",
+      "narrative": "A hipótese de TDAH permanece como hipótese de trabalho e requer avaliação clínica abrangente, múltiplas fontes e análise de prejuízo funcional.",
+      "hypotheses": [
+        {
+          "title": "TDAH — hipótese de trabalho",
+          "narrative": "O relato sintético de desatenção e impacto escolar é insuficiente para firmar diagnóstico.",
+          "in_favor": [
+            {
+              "text": "Desatenção relatada.",
+              "clinical_status": "reported",
+              "provenance": {
+                "source_kind": "family_report",
+                "source_label": "exemplo sintético",
+                "source_date": "2026-08-27",
+                "informant": "responsável não identificado",
+                "confidence": "medium"
+              }
+            }
+          ],
+          "to_consider": [
+            {
+              "text": "Não há história completa, observação clínica, avaliação de outros ambientes ou dados normativos.",
+              "clinical_status": "not_provided",
+              "provenance": {
+                "source_kind": "not_provided",
+                "source_label": "exemplo sintético",
+                "source_date": "2026-08-27",
+                "informant": "não informado",
+                "confidence": "not_assessed"
+              }
+            }
+          ],
+          "provenance": {
+            "source_kind": "clinical_inference",
+            "source_label": "hipótese fornecida para teste",
+            "source_date": "2026-08-27",
+            "informant": "médico não identificado no exemplo",
+            "confidence": "low"
+          }
+        }
+      ],
+      "provenance": {
+        "source_kind": "clinician_decision",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "médico não identificado",
+        "confidence": "low"
+      }
+    },
+    "section_07": {
+      "status": "not_provided",
+      "narrative": "Não foram fornecidos exames complementares ou documentos externos.",
+      "exam_states": [
+        {
+          "name": "Exames complementares",
+          "state": "unknown",
+          "result": "não informado",
+          "provenance": {
+            "source_kind": "not_provided",
+            "source_label": "exemplo sintético",
+            "source_date": "2026-08-27",
+            "informant": "não informado",
+            "confidence": "not_assessed"
+          }
+        }
+      ],
+      "provenance": {
+        "source_kind": "not_provided",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "não informado",
+        "confidence": "not_assessed"
+      }
+    },
+    "section_08": {
+      "status": "partial",
+      "narrative": "A hipótese abaixo não está firmada e os códigos permanecem pendentes de validação nas fontes oficiais.",
+      "diagnoses": [
+        {
+          "label": "TDAH — hipótese de trabalho",
+          "status": "pending_code_validation",
+          "cid10": "",
+          "cid11": "",
+          "provenance": {
+            "source_kind": "clinician_decision",
+            "source_label": "exemplo sintético",
+            "source_date": "2026-08-27",
+            "informant": "médico não identificado",
+            "confidence": "low"
+          },
+          "supporting_facts": [
+            "Desatenção e impacto escolar referidos no exemplo."
+          ],
+          "limitations": [
+            "Sem avaliação clínica abrangente e sem confirmação dos códigos."
+          ]
+        }
+      ],
+      "provenance": {
+        "source_kind": "clinician_decision",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "médico não identificado",
+        "confidence": "low"
+      }
+    },
+    "section_09": {
+      "status": "partial",
+      "narrative": "O plano multiprofissional deve ser decidido pelo médico após completar a avaliação.",
+      "items": [
+        {
+          "title": "Avaliação clínica complementar",
+          "indication": "Completar história, exame e informações de múltiplos contextos antes de qualquer conclusão.",
+          "evidence": "Lacunas do exemplo sintético.",
+          "owner": "médico responsável",
+          "provenance": {
+            "source_kind": "clinician_decision",
+            "source_label": "exemplo sintético",
+            "source_date": "2026-08-27",
+            "informant": "médico não identificado",
+            "confidence": "low"
+          }
+        }
+      ],
+      "provenance": {
+        "source_kind": "clinician_decision",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "médico não identificado",
+        "confidence": "low"
+      }
+    },
+    "section_10": {
+      "status": "not_provided",
+      "narrative": "Não há medicação ou exame solicitado informado no exemplo.",
+      "medication_plan": "Não informado.",
+      "requests": [],
+      "provenance": {
+        "source_kind": "not_provided",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "não informado",
+        "confidence": "not_assessed"
+      }
+    },
+    "section_11": {
+      "status": "partial",
+      "narrative": "O prognóstico não pode ser individualizado com segurança a partir deste conjunto sintético; depende da avaliação completa e do acompanhamento.",
+      "provenance": {
+        "source_kind": "clinical_inference",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "modelo de teste",
+        "confidence": "low"
+      }
+    },
+    "section_12": {
+      "status": "not_provided",
+      "narrative": "Cenários prognósticos não foram fornecidos no exemplo.",
+      "favorable": [],
+      "expected": [],
+      "reserved": [],
+      "provenance": {
+        "source_kind": "not_provided",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "não informado",
+        "confidence": "not_assessed"
+      }
+    },
+    "section_13": {
+      "status": "partial",
+      "narrative": "O acompanhamento deverá ser definido pelo médico responsável.",
+      "alerts": [],
+      "return_condition": "Retorno conforme decisão do médico responsável; critérios de procura antecipada devem ser definidos e documentados pelo serviço.",
+      "provenance": {
+        "source_kind": "clinician_decision",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "médico não identificado",
+        "confidence": "low"
+      }
+    },
+    "section_14": {
+      "status": "partial",
+      "narrative": "Este documento é um exemplo sintético de rascunho. A hipótese permanece em investigação e nenhuma conclusão deve ser emitida sem revisão clínica.",
+      "provenance": {
+        "source_kind": "clinical_inference",
+        "source_label": "exemplo sintético",
+        "source_date": "2026-08-27",
+        "informant": "modelo de teste",
+        "confidence": "low"
+      }
+    }
+  },
+  "instruments": [],
+  "medications": [],
+  "quality_gate": {
+    "status": "pass_with_review",
+    "checks": [
+      {
+        "name": "schema",
+        "status": "pass",
+        "detail": "Objeto completo conforme neuroped-pant-1.0."
+      },
+      {
+        "name": "privacy",
+        "status": "pass",
+        "detail": "Caso pseudonimizado e sintético."
+      },
+      {
+        "name": "diagnosis",
+        "status": "warning",
+        "detail": "Hipótese não firmada; não converter em diagnóstico."
+      },
+      {
+        "name": "codes",
+        "status": "warning",
+        "detail": "CID-10 e CID-11 pendentes de validação oficial."
+      },
+      {
+        "name": "clinical_review",
+        "status": "warning",
+        "detail": "Revisão médica obrigatória antes de qualquer emissão."
+      }
+    ],
+    "blocking_reasons": []
+  },
+  "pending_clinician_review": [
+    {
+      "field": "case_metadata.purpose",
+      "reason": "Confirmar finalidade e destinatário reais.",
+      "severity": "high",
+      "action": "Revisar antes de compartilhar."
+    },
+    {
+      "field": "sections.section_03",
+      "reason": "História do desenvolvimento incompleta.",
+      "severity": "high",
+      "action": "Completar entrevista e fontes."
+    },
+    {
+      "field": "sections.section_08.diagnoses",
+      "reason": "Códigos não confirmados e hipótese não firmada.",
+      "severity": "critical",
+      "action": "Validar CIDs e status com o médico."
+    },
+    {
+      "field": "sections.section_12",
+      "reason": "Cenários prognósticos não fornecidos.",
+      "severity": "medium",
+      "action": "Omitir ou preencher apenas após decisão clínica."
+    }
+  ],
+  "sources": [
+    {
+      "id": "NEUROPED_PRODUCT_SYSTEM",
+      "title": "NeuroPed Clinical OS",
+      "url_or_path": "docs/NEUROPED_PRODUCT_SYSTEM.md",
+      "source_type": "internal_project",
+      "used_for": "Proveniência, segurança e estado de rascunho.",
+      "access_status": "verified"
+    },
+    {
+      "id": "CDC_ASD_SCREENING",
+      "title": "Clinical Screening for Autism Spectrum Disorder",
+      "url_or_path": "https://www.cdc.gov/autism/hcp/diagnosis/screening.html",
+      "source_type": "official",
+      "used_for": "Regra geral de não equivalência entre rastreamento e diagnóstico.",
+      "access_status": "verified"
+    },
+    {
+      "id": "WHO_ICD11_PT",
+      "title": "CID-11",
+      "url_or_path": "https://icd.who.int/pt/",
+      "source_type": "official",
+      "used_for": "Fonte a consultar para validar códigos, não consultada para preencher este exemplo.",
+      "access_status": "not_accessed"
+    }
+  ],
+  "rendered_text": "SUPER NEURO PED — LAUDO NEUROPEDIÁTRICO\n[SÍNTESE DA CONSULTA] Caso sintético em avaliação por desatenção e impacto escolar; rascunho para revisão clínica.\n[CAIXA CID] CID-10 pendente de confirmação · CID-11 pendente de confirmação · hipótese de trabalho, não firmada\n\n01  Quem é o paciente\nCASO-SINTETICO-001 é uma criança de sete anos em avaliação inicial.\n\n02  Motivo da avaliação\nHá queixa de desatenção e impacto no funcionamento escolar, conforme síntese sintética fornecida.\n\n03  Estrutura da história\n— Desenvolvimento\n[completar] marcos motores, linguagem, comunicação social e autonomia.\n\n04  Convergência das fontes\nA fonte sintética não permite avaliar convergência entre as fontes.\n\n05  Mapa funcional\n[O QUE ESTÁ FUNCIONANDO]\n[O QUE AINDA PEDE ATENÇÃO]\n■ Desatenção com impacto escolar referido.\n\n06  Leitura diagnóstica, hipóteses em avaliação\n— TDAH — hipótese de trabalho\nO relato sintético é insuficiente para firmar diagnóstico.\n\n07  Achados complementares\nNão foram fornecidos exames complementares ou documentos externos.\n\n08  Códigos classificatórios e status clínico\nNenhum diagnóstico é firmado por este documento. A hipótese permanece pendente de avaliação.\n· TDAH — hipótese de trabalho — CID-10 pendente · CID-11 pendente — pending_code_validation\n\n09  Plano terapêutico multiprofissional\nAvaliação clínica complementar\nINDICAÇÃO: Completar história, exame e informações de múltiplos contextos.\n\n10  Conduta farmacológica e exames\nNão informado.\n\n11  Prognóstico, leitura funcional\nO prognóstico depende da avaliação completa e do acompanhamento.\n\n12  Prognóstico em cenários\n[FAVORÁVEL]\n[ESPERADO]\n[RESERVADO]\n\n13  Acompanhamento e retorno\nRetorno conforme decisão do médico responsável.\n\n14  Síntese e encaminhamento\nEste documento é um exemplo sintético de rascunho. Nenhuma conclusão deve ser emitida sem revisão clínica."
+}

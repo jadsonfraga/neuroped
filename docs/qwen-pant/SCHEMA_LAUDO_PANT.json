@@ -1,0 +1,628 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuroped.local/schemas/laudo-pant-1.0.json",
+  "title": "NeuroPed PANT Laudo Draft",
+  "description": "Contrato de rascunho estruturado para laudo neuropediátrico. A resposta nunca representa documento emitido sem revisão e assinatura profissional.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "document_status",
+    "case_metadata",
+    "cover",
+    "sections",
+    "instruments",
+    "medications",
+    "quality_gate",
+    "pending_clinician_review",
+    "sources",
+    "rendered_text"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "neuroped-pant-1.0"
+    },
+    "document_status": {
+      "type": "string",
+      "const": "draft_for_clinician_review"
+    },
+    "case_metadata": {
+      "$ref": "#/$defs/caseMetadata"
+    },
+    "cover": {
+      "$ref": "#/$defs/cover"
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section_01",
+        "section_02",
+        "section_03",
+        "section_04",
+        "section_05",
+        "section_06",
+        "section_07",
+        "section_08",
+        "section_09",
+        "section_10",
+        "section_11",
+        "section_12",
+        "section_13",
+        "section_14"
+      ],
+      "properties": {
+        "section_01": { "$ref": "#/$defs/section01" },
+        "section_02": { "$ref": "#/$defs/section02" },
+        "section_03": { "$ref": "#/$defs/section03" },
+        "section_04": { "$ref": "#/$defs/section04" },
+        "section_05": { "$ref": "#/$defs/section05" },
+        "section_06": { "$ref": "#/$defs/section06" },
+        "section_07": { "$ref": "#/$defs/section07" },
+        "section_08": { "$ref": "#/$defs/section08" },
+        "section_09": { "$ref": "#/$defs/section09" },
+        "section_10": { "$ref": "#/$defs/section10" },
+        "section_11": { "$ref": "#/$defs/narrativeSection" },
+        "section_12": { "$ref": "#/$defs/section12" },
+        "section_13": { "$ref": "#/$defs/section13" },
+        "section_14": { "$ref": "#/$defs/narrativeSection" }
+      }
+    },
+    "instruments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/instrument" }
+    },
+    "medications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/medication" }
+    },
+    "quality_gate": {
+      "$ref": "#/$defs/qualityGate"
+    },
+    "pending_clinician_review": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pendingItem" }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "rendered_text": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low", "not_assessed"]
+    },
+    "sourceKind": {
+      "type": "string",
+      "enum": [
+        "family_report",
+        "patient_report",
+        "school_report",
+        "therapy_report",
+        "direct_observation",
+        "instrument",
+        "external_document",
+        "complementary_exam",
+        "clinician_decision",
+        "clinical_inference",
+        "not_provided"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "source_label",
+        "source_date",
+        "informant",
+        "confidence"
+      ],
+      "properties": {
+        "source_kind": { "$ref": "#/$defs/sourceKind" },
+        "source_label": { "type": "string" },
+        "source_date": { "type": "string" },
+        "informant": { "type": "string" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "caseMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "patient_label",
+        "evaluation_date",
+        "purpose",
+        "consent_state"
+      ],
+      "properties": {
+        "patient_label": { "type": "string", "minLength": 1 },
+        "date_of_birth": { "type": "string" },
+        "age": { "type": "string" },
+        "sex": { "type": "string" },
+        "city_state": { "type": "string" },
+        "evaluation_date": { "type": "string", "minLength": 1 },
+        "consultation_type": { "type": "string" },
+        "protocol": { "type": "string" },
+        "purpose": { "type": "string", "minLength": 1 },
+        "consent_state": {
+          "type": "string",
+          "enum": [
+            "authorized_minimum_dataset",
+            "pseudonymized",
+            "not_verified"
+          ]
+        }
+      }
+    },
+    "cover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "cid_box"],
+      "properties": {
+        "summary": { "type": "string" },
+        "cid_box": { "type": "string" }
+      }
+    },
+    "sectionBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "provenance"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "not_provided",
+            "not_assessed",
+            "unknown"
+          ]
+        },
+        "narrative": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "narrativeSection": {
+      "allOf": [{ "$ref": "#/$defs/sectionBase" }]
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "clinical_status", "provenance"],
+      "properties": {
+        "text": { "type": "string" },
+        "clinical_status": {
+          "type": "string",
+          "enum": [
+            "reported",
+            "observed",
+            "measured",
+            "documented",
+            "decided",
+            "inferred",
+            "not_provided",
+            "unknown"
+          ]
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "narrative",
+        "accompanied_by",
+        "interview_observation",
+        "provenance"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "accompanied_by": { "type": "string" },
+        "interview_observation": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section02": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "context", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "context": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "historySubsection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "narrative", "provenance"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "narrative": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section03": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "subsections", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "subsections": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/historySubsection" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section04": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "narrative",
+        "divergences",
+        "documents",
+        "provenance"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "divergences": { "type": "string" },
+        "documents": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section05": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "functioning", "needs_attention", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "functioning": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+        "needs_attention": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fact" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "narrative",
+        "in_favor",
+        "to_consider",
+        "provenance"
+      ],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "narrative": { "type": "string" },
+        "in_favor": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+        "to_consider": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section06": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "hypotheses", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "hypotheses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/hypothesis" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section07": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "exam_states", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "exam_states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "state", "result", "provenance"],
+            "properties": {
+              "name": { "type": "string" },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "requested",
+                  "performed",
+                  "result_available",
+                  "result_not_provided",
+                  "not_requested",
+                  "unknown"
+                ]
+              },
+              "result": { "type": "string" },
+              "provenance": { "$ref": "#/$defs/provenance" }
+            }
+          }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "status",
+        "cid10",
+        "cid11",
+        "provenance",
+        "limitations"
+      ],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "firmed_by_clinician",
+            "working_hypothesis",
+            "screening_signal",
+            "differential",
+            "ruled_out",
+            "pending_code_validation"
+          ]
+        },
+        "cid10": { "type": "string" },
+        "cid11": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "supporting_facts": { "type": "array", "items": { "type": "string" } },
+        "limitations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "section08": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "diagnoses", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "diagnoses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnosis" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "planItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "indication", "evidence", "provenance"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "indication": { "type": "string" },
+        "evidence": { "type": "string" },
+        "owner": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section09": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "narrative", "items", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/planItem" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "medication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "dose",
+        "route",
+        "frequency",
+        "duration",
+        "indication",
+        "provenance"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "presentation": { "type": "string" },
+        "dose": { "type": "string" },
+        "route": { "type": "string" },
+        "frequency": { "type": "string" },
+        "duration": { "type": "string" },
+        "indication": { "type": "string" },
+        "adherence": { "type": "string" },
+        "response": { "type": "string" },
+        "adverse_effects": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section10": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "narrative",
+        "medication_plan",
+        "requests",
+        "provenance"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "narrative": { "type": "string" },
+        "medication_plan": { "type": "string" },
+        "requests": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "scenario": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fact" }
+    },
+    "section12": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "favorable", "expected", "reserved", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "favorable": { "$ref": "#/$defs/scenario" },
+        "expected": { "$ref": "#/$defs/scenario" },
+        "reserved": { "$ref": "#/$defs/scenario" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "section13": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "alerts", "return_condition", "provenance"],
+      "properties": {
+        "status": { "$ref": "#/$defs/sectionBase/properties/status" },
+        "alerts": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+        "return_condition": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "instrument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "acronym",
+        "version",
+        "date",
+        "respondent",
+        "purpose",
+        "domain",
+        "raw_score",
+        "normative_score",
+        "classification",
+        "source",
+        "license_policy",
+        "limitations",
+        "provenance"
+      ],
+      "properties": {
+        "name": { "type": "string" },
+        "acronym": { "type": "string" },
+        "version": { "type": "string" },
+        "date": { "type": "string" },
+        "respondent": { "type": "string" },
+        "purpose": { "type": "string" },
+        "domain": { "type": "string" },
+        "raw_score": { "type": "string" },
+        "normative_score": { "type": "string" },
+        "classification": { "type": "string" },
+        "source": { "type": "string" },
+        "license_policy": {
+          "type": "string",
+          "enum": [
+            "embed_allowed_with_attribution",
+            "permission_required",
+            "link_only",
+            "not_provided"
+          ]
+        },
+        "limitations": { "type": "array", "items": { "type": "string" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "qualityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checks", "blocking_reasons"],
+      "properties": {
+        "status": { "type": "string", "enum": ["pass_with_review", "blocked"] },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "status", "detail"],
+            "properties": {
+              "name": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["pass", "warning", "fail"]
+              },
+              "detail": { "type": "string" }
+            }
+          }
+        },
+        "blocking_reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "pendingItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "reason", "severity", "action"],
+      "properties": {
+        "field": { "type": "string" },
+        "reason": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"]
+        },
+        "action": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "url_or_path",
+        "source_type",
+        "used_for",
+        "access_status"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "url_or_path": { "type": "string" },
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "official",
+            "peer_reviewed",
+            "internal_project",
+            "copyrighted_reference",
+            "candidate"
+          ]
+        },
+        "used_for": { "type": "string" },
+        "access_status": {
+          "type": "string",
+          "enum": [
+            "verified",
+            "metadata_only",
+            "not_accessed",
+            "pending_review"
+          ]
+        }
+      }
+    }
+  }
+}

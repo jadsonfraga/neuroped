@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { FileText, Printer, RefreshCw, Sparkles, Copy, ClipboardPaste, CheckCircle2, AlertCircle, Plus, Trash2, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { FileText, Printer, RefreshCw, Sparkles, Copy, ClipboardPaste, CheckCircle2, AlertCircle, Plus, Trash2, ShieldCheck, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,7 @@ import {
   medicoSuper,
   type SuperEntrada,
 } from "@/lib/laudo/modeloSuper";
+import { parseQwenJsonText } from "@/lib/laudo/qwenContract";
 
 /* ────────────────────────────────────────────────────────────
    Laudo SuperNeuroPed — WebUI de geração assistida (embutida)
@@ -661,8 +662,33 @@ export default function LaudoSuperPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const [abertos, setAbertos] = useState<Record<string, boolean>>({ capa: true });
+  const [qwenWarnings, setQwenWarnings] = useState<string[]>([]);
+  const [revisaoConfirmada, setRevisaoConfirmada] = useState(false);
+
+  useEffect(() => {
+    setRevisaoConfirmada(false);
+  }, [entrada, texto]);
 
   const toggle = (k: string) => setAbertos((p) => ({ ...p, [k]: !p[k] }));
+
+  const handleQwenJson = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const imported = parseQwenJsonText(await file.text());
+      setEntrada(imported.entrada);
+      setTexto("");
+      setEditando(true);
+      setShowPreview(false);
+      setRevisaoConfirmada(false);
+      setQwenWarnings(imported.warnings);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao importar o JSON do Qwen.";
+      setQwenWarnings([message]);
+      setRevisaoConfirmada(false);
+    }
+  };
 
   const configurado = useMemo(() => {
     if (vazia(entrada)) return false;
@@ -688,6 +714,7 @@ export default function LaudoSuperPage() {
     setTexto(laudoSuperParaTexto(resultado.laudo));
     setEditando(false);
     setShowPreview(true);
+    setRevisaoConfirmada(false);
   };
 
   const handleCopiar = async () => {
@@ -701,6 +728,7 @@ export default function LaudoSuperPage() {
   };
 
   const handlePrint = () => {
+    if (!revisaoConfirmada) return;
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
@@ -736,11 +764,15 @@ export default function LaudoSuperPage() {
           <Button onClick={handleGerar} disabled={!configurado} size="sm" className="gap-2">
             <Sparkles className="h-4 w-4" /> Gerar laudo
           </Button>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted">
+            <Upload className="h-4 w-4" /> Importar JSON Qwen
+            <input type="file" accept="application/json,.json" className="sr-only" onChange={handleQwenJson} />
+          </label>
           <Button onClick={() => setShowPreview((v) => !v)} variant="outline" size="sm" className="gap-2" disabled={!texto}>
             <FileText className="h-4 w-4" />
             {showPreview ? "Fechar prévia" : "Visualizar"}
           </Button>
-          <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!texto}>
+          <Button onClick={handlePrint} size="sm" className="gap-2" disabled={!texto || !revisaoConfirmada}>
             <Printer className="h-4 w-4" /> Imprimir / Salvar PDF
           </Button>
           <Button variant="secondary" size="sm" className="gap-2" onClick={() => { setEntrada(ENTRADA_VAZIA); setTexto(""); setShowPreview(false); }}>
@@ -761,6 +793,13 @@ export default function LaudoSuperPage() {
           {!aprovado && (
             <pre className="mt-2 whitespace-pre-wrap text-xs">{resultado.qa.replace("REPROVADO:", "")}</pre>
           )}
+        </div>
+      )}
+
+      {qwenWarnings.length > 0 && (
+        <div className="rounded-xl border border-amber-400/70 bg-amber-50/70 p-4 text-sm text-amber-950">
+          <div className="flex items-center gap-2 font-semibold"><AlertCircle className="h-4 w-4" /> Pendências importadas do Qwen</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">{qwenWarnings.map((warning, index) => <li key={`${warning}-${index}`}>{warning}</li>)}</ul>
         </div>
       )}
 
@@ -868,7 +907,12 @@ export default function LaudoSuperPage() {
             <p className="text-xs text-muted-foreground mb-3">
               Selecione seu certificado .p12/.pfx. A assinatura ocorre localmente e o certificado permanece somente na memória desta aba.
             </p>
-            <AssinaturaIcpPanel
+            <label className="mb-3 flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs">
+              <input type="checkbox" checked={revisaoConfirmada} onChange={(event) => setRevisaoConfirmada(event.target.checked)} className="mt-0.5" />
+              <span>Confirmo que revisei o conteúdo clínico, as fontes, os CIDs, as doses, as pendências e o destinatário. Entendo que o Qwen produziu apenas um rascunho.</span>
+            </label>
+            {!revisaoConfirmada && <p className="mb-3 text-xs text-amber-700">A emissão e a assinatura ficam bloqueadas até a confirmação da revisão médica.</p>}
+            {revisaoConfirmada ? <AssinaturaIcpPanel
               buildPdf={async () => {
                 const { buildDocumentPdf } = await import("@/lib/documentPdf");
                 const textoAssinavel =
@@ -895,7 +939,7 @@ export default function LaudoSuperPage() {
               location="Petrolina-PE"
               reason="Laudo SuperNeuroPed"
               archivePdf={undefined}
-            />
+            /> : <p className="text-xs text-muted-foreground">Após concluir a revisão acima, os controles de PDF e assinatura serão habilitados.</p>}
           </Card>
         </div>
       )}
@@ -912,7 +956,7 @@ export default function LaudoSuperPage() {
           </div>
           <Textarea
             value={texto}
-            onChange={(e) => setTexto(e.target.value)}
+            onChange={(e) => { setTexto(e.target.value); setRevisaoConfirmada(false); }}
             className="min-h-[60vh] font-mono text-xs leading-relaxed"
             data-testid="textarea-laudo-super"
           />
