@@ -1,0 +1,416 @@
+[
+  {
+    "viewport": "desktop",
+    "target": "home",
+    "screenshotPath": "/tmp/neuroped-visual-audit/desktop-home.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "activeNavigation": [
+        "Início"
+      ],
+      "sidebarGroups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "mobileDock": [
+        "Início",
+        "Agenda",
+        "Pacientes",
+        "Avaliar",
+        "Mais"
+      ],
+      "homeActions": [
+        "Abrir a AgendaHoje, fila e próximos atendimentos",
+        "Encontrar pacienteProntuário, histórico e contexto",
+        "Escolher uma escalaPor idade, queixa e objetivo",
+        "Produzir documentoLaudo, receita, plano ou assinatura"
+      ],
+      "tablists": [],
+      "documentHeight": 1421
+    },
+    "runtimeErrors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failedResponses": [
+      "404 http://localhost:5173/api/health"
+    ]
+  },
+  {
+    "viewport": "desktop",
+    "target": "explorar",
+    "screenshotPath": "/tmp/neuroped-visual-audit/desktop-explorar.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "activeNavigation": [
+        "Todos os recursos"
+      ],
+      "sidebarGroups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "mobileDock": [
+        "Início",
+        "Agenda",
+        "Pacientes",
+        "Avaliar",
+        "Mais"
+      ],
+      "homeActions": [],
+      "tablists": [],
+      "documentHeight": 2309
+    },
+    "runtimeErrors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failedResponses": [
+      "404 http://localhost:5173/api/health"
+    ]
+  },
+  {
+    "viewport": "desktop",
+    "target": "tea-checklists",
+    "screenshotPath": "/tmp/neuroped-visual-audit/desktop-tea-checklists.png",
+    "metrics": {
+      "width": 1440,
+      "height": 900,
+      "activeNavigation": [
+        "Checklists TEA"
+      ],
+      "sidebarGroups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "true"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "mobileDock": [
+        "Início",
+        "Agenda",
+        "Pacientes",
+        "Avaliar",
+        "Mais"
+      ],
+      "homeActions": [],
+      "tablists": [
+        {
+          "clientWidth": 1114,
+          "scrollWidth": 1114,
+          "overflowX": "auto",
+          "tabs": [
+            {
+              "label": "ADOS-2",
+              "selected": "true"
+            },
+            {
+              "label": "ADI-R",
+              "selected": "false"
+            },
+            {
+              "label": "CARS-2",
+              "selected": "false"
+            },
+            {
+              "label": "GARS-3",
+              "selected": "false"
+            },
+            {
+              "label": "SRS-2",
+              "selected": "false"
+            }
+          ]
+        }
+      ],
+      "documentHeight": 2740
+    },
+    "runtimeErrors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failedResponses": [
+      "404 http://localhost:5173/api/health"
+    ]
+  },
+  {
+    "viewport": "mobile",
+    "target": "home",
+    "screenshotPath": "/tmp/neuroped-visual-audit/mobile-home.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "activeNavigation": [
+        "Início"
+      ],
+      "sidebarGroups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "mobileDock": [
+        "Início",
+        "Agenda",
+        "Pacientes",
+        "Avaliar",
+        "Mais"
+      ],
+      "homeActions": [
+        "Abrir a AgendaHoje, fila e próximos atendimentos",
+        "Encontrar pacienteProntuário, histórico e contexto",
+        "Escolher uma escalaPor idade, queixa e objetivo",
+        "Produzir documentoLaudo, receita, plano ou assinatura"
+      ],
+      "tablists": [],
+      "documentHeight": 2494
+    },
+    "runtimeErrors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failedResponses": [
+      "404 http://localhost:5173/api/health"
+    ]
+  },
+  {
+    "viewport": "mobile",
+    "target": "explorar",
+    "screenshotPath": "/tmp/neuroped-visual-audit/mobile-explorar.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "activeNavigation": [
+        "Todos os recursos"
+      ],
+      "sidebarGroups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "false"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "mobileDock": [
+        "Início",
+        "Agenda",
+        "Pacientes",
+        "Avaliar",
+        "Mais"
+      ],
+      "homeActions": [],
+      "tablists": [],
+      "documentHeight": 3475
+    },
+    "runtimeErrors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failedResponses": [
+      "404 http://localhost:5173/api/health"
+    ]
+  },
+  {
+    "viewport": "mobile",
+    "target": "tea-checklists",
+    "screenshotPath": "/tmp/neuroped-visual-audit/mobile-tea-checklists.png",
+    "metrics": {
+      "width": 390,
+      "height": 844,
+      "activeNavigation": [
+        "Checklists TEA"
+      ],
+      "sidebarGroups": [
+        {
+          "label": "TRABALHO DE HOJE7",
+          "expanded": "true"
+        },
+        {
+          "label": "AVALIAR8",
+          "expanded": "true"
+        },
+        {
+          "label": "DOCUMENTAR11",
+          "expanded": "false"
+        },
+        {
+          "label": "ACOMPANHAR9",
+          "expanded": "false"
+        },
+        {
+          "label": "REFERÊNCIA11",
+          "expanded": "false"
+        },
+        {
+          "label": "CONECTAR14",
+          "expanded": "false"
+        },
+        {
+          "label": "AJUDA E CONTA8",
+          "expanded": "false"
+        }
+      ],
+      "mobileDock": [
+        "Início",
+        "Agenda",
+        "Pacientes",
+        "Avaliar",
+        "Mais"
+      ],
+      "homeActions": [],
+      "tablists": [
+        {
+          "clientWidth": 362,
+          "scrollWidth": 362,
+          "overflowX": "auto",
+          "tabs": [
+            {
+              "label": "ADOS-2",
+              "selected": "true"
+            },
+            {
+              "label": "ADI-R",
+              "selected": "false"
+            },
+            {
+              "label": "CARS-2",
+              "selected": "false"
+            },
+            {
+              "label": "GARS-3",
+              "selected": "false"
+            },
+            {
+              "label": "SRS-2",
+              "selected": "false"
+            }
+          ]
+        }
+      ],
+      "documentHeight": 3837
+    },
+    "runtimeErrors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failedResponses": [
+      "404 http://localhost:5173/api/health"
+    ]
+  }
+]

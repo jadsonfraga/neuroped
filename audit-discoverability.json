@@ -1,0 +1,1743 @@
+{
+  "summary": {
+    "page_files": 156,
+    "route_entries": 153,
+    "navigation_items": 85,
+    "sensitive_routes": 34,
+    "public_route_literals": 42,
+    "hub_owned_routes": 72,
+    "unlinked_route_orphans": 0
+  },
+  "routes": [
+    {
+      "path": "/brincando-e-aprendendo",
+      "component": "BrincandoAprendendoPage",
+      "source": "brincando-e-aprendendo"
+    },
+    {
+      "path": "/missao-saude",
+      "component": "MissaoSaudePage",
+      "source": "missao-saude"
+    },
+    {
+      "path": "/login",
+      "component": "LoginPage",
+      "source": "login"
+    },
+    {
+      "path": "/sessao-expirada",
+      "component": "SessionExpiredPage",
+      "source": "session-expired"
+    },
+    {
+      "path": "/consentimento-lgpd",
+      "component": "LgpdConsentPage",
+      "source": "lgpd-consent"
+    },
+    {
+      "path": "/",
+      "component": "HomePage",
+      "source": "home"
+    },
+    {
+      "path": "/explorar",
+      "component": "ExplorarPage",
+      "source": "explorar"
+    },
+    {
+      "path": "/assistente-clinico",
+      "component": "AssistenteClinicoPage",
+      "source": "assistente-clinico"
+    },
+    {
+      "path": "/mchat",
+      "component": "MchatPage",
+      "source": "mchat"
+    },
+    {
+      "path": "/cars",
+      "component": "CarsPage",
+      "source": "cars"
+    },
+    {
+      "path": "/snap",
+      "component": "SnapPage",
+      "source": "snap"
+    },
+    {
+      "path": "/denver",
+      "component": "DenverPage",
+      "source": "denver"
+    },
+    {
+      "path": "/sdq",
+      "component": "SdqPage",
+      "source": "sdq"
+    },
+    {
+      "path": "/scared",
+      "component": "ScaredPage",
+      "source": "scared"
+    },
+    {
+      "path": "/conners",
+      "component": "ConnersPage",
+      "source": "conners"
+    },
+    {
+      "path": "/vineland",
+      "component": "VinelandPage",
+      "source": "vineland"
+    },
+    {
+      "path": "/pant",
+      "component": "PantPage",
+      "source": "pant"
+    },
+    {
+      "path": "/fluxograma",
+      "component": "FluxogramaPage",
+      "source": "fluxograma"
+    },
+    {
+      "path": "/cdi2",
+      "component": "Cdi2Page",
+      "source": "cdi2"
+    },
+    {
+      "path": "/phqa",
+      "component": "PhqaPage",
+      "source": "phqa"
+    },
+    {
+      "path": "/cssrs",
+      "component": "CssrsPage",
+      "source": "cssrs"
+    },
+    {
+      "path": "/crafft",
+      "component": "CrafftPage",
+      "source": "crafft"
+    },
+    {
+      "path": "/cbcl",
+      "component": "CbclPage",
+      "source": "cbcl"
+    },
+    {
+      "path": "/vanderbilt",
+      "component": "VanderbiltPage",
+      "source": "vanderbilt"
+    },
+    {
+      "path": "/brief2",
+      "component": "Brief2Page",
+      "source": "brief2"
+    },
+    {
+      "path": "/abc",
+      "component": "AbcPage",
+      "source": "abc"
+    },
+    {
+      "path": "/asq3",
+      "component": "Asq3Page",
+      "source": "asq3"
+    },
+    {
+      "path": "/pedsql",
+      "component": "PedsqlPage",
+      "source": "pedsql"
+    },
+    {
+      "path": "/gmfcs",
+      "component": "GmfcsPage",
+      "source": "gmfcs"
+    },
+    {
+      "path": "/cshq",
+      "component": "CshqPage",
+      "source": "cshq"
+    },
+    {
+      "path": "/ygtss",
+      "component": "YgtssPage",
+      "source": "ygtss"
+    },
+    {
+      "path": "/epilepsia",
+      "component": "EpilepsyDiaryPage",
+      "source": "epilepsy-diary"
+    },
+    {
+      "path": "/neuroacompanhamento",
+      "component": "NeuropedAcompanhamentoPage",
+      "source": "neuroped-acompanhamento"
+    },
+    {
+      "path": "/cefaleia",
+      "component": "HeadacheCalendarPage",
+      "source": "headache-calendar"
+    },
+    {
+      "path": "/tea",
+      "component": "TeaPage",
+      "source": "tea"
+    },
+    {
+      "path": "/tea-checklists",
+      "component": "TeaChecklistsPage",
+      "source": "tea-checklists"
+    },
+    {
+      "path": "/tea-comportamentos",
+      "component": "TeaBehaviorsPage",
+      "source": "tea-behaviors"
+    },
+    {
+      "path": "/psiquiatria",
+      "component": "PsiquiatriaGuiaPage",
+      "source": "psiquiatria-guia"
+    },
+    {
+      "path": "/bateria-jadson",
+      "component": "BateriaJadsonPage",
+      "source": "bateria-jadson"
+    },
+    {
+      "path": "/emdi",
+      "component": "EmdiPage",
+      "source": "emdi"
+    },
+    {
+      "path": "/eaf",
+      "component": "EafPage",
+      "source": "eaf"
+    },
+    {
+      "path": "/ecsm",
+      "component": "EcsmPage",
+      "source": "ecsm"
+    },
+    {
+      "path": "/ips",
+      "component": "IpsPage",
+      "source": "ips"
+    },
+    {
+      "path": "/ecar-si",
+      "component": "EcarSiPage",
+      "source": "ecar-si"
+    },
+    {
+      "path": "/edi",
+      "component": "EdiPage",
+      "source": "edi"
+    },
+    {
+      "path": "/eai",
+      "component": "EaiPage",
+      "source": "eai"
+    },
+    {
+      "path": "/easi",
+      "component": "EasiPage",
+      "source": "easi"
+    },
+    {
+      "path": "/ems",
+      "component": "EmsPage",
+      "source": "ems"
+    },
+    {
+      "path": "/etare",
+      "component": "EtarePage",
+      "source": "etare"
+    },
+    {
+      "path": "/eaah",
+      "component": "EaahPage",
+      "source": "eaah"
+    },
+    {
+      "path": "/filtro",
+      "component": "FiltroPage",
+      "source": "filtro"
+    },
+    {
+      "path": "/filtro-escalas",
+      "component": "FiltroPage",
+      "source": "filtro"
+    },
+    {
+      "path": "/escalas-neuropsiquiatria",
+      "component": "EscalasNeuropsiquiatriaPage",
+      "source": "escalas-neuropsiquiatria"
+    },
+    {
+      "path": "/caa",
+      "component": "CaaPage",
+      "source": "caa"
+    },
+    {
+      "path": "/diario-sono",
+      "component": "DiarioSonoPage",
+      "source": "diario-sono"
+    },
+    {
+      "path": "/diario-alimentar",
+      "component": "DiarioAlimentarPage",
+      "source": "diario-alimentar"
+    },
+    {
+      "path": "/sobre",
+      "component": "SobrePage",
+      "source": "sobre"
+    },
+    {
+      "path": "/servicos-clinica",
+      "component": "ServicosClinicaPage",
+      "source": "servicos-clinica"
+    },
+    {
+      "path": "/eletroencefalograma",
+      "component": "EletroencefalogramaPage",
+      "source": "eletroencefalograma"
+    },
+    {
+      "path": "/termos",
+      "component": "TermosPage",
+      "source": "termos"
+    },
+    {
+      "path": "/neuropsicologia",
+      "component": "NeuropsicologiaPage",
+      "source": "neuropsicologia"
+    },
+    {
+      "path": "/pac",
+      "component": "PacPage",
+      "source": "pac"
+    },
+    {
+      "path": "/ahsd-tea",
+      "component": "AhsdTeaPage",
+      "source": "ahsd-tea"
+    },
+    {
+      "path": "/tde2",
+      "component": "Tde2Page",
+      "source": "tde2"
+    },
+    {
+      "path": "/testes-reconhecimento",
+      "component": "TestesReconhecimentoPage",
+      "source": "testes-reconhecimento"
+    },
+    {
+      "path": "/testes-academicos",
+      "component": "TestesAcademicosPage",
+      "source": "testes-academicos"
+    },
+    {
+      "path": "/testes-diretos",
+      "component": "TestesDiretosPage",
+      "source": "testes-diretos"
+    },
+    {
+      "path": "/cognitive-lab",
+      "component": "CognitiveLabPage",
+      "source": "cognitive-lab"
+    },
+    {
+      "path": "/cognitive-lab/:taskId",
+      "component": "CognitiveTaskPage",
+      "source": "cognitive-task"
+    },
+    {
+      "path": "/avaliacao-cognitiva-infantil",
+      "component": "AvaliacaoCognitivaInfantilPage",
+      "source": "avaliacao-cognitiva-infantil"
+    },
+    {
+      "path": "/academico-interativo",
+      "component": "AcademicoInterativoPage",
+      "source": "academico-interativo"
+    },
+    {
+      "path": "/escrita-desenho",
+      "component": "EscritaDesenhoPage",
+      "source": "escrita-desenho"
+    },
+    {
+      "path": "/conhecimento-visual",
+      "component": "ConhecimentoVisualPage",
+      "source": "conhecimento-visual"
+    },
+    {
+      "path": "/motricidade-teste",
+      "component": "MotricidadeTestePage",
+      "source": "motricidade-teste"
+    },
+    {
+      "path": "/conhecimentos-gerais",
+      "component": "ConhecimentosGeraisPage",
+      "source": "conhecimentos-gerais"
+    },
+    {
+      "path": "/funcoes-executivas",
+      "component": "FuncoesExecutivasPage",
+      "source": "funcoes-executivas"
+    },
+    {
+      "path": "/atencao-concentracao",
+      "component": "AtencaoConcentracaoPage",
+      "source": "atencao-concentracao"
+    },
+    {
+      "path": "/linguagem-fonologia",
+      "component": "LinguagemFonologiaPage",
+      "source": "linguagem-fonologia"
+    },
+    {
+      "path": "/memoria-teste",
+      "component": "MemoriaTestePage",
+      "source": "memoria-teste"
+    },
+    {
+      "path": "/memoria-clinica",
+      "component": "MemoriaClinicaPage",
+      "source": "memoria-clinica"
+    },
+    {
+      "path": "/processamento-visuoauditivo",
+      "component": "ProcessamentoVisuoauditivoPage",
+      "source": "processamento-visuoauditivo"
+    },
+    {
+      "path": "/inventarios-auto",
+      "component": "InventariosAutoPage",
+      "source": "inventarios-auto"
+    },
+    {
+      "path": "/ajuda",
+      "component": "AjudaPage",
+      "source": "ajuda"
+    },
+    {
+      "path": "/curvas-crescimento",
+      "component": "CurvasCrescimentoPage",
+      "source": "curvas-crescimento"
+    },
+    {
+      "path": "/orientacao-parental",
+      "component": "OrientacaoParentalPage",
+      "source": "orientacao-parental"
+    },
+    {
+      "path": "/psc17",
+      "component": "Psc17Page",
+      "source": "psc17"
+    },
+    {
+      "path": "/gad7",
+      "component": "Gad7Page",
+      "source": "gad7"
+    },
+    {
+      "path": "/aq10",
+      "component": "Aq10Page",
+      "source": "aq10"
+    },
+    {
+      "path": "/aq50",
+      "component": "Aq50Page",
+      "source": "aq50"
+    },
+    {
+      "path": "/classificacao/:id",
+      "component": "ClassificacaoPage",
+      "source": "classificacao"
+    },
+    {
+      "path": "/ballard",
+      "component": "BallardPage",
+      "source": "ballard"
+    },
+    {
+      "path": "/biblioteca-instrumentos",
+      "component": "BibliotecaInstrumentosPage",
+      "source": "biblioteca-instrumentos"
+    },
+    {
+      "path": "/espasticidade",
+      "component": "EspasticidadePage",
+      "source": "espasticidade"
+    },
+    {
+      "path": "/classificacoes",
+      "component": "ClassificacoesPage",
+      "source": "classificacoes"
+    },
+    {
+      "path": "/fluxogramas",
+      "component": "FluxogramasPage",
+      "source": "fluxogramas"
+    },
+    {
+      "path": "/marcos-desenvolvimento",
+      "component": "MarcosDesenvolvimentoPage",
+      "source": "marcos-desenvolvimento"
+    },
+    {
+      "path": "/valores-referencia",
+      "component": "ValoresReferenciaPage",
+      "source": "valores-referencia"
+    },
+    {
+      "path": "/pdae",
+      "component": "PdaePage",
+      "source": "pdae"
+    },
+    {
+      "path": "/medicamentos",
+      "component": "MedicamentosPage",
+      "source": "medicamentos"
+    },
+    {
+      "path": "/farmacologia",
+      "component": "FarmacologiaPage",
+      "source": "farmacologia"
+    },
+    {
+      "path": "/calculadora-dose",
+      "component": "CalculadoraDosePage",
+      "source": "calculadora-dose"
+    },
+    {
+      "path": "/eusm10",
+      "component": "Eusm10Page",
+      "source": "eusm10"
+    },
+    {
+      "path": "/avaliacao-multiprofissional",
+      "component": "AvaliacaoMultiprofissionalPage",
+      "source": "avaliacao-multiprofissional"
+    },
+    {
+      "path": "/generic-scale/:id",
+      "component": "GenericScalePage",
+      "source": "generic-scale"
+    },
+    {
+      "path": "/bayley",
+      "component": "BayleyPage",
+      "source": "bayley"
+    },
+    {
+      "path": "/griffiths",
+      "component": "GriffithsPage",
+      "source": "griffiths"
+    },
+    {
+      "path": "/rcads",
+      "component": "RcadsPage",
+      "source": "rcads"
+    },
+    {
+      "path": "/masc2",
+      "component": "Masc2Page",
+      "source": "masc2"
+    },
+    {
+      "path": "/leiter3",
+      "component": "Leiter3Page",
+      "source": "leiter3"
+    },
+    {
+      "path": "/nepsy2",
+      "component": "Nepsy2Page",
+      "source": "nepsy2"
+    },
+    {
+      "path": "/raven",
+      "component": "RavenPage",
+      "source": "raven"
+    },
+    {
+      "path": "/wisc5",
+      "component": "Wisc5Page",
+      "source": "wisc5"
+    },
+    {
+      "path": "/wppsi",
+      "component": "WppsiPage",
+      "source": "wppsi"
+    },
+    {
+      "path": "/pedicat",
+      "component": "PedicatPage",
+      "source": "pedicat"
+    },
+    {
+      "path": "/tde",
+      "component": "TdePage",
+      "source": "tde"
+    },
+    {
+      "path": "/confias",
+      "component": "ConfiasPage",
+      "source": "confias"
+    },
+    {
+      "path": "/portage",
+      "component": "PortagePage",
+      "source": "portage"
+    },
+    {
+      "path": "/vineland-completo",
+      "component": "VinelandCompletePage",
+      "source": "vineland"
+    },
+    {
+      "path": "/cbcl-interativo",
+      "component": "CbclInterativoPage",
+      "source": "cbcl-interativo"
+    },
+    {
+      "path": "/pre-consulta",
+      "component": "PreConsultaPage",
+      "source": "pre-consulta"
+    },
+    {
+      "path": "/pre-retorno",
+      "component": "PreRetornoPage",
+      "source": "pre-retorno"
+    },
+    {
+      "path": "/efeitos-colaterais",
+      "component": "PreRetornoPage",
+      "source": "pre-retorno"
+    },
+    {
+      "path": "/recepcao",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/prontuario",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/manus",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/documentos",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/assinatura-digital",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/satisfacao-medicacao",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/plano-terapeutico",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/plano-intervencao",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/fichas-registro",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/laudo-neuroped",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/laudo-super",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/receita-c1",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/receita-c1-express",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/verificar",
+      "component": "VerificarPage",
+      "source": "verificar"
+    },
+    {
+      "path": "/diario-escola",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/inventarios-escola",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/conecta",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/agenda",
+      "component": "nested-or-unknown",
+      "source": null
+    },
+    {
+      "path": "/agendar",
+      "component": "AgendarPage",
+      "source": "agendar"
+    },
+    {
+      "path": "/marcacao",
+      "component": "MarcacaoPage",
+      "source": "marcacao"
+    },
+    {
+      "path": "/familia",
+      "component": "FamiliaPage",
+      "source": "familia"
+    },
+    {
+      "path": "/portal-familia",
+      "component": "PortalFamiliaPage",
+      "source": "portal-familia"
+    },
+    {
+      "path": "/portal-familia/novidades",
+      "component": "PortalNovidadesPage",
+      "source": "portal-novidades-safe"
+    },
+    {
+      "path": "/portal-familia/acesso",
+      "component": "PortalAcessoPage",
+      "source": "portal-acesso"
+    },
+    {
+      "path": "/acessibilidade",
+      "component": "AcessibilidadePage",
+      "source": "acessibilidade"
+    },
+    {
+      "path": "/sobre-neuroped",
+      "component": "SobreNeuropedPage",
+      "source": "sobre-neuroped"
+    },
+    {
+      "path": "/glossario",
+      "component": "GlossarioPage",
+      "source": "glossario"
+    },
+    {
+      "path": "/instrumentos-padronizados",
+      "component": "InstrumentosPadronizadosPage",
+      "source": "instrumentos-padronizados"
+    },
+    {
+      "path": "/qualidade",
+      "component": "QualidadePage",
+      "source": "qualidade"
+    },
+    {
+      "path": "/pacientes",
+      "component": "PacientesPage",
+      "source": "pacientes"
+    },
+    {
+      "path": "/paciente/:id",
+      "component": "PacienteDetalhePage",
+      "source": "paciente-detalhe"
+    }
+  ],
+  "navigation_items": [
+    {
+      "href": "/agenda",
+      "label": "Agenda"
+    },
+    {
+      "href": "/pacientes",
+      "label": "Pacientes"
+    },
+    {
+      "href": "/filtro",
+      "label": "Encontrar uma escala"
+    },
+    {
+      "href": "/avaliacao-cognitiva-infantil",
+      "label": "Avaliação cognitiva infantil"
+    },
+    {
+      "href": "/documentos",
+      "label": "Documentar"
+    },
+    {
+      "href": "/",
+      "label": "Início"
+    },
+    {
+      "href": "/explorar",
+      "label": "Todos os recursos"
+    },
+    {
+      "href": "/recepcao",
+      "label": "Recepção e fila"
+    },
+    {
+      "href": "/pre-consulta",
+      "label": "Pré-consulta"
+    },
+    {
+      "href": "/pre-retorno",
+      "label": "Pré-retorno"
+    },
+    {
+      "href": "/memoria-clinica",
+      "label": "Memória clínica"
+    },
+    {
+      "href": "/diario-escola",
+      "label": "Diário escolar"
+    },
+    {
+      "href": "/avaliacao-multiprofissional",
+      "label": "Avaliação multiprofissional"
+    },
+    {
+      "href": "/neuropsicologia",
+      "label": "Neuropsicologia"
+    },
+    {
+      "href": "/filtro",
+      "label": "Encontrar uma escala"
+    },
+    {
+      "href": "/filtro-escalas",
+      "label": "Triar sem cadastrar"
+    },
+    {
+      "href": "/assistente-clinico",
+      "label": "Assistente clínico"
+    },
+    {
+      "href": "/bateria-jadson",
+      "label": "Bateria Jadson"
+    },
+    {
+      "href": "/pac",
+      "label": "PAC"
+    },
+    {
+      "href": "/inventarios-auto",
+      "label": "Autoavaliação"
+    },
+    {
+      "href": "/ahsd-tea",
+      "label": "AH/SD × TEA"
+    },
+    {
+      "href": "/psiquiatria",
+      "label": "Guia psiquiátrico"
+    },
+    {
+      "href": "/testes-diretos",
+      "label": "Testes por faixa etária"
+    },
+    {
+      "href": "/cognitive-lab",
+      "label": "Cognitive Lab"
+    },
+    {
+      "href": "/avaliacao-cognitiva-infantil",
+      "label": "Avaliação cognitiva infantil"
+    },
+    {
+      "href": "/caa",
+      "label": "CAA · Vou Falar"
+    },
+    {
+      "href": "/escalas-neuropsiquiatria",
+      "label": "Escalas de neuropsiquiatria"
+    },
+    {
+      "href": "/tea-checklists",
+      "label": "Checklists TEA"
+    },
+    {
+      "href": "/testes-academicos",
+      "label": "Testes acadêmicos"
+    },
+    {
+      "href": "/pdae",
+      "label": "PDAE-NEXUS escolar"
+    },
+    {
+      "href": "/testes-reconhecimento",
+      "label": "Reconhecimento visual"
+    },
+    {
+      "href": "/academico-interativo",
+      "label": "Acadêmico interativo"
+    },
+    {
+      "href": "/prontuario",
+      "label": "Prontuário clínico"
+    },
+    {
+      "href": "/laudo-neuroped",
+      "label": "Laudos neuropediátricos"
+    },
+    {
+      "href": "/laudo-super",
+      "label": "Laudo SuperNeuroPed"
+    },
+    {
+      "href": "/receita-c1",
+      "label": "Receita C1"
+    },
+    {
+      "href": "/receita-c1-express",
+      "label": "Receita C1 Express"
+    },
+    {
+      "href": "/documentos",
+      "label": "Documentos clínicos"
+    },
+    {
+      "href": "/assinatura-digital",
+      "label": "Assinatura digital"
+    },
+    {
+      "href": "/satisfacao-medicacao",
+      "label": "Satisfação com medicação"
+    },
+    {
+      "href": "/plano-terapeutico",
+      "label": "Plano terapêutico"
+    },
+    {
+      "href": "/plano-intervencao",
+      "label": "Plano de intervenção"
+    },
+    {
+      "href": "/fichas-registro",
+      "label": "Fichas de registro"
+    },
+    {
+      "href": "/neuroacompanhamento",
+      "label": "NeuroAcompanhamento"
+    },
+    {
+      "href": "/medicamentos",
+      "label": "Medicamentos"
+    },
+    {
+      "href": "/farmacologia",
+      "label": "Farmacologia"
+    },
+    {
+      "href": "/calculadora-dose",
+      "label": "Calculadora de dose"
+    },
+    {
+      "href": "/diario-sono",
+      "label": "Diário do sono"
+    },
+    {
+      "href": "/diario-alimentar",
+      "label": "Diário alimentar"
+    },
+    {
+      "href": "/epilepsia",
+      "label": "Diário de epilepsia"
+    },
+    {
+      "href": "/cefaleia",
+      "label": "Calendário de cefaleia"
+    },
+    {
+      "href": "/inventarios-escola",
+      "label": "Inventários escolares"
+    },
+    {
+      "href": "/instrumentos-padronizados",
+      "label": "Instrumentos padronizados"
+    },
+    {
+      "href": "/biblioteca-instrumentos",
+      "label": "Biblioteca de instrumentos"
+    },
+    {
+      "href": "/fluxogramas",
+      "label": "Fluxogramas"
+    },
+    {
+      "href": "/fluxograma",
+      "label": "Fluxograma clínico"
+    },
+    {
+      "href": "/marcos-desenvolvimento",
+      "label": "Marcos do desenvolvimento"
+    },
+    {
+      "href": "/valores-referencia",
+      "label": "Valores de referência"
+    },
+    {
+      "href": "/ballard",
+      "label": "Ballard neonatal"
+    },
+    {
+      "href": "/curvas-crescimento",
+      "label": "Curvas de crescimento"
+    },
+    {
+      "href": "/espasticidade",
+      "label": "Espasticidade"
+    },
+    {
+      "href": "/classificacoes",
+      "label": "Classificações"
+    },
+    {
+      "href": "/orientacao-parental",
+      "label": "Orientação parental"
+    },
+    {
+      "href": "/nesplora",
+      "label": "Nesplora"
+    },
+    {
+      "href": "/eletroencefalograma",
+      "label": "EEG & Vídeo-EEG"
+    },
+    {
+      "href": "/marcacao",
+      "label": "Marcação · Secretaria IA"
+    },
+    {
+      "href": "/conecta",
+      "label": "NeuroPed Conecta"
+    },
+    {
+      "href": "/servicos-clinica",
+      "label": "Serviços da Clínica"
+    },
+    {
+      "href": "/manus",
+      "label": "Integrações Manus"
+    },
+    {
+      "href": "/brincando-e-aprendendo",
+      "label": "Brincando e Aprendendo"
+    },
+    {
+      "href": "/missao-saude",
+      "label": "Missão Saúde"
+    },
+    {
+      "href": "/familia",
+      "label": "Área da família"
+    },
+    {
+      "href": "/portal-familia",
+      "label": "Portal da família"
+    },
+    {
+      "href": "/portal-familia/novidades",
+      "label": "Novidades do portal"
+    },
+    {
+      "href": "/portal-familia/acesso",
+      "label": "Política de acesso"
+    },
+    {
+      "href": "/agendar",
+      "label": "Autoagendamento"
+    },
+    {
+      "href": "/efeitos-colaterais",
+      "label": "Efeitos colaterais"
+    },
+    {
+      "href": "/verificar",
+      "label": "Verificar documento"
+    },
+    {
+      "href": "/glossario",
+      "label": "Glossário"
+    },
+    {
+      "href": "/termos",
+      "label": "Termos de uso"
+    },
+    {
+      "href": "/ajuda",
+      "label": "Ajuda"
+    },
+    {
+      "href": "/sobre",
+      "label": "Sobre"
+    },
+    {
+      "href": "/sobre-neuroped",
+      "label": "Sobre o NeuroPed"
+    },
+    {
+      "href": "/acessibilidade",
+      "label": "Acessibilidade"
+    },
+    {
+      "href": "/qualidade",
+      "label": "Qualidade"
+    }
+  ],
+  "page_files": [
+    "abc",
+    "academico-interativo",
+    "acessibilidade",
+    "agenda",
+    "agendar",
+    "ahsd-tea",
+    "ajuda",
+    "aq10",
+    "aq50",
+    "asq3",
+    "assinatura-digital",
+    "assistente-clinico",
+    "atencao-concentracao",
+    "avaliacao-cognitiva-infantil",
+    "avaliacao-multiprofissional",
+    "ballard",
+    "bateria-jadson",
+    "bayley",
+    "biblioteca-instrumentos",
+    "bloco3-showcase",
+    "brief2",
+    "brincando-e-aprendendo",
+    "caa",
+    "calculadora-dose",
+    "cars",
+    "cbcl",
+    "cbcl-interativo",
+    "cdi2",
+    "classificacao",
+    "classificacoes",
+    "cognitive-lab",
+    "cognitive-task",
+    "conecta",
+    "confias",
+    "conhecimento-visual",
+    "conhecimentos-gerais",
+    "conners",
+    "crafft",
+    "cshq",
+    "cssrs",
+    "curvas-crescimento",
+    "denver",
+    "diario-alimentar",
+    "diario-epilepsia",
+    "diario-escola",
+    "diario-sono",
+    "documentos",
+    "eaah",
+    "eaf",
+    "eai",
+    "easi",
+    "ecar-si",
+    "ecsm",
+    "edi",
+    "efeitos-colaterais",
+    "eletroencefalograma",
+    "emdi",
+    "ems",
+    "epilepsy-diary",
+    "escalas-neuropsiquiatria",
+    "escrita-desenho",
+    "espasticidade",
+    "etare",
+    "eusm10",
+    "explorar",
+    "familia",
+    "farmacologia",
+    "fichas-registro",
+    "filtro",
+    "filtro-engine",
+    "fluxograma",
+    "fluxogramas",
+    "funcoes-executivas",
+    "gad7",
+    "generic-scale",
+    "glossario",
+    "gmfcs",
+    "griffiths",
+    "headache-calendar",
+    "home",
+    "instrumentos-padronizados",
+    "inventarios-auto",
+    "inventarios-escola",
+    "ips",
+    "laudo-neuroped",
+    "laudo-super",
+    "leiter3",
+    "lgpd-consent",
+    "linguagem-fonologia",
+    "login",
+    "manus-integracoes",
+    "marcacao",
+    "marcos-desenvolvimento",
+    "masc2",
+    "mchat",
+    "medicamentos",
+    "memoria-clinica",
+    "memoria-teste",
+    "missao-saude",
+    "motricidade-teste",
+    "nepsy2",
+    "neuroped-acompanhamento",
+    "neuropsicologia",
+    "not-found",
+    "orientacao-parental",
+    "pac",
+    "paciente-detalhe",
+    "pacientes",
+    "pant",
+    "pdae",
+    "pedicat",
+    "pedsql",
+    "phqa",
+    "plano-intervencao",
+    "plano-terapeutico",
+    "portage",
+    "portal-acesso",
+    "portal-familia",
+    "portal-novidades",
+    "portal-novidades-safe",
+    "pre-consulta",
+    "pre-retorno",
+    "processamento-visuoauditivo",
+    "prontuario",
+    "psc17",
+    "psiquiatria-guia",
+    "qualidade",
+    "raven",
+    "rcads",
+    "receita-c1",
+    "receita-c1-express",
+    "recepcao",
+    "satisfacao-medicacao",
+    "scared",
+    "sdq",
+    "servicos-clinica",
+    "session-expired",
+    "snap",
+    "sobre",
+    "sobre-neuroped",
+    "tde",
+    "tde2",
+    "tea",
+    "tea-behaviors",
+    "tea-checklists",
+    "termos",
+    "testes-academicos",
+    "testes-diretos",
+    "testes-reconhecimento",
+    "valores-referencia",
+    "vanderbilt",
+    "verificar",
+    "vineland",
+    "wisc5",
+    "wppsi",
+    "ygtss"
+  ],
+  "route_orphans": [],
+  "hub_owned_routes": [
+    {
+      "path": "/login",
+      "component": "LoginPage",
+      "source": "login"
+    },
+    {
+      "path": "/sessao-expirada",
+      "component": "SessionExpiredPage",
+      "source": "session-expired"
+    },
+    {
+      "path": "/consentimento-lgpd",
+      "component": "LgpdConsentPage",
+      "source": "lgpd-consent"
+    },
+    {
+      "path": "/mchat",
+      "component": "MchatPage",
+      "source": "mchat"
+    },
+    {
+      "path": "/cars",
+      "component": "CarsPage",
+      "source": "cars"
+    },
+    {
+      "path": "/snap",
+      "component": "SnapPage",
+      "source": "snap"
+    },
+    {
+      "path": "/denver",
+      "component": "DenverPage",
+      "source": "denver"
+    },
+    {
+      "path": "/sdq",
+      "component": "SdqPage",
+      "source": "sdq"
+    },
+    {
+      "path": "/scared",
+      "component": "ScaredPage",
+      "source": "scared"
+    },
+    {
+      "path": "/conners",
+      "component": "ConnersPage",
+      "source": "conners"
+    },
+    {
+      "path": "/vineland",
+      "component": "VinelandPage",
+      "source": "vineland"
+    },
+    {
+      "path": "/pant",
+      "component": "PantPage",
+      "source": "pant"
+    },
+    {
+      "path": "/cdi2",
+      "component": "Cdi2Page",
+      "source": "cdi2"
+    },
+    {
+      "path": "/phqa",
+      "component": "PhqaPage",
+      "source": "phqa"
+    },
+    {
+      "path": "/cssrs",
+      "component": "CssrsPage",
+      "source": "cssrs"
+    },
+    {
+      "path": "/crafft",
+      "component": "CrafftPage",
+      "source": "crafft"
+    },
+    {
+      "path": "/cbcl",
+      "component": "CbclPage",
+      "source": "cbcl"
+    },
+    {
+      "path": "/vanderbilt",
+      "component": "VanderbiltPage",
+      "source": "vanderbilt"
+    },
+    {
+      "path": "/brief2",
+      "component": "Brief2Page",
+      "source": "brief2"
+    },
+    {
+      "path": "/abc",
+      "component": "AbcPage",
+      "source": "abc"
+    },
+    {
+      "path": "/asq3",
+      "component": "Asq3Page",
+      "source": "asq3"
+    },
+    {
+      "path": "/pedsql",
+      "component": "PedsqlPage",
+      "source": "pedsql"
+    },
+    {
+      "path": "/gmfcs",
+      "component": "GmfcsPage",
+      "source": "gmfcs"
+    },
+    {
+      "path": "/cshq",
+      "component": "CshqPage",
+      "source": "cshq"
+    },
+    {
+      "path": "/ygtss",
+      "component": "YgtssPage",
+      "source": "ygtss"
+    },
+    {
+      "path": "/tea",
+      "component": "TeaPage",
+      "source": "tea"
+    },
+    {
+      "path": "/tea-comportamentos",
+      "component": "TeaBehaviorsPage",
+      "source": "tea-behaviors"
+    },
+    {
+      "path": "/emdi",
+      "component": "EmdiPage",
+      "source": "emdi"
+    },
+    {
+      "path": "/eaf",
+      "component": "EafPage",
+      "source": "eaf"
+    },
+    {
+      "path": "/ecsm",
+      "component": "EcsmPage",
+      "source": "ecsm"
+    },
+    {
+      "path": "/ips",
+      "component": "IpsPage",
+      "source": "ips"
+    },
+    {
+      "path": "/ecar-si",
+      "component": "EcarSiPage",
+      "source": "ecar-si"
+    },
+    {
+      "path": "/edi",
+      "component": "EdiPage",
+      "source": "edi"
+    },
+    {
+      "path": "/eai",
+      "component": "EaiPage",
+      "source": "eai"
+    },
+    {
+      "path": "/easi",
+      "component": "EasiPage",
+      "source": "easi"
+    },
+    {
+      "path": "/ems",
+      "component": "EmsPage",
+      "source": "ems"
+    },
+    {
+      "path": "/etare",
+      "component": "EtarePage",
+      "source": "etare"
+    },
+    {
+      "path": "/eaah",
+      "component": "EaahPage",
+      "source": "eaah"
+    },
+    {
+      "path": "/tde2",
+      "component": "Tde2Page",
+      "source": "tde2"
+    },
+    {
+      "path": "/cognitive-lab/:taskId",
+      "component": "CognitiveTaskPage",
+      "source": "cognitive-task"
+    },
+    {
+      "path": "/escrita-desenho",
+      "component": "EscritaDesenhoPage",
+      "source": "escrita-desenho"
+    },
+    {
+      "path": "/conhecimento-visual",
+      "component": "ConhecimentoVisualPage",
+      "source": "conhecimento-visual"
+    },
+    {
+      "path": "/motricidade-teste",
+      "component": "MotricidadeTestePage",
+      "source": "motricidade-teste"
+    },
+    {
+      "path": "/conhecimentos-gerais",
+      "component": "ConhecimentosGeraisPage",
+      "source": "conhecimentos-gerais"
+    },
+    {
+      "path": "/funcoes-executivas",
+      "component": "FuncoesExecutivasPage",
+      "source": "funcoes-executivas"
+    },
+    {
+      "path": "/atencao-concentracao",
+      "component": "AtencaoConcentracaoPage",
+      "source": "atencao-concentracao"
+    },
+    {
+      "path": "/linguagem-fonologia",
+      "component": "LinguagemFonologiaPage",
+      "source": "linguagem-fonologia"
+    },
+    {
+      "path": "/memoria-teste",
+      "component": "MemoriaTestePage",
+      "source": "memoria-teste"
+    },
+    {
+      "path": "/processamento-visuoauditivo",
+      "component": "ProcessamentoVisuoauditivoPage",
+      "source": "processamento-visuoauditivo"
+    },
+    {
+      "path": "/psc17",
+      "component": "Psc17Page",
+      "source": "psc17"
+    },
+    {
+      "path": "/gad7",
+      "component": "Gad7Page",
+      "source": "gad7"
+    },
+    {
+      "path": "/aq10",
+      "component": "Aq10Page",
+      "source": "aq10"
+    },
+    {
+      "path": "/aq50",
+      "component": "Aq50Page",
+      "source": "aq50"
+    },
+    {
+      "path": "/classificacao/:id",
+      "component": "ClassificacaoPage",
+      "source": "classificacao"
+    },
+    {
+      "path": "/eusm10",
+      "component": "Eusm10Page",
+      "source": "eusm10"
+    },
+    {
+      "path": "/generic-scale/:id",
+      "component": "GenericScalePage",
+      "source": "generic-scale"
+    },
+    {
+      "path": "/bayley",
+      "component": "BayleyPage",
+      "source": "bayley"
+    },
+    {
+      "path": "/griffiths",
+      "component": "GriffithsPage",
+      "source": "griffiths"
+    },
+    {
+      "path": "/rcads",
+      "component": "RcadsPage",
+      "source": "rcads"
+    },
+    {
+      "path": "/masc2",
+      "component": "Masc2Page",
+      "source": "masc2"
+    },
+    {
+      "path": "/leiter3",
+      "component": "Leiter3Page",
+      "source": "leiter3"
+    },
+    {
+      "path": "/nepsy2",
+      "component": "Nepsy2Page",
+      "source": "nepsy2"
+    },
+    {
+      "path": "/raven",
+      "component": "RavenPage",
+      "source": "raven"
+    },
+    {
+      "path": "/wisc5",
+      "component": "Wisc5Page",
+      "source": "wisc5"
+    },
+    {
+      "path": "/wppsi",
+      "component": "WppsiPage",
+      "source": "wppsi"
+    },
+    {
+      "path": "/pedicat",
+      "component": "PedicatPage",
+      "source": "pedicat"
+    },
+    {
+      "path": "/tde",
+      "component": "TdePage",
+      "source": "tde"
+    },
+    {
+      "path": "/confias",
+      "component": "ConfiasPage",
+      "source": "confias"
+    },
+    {
+      "path": "/portage",
+      "component": "PortagePage",
+      "source": "portage"
+    },
+    {
+      "path": "/vineland-completo",
+      "component": "VinelandCompletePage",
+      "source": "vineland"
+    },
+    {
+      "path": "/cbcl-interativo",
+      "component": "CbclInterativoPage",
+      "source": "cbcl-interativo"
+    },
+    {
+      "path": "/paciente/:id",
+      "component": "PacienteDetalhePage",
+      "source": "paciente-detalhe"
+    }
+  ],
+  "page_orphans": [
+    "bloco3-showcase",
+    "diario-epilepsia",
+    "efeitos-colaterais",
+    "filtro-engine",
+    "portal-novidades"
+  ],
+  "page_orphan_classification": {
+    "internal_modules": [
+      "filtro-engine"
+    ],
+    "legacy_or_duplicates": [
+      "bloco3-showcase",
+      "diario-epilepsia"
+    ],
+    "aliases_or_special_routes": [
+      "efeitos-colaterais",
+      "portal-novidades"
+    ]
+  },
+  "navigation_missing_routes": [],
+  "sensitive_routes_not_in_navigation": [],
+  "sensitive_routes": [
+    "/pant",
+    "/assinatura-digital",
+    "/documentos",
+    "/pacientes",
+    "/memoria-clinica",
+    "/paciente",
+    "/prontuario",
+    "/calculadora-dose",
+    "/farmacologia",
+    "/medicamentos",
+    "/satisfacao-medicacao",
+    "/plano-terapeutico",
+    "/plano-intervencao",
+    "/avaliacao-multiprofissional",
+    "/fichas-registro",
+    "/laudo-neuroped",
+    "/laudo-super",
+    "/receita-c1",
+    "/receita-c1-express",
+    "/diario-escola",
+    "/neuroacompanhamento",
+    "/inventarios-escola",
+    "/generic-scale",
+    "/assistente-clinico",
+    "/cognitive-lab",
+    "/testes-diretos",
+    "/epilepsia",
+    "/cefaleia",
+    "/diario-sono",
+    "/diario-alimentar",
+    "/recepcao",
+    "/conecta",
+    "/agenda",
+    "/manus"
+  ],
+  "public_route_literals": [
+    "/login",
+    "/sessao-expirada",
+    "/familia",
+    "/brincando-e-aprendendo",
+    "/missao-saude",
+    "/agendar",
+    "/marcacao",
+    "/eletroencefalograma",
+    "/pre-consulta",
+    "/pre-retorno",
+    "/efeitos-colaterais",
+    "/verificar",
+    "/explorar",
+    "/filtro",
+    "/filtro-escalas",
+    "/orientacao-parental",
+    "/glossario",
+    "/portal-familia",
+    "/portal-familia/novidades",
+    "/portal-familia/acesso",
+    "/marcos-desenvolvimento",
+    "/curvas-crescimento",
+    "/caa",
+    "/sobre",
+    "/servicos-clinica",
+    "/termos",
+    "/sobre-neuroped",
+    "/ajuda",
+    "/acessibilidade",
+    "/consentimento-lgpd",
+    "/familia",
+    "/",
+    "/);\n  const path = raw.split(",
+    "/)[0]",
+    "/)[0] || ",
+    "/;\n  const withSlash = path.startsWith(",
+    "/) ",
+    "/ ",
+    "/) : ",
+    "/;\n}\n\n/** Rota pública",
+    "/) return ",
+    "/;\n  return normalizePath(window.location.hash || "
+  ]
+}
