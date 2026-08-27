@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -197,6 +197,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       return current;
     });
   }, [config.domains]);
+  const [activeDomainIndex, setActiveDomainIndex] = useState(0);
   const validDraftOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -296,12 +297,40 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [pendingFocusKey, visibleItemCount]);
-  const hasResponse = (item: (typeof allItems)[number]) =>
-    item.responseType === "text"
-      ? Boolean(textAnswers[item.key]?.trim())
-      : answers[item.key] !== undefined;
+  const hasResponse = useCallback(
+    (item: (typeof allItems)[number]) =>
+      item.responseType === "text"
+        ? Boolean(textAnswers[item.key]?.trim())
+        : answers[item.key] !== undefined,
+    [answers, textAnswers],
+  );
   const isCompleteForSubmit = (item: (typeof allItems)[number]) =>
     !item.required || hasResponse(item);
+  const domainProgress = useMemo(
+    () =>
+      config.domains.map((domain, domainIndex) => {
+        const answeredCount = domain.items.reduce(
+          (count, item, itemIndex) =>
+            count +
+            (hasResponse(
+              allItems.find(
+                (candidate) => candidate.key === `${domainIndex}-${itemIndex}`,
+              )!,
+            )
+              ? 1
+              : 0),
+          0,
+        );
+        return {
+          name: domain.name,
+          total: domain.items.length,
+          answered: answeredCount,
+          complete:
+            domain.items.length > 0 && answeredCount === domain.items.length,
+        };
+      }),
+    [allItems, config.domains, hasResponse],
+  );
   const answered = allItems.filter(hasResponse).length;
   const requiredItems = allItems.filter((item) => item.required);
   const requiredAnswered = requiredItems.filter(hasResponse).length;
@@ -331,6 +360,8 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           : "idle";
 
   function focusItem(key: string) {
+    const domainIndex = Number(key.split("-")[0]);
+    if (Number.isInteger(domainIndex)) setActiveDomainIndex(domainIndex);
     const itemIndex = allItems.findIndex((item) => item.key === key);
     if (itemIndex < 0) return;
     if (itemIndex >= visibleItemCount) {
@@ -346,6 +377,15 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
       () => itemRefs.current[key]?.focus({ preventScroll: true }),
       250,
     );
+  }
+
+  function focusDomain(domainIndex: number) {
+    const firstItem = allItems.find((item) => item.domainIdx === domainIndex);
+    if (!firstItem) return;
+    setActiveDomainIndex(domainIndex);
+    softTap();
+    haptic.tap();
+    focusItem(firstItem.key);
   }
 
   function finishApplication() {
@@ -805,6 +845,38 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               </button>
             ) : null)}
         </div>
+        {domainProgress.length > 1 && (
+          <div
+            className="-mx-1 flex gap-1.5 overflow-x-auto pt-1"
+            role="tablist"
+            aria-label="Navegar entre domínios da escala"
+            data-testid="scale-domain-nav"
+          >
+            {domainProgress.map((domain, index) => (
+              <button
+                key={domain.name}
+                type="button"
+                role="tab"
+                aria-selected={activeDomainIndex === index}
+                onClick={() => focusDomain(index)}
+                className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-left text-[10px] font-bold transition ${activeDomainIndex === index ? "border-primary/50 bg-primary/10 text-primary" : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/60"}`}
+              >
+                <span className="block max-w-[10rem] truncate">
+                  {domain.name}
+                </span>
+                <span
+                  className={
+                    domain.complete
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "opacity-70"
+                  }
+                >
+                  {domain.answered}/{domain.total}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-4">
@@ -876,6 +948,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                 return (
                   <Card
                     key={key}
+                    onFocus={() => setActiveDomainIndex(di)}
                     ref={(node) => {
                       itemRefs.current[key] = node;
                     }}

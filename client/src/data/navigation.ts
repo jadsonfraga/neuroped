@@ -3,12 +3,14 @@ import {
   Activity,
   Baby,
   BookOpen,
+  Compass,
   Brain,
   BrainCog,
   Calculator,
   Calendar,
   ClipboardCheck,
   ClipboardList,
+  Eye,
   FileText,
   Filter,
   Globe2,
@@ -53,45 +55,45 @@ export interface NavigationMatch {
 }
 
 /**
- * Atalhos que ficam no topo do shell clínico. São os destinos de uso mais
- * frequente e as conexões institucionais que não devem se perder no catálogo.
+ * Atalhos que ficam no topo do shell clínico. São as tarefas de uso mais
+ * frequente e de maior valor no atendimento; destinos institucionais continuam
+ * encontráveis no grupo de Portais e Suporte.
  */
 export const featuredNavigation: NavItem[] = [
   {
-    href: "/nesplora/",
-    label: "Nesplora",
-    icon: Brain,
-    tone: "golden",
-    description: "Experiência imersiva em VR",
+    href: "/agenda",
+    label: "Agenda de hoje",
+    icon: Calendar,
+    tone: "priority",
+    description: "Ver compromissos e próximos passos",
   },
   {
-    href: "/eletroencefalograma",
-    label: "EEG & Vídeo-EEG",
-    icon: Waves,
-    tone: "golden",
-    description: "Exames e orientação clínica",
+    href: "/pacientes",
+    label: "Encontrar paciente",
+    icon: Users,
+    tone: "priority",
+    description: "Abrir prontuário e contexto clínico",
   },
   {
     href: "/filtro",
-    label: "Filtro de Escalas",
+    label: "Encontrar uma escala",
     icon: Filter,
     tone: "golden",
-    description: "Por idade e queixa",
+    description: "Por idade, queixa e objetivo",
   },
   {
-    href: "/marcacao",
-    label: "Marcação · Secretaria IA",
-    icon: Calendar,
-    tone: "golden",
-    description: "Agendamento e contato",
+    href: "/avaliacao-cognitiva-infantil",
+    label: "Avaliação cognitiva infantil",
+    icon: Brain,
+    tone: "priority",
+    description: "Perfil por domínio e faixa etária",
   },
-  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {
-    href: "/servicos-clinica",
-    label: "Serviços da Clínica",
-    icon: Stethoscope,
+    href: "/conhecimento-visual",
+    label: "Reconhecimento visual",
+    icon: Eye,
     tone: "golden",
-    description: "Avaliações e serviços",
+    description: "Triagem lúdica e observação visual",
   },
 ];
 
@@ -103,12 +105,26 @@ export const featuredNavigation: NavItem[] = [
 export const navSections: NavSection[] = [
   {
     title: "",
-    items: [{ href: "/", label: "Início", icon: Home }],
+    items: [
+      { href: "/", label: "Início", icon: Home },
+      {
+        href: "/explorar",
+        label: "Explorar tudo",
+        icon: Compass,
+        tone: "priority",
+        description: "Mapa completo do app por jornada",
+      },
+    ],
   },
   {
     title: "ATENDIMENTO",
     items: [
-      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
+      {
+        href: "/agenda",
+        label: "Agenda & Gestão",
+        icon: Calendar,
+        tone: "priority",
+      },
       {
         href: "/pacientes",
         label: "Pacientes / Prontuário",
@@ -189,9 +205,18 @@ export const navSections: NavSection[] = [
   {
     title: "ACOMPANHAMENTO CLÍNICO",
     items: [
-      { href: "/medicamentos", label: "Medicamentos", icon: Pill, tone: "priority" },
+      {
+        href: "/medicamentos",
+        label: "Medicamentos",
+        icon: Pill,
+        tone: "priority",
+      },
       { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
+      {
+        href: "/calculadora-dose",
+        label: "Calculadora de dose",
+        icon: Calculator,
+      },
       { href: "/diario-sono", label: "Diário do sono", icon: Moon },
       {
         href: "/diario-alimentar",
@@ -249,6 +274,27 @@ export const navSections: NavSection[] = [
   {
     title: "PORTAIS E SUPORTE",
     items: [
+      {
+        href: "/nesplora/",
+        label: "Nesplora",
+        icon: Brain,
+        tone: "golden",
+        description: "Experiência imersiva em VR",
+      },
+      {
+        href: "/eletroencefalograma",
+        label: "EEG & Vídeo-EEG",
+        icon: Waves,
+        tone: "golden",
+        description: "Exames e orientação clínica",
+      },
+      {
+        href: "/marcacao",
+        label: "Marcação · Secretaria IA",
+        icon: Calendar,
+        tone: "golden",
+        description: "Agendamento e contato",
+      },
       {
         href: "/brincando-e-aprendendo",
         label: "Brincando e Aprendendo",

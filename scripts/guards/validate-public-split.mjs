@@ -25,26 +25,69 @@ const registeredRoutes = new Set(
 
 // Rotas que DEVEM ficar SEMPRE atrás do PIN (nunca públicas).
 const MUST_BE_GATED = [
-  "/", "/pacientes", "/prontuario", "/recepcao", "/agenda",
-  "/receita-c1", "/receita-c1-express", "/laudo-neuroped", "/documentos",
-  "/medicamentos", "/farmacologia", "/calculadora-dose", "/valores-referencia",
-  "/pant", "/fichas-registro", "/prescricao",
-  "/diario-escola", "/inventarios-escola", "/assinatura-digital",
-  "/plano-terapeutico", "/plano-intervencao",
-  "/mchat", "/cars", "/denver", "/vineland", "/bayley", "/wisc5",
+  "/",
+  "/pacientes",
+  "/prontuario",
+  "/recepcao",
+  "/agenda",
+  "/receita-c1",
+  "/receita-c1-express",
+  "/laudo-neuroped",
+  "/documentos",
+  "/medicamentos",
+  "/farmacologia",
+  "/calculadora-dose",
+  "/valores-referencia",
+  "/pant",
+  "/fichas-registro",
+  "/prescricao",
+  "/diario-escola",
+  "/inventarios-escola",
+  "/assinatura-digital",
+  "/plano-terapeutico",
+  "/plano-intervencao",
+  "/mchat",
+  "/cars",
+  "/denver",
+  "/vineland",
+  "/bayley",
+  "/wisc5",
 ];
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
-  "/orientacao-parental", "/glossario", "/portal-familia",
-  "/portal-familia/novidades", "/portal-familia/acesso",
-  "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
-  "/brincando-e-aprendendo", "/missao-saude",
-  "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
+  "/login",
+  "/sessao-expirada",
+  "/familia",
+  "/agendar",
+  "/marcacao",
+  "/eletroencefalograma",
+  "/pre-consulta",
+  "/pre-retorno",
+  "/efeitos-colaterais",
+  "/verificar",
+  "/orientacao-parental",
+  "/glossario",
+  "/portal-familia",
+  "/portal-familia/novidades",
+  "/portal-familia/acesso",
+  "/marcos-desenvolvimento",
+  "/curvas-crescimento",
+  "/caa",
+  "/brincando-e-aprendendo",
+  "/missao-saude",
+  "/sobre",
+  "/sobre-neuroped",
+  "/servicos-clinica",
+  "/termos",
+  "/ajuda",
+  "/acessibilidade",
+  "/consentimento-lgpd",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
-  "/filtro", "/filtro-escalas",
+  "/filtro",
+  "/filtro-escalas",
+  "/explorar",
 ];
 
 const errors = [];
@@ -57,7 +100,9 @@ for (const route of MUST_BE_GATED) {
 }
 for (const route of MUST_BE_PUBLIC) {
   if (!isPublicRoute(route)) {
-    errors.push(`Rota de família "${route}" NÃO está pública — famílias ficariam travadas.`);
+    errors.push(
+      `Rota de família "${route}" NÃO está pública — famílias ficariam travadas.`,
+    );
   }
 }
 
@@ -67,13 +112,21 @@ if (new Set(PUBLIC_ROUTES).size !== PUBLIC_ROUTES.length) {
 
 for (const route of PUBLIC_ROUTES) {
   if (!expectedPublicRouteSet.has(route)) {
-    errors.push(`Rota pública não aprovada pelo contrato independente: "${route}".`);
+    errors.push(
+      `Rota pública não aprovada pelo contrato independente: "${route}".`,
+    );
   }
-  if (normalizePath(route) !== route || route.includes(":") || route.includes("*")) {
+  if (
+    normalizePath(route) !== route ||
+    route.includes(":") ||
+    route.includes("*")
+  ) {
     errors.push(`Entrada pública não canônica ou dinâmica: "${route}".`);
   }
   if (!registeredRoutes.has(route)) {
-    errors.push(`Entrada pública sem rota correspondente em App.tsx: "${route}".`);
+    errors.push(
+      `Entrada pública sem rota correspondente em App.tsx: "${route}".`,
+    );
   }
 
   const descendantProbe = `${route}/__neuroped_access_regression_probe__`;

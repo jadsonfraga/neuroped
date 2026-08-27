@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   ClipboardCheck,
   Clock3,
+  Compass,
   FileText,
   Eye,
   Filter,
@@ -307,6 +308,13 @@ export default function HomePage() {
               >
                 <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
                 Triagem rápida
+              </Link>
+              <Link
+                href="/explorar"
+                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-transparent px-3 py-2.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:border-border hover:bg-white/55 hover:text-foreground dark:hover:bg-white/10"
+              >
+                <Compass className="h-4 w-4 text-primary" aria-hidden="true" />
+                Ver todos os recursos
               </Link>
             </div>
 

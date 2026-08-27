@@ -97,6 +97,7 @@ const EmsPage = lazy(() => import("@/pages/ems"));
 const EtarePage = lazy(() => import("@/pages/etare"));
 const EaahPage = lazy(() => import("@/pages/eaah"));
 const FiltroPage = lazy(() => import("@/pages/filtro"));
+const ExplorarPage = lazy(() => import("@/pages/explorar"));
 const EscalasNeuropsiquiatriaPage = lazy(
   () => import("@/pages/escalas-neuropsiquiatria"),
 );
@@ -338,6 +339,7 @@ function AppRouter() {
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
             <Route path="/" component={HomePage} />
+            <Route path="/explorar" component={ExplorarPage} />
             <Route path="/mchat" component={MchatPage} />
             <Route path="/cars" component={CarsPage} />
             <Route path="/snap" component={SnapPage} />

@@ -146,8 +146,9 @@ function FeaturedShortcuts({
     );
   };
 
-  const primary = visibleFeaturedNavigation.slice(0, 2);
-  const supporting = visibleFeaturedNavigation.slice(2);
+  // Todas as cinco entradas são tarefas de primeiro nível: a barra é curta,
+  // deliberada e não rebaixa avaliação cognitiva nem reconhecimento visual.
+  const primary = visibleFeaturedNavigation;
   const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
@@ -189,9 +190,6 @@ function FeaturedShortcuts({
           </div>
           <div className="space-y-1.5">
             {primary.map((item) => renderCard(item))}
-            <div className="grid grid-cols-2 gap-1.5">
-              {supporting.map((item) => renderCard(item, true))}
-            </div>
           </div>
         </>
       ) : (
@@ -207,9 +205,6 @@ function FeaturedShortcuts({
             </div>
             <div className="space-y-1.5">
               {primary.map((item) => renderCard(item))}
-              <div className="grid grid-cols-2 gap-1.5">
-                {supporting.map((item) => renderCard(item, true))}
-              </div>
             </div>
           </div>
           <div className="hidden flex-col items-center gap-1.5 lg:flex">

@@ -22,6 +22,7 @@ export const PUBLIC_ROUTES = [
   "/pre-retorno", // Atualização familiar antes do retorno
   "/efeitos-colaterais", // Alias familiar seguro do pré-retorno
   "/verificar", // Validação pública de documento/QR; processamento somente local
+  "/explorar", // Índice de descoberta: não contém dados clínicos; destinos continuam protegidos.
   "/filtro", // Filtro Clínico de Escalas — recomenda escalas por queixa/idade;
   "/filtro-escalas", // não exibe/armazena dado de paciente (aberto por decisão do autor)
   "/orientacao-parental", // Orientação aos Pais
