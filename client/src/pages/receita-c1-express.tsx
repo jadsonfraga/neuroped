@@ -690,10 +690,11 @@ export default function ReceitaC1ExpressPage() {
         {/* Upload exclusivamente local */}
         {(showUpload || certStatus === "missing") && (
           <div className="mb-4 rounded-xl border border-border bg-background/50 p-3 space-y-2">
-            <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+            <Label htmlFor="certificado-p12" className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
               <Upload className="h-3.5 w-3.5" /> Selecionar certificado .p12 / .pfx
             </Label>
             <Input
+              id="certificado-p12"
               type="file"
               accept=".p12,.pfx"
               onChange={onUploadP12}
@@ -760,8 +761,9 @@ export default function ReceitaC1ExpressPage() {
         <h2 className="text-sm font-bold text-foreground">Dados do Paciente</h2>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Nome completo *</Label>
+            <Label htmlFor="paciente-nome" className="text-xs font-semibold text-muted-foreground">Nome completo *</Label>
             <Input
+              id="paciente-nome"
               value={form.paciente}
               onChange={set("paciente")}
               placeholder="Nome do paciente"
@@ -770,8 +772,9 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Data de nascimento</Label>
+            <Label htmlFor="paciente-data-nascimento" className="text-xs font-semibold text-muted-foreground">Data de nascimento</Label>
             <Input
+              id="paciente-data-nascimento"
               type="date"
               value={form.dataNasc}
               onChange={set("dataNasc")}
@@ -781,8 +784,9 @@ export default function ReceitaC1ExpressPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Idade do paciente *</Label>
+            <Label htmlFor="paciente-idade" className="text-xs font-semibold text-muted-foreground">Idade do paciente *</Label>
             <Input
+              id="paciente-idade"
               value={form.idadePaciente}
               onChange={set("idadePaciente")}
               placeholder="ex.: 7 anos e 3 meses"
@@ -791,8 +795,9 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Doses por dia *</Label>
+            <Label htmlFor="doses-por-dia" className="text-xs font-semibold text-muted-foreground">Doses por dia *</Label>
             <Input
+              id="doses-por-dia"
               value={form.dosesPorDia}
               onChange={set("dosesPorDia")}
               inputMode="numeric"
@@ -803,8 +808,9 @@ export default function ReceitaC1ExpressPage() {
           </div>
         </div>
         <div>
-          <Label className="text-xs font-semibold text-muted-foreground">Endereço</Label>
+          <Label htmlFor="endereco" className="text-xs font-semibold text-muted-foreground">Endereço</Label>
           <Input
+            id="endereco"
             value={form.endereco}
             onChange={set("endereco")}
             placeholder="Rua, número, bairro"
@@ -813,17 +819,19 @@ export default function ReceitaC1ExpressPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Município / UF</Label>
-            <Input
-              value={form.municipio}
+            <Label htmlFor="municipio-uf" className="text-xs font-semibold text-muted-foreground">Município / UF</Label>
+              <Input
+                id="municipio-uf"
+                value={form.municipio}
               onChange={set("municipio")}
               placeholder="Petrolina / PE"
               className="mt-1"
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">CEP</Label>
+            <Label htmlFor="cep" className="text-xs font-semibold text-muted-foreground">CEP</Label>
             <Input
+              id="cep"
               value={form.cep}
               onChange={set("cep")}
               placeholder="00000-000"
@@ -839,8 +847,9 @@ export default function ReceitaC1ExpressPage() {
         <h2 className="text-sm font-bold text-foreground">Prescrição</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label className="text-xs font-semibold text-muted-foreground">Medicamento *</Label>
+            <Label htmlFor="medicamento" className="text-xs font-semibold text-muted-foreground">Medicamento *</Label>
             <Input
+              id="medicamento"
               value={form.medicamento}
               onChange={set("medicamento")}
               placeholder="Nome do medicamento"
@@ -849,8 +858,9 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Concentração</Label>
+            <Label htmlFor="concentracao" className="text-xs font-semibold text-muted-foreground">Concentração</Label>
             <Input
+              id="concentracao"
               value={form.concentracao}
               onChange={set("concentracao")}
               placeholder="ex.: 10 mg/mL"
@@ -858,8 +868,9 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Forma farmacêutica</Label>
+            <Label htmlFor="forma-farmaceutica" className="text-xs font-semibold text-muted-foreground">Forma farmacêutica</Label>
             <Input
+              id="forma-farmaceutica"
               value={form.forma}
               onChange={set("forma")}
               placeholder="ex.: solução oral"
@@ -867,8 +878,9 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Quantidade</Label>
+            <Label htmlFor="quantidade" className="text-xs font-semibold text-muted-foreground">Quantidade</Label>
             <Input
+              id="quantidade"
               value={form.quantidade}
               onChange={set("quantidade")}
               placeholder="ex.: 2 frascos"
@@ -876,8 +888,9 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Quantidade (por extenso)</Label>
+            <Label htmlFor="quantidade-extenso" className="text-xs font-semibold text-muted-foreground">Quantidade (por extenso)</Label>
             <Input
+              id="quantidade-extenso"
               value={form.quantidadeExtenso}
               onChange={set("quantidadeExtenso")}
               placeholder="ex.: dois frascos"
@@ -887,10 +900,11 @@ export default function ReceitaC1ExpressPage() {
         </div>
 
         <div>
-          <Label className="text-xs font-semibold text-muted-foreground">
+          <Label htmlFor="instrucoes-posologia" className="text-xs font-semibold text-muted-foreground">
             Instruções de uso / Posologia *
           </Label>
           <Textarea
+            id="instrucoes-posologia"
             value={form.instrucoes}
             onChange={set("instrucoes")}
             placeholder="ex.: Tomar 5 mL (5 mg) à noite, por via oral. Usar sem interrupção."
@@ -900,8 +914,9 @@ export default function ReceitaC1ExpressPage() {
         </div>
 
         <div className="w-40">
-          <Label className="text-xs font-semibold text-muted-foreground">CID-10 (opcional)</Label>
+          <Label htmlFor="cid-10" className="text-xs font-semibold text-muted-foreground">CID-10 (opcional)</Label>
           <Input
+            id="cid-10"
             value={form.cid}
             onChange={set("cid")}
             placeholder="ex.: F90.0"
