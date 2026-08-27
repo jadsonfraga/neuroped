@@ -85,7 +85,13 @@ export const featuredNavigation: NavItem[] = [
     tone: "golden",
     description: "Agendamento e contato",
   },
-  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
+  {
+    href: "/conecta",
+    label: "NeuroPed Conecta",
+    icon: Activity,
+    tone: "golden",
+    description: "Portais e conexões",
+  },
   {
     href: "/servicos-clinica",
     label: "Serviços da Clínica",
@@ -106,9 +112,9 @@ export const navSections: NavSection[] = [
     items: [{ href: "/", label: "Início", icon: Home }],
   },
   {
-    title: "ATENDIMENTO",
+    title: "CLÍNICA",
     items: [
-      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
+      { href: "/agenda", label: "Agenda", icon: Calendar, tone: "priority" },
       {
         href: "/pacientes",
         label: "Pacientes / Prontuário",
@@ -116,24 +122,6 @@ export const navSections: NavSection[] = [
         tone: "priority",
       },
       { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
-      {
-        href: "/laudo-neuroped",
-        label: "Laudos",
-        icon: FileText,
-        tone: "priority",
-      },
-      {
-        href: "/laudo-super",
-        label: "Laudos SuperNeuroPed",
-        icon: ShieldCheck,
-      },
-      { href: "/receita-c1", label: "Receita C1", icon: Pill },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
-    ],
-  },
-  {
-    title: "CLÍNICA E ACOMPANHAMENTO",
-    items: [
       {
         href: "/neuroacompanhamento",
         label: "NeuroAcompanhamento",
@@ -151,6 +139,46 @@ export const navSections: NavSection[] = [
         label: "Serviços da Clínica",
         icon: Stethoscope,
         tone: "golden",
+      },
+      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
+    ],
+  },
+  {
+    title: "LAUDOS E RECEITAS",
+    items: [
+      {
+        href: "/laudo-neuroped",
+        label: "Laudos neuropediátricos",
+        icon: FileText,
+        tone: "priority",
+      },
+      {
+        href: "/laudo-super",
+        label: "Laudo SuperNeuroPed",
+        icon: ShieldCheck,
+        tone: "priority",
+      },
+      {
+        href: "/receita-c1",
+        label: "Receita C1",
+        icon: Pill,
+        tone: "priority",
+      },
+      {
+        href: "/receita-c1-express",
+        label: "Receita C1 Express",
+        icon: Pill,
+        tone: "priority",
+      },
+      {
+        href: "/documentos",
+        label: "Documentos clínicos",
+        icon: ClipboardList,
+      },
+      {
+        href: "/assinatura-digital",
+        label: "Assinatura digital",
+        icon: ShieldCheck,
       },
     ],
   },
@@ -189,9 +217,18 @@ export const navSections: NavSection[] = [
   {
     title: "ACOMPANHAMENTO CLÍNICO",
     items: [
-      { href: "/medicamentos", label: "Medicamentos", icon: Pill, tone: "priority" },
+      {
+        href: "/medicamentos",
+        label: "Medicamentos",
+        icon: Pill,
+        tone: "priority",
+      },
       { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
+      {
+        href: "/calculadora-dose",
+        label: "Calculadora de dose",
+        icon: Calculator,
+      },
       { href: "/diario-sono", label: "Diário do sono", icon: Moon },
       {
         href: "/diario-alimentar",

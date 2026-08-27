@@ -227,6 +227,7 @@ const priorityNavHrefs = new Set([
   "/laudo-neuroped",
   "/laudo-super",
   "/receita-c1",
+  "/receita-c1-express",
 ]);
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -261,7 +262,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     () => ({
       principal: true,
-      ATENDIMENTO: true,
+      CLÍNICA: true,
+      "LAUDOS E RECEITAS": true,
       "TRIAGEM E FERRAMENTAS": true,
     }),
   );
