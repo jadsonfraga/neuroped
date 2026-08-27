@@ -76,6 +76,11 @@ function normalize(text: string) {
     .toLowerCase();
 }
 
+function sectionDomKey(title: string) {
+  const slug = normalize(title).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return slug || "recursos";
+}
+
 function uniqueItems(items: NavItem[]) {
   const seen = new Set<string>();
   return items.filter((item) => {
@@ -170,6 +175,7 @@ function SectionCard({
   open: boolean;
   onToggle: () => void;
 }) {
+  const sectionKey = sectionDomKey(section.title);
   const meta = sectionCopy[section.title] ?? {
     eyebrow: "Recursos",
     description: "Ferramentas e conteúdos disponíveis no ecossistema NeuroPed.",
@@ -187,13 +193,13 @@ function SectionCard({
   return (
     <section
       className={`overflow-hidden rounded-[1.75rem] border border-border/70 bg-gradient-to-br ${meta.tone} p-4 shadow-sm sm:p-5`}
-      aria-labelledby={`explore-${section.title}`}
+      aria-labelledby={`explore-${sectionKey}`}
     >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        aria-controls={`explore-items-${section.title}`}
+        aria-controls={`explore-items-${sectionKey}`}
         className="group mb-0 flex w-full items-start justify-between gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <span className="min-w-0">
@@ -201,7 +207,7 @@ function SectionCard({
             {meta.eyebrow}
           </span>
           <span
-            id={`explore-${section.title}`}
+            id={`explore-${sectionKey}`}
             className="mt-1 block text-lg font-black tracking-tight text-foreground"
           >
             {section.title || "Recursos"}
@@ -225,7 +231,7 @@ function SectionCard({
       </button>
       {open && (
         <div
-          id={`explore-items-${section.title}`}
+          id={`explore-items-${sectionKey}`}
           className="mt-4 grid gap-2.5 md:grid-cols-2"
         >
           {items.map((item) => (
