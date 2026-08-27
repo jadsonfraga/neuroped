@@ -1,6 +1,6 @@
 // Design: navegação clínica de alta clareza, com um sinal dourado Nesplora pontual e motion reduzido quando necessário.
 import { Link, useLocation } from "wouter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Moon, Sun, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Search, ClipboardList, KeyRound, Trash2, Filter, Zap, Glasses, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,79 @@ import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 
 const NESPLORA_SITE_URL = "/nesplora/";
+
+// Componente memoizado para conteúdo — evita re-render quando shell muda
+const ContentArea = memo(({
+  children,
+  showClinicalFlow,
+  location,
+  activeNavigation,
+}: {
+  children: React.ReactNode;
+  showClinicalFlow: boolean;
+  location: string;
+  activeNavigation: any;
+}) => {
+  const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
+  return (
+    <>
+      {showClinicalFlow && (
+        <div className="sticky top-14 lg:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
+          <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-muted-foreground">
+            <ClipboardList className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <span className="shrink-0 font-semibold text-foreground">Fluxo clínico</span>
+            {flowSteps.map((step, index) => {
+              const active = activeNavigation?.item.label.toLowerCase().includes(step.toLowerCase()) || (index === 1 && location === "/filtro");
+              return (
+                <span key={step} className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/50 bg-primary/15 text-primary font-medium" : "border-border/60 bg-muted/30 text-muted-foreground/80"}`}>
+                  {step}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
+        <div className="min-h-[calc(100vh-4rem)]">{children}</div>
+        <aside
+          role="note"
+          aria-label="Aviso de finalidade educativa"
+          className="np-legal-disclosure mt-8 rounded-2xl border border-amber-300/55 bg-amber-50/75 px-3.5 py-3 text-amber-950 shadow-sm dark:border-amber-800/45 dark:bg-amber-950/25 dark:text-amber-100"
+        >
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center gap-2 text-[11px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <span aria-hidden="true" className="text-sm">⚕️</span>
+              <span className="flex-1">Uso educativo — não substitui avaliação, diagnóstico ou conduta profissional.</span>
+              <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">Detalhes</span>
+              <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">Recolher</span>
+            </summary>
+            <div className="mt-3 border-t border-amber-300/45 pt-3 text-[11px] leading-relaxed text-amber-900/90 dark:border-amber-800/45 dark:text-amber-100/85">
+              O NeuroPed é uma ferramenta de <strong className="font-semibold">informação e educação</strong>. Não é dispositivo médico e não realiza diagnóstico, prescrição ou tratamento. O conteúdo não estabelece relação médico-paciente e não substitui consulta, avaliação ou conduta de profissional habilitado. Em caso de dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.{" "}
+              <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
+            </div>
+          </details>
+        </aside>
+        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-[9.5px] leading-snug text-muted-foreground/85">
+          <img
+            src="/dr-jadson-shield-badge.webp"
+            alt=""
+            width="256"
+            height="256"
+            loading="lazy"
+            decoding="async"
+            className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
+          />
+          <span>NeuroPed é um projeto autoral de</span>
+          <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            Dr. Jadson Fraga
+          </Link>
+          <span>· Conteúdo educativo e proprietário.</span>
+        </p>
+      </div>
+    </>
+  );
+});
+ContentArea.displayName = "ContentArea";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
 // Dois recursos-âncora do app, fixados no topo da sidebar (acima da lista longa)
@@ -366,7 +439,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     : navSections
         .map((s) => ({ ...s, items: s.items.filter((i) => canRenderNavItem(i.href)) }))
         .filter((s) => s.items.length > 0);
-  const flowSteps = ["Paciente", "Queixa", "Escala", "Aplicação", "Resultado", "Documento", "Histórico"];
 
   async function handleSessionAction() {
     softTap();
@@ -400,10 +472,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <SkipNav />
       <OfflineBanner />
 
-      {/* Mobile top header bar */}
+      {/* Mobile top header bar — fixed height to prevent layout shift */}
       <header
         ref={mobileHeaderRef}
         className="print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md lg:hidden"
+        style={{ height: "56px", minHeight: "56px" }}
       >
         <div className="flex items-center gap-3">
           <motion.div
@@ -786,7 +859,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main content — memoized to prevent re-render when shell state changes */}
       <main
         ref={mainContentRef}
         id="main-content"
@@ -794,61 +867,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         aria-label="Conteúdo principal"
         className={`flex-1 min-w-0 transition-all duration-300 pt-14 lg:pt-0 print:!ml-0 print:!pt-0 ${collapsed ? "lg:ml-16" : "lg:ml-64"}`}
       >
-        {showClinicalFlow && (
-          <div className="sticky top-14 lg:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
-            <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-muted-foreground">
-              <ClipboardList className="h-3.5 w-3.5 shrink-0 text-primary" />
-              <span className="shrink-0 font-semibold text-foreground">Fluxo clínico</span>
-              {flowSteps.map((step, index) => {
-                const active = activeNavigation?.item.label.toLowerCase().includes(step.toLowerCase()) || (index === 1 && location === "/filtro");
-                return (
-                  <span key={step} className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/50 bg-primary/15 text-primary font-medium" : "border-border/60 bg-muted/30 text-muted-foreground/80"}`}>
-                    {step}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        <div className="p-3 md:p-5 max-w-[1600px] mx-auto">
-          <div className="min-h-[calc(100vh-4rem)]">{children}</div>
-          {/* Aviso educativo: síntese sempre visível; fundamentação completa sob demanda. */}
-          <aside
-            role="note"
-            aria-label="Aviso de finalidade educativa"
-            className="np-legal-disclosure mt-8 rounded-2xl border border-amber-300/55 bg-amber-50/75 px-3.5 py-3 text-amber-950 shadow-sm dark:border-amber-800/45 dark:bg-amber-950/25 dark:text-amber-100"
-          >
-            <details className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-2 text-[11px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                <span aria-hidden="true" className="text-sm">⚕️</span>
-                <span className="flex-1">Uso educativo — não substitui avaliação, diagnóstico ou conduta profissional.</span>
-                <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">Detalhes</span>
-                <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">Recolher</span>
-              </summary>
-              <div className="mt-3 border-t border-amber-300/45 pt-3 text-[11px] leading-relaxed text-amber-900/90 dark:border-amber-800/45 dark:text-amber-100/85">
-                O NeuroPed é uma ferramenta de <strong className="font-semibold">informação e educação</strong>. Não é dispositivo médico e não realiza diagnóstico, prescrição ou tratamento. O conteúdo não estabelece relação médico-paciente e não substitui consulta, avaliação ou conduta de profissional habilitado. Em caso de dúvida, sintoma ou urgência, procure um médico ou serviço de saúde.{" "}
-                <Link href="/termos" className="font-bold underline underline-offset-2 hover:opacity-80">Termos de Uso e Aviso Legal</Link>.
-              </div>
-            </details>
-          </aside>
-          {/* Assinatura autoral global: reconhecimento visível, sem competir com o conteúdo. */}
-          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-[9.5px] leading-snug text-muted-foreground/85">
-            <img
-              src="/dr-jadson-shield-badge.webp"
-              alt=""
-              width="256"
-              height="256"
-              loading="lazy"
-              decoding="async"
-              className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
-            />
-            <span>NeuroPed é um projeto autoral de</span>
-            <Link href="/sobre" className="font-bold text-foreground underline decoration-primary/40 underline-offset-2 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              Dr. Jadson Fraga
-            </Link>
-            <span>· Conteúdo educativo e proprietário.</span>
-          </p>
-        </div>
+        <ContentArea
+          children={children}
+          showClinicalFlow={showClinicalFlow}
+          location={location}
+          activeNavigation={activeNavigation}
+        />
       </main>
     </div>
   );
