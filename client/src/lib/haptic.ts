@@ -12,8 +12,14 @@
 
 const STORAGE_KEY = "neuroped:haptic";
 export const HAPTIC_PREFERENCE_EVENT = "neuroped:haptic-preference-changed";
-const SELECTION_HAPTIC_MIN_INTERVAL_MS = 180;
-let lastSelectionHapticAt = -Infinity;
+const HAPTIC_MIN_INTERVAL_MS = {
+  selection: 180,
+  success: 450,
+  notify: 650,
+  warning: 800,
+  error: 800,
+} as const;
+const lastHapticAt = new Map<keyof typeof HAPTIC_MIN_INTERVAL_MS, number>();
 
 function nowMs(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -41,17 +47,24 @@ export function setHapticEnabled(enabled: boolean): void {
   emitPreferenceChange();
 }
 
-function vibrate(pattern: number | number[], minIntervalMs = 0): void {
+function vibrate(
+  pattern: number | number[],
+  kind?: keyof typeof HAPTIC_MIN_INTERVAL_MS,
+): void {
   if (!isHapticEnabled()) return;
   if (typeof navigator === "undefined") return;
   if (typeof navigator.vibrate !== "function") return;
-  if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+  if (
+    typeof document !== "undefined" &&
+    document.visibilityState === "hidden"
+  ) {
     return;
   }
-  if (minIntervalMs > 0) {
+  if (kind) {
     const now = nowMs();
-    if (now - lastSelectionHapticAt < minIntervalMs) return;
-    lastSelectionHapticAt = now;
+    const last = lastHapticAt.get(kind) ?? -Infinity;
+    if (now - last < HAPTIC_MIN_INTERVAL_MS[kind]) return;
+    lastHapticAt.set(kind, now);
   }
   try {
     navigator.vibrate(pattern);
@@ -62,11 +75,11 @@ function vibrate(pattern: number | number[], minIntervalMs = 0): void {
 
 export const haptic = {
   tap: () => vibrate(10),
-  select: () => vibrate(5, SELECTION_HAPTIC_MIN_INTERVAL_MS),
-  success: () => vibrate([12, 50, 12]),
-  warning: () => vibrate([30, 50, 30]),
-  error: () => vibrate([80, 30, 80, 30, 80]),
-  notify: () => vibrate([15, 60, 15]),
+  select: () => vibrate(5, "selection"),
+  success: () => vibrate([12, 50, 12], "success"),
+  warning: () => vibrate([30, 50, 30], "warning"),
+  error: () => vibrate([80, 30, 80, 30, 80], "error"),
+  notify: () => vibrate([15, 60, 15], "notify"),
   longPress: () => vibrate(40),
   swipe: () => vibrate(8),
 };

@@ -16,7 +16,16 @@ const VOLUME_STORAGE_KEY = "neuroped:sound-volume";
 export const SOUND_PREFERENCE_EVENT = "neuroped:sound-preference-changed";
 const DEFAULT_VOLUME = 0.35;
 const SELECTION_SOUND_MIN_INTERVAL_MS = 180;
+const SEMANTIC_SOUND_MIN_INTERVAL_MS = {
+  success: 450,
+  info: 650,
+  error: 800,
+} as const;
 let lastSelectionSoundAt = -Infinity;
+const lastSemanticSoundAt = new Map<
+  keyof typeof SEMANTIC_SOUND_MIN_INTERVAL_MS,
+  number
+>();
 
 function nowMs(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -24,8 +33,19 @@ function nowMs(): number {
 
 function shouldEmitSelectionSound(): boolean {
   const now = nowMs();
-  if (now - lastSelectionSoundAt < SELECTION_SOUND_MIN_INTERVAL_MS) return false;
+  if (now - lastSelectionSoundAt < SELECTION_SOUND_MIN_INTERVAL_MS)
+    return false;
   lastSelectionSoundAt = now;
+  return true;
+}
+
+function shouldEmitSemanticSound(
+  kind: keyof typeof SEMANTIC_SOUND_MIN_INTERVAL_MS,
+): boolean {
+  const now = nowMs();
+  const last = lastSemanticSoundAt.get(kind) ?? -Infinity;
+  if (now - last < SEMANTIC_SOUND_MIN_INTERVAL_MS[kind]) return false;
+  lastSemanticSoundAt.set(kind, now);
   return true;
 }
 
@@ -91,7 +111,10 @@ export function setSoundVolume(value: number): void {
 
 function canPlay(): boolean {
   if (!isSoundEnabled() || getSoundVolume() === 0) return false;
-  if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+  if (
+    typeof document !== "undefined" &&
+    document.visibilityState === "hidden"
+  ) {
     return false;
   }
   return true;
@@ -175,7 +198,7 @@ export function softHover(): void {
 export function softSuccess(): void {
   if (!canPlay()) return;
   const ctx = getCtx();
-  if (!ctx) return;
+  if (!ctx || !shouldEmitSemanticSound("success")) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   const notes = [523.25, 659.25, 783.99];
@@ -194,6 +217,7 @@ export function softSuccess(): void {
 
 /** Erro/alerta relevante: tom curto e filtrado. */
 export function softError(): void {
+  if (!canPlay() || !shouldEmitSemanticSound("error")) return;
   play({
     type: "triangle",
     freq: [440, 294],
@@ -208,7 +232,7 @@ export function softError(): void {
 export function softBell(): void {
   if (!canPlay()) return;
   const ctx = getCtx();
-  if (!ctx) return;
+  if (!ctx || !shouldEmitSemanticSound("info")) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   play({
