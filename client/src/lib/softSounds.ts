@@ -2,7 +2,7 @@
  * Sistema de som de interface do NeuroPed.
  *
  * Política clínica:
- * - opt-in: nasce silencioso;
+ * - som funcional habilitado por padrão, com controle explícito para desligar;
  * - áudio nunca é o único canal de feedback;
  * - sem música, autoplay, hover, clique genérico ou transição de rota;
  * - sons ficam reservados a seleção explícita, confirmação, informação e alerta;
@@ -41,9 +41,9 @@ function clampVolume(value: number): number {
 
 export function isSoundEnabled(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) === "on";
+    return localStorage.getItem(STORAGE_KEY) !== "off";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -51,7 +51,7 @@ export function setSoundEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
   } catch {
-    /* storage indisponível (modo privado/cota) — silencioso */
+    /* storage indisponível (modo privado/cota) — mantém padrão habilitado */
   }
   emitPreferenceChange();
 }
@@ -71,7 +71,7 @@ export function setSoundVolume(value: number): void {
   try {
     localStorage.setItem(VOLUME_STORAGE_KEY, String(nextValue));
   } catch {
-    /* storage indisponível (modo privado/cota) — silencioso */
+    /* storage indisponível (modo privado/cota) — usa volume padrão */
   }
   emitPreferenceChange();
 }
@@ -229,7 +229,7 @@ export function softTick(): void {
 /** Alias semântico para componentes novos. */
 export const softSelect = softTick;
 
-/** Feedback emitido apenas quando o usuário habilita som explicitamente. */
+/** Feedback emitido quando o usuário habilita som novamente. */
 export function softMuteHint(): void {
   if (!canPlay()) return;
   const ctx = getCtx();
