@@ -18,7 +18,7 @@ const migrationWorkflow = read(".github/workflows/conecta-d1-migration.yml");
 
 assert.match(app, /import\("@\/pages\/conecta"\)/, "Conecta deve ser lazy-loaded");
 assert.match(app, /path="\/conecta"/, "rota /conecta deve existir");
-assert.match(nav, /href: "\/conecta", label: "NeuroPed Conecta"/, "navegação deve apontar para /conecta");
+assert.match(nav, /href: "\/conecta",\s*label: "NeuroPed Conecta"/, "navegação deve apontar para /conecta");
 assert.match(patientDetail, /\/conecta\?patient=/, "detalhe do paciente deve abrir a jornada já contextualizada");
 assert.match(patientDetail, /button-open-conecta/, "acesso contextual ao Conecta deve ser testável");
 assert.match(serverRoutes, /registerConectaRoutes\(app\)/, "backend Express deve registrar domínio Conecta");
