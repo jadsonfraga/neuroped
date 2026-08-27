@@ -48,6 +48,8 @@ const PreferencesPanel = lazy(() =>
 );
 
 const HomePage = lazy(() => import("@/pages/home"));
+const ExplorarPage = lazy(() => import("@/pages/explorar"));
+const AssistenteClinicoPage = lazy(() => import("@/pages/assistente-clinico"));
 const BrincandoAprendendoPage = lazy(() => import("@/pages/brincando-e-aprendendo"));
 const MissaoSaudePage = lazy(() => import("@/pages/missao-saude"));
 const SplashScreen = lazy(() =>
@@ -82,6 +84,7 @@ const EpilepsyDiaryPage = lazy(() => import("@/pages/epilepsy-diary"));
 const NeuropedAcompanhamentoPage = lazy(() => import("@/pages/neuroped-acompanhamento"));
 const HeadacheCalendarPage = lazy(() => import("@/pages/headache-calendar"));
 const TeaPage = lazy(() => import("@/pages/tea"));
+const TeaChecklistsPage = lazy(() => import("@/pages/tea-checklists"));
 const TeaBehaviorsPage = lazy(() => import("@/pages/tea-behaviors"));
 const PsiquiatriaGuiaPage = lazy(() => import("@/pages/psiquiatria-guia"));
 const BateriaJadsonPage = lazy(() => import("@/pages/bateria-jadson"));
@@ -359,6 +362,8 @@ function AppRouter() {
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 
             <Route path="/" component={HomePage} />
+            <Route path="/explorar" component={ExplorarPage} />
+            <Route path="/assistente-clinico" component={AssistenteClinicoPage} />
             <Route path="/mchat" component={MchatPage} />
             <Route path="/cars" component={CarsPage} />
             <Route path="/snap" component={SnapPage} />
@@ -386,6 +391,7 @@ function AppRouter() {
             <Route path="/neuroacompanhamento" component={NeuropedAcompanhamentoPage} />
             <Route path="/cefaleia" component={HeadacheCalendarPage} />
             <Route path="/tea" component={TeaPage} />
+            <Route path="/tea-checklists" component={TeaChecklistsPage} />
             <Route path="/tea-comportamentos" component={TeaBehaviorsPage} />
             <Route path="/psiquiatria" component={PsiquiatriaGuiaPage} />
             <Route path="/bateria-jadson" component={BateriaJadsonPage} />
@@ -607,7 +613,7 @@ function AppRouter() {
               </RouteGuard>
             </Route>
             <Route path="/agenda">
-              <RouteGuard roles={["admin", "professional"]}>
+              <RouteGuard roles={["admin", "professional", "operator"]}>
                 <AgendaPage />
               </RouteGuard>
             </Route>
