@@ -27,6 +27,9 @@ for (const migration of [
   "db/migrations/0018_saas_privacy_governance.sql",
   "db/migrations/0019_saas_integrations_control.sql",
   "db/migrations/0020_saas_integration_idempotency.sql",
+  "db/migrations/0021_saas_backup_evidence_append_only.sql",
+  "db/migrations/0022_saas_webhook_deliveries.sql",
+  "db/migrations/0023_saas_incident_events.sql",
 ]) db.exec(read(migration));
 
 db.prepare(`INSERT INTO saas_module_settings(id, clinic_id, module_id, enabled, version) VALUES ('m1', 'clinic-a', 'privacy', 0, 0)`).run();
@@ -36,6 +39,21 @@ assert.throws(() => db.prepare(`INSERT INTO live_patient_search_tokens(id, clini
 db.prepare(`INSERT INTO saas_audit_log(id, clinic_id, actor_user_id, action, target_type, target_id) VALUES ('a1', 'clinic-a', 'user-a', 'x', 'y', 'z')`).run();
 assert.throws(() => db.prepare(`DELETE FROM saas_audit_log WHERE id = 'a1'`).run(), /SAAS_AUDIT_APPEND_ONLY/);
 assert.throws(() => db.prepare(`INSERT INTO saas_audit_log(id, actor_user_id, action, target_type, metadata_json) VALUES ('a2', 'user-a', 'x', 'y', '${"x".repeat(4001)}')`).run(), /SAAS_AUDIT_METADATA_TOO_LARGE/);
+
+ db.prepare(`INSERT INTO saas_backup_evidence(id, clinic_id, provider, snapshot_digest_sha256, status, rpo_minutes, rto_minutes, recorded_by_user_id) VALUES ('backup-a', 'clinic-a', 'staging-provider', '${"a".repeat(64)}', 'recorded', 60, 120, 'user-a')`).run();
+assert.throws(() => db.prepare(`UPDATE saas_backup_evidence SET status = 'verified', restore_verified_at = CURRENT_TIMESTAMP WHERE id = 'backup-a'`).run(), /SAAS_BACKUP_EVIDENCE_APPEND_ONLY/);
+assert.throws(() => db.prepare(`DELETE FROM saas_backup_evidence WHERE id = 'backup-a'`).run(), /SAAS_BACKUP_EVIDENCE_APPEND_ONLY/);
+
+const insertWebhook = db.prepare(`INSERT INTO saas_webhook_deliveries(id, clinic_id, integration_id, environment, delivery_id, event_type, payload_digest_sha256, signature, status, created_at) VALUES (?, ?, 'webhooks', ?, ?, ?, ?, ?, 'queued', CURRENT_TIMESTAMP)`);
+insertWebhook.run('webhook-a', 'clinic-a', 'sandbox', 'delivery-00000001', 'saas.module.updated', "a".repeat(64), "b".repeat(64));
+assert.throws(() => db.prepare(`UPDATE saas_webhook_deliveries SET clinic_id = 'clinic-b' WHERE id = 'webhook-a'`).run(), /SAAS_WEBHOOK_SCOPE_IMMUTABLE/);
+assert.throws(() => db.prepare(`DELETE FROM saas_webhook_deliveries WHERE id = 'webhook-a'`).run(), /SAAS_WEBHOOK_APPEND_ONLY/);
+assert.throws(() => insertWebhook.run('webhook-b', 'clinic-a', 'sandbox', 'delivery-00000001', 'saas.module.updated', "a".repeat(64), "c".repeat(64)), /UNIQUE/);
+
+const insertIncident = db.prepare(`INSERT INTO saas_incident_events(id, clinic_id, component, code, severity, status, correlation_id, metadata_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`);
+insertIncident.run('incident-a', 'clinic-a', 'integration', 'WEBHOOK_DELIVERY_REUSE', 'medium', 'open', 'request-0001', '{"environment":"sandbox"}');
+assert.throws(() => db.prepare(`UPDATE saas_incident_events SET clinic_id = 'clinic-b' WHERE id = 'incident-a'`).run(), /SAAS_INCIDENT_SCOPE_IMMUTABLE/);
+assert.throws(() => db.prepare(`DELETE FROM saas_incident_events WHERE id = 'incident-a'`).run(), /SAAS_INCIDENT_APPEND_ONLY/);
 
 const insertIntegration = db.prepare(`INSERT INTO saas_integration_connections(id, clinic_id, integration_id, environment, status, scopes_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`);
 insertIntegration.run('i1', 'clinic-a', 'webhooks', 'sandbox', 'draft', '["module.read"]', 0);
@@ -50,4 +68,4 @@ assert.throws(() => db.prepare(`DELETE FROM saas_integration_idempotency WHERE i
 assert.throws(() => insertIdempotency.run('idem-b', 'clinic-a', 'idempotency-key-0001', "b".repeat(64), '{}'), /UNIQUE/);
 
 db.close();
-console.log("[saas-migrations-smoke] ✓ migrations 0016–0020, FKs, triggers, idempotência e versionamento validados");
+console.log("[saas-migrations-smoke] ✓ migrations 0016–0023, FKs, triggers append-only, idempotência, webhooks, incidentes e versionamento validados");

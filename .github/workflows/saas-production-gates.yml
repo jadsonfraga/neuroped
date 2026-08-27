@@ -1,0 +1,173 @@
+name: NeuroPed SaaS production gates
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Ambiente do gate"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      apply_migrations:
+        description: "Aplicar migrations 0016–0020 no D1 remoto"
+        required: true
+        type: boolean
+        default: false
+      confirm_production:
+        description: "Obrigatório somente para migrations em production"
+        required: false
+        type: string
+        default: ""
+      d1_database:
+        description: "Nome do D1 alvo"
+        required: true
+        type: string
+        default: neuroped-db
+      pages_project:
+        description: "Projeto Cloudflare Pages para inspeção de secret names"
+        required: true
+        type: string
+        default: neuroped
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saas-production-gates-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-gate:
+    name: Validate ${{ inputs.environment }} SaaS gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Run local fail-closed gates
+        run: |
+          set -euo pipefail
+          npm run check
+          npm run lint
+          npm run test:saas-migrations
+          npm run test:saas-operational
+          npm run test:saas-hardening
+          npm run validate:public
+          npm run audit:access
+
+      - name: Validate Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::CLOUDFLARE_API_TOKEN ausente no environment ${{ inputs.environment }}"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente no environment ${{ inputs.environment }}"; exit 1; }
+
+      - name: Verify Pages secret names without values
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_PROJECT: ${{ inputs.pages_project }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 pages secret list --project-name "$PAGES_PROJECT" > /tmp/pages-secret-names.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const text = fs.readFileSync('/tmp/pages-secret-names.json', 'utf8');
+          const required = ['CLINICAL_DATA_KEY', 'CLINICAL_DATA_KEY_ID', 'CLINICAL_INDEX_KEY', 'OPERATIONAL_DATA_KEY'];
+          const missing = required.filter((name) => !text.includes(name));
+          if (missing.length) {
+            console.error(`::error::Secret names ausentes: ${missing.join(', ')}`);
+            process.exit(1);
+          }
+          if (/value|secret_value|plaintext/i.test(text)) {
+            console.error('::error::A resposta do secret list contém possível valor de segredo.');
+            process.exit(1);
+          }
+          NODE
+          test -n "$APP_BASE_URL" || { echo "::error::vars.APP_BASE_URL ausente"; exit 1; }
+          test -n "$ENVIRONMENT" || { echo "::error::vars.ENVIRONMENT ausente"; exit 1; }
+          if [ "$ENVIRONMENT" = "production" ] && [[ "$APP_BASE_URL" != https://* ]]; then
+            echo "::error::APP_BASE_URL de production precisa usar HTTPS";
+            exit 1;
+          fi
+          echo "Secret names presentes; APP_BASE_URL/ENVIRONMENT validados sem exibir valores.";
+
+      - name: Refuse production mutation without explicit confirmation
+        if: inputs.apply_migrations == true && inputs.environment == 'production'
+        run: |
+          set -euo pipefail
+          test "${{ inputs.confirm_production }}" = "APPLY_PRODUCTION_MIGRATIONS" || {
+            echo "::error::Para production, informe confirm_production=APPLY_PRODUCTION_MIGRATIONS.";
+            exit 1;
+          }
+
+      - name: Apply SaaS migrations in order
+        if: inputs.apply_migrations == true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          D1_DATABASE: ${{ inputs.d1_database }}
+        run: |
+          set -euo pipefail
+          for migration in \
+            db/migrations/0016_saas_control_plane_hardening.sql \
+            db/migrations/0017_saas_membership_invites.sql \
+            db/migrations/0018_saas_privacy_governance.sql \
+            db/migrations/0019_saas_integrations_control.sql \
+            db/migrations/0020_saas_integration_idempotency.sql \
+            db/migrations/0021_saas_backup_evidence_append_only.sql \
+            db/migrations/0022_saas_webhook_deliveries.sql \
+            db/migrations/0023_saas_incident_events.sql; do
+            echo "Aplicando $migration em $D1_DATABASE (${{ inputs.environment }})"
+            npx wrangler@4 d1 execute "$D1_DATABASE" --remote --yes --file="./$migration"
+          done
+
+      - name: Verify D1 SaaS schema and triggers without PHI
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          D1_DATABASE: ${{ inputs.d1_database }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute "$D1_DATABASE" --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('tenant_lifecycle','saas_audit_log','saas_module_settings','saas_backup_evidence','saas_membership_invites','saas_privacy_requests','saas_retention_policies','saas_integration_connections','saas_integration_idempotency','live_patient_search_tokens','saas_webhook_deliveries','saas_incident_events') ORDER BY name;" > /tmp/saas-tables.txt
+          npx wrangler@4 d1 execute "$D1_DATABASE" --remote --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_saas_module_settings_tenant_immutable','trg_saas_backup_evidence_tenant_immutable','trg_saas_backup_evidence_append_only_update','trg_saas_backup_evidence_append_only_delete','trg_saas_membership_invites_scope_immutable','trg_saas_privacy_request_scope_immutable','trg_saas_audit_log_append_only_delete','trg_saas_integration_idempotency_append_only','trg_saas_webhook_deliveries_scope_immutable','trg_saas_webhook_deliveries_append_only_delete','trg_saas_incident_events_scope_immutable','trg_saas_incident_events_append_only_delete') ORDER BY name;" > /tmp/saas-triggers.txt
+          cat /tmp/saas-tables.txt
+          cat /tmp/saas-triggers.txt
+          for name in tenant_lifecycle saas_audit_log saas_module_settings saas_backup_evidence saas_membership_invites saas_privacy_requests saas_retention_policies saas_integration_connections saas_integration_idempotency live_patient_search_tokens saas_webhook_deliveries saas_incident_events; do grep -q "$name" /tmp/saas-tables.txt || { echo "::error::Tabela ausente: $name"; exit 1; }; done
+          for name in trg_saas_module_settings_tenant_immutable trg_saas_backup_evidence_tenant_immutable trg_saas_backup_evidence_append_only_update trg_saas_backup_evidence_append_only_delete trg_saas_membership_invites_scope_immutable trg_saas_privacy_request_scope_immutable trg_saas_audit_log_append_only_delete trg_saas_integration_idempotency_append_only trg_saas_webhook_deliveries_scope_immutable trg_saas_webhook_deliveries_append_only_delete trg_saas_incident_events_scope_immutable trg_saas_incident_events_append_only_delete; do grep -q "$name" /tmp/saas-triggers.txt || { echo "::error::Trigger ausente: $name"; exit 1; }; done
+          echo "D1 SaaS schema e triggers comprovados sem consultar PHI."
+
+      - name: Preserve clinical LIVE disabled during the gate
+        run: |
+          set -euo pipefail
+          echo "O workflow não altera CLINICAL_LIVE_ENABLED e não habilita tráfego clínico automaticamente."
+
+      - name: Upload metadata-only evidence
+        uses: actions/upload-artifact@v5
+        with:
+          name: saas-${{ inputs.environment }}-metadata-evidence
+          path: |
+            /tmp/pages-secret-names.json
+            /tmp/saas-tables.txt
+            /tmp/saas-triggers.txt
+          if-no-files-found: error

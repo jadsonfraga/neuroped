@@ -117,6 +117,30 @@ type KeyringState = {
   controls: Record<string, boolean>;
 };
 
+type ObservabilityState = {
+  requestId: string;
+  window: string;
+  redacted: true;
+  payloadsExposed: false;
+  phiExposed: false;
+  secretValuesExposed: false;
+  totalEvents: number;
+  actions: Array<{ action: string; count: number; lastAt: string | null }>;
+  schemaReady: boolean;
+  crossTenantScope: string;
+};
+
+type ProductionDiagnosticsState = {
+  failClosed: true;
+  environment: string;
+  schema: { missingTables: string[]; missingTriggers: string[] };
+  secrets: { clinicalKeyringReady: boolean; operationalKeyReady: boolean; valuesExposed: false };
+  appBaseUrl: { configured: boolean; https: boolean; valueExposed: false };
+  entitlement: { valid: boolean; scope: string };
+  clinicalLive: { enabled: boolean; canBeEnabledOnlyAfterSchemaAndKeys: true };
+  correctiveActions: string[];
+};
+
 type PrivacyRequest = {
   id: string;
   requestType: string;
@@ -141,6 +165,20 @@ type InviteRow = {
   acceptedAt: string | null;
   revokedAt: string | null;
   createdAt: string;
+};
+
+type WebhookDelivery = {
+  clinicId: string;
+  integrationId: "webhooks";
+  deliveryId: string;
+  eventType: string;
+  environment: "sandbox" | "production";
+  status: string;
+  responseCode: number | null;
+  attemptCount: number;
+  createdAt: string;
+  payloadStored: false;
+  replayed?: boolean;
 };
 
 type IntegrationConnection = {
@@ -536,10 +574,17 @@ export default function SaasCentralPage() {
   const [remoteModuleStates, setRemoteModuleStates] = useState<Record<ModuleId, RemoteModuleState> | null>(null);
   const [readiness, setReadiness] = useState<ReadinessState | null>(null);
   const [keyring, setKeyring] = useState<KeyringState | null>(null);
+  const [productionDiagnostics, setProductionDiagnostics] = useState<ProductionDiagnosticsState | null>(null);
+  const [observability, setObservability] = useState<ObservabilityState | null>(null);
   const [privacySnapshot, setPrivacySnapshot] = useState<PrivacySnapshot | null>(null);
   const [retentionDrafts, setRetentionDrafts] = useState<Record<string, { retentionDays: number; purgeMode: string; legalHold: boolean; enabled: boolean }>>({});
   const [inviteRows, setInviteRows] = useState<InviteRow[]>([]);
   const [integrationConnections, setIntegrationConnections] = useState<IntegrationConnection[]>([]);
+  const [webhookDeliveries, setWebhookDeliveries] = useState<WebhookDelivery[]>([]);
+  const [webhookDeliveryId, setWebhookDeliveryId] = useState("");
+  const [webhookEventType, setWebhookEventType] = useState("saas.module.updated");
+  const [webhookDigest, setWebhookDigest] = useState("");
+  const [webhookEnvironment, setWebhookEnvironment] = useState<"sandbox" | "production">("sandbox");
   const [remoteStatus, setRemoteStatus] = useState<"demo" | "loading" | "synced" | "error">("demo");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -569,11 +614,16 @@ export default function SaasCentralPage() {
     setRemoteModuleStates(null);
     setReadiness(null);
     setKeyring(null);
+    setProductionDiagnostics(null);
+    setObservability(null);
     setPrivacySnapshot(null);
     setRetentionDrafts({});
     setInviteRows([]);
     setLastInviteUrl(null);
     setIntegrationConnections([]);
+    setWebhookDeliveries([]);
+    setWebhookDeliveryId("");
+    setWebhookDigest("");
     setRemoteStatus(activeClinicId ? "loading" : "demo");
     setPendingAction(null);
   }, [activeClinicId, tenantScope]);
@@ -639,6 +689,45 @@ export default function SaasCentralPage() {
         if (!cancelled) setKeyring(body as KeyringState);
       })
       .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Keyring indisponível."); });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/production-diagnostics?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Diagnóstico de produção indisponível.");
+        if (!cancelled) setProductionDiagnostics(body as ProductionDiagnosticsState);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Diagnóstico de produção indisponível."); });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/observability?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Observabilidade indisponível.");
+        if (!cancelled) setObservability(body as ObservabilityState);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Observabilidade indisponível."); });
+    return () => { cancelled = true; };
+  }, [activeClinicId]);
+
+  useEffect(() => {
+    if (!activeClinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/saas/webhooks?clinicId=${encodeURIComponent(activeClinicId)}`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Webhooks indisponíveis.");
+        if (!cancelled) setWebhookDeliveries(Array.isArray(body?.data) ? body.data : []);
+      })
+      .catch((cause) => { if (!cancelled) setToast(cause instanceof Error ? cause.message : "Webhooks indisponíveis."); });
     return () => { cancelled = true; };
   }, [activeClinicId]);
 
@@ -941,6 +1030,33 @@ export default function SaasCentralPage() {
       .finally(() => setPendingAction(null));
   };
 
+  const queueWebhook = () => {
+    if (!activeClinicId) {
+      setToast("Webhooks exigem um tenant ativo; nada foi registrado no modo demo.");
+      return;
+    }
+    if (webhookDeliveryId.trim().length < 16 || !/^[a-f0-9]{64}$/i.test(webhookDigest.trim())) {
+      setToast("Informe delivery ID com pelo menos 16 caracteres e digest SHA-256 válido.");
+      return;
+    }
+    setPendingAction("webhook-queue");
+    void authFetch("/api/saas/webhooks", {
+      method: "POST",
+      headers: { "X-Webhook-Delivery-Id": webhookDeliveryId.trim() },
+      body: JSON.stringify({ clinicId: activeClinicId, deliveryId: webhookDeliveryId.trim(), eventType: webhookEventType, environment: webhookEnvironment, payloadDigestSha256: webhookDigest.trim().toLowerCase() }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível registrar o webhook.");
+        const delivery = body.data as WebhookDelivery;
+        setWebhookDeliveries((current) => [delivery, ...current.filter((item) => item.deliveryId !== delivery.deliveryId)]);
+        setWebhookDigest("");
+        setToast(delivery.replayed ? "Replay idempotente confirmado." : "Webhook metadata-only enfileirado e assinado.");
+      })
+      .catch((cause) => setToast(cause instanceof Error ? cause.message : "Não foi possível registrar o webhook."))
+      .finally(() => setPendingAction(null));
+  };
+
   const recalculateReadiness = () => {
     if (!activeClinicId) return;
     setPendingAction("readiness");
@@ -1056,10 +1172,11 @@ export default function SaasCentralPage() {
         );
       case "observability":
         return (
-          <ActionCard title="Painel operacional" description="Indicadores sem PII: latência, disponibilidade e erro por serviço.">
-            <div className="grid gap-3 sm:grid-cols-3"><ModuleMetric label="Disponibilidade" value="99,94%" tone="success" /><ModuleMetric label="Latência p95" value="420 ms" /><ModuleMetric label="Incidentes" value="0" tone="success" /></div>
-            <div className="mt-4 flex flex-wrap gap-2"><Pill>API saudável</Pill><Pill>Storage saudável</Pill><Pill>Agenda em observação</Pill></div>
-            <Button className="mt-4 gap-2" variant="outline" onClick={() => recordAction("Incidente sintético resolvido e auditado.", 3)}><Activity className="h-4 w-4" />Simular health check</Button>
+          <ActionCard title="Painel operacional" description="Eventos agregados e redigidos do tenant. A Central não exibe PHI, payloads, tokens ou valores de segredo.">
+            <div className="grid gap-3 sm:grid-cols-3"><ModuleMetric label="Eventos 24h" value={observability ? String(observability.totalEvents) : "—"} tone="success" /><ModuleMetric label="Schema" value={observability?.schemaReady ? "pronto" : "bloqueado"} /><ModuleMetric label="Escopo" value={observability ? "tenant" : "—"} /></div>
+            <div className="mt-4 flex flex-wrap gap-2"><Pill>{observability?.redacted ? "redaction ativo" : "aguardando"}</Pill><Pill>{observability?.phiExposed === false ? "zero PHI" : "bloqueado"}</Pill><Pill>{observability?.crossTenantScope ?? "membership obrigatório"}</Pill></div>
+            <div className="mt-4 space-y-2">{observability?.actions.slice(0, 8).map((item) => <div key={item.action} className="flex items-center justify-between rounded-xl border p-3 text-xs"><span className="font-medium">{item.action}</span><span className="text-muted-foreground">{item.count} · {item.lastAt ? new Date(item.lastAt).toLocaleString() : "sem timestamp"}</span></div>)}{!observability && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar observabilidade redigida.</p>}</div>
+            <Button className="mt-4 gap-2" variant="outline" onClick={() => recordAction("Health check registrado sem payload clínico.", 3)}><Activity className="h-4 w-4" />Registrar health check</Button>
           </ActionCard>
         );
       case "continuity":
@@ -1171,6 +1288,11 @@ export default function SaasCentralPage() {
               <Button className="mt-4 gap-2" disabled={pendingAction === "integration-save"} onClick={saveIntegration}><KeyRound className="h-4 w-4" />{pendingAction === "integration-save" ? "Salvando…" : "Salvar conexão"}</Button>
               <div className="mt-4 space-y-2">{integrationConnections.map((connection) => <div key={`${connection.integrationId}:${connection.environment}`} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm"><span className="font-semibold">{connection.integrationId}</span><Badge variant="outline">{connection.environment}</Badge><Badge variant={connection.status === "connected" ? "default" : "outline"}>{connection.status}</Badge><span className="text-xs text-muted-foreground">{connection.scopes.join(", ")}</span><span className="ml-auto text-xs text-muted-foreground">{connection.credentialConfigured ? "secret ref" : "sem credencial"} · v{connection.version}</span></div>)}{activeClinicId && integrationConnections.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhuma integração configurada para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para consultar integrações reais.</p>}</div>
             </ActionCard>
+            <ActionCard title="Webhooks assinados" description="Registre somente o envelope redigido. O payload não entra no navegador, no D1 ou na auditoria; a entrega é idempotente e tenant-aware.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Input aria-label="Delivery ID" value={webhookDeliveryId} onChange={(event) => setWebhookDeliveryId(event.target.value)} placeholder="delivery-00000001" /><select aria-label="Evento do webhook" value={webhookEventType} onChange={(event) => setWebhookEventType(event.target.value)} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="saas.module.updated">Módulo atualizado</option><option value="saas.invite.updated">Convite atualizado</option><option value="saas.privacy.updated">LGPD atualizada</option><option value="saas.integration.updated">Integração atualizada</option></select><select aria-label="Ambiente do webhook" value={webhookEnvironment} onChange={(event) => setWebhookEnvironment(event.target.value as "sandbox" | "production")} className="h-10 rounded-xl border bg-background px-3 text-sm"><option value="sandbox">Sandbox</option><option value="production">Produção</option></select><Input aria-label="Digest SHA-256 do payload" value={webhookDigest} onChange={(event) => setWebhookDigest(event.target.value)} placeholder="64 caracteres hexadecimais" className="font-mono text-xs" /></div>
+              <Button className="mt-4 gap-2" disabled={pendingAction === "webhook-queue"} onClick={queueWebhook}><Activity className="h-4 w-4" />{pendingAction === "webhook-queue" ? "Registrando…" : "Registrar envelope"}</Button>
+              <div className="mt-4 space-y-2">{webhookDeliveries.slice(0, 8).map((delivery) => <div key={delivery.deliveryId} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-xs"><span className="font-mono">{delivery.deliveryId}</span><Badge variant="outline">{delivery.environment}</Badge><Badge variant={delivery.status === "queued" ? "default" : "outline"}>{delivery.status}</Badge><span>{delivery.eventType}</span><span className="ml-auto text-muted-foreground">tentativas {delivery.attemptCount} · payload armazenado: não</span></div>)}{activeClinicId && webhookDeliveries.length === 0 && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Nenhuma entrega registrada para este tenant.</p>}{!activeClinicId && <p className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">Ative uma clínica para registrar envelopes de webhook.</p>}</div>
+            </ActionCard>
             <ActionCard title="Credencial de sandbox legada" description="Mantida somente como demonstração local; não concede acesso a dados clínicos identificáveis.">
               <div className="rounded-2xl border bg-muted/20 p-4"><div className="flex items-center gap-3"><Code2 className="h-5 w-5 text-primary" /><div><p className="font-semibold">Chave local de teste</p><p className="text-xs text-muted-foreground">Não é uma credencial de produção</p></div></div>{apiKeyCreated && <code className="mt-4 block break-all rounded-xl bg-background p-3 text-xs">np_sandbox_demo_7b3c_••••••••••••</code>}</div><Button className="mt-4 gap-2" variant="outline" onClick={() => { setApiKeyCreated(true); recordAction("Chave de sandbox criada apenas localmente.", 2); }}><KeyRound className="h-4 w-4" />{apiKeyCreated ? "Rotacionar demo" : "Gerar demo"}</Button>
             </ActionCard>
@@ -1201,6 +1323,8 @@ export default function SaasCentralPage() {
       {activeClinicId && readiness && <Card className={readiness.readyForProduction ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex gap-3 py-4 text-sm"><ShieldCheck className={readiness.readyForProduction ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><p className="font-semibold">{readiness.readyForProduction ? "Tenant pronto para liberação controlada" : "Readiness bloqueado antes da produção"}<span className="ml-2 text-xs font-normal text-muted-foreground">{readiness.enabledModules}/{readiness.requiredModules} módulos habilitados</span></p><Button size="sm" variant="outline" className="ml-auto" disabled={pendingAction === "readiness"} onClick={recalculateReadiness}>{pendingAction === "readiness" ? "Recalculando…" : "Recalcular"}</Button></div><p className="mt-1 text-xs leading-5 text-muted-foreground">{readiness.readyForProduction ? "Todos os gates mínimos de infraestrutura, acesso e continuidade foram comprovados." : readiness.eligibleForClinicalEnablement ? "Os gates prévios estão prontos; habilite Clinical LIVE somente no procedimento aprovado." : `Pendências: ${readiness.missing.join(" · ")}`}</p><div className="mt-3 flex flex-wrap gap-2">{Object.values(readiness.checks).map((check) => <Pill key={check.label}>{check.ok ? "✓" : "○"} {check.label}</Pill>)}</div>{readiness.correctiveActions?.length ? <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100"><p className="font-semibold">Ações corretivas antes do go-live</p><ul className="mt-1 list-disc space-y-1 pl-4">{readiness.correctiveActions.map((action) => <li key={action}>{action}</li>)}</ul></div> : null}</div></CardContent></Card>}
 
       {activeClinicId && keyring && <Card className={keyring.ready ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20" : "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20"}><CardContent className="flex items-start gap-3 py-4 text-sm"><KeyRound className={keyring.ready ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" : "mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"} /><div><p className="font-semibold">Postura criptográfica {keyring.ready ? "aprovada" : "bloqueada"}</p><p className="mt-1 text-xs text-muted-foreground">{keyring.encryptionVersion ? `Versão identificável: ${keyring.encryptionVersion}` : "Versão clínica indisponível"} · material exposto: não</p>{keyring.missing.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-950 dark:text-amber-100">{keyring.missing.map((item) => <li key={item}>{item}</li>)}</ul> : null}</div></CardContent></Card>}
+
+      {activeClinicId && productionDiagnostics && <Card className={productionDiagnostics.correctiveActions.length ? "border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/20" : "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/20"}><CardContent className="flex items-start gap-3 py-4 text-sm"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">Diagnóstico de produção · {productionDiagnostics.environment}</p><Badge variant="outline">fail-closed</Badge><Badge variant={productionDiagnostics.secrets.valuesExposed ? "destructive" : "default"}>valores redigidos</Badge></div><p className="mt-1 text-xs text-muted-foreground">Schema: {productionDiagnostics.schema.missingTables.length === 0 && productionDiagnostics.schema.missingTriggers.length === 0 ? "completo" : `${productionDiagnostics.schema.missingTables.length} tabelas e ${productionDiagnostics.schema.missingTriggers.length} triggers ausentes`} · keyring clínico: {productionDiagnostics.secrets.clinicalKeyringReady ? "ok" : "bloqueado"} · chave operacional: {productionDiagnostics.secrets.operationalKeyReady ? "ok" : "bloqueada"} · entitlement: {productionDiagnostics.entitlement.valid ? "ok" : "bloqueado"}</p>{productionDiagnostics.correctiveActions.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-950 dark:text-amber-100">{productionDiagnostics.correctiveActions.map((action) => <li key={action}>{action}</li>)}</ul> : <p className="mt-2 text-xs text-emerald-800 dark:text-emerald-200">Nenhuma ação corretiva de ambiente foi detectada.</p>}</div></CardContent></Card>}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><ModuleMetric label="Abas disponíveis" value="20" /><ModuleMetric label="Módulos habilitados" value={`${enabledCount}/20`} tone="success" /><ModuleMetric label="Marcos registrados" value={`${completedCount}`} /><ModuleMetric label="Workspace" value={activeClinic?.name ?? state.organizationName} /></div>
 

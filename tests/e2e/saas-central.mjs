@@ -57,6 +57,12 @@ async function main() {
     await page.getByText("Fila de direitos do titular", { exact: true }).waitFor({ state: "visible" });
     await page.getByRole("tab", { name: /^20/ }).click();
     await page.getByText("Integrações tenant-aware", { exact: true }).waitFor({ state: "visible" });
+    await page.locator("div.font-semibold").filter({ hasText: "Webhooks assinados" }).first().waitFor({ state: "visible" });
+    const localStorageKeys = await page.evaluate(() => Object.keys(localStorage).join("\n"));
+    if (/credential|secret|payload|phi|token/i.test(localStorageKeys)) throw new Error("estado sensível detectado no localStorage da Central");
+    await page.getByRole("tab", { name: /^06/ }).click();
+    await page.getByText("Painel operacional", { exact: true }).waitFor({ state: "visible" });
+    await page.getByText(/zero PHI|aguardando/, { exact: false }).first().waitFor({ state: "visible" });
 
     await page.getByRole("tab", { name: /^01/ }).click();
     await page.getByRole("button", { name: "Salvar workspace" }).click();
@@ -65,7 +71,7 @@ async function main() {
     if (await notice.isVisible().catch(() => false)) await notice.click();
     await page.getByText("Workspace piloto salvo com isolamento lógico.", { exact: true }).waitFor({ state: "visible", timeout: 5_000 });
     if (errors.length) throw new Error(`erros de página: ${errors.join(" | ")}`);
-    console.log("[saas-central] ✓ 20 abas, filtro, interação e persistência local aprovados");
+    console.log("[saas-central] ✓ 20 abas, observabilidade, webhooks, filtro, interação e persistência local aprovados");
   } finally {
     await browser.close();
   }

@@ -10,23 +10,11 @@ import {
   type TenantEnv,
 } from "../tenant/_core";
 import { clinicalCryptoReady } from "../tenant/_crypto";
-
-const REQUIRED_TABLES = [
-  "tenant_lifecycle",
-  "saas_audit_log",
-  "saas_module_settings",
-  "saas_backup_evidence",
-  "saas_membership_invites",
-  "saas_privacy_requests",
-  "saas_retention_policies",
-  "saas_integration_connections",
-  "saas_integration_idempotency",
-  "live_patient_search_tokens",
-] as const;
+import { loadSaasSchemaPosture } from "./_readiness";
 
 const CHECK_ACTIONS = {
   membership: "Confirmar membership administrativa ativa para esta clínica.",
-  migration: "Aplicar migrations SaaS 0016–0020 em ordem e repetir o readiness.",
+  migration: "Aplicar migrations SaaS 0016–0023 em ordem e repetir o readiness.",
   keyring: "Configurar o keyring clínico dedicado com IDs separados.",
   operationalKey: "Configurar OPERATIONAL_DATA_KEY no secret manager.",
   clinicalFlag: "Manter Clinical LIVE desabilitado até concluir os gates; o ambiente de produção deve definir a flag explicitamente.",
@@ -67,26 +55,19 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if ("error" in authorized) return authorized.error;
 
   try {
-    const tableResult = await authorized.db
-      .prepare(
-        `SELECT name FROM sqlite_master
-          WHERE type = 'table' AND name IN (${REQUIRED_TABLES.map(() => "?").join(",")})`,
-      )
-      .bind(...REQUIRED_TABLES)
-      .all<{ name: string }>();
-    const existingTables = new Set((tableResult.results ?? []).map((row) => row.name));
-    const migrationReady = REQUIRED_TABLES.every((table) => existingTables.has(table));
+    const schema = await loadSaasSchemaPosture(authorized.db);
+    const migrationReady = schema.ready;
 
     let enabledModules = 0;
     let latestBackup: LatestBackupRow | null = null;
-    if (existingTables.has("saas_module_settings")) {
+    if (schema.missingTables.length === 0) {
       const modules = await authorized.db
         .prepare(`SELECT COUNT(*) AS count FROM saas_module_settings WHERE clinic_id = ? AND enabled = 1`)
         .bind(clinicId)
         .first<{ count: number }>();
       enabledModules = Number(modules?.count ?? 0);
     }
-    if (existingTables.has("saas_backup_evidence")) {
+    if (schema.missingTables.length === 0) {
       latestBackup = await authorized.db
         .prepare(
           `SELECT status, restore_verified_at, created_at
@@ -107,7 +88,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
       operationalKey: { ok: operationalCryptoReady(context.env), label: "Chave operacional disponível", action: CHECK_ACTIONS.operationalKey },
       clinicalFlag: { ok: clinicalLiveEnabled(context.env), label: "Clinical LIVE habilitado", action: CHECK_ACTIONS.clinicalFlag },
       billing: { ok: !billingError, label: "Entitlement administrativo válido", action: CHECK_ACTIONS.billing },
-      audit: { ok: existingTables.has("saas_audit_log"), label: "Trilha SaaS disponível", action: CHECK_ACTIONS.audit },
+      audit: { ok: !schema.missingTables.includes("saas_audit_log") && !schema.missingTriggers.includes("trg_saas_audit_log_append_only_delete"), label: "Trilha SaaS disponível", action: CHECK_ACTIONS.audit },
       restore: { ok: latestBackup?.status === "verified" && Boolean(latestBackup.restore_verified_at), label: "Restore verificado", action: CHECK_ACTIONS.restore },
     };
     const missing = Object.values(checks).filter((check) => !check.ok).map((check) => check.label);
@@ -123,8 +104,9 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
       enabledModules,
             requiredModules: 20,
       correctiveActions: Object.values(checks).filter((check) => !check.ok).map((check) => check.action),
-      latestBackup:
- latestBackup
+            schema,
+      latestBackup: latestBackup
+
         ? { status: latestBackup.status, restoreVerifiedAt: latestBackup.restore_verified_at, createdAt: latestBackup.created_at }
         : null,
     });
