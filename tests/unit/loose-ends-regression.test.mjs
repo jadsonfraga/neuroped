@@ -8,6 +8,7 @@ const root = resolve(here, "../..");
 const read = (path) => readFileSync(resolve(root, path), "utf8");
 
 const home = read("client/src/pages/home.tsx");
+const navigation = read("client/src/data/navigation.ts");
 const filtro = `${read("client/src/pages/filtro.tsx")}\n${read("client/src/pages/filtro-engine.tsx")}`;
 const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const portalFamilia = read("client/src/pages/portal-familia.tsx");
@@ -41,7 +42,7 @@ const clinicalFiles = [
 ];
 
 // Triagem sem cadastro: deve continuar pública, efêmera e sem contaminar o estado persistente.
-assert.match(home, /filtro-escalas\?mode=flash/);
+assert.match(navigation, /href:\s*"\/filtro-escalas",\s*label:\s*"Triar sem cadastrar"/);
 assert.match(filtro, /Modo efêmero — saia da tela e os dados somem/);
 assert.match(filtro, /sessionStorage\.setItem\(\s*FLASH_STORAGE_KEY/);
 assert.match(filtro, /sessionStorage\.removeItem\(FLASH_STORAGE_KEY/);
