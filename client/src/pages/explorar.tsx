@@ -462,7 +462,7 @@ export default function ExplorarPage() {
         </div>
       )}
 
-      <main
+      <section
         className="space-y-4 sm:space-y-5"
         aria-label="Recursos organizados por jornada"
       >
@@ -504,7 +504,7 @@ export default function ExplorarPage() {
             </Button>
           </section>
         )}
-      </main>
+      </section>
 
       <section
         className="grid gap-3 md:grid-cols-3"
