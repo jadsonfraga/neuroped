@@ -442,9 +442,9 @@ export default function SatisfacaoMedicacaoPage() {
         {/* ── Eficácia ── */}
         <Card>
           <CardContent className="p-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase text-muted-foreground">
               Eficácia
-            </h3>
+            </h2>
             <div className="space-y-2">
               <div className="rounded-lg border border-border/70 bg-background p-2.5">
                 <p className="text-sm text-foreground">
@@ -476,9 +476,9 @@ export default function SatisfacaoMedicacaoPage() {
         {/* ── Efeitos adversos ── */}
         <Card>
           <CardContent className="p-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase text-muted-foreground">
               Efeitos adversos
-            </h3>
+            </h2>
             {efeitosCategorias.map((cat) => (
               <div key={cat} className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2 border-t">
@@ -508,9 +508,9 @@ export default function SatisfacaoMedicacaoPage() {
         {/* ── Forma de administrar ── */}
         <Card>
           <CardContent className="p-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase text-muted-foreground">
               Forma de administrar
-            </h3>
+            </h2>
             <div className="space-y-2">
               {formaPerguntas.map((fp) => {
                 const val = formaResp[fp.id];
@@ -533,9 +533,9 @@ export default function SatisfacaoMedicacaoPage() {
         {/* ── Satisfação da família ── */}
         <Card>
           <CardContent className="p-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase text-muted-foreground">
               Satisfação da família
-            </h3>
+            </h2>
             <div className="space-y-2">
               <div className="rounded-lg border border-border/70 bg-background p-2.5">
                 <p className="text-sm text-foreground">
@@ -640,21 +640,23 @@ export default function SatisfacaoMedicacaoPage() {
       {/* Identificação */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold">Identificação</h3>
+          <h2 className="text-sm font-bold">Identificação</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
+              <Label htmlFor="satisfacao-nome-crianca" className="text-xs text-muted-foreground">
                 Nome da criança
               </Label>
               <Input
+                id="satisfacao-nome-crianca"
                 value={nomeCrianca}
                 onChange={(e) => setNomeCrianca(e.target.value)}
                 className="h-9 text-sm"
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Idade</Label>
+              <Label htmlFor="satisfacao-idade" className="text-xs text-muted-foreground">Idade</Label>
               <Input
+                id="satisfacao-idade"
                 value={idadeCrianca}
                 onChange={(e) => setIdadeCrianca(e.target.value)}
                 placeholder="Ex: 8 anos"
@@ -662,8 +664,9 @@ export default function SatisfacaoMedicacaoPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Peso (kg)</Label>
+              <Label htmlFor="satisfacao-peso" className="text-xs text-muted-foreground">Peso (kg)</Label>
               <Input
+                id="satisfacao-peso"
                 value={pesoCrianca}
                 onChange={(e) => setPesoCrianca(e.target.value)}
                 placeholder="Ex: 25"
@@ -671,10 +674,11 @@ export default function SatisfacaoMedicacaoPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
+              <Label htmlFor="satisfacao-respondente" className="text-xs text-muted-foreground">
                 Quem responde
               </Label>
               <Input
+                id="satisfacao-respondente"
                 value={respondente}
                 onChange={(e) => setRespondente(e.target.value)}
                 placeholder="Ex: Mãe"
@@ -684,8 +688,9 @@ export default function SatisfacaoMedicacaoPage() {
           </div>
           <div className="grid sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Medicação</Label>
+              <Label htmlFor="satisfacao-medicacao" className="text-xs text-muted-foreground">Medicação</Label>
               <Input
+                id="satisfacao-medicacao"
                 value={nomeMedicacao}
                 onChange={(e) => setNomeMedicacao(e.target.value)}
                 placeholder="Ex: Risperidona"
@@ -693,8 +698,9 @@ export default function SatisfacaoMedicacaoPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Dose (mg)</Label>
+              <Label htmlFor="satisfacao-dose" className="text-xs text-muted-foreground">Dose (mg)</Label>
               <Input
+                id="satisfacao-dose"
                 value={doseMedicacao}
                 onChange={(e) => setDoseMedicacao(e.target.value)}
                 placeholder="Ex: 0.5"
@@ -702,8 +708,9 @@ export default function SatisfacaoMedicacaoPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Posologia</Label>
+              <Label htmlFor="satisfacao-posologia" className="text-xs text-muted-foreground">Posologia</Label>
               <Input
+                id="satisfacao-posologia"
                 value={posologia}
                 onChange={(e) => setPosologia(e.target.value)}
                 placeholder="Ex: 1x noite"
@@ -713,10 +720,11 @@ export default function SatisfacaoMedicacaoPage() {
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
+              <Label htmlFor="satisfacao-tempo-uso" className="text-xs text-muted-foreground">
                 Tempo de uso
               </Label>
               <Input
+                id="satisfacao-tempo-uso"
                 value={tempoUso}
                 onChange={(e) => setTempoUso(e.target.value)}
                 placeholder="Ex: 3 meses"
@@ -724,8 +732,9 @@ export default function SatisfacaoMedicacaoPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Indicação</Label>
+              <Label htmlFor="satisfacao-indicacao" className="text-xs text-muted-foreground">Indicação</Label>
               <Input
+                id="satisfacao-indicacao"
                 value={indicacao}
                 onChange={(e) => setIndicacao(e.target.value)}
                 placeholder="Ex: irritabilidade, sono"
@@ -759,10 +768,10 @@ export default function SatisfacaoMedicacaoPage() {
       {/* ── 1. EFICÁCIA GERAL ── */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold flex items-center gap-2">
+          <h2 className="text-sm font-bold flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
             No geral, a medicação está fazendo efeito?
-          </h3>
+          </h2>
           <RadioGroup
             value={eficaciaGeral?.toString()}
             onValueChange={(v) => setEficaciaGeral(parseInt(v))}
@@ -790,10 +799,10 @@ export default function SatisfacaoMedicacaoPage() {
       {/* ── 2. EFICÁCIA POR ÁREA ── */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold flex items-center gap-2">
+          <h2 className="text-sm font-bold flex items-center gap-2">
             <Brain className="w-4 h-4 text-violet-500" />
             Em que áreas percebeu melhora?
-          </h3>
+          </h2>
           <p className="text-xs text-muted-foreground">
             Responda apenas as áreas relevantes para a criança
           </p>
@@ -842,10 +851,10 @@ export default function SatisfacaoMedicacaoPage() {
       {/* ── 3. EFEITOS ADVERSOS ── */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold flex items-center gap-2">
+          <h2 className="text-sm font-bold flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             Efeitos adversos observados
-          </h3>
+          </h2>
           <p className="text-xs text-muted-foreground">
             0 = Ausente, 1 = Raro, 2 = Às vezes, 3 = Frequente, 4 = Constante
           </p>
@@ -892,10 +901,10 @@ export default function SatisfacaoMedicacaoPage() {
       {/* ── 4. FORMA DE DAR ── */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold flex items-center gap-2">
+          <h2 className="text-sm font-bold flex items-center gap-2">
             <Droplets className="w-4 h-4 text-blue-500" />
             Forma de administrar
-          </h3>
+          </h2>
           {formaPerguntas.map((fp) => (
             <div key={fp.id} className="space-y-1.5">
               <p className="text-xs font-medium">{fp.nome}</p>
@@ -930,10 +939,10 @@ export default function SatisfacaoMedicacaoPage() {
       {/* ── 5. SATISFAÇÃO GERAL ── */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="text-sm font-bold flex items-center gap-2">
+          <h2 className="text-sm font-bold flex items-center gap-2">
             <Smile className="w-4 h-4 text-primary" />
             Satisfação geral com a medicação
-          </h3>
+          </h2>
           <RadioGroup
             value={satisfacaoGeral?.toString()}
             onValueChange={(v) => setSatisfacaoGeral(parseInt(v))}
@@ -992,7 +1001,7 @@ export default function SatisfacaoMedicacaoPage() {
       {/* ── 6. OBSERVAÇÕES LIVRES ── */}
       <Card>
         <CardContent className="p-4 space-y-2">
-          <h3 className="text-sm font-bold">Observações da família (livre)</h3>
+          <h2 className="text-sm font-bold">Observações da família (livre)</h2>
           <Textarea
             value={obsLivre}
             onChange={(e) => setObsLivre(e.target.value)}

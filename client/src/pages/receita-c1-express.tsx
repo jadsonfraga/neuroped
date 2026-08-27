@@ -690,10 +690,14 @@ export default function ReceitaC1ExpressPage() {
         {/* Upload exclusivamente local */}
         {(showUpload || certStatus === "missing") && (
           <div className="mb-4 rounded-xl border border-border bg-background/50 p-3 space-y-2">
-            <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+            <Label
+              htmlFor="receita-c1-certificado"
+              className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5"
+            >
               <Upload className="h-3.5 w-3.5" /> Selecionar certificado .p12 / .pfx
             </Label>
             <Input
+              id="receita-c1-certificado"
               type="file"
               accept=".p12,.pfx"
               onChange={onUploadP12}
@@ -770,8 +774,14 @@ export default function ReceitaC1ExpressPage() {
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-muted-foreground">Data de nascimento</Label>
+            <Label
+              htmlFor="receita-c1-data-nascimento"
+              className="text-xs font-semibold text-muted-foreground"
+            >
+              Data de nascimento
+            </Label>
             <Input
+              id="receita-c1-data-nascimento"
               type="date"
               value={form.dataNasc}
               onChange={set("dataNasc")}

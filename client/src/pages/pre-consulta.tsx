@@ -266,7 +266,13 @@ export default function PreConsultaPage() {
           <Card>
             <CardContent className="space-y-3 p-4">
               <p className="text-sm font-semibold text-foreground">Resumo para o médico</p>
-              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">{summary}</pre>
+              <pre
+                tabIndex={0}
+                aria-label="Resumo para o médico"
+                className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground"
+              >
+                {summary}
+              </pre>
             </CardContent>
           </Card>
         </div>

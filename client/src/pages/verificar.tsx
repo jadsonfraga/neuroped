@@ -87,10 +87,13 @@ export default function VerificarPage() {
         </div>
 
         <div>
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+          <label
+            htmlFor="input-verify-file"
+            className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1"
+          >
             <FileUp className="w-3.5 h-3.5" /> Documento PDF
           </label>
-          <Input type="file" accept="application/pdf,.pdf" onChange={onPick} className="text-xs" data-testid="input-verify-file" />
+          <Input id="input-verify-file" type="file" accept="application/pdf,.pdf" onChange={onPick} className="text-xs" data-testid="input-verify-file" />
           {fileName && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{fileName}</p>}
         </div>
 

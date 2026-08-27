@@ -140,8 +140,9 @@ function PatientHeaderForm({
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Data de Nascimento</Label>
+        <Label htmlFor="input-patient-dob" className="text-xs">Data de Nascimento</Label>
         <Input
+          id="input-patient-dob"
           type="date"
           className="h-8 text-xs"
           value={value.nascimento}
@@ -150,8 +151,9 @@ function PatientHeaderForm({
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Data da Avaliação</Label>
+        <Label htmlFor="input-eval-date" className="text-xs">Data da Avaliação</Label>
         <Input
+          id="input-eval-date"
           type="date"
           className="h-8 text-xs"
           value={value.data}
