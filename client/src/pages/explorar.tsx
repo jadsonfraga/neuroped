@@ -6,6 +6,7 @@ import {
   BookOpen,
   Calendar,
   Check,
+  ChevronDown,
   FileText,
   Grid2X2,
   LockKeyhole,
@@ -162,11 +163,19 @@ function CatalogCard({
   );
 
   return item.href === "/nesplora/" ? (
-    <a href={target} aria-label={`Abrir ${item.label}`}>
+    <a
+      href={target}
+      aria-label={`Abrir ${item.label}`}
+      className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+    >
       {content}
     </a>
   ) : (
-    <Link href={target} aria-label={`Abrir ${item.label}`}>
+    <Link
+      href={target}
+      aria-label={`Abrir ${item.label}`}
+      className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+    >
       {content}
     </Link>
   );
@@ -177,11 +186,15 @@ function CatalogSection({
   query,
   canOpen,
   offset,
+  expanded,
+  onToggle,
 }: {
   section: NavSection;
   query: string;
   canOpen: (path: string) => boolean;
   offset: number;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const items = uniqueItems(section.items).filter((item) =>
     itemMatchesQuery(item, query),
@@ -189,14 +202,24 @@ function CatalogSection({
   if (items.length === 0) return null;
   const Icon = sectionIcons[section.title] ?? Grid2X2;
   const sectionId = `explore-${slugify(section.title || "principal")}`;
+  const isOpen = expanded || query.trim().length > 0;
 
   return (
-    <section className="space-y-3" aria-labelledby={sectionId}>
-      <div className="flex items-start gap-3">
+    <section
+      className="group rounded-2xl border border-border/60 bg-card/45 p-3.5 sm:p-4"
+      data-testid={`explore-section-${slugify(section.title || "principal")}`}
+    >
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left transition-colors hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={`${sectionId}-items`}
+      >
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2
             id={sectionId}
             className="text-base font-semibold tracking-tight text-foreground"
@@ -208,23 +231,41 @@ function CatalogSection({
               "Acesso rápido ao ecossistema NeuroPed."}
           </p>
         </div>
-      </div>
-      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((item, index) => (
-          <CatalogCard
-            key={`${section.title}-${item.href}`}
-            item={item}
-            index={offset + index}
-            locked={!isPublicRoute(item.href) && !canOpen(item.href)}
-          />
-        ))}
-      </div>
+        <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+          {items.length}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {isOpen && (
+        <div
+          id={`${sectionId}-items`}
+          className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          {items.map((item, index) => (
+            <CatalogCard
+              key={`${section.title}-${item.href}`}
+              item={item}
+              index={offset + index}
+              locked={!isPublicRoute(item.href) && !canOpen(item.href)}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
 export default function ExplorarPage() {
   const [query, setQuery] = useState("");
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
+    DESTAQUES: true,
+    "TRABALHO DE HOJE": true,
+  });
   const { accessMode, isAuthenticated, isLoading, user } = useAuth();
   const currentPath = currentHashPath();
   const canOpen = (path: string) =>
@@ -378,6 +419,13 @@ export default function ExplorarPage() {
               query={query}
               canOpen={canOpen}
               offset={index * 12}
+              expanded={expandedSections[section.title] ?? false}
+              onToggle={() =>
+                setExpandedSections((current) => ({
+                  ...current,
+                  [section.title]: !(current[section.title] ?? false),
+                }))
+              }
             />
           ))}
         </div>

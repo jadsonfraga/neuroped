@@ -2,7 +2,7 @@
   "summary": {
     "page_files": 156,
     "route_entries": 153,
-    "navigation_items": 82,
+    "navigation_items": 83,
     "sensitive_routes": 34,
     "public_route_literals": 42,
     "hub_owned_routes": 72,
@@ -783,6 +783,10 @@
     {
       "href": "/pacientes",
       "label": "Pacientes"
+    },
+    {
+      "href": "/documentos",
+      "label": "Documentar"
     },
     {
       "href": "/",

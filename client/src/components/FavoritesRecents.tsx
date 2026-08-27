@@ -86,13 +86,21 @@ export function FavoritesRecents() {
               Marque escalas como favoritas no Filtro Clínico e elas aparecem
               aqui, junto do que você usou recentemente.
             </p>
-            <Link
-              href="/filtro"
-              className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-primary transition-colors hover:text-primary/75"
-            >
-              Abrir Filtro Clínico{" "}
-              <ArrowRight className="h-3 w-3" aria-hidden="true" />
-            </Link>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href="/filtro"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                Por queixa e objetivo
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/filtro-escalas"
+                className="inline-flex min-h-9 items-center rounded-xl border border-border/70 bg-background/55 px-3 py-2 text-[11px] font-semibold text-foreground transition-colors hover:border-primary/25 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                Triar sem cadastrar
+              </Link>
+            </div>
           </div>
         </div>
       ) : scales.length === 0 ? (

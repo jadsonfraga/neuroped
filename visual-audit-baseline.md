@@ -70,3 +70,25 @@ Na captura mobile, a composição reflowa corretamente para uma coluna, mantém 
 ## Qualidade de código após a iteração
 
 `npm run lint` passou com 0 erros e 0 avisos depois da remoção dos imports não utilizados da home. `npm run check` continua falhando somente nos erros históricos do servidor ligados a `Request.user` e à augmentação do Express; não foram apontados arquivos da home, sidebar, abas, catálogo ou dock.
+
+
+## Pranchas antes × depois
+
+Foram capturados pares na mesma rota e viewport: Home, Explorar e Checklists TEA em desktop `1440×900` e mobile `390×844`. As pranchas foram montadas com `ANTES` à esquerda e `DEPOIS` à direita, preservando a altura completa de cada página para comparação direta. A home desktop mostra a hierarquia do cockpit e a sidebar lado a lado; a home mobile mostra a reflowagem e o dock na mesma largura.
+
+
+## Segunda rodada — redução de rolagem no catálogo
+
+O catálogo foi convertido de uma lista longa para seções recolhíveis com contador, descrição, estado de abertura e abertura automática quando existe busca. Na linha de base, a altura era `4527px` desktop e `10198px` mobile; após a mudança caiu para `2309px` desktop e `3373px` mobile — redução de aproximadamente `49%` e `67%`, respectivamente — sem excluir itens. Os grupos Destaques e Trabalho de hoje permanecem abertos, enquanto os demais podem ser explorados sob demanda; uma busca abre somente as seções que contêm resultados.
+
+
+## Segunda rodada — smoke test de usabilidade
+
+O smoke test confirmou `Enter` na busca da home navegando para `#/laudo-neuroped`, expansão manual real de `DOCUMENTAR` com 11 cards, busca `receita` retornando 2 resultados e abertura contextual apenas das seções que contêm resultados. Em `390px`, `documentElement.scrollWidth` e `body.scrollWidth` permaneceram em `390px`, sem overflow horizontal; uma aba recebeu foco programaticamente com `role="tab"`; não houve erros de runtime.
+
+
+## Segunda rodada — resultados corrigidos
+
+Após corrigir a renderização condicional dos cards, a medição final ficou: Home `1421px` desktop e `2494px` mobile; Explorar `2309px` desktop e `3475px` mobile; Checklists TEA `2740px` desktop e `3837px` mobile. Comparado à linha de base da versão atual (`1399`, `2492`, `4527`, `10198`, `2740`, `3837`), o catálogo caiu `49.0%` no desktop e `65.9%` no mobile. As pequenas variações da home decorrem da promoção de Documentar para o atalho de primeira camada.
+
+O caminho até Documentar passou de abrir o grupo e depois escolher um destino para um clique direto no bloco Começar, redução de 2 ações para 1. A busca da home passou a aceitar Enter para abrir o primeiro resultado. O smoke test confirmou busca para laudo, expansão manual do grupo, filtro de receita, foco de aba e zero overflow horizontal.

@@ -56,7 +56,7 @@ export interface NavigationMatch {
 }
 
 /**
- * Dois atalhos de alta frequência. O restante continua acessível nos grupos
+ * Três atalhos de alta frequência. O restante continua acessível nos grupos
  * e no catálogo, mas não compete com o trabalho que começa todos os dias.
  */
 export const featuredNavigation: NavItem[] = [
@@ -73,6 +73,13 @@ export const featuredNavigation: NavItem[] = [
     icon: Users,
     tone: "priority",
     description: "Busca e prontuários",
+  },
+  {
+    href: "/documentos",
+    label: "Documentar",
+    icon: FileText,
+    tone: "priority",
+    description: "Laudo, receita ou plano",
   },
 ];
 

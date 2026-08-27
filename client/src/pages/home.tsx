@@ -120,7 +120,10 @@ function activate() {
 function ActionCard({ action, index }: { action: HomeAction; index: number }) {
   const Icon = action.icon;
   return (
-    <Link href={action.href}>
+    <Link
+      href={action.href}
+      className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+    >
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -133,11 +136,11 @@ function ActionCard({ action, index }: { action: HomeAction; index: number }) {
         whileTap={{ scale: 0.985 }}
         onMouseEnter={() => softHover()}
         onClick={activate}
-        className="group flex min-h-[104px] cursor-pointer items-center gap-3.5 rounded-2xl border border-border/65 bg-card/80 p-4 shadow-[0_12px_34px_-28px_hsl(var(--foreground)/0.5)] transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/25 hover:bg-card hover:shadow-[0_20px_42px_-28px_hsl(var(--primary)/0.32)]"
+        className="group flex min-h-[88px] cursor-pointer items-center gap-3 rounded-2xl border border-border/65 bg-card/80 p-3 sm:min-h-[104px] sm:gap-3.5 sm:p-4 shadow-[0_12px_34px_-28px_hsl(var(--foreground)/0.5)] transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/25 hover:bg-card hover:shadow-[0_20px_42px_-28px_hsl(var(--primary)/0.32)]"
         data-testid={`home-action-${action.href.slice(1)}`}
       >
         <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1 transition-transform duration-200 group-hover:scale-105 ${toneClasses[action.tone]}`}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ring-1 sm:h-11 sm:w-11 transition-transform duration-200 group-hover:scale-105 ${toneClasses[action.tone]}`}
         >
           <Icon className="h-5 w-5" strokeWidth={1.85} aria-hidden="true" />
         </div>
@@ -161,7 +164,10 @@ function ActionCard({ action, index }: { action: HomeAction; index: number }) {
 function JourneyCard({ action, index }: { action: HomeAction; index: number }) {
   const Icon = action.icon;
   return (
-    <Link href={action.href}>
+    <Link
+      href={action.href}
+      className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+    >
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -318,8 +324,16 @@ export default function HomePage() {
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && searchResults[0]) {
+                  event.preventDefault();
+                  activate();
+                  window.location.hash = searchResults[0].href;
+                }
+              }}
               placeholder="Buscar escala, paciente, documento ou módulo…"
               aria-label="Buscar escala, paciente, documento ou módulo"
+              aria-keyshortcuts="Enter"
               className="h-14 rounded-2xl border-white/80 bg-card/85 pl-11 pr-10 text-sm shadow-[0_14px_35px_-22px_hsl(var(--foreground)/0.42)] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-primary/30 focus-visible:shadow-[0_18px_42px_-22px_hsl(var(--primary)/0.4)] dark:border-white/10"
               data-testid="input-search"
             />

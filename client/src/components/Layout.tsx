@@ -149,18 +149,26 @@ function FeaturedShortcuts({
     );
 
     return isExternalShortcut(item.href) ? (
-      <a key={item.href} href={item.href}>
+      <a
+        key={item.href}
+        href={item.href}
+        className="block rounded-[1rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1"
+      >
         {card}
       </a>
     ) : (
-      <Link key={item.href} href={item.href}>
+      <Link
+        key={item.href}
+        href={item.href}
+        className="block rounded-[1rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1"
+      >
         {card}
       </Link>
     );
   };
 
-  const primary = visibleFeaturedNavigation.slice(0, 2);
-  const supporting = visibleFeaturedNavigation.slice(2);
+  const primary = visibleFeaturedNavigation.slice(0, 3);
+  const supporting = visibleFeaturedNavigation.slice(3);
   const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
@@ -214,9 +222,11 @@ function FeaturedShortcuts({
             </div>
             <div className="space-y-1.5">
               {primary.map((item) => renderCard(item))}
-              <div className="grid grid-cols-2 gap-1.5">
-                {supporting.map((item) => renderCard(item, true))}
-              </div>
+              {supporting.length > 0 && (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {supporting.map((item) => renderCard(item, true))}
+                </div>
+              )}
             </div>
           </div>
           <div className="hidden flex-col items-center gap-1.5 lg:flex">
@@ -877,6 +887,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             key={`${sectionKey}-${item.href}-${item.label}`}
                             href={item.href}
                             aria-current={active ? "page" : undefined}
+                            className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1"
                           >
                             <div
                               title={
