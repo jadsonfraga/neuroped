@@ -326,17 +326,6 @@ function AppRouter() {
     );
   }
 
-  // A marcação pública é uma porta administrativa independente do shell clínico.
-  // A página já possui seu próprio landmark <main>; mantê-la fora do Layout evita
-  // duplicidade de landmarks e não expõe navegação ou dados clínicos.
-  if (location === "/marcacao") {
-    return (
-      <Suspense fallback={<LoadingSpinner />}>
-        <MarcacaoPage />
-      </Suspense>
-    );
-  }
-
   // O Vídeo-EEG é um handoff institucional para famílias, sem dados clínicos
   // nem redirecionamento externo. Ele não deve herdar o layout ou o gate médico.
   if (location === "/eletroencefalograma") {

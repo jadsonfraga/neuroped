@@ -2433,6 +2433,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
               Etapa escolar
             </span>
             <select
+              aria-label="Etapa escolar"
               value={schoolStage}
               onChange={(e) => {
                 setSchoolStage(e.target.value);
@@ -2454,6 +2455,7 @@ export default function AvaliacaoCognitivaInfantilPage() {
               Quem acompanha a resposta
             </span>
             <select
+              aria-label="Quem acompanha a resposta"
               value={informant}
               onChange={(e) => {
                 setInformant(e.target.value);

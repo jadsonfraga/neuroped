@@ -22,6 +22,11 @@ test("a jornada de marcação fica protegida, navegável e é atendida pela Secr
     app,
     /path="\/marcacao"[\s\S]*?<RouteGuard roles=\{\["admin", "professional", "operator"\]\}>[\s\S]*?<MarcacaoPage \/>/,
   );
+  assert.doesNotMatch(
+    app,
+    /location\s*===\s*["']\/marcacao["']/,
+    "Marcação não pode contornar o RouteGuard por retorno antecipado",
+  );
   assert.match(
     app,
     /path="\/agendar"[\s\S]*?<RouteGuard roles=\{\["admin", "professional", "operator"\]\}>[\s\S]*?<AgendarPage \/>/,

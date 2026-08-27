@@ -92,7 +92,11 @@ const routes = discoveredRoutes.slice(0, routeLimit);
 // ---- visita cada rota ----
 let browser;
 try {
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  const configuredExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  const systemExecutable = ["/usr/bin/chromium", "/usr/bin/chromium-browser"].find(
+    (candidate) => existsSync(candidate),
+  );
+  const executablePath = configuredExecutable || systemExecutable;
   browser = await chromium.launch(
     executablePath
       ? {
