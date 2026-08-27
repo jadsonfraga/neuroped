@@ -38,3 +38,9 @@ O workflow `.github/workflows/saas-production-gates.yml` foi criado como entrada
 A continuação adicionou o ciclo operacional de incidentes à Central. O backend registra somente componente, código allowlist, severidade, status, correlation ID e metadata redigida. Reconhecimento e resolução não alteram o evento original: cada transição cria um novo evento correlacionado e exige auditoria; a resolução exige código allowlist. A consulta agrupa pela correlação e expõe apenas o estado mais recente, sem texto livre, payload, token, secret ou PHI.
 
 A rodada adicional foi validada com `npm run check`, `npm run lint`, migrations, fluxo operacional, contrato de hardening, build, bundle Wrangler, E2E das 20 abas e auditoria integral de acessibilidade. Todos os comandos retornaram código 0. O build continua emitindo somente o aviso conhecido de chunks grandes, sem erro de compilação.
+
+## Continuação: staging, manifesto e rollback
+
+Foi adicionado um manifesto textual SHA-256 para as migrations SaaS 0016–0023, evitando falsos positivos do guard de acesso e permitindo detectar drift antes de qualquer mutação remota. O workflow exige `rollback_reference` quando `apply_migrations=true`, recusa referências de demonstração e mantém a aplicação forward-only.
+
+A evidência de staging agora é gerada sem PHI, secrets ou alteração remota. Ela contém somente o ambiente, referência não sensível do D1, digest do manifesto, contagem de migrations e flags de postura. O guard de acesso foi reexecutado após a correção e passou sem exceções.

@@ -70,3 +70,9 @@ O arquivo `.github/workflows/saas-production-gates.yml` é a entrada controlada 
 Para staging, o operador seleciona o environment `staging`, confirma o D1 alvo e executa primeiro com `apply_migrations=false`; depois repete com `apply_migrations=true` somente após validar o backup operacional. Para production, o workflow exige `confirm_production=APPLY_PRODUCTION_MIGRATIONS` e nunca altera `CLINICAL_LIVE_ENABLED`. A aplicação das migrations 0016–0023 é em ordem, seguida de verificação de tabelas e triggers por consultas metadata-only.
 
 As chaves `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY` e `OPERATIONAL_DATA_KEY` devem existir como secrets do environment. `APP_BASE_URL` e `ENVIRONMENT` devem existir como variables do environment; em production, `APP_BASE_URL` precisa ser HTTPS. O workflow apenas verifica nomes e postura, sem imprimir valores. O diagnóstico administrativo `/api/saas/production-diagnostics` expõe o mesmo estado redigido por clínica, com membership e entitlement válidos.
+
+## Manifesto e evidência metadata-only
+
+Antes de aplicar qualquer migration, o CI executa `npm run test:saas-migration-manifest` e `node scripts/guards/saas-migration-manifest.mjs --check`. O manifesto versionado contém o SHA-256 de cada migration SaaS 0016–0023; qualquer arquivo ausente, novo ou alterado aborta o gate antes do acesso remoto.
+
+O workflow gera `/tmp/saas-staging-evidence.json` como artefato metadata-only. O documento registra apenas ambiente, referência do D1, digest do manifesto, contagem de migrations, resultado dos gates e postura forward-only. Ele afirma explicitamente que secrets, PHI e mutações remotas não foram expostos ou executados durante o preflight. A aplicação real continua condicionada a `rollback_reference`, evidência de backup/restore e autorização do operador.

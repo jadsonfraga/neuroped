@@ -12,10 +12,15 @@ on:
           - production
         default: staging
       apply_migrations:
-        description: "Aplicar migrations 0016–0020 no D1 remoto"
+        description: "Aplicar migrations 0016–0023 no D1 remoto"
         required: true
         type: boolean
         default: false
+      rollback_reference:
+        description: "ID de evidência de backup/ticket de rollback aprovado; obrigatório ao aplicar migrations"
+        required: false
+        type: string
+        default: ""
       confirm_production:
         description: "Obrigatório somente para migrations em production"
         required: false
@@ -70,6 +75,22 @@ jobs:
           npm run test:saas-hardening
           npm run validate:public
           npm run audit:access
+          npm run test:saas-migration-manifest
+          npm run test:saas-staging-evidence
+
+      - name: Validate migration manifest before any remote mutation
+        run: |
+          set -euo pipefail
+          node scripts/guards/saas-migration-manifest.mjs --check
+          echo "Manifesto de migrations validado sem drift."
+
+      - name: Generate metadata-only staging evidence
+        run: |
+          set -euo pipefail
+          node scripts/guards/saas-staging-evidence.mjs --environment "${{ inputs.environment }}" --database "${{ inputs.d1_database }}" --out /tmp/saas-staging-evidence.json
+          grep -q '"secretsValuesExposed": false' /tmp/saas-staging-evidence.json
+          grep -q '"phiExposed": false' /tmp/saas-staging-evidence.json
+          grep -q '"remoteMigrationApplied": false' /tmp/saas-staging-evidence.json
 
       - name: Validate Cloudflare credentials
         env:
@@ -121,6 +142,17 @@ jobs:
             exit 1;
           }
 
+      - name: Require rollback reference before migration mutation
+        if: inputs.apply_migrations == true
+        run: |
+          set -euo pipefail
+          test -n "${{ inputs.rollback_reference }}" || { echo "::error::Informe rollback_reference com evidência de backup/ticket aprovado."; exit 1; }
+          if [ "${{ inputs.rollback_reference }}" = "DEMO" ]; then
+            echo "::error::DEMO não é referência de rollback válida.";
+            exit 1;
+          fi
+          echo "Referência de rollback informada; o valor não será persistido como PHI ou secret."
+
       - name: Apply SaaS migrations in order
         if: inputs.apply_migrations == true
         env:
@@ -129,6 +161,8 @@ jobs:
           D1_DATABASE: ${{ inputs.d1_database }}
         run: |
           set -euo pipefail
+          node scripts/guards/saas-migration-manifest.mjs --check
+          echo "Aplicação forward-only autorizada por ${{ inputs.rollback_reference }} em $D1_DATABASE (${{ inputs.environment }})."
           for migration in \
             db/migrations/0016_saas_control_plane_hardening.sql \
             db/migrations/0017_saas_membership_invites.sql \
@@ -170,4 +204,5 @@ jobs:
             /tmp/pages-secret-names.json
             /tmp/saas-tables.txt
             /tmp/saas-triggers.txt
+            /tmp/saas-staging-evidence.json
           if-no-files-found: error
