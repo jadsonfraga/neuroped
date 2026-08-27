@@ -105,3 +105,7 @@ A implementação está pronta para revisão no branch separado. Recomenda-se re
 ## Referências
 
 Não foram utilizadas fontes externas. As conclusões e métricas deste relatório derivam exclusivamente do código, dos assets e dos gates reproduzíveis do repositório `jadsonfraga/neuroped`.
+
+## Resultado remoto final
+
+O commit `a9fe06c7` foi publicado no branch `feat/operational-hardening-20260827` e reconhecido pelo Draft PR #718. Após a execução completa do workflow, o GitHub reportou **18 Checks bem-sucedidos, 0 falhas, 0 cancelamentos e 0 pendências**. A campanha permanece sem merge e sem deploy, disponível para revisão humana no PR.
