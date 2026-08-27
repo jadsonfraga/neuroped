@@ -33,6 +33,20 @@ function normalize(text: string): string {
     .trim();
 }
 
+function slugify(text: string): string {
+  return normalize(text)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function itemMatchesQuery(item: NavItem, query: string): boolean {
+  const normalizedQuery = normalize(query);
+  if (!normalizedQuery) return true;
+  return normalize(
+    `${item.label} ${item.href} ${item.description ?? ""}`,
+  ).includes(normalizedQuery);
+}
+
 const sectionDescriptions: Record<string, string> = {
   CLÍNICA: "Atendimento, agenda, pacientes e operação diária do consultório.",
   "LAUDOS E RECEITAS":
@@ -70,7 +84,7 @@ function CatalogCard({
   locked: boolean;
 }) {
   const Icon = item.icon;
-  const target = item.href === "/nesplora/" ? item.href : item.href;
+  const target = item.href;
   const content = (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -165,28 +179,22 @@ function CatalogSection({
   canOpen: (path: string) => boolean;
   offset: number;
 }) {
-  const normalizedQuery = normalize(query);
-  const items = uniqueItems(section.items).filter((item) => {
-    if (!normalizedQuery) return true;
-    return normalize(
-      `${item.label} ${item.href} ${item.description ?? ""}`,
-    ).includes(normalizedQuery);
-  });
+  const items = uniqueItems(section.items).filter((item) =>
+    itemMatchesQuery(item, query),
+  );
   if (items.length === 0) return null;
   const Icon = sectionIcons[section.title] ?? Grid2X2;
+  const sectionId = `explore-${slugify(section.title || "principal")}`;
 
   return (
-    <section
-      className="space-y-3"
-      aria-labelledby={`explore-${section.title || "principal"}`}
-    >
+    <section className="space-y-3" aria-labelledby={sectionId}>
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </div>
         <div className="min-w-0">
           <h2
-            id={`explore-${section.title || "principal"}`}
+            id={sectionId}
             className="text-base font-semibold tracking-tight text-foreground"
           >
             {section.title || "Início"}
@@ -232,17 +240,20 @@ export default function ExplorarPage() {
     };
     return [highlights, ...navSections];
   }, []);
-  const destinationCount = useMemo(
-    () => uniqueItems(sections.flatMap((section) => section.items)).length,
+  const destinations = useMemo(
+    () => uniqueItems(sections.flatMap((section) => section.items)),
     [sections],
   );
+  const destinationCount = destinations.length;
   const publicCount = useMemo(
-    () =>
-      uniqueItems(sections.flatMap((section) => section.items)).filter((item) =>
-        isPublicRoute(item.href),
-      ).length,
-    [sections],
+    () => destinations.filter((item) => isPublicRoute(item.href)).length,
+    [destinations],
   );
+  const filteredDestinationCount = useMemo(
+    () => destinations.filter((item) => itemMatchesQuery(item, query)).length,
+    [destinations, query],
+  );
+  const hasQuery = query.trim().length > 0;
 
   return (
     <div className="page-enter proportion-safe-page space-y-8 pb-12">
@@ -274,19 +285,38 @@ export default function ExplorarPage() {
               fica escondido por falta de uma aba.
             </p>
           </div>
-          <div className="relative max-w-2xl">
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
-              aria-hidden="true"
-            />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar por função, página ou ferramenta…"
-              aria-label="Buscar em todo o catálogo NeuroPed"
-              className="h-12 rounded-2xl border-white/80 bg-card/80 pl-11 pr-4 text-sm shadow-sm backdrop-blur focus-visible:ring-primary/25 dark:border-white/10"
-              data-testid="input-explore-search"
-            />
+          <div className="max-w-2xl space-y-2">
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
+                aria-hidden="true"
+              />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar por função, página ou ferramenta…"
+                aria-label="Buscar em todo o catálogo NeuroPed"
+                aria-describedby="explore-search-status"
+                className="h-12 rounded-2xl border-white/80 bg-card/80 pl-11 pr-4 text-sm shadow-sm backdrop-blur focus-visible:ring-primary/25 dark:border-white/10"
+                data-testid="input-explore-search"
+              />
+            </div>
+            <div className="flex min-h-6 items-center justify-between gap-3 px-1 text-[11px] text-muted-foreground">
+              <span id="explore-search-status" role="status" aria-live="polite">
+                {hasQuery
+                  ? `${filteredDestinationCount} ${filteredDestinationCount === 1 ? "resultado" : "resultados"} para a busca`
+                  : `${destinationCount} destinos disponíveis`}
+              </span>
+              {hasQuery && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="shrink-0 rounded-md px-2 py-1 font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  Limpar busca
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5">
@@ -332,17 +362,45 @@ export default function ExplorarPage() {
         </div>
       </section>
 
-      <div className="space-y-10">
-        {sections.map((section, index) => (
-          <CatalogSection
-            key={section.title || "principal"}
-            section={section}
-            query={query}
-            canOpen={canOpen}
-            offset={index * 12}
-          />
-        ))}
-      </div>
+      {filteredDestinationCount > 0 ? (
+        <div className="space-y-10">
+          {sections.map((section, index) => (
+            <CatalogSection
+              key={section.title || "principal"}
+              section={section}
+              query={query}
+              canOpen={canOpen}
+              offset={index * 12}
+            />
+          ))}
+        </div>
+      ) : (
+        <section
+          className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-primary/20 bg-card/60 p-8 text-center"
+          aria-labelledby="explore-empty-title"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Search className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <h2
+            id="explore-empty-title"
+            className="mt-4 text-base font-semibold text-foreground"
+          >
+            Nenhum recurso encontrado
+          </h2>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+            Tente um termo mais amplo ou limpe a busca para voltar a ver todo o
+            catálogo do NeuroPed.
+          </p>
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            Mostrar todos os recursos
+          </button>
+        </section>
+      )}
 
       {currentPath !== "/" && (
         <Link
