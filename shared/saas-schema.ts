@@ -140,10 +140,10 @@ export const submitAppointmentFeedbackSchema = z
     npsScore: z.number().int().min(0).max(10).optional(),
     comment: z.string().max(2000).optional(),
   })
+  .strict()
   .refine((data) => data.rating !== undefined || data.npsScore !== undefined, {
     message: "Deve fornecer pelo menos rating ou NPS score",
-  })
-  .strict();
+  });
 
 export type SubmitAppointmentFeedbackInput = z.infer<typeof submitAppointmentFeedbackSchema>;
 
@@ -273,6 +273,44 @@ export const applyTemplateSchema = z
   .strict();
 
 export type ApplyTemplateInput = z.infer<typeof applyTemplateSchema>;
+
+/* =====================================================================
+ * TENANT LIFECYCLE EVENTS — Para rastrear transições de estado
+ * ===================================================================== */
+
+export const lifecycleEventTypes = [
+  "created",
+  "activated",
+  "closure_requested",
+  "closed",
+  "reactivation_requested",
+  "reactivated",
+  "legal_hold_placed",
+  "legal_hold_released",
+] as const;
+export type LifecycleEventType = (typeof lifecycleEventTypes)[number];
+
+export const tenantLifecycleEvents = sqliteTable(
+  "tenant_lifecycle_events",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    tenantId: text("tenant_id").notNull(),
+    eventType: text("event_type", { enum: lifecycleEventTypes }).notNull(),
+    reason: text("reason"),
+    triggeredBy: text("triggered_by").notNull(),
+    previousState: text("previous_state"),
+    newState: text("new_state"),
+    metadata: text("metadata"), // JSON
+    createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  },
+  (t) => ({
+    tenantIdx: index("idx_lifecycle_tenant").on(t.tenantId),
+    eventTypeIdx: index("idx_lifecycle_event_type").on(t.eventType),
+  }),
+);
+
+export type TenantLifecycleEvent = typeof tenantLifecycleEvents.$inferSelect;
+export type InsertTenantLifecycleEvent = typeof tenantLifecycleEvents.$inferInsert;
 
 /* =====================================================================
  * AGGREGATE TYPES — Para respostas de API

@@ -7,9 +7,8 @@
  * GET  /api/saas/onboarding/steps
  */
 
-import { Hono } from "hono";
+import type { Express } from "express";
 import { z } from "zod";
-import type { HonoContext } from "./types";
 import {
   onboardingChecklist,
   onboardingSteps,
@@ -17,8 +16,6 @@ import {
   completeOnboardingStepSchema,
   type OnboardingProgress,
 } from "@shared/saas-schema";
-
-const router = new Hono<HonoContext>();
 
 /**
  * GET /api/saas/onboarding/progress
