@@ -37,7 +37,7 @@ test("a jornada de marcação fica protegida, navegável e é atendida pela Secr
   );
   assert.doesNotMatch(publicRoutes, /"\/marcacao"/);
   assert.doesNotMatch(publicRoutes, /"\/agendar"/);
-  assert.match(page, /<main className=/);
+  assert.match(page, /<div className=/);
   assert.match(
     page,
     /apiRequest\("GET", "\/api\/public-booking\?action=providers"\)/,
