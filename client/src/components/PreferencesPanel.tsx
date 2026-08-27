@@ -216,7 +216,7 @@ export function PreferencesPanel() {
             <PrefRow
               icon={soundOn ? Volume2 : VolumeX}
               label="Sons da interface"
-              description="Breves e opcionais, só em confirmações e alertas relevantes"
+              description="Ativos por padrão, breves e restritos a confirmações e alertas relevantes"
               on={soundOn}
               onToggle={toggleSound}
               feedback={false}
@@ -261,7 +261,7 @@ export function PreferencesPanel() {
             <PrefRow
               icon={Vibrate}
               label="Vibração tátil"
-              description="Independente do som e usada apenas quando disponível"
+              description="Desligada por padrão, independente do som e usada quando disponível"
               on={hapticOn}
               onToggle={toggleHaptic}
               reducedMotion={reducedMotion}
@@ -271,10 +271,11 @@ export function PreferencesPanel() {
 
         <div className="border-t border-card-border p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Som e vibração ficam desligados até ativação explícita. Feedback
-            visual e textual permanece disponível. A redução de movimento do
-            sistema é respeitada automaticamente neste dispositivo. Senhas nunca
-            são persistidas pelo NeuroPed.
+            Sons da interface vêm habilitados e podem ser desligados a qualquer
+            momento. Vibração exige ativação explícita. Feedback visual e textual
+            permanece disponível. A redução de movimento do sistema é respeitada
+            automaticamente neste dispositivo. Senhas nunca são persistidas pelo
+            NeuroPed.
           </p>
         </div>
       </DialogContent>
