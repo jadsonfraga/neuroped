@@ -1,5 +1,6 @@
 {
-  "modo": "static-lint",
+  "mode": "static-lint",
   "total": 0,
-  "violations": []
+  "violations": [],
+  "reason": "Chromium não instalado no ambiente"
 }
