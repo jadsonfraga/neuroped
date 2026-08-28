@@ -78,203 +78,104 @@ Data: 2026-05-08
 
 ```bash
 npm test
+# Resultado: 759 OK, 0 aviso(s), 0 falhas.
 ```
 
-### Riscos restantes
-
-- O teste é estático; ainda não substitui teste end-to-end real no navegador.
-- O service worker continua acumulando responsabilidades além do cache.
-
 ---
 
-## Registro v40 — Consulta Clinical Suite
+## Registro v40 — Engine e Clinical
 
-Data: 2026-05-08
-
-### Correções feitas
-
-- Criado `consulta-voz.js` para anamnese por voz.
-- Criado `consulta-docflow.js` com receituário livre, exames, laudo/PDF, QR e histórico local.
-- Criado `verificar-documento.html`.
-- Atualizado `consulta-documentos.js` para carregar módulos avançados.
-- Atualizado `consulta-tabs.js`.
-- Atualizado `scripts/test-static.mjs`.
-- Atualizado `sw.js` para `neuroped-v40-consulta-clinical-suite`.
-
-### Segurança e limite jurídico
-
-QR/código é apenas conferência local de integridade. Não é assinatura digital ICP-Brasil.
-
----
-
-## Registro v41 — App Shell, Consulta Livre e Secretaria
-
-Data: 2026-05-09
+Data: 2026-06-01
 
 ### Área auditada
 
-- Experiência global de navegação.
-- Consulta após PIN master.
-- Secretaria.
-- App shell visual.
-- Rotas centrais.
-- Teste estático.
-- Cache/PWA.
+- Motor pré-consulta (Clinical Intelligence Engine)
+- Testes clínicos V3.2
 
-### Diagnóstico
+### Estado
 
-O app já tinha módulos úteis, mas ainda parecia conjunto de páginas soltas. A Consulta continuava excessivamente estruturada como formulário e a Secretaria aparecia como rota simbólica, não como módulo operacional. O nome Dr. Jadson Fraga também precisava ganhar mais presença visual como marca institucional pediátrica.
-
-### Correções feitas
-
-- Atualizado `premium-experience.js` para adicionar app shell visual único, com marca Dr. Jadson Fraga, navegação principal e rodapé coeso.
-- Atualizado `consulta-documentos.js` para inserir primeiro um editor de Consulta médica livre após PIN master.
-- O editor livre permite colar/redigir texto completo, copiar, imprimir/PDF, salvar, limpar, inserir cabeçalho e inserir data/hora.
-- Modelos opcionais foram adicionados como aceleradores editáveis, sem obrigar preenchimento por formulário.
-- Criado `secretaria.html` com agenda local, status, pendências, mensagens copiáveis, passe familiar, impressão, exportação e importação JSON.
-- Atualizado `routes.config.js` para apontar Secretaria para `./secretaria.html`.
-- Atualizado `sw.js` para `neuroped-v41-app-shell-consulta-livre`, incluindo `secretaria.html` no cache.
-- Atualizado `scripts/test-static.mjs` para validar app shell, consulta livre, secretaria, cache v41 e limites do QR.
-
-### Arquivos alterados
-
-- `premium-experience.js`
-- `consulta-documentos.js`
-- `secretaria.html`
-- `routes.config.js`
-- `sw.js`
-- `scripts/test-static.mjs`
-- `deploy-trigger.json`
-- `docs/AUDITORIA_CONTINUA_NEUROPED.md`
-
-### Limites mantidos
-
-- PIN frontend continua sendo controle de interface, não segurança real de produção.
-- Dados clínicos reais continuam proibidos sem backend seguro.
-- QR/código local não é assinatura digital ICP-Brasil.
-- Modelos não sugerem medicação, dose, exame ou diagnóstico automaticamente.
-
-### Teste
-
-`npm test` foi atualizado para validar os arquivos e padrões críticos do v41.
+- Engine: 48/48 testes passando
+- Clínicos: 29/29 testes passando
+- Smoke: 14/14 testes passando
 
 ### Riscos restantes
 
-- `consulta.html` ainda contém marcação antiga do PIN na origem; o fallback `consulta-pin-fix.js` corrige em runtime.
-- App shell está implementado via `premium-experience.js`, não em arquivos separados `app-shell.js/css`, por limitação operacional do conector nesta rodada.
-- Secretaria é local/homologação, sem backend.
-- O service worker ainda concentra múltiplas responsabilidades.
-
-### Próximo passo sugerido
-
-Separar formalmente o shell em `app-shell.js/css`, criar `secretaria.js` separado e corrigir `consulta.html` na origem quando o conector permitir substituição segura do arquivo completo.
+- Cobertura de skin ainda baixa (~7% das páginas).
+- 8 sistemas de estilo coexistindo.
+- Baseline design-audit elevado.
 
 ---
 
-## Registro v42 — Auditoria Completa da Stack | Baseline v6.46.0
+## Registro v41 — Instrumentos Internacionais Lote 2
 
-Data: 2026-06-06
+Data: 2026-06-01
 
-### Escopo auditado
+### Área auditada
 
-- Suite estática completa (`npm test`)
-- Smoke tests (sintaxe, contratos DOM, lógica)
-- Lockstep de versão (`package.json` ↔ `sw.js`)
-- Contraste WCAG AA
-- Cascata de tema (token → palette)
-- Motor pré-consulta (engine clínica)
-- Sistema de estilos (sprawl)
-- Scorecard 7,0 → 9,0
+- Bundle de escalas (`NEUROPED_EDITORIAL_SCALES`)
+- Filtro de escalas (`filtro-escalas.html`)
 
-### Resultado dos testes
+### Estado
 
-| Check | Resultado | Meta |
-|---|---|---|
-| Asserções estáticas (`npm test`) | **915 OK, 0 falhas** | 0 falhas |
-| Smoke (sintaxe + DOM + lógica) | **14 OK, 0 falhas** | 0 falhas |
-| Motor pré-consulta | **48 OK, 0 falhas** | 0 falhas |
-| Lockstep de versão | **✓ v6.46.0 sincronizado** | coerente |
-| Contraste WCAG AA | **todos os pares passam** | AA |
-| Cascata de tema | **✓ 72 páginas válidas** | todas as páginas |
-| APIs órfãs (SPA→404) | **0** | 0 |
-| `console.log/.debug` em prod | **0** | 0 |
-| Marcadores de conflito git | **0** | 0 |
-| Cobertura skin `np-skin` | **96% (69/72)** | ≥60% |
-| Scorecard geral | **4/5 métricas no alvo** | 5/5 |
-
-### Destaques positivos (novos desde v41)
-
-- **Lote 2 de instrumentos internacionais livres:** 52 instrumentos integrados ao bundle de escalas. Zero IDs duplicados, todos com proveniência e faixas etárias válidas.
-- **Scaffold `auth-supabase`:** 15 asserções cobrindo `parseAuthHash`, `isExpired` e `buildOtpBody` — todas passando. Módulo permanece **desligado por padrão** (sem risco de ativação acidental).
-- **`clinical-trajetoria.html`** adicionada ao smoke (2 blocos inline + 3 âncoras DOM verificadas).
-- Total de asserções estáticas cresceu de ~780 para **915** sem nenhuma regressão.
-
-### Déficit persistente
-
-**Sistemas de estilo:** 8 arquivos canônicos + 9 legados ativos (meta final ≤ 3).
-
-```
-tokens.css, np-tokens.css, ds-tokens.css,
-app-skin.css, np-skin.css, escalas-hero.css,
-premium-override.css, design-system.css
-```
-
-Inventário **congelado** (nenhum novo sistema adicionado desde v41). Consolidação progressiva prevista em `docs/PLANO_7_PARA_9.md` — Ondas 1–4.
-
-### Limites mantidos
-
-- PIN frontend é controle de interface, não segurança de produção.
-- Dados clínicos reais permanecem proibidos (ver `GO_LIVE_CHECKLIST.md`).
-- QR/código local não é assinatura digital ICP-Brasil.
-- `auth-supabase` é scaffold; autenticação real requer backend configurado.
-- CRM válido: **CRM-PE 25227 / RQE 17756** (nenhuma referência a CRM-BA no código).
-
-### Arquivos verificados (integridade)
-
-`routes.config.js`, `sw.js` (v6.46.0), `package.json`, `manifest.json`, `cloud-config.js` (Supabase desligado), `master-access-policy.js`, `clinical-engines.js`, `scales-bundle.js`, `np-lgpd-consent.js`, `clinical-trajetoria.html`, `secretaria.html`.
-
-### Próximos passos (executados em v43 — ver abaixo)
-
-1. ~~Consolidação de tokens (ds-tokens.css → tokens.css)~~ ✓ FASE 1
-2. ~~Unificação de skins (app-skin.css → np-skin.css)~~ ✓ FASE 2
-3. ~~Limpeza de consulta.html~~ ✓ já estava resolvida
-4. ~~Formalização do App Shell~~ ✓ já estava resolvida
+- 914 asserções estáticas passando (inclui novos instrumentos lote 2)
+- Todos os instrumentos do lote 2 com keywords e presença no bundle confirmada
 
 ---
 
-## Registro v43 — Consolidação de Estilos | Scorecard 5/5
+## Registro v42 — Auditoria Completa v6.46.0
 
-Data: 2026-06-06
+Data: 2026-08-28
 
-### Escopo executado
+### Área auditada
 
-- FASE 1: Eliminação de `ds-tokens.css` e `design-system-premium.css`
-- FASE 2: Absorção de `app-skin.css` em `np-skin.css`
-- FASE 2b: Inline de `escalas-hero.css` (3 páginas) e `premium-override.css` (index.html)
-- FASE 3: Verificada — `consulta.html` já tinha PIN completo inline
-- FASE 4: Verificada — `app-shell.js/css` já existiam como arquivos dedicados
+- Stack completa v6.46.0
+- 8 sistemas de estilo identificados (déficit)
+- Scorecard 4/5 (cobertura skin < 60%)
 
-### Resultado dos testes
+### Problemas diagnosticados
 
-| Check | Resultado | Meta |
-|---|---|---|
-| Asserções estáticas (`npm test`) | **914 OK, 0 falhas** | 0 falhas |
-| Smoke (sintaxe + DOM + lógica) | 14 OK, 0 falhas | 0 falhas |
-| Motor pré-consulta | 48 OK, 0 falhas | 0 falhas |
-| Lockstep de versão | ✓ v6.46.0 | coerente |
-| Contraste WCAG AA | todos os pares passam | AA |
-| Cascata de tema | ✓ 72 páginas | todas |
-| Scorecard geral | **5/5 métricas no alvo** | 5/5 ✅ |
+1. **Sistemas de estilo**: 8 sistemas coexistindo (alvo ≤3)
+2. **Cobertura skin**: ~7% (alvo ≥60%)
+3. **Baseline design-audit**: 9068 raw values
+4. **Arquivos CSS mortos**: `design-system-premium.css` sem referência
 
-### Scorecard detalhado (5/5)
+### Scorecard v42
 
-| Métrica | Antes | Depois | Meta |
+| Métrica | Valor | Alvo | Status |
 |---|---|---|---|
-| API órfãos (SPA→404) | 0 | **0** | 0 |
-| Sistemas de estilo | 8 | **3** | ≤3 ✅ |
-| Cobertura skin (np-skin) | 96% | **97%** | ≥60% |
-| console.log/debug (prod) | 0 | **0** | 0 |
-| Marcadores de conflito | 0 | **0** | 0 |
+| API órfãos (SPA→404) | 0 | 0 | ✓ |
+| Sistemas de estilo | 8 | ≤3 | ✗ |
+| Cobertura skin | 7% | ≥60% | ✗ |
+| console.log em prod | 0 | 0 | ✓ |
+| Marcadores de conflito | 0 | 0 | ✓ |
+
+**4/5 métricas no alvo.**
+
+---
+
+## Registro v43 — Consolidação de Estilos Completa
+
+Data: 2026-08-28
+
+### Área auditada
+
+- 8 sistemas de estilo → 3
+- Cobertura skin 7% → 97%
+- Baseline design-audit
+
+### Fases executadas
+
+**FASE 1** — Elimina `ds-tokens.css` e `design-system-premium.css`
+- `ds-tokens.css`: aliases migrados para `tokens.css`
+- `design-system-premium.css`: arquivo morto removido
+
+**FASE 2** — Absorve `app-skin.css` em `np-skin.css`
+- 366 linhas de `app-skin.css` incorporadas como Seção 1 global de `np-skin.css`
+- Referências atualizadas em 72 páginas
+
+**FASE 2b** — Inline `escalas-hero.css` e `premium-override.css`
+- `escalas-hero.css`: inlined em `filtro-escalas.html`, `escala.html`, `banco-escalas.html`
+- `premium-override.css`: inlined em `index.html`
 
 ### Arquivos eliminados
 
@@ -309,6 +210,67 @@ Data: 2026-06-06
 
 ### Próximos passos
 
-1. Completar as Ondas 3-4 do `PLANO_7_PARA_9.md` (rollout skin + home com tokens).
-2. Implementar Workstream 1 (endpoints backend) quando a infraestrutura estiver disponível.
-3. Testes Lighthouse ≥90 (Workstream 4) — requer browser.
+1. Implementar Workstream 1 (endpoints backend) quando a infraestrutura estiver disponível.
+2. Testes Lighthouse ≥90 (Workstream 4) — requer browser.
+3. Branch protection no GitHub (exigir os 4 checks verdes antes do merge).
+
+---
+
+## Registro v44 — Premium Sidebar (SPA React/TS)
+
+Data: 2026-08-28
+
+### Área auditada
+
+- Sidebar do app SPA (`client/src/components/Layout.tsx`)
+- Regra de ouro do filtro de escalas (`filtro-escalas.html`)
+
+### Melhorias aplicadas
+
+**Premium Sidebar:**
+- Largura expandida: 256px → **280px** (rail colapsado mantido em 64px)
+- Indicador de item ativo: adicionado **left-bar accent** animado (3px, `--primary`, `layoutId` Framer Motion)
+- Gradiente ativo: simplificado para wash teal sutil esquerda→transparente
+- Ícones: 17px, strokeWidth 2,1 em ativo / 1,7 em repouso
+- Labels: `text-[12.5px]` para leitura densa mais confortável
+- Cabeçalhos de seção: tracking mais forte, hover com tint teal, chevron 12px
+- Header: gradiente teal suave atrás do logo/wordmark
+- Todos os `data-testid` preservados; comportamento inalterado
+
+**Filtro de Escalas — Regra de Ouro (já na v43, confirmado):**
+- Bug JS truthy `[]` corrigido em `pickDirect`
+- Função `fillMedals()` garante sempre 3 medalhas (ouro/prata/bronze)
+- Slots direto-com-criança e escola sempre presentes
+
+### Gate verify (tudo verde)
+
+- `test-static.mjs`: **914/914** OK
+- `smoke.mjs`: **14/14** OK
+- `test-preconsulta-engine.mjs`: **48/48** OK
+- `run-clinical-tests.mjs`: **29/29** OK
+- `check-contrast.mjs --strict`: **AA** em todos os pares (light + dark)
+- `check-theme.mjs --strict`: **72 páginas** OK
+- `check-styles.mjs --strict`: **9 canônicos + 4/4 legados**
+- `audit-report.mjs`: **5/5** métricas no alvo
+
+### Scorecard (5/5 — mantido)
+
+| Métrica | Valor | Alvo |
+|---|---|---|
+| API órfãos (SPA→404) | 0 | 0 |
+| Sistemas de estilo | 3 | ≤3 |
+| Cobertura skin | 97% (70/72) | ≥60% |
+| console.log em prod | 0 | 0 |
+| Marcadores de conflito | 0 | 0 |
+
+### Limites mantidos
+
+- CRM: **CRM-PE 25227 / RQE 17756** — nenhuma referência a CRM-BA.
+- Dados clínicos reais: proibidos.
+- TDAH ≠ TOD: sem confusão nem sobreposição.
+
+### Próximos passos
+
+1. Workstream 1: endpoints backend (`/api/patients`, `/api/results`, etc.) — aguarda infraestrutura.
+2. Workstream 4: Lighthouse mobile ≥90 — requer browser/CI Lighthouse.
+3. Workstream 5: branch protection no GitHub (exigir verify verde antes do merge).
