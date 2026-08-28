@@ -14,7 +14,6 @@ import {
   integer,
   index,
   uniqueIndex,
-  real,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";

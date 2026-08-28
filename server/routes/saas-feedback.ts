@@ -7,16 +7,17 @@
  * GET  /api/saas/feedback/metrics?clinicId=...&from=...&to=...
  */
 
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { eq, and, gte, lte } from "drizzle-orm";
 import { db } from "../storage.js";
 import {
   appointmentFeedback,
   submitAppointmentFeedbackSchema,
   type OperationsFeedbackMetrics,
-  type AppointmentFeedback,
 } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
+import { oneParam } from "../lib/http.js";
 
 /**
  * Calcula sentiment baseado em NPS ou rating
@@ -44,12 +45,9 @@ function calculateSentiment(
  * POST /api/saas/feedback/appointments/:appointmentId/submit
  * Submete feedback de uma consulta
  */
-function handleSubmitFeedback(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleSubmitFeedback(req: Request, res: Response) {
   try {
-    const appointmentId = req.params.appointmentId;
+    const appointmentId = oneParam(req.params.appointmentId);
     const body = req.body;
     const input = submitAppointmentFeedbackSchema.parse(body);
 
@@ -61,21 +59,21 @@ function handleSubmitFeedback(
     const existing = db
       .select()
       .from(appointmentFeedback)
-      .where((t: any) => t.appointmentId.eq(appointmentId))
-      .first();
+      .where(eq(appointmentFeedback.appointmentId, appointmentId))
+      .get();
 
     if (existing) {
       // Atualizar existente
       db.update(appointmentFeedback)
         .set({
-          rating: input.rating || undefined,
-          npsScore: input.npsScore || undefined,
-          comment: input.comment || undefined,
-          sentiment: sentiment || undefined,
+          rating: input.rating ?? undefined,
+          npsScore: input.npsScore ?? undefined,
+          comment: input.comment ?? undefined,
+          sentiment: sentiment ?? undefined,
           respondedAt: now,
           updatedAt: now,
-        } as any)
-        .where((t: any) => t.appointmentId.eq(appointmentId))
+        })
+        .where(eq(appointmentFeedback.appointmentId, appointmentId))
         .run();
     } else {
       // Criar novo
@@ -83,14 +81,14 @@ function handleSubmitFeedback(
         id: `af_${crypto.randomUUID()}`,
         appointmentId,
         clinicId,
-        rating: input.rating || undefined,
-        npsScore: input.npsScore || undefined,
-        comment: input.comment || undefined,
-        sentiment: sentiment || undefined,
+        rating: input.rating ?? undefined,
+        npsScore: input.npsScore ?? undefined,
+        comment: input.comment ?? undefined,
+        sentiment: sentiment ?? undefined,
         respondedAt: now,
         createdAt: now,
         updatedAt: now,
-      } as any);
+      });
     }
 
     return res.json({
@@ -117,18 +115,15 @@ function handleSubmitFeedback(
  * GET /api/saas/feedback/appointments/:appointmentId
  * Retorna feedback de uma consulta
  */
-function handleGetFeedback(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetFeedback(req: Request, res: Response) {
   try {
-    const appointmentId = req.params.appointmentId;
+    const appointmentId = oneParam(req.params.appointmentId);
 
     const feedback = db
       .select()
       .from(appointmentFeedback)
-      .where((t: any) => t.appointmentId.eq(appointmentId))
-      .first();
+      .where(eq(appointmentFeedback.appointmentId, appointmentId))
+      .get();
 
     if (!feedback) {
       return res.status(404).json({ error: "Feedback not found" });
@@ -145,10 +140,7 @@ function handleGetFeedback(
  * GET /api/saas/feedback/metrics?clinicId=...&from=...&to=...
  * Retorna métricas agregadas de feedback
  */
-function handleGetMetrics(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetMetrics(req: Request, res: Response) {
   try {
     const clinicId = req.query.clinicId as string;
     const from = req.query.from as string;
@@ -174,21 +166,22 @@ function handleGetMetrics(
       .select()
       .from(appointmentFeedback)
       .where(
-        (t: any) =>
-          t.clinicId.eq(clinicId) &&
-          t.createdAt.gte(from) &&
-          t.createdAt.lte(to),
+        and(
+          eq(appointmentFeedback.clinicId, clinicId),
+          gte(appointmentFeedback.createdAt, from),
+          lte(appointmentFeedback.createdAt, to),
+        ),
       )
       .all();
 
     // Agregar métricas
-    const respondedFeedbacks = feedbacks.filter((f: any) => f.respondedAt);
+    const respondedFeedbacks = feedbacks.filter((f) => f.respondedAt);
     const ratings = respondedFeedbacks
-      .filter((f: any) => f.rating)
-      .map((f: any) => f.rating as number);
+      .filter((f) => f.rating)
+      .map((f) => f.rating as number);
     const npsScores = respondedFeedbacks
-      .filter((f: any) => f.npsScore !== null)
-      .map((f: any) => f.npsScore as number);
+      .filter((f) => f.npsScore !== null)
+      .map((f) => f.npsScore as number);
 
     const averageRating =
       ratings.length > 0
@@ -212,11 +205,9 @@ function handleGetMetrics(
 
     // Contar sentimentos
     const sentimentCounts = {
-      positive: feedbacks.filter((f: any) => f.sentiment === "positive")
-        .length,
-      neutral: feedbacks.filter((f: any) => f.sentiment === "neutral").length,
-      negative: feedbacks.filter((f: any) => f.sentiment === "negative")
-        .length,
+      positive: feedbacks.filter((f) => f.sentiment === "positive").length,
+      neutral: feedbacks.filter((f) => f.sentiment === "neutral").length,
+      negative: feedbacks.filter((f) => f.sentiment === "negative").length,
     };
 
     const metrics: OperationsFeedbackMetrics = {

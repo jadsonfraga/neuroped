@@ -7,8 +7,9 @@
  * GET  /api/saas/onboarding/steps
  */
 
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { eq, and } from "drizzle-orm";
 import { db } from "../storage.js";
 import {
   onboardingChecklist,
@@ -18,15 +19,13 @@ import {
   type OnboardingProgress,
 } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
+import { oneParam } from "../lib/http.js";
 
 /**
  * GET /api/saas/onboarding/progress
  * Retorna progresso de onboarding da clínica
  */
-function handleGetProgress(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetProgress(req: Request, res: Response) {
   try {
     const clinicId = req.query.clinicId as string;
     if (!clinicId) {
@@ -43,7 +42,7 @@ function handleGetProgress(
     const steps = db
       .select()
       .from(onboardingChecklist)
-      .where((t: any) => t.clinicId.eq(clinicId))
+      .where(eq(onboardingChecklist.clinicId, clinicId))
       .all();
 
     if (!steps || steps.length === 0) {
@@ -58,12 +57,11 @@ function handleGetProgress(
       } as OnboardingProgress);
     }
 
-    const completedSteps = steps.filter((s: any) => s.completed).length;
+    const completedSteps = steps.filter((s) => s.completed).length;
     const totalSteps = steps.length;
     const percentage = Math.round((completedSteps / totalSteps) * 100);
 
-    const nextStep =
-      steps.find((s: any) => !s.completed)?.stepId || null;
+    const nextStep = steps.find((s) => !s.completed)?.stepId || null;
 
     const progress: OnboardingProgress = {
       clinicId,
@@ -71,7 +69,7 @@ function handleGetProgress(
       completedSteps,
       percentage,
       steps: steps.sort(
-        (a: any, b: any) =>
+        (a, b) =>
           onboardingSteps.indexOf(a.stepId as any) -
           onboardingSteps.indexOf(b.stepId as any),
       ),
@@ -93,12 +91,9 @@ function handleGetProgress(
  * POST /api/saas/onboarding/steps/:stepId/complete
  * Marca uma etapa de onboarding como completa
  */
-function handleCompleteStep(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleCompleteStep(req: Request, res: Response) {
   try {
-    const stepId = req.params.stepId;
+    const stepId = oneParam(req.params.stepId);
     if (!onboardingSteps.includes(stepId as any)) {
       return res.status(400).json({ error: "Invalid step ID" });
     }
@@ -112,7 +107,7 @@ function handleCompleteStep(
     }
 
     // TODO: Validar ownership
-    const user = req.user as any;
+    const user = req.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -128,11 +123,16 @@ function handleCompleteStep(
         completedBy: user.id,
         notes: input.notes || undefined,
         updatedAt: now,
-      } as any)
-      .where((t: any) => t.clinicId.eq(clinicId) && t.stepId.eq(stepId))
+      })
+      .where(
+        and(
+          eq(onboardingChecklist.clinicId, clinicId),
+          eq(onboardingChecklist.stepId, stepId as (typeof onboardingSteps)[number]),
+        ),
+      )
       .run();
 
-    if ((result as any).changes === 0) {
+    if (result.changes === 0) {
       return res
         .status(404)
         .json({ error: "Step not found or already completed" });
@@ -142,10 +142,10 @@ function handleCompleteStep(
     const steps = db
       .select()
       .from(onboardingChecklist)
-      .where((t: any) => t.clinicId.eq(clinicId))
+      .where(eq(onboardingChecklist.clinicId, clinicId))
       .all();
 
-    const completedSteps = steps.filter((s: any) => s.completed).length;
+    const completedSteps = steps.filter((s) => s.completed).length;
     const totalSteps = steps.length;
     const percentage = Math.round((completedSteps / totalSteps) * 100);
 
@@ -155,7 +155,7 @@ function handleCompleteStep(
       completedSteps,
       percentage,
       steps,
-      nextStep: steps.find((s: any) => !s.completed)?.stepId as any || null,
+      nextStep: (steps.find((s) => !s.completed)?.stepId as any) || null,
       estimatedCompletionDays: Math.max(
         1,
         Math.ceil((totalSteps - completedSteps) / 1.5),
@@ -178,10 +178,7 @@ function handleCompleteStep(
  * GET /api/saas/onboarding/steps
  * Lista todos os steps disponíveis com labels
  */
-function handleGetSteps(
-  _req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetSteps(_req: Request, res: Response) {
   const steps = onboardingSteps.map((stepId) => ({
     id: stepId,
     label: onboardingStepLabels[stepId],

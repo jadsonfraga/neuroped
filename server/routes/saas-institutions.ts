@@ -12,8 +12,9 @@
  * GET    /api/saas/institutions/:institutionId/users
  */
 
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { eq, and } from "drizzle-orm";
 import { db } from "../storage.js";
 import {
   institutions,
@@ -26,6 +27,7 @@ import {
   logAuthorizationAttempt,
   type AuthorizationContext,
 } from "../middleware/saas-authorization.js";
+import { oneParam } from "../lib/http.js";
 
 const assignClinicSchema = z
   .object({
@@ -45,18 +47,17 @@ const assignUserSchema = z
  * POST /api/saas/institutions
  * Cria nova instituição (only admins)
  */
-function handleCreateInstitution(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleCreateInstitution(req: Request, res: Response) {
   try {
     const body = req.body;
     const input = createInstitutionSchema.parse(body);
-    const user = req.user as any;
+    const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
     if (!user) {
-      logAuthorizationAttempt(authContext, "create_institution", undefined, "denied", "unauthorized");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "create_institution", undefined, "denied", "unauthorized");
+      }
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -82,9 +83,11 @@ function handleCreateInstitution(
       adminUserId: user.id,
       createdAt: now,
       updatedAt: now,
-    } as any);
+    });
 
-    logAuthorizationAttempt(authContext, "create_institution", `institution:${institutionId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "create_institution", `institution:${institutionId}`, "allowed");
+    }
 
     return res.status(201).json({
       success: true,
@@ -112,12 +115,9 @@ function handleCreateInstitution(
  * GET /api/saas/institutions
  * Lista instituições (filtered by user permissions)
  */
-function handleListInstitutions(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleListInstitutions(req: Request, res: Response) {
   try {
-    const user = req.user as any;
+    const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
     if (!user) {
@@ -129,10 +129,12 @@ function handleListInstitutions(
     const list = db
       .select()
       .from(institutions)
-      .where((i: any) => i.isActive.eq(true))
+      .where(eq(institutions.isActive, true))
       .all();
 
-    logAuthorizationAttempt(authContext, "list_institutions", undefined, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "list_institutions", undefined, "allowed");
+    }
 
     return res.json({
       total: list.length,
@@ -148,22 +150,21 @@ function handleListInstitutions(
  * GET /api/saas/institutions/:institutionId
  * Retorna detalhes de uma instituição
  */
-function handleGetInstitution(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetInstitution(req: Request, res: Response) {
   try {
-    const institutionId = req.params.institutionId;
+    const institutionId = oneParam(req.params.institutionId);
     const authContext = (req as any).authContext as AuthorizationContext;
 
     const institution = db
       .select()
       .from(institutions)
-      .where((i: any) => i.id.eq(institutionId))
-      .first();
+      .where(eq(institutions.id, institutionId))
+      .get();
 
     if (!institution) {
-      logAuthorizationAttempt(authContext, "get_institution", `institution:${institutionId}`, "denied", "not_found");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "get_institution", `institution:${institutionId}`, "denied", "not_found");
+      }
       return res.status(404).json({ error: "Institution not found" });
     }
 
@@ -171,10 +172,12 @@ function handleGetInstitution(
     const clinics = db
       .select()
       .from(institutionClinicAssignments)
-      .where((a: any) => a.institutionId.eq(institutionId))
+      .where(eq(institutionClinicAssignments.institutionId, institutionId))
       .all();
 
-    logAuthorizationAttempt(authContext, "get_institution", `institution:${institutionId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "get_institution", `institution:${institutionId}`, "allowed");
+    }
 
     return res.json({
       ...institution,
@@ -191,13 +194,10 @@ function handleGetInstitution(
  * PATCH /api/saas/institutions/:institutionId
  * Atualiza instituição
  */
-function handleUpdateInstitution(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleUpdateInstitution(req: Request, res: Response) {
   try {
-    const institutionId = req.params.institutionId;
-    const user = req.user as any;
+    const institutionId = oneParam(req.params.institutionId);
+    const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
     if (!user) {
@@ -207,11 +207,13 @@ function handleUpdateInstitution(
     const institution = db
       .select()
       .from(institutions)
-      .where((i: any) => i.id.eq(institutionId))
-      .first();
+      .where(eq(institutions.id, institutionId))
+      .get();
 
     if (!institution) {
-      logAuthorizationAttempt(authContext, "update_institution", `institution:${institutionId}`, "denied", "not_found");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "update_institution", `institution:${institutionId}`, "denied", "not_found");
+      }
       return res.status(404).json({ error: "Institution not found" });
     }
 
@@ -233,17 +235,19 @@ function handleUpdateInstitution(
     if (isActive !== undefined) updates.isActive = isActive;
 
     db.update(institutions)
-      .set(updates as any)
-      .where((i: any) => i.id.eq(institutionId))
+      .set(updates)
+      .where(eq(institutions.id, institutionId))
       .run();
 
-    logAuthorizationAttempt(authContext, "update_institution", `institution:${institutionId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "update_institution", `institution:${institutionId}`, "allowed");
+    }
 
     const updated = db
       .select()
       .from(institutions)
-      .where((i: any) => i.id.eq(institutionId))
-      .first();
+      .where(eq(institutions.id, institutionId))
+      .get();
 
     return res.json({ success: true, institution: updated });
   } catch (error) {
@@ -256,15 +260,12 @@ function handleUpdateInstitution(
  * POST /api/saas/institutions/:institutionId/clinics
  * Associa clínica à instituição
  */
-function handleAssignClinicToInstitution(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleAssignClinicToInstitution(req: Request, res: Response) {
   try {
-    const institutionId = req.params.institutionId;
+    const institutionId = oneParam(req.params.institutionId);
     const body = req.body;
     const input = assignClinicSchema.parse(body);
-    const user = req.user as any;
+    const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
     if (!user) {
@@ -274,11 +275,13 @@ function handleAssignClinicToInstitution(
     const institution = db
       .select()
       .from(institutions)
-      .where((i: any) => i.id.eq(institutionId))
-      .first();
+      .where(eq(institutions.id, institutionId))
+      .get();
 
     if (!institution) {
-      logAuthorizationAttempt(authContext, "assign_clinic", `institution:${institutionId}`, "denied", "not_found");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "assign_clinic", `institution:${institutionId}`, "denied", "not_found");
+      }
       return res.status(404).json({ error: "Institution not found" });
     }
 
@@ -286,11 +289,13 @@ function handleAssignClinicToInstitution(
     const existing = db
       .select()
       .from(institutionClinicAssignments)
-      .where((a: any) => a.clinicId.eq(input.clinicId))
-      .first();
+      .where(eq(institutionClinicAssignments.clinicId, input.clinicId))
+      .get();
 
     if (existing) {
-      logAuthorizationAttempt(authContext, "assign_clinic", `clinic:${input.clinicId}`, "denied", "already_assigned");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "assign_clinic", `clinic:${input.clinicId}`, "denied", "already_assigned");
+      }
       return res.status(409).json({ error: "Clinic already assigned to institution" });
     }
 
@@ -305,18 +310,20 @@ function handleAssignClinicToInstitution(
       assignedAt: now,
       assignedBy: user.id,
       createdAt: now,
-    } as any);
+    });
 
     // Update clinic count
     db.update(institutions)
       .set({
         clinicCount: (institution.clinicCount || 0) + 1,
         updatedAt: now,
-      } as any)
-      .where((i: any) => i.id.eq(institutionId))
+      })
+      .where(eq(institutions.id, institutionId))
       .run();
 
-    logAuthorizationAttempt(authContext, "assign_clinic", `clinic:${input.clinicId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "assign_clinic", `clinic:${input.clinicId}`, "allowed");
+    }
 
     return res.status(201).json({
       success: true,
@@ -341,21 +348,20 @@ function handleAssignClinicToInstitution(
  * GET /api/saas/institutions/:institutionId/clinics
  * Lista clínicas associadas
  */
-function handleListInstitutionClinics(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleListInstitutionClinics(req: Request, res: Response) {
   try {
-    const institutionId = req.params.institutionId;
+    const institutionId = oneParam(req.params.institutionId);
     const authContext = (req as any).authContext as AuthorizationContext;
 
     const clinics = db
       .select()
       .from(institutionClinicAssignments)
-      .where((a: any) => a.institutionId.eq(institutionId))
+      .where(eq(institutionClinicAssignments.institutionId, institutionId))
       .all();
 
-    logAuthorizationAttempt(authContext, "list_clinics", `institution:${institutionId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "list_clinics", `institution:${institutionId}`, "allowed");
+    }
 
     return res.json({
       institutionId,
@@ -372,15 +378,12 @@ function handleListInstitutionClinics(
  * POST /api/saas/institutions/:institutionId/users
  * Adiciona usuário à instituição
  */
-function handleAssignUserToInstitution(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleAssignUserToInstitution(req: Request, res: Response) {
   try {
-    const institutionId = req.params.institutionId;
+    const institutionId = oneParam(req.params.institutionId);
     const body = req.body;
     const input = assignUserSchema.parse(body);
-    const user = req.user as any;
+    const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
     if (!user) {
@@ -390,11 +393,13 @@ function handleAssignUserToInstitution(
     const institution = db
       .select()
       .from(institutions)
-      .where((i: any) => i.id.eq(institutionId))
-      .first();
+      .where(eq(institutions.id, institutionId))
+      .get();
 
     if (!institution) {
-      logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "denied", "not_found");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "denied", "not_found");
+      }
       return res.status(404).json({ error: "Institution not found" });
     }
 
@@ -402,11 +407,18 @@ function handleAssignUserToInstitution(
     const existing = db
       .select()
       .from(institutionUsers)
-      .where((iu: any) => iu.institutionId.eq(institutionId) && iu.userId.eq(input.userId))
-      .first();
+      .where(
+        and(
+          eq(institutionUsers.institutionId, institutionId),
+          eq(institutionUsers.userId, input.userId),
+        ),
+      )
+      .get();
 
     if (existing) {
-      logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "denied", "already_assigned");
+      if (authContext) {
+        logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "denied", "already_assigned");
+      }
       return res.status(409).json({ error: "User already assigned to institution" });
     }
 
@@ -421,9 +433,11 @@ function handleAssignUserToInstitution(
       grantedAt: now,
       grantedBy: user.id,
       createdAt: now,
-    } as any);
+    });
 
-    logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "allowed");
+    }
 
     return res.status(201).json({
       success: true,
@@ -448,21 +462,20 @@ function handleAssignUserToInstitution(
  * GET /api/saas/institutions/:institutionId/users
  * Lista usuários da instituição
  */
-function handleListInstitutionUsers(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleListInstitutionUsers(req: Request, res: Response) {
   try {
-    const institutionId = req.params.institutionId;
+    const institutionId = oneParam(req.params.institutionId);
     const authContext = (req as any).authContext as AuthorizationContext;
 
     const users = db
       .select()
       .from(institutionUsers)
-      .where((iu: any) => iu.institutionId.eq(institutionId))
+      .where(eq(institutionUsers.institutionId, institutionId))
       .all();
 
-    logAuthorizationAttempt(authContext, "list_users", `institution:${institutionId}`, "allowed");
+    if (authContext) {
+      logAuthorizationAttempt(authContext, "list_users", `institution:${institutionId}`, "allowed");
+    }
 
     return res.json({
       institutionId,

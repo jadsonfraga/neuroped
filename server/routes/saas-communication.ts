@@ -10,22 +10,22 @@
  * POST   /api/saas/communication/send
  */
 
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { eq, and } from "drizzle-orm";
 import { db } from "../storage.js";
 import {
   communicationTemplates,
   communicationChannels,
   sendCommunicationSchema,
-  type CommunicationTemplate,
 } from "@shared/saas-schema-extended";
 import { requireAuth } from "../middleware/auth.js";
 import {
   validateClinicOwnership,
-  validateProfessionalOwnership,
   logAuthorizationAttempt,
   type AuthorizationContext,
 } from "../middleware/saas-authorization.js";
+import { oneParam } from "../lib/http.js";
 
 const createTemplateSchema = z
   .object({
@@ -37,20 +37,15 @@ const createTemplateSchema = z
   })
   .strict();
 
-type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
-
 /**
  * POST /api/saas/templates/communication
  * Cria novo template de comunicação
  */
-function handleCreateCommunicationTemplate(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleCreateCommunicationTemplate(req: Request, res: Response) {
   try {
     const body = req.body;
     const input = createTemplateSchema.parse(body);
-    const user = req.user as any;
+    const user = req.user;
     const clinicId = (req as any).clinicId || (req.query.clinicId as string);
     const authContext = (req as any).authContext as AuthorizationContext;
 
@@ -66,12 +61,13 @@ function handleCreateCommunicationTemplate(
       .select()
       .from(communicationTemplates)
       .where(
-        (t: any) =>
-          t.clinicId.eq(clinicId) &&
-          t.channel.eq(input.channel) &&
-          t.name.eq(input.name),
+        and(
+          eq(communicationTemplates.clinicId, clinicId),
+          eq(communicationTemplates.channel, input.channel),
+          eq(communicationTemplates.name, input.name),
+        ),
       )
-      .first();
+      .get();
 
     if (existing) {
       logAuthorizationAttempt(authContext, "create_communication_template", `template:${input.name}`, "denied", "duplicate");
@@ -94,7 +90,7 @@ function handleCreateCommunicationTemplate(
       createdBy: user.id,
       createdAt: now,
       updatedAt: now,
-    } as any);
+    });
 
     logAuthorizationAttempt(authContext, "create_communication_template", `template:${templateId}`, "allowed");
 
@@ -128,10 +124,7 @@ function handleCreateCommunicationTemplate(
  * GET /api/saas/templates/communication
  * Lista templates de comunicação da clínica
  */
-function handleListCommunicationTemplates(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleListCommunicationTemplates(req: Request, res: Response) {
   try {
     const clinicId = (req as any).clinicId || (req.query.clinicId as string);
     const channel = req.query.channel as string;
@@ -141,20 +134,20 @@ function handleListCommunicationTemplates(
       return res.status(400).json({ error: "Missing clinicId" });
     }
 
-    let query = db
-      .select()
-      .from(communicationTemplates)
-      .where((t: any) => t.clinicId.eq(clinicId));
-
-    if (channel && communicationChannels.includes(channel as any)) {
-      query = query.where((t: any) => t.channel.eq(channel));
+    const conditions = [eq(communicationTemplates.clinicId, clinicId)];
+    if (channel && (communicationChannels as readonly string[]).includes(channel)) {
+      conditions.push(eq(communicationTemplates.channel, channel as any));
     }
 
-    const templates = query.all();
+    const templates = db
+      .select()
+      .from(communicationTemplates)
+      .where(and(...conditions))
+      .all();
 
     logAuthorizationAttempt(authContext, "list_communication_templates", `clinic:${clinicId}`, "allowed");
 
-    const parsed = templates.map((t: any) => ({
+    const parsed = templates.map((t) => ({
       ...t,
       variables: t.variables ? JSON.parse(t.variables) : [],
     }));
@@ -174,12 +167,9 @@ function handleListCommunicationTemplates(
  * GET /api/saas/templates/communication/:templateId
  * Retorna detalhes de um template
  */
-function handleGetCommunicationTemplate(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetCommunicationTemplate(req: Request, res: Response) {
   try {
-    const templateId = req.params.templateId;
+    const templateId = oneParam(req.params.templateId);
     const clinicId = (req as any).clinicId || (req.query.clinicId as string);
     const authContext = (req as any).authContext as AuthorizationContext;
 
@@ -190,8 +180,13 @@ function handleGetCommunicationTemplate(
     const template = db
       .select()
       .from(communicationTemplates)
-      .where((t: any) => t.id.eq(templateId) && t.clinicId.eq(clinicId))
-      .first();
+      .where(
+        and(
+          eq(communicationTemplates.id, templateId),
+          eq(communicationTemplates.clinicId, clinicId),
+        ),
+      )
+      .get();
 
     if (!template) {
       logAuthorizationAttempt(authContext, "get_communication_template", `template:${templateId}`, "denied", "not_found");
@@ -214,14 +209,11 @@ function handleGetCommunicationTemplate(
  * PATCH /api/saas/templates/communication/:templateId
  * Atualiza um template
  */
-function handleUpdateCommunicationTemplate(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleUpdateCommunicationTemplate(req: Request, res: Response) {
   try {
-    const templateId = req.params.templateId;
+    const templateId = oneParam(req.params.templateId);
     const clinicId = (req as any).clinicId || (req.query.clinicId as string);
-    const user = req.user as any;
+    const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
     if (!clinicId || !user) {
@@ -231,8 +223,13 @@ function handleUpdateCommunicationTemplate(
     const template = db
       .select()
       .from(communicationTemplates)
-      .where((t: any) => t.id.eq(templateId) && t.clinicId.eq(clinicId))
-      .first();
+      .where(
+        and(
+          eq(communicationTemplates.id, templateId),
+          eq(communicationTemplates.clinicId, clinicId),
+        ),
+      )
+      .get();
 
     if (!template) {
       logAuthorizationAttempt(authContext, "update_communication_template", `template:${templateId}`, "denied", "not_found");
@@ -251,8 +248,8 @@ function handleUpdateCommunicationTemplate(
     if (isActive !== undefined) updates.isActive = isActive;
 
     db.update(communicationTemplates)
-      .set(updates as any)
-      .where((t: any) => t.id.eq(templateId))
+      .set(updates)
+      .where(eq(communicationTemplates.id, templateId))
       .run();
 
     logAuthorizationAttempt(authContext, "update_communication_template", `template:${templateId}`, "allowed");
@@ -260,14 +257,14 @@ function handleUpdateCommunicationTemplate(
     const updated = db
       .select()
       .from(communicationTemplates)
-      .where((t: any) => t.id.eq(templateId))
-      .first();
+      .where(eq(communicationTemplates.id, templateId))
+      .get();
 
     return res.json({
       success: true,
       template: {
         ...updated,
-        variables: updated.variables ? JSON.parse(updated.variables) : [],
+        variables: updated!.variables ? JSON.parse(updated!.variables!) : [],
       },
     });
   } catch (error) {
@@ -280,12 +277,9 @@ function handleUpdateCommunicationTemplate(
  * DELETE /api/saas/templates/communication/:templateId
  * Deleta um template (soft delete)
  */
-function handleDeleteCommunicationTemplate(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleDeleteCommunicationTemplate(req: Request, res: Response) {
   try {
-    const templateId = req.params.templateId;
+    const templateId = oneParam(req.params.templateId);
     const clinicId = (req as any).clinicId || (req.query.clinicId as string);
     const authContext = (req as any).authContext as AuthorizationContext;
 
@@ -296,8 +290,13 @@ function handleDeleteCommunicationTemplate(
     const template = db
       .select()
       .from(communicationTemplates)
-      .where((t: any) => t.id.eq(templateId) && t.clinicId.eq(clinicId))
-      .first();
+      .where(
+        and(
+          eq(communicationTemplates.id, templateId),
+          eq(communicationTemplates.clinicId, clinicId),
+        ),
+      )
+      .get();
 
     if (!template) {
       logAuthorizationAttempt(authContext, "delete_communication_template", `template:${templateId}`, "denied", "not_found");
@@ -308,8 +307,8 @@ function handleDeleteCommunicationTemplate(
       .set({
         isActive: false,
         updatedAt: new Date().toISOString(),
-      } as any)
-      .where((t: any) => t.id.eq(templateId))
+      })
+      .where(eq(communicationTemplates.id, templateId))
       .run();
 
     logAuthorizationAttempt(authContext, "delete_communication_template", `template:${templateId}`, "allowed");
@@ -329,10 +328,7 @@ function handleDeleteCommunicationTemplate(
  * POST /api/saas/communication/send
  * Envia comunicação usando um template
  */
-function handleSendCommunication(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleSendCommunication(req: Request, res: Response) {
   try {
     const body = req.body;
     const input = sendCommunicationSchema.parse(body);
@@ -347,8 +343,13 @@ function handleSendCommunication(
     const template = db
       .select()
       .from(communicationTemplates)
-      .where((t: any) => t.id.eq(input.templateId) && t.clinicId.eq(clinicId))
-      .first();
+      .where(
+        and(
+          eq(communicationTemplates.id, input.templateId),
+          eq(communicationTemplates.clinicId, clinicId),
+        ),
+      )
+      .get();
 
     if (!template) {
       logAuthorizationAttempt(authContext, "send_communication", `template:${input.templateId}`, "denied", "template_not_found");
@@ -366,13 +367,13 @@ function handleSendCommunication(
     //   case "whatsapp": await sendWhatsApp(...);
     // }
 
-    // TODO: Update usage count
+    // Update usage count
     db.update(communicationTemplates)
       .set({
         usageCount: (template.usageCount || 0) + 1,
         updatedAt: new Date().toISOString(),
-      } as any)
-      .where((t: any) => t.id.eq(input.templateId))
+      })
+      .where(eq(communicationTemplates.id, input.templateId))
       .run();
 
     logAuthorizationAttempt(authContext, "send_communication", `template:${input.templateId}`, "allowed");

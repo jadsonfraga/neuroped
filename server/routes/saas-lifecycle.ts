@@ -6,14 +6,11 @@
  * GET  /api/saas/lifecycle/status?tenantId=...
  */
 
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { eq, asc } from "drizzle-orm";
 import { db } from "../storage.js";
-import {
-  tenantLifecycleEvents,
-  lifecycleEventTypes,
-  type TenantLifecycleEvent,
-} from "@shared/saas-schema";
+import { tenantLifecycleEvents } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
 
 /**
@@ -26,20 +23,15 @@ const requestReactivationSchema = z
   })
   .strict();
 
-type RequestReactivationInput = z.infer<typeof requestReactivationSchema>;
-
 /**
  * POST /api/saas/lifecycle/request-reactivation
  * Solicita reativação de uma clínica fechada
  */
-function handleRequestReactivation(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleRequestReactivation(req: Request, res: Response) {
   try {
     const body = req.body;
     const input = requestReactivationSchema.parse(body);
-    const user = req.user as any;
+    const user = req.user;
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -53,14 +45,14 @@ function handleRequestReactivation(
     const now = new Date().toISOString();
 
     // Buscar último estado da clínica
-    const lastEvent = db
+    const events = db
       .select()
       .from(tenantLifecycleEvents)
-      .where((t: any) => t.tenantId.eq(input.tenantId))
-      .orderBy((t: any) => t.createdAt)
-      .all()
-      .at(-1) as TenantLifecycleEvent | undefined;
+      .where(eq(tenantLifecycleEvents.tenantId, input.tenantId))
+      .orderBy(asc(tenantLifecycleEvents.createdAt))
+      .all();
 
+    const lastEvent = events.at(-1);
     const previousState = lastEvent?.newState || "unknown";
 
     // Validar que clínica está em estado "closed"
@@ -83,13 +75,13 @@ function handleRequestReactivation(
       id: `tle_${crypto.randomUUID()}`,
       tenantId: input.tenantId,
       eventType: "reactivation_requested",
-      reason: input.reason || undefined,
+      reason: input.reason ?? undefined,
       triggeredBy: user.id,
       previousState,
       newState: "reactivation_requested",
       metadata: JSON.stringify({ ip: req.ip }),
       createdAt: now,
-    } as any);
+    });
 
     return res.json({
       success: true,
@@ -114,10 +106,7 @@ function handleRequestReactivation(
  * GET /api/saas/lifecycle/status?tenantId=...
  * Retorna status de lifecycle da clínica
  */
-function handleGetStatus(
-  req: Express.Request,
-  res: Express.Response,
-) {
+function handleGetStatus(req: Request, res: Response) {
   try {
     const tenantId = req.query.tenantId as string;
     if (!tenantId) {
@@ -125,7 +114,7 @@ function handleGetStatus(
     }
 
     // TODO: Validar ownership
-    const user = req.user as any;
+    const user = req.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -134,8 +123,8 @@ function handleGetStatus(
     const events = db
       .select()
       .from(tenantLifecycleEvents)
-      .where((t: any) => t.tenantId.eq(tenantId))
-      .orderBy((t: any) => t.createdAt)
+      .where(eq(tenantLifecycleEvents.tenantId, tenantId))
+      .orderBy(asc(tenantLifecycleEvents.createdAt))
       .all();
 
     if (events.length === 0) {
@@ -174,9 +163,5 @@ export function registerLifecycleRoutes(app: Express) {
     requireAuth,
     handleRequestReactivation,
   );
-  app.get(
-    "/api/saas/lifecycle/status",
-    requireAuth,
-    handleGetStatus,
-  );
+  app.get("/api/saas/lifecycle/status", requireAuth, handleGetStatus);
 }

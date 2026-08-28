@@ -7,7 +7,6 @@
  * GET  /api/saas/onboarding/steps
  */
 
-import type { Express } from "express";
 import { z } from "zod";
 import {
   onboardingChecklist,

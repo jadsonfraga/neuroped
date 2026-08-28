@@ -5,7 +5,6 @@
  * Integrates with rate limiting and audit trail
  */
 
-import type { Express } from "express";
 import { db } from "../storage.js";
 import { authorizationLogs } from "@shared/saas-schema-extended";
 
@@ -159,9 +158,9 @@ export function validateProfessionalOwnership(
  * Helper: Check if user has specific role in clinic
  */
 export function hasClinicRole(
-  user: any,
-  clinicId: string,
-  requiredRole: string,
+  _user: any,
+  _clinicId: string,
+  _requiredRole: string,
 ): boolean {
   // TODO: Query institution_users table to check role
   // const userRole = db

@@ -5,7 +5,8 @@
  * Prevents API abuse while ensuring fair usage across all clinics
  */
 
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
+import { eq, and } from "drizzle-orm";
 import { db } from "../storage.js";
 import { rateLimitState } from "@shared/saas-schema-extended";
 
@@ -16,12 +17,12 @@ import { rateLimitState } from "@shared/saas-schema-extended";
 export const rateLimitConfig: Record<string, { perMinute?: number; perHour: number; perDay?: number }> = {
   // Onboarding (moderate use)
   "GET /api/saas/onboarding/progress": { perHour: 500 },
-  "POST /api/saas/onboarding/steps/:stepId/complete": { perHour: 100 },
+  "POST /api/saas/onboarding/steps/:id/complete": { perHour: 100 },
   "GET /api/saas/onboarding/steps": { perHour: 500 },
 
   // Feedback (high frequency expected)
-  "POST /api/saas/feedback/appointments/:appointmentId/submit": { perHour: 1000 },
-  "GET /api/saas/feedback/appointments/:appointmentId": { perHour: 500 },
+  "POST /api/saas/feedback/appointments/:id/submit": { perHour: 1000 },
+  "GET /api/saas/feedback/appointments/:id": { perHour: 500 },
   "GET /api/saas/feedback/metrics": { perHour: 100 },
 
   // Lifecycle (low frequency)
@@ -31,10 +32,10 @@ export const rateLimitConfig: Record<string, { perMinute?: number; perHour: numb
   // Templates (moderate use)
   "GET /api/saas/templates/availability": { perHour: 500 },
   "POST /api/saas/templates/availability": { perHour: 100 },
-  "GET /api/saas/templates/availability/:templateId": { perHour: 500 },
-  "PATCH /api/saas/templates/availability/:templateId": { perHour: 100 },
-  "DELETE /api/saas/templates/availability/:templateId": { perHour: 50 },
-  "POST /api/saas/templates/availability/:templateId/apply": { perHour: 100 },
+  "GET /api/saas/templates/availability/:id": { perHour: 500 },
+  "PATCH /api/saas/templates/availability/:id": { perHour: 100 },
+  "DELETE /api/saas/templates/availability/:id": { perHour: 50 },
+  "POST /api/saas/templates/availability/:id/apply": { perHour: 100 },
 
   // Communication (new module)
   "GET /api/saas/templates/communication": { perHour: 500 },
@@ -74,12 +75,13 @@ export function checkRateLimit(
       .select()
       .from(rateLimitState)
       .where(
-        (t: any) =>
-          t.clinicId.eq(clinicId) &&
-          t.endpoint.eq(endpoint) &&
-          t.windowStart.eq(windowStartISO),
+        and(
+          eq(rateLimitState.clinicId, clinicId),
+          eq(rateLimitState.endpoint, endpoint),
+          eq(rateLimitState.windowStart, windowStartISO),
+        ),
       )
-      .first();
+      .get();
 
     if (!record) {
       // Create new window record
@@ -96,13 +98,13 @@ export function checkRateLimit(
         lastRequestAt: now.toISOString(),
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
-      } as any);
+      });
 
       record = db
         .select()
         .from(rateLimitState)
-        .where((t: any) => t.id.eq(recordId))
-        .first();
+        .where(eq(rateLimitState.id, recordId))
+        .get();
     }
 
     const currentCount = record?.requestCount || 0;
@@ -114,8 +116,8 @@ export function checkRateLimit(
         .set({
           status: currentCount >= limit * 1.5 ? "blocked" : "throttled",
           updatedAt: now.toISOString(),
-        } as any)
-        .where((t: any) => t.id.eq(record.id))
+        })
+        .where(eq(rateLimitState.id, record!.id))
         .run();
 
       return {
@@ -132,8 +134,8 @@ export function checkRateLimit(
         requestCount: currentCount + 1,
         lastRequestAt: now.toISOString(),
         updatedAt: now.toISOString(),
-      } as any)
-      .where((t: any) => t.id.eq(record.id))
+      })
+      .where(eq(rateLimitState.id, record!.id))
       .run();
 
     return {
@@ -159,8 +161,8 @@ export function checkRateLimit(
  * Usage: app.use(saasRateLimitMiddleware)
  */
 export function saasRateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
-  const user = (req as any).user;
-  const clinicId = (req as any).clinicId || user?.clinicId;
+  const user = req.user;
+  const clinicId = (req as any).clinicId || (user as any)?.clinicId;
 
   if (!clinicId) {
     return next();
@@ -172,7 +174,7 @@ export function saasRateLimitMiddleware(req: Request, res: Response, next: NextF
 
   // Normalize endpoint (replace IDs with :id placeholders)
   const normalizedEndpoint = endpoint
-    .replace(/\/[a-f0-9\-]{36}/g, "/:id") // UUID pattern
+    .replace(/\/[a-f0-9-]{36}/g, "/:id") // UUID pattern
     .replace(/\/[a-z0-9_]+_[a-z0-9]+/g, "/:id"); // Token pattern
 
   const config = rateLimitConfig[normalizedEndpoint];

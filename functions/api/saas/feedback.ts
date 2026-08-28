@@ -13,9 +13,7 @@ import type { HonoContext } from "./types";
 import {
   appointmentFeedback,
   submitAppointmentFeedbackSchema,
-  operationsFeedbackMetricsSchema,
   type OperationsFeedbackMetrics,
-  type AppointmentFeedback,
 } from "@shared/saas-schema";
 
 const router = new Hono<HonoContext>();
@@ -64,10 +62,9 @@ router.post("/appointments/:appointmentId/submit", async (c) => {
       .where((t) => t.appointmentId.eq(appointmentId))
       .first();
 
-    let result;
     if (existing) {
       // Atualizar existente
-      result = await db
+      await db
         .update(appointmentFeedback)
         .set({
           rating: input.rating || undefined,
@@ -82,7 +79,7 @@ router.post("/appointments/:appointmentId/submit", async (c) => {
     } else {
       // Criar novo (clinicId será preenchido pela chamada)
       const clinicId = c.req.query("clinicId") || "unknown";
-      result = await db
+      await db
         .insert(appointmentFeedback)
         .values({
           id: `af_${crypto.randomUUID()}`,
