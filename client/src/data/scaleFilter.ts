@@ -13,6 +13,7 @@ import { exemplosPais2026 } from "./exemplosPais2026";
 // Manifesto gerado: ids e contagens sem carregar centenas de itens clínicos
 // apenas para testar existência/completude no catálogo.
 import { INTERACTIVE_SCALE_IDS, INTERACTIVE_SCALE_ITEM_COUNTS } from "./interactiveScaleIds.generated";
+import { symptomSignalScore, buildJustification } from "./symptomSignalMap";
 
 export type Prioridade = "triagem" | "diagnostica" | "monitorizacao";
 // "crianca" e "teste_direto_crianca" são tratados como aplicação direta com a criança.
@@ -1019,43 +1020,101 @@ export const allScalesComFichas: ScaleEntry[] = dedupeCatalog(allScalesComDescri
 
 export const allScales: ScaleEntry[] = allScalesComFichas.filter(aplicavelDeFato);
 
-// Filtrar escalas por queixa(s) e faixa etária (min/max em meses)
+export interface FilteredScale {
+  scale: ScaleEntry;
+  justification: string;
+}
+
+/**
+ * Filtro principal de escalas por queixa(s), faixa etária e sintomas observados.
+ *
+ * Fórmula de ranking (5 fatores, total = 1.0):
+ *   finalScore = symptomSignalScore * 0.50
+ *              + ageFitScore        * 0.20
+ *              + complaintContextScore * 0.15
+ *              + respondentFitScore * 0.10
+ *              + appAvailabilityScore * 0.05
+ *
+ * Quando nenhum sintoma é selecionado, symptomSignalScore = 0 para todas as
+ * escalas e os pesos dos demais fatores são redistribuídos proporcionalmente
+ * para manter o total igual a 1.0.
+ */
 export function filterScales(
   selectedQueixas: string[],
-  ageRange: { min: number; max: number } | null
-): ScaleEntry[] {
+  ageRange: { min: number; max: number } | null,
+  selectedSymptomIds: string[] = [],
+): FilteredScale[] {
+  const hasSymptoms = selectedSymptomIds.length > 0;
+  // Pesos base
+  const W_SYMPTOM   = hasSymptoms ? 0.50 : 0;
+  const remaining   = 1 - W_SYMPTOM;
+  // Redistribuição proporcional dos 4 fatores restantes quando sem sintomas
+  const BASE = hasSymptoms
+    ? { age: 0.20, complaint: 0.15, respondent: 0.10, app: 0.05 }
+    : { age: 0.20 / 0.50, complaint: 0.15 / 0.50, respondent: 0.10 / 0.50, app: 0.05 / 0.50 };
+  const sumBase = BASE.age + BASE.complaint + BASE.respondent + BASE.app;
+  const W_AGE        = (BASE.age        / sumBase) * remaining;
+  const W_COMPLAINT  = (BASE.complaint  / sumBase) * remaining;
+  const W_RESPONDENT = (BASE.respondent / sumBase) * remaining;
+  const W_APP        = (BASE.app        / sumBase) * remaining;
+
+  const prioScore = { triagem: 1.0, diagnostica: 0.6, monitorizacao: 0.3 } as const;
+
   return allScales
     .filter(s => {
-      // Queixa: a escala deve ter pelo menos uma queixa selecionada
       const matchQueixa = selectedQueixas.length === 0 || s.queixas.some(q => selectedQueixas.includes(q));
-      // Idade: sobreposição de faixas (a escala cobre algum ponto da faixa selecionada)
       const matchAge = ageRange === null || (s.ageMax >= ageRange.min && s.ageMin <= ageRange.max);
       return matchQueixa && matchAge;
     })
     .map(s => {
-      // Scoring de relevância: mais queixas matching = mais relevante
-      let relevance = 0;
-      if (selectedQueixas.length > 0) {
-        relevance = s.queixas.filter(q => selectedQueixas.includes(q)).length;
+      // 1. symptomSignalScore (0–1)
+      const sScore = symptomSignalScore(s.id, selectedSymptomIds);
+
+      // 2. ageFitScore: sobreposição normalizada com a faixa etária selecionada
+      let ageScore = 0.5; // neutro quando sem faixa
+      if (ageRange !== null) {
+        const overlapMin = Math.max(s.ageMin, ageRange.min);
+        const overlapMax = Math.min(s.ageMax, ageRange.max);
+        const overlap = Math.max(0, overlapMax - overlapMin);
+        const rangeSpan = ageRange.max - ageRange.min || 1;
+        ageScore = Math.min(1, overlap / rangeSpan);
       }
-      // Bonus: se está implementada no app
-      if (s.appRoute) relevance += 0.5;
-      return { scale: s, relevance };
+
+      // 3. complaintContextScore: proporção de queixas cobertas
+      let complaintScore = 0.5;
+      if (selectedQueixas.length > 0) {
+        const matched = s.queixas.filter(q => selectedQueixas.includes(q)).length;
+        complaintScore = matched / selectedQueixas.length;
+      }
+
+      // 4. respondentFitScore: baseado em prioridade (proxy de respondente)
+      const respondentScore = prioScore[s.prioridade] ?? 0.3;
+
+      // 5. appAvailabilityScore
+      const appScore = s.appRoute ? 1.0 : 0.0;
+
+      const finalScore =
+        W_SYMPTOM   * sScore        +
+        W_AGE       * ageScore      +
+        W_COMPLAINT * complaintScore +
+        W_RESPONDENT * respondentScore +
+        W_APP       * appScore;
+
+      return {
+        scale: s,
+        finalScore,
+        justification: buildJustification(s.id, selectedSymptomIds),
+      };
     })
     .sort((a, b) => {
-      // Prioridade: triagem > diagnóstica > monitorização
-      const prio = { triagem: 0, diagnostica: 1, monitorizacao: 2 };
-      const prioDiff = prio[a.scale.prioridade] - prio[b.scale.prioridade];
-      if (prioDiff !== 0) return prioDiff;
-      // Dentro da mesma prioridade, mais relevante primeiro
-      if (b.relevance !== a.relevance) return b.relevance - a.relevance;
-      // Escalas com rota no app primeiro
+      if (Math.abs(b.finalScore - a.finalScore) > 0.001) return b.finalScore - a.finalScore;
       if (a.scale.appRoute && !b.scale.appRoute) return -1;
       if (!a.scale.appRoute && b.scale.appRoute) return 1;
       return a.scale.name.localeCompare(b.scale.name);
     })
-    .map(r => r.scale);
+    .map(({ scale, justification }) => ({ scale, justification }));
 }
+
 
 // Validation: detect duplicate scale IDs in catalog
 function validateNoDuplicateIds(catalog: ScaleEntry[]): string[] {
