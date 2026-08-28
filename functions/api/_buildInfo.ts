@@ -1,7 +1,7 @@
 // GERADO AUTOMATICAMENTE por scripts/gen-build-info.mjs — não editar à mão.
 export const BUILD_INFO = {
   "version": "2.0.0-fullstack",
-  "buildDate": "2026-08-19T23:09:05.739Z",
-  "commit": "7048ec20",
+  "buildDate": "2026-08-28T21:13:11.672Z",
+  "commit": "21b4803",
   "branch": "main"
 } as const;
