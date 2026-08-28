@@ -44,3 +44,9 @@ A rodada adicional foi validada com `npm run check`, `npm run lint`, migrations,
 Foi adicionado um manifesto textual SHA-256 para as migrations SaaS 0016–0023, evitando falsos positivos do guard de acesso e permitindo detectar drift antes de qualquer mutação remota. O workflow exige `rollback_reference` quando `apply_migrations=true`, recusa referências de demonstração e mantém a aplicação forward-only.
 
 A evidência de staging agora é gerada sem PHI, secrets ou alteração remota. Ela contém somente o ambiente, referência não sensível do D1, digest do manifesto, contagem de migrations e flags de postura. O guard de acesso foi reexecutado após a correção e passou sem exceções.
+
+## Execução incremental: atestação de environment e D1
+
+A rodada acrescentou a atestação explícita entre `inputs.environment`, `vars.ENVIRONMENT`, `inputs.d1_database` e `vars.D1_DATABASE_NAME`. O workflow não permite inferir o banco alvo nem prosseguir quando o D1 declarado não corresponde ao environment selecionado. A referência de rollback continua obrigatória para qualquer aplicação de migration.
+
+Na execução final desta rodada, todos os gates retornaram código 0: build, bundle Cloudflare Functions via Wrangler, audit de segurança, migrations, hardening, fluxo operacional, manifesto, evidência staging, separação público/clínico, política de acesso, navegação, inventário, política de persistência browser-side, boundary zero-PHI, E2E da Central e acessibilidade integral. O build mantém apenas o aviso conhecido de chunks grandes; não houve erro de compilação.

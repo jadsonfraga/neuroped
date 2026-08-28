@@ -108,6 +108,7 @@ jobs:
           PAGES_PROJECT: ${{ inputs.pages_project }}
           APP_BASE_URL: ${{ vars.APP_BASE_URL }}
           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+          D1_DATABASE_NAME: ${{ vars.D1_DATABASE_NAME }}
         run: |
           set -euo pipefail
           npx wrangler@4 pages secret list --project-name "$PAGES_PROJECT" > /tmp/pages-secret-names.json
@@ -127,11 +128,14 @@ jobs:
           NODE
           test -n "$APP_BASE_URL" || { echo "::error::vars.APP_BASE_URL ausente"; exit 1; }
           test -n "$ENVIRONMENT" || { echo "::error::vars.ENVIRONMENT ausente"; exit 1; }
+          test "$ENVIRONMENT" = "${{ inputs.environment }}" || { echo "::error::ENVIRONMENT não corresponde ao environment selecionado"; exit 1; }
+          test -n "$D1_DATABASE_NAME" || { echo "::error::vars.D1_DATABASE_NAME ausente; não é permitido inferir o D1 alvo"; exit 1; }
+          test "$D1_DATABASE_NAME" = "${{ inputs.d1_database }}" || { echo "::error::d1_database não corresponde ao D1 declarado no environment"; exit 1; }
           if [ "$ENVIRONMENT" = "production" ] && [[ "$APP_BASE_URL" != https://* ]]; then
             echo "::error::APP_BASE_URL de production precisa usar HTTPS";
             exit 1;
           fi
-          echo "Secret names presentes; APP_BASE_URL/ENVIRONMENT validados sem exibir valores.";
+          echo "Secret names presentes; APP_BASE_URL/ENVIRONMENT/D1_DATABASE_NAME validados sem exibir valores."
 
       - name: Refuse production mutation without explicit confirmation
         if: inputs.apply_migrations == true && inputs.environment == 'production'

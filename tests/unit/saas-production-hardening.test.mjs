@@ -141,6 +141,8 @@ assert.match(productionGates, /pages secret list/);
 assert.match(productionGates, /CLINICAL_LIVE_ENABLED/);
 assert.match(productionGates, /metadata-only/);
 assert.match(productionGates, /rollback_reference/);
+assert.match(productionGates, /D1_DATABASE_NAME/);
+assert.match(productionGates, /d1_database não corresponde ao D1 declarado/);
 assert.match(productionGates, /saas-migration-manifest/);
 assert.match(migrationManifest, /SAAS_MIGRATION_MANIFEST_MISMATCH/);
 assert.match(migrationManifest, /sha256/);
