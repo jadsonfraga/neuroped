@@ -46,6 +46,8 @@ import { registerOnboardingRoutes } from "./routes/saas-onboarding.js";
 import { registerFeedbackRoutes } from "./routes/saas-feedback.js";
 import { registerLifecycleRoutes } from "./routes/saas-lifecycle.js";
 import { registerAvailabilityTemplateRoutes } from "./routes/saas-availability-templates.js";
+import { registerCommunicationRoutes } from "./routes/saas-communication.js";
+import { registerInstitutionRoutes } from "./routes/saas-institutions.js";
 
 const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
@@ -131,11 +133,13 @@ export async function registerRoutes(
   // ----- Memória clínica persistente, cifrada e vinculada ao paciente -----
   registerMemoryRoutes(app);
 
-  // ----- SaaS: Onboarding, Feedback, Lifecycle e Availability Templates -----
+  // ----- SaaS: Onboarding, Feedback, Lifecycle, Templates, Communication, Institutions -----
   registerOnboardingRoutes(app);
   registerFeedbackRoutes(app);
   registerLifecycleRoutes(app);
   registerAvailabilityTemplateRoutes(app);
+  registerCommunicationRoutes(app);
+  registerInstitutionRoutes(app);
 
   // ----- Healthcheck publico -----
   app.get("/api/health", (_req, res) => {
