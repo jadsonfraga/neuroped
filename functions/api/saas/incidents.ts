@@ -8,6 +8,7 @@ import {
   tenantJson,
   type TenantEnv,
 } from "../tenant/_core";
+import { enforceTenantRateLimit } from "./_rate-limit";
 
 const COMPONENTS = ["auth", "tenant", "keyring", "migration", "backup", "integration", "privacy", "frontend"] as const;
 const SEVERITIES = ["low", "medium", "high", "critical"] as const;
@@ -62,6 +63,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:incidents:write", 30, 60);
+  if (rateLimitError) return rateLimitError;
   const component = body.component;
   const code = cleanText(body.code, 80).toUpperCase();
   const severity = body.severity;
@@ -100,6 +103,8 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:incidents:write", 30, 60);
+  if (rateLimitError) return rateLimitError;
   const incidentId = cleanText(body.incidentId, 80);
   const nextStatus = body.nextStatus;
   const resolutionCode = body.resolutionCode;

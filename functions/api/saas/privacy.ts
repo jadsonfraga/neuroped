@@ -9,6 +9,7 @@ import {
   type TenantEnv,
 } from "../tenant/_core";
 import { operationalBlindHash } from "./_invite";
+import { enforceTenantRateLimit } from "./_rate-limit";
 
 const DATA_CLASSES = ["health", "identity", "operational", "credentials", "editorial"] as const;
 const REQUEST_TYPES = ["access", "correction", "portability", "deletion", "restriction", "objection"] as const;
@@ -185,6 +186,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:privacy:write", 30, 60);
+  if (rateLimitError) return rateLimitError;
 
   const requestType = cleanText(body.requestType, 20);
   const subjectType = cleanText(body.subjectType, 20);
@@ -239,6 +242,8 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:privacy:write", 30, 60);
+  if (rateLimitError) return rateLimitError;
 
   const requestId = cleanText(body.requestId, 80);
   const nextStatus = cleanText(body.status, 20);
@@ -309,6 +314,8 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:privacy:write", 30, 60);
+  if (rateLimitError) return rateLimitError;
 
   const dataClass = cleanText(body.dataClass, 20);
   const purgeMode = cleanText(body.purgeMode, 20);

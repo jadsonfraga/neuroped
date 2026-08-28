@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const manifestPath = path.join(root, "docs/saas-migration-manifest.sha256");
 const migrationFiles = fs.readdirSync(path.join(root, "db/migrations"))
-  .filter((file) => /^00(?:1[6-9]|2[0-3])_saas_.*\.sql$/.test(file))
+  .filter((file) => /^00(?:1[6-9]|2[0-4])_saas_.*\.sql$/.test(file))
   .sort()
   .map((file) => `db/migrations/${file}`);
 
@@ -65,4 +65,4 @@ if (expectedSerialized !== currentSerialized) {
   console.error(JSON.stringify({ error: "SAAS_MIGRATION_MANIFEST_MISMATCH", missing, added, changed }, null, 2));
   process.exit(1);
 }
-console.log(`[saas-migration-manifest] ✓ ${current.migrations.length} migrations 0016–0023 sem drift`);
+console.log(`[saas-migration-manifest] ✓ ${current.migrations.length} migrations 0016–0024 sem drift`);

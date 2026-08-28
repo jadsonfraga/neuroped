@@ -30,6 +30,7 @@ for (const migration of [
   "db/migrations/0021_saas_backup_evidence_append_only.sql",
   "db/migrations/0022_saas_webhook_deliveries.sql",
   "db/migrations/0023_saas_incident_events.sql",
+  "db/migrations/0024_saas_rate_limit_buckets.sql",
 ]) db.exec(read(migration));
 
 db.prepare(`INSERT INTO saas_module_settings(id, clinic_id, module_id, enabled, version) VALUES ('m1', 'clinic-a', 'privacy', 0, 0)`).run();
@@ -55,6 +56,11 @@ insertIncident.run('incident-a', 'clinic-a', 'integration', 'WEBHOOK_DELIVERY_RE
 assert.throws(() => db.prepare(`UPDATE saas_incident_events SET clinic_id = 'clinic-b' WHERE id = 'incident-a'`).run(), /SAAS_INCIDENT_SCOPE_IMMUTABLE/);
 assert.throws(() => db.prepare(`DELETE FROM saas_incident_events WHERE id = 'incident-a'`).run(), /SAAS_INCIDENT_APPEND_ONLY/);
 
+const insertRateLimit = db.prepare(`INSERT INTO saas_rate_limit_buckets(clinic_id, bucket_key, window_started_at, window_expires_at, request_count, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, datetime('now', '+60 seconds'), ?, CURRENT_TIMESTAMP)`);
+insertRateLimit.run('clinic-a', 'saas:webhooks', 1);
+assert.throws(() => db.prepare(`UPDATE saas_rate_limit_buckets SET clinic_id = 'clinic-b' WHERE clinic_id = 'clinic-a' AND bucket_key = 'saas:webhooks'`).run(), /SAAS_RATE_LIMIT_SCOPE_IMMUTABLE/);
+assert.equal(db.prepare(`SELECT COUNT(*) AS count FROM saas_rate_limit_buckets WHERE clinic_id = 'clinic-b'`).get().count, 0);
+
 const insertIntegration = db.prepare(`INSERT INTO saas_integration_connections(id, clinic_id, integration_id, environment, status, scopes_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`);
 insertIntegration.run('i1', 'clinic-a', 'webhooks', 'sandbox', 'draft', '["module.read"]', 0);
 assert.throws(() => db.prepare(`UPDATE saas_integration_connections SET clinic_id = 'clinic-b' WHERE id = 'i1'`).run(), /SAAS_INTEGRATION_SCOPE_IMMUTABLE/);
@@ -68,4 +74,4 @@ assert.throws(() => db.prepare(`DELETE FROM saas_integration_idempotency WHERE i
 assert.throws(() => insertIdempotency.run('idem-b', 'clinic-a', 'idempotency-key-0001', "b".repeat(64), '{}'), /UNIQUE/);
 
 db.close();
-console.log("[saas-migrations-smoke] ✓ migrations 0016–0023, FKs, triggers append-only, idempotência, webhooks, incidentes e versionamento validados");
+console.log("[saas-migrations-smoke] ✓ migrations 0016–0024, FKs, triggers append-only, idempotência, webhooks, incidentes, rate limit e versionamento validados");

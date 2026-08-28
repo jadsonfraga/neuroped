@@ -16,6 +16,7 @@ import {
   randomInviteToken,
   sha256Hex,
 } from "../../saas/_invite";
+import { enforceTenantRateLimit } from "../../saas/_rate-limit";
 
 function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -109,6 +110,8 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context);
   const authorized = await authorizeInviteAdmin(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:invites:write", 20, 60);
+  if (rateLimitError) return rateLimitError;
   const url = new URL(context.request.url);
   let inviteId = cleanText(url.searchParams.get("inviteId"), 80);
   if (!inviteId) {
@@ -145,6 +148,8 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context);
   const authorized = await authorizeInviteAdmin(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:invites:write", 20, 60);
+  if (rateLimitError) return rateLimitError;
   const body = await parseBody(context.request);
   if (!body) return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);
   const inviteId = cleanText(body.inviteId, 80);
@@ -216,6 +221,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const billingError = await requireBillingEntitlement(db, user.id, clinicId, "admin");
   if (billingError) return billingError;
   if (!operationalCryptoReady(context.env)) return tenantError("Chave operacional não configurada.", "OPERATIONAL_CRYPTO_NOT_CONFIGURED", 503);
+  const rateLimitError = await enforceTenantRateLimit(db, clinicId, "saas:invites:write", 20, 60);
+  if (rateLimitError) return rateLimitError;
 
   const body = await parseBody(context.request);
   if (!body) return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);

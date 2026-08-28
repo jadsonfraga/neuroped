@@ -31,6 +31,7 @@ export const REQUIRED_SAAS_TABLES = [
   "live_patient_search_tokens",
   "saas_webhook_deliveries",
   "saas_incident_events",
+  "saas_rate_limit_buckets",
 ] as const;
 
 export const REQUIRED_SAAS_TRIGGERS = [

@@ -8,6 +8,7 @@ import {
   tenantJson,
   type TenantEnv,
 } from "../tenant/_core";
+import { enforceTenantRateLimit } from "./_rate-limit";
 
 interface BackupEvidenceRow {
   id: string;
@@ -108,6 +109,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:continuity:write", 10, 60);
+  if (rateLimitError) return rateLimitError;
 
   const provider = cleanText(body.provider, 80);
   const digest = cleanText(body.snapshotDigestSha256, 64).toLowerCase();

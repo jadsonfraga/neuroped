@@ -4,8 +4,8 @@ Este runbook descreve como liberar as 20 abas em ambiente real sem tratar a tela
 
 ## Ordem de aplicação
 
-1. Aplicar as migrations D1 em ordem, incluindo `0016_saas_control_plane_hardening.sql`, `0017_saas_membership_invites.sql`, `0018_saas_privacy_governance.sql`, `0019_saas_integrations_control.sql`, `0020_saas_integration_idempotency.sql`, `0021_saas_backup_evidence_append_only.sql`, `0022_saas_webhook_deliveries.sql` e `0023_saas_incident_events.sql`.
-2. Confirmar que `saas_module_settings`, `saas_backup_evidence`, `saas_membership_invites`, `saas_privacy_requests`, `saas_retention_policies`, `saas_integration_connections`, `saas_integration_idempotency` e `live_patient_search_tokens` existem no banco de produção.
+1. Aplicar as migrations D1 em ordem, incluindo `0016_saas_control_plane_hardening.sql`, `0017_saas_membership_invites.sql`, `0018_saas_privacy_governance.sql`, `0019_saas_integrations_control.sql`, `0020_saas_integration_idempotency.sql`, `0021_saas_backup_evidence_append_only.sql`, `0022_saas_webhook_deliveries.sql`, `0023_saas_incident_events.sql` e `0024_saas_rate_limit_buckets.sql`.
+2. Confirmar que `saas_module_settings`, `saas_backup_evidence`, `saas_membership_invites`, `saas_privacy_requests`, `saas_retention_policies`, `saas_integration_connections`, `saas_integration_idempotency`, `live_patient_search_tokens` e `saas_rate_limit_buckets` existem no banco de produção.
 3. Configurar os segredos no secret manager, nunca no frontend: `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY`, `OPERATIONAL_DATA_KEY`, `APP_BASE_URL` HTTPS e `ENVIRONMENT=production`. Durante rotação, `CLINICAL_DATA_KEY_PREVIOUS` e seu identificador devem apontar somente para a chave anterior.
 4. Manter `CLINICAL_LIVE_ENABLED=false` até o keyring, backup/restore e smoke tenant-aware passarem. O sistema deve falhar fechado se o keyring faltar ou se houver colisão/separação inválida de chaves.
 5. Criar ou validar uma clínica de staging com memberships explícitas, entitlement válido e dados sintéticos. Nunca usar PHI real em staging.
@@ -67,12 +67,21 @@ A lista de convites retorna somente prefixo de hash e estado operacional. O toke
 
 O arquivo `.github/workflows/saas-production-gates.yml` é a entrada controlada para staging e produção. Ele executa TypeScript, lint, migrations smoke, fluxo operacional, hardening, separação pública e política de acesso antes de qualquer operação remota. Por padrão, `apply_migrations` é falso.
 
-Para staging, o operador seleciona o environment `staging`, confirma o D1 alvo e executa primeiro com `apply_migrations=false`; depois repete com `apply_migrations=true` somente após validar o backup operacional. Para production, o workflow exige `confirm_production=APPLY_PRODUCTION_MIGRATIONS` e nunca altera `CLINICAL_LIVE_ENABLED`. A aplicação das migrations 0016–0023 é em ordem, seguida de verificação de tabelas e triggers por consultas metadata-only.
+Para staging, o operador seleciona o environment `staging`, confirma o D1 alvo e executa primeiro com `apply_migrations=false`; depois repete com `apply_migrations=true` somente após validar o backup operacional. Para production, o workflow exige `confirm_production=APPLY_PRODUCTION_MIGRATIONS` e nunca altera `CLINICAL_LIVE_ENABLED`. A aplicação das migrations 0016–0024 é em ordem, seguida de verificação de tabelas e triggers por consultas metadata-only.
 
 As chaves `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY` e `OPERATIONAL_DATA_KEY` devem existir como secrets do environment. `APP_BASE_URL` e `ENVIRONMENT` devem existir como variables do environment; em production, `APP_BASE_URL` precisa ser HTTPS. O workflow apenas verifica nomes e postura, sem imprimir valores. O diagnóstico administrativo `/api/saas/production-diagnostics` expõe o mesmo estado redigido por clínica, com membership e entitlement válidos.
 
 ## Manifesto e evidência metadata-only
 
-Antes de aplicar qualquer migration, o CI executa `npm run test:saas-migration-manifest` e `node scripts/guards/saas-migration-manifest.mjs --check`. O manifesto versionado contém o SHA-256 de cada migration SaaS 0016–0023; qualquer arquivo ausente, novo ou alterado aborta o gate antes do acesso remoto.
+Antes de aplicar qualquer migration, o CI executa `npm run test:saas-migration-manifest` e `node scripts/guards/saas-migration-manifest.mjs --check`. O manifesto versionado contém o SHA-256 de cada migration SaaS 0016–0024; qualquer arquivo ausente, novo ou alterado aborta o gate antes do acesso remoto.
 
 O workflow gera `/tmp/saas-staging-evidence.json` como artefato metadata-only. O documento registra apenas ambiente, referência do D1, digest do manifesto, contagem de migrations, resultado dos gates e postura forward-only. Ele afirma explicitamente que secrets, PHI e mutações remotas não foram expostos ou executados durante o preflight. A aplicação real continua condicionada a `rollback_reference`, evidência de backup/restore e autorização do operador.
+
+
+## Rate limiting tenant-aware — migration 0024
+
+A migration `0024_saas_rate_limit_buckets.sql` deve ser aplicada depois de `0023_saas_incident_events.sql`. Ela cria buckets por `clinic_id` e ação operacional, sem armazenar IP, e-mail, PHI, payload ou token. O catálogo físico e o readiness exigem a tabela antes do go-live.
+
+As mutações administrativas usam janelas conservadoras: convites até 20 operações/minuto por clínica, privacidade até 30/minuto, incidentes até 30/minuto, integrações até 60/minuto, webhooks até 120/minuto e evidências de continuidade até 10/minuto. O limite é aplicado somente depois de autenticação, membership e entitlement. Quando excedido, a API retorna `429` com `Retry-After`; quando a migration não está aplicada, retorna `503` fail-closed. Não se deve usar IP ou conteúdo clínico como chave de limitação.
+
+O operador deve validar o bucket em staging com duas clínicas sintéticas e confirmar que a contagem de uma clínica jamais aparece na outra. A ausência da tabela, alteração de `clinic_id`/`bucket_key` ou divergência de ambiente deve interromper o gate.

@@ -12,7 +12,7 @@ on:
           - production
         default: staging
       apply_migrations:
-        description: "Aplicar migrations 0016–0023 no D1 remoto"
+        description: "Aplicar migrations 0016–0024 no D1 remoto"
         required: true
         type: boolean
         default: false
@@ -72,6 +72,7 @@ jobs:
           npm run lint
           npm run test:saas-migrations
           npm run test:saas-operational
+          npm run test:saas-rate-limit
           npm run test:saas-hardening
           npm run validate:public
           npm run audit:access
@@ -175,7 +176,8 @@ jobs:
             db/migrations/0020_saas_integration_idempotency.sql \
             db/migrations/0021_saas_backup_evidence_append_only.sql \
             db/migrations/0022_saas_webhook_deliveries.sql \
-            db/migrations/0023_saas_incident_events.sql; do
+            db/migrations/0023_saas_incident_events.sql \
+            db/migrations/0024_saas_rate_limit_buckets.sql; do
             echo "Aplicando $migration em $D1_DATABASE (${{ inputs.environment }})"
             npx wrangler@4 d1 execute "$D1_DATABASE" --remote --yes --file="./$migration"
           done
@@ -187,12 +189,12 @@ jobs:
           D1_DATABASE: ${{ inputs.d1_database }}
         run: |
           set -euo pipefail
-          npx wrangler@4 d1 execute "$D1_DATABASE" --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('tenant_lifecycle','saas_audit_log','saas_module_settings','saas_backup_evidence','saas_membership_invites','saas_privacy_requests','saas_retention_policies','saas_integration_connections','saas_integration_idempotency','live_patient_search_tokens','saas_webhook_deliveries','saas_incident_events') ORDER BY name;" > /tmp/saas-tables.txt
-          npx wrangler@4 d1 execute "$D1_DATABASE" --remote --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_saas_module_settings_tenant_immutable','trg_saas_backup_evidence_tenant_immutable','trg_saas_backup_evidence_append_only_update','trg_saas_backup_evidence_append_only_delete','trg_saas_membership_invites_scope_immutable','trg_saas_privacy_request_scope_immutable','trg_saas_audit_log_append_only_delete','trg_saas_integration_idempotency_append_only','trg_saas_webhook_deliveries_scope_immutable','trg_saas_webhook_deliveries_append_only_delete','trg_saas_incident_events_scope_immutable','trg_saas_incident_events_append_only_delete') ORDER BY name;" > /tmp/saas-triggers.txt
+          npx wrangler@4 d1 execute "$D1_DATABASE" --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('tenant_lifecycle','saas_audit_log','saas_module_settings','saas_backup_evidence','saas_membership_invites','saas_privacy_requests','saas_retention_policies','saas_integration_connections','saas_integration_idempotency','live_patient_search_tokens','saas_webhook_deliveries','saas_incident_events','saas_rate_limit_buckets') ORDER BY name;" > /tmp/saas-tables.txt
+          npx wrangler@4 d1 execute "$D1_DATABASE" --remote --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_saas_module_settings_tenant_immutable','trg_saas_backup_evidence_tenant_immutable','trg_saas_backup_evidence_append_only_update','trg_saas_backup_evidence_append_only_delete','trg_saas_membership_invites_scope_immutable','trg_saas_privacy_request_scope_immutable','trg_saas_audit_log_append_only_delete','trg_saas_integration_idempotency_append_only','trg_saas_webhook_deliveries_scope_immutable','trg_saas_webhook_deliveries_append_only_delete','trg_saas_incident_events_scope_immutable','trg_saas_incident_events_append_only_delete','trg_saas_rate_limit_scope_immutable') ORDER BY name;" > /tmp/saas-triggers.txt
           cat /tmp/saas-tables.txt
           cat /tmp/saas-triggers.txt
-          for name in tenant_lifecycle saas_audit_log saas_module_settings saas_backup_evidence saas_membership_invites saas_privacy_requests saas_retention_policies saas_integration_connections saas_integration_idempotency live_patient_search_tokens saas_webhook_deliveries saas_incident_events; do grep -q "$name" /tmp/saas-tables.txt || { echo "::error::Tabela ausente: $name"; exit 1; }; done
-          for name in trg_saas_module_settings_tenant_immutable trg_saas_backup_evidence_tenant_immutable trg_saas_backup_evidence_append_only_update trg_saas_backup_evidence_append_only_delete trg_saas_membership_invites_scope_immutable trg_saas_privacy_request_scope_immutable trg_saas_audit_log_append_only_delete trg_saas_integration_idempotency_append_only trg_saas_webhook_deliveries_scope_immutable trg_saas_webhook_deliveries_append_only_delete trg_saas_incident_events_scope_immutable trg_saas_incident_events_append_only_delete; do grep -q "$name" /tmp/saas-triggers.txt || { echo "::error::Trigger ausente: $name"; exit 1; }; done
+          for name in tenant_lifecycle saas_audit_log saas_module_settings saas_backup_evidence saas_membership_invites saas_privacy_requests saas_retention_policies saas_integration_connections saas_integration_idempotency live_patient_search_tokens saas_webhook_deliveries saas_incident_events saas_rate_limit_buckets; do grep -q "$name" /tmp/saas-tables.txt || { echo "::error::Tabela ausente: $name"; exit 1; }; done
+          for name in trg_saas_module_settings_tenant_immutable trg_saas_backup_evidence_tenant_immutable trg_saas_backup_evidence_append_only_update trg_saas_backup_evidence_append_only_delete trg_saas_membership_invites_scope_immutable trg_saas_privacy_request_scope_immutable trg_saas_audit_log_append_only_delete trg_saas_integration_idempotency_append_only trg_saas_webhook_deliveries_scope_immutable trg_saas_webhook_deliveries_append_only_delete trg_saas_incident_events_scope_immutable trg_saas_incident_events_append_only_delete trg_saas_rate_limit_scope_immutable; do grep -q "$name" /tmp/saas-triggers.txt || { echo "::error::Trigger ausente: $name"; exit 1; }; done
           echo "D1 SaaS schema e triggers comprovados sem consultar PHI."
 
       - name: Preserve clinical LIVE disabled during the gate

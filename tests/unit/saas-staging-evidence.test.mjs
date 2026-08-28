@@ -12,7 +12,7 @@ try {
   const evidence = JSON.parse(fs.readFileSync(output, "utf8"));
   assert.equal(evidence.evidenceType, "saas-production-gate");
   assert.equal(evidence.environment, "staging");
-  assert.equal(evidence.migrationRange, "0016-0023");
+  assert.equal(evidence.migrationRange, "0016-0024");
   assert.equal(evidence.checks.metadataOnly, true);
   assert.equal(evidence.checks.secretsValuesExposed, false);
   assert.equal(evidence.checks.phiExposed, false);

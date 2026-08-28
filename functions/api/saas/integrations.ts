@@ -9,6 +9,7 @@ import {
   type TenantEnv,
 } from "../tenant/_core";
 import { operationalBlindHash, sha256Hex } from "./_invite";
+import { enforceTenantRateLimit } from "./_rate-limit";
 import {
   INTEGRATION_SCOPES,
   OPERATIONAL_INTEGRATIONS,
@@ -128,6 +129,8 @@ export const onRequestPut: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:integrations:write", 60, 60);
+  if (rateLimitError) return rateLimitError;
   const idempotencyKey = cleanText(context.request.headers.get("x-idempotency-key"), 128);
   if (!isValidIdempotencyKey(idempotencyKey)) return tenantError("X-Idempotency-Key é obrigatório e deve ter 16–128 caracteres seguros.", "IDEMPOTENCY_KEY_REQUIRED", 400);
   const requestHash = await sha256Hex(JSON.stringify({ clinicId, body }));

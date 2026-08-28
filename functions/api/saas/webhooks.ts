@@ -10,6 +10,7 @@ import {
 } from "../tenant/_core";
 import { operationalBlindHash } from "./_invite";
 import { integrationById } from "../../../shared/saas-operational";
+import { enforceTenantRateLimit } from "./_rate-limit";
 
 const EVENT_TYPES = ["saas.module.updated", "saas.invite.updated", "saas.privacy.updated", "saas.integration.updated"] as const;
 type EventType = (typeof EVENT_TYPES)[number];
@@ -49,6 +50,8 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const clinicId = clinicIdFrom(context.request, body);
   const authorized = await authorize(context, clinicId);
   if ("error" in authorized) return authorized.error;
+  const rateLimitError = await enforceTenantRateLimit(authorized.db, clinicId, "saas:webhooks:write", 120, 60);
+  if (rateLimitError) return rateLimitError;
   const integration = integrationById("webhooks");
   const integrationEnvironment = cleanText(body.environment, 16);
   const deliveryId = cleanText(body.deliveryId ?? context.request.headers.get("x-webhook-delivery-id"), 128);

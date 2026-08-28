@@ -14,7 +14,7 @@ import { loadSaasSchemaPosture } from "./_readiness";
 
 const CHECK_ACTIONS = {
   membership: "Confirmar membership administrativa ativa para esta clínica.",
-  migration: "Aplicar migrations SaaS 0016–0023 em ordem e repetir o readiness.",
+  migration: "Aplicar migrations SaaS 0016–0024 em ordem e repetir o readiness.",
   keyring: "Configurar o keyring clínico dedicado com IDs separados.",
   operationalKey: "Configurar OPERATIONAL_DATA_KEY no secret manager.",
   clinicalFlag: "Manter Clinical LIVE desabilitado até concluir os gates; o ambiente de produção deve definir a flag explicitamente.",
@@ -102,11 +102,10 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
       checks,
       missing,
       enabledModules,
-            requiredModules: 20,
+      requiredModules: 20,
       correctiveActions: Object.values(checks).filter((check) => !check.ok).map((check) => check.action),
-            schema,
+      schema,
       latestBackup: latestBackup
-
         ? { status: latestBackup.status, restoreVerifiedAt: latestBackup.restore_verified_at, createdAt: latestBackup.created_at }
         : null,
     });

@@ -10,7 +10,7 @@ A rodada local foi executada após a implementação do diagnóstico metadata-on
 | Lint global | Passou | `npm run lint` |
 | Build frontend/backend | Passou | `npm run build`; apenas aviso preexistente de chunks grandes |
 | Segurança de dependências | Passou | `npm run audit:security`; 0 vulnerabilidades high/critical |
-| Migrations e integridade física | Passou | Migrations 0016–0023; FKs, escopo, append-only, idempotência, webhooks e incidentes |
+| Migrations e integridade física | Passou | Migrations 0016–0024; FKs, escopo, append-only, idempotência, webhooks, incidentes e rate limit |
 | Contrato SaaS/LGPD | Passou | `npm run test:saas-hardening` |
 | Fluxos operacionais | Passou | `npm run test:saas-operational` |
 | Separação público/clínico | Passou | 30 rotas públicas exatas; 27 rotas sensíveis protegidas |
@@ -23,7 +23,7 @@ A rodada local foi executada após a implementação do diagnóstico metadata-on
 
 ## Pontos resolvidos
 
-O readiness agora usa catálogo físico compartilhado de tabelas e triggers, exige migrations 0016–0023, keyring clínico separado, chave operacional, entitlement, auditoria e restore verificado. O diagnóstico `/api/saas/production-diagnostics` retorna apenas postura e ações corretivas, sem valores de secrets ou dados clínicos.
+O readiness agora usa catálogo físico compartilhado de tabelas e triggers, exige migrations 0016–0024, keyring clínico separado, chave operacional, entitlement, auditoria e restore verificado. O diagnóstico `/api/saas/production-diagnostics` retorna apenas postura e ações corretivas, sem valores de secrets ou dados clínicos.
 
 A continuidade foi endurecida com evidência de backup/restore append-only. As migrations 0021 e 0022 protegem a prova de restore e os envelopes de webhook contra alteração ou deleção. A rota `/api/saas/webhooks` aceita somente delivery ID, evento allowlist, ambiente e digest SHA-256; assina com HMAC operacional tenant-aware, rejeita reuso divergente e nunca armazena payload.
 
@@ -31,7 +31,7 @@ A observabilidade foi conectada à Central como agregação de ações de audito
 
 ## Limites restantes
 
-O workflow `.github/workflows/saas-production-gates.yml` foi criado como entrada manual e fail-closed. Ele não foi executado contra um D1 real nesta sessão porque isso exige credenciais e aprovação do operador. Os gates humanos restantes são: configurar os environments `staging` e `production`, definir secrets/variables no secret manager, aplicar migrations 0016–0023 no D1 staging, executar backup/restore real, conectar provedor de e-mail e webhooks sandbox, testar LGPD com dados sintéticos e obter aprovação formal do controlador/encarregado. A flag `CLINICAL_LIVE_ENABLED` permanece fora de qualquer mutação automática.
+O workflow `.github/workflows/saas-production-gates.yml` foi criado como entrada manual e fail-closed. Ele não foi executado contra um D1 real nesta sessão porque isso exige credenciais e aprovação do operador. Os gates humanos restantes são: configurar os environments `staging` e `production`, definir secrets/variables no secret manager, aplicar migrations 0016–0024 no D1 staging, executar backup/restore real, conectar provedor de e-mail e webhooks sandbox, testar LGPD com dados sintéticos e obter aprovação formal do controlador/encarregado. A flag `CLINICAL_LIVE_ENABLED` permanece fora de qualquer mutação automática.
 
 ## Continuação: resposta a incidentes
 
@@ -41,7 +41,7 @@ A rodada adicional foi validada com `npm run check`, `npm run lint`, migrations,
 
 ## Continuação: staging, manifesto e rollback
 
-Foi adicionado um manifesto textual SHA-256 para as migrations SaaS 0016–0023, evitando falsos positivos do guard de acesso e permitindo detectar drift antes de qualquer mutação remota. O workflow exige `rollback_reference` quando `apply_migrations=true`, recusa referências de demonstração e mantém a aplicação forward-only.
+Foi adicionado um manifesto textual SHA-256 para as migrations SaaS 0016–0024, evitando falsos positivos do guard de acesso e permitindo detectar drift antes de qualquer mutação remota. O workflow exige `rollback_reference` quando `apply_migrations=true`, recusa referências de demonstração e mantém a aplicação forward-only.
 
 A evidência de staging agora é gerada sem PHI, secrets ou alteração remota. Ela contém somente o ambiente, referência não sensível do D1, digest do manifesto, contagem de migrations e flags de postura. O guard de acesso foi reexecutado após a correção e passou sem exceções.
 
@@ -50,3 +50,10 @@ A evidência de staging agora é gerada sem PHI, secrets ou alteração remota. 
 A rodada acrescentou a atestação explícita entre `inputs.environment`, `vars.ENVIRONMENT`, `inputs.d1_database` e `vars.D1_DATABASE_NAME`. O workflow não permite inferir o banco alvo nem prosseguir quando o D1 declarado não corresponde ao environment selecionado. A referência de rollback continua obrigatória para qualquer aplicação de migration.
 
 Na execução final desta rodada, todos os gates retornaram código 0: build, bundle Cloudflare Functions via Wrangler, audit de segurança, migrations, hardening, fluxo operacional, manifesto, evidência staging, separação público/clínico, política de acesso, navegação, inventário, política de persistência browser-side, boundary zero-PHI, E2E da Central e acessibilidade integral. O build mantém apenas o aviso conhecido de chunks grandes; não houve erro de compilação.
+
+
+## Execução incremental: rate limiting tenant-aware
+
+A migration `0024_saas_rate_limit_buckets.sql` e o helper `functions/api/saas/_rate-limit.ts` adicionam limitação por `clinic_id` e ação operacional. As rotas mutáveis de convites, privacidade, continuidade, integrações, webhooks e incidentes aplicam o limite somente depois de autenticação, membership e entitlement. O excesso retorna `429` com `Retry-After`; ausência da migration retorna `503` fail-closed. Não são usados IP, e-mail, PHI, payload ou token como chave.
+
+A validação executável `npm run test:saas-rate-limit` comprovou janela, contagem, expiração, isolamento entre clínicas, `Retry-After` e resposta 429. O smoke de migrations comprovou a FK e a imutabilidade de `clinic_id`/`bucket_key`. A rodada completa também passou TypeScript, lint, build, bundle Cloudflare, audit de segurança, hardening, fluxo operacional, manifesto, staging evidence, rotas, inventário, zero-PHI, E2E da Central e acessibilidade integral.

@@ -23,6 +23,7 @@ const expectedFiles = [
   "db/migrations/0021_saas_backup_evidence_append_only.sql",
   "db/migrations/0022_saas_webhook_deliveries.sql",
   "db/migrations/0023_saas_incident_events.sql",
+  "db/migrations/0024_saas_rate_limit_buckets.sql",
 ];
 assert.deepEqual(entries.map((item) => item.file), expectedFiles);
 for (const item of entries) {
