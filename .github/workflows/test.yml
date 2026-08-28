@@ -1,6 +1,6 @@
 # Gate de testes — roda em todo PR e push (exceto main, que já roda no deploy).
-# Trava regressões ANTES do merge: estático (test-static), smoke E2E e o
-# teste do motor de pré-consulta (gate de diários/clínicos + medalhas).
+# Trava regressões ANTES do merge: estático, smoke, motor pré-consulta,
+# testes clínicos V3.2+V4 (100%) e scorecard 7→9 (5/5 alvo).
 name: Tests — pre-merge gate
 
 on:
@@ -15,12 +15,12 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Sem marcadores de conflito de merge
         run: node scripts/check-no-conflicts.mjs
       - name: Versão única (package.json = sw.js)
@@ -37,3 +37,7 @@ jobs:
         run: node scripts/smoke.mjs
       - name: Motor de pré-consulta (gate + ranking)
         run: node scripts/test-preconsulta-engine.mjs
+      - name: Testes clínicos V3.2+V4 — exige 100%
+        run: node tests/run-clinical-tests.mjs
+      - name: Scorecard 7→9 — 5/5 métricas no alvo
+        run: node scripts/audit-report.mjs --strict

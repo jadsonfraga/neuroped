@@ -2,7 +2,6 @@ name: clinical-tests
 
 on:
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
@@ -23,7 +22,7 @@ jobs:
 
   lighthouse:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     needs: integrity
     if: github.event_name == 'pull_request'
     steps:
@@ -35,15 +34,18 @@ jobs:
       - name: Start static server
         run: |
           npx --yes http-server . -p 8080 -c -1 &
-          sleep 3
-      - name: Audit
+          sleep 4
+      - name: Lighthouse ≥90 (WS4)
         run: |
           npx lhci autorun \
             --collect.url=http://localhost:8080/index.html \
+            --collect.url=http://localhost:8080/filtro-escalas.html \
             --collect.url=http://localhost:8080/testes-diretos.html \
             --collect.url=http://localhost:8080/escalas-questionarios.html \
             --collect.url=http://localhost:8080/diarios-clinicos.html \
             --assert.preset=lighthouse:no-pwa \
-            --assert.assertions.categories:performance=warn \
-            --assert.assertions.categories:accessibility=error \
-            --upload.target=temporary-public-storage || true
+            "--assert.assertions.categories:performance=[\"error\",{\"minScore\":0.9}]" \
+            "--assert.assertions.categories:accessibility=[\"error\",{\"minScore\":0.9}]" \
+            "--assert.assertions.categories:best-practices=[\"warn\",{\"minScore\":0.9}]" \
+            "--assert.assertions.categories:seo=[\"warn\",{\"minScore\":0.9}]" \
+            --upload.target=temporary-public-storage
