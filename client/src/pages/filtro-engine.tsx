@@ -57,6 +57,11 @@ import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
 import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
 import {
+  SYMPTOM_GROUPS,
+  buildJustification,
+  resolveAliasToSymptomIds,
+} from "@/data/symptomSignalMap";
+import {
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
   generateContextualRecommendation,
@@ -1198,6 +1203,8 @@ export default function FiltroPage() {
   const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>(
     flashMode || useNavigationPrefill ? [] : sessionSignalIds,
   );
+  const [selectedSymptomMapIds, setSelectedSymptomMapIds] = useState<string[]>([]);
+  const [symptomQuery, setSymptomQuery] = useState("");
   const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
     flashMode ? "complete" : preferences.availability,
   );
@@ -1470,6 +1477,32 @@ export default function FiltroPage() {
     [refinedMatches, auditedPodium],
   );
 
+  // Mapa de justificativa por scaleId: "Indicada por: sinal X, sinal Y"
+  const justificationMap = useMemo(() => {
+    if (selectedSymptomMapIds.length === 0) return new Map<string, string>();
+    const map = new Map<string, string>();
+    for (const m of refinedMatches) {
+      const j = buildJustification(m.scale.id, selectedSymptomMapIds);
+      if (j) map.set(m.scale.id, j);
+    }
+    return map;
+  }, [refinedMatches, selectedSymptomMapIds]);
+
+  // Sintomas filtrados pelo campo de busca livre
+  const filteredSymptomGroups = useMemo(() => {
+    const q = symptomQuery.trim().toLowerCase();
+    if (!q) return SYMPTOM_GROUPS;
+    const aliasMatches = new Set(resolveAliasToSymptomIds(q));
+    return SYMPTOM_GROUPS.map(g => ({
+      ...g,
+      symptoms: g.symptoms.filter(s =>
+        s.label.toLowerCase().includes(q) ||
+        s.aliases?.some(a => a.toLowerCase().includes(q)) ||
+        aliasMatches.has(s.id),
+      ),
+    })).filter(g => g.symptoms.length > 0);
+  }, [symptomQuery]);
+
   // Ouro veio da tabela curada? Então mostramos o racional clínico específico.
   const podium = auditedPodium;
   const isCuratedOuro = Boolean(
@@ -1727,6 +1760,8 @@ export default function FiltroPage() {
     setSelectedLiteracy(null);
     setSelectedAssessmentType(null);
     setSelectedSignalIds([]);
+    setSelectedSymptomMapIds([]);
+    setSymptomQuery("");
     setAvailabilityMode("complete");
   };
 
@@ -2269,6 +2304,76 @@ export default function FiltroPage() {
               />
             </div>
           )}
+
+          {/* Sinais e sintomas observados — chips por domínio clínico (symptomSignalMap) */}
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
+                Sinais e sintomas observados
+              </p>
+              {selectedSymptomMapIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { softTap(); haptic.tap(); setSelectedSymptomMapIds([]); setSymptomQuery(""); }}
+                  className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-semibold text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                  aria-label="Limpar sinais selecionados"
+                >
+                  <X className="h-3 w-3" /> Limpar ({selectedSymptomMapIds.length})
+                </button>
+              )}
+            </div>
+            <Input
+              type="search"
+              placeholder="Buscar sinal (ex: não olha, não dorme, convulsão…)"
+              value={symptomQuery}
+              onChange={e => setSymptomQuery(e.target.value)}
+              className="h-8 text-sm"
+              aria-label="Buscar sinal ou sintoma"
+            />
+            <div className="space-y-2">
+              {filteredSymptomGroups.map(group => (
+                <div key={group.id}>
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                    {group.label}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.symptoms.map(symptom => {
+                      const selected = selectedSymptomMapIds.includes(symptom.id);
+                      return (
+                        <button
+                          key={symptom.id}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => {
+                            softTick();
+                            haptic.select();
+                            setSelectedSymptomMapIds(prev =>
+                              prev.includes(symptom.id)
+                                ? prev.filter(x => x !== symptom.id)
+                                : [...prev, symptom.id],
+                            );
+                          }}
+                          onMouseEnter={() => softHover()}
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all duration-150 ${
+                            selected
+                              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                              : "border-border bg-card text-foreground/70 hover:border-primary/40 hover:bg-muted/60"
+                          }`}
+                        >
+                          {symptom.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              {filteredSymptomGroups.length === 0 && symptomQuery.trim() && (
+                <p className="text-[11px] text-muted-foreground">
+                  Nenhum sinal encontrado para "{symptomQuery}".
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* RIGHT COLUMN — Results (lg:col-span-2) */}
@@ -2613,6 +2718,11 @@ export default function FiltroPage() {
                           <div className="filter-260-evidence">
                             <strong>Por que ranqueou:</strong>{" "}
                             {item.clinicalReason}
+                          </div>
+                        )}
+                        {item.hasScale && item.scale && justificationMap.get(item.scale.id) && (
+                          <div className="filter-260-evidence">
+                            <strong>🎯 {justificationMap.get(item.scale.id)}</strong>
                           </div>
                         )}
                         {item.hasScale && (
