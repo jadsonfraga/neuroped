@@ -151,38 +151,19 @@ jobs:
             }
 
             const dispatched = [];
-            const legacy = [];
             const failed = [];
 
             for (const target of targets) {
               try {
-                // Branches antigas podem ainda não conter workflow_dispatch.
-                // Elas permanecem bloqueadas pela exigência de base atual e
-                // passam a suportar fan-out assim que incorporarem a main.
-                const workflowFile = await github.rest.repos.getContent({
-                  owner,
-                  repo,
-                  path: ".github/workflows/pr-check.yml",
-                  ref: target.head.sha,
-                });
-                const encoded = Array.isArray(workflowFile.data)
-                  ? ""
-                  : workflowFile.data.content ?? "";
-                const text = Buffer.from(encoded, "base64").toString("utf8");
-
-                if (!/\bworkflow_dispatch\s*:/.test(text)) {
-                  legacy.push({
-                    number: target.number,
-                    branch: target.head.ref,
-                  });
-                  continue;
-                }
-
+                // A definição confiável do workflow vem sempre da main. O
+                // checkout do PR é fixado depois pelo expected_head_sha, então
+                // branches antigas também podem ser revalidadas sem executar
+                // uma definição de workflow desatualizada ou controlada pelo PR.
                 await github.rest.actions.createWorkflowDispatch({
                   owner,
                   repo,
                   workflow_id: workflowId,
-                  ref: target.head.ref,
+                  ref: baseRef,
                   inputs: {
                     pr_number: String(target.number),
                     trigger_reason: reason,
@@ -213,7 +194,6 @@ jobs:
                 ["PRs não-draft avaliados", String(eligible.length)],
                 ["PRs afetados", String(targets.length)],
                 ["Revalidações disparadas", String(dispatched.length)],
-                ["Branches legadas aguardando atualização", String(legacy.length)],
                 ["Falhas inesperadas", String(failed.length)],
               ]);
 
@@ -225,15 +205,6 @@ jobs:
                   : "";
                 core.summary.addRaw(
                   `- PR #${item.number} (\`${item.branch}\`)${files}\n`,
-                );
-              }
-            }
-
-            if (legacy.length > 0) {
-              core.summary.addHeading("Branches que precisam incorporar a main", 2);
-              for (const item of legacy) {
-                core.summary.addRaw(
-                  `- PR #${item.number} (\`${item.branch}\`): ainda sem \`workflow_dispatch\`; a proteção strict mantém o merge bloqueado até atualização.\n`,
                 );
               }
             }

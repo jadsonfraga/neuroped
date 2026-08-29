@@ -102,6 +102,16 @@ assert.match(
 );
 assert.match(
   fanout,
+  /ref: baseRef/,
+  "fan-out deve executar a definição confiável do PR Check hospedada na main",
+);
+assert.doesNotMatch(
+  fanout,
+  /getContent|target\.head\.ref,\s*inputs/,
+  "fan-out não pode depender de uma definição de workflow da branch revalidada",
+);
+assert.match(
+  fanout,
   /eventPaths\.has\(path\) && isCritical\(path\)/,
   "eventos de PR devem revalidar somente pares com sobreposição crítica",
 );
