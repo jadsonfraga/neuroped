@@ -14,6 +14,7 @@ on:
       - "tests/unit/premium-native-app-v14-contract.test.mjs"
       - "tests/e2e/premium-visual-proof.mjs"
       - "tests/e2e/premium-native-geometry.mjs"
+      - "tests/e2e/premium-coarse-touch.mjs"
       - "tests/e2e/responsive-shell-smoke.mjs"
       - ".github/workflows/premium-visual-v13.yml"
   push:
@@ -31,6 +32,7 @@ on:
       - "tests/unit/premium-native-app-v14-contract.test.mjs"
       - "tests/e2e/premium-visual-proof.mjs"
       - "tests/e2e/premium-native-geometry.mjs"
+      - "tests/e2e/premium-coarse-touch.mjs"
       - "tests/e2e/responsive-shell-smoke.mjs"
       - ".github/workflows/premium-visual-v13.yml"
   workflow_dispatch:
@@ -96,6 +98,9 @@ jobs:
 
       - name: Geometria native-app em iPhone e iPad
         run: node tests/e2e/premium-native-geometry.mjs
+
+      - name: Cascade touch/coarse real
+        run: node tests/e2e/premium-coarse-touch.mjs
 
       - name: Prova visual multitelas
         env:
