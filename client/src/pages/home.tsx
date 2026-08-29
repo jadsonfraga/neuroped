@@ -28,6 +28,12 @@ import type { ScaleEntry } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
 import { duration, easing } from "@/lib/motion";
 import { softHover, softTap } from "@/lib/softSounds";
+import { useAuth } from "@/contexts/AuthContext";
+import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
+import {
+  hasConfiguredMasterPin,
+  isMasterPinUnlocked,
+} from "@/lib/masterPin";
 
 interface ClinicalFlow {
   href: string;
@@ -236,6 +242,7 @@ function MetricCard({
 }
 
 export default function HomePage() {
+  const { accessMode, isAuthenticated, isLoading, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [scaleSearchCatalog, setScaleSearchCatalog] = useState<ScaleEntry[]>(
     [],
@@ -250,6 +257,21 @@ export default function HomePage() {
         month: "long",
       }).format(new Date()),
     [],
+  );
+  const visibleQuickActions = useMemo(
+    () =>
+      quickActions.filter((action) =>
+        canRenderNavigationItem({
+          path: action.href,
+          accessMode,
+          isAuthenticated,
+          isLoading,
+          userRole: user?.role,
+          localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
+          localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
+        }),
+      ),
+    [accessMode, isAuthenticated, isLoading, user?.role],
   );
 
   useEffect(() => {
@@ -395,26 +417,35 @@ export default function HomePage() {
             </div>
 
             <div className="np-v13-quick-actions">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link key={action.href} href={action.href}>
-                    <div
-                      className="np-v13-quick-link"
-                      data-testid="premium-quick-link"
-                    >
-                      <span aria-hidden="true">
-                        <Icon strokeWidth={1.7} />
-                      </span>
-                      <div>
-                        <strong>{action.label}</strong>
-                        <small>{action.detail}</small>
+              {visibleQuickActions.length > 0 ? (
+                visibleQuickActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Link key={action.href} href={action.href}>
+                      <div
+                        className="np-v13-quick-link"
+                        data-testid="premium-quick-link"
+                      >
+                        <span aria-hidden="true">
+                          <Icon strokeWidth={1.7} />
+                        </span>
+                        <div>
+                          <strong>{action.label}</strong>
+                          <small>{action.detail}</small>
+                        </div>
+                        <ArrowUpRight aria-hidden="true" />
                       </div>
-                      <ArrowUpRight aria-hidden="true" />
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })
+              ) : (
+                <div
+                  className="np-v13-empty-result"
+                  data-testid="premium-quick-actions-empty"
+                >
+                  Nenhum atalho operacional está disponível para este perfil.
+                </div>
+              )}
             </div>
 
             <div className="np-v13-panel-footer">
