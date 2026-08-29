@@ -1,0 +1,126 @@
+/*
+ * NeuroPED OS — Sidebar Native v16
+ *
+ * Refinamento estritamente visual do rail principal. Corrige a compressão dos
+ * quatro atalhos compactos e melhora a leitura de aplicativo instalado sem
+ * alterar destinos, permissões, agrupamentos ou estado da navegação.
+ */
+
+@media screen and (min-width: 1280px) {
+  aside.np-app-sidebar[class~="lg:w-64"] {
+    width: 17.5rem !important;
+  }
+
+  #main-content[class~="lg:ml-64"] {
+    margin-left: 17.5rem !important;
+  }
+}
+
+/* Os quatro atalhos de apoio funcionam como app tiles: ícone central, rótulo
+   íntegro em até três linhas e nenhum chevron disputando a largura do texto. */
+.np-app-sidebar
+  .grid.grid-cols-2
+  [data-testid^="featured-"] {
+  min-height: 4.65rem !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem !important;
+  padding: 0.5rem 0.42rem !important;
+  border-color: hsl(var(--sidebar-border) / 0.78) !important;
+  background:
+    linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.78),
+      hsl(var(--sidebar-accent) / 0.58)
+    ) !important;
+  color: hsl(var(--sidebar-foreground)) !important;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.3),
+    0 10px 24px -22px hsl(var(--foreground) / 0.32) !important;
+}
+
+.dark
+  .np-app-sidebar
+  .grid.grid-cols-2
+  [data-testid^="featured-"] {
+  background:
+    linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.76),
+      hsl(var(--sidebar-accent) / 0.68)
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.04),
+    0 12px 26px -22px hsl(0 0% 0% / 0.64) !important;
+}
+
+.np-app-sidebar
+  .grid.grid-cols-2
+  [data-testid^="featured-"]
+  > span:first-of-type {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 0.68rem !important;
+}
+
+.np-app-sidebar
+  .grid.grid-cols-2
+  [data-testid^="featured-"]
+  > span:nth-of-type(2) {
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.np-app-sidebar
+  .grid.grid-cols-2
+  [data-testid^="featured-"]
+  > span:nth-of-type(2)
+  > span:first-child {
+  display: -webkit-box !important;
+  overflow: hidden;
+  min-height: 1.4rem;
+  color: hsl(var(--sidebar-foreground));
+  font-size: 0.64rem !important;
+  font-weight: 750 !important;
+  line-height: 1.12 !important;
+  text-wrap: balance;
+  white-space: normal !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.np-app-sidebar
+  .grid.grid-cols-2
+  [data-testid^="featured-"]
+  > span:last-child {
+  display: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .np-app-sidebar
+    .grid.grid-cols-2
+    [data-testid^="featured-"]:hover {
+    transform: translateY(-1px) !important;
+    border-color: hsl(var(--primary) / 0.28) !important;
+    background: hsl(var(--sidebar-accent) / 0.84) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-app-sidebar [data-testid^="featured-"] {
+    transition: none !important;
+  }
+
+  .np-app-sidebar [data-testid^="featured-"]:hover {
+    transform: none !important;
+  }
+}
+
+@media print {
+  .np-app-sidebar {
+    display: none !important;
+  }
+}
