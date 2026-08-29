@@ -64,11 +64,16 @@ function assertTiles(contract, caseName) {
   );
 
   for (const tile of contract.tiles) {
+    assert.ok(tile.labelFound, `${caseName}: rótulo ${tile.testId} não encontrado`);
+    assert.ok(
+      tile.trailingFound,
+      `${caseName}: controle trailing de ${tile.testId} não encontrado`,
+    );
     assert.ok(tile.width >= 105, `${caseName}: tile ${tile.testId} estreito`);
     assert.ok(tile.height >= 73, `${caseName}: tile ${tile.testId} baixo`);
     assert.ok(
-      tile.labelFontSize >= 10,
-      `${caseName}: rótulo ${tile.testId} menor que 10 px`,
+      tile.labelFontSize >= 11,
+      `${caseName}: rótulo ${tile.testId} menor que 11 px`,
     );
     assert.equal(
       tile.labelWhiteSpace,
@@ -127,10 +132,14 @@ async function readContract(page) {
       main: geometry(main),
       tiles: tileElements.map((tile) => {
         const rect = tile.getBoundingClientRect();
+        // Seletores por função visual. Os cards dourados têm um halo decorativo
+        // como primeiro span, portanto nth-of-type é deliberadamente proibido.
         const label = tile.querySelector(
-          ":scope > span:nth-of-type(2) > span:first-child",
+          ":scope > span.relative.z-10.min-w-0.flex-1 > span:first-child",
         );
-        const trailing = tile.querySelector(":scope > span:last-child");
+        const trailing = tile.querySelector(
+          ":scope > span.relative.z-10.flex.shrink-0.items-center.gap-1",
+        );
         const labelStyle =
           label instanceof HTMLElement ? getComputedStyle(label) : null;
         let labelLineRects = 0;
@@ -147,6 +156,8 @@ async function readContract(page) {
           right: rect.right,
           width: rect.width,
           height: rect.height,
+          labelFound: label instanceof HTMLElement,
+          trailingFound: trailing instanceof HTMLElement,
           labelFontSize: labelStyle
             ? Number.parseFloat(labelStyle.fontSize)
             : 0,
@@ -206,7 +217,9 @@ try {
     await prepare(mobilePage);
     await mobilePage.getByTestId("button-mobile-menu").click();
     await mobilePage
-      .locator('.np-app-sidebar[aria-hidden="false"], .np-app-sidebar:not([aria-hidden])')
+      .locator(
+        '.np-app-sidebar[aria-hidden="false"], .np-app-sidebar:not([aria-hidden])',
+      )
       .waitFor({ state: "visible", timeout: 10000 })
       .catch(() => {});
     const contract = await readContract(mobilePage);
