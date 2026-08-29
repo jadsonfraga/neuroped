@@ -1,5 +1,9 @@
 import { lazy, Suspense, useRef, useState } from "react";
-import { mchatQuestions } from "@/data/mchat";
+import {
+  mchatQuestions,
+  mchatReversedItems,
+  classifyMchat,
+} from "@/data/mchat";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +89,23 @@ export default function MchatPage() {
   if (!draftReady) return <ScaleDraftLoading />;
 
   if (showResult) {
+    // Pontuação oficial M-CHAT-R (Robins et al., 2014): itens 2, 5 e 12
+    // (índices 1, 4, 11) são invertidos — "Sim" pontua risco; nos demais,
+    // "Não" pontua risco. Total 0–20.
+    const reversed = new Set<number>(mchatReversedItems);
+    const riskScore = mchatQuestions.reduce((sum, _, i) => {
+      const a = answers[i];
+      if (a === undefined) return sum;
+      const atRisk = reversed.has(i) ? a === true : a === false;
+      return sum + (atRisk ? 1 : 0);
+    }, 0);
+    const riskItems = mchatQuestions
+      .map((_, i) => i)
+      .filter((i) => {
+        const a = answers[i];
+        return a !== undefined && (reversed.has(i) ? a === true : a === false);
+      });
+    const classification = classifyMchat(riskScore);
     const reportItems = mchatQuestions.map((question, index) => ({
       question,
       answer:
@@ -94,6 +115,16 @@ export default function MchatPage() {
             ? "Não"
             : "Não respondida",
     }));
+    const scoreSummaryItems = [
+      {
+        question: "Escore de risco M-CHAT-R (0–20)",
+        answer: `${riskScore} — ${classification.risk}`,
+      },
+      {
+        question: "Conduta recomendada",
+        answer: classification.description,
+      },
+    ];
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -101,10 +132,45 @@ export default function MchatPage() {
             <Baby className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold">Respostas registradas — M-CHAT-R/F</h1>
+            <h1 className="text-lg font-bold">Resultado — M-CHAT-R/F</h1>
             <p className="text-xs text-muted-foreground">Avaliação concluída</p>
           </div>
         </div>
+
+        <Card className="border-card-border" data-testid="mchat-score-card">
+          <CardContent className="p-6 space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-sm font-semibold text-foreground">
+                Escore de risco M-CHAT-R
+              </h2>
+              <span className={`text-2xl font-bold ${classification.color}`}>
+                {riskScore}
+                <span className="text-sm font-medium text-muted-foreground">
+                  {" "}
+                  / 20
+                </span>
+              </span>
+            </div>
+            <p className={`text-sm font-semibold ${classification.color}`}>
+              {classification.risk}
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {classification.description}
+            </p>
+            {riskItems.length > 0 && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Itens que pontuaram risco:{" "}
+                {riskItems.map((i) => i + 1).join(", ")}.
+              </p>
+            )}
+            <p className="rounded-lg bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+              A Entrevista de Seguimento (Follow-Up) do M-CHAT-R/F não é
+              aplicada nesta tela; em escore 3–7, conduza o Follow-Up oficial
+              antes de decidir o encaminhamento. Este rastreio não substitui
+              avaliação diagnóstica.
+            </p>
+          </CardContent>
+        </Card>
 
         <Card className="border-card-border">
           <CardContent className="p-6 space-y-4">
@@ -148,12 +214,12 @@ export default function MchatPage() {
           <LazyClinicalReport
             scaleName="M-CHAT-R/F"
             scaleFullName="Modified Checklist for Autism in Toddlers, Revised with Follow-Up"
-            items={reportItems}
+            items={[...scoreSummaryItems, ...reportItems]}
             patientAge="16-30 meses"
           />
           <LazySaveToPatient
             scaleName="M-CHAT-R/F"
-            responses={reportItems}
+            responses={[...scoreSummaryItems, ...reportItems]}
             patientAge="16-30 meses"
           />
         </Suspense>

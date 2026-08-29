@@ -179,7 +179,6 @@ const requiredPages = [
   "sdq",
   "scared",
   "conners",
-  "cdi2",
   "phqa",
   "cssrs",
   "crafft",

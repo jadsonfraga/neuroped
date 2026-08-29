@@ -197,10 +197,15 @@ export const opbParentCopy: Record<string, OPBCopy> = {
     parentExample: "O adolescente responde sobre tristeza, perda de interesse, sono, apetite, cansaço e ideias de morte.",
     whyUseful: "Rastreio de 1ª linha de depressão na adolescência, com item de risco.",
   },
-  cdi2: {
-    mainQuestion: "A criança apresenta sintomas depressivos?",
-    parentExample: "A própria criança escolhe as frases que melhor descrevem humor, autoestima, escola e relações.",
-    whyUseful: "Autorrelato validado de depressão na idade escolar.",
+  smfq: {
+    mainQuestion: "A criança apresenta sintomas de humor deprimido?",
+    parentExample: "A própria criança responde 13 frases curtas sobre tristeza, cansaço e como se sentiu nas últimas duas semanas.",
+    whyUseful: "Autorrelato breve e livre de humor na idade escolar.",
+  },
+  who5: {
+    mainQuestion: "Como está o bem-estar subjetivo do adolescente?",
+    parentExample: "O adolescente marca com que frequência se sentiu alegre, calmo, ativo e interessado nas últimas duas semanas.",
+    whyUseful: "Índice livre de bem-estar; queda importante sugere rastrear depressão.",
   },
   cssrs: {
     mainQuestion: "Há ideação ou comportamento suicida e qual a gravidade?",

@@ -140,7 +140,6 @@ const VERIFIED_INTERACTIVE_ROUTES = new Set([
   "/brief2",
   "/cbcl",
   "/abc",
-  "/cdi2",
   "/epilepsia",
   "/gmfcs",
   "/espasticidade",

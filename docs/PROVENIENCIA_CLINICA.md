@@ -3,8 +3,8 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 253
-- **Com fonte declarada:** 253 (100.0%)
+- **Total de instrumentos:** 252
+- **Com fonte declarada:** 252 (100.0%)
 - **Sem fonte declarada:** 0
 - **Aguardando validação psicométrica publicada:** 77 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
@@ -36,7 +36,6 @@
 | `catclams` | CAT/CLAMS | Accardo PJ et al., 1992 | não | não |
 | `cats` | CATS | Sachser C et al., 2017 (Child and Adolescent Trauma Screen) | não | não |
 | `cbcl` | CBCL | Achenbach TM & Rescorla LA, 2001 | não | não |
-| `cdi2` | CDI-2 | Kovacs M, 2011 - Multi-Health Systems | não | não |
 | `cefaleia-calendario` | Calendário de Cefaleia | Ferramenta de registro clínico NeuroPed (calendário de cefaleia) | não | não |
 | `cfcs` | CFCS | Hidecker MJC et al., 2011 (CFCS) | não | não |
 | `cheops` | CHEOPS | McGrath PJ et al., 1985 | não | não |

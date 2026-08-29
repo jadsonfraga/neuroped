@@ -94,11 +94,11 @@ export const clinicalRanking: ClinicalTierRule[] = [
 
   // ============================= DEPRESSÃO ==============================
   { queixa: "depressao", ageMin: 132, ageMax: 216,
-    ouro: "phqa", prata: "cdi2", bronze: "cssrs",
-    reason: "PHQ-A é o rastreio de primeira linha de depressão no adolescente; CDI-2 complementa e C-SSRS avalia risco de suicídio (obrigatório)." },
+    ouro: "phqa", prata: "who5", bronze: "cssrs",
+    reason: "PHQ-A é o rastreio de primeira linha de depressão no adolescente; WHO-5 (livre) mede bem-estar subjetivo e C-SSRS avalia risco de suicídio (obrigatório)." },
   { queixa: "depressao", ageMin: 84, ageMax: 132,
-    ouro: "cdi2", prata: "cssrs", bronze: "cbcl",
-    reason: "CDI-2 é o autorrelato validado de depressão na criança escolar; sempre pareado ao rastreio de risco C-SSRS." },
+    ouro: "smfq", prata: "cssrs", bronze: "cbcl",
+    reason: "SMFQ (livre) é o autorrelato breve de humor na criança escolar; sempre pareado ao rastreio de risco C-SSRS. CDI-2 é licenciado (aplicação externa)." },
   { queixa: "depressao", ageMin: 48, ageMax: 84,
     ouro: "edi", prata: "cbcl", bronze: "orientacao-parental",
     reason: "Em pré-escolares, a avaliação de humor é heteroaplicada (EDI clínico, CBCL pais), pois falta autorrelato confiável." },
