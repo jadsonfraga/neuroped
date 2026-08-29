@@ -83,7 +83,7 @@
   overflow: hidden;
   min-height: 1.55rem;
   color: hsl(var(--sidebar-foreground));
-  font-size: 0.72rem !important;
+  font-size: max(11px, 0.72rem) !important;
   font-weight: 750 !important;
   line-height: 1.12 !important;
   text-wrap: balance;
