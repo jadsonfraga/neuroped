@@ -42,6 +42,9 @@ const MUST_BE_PUBLIC = [
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",
   "/brincando-e-aprendendo", "/missao-saude",
   "/sobre", "/sobre-neuroped", "/servicos-clinica", "/termos", "/ajuda", "/acessibilidade", "/consentimento-lgpd",
+  // Vitrine comercial: marketing B2B e planos. Nenhum dado clínico; as ações de
+  // billing/checkout exigem sessão e papel de gestor no backend (Functions).
+  "/para-clinicas", "/planos",
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",
