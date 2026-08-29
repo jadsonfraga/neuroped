@@ -76,6 +76,15 @@ const manifest = {
   captures: [],
 };
 
+function rectsOverlap(a, b) {
+  return !(
+    a.right <= b.left + 1 ||
+    b.right <= a.left + 1 ||
+    a.bottom <= b.top + 1 ||
+    b.bottom <= a.top + 1
+  );
+}
+
 async function capture(spec) {
   const context = await browser.newContext({
     viewport: { width: spec.width, height: spec.height },
@@ -139,6 +148,12 @@ async function capture(spec) {
       const sidebar = document.querySelector(
         'aside[aria-label="Menu de navegação"]',
       );
+      const flowGrid = document.querySelector(
+        '[data-testid="premium-flow-grid"]',
+      );
+      const flowElements = Array.from(
+        document.querySelectorAll('[data-testid^="home-flow-"]'),
+      );
 
       const rectHeight = (element) =>
         element instanceof HTMLElement
@@ -150,6 +165,19 @@ async function capture(spec) {
         getComputedStyle(element).visibility !== "hidden" &&
         element.getBoundingClientRect().width > 0 &&
         element.getBoundingClientRect().height > 0;
+      const serializeRect = (element) => {
+        if (!(element instanceof HTMLElement)) return null;
+        const rect = element.getBoundingClientRect();
+        return {
+          testId: element.getAttribute("data-testid") || "",
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+        };
+      };
 
       return {
         viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -161,9 +189,12 @@ async function capture(spec) {
         secondaryVisible: visible(secondaryAction),
         primaryHeight: rectHeight(primaryAction),
         secondaryHeight: rectHeight(secondaryAction),
-        flowCount: document.querySelectorAll(
-          '[data-testid^="home-flow-"]',
-        ).length,
+        flowCount: flowElements.length,
+        flowGridDisplay:
+          flowGrid instanceof HTMLElement
+            ? getComputedStyle(flowGrid).display
+            : null,
+        flowRects: flowElements.map(serializeRect).filter(Boolean),
         metricCount: document.querySelectorAll(
           '[data-testid="premium-metric-card"]',
         ).length,
@@ -256,6 +287,49 @@ async function capture(spec) {
         true,
         `${spec.name}: sidebar desktop ausente`,
       );
+    }
+
+    if (spec.width <= 767) {
+      assert.equal(
+        contract.flowGridDisplay,
+        "flex",
+        `${spec.name}: fluxos móveis devem usar pilha linear defensiva`,
+      );
+      assert.equal(
+        contract.flowRects.length,
+        5,
+        `${spec.name}: geometria incompleta dos fluxos móveis`,
+      );
+      for (const rect of contract.flowRects) {
+        assert.ok(
+          rect.width >= spec.width * 0.86,
+          `${spec.name}: ${rect.testId} estreito (${rect.width}px)`,
+        );
+        assert.ok(
+          rect.left >= -1 && rect.right <= spec.width + 1,
+          `${spec.name}: ${rect.testId} saiu do viewport`,
+        );
+        assert.ok(
+          rect.height >= 180,
+          `${spec.name}: ${rect.testId} colapsou verticalmente (${rect.height}px)`,
+        );
+      }
+      for (let i = 0; i < contract.flowRects.length; i += 1) {
+        for (let j = i + 1; j < contract.flowRects.length; j += 1) {
+          assert.equal(
+            rectsOverlap(contract.flowRects[i], contract.flowRects[j]),
+            false,
+            `${spec.name}: ${contract.flowRects[i].testId} sobrepõe ${contract.flowRects[j].testId}`,
+          );
+        }
+      }
+      for (let index = 1; index < contract.flowRects.length; index += 1) {
+        assert.ok(
+          contract.flowRects[index].top >
+            contract.flowRects[index - 1].bottom,
+          `${spec.name}: ordem vertical dos fluxos foi perdida`,
+        );
+      }
     }
 
     const fileName = `${spec.name}.png`;
