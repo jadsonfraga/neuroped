@@ -12,6 +12,9 @@ const css = read("client/src/styles/premium-internal-app-v15.css");
 const a11yCss = read(
   "client/src/styles/premium-internal-app-v15-a11y.css",
 );
+const responsiveCss = read(
+  "client/src/styles/premium-internal-app-v15-responsive.css",
+);
 const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const workflow = read(".github/workflows/premium-visual-v13.yml");
 
@@ -67,11 +70,20 @@ const v15 = main.indexOf('./styles/premium-internal-app-v15.css');
 const v15A11y = main.indexOf(
   './styles/premium-internal-app-v15-a11y.css',
 );
+const v15Responsive = main.indexOf(
+  './styles/premium-internal-app-v15-responsive.css',
+);
+const v16 = main.indexOf('./styles/premium-sidebar-v16.css');
 const touch = main.indexOf('./styles/tablet-coarse-perf.css');
 assert.ok(v15 > v14Responsive, "v15 deve carregar depois do acabamento v14");
 assert.ok(v15A11y > v15, "O reforço WCAG interno deve carregar depois da v15");
 assert.ok(
-  touch > v15A11y,
+  v15Responsive > v15A11y,
+  "A contenção responsiva deve carregar depois do acabamento principal da v15",
+);
+assert.ok(v16 > v15Responsive, "A sidebar v16 deve carregar depois da v15");
+assert.ok(
+  touch > v16,
   "tablet-coarse-perf deve continuar sendo a última camada de desempenho",
 );
 
@@ -121,13 +133,31 @@ for (const contrastContract of [
   );
 }
 
+for (const tableContract of [
+  "@media screen and (max-width: 767px)",
+  "div:has(> table)",
+  "width: 100% !important",
+  "max-width: 100% !important",
+  "min-width: 0",
+]) {
+  assert.ok(
+    responsiveCss.includes(tableContract),
+    `Contenção de tabela móvel ausente: ${tableContract}`,
+  );
+}
 assert.doesNotMatch(
-  `${css}\n${a11yCss}`,
+  responsiveCss,
+  /100vw/,
+  "A correção de tabelas aninhadas não pode ser dimensionada pelo viewport",
+);
+
+assert.doesNotMatch(
+  `${css}\n${a11yCss}\n${responsiveCss}`,
   /html\[data-np-workspace="public"\]/,
   "A camada clínica não pode reestilizar deliberadamente as rotas públicas",
 );
 assert.doesNotMatch(
-  `${css}\n${a11yCss}`,
+  `${css}\n${a11yCss}\n${responsiveCss}`,
   /url\(["']?https?:\/\//i,
   "A v15 não pode depender de ativos externos em tempo de execução",
 );
@@ -138,9 +168,14 @@ assert.doesNotMatch(
 );
 
 for (const guardedFile of [
+  "client/src/components/Layout.tsx",
+  "client/src/data/navigation.ts",
+  "client/src/lib/publicRoutes.ts",
   "client/src/lib/workspaceSurface.ts",
+  "client/src/security/routeGuardPolicy.ts",
   "client/src/styles/premium-internal-app-v15.css",
   "client/src/styles/premium-internal-app-v15-a11y.css",
+  "client/src/styles/premium-internal-app-v15-responsive.css",
   "tests/unit/premium-internal-app-v15-contract.test.mjs",
   "tests/e2e/premium-internal-workspace.mjs",
 ]) {
@@ -161,5 +196,5 @@ for (const command of [
 }
 
 console.log(
-  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas, WCAG, touch, dark e impressão protegidos.",
+  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas aninhadas, WCAG, touch, dark e impressão protegidos.",
 );
