@@ -15,3 +15,14 @@ html[data-np-workspace="clinical"]:not([data-np-route="home"])
   > span {
   color: hsl(var(--muted-foreground));
 }
+
+/* NeuroAcompanhamento: o badge de identidade combinava sky-600 com texto branco
+ * em 11 px (4.09:1 no Axe). O container real da página ancora a correção e o
+ * par semântico primary/primary-foreground mantém contraste oficial em claro e
+ * escuro, sem literal de cor e sem alterar o baseline de design.
+ */
+[data-testid="neuroacompanhamento-page"]
+  .border-primary\/15.bg-sky-600.text-white {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
