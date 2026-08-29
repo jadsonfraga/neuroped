@@ -307,7 +307,7 @@ jobs:
             const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
             const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
             const collisionStatus = '${{ steps.collision.outcome }}' === 'success';
-            const ready = contractStatus && buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && collisionStatus;
+            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && collisionStatus && contractStatus;
 
             const prNumber = Number('${{ steps.collision.outputs.pr_number }}');
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
