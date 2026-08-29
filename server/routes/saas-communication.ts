@@ -22,6 +22,7 @@ import {
 import { requireAuth } from "../middleware/auth.js";
 import {
   validateClinicOwnership,
+  requireClinicManager,
   logAuthorizationAttempt,
   type AuthorizationContext,
 } from "../middleware/saas-authorization.js";
@@ -46,13 +47,10 @@ function handleCreateCommunicationTemplate(req: Request, res: Response) {
     const body = req.body;
     const input = createTemplateSchema.parse(body);
     const user = req.user;
-    const clinicId = (req as any).clinicId || (req.query.clinicId as string);
+    const clinicId = (req as any).clinicId as string;
     const authContext = (req as any).authContext as AuthorizationContext;
 
-    if (!user || !clinicId) {
-      if (authContext) {
-        logAuthorizationAttempt(authContext, "create_communication_template", undefined, "denied", "unauthorized");
-      }
+    if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -90,7 +88,7 @@ function handleCreateCommunicationTemplate(req: Request, res: Response) {
       createdBy: user.id,
       createdAt: now,
       updatedAt: now,
-    });
+    }).run();
 
     logAuthorizationAttempt(authContext, "create_communication_template", `template:${templateId}`, "allowed");
 
@@ -126,13 +124,9 @@ function handleCreateCommunicationTemplate(req: Request, res: Response) {
  */
 function handleListCommunicationTemplates(req: Request, res: Response) {
   try {
-    const clinicId = (req as any).clinicId || (req.query.clinicId as string);
+    const clinicId = (req as any).clinicId as string;
     const channel = req.query.channel as string;
     const authContext = (req as any).authContext as AuthorizationContext;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
 
     const conditions = [eq(communicationTemplates.clinicId, clinicId)];
     if (channel && (communicationChannels as readonly string[]).includes(channel)) {
@@ -170,12 +164,8 @@ function handleListCommunicationTemplates(req: Request, res: Response) {
 function handleGetCommunicationTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId = (req as any).clinicId || (req.query.clinicId as string);
+    const clinicId = (req as any).clinicId as string;
     const authContext = (req as any).authContext as AuthorizationContext;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
 
     const template = db
       .select()
@@ -212,11 +202,11 @@ function handleGetCommunicationTemplate(req: Request, res: Response) {
 function handleUpdateCommunicationTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId = (req as any).clinicId || (req.query.clinicId as string);
+    const clinicId = (req as any).clinicId as string;
     const user = req.user;
     const authContext = (req as any).authContext as AuthorizationContext;
 
-    if (!clinicId || !user) {
+    if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -280,12 +270,8 @@ function handleUpdateCommunicationTemplate(req: Request, res: Response) {
 function handleDeleteCommunicationTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId = (req as any).clinicId || (req.query.clinicId as string);
+    const clinicId = (req as any).clinicId as string;
     const authContext = (req as any).authContext as AuthorizationContext;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
 
     const template = db
       .select()
@@ -332,12 +318,8 @@ function handleSendCommunication(req: Request, res: Response) {
   try {
     const body = req.body;
     const input = sendCommunicationSchema.parse(body);
-    const clinicId = (req as any).clinicId || (req.query.clinicId as string);
+    const clinicId = (req as any).clinicId as string;
     const authContext = (req as any).authContext as AuthorizationContext;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
 
     // Get template
     const template = db
@@ -402,6 +384,7 @@ export function registerCommunicationRoutes(app: Express) {
     "/api/saas/templates/communication",
     requireAuth,
     validateClinicOwnership,
+    requireClinicManager,
     handleCreateCommunicationTemplate,
   );
   app.get(
@@ -420,12 +403,14 @@ export function registerCommunicationRoutes(app: Express) {
     "/api/saas/templates/communication/:templateId",
     requireAuth,
     validateClinicOwnership,
+    requireClinicManager,
     handleUpdateCommunicationTemplate,
   );
   app.delete(
     "/api/saas/templates/communication/:templateId",
     requireAuth,
     validateClinicOwnership,
+    requireClinicManager,
     handleDeleteCommunicationTemplate,
   );
   app.post(

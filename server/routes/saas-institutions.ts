@@ -29,6 +29,72 @@ import {
 } from "../middleware/saas-authorization.js";
 import { oneParam } from "../lib/http.js";
 
+/** Papéis da instituição em ordem crescente de poder. */
+const institutionRoleRank: Record<string, number> = {
+  viewer: 1,
+  operator: 2,
+  manager: 3,
+  admin: 4,
+};
+
+/**
+ * Resolve o vínculo do usuário com a instituição. O criador (adminUserId) é
+ * sempre admin; os demais precisam de uma linha em institution_users.
+ * Retorna null quando não há vínculo — o chamador nega (fail closed).
+ */
+function resolveInstitutionAccess(
+  institutionId: string,
+  userId: string,
+): { institution: typeof institutions.$inferSelect; role: string } | null {
+  const institution = db
+    .select()
+    .from(institutions)
+    .where(eq(institutions.id, institutionId))
+    .get();
+
+  if (!institution) return null;
+  if (institution.adminUserId === userId) return { institution, role: "admin" };
+
+  const membership = db
+    .select()
+    .from(institutionUsers)
+    .where(
+      and(
+        eq(institutionUsers.institutionId, institutionId),
+        eq(institutionUsers.userId, userId),
+      ),
+    )
+    .get();
+
+  if (!membership) return null;
+  return { institution, role: membership.role };
+}
+
+function roleAtLeast(role: string, required: keyof typeof institutionRoleRank): boolean {
+  return (institutionRoleRank[role] ?? 0) >= institutionRoleRank[required];
+}
+
+/**
+ * Nega o pedido de forma uniforme quando não há vínculo ou o papel é fraco.
+ * Responde 404 para ausência de vínculo: quem não participa da instituição não
+ * deve conseguir distinguir "não existe" de "existe e você não tem acesso".
+ */
+function denyInstitution(
+  res: Response,
+  authContext: AuthorizationContext | undefined,
+  action: string,
+  institutionId: string,
+  reason: string,
+  status: 403 | 404,
+) {
+  if (authContext) {
+    logAuthorizationAttempt(authContext, action, `institution:${institutionId}`, "denied", reason);
+  }
+  return status === 404
+    ? res.status(404).json({ error: "Institution not found" })
+    : res.status(403).json({ error: "Insufficient institution role" });
+}
+
 const assignClinicSchema = z
   .object({
     clinicId: z.string().min(1).max(255),
@@ -61,10 +127,10 @@ function handleCreateInstitution(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // TODO: Validate user is admin
-    // if (!user.isAdmin) {
-    //   return res.status(403).json({ error: "Admin access required" });
-    // }
+    // Criação é self-service: qualquer usuário autenticado pode registrar uma
+    // instituição e se torna admin apenas dela. Nenhum acesso a instituições de
+    // terceiros decorre disso — leitura e escrita passam por
+    // resolveInstitutionAccess.
 
     const now = new Date().toISOString();
     const institutionId = `inst_${crypto.randomUUID()}`;
@@ -83,7 +149,7 @@ function handleCreateInstitution(req: Request, res: Response) {
       adminUserId: user.id,
       createdAt: now,
       updatedAt: now,
-    });
+    }).run();
 
     if (authContext) {
       logAuthorizationAttempt(authContext, "create_institution", `institution:${institutionId}`, "allowed");
@@ -124,13 +190,21 @@ function handleListInstitutions(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // TODO: Filter by user's institution assignments
-    // For now, return all active institutions (admin view)
+    // Somente instituições em que o usuário participa: como criador
+    // (adminUserId) ou por linha em institution_users.
+    const memberships = db
+      .select({ institutionId: institutionUsers.institutionId })
+      .from(institutionUsers)
+      .where(eq(institutionUsers.userId, user.id))
+      .all();
+    const memberOf = new Set(memberships.map((m) => m.institutionId));
+
     const list = db
       .select()
       .from(institutions)
       .where(eq(institutions.isActive, true))
-      .all();
+      .all()
+      .filter((i) => i.adminUserId === user.id || memberOf.has(i.id));
 
     if (authContext) {
       logAuthorizationAttempt(authContext, "list_institutions", undefined, "allowed");
@@ -154,19 +228,15 @@ function handleGetInstitution(req: Request, res: Response) {
   try {
     const institutionId = oneParam(req.params.institutionId);
     const authContext = (req as any).authContext as AuthorizationContext;
+    const user = req.user;
 
-    const institution = db
-      .select()
-      .from(institutions)
-      .where(eq(institutions.id, institutionId))
-      .get();
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-    if (!institution) {
-      if (authContext) {
-        logAuthorizationAttempt(authContext, "get_institution", `institution:${institutionId}`, "denied", "not_found");
-      }
-      return res.status(404).json({ error: "Institution not found" });
+    const access = resolveInstitutionAccess(institutionId, user.id);
+    if (!access) {
+      return denyInstitution(res, authContext, "get_institution", institutionId, "no_membership", 404);
     }
+    const { institution } = access;
 
     // Get associated clinics
     const clinics = db
@@ -204,23 +274,13 @@ function handleUpdateInstitution(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const institution = db
-      .select()
-      .from(institutions)
-      .where(eq(institutions.id, institutionId))
-      .get();
-
-    if (!institution) {
-      if (authContext) {
-        logAuthorizationAttempt(authContext, "update_institution", `institution:${institutionId}`, "denied", "not_found");
-      }
-      return res.status(404).json({ error: "Institution not found" });
+    const access = resolveInstitutionAccess(institutionId, user.id);
+    if (!access) {
+      return denyInstitution(res, authContext, "update_institution", institutionId, "no_membership", 404);
     }
-
-    // TODO: Validate user is admin or manager of institution
-    // if (institution.adminUserId !== user.id && !user.isAdmin) {
-    //   return res.status(403).json({ error: "Forbidden" });
-    // }
+    if (!roleAtLeast(access.role, "manager")) {
+      return denyInstitution(res, authContext, "update_institution", institutionId, "insufficient_role", 403);
+    }
 
     const { name, legalName, city, state, website, contactEmail, contactPhone, isActive } = req.body;
     const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
@@ -272,18 +332,14 @@ function handleAssignClinicToInstitution(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const institution = db
-      .select()
-      .from(institutions)
-      .where(eq(institutions.id, institutionId))
-      .get();
-
-    if (!institution) {
-      if (authContext) {
-        logAuthorizationAttempt(authContext, "assign_clinic", `institution:${institutionId}`, "denied", "not_found");
-      }
-      return res.status(404).json({ error: "Institution not found" });
+    const access = resolveInstitutionAccess(institutionId, user.id);
+    if (!access) {
+      return denyInstitution(res, authContext, "assign_clinic", institutionId, "no_membership", 404);
     }
+    if (!roleAtLeast(access.role, "manager")) {
+      return denyInstitution(res, authContext, "assign_clinic", institutionId, "insufficient_role", 403);
+    }
+    const { institution } = access;
 
     // Check if clinic already assigned
     const existing = db
@@ -310,7 +366,7 @@ function handleAssignClinicToInstitution(req: Request, res: Response) {
       assignedAt: now,
       assignedBy: user.id,
       createdAt: now,
-    });
+    }).run();
 
     // Update clinic count
     db.update(institutions)
@@ -352,6 +408,12 @@ function handleListInstitutionClinics(req: Request, res: Response) {
   try {
     const institutionId = oneParam(req.params.institutionId);
     const authContext = (req as any).authContext as AuthorizationContext;
+    const user = req.user;
+
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    if (!resolveInstitutionAccess(institutionId, user.id)) {
+      return denyInstitution(res, authContext, "list_clinics", institutionId, "no_membership", 404);
+    }
 
     const clinics = db
       .select()
@@ -390,17 +452,14 @@ function handleAssignUserToInstitution(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const institution = db
-      .select()
-      .from(institutions)
-      .where(eq(institutions.id, institutionId))
-      .get();
-
-    if (!institution) {
-      if (authContext) {
-        logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "denied", "not_found");
-      }
-      return res.status(404).json({ error: "Institution not found" });
+    const access = resolveInstitutionAccess(institutionId, user.id);
+    if (!access) {
+      return denyInstitution(res, authContext, "assign_user", institutionId, "no_membership", 404);
+    }
+    // Conceder papéis é privilégio de admin: um manager não pode se promover
+    // nem criar outro admin.
+    if (!roleAtLeast(access.role, "admin")) {
+      return denyInstitution(res, authContext, "assign_user", institutionId, "insufficient_role", 403);
     }
 
     // Check if user already has role
@@ -433,7 +492,7 @@ function handleAssignUserToInstitution(req: Request, res: Response) {
       grantedAt: now,
       grantedBy: user.id,
       createdAt: now,
-    });
+    }).run();
 
     if (authContext) {
       logAuthorizationAttempt(authContext, "assign_user", `institution:${institutionId}`, "allowed");
@@ -466,6 +525,17 @@ function handleListInstitutionUsers(req: Request, res: Response) {
   try {
     const institutionId = oneParam(req.params.institutionId);
     const authContext = (req as any).authContext as AuthorizationContext;
+    const user = req.user;
+
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    // A lista de membros expõe quem tem acesso: exige manager+.
+    const access = resolveInstitutionAccess(institutionId, user.id);
+    if (!access) {
+      return denyInstitution(res, authContext, "list_users", institutionId, "no_membership", 404);
+    }
+    if (!roleAtLeast(access.role, "manager")) {
+      return denyInstitution(res, authContext, "list_users", institutionId, "insufficient_role", 403);
+    }
 
     const users = db
       .select()

@@ -249,6 +249,201 @@ sqlite.exec(`
 `);
 
 /* =========================================================================
+ * SCHEMA SaaS — módulos de operação (onboarding, feedback, templates,
+ * instituições, rate limit e trilha de autorização).
+ *
+ * As migrations em db/migrations/ atendem ao D1 (Cloudflare). O servidor
+ * Express cria o mesmo contrato aqui, porque nada executa aquelas migrations
+ * neste runtime: sem estas tabelas toda a superfície /api/saas responde 500.
+ *
+ * `clinic_memberships` espelha o modelo de tenant do D1 (shared/tenant.ts) e é
+ * a ÚNICA fonte de verdade para acesso a uma clínica. Nenhum identificador de
+ * clínica vindo do cliente concede acesso por si só.
+ * ========================================================================= */
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS clinic_memberships (
+    clinic_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (clinic_id, user_id),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS clinic_memberships_user_idx ON clinic_memberships(user_id);
+  CREATE INDEX IF NOT EXISTS clinic_memberships_clinic_idx ON clinic_memberships(clinic_id);
+
+  CREATE TABLE IF NOT EXISTS onboarding_checklist (
+    id TEXT PRIMARY KEY,
+    clinic_id TEXT NOT NULL,
+    step_id TEXT NOT NULL,
+    step_label TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0,
+    completed_at TEXT,
+    completed_by TEXT,
+    notes TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_onboarding_clinic_step
+    ON onboarding_checklist(clinic_id, step_id);
+  CREATE INDEX IF NOT EXISTS idx_onboarding_clinic ON onboarding_checklist(clinic_id);
+
+  CREATE TABLE IF NOT EXISTS appointment_feedback (
+    id TEXT PRIMARY KEY,
+    appointment_id TEXT NOT NULL UNIQUE,
+    clinic_id TEXT NOT NULL,
+    rating INTEGER,
+    nps_score INTEGER,
+    comment TEXT,
+    sentiment TEXT,
+    sent_at TEXT,
+    responded_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_feedback_clinic ON appointment_feedback(clinic_id);
+  CREATE INDEX IF NOT EXISTS idx_feedback_clinic_date
+    ON appointment_feedback(clinic_id, created_at);
+
+  CREATE TABLE IF NOT EXISTS availability_templates (
+    id TEXT PRIMARY KEY,
+    clinic_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    rules TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_avail_template_clinic_name
+    ON availability_templates(clinic_id, name);
+  CREATE INDEX IF NOT EXISTS idx_avail_template_clinic ON availability_templates(clinic_id);
+
+  CREATE TABLE IF NOT EXISTS professional_template_assignments (
+    id TEXT PRIMARY KEY,
+    professional_id TEXT NOT NULL,
+    template_id TEXT NOT NULL,
+    clinic_id TEXT NOT NULL,
+    applied_at TEXT NOT NULL,
+    applied_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_prof_template_assignment
+    ON professional_template_assignments(professional_id, template_id);
+  CREATE INDEX IF NOT EXISTS idx_prof_assignment_clinic
+    ON professional_template_assignments(clinic_id);
+
+  CREATE TABLE IF NOT EXISTS tenant_lifecycle_events (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    reason TEXT,
+    triggered_by TEXT NOT NULL,
+    previous_state TEXT,
+    new_state TEXT,
+    metadata TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_lifecycle_tenant ON tenant_lifecycle_events(tenant_id);
+
+  CREATE TABLE IF NOT EXISTS communication_templates (
+    id TEXT PRIMARY KEY,
+    clinic_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    subject TEXT,
+    body TEXT NOT NULL,
+    variables TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_comm_template_clinic_channel
+    ON communication_templates(clinic_id, channel, name);
+  CREATE INDEX IF NOT EXISTS idx_comm_template_clinic ON communication_templates(clinic_id);
+
+  CREATE TABLE IF NOT EXISTS institutions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    legal_name TEXT,
+    cnpj TEXT UNIQUE,
+    country TEXT NOT NULL DEFAULT 'BR',
+    city TEXT,
+    state TEXT,
+    website TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    admin_user_id TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    clinic_count INTEGER NOT NULL DEFAULT 0,
+    metadata TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_institution_admin ON institutions(admin_user_id);
+
+  CREATE TABLE IF NOT EXISTS institution_clinic_assignments (
+    id TEXT PRIMARY KEY,
+    institution_id TEXT NOT NULL,
+    clinic_id TEXT NOT NULL UNIQUE,
+    role TEXT DEFAULT 'primary',
+    assigned_at TEXT NOT NULL,
+    assigned_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_ica_institution ON institution_clinic_assignments(institution_id);
+
+  CREATE TABLE IF NOT EXISTS institution_users (
+    id TEXT PRIMARY KEY,
+    institution_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    granted_at TEXT NOT NULL,
+    granted_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_inst_user_role
+    ON institution_users(institution_id, user_id);
+
+  CREATE TABLE IF NOT EXISTS rate_limit_state (
+    id TEXT PRIMARY KEY,
+    clinic_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    window_start TEXT NOT NULL,
+    window_end TEXT NOT NULL,
+    request_count INTEGER NOT NULL DEFAULT 0,
+    limit_per_window INTEGER NOT NULL DEFAULT 100,
+    status TEXT DEFAULT 'active',
+    last_request_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_rl_clinic_endpoint
+    ON rate_limit_state(clinic_id, endpoint, window_start);
+
+  CREATE TABLE IF NOT EXISTS authorization_logs (
+    id TEXT PRIMARY KEY,
+    clinic_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    resource TEXT,
+    result TEXT NOT NULL,
+    reason TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_auth_log_clinic ON authorization_logs(clinic_id);
+  CREATE INDEX IF NOT EXISTS idx_auth_log_result ON authorization_logs(result, created_at);
+`);
+
+/* =========================================================================
  * Storage interface (legado para resultados; pacientes agora vai direto via db)
  * ========================================================================= */
 

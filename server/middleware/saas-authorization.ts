@@ -1,12 +1,24 @@
 /**
  * SaaS Authorization Middleware
  *
- * Validates clinic ownership, professional assignment, and logs all access attempts
- * Integrates with rate limiting and audit trail
+ * Resolve o acesso a uma clínica EXCLUSIVAMENTE por membership explícita,
+ * espelhando o contrato do D1 em functions/api/tenant/_core.ts. Um `clinicId`
+ * enviado pelo cliente (query, body ou rota) é apenas um pedido: só passa se
+ * existir uma linha ativa em `clinic_memberships` ligando aquele usuário
+ * àquela clínica. O papel global `admin` NÃO é bypass entre clínicas.
+ *
+ * Toda tentativa — permitida ou negada — é registrada em `authorization_logs`.
  */
 
+import type { Request, Response, NextFunction } from "express";
+import { and, eq } from "drizzle-orm";
 import { db } from "../storage.js";
-import { authorizationLogs } from "@shared/saas-schema-extended";
+import {
+  authorizationLogs,
+  clinicMemberships,
+  type ClinicMembership,
+} from "@shared/saas-schema-extended";
+import { canManageClinic, type ClinicMembershipRole } from "@shared/tenant";
 
 type AuthContext = {
   userId: string;
@@ -15,6 +27,80 @@ type AuthContext = {
   ip: string;
   userAgent: string;
 };
+
+/**
+ * Clínica pessoal de um usuário. Serve de escopo padrão quando o cliente não
+ * pede uma clínica específica, para que a superfície SaaS seja utilizável sem
+ * depender de um provisionamento de clínicas que o runtime Express ainda não
+ * possui. O identificador é derivado no servidor — nunca aceito do cliente.
+ */
+export function personalClinicId(userId: string): string {
+  return `user_${userId}`;
+}
+
+/**
+ * Garante que o usuário seja `owner` da própria clínica pessoal.
+ * Idempotente: repetir a chamada não altera uma membership existente.
+ */
+export function ensurePersonalClinicMembership(userId: string): string {
+  const clinicId = personalClinicId(userId);
+  try {
+    const existing = db
+      .select()
+      .from(clinicMemberships)
+      .where(
+        and(
+          eq(clinicMemberships.clinicId, clinicId),
+          eq(clinicMemberships.userId, userId),
+        ),
+      )
+      .get();
+
+    if (!existing) {
+      db.insert(clinicMemberships)
+        .values({
+          clinicId,
+          userId,
+          role: "owner",
+          active: true,
+          createdAt: new Date().toISOString(),
+        })
+        .onConflictDoNothing()
+        .run();
+    }
+  } catch (err) {
+    console.error("Failed to ensure personal clinic membership:", err);
+  }
+  return clinicId;
+}
+
+/**
+ * Busca a membership ativa do usuário na clínica. Retorna null quando não há
+ * vínculo — o chamador deve tratar isso como negação (fail closed).
+ */
+export function getClinicMembership(
+  clinicId: string,
+  userId: string,
+): ClinicMembership | null {
+  try {
+    const row = db
+      .select()
+      .from(clinicMemberships)
+      .where(
+        and(
+          eq(clinicMemberships.clinicId, clinicId),
+          eq(clinicMemberships.userId, userId),
+          eq(clinicMemberships.active, true),
+        ),
+      )
+      .get();
+    return row ?? null;
+  } catch (err) {
+    // Falha de armazenamento não pode abrir uma clínica de terceiro.
+    console.error("Membership lookup failed:", err);
+    return null;
+  }
+}
 
 /**
  * Logs authorization attempts (allowed and denied)
@@ -27,80 +113,85 @@ export function logAuthorizationAttempt(
   reason?: string,
 ) {
   try {
-    const now = new Date().toISOString();
-    db.insert(authorizationLogs).values({
-      id: `alog_${crypto.randomUUID()}`,
-      clinicId: context.clinicId,
-      userId: context.userId,
-      action,
-      resource,
-      result,
-      reason,
-      ipAddress: context.ip,
-      userAgent: context.userAgent,
-      createdAt: now,
-    } as any);
+    db.insert(authorizationLogs)
+      .values({
+        id: `alog_${crypto.randomUUID()}`,
+        clinicId: context.clinicId,
+        userId: context.userId,
+        action,
+        resource,
+        result,
+        reason,
+        ipAddress: context.ip,
+        userAgent: context.userAgent,
+        createdAt: new Date().toISOString(),
+      })
+      .run();
   } catch (err) {
     console.error("Failed to log authorization attempt:", err);
   }
 }
 
+function contextFrom(req: Request, userId: string, clinicId: string): AuthContext {
+  return {
+    userId,
+    clinicId,
+    ip: req.ip || "unknown",
+    userAgent: req.get("user-agent") || "unknown",
+  };
+}
+
 /**
- * Middleware: Validate clinic ownership
+ * Middleware: resolve e valida a clínica do pedido.
  *
- * Ensures user belongs to the clinic specified in query/body
- * Usage: app.use(validateClinicOwnership)
+ * Sem `clinicId` explícito o pedido é escopado à clínica pessoal do usuário.
+ * Com `clinicId` explícito, exige membership ativa — caso contrário 403.
  */
 export function validateClinicOwnership(
-  req: any,
-  res: any,
-  next: any,
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ) {
   try {
-    const user = req.user as any;
+    const user = req.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Extract clinicId from multiple sources (priority order)
-    const clinicId =
-      (req.query.clinicId as string) ||
-      (req.body?.clinicId as string) ||
-      user.clinicId;
+    const requested =
+      (typeof req.query.clinicId === "string" ? req.query.clinicId : undefined) ||
+      (typeof req.body?.clinicId === "string" ? req.body.clinicId : undefined);
 
-    if (!clinicId) {
-      const context: AuthContext = {
-        userId: user.id,
-        clinicId: "unknown",
-        ip: req.ip || "unknown",
-        userAgent: req.get("user-agent") || "unknown",
-      };
-      logAuthorizationAttempt(context, req.method + " " + req.path, undefined, "denied", "missing_clinic_id");
-      return res.status(400).json({ error: "Missing clinicId" });
+    // Sem clínica pedida: escopo pessoal, derivado no servidor.
+    if (!requested) {
+      const clinicId = ensurePersonalClinicMembership(user.id);
+      (req as any).clinicId = clinicId;
+      (req as any).clinicRole = "owner" as ClinicMembershipRole;
+      (req as any).authContext = contextFrom(req, user.id, clinicId);
+      return next();
     }
 
-    // TODO: Validate user belongs to clinic
-    // if (user.clinicId !== clinicId && !user.isAdmin) {
-    //   const context: AuthContext = {
-    //     userId: user.id,
-    //     clinicId,
-    //     ip: req.ip || "unknown",
-    //     userAgent: req.get("user-agent") || "unknown",
-    //   };
-    //   logAuthorizationAttempt(context, req.method + " " + req.path, undefined, "denied", "clinic_mismatch");
-    //   return res.status(403).json({ error: "Clinic access denied" });
-    // }
+    // Clínica pedida: só passa com membership ativa.
+    const membership =
+      requested === personalClinicId(user.id)
+        ? { clinicId: requested, userId: user.id, role: "owner" as const, active: true, createdAt: "" }
+        : getClinicMembership(requested, user.id);
 
-    // Attach to request for downstream use
-    req.clinicId = clinicId;
-    const context: AuthContext = {
-      userId: user.id,
-      clinicId,
-      ip: req.ip || "unknown",
-      userAgent: req.get("user-agent") || "unknown",
-    };
-    (req as any).authContext = context;
+    if (!membership) {
+      const context = contextFrom(req, user.id, requested);
+      logAuthorizationAttempt(
+        context,
+        `${req.method} ${req.path}`,
+        `clinic:${requested}`,
+        "denied",
+        "clinic_membership_missing",
+      );
+      return res.status(403).json({ error: "Clinic access denied" });
+    }
 
+    (req as any).clinicId = membership.clinicId;
+    (req as any).clinicRole = membership.role;
+    (req as any).authContext = contextFrom(req, user.id, membership.clinicId);
     next();
   } catch (error) {
     console.error("Clinic ownership validation error:", error);
@@ -109,76 +200,30 @@ export function validateClinicOwnership(
 }
 
 /**
- * Middleware: Validate professional ownership
- *
- * Ensures professional belongs to user's clinic
- * Usage: app.get("/:professionalId", validateProfessionalOwnership)
+ * Middleware: exige um papel com permissão de gestão na clínica já resolvida
+ * por `validateClinicOwnership`. Use em escrita de configuração da clínica.
  */
-export function validateProfessionalOwnership(
-  req: any,
-  res: any,
-  next: any,
+export function requireClinicManager(
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ) {
-  try {
-    const user = req.user as any;
-    const clinicId = req.clinicId || user?.clinicId;
-    const professionalId = req.params.professionalId || req.body?.professionalId;
+  const role = (req as any).clinicRole as ClinicMembershipRole | undefined;
+  const context = (req as any).authContext as AuthContext | undefined;
 
-    if (!clinicId || !professionalId) {
-      return next();
+  if (!role || !canManageClinic(role)) {
+    if (context) {
+      logAuthorizationAttempt(
+        context,
+        `${req.method} ${req.path}`,
+        undefined,
+        "denied",
+        "insufficient_clinic_role",
+      );
     }
-
-    // TODO: Validate professional belongs to clinic
-    // const professional = db
-    //   .select()
-    //   .from(professionals)
-    //   .where((p: any) => p.id.eq(professionalId) && p.clinicId.eq(clinicId))
-    //   .first();
-    //
-    // if (!professional) {
-    //   const context: AuthContext = {
-    //     userId: user.id,
-    //     clinicId,
-    //     ip: req.ip || "unknown",
-    //     userAgent: req.get("user-agent") || "unknown",
-    //   };
-    //   logAuthorizationAttempt(context, req.method + " " + req.path, `professional:${professionalId}`, "denied", "professional_not_found");
-    //   return res.status(404).json({ error: "Professional not found" });
-    // }
-
-    req.professionalId = professionalId;
-    next();
-  } catch (error) {
-    console.error("Professional ownership validation error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(403).json({ error: "Insufficient clinic role" });
   }
-}
-
-/**
- * Helper: Check if user has specific role in clinic
- */
-export function hasClinicRole(
-  _user: any,
-  _clinicId: string,
-  _requiredRole: string,
-): boolean {
-  // TODO: Query institution_users table to check role
-  // const userRole = db
-  //   .select()
-  //   .from(institutionUsers)
-  //   .where((iu: any) => iu.userId.eq(user.id) && iu.institutionId.eq(clinicId))
-  //   .first();
-  //
-  // const roleHierarchy: Record<string, number> = {
-  //   admin: 4,
-  //   manager: 3,
-  //   operator: 2,
-  //   viewer: 1,
-  // };
-  //
-  // return (roleHierarchy[userRole?.role] || 0) >= (roleHierarchy[requiredRole] || 0);
-
-  return true; // Placeholder: always allow for now
+  next();
 }
 
 /**

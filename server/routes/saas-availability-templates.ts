@@ -21,6 +21,10 @@ import {
   applyTemplateSchema,
 } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
+import {
+  validateClinicOwnership,
+  requireClinicManager,
+} from "../middleware/saas-authorization.js";
 import { oneParam } from "../lib/http.js";
 
 /**
@@ -37,12 +41,7 @@ function handleCreateTemplate(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const clinicId = (req.query.clinicId as string) || (user as any).clinicId;
-    if (!clinicId) {
-      return res.status(400).json({
-        error: "Missing clinicId. Provide as query param or in token.",
-      });
-    }
+    const clinicId = (req as any).clinicId as string;
 
     const now = new Date().toISOString();
 
@@ -76,7 +75,7 @@ function handleCreateTemplate(req: Request, res: Response) {
       createdBy: user.id,
       createdAt: now,
       updatedAt: now,
-    });
+    }).run();
 
     return res.status(201).json({
       success: true,
@@ -110,11 +109,7 @@ function handleCreateTemplate(req: Request, res: Response) {
  */
 function handleListTemplates(req: Request, res: Response) {
   try {
-    const clinicId =
-      (req.query.clinicId as string) || (req.user as any)?.clinicId;
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
+    const clinicId = (req as any).clinicId as string;
 
     const isActive = req.query.isActive as string;
 
@@ -152,12 +147,7 @@ function handleListTemplates(req: Request, res: Response) {
 function handleGetTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId =
-      (req.query.clinicId as string) || (req.user as any)?.clinicId;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
+    const clinicId = (req as any).clinicId as string;
 
     const template = db
       .select()
@@ -191,13 +181,8 @@ function handleGetTemplate(req: Request, res: Response) {
 function handleUpdateTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId =
-      (req.query.clinicId as string) || (req.user as any)?.clinicId;
+    const clinicId = (req as any).clinicId as string;
     const user = req.user;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -285,12 +270,7 @@ function handleUpdateTemplate(req: Request, res: Response) {
 function handleDeleteTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId =
-      (req.query.clinicId as string) || (req.user as any)?.clinicId;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
+    const clinicId = (req as any).clinicId as string;
 
     const template = db
       .select()
@@ -334,15 +314,10 @@ function handleDeleteTemplate(req: Request, res: Response) {
 function handleApplyTemplate(req: Request, res: Response) {
   try {
     const templateId = oneParam(req.params.templateId);
-    const clinicId =
-      (req.query.clinicId as string) || (req.user as any)?.clinicId;
+    const clinicId = (req as any).clinicId as string;
     const body = req.body;
     const input = applyTemplateSchema.parse(body);
     const user = req.user;
-
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId" });
-    }
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -395,7 +370,7 @@ function handleApplyTemplate(req: Request, res: Response) {
       appliedAt: now,
       appliedBy: user.id,
       createdAt: now,
-    });
+    }).run();
 
     // Incrementar usage count
     db.update(availabilityTemplates)
@@ -436,31 +411,40 @@ export function registerAvailabilityTemplateRoutes(app: Express) {
   app.post(
     "/api/saas/templates/availability",
     requireAuth,
+    validateClinicOwnership,
+    requireClinicManager,
     handleCreateTemplate,
   );
   app.get(
     "/api/saas/templates/availability",
     requireAuth,
+    validateClinicOwnership,
     handleListTemplates,
   );
   app.get(
     "/api/saas/templates/availability/:templateId",
     requireAuth,
+    validateClinicOwnership,
     handleGetTemplate,
   );
   app.patch(
     "/api/saas/templates/availability/:templateId",
     requireAuth,
+    validateClinicOwnership,
+    requireClinicManager,
     handleUpdateTemplate,
   );
   app.delete(
     "/api/saas/templates/availability/:templateId",
     requireAuth,
+    validateClinicOwnership,
+    requireClinicManager,
     handleDeleteTemplate,
   );
   app.post(
     "/api/saas/templates/availability/:templateId/apply",
     requireAuth,
+    validateClinicOwnership,
     handleApplyTemplate,
   );
 }

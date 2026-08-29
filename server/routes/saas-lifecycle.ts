@@ -12,6 +12,32 @@ import { eq, asc } from "drizzle-orm";
 import { db } from "../storage.js";
 import { tenantLifecycleEvents } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
+import {
+  getClinicMembership,
+  personalClinicId,
+  logAuthorizationAttempt,
+} from "../middleware/saas-authorization.js";
+import { canManageClinic } from "@shared/tenant";
+
+/**
+ * Um tenant do ciclo de vida é uma clínica. Só quem tem membership ativa com
+ * papel de gestão pode ler o histórico ou pedir reativação — conhecer o
+ * tenantId não basta.
+ */
+function canManageTenant(tenantId: string, userId: string): boolean {
+  if (tenantId === personalClinicId(userId)) return true;
+  const membership = getClinicMembership(tenantId, userId);
+  return membership ? canManageClinic(membership.role) : false;
+}
+
+function authContextFor(req: Request, userId: string, tenantId: string) {
+  return {
+    userId,
+    clinicId: tenantId,
+    ip: req.ip || "unknown",
+    userAgent: req.get("user-agent") || "unknown",
+  };
+}
 
 /**
  * Schema para solicitar reativação
@@ -37,10 +63,16 @@ function handleRequestReactivation(req: Request, res: Response) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // TODO: Validar que user é owner/admin da clínica
-    // if (!canManageClinic(user, input.tenantId)) {
-    //   return res.status(403).json({ error: "Forbidden" });
-    // }
+    if (!canManageTenant(input.tenantId, user.id)) {
+      logAuthorizationAttempt(
+        authContextFor(req, user.id, input.tenantId),
+        "request_reactivation",
+        `tenant:${input.tenantId}`,
+        "denied",
+        "insufficient_clinic_role",
+      );
+      return res.status(403).json({ error: "Tenant access denied" });
+    }
 
     const now = new Date().toISOString();
 
@@ -81,7 +113,7 @@ function handleRequestReactivation(req: Request, res: Response) {
       newState: "reactivation_requested",
       metadata: JSON.stringify({ ip: req.ip }),
       createdAt: now,
-    });
+    }).run();
 
     return res.json({
       success: true,
@@ -113,10 +145,20 @@ function handleGetStatus(req: Request, res: Response) {
       return res.status(400).json({ error: "Missing tenantId query param" });
     }
 
-    // TODO: Validar ownership
     const user = req.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!canManageTenant(tenantId, user.id)) {
+      logAuthorizationAttempt(
+        authContextFor(req, user.id, tenantId),
+        "get_lifecycle_status",
+        `tenant:${tenantId}`,
+        "denied",
+        "insufficient_clinic_role",
+      );
+      return res.status(403).json({ error: "Tenant access denied" });
     }
 
     // Buscar todos os eventos dessa clínica

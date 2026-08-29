@@ -1,5 +1,26 @@
 # SaaS Hub Expansion — Multi-Directional Hardening
 
+> **Auditoria de 29/08/2026 — leia antes de usar este documento.**
+>
+> A versão anterior deste resumo descrevia como prontas capacidades que não
+> funcionavam. O que foi verificado e corrigido:
+>
+> | Afirmação anterior | Estado real encontrado | Agora |
+> |---|---|---|
+> | 26 endpoints entregues | Nenhuma tabela SaaS existia no runtime Express: **toda** chamada respondia 500 | Tabelas criadas no boot (`server/storage.ts`) |
+> | "Ownership validation at every endpoint" | A checagem estava comentada; `req.user` não carrega clínica, então o `clinicId` vinha inteiro do cliente | Acesso resolvido por `clinic_memberships`, espelhando o D1 |
+> | Rate limiting por clínica | Middleware nunca registrado; normalização de rota quebrada; janela recalculada a cada pedido | Registrado em `/api/saas`, normalização por segmento, bucket horário fixo |
+> | Endpoints de criação | `insert().values()` sem `.run()`: retornavam 201 sem gravar nada (9 ocorrências) | Corrigidos e cobertos por teste |
+> | Submissão de feedback | Rota pública, sem autenticação, sobrescrevendo respostas alheias | Exige sessão e escopo de clínica |
+> | RBAC framework | `hasClinicRole()` retornava `true` sempre | Removido; papéis vêm de `shared/tenant.ts` via `requireClinicManager` |
+>
+> Travas em `tests/unit/saas-tenant-isolation.test.ts` (`npm run test:saas-isolation`,
+> encadeado no `verify:release`).
+>
+> **Integração:** esta superfície Express ainda não tem consumidor — o cliente
+> usa `/api/billing/*` e `/api/tenants/*` no Cloudflare D1. Os módulos abaixo
+> funcionam e estão protegidos, mas seguem sem tela.
+
 ## Overview
 
 Expanded the SaaS Hub from **3 modules** (Phase 1-3) to **7 complete modules** across **5 strategic directions**:

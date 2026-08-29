@@ -14,9 +14,38 @@ import {
   integer,
   index,
   uniqueIndex,
+  primaryKey,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { clinicMembershipRoles } from "./tenant";
+
+/* =====================================================================
+ * CLINIC MEMBERSHIPS — fonte de verdade de acesso a uma clínica
+ *
+ * Espelha o modelo do D1 (functions/api/tenant/_core.ts): o acesso é
+ * resolvido EXCLUSIVAMENTE por membership explícita. Um `clinicId` recebido
+ * do cliente nunca concede acesso por si só, e o papel global `admin` não é
+ * bypass entre clínicas.
+ * ===================================================================== */
+
+export const clinicMemberships = sqliteTable(
+  "clinic_memberships",
+  {
+    clinicId: text("clinic_id").notNull(),
+    userId: text("user_id").notNull(),
+    role: text("role", { enum: clinicMembershipRoles }).notNull(),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.clinicId, t.userId] }),
+    userIdx: index("clinic_memberships_user_idx").on(t.userId),
+    clinicIdx: index("clinic_memberships_clinic_idx").on(t.clinicId),
+  }),
+);
+
+export type ClinicMembership = typeof clinicMemberships.$inferSelect;
 
 /* =====================================================================
  * COMMUNICATION TEMPLATES — Module 4: Email, SMS, WhatsApp

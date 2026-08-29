@@ -57,14 +57,24 @@ interface RateLimitCheckResult {
  * Uses sliding window with 1-hour windows
  * Returns true if allowed, false if blocked
  */
+const WINDOW_MS = 60 * 60 * 1000;
+
+/** Início do bucket horário fixo que contém `now`. */
+export function windowStartFor(now: Date): Date {
+  return new Date(Math.floor(now.getTime() / WINDOW_MS) * WINDOW_MS);
+}
+
 export function checkRateLimit(
   clinicId: string,
   endpoint: string,
   limitConfig: { perHour: number },
 ): RateLimitCheckResult {
   const now = new Date();
-  const windowStart = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour ago
-  const windowEnd = now;
+  // Bucket horário fixo. Derivar a janela de `now - 1h` a cada chamada daria a
+  // cada pedido um windowStart distinto (precisão de milissegundo), criando uma
+  // linha nova por requisição e zerando a contagem — o limite nunca dispararia.
+  const windowStart = windowStartFor(now);
+  const windowEnd = new Date(windowStart.getTime() + WINDOW_MS);
 
   const windowStartISO = windowStart.toISOString();
   const windowEndISO = windowEnd.toISOString();
@@ -98,7 +108,7 @@ export function checkRateLimit(
         lastRequestAt: now.toISOString(),
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
-      });
+      }).run();
 
       record = db
         .select()
@@ -155,34 +165,62 @@ export function checkRateLimit(
   }
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Um segmento é identificador quando é um UUID puro ou um id prefixado do tipo
+ * `tpl_<uuid>` / `inst_<uuid>` que esta base emite.
+ *
+ * A normalização é por segmento — substituir por regex sobre o caminho inteiro
+ * quebra em ids prefixados, porque o casamento para no primeiro hífen do UUID e
+ * deixa o resto do identificador na chave.
+ */
+export function isIdSegment(segment: string): boolean {
+  if (UUID.test(segment)) return true;
+  const underscore = segment.indexOf("_");
+  if (underscore > 0 && UUID.test(segment.slice(underscore + 1))) return true;
+  return false;
+}
+
+/**
+ * Converte um caminho concreto na chave de configuração correspondente.
+ * Ex.: "GET /api/saas/templates/availability/tpl_<uuid>"
+ *   -> "GET /api/saas/templates/availability/:id"
+ */
+export function normalizeEndpoint(method: string, pathname: string): string {
+  const normalized = pathname
+    .split("/")
+    .map((segment) => (isIdSegment(segment) ? ":id" : segment))
+    .join("/");
+  return `${method} ${normalized}`;
+}
+
 /**
  * Express middleware: Apply rate limiting
  *
- * Usage: app.use(saasRateLimitMiddleware)
+ * Monte depois de `requireAuth`. Sem clínica resolvida ainda, a janela é
+ * contada por usuário — o que mantém o limite efetivo em vez de deixar o
+ * pedido passar sem contabilizar.
  */
 export function saasRateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
   const user = req.user;
-  const clinicId = (req as any).clinicId || (user as any)?.clinicId;
+  const subject = ((req as any).clinicId as string | undefined) ?? (user ? `user_${user.id}` : null);
 
-  if (!clinicId) {
+  if (!subject) {
     return next();
   }
 
-  // Get endpoint pattern (e.g., "GET /api/saas/feedback/metrics")
-  const method = req.method;
-  const endpoint = `${method} ${req.baseUrl}${req.path}`;
-
-  // Normalize endpoint (replace IDs with :id placeholders)
-  const normalizedEndpoint = endpoint
-    .replace(/\/[a-f0-9-]{36}/g, "/:id") // UUID pattern
-    .replace(/\/[a-z0-9_]+_[a-z0-9]+/g, "/:id"); // Token pattern
+  const normalizedEndpoint = normalizeEndpoint(
+    req.method,
+    `${req.baseUrl}${req.path}`,
+  );
 
   const config = rateLimitConfig[normalizedEndpoint];
   if (!config) {
     return next();
   }
 
-  const result = checkRateLimit(clinicId, normalizedEndpoint, config);
+  const result = checkRateLimit(subject, normalizedEndpoint, config);
 
   // Set response headers for rate limit info
   res.setHeader("X-RateLimit-Limit", config.perHour);

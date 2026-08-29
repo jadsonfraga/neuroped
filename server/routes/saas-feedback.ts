@@ -17,6 +17,7 @@ import {
   type OperationsFeedbackMetrics,
 } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
+import { validateClinicOwnership } from "../middleware/saas-authorization.js";
 import { oneParam } from "../lib/http.js";
 
 /**
@@ -53,7 +54,7 @@ function handleSubmitFeedback(req: Request, res: Response) {
 
     const now = new Date().toISOString();
     const sentiment = calculateSentiment(input.rating, input.npsScore);
-    const clinicId = (req.query.clinicId as string) || "unknown";
+    const clinicId = (req as any).clinicId as string;
 
     // Verificar se já existe feedback para este appointment
     const existing = db
@@ -61,6 +62,12 @@ function handleSubmitFeedback(req: Request, res: Response) {
       .from(appointmentFeedback)
       .where(eq(appointmentFeedback.appointmentId, appointmentId))
       .get();
+
+    // O appointment_id é único globalmente: um feedback já registrado por
+    // outra clínica não pode ser sobrescrito a partir desta.
+    if (existing && existing.clinicId !== clinicId) {
+      return res.status(403).json({ error: "Feedback belongs to another clinic" });
+    }
 
     if (existing) {
       // Atualizar existente
@@ -88,7 +95,7 @@ function handleSubmitFeedback(req: Request, res: Response) {
         respondedAt: now,
         createdAt: now,
         updatedAt: now,
-      });
+      }).run();
     }
 
     return res.json({
@@ -118,11 +125,18 @@ function handleSubmitFeedback(req: Request, res: Response) {
 function handleGetFeedback(req: Request, res: Response) {
   try {
     const appointmentId = oneParam(req.params.appointmentId);
+    const clinicId = (req as any).clinicId as string;
 
+    // Escopado à clínica: conhecer o appointmentId não basta para ler.
     const feedback = db
       .select()
       .from(appointmentFeedback)
-      .where(eq(appointmentFeedback.appointmentId, appointmentId))
+      .where(
+        and(
+          eq(appointmentFeedback.appointmentId, appointmentId),
+          eq(appointmentFeedback.clinicId, clinicId),
+        ),
+      )
       .get();
 
     if (!feedback) {
@@ -142,13 +156,13 @@ function handleGetFeedback(req: Request, res: Response) {
  */
 function handleGetMetrics(req: Request, res: Response) {
   try {
-    const clinicId = req.query.clinicId as string;
+    const clinicId = (req as any).clinicId as string;
     const from = req.query.from as string;
     const to = req.query.to as string;
 
-    if (!clinicId || !from || !to) {
+    if (!from || !to) {
       return res.status(400).json({
-        error: "Missing required query params: clinicId, from, to",
+        error: "Missing required query params: from, to",
       });
     }
 
@@ -237,14 +251,25 @@ function handleGetMetrics(req: Request, res: Response) {
  * Registra rotas de feedback
  */
 export function registerFeedbackRoutes(app: Express) {
+  // Submissão exige sessão: sem um token de convite assinado (que ainda não
+  // existe), uma rota pública aqui aceitaria escrita anônima em qualquer
+  // appointment e sobrescrita de respostas já registradas.
   app.post(
     "/api/saas/feedback/appointments/:appointmentId/submit",
+    requireAuth,
+    validateClinicOwnership,
     handleSubmitFeedback,
   );
   app.get(
     "/api/saas/feedback/appointments/:appointmentId",
     requireAuth,
+    validateClinicOwnership,
     handleGetFeedback,
   );
-  app.get("/api/saas/feedback/metrics", requireAuth, handleGetMetrics);
+  app.get(
+    "/api/saas/feedback/metrics",
+    requireAuth,
+    validateClinicOwnership,
+    handleGetMetrics,
+  );
 }

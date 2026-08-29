@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Brain,
   CalendarClock,
+  Clock3,
   FileText,
   Filter,
   HeartPulse,
@@ -364,6 +365,22 @@ export default function HomePage() {
               ⌘K
             </kbd>
           </button>
+        </div>
+
+        <div className="relative mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <span>Sem cadastro?</span>
+          <Link
+            href="/filtro-escalas?mode=flash"
+            onClick={activate}
+            onMouseEnter={() => softHover()}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-primary/20 bg-card/70 px-3 py-1.5 text-[11px] font-semibold text-foreground transition-colors hover:border-primary/35 hover:text-primary"
+          >
+            <Clock3 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+            Triagem rápida
+          </Link>
+          <span className="text-muted-foreground/80">
+            modo efêmero, nada fica salvo
+          </span>
         </div>
       </motion.section>
 

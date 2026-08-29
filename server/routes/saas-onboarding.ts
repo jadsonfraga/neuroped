@@ -19,6 +19,7 @@ import {
   type OnboardingProgress,
 } from "@shared/saas-schema";
 import { requireAuth } from "../middleware/auth.js";
+import { validateClinicOwnership } from "../middleware/saas-authorization.js";
 import { oneParam } from "../lib/http.js";
 
 /**
@@ -27,16 +28,8 @@ import { oneParam } from "../lib/http.js";
  */
 function handleGetProgress(req: Request, res: Response) {
   try {
-    const clinicId = req.query.clinicId as string;
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId query param" });
-    }
-
-    // TODO: Validar ownership aqui (user é admin/clinic_admin da clínica)
-    // const user = req.user as any;
-    // if (!user || !canAccessClinic(user, clinicId)) {
-    //   return res.status(403).json({ error: "Forbidden" });
-    // }
+    // Resolvido por validateClinicOwnership a partir da membership do usuário.
+    const clinicId = (req as any).clinicId as string;
 
     // Buscar checklist steps
     const steps = db
@@ -101,12 +94,7 @@ function handleCompleteStep(req: Request, res: Response) {
     const body = req.body;
     const input = completeOnboardingStepSchema.parse(body);
 
-    const clinicId = req.query.clinicId as string;
-    if (!clinicId) {
-      return res.status(400).json({ error: "Missing clinicId query param" });
-    }
-
-    // TODO: Validar ownership
+    const clinicId = (req as any).clinicId as string;
     const user = req.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -192,11 +180,18 @@ function handleGetSteps(_req: Request, res: Response) {
  * Registra rotas de onboarding
  */
 export function registerOnboardingRoutes(app: Express) {
-  app.get("/api/saas/onboarding/progress", requireAuth, handleGetProgress);
+  app.get(
+    "/api/saas/onboarding/progress",
+    requireAuth,
+    validateClinicOwnership,
+    handleGetProgress,
+  );
   app.post(
     "/api/saas/onboarding/steps/:stepId/complete",
     requireAuth,
+    validateClinicOwnership,
     handleCompleteStep,
   );
-  app.get("/api/saas/onboarding/steps", handleGetSteps);
+  // Catálogo estático de etapas: não expõe dado de clínica alguma.
+  app.get("/api/saas/onboarding/steps", requireAuth, handleGetSteps);
 }
