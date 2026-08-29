@@ -53,8 +53,8 @@ assert.match(
 );
 assert.match(
   css,
-  /font-size:\s*0\.72rem\s*!important/,
-  "Os rótulos compactos devem manter tamanho legível acima de 10 px",
+  /font-size:\s*max\(11px,\s*0\.72rem\)\s*!important/,
+  "Os rótulos compactos devem manter piso absoluto de 11 px",
 );
 assert.doesNotMatch(
   css,
