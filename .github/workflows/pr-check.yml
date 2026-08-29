@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Configurar Node.js 20
+      - name: Configurar Node.js 24
         uses: actions/setup-node@v6
         with:
           node-version: "24"
@@ -28,6 +28,142 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
+
+      - name: Validar base atual e colisões críticas entre PRs
+        id: collision
+        uses: actions/github-script@v9
+        continue-on-error: true
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed("Evento sem pull_request; gate fechado por segurança.");
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              owner,
+              repo,
+              basehead: `${pr.base.ref}...${pr.head.sha}`,
+              per_page: 1,
+            });
+            const behindBy = Number(comparison.data.behind_by ?? 0);
+
+            const currentFiles = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: pr.number, per_page: 100 },
+            );
+            const currentPaths = new Set(currentFiles.map((file) => file.filename));
+
+            const openPulls = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner,
+                repo,
+                state: "open",
+                base: pr.base.ref,
+                sort: "updated",
+                direction: "desc",
+                per_page: 100,
+              },
+            );
+
+            const exactCritical = new Set([
+              "package.json",
+              "package-lock.json",
+              "client/src/App.tsx",
+              "client/src/main.tsx",
+              "client/src/pages/home.tsx",
+              "vite.config.ts",
+              "wrangler.toml",
+              "vercel.json",
+            ]);
+            const criticalPrefixes = [
+              ".github/workflows/",
+              "server/",
+              "functions/",
+              "shared/",
+              "db/migrations/",
+              "migrations/",
+              "client/src/pages/",
+              "client/src/components/",
+              "client/src/contexts/",
+              "client/src/security/",
+              "client/src/lib/auth",
+            ];
+            const isCritical = (path) =>
+              exactCritical.has(path) ||
+              criticalPrefixes.some((prefix) => path.startsWith(prefix));
+
+            const collisions = [];
+            for (const other of openPulls) {
+              if (other.number === pr.number || other.draft) continue;
+              const otherFiles = await github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number: other.number, per_page: 100 },
+              );
+              const critical = otherFiles
+                .map((file) => file.filename)
+                .filter((path) => currentPaths.has(path) && isCritical(path));
+              if (critical.length > 0) {
+                collisions.push({
+                  number: other.number,
+                  title: other.title,
+                  files: critical,
+                });
+              }
+            }
+
+            core.setOutput("behind_by", String(behindBy));
+            core.setOutput("collision_count", String(collisions.length));
+
+            core.summary
+              .addHeading("NeuroPED — gate obrigatório de integração")
+              .addTable([
+                [
+                  { data: "Indicador", header: true },
+                  { data: "Resultado", header: true },
+                ],
+                ["PR", `#${pr.number} — ${pr.title}`],
+                ["Estado", pr.draft ? "Draft" : "Pronto para revisão"],
+                ["Commits atrás da base", String(behindBy)],
+                ["Colisões críticas com PRs não-draft", String(collisions.length)],
+              ]);
+
+            for (const item of collisions) {
+              core.summary.addRaw(
+                `- PR #${item.number} — ${item.title}: ${item.files.map((file) => `\`${file}\``).join(", ")}\n`,
+              );
+            }
+            await core.summary.write();
+
+            if (pr.draft) {
+              if (behindBy > 0 || collisions.length > 0) {
+                core.notice(
+                  "Base antiga ou colisões registradas; o PR permanece protegido por estar em draft.",
+                );
+              }
+              return;
+            }
+
+            const blockers = [];
+            if (behindBy > 0) {
+              blockers.push(
+                `Branch ${behindBy} commit(s) atrás de ${pr.base.ref}; atualize a base e repita os gates.`,
+              );
+            }
+            if (collisions.length > 0) {
+              blockers.push(
+                `Colisão crítica: ${collisions
+                  .map((item) => `#${item.number} [${item.files.join(", ")}]`)
+                  .join(" | ")}. Deixe um PR em draft, defina a ordem e reconcilie após o primeiro merge.`,
+              );
+            }
+            if (blockers.length > 0) {
+              core.setFailed(blockers.join("\n"));
+            }
 
       - name: Verificar tipos TypeScript
         id: typecheck
@@ -84,7 +220,7 @@ jobs:
         continue-on-error: true
 
       - name: Comentar resultado no PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const buildStatus = '${{ steps.build.outcome }}' === 'success';
@@ -95,7 +231,8 @@ jobs:
             const conectaStatus = '${{ steps.conecta.outcome }}' === 'success';
             const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
             const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
-            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus;
+            const collisionStatus = '${{ steps.collision.outcome }}' === 'success';
+            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && collisionStatus;
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -106,6 +243,7 @@ jobs:
 
             | Etapa | Status |
             |-------|--------|
+            | ${icon(collisionStatus)} Base atual + colisões entre PRs | ${label(collisionStatus)} |
             | ${icon(typecheckStatus)} TypeScript | ${label(typecheckStatus)} |
             | ${icon(buildStatus)} Build | ${label(buildStatus)} |
             | ${icon(lintStatus)} Lint | ${label(lintStatus)} |
@@ -117,7 +255,7 @@ jobs:
 
             ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
+              : '> ❌ **Há gates pendentes.** Corrija colisões/base, TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
@@ -149,7 +287,8 @@ jobs:
       - name: Falhar se qualquer verificação crítica quebrou
         if: always()
         run: |
-          if [ "${{ steps.typecheck.outcome }}" != "success" ] || \
+          if [ "${{ steps.collision.outcome }}" != "success" ] || \
+             [ "${{ steps.typecheck.outcome }}" != "success" ] || \
              [ "${{ steps.build.outcome }}" != "success" ] || \
              [ "${{ steps.lint.outcome }}" != "success" ] || \
              [ "${{ steps.functions_build.outcome }}" != "success" ] || \
