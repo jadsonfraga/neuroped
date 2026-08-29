@@ -35,7 +35,7 @@ for (const contract of [
   '#main-content[class~="lg:ml-64"]',
   '.grid.grid-cols-2',
   '[data-testid^="featured-"]',
-  'min-height: 4.65rem !important',
+  'min-height: 5rem !important',
   'flex-direction: column',
   '-webkit-line-clamp: 3',
   '> span:last-child',
@@ -53,8 +53,8 @@ assert.match(
 );
 assert.match(
   css,
-  /font-size:\s*0\.64rem\s*!important/,
-  "Os rótulos compactos devem manter tamanho legível",
+  /font-size:\s*0\.72rem\s*!important/,
+  "Os rótulos compactos devem manter tamanho legível acima de 10 px",
 );
 assert.doesNotMatch(
   css,
