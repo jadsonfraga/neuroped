@@ -221,7 +221,8 @@ export default function AgendaPage() {
   }
 
   const canConfigure = data.access.canConfigure;
-  const publicHref = `/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
+  // Query dentro do hash: é o formato que a página pública /agendar lê.
+  const publicHref = `#/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
 
   return (
     <div className="space-y-6 pb-16">
@@ -238,7 +239,7 @@ export default function AgendaPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {canConfigure && <Button asChild variant="outline" className="gap-2"><Link href={publicHref}><ExternalLink className="h-4 w-4" />Ver página pública</Link></Button>}
+            {canConfigure && <Button asChild variant="outline" className="gap-2"><a href={publicHref}><ExternalLink className="h-4 w-4" />Ver página pública</a></Button>}
             <Button asChild className="gap-2"><Link href="/recepcao"><Users className="h-4 w-4" />Recepção</Link></Button>
           </div>
         </div>
@@ -434,7 +435,7 @@ export default function AgendaPage() {
 
         {canConfigure && (
           <TabsContent value="publico">
-            <Card><CardContent className="space-y-5 p-5 sm:p-6"><div className="flex items-start gap-3"><ShieldCheck className="mt-1 h-5 w-5 text-primary" /><div><h2 className="font-bold">Perfil e autoagendamento</h2><p className="text-sm text-muted-foreground">O booking público só abre horários quando você o ativa. Contatos são cifrados antes de persistir; não há campo livre para hipótese diagnóstica.</p></div></div><div className="grid gap-3 md:grid-cols-2"><Field label="Nome público"><Input value={profile.displayName} onChange={(e) => setProfile((p) => ({ ...p, displayName: e.target.value }))} /></Field><Field label="Especialidade"><Input value={profile.specialty} onChange={(e) => setProfile((p) => ({ ...p, specialty: e.target.value }))} /></Field><Field label="Local"><Input value={profile.locationLabel} onChange={(e) => setProfile((p) => ({ ...p, locationLabel: e.target.value }))} /></Field><Field label="Endereço público"><Input value={profile.slug} onChange={(e) => setProfile((p) => ({ ...p, slug: e.target.value.toLowerCase() }))} /></Field></div><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: data.profile.bookingEnabled }, "Perfil salvo.")}>Salvar perfil</Button><Button variant={data.profile.bookingEnabled ? "destructive" : "default"} disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: !data.profile.bookingEnabled }, data.profile.bookingEnabled ? "Agendamento público pausado." : "Agendamento público ativado.")}>{data.profile.bookingEnabled ? "Pausar agendamento" : "Ativar agendamento"}</Button><Button asChild variant="outline"><Link href={publicHref}>Abrir página pública</Link></Button></div>{!data.services.some((item) => item.active && item.publicVisible) || data.rules.length === 0 ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">Antes de ativar, cadastre pelo menos um serviço ativo e uma regra de disponibilidade.</p> : null}</CardContent></Card>
+            <Card><CardContent className="space-y-5 p-5 sm:p-6"><div className="flex items-start gap-3"><ShieldCheck className="mt-1 h-5 w-5 text-primary" /><div><h2 className="font-bold">Perfil e autoagendamento</h2><p className="text-sm text-muted-foreground">O booking público só abre horários quando você o ativa. Contatos são cifrados antes de persistir; não há campo livre para hipótese diagnóstica.</p></div></div><div className="grid gap-3 md:grid-cols-2"><Field label="Nome público"><Input value={profile.displayName} onChange={(e) => setProfile((p) => ({ ...p, displayName: e.target.value }))} /></Field><Field label="Especialidade"><Input value={profile.specialty} onChange={(e) => setProfile((p) => ({ ...p, specialty: e.target.value }))} /></Field><Field label="Local"><Input value={profile.locationLabel} onChange={(e) => setProfile((p) => ({ ...p, locationLabel: e.target.value }))} /></Field><Field label="Endereço público"><Input value={profile.slug} onChange={(e) => setProfile((p) => ({ ...p, slug: e.target.value.toLowerCase() }))} /></Field></div><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: data.profile.bookingEnabled }, "Perfil salvo.")}>Salvar perfil</Button><Button variant={data.profile.bookingEnabled ? "destructive" : "default"} disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: !data.profile.bookingEnabled }, data.profile.bookingEnabled ? "Agendamento público pausado." : "Agendamento público ativado.")}>{data.profile.bookingEnabled ? "Pausar agendamento" : "Ativar agendamento"}</Button><Button asChild variant="outline"><a href={publicHref}>Abrir página pública</a></Button></div>{!data.services.some((item) => item.active && item.publicVisible) || data.rules.length === 0 ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">Antes de ativar, cadastre pelo menos um serviço ativo e uma regra de disponibilidade.</p> : null}</CardContent></Card>
           </TabsContent>
         )}
 

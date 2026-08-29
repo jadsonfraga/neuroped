@@ -1,6 +1,23 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import { Switch, Route, Router, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
+
+// O useHashLocation do wouter devolve a query DENTRO da localização quando o
+// link profundo usa o formato "#/rota?chave=valor" (ex.: "#/agendar?provider=x"
+// vira "/agendar?provider=x"). O casador de rotas (regexparam) não reconhece o
+// sufixo "?…", então TODA rota acessada assim cairia no NotFound. Como as
+// páginas públicas (marcação → agendar, testes diretos, etc.) dependem desses
+// links, normalizamos aqui: a rota casa sem a query e cada página continua
+// lendo seus parâmetros direto de window.location.hash.
+function useAppHashLocation(options?: Parameters<typeof useHashLocation>[0]) {
+  const [location, navigate] = useHashLocation(options);
+  const queryIndex = location.indexOf("?");
+  const path =
+    queryIndex === -1 ? location : location.slice(0, queryIndex) || "/";
+  return [path, navigate] as [typeof location, typeof navigate];
+}
+// Mantém âncoras "#/rota" nos <Link> (botão do meio/copiar link funcionam).
+useAppHashLocation.hrefs = (href: string) => `#${href}`;
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -715,7 +732,7 @@ function App() {
                   </Suspense>
                 )}
                 <PrivateGate>
-                  <Router hook={useHashLocation}>
+                  <Router hook={useAppHashLocation}>
                     <AppRouter />
                   </Router>
                   {auxiliarySurfacesVisible && (

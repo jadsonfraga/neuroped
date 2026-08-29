@@ -17,9 +17,14 @@ import {
 
 function queryParam(name: string): string {
   if (typeof window === "undefined") return "";
+  // Formato principal: query dentro do hash ("#/agendar?provider=x").
   const raw = window.location.hash.replace(/^#/, "");
   const query = raw.includes("?") ? raw.slice(raw.indexOf("?") + 1) : "";
-  return new URLSearchParams(query).get(name)?.trim() ?? "";
+  const fromHash = new URLSearchParams(query).get(name)?.trim();
+  if (fromHash) return fromHash;
+  // Fallback: o navigate() do wouter move a query para a search real da URL
+  // ("?provider=x#/agendar"), então também a aceitamos aqui.
+  return new URLSearchParams(window.location.search).get(name)?.trim() ?? "";
 }
 
 function todayLocal(): string {
@@ -54,9 +59,21 @@ function displayLocal(value: string): string {
   return `${day}/${month}/${year} às ${time}`;
 }
 
+type PublicProviderSummary = {
+  slug: string;
+  displayName: string;
+  specialty: string;
+  locationLabel: string | null;
+};
+
 export default function AgendarPage() {
   const { toast } = useToast();
-  const providerSlug = queryParam("provider");
+  const linkedSlug = queryParam("provider");
+  const [autoSlug, setAutoSlug] = useState("");
+  const [providerChoices, setProviderChoices] = useState<PublicProviderSummary[] | null>(null);
+  // Sem provider no link (ex.: "Ver horários" da Missão Saúde), resolvemos a
+  // agenda pública disponível em vez de mostrar um beco sem saída.
+  const providerSlug = linkedSlug || autoSlug;
   const [profile, setProfile] = useState<PublicProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,10 +94,33 @@ export default function AgendarPage() {
     let active = true;
     async function load() {
       if (!providerSlug) {
-        setError("Este link de agendamento não informa o profissional.");
-        setLoading(false);
+        // Descobre as agendas públicas abertas para oferecer uma escolha real.
+        try {
+          const response = await apiRequest("GET", "/api/public-booking?action=providers");
+          if (!response.ok) throw new Error("PUBLIC_BOOKING_UNAVAILABLE");
+          const data = (await response.json()) as { providers?: PublicProviderSummary[] };
+          if (!active) return;
+          const providers = Array.isArray(data.providers) ? data.providers : [];
+          if (providers.length === 1) {
+            // Mantém "loading" ativo: o efeito roda de novo com o slug resolvido.
+            setAutoSlug(providers[0].slug);
+            return;
+          }
+          setProviderChoices(providers);
+          if (providers.length === 0) {
+            setError("Não há agendas online abertas neste momento. A clínica pode disponibilizar novos horários em breve.");
+          }
+          setLoading(false);
+        } catch {
+          if (active) {
+            setError("O serviço de agendamento não está disponível agora. Tente novamente mais tarde.");
+            setLoading(false);
+          }
+        }
         return;
       }
+      setLoading(true);
+      setError("");
       try {
         const response = await apiRequest("GET", `/api/public-booking?action=profile&provider=${encodeURIComponent(providerSlug)}`);
         const data = await response.json() as PublicProviderProfile;
@@ -233,6 +273,37 @@ export default function AgendarPage() {
   }
 
   if (loading) return <div className="mx-auto max-w-3xl p-8 text-sm text-muted-foreground">Carregando agendamento…</div>;
+
+  if (!providerSlug && providerChoices && providerChoices.length > 1) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 pb-16">
+        <header className="rounded-[2rem] border border-primary/15 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-6 sm:p-8">
+          <Badge className="mb-2 bg-primary/10 text-primary hover:bg-primary/10">Agendamento NeuroPed</Badge>
+          <h1 className="text-2xl font-black">Escolha o profissional</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Há mais de uma agenda pública aberta. Selecione com quem deseja consultar horários.</p>
+        </header>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {providerChoices.map((provider) => (
+            <Card key={provider.slug} className="transition-colors hover:border-primary/45">
+              <CardContent className="flex h-full flex-col gap-3 p-5">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary"><UserRound className="h-5 w-5" /></span>
+                  <div className="min-w-0">
+                    <p className="font-bold">{provider.displayName}</p>
+                    <p className="text-xs text-muted-foreground">{provider.specialty}{provider.locationLabel ? ` · ${provider.locationLabel}` : ""}</p>
+                  </div>
+                </div>
+                <Button asChild className="mt-auto w-full">
+                  <a href={`#/agendar?provider=${encodeURIComponent(provider.slug)}`}>Ver horários</a>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (error || !profile) return <div className="mx-auto max-w-2xl rounded-3xl border p-8 text-center"><h1 className="text-xl font-bold">Agendamento indisponível</h1><p className="mt-2 text-sm text-muted-foreground">{error || "Perfil não encontrado."}</p></div>;
 
   return (
