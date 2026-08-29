@@ -11,6 +11,11 @@ import childAssessmentImg from "@assets/images/child-assessment.webp";
 import teamImg from "@assets/images/team-multiprofessional.webp";
 import { appMetrics } from "@/data/appMetrics";
 import { SafeImage } from "@/components/SafeImage";
+import {
+  KawaiiSticker,
+  KawaiiStickerRow,
+  type KawaiiStickerName,
+} from "@/components/KawaiiSticker";
 import { softTap, softTick, softSuccess, softWhoosh } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import {
@@ -22,12 +27,25 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
-const steps = [
+const steps: Array<{
+  title: string;
+  subtitle: string;
+  sticker: KawaiiStickerName;
+  content: JSX.Element;
+}> = [
   {
     title: "Bem-vindo ao NeuroPed",
     subtitle: "Escalas e instrumentos de neuropediatria",
+    sticker: "estrela",
     content: (
       <div className="space-y-5">
+        <div className="flex justify-center">
+          <KawaiiStickerRow
+            names={["nuvem", "estrela", "coracao"]}
+            size={26}
+            pop
+          />
+        </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -80,6 +98,7 @@ const steps = [
   {
     title: "Três caminhos rápidos",
     subtitle: "Formas de encontrar o que precisa",
+    sticker: "lapis",
     content: (
       <div className="space-y-3">
         {[
@@ -124,6 +143,7 @@ const steps = [
   {
     title: "Pais e psicoeducação segura",
     subtitle: "Tudo que é não sensível vai para a aba dos pais",
+    sticker: "gatinho",
     content: (
       <div className="space-y-3">
         <motion.div
@@ -176,6 +196,7 @@ const steps = [
   {
     title: "Resultados que viajam",
     subtitle: "PDF, e-mail e acompanhamento longitudinal",
+    sticker: "balao",
     content: (
       <div className="space-y-3">
         {[
@@ -262,7 +283,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               className="min-h-[420px] flex flex-col"
             >
               <div className="text-center mb-5">
-                <h2 id="onboarding-title" className="text-xl font-bold text-foreground">{current.title}</h2>
+                <h2 id="onboarding-title" className="inline-flex items-center gap-2 text-xl font-bold text-foreground">
+                  <KawaiiSticker name={current.sticker} size={26} pop />
+                  {current.title}
+                </h2>
                 <p className="text-sm text-muted-foreground mt-1">{current.subtitle}</p>
               </div>
               <div className="flex-1">{current.content}</div>

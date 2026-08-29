@@ -15,8 +15,9 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2, Inbox } from "lucide-react";
+import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { KawaiiSticker } from "@/components/KawaiiSticker";
 
 // ====================================================
 // LOADING STATE
@@ -111,10 +112,10 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-4">
       <div
-        className="w-14 h-14 rounded-full bg-muted flex items-center justify-center"
+        className="w-16 h-16 rounded-full bg-muted/70 flex items-center justify-center"
         aria-hidden="true"
       >
-        {icon ?? <Inbox className="w-7 h-7 text-muted-foreground" />}
+        {icon ?? <KawaiiSticker name="nuvem" size={44} float />}
       </div>
       <div className="space-y-1.5 max-w-sm">
         <p className="font-semibold text-foreground">{title}</p>

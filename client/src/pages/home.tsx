@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Mascote } from "@/components/Mascote";
+import { KawaiiSticker } from "@/components/KawaiiSticker";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { appMetrics } from "@/data/appMetrics";
 import { navigablePages } from "@/data/navigation";
@@ -335,6 +336,19 @@ export default function HomePage() {
               className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]"
               aria-hidden="true"
             />
+            {/* Figurinhas kawaii orbitando o mascote — boas-vindas afetivas */}
+            <div className="absolute left-6 top-14 z-10" aria-hidden="true">
+              <KawaiiSticker name="estrela" size={34} float />
+            </div>
+            <div className="absolute right-4 top-24 z-10" aria-hidden="true">
+              <KawaiiSticker name="nuvem" size={38} float />
+            </div>
+            <div className="absolute bottom-16 left-10 z-10" aria-hidden="true">
+              <KawaiiSticker name="coracao" size={30} float />
+            </div>
+            <div className="absolute bottom-8 right-10 z-10" aria-hidden="true">
+              <KawaiiSticker name="cerebro" size={36} float />
+            </div>
             <Mascote contexto="home" size="lg" className="relative z-10" />
           </div>
         </div>
@@ -371,7 +385,9 @@ export default function HomePage() {
                 </Link>
               ))
             ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
+              <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
+                <KawaiiSticker name="nuvem" size={34} float />
+                <span>
                 Nenhum atalho direto. Use o{" "}
                 <Link
                   href="/filtro"
@@ -380,6 +396,7 @@ export default function HomePage() {
                   Filtro Clínico
                 </Link>{" "}
                 para aproximar por idade e queixa.
+                </span>
               </div>
             )}
           </div>
@@ -389,7 +406,8 @@ export default function HomePage() {
           <section className="space-y-4" aria-labelledby="fluxos-principais">
             <div className="flex items-end justify-between gap-3">
               <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                  <KawaiiSticker name="sol" size={18} />
                   Sua jornada
                 </p>
                 <h2

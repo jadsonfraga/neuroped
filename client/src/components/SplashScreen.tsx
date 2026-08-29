@@ -2,6 +2,20 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { easing } from "@/lib/motion";
+import { KawaiiSticker, type KawaiiStickerName } from "@/components/KawaiiSticker";
+
+/** Figurinhas orbitando o escudo — entrada orquestrada após o logo pousar. */
+const splashStickers: Array<{
+  name: KawaiiStickerName;
+  className: string;
+  size: number;
+  delay: number;
+}> = [
+  { name: "estrela", className: "-left-11 -top-7", size: 30, delay: 0.55 },
+  { name: "lua", className: "-right-12 -top-3", size: 27, delay: 0.68 },
+  { name: "coracao", className: "-left-12 bottom-2", size: 24, delay: 0.8 },
+  { name: "nuvem", className: "-right-14 bottom-7", size: 28, delay: 0.92 },
+];
 
 interface SplashScreenProps {
   /** Tempo minimo de exibicao (ms). Default 900ms. */
@@ -121,6 +135,32 @@ export function SplashScreen({
                   className="w-full h-full object-cover"
                 />
               </div>
+
+              {/* Figurinhas kawaii orbitando o escudo — boas-vindas acolhedoras */}
+              {splashStickers.map((sticker) => (
+                <motion.div
+                  key={sticker.name}
+                  initial={
+                    reduceMotion
+                      ? { opacity: 1, scale: 1 }
+                      : { opacity: 0, scale: 0.4, y: 8 }
+                  }
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{
+                    duration: reduceMotion ? 0 : 0.55,
+                    ease: easing.spring,
+                    delay: reduceMotion ? 0 : sticker.delay,
+                  }}
+                  className={`absolute ${sticker.className}`}
+                  aria-hidden="true"
+                >
+                  <KawaiiSticker
+                    name={sticker.name}
+                    size={sticker.size}
+                    float={!reduceMotion}
+                  />
+                </motion.div>
+              ))}
             </motion.div>
 
             {/* Wordmark — tipografia premium */}

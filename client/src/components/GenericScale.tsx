@@ -18,6 +18,7 @@ import {
 import { ScaleReference } from "@/components/ScaleReference";
 import { WhatsAppShare } from "@/components/WhatsAppShare";
 import { Mascote } from "@/components/Mascote";
+import { KawaiiStickerRow } from "@/components/KawaiiSticker";
 import { celebrate } from "@/lib/confetti";
 import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
@@ -501,7 +502,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
           >
             <config.icon className="w-5 h-5 text-white" strokeWidth={1.75} />
           </motion.div>
-          <div>
+          <div className="min-w-0 flex-1">
             <h1
               className="text-xl text-foreground leading-tight"
               style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
@@ -512,6 +513,12 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
               Avaliação concluída
             </p>
           </div>
+          {/* Celebração kawaii — decorativa, entra com pop suave junto do confetti */}
+          <KawaiiStickerRow
+            names={["estrela", "coracao", "arcoiris"]}
+            size={30}
+            className="hidden shrink-0 sm:inline-flex"
+          />
         </div>
 
         <Mascote
