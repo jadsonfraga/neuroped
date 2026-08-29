@@ -82,6 +82,11 @@ assert.ok(
     home.includes("appMetrics.pageCount"),
   "As métricas devem continuar derivadas da fonte canônica appMetrics",
 );
+assert.ok(
+  home.includes("canRenderNavigationItem") &&
+    home.includes("visibleQuickActions"),
+  "Atalhos operacionais devem continuar filtrados pela política real de acesso",
+);
 
 const v12Index = main.indexOf('./styles/premium-app-shell-v12.css');
 const v13Index = main.indexOf('./styles/premium-visual-v13.css');
@@ -141,10 +146,17 @@ for (const contract of [
 for (const contract of [
   ".np-app-content:has(.np-v13-home) > p.flex-wrap > span",
   "color: hsl(var(--muted-foreground))",
+  "min-height: 100dvh",
+  "overflow-x: clip",
+  '[data-testid="mobile-primary-dock"]',
+  '[data-testid="mobile-dock-nesplora"]',
+  "min-height: 44px",
+  "@media screen and (min-width: 768px) and (max-width: 1023px)",
+  "@media screen and (max-width: 767px)",
 ]) {
   assert.ok(
     a11yVisual.includes(contract),
-    `Reforço WCAG ausente ou enfraquecido: ${contract}`,
+    `Acabamento nativo/WCAG ausente ou enfraquecido: ${contract}`,
   );
 }
 
@@ -190,5 +202,5 @@ for (const step of [
 }
 
 console.log(
-  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, anticolisão móvel, contraste WCAG, responsividade e CI preservados.",
+  "[premium-v13-contract] ✓ rotas, permissões, busca, identidade, métricas, ordem de CSS, anticolisão móvel, acabamento de app, contraste WCAG, responsividade e CI preservados.",
 );
