@@ -56,10 +56,12 @@
     0 12px 26px -22px hsl(0 0% 0% / 0.64) !important;
 }
 
+/* Seletores por função visual, não por posição. Os atalhos dourados incluem um
+   halo decorativo como primeiro span; nth-of-type atingiria o elemento errado. */
 .np-app-sidebar
   .grid.grid-cols-2
   [data-testid^="featured-"]
-  > span:first-of-type {
+  > span.relative.z-10.flex.shrink-0.items-center.justify-center {
   width: 2rem !important;
   height: 2rem !important;
   border-radius: 0.68rem !important;
@@ -68,7 +70,7 @@
 .np-app-sidebar
   .grid.grid-cols-2
   [data-testid^="featured-"]
-  > span:nth-of-type(2) {
+  > span.relative.z-10.min-w-0.flex-1 {
   width: 100%;
   min-width: 0;
   flex: 0 0 auto;
@@ -77,7 +79,7 @@
 .np-app-sidebar
   .grid.grid-cols-2
   [data-testid^="featured-"]
-  > span:nth-of-type(2)
+  > span.relative.z-10.min-w-0.flex-1
   > span:first-child {
   display: -webkit-box !important;
   overflow: hidden;
@@ -95,7 +97,7 @@
 .np-app-sidebar
   .grid.grid-cols-2
   [data-testid^="featured-"]
-  > span:last-child {
+  > span.relative.z-10.flex.shrink-0.items-center.gap-1 {
   display: none !important;
 }
 
