@@ -412,6 +412,13 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ error: "Senha atual incorreta", code: "WRONG_PASSWORD" });
       }
 
+      if (newPassword === currentPassword) {
+        return res.status(400).json({
+          error: "A nova senha deve ser diferente da senha atual",
+          code: "SAME_PASSWORD",
+        });
+      }
+
       const newHash = await hashPassword(newPassword);
       db.update(users)
         .set({

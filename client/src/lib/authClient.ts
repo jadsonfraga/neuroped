@@ -288,10 +288,13 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
   ) {
     const epochBeforeRefresh = authEpoch;
     const newToken = await refreshTokenRequest();
-    if (newToken && authEpoch === epochBeforeRefresh) {
+    // Bodies de stream (ReadableStream) já foram consumidos pelo primeiro fetch
+    // e não podem ser reenviados; strings/FormData/Blob são reutilizáveis.
+    const bodyReusable = !(typeof ReadableStream !== "undefined" && init.body instanceof ReadableStream);
+    if (newToken && authEpoch === epochBeforeRefresh && bodyReusable) {
       headers.set("Authorization", `Bearer ${newToken}`);
       response = await fetch(requestUrl, { ...init, headers });
-    } else if (authEpoch === epochBeforeRefresh) {
+    } else if (!newToken && authEpoch === epochBeforeRefresh) {
       // Um login/logout mais novo pode ter acontecido enquanto o refresh antigo
       // estava em voo. Nesse caso a falha antiga não pode apagar a sessão nova.
       clearAuth();

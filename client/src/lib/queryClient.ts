@@ -40,7 +40,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await authFetch(`${API_BASE}${queryKey.join("/")}`);
+    // Primeiro segmento é o path base (contém "/" e query string legítimos);
+    // segmentos extras são valores dinâmicos e precisam de URL-encoding para
+    // não quebrar a URL quando contêm "/", "?" ou "#".
+    const [base, ...rest] = queryKey as readonly (string | number)[];
+    const path = [base, ...rest.map((s) => encodeURIComponent(String(s)))].join("/");
+    const res = await authFetch(`${API_BASE}${path}`);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

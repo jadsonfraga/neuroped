@@ -62,8 +62,21 @@ export async function logAudit(params: LogAuditParams): Promise<void> {
       })
       .run();
   } catch (e) {
-    // Auditoria nao deve quebrar a request principal. Apenas loga em stderr.
-    console.error("[audit] Falha ao gravar log de auditoria:", e);
+    // Auditoria nao deve quebrar a request principal, mas o evento nao pode
+    // sumir sem rastro: grava o payload completo em stderr para que o trail
+    // sobreviva nos logs do processo mesmo com o banco indisponivel.
+    console.error(
+      "[audit] Falha ao gravar log de auditoria — evento preservado em stderr:",
+      JSON.stringify({
+        eventType: params.eventType,
+        userId: params.context.userId ?? null,
+        targetType: params.targetType,
+        targetId: params.targetId,
+        success: params.success !== false,
+        at: new Date().toISOString(),
+      }),
+      e,
+    );
   }
 }
 

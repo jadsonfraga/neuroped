@@ -64,14 +64,35 @@ function getMasterKey(): Buffer {
   return Buffer.from(raw, "utf8");
 }
 
+/**
+ * Cache de chaves derivadas (salt base64 -> key). PBKDF2 com 100k iteracoes
+ * custa ~100ms sincronos e bloqueia o event loop; sem cache, decriptar um
+ * paciente com N campos custa N*100ms. O salt e aleatorio por encrypt, entao
+ * o cache beneficia sobretudo decrypt repetido dos mesmos registros.
+ * Limite de entradas evita crescimento sem fim (FIFO simples).
+ */
+const KEY_CACHE_MAX = 512;
+const keyCache = new Map<string, Buffer>();
+
 function deriveKey(salt: Buffer): Buffer {
-  return crypto.pbkdf2Sync(
+  const cacheKey = salt.toString("base64");
+  const cached = keyCache.get(cacheKey);
+  if (cached) return cached;
+
+  const key = crypto.pbkdf2Sync(
     getMasterKey(),
     salt,
     PBKDF2_ITERATIONS,
     KEY_LEN,
     PBKDF2_DIGEST,
   );
+
+  if (keyCache.size >= KEY_CACHE_MAX) {
+    const oldest = keyCache.keys().next().value;
+    if (oldest !== undefined) keyCache.delete(oldest);
+  }
+  keyCache.set(cacheKey, key);
+  return key;
 }
 
 /**
