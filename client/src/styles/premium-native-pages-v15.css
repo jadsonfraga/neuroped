@@ -1,0 +1,449 @@
+/*
+ * NeuroPED OS — Native Internal Pages v15
+ *
+ * Camada estritamente visual para unificar as telas internas do workspace.
+ * Mantém intactos rotas, regras clínicas, autenticação, persistência, LGPD,
+ * permissões e contratos de dados. O objetivo é eliminar aparência de coleção
+ * de páginas e fazer todos os arquétipos parecerem partes do mesmo aplicativo.
+ */
+
+:root {
+  --np-v15-canvas-gap: clamp(0.85rem, 1.35vw, 1.25rem);
+  --np-v15-surface-radius: 1.18rem;
+  --np-v15-control-radius: 0.86rem;
+  --np-v15-stroke: hsl(var(--border) / 0.68);
+  --np-v15-stroke-strong: hsl(var(--border) / 0.9);
+  --np-v15-surface: hsl(var(--card) / 0.93);
+  --np-v15-surface-soft: hsl(var(--card) / 0.72);
+  --np-v15-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.025),
+    0 18px 48px -38px hsl(var(--foreground) / 0.34);
+  --np-v15-shadow-raised:
+    0 2px 8px hsl(var(--foreground) / 0.03),
+    0 28px 66px -44px hsl(var(--foreground) / 0.42);
+}
+
+.dark {
+  --np-v15-stroke: hsl(0 0% 100% / 0.09);
+  --np-v15-stroke-strong: hsl(0 0% 100% / 0.15);
+  --np-v15-surface: hsl(var(--card) / 0.9);
+  --np-v15-surface-soft: hsl(var(--card) / 0.76);
+  --np-v15-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.2),
+    0 22px 54px -38px hsl(0 0% 0% / 0.76);
+  --np-v15-shadow-raised:
+    0 2px 8px hsl(0 0% 0% / 0.24),
+    0 32px 74px -46px hsl(0 0% 0% / 0.88);
+}
+
+/* ───────────────────────── Canvas interno ───────────────────────── */
+
+.np-app-content:not(:has(.np-v13-home)) {
+  container-type: inline-size;
+}
+
+.np-app-content:not(:has(.np-v13-home)) > .proportion-safe-page,
+.np-app-content:not(:has(.np-v13-home)) > [class*="page-enter"] {
+  display: grid;
+  min-width: 0;
+  gap: var(--np-v15-canvas-gap);
+}
+
+.np-app-content:not(:has(.np-v13-home)) h1 {
+  max-width: 24ch;
+  font-size: clamp(1.7rem, 2.55vw, 2.55rem);
+  letter-spacing: -0.038em;
+  line-height: 1.03;
+  text-wrap: balance;
+}
+
+.np-app-content:not(:has(.np-v13-home)) h2 {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.np-app-content:not(:has(.np-v13-home)) h3 {
+  letter-spacing: -0.014em;
+}
+
+/* PageHero deixa de parecer banner/landing page e vira cabeçalho de módulo. */
+.np-app-content:not(:has(.np-v13-home)) .np-page-hero {
+  min-height: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--np-v15-stroke) !important;
+  border-radius: 1.35rem !important;
+  padding: clamp(1rem, 1.7vw, 1.55rem) !important;
+  background:
+    radial-gradient(
+      28rem 12rem at 92% -18%,
+      hsl(var(--primary) / 0.08),
+      transparent 72%
+    ),
+    linear-gradient(
+      150deg,
+      hsl(var(--card) / 0.96),
+      hsl(var(--card) / 0.8)
+    ) !important;
+  box-shadow: var(--np-v15-shadow), inset 0 1px 0 hsl(0 0% 100% / 0.38) !important;
+  backdrop-filter: blur(14px) saturate(108%);
+}
+
+.dark .np-app-content:not(:has(.np-v13-home)) .np-page-hero {
+  box-shadow: var(--np-v15-shadow), inset 0 1px 0 hsl(0 0% 100% / 0.045) !important;
+}
+
+.np-app-content:not(:has(.np-v13-home)) .np-page-hero::before {
+  opacity: 0.4;
+}
+
+.np-app-content:not(:has(.np-v13-home)) .np-page-hero h1 {
+  margin: 0;
+  font-size: clamp(1.72rem, 2.65vw, 2.65rem) !important;
+  line-height: 1.02 !important;
+}
+
+.np-app-content:not(:has(.np-v13-home)) .np-page-hero p {
+  max-width: 70ch;
+  margin-top: 0.5rem;
+  font-size: clamp(0.8rem, 0.9vw, 0.92rem);
+  line-height: 1.58;
+}
+
+/* ───────────────────────── Superfícies compartilhadas ───────────────────────── */
+
+.np-app-content:not(:has(.np-v13-home)) .shadcn-card,
+.np-app-content:not(:has(.np-v13-home)) [data-slot="card"],
+.np-app-content:not(:has(.np-v13-home)) .np-panel,
+.np-app-content:not(:has(.np-v13-home)) .glass {
+  border-color: var(--np-v15-stroke) !important;
+  border-radius: var(--np-v15-surface-radius) !important;
+  background: var(--np-v15-surface) !important;
+  box-shadow: var(--np-v15-shadow), inset 0 1px 0 hsl(0 0% 100% / 0.32) !important;
+}
+
+.dark .np-app-content:not(:has(.np-v13-home)) .shadcn-card,
+.dark .np-app-content:not(:has(.np-v13-home)) [data-slot="card"],
+.dark .np-app-content:not(:has(.np-v13-home)) .np-panel,
+.dark .np-app-content:not(:has(.np-v13-home)) .glass {
+  box-shadow: var(--np-v15-shadow), inset 0 1px 0 hsl(0 0% 100% / 0.035) !important;
+}
+
+.np-app-content:not(:has(.np-v13-home)) .shadcn-card > [class*="CardHeader"],
+.np-app-content:not(:has(.np-v13-home)) [data-slot="card-header"] {
+  padding-bottom: 0.75rem;
+}
+
+.np-app-content:not(:has(.np-v13-home)) hr,
+.np-app-content:not(:has(.np-v13-home)) [data-orientation="horizontal"] {
+  border-color: var(--np-v15-stroke);
+}
+
+/* ───────────────────────── Controles: linguagem de app ───────────────────────── */
+
+.np-app-content:not(:has(.np-v13-home)) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select,
+  [role="combobox"]
+) {
+  min-height: 44px;
+  border-color: var(--np-v15-stroke-strong) !important;
+  border-radius: var(--np-v15-control-radius) !important;
+  background: hsl(var(--background) / 0.82) !important;
+  box-shadow: inset 0 1px 2px hsl(var(--foreground) / 0.025);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.np-app-content:not(:has(.np-v13-home)) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select,
+  [role="combobox"]
+):focus,
+.np-app-content:not(:has(.np-v13-home)) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select,
+  [role="combobox"]
+):focus-visible {
+  border-color: hsl(var(--primary) / 0.44) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.09) !important;
+  outline: none;
+}
+
+.np-app-content:not(:has(.np-v13-home)) textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.np-app-content:not(:has(.np-v13-home)) :where(button, [role="button"], [role="tab"], a[class*="inline-flex"]) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.np-app-content:not(:has(.np-v13-home)) :where(button, [role="button"], [role="tab"]):focus-visible,
+.np-app-content:not(:has(.np-v13-home)) a:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Segmented controls e abas ganham comportamento nativo e scroll defensivo. */
+.np-app-content:not(:has(.np-v13-home)) [role="tablist"] {
+  display: flex;
+  max-width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--np-v15-stroke);
+  border-radius: 0.95rem;
+  padding: 0.25rem;
+  background: hsl(var(--muted) / 0.54);
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.np-app-content:not(:has(.np-v13-home)) [role="tablist"]::-webkit-scrollbar {
+  display: none;
+}
+
+.np-app-content:not(:has(.np-v13-home)) [role="tab"] {
+  min-height: 36px;
+  flex: 0 0 auto;
+  border-radius: 0.72rem;
+  scroll-snap-align: start;
+}
+
+.np-app-content:not(:has(.np-v13-home)) [role="tab"][data-state="active"],
+.np-app-content:not(:has(.np-v13-home)) [role="tab"][aria-selected="true"] {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.08);
+}
+
+/* ───────────────────────── Dados e tabelas ───────────────────────── */
+
+.np-app-content:not(:has(.np-v13-home)) :where(.overflow-x-auto, [data-table-scroll]) {
+  scrollbar-width: thin;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.np-app-content:not(:has(.np-v13-home)) table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.82rem;
+}
+
+.np-app-content:not(:has(.np-v13-home)) thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: hsl(var(--card) / 0.98);
+  color: hsl(var(--muted-foreground));
+  font-size: 0.67rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.np-app-content:not(:has(.np-v13-home)) tbody tr {
+  transition: background-color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .np-app-content:not(:has(.np-v13-home)) tbody tr:hover {
+    background: hsl(var(--muted) / 0.36);
+  }
+}
+
+/* ───────────────────────── Dialogs, popovers e sheets ───────────────────────── */
+
+:where([role="dialog"], [data-radix-dialog-content]) {
+  max-width: min(96vw, 48rem);
+  max-height: min(90dvh, 56rem);
+  overflow: auto;
+  border-color: var(--np-v15-stroke-strong) !important;
+  border-radius: 1.25rem !important;
+  background: hsl(var(--card) / 0.98) !important;
+  box-shadow: 0 34px 96px -42px hsl(0 0% 0% / 0.62) !important;
+  overscroll-behavior: contain;
+}
+
+:where([data-radix-popper-content-wrapper]) > * {
+  border-color: var(--np-v15-stroke-strong) !important;
+  border-radius: 0.95rem !important;
+  box-shadow: var(--np-v15-shadow-raised) !important;
+}
+
+/* ───────────────────────── Estados ───────────────────────── */
+
+.np-app-content:not(:has(.np-v13-home)) :where([role="status"], [data-state="loading"]) {
+  border-radius: 0.9rem;
+}
+
+.np-app-content:not(:has(.np-v13-home)) :where(.animate-pulse, [data-skeleton]) {
+  border-radius: 0.65rem;
+}
+
+/* ───────────────────────── Desktop e tablet ───────────────────────── */
+
+@media screen and (min-width: 1024px) {
+  .np-app-content:not(:has(.np-v13-home)) > .proportion-safe-page,
+  .np-app-content:not(:has(.np-v13-home)) > [class*="page-enter"] {
+    padding-bottom: 1.5rem;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) .np-page-hero + * {
+    margin-top: -0.1rem;
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+  .np-app-content:not(:has(.np-v13-home)) .np-page-hero {
+    padding: 1.1rem !important;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) .shadcn-card,
+  .np-app-content:not(:has(.np-v13-home)) [data-slot="card"] {
+    border-radius: 1.08rem !important;
+  }
+}
+
+/* ───────────────────────── Mobile nativo ───────────────────────── */
+
+@media screen and (max-width: 767px) {
+  :root {
+    --np-v15-canvas-gap: 0.72rem;
+    --np-v15-surface-radius: 1rem;
+    --np-v15-control-radius: 0.78rem;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) {
+    padding-left: max(0.72rem, env(safe-area-inset-left)) !important;
+    padding-right: max(0.72rem, env(safe-area-inset-right)) !important;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) h1 {
+    max-width: 100%;
+    font-size: clamp(1.55rem, 7.8vw, 2.05rem);
+    line-height: 1.04;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) .np-page-hero {
+    border-radius: 1.05rem !important;
+    padding: 0.9rem !important;
+    backdrop-filter: none;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) .np-page-hero h1 {
+    font-size: clamp(1.5rem, 7.6vw, 2rem) !important;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) .np-page-hero p {
+    margin-top: 0.38rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) .shadcn-card,
+  .np-app-content:not(:has(.np-v13-home)) [data-slot="card"],
+  .np-app-content:not(:has(.np-v13-home)) .np-panel,
+  .np-app-content:not(:has(.np-v13-home)) .glass {
+    border-radius: var(--np-v15-surface-radius) !important;
+    box-shadow: 0 12px 34px -28px hsl(var(--foreground) / 0.35) !important;
+    backdrop-filter: none !important;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) [role="tablist"] {
+    width: calc(100% + 0.72rem);
+    margin-right: -0.72rem;
+    padding-right: 0.72rem;
+    border-inline-end: 0;
+    border-radius: 0.82rem 0 0 0.82rem;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) table {
+    min-width: 42rem;
+    font-size: 0.76rem;
+  }
+
+  :where([role="dialog"], [data-radix-dialog-content]) {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1rem) !important;
+    border-radius: 1.1rem !important;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Touch: preserva fluidez, zoom e alvos. A camada de desempenho continua sendo
+   importada por último e pode remover blur sem desfazer a geometria. */
+@media (any-pointer: coarse) {
+  .np-app-content:not(:has(.np-v13-home)) :where(
+    button,
+    [role="button"],
+    [role="tab"],
+    input,
+    textarea,
+    select,
+    [role="combobox"]
+  ) {
+    touch-action: manipulation;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    textarea,
+    select,
+    [role="combobox"]
+  ) {
+    font-size: max(16px, 1rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-app-content:not(:has(.np-v13-home)) *,
+  .np-app-content:not(:has(.np-v13-home)) *::before,
+  .np-app-content:not(:has(.np-v13-home)) *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) :where(
+    input,
+    textarea,
+    select,
+    [role="combobox"],
+    tbody tr
+  ) {
+    transition: none !important;
+  }
+}
+
+@media print {
+  .np-app-content:not(:has(.np-v13-home)) .np-page-hero,
+  .np-app-content:not(:has(.np-v13-home)) .shadcn-card,
+  .np-app-content:not(:has(.np-v13-home)) [data-slot="card"],
+  .np-app-content:not(:has(.np-v13-home)) .np-panel,
+  .np-app-content:not(:has(.np-v13-home)) .glass,
+  :where([role="dialog"], [data-radix-dialog-content]) {
+    break-inside: avoid;
+    border-color: #d4d4d4 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .np-app-content:not(:has(.np-v13-home)) [role="tablist"] {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+}
