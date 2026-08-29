@@ -38,6 +38,7 @@ existia no backend, mas nenhuma tela vendia, explicava ou permitia contratar:
 | `/para-clinicas` | Página B2B pública: proposta de valor (filtro, escalas interativas, jornada da família, operação, multi-clínica, LGPD), passo a passo de onboarding (conta → clínica → convites → trial) e compromissos de transparência. Sem depoimentos fabricados, sem dado clínico. |
 | Navegação | "Planos & Assinatura" na seção Clínica e Acompanhamento; "NeuroPed para Clínicas" em Portais e Suporte. |
 | Zona pública | Ambas as rotas aprovadas nos DOIS registros exigidos pela catraca de segurança: `client/src/lib/publicRoutes.ts` e o contrato independente em `scripts/guards/validate-public-split.mjs`. |
+| `/minha-clinica` | Onboarding self-service do funil SaaS: criação da clínica na UI (`POST /api/tenants`, com tratamento de conflito de slug), painel de convites da equipe (`GET/POST/DELETE /api/billing/invitations` — convidar com papel, reenviar, revogar, copiar link do convite) e reuso da regra `canManageClinic` do domínio compartilhado. Rota clínica fail-closed (fora da allowlist pública). |
 | **Trava anti-regressão** | Novo teste `tests/unit/commercial-pages-static.test.mjs` (script `test:commercial`, encadeado em `test:quick-wins` → roda no `verify:release`). Protege: rotas registradas de ponta a ponta; preço nunca hardcoded (fonte única `shared/billing.ts`); contratos de billing honrados (`scope=finance`, `clinicId`+`seats`, tratamento de 503); páginas públicas sem importar dados clínicos. |
 
 Gates verificados antes do push: `tsc --noEmit`, ESLint, `test:commercial`,
@@ -46,10 +47,9 @@ completo e `build:client`.
 
 ## 3. Backlog comercial priorizado (próximas ondas)
 
-1. **Onboarding self-service completo na UI** — assistente "criar clínica"
-   (POST `/api/tenants`) + tela de convites de equipe (POST
-   `/api/billing/invitations`) ligados a partir de `/planos`. O backend já
-   está pronto; falta só a superfície.
+1. ~~Onboarding self-service completo na UI~~ — **implementado nesta
+   auditoria** em `/minha-clinica` (criação de clínica + convites de equipe),
+   ligado a partir de `/planos`.
 2. **E-mails de ciclo de vida** — boas-vindas ao trial, aviso de expiração
    (D-3), recibo de pagamento e recuperação de past_due; reaproveitar o
    pipeline SMTP existente.

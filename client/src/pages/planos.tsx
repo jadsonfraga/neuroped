@@ -214,6 +214,11 @@ function SubscriptionPanel() {
             Crie a sua clínica (ou aceite um convite recebido por e-mail) para iniciar o
             período de avaliação e gerenciar a assinatura por aqui.
           </p>
+          <Link href="/minha-clinica">
+            <Button size="sm" className="mt-3 gap-1.5">
+              <Building2 className="w-4 h-4" /> Criar a minha clínica
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     );

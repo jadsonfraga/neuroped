@@ -155,6 +155,12 @@ export const navSections: NavSection[] = [
         tone: "golden",
       },
       {
+        href: "/minha-clinica",
+        label: "Minha Clínica & Equipe",
+        icon: Building2,
+        description: "Criar clínica, convites e papéis da equipe",
+      },
+      {
         href: "/planos",
         label: "Planos & Assinatura",
         icon: CreditCard,

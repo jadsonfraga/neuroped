@@ -103,4 +103,42 @@ for (const [name, source] of [
   );
 }
 
-console.log("✅ commercial-pages-static: vitrine comercial protegida (rotas, preço único, contratos de billing e zona pública limpa).");
+// 5) Onboarding self-service (/minha-clinica) — rota CLÍNICA, nunca pública.
+const minhaClinica = read("client/src/pages/minha-clinica.tsx");
+assert.match(
+  app,
+  /<Route path="\/minha-clinica"/,
+  "/minha-clinica deve continuar registrada no roteador",
+);
+assert.match(
+  navigation,
+  /href: "\/minha-clinica"/,
+  "/minha-clinica deve continuar acessível pela navegação",
+);
+assert.doesNotMatch(
+  publicRoutes,
+  /"\/minha-clinica"/,
+  "/minha-clinica gerencia o tenant e NUNCA pode entrar na allowlist pública",
+);
+assert.match(
+  minhaClinica,
+  /apiRequest\("POST", "\/api\/tenants"/,
+  "a criação de clínica deve usar o contrato POST /api/tenants",
+);
+assert.match(
+  minhaClinica,
+  /\/api\/billing\/invitations\?clinicId=/,
+  "a listagem de convites deve enviar clinicId",
+);
+assert.match(
+  minhaClinica,
+  /canManageClinic/,
+  "a UI deve reutilizar a regra de gestão do domínio compartilhado (shared/tenant)",
+);
+assert.match(
+  minhaClinica,
+  /action: "resend",\s*invitationId/,
+  "o reenvio de convite deve honrar o contrato {action: 'resend', invitationId}",
+);
+
+console.log("✅ commercial-pages-static: vitrine comercial protegida (rotas, preço único, contratos de billing, onboarding gated e zona pública limpa).");

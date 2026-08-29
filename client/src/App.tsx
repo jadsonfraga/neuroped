@@ -107,6 +107,7 @@ const SobrePage = lazy(() => import("@/pages/sobre"));
 const ServicosClinicaPage = lazy(() => import("@/pages/servicos-clinica"));
 const ParaClinicasPage = lazy(() => import("@/pages/para-clinicas"));
 const PlanosPage = lazy(() => import("@/pages/planos"));
+const MinhaClinicaPage = lazy(() => import("@/pages/minha-clinica"));
 const EletroencefalogramaPage = lazy(() => import("@/pages/eletroencefalograma"));
 const TermosPage = lazy(() => import("@/pages/termos"));
 const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
@@ -394,6 +395,7 @@ function AppRouter() {
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
             <Route path="/para-clinicas" component={ParaClinicasPage} />
             <Route path="/planos" component={PlanosPage} />
+            <Route path="/minha-clinica" component={MinhaClinicaPage} />
             <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
             <Route path="/termos" component={TermosPage} />
             <Route path="/neuropsicologia" component={NeuropsicologiaPage} />
