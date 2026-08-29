@@ -27,6 +27,7 @@ import "./styles/flow-os.css";
 import "./styles/premium-app-shell-v12.css";
 import "./styles/premium-visual-v13.css";
 import "./styles/premium-visual-v13-mobile.css";
+import "./styles/premium-visual-v13-a11y.css";
 // Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
 import "./styles/tablet-coarse-perf.css";
 
