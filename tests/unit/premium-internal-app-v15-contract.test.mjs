@@ -9,6 +9,9 @@ const read = (relativePath) =>
 const main = read("client/src/main.tsx");
 const workspace = read("client/src/lib/workspaceSurface.ts");
 const css = read("client/src/styles/premium-internal-app-v15.css");
+const a11yCss = read(
+  "client/src/styles/premium-internal-app-v15-a11y.css",
+);
 const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const workflow = read(".github/workflows/premium-visual-v13.yml");
 
@@ -61,10 +64,14 @@ const v14Responsive = main.indexOf(
   './styles/premium-native-app-v14-responsive.css',
 );
 const v15 = main.indexOf('./styles/premium-internal-app-v15.css');
+const v15A11y = main.indexOf(
+  './styles/premium-internal-app-v15-a11y.css',
+);
 const touch = main.indexOf('./styles/tablet-coarse-perf.css');
 assert.ok(v15 > v14Responsive, "v15 deve carregar depois do acabamento v14");
+assert.ok(v15A11y > v15, "O reforço WCAG interno deve carregar depois da v15");
 assert.ok(
-  touch > v15,
+  touch > v15A11y,
   "tablet-coarse-perf deve continuar sendo a última camada de desempenho",
 );
 
@@ -101,13 +108,26 @@ for (const declaration of [
   assert.ok(css.includes(declaration), `Declaração v15 ausente: ${declaration}`);
 }
 
+for (const contrastContract of [
+  'html[data-np-workspace="clinical"]:not([data-np-route="home"])',
+  ".np-app-content",
+  "> p.flex-wrap",
+  "> span",
+  "color: hsl(var(--muted-foreground))",
+]) {
+  assert.ok(
+    a11yCss.includes(contrastContract),
+    `Reforço WCAG interno ausente: ${contrastContract}`,
+  );
+}
+
 assert.doesNotMatch(
-  css,
+  `${css}\n${a11yCss}`,
   /html\[data-np-workspace="public"\]/,
   "A camada clínica não pode reestilizar deliberadamente as rotas públicas",
 );
 assert.doesNotMatch(
-  css,
+  `${css}\n${a11yCss}`,
   /url\(["']?https?:\/\//i,
   "A v15 não pode depender de ativos externos em tempo de execução",
 );
@@ -120,6 +140,7 @@ assert.doesNotMatch(
 for (const guardedFile of [
   "client/src/lib/workspaceSurface.ts",
   "client/src/styles/premium-internal-app-v15.css",
+  "client/src/styles/premium-internal-app-v15-a11y.css",
   "tests/unit/premium-internal-app-v15-contract.test.mjs",
   "tests/e2e/premium-internal-workspace.mjs",
 ]) {
@@ -140,5 +161,5 @@ for (const command of [
 }
 
 console.log(
-  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas, touch, dark e impressão protegidos.",
+  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas, WCAG, touch, dark e impressão protegidos.",
 );
