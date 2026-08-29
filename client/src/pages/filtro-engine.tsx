@@ -55,6 +55,10 @@ import { getClinicalTiers } from "@/data/clinicalRanking";
 import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
+import {
+  FiltroModoSimples,
+  type ModoSimplesResultado,
+} from "@/components/FiltroModoSimples";
 import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
 import {
   SYMPTOM_GROUPS,
@@ -1205,6 +1209,51 @@ export default function FiltroPage() {
   );
   const [selectedSymptomMapIds, setSelectedSymptomMapIds] = useState<string[]>([]);
   const [symptomQuery, setSymptomQuery] = useState("");
+  // Assistente "Modo Simples": aberto por padrão para quem chega sem contexto
+  // (primeiro uso ou sem filtros ativos); some no modo flash e quando a sessão
+  // já traz seleções. É aditivo — preenche os MESMOS filtros do modo completo.
+  const [assistenteAberto, setAssistenteAberto] = useState<boolean>(() => {
+    if (isFlashRoute()) return false;
+    try {
+      if (localStorage.getItem("np_filtro_assistente_done") === "1") return false;
+    } catch {
+      /* localStorage indisponível — assistente segue aberto */
+    }
+    const jaTemContexto =
+      Boolean(sessionFilters?.selectedAge) ||
+      (sessionFilters?.selectedQueixas?.length ?? 0) > 0 ||
+      (sessionFilters?.search ?? "").trim().length >= 2 ||
+      navigationPrefill.present;
+    return !jaTemContexto;
+  });
+
+  function aplicarModoSimples(resultado: ModoSimplesResultado) {
+    setSelectedRespondente(resultado.respondente);
+    setSelectedAge(resultado.age);
+    setSelectedQueixas(resultado.queixas);
+    setSearch("");
+    setAssistenteAberto(false);
+    try {
+      localStorage.setItem("np_filtro_assistente_done", "1");
+    } catch {
+      /* preferências são best-effort */
+    }
+    // Leva o olhar direto ao pódio de resultados.
+    window.setTimeout(() => {
+      document
+        .querySelector('[data-testid="filter-results-region"], #filtro-resultados')
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }
+
+  function fecharAssistente() {
+    setAssistenteAberto(false);
+    try {
+      localStorage.setItem("np_filtro_assistente_done", "1");
+    } catch {
+      /* preferências são best-effort */
+    }
+  }
   const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>(
     flashMode ? "complete" : preferences.availability,
   );
@@ -1836,6 +1885,25 @@ export default function FiltroPage() {
         </div>
       </section>
 
+      {/* Assistente Modo Simples — 3 perguntas guiadas, aditivo aos filtros */}
+      {!flashMode && assistenteAberto && (
+        <div className="mb-4 sm:mb-6">
+          <FiltroModoSimples onApply={aplicarModoSimples} onDismiss={fecharAssistente} />
+        </div>
+      )}
+      {!flashMode && !assistenteAberto && (
+        <div className="mb-3 sm:mb-4">
+          <button
+            type="button"
+            onClick={() => setAssistenteAberto(true)}
+            data-testid="button-abrir-assistente"
+            className="inline-flex min-h-10 items-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-2 text-sm font-bold text-primary transition hover:border-primary hover:bg-primary/10 active:scale-[0.98]"
+          >
+            🪄 Assistente simples: responda 3 perguntas e veja as melhores escalas
+          </button>
+        </div>
+      )}
+
       {/* Two-column grid: Controls (left) + Results (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-max">
         {/* LEFT COLUMN — Controls (Sticky on Desktop) */}
@@ -2378,7 +2446,7 @@ export default function FiltroPage() {
 
         {/* RIGHT COLUMN — Results (lg:col-span-2) */}
         {hasSearch && (
-          <section className="space-y-3 lg:col-span-2">
+          <section className="space-y-3 lg:col-span-2" data-testid="filter-results-region">
             {acuteRiskContext && (
               <div
                 className="rounded-2xl border-2 border-red-300 bg-red-50 p-4 text-sm text-red-950 dark:border-red-800 dark:bg-red-950/35 dark:text-red-100"
