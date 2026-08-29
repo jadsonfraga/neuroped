@@ -13,11 +13,15 @@ const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const workflow = read(".github/workflows/premium-visual-v13.yml");
 
 assert.ok(
-  workspace.includes('import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes"'),
+  workspace.includes(
+    'import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes"',
+  ),
   "A classificação visual deve reutilizar a allowlist pública canônica",
 );
 assert.ok(
-  workspace.includes('surface: WorkspaceSurface = isPublicRoute(path) ? "public" : "clinical"'),
+  workspace.includes(
+    'surface: WorkspaceSurface = isPublicRoute(path) ? "public" : "clinical"',
+  ),
   "Rotas não públicas devem permanecer clínicas por padrão",
 );
 assert.ok(
@@ -27,13 +31,25 @@ assert.ok(
   "Workspace visual deve sincronizar no primeiro paint e em toda navegação",
 );
 assert.ok(
+  workspace.includes('path.split("/").filter(Boolean)[0]') &&
+    workspace.includes("IDs de paciente"),
+  "Metadados visuais devem usar somente o primeiro segmento e nunca copiar IDs dinâmicos para o DOM",
+);
+assert.doesNotMatch(
+  workspace,
+  /path\s*\.replace\(\/\^\\\/\+\|\\\/\+\$\/g/,
+  "O token visual não pode serializar o caminho clínico completo",
+);
+assert.ok(
   publicRoutes.includes("const PUBLIC_ROUTE_SET") &&
     publicRoutes.includes("export function isPublicRoute"),
   "A v15 não pode criar uma segunda lista de rotas públicas",
 );
 
 assert.ok(
-  main.includes('import { installWorkspaceSurface } from "./lib/workspaceSurface"'),
+  main.includes(
+    'import { installWorkspaceSurface } from "./lib/workspaceSurface"',
+  ),
   "main deve instalar a classificação de workspace",
 );
 assert.ok(
@@ -124,5 +140,5 @@ for (const command of [
 }
 
 console.log(
-  "[premium-internal-v15] ✓ classificação fail-closed, canvas de app, superfícies, formulários, tabs, tabelas, touch, dark e impressão protegidos.",
+  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas, touch, dark e impressão protegidos.",
 );
