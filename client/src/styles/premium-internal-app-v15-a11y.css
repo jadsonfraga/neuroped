@@ -1,9 +1,8 @@
 /*
- * NeuroPED Internal Workspace v15 — contraste da assinatura global.
+ * NeuroPED Internal Workspace v15 — contraste e interação acessível.
  *
- * Ao remover a moldura opaca das páginas internas, a assinatura autoral passa
- * a repousar diretamente sobre o canvas. O texto recebe a cor canônica sem
- * transparência adicional para preservar WCAG AA nos modos claro e escuro.
+ * Esta folha concentra correções WCAG da camada clínica canônica já carregada
+ * pelo runtime. Não altera autorização, conteúdo clínico ou contratos de dados.
  */
 
 html[data-np-workspace="clinical"]:not([data-np-route="home"])
@@ -25,4 +24,26 @@ html[data-np-workspace="clinical"]:not([data-np-route="home"])
   .border-primary\/15.bg-sky-600.text-white {
   background-color: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
+}
+
+/* Em ponteiros coarse, a área clicável precisa acompanhar a densidade visual:
+ * tabs preservam 44 px e campos usam 16 px para evitar zoom involuntário no iOS.
+ */
+@media (any-pointer: coarse) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    [role="tab"] {
+    min-height: 44px !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    :is(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+      textarea,
+      select,
+      [role="combobox"]
+    ) {
+    font-size: max(16px, 1rem);
+  }
 }
