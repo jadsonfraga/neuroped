@@ -1,0 +1,575 @@
+/*
+ * NeuroPED OS — Internal Workspace v15
+ *
+ * Linguagem visual compartilhada por TODAS as rotas clínicas, exceto a Home,
+ * que mantém o cockpit v13/v14 próprio. Esta camada é estritamente visual e
+ * depende da classificação fail-closed de workspaceSurface.ts: qualquer rota
+ * não incluída na allowlist pública recebe o acabamento clínico por padrão.
+ *
+ * Objetivos: remover a sensação de “página dentro de um site”, consolidar um
+ * canvas de aplicativo, reduzir variações entre módulos legados e preservar
+ * legibilidade, touch, impressão, dark mode e desempenho em hardware móvel.
+ */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"]) {
+  --np-v15-line: hsl(var(--foreground) / 0.085);
+  --np-v15-line-strong: hsl(var(--foreground) / 0.14);
+  --np-v15-surface: hsl(var(--card) / 0.9);
+  --np-v15-surface-soft: hsl(var(--card) / 0.7);
+  --np-v15-control: hsl(var(--card) / 0.92);
+  --np-v15-radius-sm: 0.78rem;
+  --np-v15-radius-md: 1rem;
+  --np-v15-radius-lg: 1.2rem;
+  --np-v15-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.025),
+    0 18px 42px -34px hsl(var(--foreground) / 0.34);
+  --np-v15-shadow-strong:
+    0 2px 8px hsl(var(--foreground) / 0.035),
+    0 30px 74px -44px hsl(var(--foreground) / 0.42);
+  --np-v15-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dark[data-np-workspace="clinical"]:not([data-np-route="home"]) {
+  --np-v15-line: hsl(0 0% 100% / 0.09);
+  --np-v15-line-strong: hsl(0 0% 100% / 0.15);
+  --np-v15-surface: hsl(var(--card) / 0.88);
+  --np-v15-surface-soft: hsl(var(--card) / 0.72);
+  --np-v15-control: hsl(var(--card) / 0.94);
+  --np-v15-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.16),
+    0 22px 50px -34px hsl(0 0% 0% / 0.66);
+  --np-v15-shadow-strong:
+    0 2px 8px hsl(0 0% 0% / 0.22),
+    0 36px 82px -46px hsl(0 0% 0% / 0.82);
+}
+
+/* ───────────────────── Canvas: aplicativo, não página web ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  #main-content
+  > .np-app-content {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  #main-content
+  > .np-app-content::before {
+  display: none !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  > div:first-child {
+  min-width: 0;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content {
+  max-width: 1480px !important;
+}
+
+/* A faixa de contexto vira chrome do aplicativo, e não breadcrumb de site. */
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  #main-content
+  > .sticky {
+  border-bottom-color: var(--np-v15-line) !important;
+  background: hsl(var(--background) / 0.88) !important;
+  box-shadow: 0 14px 32px -30px hsl(var(--foreground) / 0.42);
+  backdrop-filter: blur(20px) saturate(125%) !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  #main-content
+  > .sticky
+  > div {
+  min-height: 2.15rem;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  #main-content
+  > .sticky
+  > div::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  #main-content
+  > .sticky
+  span.rounded-full {
+  min-height: 1.75rem;
+  scroll-snap-align: start;
+  border-color: var(--np-v15-line) !important;
+  background: hsl(var(--card) / 0.66) !important;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.28);
+}
+
+/* ───────────────────── Cabeçalho canônico dos módulos ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-page-hero {
+  border-color: var(--np-v15-line) !important;
+  border-radius: var(--np-v15-radius-lg) !important;
+  padding: 1rem 1.1rem !important;
+  background:
+    radial-gradient(
+      22rem 10rem at 92% -30%,
+      hsl(var(--primary) / 0.075),
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.96),
+      hsl(var(--card) / 0.82)
+    ) !important;
+  box-shadow:
+    var(--np-v15-shadow),
+    inset 0 1px 0 hsl(0 0% 100% / 0.46) !important;
+  backdrop-filter: blur(14px) saturate(110%);
+}
+
+.dark[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-page-hero {
+  box-shadow:
+    var(--np-v15-shadow),
+    inset 0 1px 0 hsl(0 0% 100% / 0.045) !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-page-hero
+  > .relative {
+  align-items: center;
+  gap: 0.85rem;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-page-hero
+  > .relative
+  > div:first-child {
+  width: 2.55rem !important;
+  height: 2.55rem !important;
+  border-radius: 0.82rem !important;
+  box-shadow: 0 12px 24px -18px hsl(var(--primary) / 0.72) !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-page-hero
+  h1 {
+  font-family: var(--font-sans) !important;
+  font-size: clamp(1.25rem, 1.8vw, 1.6rem) !important;
+  font-weight: 720 !important;
+  letter-spacing: -0.032em !important;
+  line-height: 1.08 !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-page-hero
+  h1
+  + p {
+  max-width: 62rem;
+  margin-top: 0.45rem !important;
+  font-size: 0.79rem !important;
+  line-height: 1.55 !important;
+}
+
+/* ───────────────────── Superfícies e hierarquia ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .shadcn-card {
+  border-color: var(--np-v15-line) !important;
+  border-radius: var(--np-v15-radius-lg) !important;
+  background: var(--np-v15-surface) !important;
+  box-shadow:
+    var(--np-v15-shadow),
+    inset 0 1px 0 hsl(0 0% 100% / 0.42) !important;
+  backdrop-filter: blur(12px) saturate(108%);
+}
+
+.dark[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .shadcn-card {
+  box-shadow:
+    var(--np-v15-shadow),
+    inset 0 1px 0 hsl(0 0% 100% / 0.04) !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .shadcn-card
+  h2,
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .shadcn-card
+  h3 {
+  letter-spacing: -0.025em;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .glass {
+  border-color: var(--np-v15-line) !important;
+  border-radius: var(--np-v15-radius-lg) !important;
+  background: var(--np-v15-surface) !important;
+  box-shadow: var(--np-v15-shadow) !important;
+}
+
+/* ───────────────────── Formulários clínicos ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+    textarea,
+    select,
+    [role="combobox"]
+  ) {
+  min-height: 44px;
+  border-color: var(--np-v15-line-strong) !important;
+  border-radius: var(--np-v15-radius-sm) !important;
+  background: var(--np-v15-control) !important;
+  box-shadow:
+    inset 0 1px 1px hsl(var(--foreground) / 0.02),
+    0 10px 22px -22px hsl(var(--foreground) / 0.3) !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  textarea {
+  min-height: 7rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+    textarea,
+    select,
+    [role="combobox"]
+  ):focus,
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+    textarea,
+    select,
+    [role="combobox"]
+  ):focus-visible {
+  border-color: hsl(var(--primary) / 0.46) !important;
+  outline: none;
+  box-shadow:
+    0 0 0 3px hsl(var(--primary) / 0.1),
+    0 18px 34px -26px hsl(var(--primary) / 0.42) !important;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  label {
+  color: hsl(var(--foreground) / 0.86);
+  font-weight: 640;
+  letter-spacing: -0.008em;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  fieldset {
+  min-width: 0;
+  border-radius: var(--np-v15-radius-md);
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  legend {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* ───────────────────── Tabs e navegação local ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  [role="tablist"]:not([aria-orientation="vertical"]) {
+  max-width: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-color: var(--np-v15-line) !important;
+  border-radius: var(--np-v15-radius-md) !important;
+  background: hsl(var(--muted) / 0.48) !important;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.34) !important;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  [role="tablist"]::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  [role="tab"] {
+  min-height: 36px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  border-radius: 0.72rem !important;
+  font-size: 0.76rem;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  [role="tab"][data-state="active"] {
+  background: hsl(var(--card)) !important;
+  box-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.04),
+    0 9px 18px -16px hsl(var(--foreground) / 0.38) !important;
+}
+
+/* ───────────────────── Tabelas e listas densas ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  div:has(> table) {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--np-v15-line);
+  border-radius: var(--np-v15-radius-md);
+  background: var(--np-v15-surface);
+  box-shadow: var(--np-v15-shadow);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  thead {
+  background: hsl(var(--muted) / 0.58);
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  th {
+  min-height: 44px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.68rem;
+  font-weight: 720;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  tbody
+  tr {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  tbody
+  tr:hover {
+  background: hsl(var(--muted) / 0.42);
+}
+
+/* Portais Radix recebem o mesmo acabamento quando uma rota clínica está ativa. */
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  :is([role="dialog"], [role="alertdialog"])[data-state] {
+  border-color: var(--np-v15-line-strong) !important;
+  border-radius: var(--np-v15-radius-lg) !important;
+  background: hsl(var(--card) / 0.98) !important;
+  box-shadow: var(--np-v15-shadow-strong) !important;
+}
+
+/* Aviso permanece presente, mas deixa de parecer um grande bloco editorial. */
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-legal-disclosure {
+  margin-top: 1.35rem !important;
+  border-radius: var(--np-v15-radius-md) !important;
+  padding: 0.72rem 0.82rem !important;
+  box-shadow: none !important;
+}
+
+/* ───────────────────── Interação e foco ───────────────────── */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  :is(a, button, input, textarea, select, [role="button"], [role="tab"]):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .shadcn-card:hover {
+    transform: translateY(-1px) !important;
+    border-color: hsl(var(--primary) / 0.17) !important;
+    box-shadow: var(--np-v15-shadow-strong) !important;
+  }
+}
+
+/* ───────────────────── Tablet e celular ───────────────────── */
+
+@media screen and (max-width: 1023px) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    #main-content
+    > .np-app-content {
+    padding: 0.8rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    #main-content
+    > .sticky {
+    top: 3.5rem !important;
+    padding: 0.42rem 0.75rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .shadcn-card,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .glass {
+    backdrop-filter: none;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    #main-content
+    > .np-app-content {
+    padding: 0.65rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero {
+    border-radius: 1rem !important;
+    padding: 0.82rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero
+    > .relative {
+    align-items: flex-start;
+    gap: 0.68rem;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero
+    > .relative
+    > div:first-child {
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero
+    h1 {
+    font-size: 1.18rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero
+    h1
+    + p {
+    font-size: 0.75rem !important;
+    line-height: 1.48 !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .shadcn-card,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .glass {
+    border-radius: 1rem !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    [role="tab"] {
+    min-height: 40px;
+    padding-inline: 0.8rem;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    div:has(> table) {
+    width: calc(100vw - 1.3rem);
+    border-radius: 0.9rem;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    th,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    td {
+    padding-inline: 0.75rem;
+  }
+}
+
+@media (any-pointer: coarse) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    :is(a, button, [role="button"], [role="tab"], [role="combobox"]) {
+    touch-action: manipulation;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .shadcn-card,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    tbody
+    tr {
+    transition: none !important;
+  }
+
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .shadcn-card:hover {
+    transform: none !important;
+  }
+}
+
+@media print {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    #main-content
+    > .np-app-content,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-page-hero,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .shadcn-card,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .glass,
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    div:has(> table) {
+    overflow: visible !important;
+    border-color: #d1d5db !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
