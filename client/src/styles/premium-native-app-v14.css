@@ -1,0 +1,417 @@
+/*
+ * NeuroPED OS — Native App Polish v14
+ *
+ * Camada estritamente visual sobre a v13. Objetivo: reduzir qualquer leitura
+ * de landing page, aumentar densidade operacional e aproximar o shell de um
+ * aplicativo clínico instalado. Não altera rotas, permissões, dados, regras
+ * clínicas, autenticação, persistência ou contratos de backend.
+ */
+
+:root {
+  --np-v14-card-radius: 1.2rem;
+  --np-v14-compact-gap: 0.72rem;
+}
+
+.np-app-main {
+  overscroll-behavior-y: contain;
+}
+
+.np-v13-home {
+  gap: clamp(1rem, 1.5vw, 1.4rem);
+}
+
+/* Hero deixa de se comportar como peça promocional e passa a funcionar como
+   cabeçalho operacional do workspace. */
+.np-v13-hero {
+  border-radius: 1.55rem;
+  padding: clamp(1.15rem, 1.8vw, 1.75rem);
+}
+
+.np-v13-hero-grid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(17rem, 0.62fr);
+  gap: clamp(1rem, 1.9vw, 1.65rem);
+}
+
+.np-v13-title-block {
+  margin-top: clamp(0.9rem, 1.45vw, 1.3rem);
+}
+
+.np-v13-title-block h1 {
+  max-width: 15ch;
+  font-size: clamp(2.15rem, 3.45vw, 3.65rem);
+  line-height: 0.98;
+  letter-spacing: -0.043em;
+}
+
+.np-v13-title-block p {
+  max-width: 40rem;
+  margin-top: 0.85rem;
+  font-size: clamp(0.82rem, 0.95vw, 0.94rem);
+  line-height: 1.58;
+}
+
+.np-v13-search {
+  max-width: 44rem;
+  min-height: 3.2rem;
+  margin-top: clamp(1rem, 1.6vw, 1.35rem);
+  border-radius: 1rem;
+}
+
+.np-v13-search input {
+  height: 3.15rem !important;
+}
+
+.np-v13-actions {
+  margin-top: 0.72rem;
+}
+
+.np-v13-control-panel {
+  border-radius: 1.35rem;
+  padding: 0.92rem;
+}
+
+.np-v13-panel-heading {
+  padding-bottom: 0.62rem;
+}
+
+.np-v13-quick-actions {
+  gap: 0.38rem;
+}
+
+.np-v13-quick-link {
+  min-height: 3.4rem;
+  border-radius: 0.88rem;
+  padding: 0.5rem;
+}
+
+.np-v13-quick-link > span {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+}
+
+.np-v13-panel-footer {
+  padding-top: 0.65rem;
+}
+
+.np-v13-panel-footer figure,
+.np-v13-panel-footer figure > div:nth-of-type(2) {
+  width: 3.7rem !important;
+  min-width: 3.7rem;
+  height: 3.7rem !important;
+}
+
+.np-v13-metric-grid {
+  gap: var(--np-v14-compact-gap);
+}
+
+.np-v13-metric-card {
+  min-height: 7.4rem;
+  border-radius: var(--np-v14-card-radius);
+  padding: 0.9rem;
+}
+
+.np-v13-metric-card > strong {
+  margin-top: 0.65rem;
+  font-size: clamp(1.55rem, 1.9vw, 1.95rem);
+}
+
+.np-v13-flow-grid {
+  gap: var(--np-v14-compact-gap);
+}
+
+.np-v13-flow-card {
+  min-height: 12.2rem;
+  border-radius: 1.25rem !important;
+  padding: 1rem !important;
+}
+
+.np-v13-flow-copy {
+  margin-top: 0.9rem;
+}
+
+.np-v13-flow-copy span {
+  margin-top: 0.42rem;
+  line-height: 1.48;
+}
+
+.np-v13-flow-footer {
+  padding-top: 0.72rem;
+}
+
+.np-v13-lower-grid {
+  gap: var(--np-v14-compact-gap);
+}
+
+/* Tablet: mantém sidebar/cockpit, mas evita proporções de página editorial. */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+  .np-v13-title-block h1 {
+    font-size: clamp(2.35rem, 4.5vw, 3.25rem);
+  }
+
+  .np-v13-control-panel {
+    padding: 0.82rem;
+  }
+
+  .np-v13-flow-card {
+    min-height: 11.6rem;
+  }
+}
+
+/* Celular: experiência deliberadamente nativa. As métricas continuam em grade
+   compacta, atalhos viram dock de ações e os fluxos passam a um rail horizontal
+   com snap — todos permanecem acessíveis sem produzir uma página quilométrica. */
+@media screen and (max-width: 767px) {
+  .np-v13-home {
+    gap: 0.9rem;
+    padding-bottom: 1rem;
+  }
+
+  .np-v13-hero {
+    padding: 0.95rem;
+    border-radius: 1.25rem;
+  }
+
+  .np-v13-title-block {
+    margin-top: 0.85rem;
+  }
+
+  .np-v13-title-block h1 {
+    max-width: 13ch;
+    font-size: clamp(2rem, 9.5vw, 2.65rem);
+    line-height: 0.98;
+  }
+
+  .np-v13-title-block p {
+    margin-top: 0.65rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .np-v13-search {
+    min-height: 3rem;
+    margin-top: 0.9rem;
+    border-radius: 0.9rem;
+  }
+
+  .np-v13-search input {
+    height: 2.95rem !important;
+  }
+
+  .np-v13-actions {
+    gap: 0.5rem;
+    margin-top: 0.55rem;
+  }
+
+  .np-v13-primary-action,
+  .np-v13-secondary-action {
+    min-height: 2.75rem;
+    border-radius: 0.86rem;
+  }
+
+  .np-v13-control-panel {
+    border-radius: 1.05rem;
+    padding: 0.72rem;
+  }
+
+  .np-v13-panel-heading {
+    padding: 0.1rem 0.05rem 0.5rem;
+  }
+
+  .np-v13-quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.38rem;
+  }
+
+  .np-v13-quick-link {
+    display: flex !important;
+    min-height: 4.4rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.3rem;
+    text-align: center;
+  }
+
+  .np-v13-quick-link > span {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .np-v13-quick-link > div {
+    width: 100%;
+  }
+
+  .np-v13-quick-link strong {
+    font-size: 0.66rem;
+  }
+
+  .np-v13-quick-link small,
+  .np-v13-quick-link > svg {
+    display: none !important;
+  }
+
+  .np-v13-panel-footer {
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+  }
+
+  .np-v13-panel-footer span {
+    display: none;
+  }
+
+  .np-v13-panel-footer figure,
+  .np-v13-panel-footer figure > div:nth-of-type(2) {
+    width: 3.15rem !important;
+    min-width: 3.15rem;
+    height: 3.15rem !important;
+  }
+
+  .np-v13-metric-grid {
+    gap: 0.45rem;
+  }
+
+  .np-v13-metric-card {
+    min-height: 6.8rem;
+    border-radius: 1rem;
+    padding: 0.72rem;
+  }
+
+  .np-v13-metric-heading p {
+    font-size: 0.55rem;
+  }
+
+  .np-v13-metric-heading span {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .np-v13-metric-card > strong {
+    margin-top: 0.5rem;
+    font-size: 1.48rem;
+  }
+
+  .np-v13-metric-detail {
+    margin-top: 0.25rem;
+    font-size: 0.58rem;
+  }
+
+  .np-v13-section-heading {
+    padding-inline: 0.08rem;
+  }
+
+  .np-v13-section-heading h2 {
+    font-size: 1.45rem;
+  }
+
+  .np-v13-flow-grid {
+    display: flex !important;
+    width: calc(100% + 0.95rem);
+    margin-right: -0.95rem;
+    padding: 0.05rem 0.95rem 0.45rem 0;
+    flex-direction: row !important;
+    align-items: stretch;
+    gap: 0.58rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .np-v13-flow-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .np-v13-flow-grid > *,
+  .np-v13-flow-grid > a,
+  .np-v13-flow-grid > article {
+    display: block;
+    width: min(82vw, 19rem) !important;
+    min-width: min(82vw, 19rem) !important;
+    max-width: min(82vw, 19rem) !important;
+    flex: 0 0 min(82vw, 19rem) !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    scroll-snap-align: start;
+  }
+
+  .np-v13-flow-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 11.4rem;
+    border-radius: 1.1rem !important;
+    padding: 0.85rem !important;
+  }
+
+  .np-v13-flow-copy {
+    margin-top: 0.72rem;
+  }
+
+  .np-v13-flow-copy span {
+    font-size: 0.7rem;
+    line-height: 1.45;
+  }
+
+  .np-v13-flow-footer {
+    padding-top: 0.55rem;
+  }
+
+  .np-v13-responsible-note {
+    padding: 0.8rem;
+    border-radius: 1rem;
+  }
+
+  .np-legal-disclosure {
+    margin-top: 1rem !important;
+    border-radius: 1rem !important;
+    padding: 0.7rem 0.8rem !important;
+  }
+}
+
+/* App chrome mobile: tab bar menor e mais estável, sem aparência de CTA flutuante. */
+@media screen and (max-width: 1023px) {
+  [data-testid="mobile-primary-dock"] nav {
+    border-radius: 1.2rem !important;
+  }
+
+  [data-testid="mobile-primary-dock"] button,
+  [data-testid="mobile-primary-dock"] a {
+    min-height: 3.25rem !important;
+  }
+
+  [data-testid="mobile-dock-nesplora"] {
+    margin-top: -0.45rem !important;
+    min-height: 3.65rem !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 10px 24px -16px hsl(41 70% 34% / 0.5) !important;
+  }
+
+  [data-testid="mobile-dock-nesplora"] > span:first-child {
+    display: none !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .np-v13-flow-card:hover,
+  .np-v13-metric-card:hover,
+  .np-v13-result-card:hover {
+    transform: translateY(-1px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-v13-flow-grid {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  .np-v13-flow-grid {
+    display: grid !important;
+    overflow: visible !important;
+  }
+}
