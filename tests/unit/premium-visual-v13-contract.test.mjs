@@ -12,6 +12,9 @@ const visual = read("client/src/styles/premium-visual-v13.css");
 const mobileVisual = read(
   "client/src/styles/premium-visual-v13-mobile.css",
 );
+const a11yVisual = read(
+  "client/src/styles/premium-visual-v13-a11y.css",
+);
 const workflow = read(".github/workflows/premium-visual-v13.yml");
 
 const requiredRoutes = [
@@ -83,6 +86,7 @@ assert.ok(
 const v12Index = main.indexOf('./styles/premium-app-shell-v12.css');
 const v13Index = main.indexOf('./styles/premium-visual-v13.css');
 const mobileIndex = main.indexOf('./styles/premium-visual-v13-mobile.css');
+const a11yIndex = main.indexOf('./styles/premium-visual-v13-a11y.css');
 const touchIndex = main.indexOf('./styles/tablet-coarse-perf.css');
 
 assert.ok(v12Index >= 0, "A camada visual v12 continua obrigatória");
@@ -92,7 +96,11 @@ assert.ok(
   "A proteção móvel da v13 deve ser carregada depois da camada principal",
 );
 assert.ok(
-  touchIndex > mobileIndex,
+  a11yIndex > mobileIndex,
+  "O reforço WCAG deve ser carregado depois das camadas visuais da v13",
+);
+assert.ok(
+  touchIndex > a11yIndex,
   "A proteção de desempenho/touch deve continuar sendo a última camada",
 );
 
@@ -130,6 +138,16 @@ for (const contract of [
   );
 }
 
+for (const contract of [
+  ".np-app-content:has(.np-v13-home) > p.flex-wrap > span",
+  "color: hsl(var(--muted-foreground))",
+]) {
+  assert.ok(
+    a11yVisual.includes(contract),
+    `Reforço WCAG ausente ou enfraquecido: ${contract}`,
+  );
+}
+
 assert.match(
   visual,
   /min-height:\s*44px/,
@@ -141,14 +159,20 @@ assert.match(
   "A home deve declarar contenção de overflow horizontal",
 );
 assert.doesNotMatch(
-  `${visual}\n${mobileVisual}`,
+  `${visual}\n${mobileVisual}\n${a11yVisual}`,
   /url\(["']?https?:\/\//i,
   "A camada visual não pode depender de ativos externos em tempo de execução",
 );
-assert.ok(
-  workflow.includes("client/src/styles/premium-visual-v13-mobile.css"),
-  "Mudanças na proteção móvel devem sempre disparar o workflow visual",
-);
+
+for (const guardedFile of [
+  "client/src/styles/premium-visual-v13-mobile.css",
+  "client/src/styles/premium-visual-v13-a11y.css",
+]) {
+  assert.ok(
+    workflow.includes(guardedFile),
+    `Mudanças em ${guardedFile} devem sempre disparar o workflow visual`,
+  );
+}
 
 for (const step of [
   "node tests/unit/premium-visual-v13-contract.test.mjs",
@@ -166,5 +190,5 @@ for (const step of [
 }
 
 console.log(
-  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, anticolisão móvel, WCAG, responsividade e CI preservados.",
+  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, anticolisão móvel, contraste WCAG, responsividade e CI preservados.",
 );
