@@ -67,6 +67,14 @@ jobs:
           npm run audit:color
           npm run audit:design
 
+      # Mantido como continue-on-error somente para que o relatório JSON e as
+      # capturas sobrevivam a uma falha e possam ser auditados. A etapa final
+      # converte qualquer violação em bloqueio obrigatório do job.
+      - name: Acessibilidade WCAG em navegador real
+        id: a11y
+        continue-on-error: true
+        run: npm run audit:a11y
+
       # O runtime de auditoria é o responsável pelo build. Ele injeta
       # VITE_AUTH_MODE=auto, VITE_API_URL vazio e VITE_ZONE=full para que o
       # Chromium exercite o workspace clínico completo, não uma variante
@@ -79,11 +87,19 @@ jobs:
           PREMIUM_PROOF_DIR: artifacts/premium-v13
         run: node tests/e2e/premium-visual-proof.mjs
 
-      - name: Publicar capturas e manifesto
+      - name: Publicar capturas, manifesto e relatório WCAG
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: neuroped-premium-v13-screenshots
-          path: artifacts/premium-v13
+          path: |
+            artifacts/premium-v13
+            scripts/guards/a11y-report.json
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Bloquear integração se a acessibilidade falhar
+        if: always() && steps.a11y.outcome != 'success'
+        run: |
+          echo "A auditoria WCAG encontrou violação. Consulte scripts/guards/a11y-report.json no artefato."
+          exit 1
