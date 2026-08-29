@@ -18,6 +18,13 @@
   }
 }
 
+/* O botão de limpar busca é um alvo touch real: nunca pode herdar menos de 44 px. */
+.np-v13-search button {
+  width: 2.75rem !important;
+  min-width: 2.75rem !important;
+  min-height: 2.75rem !important;
+}
+
 @media screen and (max-width: 767px) {
   .np-v13-hero-grid {
     gap: 0.7rem;
@@ -27,5 +34,16 @@
     position: relative;
     inset: auto;
     min-height: 0;
+  }
+
+  /* Métricas são informação clínica/operacional, não ornamento. */
+  .np-v13-metric-heading p {
+    font-size: 0.72rem !important;
+    line-height: 1.25;
+  }
+
+  .np-v13-metric-detail {
+    font-size: 0.7rem !important;
+    line-height: 1.35;
   }
 }
