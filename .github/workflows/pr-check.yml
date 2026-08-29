@@ -11,21 +11,6 @@ on:
       - synchronize
       - ready_for_review
       - edited
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "Número do PR que deve ser revalidado"
-        required: true
-        type: string
-      trigger_reason:
-        description: "Motivo da revalidação automática"
-        required: false
-        default: "fanout"
-        type: string
-      expected_head_sha:
-        description: "SHA imutável que deve ser testado"
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -33,7 +18,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: neuroped-pr-check-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  group: neuroped-pr-check-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -44,10 +29,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          # pull_request mantém o merge ref canônico; fan-out fixa o SHA
-          # informado no despacho para não testar uma revisão diferente.
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_head_sha || '' }}
 
       - name: Configurar Node.js 24
         uses: actions/setup-node@v6
@@ -71,40 +52,23 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const inputNumber = Number("${{ inputs.pr_number || '' }}");
-            const payloadNumber = context.payload.pull_request?.number;
-            const prNumber = payloadNumber ?? inputNumber;
-            const expectedHead = "${{ inputs.expected_head_sha || '' }}";
+            const payloadPr = context.payload.pull_request;
 
-            if (!Number.isInteger(prNumber) || prNumber <= 0) {
-              core.setFailed("Número de PR ausente ou inválido; gate fechado por segurança.");
+            if (!payloadPr?.number) {
+              core.setFailed("Evento sem pull_request; gate fechado por segurança.");
               return;
             }
 
-            // Não confia em payload antigo: sempre consulta o estado atual do PR.
+            // Consulta o estado atual; não confia em payload potencialmente antigo.
             const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
-              pull_number: prNumber,
+              pull_number: payloadPr.number,
             });
             core.setOutput("pr_number", String(pr.number));
 
-            if (expectedHead && pr.head.sha !== expectedHead) {
-              core.setFailed(
-                `O PR #${pr.number} avançou de ${expectedHead.slice(0, 12)} para ${pr.head.sha.slice(0, 12)}; o despacho antigo foi rejeitado.`,
-              );
-              return;
-            }
-
             if (pr.state !== "open") {
-              core.setFailed(`O PR #${pr.number} não está aberto; revalidação cancelada.`);
-              return;
-            }
-
-            if (pr.head.repo?.full_name !== `${owner}/${repo}`) {
-              core.setFailed(
-                `O PR #${pr.number} vem de fork e exige um fluxo isolado; checkout automático bloqueado.`,
-              );
+              core.setFailed(`O PR #${pr.number} não está aberto; validação cancelada.`);
               return;
             }
 
@@ -201,7 +165,6 @@ jobs:
                 ],
                 ["PR", `#${pr.number} — ${pr.title}`],
                 ["Estado", pr.draft ? "Draft" : "Pronto para revisão"],
-                ["Gatilho", "${{ inputs.trigger_reason || github.event.action || github.event_name }}"],
                 ["Commits atrás da base", String(behindBy)],
                 ["Colisões críticas com PRs não-draft", String(collisions.length)],
               ]);

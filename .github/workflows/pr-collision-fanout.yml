@@ -1,4 +1,4 @@
-name: NeuroPED PR Collision Recheck Fan-out
+name: NeuroPED PR Collision Quarantine
 
 on:
   push:
@@ -10,36 +10,34 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-      - converted_to_draft
       - edited
-      - closed
 
 permissions:
-  actions: write
   contents: read
-  pull-requests: read
+  issues: write
+  pull-requests: write
 
 concurrency:
-  group: neuroped-pr-collision-fanout-${{ github.event.pull_request.number || github.sha }}
+  group: neuroped-pr-quarantine-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  fanout:
-    name: Revalidar PRs afetados
+  quarantine:
+    name: Quarentena de base e colisões
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      # Segurança: este workflow roda no contexto protegido da main e nunca
-      # faz checkout nem executa código vindo de um pull request.
-      - name: Localizar PRs afetados e redisparar o gate obrigatório
+      # Segurança: usa somente a definição protegida da main. Não há checkout,
+      # build, import ou execução de conteúdo vindo de pull requests.
+      - name: Colocar em draft PRs desatualizados ou concorrentes
         uses: actions/github-script@v9
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const baseRef = "main";
-            const workflowId = "pr-check.yml";
+            const marker = "<!-- neuroped-collision-quarantine -->";
 
             const filePaths = (file) =>
               [...new Set([file.filename, file.previous_filename].filter(Boolean))];
@@ -71,157 +69,248 @@ jobs:
               exactCritical.has(path) ||
               criticalPrefixes.some((prefix) => path.startsWith(prefix));
 
-            const openPulls = await github.paginate(
-              github.rest.pulls.list,
-              {
+            async function freshPull(number) {
+              const { data } = await github.rest.pulls.get({
                 owner,
                 repo,
-                state: "open",
-                base: baseRef,
-                sort: "updated",
-                direction: "desc",
-                per_page: 100,
-              },
-            );
+                pull_number: number,
+              });
+              return data;
+            }
 
-            const eligible = openPulls.filter(
-              (pull) =>
-                !pull.draft &&
-                pull.head.repo?.full_name === `${owner}/${repo}`,
-            );
+            async function behindBy(pull) {
+              const comparison = await github.rest.repos.compareCommitsWithBasehead({
+                owner,
+                repo,
+                basehead: `${pull.base.ref}...${pull.head.sha}`,
+                per_page: 1,
+              });
+              return Number(comparison.data.behind_by ?? 0);
+            }
 
-            let targets = [];
-            let reason = "";
+            async function pullPaths(number) {
+              const files = await github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number: number, per_page: 100 },
+              );
+              return new Set(files.flatMap(filePaths));
+            }
+
+            async function quarantinePull(pull, reasons) {
+              const current = await freshPull(pull.number);
+              if (current.state !== "open" || current.draft) {
+                return { number: current.number, changed: false, alreadySafe: true };
+              }
+
+              await github.graphql(
+                `mutation ConvertToDraft($pullRequestId: ID!) {
+                  convertPullRequestToDraft(
+                    input: { pullRequestId: $pullRequestId }
+                  ) {
+                    pullRequest {
+                      id
+                      number
+                      isDraft
+                    }
+                  }
+                }`,
+                { pullRequestId: current.node_id },
+              );
+
+              const body = `${marker}
+            ## 🔒 Quarentena automática de integração
+
+            Este PR foi convertido para **draft** porque a integração segura exige uma nova reconciliação.
+
+            ${reasons.map((reason) => `- ${reason}`).join("\n")}
+
+            Para voltar a **Ready for review**:
+            1. incorpore a \`main\` atual;
+            2. reconcilie os arquivos críticos indicados;
+            3. execute novamente todos os checks;
+            4. só então marque o PR como pronto para revisão.
+
+            Nenhum commit foi removido, nenhuma branch foi apagada e nenhum deploy foi executado.`;
+
+              const comments = await github.paginate(
+                github.rest.issues.listComments,
+                {
+                  owner,
+                  repo,
+                  issue_number: current.number,
+                  per_page: 100,
+                },
+              );
+              const previous = comments.find(
+                (comment) =>
+                  comment.user?.type === "Bot" &&
+                  comment.body?.includes(marker),
+              );
+
+              if (previous) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: previous.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: current.number,
+                  body,
+                });
+              }
+
+              return { number: current.number, changed: true, alreadySafe: false };
+            }
+
+            const quarantined = [];
+            const safe = [];
+            const failures = [];
 
             if (context.eventName === "push") {
-              // Quando a main avança, todo PR não-draft precisa demonstrar que
-              // continua íntegro sobre a base atual.
-              targets = eligible;
-              reason = `main avançou para ${context.sha.slice(0, 12)}`;
+              // Quando a main avança, qualquer PR não-draft que fique atrás
+              // volta a draft. Isso força atualização real da branch e novos
+              // checks associados ao SHA correto do PR — sem status lateral.
+              const openPulls = await github.paginate(
+                github.rest.pulls.list,
+                {
+                  owner,
+                  repo,
+                  state: "open",
+                  base: baseRef,
+                  sort: "updated",
+                  direction: "desc",
+                  per_page: 100,
+                },
+              );
+
+              for (const listed of openPulls) {
+                if (listed.draft) continue;
+                try {
+                  const pull = await freshPull(listed.number);
+                  const behind = await behindBy(pull);
+                  if (behind <= 0) {
+                    safe.push(pull.number);
+                    continue;
+                  }
+                  const result = await quarantinePull(pull, [
+                    `A branch está ${behind} commit(s) atrás da \`${baseRef}\` após a atualização ${context.sha.slice(0, 12)}.`,
+                  ]);
+                  if (result.changed) quarantined.push(result.number);
+                } catch (error) {
+                  failures.push({
+                    number: listed.number,
+                    message: error?.message ?? String(error),
+                  });
+                }
+              }
             } else {
-              const eventPr = context.payload.pull_request;
-              if (!eventPr?.number) {
+              const payloadPr = context.payload.pull_request;
+              if (!payloadPr?.number) {
                 core.setFailed("Evento pull_request_target sem número de PR.");
                 return;
               }
 
-              const eventFiles = await github.paginate(
-                github.rest.pulls.listFiles,
-                {
-                  owner,
-                  repo,
-                  pull_number: eventPr.number,
-                  per_page: 100,
-                },
-              );
-              const eventPaths = new Set(eventFiles.flatMap(filePaths));
-              reason = `PR #${eventPr.number} ${context.payload.action}`;
-
-              // O PR que gerou o evento já recebe seu próprio pull_request run.
-              // O fan-out revalida somente os pares que podem ter ficado stale.
-              for (const pull of eligible) {
-                if (pull.number === eventPr.number) continue;
-
-                const pullFiles = await github.paginate(
-                  github.rest.pulls.listFiles,
-                  {
-                    owner,
-                    repo,
-                    pull_number: pull.number,
-                    per_page: 100,
-                  },
-                );
-                const sharedCritical = [
-                  ...new Set(
-                    pullFiles
-                      .flatMap(filePaths)
-                      .filter(
-                        (path) => eventPaths.has(path) && isCritical(path),
-                      ),
-                  ),
-                ];
-
-                if (sharedCritical.length > 0) {
-                  targets.push({
-                    ...pull,
-                    sharedCritical,
-                  });
-                }
-              }
-            }
-
-            const dispatched = [];
-            const failed = [];
-
-            for (const target of targets) {
               try {
-                // A definição confiável do workflow vem sempre da main. O
-                // checkout do PR é fixado depois pelo expected_head_sha, então
-                // branches antigas também podem ser revalidadas sem executar
-                // uma definição de workflow desatualizada ou controlada pelo PR.
-                await github.rest.actions.createWorkflowDispatch({
-                  owner,
-                  repo,
-                  workflow_id: workflowId,
-                  ref: baseRef,
-                  inputs: {
-                    pr_number: String(target.number),
-                    trigger_reason: reason,
-                    expected_head_sha: target.head.sha,
-                  },
-                });
-                dispatched.push({
-                  number: target.number,
-                  branch: target.head.ref,
-                  sharedCritical: target.sharedCritical ?? [],
-                });
+                const pull = await freshPull(payloadPr.number);
+                if (pull.state !== "open" || pull.draft) {
+                  safe.push(pull.number);
+                } else {
+                  const reasons = [];
+                  const behind = await behindBy(pull);
+                  if (behind > 0) {
+                    reasons.push(
+                      `A branch está ${behind} commit(s) atrás da \`${pull.base.ref}\`.`,
+                    );
+                  }
+
+                  const currentPaths = await pullPaths(pull.number);
+                  const peers = await github.paginate(
+                    github.rest.pulls.list,
+                    {
+                      owner,
+                      repo,
+                      state: "open",
+                      base: pull.base.ref,
+                      sort: "updated",
+                      direction: "desc",
+                      per_page: 100,
+                    },
+                  );
+
+                  for (const peer of peers) {
+                    if (
+                      peer.number === pull.number ||
+                      peer.draft ||
+                      peer.state !== "open"
+                    ) {
+                      continue;
+                    }
+                    const peerPaths = await pullPaths(peer.number);
+                    const sharedCritical = [
+                      ...new Set(
+                        [...peerPaths].filter(
+                          (path) => currentPaths.has(path) && isCritical(path),
+                        ),
+                      ),
+                    ];
+                    if (sharedCritical.length > 0) {
+                      reasons.push(
+                        `Colisão crítica com o PR #${peer.number}: ${sharedCritical
+                          .map((path) => `\`${path}\``)
+                          .join(", ")}.`,
+                      );
+                    }
+                  }
+
+                  if (reasons.length > 0) {
+                    const result = await quarantinePull(pull, reasons);
+                    if (result.changed) quarantined.push(result.number);
+                  } else {
+                    safe.push(pull.number);
+                  }
+                }
               } catch (error) {
-                failed.push({
-                  number: target.number,
+                failures.push({
+                  number: payloadPr.number,
                   message: error?.message ?? String(error),
                 });
               }
             }
 
             core.summary
-              .addHeading("NeuroPED — fan-out de revalidação")
+              .addHeading("NeuroPED — quarentena antirregressão")
               .addTable([
                 [
                   { data: "Indicador", header: true },
                   { data: "Resultado", header: true },
                 ],
-                ["Gatilho", reason || context.eventName],
-                ["PRs não-draft avaliados", String(eligible.length)],
-                ["PRs afetados", String(targets.length)],
-                ["Revalidações disparadas", String(dispatched.length)],
-                ["Falhas inesperadas", String(failed.length)],
+                ["Evento", context.eventName],
+                ["PRs convertidos para draft", String(quarantined.length)],
+                ["PRs já seguros", String(safe.length)],
+                ["Falhas inesperadas", String(failures.length)],
               ]);
 
-            if (dispatched.length > 0) {
-              core.summary.addHeading("Revalidações", 2);
-              for (const item of dispatched) {
-                const files = item.sharedCritical.length
-                  ? ` — ${item.sharedCritical.map((path) => `\`${path}\``).join(", ")}`
-                  : "";
+            if (quarantined.length > 0) {
+              core.summary.addRaw(
+                `\nQuarentena aplicada: ${quarantined.map((number) => `#${number}`).join(", ")}.\n`,
+              );
+            }
+            if (failures.length > 0) {
+              core.summary.addHeading("Falhas", 2);
+              for (const failure of failures) {
                 core.summary.addRaw(
-                  `- PR #${item.number} (\`${item.branch}\`)${files}\n`,
+                  `- PR #${failure.number}: ${failure.message}\n`,
                 );
               }
             }
-
-            if (failed.length > 0) {
-              core.summary.addHeading("Falhas inesperadas", 2);
-              for (const item of failed) {
-                core.summary.addRaw(
-                  `- PR #${item.number}: ${item.message}\n`,
-                );
-              }
-            }
-
             await core.summary.write();
 
-            if (failed.length > 0) {
+            if (failures.length > 0) {
               core.setFailed(
-                `Falha ao redisparar ${failed.length} PR(s) afetado(s). Consulte o summary.`,
+                `Não foi possível colocar ${failures.length} PR(s) em quarentena.`,
               );
             }
