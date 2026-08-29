@@ -152,8 +152,11 @@ assert.ok(
 
 for (const step of [
   "node tests/unit/premium-visual-v13-contract.test.mjs",
+  "npm run audit:a11y",
   "node tests/e2e/responsive-shell-smoke.mjs",
   "node tests/e2e/premium-visual-proof.mjs",
+  "scripts/guards/a11y-report.json",
+  "steps.a11y.outcome != 'success'",
   "actions/upload-artifact",
 ]) {
   assert.ok(
@@ -163,5 +166,5 @@ for (const step of [
 }
 
 console.log(
-  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, anticolisão móvel, responsividade e CI preservados.",
+  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, anticolisão móvel, WCAG, responsividade e CI preservados.",
 );
