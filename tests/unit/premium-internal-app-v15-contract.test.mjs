@@ -178,6 +178,7 @@ for (const guardedFile of [
   "client/src/styles/premium-internal-app-v15-responsive.css",
   "tests/unit/premium-internal-app-v15-contract.test.mjs",
   "tests/e2e/premium-internal-workspace.mjs",
+  "tests/e2e/premium-table-containment.mjs",
 ]) {
   assert.ok(
     workflow.includes(guardedFile),
@@ -188,6 +189,7 @@ for (const guardedFile of [
 for (const command of [
   "node tests/unit/premium-internal-app-v15-contract.test.mjs",
   "node tests/e2e/premium-internal-workspace.mjs",
+  "node tests/e2e/premium-table-containment.mjs",
 ]) {
   assert.ok(
     workflow.includes(command),
@@ -196,5 +198,5 @@ for (const command of [
 }
 
 console.log(
-  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas aninhadas, WCAG, touch, dark e impressão protegidos.",
+  "[premium-internal-v15] ✓ classificação fail-closed sem IDs, canvas de app, superfícies, formulários, tabs, tabelas aninhadas reais, WCAG, touch, dark e impressão protegidos.",
 );
