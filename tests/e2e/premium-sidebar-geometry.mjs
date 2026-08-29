@@ -207,8 +207,9 @@ try {
     await desktopContext.close();
   }
 
+  const mobileWidth = 390;
   const mobileContext = await browser.newContext({
-    viewport: { width: 390, height: 844 },
+    viewport: { width: mobileWidth, height: 844 },
     hasTouch: true,
     reducedMotion: "reduce",
   });
@@ -225,12 +226,20 @@ try {
     const contract = await readContract(mobilePage);
     assert.ok(contract.sidebar, "mobile: drawer ausente");
     assert.ok(
-      contract.documentWidth <= 391,
+      contract.documentWidth <= mobileWidth + 1,
       "mobile: overflow horizontal no documento",
     );
+    // O shell usa `w-[88vw] max-w-[360px] sm:w-64`: em 390 px, a largura
+    // canônica é 343,2 px, não 256 px. A asserção deriva do contrato real para
+    // detectar regressão sem condenar o drawer amplo e tátil do iPhone.
+    const expectedDrawerWidth = Math.min(360, mobileWidth * 0.88);
     assert.ok(
-      contract.sidebar.width >= 255 && contract.sidebar.width <= 257,
-      `mobile: largura do drawer inesperada (${contract.sidebar.width}px)`,
+      Math.abs(contract.sidebar.width - expectedDrawerWidth) <= 2,
+      `mobile: largura do drawer inesperada (${contract.sidebar.width}px; esperado ${expectedDrawerWidth}px)`,
+    );
+    assert.ok(
+      contract.sidebar.width < mobileWidth,
+      "mobile: drawer ocupou todo o viewport e perdeu o contexto de sobreposição",
     );
     assertTiles(contract, "mobile");
     await mobilePage.screenshot({
