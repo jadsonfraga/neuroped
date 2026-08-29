@@ -275,7 +275,7 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         minMonths: 84,
         maxMonths: 132,
         tiers: {
-          ouro: ["cdi2"],
+          ouro: ["smfq"],
           prata: ["cssrs"],
           bronze: ["cbcl", "sdq"],
         },
@@ -286,13 +286,13 @@ export const signalFlowcharts: Record<string, SignalFlowchart> = {
         maxMonths: 216,
         tiers: {
           ouro: ["phqa"],
-          prata: ["cdi2"],
+          prata: ["who5"],
           bronze: ["cssrs"],
         },
       },
     ],
     monitoring: {
-      ouro: ["cdi2"],
+      ouro: ["smfq"],
       prata: ["phqa"],
       bronze: ["cbcl"],
     },

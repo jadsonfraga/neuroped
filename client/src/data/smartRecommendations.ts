@@ -78,7 +78,7 @@ export const clinicalPatterns: ClinicalPattern[] = [
   {
     signature: ["ansiedade", "depressao"],
     primaryScale: "rcads",
-    secondaryScales: ["masc2", "cdi2"],
+    secondaryScales: ["masc2", "smfq"],
     supportingScales: ["phqa", "scared"],
     reason: "Ansiedade comórbida com depressão",
     estimatedTime: "30-45 minutos",
