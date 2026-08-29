@@ -108,6 +108,31 @@ assert.doesNotMatch(
   "quarentena privilegiada não pode executar scripts do repositório",
 );
 
+function extractInlineScript(workflow) {
+  const marker = "          script: |\n";
+  const start = workflow.indexOf(marker);
+  assert.notEqual(start, -1, "workflow deve conter um script inline");
+  const lines = workflow.slice(start + marker.length).split("\n");
+  const collected = [];
+  for (const line of lines) {
+    if (line.length > 0 && !line.startsWith("            ")) break;
+    collected.push(line.startsWith("            ") ? line.slice(12) : line);
+  }
+  return collected.join("\n");
+}
+
+const quarantineScript = extractInlineScript(quarantine);
+assert.doesNotThrow(
+  () =>
+    new Function(
+      "github",
+      "context",
+      "core",
+      "return (async () => {\n" + quarantineScript + "\n})();",
+    ),
+  "o JavaScript inline da quarentena deve compilar antes do merge",
+);
+
 // Prova unitária do caso de rename levantado na revisão.
 const filePaths = (file) =>
   [...new Set([file.filename, file.previous_filename].filter(Boolean))];
