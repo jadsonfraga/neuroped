@@ -14,8 +14,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 concurrency:
   group: neuroped-pr-check-${{ github.event.pull_request.number || github.ref }}
@@ -25,10 +23,27 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     name: Build & Lint
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr_number: ${{ steps.collision.outputs.pr_number }}
+      contract_status: ${{ steps.collision_contract.outcome }}
+      collision_status: ${{ steps.collision.outcome }}
+      typecheck_status: ${{ steps.typecheck.outcome }}
+      build_status: ${{ steps.build.outcome }}
+      lint_status: ${{ steps.lint.outcome }}
+      functions_build_status: ${{ steps.functions_build.outcome }}
+      access_status: ${{ steps.access.outcome }}
+      conecta_status: ${{ steps.conecta.outcome }}
+      clinical_core_status: ${{ steps.clinical_core.outcome }}
+      operations_status: ${{ steps.operations.outcome }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Configurar Node.js 24
         uses: actions/setup-node@v6
@@ -256,23 +271,53 @@ jobs:
           node scripts/guards/audit-navigation-routes.mjs
         continue-on-error: true
 
+      - name: Falhar se qualquer verificação crítica quebrou
+        if: always()
+        run: |
+          if [ "${{ steps.collision_contract.outcome }}" != "success" ] || \
+             [ "${{ steps.collision.outcome }}" != "success" ] || \
+             [ "${{ steps.typecheck.outcome }}" != "success" ] || \
+             [ "${{ steps.build.outcome }}" != "success" ] || \
+             [ "${{ steps.lint.outcome }}" != "success" ] || \
+             [ "${{ steps.functions_build.outcome }}" != "success" ] || \
+             [ "${{ steps.conecta.outcome }}" != "success" ] || \
+             [ "${{ steps.clinical_core.outcome }}" != "success" ] || \
+             [ "${{ steps.operations.outcome }}" != "success" ] || \
+             [ "${{ steps.access.outcome }}" != "success" ]; then
+            echo "Uma ou mais verificações críticas falharam."
+            exit 1
+          fi
+
+  report:
+    name: PR Report
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
       - name: Comentar resultado no PR
         uses: actions/github-script@v9
         with:
           script: |
-            const contractStatus = '${{ steps.collision_contract.outcome }}' === 'success';
-            const buildStatus = '${{ steps.build.outcome }}' === 'success';
-            const typecheckStatus = '${{ steps.typecheck.outcome }}' === 'success';
-            const lintStatus = '${{ steps.lint.outcome }}' === 'success';
-            const functionsBuildStatus = '${{ steps.functions_build.outcome }}' === 'success';
-            const accessStatus = '${{ steps.access.outcome }}' === 'success';
-            const conectaStatus = '${{ steps.conecta.outcome }}' === 'success';
-            const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
-            const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
-            const collisionStatus = '${{ steps.collision.outcome }}' === 'success';
+            const contractStatus = '${{ needs.validate.outputs.contract_status }}' === 'success';
+            const buildStatus = '${{ needs.validate.outputs.build_status }}' === 'success';
+            const typecheckStatus = '${{ needs.validate.outputs.typecheck_status }}' === 'success';
+            const lintStatus = '${{ needs.validate.outputs.lint_status }}' === 'success';
+            const functionsBuildStatus = '${{ needs.validate.outputs.functions_build_status }}' === 'success';
+            const accessStatus = '${{ needs.validate.outputs.access_status }}' === 'success';
+            const conectaStatus = '${{ needs.validate.outputs.conecta_status }}' === 'success';
+            const clinicalCoreStatus = '${{ needs.validate.outputs.clinical_core_status }}' === 'success';
+            const operationsStatus = '${{ needs.validate.outputs.operations_status }}' === 'success';
+            const collisionStatus = '${{ needs.validate.outputs.collision_status }}' === 'success';
             const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && collisionStatus && contractStatus;
 
-            const prNumber = Number('${{ steps.collision.outputs.pr_number }}');
+            const prNumber = Number(
+              '${{ needs.validate.outputs.pr_number || github.event.pull_request.number }}',
+            );
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
               core.setFailed("Não foi possível identificar o PR para publicar o resultado.");
               return;
@@ -302,7 +347,7 @@ jobs:
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
               : '> ❌ **Há gates pendentes.** Corrija contrato/colisões/base, TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
 
-            *Rodou em commit \`${{ github.sha }}\`*`;
+            *Rodou no HEAD do PR \`${{ github.event.pull_request.head.sha }}\`*`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
@@ -328,20 +373,3 @@ jobs:
                 body,
               });
             }
-
-      - name: Falhar se qualquer verificação crítica quebrou
-        if: always()
-        run: |
-          if [ "${{ steps.collision_contract.outcome }}" != "success" ] || \
-             [ "${{ steps.collision.outcome }}" != "success" ] || \
-             [ "${{ steps.typecheck.outcome }}" != "success" ] || \
-             [ "${{ steps.build.outcome }}" != "success" ] || \
-             [ "${{ steps.lint.outcome }}" != "success" ] || \
-             [ "${{ steps.functions_build.outcome }}" != "success" ] || \
-             [ "${{ steps.conecta.outcome }}" != "success" ] || \
-             [ "${{ steps.clinical_core.outcome }}" != "success" ] || \
-             [ "${{ steps.operations.outcome }}" != "success" ] || \
-             [ "${{ steps.access.outcome }}" != "success" ]; then
-            echo "Uma ou mais verificações críticas falharam."
-            exit 1
-          fi

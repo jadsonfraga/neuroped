@@ -67,6 +67,49 @@ assert.match(
   "a condição final deve bloquear quando o contrato da trava falhar",
 );
 
+const validateStart = prCheck.indexOf("\n  validate:\n");
+const reportStart = prCheck.indexOf("\n  report:\n");
+assert.ok(validateStart >= 0, "PR Check deve manter o job obrigatório validate");
+assert.ok(reportStart > validateStart, "PR Check deve separar o job de relatório");
+const validateBlock = prCheck.slice(validateStart, reportStart);
+const reportBlock = prCheck.slice(reportStart);
+
+assert.match(
+  prCheck,
+  /^permissions:\n  contents: read$/m,
+  "permissão padrão do workflow deve ser somente leitura",
+);
+assert.match(
+  validateBlock,
+  /permissions:\n\s+contents: read\n\s+pull-requests: read/,
+  "o job que executa código deve ter somente permissões de leitura",
+);
+assert.match(
+  validateBlock,
+  /persist-credentials: false/,
+  "checkout do job que executa código não deve persistir credencial",
+);
+assert.doesNotMatch(
+  validateBlock,
+  /issues: write|pull-requests: write/,
+  "build e testes não podem receber token gravável",
+);
+assert.match(
+  reportBlock,
+  /needs: validate[\s\S]*?if: always\(\)/,
+  "o relatório deve rodar depois da validação, inclusive em caso de falha",
+);
+assert.match(
+  reportBlock,
+  /issues: write[\s\S]*?pull-requests: write/,
+  "somente o job de relatório pode comentar no PR",
+);
+assert.doesNotMatch(
+  reportBlock,
+  /actions\/checkout|\brun:\s*(?:npm|node|pnpm|yarn)\b/,
+  "o job gravável não pode fazer checkout nem executar código do repositório",
+);
+
 assert.match(
   quarantine,
   /pull_request_target:/,
@@ -152,5 +195,5 @@ assert.deepEqual(
 );
 
 console.log(
-  "✓ quarentena nativa, estado atual do PR e renames protegidos",
+  "✓ quarentena nativa, token isolado, estado atual do PR e renames protegidos",
 );
