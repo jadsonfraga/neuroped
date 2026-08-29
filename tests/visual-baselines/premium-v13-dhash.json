@@ -1,0 +1,12 @@
+{
+  "algorithm": "dhash-9x8-nearest",
+  "maxHammingDistance": 14,
+  "approvedFromCommit": "2c678a79686e1bfc13bf9278992e1e551d8bf362",
+  "captures": {
+    "desktop-dark-1440x1000.png": "90fae0400d323800",
+    "desktop-light-1440x1000.png": "9e1660002d124000",
+    "mobile-dark-390x844.png": "d9c1816f88220000",
+    "mobile-light-390x844.png": "2b008090005e0000",
+    "tablet-light-1024x1366.png": "2e277d5239192e00"
+  }
+}
