@@ -1026,6 +1026,13 @@ export interface FilteredScale {
 }
 
 /**
+ * Item retornado por filterScales: mantém compatibilidade dupla — os campos da
+ * ScaleEntry ficam achatados no próprio item (contrato legado) e também
+ * disponíveis em `scale`, junto da `justification` por sintomas (contrato novo).
+ */
+export type FilterScalesResult = ScaleEntry & FilteredScale;
+
+/**
  * Filtro principal de escalas por queixa(s), faixa etária e sintomas observados.
  *
  * Fórmula de ranking (5 fatores, total = 1.0):
@@ -1043,7 +1050,7 @@ export function filterScales(
   selectedQueixas: string[],
   ageRange: { min: number; max: number } | null,
   selectedSymptomIds: string[] = [],
-): FilteredScale[] {
+): FilterScalesResult[] {
   const hasSymptoms = selectedSymptomIds.length > 0;
   // Pesos base
   const W_SYMPTOM   = hasSymptoms ? 0.50 : 0;
@@ -1059,6 +1066,16 @@ export function filterScales(
   const W_APP        = (BASE.app        / sumBase) * remaining;
 
   const prioScore = { triagem: 1.0, diagnostica: 0.6, monitorizacao: 0.3 } as const;
+  // Ordem legada (sem sintomas): prioridade clínica → relevância de queixa →
+  // disponibilidade no app → nome. Preserva o contrato monotônico validado por
+  // test-clinical.mjs. Com sintomas selecionados, o score de 5 fatores assume.
+  const legacyPrio = { triagem: 0, diagnostica: 1, monitorizacao: 2 } as const;
+  const legacyRelevance = (s: ScaleEntry): number => {
+    let r = 0;
+    if (selectedQueixas.length > 0) r = s.queixas.filter(q => selectedQueixas.includes(q)).length;
+    if (s.appRoute) r += 0.5;
+    return r;
+  };
 
   return allScales
     .filter(s => {
@@ -1107,12 +1124,23 @@ export function filterScales(
       };
     })
     .sort((a, b) => {
-      if (Math.abs(b.finalScore - a.finalScore) > 0.001) return b.finalScore - a.finalScore;
+      if (hasSymptoms) {
+        // Ranking dirigido por sinais/sintomas (fórmula de 5 fatores)
+        if (Math.abs(b.finalScore - a.finalScore) > 0.001) return b.finalScore - a.finalScore;
+      } else {
+        // Contrato legado: prioridade clínica → relevância de queixa
+        const prioDiff = legacyPrio[a.scale.prioridade] - legacyPrio[b.scale.prioridade];
+        if (prioDiff !== 0) return prioDiff;
+        const relDiff = legacyRelevance(b.scale) - legacyRelevance(a.scale);
+        if (relDiff !== 0) return relDiff;
+      }
       if (a.scale.appRoute && !b.scale.appRoute) return -1;
       if (!a.scale.appRoute && b.scale.appRoute) return 1;
       return a.scale.name.localeCompare(b.scale.name);
     })
-    .map(({ scale, justification }) => ({ scale, justification }));
+    // Compatibilidade dupla: cada item expõe os campos da escala (contrato
+    // legado de test-clinical.mjs) E `scale`/`justification` (contrato novo).
+    .map(({ scale, justification }) => ({ ...scale, scale, justification }));
 }
 
 
