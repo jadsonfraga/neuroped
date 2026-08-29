@@ -1,0 +1,86 @@
+name: NeuroPED Premium Visual v13
+
+on:
+  pull_request:
+    paths:
+      - "client/src/pages/home.tsx"
+      - "client/src/main.tsx"
+      - "client/src/styles/premium-visual-v13.css"
+      - "tests/unit/premium-visual-v13-contract.test.mjs"
+      - "tests/e2e/premium-visual-proof.mjs"
+      - "tests/e2e/responsive-shell-smoke.mjs"
+      - ".github/workflows/premium-visual-v13.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/pages/home.tsx"
+      - "client/src/main.tsx"
+      - "client/src/styles/premium-visual-v13.css"
+      - "tests/unit/premium-visual-v13-contract.test.mjs"
+      - "tests/e2e/premium-visual-proof.mjs"
+      - "tests/e2e/responsive-shell-smoke.mjs"
+      - ".github/workflows/premium-visual-v13.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: premium-visual-v13-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-antiregression:
+    name: Trava visual e funcional
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Dependências
+        run: npm ci
+
+      - name: Chromium para auditoria
+        run: npx playwright install --with-deps chromium
+
+      - name: Contrato estático da experiência premium
+        run: node tests/unit/premium-visual-v13-contract.test.mjs
+
+      - name: Qualidade TypeScript e ESLint
+        run: |
+          npm run lint
+          npm run check
+
+      - name: Contratos de cor e design
+        run: |
+          npm run audit:color
+          npm run audit:design
+
+      - name: Build do cliente
+        run: npm run build:client
+
+      - name: Shell responsivo existente
+        run: node tests/e2e/responsive-shell-smoke.mjs
+
+      - name: Prova visual multitelas
+        env:
+          PREMIUM_PROOF_DIR: artifacts/premium-v13
+        run: node tests/e2e/premium-visual-proof.mjs
+
+      - name: Publicar capturas e manifesto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuroped-premium-v13-screenshots
+          path: artifacts/premium-v13
+          if-no-files-found: warn
+          retention-days: 30
