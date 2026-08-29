@@ -6,9 +6,11 @@ import { createRoot } from "react-dom/client";
 const App = lazy(() => import("./App"));
 
 const UnauthorizedCopyScreen = lazy(() =>
-  import("./components/UnauthorizedCopyScreen").then(({ UnauthorizedCopyScreen: Component }) => ({
-    default: Component,
-  })),
+  import("./components/UnauthorizedCopyScreen").then(
+    ({ UnauthorizedCopyScreen: Component }) => ({
+      default: Component,
+    }),
+  ),
 );
 import { installChunkRecovery } from "./lib/chunkRecovery";
 import { purgeLegacyCertificateCache } from "./lib/certificateSession";
@@ -23,6 +25,7 @@ import "./styles/visual-reset.css";
 import "./styles/premium-polish-10.css";
 import "./styles/flow-os.css";
 import "./styles/premium-app-shell-v12.css";
+import "./styles/premium-visual-v13.css";
 // Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
 import "./styles/tablet-coarse-perf.css";
 
@@ -68,22 +71,25 @@ const isDevelopmentBuild =
   (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 
 if (isAuthorizedHost(hostname, { allowPrivateNetwork: isDevelopmentBuild })) {
-    root.render(
-      <Suspense
-        fallback={
-          <div className="flex min-h-screen items-center justify-center bg-background p-6 text-sm font-semibold text-muted-foreground" role="status">
-            Preparando o NeuroPed…
-          </div>
-        }
-      >
-        <App />
-      </Suspense>,
-    );
+  root.render(
+    <Suspense
+      fallback={
+        <div
+          className="flex min-h-screen items-center justify-center bg-background p-6 text-sm font-semibold text-muted-foreground"
+          role="status"
+        >
+          Preparando o NeuroPed…
+        </div>
+      }
+    >
+      <App />
+    </Suspense>,
+  );
 } else {
   // Trava de domínio: cópia re-hospedada em endereço não autorizado.
-    root.render(
-      <Suspense fallback={null}>
-        <UnauthorizedCopyScreen host={hostname} />
-      </Suspense>,
-    );
+  root.render(
+    <Suspense fallback={null}>
+      <UnauthorizedCopyScreen host={hostname} />
+    </Suspense>,
+  );
 }
