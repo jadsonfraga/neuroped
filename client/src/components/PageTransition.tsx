@@ -12,6 +12,14 @@ import { slideUpFadeIn, easing, duration } from "@/lib/motion";
  *
  * O location e usado como `key` para forcar re-mount + animacao em cada rota.
  */
+// Entrada orquestrada: o véu sobe com leve profundidade (scale + rise), dando
+// sensação de "pousar" na tela em vez de um corte seco. Com prefers-reduced-motion
+// a variante recua para o fade simples do sistema.
+const pageEnter = {
+  hidden: { opacity: 0, y: 14, scale: 0.992 },
+  visible: { opacity: 1, y: 0, scale: 1 },
+};
+
 export function PageTransition({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const reduceMotion = useReducedMotion();
@@ -25,7 +33,7 @@ export function PageTransition({ children }: { children: ReactNode }) {
       key={location}
       initial="hidden"
       animate="visible"
-      variants={slideUpFadeIn}
+      variants={reduceMotion ? slideUpFadeIn : pageEnter}
       transition={{ duration: duration.normal, ease: easing.smooth }}
       onPointerMove={(event) => {
         if (reduceMotion || event.pointerType !== "mouse") return;
