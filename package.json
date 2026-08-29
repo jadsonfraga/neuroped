@@ -151,7 +151,7 @@
     "pino": "^10.3.1",
     "postgres": "^3.4.5",
     "qrcode": "^1.5.4",
-    "rate-limit-redis": "^5.0.0",
+    "rate-limit-redis": "^4.3.1",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",

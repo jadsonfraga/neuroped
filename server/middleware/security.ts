@@ -13,8 +13,19 @@ import type { Express, Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit, { type Store } from "express-rate-limit";
+import { createRequire } from "node:module";
 
-function buildRateLimitStore(): Store | undefined {
+// `require` nativo não existe em escopo ESM (dev roda via tsx); createRequire
+// funciona igualmente no bundle CJS de produção.
+const nodeRequire = createRequire(import.meta.url);
+
+// Cliente Redis único, compartilhado; cada limiter recebe o SEU store (a API
+// do express-rate-limit exige um store por limiter — compartilhar a instância
+// mistura os contadores). O prefixo isola as chaves de cada limiter no Redis.
+let _redisClient: unknown | null | undefined;
+
+function getRedisClient(): unknown | null {
+  if (_redisClient !== undefined) return _redisClient;
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) {
     if (process.env.NODE_ENV === "production") {
@@ -23,21 +34,35 @@ function buildRateLimitStore(): Store | undefined {
         "Em deploys multi-processo, defina REDIS_URL para proteção distribuida.",
       );
     }
-    return undefined;
+    _redisClient = null;
+    return null;
   }
   try {
-    const { default: RedisStore } = require("rate-limit-redis");
-    const { default: Redis } = require("ioredis");
+    const { default: Redis } = nodeRequire("ioredis");
     const client = new Redis(redisUrl, { enableOfflineQueue: false, lazyConnect: true });
     client.on("error", (err: Error) => console.error("[redis] rate-limit store error:", err.message));
-    return new RedisStore({ sendCommand: (...args: string[]) => client.call(...args) });
+    _redisClient = client;
+  } catch (err) {
+    console.error("[security] Falha ao inicializar cliente Redis; usando memoria:", err);
+    _redisClient = null;
+  }
+  return _redisClient as unknown | null;
+}
+
+function buildRateLimitStore(prefix: string): Store | undefined {
+  const client = getRedisClient();
+  if (!client) return undefined;
+  try {
+    const { default: RedisStore } = nodeRequire("rate-limit-redis");
+    return new RedisStore({
+      prefix: `rl:${prefix}:`,
+      sendCommand: (...args: string[]) => (client as { call: (...a: string[]) => unknown }).call(...args),
+    });
   } catch (err) {
     console.error("[security] Falha ao inicializar Redis store; usando memoria:", err);
     return undefined;
   }
 }
-
-const _sharedStore = buildRateLimitStore();
 
 
 export function isCorsOriginAllowed(
@@ -120,7 +145,7 @@ export function applySecurity(app: Express): void {
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    store: _sharedStore,
+    store: buildRateLimitStore("global"),
     message: { error: "Too many requests", code: "RATE_LIMIT" },
     skip: (req) => req.method === "OPTIONS",
   });
@@ -142,7 +167,7 @@ export const loginRateLimit = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  store: _sharedStore,
+  store: buildRateLimitStore("login"),
   skipSuccessfulRequests: true,
   message: {
     error: "Muitas tentativas de login. Aguarde 15 minutos.",
@@ -156,7 +181,7 @@ export const writeRateLimit = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  store: _sharedStore,
+  store: buildRateLimitStore("write"),
 });
 
 /** Limite para envio de email (anti-spam). */
@@ -165,7 +190,7 @@ export const emailRateLimit = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  store: _sharedStore,
+  store: buildRateLimitStore("email"),
   message: {
     error: "Limite de envios de email atingido. Aguarde 1 hora.",
     code: "EMAIL_RATE_LIMIT",
