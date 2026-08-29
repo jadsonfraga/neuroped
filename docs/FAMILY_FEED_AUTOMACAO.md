@@ -59,10 +59,23 @@ estende a validade por mais 60 dias). Se o segredo `NEUROPED_AUTOMATION_TOKEN`
 (PAT com permissão de administrar segredos) existir, o token renovado é salvo
 de volta no segredo — a automação fica perpétua, sem manutenção.
 
+## Configuração pelo Windows (um clique)
+
+Quem estiver no Windows não precisa de nenhum comando: basta clicar duas vezes
+em `scripts\windows\INICIAR-FEED-FAMILIAS.bat`. O configurador
+[`Configurar-FeedFamilias.ps1`](../scripts/windows/Configurar-FeedFamilias.ps1)
+instala o que faltar (Git, Node.js, GitHub CLI via winget), autentica no GitHub,
+grava os segredos, mescla o pull request, dispara a primeira atualização e
+confere o site publicado. Todas as etapas são idempotentes.
+
+Para conduzir o processo pelo **Claude Cowork**, o prompt pronto está em
+[`COWORK_WINDOWS_FEED_FAMILIAS.md`](COWORK_WINDOWS_FEED_FAMILIAS.md).
+
 ## Operação manual
 
 - Rodar agora: aba **Actions** → "Feed diário das famílias" → *Run workflow*.
 - Testar localmente: `node scripts/update-family-feed.mjs`.
+- Windows, tudo de uma vez: `scripts\windows\INICIAR-FEED-FAMILIAS.bat`.
 
 ## Garantias
 
