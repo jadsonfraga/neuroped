@@ -29,6 +29,7 @@ import "./styles/premium-visual-v13.css";
 import "./styles/premium-visual-v13-mobile.css";
 import "./styles/premium-visual-v13-a11y.css";
 import "./styles/premium-native-app-v14.css";
+import "./styles/premium-native-app-v14-responsive.css";
 // Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
 import "./styles/tablet-coarse-perf.css";
 
