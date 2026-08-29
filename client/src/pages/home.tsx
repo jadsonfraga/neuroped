@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   ArrowUpRight,
+  CalendarDays,
   ClipboardCheck,
   Clock3,
   FileText,
@@ -12,7 +13,10 @@ import {
   Filter,
   LineChart,
   Search,
+  ShieldCheck,
+  Sparkles,
   Stethoscope,
+  Users,
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -22,7 +26,7 @@ import { appMetrics } from "@/data/appMetrics";
 import { navigablePages } from "@/data/navigation";
 import type { ScaleEntry } from "@/data/scaleFilter";
 import { haptic } from "@/lib/haptic";
-import { easing, duration } from "@/lib/motion";
+import { duration, easing } from "@/lib/motion";
 import { softHover, softTap } from "@/lib/softSounds";
 
 interface ClinicalFlow {
@@ -33,6 +37,13 @@ interface ClinicalFlow {
   useCase: string;
   icon: LucideIcon;
   emphasis: "primary" | "gold" | "teal" | "blue" | "slate";
+}
+
+interface QuickAction {
+  href: string;
+  label: string;
+  detail: string;
+  icon: LucideIcon;
 }
 
 const clinicalFlows: ClinicalFlow[] = [
@@ -53,7 +64,7 @@ const clinicalFlows: ClinicalFlow[] = [
     action: "Abrir filtro clínico",
     useCase: "Escolher instrumento",
     icon: Filter,
-    emphasis: "gold",
+    emphasis: "teal",
   },
   {
     href: "/avaliacao-cognitiva-infantil",
@@ -87,33 +98,52 @@ const clinicalFlows: ClinicalFlow[] = [
   },
 ];
 
-// Acento sutil por fluxo: fundo tonal + ícone colorido + anel fino. Sem
-// gradientes escuros pesados — leveza e coerência (nível premium).
-const accentClasses: Record<ClinicalFlow["emphasis"], string> = {
-  primary: "bg-primary/10 text-primary ring-primary/15",
-  gold: "bg-amber-500/10 text-amber-600 ring-amber-500/15 dark:text-amber-400",
-  teal: "bg-teal-500/10 text-teal-600 ring-teal-500/15 dark:text-teal-400",
-  blue: "bg-blue-500/10 text-blue-600 ring-blue-500/15 dark:text-blue-400",
-  slate: "bg-slate-500/10 text-slate-600 ring-slate-500/15 dark:text-slate-300",
-};
+const quickActions: QuickAction[] = [
+  {
+    href: "/pacientes",
+    label: "Pacientes",
+    detail: "Abrir prontuários",
+    icon: Users,
+  },
+  {
+    href: "/agenda",
+    label: "Agenda",
+    detail: "Organizar atendimentos",
+    icon: CalendarDays,
+  },
+  {
+    href: "/laudo-neuroped",
+    label: "Documentos",
+    detail: "Laudos e relatórios",
+    icon: FileText,
+  },
+];
 
 const metricCards = [
   {
-    label: "Escalas no catálogo",
+    label: "Escalas clínicas",
     value: appMetrics.scaleCount,
+    detail: "instrumentos no catálogo",
     icon: ClipboardCheck,
   },
   {
-    label: "Itens no filtro inteligente",
+    label: "Filtro inteligente",
     value: appMetrics.filterableInstrumentCount,
+    detail: "itens pesquisáveis",
     icon: Filter,
   },
   {
     label: "Testes diretos",
     value: appMetrics.directTestCount,
-    icon: ClipboardCheck,
+    detail: "experiências aplicáveis",
+    icon: Sparkles,
   },
-  { label: "Páginas", value: appMetrics.pageCount, icon: FileText },
+  {
+    label: "Ecossistema",
+    value: appMetrics.pageCount,
+    detail: "páginas integradas",
+    icon: FileText,
+  },
 ];
 
 function normalize(text: string) {
@@ -125,61 +155,83 @@ function normalize(text: string) {
 
 function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
   const Icon = flow.icon;
+
   return (
     <Link href={flow.href}>
-      <motion.div
+      <motion.article
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
-          delay: index * 0.05,
+          delay: index * 0.045,
           duration: duration.normal,
           ease: easing.smooth,
         }}
         whileHover={{ y: -4 }}
-        whileTap={{ scale: 0.99 }}
+        whileTap={{ scale: 0.992 }}
         onMouseEnter={() => softHover()}
         onClick={() => {
           softTap();
           haptic.tap();
         }}
-        className="group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-[1.75rem] border border-white/75 bg-card/90 p-5 shadow-[0_18px_55px_-38px_rgba(38,24,53,0.38)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-300 hover:border-primary/20 hover:shadow-[0_24px_60px_-32px_rgba(87,37,113,0.3)] dark:border-white/10"
+        className="np-v13-flow-card"
+        data-tone={flow.emphasis}
         data-testid={`home-flow-${index + 1}`}
       >
-        <div className="flex items-start justify-between">
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 transition-transform duration-300 group-hover:scale-105 ${accentClasses[flow.emphasis]}`}
-          >
-            <Icon
-              className="h-[22px] w-[22px]"
-              strokeWidth={1.9}
-              aria-hidden="true"
-            />
-          </div>
-          <ArrowUpRight
-            className="h-5 w-5 text-muted-foreground/40 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            aria-hidden="true"
-          />
-        </div>
-        <div className="flex flex-1 flex-col">
-          <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {flow.useCase}
-          </p>
-          <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">
-            {flow.title}
-          </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-            {flow.subtitle}
-          </p>
-          <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/70 transition-colors group-hover:text-primary">
-            {flow.action}
-            <ArrowRight
-              className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
-              aria-hidden="true"
-            />
+        <div className="np-v13-flow-topline">
+          <span className="np-v13-flow-icon" aria-hidden="true">
+            <Icon strokeWidth={1.75} />
           </span>
+          <ArrowUpRight className="np-v13-flow-arrow" aria-hidden="true" />
         </div>
-      </motion.div>
+
+        <div className="np-v13-flow-copy">
+          <p>{flow.useCase}</p>
+          <h3>{flow.title}</h3>
+          <span>{flow.subtitle}</span>
+        </div>
+
+        <div className="np-v13-flow-footer">
+          <span>{flow.action}</span>
+          <ArrowRight aria-hidden="true" />
+        </div>
+      </motion.article>
     </Link>
+  );
+}
+
+function MetricCard({
+  metric,
+  index,
+}: {
+  metric: (typeof metricCards)[number];
+  index: number;
+}) {
+  const Icon = metric.icon;
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: 0.08 + index * 0.045,
+        duration: duration.normal,
+        ease: easing.smooth,
+      }}
+      className="np-v13-metric-card"
+      data-testid="premium-metric-card"
+    >
+      <div className="np-v13-metric-heading">
+        <p>{metric.label}</p>
+        <span aria-hidden="true">
+          <Icon strokeWidth={1.75} />
+        </span>
+      </div>
+      <strong>
+        {metric.value}
+        <small>+</small>
+      </strong>
+      <p className="np-v13-metric-detail">{metric.detail}</p>
+    </motion.article>
   );
 }
 
@@ -190,10 +242,20 @@ export default function HomePage() {
   );
   const q = normalize(searchQuery.trim());
   const isSearching = q.length >= 2;
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+      }).format(new Date()),
+    [],
+  );
 
   useEffect(() => {
     if (!isSearching || scaleSearchCatalog.length > 0) return;
     let cancelled = false;
+
     void Promise.all([
       import("@/data/filterableCatalog"),
       import("@/data/scaleFilter"),
@@ -203,16 +265,17 @@ export default function HomePage() {
           setScaleSearchCatalog(mergeFilterableCatalog(allScales));
       })
       .catch(() => {
-        // A Home continua navegável mesmo se o chunk opcional da busca falhar.
         if (!cancelled) setScaleSearchCatalog([]);
       });
+
     return () => {
       cancelled = true;
     };
-  }, [isSearching, scaleSearchCatalog.length, setScaleSearchCatalog]);
+  }, [isSearching, scaleSearchCatalog.length]);
 
   const searchResults = useMemo(() => {
     if (q.length < 2) return [];
+
     const pages = navigablePages
       .filter((page) => normalize(`${page.label} ${page.href}`).includes(q))
       .map((page) => ({
@@ -220,6 +283,7 @@ export default function HomePage() {
         title: page.label,
         detail: "Página do app",
       }));
+
     const scales = scaleSearchCatalog
       .filter((scale) =>
         normalize(
@@ -232,194 +296,237 @@ export default function HomePage() {
         title: scale.name,
         detail: scale.fullName,
       }));
+
     return [...pages, ...scales].slice(0, 10);
   }, [q, scaleSearchCatalog]);
 
   return (
-    <div className="page-enter proportion-safe-page space-y-9 pb-10">
+    <div
+      className="np-v13-home page-enter proportion-safe-page"
+      data-testid="premium-home-v13"
+    >
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="np-home-hero relative overflow-hidden rounded-3xl border border-white/70 p-6 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] sm:p-10 lg:min-h-[34rem] dark:border-white/10"
+        className="np-v13-hero"
+        data-testid="premium-hero"
       >
-        <div className="np-home-orb np-home-orb-one" aria-hidden="true" />
-        <div className="np-home-orb np-home-orb-two" aria-hidden="true" />
-        <div className="absolute right-2 top-2 lg:hidden">
-          <Mascote contexto="home" size="sm" fala="" />
-        </div>
-        <div className="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
-          <div className="space-y-7">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/65 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur dark:bg-white/5">
-              <span className="relative flex h-2 w-2" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40 motion-reduce:animate-none" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
-              </span>
-              Painel clínico inteligente
+        <div className="np-v13-hero-grid">
+          <div className="np-v13-hero-copy">
+            <div
+              className="np-v13-status"
+              data-testid="premium-system-status"
+            >
+              <span aria-hidden="true" />
+              <strong>NeuroPED OS</strong>
+              <i aria-hidden="true" />
+              <span>{todayLabel}</span>
             </div>
-            <div className="max-w-3xl space-y-4">
-              <h1
-                className="max-w-2xl text-[2.65rem] font-semibold leading-[0.98] tracking-[-0.045em] text-foreground sm:text-[4rem] lg:text-[4.65rem]"
-                style={{ fontFamily: "var(--font-display)" }}
-                data-testid="text-page-title"
-              >
-                Menos ruído.{" "}
-                <span className="np-title-gradient">Mais clareza clínica.</span>
+
+            <div className="np-v13-title-block">
+              <h1 data-testid="text-page-title">
+                Seu consultório,
+                <span> em estado de foco.</span>
               </h1>
-              <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
-                Escalas, triagem e acompanhamento em uma jornada segura,
-                acolhedora e feita para o ritmo do consultório.
+              <p>
+                Acesse escalas, triagens, acompanhamento e documentos sem
+                perder o contexto clínico — com menos ruído e mais precisão.
               </p>
             </div>
 
-            <div className="relative max-w-2xl" data-testid="search-container">
-              <Search className="pointer-events-none absolute left-5 top-1/2 h-[19px] w-[19px] -translate-y-1/2 text-primary" />
+            <div
+              className="np-v13-search"
+              data-testid="search-container"
+            >
+              <Search aria-hidden="true" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar escala ou página…"
-                aria-label="Buscar escala ou página"
-                className="h-14 rounded-[1.15rem] border-white/80 bg-white/80 pl-13 pr-10 text-[15px] shadow-[0_14px_35px_-22px_rgba(45,25,58,0.4)] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-primary/30 focus-visible:shadow-[0_18px_42px_-22px_rgba(91,42,116,0.4)] dark:border-white/10 dark:bg-slate-950/50"
+                placeholder="Buscar escala, teste, página ou módulo…"
+                aria-label="Buscar escala, teste, página ou módulo"
                 data-testid="input-search"
               />
+              <kbd>⌘ K</kbd>
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   aria-label="Limpar busca"
                 >
-                  <X className="h-4 w-4" />
+                  <X aria-hidden="true" />
                 </button>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+
+            <div className="np-v13-actions">
               <Link
                 href="/filtro"
-                className="np-primary-cta inline-flex min-h-11 items-center gap-2 rounded-2xl px-5 py-2.5 text-[13px] font-semibold text-white"
+                className="np-v13-primary-action"
+                data-testid="premium-primary-action"
               >
                 Encontrar escala ideal
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <ArrowRight aria-hidden="true" />
               </Link>
               <Link
                 href="/filtro-escalas?mode=flash"
-                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-primary/15 bg-white/55 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10"
+                className="np-v13-secondary-action"
+                data-testid="premium-secondary-action"
               >
-                <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
+                <Clock3 aria-hidden="true" />
                 Triagem rápida
               </Link>
             </div>
+          </div>
 
-            <div
-              className="grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/60 bg-white/45 sm:grid-cols-4 dark:border-white/10 dark:bg-white/5"
-              aria-label="Métricas do app"
-            >
-              {metricCards.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="bg-white/35 px-3.5 py-3.5 dark:bg-slate-950/20"
-                >
-                  <div className="text-xl font-semibold tracking-[-0.03em] text-foreground sm:text-2xl">
-                    {metric.value}
-                    <span className="ml-0.5 text-primary">+</span>
-                  </div>
-                  <p className="mt-0.5 text-[10.5px] font-medium leading-tight text-muted-foreground">
-                    {metric.label}
-                  </p>
-                </div>
-              ))}
+          <aside
+            className="np-v13-control-panel"
+            aria-label="Atalhos operacionais"
+          >
+            <div className="np-v13-panel-heading">
+              <div>
+                <p>Próximo passo</p>
+                <h2>Fluxo do consultório</h2>
+              </div>
+              <span>
+                <ShieldCheck aria-hidden="true" />
+                Protegido
+              </span>
             </div>
-          </div>
-          <div className="relative hidden min-h-[27rem] items-center justify-center lg:flex">
-            <div
-              className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]"
-              aria-hidden="true"
-            />
-            <Mascote contexto="home" size="lg" className="relative z-10" />
-          </div>
+
+            <div className="np-v13-quick-actions">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link key={action.href} href={action.href}>
+                    <div
+                      className="np-v13-quick-link"
+                      data-testid="premium-quick-link"
+                    >
+                      <span aria-hidden="true">
+                        <Icon strokeWidth={1.7} />
+                      </span>
+                      <div>
+                        <strong>{action.label}</strong>
+                        <small>{action.detail}</small>
+                      </div>
+                      <ArrowUpRight aria-hidden="true" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="np-v13-panel-footer">
+              <div>
+                <strong>Ambiente clínico pronto</strong>
+                <span>
+                  A lógica, as permissões e a persistência segura permanecem
+                  preservadas.
+                </span>
+              </div>
+              <Mascote contexto="home" size="sm" fala="" />
+            </div>
+          </aside>
         </div>
       </motion.section>
 
+      <section
+        className="np-v13-metric-grid"
+        aria-label="Indicadores do aplicativo"
+        data-testid="premium-metric-grid"
+      >
+        {metricCards.map((metric, index) => (
+          <MetricCard key={metric.label} metric={metric} index={index} />
+        ))}
+      </section>
+
       {isSearching ? (
-        <section className="space-y-4" aria-label="Resultados da busca da home">
-          <div className="flex items-center gap-2">
-            <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
-              Resultados rápidos
-            </h2>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {searchResults.length}
-            </span>
+        <section
+          className="np-v13-search-results"
+          aria-label="Resultados da busca da home"
+        >
+          <div className="np-v13-section-heading">
+            <div>
+              <p>Busca clínica</p>
+              <h2>Resultados rápidos</h2>
+            </div>
+            <span>{searchResults.length}</span>
           </div>
-          <div className="grid gap-2.5 sm:grid-cols-2">
+
+          <div className="np-v13-result-grid">
             {searchResults.length > 0 ? (
               searchResults.map((item) => (
                 <Link key={`${item.href}-${item.title}`} href={item.href}>
-                  <div className="group flex cursor-pointer items-center gap-3.5 rounded-2xl border border-border/60 bg-card/80 p-3.5 transition-all duration-200 hover:border-border hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Stethoscope className="h-[18px] w-[18px]" />
+                  <article className="np-v13-result-card">
+                    <span aria-hidden="true">
+                      <Stethoscope strokeWidth={1.75} />
+                    </span>
+                    <div>
+                      <h3>{item.title}</h3>
+                      <p>{item.detail}</p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-[14px] font-medium text-foreground">
-                        {item.title}
-                      </h3>
-                      <p className="truncate text-[12px] text-muted-foreground">
-                        {item.detail}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
-                  </div>
+                    <ArrowRight aria-hidden="true" />
+                  </article>
                 </Link>
               ))
             ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 p-5 text-[13px] text-muted-foreground sm:col-span-2">
+              <div className="np-v13-empty-result">
                 Nenhum atalho direto. Use o{" "}
-                <Link
-                  href="/filtro"
-                  className="font-medium text-primary underline-offset-2 hover:underline"
-                >
-                  Filtro Clínico
-                </Link>{" "}
-                para aproximar por idade e queixa.
+                <Link href="/filtro">Filtro Clínico</Link> para aproximar por
+                idade, objetivo e queixa.
               </div>
             )}
           </div>
         </section>
       ) : (
         <>
-          <section className="space-y-4" aria-labelledby="fluxos-principais">
-            <div className="flex items-end justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                  Sua jornada
-                </p>
-                <h2
-                  id="fluxos-principais"
-                  className="text-2xl font-semibold tracking-[-0.03em] text-foreground"
-                >
-                  O cuidado começa por aqui
-                </h2>
+          <section
+            className="np-v13-section"
+            aria-labelledby="fluxos-principais"
+          >
+            <div className="np-v13-section-heading">
+              <div>
+                <p>Jornada clínica</p>
+                <h2 id="fluxos-principais">Escolha por onde começar</h2>
               </div>
-              <span className="shrink-0 rounded-full border border-border/70 bg-card/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden">
-                Deslize →
+              <span className="np-v13-section-meta">
+                Cinco fluxos essenciais
               </span>
             </div>
-            <div className="np-home-flow-grid grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+
+            <div
+              className="np-v13-flow-grid"
+              data-testid="premium-flow-grid"
+            >
               {clinicalFlows.map((flow, index) => (
                 <FlowCard key={flow.href} flow={flow} index={index} />
               ))}
             </div>
           </section>
 
-          <section className="grid gap-3.5 lg:grid-cols-[1fr_0.8fr]">
-            <div className="rounded-2xl border border-amber-200/50 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/15">
-              <p className="text-[12.5px] leading-relaxed text-amber-900/90 dark:text-amber-100/90">
-                <strong className="font-semibold">Uso responsável.</strong> As
-                escalas orientam rastreio, documentação e monitorização — não
-                substituem julgamento clínico, anamnese, exame neurológico e
-                integração com família e escola.
-              </p>
+          <section className="np-v13-lower-grid">
+            <aside
+              className="np-v13-responsible-note"
+              role="note"
+              data-testid="premium-responsible-note"
+            >
+              <div>
+                <ShieldCheck aria-hidden="true" />
+              </div>
+              <div>
+                <p>Uso responsável</p>
+                <span>
+                  As escalas apoiam rastreio, documentação e monitorização. A
+                  decisão continua dependente de anamnese, exame, contexto e
+                  julgamento clínico.
+                </span>
+              </div>
+            </aside>
+
+            <div className="np-v13-favorites">
+              <FavoritesRecents />
             </div>
-            <FavoritesRecents />
           </section>
         </>
       )}
