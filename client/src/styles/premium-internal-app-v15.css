@@ -566,7 +566,7 @@ html[data-np-workspace="clinical"]:not([data-np-route="home"])
     .np-app-content
     div:has(> table) {
     overflow: visible !important;
-    border-color: #d1d5db !important;
+    border-color: hsl(var(--border)) !important;
     background: white !important;
     color: black !important;
     box-shadow: none !important;
