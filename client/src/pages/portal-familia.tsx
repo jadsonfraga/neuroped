@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/VisualStates";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
 import { AssetShowcase, brandAssets } from "@/components/BrandAssets";
+import { InstagramLatestCard } from "@/components/FamilyFeedNovidades";
 import {
   AlertTriangle,
   BookOpen,
@@ -74,7 +75,7 @@ const parentResources = [
   {
     href: "/portal-familia/novidades",
     title: "Novidades e artigos",
-    description: "Conteúdo educativo geral para famílias, sem dados de prontuário.",
+    description: "Notícias diárias de neuropediatria, Instagram do consultório e artigos educativos.",
     icon: Newspaper,
   },
   {
@@ -147,6 +148,8 @@ export default function PortalFamiliaPage() {
         subtitle="Conteúdos educativos ficam acessíveis aos pais; documentos individuais seguem somente por acesso autenticado ou canal seguro do médico."
         className="min-h-44"
       />
+
+      <InstagramLatestCard />
 
       <AssetShowcase
         variant="family"

@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "app": "NeuroPed",
+  "description": "Feed educativo gratuito para famílias: notícias públicas em português sobre neuropediatria e o post mais recente do Instagram do consultório.",
+  "updatedAt": "2026-08-29T13:24:59.658Z",
+  "instagram": {
+    "username": "drjadsonfraganeuroped",
+    "profileUrl": "https://www.instagram.com/drjadsonfraganeuroped/"
+  },
+  "topics": [
+    {
+      "key": "autismo",
+      "label": "Autismo",
+      "emoji": "🧩",
+      "items": [
+        {
+          "title": "Autismo e Realidade — cartilhas e guias gratuitos para famílias",
+          "url": "https://autismoerealidade.org.br/",
+          "source": "Autismo e Realidade",
+          "publishedAt": null
+        },
+        {
+          "title": "Revista Autismo — publicação gratuita em português sobre TEA",
+          "url": "https://www.revistaautismo.com.br/",
+          "source": "Revista Autismo",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "tdah",
+      "label": "TDAH",
+      "emoji": "⚡",
+      "items": [
+        {
+          "title": "ABDA — Associação Brasileira do Déficit de Atenção: materiais e orientações",
+          "url": "https://tdah.org.br/",
+          "source": "ABDA",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "linguagem",
+      "label": "Linguagem",
+      "emoji": "🗣️",
+      "items": [
+        {
+          "title": "Sociedade Brasileira de Fonoaudiologia — orientações sobre fala e linguagem",
+          "url": "https://www.sbfa.org.br/",
+          "source": "SBFa",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "sono",
+      "label": "Sono infantil",
+      "emoji": "😴",
+      "items": [
+        {
+          "title": "Associação Brasileira do Sono — conteúdo educativo sobre o sono da criança",
+          "url": "https://absono.com.br/",
+          "source": "Associação Brasileira do Sono",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "desenvolvimento",
+      "label": "Desenvolvimento",
+      "emoji": "🌱",
+      "items": [
+        {
+          "title": "Caderneta da Criança — Ministério da Saúde (download gratuito)",
+          "url": "https://www.gov.br/saude/pt-br/composicao/saps/caderneta-da-crianca",
+          "source": "Ministério da Saúde",
+          "publishedAt": null
+        },
+        {
+          "title": "Sociedade Brasileira de Pediatria — informações para famílias",
+          "url": "https://www.sbp.com.br/",
+          "source": "SBP",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "epilepsia",
+      "label": "Epilepsia",
+      "emoji": "🧠",
+      "items": [
+        {
+          "title": "Liga Brasileira de Epilepsia — orientações para pacientes e famílias",
+          "url": "https://epilepsia.org.br/",
+          "source": "LBE",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "paralisia-cerebral",
+      "label": "Paralisia cerebral",
+      "emoji": "🦋",
+      "items": [
+        {
+          "title": "AACD — reabilitação e informação sobre paralisia cerebral",
+          "url": "https://aacd.org.br/",
+          "source": "AACD",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    },
+    {
+      "key": "genetica",
+      "label": "Genética",
+      "emoji": "🧬",
+      "items": [
+        {
+          "title": "Instituto Vidas Raras — apoio e informação sobre doenças raras",
+          "url": "https://vidasraras.org.br/",
+          "source": "Instituto Vidas Raras",
+          "publishedAt": null
+        },
+        {
+          "title": "Sociedade Brasileira de Genética Médica e Genômica",
+          "url": "https://www.sbgm.org.br/",
+          "source": "SBGM",
+          "publishedAt": null
+        }
+      ],
+      "fetchedAt": null
+    }
+  ]
+}

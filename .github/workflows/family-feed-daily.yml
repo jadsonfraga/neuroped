@@ -1,0 +1,111 @@
+name: Feed diário das famílias (novidades + Instagram)
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # 06h00 em America/Recife (UTC-3) — execução primária
+    - cron: "0 13 * * *" # 10h00 em America/Recife (UTC-3) — redundância (idempotente)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: neuroped-family-feed-daily
+  cancel-in-progress: false
+
+jobs:
+  update-feed:
+    name: Buscar novidades gratuitas e último post do Instagram
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout do main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          token: ${{ secrets.NEUROPED_AUTOMATION_TOKEN || github.token }}
+          fetch-depth: 1
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      # O script não usa dependências externas — nada de npm ci aqui.
+      - name: Atualizar feed (notícias pt-BR + Instagram)
+        env:
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_TOKEN_REFRESH_FILE: ${{ runner.temp }}/ig-token.json
+        run: node scripts/update-family-feed.mjs
+
+      - name: Renovar segredo do token do Instagram (quando possível)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN }}
+          REFRESH_FILE: ${{ runner.temp }}/ig-token.json
+        run: |
+          set -euo pipefail
+          if [ ! -s "$REFRESH_FILE" ]; then
+            echo "Sem token renovado nesta execução."
+            exit 0
+          fi
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::notice::Token renovado, mas NEUROPED_AUTOMATION_TOKEN ausente; o segredo não pôde ser atualizado automaticamente."
+            exit 0
+          fi
+          new_token="$(jq -r '.access_token // empty' "$REFRESH_FILE")"
+          rm -f "$REFRESH_FILE"
+          [ -n "$new_token" ] || exit 0
+          echo "::add-mask::$new_token"
+          if gh secret set INSTAGRAM_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" --body "$new_token"; then
+            echo "Segredo INSTAGRAM_ACCESS_TOKEN renovado."
+          else
+            echo "::warning::Não foi possível atualizar o segredo INSTAGRAM_ACCESS_TOKEN (o token atual segue válido por até 60 dias)."
+          fi
+
+      - name: Commit e push das atualizações
+        id: publish
+        run: |
+          set -euo pipefail
+          git add client/public/family-feed
+          if git diff --cached --quiet; then
+            echo "Nenhuma novidade desde a última execução."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(family-feed): atualização diária de novidades e Instagram"
+          for attempt in 1 2 3 4; do
+            if git push origin main; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep $((2 ** attempt))
+            git pull --rebase origin main
+          done
+          echo "::error::Push do feed diário falhou após 4 tentativas."
+          exit 1
+
+      # Push feito com o github.token não dispara o deploy on:push; nesse caso
+      # o deploy oficial é acionado explicitamente. Com o PAT de automação o
+      # deploy-cloudflare.yml já roda sozinho no push.
+      - name: Garantir publicação no site
+        if: steps.publish.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HAS_AUTOMATION_TOKEN: ${{ secrets.NEUROPED_AUTOMATION_TOKEN != '' }}
+          DEPLOY_SHA: ${{ steps.publish.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_AUTOMATION_TOKEN" = "true" ]; then
+            echo "Deploy on:push será disparado pelo próprio push."
+            exit 0
+          fi
+          gh workflow run daily-authorial-static-sync.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            -f expected_commit="$DEPLOY_SHA"
+          echo "Sincronização estática de produção disparada para $DEPLOY_SHA."

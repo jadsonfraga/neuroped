@@ -11,6 +11,10 @@ import {
 } from "@/data/novidadesConteudoAmpliado";
 import type { NovidadeArtigo } from "@/data/novidadesArtigos";
 import { sanitizeArticleHtml } from "@/lib/sanitizeArticleHtml";
+import {
+  FamilyNewsFeed,
+  InstagramLatestCard,
+} from "@/components/FamilyFeedNovidades";
 
 export default function PortalNovidadesPage() {
   const [cat, setCat] = useState("todos");
@@ -90,6 +94,19 @@ export default function PortalNovidadesPage() {
             <Users className="w-4 h-4" /> Portal da Família
           </Button>
         </Link>
+      </div>
+
+      <InstagramLatestCard />
+
+      <FamilyNewsFeed />
+
+      <div className="border-t border-border pt-5">
+        <h2 className="text-base font-bold text-foreground">
+          Biblioteca educativa NeuroPed
+        </h2>
+        <p className="text-[11px] text-muted-foreground">
+          Artigos autorais validados internamente, organizados por trilha.
+        </p>
       </div>
 
       {/* Filtros de categoria */}
