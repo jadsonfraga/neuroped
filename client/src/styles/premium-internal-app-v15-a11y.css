@@ -1,0 +1,17 @@
+/*
+ * NeuroPED Internal Workspace v15 — contraste da assinatura global.
+ *
+ * Ao remover a moldura opaca das páginas internas, a assinatura autoral passa
+ * a repousar diretamente sobre o canvas. O texto recebe a cor canônica sem
+ * transparência adicional para preservar WCAG AA nos modos claro e escuro.
+ */
+
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  > p.flex-wrap,
+html[data-np-workspace="clinical"]:not([data-np-route="home"])
+  .np-app-content
+  > p.flex-wrap
+  > span {
+  color: hsl(var(--muted-foreground));
+}
