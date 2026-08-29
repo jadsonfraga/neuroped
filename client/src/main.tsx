@@ -19,6 +19,7 @@ import {
   isClinicalBrowserPersistenceDenied,
 } from "./lib/clinicalBrowserPersistencePolicy";
 import { isAuthorizedHost, printProprietaryNotice } from "./lib/domainGuard";
+import { installWorkspaceSurface } from "./lib/workspaceSurface";
 import "./index.css";
 import "./styles/proportion-guards.css";
 import "./styles/visual-reset.css";
@@ -30,6 +31,7 @@ import "./styles/premium-visual-v13-mobile.css";
 import "./styles/premium-visual-v13-a11y.css";
 import "./styles/premium-native-app-v14.css";
 import "./styles/premium-native-app-v14-responsive.css";
+import "./styles/premium-internal-app-v15.css";
 // Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
 import "./styles/tablet-coarse-perf.css";
 
@@ -66,6 +68,10 @@ try {
 if (!window.location.hash) {
   window.location.hash = "#/";
 }
+
+// Classificação visual fail-closed: rotas não públicas recebem o workspace
+// clínico compartilhado sem alterar autorização, dados ou lógica de navegação.
+installWorkspaceSurface();
 
 printProprietaryNotice();
 
