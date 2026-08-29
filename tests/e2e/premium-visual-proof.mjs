@@ -1,8 +1,9 @@
 /**
- * Prova visual e estrutural do NeuroPED Premium v13.
+ * Prova visual e estrutural do NeuroPED Premium v13/v14.
  *
  * Gera capturas reprodutíveis em desktop, iPad e iPhone, nos modos claro e
- * escuro. Também bloqueia regressões de composição, overflow, touch e shell.
+ * escuro. Também bloqueia regressões de composição, overflow, touch, shell e
+ * comportamento app-like no mobile.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -194,6 +195,14 @@ async function capture(spec) {
           flowGrid instanceof HTMLElement
             ? getComputedStyle(flowGrid).display
             : null,
+        flowGridOverflowX:
+          flowGrid instanceof HTMLElement
+            ? getComputedStyle(flowGrid).overflowX
+            : null,
+        flowGridScrollWidth:
+          flowGrid instanceof HTMLElement ? flowGrid.scrollWidth : 0,
+        flowGridClientWidth:
+          flowGrid instanceof HTMLElement ? flowGrid.clientWidth : 0,
         flowRects: flowElements.map(serializeRect).filter(Boolean),
         metricCount: document.querySelectorAll(
           '[data-testid="premium-metric-card"]',
@@ -293,7 +302,16 @@ async function capture(spec) {
       assert.equal(
         contract.flowGridDisplay,
         "flex",
-        `${spec.name}: fluxos móveis devem usar pilha linear defensiva`,
+        `${spec.name}: rail clínico móvel deve permanecer flex`,
+      );
+      assert.equal(
+        contract.flowGridOverflowX,
+        "auto",
+        `${spec.name}: rail clínico precisa continuar rolável horizontalmente`,
+      );
+      assert.ok(
+        contract.flowGridScrollWidth > contract.flowGridClientWidth * 2,
+        `${spec.name}: rail perdeu a paginação horizontal nativa`,
       );
       assert.equal(
         contract.flowRects.length,
@@ -302,18 +320,19 @@ async function capture(spec) {
       );
       for (const rect of contract.flowRects) {
         assert.ok(
-          rect.width >= spec.width * 0.86,
-          `${spec.name}: ${rect.testId} estreito (${rect.width}px)`,
+          rect.width >= spec.width * 0.7 && rect.width <= spec.width * 0.86,
+          `${spec.name}: ${rect.testId} perdeu proporção de card nativo (${rect.width}px)`,
         );
         assert.ok(
-          rect.left >= -1 && rect.right <= spec.width + 1,
-          `${spec.name}: ${rect.testId} saiu do viewport`,
-        );
-        assert.ok(
-          rect.height >= 180,
+          rect.height >= 160,
           `${spec.name}: ${rect.testId} colapsou verticalmente (${rect.height}px)`,
         );
       }
+      assert.ok(
+        contract.flowRects[0].left >= -1 &&
+          contract.flowRects[0].right <= spec.width + 1,
+        `${spec.name}: primeiro fluxo precisa iniciar visível no viewport`,
+      );
       for (let i = 0; i < contract.flowRects.length; i += 1) {
         for (let j = i + 1; j < contract.flowRects.length; j += 1) {
           assert.equal(
@@ -323,11 +342,11 @@ async function capture(spec) {
           );
         }
       }
-      for (let index = 1; index < contract.flowRects.length; index += 1) {
+      const railTop = contract.flowRects[0].top;
+      for (const rect of contract.flowRects.slice(1)) {
         assert.ok(
-          contract.flowRects[index].top >
-            contract.flowRects[index - 1].bottom,
-          `${spec.name}: ordem vertical dos fluxos foi perdida`,
+          Math.abs(rect.top - railTop) <= 2,
+          `${spec.name}: ${rect.testId} saiu do alinhamento horizontal do rail`,
         );
       }
     }
