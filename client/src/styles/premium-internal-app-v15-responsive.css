@@ -1,0 +1,17 @@
+/*
+ * NeuroPED Internal Workspace v15 — contenção responsiva de tabelas.
+ *
+ * Tabelas clínicas podem existir dentro de cards com padding. O wrapper deve
+ * dimensionar-se pelo contêiner real, nunca pelo viewport, para que seu próprio
+ * scroll horizontal continue integralmente acessível em celulares.
+ */
+
+@media screen and (max-width: 767px) {
+  html[data-np-workspace="clinical"]:not([data-np-route="home"])
+    .np-app-content
+    div:has(> table) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+  }
+}
