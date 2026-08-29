@@ -1,0 +1,13 @@
+/*
+ * NeuroPED Premium v13 — reforço de contraste auditado.
+ *
+ * A home v13 remove deliberadamente o painel opaco que envolvia todo o
+ * conteúdo. A assinatura autoral global passa, portanto, a repousar diretamente
+ * sobre o fundo do aplicativo. Os dois textos auxiliares recebem a cor canônica
+ * sem transparência adicional para manter contraste WCAG AA, sem alterar o link
+ * autoral nem os rodapés das demais páginas.
+ */
+
+.np-app-content:has(.np-v13-home) > p.flex-wrap > span {
+  color: hsl(var(--muted-foreground));
+}
