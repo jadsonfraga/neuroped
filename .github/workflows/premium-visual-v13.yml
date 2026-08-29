@@ -10,6 +10,7 @@ on:
       - "client/src/styles/premium-visual-v13-a11y.css"
       - "client/src/styles/premium-native-app-v14.css"
       - "tests/unit/premium-visual-v13-contract.test.mjs"
+      - "tests/unit/premium-native-app-v14-contract.test.mjs"
       - "tests/e2e/premium-visual-proof.mjs"
       - "tests/e2e/responsive-shell-smoke.mjs"
       - ".github/workflows/premium-visual-v13.yml"
@@ -24,6 +25,7 @@ on:
       - "client/src/styles/premium-visual-v13-a11y.css"
       - "client/src/styles/premium-native-app-v14.css"
       - "tests/unit/premium-visual-v13-contract.test.mjs"
+      - "tests/unit/premium-native-app-v14-contract.test.mjs"
       - "tests/e2e/premium-visual-proof.mjs"
       - "tests/e2e/responsive-shell-smoke.mjs"
       - ".github/workflows/premium-visual-v13.yml"
@@ -58,8 +60,10 @@ jobs:
       - name: Chromium para auditoria
         run: npx playwright install --with-deps chromium
 
-      - name: Contrato estático da experiência premium
-        run: node tests/unit/premium-visual-v13-contract.test.mjs
+      - name: Contratos estáticos da experiência premium
+        run: |
+          node tests/unit/premium-visual-v13-contract.test.mjs
+          node tests/unit/premium-native-app-v14-contract.test.mjs
 
       - name: Qualidade TypeScript e ESLint
         run: |
