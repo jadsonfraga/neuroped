@@ -29,6 +29,7 @@ on:
       - "tests/e2e/premium-native-geometry.mjs"
       - "tests/e2e/premium-coarse-touch.mjs"
       - "tests/e2e/premium-internal-workspace.mjs"
+      - "tests/e2e/premium-table-containment.mjs"
       - "tests/e2e/premium-sidebar-geometry.mjs"
       - "tests/e2e/responsive-shell-smoke.mjs"
       - ".github/workflows/premium-visual-v13.yml"
@@ -62,6 +63,7 @@ on:
       - "tests/e2e/premium-native-geometry.mjs"
       - "tests/e2e/premium-coarse-touch.mjs"
       - "tests/e2e/premium-internal-workspace.mjs"
+      - "tests/e2e/premium-table-containment.mjs"
       - "tests/e2e/premium-sidebar-geometry.mjs"
       - "tests/e2e/responsive-shell-smoke.mjs"
       - ".github/workflows/premium-visual-v13.yml"
@@ -138,6 +140,9 @@ jobs:
         env:
           PREMIUM_INTERNAL_DIR: artifacts/premium-v15
         run: node tests/e2e/premium-internal-workspace.mjs
+
+      - name: Tabelas clínicas aninhadas no mobile
+        run: node tests/e2e/premium-table-containment.mjs
 
       - name: Geometria da sidebar premium
         env:
