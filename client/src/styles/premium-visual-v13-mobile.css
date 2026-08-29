@@ -1,0 +1,48 @@
+/*
+ * NeuroPED Premium v13 — correção defensiva do fluxo clínico em celulares.
+ *
+ * O grid editorial desktop/tablet usa spans assimétricos. Em navegadores que
+ * preservam a colocação implícita desses spans após a troca para uma única
+ * coluna, dois links podem disputar a mesma célula e o último pode criar uma
+ * trilha estreita. No celular, a hierarquia correta é deliberadamente linear:
+ * um fluxo por linha, largura integral, sem sobreposição.
+ */
+
+@media screen and (max-width: 767px) {
+  .np-v13-flow-grid {
+    display: flex !important;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column !important;
+    align-items: stretch;
+    gap: 0.7rem;
+    grid-template-columns: none !important;
+  }
+
+  .np-v13-flow-grid > *,
+  .np-v13-flow-grid > a,
+  .np-v13-flow-grid > article {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+
+  .np-v13-flow-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .np-v13-flow-copy,
+  .np-v13-flow-copy p,
+  .np-v13-flow-copy h3,
+  .np-v13-flow-copy span,
+  .np-v13-flow-footer {
+    min-width: 0;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
