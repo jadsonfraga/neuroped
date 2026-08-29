@@ -23,6 +23,15 @@ const cases = [
   { name: "tablet-coarse", width: 1024, height: 1366 },
 ];
 
+const rect = (r) => ({
+  left: r.left,
+  right: r.right,
+  top: r.top,
+  bottom: r.bottom,
+  width: r.width,
+  height: r.height,
+});
+
 try {
   for (const spec of cases) {
     const context = await browser.newContext({
@@ -52,18 +61,16 @@ try {
         window.scrollTo(0, 0);
       });
 
+      // Estado 1: busca ativa. Serve exclusivamente para medir o alvo touch do
+      // botão limpar; a busca substitui deliberadamente os fluxos por resultados.
       await page.getByTestId("input-search").fill("mchat");
-
-      const contract = await page.evaluate(() => {
+      const searchState = await page.evaluate(() => {
         const hero = document.querySelector('[data-testid="premium-hero"]');
         const grid = hero?.querySelector(".np-v13-hero-grid");
         const copy = hero?.querySelector(".np-v13-hero-copy");
         const panel = hero?.querySelector(".np-v13-control-panel");
         const clear = hero?.querySelector(".np-v13-search button");
-        const metricHeading = document.querySelector(".np-v13-metric-heading p");
-        const metricDetail = document.querySelector(".np-v13-metric-detail");
-        const rail = document.querySelector('[data-testid="premium-flow-grid"]');
-        const rect = (el) => {
+        const serialize = (el) => {
           if (!(el instanceof HTMLElement)) return null;
           const r = el.getBoundingClientRect();
           return {
@@ -78,10 +85,41 @@ try {
         return {
           coarse: matchMedia("(any-pointer: coarse)").matches,
           documentWidth: document.documentElement.scrollWidth,
-          grid: rect(grid),
-          copy: rect(copy),
-          panel: rect(panel),
-          clear: rect(clear),
+          grid: serialize(grid),
+          copy: serialize(copy),
+          panel: serialize(panel),
+          clear: serialize(clear),
+        };
+      });
+
+      assert.equal(searchState.coarse, true, `${spec.name}: any-pointer coarse não ativou`);
+      assert.ok(
+        searchState.documentWidth <= spec.width + 1,
+        `${spec.name}: overflow horizontal no documento durante busca`,
+      );
+      assert.ok(searchState.grid && searchState.copy && searchState.panel && searchState.clear);
+      assert.ok(
+        searchState.panel.top >= searchState.copy.bottom - 1,
+        `${spec.name}: painel sobrepôs conteúdo com cascade coarse ativa`,
+      );
+      assert.ok(
+        searchState.clear.width >= 44 && searchState.clear.height >= 44,
+        `${spec.name}: botão limpar busca menor que 44 px`,
+      );
+
+      // Estado 2: dashboard operacional. Após limpar a busca, os cinco fluxos e
+      // métricas reaparecem; só então validamos rail, legibilidade e scroll.
+      await page.getByTestId("input-search").fill("");
+      await page
+        .getByTestId("premium-flow-grid")
+        .waitFor({ state: "visible", timeout: 10000 });
+
+      const dashboardState = await page.evaluate(() => {
+        const metricHeading = document.querySelector(".np-v13-metric-heading p");
+        const metricDetail = document.querySelector(".np-v13-metric-detail");
+        const rail = document.querySelector('[data-testid="premium-flow-grid"]');
+        return {
+          documentWidth: document.documentElement.scrollWidth,
           metricHeadingSize:
             metricHeading instanceof HTMLElement
               ? Number.parseFloat(getComputedStyle(metricHeading).fontSize)
@@ -99,34 +137,32 @@ try {
         };
       });
 
-      assert.equal(contract.coarse, true, `${spec.name}: any-pointer coarse não ativou`);
       assert.ok(
-        contract.documentWidth <= spec.width + 1,
-        `${spec.name}: overflow horizontal no documento`,
-      );
-      assert.ok(contract.grid && contract.copy && contract.panel && contract.clear);
-      assert.ok(
-        contract.panel.top >= contract.copy.bottom - 1,
-        `${spec.name}: painel sobrepôs conteúdo com cascade coarse ativa`,
-      );
-      assert.ok(
-        contract.clear.width >= 44 && contract.clear.height >= 44,
-        `${spec.name}: botão limpar busca menor que 44 px`,
+        dashboardState.documentWidth <= spec.width + 1,
+        `${spec.name}: overflow horizontal no dashboard`,
       );
 
       if (spec.width <= 767) {
         assert.ok(
-          contract.metricHeadingSize >= 11,
-          `${spec.name}: rótulo de métrica ilegível (${contract.metricHeadingSize}px)`,
+          dashboardState.metricHeadingSize >= 11,
+          `${spec.name}: rótulo de métrica ilegível (${dashboardState.metricHeadingSize}px)`,
         );
         assert.ok(
-          contract.metricDetailSize >= 11,
-          `${spec.name}: detalhe de métrica ilegível (${contract.metricDetailSize}px)`,
+          dashboardState.metricDetailSize >= 11,
+          `${spec.name}: detalhe de métrica ilegível (${dashboardState.metricDetailSize}px)`,
         );
-        assert.equal(contract.railDisplay, "flex", `${spec.name}: rail deixou de ser flex`);
-        assert.equal(contract.railOverflow, "auto", `${spec.name}: rail deixou de rolar`);
+        assert.equal(
+          dashboardState.railDisplay,
+          "flex",
+          `${spec.name}: rail deixou de ser flex`,
+        );
+        assert.equal(
+          dashboardState.railOverflow,
+          "auto",
+          `${spec.name}: rail deixou de rolar`,
+        );
         assert.ok(
-          contract.railScrollWidth > contract.railClientWidth * 2,
+          dashboardState.railScrollWidth > dashboardState.railClientWidth * 2,
           `${spec.name}: rail não preserva os cinco fluxos navegáveis`,
         );
       }
