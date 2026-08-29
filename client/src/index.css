@@ -181,11 +181,11 @@
   }
 
   .page-enter {
-    animation: pageIn 0.25s ease-out;
+    animation: pageIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
   }
   @keyframes pageIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px) scale(0.995); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   .card-hover {
@@ -845,6 +845,64 @@
 
 @media (prefers-reduced-motion: reduce) {
   .np-anim-fade-up, .np-anim-float, .np-anim-glow, .np-anim-sparkle, .np-shimmer { animation: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Figurinhas Kawaii (KawaiiSticker.tsx) — vida sutil, nunca piscante.
+   Decorativas (aria-hidden), balanço lento e entrada com "pop" suave.
+   Tudo desativado sob prefers-reduced-motion.
+   ───────────────────────────────────────────────────────────── */
+.np-sticker {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  filter: drop-shadow(0 3px 6px hsl(var(--foreground) / 0.12));
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes np-sticker-bob {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50% { transform: translateY(-5px) rotate(1.5deg); }
+  }
+  @keyframes np-sticker-pop {
+    0% { opacity: 0; transform: scale(0.6) rotate(-6deg); }
+    70% { opacity: 1; transform: scale(1.06) rotate(2deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+  @keyframes np-sticker-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    30% { transform: rotate(-5deg) scale(1.05); }
+    60% { transform: rotate(4deg) scale(1.05); }
+  }
+  .np-sticker-float { animation: np-sticker-bob 5.6s ease-in-out infinite; }
+  .np-sticker-float:nth-child(2n) { animation-duration: 6.8s; animation-delay: 0.9s; }
+  .np-sticker-float:nth-child(3n) { animation-duration: 7.6s; animation-delay: 1.7s; }
+  .np-sticker-pop { animation: np-sticker-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .np-sticker-pop:nth-child(2) { animation-delay: 0.09s; }
+  .np-sticker-pop:nth-child(3) { animation-delay: 0.18s; }
+  .np-sticker-pop:nth-child(4) { animation-delay: 0.27s; }
+  .np-sticker:hover { animation: np-sticker-wiggle 0.6s ease-in-out; }
+}
+
+/* Constelação decorativa de figurinhas por rota (PageMascotDecor) */
+.np-sticker-constellation {
+  position: fixed;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0.8;
+}
+@media print {
+  .np-sticker-constellation { display: none !important; }
+}
+
+/* Chip pastel para headers de seção com figurinha */
+.np-kawaii-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.3rem 0.85rem 0.3rem 0.45rem;
+  background: var(--kw-gradient-soft);
+  border: 1px solid hsl(var(--primary) / 0.14);
 }
 
 /* Estilos do conteúdo dos artigos do Portal das Famílias (portal-novidades) */

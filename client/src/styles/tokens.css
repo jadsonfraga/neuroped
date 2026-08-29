@@ -318,6 +318,56 @@
 }
 
 
+/** ── Figurinhas Kawaii — paleta pastel das figurinhas SVG (KawaiiSticker) ──
+ *  Todas as cores das figurinhas vivem aqui como tokens; o componente usa
+ *  exclusivamente var(--kw-*), mantendo o guard de design (audit:design) limpo. */
+:root {
+  --kw-ink: #40325a;            /* olhinhos, boquinha, contornos */
+  --kw-blush: #f8a8c0;          /* bochechas rosadas */
+  --kw-white: #ffffff;
+  --kw-shine: rgba(255, 255, 255, 0.65);
+  --kw-star: #ffd66e;
+  --kw-star-deep: #f2b33d;
+  --kw-cloud: #e7f0fd;
+  --kw-cloud-deep: #b9d4f5;
+  --kw-heart: #ff9db8;
+  --kw-heart-deep: #f0648c;
+  --kw-brain: #cdb4f2;
+  --kw-brain-deep: #a684dd;
+  --kw-pencil: #ffc46b;
+  --kw-pencil-wood: #f7dcae;
+  --kw-pencil-tip: #6f5a80;
+  --kw-moon: #ffe9a8;
+  --kw-moon-deep: #f5cf6f;
+  --kw-sun: #ffb85c;
+  --kw-sun-ray: #ffd66e;
+  --kw-cat: #ffd9b8;
+  --kw-cat-deep: #f0b487;
+  --kw-dino: #9adfa9;
+  --kw-dino-deep: #56bd75;
+  --kw-flower: #c9b6f5;
+  --kw-flower-center: #ffd66e;
+  --kw-balloon: #8fd3f2;
+  --kw-balloon-deep: #58b6e3;
+  --kw-rainbow-1: #f0648c;
+  --kw-rainbow-2: #ffb85c;
+  --kw-rainbow-3: #ffd66e;
+  --kw-rainbow-4: #56bd75;
+  --kw-rainbow-5: #58b6e3;
+  /* Gradientes pastel de apoio (headers de seção, chips decorativos) */
+  --kw-gradient-soft: linear-gradient(135deg, rgba(201, 182, 245, 0.35), rgba(143, 211, 242, 0.28) 55%, rgba(154, 223, 169, 0.24));
+  --kw-gradient-warm: linear-gradient(135deg, rgba(255, 214, 110, 0.32), rgba(255, 157, 184, 0.26));
+}
+
+/* No tema escuro as figurinhas ganham tons um pouco mais profundos para não
+   "estourar" sobre superfícies escuras — segue decorativo, nunca texto. */
+.dark {
+  --kw-ink: #2c2440;
+  --kw-shine: rgba(255, 255, 255, 0.4);
+  --kw-cloud: #d5e4fa;
+  --kw-white: #f3f0fa;
+}
+
 /* ── Missão Saúde — paleta educativa pública ───────────────────────── */
 :root {
   --ms-ink: #113c4c;
