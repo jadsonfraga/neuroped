@@ -23,15 +23,6 @@ const cases = [
   { name: "tablet-coarse", width: 1024, height: 1366 },
 ];
 
-const rect = (r) => ({
-  left: r.left,
-  right: r.right,
-  top: r.top,
-  bottom: r.bottom,
-  width: r.width,
-  height: r.height,
-});
-
 try {
   for (const spec of cases) {
     const context = await browser.newContext({
@@ -92,12 +83,21 @@ try {
         };
       });
 
-      assert.equal(searchState.coarse, true, `${spec.name}: any-pointer coarse não ativou`);
+      assert.equal(
+        searchState.coarse,
+        true,
+        `${spec.name}: any-pointer coarse não ativou`,
+      );
       assert.ok(
         searchState.documentWidth <= spec.width + 1,
         `${spec.name}: overflow horizontal no documento durante busca`,
       );
-      assert.ok(searchState.grid && searchState.copy && searchState.panel && searchState.clear);
+      assert.ok(
+        searchState.grid &&
+          searchState.copy &&
+          searchState.panel &&
+          searchState.clear,
+      );
       assert.ok(
         searchState.panel.top >= searchState.copy.bottom - 1,
         `${spec.name}: painel sobrepôs conteúdo com cascade coarse ativa`,
@@ -115,9 +115,13 @@ try {
         .waitFor({ state: "visible", timeout: 10000 });
 
       const dashboardState = await page.evaluate(() => {
-        const metricHeading = document.querySelector(".np-v13-metric-heading p");
+        const metricHeading = document.querySelector(
+          ".np-v13-metric-heading p",
+        );
         const metricDetail = document.querySelector(".np-v13-metric-detail");
-        const rail = document.querySelector('[data-testid="premium-flow-grid"]');
+        const rail = document.querySelector(
+          '[data-testid="premium-flow-grid"]',
+        );
         return {
           documentWidth: document.documentElement.scrollWidth,
           metricHeadingSize:
