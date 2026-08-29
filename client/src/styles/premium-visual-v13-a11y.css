@@ -1,13 +1,273 @@
 /*
- * NeuroPED Premium v13 — reforço de contraste auditado.
+ * NeuroPED Premium v13 — reforço de contraste e acabamento nativo.
  *
- * A home v13 remove deliberadamente o painel opaco que envolvia todo o
- * conteúdo. A assinatura autoral global passa, portanto, a repousar diretamente
- * sobre o fundo do aplicativo. Os dois textos auxiliares recebem a cor canônica
- * sem transparência adicional para manter contraste WCAG AA, sem alterar o link
- * autoral nem os rodapés das demais páginas.
+ * Esta camada permanece deliberadamente visual. Não altera rotas, permissões,
+ * persistência, dados clínicos nem contratos funcionais. Além do contraste WCAG,
+ * reduz sinais de "site" e aproxima o shell de um aplicativo instalado:
+ * viewport estável, superfícies de workspace, dock compacto e microinterações
+ * sem deslocamentos estruturais.
  */
 
 .np-app-content:has(.np-v13-home) > p.flex-wrap > span {
   color: hsl(var(--muted-foreground));
+}
+
+/* O workspace deve ocupar a tela como produto, sem largura de landing page. */
+.np-app-shell,
+.np-app-main,
+#main-content {
+  min-height: 100dvh;
+}
+
+.np-app-main {
+  overflow-x: clip;
+}
+
+.np-app-content:has(.np-v13-home) {
+  max-width: 1520px !important;
+}
+
+/* Densidade de software: superfícies secundárias ficam um pouco mais firmes e
+   menos "hero marketing", preservando a hierarquia premium da v13. */
+.np-v13-metric-card,
+.np-v13-flow-card,
+.np-v13-result-card,
+.np-v13-favorites > * {
+  background-color: hsl(var(--card) / 0.94);
+}
+
+.np-v13-flow-card,
+.np-v13-metric-card,
+.np-v13-result-card {
+  transform: translateZ(0);
+}
+
+/* Interações de app não devem reposicionar conteúdo vizinho. */
+@media (hover: hover) and (pointer: fine) {
+  .np-v13-metric-card:hover,
+  .np-v13-flow-card:hover,
+  .np-v13-result-card:hover {
+    transform: translateY(-2px) translateZ(0) !important;
+  }
+}
+
+/* Tablet/iPad: a largura de 1024px já é workspace amplo. Mantemos header/dock
+   touch, porém comprimimos a composição para parecer app e não página longa. */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .np-v13-hero {
+    padding: 1.5rem;
+  }
+
+  .np-v13-hero-grid {
+    gap: 1rem;
+  }
+
+  .np-v13-title-block {
+    margin-top: 1.35rem;
+  }
+
+  .np-v13-title-block h1 {
+    max-width: 13ch;
+    font-size: clamp(3.35rem, 7.2vw, 4.7rem);
+  }
+
+  .np-v13-quick-actions {
+    gap: 0.55rem;
+  }
+
+  .np-v13-control-panel {
+    padding: 1rem;
+  }
+
+  .np-v13-metric-card {
+    min-height: 7.9rem;
+  }
+}
+
+/* iPhone: reduzimos a sensação de landing page. O hero vira um cabeçalho de
+   workspace compacto; o painel operacional permanece presente, mas mais denso.
+   Nenhum módulo ou ação é removido. */
+@media screen and (max-width: 767px) {
+  .np-v13-home {
+    gap: 0.95rem;
+    padding-bottom: 1rem;
+  }
+
+  .np-v13-hero {
+    border-radius: 1.35rem;
+    padding: 1rem;
+  }
+
+  .np-v13-hero-grid {
+    gap: 0.85rem;
+  }
+
+  .np-v13-title-block {
+    margin-top: 0.9rem;
+  }
+
+  .np-v13-title-block h1 {
+    max-width: 13ch;
+    font-size: clamp(2.15rem, 10.6vw, 2.85rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+  }
+
+  .np-v13-title-block p {
+    margin-top: 0.65rem;
+    font-size: 0.8rem;
+    line-height: 1.52;
+  }
+
+  .np-v13-search {
+    min-height: 3.1rem;
+    margin-top: 0.9rem;
+    border-radius: 1rem;
+  }
+
+  .np-v13-search input {
+    height: 3.1rem !important;
+  }
+
+  .np-v13-actions {
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+  }
+
+  .np-v13-primary-action,
+  .np-v13-secondary-action {
+    min-height: 44px;
+    border-radius: 0.9rem;
+  }
+
+  .np-v13-control-panel {
+    border-radius: 1.2rem;
+    padding: 0.8rem;
+  }
+
+  .np-v13-panel-heading {
+    padding-bottom: 0.55rem;
+  }
+
+  .np-v13-quick-actions {
+    gap: 0.4rem;
+  }
+
+  .np-v13-quick-link {
+    min-height: 3.45rem;
+    border-radius: 0.9rem;
+    padding: 0.48rem;
+  }
+
+  .np-v13-quick-link > span {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .np-v13-panel-footer {
+    margin-top: 0.45rem;
+    padding-top: 0.55rem;
+  }
+
+  .np-v13-panel-footer span {
+    line-height: 1.4;
+  }
+
+  .np-v13-panel-footer figure,
+  .np-v13-panel-footer figure > div:nth-of-type(2) {
+    width: 3.35rem !important;
+    min-width: 3.35rem;
+    height: 3.35rem !important;
+  }
+
+  .np-v13-metric-grid {
+    gap: 0.5rem;
+  }
+
+  .np-v13-metric-card {
+    min-height: 7.15rem;
+    border-radius: 1rem;
+    padding: 0.78rem;
+  }
+
+  .np-v13-section,
+  .np-v13-search-results {
+    gap: 0.65rem;
+  }
+
+  .np-v13-section-heading h2 {
+    font-size: 1.55rem;
+  }
+
+  .np-v13-flow-grid {
+    gap: 0.55rem !important;
+  }
+
+  .np-v13-flow-card {
+    min-height: 11.8rem;
+    border-radius: 1.15rem !important;
+    padding: 0.9rem;
+  }
+
+  .np-v13-flow-copy {
+    margin-top: 0.9rem;
+  }
+
+  .np-v13-flow-copy span {
+    margin-top: 0.45rem;
+    line-height: 1.48;
+  }
+
+  .np-v13-flow-footer {
+    padding-top: 0.75rem;
+  }
+
+  .np-v13-lower-grid {
+    gap: 0.55rem;
+  }
+
+  .np-v13-responsible-note {
+    border-radius: 1rem;
+    padding: 0.8rem;
+  }
+
+  /* Dock de app: menos volumoso e sem aparência de CTA promocional flutuante. */
+  [data-testid="mobile-primary-dock"] {
+    padding-inline: 0.45rem !important;
+  }
+
+  [data-testid="mobile-primary-dock"] nav {
+    border-radius: 1.25rem !important;
+    padding: 0.3rem !important;
+  }
+
+  [data-testid="mobile-primary-dock"] button,
+  [data-testid="mobile-primary-dock"] a {
+    min-height: 3.25rem !important;
+    border-radius: 0.9rem !important;
+  }
+
+  [data-testid="mobile-dock-nesplora"] {
+    margin-top: -0.35rem !important;
+    min-height: 3.65rem !important;
+    box-shadow: 0 10px 28px -18px hsl(var(--np-brand-gold, 41 72% 52%) / 0.72) !important;
+  }
+
+  [data-testid="mobile-dock-nesplora"] > span:first-child {
+    display: none;
+  }
+}
+
+/* Foco de teclado permanece inequívoco mesmo após compactação. */
+.np-v13-home :is(a, button, input):focus-visible,
+[data-testid="mobile-primary-dock"] :is(a, button):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-v13-home *,
+  [data-testid="mobile-primary-dock"] * {
+    scroll-behavior: auto !important;
+  }
 }
