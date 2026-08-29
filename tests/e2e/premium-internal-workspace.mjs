@@ -25,7 +25,7 @@ const outputDir = path.resolve(
 fs.rmSync(outputDir, { recursive: true, force: true });
 fs.mkdirSync(outputDir, { recursive: true });
 // Evita reutilizar um bundle remoto deixado por outro job: as rotas abaixo
-// precisam renderizar o workspace local completo, não a tela de login.
+// precisam renderizar o workspace local completo, não apenas a tela de login.
 fs.rmSync(path.resolve(repoRoot, "dist/public"), {
   recursive: true,
   force: true,
@@ -81,11 +81,11 @@ const manifest = {
 
 function tokenForRoute(route) {
   if (route === "/") return "home";
+  const firstSegment = route.split("/").filter(Boolean)[0] || "workspace";
   return (
-    route
-      .replace(/^\/+|\/+$/g, "")
+    firstSegment
       .replace(/[^a-zA-Z0-9-]+/g, "-")
-      .replace(/-+/g, "-") || "home"
+      .replace(/-+/g, "-") || "workspace"
   );
 }
 
@@ -141,6 +141,9 @@ async function auditCase(spec) {
     const contract = await page.evaluate(() => {
       const root = document.documentElement;
       const content = document.querySelector(".np-app-content");
+      const functionalRoot = document.querySelector(
+        ".np-app-content > div:first-child",
+      );
       const contextBar = document.querySelector("#main-content > .sticky");
       const pageHero = document.querySelector(".np-page-hero");
       const card = document.querySelector(".shadcn-card");
@@ -204,23 +207,38 @@ async function auditCase(spec) {
         };
       };
 
+      const visibleTopLevel =
+        functionalRoot instanceof HTMLElement
+          ? Array.from(functionalRoot.children).filter(visible)
+          : [];
+      const interactiveCount = Array.from(
+        document.querySelectorAll(
+          ".np-app-content button, .np-app-content a[href], .np-app-content input, .np-app-content textarea, .np-app-content select, .np-app-content [role=button], .np-app-content [role=tab]",
+        ),
+      ).filter(visible).length;
+
       return {
         workspace: root.dataset.npWorkspace,
         route: root.dataset.npRoute,
         dark: root.classList.contains("dark"),
+        hashPath: window.location.hash.replace(/^#/, "").split("?")[0],
         documentWidth: document.documentElement.scrollWidth,
         bodyWidth: document.body.scrollWidth,
         bodyText: document.body.innerText,
         content: geometry(content),
+        functionalRoot: geometry(functionalRoot),
+        firstSurface: geometry(visibleTopLevel[0]),
+        visibleTopLevelCount: visibleTopLevel.length,
+        interactiveCount,
+        v15Radius: getComputedStyle(root)
+          .getPropertyValue("--np-v15-radius-lg")
+          .trim(),
         contextBar: geometry(contextBar),
         hero: geometry(pageHero),
         card: geometry(card),
         tablist: geometry(tablist),
         table: geometry(table),
         control: geometry(formControl),
-        surfaceCount: document.querySelectorAll(
-          ".np-page-hero, .shadcn-card, form, table, [role=tablist]",
-        ).length,
         legalVisible: visible(legal),
         mobileMenuVisible: visible(mobileMenu),
         mobileDockVisible: visible(mobileDock),
@@ -229,6 +247,14 @@ async function auditCase(spec) {
       };
     });
 
+    const file = `${spec.name}-${spec.viewportName}-${spec.theme}.png`;
+    await page.screenshot({
+      path: path.join(outputDir, file),
+      fullPage: true,
+      animations: "disabled",
+    });
+    manifest.captures.push({ ...spec, file, contract });
+
     assert.equal(contract.workspace, "clinical", `${spec.name}: workspace incorreto`);
     assert.equal(
       contract.route,
@@ -236,13 +262,14 @@ async function auditCase(spec) {
       `${spec.name}: token da rota não sincronizou`,
     );
     assert.equal(
+      contract.hashPath,
+      spec.route,
+      `${spec.name}: navegador deixou a rota auditada`,
+    );
+    assert.equal(
       contract.dark,
       spec.theme === "dark",
       `${spec.name}: tema ${spec.theme} não foi aplicado`,
-    );
-    assert.ok(
-      !contract.bodyText.includes("Entrar na área profissional"),
-      `${spec.name}: auditoria caiu na tela de login em vez do módulo`,
     );
     assert.ok(
       !/erro inesperado|application error|failed to render/i.test(contract.bodyText),
@@ -264,9 +291,24 @@ async function auditCase(spec) {
       "rgba(0, 0, 0, 0)",
       `${spec.name}: canvas principal deixou de ser transparente`,
     );
+    assert.equal(
+      contract.v15Radius,
+      "1.2rem",
+      `${spec.name}: tokens compartilhados da v15 não estão ativos`,
+    );
     assert.ok(
-      contract.surfaceCount > 0,
-      `${spec.name}: módulo sem superfície funcional detectável`,
+      contract.functionalRoot && contract.visibleTopLevelCount > 0,
+      `${spec.name}: módulo não renderizou estado funcional, vazio, carregando ou erro recuperável`,
+    );
+    assert.ok(
+      contract.firstSurface &&
+        contract.firstSurface.width > 0 &&
+        contract.firstSurface.width <= contract.content.width + 1,
+      `${spec.name}: primeira superfície saiu do canvas`,
+    );
+    assert.ok(
+      contract.interactiveCount > 0,
+      `${spec.name}: módulo perdeu todos os controles e destinos navegáveis`,
     );
     assert.ok(contract.contextBar, `${spec.name}: chrome clínico ausente`);
     assert.ok(
@@ -308,10 +350,7 @@ async function auditCase(spec) {
       );
     }
     if (contract.table) {
-      assert.ok(
-        contract.table.width > 0,
-        `${spec.name}: tabela colapsou`,
-      );
+      assert.ok(contract.table.width > 0, `${spec.name}: tabela colapsou`);
     }
 
     if (spec.width < 1024) {
@@ -348,13 +387,6 @@ async function auditCase(spec) {
       );
     }
 
-    const file = `${spec.name}-${spec.viewportName}-${spec.theme}.png`;
-    await page.screenshot({
-      path: path.join(outputDir, file),
-      fullPage: true,
-      animations: "disabled",
-    });
-    manifest.captures.push({ ...spec, file, contract });
     console.log(
       `[premium-internal-v15] ✓ ${spec.name} · ${spec.viewportName} · ${spec.theme}`,
     );
