@@ -34,12 +34,20 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const pr = context.payload.pull_request;
+            const payloadPr = context.payload.pull_request;
 
-            if (!pr) {
+            if (!payloadPr?.number) {
               core.setFailed("Evento sem pull_request; execução bloqueada por segurança.");
               return;
             }
+
+            // Busca o estado atual do PR. Isso mantém a decisão correta também
+            // quando um run é reexecutado após mudança de draft/base/metadados.
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: payloadPr.number,
+            });
 
             const baseRef = pr.base.ref;
             const headSha = pr.head.sha;
@@ -54,6 +62,9 @@ jobs:
             });
             const behindBy = Number(comparison.data.behind_by ?? 0);
 
+            const filePaths = (file) =>
+              [...new Set([file.filename, file.previous_filename].filter(Boolean))];
+
             const currentFiles = await github.paginate(
               github.rest.pulls.listFiles,
               {
@@ -63,7 +74,8 @@ jobs:
                 per_page: 100,
               },
             );
-            const currentPaths = new Set(currentFiles.map((file) => file.filename));
+            // previous_filename é indispensável para detectar rename x edição.
+            const currentPaths = new Set(currentFiles.flatMap(filePaths));
 
             const openPulls = await github.paginate(
               github.rest.pulls.list,
@@ -119,9 +131,14 @@ jobs:
                 },
               );
 
-              const shared = otherFiles
-                .map((file) => file.filename)
-                .filter((path) => currentPaths.has(path));
+              // Inclui o caminho anterior de renames nos dois lados da comparação.
+              const shared = [
+                ...new Set(
+                  otherFiles
+                    .flatMap(filePaths)
+                    .filter((path) => currentPaths.has(path)),
+                ),
+              ];
               if (shared.length === 0) continue;
 
               const critical = shared.filter(isCriticalPath);

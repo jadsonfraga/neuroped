@@ -1,0 +1,256 @@
+name: NeuroPED PR Collision Recheck Fan-out
+
+on:
+  push:
+    branches: [main]
+  pull_request_target:
+    branches: [main]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - converted_to_draft
+      - edited
+      - closed
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: neuroped-pr-collision-fanout-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  fanout:
+    name: Revalidar PRs afetados
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # Segurança: este workflow roda no contexto protegido da main e nunca
+      # faz checkout nem executa código vindo de um pull request.
+      - name: Localizar PRs afetados e redisparar o gate obrigatório
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const baseRef = "main";
+            const workflowId = "pr-check.yml";
+
+            const filePaths = (file) =>
+              [...new Set([file.filename, file.previous_filename].filter(Boolean))];
+
+            const exactCritical = new Set([
+              "package.json",
+              "package-lock.json",
+              "client/src/App.tsx",
+              "client/src/main.tsx",
+              "client/src/pages/home.tsx",
+              "vite.config.ts",
+              "wrangler.toml",
+              "vercel.json",
+            ]);
+            const criticalPrefixes = [
+              ".github/workflows/",
+              "server/",
+              "functions/",
+              "shared/",
+              "db/migrations/",
+              "migrations/",
+              "client/src/pages/",
+              "client/src/components/",
+              "client/src/contexts/",
+              "client/src/security/",
+              "client/src/lib/auth",
+            ];
+            const isCritical = (path) =>
+              exactCritical.has(path) ||
+              criticalPrefixes.some((prefix) => path.startsWith(prefix));
+
+            const openPulls = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner,
+                repo,
+                state: "open",
+                base: baseRef,
+                sort: "updated",
+                direction: "desc",
+                per_page: 100,
+              },
+            );
+
+            const eligible = openPulls.filter(
+              (pull) =>
+                !pull.draft &&
+                pull.head.repo?.full_name === `${owner}/${repo}`,
+            );
+
+            let targets = [];
+            let reason = "";
+
+            if (context.eventName === "push") {
+              // Quando a main avança, todo PR não-draft precisa demonstrar que
+              // continua íntegro sobre a base atual.
+              targets = eligible;
+              reason = `main avançou para ${context.sha.slice(0, 12)}`;
+            } else {
+              const eventPr = context.payload.pull_request;
+              if (!eventPr?.number) {
+                core.setFailed("Evento pull_request_target sem número de PR.");
+                return;
+              }
+
+              const eventFiles = await github.paginate(
+                github.rest.pulls.listFiles,
+                {
+                  owner,
+                  repo,
+                  pull_number: eventPr.number,
+                  per_page: 100,
+                },
+              );
+              const eventPaths = new Set(eventFiles.flatMap(filePaths));
+              reason = `PR #${eventPr.number} ${context.payload.action}`;
+
+              // O PR que gerou o evento já recebe seu próprio pull_request run.
+              // O fan-out revalida somente os pares que podem ter ficado stale.
+              for (const pull of eligible) {
+                if (pull.number === eventPr.number) continue;
+
+                const pullFiles = await github.paginate(
+                  github.rest.pulls.listFiles,
+                  {
+                    owner,
+                    repo,
+                    pull_number: pull.number,
+                    per_page: 100,
+                  },
+                );
+                const sharedCritical = [
+                  ...new Set(
+                    pullFiles
+                      .flatMap(filePaths)
+                      .filter(
+                        (path) => eventPaths.has(path) && isCritical(path),
+                      ),
+                  ),
+                ];
+
+                if (sharedCritical.length > 0) {
+                  targets.push({
+                    ...pull,
+                    sharedCritical,
+                  });
+                }
+              }
+            }
+
+            const dispatched = [];
+            const legacy = [];
+            const failed = [];
+
+            for (const target of targets) {
+              try {
+                // Branches antigas podem ainda não conter workflow_dispatch.
+                // Elas permanecem bloqueadas pela exigência de base atual e
+                // passam a suportar fan-out assim que incorporarem a main.
+                const workflowFile = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: ".github/workflows/pr-check.yml",
+                  ref: target.head.sha,
+                });
+                const encoded = Array.isArray(workflowFile.data)
+                  ? ""
+                  : workflowFile.data.content ?? "";
+                const text = Buffer.from(encoded, "base64").toString("utf8");
+
+                if (!/\bworkflow_dispatch\s*:/.test(text)) {
+                  legacy.push({
+                    number: target.number,
+                    branch: target.head.ref,
+                  });
+                  continue;
+                }
+
+                await github.rest.actions.createWorkflowDispatch({
+                  owner,
+                  repo,
+                  workflow_id: workflowId,
+                  ref: target.head.ref,
+                  inputs: {
+                    pr_number: String(target.number),
+                    trigger_reason: reason,
+                    expected_head_sha: target.head.sha,
+                  },
+                });
+                dispatched.push({
+                  number: target.number,
+                  branch: target.head.ref,
+                  sharedCritical: target.sharedCritical ?? [],
+                });
+              } catch (error) {
+                failed.push({
+                  number: target.number,
+                  message: error?.message ?? String(error),
+                });
+              }
+            }
+
+            core.summary
+              .addHeading("NeuroPED — fan-out de revalidação")
+              .addTable([
+                [
+                  { data: "Indicador", header: true },
+                  { data: "Resultado", header: true },
+                ],
+                ["Gatilho", reason || context.eventName],
+                ["PRs não-draft avaliados", String(eligible.length)],
+                ["PRs afetados", String(targets.length)],
+                ["Revalidações disparadas", String(dispatched.length)],
+                ["Branches legadas aguardando atualização", String(legacy.length)],
+                ["Falhas inesperadas", String(failed.length)],
+              ]);
+
+            if (dispatched.length > 0) {
+              core.summary.addHeading("Revalidações", 2);
+              for (const item of dispatched) {
+                const files = item.sharedCritical.length
+                  ? ` — ${item.sharedCritical.map((path) => `\`${path}\``).join(", ")}`
+                  : "";
+                core.summary.addRaw(
+                  `- PR #${item.number} (\`${item.branch}\`)${files}\n`,
+                );
+              }
+            }
+
+            if (legacy.length > 0) {
+              core.summary.addHeading("Branches que precisam incorporar a main", 2);
+              for (const item of legacy) {
+                core.summary.addRaw(
+                  `- PR #${item.number} (\`${item.branch}\`): ainda sem \`workflow_dispatch\`; a proteção strict mantém o merge bloqueado até atualização.\n`,
+                );
+              }
+            }
+
+            if (failed.length > 0) {
+              core.summary.addHeading("Falhas inesperadas", 2);
+              for (const item of failed) {
+                core.summary.addRaw(
+                  `- PR #${item.number}: ${item.message}\n`,
+                );
+              }
+            }
+
+            await core.summary.write();
+
+            if (failed.length > 0) {
+              core.setFailed(
+                `Falha ao redisparar ${failed.length} PR(s) afetado(s). Consulte o summary.`,
+              );
+            }

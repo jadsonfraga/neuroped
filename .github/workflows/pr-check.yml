@@ -11,6 +11,21 @@ on:
       - synchronize
       - ready_for_review
       - edited
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Número do PR que deve ser revalidado"
+        required: true
+        type: string
+      trigger_reason:
+        description: "Motivo da revalidação automática"
+        required: false
+        default: "fanout"
+        type: string
+      expected_head_sha:
+        description: "SHA imutável que deve ser testado"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -18,7 +33,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: neuroped-pr-check-${{ github.event.pull_request.number }}
+  group: neuroped-pr-check-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,6 +44,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # pull_request mantém o merge ref canônico; fan-out fixa o SHA
+          # informado no despacho para não testar uma revisão diferente.
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_head_sha || '' }}
 
       - name: Configurar Node.js 24
         uses: actions/setup-node@v6
@@ -39,20 +58,56 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Validar contrato estático da trava de colisões
+        id: collision_contract
+        run: node tests/unit/pr-collision-guard.test.mjs
+        continue-on-error: true
+
       - name: Validar base atual e colisões críticas entre PRs
         id: collision
         uses: actions/github-script@v9
         continue-on-error: true
         with:
           script: |
-            const pr = context.payload.pull_request;
-            if (!pr) {
-              core.setFailed("Evento sem pull_request; gate fechado por segurança.");
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const inputNumber = Number("${{ inputs.pr_number || '' }}");
+            const payloadNumber = context.payload.pull_request?.number;
+            const prNumber = payloadNumber ?? inputNumber;
+            const expectedHead = "${{ inputs.expected_head_sha || '' }}";
+
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed("Número de PR ausente ou inválido; gate fechado por segurança.");
               return;
             }
 
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+            // Não confia em payload antigo: sempre consulta o estado atual do PR.
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+            core.setOutput("pr_number", String(pr.number));
+
+            if (expectedHead && pr.head.sha !== expectedHead) {
+              core.setFailed(
+                `O PR #${pr.number} avançou de ${expectedHead.slice(0, 12)} para ${pr.head.sha.slice(0, 12)}; o despacho antigo foi rejeitado.`,
+              );
+              return;
+            }
+
+            if (pr.state !== "open") {
+              core.setFailed(`O PR #${pr.number} não está aberto; revalidação cancelada.`);
+              return;
+            }
+
+            if (pr.head.repo?.full_name !== `${owner}/${repo}`) {
+              core.setFailed(
+                `O PR #${pr.number} vem de fork e exige um fluxo isolado; checkout automático bloqueado.`,
+              );
+              return;
+            }
+
             const comparison = await github.rest.repos.compareCommitsWithBasehead({
               owner,
               repo,
@@ -61,11 +116,15 @@ jobs:
             });
             const behindBy = Number(comparison.data.behind_by ?? 0);
 
+            const filePaths = (file) =>
+              [...new Set([file.filename, file.previous_filename].filter(Boolean))];
+
             const currentFiles = await github.paginate(
               github.rest.pulls.listFiles,
               { owner, repo, pull_number: pr.number, per_page: 100 },
             );
-            const currentPaths = new Set(currentFiles.map((file) => file.filename));
+            // Inclui o caminho antigo de arquivos renomeados.
+            const currentPaths = new Set(currentFiles.flatMap(filePaths));
 
             const openPulls = await github.paginate(
               github.rest.pulls.list,
@@ -114,9 +173,13 @@ jobs:
                 github.rest.pulls.listFiles,
                 { owner, repo, pull_number: other.number, per_page: 100 },
               );
-              const critical = otherFiles
-                .map((file) => file.filename)
-                .filter((path) => currentPaths.has(path) && isCritical(path));
+              const critical = [
+                ...new Set(
+                  otherFiles
+                    .flatMap(filePaths)
+                    .filter((path) => currentPaths.has(path) && isCritical(path)),
+                ),
+              ];
               if (critical.length > 0) {
                 collisions.push({
                   number: other.number,
@@ -138,6 +201,7 @@ jobs:
                 ],
                 ["PR", `#${pr.number} — ${pr.title}`],
                 ["Estado", pr.draft ? "Draft" : "Pronto para revisão"],
+                ["Gatilho", "${{ inputs.trigger_reason || github.event.action || github.event_name }}"],
                 ["Commits atrás da base", String(behindBy)],
                 ["Colisões críticas com PRs não-draft", String(collisions.length)],
               ]);
@@ -233,6 +297,7 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
+            const contractStatus = '${{ steps.collision_contract.outcome }}' === 'success';
             const buildStatus = '${{ steps.build.outcome }}' === 'success';
             const typecheckStatus = '${{ steps.typecheck.outcome }}' === 'success';
             const lintStatus = '${{ steps.lint.outcome }}' === 'success';
@@ -242,7 +307,13 @@ jobs:
             const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
             const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
             const collisionStatus = '${{ steps.collision.outcome }}' === 'success';
-            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && collisionStatus;
+            const ready = contractStatus && buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && collisionStatus;
+
+            const prNumber = Number('${{ steps.collision.outputs.pr_number }}');
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed("Não foi possível identificar o PR para publicar o resultado.");
+              return;
+            }
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -253,6 +324,7 @@ jobs:
 
             | Etapa | Status |
             |-------|--------|
+            | ${icon(contractStatus)} Contrato da trava de colisões | ${label(contractStatus)} |
             | ${icon(collisionStatus)} Base atual + colisões entre PRs | ${label(collisionStatus)} |
             | ${icon(typecheckStatus)} TypeScript | ${label(typecheckStatus)} |
             | ${icon(buildStatus)} Build | ${label(buildStatus)} |
@@ -265,14 +337,14 @@ jobs:
 
             ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Há gates pendentes.** Corrija colisões/base, TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
+              : '> ❌ **Há gates pendentes.** Corrija contrato/colisões/base, TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: prNumber,
               per_page: 100,
             });
             const previous = comments.find((comment) =>
@@ -287,7 +359,7 @@ jobs:
               });
             } else {
               await github.rest.issues.createComment({
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body,
@@ -297,7 +369,8 @@ jobs:
       - name: Falhar se qualquer verificação crítica quebrou
         if: always()
         run: |
-          if [ "${{ steps.collision.outcome }}" != "success" ] || \
+          if [ "${{ steps.collision_contract.outcome }}" != "success" ] || \
+             [ "${{ steps.collision.outcome }}" != "success" ] || \
              [ "${{ steps.typecheck.outcome }}" != "success" ] || \
              [ "${{ steps.build.outcome }}" != "success" ] || \
              [ "${{ steps.lint.outcome }}" != "success" ] || \
