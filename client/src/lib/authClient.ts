@@ -24,10 +24,20 @@ const ACCESS_KEY = "neuroped:access";
 const REFRESH_KEY = "neuroped:refresh";
 const USER_KEY = "neuroped:user";
 const CAPABILITY_KEY = "neuroped:auth-capability";
+/**
+ * Resultado do refresh: `definitive` separa "o servidor rejeitou o token"
+ * (401/403 — sessão realmente acabou) de falha transitória (rede, 5xx, 429).
+ * Só a rejeição definitiva pode disparar a limpeza destrutiva de estado local.
+ */
+export interface RefreshOutcome {
+  token: string | null;
+  definitive: boolean;
+}
+
 interface RefreshFlight {
   epoch: number;
   refreshToken: string;
-  promise: Promise<string | null>;
+  promise: Promise<RefreshOutcome>;
 }
 
 let refreshInFlight: RefreshFlight | null = null;
@@ -195,23 +205,27 @@ export async function changePasswordRequest(
   return data;
 }
 
-async function performRefresh(refreshToken: string, epochAtStart: number): Promise<string | null> {
+async function performRefresh(refreshToken: string, epochAtStart: number): Promise<RefreshOutcome> {
   try {
     const r = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
-    if (!r.ok) return null;
+    if (!r.ok) {
+      // 401/403 = o servidor rejeitou o token: sessão realmente inválida.
+      // 5xx/429 = soluço de gateway: NÃO pode custar o vault local do usuário.
+      return { token: null, definitive: r.status === 401 || r.status === 403 };
+    }
     const data = await r.json();
     // Logout ou novo login ocorreu enquanto a chamada estava no ar: a resposta
     // antiga não pode ressuscitar credenciais descartadas.
-    if (authEpoch !== epochAtStart) return null;
+    if (authEpoch !== epochAtStart) return { token: null, definitive: false };
     writeToken(ACCESS_KEY, data.accessToken);
     writeToken(REFRESH_KEY, data.refreshToken);
-    return data.accessToken;
+    return { token: data.accessToken, definitive: false };
   } catch {
-    return null;
+    return { token: null, definitive: false };
   }
 }
 
@@ -219,9 +233,9 @@ async function performRefresh(refreshToken: string, epochAtStart: number): Promi
  * Single-flight obrigatório com refresh rotativo: vários 401 simultâneos usam
  * a mesma promessa, evitando reutilizar o token anterior e revogar a família.
  */
-export function refreshTokenRequest(): Promise<string | null> {
+export function refreshTokenRequest(): Promise<RefreshOutcome> {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) return Promise.resolve(null);
+  if (!refreshToken) return Promise.resolve({ token: null, definitive: true });
 
   const epochAtStart = authEpoch;
   if (
@@ -287,16 +301,18 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
     && (token || getRefreshToken())
   ) {
     const epochBeforeRefresh = authEpoch;
-    const newToken = await refreshTokenRequest();
+    const outcome = await refreshTokenRequest();
     // Bodies de stream (ReadableStream) já foram consumidos pelo primeiro fetch
     // e não podem ser reenviados; strings/FormData/Blob são reutilizáveis.
     const bodyReusable = !(typeof ReadableStream !== "undefined" && init.body instanceof ReadableStream);
-    if (newToken && authEpoch === epochBeforeRefresh && bodyReusable) {
-      headers.set("Authorization", `Bearer ${newToken}`);
+    if (outcome.token && authEpoch === epochBeforeRefresh && bodyReusable) {
+      headers.set("Authorization", `Bearer ${outcome.token}`);
       response = await fetch(requestUrl, { ...init, headers });
-    } else if (!newToken && authEpoch === epochBeforeRefresh) {
-      // Um login/logout mais novo pode ter acontecido enquanto o refresh antigo
-      // estava em voo. Nesse caso a falha antiga não pode apagar a sessão nova.
+    } else if (!outcome.token && outcome.definitive && authEpoch === epochBeforeRefresh) {
+      // Só a rejeição DEFINITIVA do refresh (401/403) encerra a sessão local —
+      // um 502 transitório do gateway não pode disparar a limpeza destrutiva
+      // do vault (auth:expired → secureClearAll → IndexedDB apagado).
+      // Um login/logout mais novo em voo também não pode ser apagado (epoch).
       clearAuth();
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }

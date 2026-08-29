@@ -55,6 +55,23 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+/**
+ * Invalida toda query cujo primeiro segmento da key começa com um dos
+ * prefixos. Necessário porque as keys de lista embutem a query string
+ * (`"/api/patients?q=…&page=1"`), então `invalidateQueries({ queryKey:
+ * ["/api/patients"] })` NUNCA casa — o React Query compara elemento a
+ * elemento, e "/api/patients" !== "/api/patients?q=…". Com staleTime:
+ * Infinity, a lista ficava obsoleta para sempre após criar/importar/editar.
+ */
+export function invalidateByPathPrefix(...prefixes: string[]): Promise<void> {
+  return queryClient.invalidateQueries({
+    predicate: (query) => {
+      const first = String(query.queryKey[0] ?? "");
+      return prefixes.some((p) => first === p || first.startsWith(`${p}?`) || first.startsWith(`${p}/`));
+    },
+  });
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

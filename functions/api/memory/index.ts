@@ -1,5 +1,6 @@
 import { memoryNoteInputSchema } from "../../../shared/memory";
 import { canWriteClinicalData, getContextUser, getPatientAccess, isAdmin } from "../auth/_authorization";
+import { escapeLike } from "../patients/_contract";
 
 interface Env { DB?: D1Database }
 
@@ -36,7 +37,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!user) return error("Não autenticado.", "UNAUTHENTICATED", 401);
   const url = new URL(context.request.url);
   const patientId = url.searchParams.get("patient_id")?.trim() ?? "";
-  const query = (url.searchParams.get("q") ?? "").trim();
+  // Cap de 300 chars (mesmo de memory/search.ts) e escape de %/_ — sem o
+  // escape, "100_mg" casava "1000mg" e "q=%" devolvia todas as notas.
+  const query = (url.searchParams.get("q") ?? "").trim().slice(0, 300);
+  const queryLike = query ? `%${escapeLike(query)}%` : "";
   if (patientId) {
     const access = await getPatientAccess(context.env.DB, patientId, user);
     if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
@@ -47,9 +51,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   await ensureSchema(context.env.DB);
   const result = await context.env.DB.prepare(`SELECT id, patient_id, title, content, category, source, tags, author_user_id, created_at, updated_at
     FROM clinical_memory_notes_demo WHERE is_demo = 1 AND (? = '' OR patient_id = ?)
-      AND (? = '' OR title LIKE ? OR content LIKE ? OR tags LIKE ?)
+      AND (? = '' OR title LIKE ? ESCAPE '\\' OR content LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\')
     ORDER BY updated_at DESC LIMIT 100`)
-    .bind(patientId, patientId, query, `%${query}%`, `%${query}%`, `%${query}%`).all<Row>();
+    .bind(patientId, patientId, query, queryLike, queryLike, queryLike).all<Row>();
   const data = (result.results ?? []).map(present);
   return json({ data, total: data.length, mode: "demo-db" });
 };

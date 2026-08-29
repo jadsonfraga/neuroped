@@ -39,13 +39,15 @@ function writeList(key: string, list: string[], eventName: string) {
   }
 }
 
-function useSyncedList(key: string, eventName: string): [string[], (next: string[]) => void] {
+function useSyncedList(key: string, eventName: string): [string[], (compute: (prev: string[]) => string[]) => void] {
   const [list, setList] = useState<string[]>(() => readList(key));
 
   useEffect(() => {
     const refresh = () => setList(readList(key));
     const onStorage = (e: StorageEvent) => {
-      if (e.key === key) refresh();
+      // e.key === null significa localStorage.clear() em outra aba (wipe de
+      // segurança) — a lista desta aba também precisa refletir isso.
+      if (e.key === key || e.key === null) refresh();
     };
     window.addEventListener(eventName, refresh);
     window.addEventListener("storage", onStorage);
@@ -55,8 +57,12 @@ function useSyncedList(key: string, eventName: string): [string[], (next: string
     };
   }, [key, eventName]);
 
+  // Forma funcional lendo o storage no momento da escrita: dois toggles no
+  // mesmo tick (double-tap, loop de "favoritar seleção") partiam do mesmo
+  // snapshot e o último sobrescrevia o primeiro.
   const update = useCallback(
-    (next: string[]) => {
+    (compute: (prev: string[]) => string[]) => {
+      const next = compute(readList(key));
       writeList(key, next, eventName);
       setList(next);
     },
@@ -73,11 +79,11 @@ export function useFavorites() {
 
   const toggle = useCallback(
     (id: string) => {
-      setFavorites(
-        favorites.includes(id) ? favorites.filter((x) => x !== id) : [...favorites, id],
+      setFavorites((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
       );
     },
-    [favorites, setFavorites],
+    [setFavorites],
   );
 
   const getFavorites = useCallback(() => favorites, [favorites]);
@@ -90,9 +96,9 @@ export function useRecents() {
 
   const pushRecent = useCallback(
     (id: string) => {
-      setRecents([id, ...recents.filter((x) => x !== id)].slice(0, RECENTS_MAX));
+      setRecents((prev) => [id, ...prev.filter((x) => x !== id)].slice(0, RECENTS_MAX));
     },
-    [recents, setRecents],
+    [setRecents],
   );
 
   const getRecents = useCallback(() => recents, [recents]);

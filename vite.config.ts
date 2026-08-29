@@ -83,6 +83,11 @@ export default defineConfig(({ mode }) => {
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
+  // envDir default = root (client/), onde NÃO há .env — o .env documentado em
+  // .env.example vive na raiz do repo. Sem isto, import.meta.env.VITE_* ficava
+  // undefined em builds locais (VITE_API_URL colapsava para "" e toda chamada
+  // ia para a origem da página), enquanto o loadEnv acima lia a raiz e mascarava.
+  envDir: import.meta.dirname,
   // base "./" usa caminhos relativos — funciona no GitHub Pages em qualquer subpath
   // O roteamento é hash-based (wouter + useHashLocation), portanto não precisa de basename absoluto
   base: "./",

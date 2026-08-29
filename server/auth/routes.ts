@@ -24,6 +24,13 @@ import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { loginRateLimit } from "../middleware/security.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
+/**
+ * Janela em que a reapresentação de um refresh token já rotacionado é tratada
+ * como corrida benigna do próprio cliente (duas chamadas simultâneas), não
+ * como roubo. Fora dela, a família inteira de sessões é revogada.
+ */
+const REFRESH_REUSE_GRACE_MS = 10_000;
+
 export function registerAuthRoutes(app: Express): void {
   // ----- Register -----
   app.post("/api/auth/register", requireAuth, requireAdmin, async (req: Request, res: Response) => {
@@ -86,13 +93,24 @@ export function registerAuthRoutes(app: Express): void {
         if (user && user.isActive && !locked && !valid) {
           const now = new Date().toISOString();
           const lockUntil = calculateLockoutUntil();
+          // Lockout expirado zera a contagem: sem isso, um erro a cada 15min
+          // manteria a conta travada para sempre (5+1 >= 5 re-bloqueia), e um
+          // lockedUntil expirado retido re-zeraria a contagem a cada tentativa.
           const updated = db.update(users)
             .set({
-              failedLoginAttempts: sql`COALESCE(${users.failedLoginAttempts}, 0) + 1`,
+              failedLoginAttempts: sql`CASE
+                WHEN ${users.lockedUntil} IS NOT NULL AND julianday(${users.lockedUntil}) <= julianday(${now})
+                THEN 1
+                ELSE COALESCE(${users.failedLoginAttempts}, 0) + 1
+              END`,
               lockedUntil: sql`CASE
-                WHEN COALESCE(${users.failedLoginAttempts}, 0) + 1 >= ${PASSWORD_POLICY.maxFailedAttempts}
+                WHEN (CASE
+                  WHEN ${users.lockedUntil} IS NOT NULL AND julianday(${users.lockedUntil}) <= julianday(${now})
+                  THEN 1
+                  ELSE COALESCE(${users.failedLoginAttempts}, 0) + 1
+                END) >= ${PASSWORD_POLICY.maxFailedAttempts}
                 THEN ${lockUntil}
-                ELSE ${users.lockedUntil}
+                ELSE NULL
               END`,
             })
             .where(and(
@@ -228,19 +246,31 @@ export function registerAuthRoutes(app: Express): void {
       if (!stored) {
         const reused = db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash)).get();
         if (reused?.revokedAt) {
-          db.update(refreshTokens)
-            .set({ revokedAt: new Date().toISOString() })
-            .where(and(eq(refreshTokens.userId, reused.userId), isNull(refreshTokens.revokedAt)))
-            .run();
+          // Janela de graça: dois refreshes simultâneos do mesmo cliente são
+          // rotina (duas chamadas em voo recebendo 401 juntas). Rotação há
+          // poucos segundos com sucessor registrado = corrida benigna; só a
+          // reapresentação de um token revogado há mais tempo indica roubo e
+          // justifica revogar a família inteira.
+          const revokedAgeMs = Date.now() - new Date(reused.revokedAt).getTime();
+          const benignRace = reused.rotatedToTokenId != null
+            && Number.isFinite(revokedAgeMs)
+            && revokedAgeMs >= 0
+            && revokedAgeMs < REFRESH_REUSE_GRACE_MS;
+          if (!benignRace) {
+            db.update(refreshTokens)
+              .set({ revokedAt: new Date().toISOString() })
+              .where(and(eq(refreshTokens.userId, reused.userId), isNull(refreshTokens.revokedAt)))
+              .run();
 
-          await logAudit({
-            eventType: "auth.token.refresh",
-            context: { ...ctx, userId: reused.userId },
-            targetType: "user",
-            targetId: reused.userId,
-            metadata: { reason: "refresh_reuse_detected" },
-            success: false,
-          });
+            await logAudit({
+              eventType: "auth.token.refresh",
+              context: { ...ctx, userId: reused.userId },
+              targetType: "user",
+              targetId: reused.userId,
+              metadata: { reason: "refresh_reuse_detected" },
+              success: false,
+            });
+          }
         }
         return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
       }
@@ -287,16 +317,16 @@ export function registerAuthRoutes(app: Express): void {
           return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
         }
         if (code === "REFRESH_RACE") {
-          db.update(refreshTokens)
-            .set({ revokedAt: new Date().toISOString() })
-            .where(and(eq(refreshTokens.userId, stored.userId), isNull(refreshTokens.revokedAt)))
-            .run();
+          // O token era válido na entrada e foi rotacionado dentro da própria
+          // janela desta requisição (milissegundos) — corrida benigna entre
+          // duas chamadas do mesmo cliente. Devolve 401 para este perdedor
+          // sem derrubar a sessão recém-emitida pelo vencedor.
           await logAudit({
             eventType: "auth.token.refresh",
             context: { ...ctx, userId: stored.userId },
             targetType: "user",
             targetId: stored.userId,
-            metadata: { reason: "refresh_race_or_reuse_detected" },
+            metadata: { reason: "refresh_concurrent_race" },
             success: false,
           });
           return res.status(401).json({ error: "Refresh token invalido", code: "REFRESH_INVALID" });
@@ -374,7 +404,11 @@ export function registerAuthRoutes(app: Express): void {
   });
 
   // ----- Verify PIN (bridge PIN â†’ JWT para legado mobile/offline) -----
-  app.post("/api/auth/verify-pin", loginRateLimit, async (req: Request, res: Response) => {
+  // Sem loginRateLimit aqui: o endpoint responde 410 fixo, e como 410 >= 400
+  // não é isento por skipSuccessfulRequests — clients legados chamando isto
+  // queimariam o orçamento de login de todo o NAT da clínica. O rate limit
+  // global de /api já cobre abuso.
+  app.post("/api/auth/verify-pin", async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
     await logAudit({
       eventType: "auth.pin.failure",

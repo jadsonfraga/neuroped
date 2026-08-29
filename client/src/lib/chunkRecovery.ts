@@ -1,6 +1,9 @@
 const RELOAD_MARKER = "neuroped:chunk-recovery-at";
 const RELOAD_COOLDOWN_MS = 60_000;
-const HEALTHY_BOOT_MS = 30_000;
+// Deve ser >= RELOAD_COOLDOWN_MS: o marcador que impõe o cooldown era
+// apagado aos 30s, encurtando o cooldown real e permitindo loop de reload
+// num deploy com chunk genuinamente 404.
+const HEALTHY_BOOT_MS = RELOAD_COOLDOWN_MS;
 
 let installed = false;
 

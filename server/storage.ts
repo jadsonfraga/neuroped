@@ -255,7 +255,7 @@ sqlite.exec(`
 export interface IStorage {
   saveResult(result: InsertScaleResult): ScaleResult;
   getResults(): ScaleResult[];
-  getResultsAccessibleBy(user: { id: string; role: string }, limit?: number): ScaleResult[];
+  getResultsAccessibleBy(user: { id: string; role: string }, limit?: number, offset?: number): ScaleResult[];
   getResult(id: string): ScaleResult | undefined;
   getResultsByPatient(patientId: string, limit?: number, offset?: number): ScaleResult[];
   countResultsByPatient(patientId: string): number;
@@ -285,9 +285,9 @@ export class SqliteStorage implements IStorage {
    * duas contas, um paciente cada, resultado vinculado e órfão — cada conta
    * só vê o que é dela.
    */
-  getResultsAccessibleBy(user: { id: string; role: string }, limit = 50): ScaleResult[] {
+  getResultsAccessibleBy(user: { id: string; role: string }, limit = 50, offset = 0): ScaleResult[] {
     if (user.role === "admin") {
-      return db.select().from(scaleResults).orderBy(desc(scaleResults.createdAt)).limit(limit).all();
+      return db.select().from(scaleResults).orderBy(desc(scaleResults.createdAt)).limit(limit).offset(offset).all();
     }
     return db
       .select(getTableColumns(scaleResults))
@@ -301,6 +301,7 @@ export class SqliteStorage implements IStorage {
       )
       .orderBy(desc(scaleResults.createdAt))
       .limit(limit)
+      .offset(offset)
       .all() as ScaleResult[];
   }
 

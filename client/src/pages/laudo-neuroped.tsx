@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { escapeHtml } from "@/lib/htmlEscape";
+import { getRouteQueryParam } from "@/lib/utils";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { gerarEValidar, type EntradaLaudo } from "@/lib/laudo/gerador";
 import { laudoParaTexto } from "@/lib/laudo/paraTexto";
@@ -167,9 +168,7 @@ export default function LaudoNeuropedPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  const patientId = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("patientId")
-    : null;
+  const patientId = getRouteQueryParam("patientId") || null;
 
   const configurado = useMemo(() => {
     return (

@@ -1,7 +1,7 @@
 import { useState, useId } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, invalidateByPathPrefix } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,9 +64,12 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
   const [savedPatientId, setSavedPatientId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // limit=100: sem parâmetro, o runtime Cloudflare devolvia só 20 pacientes e
+  // o 21º ficava inselecionável no dropdown, empurrando o usuário para
+  // "+ Criar novo" e duplicando o prontuário. (Node aceita 100; CF clampa em 50.)
   const patientQueryKey = isRemoteClinical
     ? `/api/live/patients?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
-    : "/api/patients";
+    : "/api/patients?limit=100&page=1";
   const {
     data: patientsRaw,
     isLoading: loadingPatients,
@@ -100,7 +103,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     },
     onSuccess: () => {
       setErrorMessage(null);
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      void invalidateByPathPrefix("/api/patients", "/api/live/patients");
     },
     onError: () => {
       setErrorMessage(
@@ -315,6 +318,10 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
           newPatientName.trim(),
         );
         patientId = patient.id;
+        // Fixa o paciente recém-criado na seleção: se o salvamento do
+        // resultado falhar agora, o retry reutiliza este cadastro em vez de
+        // criar um "João" duplicado a cada clique em Salvar.
+        setSelectedPatientId(patient.id);
       } catch {
         return;
       }

@@ -307,7 +307,9 @@ async function getDashboard(
     metrics,
     access: principal,
     staff: principal.canConfigure ? await listOperationsStaff(db, provider.id) : [],
-    audit: await listOperationsAudit(db, provider.id, 40),
+    // Mesma barreira de reviews/staff: recepção delegada (canConfigure=false)
+    // não recebe a trilha administrativa completa do profissional.
+    audit: principal.canConfigure ? await listOperationsAudit(db, provider.id, 40) : [],
   };
 }
 

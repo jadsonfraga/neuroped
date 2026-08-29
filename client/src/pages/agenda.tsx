@@ -116,7 +116,15 @@ export default function AgendaPage() {
   const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
   const data = dashboard.data;
   const [patientSearch, setPatientSearch] = useState("");
-  const patientSearchParam = encodeURIComponent(patientSearch.trim());
+  // Debounce de 250ms (mesmo padrão de pacientes.tsx): sem ele, cada tecla
+  // vira uma request e uma entrada permanente no cache do React Query — e é o
+  // caminho mais curto para estourar o rate limit no runtime Cloudflare.
+  const [patientSearchDebounced, setPatientSearchDebounced] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setPatientSearchDebounced(patientSearch.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [patientSearch]);
+  const patientSearchParam = encodeURIComponent(patientSearchDebounced);
   const patientsQuery = useQuery<{ data: Array<{ id: string; name: string; birthDate?: string | null }>; total?: number }>({
     queryKey: [`/api/patients?limit=50&page=1&q=${patientSearchParam}`],
     enabled: Boolean(data?.access.canConfigure),
@@ -221,7 +229,12 @@ export default function AgendaPage() {
   }
 
   const canConfigure = data.access.canConfigure;
-  const publicHref = `/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
+  // data.profile pode faltar (profissional sem perfil público salvo) — o guard
+  // no effect acima já trata como opcional; um deref direto aqui derrubava a
+  // página inteira com TypeError depois dos early-returns de loading/erro.
+  const publicHref = data.profile
+    ? `/agendar?provider=${encodeURIComponent(data.profile.slug)}`
+    : "/agendar";
 
   return (
     <div className="space-y-6 pb-16">
@@ -434,7 +447,7 @@ export default function AgendaPage() {
 
         {canConfigure && (
           <TabsContent value="publico">
-            <Card><CardContent className="space-y-5 p-5 sm:p-6"><div className="flex items-start gap-3"><ShieldCheck className="mt-1 h-5 w-5 text-primary" /><div><h2 className="font-bold">Perfil e autoagendamento</h2><p className="text-sm text-muted-foreground">O booking público só abre horários quando você o ativa. Contatos são cifrados antes de persistir; não há campo livre para hipótese diagnóstica.</p></div></div><div className="grid gap-3 md:grid-cols-2"><Field label="Nome público"><Input value={profile.displayName} onChange={(e) => setProfile((p) => ({ ...p, displayName: e.target.value }))} /></Field><Field label="Especialidade"><Input value={profile.specialty} onChange={(e) => setProfile((p) => ({ ...p, specialty: e.target.value }))} /></Field><Field label="Local"><Input value={profile.locationLabel} onChange={(e) => setProfile((p) => ({ ...p, locationLabel: e.target.value }))} /></Field><Field label="Endereço público"><Input value={profile.slug} onChange={(e) => setProfile((p) => ({ ...p, slug: e.target.value.toLowerCase() }))} /></Field></div><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: data.profile.bookingEnabled }, "Perfil salvo.")}>Salvar perfil</Button><Button variant={data.profile.bookingEnabled ? "destructive" : "default"} disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: !data.profile.bookingEnabled }, data.profile.bookingEnabled ? "Agendamento público pausado." : "Agendamento público ativado.")}>{data.profile.bookingEnabled ? "Pausar agendamento" : "Ativar agendamento"}</Button><Button asChild variant="outline"><Link href={publicHref}>Abrir página pública</Link></Button></div>{!data.services.some((item) => item.active && item.publicVisible) || data.rules.length === 0 ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">Antes de ativar, cadastre pelo menos um serviço ativo e uma regra de disponibilidade.</p> : null}</CardContent></Card>
+            <Card><CardContent className="space-y-5 p-5 sm:p-6"><div className="flex items-start gap-3"><ShieldCheck className="mt-1 h-5 w-5 text-primary" /><div><h2 className="font-bold">Perfil e autoagendamento</h2><p className="text-sm text-muted-foreground">O booking público só abre horários quando você o ativa. Contatos são cifrados antes de persistir; não há campo livre para hipótese diagnóstica.</p></div></div><div className="grid gap-3 md:grid-cols-2"><Field label="Nome público"><Input value={profile.displayName} onChange={(e) => setProfile((p) => ({ ...p, displayName: e.target.value }))} /></Field><Field label="Especialidade"><Input value={profile.specialty} onChange={(e) => setProfile((p) => ({ ...p, specialty: e.target.value }))} /></Field><Field label="Local"><Input value={profile.locationLabel} onChange={(e) => setProfile((p) => ({ ...p, locationLabel: e.target.value }))} /></Field><Field label="Endereço público"><Input value={profile.slug} onChange={(e) => setProfile((p) => ({ ...p, slug: e.target.value.toLowerCase() }))} /></Field></div><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: data.profile?.bookingEnabled ?? false }, "Perfil salvo.")}>Salvar perfil</Button><Button variant={data.profile?.bookingEnabled ? "destructive" : "default"} disabled={busy} onClick={() => mutate({ action: "upsert_profile", ...profile, bookingEnabled: !data.profile?.bookingEnabled }, data.profile?.bookingEnabled ? "Agendamento público pausado." : "Agendamento público ativado.")}>{data.profile?.bookingEnabled ? "Pausar agendamento" : "Ativar agendamento"}</Button><Button asChild variant="outline"><Link href={publicHref}>Abrir página pública</Link></Button></div>{!data.services.some((item) => item.active && item.publicVisible) || data.rules.length === 0 ? <p className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">Antes de ativar, cadastre pelo menos um serviço ativo e uma regra de disponibilidade.</p> : null}</CardContent></Card>
           </TabsContent>
         )}
 

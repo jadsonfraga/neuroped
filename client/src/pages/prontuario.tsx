@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, useState, useCallback, useEffect, type ReactElement, type ReactNode } from "react";
+import { cloneElement, isValidElement, useState, useCallback, useEffect, useRef, type ReactElement, type ReactNode } from "react";
 import {
   User, Users, Baby, Stethoscope, FileText, PlusCircle, Trash2,
   Activity, MessageSquare, Pill, Dumbbell, FlaskConical,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { softTap, softSuccess, softError, softBell } from "@/lib/softSounds";
+import { getRouteQueryParam } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
 import { apiRequest } from "@/lib/queryClient";
@@ -143,8 +144,7 @@ const marcoKeys: (keyof Marcos)[] = [
 ];
 
 function patientIdFromQuery(): string {
-  if (typeof window === "undefined") return "";
-  return new URLSearchParams(window.location.search).get("patientId")?.trim() ?? "";
+  return getRouteQueryParam("patientId");
 }
 
 function parseClinicalNote(note: unknown): Record<string, unknown> {
@@ -600,6 +600,12 @@ export default function ProntuarioPage() {
   const [recordLoading, setRecordLoading] = useState(Boolean(patientId));
   const [recordSaving, setRecordSaving] = useState(false);
   const [eventIds, setEventIds] = useState<Record<string, string>>({});
+  // Guard de edição: o effect de carga re-executa quando isRemoteClinical /
+  // liveContextReady mudam (a sessão termina de resolver) e reaplicava os
+  // valores do servidor por cima do que o usuário já tinha digitado —
+  // minutos de anamnese perdidos sem aviso. Com o guard, a carga só
+  // sobrescreve um formulário intocado.
+  const formDirtyRef = useRef(false);
 
   useEffect(() => {
     if (!patientId || (isRemoteClinical && !liveContextReady)) return;
@@ -616,7 +622,9 @@ export default function ProntuarioPage() {
       apiRequest("GET", eventsUrl).then((response) => response.json()),
     ]).then(([patientPayload, eventPayload]) => {
       if (cancelled) return;
-      const patient = isRemoteClinical ? { ...(patientPayload?.profile ?? {}), ...patientPayload } : patientPayload;
+      const patient = isRemoteClinical
+        ? { ...(patientPayload?.profile ?? {}), ...(patientPayload ?? {}) }
+        : (patientPayload ?? {});
       const events = Array.isArray(eventPayload?.data)
         ? (eventPayload.data as any[]).map((event) => isRemoteClinical
           ? ({ ...event, data: event.payload ?? {}, note: event.encounterId ?? "" } as StoredClinicalEvent)
@@ -679,6 +687,13 @@ export default function ProntuarioPage() {
         }
       }
 
+      if (formDirtyRef.current) {
+        // Há texto não salvo do usuário: preserva o formulário e aplica só o
+        // mapa de ids de eventos (necessário para o save direcionar updates).
+        setEventIds(nextIds);
+        setRecordLoading(false);
+        return;
+      }
       setId(nextId);
       setAnamnese(nextAnamnese);
       setMarcos(nextMarcos);
@@ -696,30 +711,42 @@ export default function ProntuarioPage() {
   }, [activeClinicId, isRemoteClinical, liveContextReady, patientId, toast]);
 
   // ── updaters ──
-  const updId = useCallback((field: keyof Identificacao, val: string) =>
-    setId(p => ({ ...p, [field]: val })), []);
-  const updAn = useCallback((field: keyof Anamnese, val: string) =>
-    setAnamnese(p => ({ ...p, [field]: val })), []);
-  const updMarco = useCallback((field: keyof Marcos, val: string) =>
-    setMarcos(p => ({ ...p, [field]: val })), []);
+  const updId = useCallback((field: keyof Identificacao, val: string) => {
+    formDirtyRef.current = true;
+    setId(p => ({ ...p, [field]: val }));
+  }, []);
+  const updAn = useCallback((field: keyof Anamnese, val: string) => {
+    formDirtyRef.current = true;
+    setAnamnese(p => ({ ...p, [field]: val }));
+  }, []);
+  const updMarco = useCallback((field: keyof Marcos, val: string) => {
+    formDirtyRef.current = true;
+    setMarcos(p => ({ ...p, [field]: val }));
+  }, []);
 
   // ── medication handlers ──
-  const addMed = () => setMedicacoes(p => [...p, emptyMed()]);
-  const updMed = (id: string, field: keyof Medicacao, val: string) =>
+  const addMed = () => { formDirtyRef.current = true; setMedicacoes(p => [...p, emptyMed()]); };
+  const updMed = (id: string, field: keyof Medicacao, val: string) => {
+    formDirtyRef.current = true;
     setMedicacoes(p => p.map(m => m.id === id ? { ...m, [field]: val } : m));
-  const removeMed = (id: string) => setMedicacoes(p => p.filter(m => m.id !== id));
+  };
+  const removeMed = (id: string) => { formDirtyRef.current = true; setMedicacoes(p => p.filter(m => m.id !== id)); };
 
   // ── therapy handlers ──
-  const addTer = () => setTerapias(p => [...p, emptyTerapia()]);
-  const updTer = (id: string, field: keyof Terapia, val: string) =>
+  const addTer = () => { formDirtyRef.current = true; setTerapias(p => [...p, emptyTerapia()]); };
+  const updTer = (id: string, field: keyof Terapia, val: string) => {
+    formDirtyRef.current = true;
     setTerapias(p => p.map(t => t.id === id ? { ...t, [field]: val } : t));
-  const removeTer = (id: string) => setTerapias(p => p.filter(t => t.id !== id));
+  };
+  const removeTer = (id: string) => { formDirtyRef.current = true; setTerapias(p => p.filter(t => t.id !== id)); };
 
   // ── exam handlers ──
-  const addExame = () => setExames(p => [...p, emptyExame()]);
-  const updExame = (id: string, field: keyof Exame, val: string) =>
+  const addExame = () => { formDirtyRef.current = true; setExames(p => [...p, emptyExame()]); };
+  const updExame = (id: string, field: keyof Exame, val: string) => {
+    formDirtyRef.current = true;
     setExames(p => p.map(e => e.id === id ? { ...e, [field]: val } : e));
-  const removeExame = (id: string) => setExames(p => p.filter(e => e.id !== id));
+  };
+  const removeExame = (id: string) => { formDirtyRef.current = true; setExames(p => p.filter(e => e.id !== id)); };
 
   // ── report ──
   const reportText = buildReport(identificacao, anamnese, marcos, medicacoes, terapias, exames);
@@ -904,6 +931,7 @@ export default function ProntuarioPage() {
       }
 
       setEventIds(nextIds);
+      formDirtyRef.current = false;
       setRecordSaving(false);
       softSuccess();
       haptic.success();

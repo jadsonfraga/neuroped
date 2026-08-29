@@ -56,17 +56,31 @@ export function patientToStorage(input: PatientApi & { ownerUserId?: string | nu
 }
 
 /**
+ * decrypt() lança CryptoIntegrityError em payload corrompido ou chave mestra
+ * trocada. Aqui a falha é por campo: um registro ilegível não pode derrubar a
+ * listagem inteira de pacientes com 500 — degrada só o campo, com log.
+ */
+function safeDecrypt(payload: string | null, rowId: string, field: string): string | null {
+  try {
+    return decrypt(payload);
+  } catch (e) {
+    console.error(`[patientCrypto] falha ao decriptar ${field} do paciente ${rowId}:`, e);
+    return null;
+  }
+}
+
+/**
  * Recebe registro do banco e devolve struct legivel ao usuario.
  */
 export function patientToPlaintext(row: Patient): PatientPlaintext {
   return {
     id: row.id,
-    name: decrypt(row.nameEncrypted) ?? row.name ?? "",
+    name: safeDecrypt(row.nameEncrypted, row.id, "name") ?? row.name ?? "[registro ilegível]",
     birthDate: row.birthDate,
-    cpf: decrypt(row.cpfEncrypted),
+    cpf: safeDecrypt(row.cpfEncrypted, row.id, "cpf"),
     cid: row.cid,
     cidDescription: row.cidDescription,
-    notes: decrypt(row.notesEncrypted) ?? row.notes,
+    notes: safeDecrypt(row.notesEncrypted, row.id, "notes") ?? row.notes,
     isAnonymized: row.isAnonymized,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

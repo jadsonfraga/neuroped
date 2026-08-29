@@ -31,31 +31,44 @@ const PRECACHE_ASSETS = Array.isArray(self.__NEUROPED_PRECACHE_ASSETS__)
   ? self.__NEUROPED_PRECACHE_ASSETS__
   : [];
 
-// App shell — apenas recursos estáticos sem dados clínicos
-const APP_SHELL = [
+// App shell — apenas recursos estáticos sem dados clínicos.
+// CORE é obrigatório (falha aborta a instalação); os chunks hasheados são
+// oportunistas: um único 5xx transitório entre dezenas de fetches paralelos
+// não pode brickar o update do SW — como o sw.js é byte-idêntico entre
+// deploys, uma instalação abortada só seria retentada no PRÓXIMO deploy,
+// prendendo o usuário na versão antiga indefinidamente.
+const APP_SHELL_CORE = [
   "./",
   "./index.html",
   "./manifest.json",
   "./offline.html",
   "./icon-192.png",
   "./icon-512.png",
-  ...PRECACHE_ASSETS,
 ];
+const APP_SHELL = [...APP_SHELL_CORE, ...PRECACHE_ASSETS];
 
 // ---------- Install ----------
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(
-        APP_SHELL.map(async (asset) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.all(
+        APP_SHELL_CORE.map(async (asset) => {
           const response = await fetch(asset, { cache: "reload" });
           if (!response.ok) {
             throw new Error(`Falha ao instalar recurso obrigatório: ${asset}`);
           }
           await cache.put(asset, response);
         }),
-      ),
-    ),
+      );
+      // Chunks hasheados: best-effort. Um chunk que falhar aqui é buscado
+      // da rede (e cacheado) no primeiro uso pelo handler de fetch.
+      await Promise.allSettled(
+        PRECACHE_ASSETS.map(async (asset) => {
+          const response = await fetch(asset, { cache: "reload" });
+          if (response.ok) await cache.put(asset, response);
+        }),
+      );
+    }),
   );
   self.skipWaiting();
 });
@@ -177,16 +190,37 @@ async function cacheFirst(request) {
 
     // Compatibilidade com uma aba que ainda executa o build anterior: um
     // chunk hasheado antigo pode já ter saído da origem, mas continua no único
-    // cache legado preservado durante a ativação. Recursos não hasheados nunca
-    // usam esse atalho quando a rede respondeu com a versão atual.
-    const legacy = await caches.match(request);
+    // cache legado preservado durante a ativação.
+    const legacy = await matchWithLegacyFallback(cache, request);
     return legacy ?? response;
   } catch {
-    const legacy = await caches.match(request);
+    const legacy = await matchWithLegacyFallback(cache, request);
     if (legacy) return legacy;
     // Recurso indisponível offline — 408 para imagens, evita crash.
     return new Response("", { status: 408, statusText: "Request Timeout" });
   }
+}
+
+/**
+ * Busca cross-cache (caches.match) APENAS para assets hasheados: o hash no
+ * nome torna a URL content-addressed, então qualquer cache que a contenha tem
+ * os bytes certos. Para caminhos NÃO hasheados, um cache retido de outro build
+ * (ex.: rollback com o cache do build mais novo ainda vivo) teria conteúdo
+ * diferente sob a mesma URL — nesses, só o cache do build atual vale.
+ */
+function isHashedAssetUrl(request) {
+  try {
+    return new URL(request.url).pathname.includes("/assets/");
+  } catch {
+    return false;
+  }
+}
+
+async function matchWithLegacyFallback(cache, request) {
+  const current = await cache.match(request);
+  if (current) return current;
+  if (isHashedAssetUrl(request)) return caches.match(request);
+  return undefined;
 }
 
 /**
@@ -214,12 +248,20 @@ async function networkFirst(request) {
     if (cached) return cached;
   }
 
-  // Fallback offline: serve index.html para navegação SPA
-  const offlinePage = await cache.match("./offline.html");
-  if (offlinePage && request.mode === "navigate") return offlinePage;
-
-  const fallback = await cache.match("./index.html");
-  if (fallback) return fallback;
+  // Fallback offline: só NAVEGAÇÃO recebe HTML. Servir index.html (200,
+  // text/html) para um fetch de dados (.json etc.) passava no `if (res.ok)`
+  // do chamador e explodia depois no response.json() com SyntaxError.
+  if (request.mode === "navigate") {
+    const offlinePage = await cache.match("./offline.html");
+    if (offlinePage) return offlinePage;
+    const fallback = await cache.match("./index.html");
+    if (fallback) return fallback;
+  } else {
+    return new Response(JSON.stringify({ error: "offline", code: "OFFLINE" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   return new Response(
     `<!DOCTYPE html>

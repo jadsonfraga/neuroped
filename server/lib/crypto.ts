@@ -96,29 +96,58 @@ function deriveKey(salt: Buffer): Buffer {
 }
 
 /**
- * Criptografa uma string e retorna payload em base64 pronto para gravar.
+ * Envelope v2: uma única chave por processo, derivada com salt FIXO — a PBKDF2
+ * de 100k iterações roda uma vez, não uma vez por campo. O v1 (salt aleatório
+ * por campo) custava ~100ms síncronos por decrypt; uma listagem de 100
+ * pacientes × 3 campos travava o event loop por ~30s. GCM com IV aleatório
+ * por mensagem é seguro sob chave única (limite ~2^32 mensagens).
+ * Formato v2: "v2:" + base64( iv(12) | tag(16) | ciphertext ).
+ * Payloads v1 (sem prefixo) continuam legíveis via cache por salt.
+ */
+const V2_PREFIX = "v2:";
+const V2_FIXED_SALT = Buffer.from("neuroped-field-encryption-v2", "utf8");
+let v2Key: Buffer | null = null;
+
+function getV2Key(): Buffer {
+  if (!v2Key) {
+    v2Key = crypto.pbkdf2Sync(getMasterKey(), V2_FIXED_SALT, PBKDF2_ITERATIONS, KEY_LEN, PBKDF2_DIGEST);
+  }
+  return v2Key;
+}
+
+/**
+ * Criptografa uma string e retorna payload v2 pronto para gravar.
  * Retorna null para entrada nula/vazia (politica de minimizacao).
  */
 export function encrypt(plaintext: string | null | undefined): string | null {
   if (plaintext == null || plaintext === "") return null;
 
-  const salt = crypto.randomBytes(SALT_LEN);
   const iv = crypto.randomBytes(IV_LEN);
-  const key = deriveKey(salt);
-
-  const cipher = crypto.createCipheriv(ALGO, key, iv);
+  const cipher = crypto.createCipheriv(ALGO, getV2Key(), iv);
   const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
 
-  return Buffer.concat([salt, iv, tag, ct]).toString("base64");
+  return V2_PREFIX + Buffer.concat([iv, tag, ct]).toString("base64");
 }
 
 /**
- * Descriptografa um payload produzido por encrypt(). Lanca CryptoIntegrityError
- * se o auth tag nao bater (indica adulteracao ou chave incorreta).
+ * Descriptografa payloads v2 ("v2:...") e v1 (legado, salt por campo).
+ * Lanca CryptoIntegrityError se o auth tag nao bater (adulteracao ou chave
+ * mestra incorreta).
  */
 export function decrypt(payload: string | null | undefined): string | null {
   if (payload == null || payload === "") return null;
+
+  if (payload.startsWith(V2_PREFIX)) {
+    const buf = Buffer.from(payload.slice(V2_PREFIX.length), "base64");
+    if (buf.length < IV_LEN + TAG_LEN + 1) {
+      throw new CryptoIntegrityError("Payload criptografado v2 muito curto");
+    }
+    const iv = buf.subarray(0, IV_LEN);
+    const tag = buf.subarray(IV_LEN, IV_LEN + TAG_LEN);
+    const ct = buf.subarray(IV_LEN + TAG_LEN);
+    return decryptWithKey(getV2Key(), iv, tag, ct);
+  }
 
   const buf = Buffer.from(payload, "base64");
   if (buf.length < SALT_LEN + IV_LEN + TAG_LEN + 1) {
@@ -130,8 +159,10 @@ export function decrypt(payload: string | null | undefined): string | null {
   const tag = buf.subarray(SALT_LEN + IV_LEN, SALT_LEN + IV_LEN + TAG_LEN);
   const ct = buf.subarray(SALT_LEN + IV_LEN + TAG_LEN);
 
-  const key = deriveKey(salt);
+  return decryptWithKey(deriveKey(salt), iv, tag, ct);
+}
 
+function decryptWithKey(key: Buffer, iv: Buffer, tag: Buffer, ct: Buffer): string {
   try {
     const decipher = crypto.createDecipheriv(ALGO, key, iv);
     decipher.setAuthTag(tag);

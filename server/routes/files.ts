@@ -201,7 +201,10 @@ export function registerFileRoutes(app: Express): void {
    * Body: { sha256? }
    * Verifica que o objeto realmente foi enviado ao bucket.
    */
-  app.post("/api/files/:id/confirm", requireAuth, async (req: Request, res: Response) => {
+  // writeRateLimit: cada confirm re-baixa o objeto inteiro do bucket para
+  // calcular sha256 — sem limite, uma conta comum gera egress e hashing
+  // contínuos repetindo o confirm de um arquivo grande.
+  app.post("/api/files/:id/confirm", requireAuth, writeRateLimit, async (req: Request, res: Response) => {
     const ctx = getAuditContextFromRequest(req);
     try {
       const file = db.select().from(filesTable).where(eq(filesTable.id, oneParam(req.params.id))).get();

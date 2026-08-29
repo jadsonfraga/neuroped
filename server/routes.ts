@@ -71,16 +71,19 @@ function normalizeScaleResponses(
     }
   }
   if (!Array.isArray(parsed)) return [];
+  // Item malformado é PULADO, não aborta a lista: um único item ruim gravado
+  // por um build antigo apagava as outras 19 respostas válidas do registro
+  // clínico na resposta da API (HTTP 200 com responses: []).
   const normalized: Array<{ question: string; answer: string }> = [];
   for (const item of parsed) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
     const questionValue = (item as Record<string, unknown>).question;
     const answerValue = (item as Record<string, unknown>).answer;
-    if (typeof questionValue !== "string") return [];
-    if (answerValue != null && typeof answerValue !== "string") return [];
+    if (typeof questionValue !== "string") continue;
+    if (answerValue != null && typeof answerValue !== "string") continue;
     const question = questionValue.trim();
     const answer = typeof answerValue === "string" ? answerValue.trim() : "";
-    if (!question) return [];
+    if (!question) continue;
     normalized.push({ question, answer: answer || "Não respondida" });
   }
   return normalized;
@@ -171,26 +174,50 @@ export async function registerRoutes(
     // Clamp inferior obrigatório: LIMIT negativo no SQLite significa "sem
     // limite" e furaria o teto de 100 itens por página.
     const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
-    const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+    // O client envia page (1-based); offset direto continua aceito.
+    const page = Math.max(parseInt(req.query.page as string) || 0, 0);
+    const offsetParam = Math.max(parseInt(req.query.offset as string) || 0, 0);
+    const offset = offsetParam > 0 ? offsetParam : page > 1 ? (page - 1) * limit : 0;
+    const q = String(req.query.q ?? "").trim().toLocaleLowerCase("pt-BR");
 
     const query = isAdmin(req.user!)
       ? db.select().from(patients)
       : db.select().from(patients).where(eq(patients.ownerUserId, req.user!.id));
 
-    const rows = query.limit(limit).offset(offset).all();
-    const countResult = isAdmin(req.user!)
-      ? db.select({ count: count() }).from(patients).all()
-      : db.select({ count: count() }).from(patients).where(eq(patients.ownerUserId, req.user!.id)).all();
-
-    const total = countResult[0]?.count || 0;
+    let data: ReturnType<typeof patientToPlaintext>[];
+    let total: number;
+    if (q) {
+      // Nome é criptografado em repouso — busca por LIKE no SQL é impossível.
+      // Decripta o conjunto (já limitado ao dono) e filtra em memória; com o
+      // cache de chave v2 o custo por linha é de microssegundos.
+      const all = query.all().map(patientToPlaintext);
+      const filtered = all.filter((p) =>
+        (p.name ?? "").toLocaleLowerCase("pt-BR").includes(q) ||
+        (p.cid ?? "").toLocaleLowerCase("pt-BR").includes(q),
+      );
+      total = filtered.length;
+      data = filtered.slice(offset, offset + limit);
+    } else {
+      const rows = query.limit(limit).offset(offset).all();
+      const countResult = isAdmin(req.user!)
+        ? db.select({ count: count() }).from(patients).all()
+        : db.select({ count: count() }).from(patients).where(eq(patients.ownerUserId, req.user!.id)).all();
+      total = countResult[0]?.count || 0;
+      data = rows.map(patientToPlaintext);
+    }
 
     await logAudit({
       eventType: "patient.read",
       context: ctx,
-      metadata: { count: rows.length, total, limit, offset },
+      metadata: { count: data.length, total, limit, offset, search: q ? true : undefined },
     });
+    // total também no topo: contrato igual ao das Functions Cloudflare, e é o
+    // campo que o client lê para exibir a paginação.
     return res.json({
-      data: rows.map(patientToPlaintext),
+      data,
+      total,
+      page: Math.floor(offset / limit) + 1,
+      limit,
       pagination: { total, limit, offset, hasMore: offset + limit < total },
     });
   });
@@ -370,7 +397,11 @@ export async function registerRoutes(
     // disparava uma query síncrona extra para checar dono do paciente (N+1) —
     // sem LIMIT, degradava linearmente com o crescimento da tabela. Agora o
     // filtro de ownership e o LIMIT vivem na própria query (getResultsAccessibleBy).
-    const accessible = storage.getResultsAccessibleBy(req.user!);
+    // limit/offset opcionais: sem eles, resultados além dos 50 mais recentes
+    // eram inalcançáveis para sempre.
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 200);
+    const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+    const accessible = storage.getResultsAccessibleBy(req.user!, limit, offset);
     return res.json(accessible.map(presentScaleResponseRecord));
   });
 

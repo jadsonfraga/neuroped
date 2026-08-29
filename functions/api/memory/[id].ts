@@ -12,7 +12,12 @@ async function authorize(context: { env: Env; data?: unknown }, row: Row) {
   if (!canWriteClinicalData(user)) return { failure: error("Sem permissão.", "FORBIDDEN", 403), user: null };
   if (!row.patient_id) return isAdmin(user) ? { failure: null, user } : { failure: error("Sem permissão.", "FORBIDDEN", 403), user: null };
   const access = await getPatientAccess(context.env.DB!, row.patient_id, user);
-  return access.allowed ? { failure: null, user } : { failure: error("Sem permissão.", "FORBIDDEN", 403), user: null };
+  if (access.allowed) return { failure: null, user };
+  // Paciente apagado fora do cascade: a nota órfã precisa continuar corrigível
+  // e apagável pelo admin (LGPD) — antes, 403 para todo mundo tornava o
+  // registro imortal via API.
+  if (!access.exists && isAdmin(user)) return { failure: null, user };
+  return { failure: error("Sem permissão.", "FORBIDDEN", 403), user: null };
 }
 
 export const onRequestPatch: PagesFunction<Env> = async (context) => {

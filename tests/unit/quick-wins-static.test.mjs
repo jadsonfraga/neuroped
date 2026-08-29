@@ -226,13 +226,23 @@ assert.match(
   worker,
   /const cache = await caches\.open\(CACHE_NAME\);[\s\S]*const cached = await cache\.match\(request\)/,
 );
-assert.match(worker, /const legacy = await caches\.match\(request\)/);
+// Fallback legado é centralizado e cross-cache SÓ para assets hasheados
+// (URL content-addressed); caminhos não-hasheados ficam restritos ao cache
+// do build atual — um cache retido de outro build teria bytes diferentes.
+assert.match(worker, /const legacy = await matchWithLegacyFallback\(cache, request\)/);
+assert.match(worker, /function isHashedAssetUrl\(request\)/);
+assert.match(worker, /if \(isHashedAssetUrl\(request\)\) return caches\.match\(request\)/);
 assert.doesNotMatch(
   worker,
   /async function cacheFirst\(request\) \{\s*const cached = await caches\.match/,
   "cache-first não pode preferir indefinidamente um asset não-hasheado do build anterior",
 );
-assert.doesNotMatch(worker, /Promise\.allSettled\(/);
+// Instalação: o CORE do shell continua atômico (Promise.all + throw em !ok);
+// allSettled é permitido APENAS para os chunks hasheados oportunistas — um
+// 5xx transitório num chunk não pode brickar o update do SW inteiro.
+assert.match(worker, /APP_SHELL_CORE\.map\(async \(asset\)[\s\S]{0,300}throw new Error/);
+assert.match(worker, /Promise\.allSettled\(\s*PRECACHE_ASSETS\.map/);
+assert.doesNotMatch(worker, /Promise\.allSettled\(\s*APP_SHELL\b/);
 assert.doesNotMatch(worker, /ONLINE_STATUS[\s\S]*online: true/);
 assert.doesNotMatch(worker, /neuroped-v7/);
 

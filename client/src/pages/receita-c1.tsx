@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
 import { buildAppHashUrl } from "@/lib/appUrl";
+import { getRouteQueryParam } from "@/lib/utils";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -478,9 +479,7 @@ export default function ReceitaC1Page() {
   const [f, setF] = useState<ReceitaFields>({ ...EMPTY, data: todayBR() });
   const [showPreview, setShowPreview] = useState(false);
   const [patientLoading, setPatientLoading] = useState(false);
-  const patientId = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("patientId")
-    : null;
+  const patientId = getRouteQueryParam("patientId") || null;
   const filename = `receita-c1-${dateStamp()}`;
 
   useEffect(() => {

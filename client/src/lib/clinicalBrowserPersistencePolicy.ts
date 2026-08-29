@@ -131,9 +131,12 @@ function configuredEnvironment(): ClinicalBrowserPersistenceInput["environment"]
 
 function configuredAuthMode(): ClinicalBrowserPersistenceInput["authMode"] {
   const mode = import.meta.env?.VITE_AUTH_MODE;
-  return mode === "remote" || mode === "local" || mode === "auto"
-    ? mode
-    : "unknown";
+  if (mode === "remote" || mode === "local" || mode === "auto") return mode;
+  // Mesmo default fail-closed do authCapabilityPolicy: produção sem
+  // VITE_AUTH_MODE é "remote". Reportar "unknown" aqui desligava TODA a
+  // barreira de persistência de PHI justamente nos deploys que esqueceram a
+  // env var, enquanto o resto do app rodava em modo LIVE remoto.
+  return import.meta.env?.PROD === true ? "remote" : "auto";
 }
 
 function hasAuthenticatedRemoteSession(): boolean {
@@ -193,8 +196,12 @@ export function installClinicalBrowserPersistenceBoundary(): void {
     originalSetItem.call(this, key, value);
   };
 
+  // Remoção NUNCA é bloqueada: apagar só reduz PHI persistido. O bloqueio
+  // anterior quebrava o wipe de troca de conta — o login novo grava o token
+  // antes da limpeza, hasAuthenticatedRemoteSession() virava true e cada
+  // removeItem do secureClearAll() era um no-op silencioso, deixando os dados
+  // clínicos do usuário anterior no navegador para o usuário seguinte.
   Storage.prototype.removeItem = function removeItem(key: string): void {
-    if (isClinicalBrowserPersistenceDenied(key, "remove")) return;
     originalRemoveItem.call(this, key);
   };
 }

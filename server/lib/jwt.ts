@@ -69,8 +69,11 @@ export function signAccessToken(params: {
 }
 
 export function verifyAccessToken(token: string): AccessTokenClaims {
+  // Fora do try: segredo ausente/curto é erro de configuração e deve subir
+  // como JwtConfigurationError, não ser lavado em "Token invalido" por request.
+  const secret = getJwtSecret();
   try {
-    const decoded = jwt.verify(token, getJwtSecret(), {
+    const decoded = jwt.verify(token, secret, {
       algorithms: ["HS256"],
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,

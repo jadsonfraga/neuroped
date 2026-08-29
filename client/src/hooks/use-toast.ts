@@ -180,7 +180,9 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+    // Inscrição única por montagem: com [state] a lista global de listeners
+    // era reescrita a cada mudança de toast.
+  }, [])
 
   return {
     ...state,

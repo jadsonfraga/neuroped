@@ -105,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<void> => {
+    // Limpa ANTES do login: o estado da sessão anterior (outra conta neste
+    // mesmo SPA) não pode sobreviver até depois que o token novo é gravado.
+    await clearSessionScopedClientState();
     const data = await loginRequest(email, password);
     await clearSessionScopedClientState();
     setUser(data.user);

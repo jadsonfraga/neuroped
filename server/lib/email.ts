@@ -38,6 +38,10 @@ function getTransporter(): Transporter {
     host,
     port,
     secure: port === 465,
+    // STARTTLS em 587 é oportunista por padrão: sem requireTLS, um atacante
+    // on-path que suprima a capability STARTTLS derruba a conexão para texto
+    // claro, expondo credenciais SMTP e o corpo das mensagens.
+    requireTLS: port !== 465,
     auth: { user, pass: password },
     tls: { rejectUnauthorized: true },
   });

@@ -95,14 +95,29 @@ function isPersistentSecureKey(key: string): boolean {
  * forma de o armazenamento local manter confidencialidade sem pedir ao usuário
  * outro segredo. O custo deliberado é perder rascunhos após recarregar a aba.
  */
+let _sessionKeyPending: Promise<CryptoKey> | null = null;
+
 async function getSessionKey(): Promise<CryptoKey> {
   if (_sessionKey) return _sessionKey;
-  _sessionKey = await crypto.subtle.generateKey(
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"],
-  );
-  return _sessionKey;
+  // Memoiza a PROMESSA, não só o resultado: dois chamadores no mesmo tick
+  // gerariam duas chaves distintas, e o que perdesse a atribuição teria seus
+  // envelopes silenciosamente descartados na próxima leitura (decrypt falha →
+  // remoção). O mesmo hardening já existia em getOrCreateMasterKey.
+  if (!_sessionKeyPending) {
+    _sessionKeyPending = crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"],
+    )
+      .then((key) => {
+        _sessionKey = key;
+        return key;
+      })
+      .finally(() => {
+        _sessionKeyPending = null;
+      });
+  }
+  return _sessionKeyPending;
 }
 
 /** Compatibilidade de leitura com envelopes v1; toda leitura é regravada em v2. */
@@ -364,7 +379,11 @@ export async function secureGet<T>(key: string): Promise<T | null> {
  */
 export async function secureClear(key: string): Promise<void> {
   if (isPersistentSecureKey(key)) {
+    // Early-return como em secureSet/secureGet: chave persistente nunca tem
+    // envelope de sessão, e cair no ramo legado tentaria decriptar com a
+    // chave errada.
     await persistentSecureClear(key);
+    return;
   }
 
   const storageKey = NAMESPACE + key;
@@ -441,8 +460,9 @@ export async function secureClearAll(): Promise<void> {
   // de conta destrói o cofre persistente e sua chave não exportável.
   await persistentSecureClearAll();
 
-  // Invalida chave de sessão em memória
+  // Invalida chave de sessão em memória (inclusive geração em voo)
   _sessionKey = null;
+  _sessionKeyPending = null;
   removeStorage(scoped, SESSION_SALT_KEY);
 }
 

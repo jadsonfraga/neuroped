@@ -59,6 +59,14 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/logout",
   "/api/public-booking",
+  // Webhook Asaas: autentica com asaas-access-token próprio (comparação em
+  // tempo constante no handler) — exigir Bearer JWT aqui tornava o webhook
+  // inalcançável e nenhum pagamento jamais era confirmado.
+  "/api/billing/webhook",
+  // Aceite de convite: o convidado ainda NÃO tem conta — o handler valida o
+  // token de convite e cria o usuário. Exigir login aqui matava todo o funil
+  // de onboarding documentado em _onboarding.ts.
+  "/api/billing/accept",
 ]);
 
 const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([

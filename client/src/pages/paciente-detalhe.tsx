@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, invalidateByPathPrefix } from "@/lib/queryClient";
 import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { loadAllPatientResults } from "@/lib/patientResultsPagination";
@@ -54,7 +54,11 @@ import { useClinic } from "@/contexts/ClinicContext";
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
   try {
+    // date-fns 3: parseISO em data malformada retorna Invalid Date e
+    // differenceInYears devolve NaN sem lançar — o catch nunca dispara e a
+    // UI (e o PDF) mostrariam "NaN anos".
     const years = differenceInYears(new Date(), parseISO(birthDate));
+    if (!Number.isFinite(years)) return null;
     return `${years} ano${years !== 1 ? "s" : ""}`;
   } catch {
     return null;
@@ -166,9 +170,18 @@ export default function PacienteDetalhePage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      // Prefixo cobre o detalhe E a lista de pacientes (a key da lista embute
+      // a query string e nunca casaria com uma key exata).
+      void invalidateByPathPrefix("/api/patients", "/api/live/patients");
       setEditOpen(false);
       toast({ title: "Paciente atualizado!" });
+    },
+    onError: () => {
+      toast({
+        title: "Não foi possível salvar as alterações.",
+        description: "Verifique a conexão e tente novamente.",
+        variant: "destructive",
+      });
     },
   });
 

@@ -7,8 +7,10 @@
  */
 
 import type { Request, Response, NextFunction } from "express";
+import { eq } from "drizzle-orm";
 import { verifyAccessToken } from "../lib/jwt.js";
-import type { UserRole } from "@shared/schema";
+import { db } from "../storage.js";
+import { users, type UserRole } from "@shared/schema";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -26,10 +28,9 @@ function extractBearerToken(req: Request): string | null {
   if (auth && auth.toLowerCase().startsWith("bearer ")) {
     return auth.slice(7).trim();
   }
-  // Fallback para cookie httpOnly se o cliente preferir.
-  if (req.cookies && typeof req.cookies.access_token === "string") {
-    return req.cookies.access_token;
-  }
+  // Sem fallback de cookie: nenhuma rota grava access_token em cookie, e
+  // aceitar cookies aqui abriria vetor CSRF via formulário urlencoded
+  // (requisição "simples", sem preflight CORS).
   return null;
 }
 
@@ -42,11 +43,23 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   try {
     const claims = verifyAccessToken(token);
+    // Revalida contra o banco a cada request: desativação de conta, troca de
+    // senha e mudança de papel valem imediatamente, não só após o TTL de 15min
+    // do access token. Role vem do banco, nunca do token.
+    const live = db
+      .select({ id: users.id, email: users.email, role: users.role, name: users.name, isActive: users.isActive })
+      .from(users)
+      .where(eq(users.id, claims.sub))
+      .get();
+    if (!live || !live.isActive) {
+      res.status(401).json({ error: "Invalid or expired token", code: "AUTH_INVALID" });
+      return;
+    }
     req.user = {
-      id: claims.sub,
-      email: claims.email,
-      role: claims.role,
-      name: claims.name,
+      id: live.id,
+      email: live.email,
+      role: live.role,
+      name: live.name,
     };
     next();
   } catch (e: any) {
@@ -66,12 +79,14 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   }
   try {
     const claims = verifyAccessToken(token);
-    req.user = {
-      id: claims.sub,
-      email: claims.email,
-      role: claims.role,
-      name: claims.name,
-    };
+    const live = db
+      .select({ id: users.id, email: users.email, role: users.role, name: users.name, isActive: users.isActive })
+      .from(users)
+      .where(eq(users.id, claims.sub))
+      .get();
+    if (live && live.isActive) {
+      req.user = { id: live.id, email: live.email, role: live.role, name: live.name };
+    }
   } catch {
     // Ignora token invalido em rotas opcionais
   }

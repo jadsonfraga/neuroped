@@ -74,6 +74,11 @@ export async function uploadFile(params: FileUploadParams): Promise<FileMetadata
       else reject(new Error(`Upload falhou: HTTP ${xhr.status}`));
     };
     xhr.onerror = () => reject(new Error("Upload falhou: erro de rede"));
+    // Sem onabort/ontimeout a promise nunca resolvia num abort ou conexão
+    // travada — a UI ficava presa em "enviando…" para sempre.
+    xhr.onabort = () => reject(new Error("Upload cancelado."));
+    xhr.ontimeout = () => reject(new Error("Upload expirou: conexão lenta ou instável."));
+    xhr.timeout = 10 * 60_000;
     xhr.send(file);
   });
 

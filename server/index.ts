@@ -74,7 +74,31 @@ app.use((req, res, next) => {
   next();
 });
 
+/**
+ * Valida configuração crítica no boot. Sem isto, um deploy sem
+ * NEUROPED_JWT_SECRET sobe "saudável" e falha por request com 401/500
+ * opacos que mandam o operador caçar um bug de token fantasma.
+ */
+function validateBootConfig(): void {
+  const isProduction = process.env.NODE_ENV === "production";
+  if (!process.env.NODE_ENV) {
+    console.error(
+      "[boot] AVISO: NODE_ENV não definido — CSP e outras proteções de produção " +
+      "ficam DESLIGADAS. Defina NODE_ENV=production em qualquer deploy real.",
+    );
+  }
+  const jwtSecret = process.env.NEUROPED_JWT_SECRET ?? "";
+  if (isProduction && jwtSecret.length < 32) {
+    throw new Error(
+      "[boot] NEUROPED_JWT_SECRET ausente ou com menos de 32 caracteres. " +
+      "O servidor não pode autenticar ninguém — abortando o boot em produção.",
+    );
+  }
+}
+
 (async () => {
+  validateBootConfig();
+
   // Bootstrap (cria admin inicial se ADMIN_EMAIL/ADMIN_INITIAL_PASSWORD definidos)
   try {
     await bootstrapAdmin();
@@ -84,7 +108,25 @@ app.use((req, res, next) => {
 
   await registerRoutes(httpServer, app);
 
+  // ----- 404 JSON para rotas /api desconhecidas -----
+  // Sem isto o catch-all da SPA devolve index.html com 200 para qualquer
+  // /api/* inexistente: um DELETE numa rota renomeada "sucede" sem fazer nada.
+  app.use("/api", (_req: Request, res: Response) => {
+    res.status(404).json({ error: "Rota não encontrada", code: "NOT_FOUND" });
+  });
+
+  // ----- Estatico vs Vite -----
+  if (process.env.NODE_ENV === "production") {
+    serveStatic(app);
+  } else {
+    const { setupVite } = await import("./vite.js");
+    await setupVite(httpServer, app);
+  }
+
   // ----- Error handler global -----
+  // Registrado por último: o Express só procura error handlers DEPOIS da layer
+  // que falhou, então ele precisa vir após static/Vite para capturar erros de
+  // sendFile (ex.: index.html ausente num build parcial).
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -97,14 +139,6 @@ app.use((req, res, next) => {
       code: err.code,
     });
   });
-
-  // ----- Estatico vs Vite -----
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite.js");
-    await setupVite(httpServer, app);
-  }
 
   const port = boundedIntegerEnv("PORT", 5000, 1, 65535);
   const host = process.env.HOST || "0.0.0.0";
