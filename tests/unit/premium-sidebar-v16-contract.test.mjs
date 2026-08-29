@@ -9,6 +9,7 @@ const read = (relativePath) =>
 const main = read("client/src/main.tsx");
 const css = read("client/src/styles/premium-sidebar-v16.css");
 const layout = read("client/src/components/Layout.tsx");
+const geometry = read("tests/e2e/premium-sidebar-geometry.mjs");
 const workflow = read(".github/workflows/premium-visual-v13.yml");
 
 assert.ok(
@@ -37,14 +38,37 @@ for (const contract of [
   '[data-testid^="featured-"]',
   'min-height: 5rem !important',
   'flex-direction: column',
+  '> span.relative.z-10.flex.shrink-0.items-center.justify-center',
+  '> span.relative.z-10.min-w-0.flex-1',
+  '> span:first-child',
+  '> span.relative.z-10.flex.shrink-0.items-center.gap-1',
   '-webkit-line-clamp: 3',
-  '> span:last-child',
   '@media (hover: hover) and (pointer: fine)',
   '@media (prefers-reduced-motion: reduce)',
   '@media print',
 ]) {
   assert.ok(css.includes(contract), `Contrato da sidebar v16 ausente: ${contract}`);
 }
+
+assert.doesNotMatch(
+  css,
+  />\s*span:(?:first|last|nth)-of-type/,
+  "O CSS não pode depender da ordem dos spans porque o halo dourado é condicional",
+);
+for (const selector of [
+  ":scope > span.relative.z-10.min-w-0.flex-1 > span:first-child",
+  ":scope > span.relative.z-10.flex.shrink-0.items-center.gap-1",
+]) {
+  assert.ok(
+    geometry.includes(selector),
+    `O teste geométrico deve medir o elemento funcional: ${selector}`,
+  );
+}
+assert.doesNotMatch(
+  geometry,
+  /span:nth-of-type/,
+  "O teste geométrico não pode medir spans pela posição",
+);
 
 assert.match(
   css,
@@ -84,5 +108,5 @@ for (const command of [
 }
 
 console.log(
-  "[premium-sidebar-v16] ✓ largura, app tiles, legibilidade, motion, impressão e ordem de cascata protegidos.",
+  "[premium-sidebar-v16] ✓ largura, seletores semânticos, app tiles, legibilidade, motion, impressão e cascata protegidos.",
 );
