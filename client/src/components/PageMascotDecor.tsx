@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useLocation } from "wouter";
+import {
+  KawaiiSticker,
+  kawaiiStickerNames,
+  type KawaiiStickerName,
+} from "@/components/KawaiiSticker";
 import drSuperMascot from "@assets/images/dr-jadson-logo-super.jpeg";
 import drConsultorioHero from "@assets/images/dr-jadson-consultorio-superman.jpeg";
 import drArteMascot from "@assets/images/dr-jadson-arte.jpeg";
@@ -67,6 +72,14 @@ const routePools: Array<{ test: RegExp; mascots: LegacyMascot[] }> = [
     test: /^\/(tea|tea-comportamentos|snap|denver|sdq|scared|conners|vineland|cbcl|vanderbilt|brief2|abc|asq3|cdi2|phqa|cssrs|crafft|rcads|masc2)/,
     mascots: [legacyMascots.superDoctor, legacyMascots.consultorioBatman, legacyMascots.consultorioSuperman, legacyMascots.ninoRetired],
   },
+  {
+    test: /^\/(brincando-e-aprendendo|missao-crescer|testes-reconhecimento|conhecimento-visual|conhecimentos-gerais|academico-interativo|cognitive-lab|cognitive-task|avaliacao-cognitiva-infantil)/,
+    mascots: [legacyMascots.celebrationArt, legacyMascots.doctorSelfie, legacyMascots.ninoRetired],
+  },
+  {
+    test: /^\/(glossario|biblioteca-instrumentos|fluxogramas?|classificac|curvas-crescimento|marcos-desenvolvimento|neuroanatomia|semiologia)/,
+    mascots: [legacyMascots.superDoctor, legacyMascots.consultorioFull, legacyMascots.ninoRetired],
+  },
 ];
 
 const routesWithInlineNino = ["/", "/filtro", "/filtro-escalas", "/prontuario"];
@@ -112,6 +125,33 @@ function isDenseClinicalWorkspace(path: string): boolean {
   return /^\/(prontuario|agenda|recepcao|pacientes|paciente|pre-consulta|pre-retorno|documentos|laudo-neuroped|laudo-super|receita-c1|receita-c1-express|assinatura-digital|medicamentos|farmacologia|calculadora-dose)(?:\/|$)/.test(path);
 }
 
+// ── Constelação kawaii ──────────────────────────────────────────────────────
+// Cada rota elegível ganha 2–3 figurinhas kawaii determinísticas (pelo hash do
+// caminho), ancoradas nas bordas da viewport, bem sutis. Elas dão identidade
+// afetiva a TODAS as telas sem competir com o conteúdo: fora do fluxo, sem
+// clique, escondidas na impressão e estáticas sob prefers-reduced-motion.
+type StickerAnchor = { className: string; size: number };
+
+const stickerAnchors: StickerAnchor[] = [
+  { className: "bottom-24 left-2 hidden md:block lg:left-[17.5rem]", size: 34 },
+  { className: "bottom-40 right-3 hidden sm:block xl:right-8", size: 30 },
+  { className: "top-[46%] right-1.5 hidden xl:block", size: 26 },
+];
+
+function pickStickers(path: string): KawaiiStickerName[] {
+  const seed = stablePathHash(`kawaii:${path}`);
+  const total = kawaiiStickerNames.length;
+  const first = seed % total;
+  const second = (first + 1 + (seed >>> 3) % (total - 1)) % total;
+  let third = (second + 1 + (seed >>> 7) % (total - 1)) % total;
+  if (third === first) third = (third + 1) % total;
+  return [
+    kawaiiStickerNames[first],
+    kawaiiStickerNames[second],
+    kawaiiStickerNames[third],
+  ];
+}
+
 /**
  * Assinatura visual global do NeuroPed.
  *
@@ -140,7 +180,13 @@ export function PageMascotDecor() {
   const denseClinicalWorkspace = isDenseClinicalWorkspace(pathname);
   const showGlobalNino = !hasInlineNino(pathname) && !scaleFocus && !denseClinicalWorkspace;
   // O acervo continua disponível onde é conteúdo, não como FAB concorrente.
-  const showLegacyCameo = pathname === "/sobre" || pathname === "/sobre-neuroped";
+  // Ampliado (2026-08): páginas institucionais e de apoio também recebem o
+  // cameo do acervo histórico — mais mascotes onde não há fluxo clínico denso.
+  const showLegacyCameo = /^\/(sobre|sobre-neuroped|ajuda|termos|qualidade|acessibilidade|familia|portal-familia|orientacao-parental)$/.test(pathname);
+  // Figurinhas kawaii em toda tela elegível: fora de aplicação de escala e de
+  // workspaces clínicos densos, onde nada decorativo deve competir.
+  const showStickers = !scaleFocus && !denseClinicalWorkspace;
+  const stickers = pickStickers(pathname);
 
   return (
     <div
@@ -175,6 +221,28 @@ export function PageMascotDecor() {
           <span className="np-mascot-chip hidden sm:inline-flex">NeuroPed</span>
         </motion.div>
       )}
+
+      {showStickers &&
+        stickers.map((sticker, index) => {
+          const anchor = stickerAnchors[index];
+          if (!anchor) return null;
+          return (
+            <motion.div
+              key={`sticker-${pathname}-${sticker}-${index}`}
+              initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.7 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                duration: 0.5,
+                ease: "easeOut",
+                delay: 0.12 + index * 0.1,
+              }}
+              className={`np-sticker-constellation ${anchor.className}`}
+              data-sticker={sticker}
+            >
+              <KawaiiSticker name={sticker} size={anchor.size} float />
+            </motion.div>
+          );
+        })}
 
       {showLegacyCameo && (
       <motion.div
