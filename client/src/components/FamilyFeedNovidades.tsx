@@ -37,7 +37,6 @@ export interface FamilyFeedTopic {
   label: string;
   emoji: string;
   items: FamilyFeedItem[];
-  fetchedAt?: string | null;
 }
 
 export interface FamilyFeedInstagram {

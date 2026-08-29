@@ -21,6 +21,7 @@
  *
  * Uso: node scripts/update-family-feed.mjs
  */
+import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -203,8 +204,8 @@ async function fetchInstagramViaGraph(token) {
   if (!imageUrl) {
     throw new Error("Graph API sem URL de mídia");
   }
-  await downloadInstagramImage(imageUrl);
   return {
+    imageUrl,
     permalink: post.permalink ?? INSTAGRAM_PROFILE_URL,
     caption: (post.caption ?? "").slice(0, 400),
     timestamp: post.timestamp ?? null,
@@ -255,8 +256,8 @@ async function fetchInstagramViaWebProfile() {
   if (!imageUrl || !node.shortcode) {
     throw new Error("perfil web sem mídia utilizável");
   }
-  await downloadInstagramImage(imageUrl);
   return {
+    imageUrl,
     permalink: `https://www.instagram.com/p/${node.shortcode}/`,
     caption: (node.edge_media_to_caption?.edges?.[0]?.node?.text ?? "").slice(0, 400),
     timestamp: node.taken_at_timestamp
@@ -269,30 +270,53 @@ async function fetchInstagramViaWebProfile() {
 
 async function updateInstagram(previous) {
   const token = process.env.INSTAGRAM_ACCESS_TOKEN?.trim();
+  let meta = null;
+
   if (token) {
     try {
-      const post = await fetchInstagramViaGraph(token);
+      meta = await fetchInstagramViaGraph(token);
       refreshInstagramToken(token).catch((error) =>
         warn(`Renovação do token do Instagram falhou: ${error.message}`),
       );
-      log(`Instagram atualizado via Graph API (${post.permalink}).`);
-      return { ...basicInstagramInfo(), ...post, image: "/family-feed/instagram-latest.jpg", fetchedAt: new Date().toISOString() };
     } catch (error) {
       warn(`Graph API do Instagram indisponível: ${error.message}`);
     }
   }
-  try {
-    const post = await fetchInstagramViaWebProfile();
-    log(`Instagram atualizado via perfil público (${post.permalink}).`);
-    return { ...basicInstagramInfo(), ...post, image: "/family-feed/instagram-latest.jpg", fetchedAt: new Date().toISOString() };
-  } catch (error) {
-    warn(`Perfil público do Instagram indisponível: ${error.message}`);
+
+  if (!meta) {
+    try {
+      meta = await fetchInstagramViaWebProfile();
+    } catch (error) {
+      warn(`Perfil público do Instagram indisponível: ${error.message}`);
+    }
   }
-  if (previous?.permalink) {
-    warn("Mantendo o último post do Instagram já publicado (persistência).");
+
+  if (!meta) {
+    if (previous?.permalink) {
+      warn("Mantendo o último post do Instagram já publicado (persistência).");
+      return previous;
+    }
+    return basicInstagramInfo();
+  }
+
+  // Mesmo post de ontem: devolve o objeto anterior intacto para que o JSON
+  // fique idêntico byte a byte — sem commit e sem deploy desnecessário. A URL
+  // de mídia do Instagram é assinada e muda a cada consulta, por isso nunca é
+  // persistida.
+  const { imageUrl, ...post } = meta;
+  if (previous?.permalink === post.permalink && existsSync(instagramImagePath)) {
+    log(`Instagram sem novidade desde a última execução (${post.permalink}).`);
     return previous;
   }
-  return basicInstagramInfo();
+
+  await downloadInstagramImage(imageUrl);
+  log(`Instagram atualizado via ${post.source} (${post.permalink}).`);
+  return {
+    ...basicInstagramInfo(),
+    ...post,
+    image: "/family-feed/instagram-latest.jpg",
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 function basicInstagramInfo() {
@@ -321,7 +345,8 @@ async function main() {
   let fetchedTopics = 0;
   for (const topic of TOPICS) {
     const previousTopic = previousTopics.get(topic.key);
-    let freshItems = [];
+    // null distingue "falhou" de "respondeu sem notícias novas".
+    let freshItems = null;
     try {
       freshItems = await fetchTopicNews(topic);
       fetchedTopics += 1;
@@ -333,25 +358,42 @@ async function main() {
       key: topic.key,
       label: topic.label,
       emoji: topic.emoji,
-      items: mergeTopicItems(freshItems, previousTopic?.items),
-      fetchedAt: freshItems.length > 0 ? new Date().toISOString() : (previousTopic?.fetchedAt ?? null),
+      // Numa falha os itens anteriores passam intactos: aplicar o corte de
+      // idade aqui esvaziaria o tema durante uma indisponibilidade longa.
+      items:
+        freshItems === null
+          ? (previousTopic?.items ?? [])
+          : mergeTopicItems(freshItems, previousTopic?.items),
     });
   }
 
   const instagram = await updateInstagram(previous?.instagram);
+
+  // Sem novidade real, o carimbo anterior é mantido: assim o arquivo fica
+  // idêntico, o workflow não commita e nenhum deploy é disparado à toa — e a
+  // interface não anuncia como "atualizado hoje" um conteúdo que não mudou.
+  const advanced =
+    JSON.stringify(previous?.topics ?? null) !== JSON.stringify(topics) ||
+    JSON.stringify(previous?.instagram ?? null) !== JSON.stringify(instagram);
 
   const feed = {
     version: 1,
     app: "NeuroPed",
     description:
       "Feed educativo gratuito para famílias: notícias públicas em português sobre neuropediatria e o post mais recente do Instagram do consultório.",
-    updatedAt: new Date().toISOString(),
+    updatedAt:
+      advanced || !previous?.updatedAt
+        ? new Date().toISOString()
+        : previous.updatedAt,
     instagram,
     topics,
   };
 
   await writeFile(feedPath, `${JSON.stringify(feed, null, 2)}\n`);
-  log(`Feed gravado em ${feedPath} (${fetchedTopics}/${TOPICS.length} temas atualizados).`);
+  log(
+    `Feed gravado em ${feedPath} (${fetchedTopics}/${TOPICS.length} temas consultados; ` +
+      `${advanced ? "conteúdo avançou" : "sem novidade, carimbo preservado"}).`,
+  );
 
   if (fetchedTopics === 0 && !previous) {
     throw new Error("Nenhuma fonte respondeu e não há feed anterior para preservar.");
