@@ -435,8 +435,8 @@
   .np-app-content:not(:has(.np-v13-home)) .glass,
   :where([role="dialog"], [data-radix-dialog-content]) {
     break-inside: avoid;
-    border-color: #d4d4d4 !important;
-    background: #fff !important;
+    border-color: hsl(0 0% 83%) !important;
+    background: hsl(0 0% 100%) !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
   }
