@@ -9,6 +9,9 @@ const read = (relativePath) =>
 const home = read("client/src/pages/home.tsx");
 const main = read("client/src/main.tsx");
 const visual = read("client/src/styles/premium-visual-v13.css");
+const mobileVisual = read(
+  "client/src/styles/premium-visual-v13-mobile.css",
+);
 const workflow = read(".github/workflows/premium-visual-v13.yml");
 
 const requiredRoutes = [
@@ -79,12 +82,17 @@ assert.ok(
 
 const v12Index = main.indexOf('./styles/premium-app-shell-v12.css');
 const v13Index = main.indexOf('./styles/premium-visual-v13.css');
+const mobileIndex = main.indexOf('./styles/premium-visual-v13-mobile.css');
 const touchIndex = main.indexOf('./styles/tablet-coarse-perf.css');
 
 assert.ok(v12Index >= 0, "A camada visual v12 continua obrigatória");
 assert.ok(v13Index > v12Index, "A v13 deve ser carregada depois da v12");
 assert.ok(
-  touchIndex > v13Index,
+  mobileIndex > v13Index,
+  "A proteção móvel da v13 deve ser carregada depois da camada principal",
+);
+assert.ok(
+  touchIndex > mobileIndex,
   "A proteção de desempenho/touch deve continuar sendo a última camada",
 );
 
@@ -109,6 +117,19 @@ for (const contract of visualContracts) {
   );
 }
 
+for (const contract of [
+  "@media screen and (max-width: 767px)",
+  "display: flex !important",
+  "flex-direction: column !important",
+  "grid-column: 1 / -1 !important",
+  "width: 100% !important",
+]) {
+  assert.ok(
+    mobileVisual.includes(contract),
+    `Proteção móvel sem contrato anticolisão: ${contract}`,
+  );
+}
+
 assert.match(
   visual,
   /min-height:\s*44px/,
@@ -120,9 +141,13 @@ assert.match(
   "A home deve declarar contenção de overflow horizontal",
 );
 assert.doesNotMatch(
-  visual,
+  `${visual}\n${mobileVisual}`,
   /url\(["']?https?:\/\//i,
   "A camada visual não pode depender de ativos externos em tempo de execução",
+);
+assert.ok(
+  workflow.includes("client/src/styles/premium-visual-v13-mobile.css"),
+  "Mudanças na proteção móvel devem sempre disparar o workflow visual",
 );
 
 for (const step of [
@@ -138,5 +163,5 @@ for (const step of [
 }
 
 console.log(
-  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, responsividade e CI preservados.",
+  "[premium-v13-contract] ✓ rotas, busca, identidade, métricas, ordem de CSS, anticolisão móvel, responsividade e CI preservados.",
 );
