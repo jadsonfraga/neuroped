@@ -2,22 +2,25 @@ import { currentHashPath, isPublicRoute } from "@/lib/publicRoutes";
 
 export type WorkspaceSurface = "clinical" | "public";
 
+/**
+ * Mantém apenas o primeiro segmento estável da rota. IDs de paciente, documento
+ * ou qualquer parâmetro dinâmico jamais são copiados para atributos do DOM.
+ */
 function routeToken(path: string): string {
   if (path === "/") return "home";
+  const firstSegment = path.split("/").filter(Boolean)[0] || "workspace";
   return (
-    path
-      .replace(/^\/+|\/+$/g, "")
+    firstSegment
       .replace(/[^a-zA-Z0-9-]+/g, "-")
-      .replace(/-+/g, "-") || "home"
+      .replace(/-+/g, "-") || "workspace"
   );
 }
 
 /**
- * Expõe somente metadados visuais da rota atual no elemento raiz.
- *
- * A classificação reutiliza a allowlist canônica de rotas públicas; portanto,
- * qualquer rota nova continua clínica por padrão. Nenhuma permissão, dado,
- * decisão de acesso ou regra funcional é alterada por esta camada.
+ * Expõe somente metadados visuais não identificáveis da rota atual no elemento
+ * raiz. A classificação reutiliza a allowlist canônica de rotas públicas;
+ * portanto, qualquer rota nova continua clínica por padrão. Nenhuma permissão,
+ * dado, decisão de acesso ou regra funcional é alterada por esta camada.
  */
 export function syncWorkspaceSurface(): WorkspaceSurface {
   const path = currentHashPath();
