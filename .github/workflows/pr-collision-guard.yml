@@ -1,0 +1,198 @@
+name: NeuroPED PR Collision Guard
+
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - converted_to_draft
+      - edited
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: neuroped-pr-collision-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  collision-guard:
+    name: Base atual e colisões críticas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Auditar base e sobreposição entre PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+
+            if (!pr) {
+              core.setFailed("Evento sem pull_request; execução bloqueada por segurança.");
+              return;
+            }
+
+            const baseRef = pr.base.ref;
+            const headSha = pr.head.sha;
+            const isDraft = Boolean(pr.draft);
+
+            // Um PR pronto para revisão não pode ser integrado sobre uma base antiga.
+            const comparison = await github.rest.repos.compareCommitsWithBasehead({
+              owner,
+              repo,
+              basehead: `${baseRef}...${headSha}`,
+              per_page: 1,
+            });
+            const behindBy = Number(comparison.data.behind_by ?? 0);
+
+            const currentFiles = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner,
+                repo,
+                pull_number: pr.number,
+                per_page: 100,
+              },
+            );
+            const currentPaths = new Set(currentFiles.map((file) => file.filename));
+
+            const openPulls = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner,
+                repo,
+                state: "open",
+                base: baseRef,
+                sort: "updated",
+                direction: "desc",
+                per_page: 100,
+              },
+            );
+
+            const exactCritical = new Set([
+              "package.json",
+              "package-lock.json",
+              "client/src/App.tsx",
+              "client/src/main.tsx",
+              "client/src/pages/home.tsx",
+              "vite.config.ts",
+              "wrangler.toml",
+              "vercel.json",
+            ]);
+            const criticalPrefixes = [
+              ".github/workflows/",
+              "server/",
+              "functions/",
+              "shared/",
+              "db/migrations/",
+              "migrations/",
+              "client/src/pages/",
+              "client/src/components/",
+              "client/src/contexts/",
+              "client/src/security/",
+              "client/src/lib/auth",
+            ];
+            const isCriticalPath = (path) =>
+              exactCritical.has(path) ||
+              criticalPrefixes.some((prefix) => path.startsWith(prefix));
+
+            const collisions = [];
+            for (const other of openPulls) {
+              if (other.number === pr.number) continue;
+
+              const otherFiles = await github.paginate(
+                github.rest.pulls.listFiles,
+                {
+                  owner,
+                  repo,
+                  pull_number: other.number,
+                  per_page: 100,
+                },
+              );
+
+              const shared = otherFiles
+                .map((file) => file.filename)
+                .filter((path) => currentPaths.has(path));
+              if (shared.length === 0) continue;
+
+              const critical = shared.filter(isCriticalPath);
+              collisions.push({
+                number: other.number,
+                title: other.title,
+                draft: Boolean(other.draft),
+                shared,
+                critical,
+              });
+            }
+
+            const blockingCollisions = collisions.filter(
+              (item) => !item.draft && item.critical.length > 0,
+            );
+
+            core.summary
+              .addHeading("NeuroPED — auditoria de concorrência entre PRs")
+              .addTable([
+                [
+                  { data: "Indicador", header: true },
+                  { data: "Resultado", header: true },
+                ],
+                ["PR", `#${pr.number} — ${pr.title}`],
+                ["Estado", isDraft ? "Draft" : "Pronto para revisão"],
+                ["Commits atrás da main", String(behindBy)],
+                ["PRs com algum arquivo em comum", String(collisions.length)],
+                ["Colisões críticas não-draft", String(blockingCollisions.length)],
+              ]);
+
+            if (collisions.length > 0) {
+              core.summary.addHeading("Arquivos compartilhados", 2);
+              for (const item of collisions) {
+                const state = item.draft ? "draft" : "não-draft";
+                const critical = item.critical.length
+                  ? `\nCríticos: ${item.critical.map((path) => `\`${path}\``).join(", ")}`
+                  : "";
+                core.summary.addRaw(
+                  `- PR #${item.number} (${state}) — ${item.title}\n  Arquivos: ${item.shared.map((path) => `\`${path}\``).join(", ")}${critical}\n`,
+                );
+              }
+            } else {
+              core.summary.addRaw("Nenhum outro PR aberto modifica os mesmos arquivos.\n");
+            }
+
+            await core.summary.write();
+
+            const blockers = [];
+            if (!isDraft && behindBy > 0) {
+              blockers.push(
+                `A branch está ${behindBy} commit(s) atrás de ${baseRef}. Atualize-a e execute novamente todos os gates.`,
+              );
+            }
+            if (!isDraft && blockingCollisions.length > 0) {
+              const details = blockingCollisions
+                .map(
+                  (item) =>
+                    `#${item.number}: ${item.critical.join(", ")}`,
+                )
+                .join(" | ");
+              blockers.push(
+                `Há colisão crítica com outro PR pronto para revisão: ${details}. Transforme um deles em draft, defina a ordem de integração e reconcilie a branch após o primeiro merge.`,
+              );
+            }
+
+            if (blockers.length > 0) {
+              core.setFailed(blockers.join("\n"));
+            } else if (isDraft && (behindBy > 0 || blockingCollisions.length > 0)) {
+              core.notice(
+                "Colisões ou base antiga registradas, mas o PR permanece draft e não pode ser integrado.",
+              );
+            } else {
+              core.info("Base atual e ausência de colisões críticas bloqueantes confirmadas.");
+            }
