@@ -40,10 +40,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Node.js 20
+      - name: Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
 
       - name: Dependências
@@ -65,9 +65,10 @@ jobs:
           npm run audit:color
           npm run audit:design
 
-      - name: Build do cliente
-        run: npm run build:client
-
+      # O runtime de auditoria é o responsável pelo build. Ele injeta
+      # VITE_AUTH_MODE=auto, VITE_API_URL vazio e VITE_ZONE=full para que o
+      # Chromium exercite o workspace clínico completo, não uma variante
+      # pública/produção deixada previamente em dist/public.
       - name: Shell responsivo existente
         run: node tests/e2e/responsive-shell-smoke.mjs
 
