@@ -138,6 +138,16 @@
   border-color: var(--np-v15-stroke);
 }
 
+/* O badge de identidade do NeuroAcompanhamento usava sky-600 + texto branco,
+   combinação que o Axe mediu em 4.09:1 para 11 px. Reancorá-lo nos tokens
+   semânticos mantém a intenção de destaque e garante o par de contraste oficial
+   em claro e escuro, sem criar um literal de cor nem afrouxar o gate. */
+html[data-np-route="neuroacompanhamento"]
+  .border-primary\/15.bg-sky-600.text-white {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
 /* ───────────────────────── Controles: linguagem de app ───────────────────────── */
 
 .np-app-content:not(:has(.np-v13-home)) :where(
