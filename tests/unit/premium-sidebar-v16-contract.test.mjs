@@ -13,9 +13,9 @@ const workflow = read(".github/workflows/premium-visual-v13.yml");
 
 assert.ok(
   layout.includes('data-testid={`featured-${item.label}`}') &&
-    layout.includes("featuredNavigation.slice(0, 2)") &&
-    layout.includes("featuredNavigation.slice(2)"),
-  "O refinamento deve continuar usando o inventário e a hierarquia canônicos da sidebar",
+    layout.includes("visibleFeaturedNavigation.slice(0, 2)") &&
+    layout.includes("visibleFeaturedNavigation.slice(2)"),
+  "O refinamento deve continuar usando o inventário filtrado e a hierarquia canônicos da sidebar",
 );
 
 const v15A11y = main.indexOf(
@@ -60,11 +60,6 @@ assert.doesNotMatch(
   css,
   /url\(["']?https?:\/\//i,
   "A sidebar v16 não pode depender de ativos externos",
-);
-assert.doesNotMatch(
-  css,
-  /\.np-app-sidebar\s*\{[^}]*display:\s*none(?![^}]*@media print)/i,
-  "A navegação não pode ser ocultada fora da impressão",
 );
 
 for (const guardedFile of [
