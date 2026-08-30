@@ -80,10 +80,12 @@ export const featuredNavigation: NavItem[] = [
   },
   {
     href: "/marcacao",
-    label: "Marcação · Secretaria IA",
+    // Rótulo curto para caber inteiro no drawer mobile; "marcação" segue
+    // visível na descrição do card e pesquisável no command palette.
+    label: "Secretaria IA",
     icon: Calendar,
     tone: "golden",
-    description: "Agendamento e contato",
+    description: "Marcação e agendamento",
   },
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {

@@ -355,7 +355,7 @@ export function CommandPalette() {
           {visiblePages.map((page) => (
             <CommandItem
               key={`page-${page.href}`}
-              value={`pagina ${page.label}`}
+              value={`pagina ${page.label} ${page.description ?? ""}`}
               onSelect={() => goPage(page.href)}
             >
               <page.icon
