@@ -55,6 +55,10 @@ export function ensureClientBuild(repoRoot) {
     execFileSync(npm, ["run", "build:client"], {
       cwd: repoRoot,
       stdio: "inherit",
+      // Windows does not execute .cmd shims through CreateProcess when
+      // execFileSync is called without a shell. The browser audits must be
+      // able to rebuild a stale dist on both the developer machine and CI.
+      shell: process.platform === "win32",
       env: {
         ...process.env,
         // Os audits de navegador servem um backend local que declara auth
