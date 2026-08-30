@@ -191,7 +191,23 @@ const problemDataSchema = z
     status: z.enum(problemStatuses),
     rationale: optionalText(2_000),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.action === "rule_out" && data.certainty !== "ruled_out") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["certainty"],
+        message: "Ação 'rule_out' exige certainty 'ruled_out'.",
+      });
+    }
+    if (data.action === "resolve" && data.status !== "resolved") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["status"],
+        message: "Ação 'resolve' exige status 'resolved'.",
+      });
+    }
+  });
 
 const medicationDataSchema = z
   .object({

@@ -20,6 +20,22 @@ export function buildChecklistSuggestions(segments: TranscriptSegment[]): Checkl
   return requiredConsultationTopics.filter((item) => !covered.has(item.topic));
 }
 
+const RISK_TOPIC: NoteTopic = "risco_autolesao_suicidio";
+
+/**
+ * O resumo clínico normalmente mostra só os primeiros segmentos (visão geral
+ * rápida), mas um relato de risco de autolesão/suicídio nunca pode ficar de
+ * fora dele só porque apareceu depois do 12º segmento da consulta.
+ */
+function buildResumoSegments(segments: TranscriptSegment[]): TranscriptSegment[] {
+  const preview = segments.slice(0, 12);
+  const riskSegments = segments.filter((segment) => segment.topics.includes(RISK_TOPIC));
+  if (riskSegments.length === 0) return preview;
+  const seen = new Set(preview.map((segment) => segment.id));
+  const merged = [...preview, ...riskSegments.filter((segment) => !seen.has(segment.id))];
+  return merged.sort((a, b) => a.startMs - b.startMs);
+}
+
 export function generateClinicalDocuments(segments: TranscriptSegment[]): GeneratedClinicalDocuments {
   const byTopic = new Map<NoteTopic, TranscriptSegment[]>();
   for (const segment of segments) {
@@ -31,9 +47,9 @@ export function generateClinicalDocuments(segments: TranscriptSegment[]): Genera
   const exame = ["exame_fisico", "exame_neurologico"] as NoteTopic[];
   return {
     anamnese: historia.map((topic) => `## ${topicLabels[topic]}\n${section(topic)}`).join("\n\n"),
-    evolucao: ["observacoes_medico", "hipoteses", "condutas", "orientacoes"].map((topic) => `## ${topicLabels[topic as NoteTopic]}\n${section(topic as NoteTopic)}`).join("\n\n"),
-    pant: [`# PANT`, `## História organizada\n${historia.map(section).filter(Boolean).join("\n") || "Pendente"}`, `## Exame\n${exame.map(section).filter(Boolean).join("\n") || "Pendente"}`, `## Hipóteses\n${section("hipoteses") || "Pendente"}`, `## Conduta\n${section("condutas") || "Pendente"}`, `## Campos pendentes\n${camposPendentes.map((topic) => `- ${topicLabels[topic]}`).join("\n") || "Nenhum"}`].join("\n\n"),
-    resumoClinico: formatSegments(segments.slice(0, 12)),
+    evolucao: [RISK_TOPIC, "observacoes_medico", "hipoteses", "condutas", "orientacoes"].map((topic) => `## ${topicLabels[topic as NoteTopic]}\n${section(topic as NoteTopic)}`).join("\n\n"),
+    pant: [`# PANT`, `## ${topicLabels[RISK_TOPIC]}\n${section(RISK_TOPIC) || "Pendente"}`, `## História organizada\n${historia.map(section).filter(Boolean).join("\n") || "Pendente"}`, `## Exame\n${exame.map(section).filter(Boolean).join("\n") || "Pendente"}`, `## Hipóteses\n${section("hipoteses") || "Pendente"}`, `## Conduta\n${section("condutas") || "Pendente"}`, `## Campos pendentes\n${camposPendentes.map((topic) => `- ${topicLabels[topic]}`).join("\n") || "Nenhum"}`].join("\n\n"),
+    resumoClinico: formatSegments(buildResumoSegments(segments)),
     cartaEscola: section("informacoes_escolares") || "Modelo pendente de revisão médica antes do envio.",
     cartaTerapias: section("relatos_terapeuticos") || "Modelo pendente de revisão médica antes do envio.",
     receitaModelo: "Modelo de receita pendente de revisão, assinatura e CRM do médico.",

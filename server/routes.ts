@@ -586,6 +586,17 @@ export async function registerRoutes(
       });
       try {
         const parsed = schema.parse(req.body);
+        // Um e-mail externo arbitrário só pode ser escolhido pelo admin: um
+        // profissional comum enviando HTML livre para QUALQUER destinatário
+        // usando o SMTP da clínica funcionaria como relay de spam/phishing.
+        // Sem esta checagem qualquer conta "professional" comprometida vira
+        // um relay silencioso, pois `to` era aceito sem checagem de papel.
+        if (parsed.to && req.user!.role !== "admin") {
+          return res.status(403).json({
+            error: "Somente administradores podem enviar para um destinatário externo customizado.",
+            code: "FORBIDDEN",
+          });
+        }
         const recipient = parsed.to || PROFESSIONAL_REPORT_EMAIL;
         const result = await sendEmail({
           to: recipient,
@@ -594,14 +605,12 @@ export async function registerRoutes(
           html: parsed.isHtml ? parsed.body : undefined,
           replyTo: req.user!.email,
         });
-        // Este endpoint deixa qualquer profissional (não só admin) mandar HTML
-        // livre para QUALQUER e-mail externo usando o SMTP da clínica — uso
-        // indevido pareceria relay de spam/phishing. `redactSensitive` apaga a
-        // chave "recipient" de todo log de auditoria (política de minimização
-        // de PII), então investigar abuso era impossível mesmo para um admin.
-        // Gravamos aqui um traço que não é a chave redigida, mascarado o
-        // bastante para não ser o e-mail em si, mas suficiente para apoiar
-        // investigação (dominio + iniciais) e correlacionar envios repetidos.
+        // `redactSensitive` apaga a chave "recipient" de todo log de auditoria
+        // (política de minimização de PII), então investigar abuso seria
+        // impossível mesmo para um admin. Gravamos aqui um traço que não é a
+        // chave redigida, mascarado o bastante para não ser o e-mail em si,
+        // mas suficiente para apoiar investigação (dominio + iniciais) e
+        // correlacionar envios repetidos.
         const [localPart, domainPart] = recipient.split("@");
         const recipientMasked = domainPart
           ? `${localPart.slice(0, 2)}***@${domainPart}`

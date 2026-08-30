@@ -2,6 +2,7 @@ import { hashPassword } from "../auth/_crypto";
 import { getUserByEmail } from "../auth/_shared";
 import { validateInvitationForAccept } from "./_onboarding";
 import { isClinicMembershipRole } from "../../../shared/tenant";
+import { getContextUser } from "../auth/_authorization";
 
 interface Env {
   DB?: D1Database;
@@ -34,8 +35,10 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const { env, request } = context;
   if (!env.DB) return json({ error: "Banco SaaS indisponível.", code: "DB_REQUIRED" }, 503);
+  const authUser = getContextUser(context);
 
   let body: Record<string, unknown>;
   try {
@@ -64,6 +67,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const validity = validateInvitationForAccept(invitation);
   if (!validity.ok) {
     return json({ error: "Convite expirado, revogado ou já utilizado.", code: validity.reason ?? "INVITATION_INVALID" }, 409);
+  }
+
+  // O aceite nunca pode anexar a conta de outra pessoa à clínica: quem chama
+  // esta rota autenticado precisa ser o próprio destinatário do convite.
+  // Sem isso, qualquer usuário autenticado (por exemplo o próprio convidante,
+  // de posse do link retornado por POST /api/billing/invitations) poderia
+  // convidar o e-mail de terceiro já cadastrado e aceitar em nome dele.
+  if (authUser && authUser.email.trim().toLowerCase() !== invitation.email.trim().toLowerCase()) {
+    return json(
+      { error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" },
+      403,
+    );
   }
 
   const billing = await env.DB.prepare(
@@ -97,6 +112,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const existing = await getUserByEmail(env.DB, invitation.email);
   if (existing && existing.is_active !== 1) {
     return json({ error: "Conta existente está inativa.", code: "ACCOUNT_INACTIVE" }, 409);
+  }
+  if (existing && !authUser) {
+    return json(
+      { error: "Faça login com a conta convidada para aceitar este convite.", code: "AUTHENTICATION_REQUIRED" },
+      401,
+    );
+  }
+  if (existing && authUser && existing.id !== authUser.id) {
+    return json(
+      { error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" },
+      403,
+    );
   }
 
   let userId = existing?.id ?? "";
