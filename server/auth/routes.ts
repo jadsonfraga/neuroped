@@ -144,6 +144,7 @@ export function registerAuthRoutes(app: Express): void {
       // bcrypt. Atualização de estado + criação do refresh acontecem na mesma tx.
       const now = new Date().toISOString();
       const refresh = issueRefreshToken();
+      const sessionId = crypto.randomUUID();
       const accepted = db.transaction((tx) => {
         const live = tx.update(users)
           .set({
@@ -166,6 +167,7 @@ export function registerAuthRoutes(app: Express): void {
             expiresAt: refresh.expiresAt,
             ipAddress: ctx.ipAddress,
             userAgent: ctx.userAgent,
+            sessionId,
           })
           .run();
         return true;
@@ -179,6 +181,7 @@ export function registerAuthRoutes(app: Express): void {
         email: user.email,
         role: user.role,
         name: user.name,
+        sessionId,
       });
 
       await logAudit({
@@ -250,7 +253,7 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       const newRefresh = issueRefreshToken();
-      let rotation: { user: typeof users.$inferSelect } | null = null;
+      let rotation: { user: typeof users.$inferSelect; sessionId: string } | null = null;
       try {
         rotation = db.transaction((tx) => {
           const current = tx.select().from(refreshTokens)
@@ -262,6 +265,11 @@ export function registerAuthRoutes(app: Express): void {
           const liveUser = tx.select().from(users).where(and(eq(users.id, current.userId), eq(users.isActive, true))).get();
           if (!liveUser) throw new Error("REFRESH_USER_INACTIVE");
 
+          // Sessões emitidas antes da introdução de session_id ganham uma
+          // família nova neste primeiro refresh pós-migração; a partir daí
+          // seguem a cadeia normalmente.
+          const sessionId = current.sessionId ?? crypto.randomUUID();
+
           const newRefreshRow = tx
             .insert(refreshTokens)
             .values({
@@ -270,6 +278,7 @@ export function registerAuthRoutes(app: Express): void {
               expiresAt: newRefresh.expiresAt,
               ipAddress: ctx.ipAddress,
               userAgent: ctx.userAgent,
+              sessionId,
             })
             .returning()
             .get();
@@ -279,7 +288,7 @@ export function registerAuthRoutes(app: Express): void {
             .where(and(eq(refreshTokens.id, current.id), isNull(refreshTokens.revokedAt)))
             .run();
           if (revoked.changes !== 1) throw new Error("REFRESH_RACE");
-          return { user: liveUser };
+          return { user: liveUser, sessionId };
         });
       } catch (error) {
         const code = error instanceof Error ? error.message : "";
@@ -313,6 +322,7 @@ export function registerAuthRoutes(app: Express): void {
         email: user.email,
         role: user.role,
         name: user.name,
+        sessionId: rotation.sessionId,
       });
 
       await logAudit({
@@ -345,10 +355,29 @@ export function registerAuthRoutes(app: Express): void {
       const { refreshToken } = schema.parse(req.body || {});
       if (refreshToken) {
         const tokenHash = hashRefreshToken(refreshToken);
-        db.update(refreshTokens)
-          .set({ revokedAt: new Date().toISOString() })
+        const now = new Date().toISOString();
+        const presented = db.select({ userId: refreshTokens.userId, sessionId: refreshTokens.sessionId })
+          .from(refreshTokens)
           .where(eq(refreshTokens.tokenHash, tokenHash))
-          .run();
+          .get();
+        // Revoga a família inteira, não só o token apresentado: caso
+        // contrário o access token já emitido (ligado ao mesmo sid) seguiria
+        // válido até expirar sozinho, mesmo depois do logout explícito.
+        if (presented?.sessionId) {
+          db.update(refreshTokens)
+            .set({ revokedAt: now })
+            .where(and(
+              eq(refreshTokens.sessionId, presented.sessionId),
+              eq(refreshTokens.userId, presented.userId),
+              isNull(refreshTokens.revokedAt),
+            ))
+            .run();
+        } else {
+          db.update(refreshTokens)
+            .set({ revokedAt: now })
+            .where(eq(refreshTokens.tokenHash, tokenHash))
+            .run();
+        }
       }
       await logAudit({ eventType: "auth.logout", context: ctx });
       return res.json({ ok: true });

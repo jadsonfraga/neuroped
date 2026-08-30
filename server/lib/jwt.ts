@@ -40,6 +40,8 @@ export interface AccessTokenClaims {
   role: string;
   name: string;
   type: "access";
+  /** Id da família de sessão (mesmo valor gravado em refresh_tokens.session_id). */
+  sid: string;
   iat: number;
   exp: number;
 }
@@ -49,6 +51,7 @@ export function signAccessToken(params: {
   email: string;
   role: string;
   name: string;
+  sessionId: string;
 }): string {
   return jwt.sign(
     {
@@ -57,6 +60,7 @@ export function signAccessToken(params: {
       role: params.role,
       name: params.name,
       type: "access",
+      sid: params.sessionId,
     },
     getJwtSecret(),
     {
@@ -81,6 +85,7 @@ export function verifyAccessToken(token: string): AccessTokenClaims {
       typeof decoded.email !== "string" || decoded.email.length === 0 ||
       typeof decoded.role !== "string" || decoded.role.length === 0 ||
       typeof decoded.name !== "string" || decoded.name.length === 0 ||
+      typeof decoded.sid !== "string" || decoded.sid.length === 0 ||
       !Number.isInteger(decoded.iat) || !Number.isInteger(decoded.exp) ||
       decoded.exp <= decoded.iat
     ) {

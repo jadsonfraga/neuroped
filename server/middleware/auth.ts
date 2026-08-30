@@ -8,9 +8,9 @@
 
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../lib/jwt.js";
-import { users, type UserRole } from "@shared/schema";
+import { users, refreshTokens, type UserRole } from "@shared/schema";
 import { db } from "../storage.js";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 /**
  * Rotas liberadas mesmo com `mustChangePassword` pendente — espelha
@@ -72,6 +72,27 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       .get();
 
     if (!row || !row.isActive) {
+      res.status(401).json({ error: "Invalid or expired token", code: "AUTH_INVALID_SESSION" });
+      return;
+    }
+
+    // O access token embute `sid`, a família de sessão do login que o
+    // originou. Logout, detecção de reuse do refresh e troca de senha
+    // revogam essa família inteira em `refresh_tokens` — sem checar isso
+    // aqui, o access token continuaria válido pelos até 15 min restantes de
+    // sua expiração mesmo depois de qualquer uma dessas revogações.
+    const nowIso = new Date().toISOString();
+    const activeSession = db
+      .select({ id: refreshTokens.id })
+      .from(refreshTokens)
+      .where(and(
+        eq(refreshTokens.sessionId, claims.sid),
+        eq(refreshTokens.userId, row.id),
+        isNull(refreshTokens.revokedAt),
+        sql`julianday(${refreshTokens.expiresAt}) > julianday(${nowIso})`,
+      ))
+      .get();
+    if (!activeSession) {
       res.status(401).json({ error: "Invalid or expired token", code: "AUTH_INVALID_SESSION" });
       return;
     }

@@ -10,7 +10,7 @@ process.env.NEUROPED_JWT_SECRET = testJwtSecret;
 process.env.NODE_ENV = "test";
 
 const { db, sqlite } = await import("../../server/storage.js");
-const { files, users } = await import("../../shared/schema.js");
+const { files, users, refreshTokens } = await import("../../shared/schema.js");
 const { registerDocumentRoutes } = await import("../../server/routes/documents.js");
 const { registerFileRoutes } = await import("../../server/routes/files.js");
 const { signAccessToken } = await import("../../server/lib/jwt.js");
@@ -21,6 +21,7 @@ registerFileRoutes(app);
 registerDocumentRoutes(app);
 
 const userId = crypto.randomUUID();
+const sessionId = crypto.randomUUID();
 const fileId = crypto.randomUUID();
 const pendingFileId = crypto.randomUUID();
 const pdfBytes = Buffer.from("%PDF-1.7\nclinical-test\n%%EOF\n", "utf8");
@@ -31,6 +32,7 @@ const token = signAccessToken({
   email: "document-test@example.test",
   role: "professional",
   name: "Profissional Teste",
+  sessionId,
 });
 
 // O teste usa um arquivo confirmado no storage lógico; o upload remoto é coberto
@@ -44,6 +46,16 @@ db.insert(users).values({
   isActive: true,
   createdAt: now,
   updatedAt: now,
+}).run();
+
+// requireAuth exige uma sessão ativa em refresh_tokens além do JWT válido.
+db.insert(refreshTokens).values({
+  id: crypto.randomUUID(),
+  userId,
+  tokenHash: crypto.randomUUID(),
+  issuedAt: now,
+  expiresAt: new Date(Date.now() + 60_000).toISOString(),
+  sessionId,
 }).run();
 
 db.insert(files).values({

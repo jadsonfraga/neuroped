@@ -105,10 +105,16 @@ export const refreshTokens = sqliteTable(
     expiresAt: text("expires_at").notNull(),
     revokedAt: text("revoked_at"),
     rotatedToTokenId: text("rotated_to_token_id"),
+    // Estável através de toda a cadeia de rotação de um mesmo login (a
+    // "família"). Também embutido no access token (`sid`) para que
+    // logout/reuse-detection revoguem o access token já emitido, não só o
+    // refresh — sem isto, o access token seguia válido até expirar sozinho.
+    sessionId: text("session_id"),
   },
   (t) => ({
     userIdx: index("refresh_tokens_user_idx").on(t.userId),
     tokenHashIdx: index("refresh_tokens_token_hash_idx").on(t.tokenHash),
+    sessionIdx: index("refresh_tokens_session_idx").on(t.sessionId),
   }),
 );
 
