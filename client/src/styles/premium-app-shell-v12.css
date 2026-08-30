@@ -748,12 +748,13 @@ a[class*="inline-flex"]:active {
       linear-gradient(180deg, hsl(var(--card) / 0.34), transparent);
   }
 
-  .np-app-sidebar > nav {
+  /* O contêiner rolável agora engloba busca + atalhos + navegação. */
+  .np-app-sidebar .np-sidebar-scroll {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--sidebar-foreground) / 0.18) transparent;
   }
 
-  .np-app-sidebar > nav > div > button {
+  .np-app-sidebar #sidebar-nav > div > button {
     min-height: 2rem;
     letter-spacing: 0.15em;
   }

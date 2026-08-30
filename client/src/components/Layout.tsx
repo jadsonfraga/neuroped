@@ -96,7 +96,7 @@ function FeaturedShortcuts({
         onClick={onPick}
         onMouseEnter={() => softHover()}
         data-testid={`featured-${item.label}`}
-        className={`group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-[1rem] border px-3 transition-all duration-200 hover:-translate-y-0.5 ${compact ? "min-h-[58px] py-2" : "min-h-[68px] py-2.5"} ${toneClasses[tone]} ${active ? "ring-2 ring-primary/25 ring-offset-1 ring-offset-sidebar" : ""}`}
+        className={`group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-[1rem] border px-3 transition-all duration-200 hover:-translate-y-0.5 ${compact ? "min-h-[54px] py-2" : "min-h-[68px] py-2.5"} ${toneClasses[tone]} ${active ? "ring-2 ring-primary/25 ring-offset-1 ring-offset-sidebar" : ""}`}
       >
         {tone === "golden" && (
           <span
@@ -114,16 +114,19 @@ function FeaturedShortcuts({
           />
         </span>
         <span className="relative z-10 min-w-0 flex-1">
+          {/* Sempre uma linha com reticências: os cards antigos em duas
+              colunas cortavam palavras no meio ("Marcaç", "NeuroP") no
+              drawer mobile de 256px. */}
           <span
-            className={`block leading-tight ${compact ? "line-clamp-2 whitespace-normal text-[10px] font-bold" : "truncate text-xs font-extrabold"}`}
+            className={`block truncate leading-tight ${compact ? "text-[11px] font-bold" : "text-xs font-extrabold"}`}
           >
             {item.label}
           </span>
-          {!compact && (
-            <span className="mt-0.5 block truncate text-[10px] leading-tight opacity-70">
-              {item.description}
-            </span>
-          )}
+          <span
+            className={`mt-0.5 block truncate leading-tight opacity-70 ${compact ? "text-[9.5px]" : "text-[10px]"}`}
+          >
+            {item.description}
+          </span>
         </span>
         <span className="relative z-10 flex shrink-0 items-center gap-1 opacity-65 transition-transform group-hover:translate-x-0.5">
           {isExternalShortcut(item.href) ? (
@@ -189,9 +192,7 @@ function FeaturedShortcuts({
           </div>
           <div className="space-y-1.5">
             {primary.map((item) => renderCard(item))}
-            <div className="grid grid-cols-2 gap-1.5">
-              {supporting.map((item) => renderCard(item, true))}
-            </div>
+            {supporting.map((item) => renderCard(item, true))}
           </div>
         </>
       ) : (
@@ -207,9 +208,7 @@ function FeaturedShortcuts({
             </div>
             <div className="space-y-1.5">
               {primary.map((item) => renderCard(item))}
-              <div className="grid grid-cols-2 gap-1.5">
-                {supporting.map((item) => renderCard(item, true))}
-              </div>
+              {supporting.map((item) => renderCard(item, true))}
             </div>
           </div>
           <div className="hidden flex-col items-center gap-1.5 lg:flex">
@@ -727,6 +726,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
+        {/* Área central rolável: busca, atalhos e navegação rolam como um
+            bloco único. Antes, apenas o <nav> rolava e os cards de acessos
+            prioritários ficavam fixos, esmagando o menu em telas de celular. */}
+        <div className="np-sidebar-scroll flex-1 min-h-0 overflow-y-auto">
         {/* Busca / Command palette */}
         <div className="px-2 pt-2 space-y-2">
           <button
@@ -775,7 +778,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Navigation */}
         <nav
           id="sidebar-nav"
-          className="flex-1 py-2 px-2 space-y-1 overflow-y-auto"
+          className="py-2 px-2 space-y-1"
           aria-label="Navegação principal em grupos recolhíveis"
         >
           {renderedSections.map((section, si) => {
@@ -942,6 +945,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        </div>
 
         {/* Bottom controls */}
         <div className="p-2 border-t border-sidebar-border space-y-1">
@@ -1030,32 +1034,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </span>
             )}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
-            onClick={() => {
-              softTap();
-              haptic.tap();
-              setCollapsed(!collapsed);
-            }}
-            data-testid="button-sidebar-toggle"
-            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-          >
-            {collapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-            {!collapsed && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                Recolher
-              </span>
-            )}
-            {collapsed && (
-              <span className="ml-2 text-sm lg:hidden">Expandir</span>
-            )}
-          </Button>
+          {/* Recolher só altera a largura da sidebar fixa de desktop; no
+              drawer mobile o botão não tem efeito visível e apenas ocupava
+              uma linha do rodapé. */}
+          <div className="hidden lg:block">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
+              onClick={() => {
+                softTap();
+                haptic.tap();
+                setCollapsed(!collapsed);
+              }}
+              data-testid="button-sidebar-toggle"
+              aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            >
+              {collapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
+              {!collapsed && (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  Recolher
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
       </aside>
 
