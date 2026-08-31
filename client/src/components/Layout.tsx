@@ -51,9 +51,11 @@ import { useUiPreferences } from "@/hooks/useUiPreferences";
 const NESPLORA_SITE_URL = "/nesplora/";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
-// Recursos de alta frequência e conexões institucionais ficam acima da lista
-// estrutural. O catálogo de escalas permanece acessível pelo filtro, sem ocupar
-// dezenas de linhas na navegação principal.
+// Hierarquia deliberada em dois níveis: dois cartões-herói dourados (as
+// conexões institucionais Nesplora e EEG) e, abaixo, uma grade de ações
+// rápidas neutras com o ícone acima do rótulo — o rótulo centralizado quebra
+// por palavra e nunca é cortado, em qualquer largura de drawer. Todo o visual
+// vive em styles/sidebar-v13.css; aqui ficam apenas estrutura e estado.
 function FeaturedShortcuts({
   collapsed,
   activeHref,
@@ -75,142 +77,119 @@ function FeaturedShortcuts({
     haptic.select();
   };
   const isExternalShortcut = (href: string) => href === NESPLORA_SITE_URL;
-  const toneClasses = {
-    golden:
-      "border-amber-300/75 bg-gradient-to-br from-amber-50 via-amber-100/90 to-amber-200/65 text-amber-950 shadow-[0_12px_28px_-18px_rgba(180,83,9,.72)] hover:border-amber-400 hover:shadow-[0_16px_34px_-18px_rgba(180,83,9,.82)] dark:border-amber-700/70 dark:from-amber-950/80 dark:via-amber-900/60 dark:to-amber-800/40 dark:text-amber-50",
-    connection:
-      "border-cyan-300/55 bg-gradient-to-br from-cyan-50/90 via-sky-50/70 to-primary/10 text-foreground shadow-[0_10px_24px_-20px_rgba(8,145,178,.7)] hover:border-cyan-400/75 hover:shadow-[0_14px_28px_-18px_rgba(8,145,178,.65)] dark:border-cyan-800/70 dark:from-cyan-950/55 dark:via-sky-950/40 dark:to-primary/10",
-    priority:
-      "border-primary/30 bg-gradient-to-br from-primary/15 via-primary/[0.08] to-chart-2/10 text-foreground shadow-sm hover:border-primary/50 hover:shadow-md",
-  } as const;
-
-  const renderCard = (
+  const withLink = (
     item: (typeof featuredNavigation)[number],
-    compact = false,
-  ) => {
+    node: React.ReactNode,
+  ) =>
+    isExternalShortcut(item.href) ? (
+      <a key={item.href} href={item.href}>
+        {node}
+      </a>
+    ) : (
+      <Link key={item.href} href={item.href}>
+        {node}
+      </Link>
+    );
+
+  const heroes = visibleFeaturedNavigation.slice(0, 2);
+  const tiles = visibleFeaturedNavigation.slice(2);
+
+  const renderHero = (item: (typeof featuredNavigation)[number]) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
-    const tone = item.tone ?? "priority";
-    const card = (
+    return withLink(
+      item,
       <div
         onClick={onPick}
         onMouseEnter={() => softHover()}
         data-testid={`featured-${item.label}`}
-        className={`group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-[1rem] border px-3 transition-all duration-200 hover:-translate-y-0.5 ${compact ? "min-h-[54px] py-2" : "min-h-[68px] py-2.5"} ${toneClasses[tone]} ${active ? "ring-2 ring-primary/25 ring-offset-1 ring-offset-sidebar" : ""}`}
+        data-active={active || undefined}
+        className="np-side-hero group"
       >
-        {tone === "golden" && (
-          <span
-            aria-hidden="true"
-            className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/55 blur-2xl transition-transform duration-500 group-hover:scale-150 dark:bg-amber-100/15"
-          />
-        )}
-        <span
-          className={`relative z-10 flex shrink-0 items-center justify-center rounded-xl shadow-sm ${compact ? "h-8 w-8" : "h-9 w-9"} ${tone === "golden" ? "bg-amber-300 text-amber-950" : tone === "connection" ? "bg-cyan-500/15 text-cyan-700 dark:text-cyan-200" : "bg-primary text-primary-foreground"}`}
-        >
-          <Icon
-            className={compact ? "h-4 w-4" : "h-[18px] w-[18px]"}
-            strokeWidth={2.1}
-            aria-hidden="true"
-          />
+        <span aria-hidden="true" className="np-side-hero__glow" />
+        <span className="np-side-hero__icon">
+          <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} aria-hidden="true" />
         </span>
-        <span className="relative z-10 min-w-0 flex-1">
-          {/* Sempre uma linha com reticências: os cards antigos em duas
-              colunas cortavam palavras no meio ("Marcaç", "NeuroP") no
-              drawer mobile de 256px. */}
-          <span
-            className={`block truncate leading-tight ${compact ? "text-[11px] font-bold" : "text-xs font-extrabold"}`}
-          >
-            {item.label}
-          </span>
-          <span
-            className={`mt-0.5 block truncate leading-tight opacity-70 ${compact ? "text-[9.5px]" : "text-[10px]"}`}
-          >
-            {item.description}
-          </span>
+        <span className="min-w-0 flex-1">
+          <span className="np-side-hero__label">{item.label}</span>
+          <span className="np-side-hero__desc">{item.description}</span>
         </span>
-        <span className="relative z-10 flex shrink-0 items-center gap-1 opacity-65 transition-transform group-hover:translate-x-0.5">
+        <span className="np-side-hero__go">
           {isExternalShortcut(item.href) ? (
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           ) : (
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
           )}
         </span>
-      </div>
-    );
-
-    return isExternalShortcut(item.href) ? (
-      <a key={item.href} href={item.href}>
-        {card}
-      </a>
-    ) : (
-      <Link key={item.href} href={item.href}>
-        {card}
-      </Link>
+      </div>,
     );
   };
 
-  const primary = visibleFeaturedNavigation.slice(0, 2);
-  const supporting = visibleFeaturedNavigation.slice(2);
+  const renderTile = (item: (typeof featuredNavigation)[number]) => {
+    const Icon = item.icon;
+    const active = activeHref === item.href;
+    return withLink(
+      item,
+      <div
+        onClick={onPick}
+        onMouseEnter={() => softHover()}
+        data-testid={`featured-${item.label}`}
+        data-active={active || undefined}
+        title={item.description}
+        className="np-side-tile group"
+      >
+        <span className="np-side-tile__icon">
+          <Icon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+        </span>
+        <span className="np-side-tile__label">{item.label}</span>
+      </div>,
+    );
+  };
+
   const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
-    const tone = item.tone ?? "priority";
-    const icon = (
+    const golden = (item.tone ?? "priority") === "golden";
+    return withLink(
+      item,
       <div
-        key={item.href}
         title={`${item.label}${item.description ? ` — ${item.description}` : ""}`}
         aria-label={item.label}
         onClick={onPick}
         onMouseEnter={() => softHover()}
-        className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 hover:-translate-y-0.5 ${tone === "golden" ? "border-amber-300/80 bg-amber-200/80 text-amber-900 shadow-sm shadow-amber-500/25 dark:border-amber-700/70 dark:bg-amber-900/50 dark:text-amber-100" : tone === "connection" ? "border-cyan-300/60 bg-cyan-100/70 text-cyan-700 dark:border-cyan-800/70 dark:bg-cyan-950/50 dark:text-cyan-200" : "border-primary/30 bg-primary/15 text-primary"} ${active ? "ring-2 ring-primary/30" : ""}`}
+        data-active={active || undefined}
+        className={`np-side-rail-icon ${golden ? "np-side-rail-icon--golden" : ""}`}
       >
         <Icon className="h-4 w-4" aria-hidden="true" />
-      </div>
-    );
-    return isExternalShortcut(item.href) ? (
-      <a key={item.href} href={item.href}>
-        {icon}
-      </a>
-    ) : (
-      <Link key={item.href} href={item.href}>
-        {icon}
-      </Link>
+      </div>,
     );
   });
 
-  return (
-    <div className="px-2 pt-2">
-      {!collapsed ? (
+  const expanded = (
+    <>
+      <div className="np-side-kicker">
+        <p>Destaques</p>
+        <span className="np-side-kicker__badge">app</span>
+      </div>
+      <div className="space-y-1.5">{heroes.map(renderHero)}</div>
+      {tiles.length > 0 && (
         <>
-          <div className="flex items-center justify-between px-1 pb-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              Acessos prioritários
-            </p>
-            <span className="rounded-full border border-sidebar-border bg-sidebar-accent/45 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
-              app
-            </span>
+          <div className="np-side-kicker np-side-kicker--sub">
+            <p>Ações rápidas</p>
           </div>
-          <div className="space-y-1.5">
-            {primary.map((item) => renderCard(item))}
-            {supporting.map((item) => renderCard(item, true))}
-          </div>
+          <div className="grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
         </>
+      )}
+    </>
+  );
+
+  return (
+    <div className="px-2 pt-3">
+      {!collapsed ? (
+        expanded
       ) : (
         <>
-          <div className="lg:hidden">
-            <div className="flex items-center justify-between px-1 pb-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                Acessos prioritários
-              </p>
-              <span className="rounded-full border border-sidebar-border bg-sidebar-accent/45 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
-                app
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {primary.map((item) => renderCard(item))}
-              {supporting.map((item) => renderCard(item, true))}
-            </div>
-          </div>
+          <div className="lg:hidden">{expanded}</div>
           <div className="hidden flex-col items-center gap-1.5 lg:flex">
             {iconRail}
           </div>
@@ -227,6 +206,20 @@ const priorityNavHrefs = new Set([
   "/laudo-super",
   "/receita-c1",
 ]);
+
+const sessionRoleLabels: Record<string, string> = {
+  admin: "Administrador",
+  professional: "Profissional",
+  reader: "Leitura",
+  operator: "Operacional",
+};
+
+function sessionInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1][0] ?? "") : "";
+  return `${first}${last}`.toUpperCase() || "•";
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -256,14 +249,45 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const mainContentRef = useRef<HTMLElement>(null);
   const mobileMenuWasOpen = useRef(false);
   // As seções essenciais começam abertas; o restante permanece recolhido para
-  // que a sidebar preserve ritmo de aplicativo mesmo com muitos módulos.
+  // que a sidebar preserve ritmo de aplicativo mesmo com muitos módulos. A
+  // escolha do usuário é lembrada entre visitas — reabrir tudo a cada sessão
+  // desfaz a curadoria que ele mesmo fez.
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
-    () => ({
-      principal: true,
-      ATENDIMENTO: true,
-      "TRIAGEM E FERRAMENTAS": true,
-    }),
+    () => {
+      const defaults: Record<string, boolean> = {
+        principal: true,
+        ATENDIMENTO: true,
+        "TRIAGEM E FERRAMENTAS": true,
+      };
+      if (typeof window === "undefined") return defaults;
+      try {
+        const saved = localStorage.getItem("neuroped:sidebar-sections");
+        if (!saved) return defaults;
+        const parsed = JSON.parse(saved) as unknown;
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return defaults;
+        }
+        const sanitized: Record<string, boolean> = {};
+        for (const [key, value] of Object.entries(parsed)) {
+          if (typeof value === "boolean") sanitized[key] = value;
+        }
+        return { ...defaults, ...sanitized };
+      } catch {
+        return defaults;
+      }
+    },
   );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "neuroped:sidebar-sections",
+        JSON.stringify(openSections),
+      );
+    } catch {
+      /* storage indisponível (modo privado/cota) — silencioso */
+    }
+  }, [openSections]);
   const [navHydrated, setNavHydrated] = useState(false);
 
   useEffect(() => {
@@ -669,7 +693,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Logo + close button on mobile */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+        <div className="np-side-brand flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
           <div className="relative flex-shrink-0 w-9 h-9">
             <div
               className="h-full w-full rounded-xl overflow-hidden flex items-center justify-center ring-1 ring-white/25"
@@ -773,7 +797,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           activeHref={activeNavigation?.item.href}
           canRenderNavItem={canRenderNavItem}
         />
-        <div className="mx-3 mt-2 border-t border-sidebar-border/60" />
+        <div className="np-side-divider mx-3 mt-3 border-t border-sidebar-border/60" />
 
         {/* Navigation */}
         <nav
@@ -834,6 +858,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           item.tone === "priority";
                         const connection = item.tone === "connection";
                         const golden = item.tone === "golden";
+                        // A lista fica calma por padrão: só o item ativo tem
+                        // fundo + barra de acento (via CSS). Tons especiais
+                        // sinalizam apenas pelo tinte do ícone e por um marcador
+                        // discreto à direita, sem fundos gritando em série.
+                        const tone = golden
+                          ? "golden"
+                          : connection
+                            ? "connection"
+                            : priority
+                              ? "priority"
+                              : "default";
                         return (
                           <Link
                             key={`${sectionKey}-${item.href}-${item.label}`}
@@ -848,51 +883,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                     : undefined
                               }
                               data-testid={`nav-${item.label}`}
+                              data-tone={tone}
+                              data-active={active || undefined}
                               onMouseEnter={() => softHover()}
                               onClick={() => {
                                 softTap();
                                 haptic.select();
                               }}
-                              className={`relative flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer border transition-all duration-200 ${
-                                golden
-                                  ? active
-                                    ? "border-amber-300 bg-gradient-to-r from-amber-100 via-amber-300 to-amber-700 text-amber-950 font-extrabold shadow-lg shadow-amber-400/40 dark:border-amber-300 dark:from-amber-800 dark:via-amber-500 dark:to-amber-200 dark:text-amber-950"
-                                    : "border-amber-300/90 bg-gradient-to-r from-amber-50 via-amber-200 to-amber-500/80 text-amber-950 font-bold shadow-md shadow-amber-400/30 hover:translate-x-0.5 hover:shadow-lg hover:shadow-amber-400/45 dark:border-amber-400 dark:from-amber-900 dark:via-amber-700 dark:to-amber-400 dark:text-amber-50"
-                                  : connection
-                                    ? active
-                                      ? "border-cyan-400/70 bg-cyan-100/80 text-cyan-950 font-semibold shadow-sm dark:border-cyan-700 dark:bg-cyan-950/55 dark:text-cyan-100"
-                                      : "border-cyan-300/45 bg-cyan-50/55 text-cyan-950 hover:border-cyan-400/70 hover:bg-cyan-100/75 hover:translate-x-0.5 dark:border-cyan-800/70 dark:bg-cyan-950/30 dark:text-cyan-100 dark:hover:bg-cyan-950/55"
-                                    : priority
-                                      ? active
-                                        ? "border-amber-400 bg-amber-200/90 text-amber-950 font-semibold shadow-sm dark:border-amber-600 dark:bg-amber-950/60 dark:text-amber-100"
-                                        : "border-amber-300/80 bg-amber-100/70 text-amber-950 hover:bg-amber-200/90 hover:translate-x-0.5 dark:border-amber-700/70 dark:bg-amber-950/35 dark:text-amber-100 dark:hover:bg-amber-950/60"
-                                      : active
-                                        ? "border-transparent bg-[linear-gradient(90deg,hsl(var(--primary)/0.18),transparent)] text-primary font-semibold shadow-sm"
-                                        : "border-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5"
-                              } ${collapsed ? "lg:justify-center" : ""}`}
+                              className={`np-nav-item relative flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg cursor-pointer ${collapsed ? "lg:justify-center" : ""}`}
                             >
                               <item.icon
-                                className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                                  golden
-                                    ? "text-amber-800 drop-shadow-sm dark:text-amber-100"
-                                    : connection
-                                      ? "text-cyan-700 dark:text-cyan-200"
-                                      : priority
-                                        ? "text-amber-700 dark:text-amber-300"
-                                        : active
-                                          ? "text-primary scale-110"
-                                          : ""
-                                }`}
+                                className="np-nav-item__icon w-4 h-4 flex-shrink-0"
                                 strokeWidth={active ? 2 : 1.75}
                                 aria-hidden="true"
                               />
                               {!collapsed && (
-                                <span className="text-xs truncate">
+                                <span className="np-nav-item__label text-xs truncate">
                                   {item.label}
                                 </span>
                               )}
                               {collapsed && (
-                                <span className="text-xs truncate lg:hidden">
+                                <span className="np-nav-item__label text-xs truncate lg:hidden">
                                   {item.label}
                                 </span>
                               )}
@@ -908,7 +919,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                     repeat: Infinity,
                                     ease: "easeInOut",
                                   }}
-                                  className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-amber-900/15 text-amber-900 dark:bg-amber-100/20 dark:text-amber-100"
+                                  className="np-nav-item__zap ml-auto flex h-5 w-5 items-center justify-center rounded-full"
                                   aria-label="Acesso ao site de vídeo-EEG"
                                 >
                                   <Zap
@@ -920,18 +931,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               )}
                               {!collapsed && connection && !active && (
                                 <ArrowUpRight
-                                  className="ml-auto h-3.5 w-3.5 text-cyan-600/75 dark:text-cyan-300/75"
+                                  className="np-nav-item__link-mark ml-auto h-3.5 w-3.5"
                                   aria-label="Acesso integrado"
-                                />
-                              )}
-                              {active && !collapsed && (
-                                <motion.div
-                                  layoutId="nav-active-dot"
-                                  className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-                                  transition={{
-                                    duration: 0.2,
-                                    ease: easing.smooth,
-                                  }}
                                 />
                               )}
                             </div>
@@ -947,93 +948,126 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
         </div>
 
-        {/* Bottom controls */}
-        <div className="p-2 border-t border-sidebar-border space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
-            onClick={toggleSound}
-            data-testid="button-sound-toggle"
-            aria-label={
-              soundOn
-                ? "Desativar sons da interface"
-                : "Ativar sons da interface"
-            }
-            aria-pressed={soundOn}
-          >
-            {soundOn ? (
-              <Volume2 className="w-4 h-4" />
-            ) : (
-              <VolumeX className="w-4 h-4" />
-            )}
-            {!collapsed && (
-              <span className="ml-2 text-sm">
-                {soundOn ? "Sons da interface" : "Som desligado"}
+        {/* Rodapé: identidade da sessão primeiro, utilitários depois. */}
+        <div className="np-side-footer p-2 border-t border-sidebar-border space-y-1.5">
+          {accessMode === "remote" && isAuthenticated && user ? (
+            // Quem está dentro — e a saída sempre à mão, sem ocupar uma
+            // linha inteira de rodapé só para o verbo "Sair".
+            <div
+              className={`np-side-session ${collapsed ? "np-side-session--rail" : ""}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`np-side-session__avatar ${collapsed ? "lg:hidden" : ""}`}
+              >
+                {sessionInitials(user.name)}
               </span>
-            )}
-            {collapsed && (
-              <span className="ml-2 text-sm lg:hidden">
-                {soundOn ? "Sons" : "Som desligado"}
+              <span
+                className={`np-side-session__id ${collapsed ? "lg:hidden" : ""}`}
+              >
+                <span className="np-side-session__name">{user.name}</span>
+                <span className="np-side-session__role">
+                  {sessionRoleLabels[user.role] ?? user.role}
+                </span>
               </span>
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
-            onClick={() => {
-              softTap();
-              haptic.tap();
-              setDark(!dark);
-            }}
-            data-testid="button-theme-toggle"
-            aria-label={dark ? "Ativar modo claro" : "Ativar modo escuro"}
-          >
-            {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {!collapsed && (
-              <span className="ml-2 text-sm">
-                {dark ? "Modo Claro" : "Modo Escuro"}
-              </span>
-            )}
-            {collapsed && (
-              <span className="ml-2 text-sm lg:hidden">
-                {dark ? "Modo Claro" : "Modo Escuro"}
-              </span>
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
-            onClick={handleSessionAction}
-            data-testid={
-              accessMode === "remote"
-                ? "button-session-exit"
-                : "button-clear-local-data"
-            }
-            aria-label={
-              accessMode === "remote"
-                ? "Sair — encerrar sessão"
-                : "Apagar dados locais — dados clínicos deste navegador"
-            }
-          >
-            {accessMode === "remote" ? (
-              <KeyRound className="w-4 h-4" />
-            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="np-side-session__exit px-2"
+                onClick={handleSessionAction}
+                data-testid="button-session-exit"
+                aria-label="Sair — encerrar sessão"
+                title={`Sair — ${user.name}`}
+              >
+                <KeyRound className="w-4 h-4" />
+                <span className="sr-only">Sair</span>
+              </Button>
+            </div>
+          ) : accessMode === "remote" ? (
+            // Sem sessão (ex.: tela de login) o rodapé convida a entrar —
+            // mostrar "Sair" deslogado era um contrassenso.
+            <Link href="/login">
+              <div
+                className={`np-side-login ${collapsed ? "np-side-session--rail" : ""}`}
+                onClick={() => {
+                  softTap();
+                  haptic.tap();
+                }}
+                data-testid="button-session-enter"
+                title="Entrar com segurança"
+              >
+                <KeyRound className="w-4 h-4" aria-hidden="true" />
+                <span className={collapsed ? "lg:hidden" : ""}>Entrar</span>
+              </div>
+            </Link>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`w-full ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
+              onClick={handleSessionAction}
+              data-testid="button-clear-local-data"
+              aria-label="Apagar dados locais — dados clínicos deste navegador"
+            >
               <Trash2 className="w-4 h-4" />
-            )}
-            {!collapsed && (
-              <span className="ml-2 text-sm">
-                {accessMode === "remote" ? "Sair" : "Apagar dados locais"}
+              <span
+                className={`ml-2 text-sm ${collapsed ? "lg:hidden" : ""}`}
+              >
+                Apagar dados locais
               </span>
-            )}
-            {collapsed && (
-              <span className="ml-2 text-sm lg:hidden">
-                {accessMode === "remote" ? "Sair" : "Apagar dados locais"}
+            </Button>
+          )}
+          <div
+            className={`grid gap-1 ${collapsed ? "grid-cols-2 lg:grid-cols-1" : "grid-cols-2"}`}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`np-side-utility ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
+              onClick={toggleSound}
+              data-testid="button-sound-toggle"
+              aria-label={
+                soundOn
+                  ? "Desativar sons da interface"
+                  : "Ativar sons da interface"
+              }
+              aria-pressed={soundOn}
+            >
+              {soundOn ? (
+                <Volume2 className="w-4 h-4" />
+              ) : (
+                <VolumeX className="w-4 h-4" />
+              )}
+              <span
+                className={`ml-2 text-xs ${collapsed ? "lg:hidden" : ""}`}
+              >
+                {soundOn ? "Sons" : "Sem som"}
               </span>
-            )}
-          </Button>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`np-side-utility ${collapsed ? "lg:justify-center lg:px-0" : "justify-start"}`}
+              onClick={() => {
+                softTap();
+                haptic.tap();
+                setDark(!dark);
+              }}
+              data-testid="button-theme-toggle"
+              aria-label={dark ? "Ativar modo claro" : "Ativar modo escuro"}
+            >
+              {dark ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+              <span
+                className={`ml-2 text-xs ${collapsed ? "lg:hidden" : ""}`}
+              >
+                {dark ? "Claro" : "Escuro"}
+              </span>
+            </Button>
+          </div>
           {/* Recolher só altera a largura da sidebar fixa de desktop; no
               drawer mobile o botão não tem efeito visível e apenas ocupava
               uma linha do rodapé. */}
