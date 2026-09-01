@@ -1,6 +1,6 @@
 # Auditoria — avisos de pré-agendamento por WhatsApp
 
-Data: 2026-09-01  
+Data: 2026-09-01
 Escopo: Secretaria IA institucional × BoaConsulta
 
 ## Resultado

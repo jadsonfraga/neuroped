@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import {
-  BoaConsultaScheduleWidget,
+  BoaConsultaScheduleGateway,
   BOACONSULTA_PROFILE_URL,
 } from "@/components/BoaConsultaScheduleWidget";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,19 @@ import { Card, CardContent } from "@/components/ui/card";
 
 type AssistantIntent = "start" | "booking" | "manage" | "questions";
 
-const SECRETARIA_WHATSAPP_URL = `https://wa.me/5587991055790?text=${encodeURIComponent(
-  "Olá, concluí um pré-agendamento no BoaConsulta. Gostaria de receber as instruções para a caução de R$ 150 e a conferência do horário pela secretaria.",
-)}`;
+function whatsappUrl(message: string) {
+  return `https://wa.me/5587991055790?text=${encodeURIComponent(message)}`;
+}
+
+const SECRETARIA_WHATSAPP_URL = whatsappUrl(
+  "Olá, gostaria de falar com a secretaria sobre o processo de agendamento.",
+);
+const MANAGE_WHATSAPP_URL = whatsappUrl(
+  "Olá, gostaria de remarcar ou cancelar uma solicitação feita no BoaConsulta.",
+);
+const BOOKING_WHATSAPP_URL = whatsappUrl(
+  "Olá, fiz uma solicitação de pré-agendamento no BoaConsulta. Gostaria de receber as instruções para a caução de R$ 150 e a conferência do horário pela secretaria.",
+);
 
 const appointmentTimes = ["09:30", "10:30", "11:30", "12:30", "13:30"];
 
@@ -194,9 +204,12 @@ export default function MarcacaoPage() {
               <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 Consulta particular
               </p>
-              <h2 className="mt-1 text-lg font-black">R$ 800</h2>
+              <h2 className="mt-1 text-lg font-black">
+                Valor atualizado no BoaConsulta
+              </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Caução obrigatória de R$ 150, conferida pela secretaria.
+                Consulte o valor exibido no perfil oficial. A caução obrigatória
+                é de R$ 150 e é conferida pela secretaria.
               </p>
             </CardContent>
           </Card>
@@ -289,7 +302,7 @@ export default function MarcacaoPage() {
                         variant="outline"
                       >
                         <a
-                          href={SECRETARIA_WHATSAPP_URL}
+                          href={MANAGE_WHATSAPP_URL}
                           rel="noreferrer"
                           target="_blank"
                         >
@@ -366,11 +379,11 @@ export default function MarcacaoPage() {
                 className="mt-6 h-12 w-full gap-2 bg-emerald-600 font-black text-white hover:bg-emerald-700"
               >
                 <a
-                  href={SECRETARIA_WHATSAPP_URL}
+                  href={BOOKING_WHATSAPP_URL}
                   rel="noreferrer"
                   target="_blank"
                 >
-                  Avisar a secretaria no WhatsApp{" "}
+                  Já solicitei: avisar a secretaria{" "}
                   <MessageCircle className="h-4 w-4" />
                 </a>
               </Button>
@@ -410,7 +423,7 @@ export default function MarcacaoPage() {
             </Button>
           </div>
 
-          <BoaConsultaScheduleWidget />
+          <BoaConsultaScheduleGateway />
 
           <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
             <strong>Importante:</strong> a mensagem automática do BoaConsulta
