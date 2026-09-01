@@ -106,6 +106,9 @@ jobs:
       - name: Audit full dependency graph
         run: npm audit --audit-level=high
 
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
+
       - name: Run hard release verification gate
         run: npm run verify
 
