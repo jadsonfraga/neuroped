@@ -1,0 +1,125 @@
+name: LGPD operational worker foundation D1
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0017_lgpd_operational_worker_foundation.sql"
+      - "functions/api/live/governance/_worker-core.ts"
+      - "tests/unit/lgpd-worker-foundation.test.ts"
+      - ".github/workflows/lgpd-worker-foundation-d1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0017_lgpd_operational_worker_foundation.sql"
+      - "functions/api/live/governance/_worker-core.ts"
+      - "tests/unit/lgpd-worker-foundation.test.ts"
+      - ".github/workflows/lgpd-worker-foundation-d1.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+jobs:
+  validate-worker-foundation:
+    name: Validate LGPD worker foundation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Prove tenant binding, lease and physical completion evidence
+        run: node --import tsx tests/unit/lgpd-worker-foundation.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+  migrate-worker-foundation:
+    name: Apply LGPD worker foundation to D1
+    needs: validate-worker-foundation
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Apply migration 0017
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0017_lgpd_operational_worker_foundation.sql
+
+      - name: Verify ledger and completion guards without reading PHI
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name='live_lgpd_worker_jobs';" \
+            > /tmp/lgpd-worker-table.txt 2>&1
+          cat /tmp/lgpd-worker-table.txt
+          grep -q "live_lgpd_worker_jobs" /tmp/lgpd-worker-table.txt
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM pragma_table_info('live_lgpd_worker_jobs') ORDER BY cid;" \
+            > /tmp/lgpd-worker-cols.txt 2>&1
+          cat /tmp/lgpd-worker-cols.txt
+          for column in request_type request_id clinic_id status attempts claimed_at lease_until worker_run_id artifact_digest_sha256 artifact_byte_length deleted_counts_json failure_code; do
+            grep -q "\b$column\b" /tmp/lgpd-worker-cols.txt || {
+              echo "::error::coluna do worker ausente: $column"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence') ORDER BY name;" \
+            > /tmp/lgpd-worker-triggers.txt 2>&1
+          cat /tmp/lgpd-worker-triggers.txt
+          for trigger in trg_live_export_completed_requires_worker trg_live_delete_completed_requires_worker trg_lgpd_worker_export_completed_evidence trg_lgpd_worker_delete_completed_evidence; do
+            grep -q "$trigger" /tmp/lgpd-worker-triggers.txt || {
+              echo "::error::trigger do worker ausente: $trigger"
+              exit 1
+            }
+          done
+
+          echo "✅ Ledger do worker LGPD instalado e guards de conclusão material ativos sem consultar conteúdo clínico."
