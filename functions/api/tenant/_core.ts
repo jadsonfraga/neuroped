@@ -16,6 +16,8 @@ export interface TenantEnv {
   CLINICAL_DATA_KEY_PREVIOUS_ID?: string;
   CLINICAL_INDEX_KEY?: string;
   CLINICAL_LIVE_ENABLED?: string;
+  /** Identidade técnica reservada; nunca pode receber membership clínica. */
+  NEUROPED_E2E_EMAIL?: string;
 }
 
 export interface ClinicMembership {
@@ -59,6 +61,12 @@ export function tenantError(message: string, code: string, status: number): Resp
 
 export function clinicalLiveEnabled(env: TenantEnv): boolean {
   return env.CLINICAL_LIVE_ENABLED?.trim().toLowerCase() === "true";
+}
+
+export function isReservedTechnicalEmail(env: Pick<TenantEnv, "NEUROPED_E2E_EMAIL">, email: string | null | undefined): boolean {
+  const reserved = env.NEUROPED_E2E_EMAIL?.trim().toLowerCase();
+  const candidate = email?.trim().toLowerCase();
+  return Boolean(reserved && candidate && reserved === candidate);
 }
 
 /**

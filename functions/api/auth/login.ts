@@ -13,6 +13,7 @@ import {
   registerFailedAttempt,
   registerSuccessfulLogin,
   bootstrapAdmin,
+  bootstrapE2EAccount,
 } from "./_shared";
 import { DUMMY_PASSWORD_HASH, verifyPassword } from "./_crypto";
 import { createSessionTokens } from "./_sessions";
@@ -34,6 +35,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
   if (!env.DB) {
     return json({ error: "Banco indisponível.", code: "DB_UNAVAILABLE" }, 503);
+  }
+
+  // ADMIN_EMAIL e NEUROPED_E2E_EMAIL são identidades mutuamente exclusivas.
+  // Esta validação precisa ocorrer antes de bootstrapAdmin(): em banco novo,
+  // detectar a colisão somente depois criaria uma conta privilegiada no e-mail
+  // reservado à sentinela técnica antes de falhar fechado.
+  const adminEmail = env.ADMIN_EMAIL?.toLowerCase().trim();
+  const e2eEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+  const e2ePassword = env.NEUROPED_E2E_PASSWORD;
+  if (adminEmail && e2eEmail && adminEmail === e2eEmail) {
+    console.error("[auth/login] ADMIN_EMAIL colide com NEUROPED_E2E_EMAIL reservado");
+    return json(
+      { error: "Autenticação temporariamente indisponível.", code: "AUTH_CONFIGURATION_INVALID" },
+      503,
+    );
   }
 
   let parsed: unknown;
@@ -73,11 +89,32 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // transforma indisponibilidade de telemetria em indisponibilidade de login.
   }
 
-  // Provisiona o admin inicial (idempotente) antes de buscar o usuário.
+  // Provisiona o admin inicial (idempotente) antes de buscar o usuário, somente
+  // depois de provar que sua identidade não colide com a sentinela E2E.
   try {
     await bootstrapAdmin(env.DB, env);
   } catch {
     /* bootstrap é best-effort; não bloqueia login de usuários já existentes */
+  }
+
+  // O e-mail E2E é uma identidade reservada. Qualquer tentativa com esse e-mail
+  // precisa apresentar exatamente o secret técnico atual; nunca pode cair no
+  // fluxo humano normal, ainda que exista uma conta humana colidindo no banco.
+  const isReservedE2EIdentity = !!e2eEmail && email === e2eEmail;
+  if (isReservedE2EIdentity) {
+    if (!e2ePassword || password !== e2ePassword) {
+      try {
+        await registerLoginAbuseFailure(env, request, secret);
+      } catch {
+        // Resposta externa permanece genérica mesmo se o bucket auxiliar falhar.
+      }
+      return json(INVALID, 401);
+    }
+    try {
+      await bootstrapE2EAccount(env.DB, env, password);
+    } catch {
+      return json(INVALID, 401);
+    }
   }
 
   const user = await getUserByEmail(env.DB, email);
@@ -111,7 +148,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json(INVALID, 401);
   }
   try {
-    const tokens = await createSessionTokens(env.DB, user, secret);
+    // Para a identidade E2E reservada, a ausência de clinic_membership entra
+    // na própria SQL que emite a sessão inicial: uma membership criada entre
+    // a revalidação atômica do bootstrap e este ponto zera as linhas afetadas
+    // em vez de emitir tokens para uma sentinela que acabou de ganhar acesso.
+    const tokens = await createSessionTokens(env.DB, user, secret, {
+      requireNoClinicMembership: isReservedE2EIdentity,
+    });
     return json({ ...tokens, user: publicUser(user) }, 200);
   } catch (error) {
     console.error("[auth/login] não foi possível criar sessão revogável:", error);

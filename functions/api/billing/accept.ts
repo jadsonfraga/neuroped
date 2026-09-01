@@ -6,6 +6,8 @@ import { getContextUser } from "../auth/_authorization";
 
 interface Env {
   DB?: D1Database;
+  /** Identidade técnica reservada; nunca pode aceitar convite de clínica. */
+  NEUROPED_E2E_EMAIL?: string;
 }
 
 interface InvitationRow {
@@ -69,6 +71,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Convite expirado, revogado ou já utilizado.", code: validity.reason ?? "INVITATION_INVALID" }, 409);
   }
 
+  const reservedEmail = env.NEUROPED_E2E_EMAIL?.trim().toLowerCase() ?? "";
+  if (reservedEmail && invitation.email.trim().toLowerCase() === reservedEmail) {
+    return json(
+      { error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" },
+      409,
+    );
+  }
+
   // O aceite nunca pode anexar a conta de outra pessoa à clínica: quem chama
   // esta rota autenticado precisa ser o próprio destinatário do convite.
   // Sem isso, qualquer usuário autenticado (por exemplo o próprio convidante,
@@ -112,6 +122,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const existing = await getUserByEmail(env.DB, invitation.email);
   if (existing && existing.is_active !== 1) {
     return json({ error: "Conta existente está inativa.", code: "ACCOUNT_INACTIVE" }, 409);
+  }
+  if (existing && reservedEmail && existing.email.trim().toLowerCase() === reservedEmail) {
+    return json(
+      { error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" },
+      409,
+    );
   }
   if (existing && !authUser) {
     return json(
@@ -171,6 +187,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
+  const membershipIndex = statements.length;
   statements.push(
     env.DB.prepare(
       `INSERT INTO clinic_memberships
@@ -181,6 +198,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
            WHERE id = ? AND token_hash = ? AND status = 'pending'
              AND julianday(expires_at) > julianday(?)
         )
+          AND NOT EXISTS (
+            SELECT 1 FROM users u
+             WHERE u.id = ? AND lower(u.email) = ?
+          )
        ON CONFLICT(clinic_id, user_id) DO UPDATE SET
          role = excluded.role,
          active = 1,
@@ -196,17 +217,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       invitation.id,
       tokenHash,
       now,
+      userId,
+      reservedEmail,
     ),
     env.DB.prepare(
       `UPDATE clinic_invitations
           SET status = 'accepted', accepted_at = ?
         WHERE id = ? AND token_hash = ? AND status = 'pending'
-          AND julianday(expires_at) > julianday(?)`,
+          AND julianday(expires_at) > julianday(?)
+          AND changes() = 1`,
     ).bind(now, invitation.id, tokenHash, now),
     env.DB.prepare(
       `INSERT INTO saas_audit_events
         (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
-       VALUES (?, ?, ?, 'invitation.accepted', 'clinic_invitation', ?, ?, ?)`,
+       SELECT ?, ?, ?, 'invitation.accepted', 'clinic_invitation', ?, ?, ?
+        WHERE changes() = 1`,
     ).bind(
       crypto.randomUUID(),
       invitation.clinic_id,
@@ -219,9 +244,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   try {
     const results = await env.DB.batch(statements);
-    const invitationUpdate = results[results.length - 2];
-    if ((invitationUpdate?.meta?.changes ?? 0) !== 1) {
-      return json({ error: "Convite mudou durante o aceite.", code: "INVITATION_STALE" }, 409);
+    const membershipResult = results[membershipIndex];
+    const invitationUpdate = results[membershipIndex + 1];
+    const auditInsert = results[membershipIndex + 2];
+    if (
+      (membershipResult?.meta?.changes ?? 0) !== 1 ||
+      (invitationUpdate?.meta?.changes ?? 0) !== 1 ||
+      (auditInsert?.meta?.changes ?? 0) !== 1
+    ) {
+      return json(
+        { error: "Convite mudou durante o aceite ou a identidade está reservada.", code: "INVITATION_STALE" },
+        409,
+      );
     }
   } catch (error) {
     const message = String(error);
