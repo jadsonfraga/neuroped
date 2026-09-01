@@ -106,6 +106,9 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      - name: Instalar Chromium para os gates E2E do release
+        run: npx playwright install --with-deps chromium
+
       - name: Auditar grafo completo de dependências
         run: npm audit --audit-level=high
 
