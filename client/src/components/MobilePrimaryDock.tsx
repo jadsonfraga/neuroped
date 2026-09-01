@@ -7,7 +7,6 @@ import {
   FileText,
   Home,
   Stethoscope,
-  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -57,16 +56,23 @@ const dockItems: DockItem[] = [
     isActive: (path) => path === "/",
   },
   {
-    label: "Pacientes",
-    href: "/pacientes",
-    icon: UsersRound,
-    isActive: (path) => path === "/pacientes" || path.startsWith("/paciente/"),
-  },
-  {
+    // Laudos, receita C1 e o próprio prontuário exigem um paciente já
+    // selecionado (o botão de salvar/imprimir dessas telas fica desabilitado
+    // sem `?patientId`, sem nenhum seletor embutido) — o único ponto de
+    // entrada real para elas é a ficha do paciente em `/paciente/:id`
+    // (client/src/pages/paciente-detalhe.tsx), alcançada a partir da lista
+    // em `/pacientes`. Levar o atalho direto a `/prontuario` sem essa etapa
+    // deixa a pessoa preencher a ficha inteira sem nunca conseguir salvar.
     label: "Prontuário",
-    href: "/prontuario",
+    href: "/pacientes",
     icon: FileText,
-    isActive: (path) => path === "/prontuario" || path.startsWith("/prontuario/"),
+    isActive: (path) =>
+      path === "/pacientes" ||
+      path.startsWith("/paciente/") ||
+      path.startsWith("/prontuario") ||
+      path.startsWith("/laudo-neuroped") ||
+      path.startsWith("/laudo-super") ||
+      path.startsWith("/receita-c1"),
     highlighted: true,
   },
   {
