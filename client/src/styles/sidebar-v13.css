@@ -1,0 +1,660 @@
+/**
+ * sidebar-v13.css — fonte única de estilo da sidebar do NeuroPed.
+ *
+ * Antes, três gerações de folhas (visual-reset, premium-polish-10 e
+ * premium-app-shell-v12) disputavam a sidebar com `!important`; o resultado
+ * era imprevisível e impossível de evoluir. As regras de sidebar daqueles
+ * arquivos foram removidas e centralizadas aqui. Estrutura correspondente em
+ * components/Layout.tsx:
+ *
+ *   marca (np-side-brand)
+ *   └─ área rolável (np-sidebar-scroll)
+ *      ├─ busca (button-command-palette)
+ *      ├─ Destaques: heróis dourados (np-side-hero)
+ *      ├─ Ações rápidas: grade de blocos (np-side-tile)
+ *      └─ navegação (#sidebar-nav .np-nav-item[data-tone][data-active])
+ *   rodapé (np-side-footer: sessão + utilitários)
+ */
+
+/* ─────────────────────────── Casco ─────────────────────────── */
+
+.np-app-sidebar {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--sidebar) / 0.99),
+    hsl(var(--sidebar) / 0.94)
+  );
+  border-right-color: hsl(var(--sidebar-border) / 0.8);
+  backdrop-filter: blur(24px) saturate(120%);
+}
+
+@media (max-width: 1023.98px) {
+  /* O drawer respira mais largo que os 16rem do rail desktop. Único
+     `!important` do arquivo: precisa vencer a utility `w-64` do Layout. */
+  .np-app-sidebar {
+    width: min(86vw, 21.5rem) !important;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (min-width: 1024px) {
+  .np-app-sidebar {
+    box-shadow:
+      12px 0 34px -30px hsl(var(--foreground) / 0.42),
+      inset -1px 0 0 hsl(0 0% 100% / 0.16);
+  }
+}
+
+/* ─────────────────────────── Marca ─────────────────────────── */
+
+.np-side-brand {
+  background:
+    radial-gradient(
+      11rem 6rem at 10% -10%,
+      hsl(var(--primary) / 0.12),
+      transparent 70%
+    ),
+    linear-gradient(180deg, hsl(var(--card) / 0.3), transparent);
+}
+
+/* ─────────────────────────── Área rolável ─────────────────────────── */
+
+.np-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--sidebar-foreground) / 0.16) transparent;
+  /* Fades sutis nas bordas: o conteúdo "entra" e "sai" da vista em vez de
+     ser guilhotinado pelo cabeçalho e pelo rodapé. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 0.85rem,
+    black calc(100% - 1.1rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 0.85rem,
+    black calc(100% - 1.1rem),
+    transparent 100%
+  );
+  padding-bottom: 0.6rem;
+}
+
+/* ─────────────────────────── Busca ─────────────────────────── */
+
+[data-testid="button-command-palette"] {
+  border-radius: 0.9rem;
+  border-color: hsl(var(--sidebar-border) / 0.85);
+  background: hsl(var(--card) / 0.55);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.28);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+[data-testid="button-command-palette"]:hover {
+  border-color: hsl(var(--primary) / 0.28);
+  background: hsl(var(--sidebar-accent) / 0.8);
+}
+
+[data-testid="button-command-palette"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.6);
+}
+
+/* ─────────────────────────── Kickers de seção ─────────────────────────── */
+
+.np-side-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.35rem 0.45rem;
+}
+
+.np-side-kicker p {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: hsl(var(--muted-foreground));
+}
+
+.np-side-kicker--sub {
+  margin-top: 0.9rem;
+}
+
+.np-side-kicker__badge {
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--sidebar-border));
+  background: hsl(var(--sidebar-accent) / 0.45);
+  padding: 0.125rem 0.4rem;
+  font-size: 9px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ─────────────────────────── Heróis dourados ─────────────────────────── */
+
+.np-side-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 4rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid hsl(43 90% 55% / 0.55);
+  background: linear-gradient(
+    135deg,
+    hsl(48 96% 95%),
+    hsl(45 93% 88% / 0.92),
+    hsl(43 90% 78% / 0.62)
+  );
+  color: hsl(24 60% 12%);
+  box-shadow: 0 12px 28px -20px hsl(30 80% 30% / 0.65);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.np-side-hero:hover {
+  transform: translateY(-1px);
+  border-color: hsl(43 92% 48% / 0.8);
+  box-shadow: 0 16px 32px -20px hsl(30 80% 30% / 0.75);
+}
+
+.np-side-hero:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.np-side-hero[data-active] {
+  box-shadow:
+    0 0 0 2px hsl(var(--primary) / 0.3),
+    0 12px 28px -20px hsl(30 80% 30% / 0.65);
+}
+
+.dark .np-side-hero {
+  border-color: hsl(40 70% 40% / 0.6);
+  background: linear-gradient(
+    135deg,
+    hsl(30 55% 14% / 0.85),
+    hsl(34 60% 18% / 0.65),
+    hsl(38 65% 24% / 0.45)
+  );
+  color: hsl(46 90% 92%);
+}
+
+.np-side-hero__glow {
+  position: absolute;
+  right: -2rem;
+  top: -2rem;
+  height: 6rem;
+  width: 6rem;
+  border-radius: 9999px;
+  background: hsl(0 0% 100% / 0.5);
+  filter: blur(24px);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+
+.dark .np-side-hero__glow {
+  background: hsl(45 90% 80% / 0.14);
+}
+
+.np-side-hero:hover .np-side-hero__glow {
+  transform: scale(1.5);
+}
+
+.np-side-hero__icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background: hsl(45 93% 65%);
+  color: hsl(24 60% 12%);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.5);
+}
+
+.dark .np-side-hero__icon {
+  background: hsl(40 75% 45%);
+  color: hsl(30 60% 10%);
+}
+
+.np-side-hero__label {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.np-side-hero__desc {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.125rem;
+  font-size: 10px;
+  line-height: 1.25;
+  opacity: 0.72;
+}
+
+.np-side-hero__go {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.np-side-hero:hover .np-side-hero__go {
+  transform: translateX(2px);
+}
+
+/* ─────────────────────────── Ações rápidas ─────────────────────────── */
+
+.np-side-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 4.4rem;
+  padding: 0.6rem 0.45rem;
+  border-radius: 0.95rem;
+  border: 1px solid hsl(var(--sidebar-border) / 0.75);
+  background: hsl(var(--card) / 0.5);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.np-side-tile:hover {
+  transform: translateY(-1px);
+  border-color: hsl(var(--primary) / 0.35);
+  background: hsl(var(--primary) / 0.06);
+  box-shadow: 0 10px 22px -20px hsl(var(--primary) / 0.6);
+}
+
+.np-side-tile:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.np-side-tile[data-active] {
+  border-color: hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.1);
+}
+
+.np-side-tile__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.9rem;
+  width: 1.9rem;
+  border-radius: 0.6rem;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.14);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.np-side-tile:hover .np-side-tile__icon,
+.np-side-tile[data-active] .np-side-tile__icon {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.np-side-tile__label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: hsl(var(--foreground) / 0.92);
+}
+
+.np-side-tile[data-active] .np-side-tile__label {
+  color: hsl(var(--primary));
+}
+
+/* ─────────────────────────── Rail (desktop recolhido) ─────────────────────────── */
+
+.np-side-rail-icon {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--primary) / 0.3);
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.np-side-rail-icon:hover {
+  transform: translateY(-1px);
+  background: hsl(var(--primary) / 0.2);
+}
+
+.np-side-rail-icon--golden {
+  border-color: hsl(43 90% 55% / 0.7);
+  background: hsl(45 93% 80% / 0.8);
+  color: hsl(28 70% 30%);
+}
+
+.dark .np-side-rail-icon--golden {
+  border-color: hsl(40 70% 40% / 0.7);
+  background: hsl(34 60% 20% / 0.6);
+  color: hsl(46 90% 82%);
+}
+
+.np-side-rail-icon[data-active] {
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3);
+}
+
+/* ─────────────────────────── Navegação ─────────────────────────── */
+
+#sidebar-nav > div > button {
+  min-height: 2rem;
+  border-radius: 0.7rem;
+}
+
+.np-nav-item {
+  border: 1px solid transparent;
+  color: hsl(var(--sidebar-foreground));
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.np-nav-item__icon {
+  color: hsl(var(--muted-foreground));
+  transition:
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.np-nav-item:hover {
+  background: hsl(var(--sidebar-accent) / 0.75);
+  transform: translateX(2px);
+}
+
+.np-nav-item:hover .np-nav-item__icon {
+  color: hsl(var(--foreground));
+}
+
+.np-nav-item:active {
+  transform: translateX(2px) scale(0.99);
+}
+
+/* Rota ativa: fundo tintado + barra de acento — um único sinal, sempre o
+   mesmo, em toda a lista. */
+.np-nav-item[data-active="true"] {
+  background: hsl(var(--primary) / 0.09);
+  color: hsl(var(--primary));
+  font-weight: 600;
+  box-shadow:
+    inset 3px 0 0 hsl(var(--primary)),
+    inset 0 0 0 1px hsl(var(--primary) / 0.08);
+}
+
+.np-nav-item[data-active="true"] .np-nav-item__icon {
+  color: hsl(var(--primary));
+  transform: scale(1.08);
+}
+
+/* Tons especiais sinalizam pelo tinte do ícone — não por fundos em série,
+   que achatavam a hierarquia (tudo importante = nada importante). */
+.np-nav-item[data-tone="priority"] .np-nav-item__icon {
+  color: hsl(36 80% 42%);
+}
+
+.dark .np-nav-item[data-tone="priority"] .np-nav-item__icon {
+  color: hsl(43 85% 62%);
+}
+
+.np-nav-item[data-tone="connection"] .np-nav-item__icon {
+  color: hsl(192 70% 38%);
+}
+
+.dark .np-nav-item[data-tone="connection"] .np-nav-item__icon {
+  color: hsl(190 75% 68%);
+}
+
+.np-nav-item__link-mark {
+  color: hsl(192 70% 40% / 0.7);
+}
+
+.dark .np-nav-item__link-mark {
+  color: hsl(190 75% 70% / 0.7);
+}
+
+/* A assinatura dourada (vídeo-EEG) permanece — única linha com fundo próprio. */
+.np-nav-item[data-tone="golden"] {
+  border-color: hsl(43 90% 55% / 0.6);
+  background: linear-gradient(
+    90deg,
+    hsl(48 96% 92% / 0.9),
+    hsl(45 93% 82% / 0.55)
+  );
+  color: hsl(24 60% 14%);
+  font-weight: 600;
+}
+
+.np-nav-item[data-tone="golden"]:hover {
+  background: linear-gradient(
+    90deg,
+    hsl(48 96% 90%),
+    hsl(45 93% 78% / 0.7)
+  );
+}
+
+.np-nav-item[data-tone="golden"] .np-nav-item__icon {
+  color: hsl(30 70% 34%);
+}
+
+.dark .np-nav-item[data-tone="golden"] {
+  border-color: hsl(40 70% 40% / 0.6);
+  background: linear-gradient(
+    90deg,
+    hsl(32 55% 16% / 0.85),
+    hsl(36 60% 22% / 0.5)
+  );
+  color: hsl(46 90% 90%);
+}
+
+.dark .np-nav-item[data-tone="golden"] .np-nav-item__icon {
+  color: hsl(45 85% 70%);
+}
+
+.np-nav-item[data-tone="golden"][data-active="true"] {
+  box-shadow:
+    inset 3px 0 0 hsl(40 85% 45%),
+    inset 0 0 0 1px hsl(43 90% 55% / 0.3);
+  color: hsl(24 60% 12%);
+}
+
+.dark .np-nav-item[data-tone="golden"][data-active="true"] {
+  color: hsl(46 90% 92%);
+}
+
+.np-nav-item__zap {
+  background: hsl(30 70% 25% / 0.15);
+  color: hsl(30 70% 28%);
+}
+
+.dark .np-nav-item__zap {
+  background: hsl(46 90% 85% / 0.2);
+  color: hsl(46 90% 85%);
+}
+
+@media (max-width: 1023.98px) {
+  .np-nav-item {
+    min-height: 2.75rem;
+  }
+
+  .np-nav-item .np-nav-item__label {
+    font-size: 0.8rem;
+  }
+}
+
+/* ─────────────────────────── Rodapé ─────────────────────────── */
+
+.np-side-footer {
+  background: linear-gradient(180deg, transparent, hsl(var(--sidebar) / 0.7));
+}
+
+.np-side-session {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.9rem;
+  border: 1px solid hsl(var(--sidebar-border) / 0.7);
+  background: hsl(var(--card) / 0.5);
+}
+
+@media (min-width: 1024px) {
+  .np-side-session--rail {
+    justify-content: center;
+    padding: 0.3rem;
+    border-color: transparent;
+    background: transparent;
+  }
+}
+
+.np-side-session__avatar {
+  display: grid;
+  place-items: center;
+  height: 2rem;
+  width: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.6rem;
+  border: 1px solid hsl(var(--primary) / 0.2);
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.np-side-session__id {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.np-side-session__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+}
+
+.np-side-session__role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.3;
+  color: hsl(var(--muted-foreground));
+}
+
+.np-side-session__exit {
+  margin-left: auto;
+  color: hsl(var(--muted-foreground));
+}
+
+.np-side-session__exit:hover {
+  color: hsl(var(--destructive));
+}
+
+.np-side-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  border-radius: 0.9rem;
+  border: 1px solid hsl(var(--primary) / 0.35);
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.np-side-login:hover {
+  background: hsl(var(--primary) / 0.16);
+  transform: translateY(-1px);
+}
+
+.np-side-utility {
+  min-height: 2.25rem;
+  border-radius: 0.7rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ─────────────────────────── Movimento com respeito ─────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .np-side-hero,
+  .np-side-hero__glow,
+  .np-side-hero__go,
+  .np-side-tile,
+  .np-side-tile__icon,
+  .np-side-rail-icon,
+  .np-nav-item,
+  .np-nav-item__icon,
+  .np-side-login,
+  [data-testid="button-command-palette"] {
+    transition: none !important;
+  }
+
+  .np-side-hero:hover,
+  .np-side-tile:hover,
+  .np-side-rail-icon:hover,
+  .np-nav-item:hover,
+  .np-side-login:hover {
+    transform: none !important;
+  }
+}

@@ -9,7 +9,7 @@ export const noteTopics = [
   "interacao_social", "brincadeiras", "comportamentos_repetitivos", "perfil_sensorial", "sono", "alimentacao", "escola",
   "aprendizagem", "comportamento", "ansiedade", "humor", "tiques", "epilepsia", "crises", "medicacoes", "alergias",
   "antecedentes", "historia_familiar", "observacoes_medico", "informacoes_escolares", "relatos_terapeuticos", "exame_fisico",
-  "exame_neurologico", "hipoteses", "condutas", "orientacoes",
+  "exame_neurologico", "hipoteses", "condutas", "orientacoes", "risco_autolesao_suicidio",
 ] as const;
 export type NoteTopic = (typeof noteTopics)[number];
 

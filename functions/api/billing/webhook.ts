@@ -100,17 +100,17 @@ async function resolveContext(db: D1Database, event: AsaasWebhookEvent): Promise
   return null;
 }
 
-async function checkoutSeatsForEvent(
+async function checkoutBillingForEvent(
   db: D1Database,
   event: AsaasWebhookEvent,
   customerId: string,
-): Promise<number | null> {
+): Promise<{ seats: number | null; amountCents: number | null }> {
   const externalReference = webhookExternalReference(event) ?? "";
   const checkoutId = event.checkout?.id?.trim() ?? "";
-  if (!externalReference && !checkoutId) return null;
+  if (!externalReference && !checkoutId) return { seats: null, amountCents: null };
 
   const row = await db.prepare(
-    `SELECT seats
+    `SELECT seats, amount_cents
        FROM billing_provider_checkouts
       WHERE billing_customer_id = ?
         AND ((? <> '' AND external_reference = ?)
@@ -123,10 +123,14 @@ async function checkoutSeatsForEvent(
     externalReference,
     checkoutId,
     checkoutId,
-  ).first<{ seats: number }>();
+  ).first<{ seats: number; amount_cents: number }>();
 
   const seats = Number(row?.seats);
-  return Number.isInteger(seats) && seats > 0 ? seats : null;
+  const amountCents = Number(row?.amount_cents);
+  return {
+    seats: Number.isInteger(seats) && seats > 0 ? seats : null,
+    amountCents: Number.isInteger(amountCents) && amountCents > 0 ? amountCents : null,
+  };
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
@@ -167,9 +171,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const occurredAt = eventDate(event.dateCreated);
   const eventInstant = new Date(occurredAt);
   const kind = classify(name);
-  const eventCheckoutSeats = kind === "paid"
-    ? await checkoutSeatsForEvent(env.DB, event, billing.customer_id)
+  const checkoutBilling = kind === "paid"
+    ? await checkoutBillingForEvent(env.DB, event, billing.customer_id)
     : null;
+  const eventCheckoutSeats = checkoutBilling?.seats ?? null;
+  // CHECKOUT_PAID não traz `payment.value`; sem esse fallback o evento seria
+  // gravado com amount_cents = 0 mesmo tendo o valor real do checkout salvo.
+  const amountCents = amountCentsFromWebhook(event) || checkoutBilling?.amountCents || 0;
   let nextStatus = billing.customer_status;
   let nextGrace = billing.grace_ends_at;
   let canceledAt = billing.canceled_at;
@@ -221,7 +229,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
        VALUES (?, ?, 'asaas', ?, ?, ?, 'done', ?, ?, ?, ?, datetime('now'))`,
     ).bind(
       crypto.randomUUID(), billing.subscription_id, providerObjectId, invoiceKind(kind),
-      amountCentsFromWebhook(event), idempotencyKey, rawStatus, occurredAt,
+      amountCents, idempotencyKey, rawStatus, occurredAt,
       JSON.stringify({ eventId: event.id ?? null, event: name }),
     ),
     env.DB.prepare(

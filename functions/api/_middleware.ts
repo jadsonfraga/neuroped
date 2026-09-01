@@ -154,7 +154,11 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
 }
 
 function getRateLimitKey(request: Request): string {
-  const ip = request.headers.get("CF-Connecting-IP") ?? request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ?? "unknown";
+  // `X-Forwarded-For` é livremente definido pelo cliente; só o cabeçalho que
+  // a borda da Cloudflare sobrescreve (`CF-Connecting-IP`) é confiável para
+  // chavear o limite — do contrário bastaria girar o header para burlá-lo.
+  // Consistente com functions/api/auth/_rateLimit.ts.
+  const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
   return `rl:${ip}`;
 }
 

@@ -264,18 +264,37 @@ export async function logoutRequest(): Promise<void> {
 }
 
 /**
+ * Só é seguro anexar o Bearer token quando o destino é a própria API: uma
+ * URL absoluta de terceiro (ex.: um link assinado de storage) nunca deve
+ * carregar junto a credencial de sessão do usuário. Um caminho relativo é
+ * sempre a própria API (é assim que todo chamador desta função já opera),
+ * então esse caso comum nunca depende de `window.location` estar disponível.
+ */
+function isSameOriginAsApi(input: RequestInfo): boolean {
+  const url = typeof input === "string" ? input : input.url;
+  if (!/^[a-z][a-z\d+.-]*:\/\//i.test(url)) return true;
+  try {
+    const target = new URL(url);
+    if (API_BASE) return target.origin === new URL(API_BASE).origin;
+    return typeof window !== "undefined" && !!window.location && target.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * fetch wrapper que insere Authorization header e tenta refresh em 401.
  */
 export async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
   const requestEpoch = authEpoch;
+  const requestUrl = typeof input === "string" && input.startsWith("/") ? `${API_BASE}${input}` : input;
+
   let token = getAccessToken();
   const headers = new Headers(init.headers);
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (token && isSameOriginAsApi(requestUrl)) headers.set("Authorization", `Bearer ${token}`);
   if (!headers.has("Content-Type") && init.body && typeof init.body === "string") {
     headers.set("Content-Type", "application/json");
   }
-
-  const requestUrl = typeof input === "string" && input.startsWith("/") ? `${API_BASE}${input}` : input;
 
   let response = await fetch(requestUrl, { ...init, headers });
 
@@ -285,6 +304,7 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
     response.status === 401
     && authEpoch === requestEpoch
     && (token || getRefreshToken())
+    && isSameOriginAsApi(requestUrl)
   ) {
     const epochBeforeRefresh = authEpoch;
     const newToken = await refreshTokenRequest();
