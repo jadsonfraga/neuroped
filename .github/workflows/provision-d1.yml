@@ -65,7 +65,7 @@ jobs:
           case "$ADMIN_MAIL" in *@*) ;; *) echo "::error::ADMIN_EMAIL inválido"; exit 1;; esac
           echo "Secrets obrigatórios presentes (valores não exibidos)."
 
-      - name: Node.js 20
+      - name: Node.js 24
         uses: actions/setup-node@v6
         with:
           node-version: "24"
@@ -76,6 +76,9 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
+
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
 
       - name: Auditar grafo completo de dependências
         run: npm audit --audit-level=high

@@ -75,6 +75,9 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
+
       - name: Normalizar parâmetros da execução
         env:
           DATE_INPUT: ${{ inputs.date }}

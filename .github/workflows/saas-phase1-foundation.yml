@@ -45,6 +45,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
       - name: Testar contrato tenant, criptografia e anti-cross-tenant
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
       - name: Testar hardening de owner, provenance e supersessão

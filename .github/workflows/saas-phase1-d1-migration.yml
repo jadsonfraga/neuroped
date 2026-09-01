@@ -48,6 +48,9 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
+
       - name: Catraca completa antes de tocar no D1 remoto
         run: |
           set -euo pipefail
