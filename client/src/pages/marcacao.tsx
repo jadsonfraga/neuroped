@@ -22,6 +22,8 @@ import { Card, CardContent } from "@/components/ui/card";
 
 type AssistantIntent = "start" | "booking" | "manage" | "questions";
 
+const OFFICIAL_CONSULTATION_PRICE = "R$ 800";
+
 function whatsappUrl(message: string) {
   return `https://wa.me/5587991055790?text=${encodeURIComponent(message)}`;
 }
@@ -33,7 +35,7 @@ const MANAGE_WHATSAPP_URL = whatsappUrl(
   "Olá, gostaria de remarcar ou cancelar uma solicitação feita no BoaConsulta.",
 );
 const BOOKING_WHATSAPP_URL = whatsappUrl(
-  "Olá, fiz uma solicitação de pré-agendamento no BoaConsulta. Gostaria de receber as instruções para a caução de R$ 150 e a conferência do horário pela secretaria.",
+  "Olá, concluí uma solicitação de pré-agendamento no BoaConsulta. Este é meu WhatsApp de contato. Por favor, enviem as instruções para a caução de R$ 150 e confirmem o horário somente após a conferência pela secretaria.",
 );
 
 const appointmentTimes = ["09:30", "10:30", "11:30", "12:30", "13:30"];
@@ -47,9 +49,9 @@ const trustCards = [
   },
   {
     icon: CheckCircle2,
-    title: "Fonte única",
+    title: "Agenda oficial",
     description:
-      "Disponibilidade e ocupação são controladas pelo perfil oficial do BoaConsulta.",
+      "Horários e ocupação são consultados no BoaConsulta; preço e confirmação final seguem a orientação da clínica.",
   },
   {
     icon: MessageCircle,
@@ -62,11 +64,17 @@ const trustCards = [
 /** Porta administrativa guiada: não recebe texto livre, sintomas ou documentos clínicos. */
 export default function MarcacaoPage() {
   const [intent, setIntent] = useState<AssistantIntent>("start");
+  const [scheduleOpened, setScheduleOpened] = useState(false);
 
   const scrollToSchedule = () => {
     document
       .getElementById("agenda-boaconsulta")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const markScheduleOpened = () => {
+    setScheduleOpened(true);
+    setIntent("booking");
   };
 
   return (
@@ -100,16 +108,16 @@ export default function MarcacaoPage() {
             </div>
 
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-white/5 px-3 py-1.5 text-xs font-semibold text-amber-200">
-              <Sparkles className="h-3.5 w-3.5" /> Secretária IA · agenda
-              oficial BoaConsulta
+              <Sparkles className="h-3.5 w-3.5" /> Secretária IA · fluxo
+              administrativo guiado
             </div>
             <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.04] tracking-tight sm:text-5xl lg:text-6xl">
               Seu pré-agendamento, simples e acompanhado.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 sm:text-lg">
-              Escolha um dos cinco horários de segunda a sexta. A secretaria
-              confere a caução de R$ 150 antes de confirmar efetivamente a
-              consulta.
+              Escolha entre os horários ainda disponíveis de segunda a sexta. A
+              secretaria confere a caução de R$ 150 antes de confirmar
+              efetivamente a consulta.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -126,7 +134,7 @@ export default function MarcacaoPage() {
               >
                 <a
                   href={SECRETARIA_WHATSAPP_URL}
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   target="_blank"
                 >
                   Falar com a secretaria <MessageCircle className="h-4 w-4" />
@@ -172,7 +180,7 @@ export default function MarcacaoPage() {
                 Agenda
               </p>
               <h2 className="mt-1 text-lg font-black">
-                5 pacientes por dia útil
+                Até 5 pacientes por dia útil
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Segunda a sexta, exceto feriados nacionais.
@@ -205,11 +213,13 @@ export default function MarcacaoPage() {
                 Consulta particular
               </p>
               <h2 className="mt-1 text-lg font-black">
-                Valor atualizado no BoaConsulta
+                Valor oficial da clínica · {OFFICIAL_CONSULTATION_PRICE}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Consulte o valor exibido no perfil oficial. A caução obrigatória
-                é de R$ 150 e é conferida pela secretaria.
+                Se o BoaConsulta exibir outro valor durante a atualização do
+                parceiro, confirme {OFFICIAL_CONSULTATION_PRICE} com a
+                secretaria antes de qualquer pagamento. A caução obrigatória é
+                de R$ 150 e depende de conferência.
               </p>
             </CardContent>
           </Card>
@@ -227,7 +237,7 @@ export default function MarcacaoPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-200">
-                    Assistente administrativa
+                    Assistente administrativa guiada
                   </p>
                   <h2 className="text-xl font-black" id="secretaria-ia-title">
                     Como posso ajudar?
@@ -277,8 +287,9 @@ export default function MarcacaoPage() {
                   {intent === "booking" && (
                     <>
                       <p>
-                        Escolha abaixo um horário livre no BoaConsulta. Depois,
-                        avise a secretaria para receber as instruções da caução.
+                        {scheduleOpened
+                          ? "A agenda oficial foi aberta. Se você concluiu a solicitação no BoaConsulta, avise a secretaria agora para receber as instruções da caução."
+                          : "Abra abaixo a agenda oficial do BoaConsulta. Depois de concluir a solicitação, volte e avise a secretaria para receber as instruções da caução."}
                       </p>
                       <Button
                         className="mt-3 gap-2 bg-rose-900 text-white hover:bg-rose-950"
@@ -303,7 +314,7 @@ export default function MarcacaoPage() {
                       >
                         <a
                           href={MANAGE_WHATSAPP_URL}
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           target="_blank"
                         >
                           Abrir WhatsApp <MessageCircle className="h-4 w-4" />
@@ -313,9 +324,11 @@ export default function MarcacaoPage() {
                   )}
                   {intent === "questions" && (
                     <p>
-                      A caução é de R$ 150 e é obrigatória. A secretaria envia
-                      as instruções pelo canal oficial e só confirma o horário
-                      depois de conferir o pagamento.
+                      A consulta particular tem valor oficial de{" "}
+                      {OFFICIAL_CONSULTATION_PRICE}. A caução é de R$ 150 e é
+                      obrigatória. A secretaria envia as instruções pelo canal
+                      oficial e só confirma o horário depois de conferir o
+                      pagamento.
                     </p>
                   )}
                 </div>
@@ -329,7 +342,7 @@ export default function MarcacaoPage() {
                 <LockKeyhole className="mt-0.5 h-6 w-6 shrink-0 text-rose-900 dark:text-amber-300" />
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-900 dark:text-amber-300">
-                    Confirmação em duas etapas
+                    Fluxo de confirmação
                   </p>
                   <h2 className="mt-1 text-2xl font-black tracking-tight">
                     A escolha online ainda é um pré-agendamento.
@@ -380,7 +393,7 @@ export default function MarcacaoPage() {
               >
                 <a
                   href={BOOKING_WHATSAPP_URL}
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   target="_blank"
                 >
                   Já solicitei: avisar a secretaria{" "}
@@ -408,14 +421,17 @@ export default function MarcacaoPage() {
                 Escolha um horário no BoaConsulta
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Horários ocupados deixam de aparecer automaticamente. Feriados
-                nacionais permanecem bloqueados.
+                A disponibilidade real é a exibida pelo BoaConsulta no momento
+                da consulta da agenda. Um horário pode deixar de estar
+                disponível antes da conclusão. Feriados nacionais permanecem
+                bloqueados.
               </p>
             </div>
             <Button asChild className="gap-2" variant="outline">
               <a
                 href={BOACONSULTA_PROFILE_URL}
-                rel="noreferrer"
+                onClick={markScheduleOpened}
+                rel="noopener noreferrer"
                 target="_blank"
               >
                 Abrir perfil oficial <ExternalLink className="h-4 w-4" />
@@ -423,13 +439,41 @@ export default function MarcacaoPage() {
             </Button>
           </div>
 
-          <BoaConsultaScheduleGateway />
+          <BoaConsultaScheduleGateway onOpen={markScheduleOpened} />
+
+          {scheduleOpened && (
+            <div
+              aria-live="polite"
+              className="rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-sm leading-6 text-emerald-950 dark:border-emerald-700/60 dark:bg-emerald-950/30 dark:text-emerald-100"
+            >
+              <p className="font-black">Voltou do BoaConsulta?</p>
+              <p className="mt-1">
+                Se concluiu a solicitação, envie a mensagem pelo seu próprio
+                WhatsApp. Assim, a secretaria recebe seu número de contato para
+                orientar a caução e conferir o horário.
+              </p>
+              <Button
+                asChild
+                className="mt-4 gap-2 bg-emerald-800 font-black text-white hover:bg-emerald-900"
+              >
+                <a
+                  href={BOOKING_WHATSAPP_URL}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Avisar secretaria agora <MessageCircle className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          )}
 
           <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
             <strong>Importante:</strong> a mensagem automática do BoaConsulta
             registra a solicitação, mas não substitui a confirmação da
             secretaria. Não considere a consulta confirmada antes da conferência
-            da caução.
+            da caução. O valor oficial da consulta particular na clínica é{" "}
+            {OFFICIAL_CONSULTATION_PRICE}; se o parceiro exibir outro valor
+            durante a sincronização, confirme pelo WhatsApp antes de pagar.
           </div>
         </section>
 
