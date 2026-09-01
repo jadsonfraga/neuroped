@@ -44,7 +44,7 @@ export default function EletroencefalogramaPage() {
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <a
-                href="#/agendar"
+                href="#/marcacao"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-sm font-extrabold text-amber-950 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.97]"
               >
                 Solicitar orientação <ArrowRight className="h-4 w-4" aria-hidden="true" />

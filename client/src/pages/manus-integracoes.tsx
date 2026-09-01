@@ -25,8 +25,8 @@ const sites: ManusSite[] = [
     label: "Secretaria IA",
     shortLabel: "Secretaria",
     url: manusUrls.secretaria,
-    description: "Encaminhamento administrativo e acesso à agenda pública integrada ao NeuroPed.",
-    note: "A Secretaria IA foi incorporada ao NeuroPed. Ela não coleta informações clínicas nesta etapa.",
+    description: "Pré-agendamento administrativo com horários oficiais do BoaConsulta.",
+    note: "A Secretaria IA foi incorporada ao NeuroPed e usa o BoaConsulta como fonte da disponibilidade. Ela não coleta informações clínicas nesta etapa.",
   },
   {
     id: "missao",
@@ -64,7 +64,7 @@ export default function ManusIntegracoesPage() {
         <div>
           <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary"><Globe2 className="h-4 w-4" />Integrações conectadas</div>
           <h1 className="text-3xl font-semibold tracking-tight">Sites do Manus no NeuroPed</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Acesse os três sites em abas isoladas, sem misturar sessões, dados clínicos ou armazenamento do aplicativo. O prontuário e a agenda continuam sob o controle do NeuroPed.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Acesse as experiências em abas isoladas, sem misturar sessões, dados clínicos ou armazenamento do aplicativo. A disponibilidade pública da Secretaria IA permanece sob o controle do BoaConsulta.</p>
         </div>
         <Button variant="outline" className="gap-2 self-start lg:self-auto" onClick={() => window.open(activeSite.url, "_blank", "noopener,noreferrer")}><ExternalLink className="h-4 w-4" />Abrir em nova guia</Button>
       </div>
