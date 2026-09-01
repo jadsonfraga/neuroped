@@ -42,6 +42,25 @@ Convenção de status: `DONE` (corrigido, testado, com evidência) ·
 | #710 (perf reflows) e #733 (ESLint) | DONE (análise — reclassificados) | Evidência 2026-09-01: ambos baseados em main antiga; diff real vs main atual reverteria trabalho integrado (#733 = 1.181 arquivos/−252.957 linhas; #710 = 218/−21.363). #733 obsoleto (lint da main já zera com --max-warnings=0); de #710, no máximo cherry-pick dos 2 commits de memoização do laudo após validação isolada. |
 | #728 (monólito), #734 (artefatos manuais), #716/#717 (duplicatas) | TODO | Fechar somente após substitutas mescladas (regra 1.4 da matriz). |
 
+## Rodada 2026-09-01 — bugs e consolidação de funções (base `main@bfd78218`)
+
+Branch reiniciada de main após merge de #745/#746/#749. Três frentes de
+auditoria (duplicação, worker LGPD, Secretaria/booking público).
+
+| Item | Status | Evidência / próximo passo |
+|---|---|---|
+| Helpers duplicados entre rotas Cloudflare (json/jsonResponse ×15, sha256Hex ×3, boundedText/clean ×3, readJsonBody ×2, nowInProviderTimezone ×2), shared (clamp de query clínica Express×CF) e client (dateStamp ×4, esc/escHtml fracos ×2) | DONE (`0b0d91d8`) | Fontes únicas: `functions/api/_request.ts`, `auth/_crypto`, `operations/_core`, `shared/clinical-core.ts` (clampClinicalEventQueryDays/parseClinicalEventTypesParam), `client/src/lib/printDocument.ts` (dateStamp), `@/lib/htmlEscape`. 28 arquivos, −279/+122; tsc, lint e suítes citadas no commit verdes. Variante de json de boaconsulta/import mantida local de propósito (headers extras). |
+| Worker LGPD: claim × rejeição concorrente deixava job zumbi 'processing' executando export de request rejeitada (ALTO) | DONE (`a027715f`) | Claim exige EXISTS(request approved/processing) + releitura pós-promoção com liberação `failed/REQUEST_STATE_CHANGED`. Regressão: `tests/unit/lgpd-worker-race-regressions.test.ts` cenário 1. |
+| Worker LGPD: conclusão × rejeição concorrente commitava job 'completed' com evidência de artefato que o executor apaga (prova fantasma, ALTO) | DONE (`a027715f`) | completeExportJob/completeDeletionJob guardados por "request ainda processing" dentro do batch. Regressão: cenário 2. |
+| Worker LGPD: ack perdido após commit da conclusão destruía o artefato registrado no ledger (TOCTOU) | DONE (`a027715f`) | `confirmCompleted` (isExportJobCompletedWithEvidence) reconsulta o ledger antes do delete; falha genuína continua removendo artefato + EXPORT_COMPLETION_FAILED. Regressões: cenários 3/3b. |
+| Evidência de aceite público existia só na migração 0016; o endpoint /api/public-booking cria schema em runtime → banco sem migração gravava agendamento/waitlist sem prova de aceite (ALTO) | DONE (`39463d1a`) | `ensureOperationsHardeningSchema` espelha os objetos da 0016 (idempotente). Regressão pelo caminho de produção: `tests/unit/operations-consent-evidence-runtime.test.ts` (falha comprovada no bootstrap pré-fix; inclui guarda anti-drift de versão/hash do aviso). |
+| Evento `clinical.read` atribuído à clínica do header x-tenant-id enquanto os handlers GET servem `?clinicId=` → leitura de B auditada na clínica A (MÉDIO) | DONE (`6e3eeb3e`) | `clinicalLiveAuditClinicId` prefere a clínica efetivamente servida (validada pelo handler; só sucesso é auditado), fallback ao header. Regressões em `live-read-audit-policy.test.ts`. |
+| Hub de integrações fingia sucesso de iframe bloqueado por X-Frame-Options (onLoad dispara mesmo bloqueado) e o timer de 10s rebaixava frame carregado para "timeout" (MÉDIO) | DONE (`54754608`) | `resolveFrameLoadStatus` (@/lib/frameStatus): "ready" só com documento legível; cross-origin vira "unverified" com aviso e saída externa; timer só promove loading→timeout. Regressão: `manus-frame-honest-status.test.ts`. |
+| Token de gestão do agendamento público persistido em sessionStorage (`neuroped:booking-token`) em /agendar (BAIXO) | DOCUMENTED | Tradeoff deliberado: token já é exibido na tela, escopo = 1 agendamento, vida = aba. Remover quebraria a gestão pós-reload em dispositivo do responsável. Decisão de produto: manter; revisitar se surgir uso em dispositivo compartilhado de recepção. |
+| Divergência de preço/regras entre /marcacao (R$ 800 + caução R$ 150, política publicada da secretaria) e /agendar (preço do serviço no D1) (BAIXO) | BLOCKED (decisão do dono) | Conteúdo de negócio, não bug de código: as duas rotas descrevem fluxos distintos (BoaConsulta+secretaria vs agenda própria). Unificar preço exige decisão do proprietário sobre qual fonte é canônica. |
+| Trigger de consentimento de waitlist dispara em qualquer INSERT (não só fluxo público) | DOCUMENTED | Risco latente apenas se nascer fluxo interno de waitlist; comportamento herdado da migração 0016 e espelhado no bootstrap para não divergir. Ao criar fluxo interno, condicionar o trigger a uma coluna `source`. |
+| Consolidações menores restantes da matriz (#8/#9: `bytesEqual` local do executor, variantes de `cleanText`) | TODO | Baixo impacto; `bytesEqual` tem nota de timing já registrada (comparação não-constante aceitável: compara ciphertext readback, não segredo). |
+
 ## Bloqueios externos
 
 | Bloqueio | Causa | Ação necessária |
