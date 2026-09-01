@@ -16,20 +16,23 @@ Na configuração operacional do BoaConsulta foram validados:
 
 Os bloqueios cobrem 08:00–14:30 na grade do BoaConsulta, abrangendo integralmente os cinco horários online de 09:30 a 13:30.
 
-O painel autenticado foi registrado com R$ 800 em 01/09/2026, mas o perfil público oficial ainda exibia R$ 750. Para evitar informação comercial divergente, o NeuroPed não fixa preço: o perfil público do BoaConsulta permanece a fonte da verdade até a sincronização do próprio serviço.
+O painel autenticado foi registrado com R$ 800 em 01/09/2026, mas o perfil público oficial ainda exibia R$ 750 nas verificações imediatas. A Secretaria IA passa a exibir R$ 800 como valor oficial da clínica e informa de forma explícita que eventual valor diferente no parceiro pode decorrer da sincronização ainda pendente. O BoaConsulta permanece a fonte da disponibilidade; não é mais usado como autoridade do preço da clínica.
 
-Por isso, o aviso automático para **Agendamento (Dr. Jadson Fraga), (87) 99105-5790**, com repetição a cada 30 minutos, não pode ser ativado de forma confiável apenas pelo frontend ou pelo widget.
+O aviso automático para **Agendamento (Dr. Jadson Fraga), (87) 99105-5790**, com repetição a cada 30 minutos, não pode ser ativado de forma confiável apenas pelo frontend ou pelo widget.
 
 ## Entrega segura atual
 
+- handoff explícito após a abertura da agenda externa, reduzindo abandono entre BoaConsulta e WhatsApp;
 - botão de WhatsApp após o pré-agendamento;
-- mensagem administrativa pré-preenchida, sem dado clínico;
+- mensagem administrativa pré-preenchida, enviada pelo próprio WhatsApp do responsável, permitindo à secretaria receber o número de contato;
 - confirmação automática do BoaConsulta mantida desligada;
-- caução de R$ 150 explicitamente pendente de conferência da secretaria.
+- caução de R$ 150 explicitamente pendente de conferência da secretaria;
+- valor oficial da consulta particular fixado na interface institucional em R$ 800;
+- nenhuma alegação de que o aviso recorrente de 30 minutos esteja ativo sem a infraestrutura externa necessária.
 
-## Dependências externas para concluir a automação
+## Dependências externas para concluir a automação recorrente
 
-- autorizar a sincronização com um Google Calendar operacional dedicado;
+- autorizar a sincronização com um Google Calendar operacional dedicado, se esse canal for usado como gatilho;
 - provisionar WhatsApp Business Platform com `phone_number_id` e token guardados como secrets;
 - aprovar o modelo de mensagem administrativa;
 - definir o sinal de encerramento do reenvio: confirmação da caução ou reconhecimento explícito da secretaria;
