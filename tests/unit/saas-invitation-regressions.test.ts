@@ -3,6 +3,11 @@ import Database from "better-sqlite3";
 import { onRequest as apiMiddleware } from "../../functions/api/_middleware";
 import { onRequestPost as acceptInvitation } from "../../functions/api/billing/accept";
 import { resolveOperationsPrincipal } from "../../functions/api/operations/_access";
+import { createSessionTokens } from "../../functions/api/auth/_sessions";
+
+const JWT_SECRET = ["saas-invitation", "regressions", "fixture"]
+  .join("-")
+  .padEnd(64, "x");
 
 class SqliteD1 {
   constructor(readonly db: Database.Database) {}
@@ -114,8 +119,34 @@ function createDatabase() {
       metadata_json TEXT,
       created_at TEXT NOT NULL
     );
+    CREATE TABLE auth_refresh_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      family_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      parent_session_id TEXT REFERENCES auth_refresh_sessions(id) ON DELETE SET NULL,
+      replaced_by_session_id TEXT REFERENCES auth_refresh_sessions(id) ON DELETE SET NULL,
+      expires_at DATETIME NOT NULL,
+      revoked_at DATETIME,
+      revoke_reason TEXT,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_used_at DATETIME
+    );
   `);
   return { db, adapter: new SqliteD1(db) };
+}
+
+/** Emite um access token de sessão real para simular um aceite autenticado. */
+async function tokenForUser(
+  db: Database.Database,
+  adapter: SqliteD1,
+  user: { id: string; name: string; email: string; role: string },
+): Promise<string> {
+  const row = db
+    .prepare("SELECT * FROM users WHERE id = ?")
+    .get(user.id) as never;
+  const tokens = await createSessionTokens(adapter as never, row, JWT_SECRET);
+  return tokens.accessToken;
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -207,19 +238,28 @@ async function insertInvitation(
 async function acceptThroughPublicRoute(
   adapter: SqliteD1,
   body: Record<string, unknown>,
+  bearerToken?: string,
 ) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (bearerToken) headers.Authorization = `Bearer ${bearerToken}`;
   const request = new Request("https://neuroped.test/api/billing/accept", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
-  const response = await apiMiddleware({
+  const env = { DB: adapter as never, NEUROPED_JWT_SECRET: JWT_SECRET };
+  // `context.data.authUser` só existe depois que o middleware roda; `next`
+  // precisa reler do mesmo objeto `context` (não recriar um `{ env, request }`
+  // à parte), do contrário o handler nunca enxerga o usuário autenticado que
+  // o middleware acabou de resolver — igual ao runtime real do Cloudflare
+  // Pages, que reusa o mesmo `context` do início ao fim da cadeia.
+  const context: { request: Request; env: typeof env; data: Record<string, unknown>; next: () => Promise<Response> } = {
     request,
-    env: { DB: adapter as never },
-    next: async () =>
-      acceptInvitation({ env: { DB: adapter as never }, request } as never),
+    env,
     data: {},
-  } as never);
+    next: async () => acceptInvitation({ env, request, data: context.data } as never),
+  };
+  const response = await apiMiddleware(context as never);
   return {
     status: response.status,
     body: (await response.json()) as Record<string, unknown>,
@@ -328,7 +368,16 @@ async function acceptThroughPublicRoute(
     token,
   });
 
-  const result = await acceptThroughPublicRoute(adapter, { token });
+  // Conta já existente: o aceite agora exige provar, via sessão, ser o
+  // próprio destinatário do convite — sem uma sessão autenticada o endpoint
+  // fica corretamente fechado com 401 AUTHENTICATION_REQUIRED.
+  const bearerToken = await tokenForUser(db, adapter, {
+    id: "existing-professional",
+    name: "Profissional assistente",
+    email: "existing@example.test",
+    role: "professional",
+  });
+  const result = await acceptThroughPublicRoute(adapter, { token }, bearerToken);
   assert.equal(
     result.status,
     201,

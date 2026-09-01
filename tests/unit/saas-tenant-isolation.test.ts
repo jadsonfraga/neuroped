@@ -157,15 +157,16 @@ function tokenFor(userId: string, email: string): string {
   const now = new Date().toISOString();
   sqlite
     .prepare(
-      `INSERT INTO refresh_tokens (id, user_id, token_hash, issued_at, expires_at)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO refresh_tokens (id, user_id, token_hash, issued_at, expires_at, session_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .run(
-      sessionId,
+      crypto.randomUUID(),
       userId,
       `fixture-session-${sessionId}`,
       now,
       new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      sessionId,
     );
   return signAccessToken({
     userId,

@@ -120,10 +120,55 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
   return null;
 }
 
+/**
+ * Rotas públicas que ainda assim se beneficiam de saber QUEM está chamando,
+ * quando a chamada vier autenticada. `/api/billing/accept` precisa continuar
+ * aceitando o destinatário anônimo de um convite novo, mas também precisa
+ * identificar uma conta já existente que aceite logada — sem isso, a checagem
+ * "convite deve ser aceito pela conta com o e-mail convidado" nunca teria como
+ * ser satisfeita, pois `authUser` nunca seria preenchido. Um Authorization
+ * ausente ou inválido aqui NUNCA falha o pedido: apenas segue anônimo, como
+ * antes desta rota conhecer usuários autenticados.
+ */
+const OPTIONALLY_AUTHENTICATED_PUBLIC_PATHS = new Set(["/api/billing/accept"]);
+
+async function resolveOptionalBearerUser(request: Request, env: Env): Promise<PublicUser | null> {
+  if (!env.DB) return null;
+  const secret = env.NEUROPED_JWT_SECRET;
+  if (!secret?.trim() || secret.trim().length < 32) return null;
+
+  const authorization = request.headers.get("Authorization") ?? "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+  if (!token) return null;
+
+  try {
+    const payload = await verifyJwt(token, secret);
+    if (!payload || payload.type !== "access") return null;
+
+    const row = await getUserById(env.DB, payload.sub);
+    if (!row || !row.is_active) return null;
+    if (!(await isSessionFamilyActive(env.DB, row.id, payload.sid))) return null;
+
+    const reservedE2EEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
+    if (reservedE2EEmail && row.email.toLowerCase().trim() === reservedE2EEmail) {
+      return null;
+    }
+
+    return publicUser(row);
+  } catch {
+    return null;
+  }
+}
+
 async function authorizeClinicalApi(request: Request, env: Env): Promise<AuthorizationResult> {
   if (!env.DB) return { failure: null, user: null };
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-  if (PUBLIC_API_PATHS.has(path)) return { failure: null, user: null };
+  if (PUBLIC_API_PATHS.has(path)) {
+    if (OPTIONALLY_AUTHENTICATED_PUBLIC_PATHS.has(path)) {
+      return { failure: null, user: await resolveOptionalBearerUser(request, env) };
+    }
+    return { failure: null, user: null };
+  }
 
   const secret = env.NEUROPED_JWT_SECRET;
   if (!secret?.trim() || secret.trim().length < 32) {

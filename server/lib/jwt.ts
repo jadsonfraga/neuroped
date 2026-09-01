@@ -44,8 +44,6 @@ export interface AccessTokenClaims {
   sid: string;
   iat: number;
   exp: number;
-  /** Hash/id do refresh token que mantém esta sessão ativa. */
-  sid: string;
 }
 
 export function signAccessToken(params: {

@@ -452,6 +452,7 @@ export function registerAuthRoutes(app: Express): void {
 
       const newHash = await hashPassword(newPassword);
       const newRefresh = issueRefreshToken();
+      const sessionId = crypto.randomUUID();
       const changedAt = new Date().toISOString();
       let changed = false;
       try {
@@ -486,6 +487,7 @@ export function registerAuthRoutes(app: Express): void {
               expiresAt: newRefresh.expiresAt,
               ipAddress: ctx.ipAddress,
               userAgent: ctx.userAgent,
+              sessionId,
             })
             .run();
           return true;
@@ -510,7 +512,7 @@ export function registerAuthRoutes(app: Express): void {
         email: user.email,
         role: user.role,
         name: user.name,
-        sessionId: newRefresh.id,
+        sessionId,
       });
 
       await logAudit({

@@ -100,7 +100,7 @@ try {
   assert.equal(oldMe.status, 401);
   assert.equal(
     ((await oldMe.json()) as { code?: string }).code,
-    "AUTH_SESSION_REVOKED",
+    "AUTH_INVALID_SESSION",
   );
 
   const newMe = await request("/api/auth/me", {
@@ -136,7 +136,7 @@ try {
   assert.equal(postLogout.status, 401);
   assert.equal(
     ((await postLogout.json()) as { code?: string }).code,
-    "AUTH_SESSION_REVOKED",
+    "AUTH_INVALID_SESSION",
   );
 
   console.log(
