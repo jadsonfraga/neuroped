@@ -19,6 +19,7 @@ on:
       - "client/src/contexts/ClinicContext.tsx"
       - "tests/unit/live-tenant-isolation-adversarial.test.ts"
       - "tests/unit/live-tenant-client-boundary.test.mjs"
+      - "tests/unit/live-governance-failclosed.test.ts"
       - ".github/workflows/live-tenant-isolation-guard.yml"
 
 permissions:
@@ -54,6 +55,9 @@ jobs:
 
       - name: Prove hard client boundary on clinic switch
         run: node tests/unit/live-tenant-client-boundary.test.mjs
+
+      - name: Prove LGPD governance fails closed before physical completion
+        run: node --import tsx tests/unit/live-governance-failclosed.test.ts
 
       - name: Preserve existing SaaS tenant invariants
         run: |
