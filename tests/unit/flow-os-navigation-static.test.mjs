@@ -50,7 +50,7 @@ const polishCss = fs.readFileSync(
   "utf8",
 );
 
-for (const label of ["Início", "Pacientes", "Clínica", "Agenda"]) {
+for (const label of ["Início", "Prontuário", "Clínica", "Agenda"]) {
   assert.match(
     dock,
     new RegExp(`label: \\"${label}\\"`),
@@ -102,8 +102,13 @@ assert.doesNotMatch(
 );
 assert.match(
   dock,
-  /path === "\/pacientes" \|\| path\.startsWith\("\/paciente\/"\)/,
-  "detalhe singular deve manter Pacientes como destino ativo",
+  /path === "\/pacientes"/,
+  "lista de pacientes deve manter Prontuário como destino ativo",
+);
+assert.match(
+  dock,
+  /path\.startsWith\("\/paciente\/"\)/,
+  "detalhe singular deve manter Prontuário como destino ativo",
 );
 assert.match(
   dock,

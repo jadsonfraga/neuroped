@@ -1,11 +1,12 @@
-// Design: dock móvel clínico com Nesplora como destino dourado central, alvos confortáveis e navegação enxuta.
+// Design: dock móvel clínico com Prontuário como destino dourado central, alvos confortáveis e navegação enxuta.
+// Nesplora migrou para os Destaques da sidebar (client/src/data/navigation.ts) — o dock prioriza os
+// fluxos de maior frequência do dia a dia clínico (pacientes, prontuário, agenda).
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
-  Glasses,
+  FileText,
   Home,
   Stethoscope,
-  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -17,14 +18,11 @@ import { hasConfiguredMasterPin, isMasterPinUnlocked } from "@/lib/masterPin";
 
 interface DockItem {
   label: string;
-  href?: string;
-  externalHref?: string;
+  href: string;
   icon: LucideIcon;
   isActive?: (path: string) => boolean;
   highlighted?: boolean;
 }
-
-const NESPLORA_SITE_URL = "/nesplora/";
 
 // O dock é navegação do workspace clínico. Mesmo no host "full", fluxos
 // explicitamente familiares/públicos não devem receber atalhos para Pacientes,
@@ -58,15 +56,23 @@ const dockItems: DockItem[] = [
     isActive: (path) => path === "/",
   },
   {
-    label: "Pacientes",
+    // Laudos, receita C1 e o próprio prontuário exigem um paciente já
+    // selecionado (o botão de salvar/imprimir dessas telas fica desabilitado
+    // sem `?patientId`, sem nenhum seletor embutido) — o único ponto de
+    // entrada real para elas é a ficha do paciente em `/paciente/:id`
+    // (client/src/pages/paciente-detalhe.tsx), alcançada a partir da lista
+    // em `/pacientes`. Levar o atalho direto a `/prontuario` sem essa etapa
+    // deixa a pessoa preencher a ficha inteira sem nunca conseguir salvar.
+    label: "Prontuário",
     href: "/pacientes",
-    icon: UsersRound,
-    isActive: (path) => path === "/pacientes" || path.startsWith("/paciente/"),
-  },
-  {
-    label: "Nesplora",
-    externalHref: NESPLORA_SITE_URL,
-    icon: Glasses,
+    icon: FileText,
+    isActive: (path) =>
+      path === "/pacientes" ||
+      path.startsWith("/paciente/") ||
+      path.startsWith("/prontuario") ||
+      path.startsWith("/laudo-neuroped") ||
+      path.startsWith("/laudo-super") ||
+      path.startsWith("/receita-c1"),
     highlighted: true,
   },
   {
@@ -120,18 +126,16 @@ export function MobilePrimaryDock() {
 
   if (hidden) return null;
 
-  const visibleDockItems = dockItems.filter(
-    (item) =>
-      !item.href ||
-      canRenderNavigationItem({
-        path: item.href,
-        accessMode,
-        isAuthenticated,
-        isLoading,
-        userRole: user?.role,
-        localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
-        localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
-      }),
+  const visibleDockItems = dockItems.filter((item) =>
+    canRenderNavigationItem({
+      path: item.href,
+      accessMode,
+      isAuthenticated,
+      isLoading,
+      userRole: user?.role,
+      localPinConfigured: accessMode === "local" && hasConfiguredMasterPin(),
+      localPinUnlocked: accessMode === "local" && isMasterPinUnlocked(),
+    }),
   );
 
   return (
@@ -156,41 +160,27 @@ export function MobilePrimaryDock() {
               : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
           }`;
 
-          if (item.externalHref) {
-            return (
-              <a
-                key={item.label}
-                href={item.externalHref}
-                className={commonClass}
-                onClick={() => {
-                  softTap();
-                  haptic.select();
-                }}
-                data-testid="mobile-dock-nesplora"
-              >
-                <span aria-hidden="true" className="absolute inset-1 rounded-[1rem] border border-amber-50/65 motion-safe:animate-pulse motion-reduce:animate-none" />
-                <Icon className="relative z-10 h-[21px] w-[21px]" strokeWidth={2.25} aria-hidden="true" />
-                <span className="relative z-10 font-extrabold tracking-[0.06em]">{item.label}</span>
-              </a>
-            );
-          }
-
           return (
             <button
               key={item.label}
               type="button"
               className={commonClass}
-              onClick={() => item.href && navigateTo(item.href)}
+              onClick={() => navigateTo(item.href)}
               aria-current={active ? "page" : undefined}
               data-testid={`mobile-dock-${item.label.toLowerCase()}`}
             >
+              {item.highlighted && (
+                <span aria-hidden="true" className="absolute inset-1 rounded-[1rem] border border-amber-50/65 motion-safe:animate-pulse motion-reduce:animate-none" />
+              )}
               <Icon
-                className="h-[19px] w-[19px]"
-                strokeWidth={active ? 2.2 : 1.9}
+                className={`relative z-10 ${item.highlighted ? "h-[21px] w-[21px]" : "h-[19px] w-[19px]"}`}
+                strokeWidth={item.highlighted ? 2.25 : active ? 2.2 : 1.9}
                 aria-hidden="true"
               />
-              <span>{item.label}</span>
-              {active && (
+              <span className={`relative z-10 ${item.highlighted ? "font-extrabold tracking-[0.06em]" : ""}`}>
+                {item.label}
+              </span>
+              {active && !item.highlighted && (
                 <span
                   className="absolute bottom-1 h-1 w-1 rounded-full bg-primary"
                   aria-hidden="true"
