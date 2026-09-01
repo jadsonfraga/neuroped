@@ -107,6 +107,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Install Chromium for release E2E gates
+        run: npx playwright install --with-deps chromium
+
       - name: Audit Full Dependency Graph
         run: npm audit --audit-level=high
         continue-on-error: false

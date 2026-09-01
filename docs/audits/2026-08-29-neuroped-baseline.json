@@ -1,0 +1,20 @@
+{
+  "date": "2026-08-29",
+  "repository": "jadsonfraga/neuroped",
+  "baselineSha": "21b480381de6e9892b67f22dace8ab28812ce300",
+  "referenceSha": "21b480381de6e9892b67f22dace8ab28812ce300",
+  "workBranch": "codex/reconcile-neuroped-2026-08-29-21b4803",
+  "workingTreeClean": true,
+  "diffCheck": {"exitCode": 0},
+  "runtime": {"node": "unavailable", "npm": "unavailable"},
+  "commands": {
+    "npm ci": {"exitCode": 1, "classification": "ambiente ausente"},
+    "lint_types_tests_build": {"status": "not_run", "classification": "ambiente ausente"},
+    "dependencyAudit": {"status": "not_run", "classification": "ambiente ausente"}
+  },
+  "remote": {"branches": 107, "openPullRequests": 25, "openIssues": 29, "workflows": 96, "branchProtection": "HTTP 401"},
+  "externalBlocks": [
+    {"code": "BLOCKED_EXTERNAL_LOCAL_RUNTIME", "system": "local", "missing": "Node.js/npm supported runtime", "verification": "rerun baseline commands"},
+    {"code": "BLOCKED_EXTERNAL_BRANCH_PROTECTION_READ", "system": "GitHub API", "missing": "authorized ruleset/protection read permission", "verification": "query main protection and rulesets"}
+  ]
+}

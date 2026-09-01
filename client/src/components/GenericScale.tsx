@@ -22,7 +22,6 @@ import { celebrate } from "@/lib/confetti";
 import { softTick, softSuccess, softTap } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { easing, duration } from "@/lib/motion";
-import { formatScaleResponseAnswer } from "@/lib/scaleResponseReport";
 import {
   useSecureScaleDraft,
   useSecureTypedScaleDraft,
@@ -592,9 +591,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         itemResponseType(item) === "text"
                           ? textResponse || "Não respondida"
                           : idx !== undefined
-                            ? formatScaleResponseAnswer(
-                                config.labels[idx] ?? `Opção ${idx + 1}`,
-                              )
+                            ? (config.labels[idx] ?? `Opção ${idx + 1}`)
                             : "Não respondida";
                       const resp = positiveSentinel
                         ? `⚠️ ALERTA POSITIVO — ${rawResponse}`

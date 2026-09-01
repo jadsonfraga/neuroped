@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -276,6 +277,53 @@ assert.match(
   `${invalidFallbackDateRun.stdout}${invalidFallbackDateRun.stderr}`,
   /Data deve usar AAAA-MM-DD e existir no calendário/,
 );
+
+const deterministicDirs = await Promise.all([
+  mkdtemp(path.join(tmpdir(), "neuroped-daily-deterministic-a-")),
+  mkdtemp(path.join(tmpdir(), "neuroped-daily-deterministic-b-")),
+]);
+try {
+  const fallbackPath = path.join(
+    ROOT,
+    "scripts/generate-daily-authorial-fallback.mts",
+  );
+  const fallbackRuns = deterministicDirs.map((outputDir) =>
+    spawnSync(
+      process.execPath,
+      ["--import", "tsx", fallbackPath],
+      {
+        cwd: ROOT,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          NEUROPED_DAILY_OUTPUT_DIR: outputDir,
+          NEUROPED_GENERATION_DATE: "2027-01-15",
+          NEUROPED_GENERATION_TIMESTAMP: "",
+        },
+      },
+    ),
+  );
+  for (const run of fallbackRuns) {
+    assert.equal(run.status, 0, `${run.stdout}${run.stderr}`);
+  }
+  const [firstFile, secondFile] = await Promise.all(
+    deterministicDirs.map(async (outputDir) => {
+      const [filename] = await readdir(outputDir);
+      return readFile(path.join(outputDir, filename), "utf8");
+    }),
+  );
+  assert.equal(firstFile, secondFile, "a contingência deve gerar bytes estáveis");
+  assert.equal(
+    createHash("sha256").update(firstFile).digest("hex"),
+    createHash("sha256").update(secondFile).digest("hex"),
+    "o SHA-256 do fallback não pode variar entre reexecuções",
+  );
+  assert.equal(JSON.parse(firstFile).generatedAt, "2027-01-15T00:00:00.000Z");
+} finally {
+  await Promise.all(
+    deterministicDirs.map((outputDir) => rm(outputDir, { recursive: true, force: true })),
+  );
+}
 
 const invalidCatalogDir = await mkdtemp(
   path.join(tmpdir(), "neuroped-daily-invalid-catalog-"),
