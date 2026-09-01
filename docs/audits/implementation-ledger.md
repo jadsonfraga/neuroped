@@ -20,7 +20,7 @@ Convenção de status: `DONE` (corrigido, testado, com evidência) ·
 | Relatos de ideação suicida invisíveis ao Notes engine | DONE (PR #745) | Tópico risco_autolesao_suicidio + seção não truncável; `test:notes` verde. |
 | authFetch anexava Bearer a URL de terceiro | DONE (PR #745) | Checagem de origem; `auth-client-races` verde. |
 | Rate limit Cloudflare aceitava X-Forwarded-For | DONE (PR #745) | Só CF-Connecting-IP; `cloudflare-auth-middleware` verde. |
-| E2E identity hardening (PR #704, autoria anterior) | VALIDATED | Todas as suítes dedicadas verdes localmente (colisão ADMIN/E2E, TOCTOU login/refresh, reserva de troca de senha); zero conflito textual com #745 via merge-tree. Aguarda aprovação humana. |
+| E2E identity hardening (PR #704, autoria anterior) | DONE (mesclado via #749) | Suítes dedicadas validadas localmente nesta auditoria; conteúdo reconciliado na main como #749 em 2026-09-01. |
 
 ## P1 — pipeline, fluxos principais, persistência
 
@@ -39,12 +39,12 @@ Convenção de status: `DONE` (corrigido, testado, com evidência) ·
 | Sidebar desorganizada (3 camadas CSS com !important em guerra) | DONE (PR #745) | Fonte única sidebar-v13.css; screenshots Playwright desktop claro/escuro + drawer mobile; e2e responsive-shell e scroll-continuity verdes no CI do PR. |
 | 25 PRs paralelos sem plano de integração | DONE (análise) | Matriz do Codex validada e publicada (PR #746) com adendo de supersessão (#745 cobre parte de #732 e o escopo de sidebar de #713). |
 | Cadeia SaaS #721→#723→#724→#725 + #726 (schemas) | TODO | REIMPLEMENT por domínio conforme matriz; exige testes IDOR de duas clínicas antes de qualquer adoção. Não iniciado nesta sessão. |
-| #710 (perf reflows) e #733 (ESLint) | TODO | `dirty` contra main; precisam rebase antes de avaliação. |
+| #710 (perf reflows) e #733 (ESLint) | DONE (análise — reclassificados) | Evidência 2026-09-01: ambos baseados em main antiga; diff real vs main atual reverteria trabalho integrado (#733 = 1.181 arquivos/−252.957 linhas; #710 = 218/−21.363). #733 obsoleto (lint da main já zera com --max-warnings=0); de #710, no máximo cherry-pick dos 2 commits de memoização do laudo após validação isolada. |
 | #728 (monólito), #734 (artefatos manuais), #716/#717 (duplicatas) | TODO | Fechar somente após substitutas mescladas (regra 1.4 da matriz). |
 
 ## Bloqueios externos
 
 | Bloqueio | Causa | Ação necessária |
 |---|---|---|
-| Merge de #745/#746/#704 | Branch protection: exige aprovação de pessoa distinta do último pusher | O dono do repositório precisa aprovar os PRs no GitHub; os merges e os 3 deploys (Vercel/Cloudflare/GitHub Pages) seguem automaticamente. |
+| Merge de #745/#746/#704 | RESOLVIDO em 2026-09-01 | Dono aprovou e mesclou: #746 (156d00fc), #745 (3eab25db), #704 via #749 (39327b00); Chromium instalado nas catracas de CI (#748/#750). Deploys de main disparados pelos merges. |
 | Automação de monitoramento de PR nesta sessão | Classificador de permissões negou subscribe_pr_activity e send_later | Reexecutar verificação manualmente ou conceder permissão. |
