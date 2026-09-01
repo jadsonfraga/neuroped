@@ -1,0 +1,63 @@
+name: LGPD worker executor core
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "functions/api/live/governance/_worker-core.ts"
+      - "functions/api/live/governance/_worker-executor.ts"
+      - "functions/api/tenant/_crypto.ts"
+      - "tests/unit/lgpd-worker-foundation.test.ts"
+      - "tests/unit/lgpd-worker-executor-core.test.ts"
+      - ".github/workflows/lgpd-worker-executor-core.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/api/live/governance/_worker-core.ts"
+      - "functions/api/live/governance/_worker-executor.ts"
+      - "functions/api/tenant/_crypto.ts"
+      - "tests/unit/lgpd-worker-foundation.test.ts"
+      - "tests/unit/lgpd-worker-executor-core.test.ts"
+      - ".github/workflows/lgpd-worker-executor-core.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lgpd-worker-executor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  executor-core:
+    name: test:lgpd-worker-executor
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Prove worker foundation invariants
+        run: node --import tsx tests/unit/lgpd-worker-foundation.test.ts
+
+      - name: Prove encrypted export and purge policy
+        run: node --import tsx tests/unit/lgpd-worker-executor-core.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
