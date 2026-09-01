@@ -85,7 +85,7 @@ export const featuredNavigation: NavItem[] = [
     label: "Secretaria IA",
     icon: Calendar,
     tone: "golden",
-    description: "Marcação e agendamento",
+    description: "Pré-agendamento pelo BoaConsulta",
   },
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {

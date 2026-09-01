@@ -16,7 +16,7 @@ export const PUBLIC_ROUTES = [
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos
   "/missao-saude", // Percurso educativo em três estações, sem dados nem avaliação clínica
   "/agendar", // Perfil e autoagendamento público com dados mínimos cifrados
-  "/marcacao", // Encaminhamento público para a Secretaria IA de triagem administrativa
+  "/marcacao", // Secretaria IA administrativa com widget oficial do BoaConsulta
   "/eletroencefalograma", // Orientação institucional de Vídeo-EEG, sem conteúdo clínico individual
   "/pre-consulta", // Formulário pré-consulta para família/recepção
   "/pre-retorno", // Atualização familiar antes do retorno

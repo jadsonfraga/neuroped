@@ -225,7 +225,7 @@ export default function MissaoSaudePage() {
         {isComplete && !active && (
           <section className="missao-finish" aria-labelledby="missao-finish-title">
             <img src="/missao-saude/media/marcos-desenvolvimento.jpg" alt="Cartaz educativo sobre marcos do desenvolvimento." />
-            <div><p className="missao-kicker">Mapa concluído</p><h2 id="missao-finish-title">Toda descoberta merece espaço.</h2><p>Este percurso não substitui acompanhamento profissional nem interpreta habilidades. Se quiser conversar sobre cuidado, desenvolvimento ou uma necessidade da família, a equipe pode orientar os próximos passos.</p><div className="missao-finish__actions"><a href="#/marcacao"><CircleHelp aria-hidden="true" /> Falar com a Secretaria IA</a><a href="#/agendar"><CalendarDays aria-hidden="true" /> Ver horários</a><button type="button" onClick={restartMission}><RotateCcw aria-hidden="true" /> Recomeçar</button></div></div>
+            <div><p className="missao-kicker">Mapa concluído</p><h2 id="missao-finish-title">Toda descoberta merece espaço.</h2><p>Este percurso não substitui acompanhamento profissional nem interpreta habilidades. Se quiser conversar sobre cuidado, desenvolvimento ou uma necessidade da família, a equipe pode orientar os próximos passos.</p><div className="missao-finish__actions"><a href="#/marcacao"><CircleHelp aria-hidden="true" /> Falar com a Secretaria IA</a><a href="#/marcacao"><CalendarDays aria-hidden="true" /> Ver horários</a><button type="button" onClick={restartMission}><RotateCcw aria-hidden="true" /> Recomeçar</button></div></div>
           </section>
         )}
 
