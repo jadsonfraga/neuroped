@@ -1,25 +1,33 @@
-# Inspeção inicial dos sites Manus
+# Inspeção inicial dos sites Manus — registro histórico
 
-Data da verificação: 2026-08-20.
+Data da verificação original: 2026-08-20.  
+Estado atual: **histórico; não é contrato de runtime**.
 
-## Secretaria IA
+## Secretaria IA — legado aposentado
 
-URL: https://secretariaia-7jubr6nq.manus.space
+URL inspecionada em 20/08/2026: `https://secretariaia-7jubr6nq.manus.space`
 
-O site apresenta a Clínica Dr. Jadson Fraga, com área de equipe em `/admin`, fluxo de triagem em `/triagem`, informações de consulta presencial, EEG domiciliar e teste de TDAH por realidade virtual. A página pública descreve triagem administrativa, consentimento e encaminhamento humano. O acesso à área de equipe pode exigir autenticação Google.
+Na inspeção original, o site apresentava a Clínica Dr. Jadson Fraga, área de equipe em `/admin`, fluxo de triagem em `/triagem` e conteúdo administrativo próprio.
+
+**Decisão consolidada em 01/09/2026:** essa publicação não é mais a Secretaria IA canônica e não deve aparecer em navegação, iframe, CTA ou fallback do NeuroPed. A única porta institucional vigente é `#/marcacao`, implementada no próprio NeuroPed e integrada à disponibilidade oficial do BoaConsulta. O contrato atual está em `docs/SECRETARIA_IA_RECONSTRUCAO.md`.
 
 ## Missão Saúde
 
-URL: https://drjadsongame-ko8qudqs.manus.space
+URL histórica: `https://drjadsongame-ko8qudqs.manus.space`
 
-O site é um jogo educativo público chamado “Missão Saúde — Dr. Jadson”, com três estações: Mochila do cuidado, Bolhas de sabão e Lanche arco-íris. A sessão controla estrelas, adesivos e progresso do circuito no navegador; não foi identificado login na tela inicial.
-
-## Decisão preliminar
-
-As abas do NeuroPed devem separar claramente “Secretaria IA” e “Missão Saúde”, com abertura integrada e fallback em nova guia caso a política de segurança do site impeça incorporação. A área administrativa da Secretaria não deve receber credenciais pelo NeuroPed; quando necessário, o login deve ocorrer no próprio site, preservando a sessão do provedor.
+O site original era um jogo educativo público chamado “Missão Saúde — Dr. Jadson”. A experiência foi posteriormente incorporada ao próprio NeuroPed em `#/missao-saude`; a URL Manus é apenas referência histórica e não é dependência do runtime atual.
 
 ## Página institucional do neuropediatra
 
-URL: https://drjadsonmd-iqeiteek.manus.space
+URL: `https://drjadsonmd-iqeiteek.manus.space`
 
-O título público é “Neuropediatra em Petrolina | Dr. Jadson Fraga”. Na inspeção inicial, a página renderizou apenas uma tela clara com a marca “Made with Manus”, sem elementos interativos ou conteúdo textual visível. A aba deverá manter um link de abertura externa como fallback, pois a renderização pode depender de recursos dinâmicos ou de uma publicação incompleta.
+Na inspeção inicial, a página renderizou apenas uma tela clara com a marca “Made with Manus”, sem elementos interativos ou conteúdo textual visível. Esta continua sendo uma integração externa independente da Secretaria IA.
+
+## Regra de precedência
+
+Quando este registro histórico divergir do código ou do runbook consolidado, prevalecem nesta ordem:
+
+1. `client/src/pages/marcacao.tsx` + testes executáveis;
+2. `docs/SECRETARIA_IA_RECONSTRUCAO.md`;
+3. auditorias datadas em `docs/audits/`;
+4. este documento histórico.
