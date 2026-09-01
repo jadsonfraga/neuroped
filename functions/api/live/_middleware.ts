@@ -1,13 +1,40 @@
 import { getContextUser } from "../auth/_authorization";
 import { requireBillingEntitlement, resolveBillingClinicId } from "../billing/_guard";
+import { writeSaasAudit } from "../tenant/_core";
 
 interface Env {
   DB?: D1Database;
   NEUROPED_E2E_EMAIL?: string;
 }
 
+/**
+ * Reduz a rota a uma classe de superfície sem persistir identificadores,
+ * query string ou qualquer conteúdo clínico no audit log.
+ */
+export function clinicalLiveReadAuditTarget(request: Request): string {
+  const path = new URL(request.url).pathname
+    .replace(/^\/api\/live\/?/i, "")
+    .split("/")
+    .filter(Boolean);
+  const surface = (path[0] || "root")
+    .replace(/[^a-z0-9_-]/gi, "_")
+    .slice(0, 40)
+    .toLowerCase();
+  return `live_${surface}`;
+}
+
+/**
+ * Audita apenas leituras que chegaram ao handler e retornaram sucesso.
+ * Falhas de autenticação/autorização continuam sendo tratadas pelos guards
+ * próprios e não são convertidas em eventos clínicos de leitura.
+ */
+export function shouldAuditClinicalLiveRead(request: Request, response: Response): boolean {
+  return request.method.toUpperCase() === "GET" && response.status >= 200 && response.status < 400;
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
-  if (!context.env.DB) return context.next();
+  const db = context.env.DB;
+  if (!db) return context.next();
   const user = getContextUser(context);
   if (!user) return context.next();
 
@@ -22,7 +49,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }), { status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
   }
 
-  const clinicId = await resolveBillingClinicId(context.env.DB, user.id, context.request);
+  const clinicId = await resolveBillingClinicId(db, user.id, context.request);
   if (!clinicId) {
     return new Response(JSON.stringify({
       error: "Contexto de clínica obrigatório para Clinical Core LIVE.",
@@ -30,7 +57,29 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }), { status: 409, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
   }
 
-  const denial = await requireBillingEntitlement(context.env.DB, user.id, clinicId, "clinical");
+  const denial = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
   if (denial) return denial;
-  return context.next();
+
+  const response = await context.next();
+  if (shouldAuditClinicalLiveRead(context.request, response)) {
+    const targetType = clinicalLiveReadAuditTarget(context.request);
+    // A auditoria de leitura é deliberadamente best-effort e desacoplada da
+    // disponibilidade clínica. `waitUntil` mantém a escrita viva após a
+    // resposta, enquanto o catch impede que indisponibilidade do audit log
+    // transforme uma leitura autorizada em falha assistencial.
+    context.waitUntil(
+      writeSaasAudit(db, {
+        clinicId,
+        actorUserId: user.id,
+        action: "clinical.read",
+        targetType,
+        metadata: {
+          method: "GET",
+          status: response.status,
+        },
+      }).catch(() => undefined),
+    );
+  }
+
+  return response;
 };
