@@ -1,0 +1,109 @@
+name: Public booking consent evidence D1
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0016_public_booking_consent_evidence.sql"
+      - "functions/api/public-booking.ts"
+      - "client/src/pages/agendar.tsx"
+      - "tests/unit/public-booking-consent-evidence.test.ts"
+      - ".github/workflows/public-booking-consent-d1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0016_public_booking_consent_evidence.sql"
+      - "functions/api/public-booking.ts"
+      - "client/src/pages/agendar.tsx"
+      - "tests/unit/public-booking-consent-evidence.test.ts"
+      - ".github/workflows/public-booking-consent-d1.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+jobs:
+  validate-consent-contract:
+    name: Validate public booking consent evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Prove versioned consent evidence and no historical backfill
+        run: node --import tsx tests/unit/public-booking-consent-evidence.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+  migrate-consent-evidence:
+    name: Apply public booking consent evidence to D1
+    needs: validate-consent-contract
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Apply migration 0016
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0016_public_booking_consent_evidence.sql
+
+      - name: Verify table and triggers without exposing PII
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name='public_booking_consent_evidence';" \
+            > /tmp/consent-table.txt 2>&1
+          cat /tmp/consent-table.txt
+          grep -q "public_booking_consent_evidence" /tmp/consent-table.txt
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_public_appointment_consent_evidence','trg_public_waitlist_consent_evidence') ORDER BY name;" \
+            > /tmp/consent-triggers.txt 2>&1
+          cat /tmp/consent-triggers.txt
+          grep -q "trg_public_appointment_consent_evidence" /tmp/consent-triggers.txt
+          grep -q "trg_public_waitlist_consent_evidence" /tmp/consent-triggers.txt
+
+          echo "✅ Evidência de consentimento do booking instalada sem consultar conteúdo identificável."
