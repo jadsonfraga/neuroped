@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-29",
+  "verdict": "NOT_READY",
+  "repository": "jadsonfraga/neuroped",
+  "baselineSha": "21b480381de6e9892b67f22dace8ab28812ce300",
+  "headSha": "fb99f93a5a4013ecd5782659b03c44173a274650",
+  "workBranch": "codex/reconcile-neuroped-2026-08-29-21b4803",
+  "upstream": "origin/codex/reconcile-neuroped-2026-08-29-21b4803",
+  "workingTreeClean": false,
+  "completed": [
+    "baseline registrado",
+    "matriz de 25 PRs registrada",
+    "determinismo do inventário diário corrigido e testado",
+    "contratos locais de PDF/laudo reportados como aprovados",
+    "nenhuma PR histórica, migração, deploy, regra ou segredo remoto alterado"
+  ],
+  "externalBlocks": [
+    {
+      "code": "BLOCKED_EXTERNAL_GITHUB_AUTH",
+      "system": "GitHub API",
+      "missing": "autorização para issue rastreadora e leitura de proteção/rulesets",
+      "verification": "issue criada, proteção/rulesets consultados e checks remotos registrados"
+    },
+    {
+      "code": "BLOCKED_EXTERNAL_LOCAL_RUNTIME",
+      "system": "ambiente local do baseline",
+      "missing": "Node.js/npm no PATH para repetir a suíte completa",
+      "verification": "reexecutar npm ci, lint, tipos, testes, build e auditoria"
+    },
+    {
+      "code": "BLOCKED_EXTERNAL_CHATGPT_LIBRARY",
+      "system": "Library do ChatGPT",
+      "missing": "acesso autorizado ao PANT final para inspeção visual",
+      "verification": "confirmar visualmente 9 páginas e seções sem títulos órfãos"
+    }
+  ],
+  "notDone": [
+    "reimplementação das PRs P0/P1",
+    "criação da issue rastreadora",
+    "prova de deploy, ledger D1 remoto e proteção de branch",
+    "merge ou fechamento de PRs históricas"
+  ]
+}

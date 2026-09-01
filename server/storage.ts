@@ -227,25 +227,33 @@ sqlite.exec(`
 /**
  * Migração aditiva para bancos SQLite já existentes. SQLite não oferece
  * `ADD COLUMN IF NOT EXISTS` de forma portável, então inspecionamos a tabela
- * antes de acrescentar os campos do contrato transacional de consentimentos.
+ * antes de acrescentar uma coluna nova a um schema já em produção.
  */
-function ensureConsentColumn(name: string, definition: string): void {
-  const columns = sqlite.prepare("PRAGMA table_info(consents)").all() as Array<{
+function ensureColumn(table: string, name: string, definition: string): void {
+  const columns = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{
     name: string;
   }>;
   if (!columns.some((column) => column.name === name)) {
-    sqlite.exec(`ALTER TABLE consents ADD COLUMN ${definition}`);
+    sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
   }
 }
 
-ensureConsentColumn("batch_id", "batch_id TEXT");
-ensureConsentColumn("accepted_at", "accepted_at TEXT");
+ensureColumn("consents", "batch_id", "batch_id TEXT");
+ensureColumn("consents", "accepted_at", "accepted_at TEXT");
 sqlite.exec(`
   CREATE INDEX IF NOT EXISTS consents_batch_idx ON consents(batch_id);
   CREATE INDEX IF NOT EXISTS consents_user_accepted_idx
     ON consents(user_id, accepted_at DESC);
   CREATE UNIQUE INDEX IF NOT EXISTS consents_idempotency_idx
     ON consents(user_id, consent_type, consent_version, accepted_at);
+`);
+
+// Sessão/família estável por login: permite que logout, detecção de reuse e
+// troca de senha revoguem o access token já emitido, não só o refresh token
+// (ver server/middleware/auth.ts e server/auth/routes.ts).
+ensureColumn("refresh_tokens", "session_id", "session_id TEXT");
+sqlite.exec(`
+  CREATE INDEX IF NOT EXISTS refresh_tokens_session_idx ON refresh_tokens(session_id);
 `);
 
 /* =========================================================================

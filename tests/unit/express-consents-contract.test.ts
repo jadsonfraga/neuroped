@@ -96,6 +96,25 @@ function insertUser(id: string, email: string): void {
     .run(id, email, "hash".repeat(20), now, now);
 }
 
+/** requireAuth exige uma sessão ativa em refresh_tokens além do JWT válido. */
+function insertActiveSession(userId: string, sessionId: string): void {
+  const now = new Date();
+  sqlite
+    .prepare(
+      `INSERT INTO refresh_tokens
+        (id, user_id, token_hash, issued_at, expires_at, session_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      crypto.randomUUID(),
+      userId,
+      crypto.randomUUID(),
+      now.toISOString(),
+      new Date(now.getTime() + 60_000).toISOString(),
+      sessionId,
+    );
+}
+
 const firstUserId = crypto.randomUUID();
 const secondUserId = crypto.randomUUID();
 insertUser(firstUserId, "reader-a@example.test");
@@ -223,20 +242,7 @@ const baseUrl = `http://127.0.0.1:${address.port}`;
 
 function tokenFor(userId: string, email: string): string {
   const sessionId = crypto.randomUUID();
-  const now = new Date().toISOString();
-  sqlite
-    .prepare(
-      `INSERT INTO refresh_tokens
-        (id, user_id, token_hash, issued_at, expires_at)
-       VALUES (?, ?, ?, ?, ?)`,
-    )
-    .run(
-      sessionId,
-      userId,
-      `fixture-session-${sessionId}`,
-      now,
-      new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    );
+  insertActiveSession(userId, sessionId);
   return signAccessToken({
     userId,
     email,

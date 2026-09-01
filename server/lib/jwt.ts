@@ -40,6 +40,8 @@ export interface AccessTokenClaims {
   role: string;
   name: string;
   type: "access";
+  /** Id da família de sessão (mesmo valor gravado em refresh_tokens.session_id). */
+  sid: string;
   iat: number;
   exp: number;
   /** Hash/id do refresh token que mantém esta sessão ativa. */

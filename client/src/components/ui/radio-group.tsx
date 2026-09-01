@@ -8,10 +8,16 @@ const RadioGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
 >(({ className, ...props }, ref) => {
+  // Radix distingue `undefined` (não-controlado) de `""` (controlado sem
+  // seleção). As escalas começam sem resposta e passam a ter valor após o
+  // primeiro clique; normalizar aqui evita a transição controlado/não-controlado
+  // e preserva o estado de resposta em todos os consumidores.
+  const value = props.value ?? (props.defaultValue === undefined ? "" : undefined);
   return (
     <RadioGroupPrimitive.Root
       className={cn("grid gap-2", className)}
       {...props}
+      value={value}
       ref={ref}
     />
   )

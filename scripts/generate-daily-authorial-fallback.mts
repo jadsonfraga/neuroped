@@ -149,6 +149,14 @@ const dateNow = () =>
 
 const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 
+// A contingência precisa ser determinística: a mesma data-alvo deve gerar
+// bytes idênticos em qualquer re-execução (o watchdog compara SHA-256 do
+// artefato com o arquivo da branch). Por isso o carimbo é derivado da data
+// de geração, nunca do relógio atual; pipelines que precisem registrar o
+// instante real podem injetá-lo via NEUROPED_GENERATION_TIMESTAMP.
+const generatedAtFor = (date: string) =>
+  process.env.NEUROPED_GENERATION_TIMESTAMP || `${date}T00:00:00.000Z`;
+
 async function catalog(): Promise<any[]> {
   await mkdir(OUTPUT_DIR, { recursive: true });
   const files = (await readdir(OUTPUT_DIR)).filter((file) => file.endsWith(".json"));
@@ -306,7 +314,7 @@ async function main() {
     slug: `contingencia-${topic.code.toLowerCase()}-${date}`,
     version: "1.0.0",
     generatedOn: date,
-    generatedAt: new Date().toISOString(),
+    generatedAt: generatedAtFor(date),
     author: "NeuroPed SDG — Dr. Jadson Fraga",
     sourceType: "autoral_diario",
     validationStatus: "nao_validado_psicometricamente",

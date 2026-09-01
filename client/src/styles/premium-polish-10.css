@@ -125,29 +125,8 @@ a.np-primary-cta:active {
     border-radius: 0.95rem !important;
   }
 
-  aside[aria-label="Menu de navegação"] {
-    width: min(88vw, 22.5rem) !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
-    background: hsl(var(--sidebar) / 0.985) !important;
-    box-shadow: 26px 0 72px -34px hsl(var(--foreground) / 0.52) !important;
-  }
-
-  aside[aria-label="Menu de navegação"] nav {
-    padding-left: 0.7rem !important;
-    padding-right: 0.7rem !important;
-    scroll-padding-top: 1rem;
-  }
-
-  #sidebar-nav [data-testid^="nav-"] {
-    min-height: var(--np-touch) !important;
-    padding-left: 0.9rem !important;
-    padding-right: 0.9rem !important;
-    border-radius: 1rem !important;
-  }
-
-  #sidebar-nav [data-testid^="nav-"] span {
-    font-size: 0.84rem !important;
-  }
+  /* Regras da sidebar (largura do drawer, itens de navegação) migraram para
+     styles/sidebar-v13.css — fonte única de estilo da sidebar. */
 
   #main-content {
     padding-top: calc(var(--np-appbar-height) + env(safe-area-inset-top)) !important;

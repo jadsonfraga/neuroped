@@ -591,7 +591,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         itemResponseType(item) === "text"
                           ? textResponse || "Não respondida"
                           : idx !== undefined
-                            ? config.labels[idx] ?? `Opção ${idx + 1}`
+                            ? (config.labels[idx] ?? `Opção ${idx + 1}`)
                             : "Não respondida";
                       const resp = positiveSentinel
                         ? `⚠️ ALERTA POSITIVO — ${rawResponse}`

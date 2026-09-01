@@ -2573,7 +2573,16 @@ export default function FiltroPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="filter-260-title group-hover:text-primary">
-                              {item.title}
+                              {item.hasScale ? (
+                                <Link
+                                  href={item.route}
+                                  className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                                >
+                                  {item.title}
+                                </Link>
+                              ) : (
+                                item.title
+                              )}
                             </h3>
                             <p className="filter-260-subtitle">
                               {item.subtitle}
@@ -2640,7 +2649,6 @@ export default function FiltroPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="font-bold text-primary underline underline-offset-2 hover:opacity-80"
-                                onClick={(e) => e.stopPropagation()}
                               >
                                 📄 Estudo (PubMed {pm.pmid})
                               </a>
@@ -2648,21 +2656,25 @@ export default function FiltroPage() {
                           ) : null;
                         })()}
                         <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary">
-                          <span>{ctaLabel}</span>
-                          {item.hasScale && <ArrowRight className="h-4 w-4" />}
+                          {item.hasScale ? (
+                            <Link
+                              href={item.route}
+                              className="inline-flex items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                            >
+                              <span>{ctaLabel}</span>
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          ) : (
+                            <span>{ctaLabel}</span>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
                   );
-                  return item.hasScale ? (
-                    <Link
-                      key={item.slot}
-                      href={item.route}
-                      className="block h-full"
-                    >
-                      {cardInner}
-                    </Link>
-                  ) : (
+                  // O card possui links internos (aplicação e PubMed). Um Link
+                  // envolvendo todo o card criava <a> dentro de <a>, quebrando
+                  // DOM, teclado e o clique no estudo externo.
+                  return (
                     <div key={item.slot} className="block h-full">
                       {cardInner}
                     </div>

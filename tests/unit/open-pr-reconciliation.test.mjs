@@ -24,7 +24,7 @@ assert.match(billingGuard, /WHERE user_id = \? AND clinic_id = \? AND active = 1
 assert.doesNotMatch(billingGuard, /if \(explicit\) return explicit;/);
 
 const webhook = read("functions/api/billing/webhook.ts");
-assert.match(webhook, /async function checkoutSeatsForEvent/);
+assert.match(webhook, /async function checkoutBillingForEvent/);
 assert.match(webhook, /seats = COALESCE\(\?, seats\)/);
 assert.doesNotMatch(webhook, /ORDER BY created_at DESC LIMIT 1\), seats\)/,
   "webhook não deve copiar seats do checkout mais recente sem vínculo com o evento");

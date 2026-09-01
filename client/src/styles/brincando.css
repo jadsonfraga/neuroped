@@ -30,7 +30,10 @@
   --kids-border-muted: hsl(39 18% 82%);
   --kids-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --kids-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  font-family: "Nunito", "Avenir Next", sans-serif;
+  /* Fontes de sistema mantêm o microsite funcional também offline. Um
+     @import remoto aqui fazia o preload CSS falhar quando a rede era
+     bloqueada, impedindo a rota inteira de montar. */
+  font-family: "Nunito", "Avenir Next", ui-rounded, system-ui, sans-serif;
   color: var(--kids-ink);
   isolation: isolate;
 }
@@ -39,7 +42,7 @@
 .np-kids h2,
 .np-kids h3,
 .np-kids [class*="font-[Fredoka"] {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Fredoka", "Nunito", ui-rounded, system-ui, sans-serif;
 }
 
 .np-kids button,

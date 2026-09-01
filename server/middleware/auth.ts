@@ -7,10 +7,18 @@
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { and, eq, isNull } from "drizzle-orm";
-import { refreshTokens, type UserRole } from "@shared/schema";
-import { db } from "../storage.js";
 import { verifyAccessToken } from "../lib/jwt.js";
+import { users, refreshTokens, type UserRole } from "@shared/schema";
+import { db } from "../storage.js";
+import { and, eq, isNull, sql } from "drizzle-orm";
+
+/**
+ * Rotas liberadas mesmo com `mustChangePassword` pendente — espelha
+ * `PASSWORD_CHANGE_ALLOWED_PATHS` do backend Cloudflare Functions
+ * (functions/api/_middleware.ts) para que os dois runtimes fiquem
+ * consistentes quanto a essa trava de segurança.
+ */
+const PASSWORD_CHANGE_ALLOWED_PATHS = new Set(["/api/auth/me", "/api/auth/change-password"]);
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -35,22 +43,6 @@ function extractBearerToken(req: Request): string | null {
   return null;
 }
 
-function hasActiveSession(sessionId: string): boolean {
-  try {
-    const session = db
-      .select({ expiresAt: refreshTokens.expiresAt })
-      .from(refreshTokens)
-      .where(and(eq(refreshTokens.id, sessionId), isNull(refreshTokens.revokedAt)))
-      .get();
-    if (!session) return false;
-    const expiresAt = Date.parse(session.expiresAt);
-    return Number.isFinite(expiresAt) && expiresAt > Date.now();
-  } catch {
-    // A falha no armazenamento não pode abrir uma API protegida.
-    return false;
-  }
-}
-
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const token = extractBearerToken(req);
   if (!token) {
@@ -60,15 +52,67 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   try {
     const claims = verifyAccessToken(token);
-    if (!hasActiveSession(claims.sid)) {
-      res.status(401).json({ error: "Invalid or expired token", code: "AUTH_SESSION_REVOKED" });
+
+    // O token só prova identidade no instante em que foi emitido. Um papel
+    // rebaixado, uma conta desativada ou uma troca de senha obrigatória
+    // precisam valer imediatamente, não só quando o access token expirar
+    // (até 15 min depois) — por isso a linha de `users` é sempre relida do
+    // banco, nunca confiada apenas às claims embutidas no JWT.
+    const row = db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+        isActive: users.isActive,
+        mustChangePassword: users.mustChangePassword,
+      })
+      .from(users)
+      .where(eq(users.id, claims.sub))
+      .get();
+
+    if (!row || !row.isActive) {
+      res.status(401).json({ error: "Invalid or expired token", code: "AUTH_INVALID_SESSION" });
       return;
     }
+
+    // O access token embute `sid`, a família de sessão do login que o
+    // originou. Logout, detecção de reuse do refresh e troca de senha
+    // revogam essa família inteira em `refresh_tokens` — sem checar isso
+    // aqui, o access token continuaria válido pelos até 15 min restantes de
+    // sua expiração mesmo depois de qualquer uma dessas revogações.
+    const nowIso = new Date().toISOString();
+    const activeSession = db
+      .select({ id: refreshTokens.id })
+      .from(refreshTokens)
+      .where(and(
+        eq(refreshTokens.sessionId, claims.sid),
+        eq(refreshTokens.userId, row.id),
+        isNull(refreshTokens.revokedAt),
+        sql`julianday(${refreshTokens.expiresAt}) > julianday(${nowIso})`,
+      ))
+      .get();
+    if (!activeSession) {
+      res.status(401).json({ error: "Invalid or expired token", code: "AUTH_INVALID_SESSION" });
+      return;
+    }
+
+    if (row.mustChangePassword) {
+      const path = req.path.replace(/\/+$/, "") || "/";
+      if (!PASSWORD_CHANGE_ALLOWED_PATHS.has(path)) {
+        res.status(403).json({
+          error: "Troca de senha obrigatória antes de acessar dados clínicos.",
+          code: "PASSWORD_CHANGE_REQUIRED",
+        });
+        return;
+      }
+    }
+
     req.user = {
-      id: claims.sub,
-      email: claims.email,
-      role: claims.role,
-      name: claims.name,
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      name: row.name,
     };
     next();
   } catch (e: any) {
@@ -88,14 +132,12 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   }
   try {
     const claims = verifyAccessToken(token);
-    if (hasActiveSession(claims.sid)) {
-      req.user = {
-        id: claims.sub,
-        email: claims.email,
-        role: claims.role,
-        name: claims.name,
-      };
-    }
+    req.user = {
+      id: claims.sub,
+      email: claims.email,
+      role: claims.role,
+      name: claims.name,
+    };
   } catch {
     // Ignora token invalido em rotas opcionais
   }
