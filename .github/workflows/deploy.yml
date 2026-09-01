@@ -64,6 +64,9 @@ jobs:
       - name: Auditar grafo completo de dependências
         run: npm audit --audit-level=high
 
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
+
       - name: Catraca técnica completa de release
         run: npm run verify
 
