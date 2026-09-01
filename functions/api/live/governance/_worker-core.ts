@@ -139,6 +139,12 @@ export async function claimLgpdRequest(
           AND (
             status IN ('queued','failed')
             OR (status = 'processing' AND (lease_until IS NULL OR lease_until < ?))
+          )
+          AND EXISTS (
+            SELECT 1 FROM ${table} r
+             WHERE r.id = live_lgpd_worker_jobs.request_id
+               AND r.clinic_id = live_lgpd_worker_jobs.clinic_id
+               AND r.status IN ('approved','processing')
           )`,
     )
     .bind(
@@ -162,6 +168,29 @@ export async function claimLgpdRequest(
     )
     .bind(claimedAt, requestId, request.clinic_id)
     .run();
+
+  // Fecha a janela entre o claim e a promoção da request: se um gestor
+  // rejeitou a solicitação nesse intervalo, o worker não pode executá-la —
+  // e o job não pode ficar 'processing' para sempre (zumbi), já que um novo
+  // claim exigiria a request em approved/processing. Libera o claim marcando
+  // o job como failed recuperável e desiste.
+  const requestState = await db
+    .prepare(`SELECT status FROM ${table} WHERE id = ? AND clinic_id = ? LIMIT 1`)
+    .bind(requestId, request.clinic_id)
+    .first<{ status: string }>();
+  if (requestState?.status !== "processing") {
+    await db
+      .prepare(
+        `UPDATE live_lgpd_worker_jobs
+            SET status = 'failed', failure_code = 'REQUEST_STATE_CHANGED',
+                lease_until = NULL, updated_at = ?
+          WHERE request_type = ? AND request_id = ? AND clinic_id = ?
+            AND status = 'processing' AND worker_run_id = ?`,
+      )
+      .bind(claimedAt, requestType, requestId, request.clinic_id, workerRunId)
+      .run();
+    return null;
+  }
 
   const job = await db
     .prepare(
@@ -204,6 +233,12 @@ export async function failLgpdJob(
   return Number(result.meta?.changes ?? 0) === 1;
 }
 
+/**
+ * Os dois statements do batch de conclusão são guardados pelo mesmo invariante
+ * (request ainda em 'processing'): sem isso, uma rejeição concorrente do gestor
+ * deixaria o job 'completed' com evidência de um artefato que o executor em
+ * seguida apaga — prova material apontando para objeto inexistente.
+ */
 export async function completeExportJob(
   db: D1Database,
   claim: LgpdWorkerClaim,
@@ -220,7 +255,13 @@ export async function completeExportJob(
             SET status = 'completed', artifact_key = ?, artifact_digest_sha256 = ?,
                 artifact_byte_length = ?, lease_until = NULL, failure_code = NULL, updated_at = ?
           WHERE id = ? AND clinic_id = ? AND request_type = 'export'
-            AND status = 'processing' AND worker_run_id = ?`,
+            AND status = 'processing' AND worker_run_id = ?
+            AND EXISTS (
+              SELECT 1 FROM live_export_requests r
+               WHERE r.id = live_lgpd_worker_jobs.request_id
+                 AND r.clinic_id = live_lgpd_worker_jobs.clinic_id
+                 AND r.status = 'processing'
+            )`,
       )
       .bind(
         evidence.artifactKey,
@@ -259,7 +300,13 @@ export async function completeDeletionJob(
             SET status = 'completed', deleted_counts_json = ?, lease_until = NULL,
                 failure_code = NULL, updated_at = ?
           WHERE id = ? AND clinic_id = ? AND request_type = 'delete'
-            AND status = 'processing' AND worker_run_id = ?`,
+            AND status = 'processing' AND worker_run_id = ?
+            AND EXISTS (
+              SELECT 1 FROM live_deletion_requests r
+               WHERE r.id = live_lgpd_worker_jobs.request_id
+                 AND r.clinic_id = live_lgpd_worker_jobs.clinic_id
+                 AND r.status = 'processing'
+            )`,
       )
       .bind(countsJson, now, claim.jobId, claim.clinicId, claim.workerRunId),
     db
@@ -271,6 +318,28 @@ export async function completeDeletionJob(
       .bind(now, now, claim.requestId, claim.clinicId),
   ]);
   return Number(results[0]?.meta?.changes ?? 0) === 1 && Number(results[1]?.meta?.changes ?? 0) === 1;
+}
+
+/**
+ * Confirma se a conclusão do export de fato commitou com esta evidência —
+ * usada pelo executor quando o ack de `completeExportJob` se perde (ex.: erro
+ * de rede após o commit). Só com esta prova o artefato pode ser preservado.
+ */
+export async function isExportJobCompletedWithEvidence(
+  db: D1Database,
+  claim: LgpdWorkerClaim,
+  evidence: LgpdExportEvidence,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT 1 AS ok FROM live_lgpd_worker_jobs
+        WHERE id = ? AND clinic_id = ? AND status = 'completed'
+          AND artifact_key = ? AND artifact_digest_sha256 = ?
+        LIMIT 1`,
+    )
+    .bind(claim.jobId, claim.clinicId, evidence.artifactKey, evidence.digestSha256)
+    .first<{ ok: number }>();
+  return row?.ok === 1;
 }
 
 /** Metadata permitida para auditoria futura do executor; sem payload clínico. */
