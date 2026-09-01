@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const read = (path) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), "utf8").replace(
@@ -23,6 +23,32 @@ const verify = read(".github/workflows/verify.yml");
 const prCheck = read(".github/workflows/pr-check.yml");
 const vercelConfig = read("vercel.json");
 const cloudflareHeaders = read("client/public/_headers");
+
+const workflowsDir = new URL("../../.github/workflows/", import.meta.url);
+for (const file of readdirSync(workflowsDir).filter((name) =>
+  /\.ya?ml$/.test(name),
+)) {
+  const source = read(`.github/workflows/${file}`);
+  const jobs = source.split(/^jobs:\s*$/m)[1] ?? "";
+  const jobBlocks = jobs.split(/(?=^  [A-Za-z0-9_-]+:\s*$)/m);
+
+  for (const job of jobBlocks) {
+    const gates = [
+      ...job.matchAll(
+        /npm run verify(?::release)?|npm run test:e2e:[A-Za-z0-9:_-]+/g,
+      ),
+    ];
+    if (gates.length === 0) continue;
+
+    const browserInstall = job.indexOf(
+      "npx playwright install --with-deps chromium",
+    );
+    assert.ok(
+      browserInstall >= 0 && gates.every((gate) => browserInstall < gate.index),
+      `${file}: todo job que executa gate E2E deve instalar Chromium antes do primeiro gate`,
+    );
+  }
+}
 
 assert.match(boaConsultaPr, /on:\s*\n\s*pull_request:/);
 assert.doesNotMatch(

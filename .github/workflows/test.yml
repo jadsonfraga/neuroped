@@ -30,5 +30,8 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      - name: Instalar Chromium para os testes E2E
+        run: npx playwright install --with-deps chromium
+
       - name: Verify manual completo
         run: npm run verify
