@@ -21,6 +21,7 @@ on:
       - "tests/unit/live-tenant-client-boundary.test.mjs"
       - "tests/unit/live-governance-failclosed.test.ts"
       - "tests/unit/live-e2e-reserved-identity.test.ts"
+      - "tests/unit/live-read-audit-policy.test.ts"
       - ".github/workflows/live-tenant-isolation-guard.yml"
 
 permissions:
@@ -62,6 +63,9 @@ jobs:
 
       - name: Prove reserved E2E identity never reaches Clinical LIVE
         run: node --import tsx tests/unit/live-e2e-reserved-identity.test.ts
+
+      - name: Prove Clinical LIVE read audit is metadata-only and non-blocking
+        run: node --import tsx tests/unit/live-read-audit-policy.test.ts
 
       - name: Preserve existing SaaS tenant invariants
         run: |
