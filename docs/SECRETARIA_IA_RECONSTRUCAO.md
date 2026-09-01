@@ -25,10 +25,12 @@ A rota `#/marcacao` não consulta `/api/public-booking`. A API interna e `#/agen
 | Capacidade             | 5 consultas por dia útil                         |
 | Período publicado      | 31/08/2026 a 31/08/2027                          |
 | Exceções               | Feriados nacionais bloqueados                    |
-| Consulta particular    | R$ 800 no BoaConsulta, verificado em 01/09/2026 |
+| Consulta particular    | Valor vigente no perfil público oficial         |
 | Caução                 | R$ 150, obrigatória                              |
 | Confirmação automática | Desligada para particular e convênio             |
 | Forma publicada        | Pagamento no local; cartão BoaConsulta desligado |
+
+O valor da consulta não é fixado neste runbook nem no frontend. Em 01/09/2026, o painel autenticado foi registrado com R$ 800 enquanto o perfil público oficial ainda exibia R$ 750; por isso, o valor efetivamente publicado no perfil é a fonte da verdade para a família até a sincronização do BoaConsulta.
 
 Os feriados nacionais bloqueados em dias úteis são 07/09/2026, 12/10/2026, 02/11/2026, 20/11/2026, 25/12/2026, 01/01/2027, 26/03/2027 e 21/04/2027. Os dias 15/11/2026 e 01/05/2027 caem no fim de semana e já ficam indisponíveis pela rotina semanal. Carnaval e Corpus Christi não foram incluídos porque são pontos facultativos, não feriados nacionais.
 
