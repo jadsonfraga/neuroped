@@ -20,6 +20,7 @@ on:
       - "tests/unit/live-tenant-isolation-adversarial.test.ts"
       - "tests/unit/live-tenant-client-boundary.test.mjs"
       - "tests/unit/live-governance-failclosed.test.ts"
+      - "tests/unit/live-e2e-reserved-identity.test.ts"
       - ".github/workflows/live-tenant-isolation-guard.yml"
 
 permissions:
@@ -58,6 +59,9 @@ jobs:
 
       - name: Prove LGPD governance fails closed before physical completion
         run: node --import tsx tests/unit/live-governance-failclosed.test.ts
+
+      - name: Prove reserved E2E identity never reaches Clinical LIVE
+        run: node --import tsx tests/unit/live-e2e-reserved-identity.test.ts
 
       - name: Preserve existing SaaS tenant invariants
         run: |
