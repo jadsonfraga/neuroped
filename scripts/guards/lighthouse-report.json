@@ -1,15 +1,16 @@
 {
   "/": {
-    "performance": 75,
+    "performance": 93,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 325,
-      "lcpMs": 484,
-      "speedIndexMs": 737,
-      "tbtMs": 673,
-      "cls": 0
+      "fcpMs": 280,
+      "lcpMs": 1110,
+      "speedIndexMs": 871,
+      "tbtMs": 177,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -17,32 +18,84 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
     "failedAudits": [
       {
+        "id": "largest-contentful-paint",
+        "score": 0.92,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
         "id": "total-blocking-time",
-        "score": 0.16,
+        "score": 0.84,
         "title": "Total Blocking Time"
       },
       {
         "id": "max-potential-fid",
-        "score": 0.01,
+        "score": 0.71,
         "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "interactive",
-        "score": 0.99,
-        "title": "Time to Interactive"
-      },
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
       },
       {
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -51,22 +104,23 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/filtro": {
-    "performance": 93,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 444,
-      "lcpMs": 721,
-      "speedIndexMs": 614,
-      "tbtMs": 215,
-      "cls": 0
+      "fcpMs": 264,
+      "lcpMs": 530,
+      "speedIndexMs": 604,
+      "tbtMs": 40,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -75,26 +129,13 @@
       "bf-cache": true
     },
     "layoutShifts": [],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [],
     "failedAudits": [
       {
-        "id": "largest-contentful-paint",
-        "score": 0.99,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.76,
-        "title": "Total Blocking Time"
-      },
-      {
         "id": "max-potential-fid",
-        "score": 0.37,
+        "score": 0.99,
         "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
       },
       {
         "id": "forced-reflow-insight",
@@ -124,11 +165,12 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 411,
-      "lcpMs": 647,
-      "speedIndexMs": 503,
-      "tbtMs": 19,
-      "cls": 0
+      "fcpMs": 296,
+      "lcpMs": 563,
+      "speedIndexMs": 672,
+      "tbtMs": 28,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -136,22 +178,74 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
     "failedAudits": [
       {
-        "id": "largest-contentful-paint",
+        "id": "max-potential-fid",
         "score": 0.99,
-        "title": "Largest Contentful Paint"
+        "title": "Max Potential First Input Delay"
       },
       {
-        "id": "valid-source-maps",
+        "id": "mainthread-work-breakdown",
         "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
+        "title": "Minimize main-thread work"
       },
       {
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
+      },
+      {
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -171,11 +265,12 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 376,
-      "lcpMs": 548,
-      "speedIndexMs": 472,
-      "tbtMs": 12,
-      "cls": 0
+      "fcpMs": 343,
+      "lcpMs": 467,
+      "speedIndexMs": 837,
+      "tbtMs": 72,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -183,96 +278,54 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
-    "failedAudits": [
+    "layoutShifts": [
       {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
       }
-    ]
-  },
-  "/#/vineland": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 340,
-      "lcpMs": 494,
-      "speedIndexMs": 398,
-      "tbtMs": 8,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
-    "failedAudits": [
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
       {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
       }
-    ]
-  },
-  "/#/cbcl": {
-    "performance": 99,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 412,
-      "lcpMs": 604,
-      "speedIndexMs": 512,
-      "tbtMs": 69,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
+    ],
     "failedAudits": [
       {
-        "id": "largest-contentful-paint",
+        "id": "speed-index",
         "score": 0.99,
-        "title": "Largest Contentful Paint"
+        "title": "Speed Index"
       },
       {
         "id": "total-blocking-time",
@@ -281,18 +334,18 @@
       },
       {
         "id": "max-potential-fid",
-        "score": 0.93,
+        "score": 0.97,
         "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
       },
       {
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -301,22 +354,218 @@
       },
       {
         "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/vineland": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 452,
+      "lcpMs": 556,
+      "speedIndexMs": 1007,
+      "tbtMs": 123,
+      "cls": 0,
+      "actionableCls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "failedAudits": [
+      {
+        "id": "speed-index",
+        "score": 0.97,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.94,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.91,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "forced-reflow-insight",
         "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/cbcl": {
+    "performance": 100,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 329,
+      "lcpMs": 454,
+      "speedIndexMs": 802,
+      "tbtMs": 46,
+      "cls": 0,
+      "actionableCls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "failedAudits": [
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.96,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/caa": {
-    "performance": 100,
+    "performance": 65,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 385,
-      "lcpMs": 555,
-      "speedIndexMs": 562,
-      "tbtMs": 12,
-      "cls": 0
+      "fcpMs": 754,
+      "lcpMs": 1278,
+      "speedIndexMs": 2160,
+      "tbtMs": 819,
+      "cls": 0.001,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -324,17 +573,84 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,4,NAV,1,DIV",
+          "selector": "div.np-app-shell > aside.print:hidden > nav#sidebar-nav > div.space-y-1",
+          "boundingRect": {
+            "top": 425,
+            "bottom": 549,
+            "left": 8,
+            "right": 247,
+            "width": 239,
+            "height": 124
+          },
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "TRIAGEM E FERRAMENTAS\nTriar sem cadastrar\nCAA · Vou Falar"
+        },
+        "score": 0.0008156107364100426
+      }
+    ],
+    "ignoredLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,4,NAV,1,DIV",
+          "selector": "div.np-app-shell > aside.print:hidden > nav#sidebar-nav > div.space-y-1",
+          "boundingRect": {
+            "top": 425,
+            "bottom": 549,
+            "left": 8,
+            "right": 247,
+            "width": 239,
+            "height": 124
+          },
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "TRIAGEM E FERRAMENTAS\nTriar sem cadastrar\nCAA · Vou Falar"
+        },
+        "score": 0.0008156107364100426
+      }
+    ],
+    "actionableLayoutShifts": [],
     "failedAudits": [
       {
+        "id": "first-contentful-paint",
+        "score": 0.96,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.87,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.55,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.09,
+        "title": "Total Blocking Time"
+      },
+      {
         "id": "max-potential-fid",
-        "score": 0.99,
+        "score": 0.23,
         "title": "Max Potential First Input Delay"
       },
       {
-        "id": "valid-source-maps",
+        "id": "interactive",
+        "score": 0.96,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "mainthread-work-breakdown",
         "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
+        "title": "Minimize main-thread work"
       },
       {
         "id": "forced-reflow-insight",
@@ -342,9 +658,9 @@
         "title": "Forced reflow"
       },
       {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
+        "id": "lcp-breakdown-insight",
+        "score": 0,
+        "title": "LCP breakdown"
       },
       {
         "id": "lcp-discovery-insight",
@@ -358,22 +674,23 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/espasticidade": {
-    "performance": 100,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 355,
-      "lcpMs": 422,
-      "speedIndexMs": 460,
-      "tbtMs": 1,
-      "cls": 0
+      "fcpMs": 322,
+      "lcpMs": 403,
+      "speedIndexMs": 800,
+      "tbtMs": 125,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -381,22 +698,69 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
     "failedAudits": [
       {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.94,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.87,
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "forced-reflow-insight",
         "score": 0,
         "title": "Forced reflow"
-      },
-      {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -410,22 +774,23 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/prontuario": {
-    "performance": 100,
+    "performance": 64,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 414,
-      "lcpMs": 603,
-      "speedIndexMs": 466,
-      "tbtMs": 0,
-      "cls": 0
+      "fcpMs": 648,
+      "lcpMs": 1006,
+      "speedIndexMs": 2376,
+      "tbtMs": 1111,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -433,17 +798,84 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,5,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,5,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
     "failedAudits": [
       {
+        "id": "first-contentful-paint",
+        "score": 0.98,
+        "title": "First Contentful Paint"
+      },
+      {
         "id": "largest-contentful-paint",
-        "score": 0.99,
+        "score": 0.94,
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "valid-source-maps",
+        "id": "speed-index",
+        "score": 0.47,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.04,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.11,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "interactive",
+        "score": 0.94,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "mainthread-work-breakdown",
         "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
+        "title": "Minimize main-thread work"
       },
       {
         "id": "forced-reflow-insight",
@@ -451,9 +883,9 @@
         "title": "Forced reflow"
       },
       {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
+        "id": "lcp-breakdown-insight",
+        "score": 0,
+        "title": "LCP breakdown"
       },
       {
         "id": "lcp-discovery-insight",
@@ -467,22 +899,23 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0,
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]
   },
   "/#/fluxograma": {
-    "performance": 100,
+    "performance": 79,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 330,
-      "lcpMs": 468,
-      "speedIndexMs": 454,
-      "tbtMs": 17,
-      "cls": 0
+      "fcpMs": 573,
+      "lcpMs": 809,
+      "speedIndexMs": 1655,
+      "tbtMs": 412,
+      "cls": 0,
+      "actionableCls": 0
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -490,121 +923,79 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
-    "failedAudits": [
+    "layoutShifts": [
       {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
       }
-    ]
-  },
-  "/#/laudo-neuroped": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 362,
-      "lcpMs": 563,
-      "speedIndexMs": 493,
-      "tbtMs": 1,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
-    "failedAudits": [
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
       {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "valid-source-maps",
-        "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
-      },
-      {
-        "id": "network-dependency-tree-insight",
-        "score": 0,
-        "title": "Network dependency tree"
-      },
-      {
-        "id": "render-blocking-insight",
-        "score": 0,
-        "title": "Render-blocking requests"
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
       }
-    ]
-  },
-  "/#/receita-c1": {
-    "performance": 100,
-    "accessibility": 100,
-    "best-practices": 100,
-    "seo": 100,
-    "metrics": {
-      "fcpMs": 469,
-      "lcpMs": 649,
-      "speedIndexMs": 561,
-      "tbtMs": 14,
-      "cls": 0
-    },
-    "requiredAudits": {
-      "errors-in-console": true,
-      "label-content-name-mismatch": true,
-      "unsized-images": true,
-      "bf-cache": true
-    },
-    "layoutShifts": [],
+    ],
     "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.99,
+        "title": "First Contentful Paint"
+      },
       {
         "id": "largest-contentful-paint",
-        "score": 0.99,
+        "score": 0.98,
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "valid-source-maps",
+        "id": "speed-index",
+        "score": 0.77,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.4,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.29,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "mainthread-work-breakdown",
         "score": 0,
-        "title": "Missing source maps for large first-party JavaScript"
+        "title": "Minimize main-thread work"
       },
       {
         "id": "forced-reflow-insight",
@@ -612,9 +1003,9 @@
         "title": "Forced reflow"
       },
       {
-        "id": "image-delivery-insight",
-        "score": 0.5,
-        "title": "Improve image delivery"
+        "id": "lcp-breakdown-insight",
+        "score": 0,
+        "title": "LCP breakdown"
       },
       {
         "id": "lcp-discovery-insight",
@@ -628,7 +1019,247 @@
       },
       {
         "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/laudo-neuroped": {
+    "performance": 28,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 3627,
+      "lcpMs": 4511,
+      "speedIndexMs": 7532,
+      "tbtMs": 1668,
+      "cls": 0,
+      "actionableCls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "failedAudits": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.02,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.12,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
         "score": 0,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "interactive",
+        "score": 0.31,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "score": 0,
+        "title": "Minimize main-thread work"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "lcp-breakdown-insight",
+        "score": 0,
+        "title": "LCP breakdown"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
+        "title": "Render-blocking requests"
+      }
+    ]
+  },
+  "/#/receita-c1": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100,
+    "metrics": {
+      "fcpMs": 308,
+      "lcpMs": 422,
+      "speedIndexMs": 1309,
+      "tbtMs": 100,
+      "cls": 0,
+      "actionableCls": 0
+    },
+    "requiredAudits": {
+      "errors-in-console": true,
+      "label-content-name-mismatch": true,
+      "unsized-images": true,
+      "bf-cache": true
+    },
+    "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
+          "selector": "body > div#root > button.fixed",
+          "boundingRect": {
+            "top": 872,
+            "bottom": 916,
+            "left": 1276,
+            "right": 1320,
+            "width": 44,
+            "height": 44
+          },
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir ajuda do NeuroPed"
+        },
+        "score": 0.00004683434210339221
+      }
+    ],
+    "failedAudits": [
+      {
+        "id": "speed-index",
+        "score": 0.9,
+        "title": "Speed Index"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.97,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.97,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "server-response-time",
+        "score": 0,
+        "title": "Reduce initial server response time"
+      },
+      {
+        "id": "document-latency-insight",
+        "score": 0,
+        "title": "Document request latency"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
+        "id": "lcp-breakdown-insight",
+        "score": 0,
+        "title": "LCP breakdown"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0.5,
         "title": "Render-blocking requests"
       }
     ]

@@ -149,6 +149,13 @@ async function visit(route) {
   let blank = false;
   try {
     await page.goto(BASE + "/#" + route, { waitUntil: "domcontentloaded", timeout: 20000 });
+    // Importações lazy podem iniciar um preload de CSS depois do primeiro
+    // DOMContentLoaded. Sem aguardar a rede estabilizar, o auditor fechava a
+    // aba no meio desse preload e registrava um falso console.error — sobretudo
+    // na experiência pública com CSS próprio.
+    await page
+      .waitForLoadState("networkidle", { timeout: Math.max(5000, settleMs + 3000) })
+      .catch(() => undefined);
     await page.waitForTimeout(settleMs);
     const info = await page.evaluate(() => {
       const root = document.getElementById("root");
