@@ -1,0 +1,54 @@
+name: Temporary R2 access probe
+
+on:
+  push:
+    branches:
+      - probe/r2-access-20260901
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r2-access-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  r2-readonly-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Probe R2 list permission without exposing bucket names
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          output="$(npx wrangler@4 r2 bucket list 2>&1)" || {
+            echo "::error::R2_API_ACCESS=DENIED"
+            exit 1
+          }
+          if printf '%s' "$output" | grep -Fq 'neuroped-lgpd-exports'; then
+            echo "R2_API_ACCESS=OK"
+            echo "TARGET_BUCKET_EXISTS=true"
+          else
+            echo "R2_API_ACCESS=OK"
+            echo "TARGET_BUCKET_EXISTS=false"
+          fi
+          echo "Bucket names intentionally suppressed."
