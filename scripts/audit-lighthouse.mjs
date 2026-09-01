@@ -58,7 +58,13 @@ function fallback(reason) {
  */
 function isFixedNavigationShift(item) {
   const selector = String(item?.node?.selector ?? "");
-  return selector.includes("aside.print:hidden > nav#sidebar-nav");
+  // O nav vive dentro do contêiner rolável da sidebar (np-sidebar-scroll),
+  // então o caminho não é mais filho direto do aside; a política continua a
+  // mesma — só é ignorado o alvo inequivocamente dentro do navigation fixo.
+  return (
+    selector.includes("aside.print:hidden") &&
+    selector.includes("nav#sidebar-nav")
+  );
 }
 
 function summarizeLayoutStability(result) {
