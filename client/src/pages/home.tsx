@@ -361,7 +361,10 @@ export default function HomePage() {
           >
             <Search className="h-4 w-4" aria-hidden="true" />
             <span>Busca avançada</span>
-            <kbd className="hidden rounded border border-border/70 bg-background/60 px-1.5 py-0.5 font-mono text-[9px] sm:inline-flex">
+            <kbd
+              aria-hidden="true"
+              className="hidden rounded border border-border/70 bg-background/60 px-1.5 py-0.5 font-mono text-[9px] sm:inline-flex"
+            >
               ⌘K
             </kbd>
           </button>

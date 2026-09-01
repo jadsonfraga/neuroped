@@ -588,6 +588,13 @@ async function proveOrphanedOwnerClasses() {
       await page.waitForFunction(
         () => getComputedStyle(document.documentElement).overflowY === "hidden",
       );
+      // O estilo computado já reporta "hidden" assim que o main thread aplica a
+      // classe, mas o compositor leva alguns frames extras para commitar a
+      // scroll-blocking region. Sem essa folga, um wheel disparado logo depois
+      // do waitForFunction pode escapar antes do bloqueio real existir — flake
+      // observado especificamente na 2ª iteração, quando o compositor ainda
+      // está processando os touchmoves da iteração anterior.
+      await settleFrames(page, 4);
       await assertWheelBlocked(page, `${className} órfã`);
       await beginTouch(session, start.x, start.y);
       assertUnlocked(
