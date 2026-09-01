@@ -376,7 +376,7 @@ export default function MarcacaoPage() {
 
               <Button
                 asChild
-                className="mt-6 h-12 w-full gap-2 bg-emerald-600 font-black text-white hover:bg-emerald-700"
+                className="mt-6 h-12 w-full gap-2 bg-emerald-800 font-black text-white hover:bg-emerald-900"
               >
                 <a
                   href={BOOKING_WHATSAPP_URL}
