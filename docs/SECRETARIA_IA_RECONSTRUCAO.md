@@ -1,87 +1,111 @@
-# Secretaria IA × BoaConsulta — arquitetura pública
+# Secretaria IA — contrato canônico consolidado
 
-## Finalidade
+**Estado:** vigente em 01/09/2026  
+**Rota institucional única:** `#/marcacao`
 
-A rota pública `#/marcacao` é a porta administrativa da NeuroPed SDG. Ela incorpora a agenda oficial do BoaConsulta e orienta a família para **pré-agendar**, **remarcar/cancelar** ou **tirar dúvidas sobre caução**, sem diagnóstico, urgência clínica, prescrição, interpretação de exames ou relato clínico livre.
+Este documento substitui decisões anteriores conflitantes sobre Manus, preço, agenda e confirmação da Secretaria IA institucional do NeuroPed SDG.
 
-O fluxo é guiado por opções fechadas. A página não envia texto a um modelo de linguagem e não armazena dados de paciente.
+## 1. Fonte de verdade por domínio
 
-## Fonte única da disponibilidade
+| Domínio | Autoridade canônica |
+| --- | --- |
+| Entrada pública da Secretaria IA | `#/marcacao` no próprio NeuroPed |
+| Disponibilidade e ocupação | perfil Premium oficial do BoaConsulta |
+| Valor da consulta particular | **R$ 800 — valor oficial da clínica** |
+| Caução | **R$ 150 — obrigatória e conferida pela secretaria** |
+| Confirmação final | secretaria, após conferência da caução |
+| Canal administrativo | WhatsApp Agendamento **(87) 99105-5790** |
+| Agenda SaaS/multi-tenant | `#/agendar` + `/api/public-booking`, produto separado |
+| Antigo site Secretaria IA no Manus | histórico, **não canônico e não usado pelo runtime** |
 
-O calendário é o perfil Premium oficial do Dr. Jadson Fraga, identificado pelo
-slug `61e1abfa9730aa005f000743`. A porta `BoaConsultaScheduleGateway` abre esse
-perfil em uma nova guia e em outro origin. Nenhum JavaScript do BoaConsulta roda
-dentro do origin do NeuroPed.
+O BoaConsulta é autoridade apenas para **disponibilidade**. Se o parceiro exibir valor diferente durante uma sincronização, o NeuroPed mantém R$ 800 como preço oficial da clínica e orienta confirmação pelo canal administrativo antes de qualquer pagamento.
 
-A rota `#/marcacao` não consulta `/api/public-booking`. A API interna e `#/agendar` continuam existentes para o produto multi-tenant, mas não são a fonte da agenda institucional do Dr. Jadson.
+## 2. Escopo funcional
 
-## Regra operacional de 12 meses
+A Secretaria IA é uma porta administrativa guiada. Ela permite:
 
-| Regra                  | Configuração                                     |
-| ---------------------- | ------------------------------------------------ |
-| Dias                   | Segunda a sexta-feira                            |
-| Inícios                | `09:30`, `10:30`, `11:30`, `12:30`, `13:30`      |
-| Duração                | 1 hora                                           |
-| Capacidade             | 5 consultas por dia útil                         |
-| Período publicado      | 31/08/2026 a 31/08/2027                          |
-| Exceções               | Feriados nacionais bloqueados                    |
-| Consulta particular    | Valor vigente no perfil público oficial         |
-| Caução                 | R$ 150, obrigatória                              |
-| Confirmação automática | Desligada para particular e convênio             |
-| Forma publicada        | Pagamento no local; cartão BoaConsulta desligado |
+- iniciar pré-agendamento;
+- consultar a agenda oficial do BoaConsulta;
+- orientar remarcação/cancelamento;
+- esclarecer o fluxo da caução;
+- fazer o handoff BoaConsulta → WhatsApp da secretaria.
 
-O valor da consulta não é fixado neste runbook nem no frontend. Em 01/09/2026, o painel autenticado foi registrado com R$ 800 enquanto o perfil público oficial ainda exibia R$ 750; por isso, o valor efetivamente publicado no perfil é a fonte da verdade para a família até a sincronização do BoaConsulta.
+Ela não recebe sintomas, diagnóstico, exames, medicamentos, documentos clínicos ou relato livre. Não diagnostica, não prescreve e não substitui atendimento clínico.
 
-Os feriados nacionais bloqueados em dias úteis são 07/09/2026, 12/10/2026, 02/11/2026, 20/11/2026, 25/12/2026, 01/01/2027, 26/03/2027 e 21/04/2027. Os dias 15/11/2026 e 01/05/2027 caem no fim de semana e já ficam indisponíveis pela rotina semanal. Carnaval e Corpus Christi não foram incluídos porque são pontos facultativos, não feriados nacionais.
+## 3. Regra operacional publicada
 
-No painel do BoaConsulta, a rotina foi publicada de segunda a sexta, das 09:30 às 14:30, com duração de uma hora, até 31/08/2027. Os bloqueios de feriado cobrem a janela exibida de 08:00 às 14:30 e, portanto, incluem integralmente os cinco horários publicados.
+| Regra | Configuração |
+| --- | --- |
+| Dias | segunda a sexta-feira |
+| Inícios | `09:30`, `10:30`, `11:30`, `12:30`, `13:30` |
+| Duração | 1 hora |
+| Capacidade máxima | **até 5 consultas por dia útil** |
+| Período publicado | 31/08/2026 a 31/08/2027 |
+| Exceções | feriados nacionais bloqueados |
+| Consulta particular | **R$ 800** |
+| Caução | **R$ 150** |
+| Confirmação automática | desligada |
+| Forma publicada no BoaConsulta | pagamento no local; cartão BoaConsulta desligado |
 
-## Estado do pré-agendamento
+Feriados nacionais bloqueados em dias úteis no período: 07/09/2026, 12/10/2026, 02/11/2026, 20/11/2026, 25/12/2026, 01/01/2027, 26/03/2027 e 21/04/2027. Os dias 15/11/2026 e 01/05/2027 caem no fim de semana e já ficam indisponíveis pela rotina semanal.
+
+## 4. Estado do pré-agendamento
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Solicitado: família escolhe horário
-  Solicitado --> AguardandoCaucao: secretaria orienta pagamento
+  [*] --> Solicitado: família conclui solicitação no BoaConsulta
+  Solicitado --> AguardandoCaucao: família avisa a secretaria pelo WhatsApp
   AguardandoCaucao --> Confirmado: secretaria confere R$ 150
-  AguardandoCaucao --> Liberado: prazo operacional expira
+  AguardandoCaucao --> Liberado: solicitação não é confirmada
 ```
 
-O aviso gerado pelo BoaConsulta registra uma solicitação. A confirmação efetiva é exclusivamente a ação manual da secretaria após a conferência da caução. O site não afirma que a caução é reembolsável nem que será descontada do valor total, pois essas condições não foram definidas.
+A escolha online é **pré-agendamento**. Mensagem automática do BoaConsulta, e-mail do parceiro ou abertura da agenda não equivalem à confirmação final da consulta.
 
-## WhatsApp administrativo
+## 5. Handoff BoaConsulta → WhatsApp
 
-O canal público é **Agendamento (Dr. Jadson Fraga), (87) 99105-5790**. Nesta entrega, a família recebe um botão com mensagem administrativa pré-preenchida, sem sintomas, diagnóstico ou documentação clínica.
+Ao abrir a agenda externa, o NeuroPed registra apenas estado efêmero de interface para exibir o próximo passo. Ao retornar, a família recebe CTA para enviar mensagem pré-preenchida pelo próprio WhatsApp. Assim, o número de contato chega à secretaria sem criar formulário adicional no NeuroPed.
 
-O BoaConsulta não oferece webhook ou WhatsApp nessa conta; a integração nativa disponível é Google Calendar. Para avisos automáticos e repetidos a cada 30 minutos até a conferência, são necessários:
+Mensagem administrativa não deve carregar conteúdo clínico.
 
-1. sincronização autorizada do BoaConsulta com um calendário operacional dedicado;
-2. credenciais de uma conta oficial da WhatsApp Business Platform;
-3. modelo de mensagem administrativa aprovado pelo provedor;
-4. fila durável com idempotência, reenvio de 30 minutos e encerramento após a confirmação;
-5. registro de auditoria sem dados clínicos no texto da notificação.
+## 6. Separação de produtos
 
-Não se deve automatizar cliques, raspar o painel do BoaConsulta nem abrir WhatsApp pelo navegador a cada 30 minutos. Esses caminhos são frágeis, não auditáveis e podem duplicar mensagens.
+`#/marcacao` é a única Secretaria IA institucional do Dr. Jadson dentro do NeuroPed.
 
-## Segurança de conteúdo
+`#/agendar` e `/api/public-booking` continuam existentes porque pertencem ao produto genérico multi-tenant. Eles não devem ser usados como fonte da agenda institucional, nem receber o rótulo de Secretaria IA do Dr. Jadson.
 
-A integração não amplia `script-src` nem `connect-src`: o perfil oficial abre
-em nova guia com `noopener noreferrer`. Essa separação impede que código de
-terceiro leia tokens, prontuários ou o armazenamento da sessão NeuroPed. O CSP
-continua permitindo scripts apenas do próprio origin.
+A antiga Secretaria IA publicada no Manus é apenas evidência histórica. Não deve reaparecer em navegação, iframe, CTA ou fallback da jornada institucional.
 
-## Critérios de aceite
+## 7. Segurança e LGPD
 
-| Critério        | Verificação                                                                   |
-| --------------- | ----------------------------------------------------------------------------- |
-| Rota pública    | `#/marcacao` abre sem PIN e sem shell clínico.                                |
-| Fonte única     | A página usa `BoaConsultaScheduleGateway` e não chama `/api/public-booking`.  |
-| Privacidade     | Não existem `input`, `textarea` ou campo clínico livre na Secretária IA.      |
-| Regra comercial | Valor oficial e caução obrigatória de R$ 150 aparecem antes da agenda.        |
-| Capacidade      | Os cinco inícios e a duração de uma hora são exibidos.                        |
-| Confirmação     | A página usa “pré-agendamento” e exige conferência manual da secretaria.      |
-| Isolamento      | A agenda abre em outro origin, sem script de terceiro dentro do NeuroPed.     |
-| CSP             | Nenhum host BoaConsulta é liberado em `script-src` ou `connect-src`.           |
+- BoaConsulta abre em outra origem com `noopener noreferrer`.
+- Nenhum script do BoaConsulta roda dentro da sessão NeuroPed.
+- CSP não libera hosts BoaConsulta em `script-src` ou `connect-src`.
+- Nenhum input ou textarea clínico existe em `#/marcacao`.
+- Nenhum secret, chave Pix, token ou dado de paciente fica no frontend.
+- A rota institucional não chama `/api/public-booking`.
 
-## Rollback
+## 8. Automação recorrente de WhatsApp
 
-Reverter em conjunto o gateway da agenda, a página `marcacao.tsx`, os ajustes de navegação e os testes. No BoaConsulta, restaurar a rotina anterior somente após conferir que não há novas solicitações dependentes dos horários publicados.
+O reenvio automático a cada 30 minutos **não está ativo e não deve ser simulado**. O bloqueio externo canônico está em:
+
+`docs/audits/BLOCKED_EXTERNAL_SECRETARIA_WHATSAPP_2026-09-01.md`
+
+Para ativá-lo de forma confiável são necessários: WhatsApp Business Platform, template administrativo aprovado, credenciais em secrets, evento idempotente de novo pré-agendamento, fila durável e condição de encerramento após conferência/acknowledgement.
+
+Não automatizar cliques, não raspar o painel do BoaConsulta e não usar automação de navegador como substituto de webhook/evento confiável.
+
+## 9. Critérios de aceite
+
+- `#/marcacao` abre como rota pública própria, sem shell clínico.
+- Navegação principal aponta para uma única `Secretaria IA`.
+- O hub de integrações/Manus não duplica a Secretaria IA.
+- A página exibe R$ 800, caução de R$ 150 e “até 5 pacientes por dia útil”.
+- Disponibilidade vem do BoaConsulta; preço não.
+- Handoff BoaConsulta → WhatsApp é explícito.
+- Confirmação final permanece manual.
+- Nenhum texto livre clínico é coletado.
+- Testes de rota, CSP, build, lint, acessibilidade e release permanecem verdes.
+
+## 10. Rollback
+
+Reverter em conjunto `client/src/pages/marcacao.tsx`, `client/src/components/BoaConsultaScheduleWidget.tsx`, navegação relacionada e testes da Secretaria IA. Não restaurar o antigo site Manus como fallback. Alterações no BoaConsulta devem ser revertidas apenas após conferir solicitações já existentes.

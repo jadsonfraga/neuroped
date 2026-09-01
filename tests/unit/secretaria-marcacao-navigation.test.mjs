@@ -8,13 +8,16 @@ async function source(path) {
   return readFile(new URL(path, root), "utf8");
 }
 
-test("a Secretaria IA pública usa a agenda oficial do BoaConsulta com confirmação manual", async () => {
+test("a Secretaria IA institucional tem uma única rota e autoridades consolidadas", async () => {
   const [
     app,
     navigation,
     publicRoutes,
     page,
     widget,
+    integrations,
+    runbook,
+    todo,
     cloudflareHeaders,
     vercelConfig,
   ] = await Promise.all([
@@ -23,6 +26,9 @@ test("a Secretaria IA pública usa a agenda oficial do BoaConsulta com confirma�
     source("client/src/lib/publicRoutes.ts"),
     source("client/src/pages/marcacao.tsx"),
     source("client/src/components/BoaConsultaScheduleWidget.tsx"),
+    source("client/src/pages/manus-integracoes.tsx"),
+    source("docs/SECRETARIA_IA_RECONSTRUCAO.md"),
+    source("todo.md"),
     source("client/public/_headers"),
     source("vercel.json"),
   ]);
@@ -72,6 +78,22 @@ test("a Secretaria IA pública usa a agenda oficial do BoaConsulta com confirma�
   assert.match(widget, /target="_blank"/);
   assert.match(widget, /rel="noopener noreferrer"/);
   assert.doesNotMatch(widget, /document\.createElement|customElements|<bc-widget-schedules/);
+
+  // A antiga duplicação da Secretaria no hub Manus não pode voltar.
+  assert.doesNotMatch(integrations, /id:\s*"secretaria"/);
+  assert.doesNotMatch(integrations, /secretaria:\s*"\/#\/marcacao"/);
+  assert.match(integrations, /Secretária IA já possui rota pública própria/);
+
+  // O runbook consolidado deve manter preço e responsabilidades inequívocos.
+  assert.match(runbook, /Rota institucional única:\*\* `#\/marcacao`/);
+  assert.match(runbook, /Valor da consulta particular \| \*\*R\$ 800/);
+  assert.match(runbook, /BoaConsulta é autoridade apenas para \*\*disponibilidade\*\*/);
+  assert.match(runbook, /Antigo site Secretaria IA no Manus \| histórico/);
+  assert.doesNotMatch(runbook, /valor da consulta não é fixado neste runbook nem no frontend/i);
+
+  // O checklist operacional não pode voltar a pedir link para a Secretaria Manus.
+  assert.match(todo, /Incorporar a Secretária IA ao próprio NeuroPed; remover dependência do antigo site Manus/);
+  assert.match(todo, /BLOCKED_EXTERNAL_SECRETARIA_WHATSAPP_2026-09-01\.md/);
 
   for (const csp of [cloudflareHeaders, vercelConfig]) {
     assert.match(csp, /script-src 'self';/);
