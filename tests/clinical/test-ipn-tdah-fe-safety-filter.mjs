@@ -59,7 +59,7 @@ const genericSource = readFileSync(
   "utf8",
 );
 ok(
-  /onValueChange=\{\(val\) => \{[\s\S]*?itemSentinel\(item\)\?\.positiveOptionIndexes\.includes\([\s\S]*?setShowSafetyGate\(true\)/.test(
+  /onValueChange=\{\(val\) => \{[\s\S]*?itemSentinel\(\s*item\s*,?\s*\)\?\.positiveOptionIndexes\.includes\([\s\S]*?setShowSafetyGate\(true\)/.test(
     genericSource,
   ),
   "seleção positiva abre o gate de segurança sem esperar submissão",

@@ -201,6 +201,15 @@ async function main() {
     viewport: { width: 1280, height: 900 },
     acceptDownloads: true,
   });
+  const controlledStateWarnings = [];
+  page.on("console", (message) => {
+    if (
+      message.type() === "warning" &&
+      /RadioGroup is changing from uncontrolled to controlled/.test(message.text())
+    ) {
+      controlledStateWarnings.push(message.text());
+    }
+  });
 
   // O smoke valida escalas clínicas protegidas. Em build de produção o modo de
   // autenticação é fail-closed (`remote`), portanto o teste cria uma sessão E2E
@@ -310,6 +319,12 @@ async function main() {
         failures.length ? ` — falhas: ${failures.join(", ")}` : ""
       }.`,
     );
+    if (controlledStateWarnings.length) {
+      console.error(
+        `[scale-smoke] ✗ ${controlledStateWarnings.length} transição(ões) RadioGroup controlado/não-controlado detectada(s).`,
+      );
+      process.exitCode = 1;
+    }
     if (failures.length) process.exitCode = 1;
   } finally {
     await browser.close();

@@ -1,53 +1,39 @@
-import { createServer } from "node:http";
-import { readFileSync, existsSync, statSync } from "node:fs";
-import { join, extname } from "node:path";
+import { createServer as createViteServer } from "vite";
 import { chromium } from "playwright";
 
-const DIST = "dist/public";
-const MIME = {
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".mjs": "text/javascript",
-  ".css": "text/css",
-  ".json": "application/json",
-  ".svg": "image/svg+xml",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".ico": "image/x-icon",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-};
-
-function startStaticServer() {
-  return new Promise((resolve) => {
-    const server = createServer((req, res) => {
-      try {
-        const pathname = decodeURIComponent((req.url || "/").split("?")[0]);
-        let file = join(DIST, pathname);
-        if (!existsSync(file) || statSync(file).isDirectory()) file = join(DIST, "index.html");
-        const body = readFileSync(file);
-        res.writeHead(200, { "Content-Type": MIME[extname(file)] || "application/octet-stream" });
-        res.end(body);
-      } catch {
-        res.writeHead(404);
-        res.end("not found");
-      }
+/**
+ * Este E2E valida explicitamente a instalação local, não o bundle LIVE.
+ * O bundle de produção exige sessão remota por desenho; servi-lo aqui fazia o
+ * teste cair no login e nunca exercitar os rascunhos locais. O modo aberto é
+ * habilitado somente no processo Vite efêmero deste teste.
+ */
+async function startLocalViteServer() {
+  const previousOpenAccess = process.env.VITE_OPEN_ACCESS;
+  process.env.VITE_OPEN_ACCESS = "true";
+  try {
+    const server = await createViteServer({
+      configFile: "vite.config.ts",
+      server: { host: "127.0.0.1", port: 0 },
+      logLevel: "error",
     });
-    server.listen(0, "127.0.0.1", () => resolve(server));
-  });
+    await server.listen();
+    const address = server.httpServer?.address();
+    if (!address || typeof address === "string") {
+      await server.close();
+      throw new Error("Vite local não informou uma porta de escuta");
+    }
+    return { server, base: `http://127.0.0.1:${address.port}` };
+  } finally {
+    if (previousOpenAccess === undefined) delete process.env.VITE_OPEN_ACCESS;
+    else process.env.VITE_OPEN_ACCESS = previousOpenAccess;
+  }
 }
 
 async function main() {
-  if (!existsSync(join(DIST, "index.html"))) {
-    console.error("[neuroped-acompanhamento] build ausente. Rode npm run build:client antes.");
-    process.exit(1);
-  }
-
   const external = process.env.E2E_BASE_URL;
-  const server = external ? null : await startStaticServer();
-  const base = external || `http://127.0.0.1:${server.address().port}`;
+  const local = external ? null : await startLocalViteServer();
+  const server = local?.server ?? null;
+  const base = external || local.base;
   const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
   const browser = await chromium.launch(
     executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
@@ -123,7 +109,7 @@ async function main() {
     console.log("[neuroped-acompanhamento] ✓ modo local: desenvolvimento + escola relacionados, persistidos e exportados");
   } finally {
     await browser.close();
-    if (server) server.close();
+    if (server) await server.close();
   }
 }
 

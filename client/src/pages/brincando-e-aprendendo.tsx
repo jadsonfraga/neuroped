@@ -344,7 +344,7 @@ function MissionCard({
         {arena.actions.map((action) => (
           <KidsButton key={action.id} color={arena.color} onClick={() => onStart(arena.id, action.id)}>
             {action.label}
-            {action.difficulty ? <span className="text-xs opacity-80">({action.difficulty})</span> : <ArrowRight className="h-4 w-4" />}
+            {action.difficulty ? <span className="text-xs">({action.difficulty})</span> : <ArrowRight className="h-4 w-4" />}
           </KidsButton>
         ))}
       </div>
