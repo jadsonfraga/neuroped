@@ -15,7 +15,7 @@ dentro do origin do NeuroPed.
 
 A rota `#/marcacao` não consulta `/api/public-booking`. A API interna e `#/agendar` continuam existentes para o produto multi-tenant, mas não são a fonte da agenda institucional do Dr. Jadson.
 
-## Regra operacional de 2026
+## Regra operacional de 12 meses
 
 | Regra                  | Configuração                                     |
 | ---------------------- | ------------------------------------------------ |
@@ -23,14 +23,16 @@ A rota `#/marcacao` não consulta `/api/public-booking`. A API interna e `#/agen
 | Inícios                | `09:30`, `10:30`, `11:30`, `12:30`, `13:30`      |
 | Duração                | 1 hora                                           |
 | Capacidade             | 5 consultas por dia útil                         |
-| Período publicado      | 01/09/2026 a 31/12/2026                          |
+| Período publicado      | 31/08/2026 a 31/08/2027                          |
 | Exceções               | Feriados nacionais bloqueados                    |
-| Consulta particular    | Valor atualizado no perfil oficial BoaConsulta  |
+| Consulta particular    | R$ 800 no BoaConsulta, verificado em 01/09/2026 |
 | Caução                 | R$ 150, obrigatória                              |
 | Confirmação automática | Desligada para particular e convênio             |
 | Forma publicada        | Pagamento no local; cartão BoaConsulta desligado |
 
-No restante de 2026, os feriados nacionais em dias úteis são 07/09, 12/10, 02/11, 20/11 e 25/12. O dia 15/11 cai em domingo e já fica indisponível pela rotina semanal.
+Os feriados nacionais bloqueados em dias úteis são 07/09/2026, 12/10/2026, 02/11/2026, 20/11/2026, 25/12/2026, 01/01/2027, 26/03/2027 e 21/04/2027. Os dias 15/11/2026 e 01/05/2027 caem no fim de semana e já ficam indisponíveis pela rotina semanal. Carnaval e Corpus Christi não foram incluídos porque são pontos facultativos, não feriados nacionais.
+
+No painel do BoaConsulta, a rotina foi publicada de segunda a sexta, das 09:30 às 14:30, com duração de uma hora, até 31/08/2027. Os bloqueios de feriado cobrem a janela exibida de 08:00 às 14:30 e, portanto, incluem integralmente os cinco horários publicados.
 
 ## Estado do pré-agendamento
 
