@@ -6,6 +6,7 @@ Escopo: Secretaria IA institucional × BoaConsulta
 ## Resultado
 
 O perfil Premium oferece widget oficial, confirmação manual e integração com Google Calendar. A conta inspecionada não expõe webhook de novos agendamentos nem integração direta com WhatsApp.
+
 Na configuração operacional do BoaConsulta foram validados:
 
 - rotina de segunda a sexta, das 09:30 às 14:30, com duração de uma hora, de 31/08/2026 a 31/08/2027;
