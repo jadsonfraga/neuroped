@@ -1,8 +1,9 @@
-import { hashPassword } from "../auth/_crypto";
+import { hashPassword, sha256Hex } from "../auth/_crypto";
 import { getUserByEmail } from "../auth/_shared";
 import { validateInvitationForAccept } from "./_onboarding";
 import { isClinicMembershipRole } from "../../../shared/tenant";
 import { getContextUser } from "../auth/_authorization";
+import { json, boundedText as text } from "../_request";
 
 interface Env {
   DB?: D1Database;
@@ -19,22 +20,6 @@ interface InvitationRow {
   token_hash: string;
   status: string;
   expires_at: string;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
-}
-
-function text(value: unknown, max: number): string {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
-
-async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {

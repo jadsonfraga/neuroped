@@ -8,6 +8,7 @@
 
 import { getContextUser } from "./auth/_authorization";
 import { isPlainObject } from "./_request";
+import { json } from "./_request";
 
 interface Env {
   DB?: D1Database;
@@ -91,16 +92,6 @@ const CONSENT_KEYS = new Set([
   "legalBasis",
   "purpose",
 ]);
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-    },
-  });
-}
 
 function hasOnlyKeys(
   value: Record<string, unknown>,

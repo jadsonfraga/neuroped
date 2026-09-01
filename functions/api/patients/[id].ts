@@ -19,6 +19,7 @@ import {
   type PatientWriteField,
 } from "./_contract";
 import { isPlainObject } from "../_request";
+import { json as jsonResponse } from "../_request";
 
 interface Env {
   DB?: D1Database;
@@ -62,16 +63,6 @@ const DEMO_PATIENTS: Record<string, PatientDatabaseRow> = {
     updated_at: new Date("2025-03-01").toISOString(),
   },
 };
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-    },
-  });
-}
 
 function errorResponse(
   message: string,

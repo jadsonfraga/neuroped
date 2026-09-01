@@ -15,13 +15,7 @@ import {
   getPatientAccess,
 } from "../auth/_authorization";
 import { hasBoundedIdentifier } from "../_clinicalValidation";
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
-}
+import { json } from "../_request";
 
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const { env, params } = context;

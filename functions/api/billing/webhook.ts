@@ -8,6 +8,7 @@ import {
   type AsaasWebhookEvent,
   type BillingProviderEnv,
 } from "./_provider";
+import { json } from "../_request";
 
 interface Env extends BillingProviderEnv { DB?: D1Database; }
 
@@ -19,13 +20,6 @@ interface BillingContext {
   subscription_id: string;
   subscription_status: string;
   lifecycle_status: string;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
 }
 
 function eventDate(value?: string): string {

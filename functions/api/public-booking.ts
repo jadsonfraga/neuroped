@@ -1,4 +1,3 @@
-import { isPlainObject } from "./_request";
 import {
   appointmentToApi,
   cleanOptionalText,
@@ -26,6 +25,7 @@ import {
 } from "./operations/_core";
 import { ensureOperationsHardeningSchema } from "./operations/_access";
 import { isValidLocalDate, selectFutureSlots } from "../../shared/operations";
+import { readJsonBody as readBody, nowInProviderTimezone as nowInTimezone } from "./operations/_core";
 
 function emailValid(value: string): boolean {
   return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -35,33 +35,6 @@ function phoneValid(value: string): boolean {
   if (!value) return false;
   const digits = value.replace(/\D/g, "");
   return digits.length >= 10 && digits.length <= 13;
-}
-
-async function readBody(request: Request): Promise<Record<string, unknown> | null> {
-  try {
-    const parsed = await request.json();
-    return isPlainObject(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function nowInTimezone(timezone: string): string {
-  try {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(new Date());
-    const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-    return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
-  } catch {
-    return new Date().toISOString().slice(0, 16);
-  }
 }
 
 async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
