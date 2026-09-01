@@ -63,17 +63,12 @@ jobs:
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
         run: |
           set -euo pipefail
-          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
-            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || {
-              echo "::error::NEUROPED_E2E_EMAIL e NEUROPED_E2E_PASSWORD devem existir juntos"
-              exit 1
-            }
-            ACTIVE_MAIL="$E2E_MAIL"
-            ACTIVE_PW="$E2E_PW"
-          else
-            ACTIVE_MAIL="$BOOTSTRAP_MAIL"
-            ACTIVE_PW="$BOOTSTRAP_PW"
-          fi
+          [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || {
+            echo "::error::NEUROPED_E2E_EMAIL e NEUROPED_E2E_PASSWORD são obrigatórios; ADMIN_* nunca é fallback de smoke."
+            exit 1
+          }
+          ACTIVE_MAIL="$E2E_MAIL"
+          ACTIVE_PW="$E2E_PW"
           for name in CF_TOKEN CF_ACCOUNT JWT_SECRET ACTIVE_MAIL ACTIVE_PW; do
             value="${!name:-}"
             if [ -z "$value" ]; then
@@ -306,13 +301,19 @@ jobs:
           ADMIN_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
           ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_NM: ${{ secrets.ADMIN_NAME }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_NM: ${{ secrets.NEUROPED_E2E_NAME }}
         run: |
           set -euo pipefail
           jwt_secret="$JWT_SECRET"
           admin_pw="$ADMIN_PW"
           admin_mail="$ADMIN_MAIL"
           admin_name="$ADMIN_NM"
-          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM
+          e2e_pw="$E2E_PW"
+          e2e_mail="$E2E_MAIL"
+          e2e_name="$E2E_NM"
+          unset JWT_SECRET ADMIN_PW ADMIN_MAIL ADMIN_NM E2E_PW E2E_MAIL E2E_NM
           put_required() {
             [ -n "$2" ] || { echo "::error::$1 ausente"; exit 1; }
             printf '%s' "$2" | npx wrangler@4 pages secret put "$1" --project-name neuroped >/dev/null
@@ -328,6 +329,12 @@ jobs:
           put_optional ADMIN_INITIAL_PASSWORD "$admin_pw"
           put_optional ADMIN_EMAIL "$admin_mail"
           put_optional ADMIN_NAME "$admin_name"
+          # A conta E2E precisa chegar ao runtime das Functions para que
+          # bootstrapE2EAccount() a provisione — sem isso, o smoke pós-deploy
+          # sempre recebe 401 porque a conta nunca existiu em produção.
+          put_optional NEUROPED_E2E_PASSWORD "$e2e_pw"
+          put_optional NEUROPED_E2E_EMAIL "$e2e_mail"
+          put_optional NEUROPED_E2E_NAME "$e2e_name"
 
       - name: Deploy para Cloudflare Pages
         env:
@@ -480,20 +487,16 @@ jobs:
         env:
           E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
           E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
-          FALLBACK_MAIL: ${{ secrets.ADMIN_EMAIL }}
-          FALLBACK_PW: ${{ secrets.ADMIN_INITIAL_PASSWORD }}
         run: |
           set -euo pipefail
           BASE=https://neuroped.pages.dev
-          if [ -n "$E2E_MAIL" ] || [ -n "$E2E_PW" ]; then
-            [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || exit 1
-            admin_mail="$E2E_MAIL"
-            admin_pw="$E2E_PW"
-          else
-            admin_mail="$FALLBACK_MAIL"
-            admin_pw="$FALLBACK_PW"
-          fi
-          unset E2E_MAIL E2E_PW FALLBACK_MAIL FALLBACK_PW
+          [ -n "$E2E_MAIL" ] && [ -n "$E2E_PW" ] || {
+            echo "::error::A conta E2E dedicada é obrigatória; ADMIN_* nunca é fallback de smoke."
+            exit 1
+          }
+          admin_mail="$E2E_MAIL"
+          admin_pw="$E2E_PW"
+          unset E2E_MAIL E2E_PW
           sleep 10
           # 1) senha errada → 401
           wrong_payload=$(jq -nc --arg email "ci-negative-${GITHUB_RUN_ID}@invalid.example" \

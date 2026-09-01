@@ -16,6 +16,7 @@ interface TestSession extends RefreshSessionRow {
 
 class FakeSessionD1 {
   readonly sessions = new Map<string, TestSession>();
+  readonly memberships = new Set<string>();
 
   prepare(sql: string) {
     let values: unknown[] = [];
@@ -44,6 +45,9 @@ class FakeSessionD1 {
       run: async () => {
         if (sql.includes("INSERT INTO auth_refresh_sessions") && sql.includes("SELECT ?, id, ?, ?")) {
           const [id, familyId, tokenHash, expiresAt, createdAt, userId] = values.map(String);
+          if (sql.includes("clinic_memberships") && this.memberships.has(userId)) {
+            return { meta: { changes: 0 } };
+          }
           this.sessions.set(id, {
             id,
             user_id: userId,
@@ -220,6 +224,37 @@ assert.equal(
   await isSessionFamilyActive(db as never, user.id, logoutPayload?.sid),
   false,
   "logout invalida access e refresh da família imediatamente",
+);
+
+// requireNoClinicMembership embute a ausência de clinic_membership na própria
+// SQL que emite a sessão inicial (usada pelo login da identidade E2E
+// reservada). Sem membership, a emissão continua funcionando; com uma
+// membership presente no momento do INSERT, a guarda zera as linhas
+// afetadas e createSessionTokens falha fechado em vez de emitir tokens.
+const membershipDb = new FakeSessionD1();
+const sentinel: UserRow = { ...user, id: "sentinel-1", role: "reader" };
+
+await createSessionTokens(membershipDb as never, sentinel, secret, {
+  requireNoClinicMembership: true,
+});
+assert.equal(
+  [...membershipDb.sessions.values()].filter((s) => s.user_id === sentinel.id).length,
+  1,
+  "sem membership, a emissão da sessão E2E continua funcionando",
+);
+
+membershipDb.memberships.add(sentinel.id);
+await assert.rejects(
+  createSessionTokens(membershipDb as never, sentinel, secret, {
+    requireNoClinicMembership: true,
+  }),
+  /AUTH_USER_STATE_CHANGED/,
+  "membership presente no momento do INSERT deve falhar fechado sem emitir tokens",
+);
+assert.equal(
+  [...membershipDb.sessions.values()].filter((s) => s.user_id === sentinel.id).length,
+  1,
+  "nenhuma sessão nova deve ter sido criada quando a guarda falha",
 );
 
 console.log("✓ refresh sessions rotacionam, detectam reuse e revogam logout");

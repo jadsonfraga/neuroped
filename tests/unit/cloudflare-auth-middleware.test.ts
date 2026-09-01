@@ -437,4 +437,80 @@ assert.equal(
   (await unavailableDocuments.json() as { code?: string }).code,
   "CLINICAL_DOCUMENTS_BACKEND_UNAVAILABLE",
 );
+// A identidade E2E reservada é revalidada na própria autorização global: um
+// access token já emitido não pode continuar acessando rotas clínicas se uma
+// clinic_membership for criada depois da emissão (sem esperar por refresh).
+function e2eAuthDb(role: string, hasMembership: boolean) {
+  return {
+    prepare: (sql: string) => ({
+      bind: () => ({
+        first: async () => {
+          if (sql.includes("auth_refresh_sessions")) return { active: 1 };
+          if (sql.includes("clinic_memberships")) {
+            return hasMembership ? { has_membership: 1 } : null;
+          }
+          return {
+            id: "e2e-1",
+            name: "Sentinela",
+            email: "e2e@example.com",
+            role,
+            is_active: 1,
+            password_hash: "irrelevante",
+            must_change_password: 0,
+            failed_login_attempts: 0,
+            locked_until: null,
+          };
+        },
+        run: async () => ({ meta: { changes: 1 } }),
+      }),
+    }),
+  };
+}
+
+const e2eToken = await signJwt(
+  { sub: "e2e-1", email: "e2e@example.com", name: "Sentinela", role: "reader", type: "access", sid: "session-e2e" },
+  secret,
+  60,
+);
+
+assert.equal(
+  (await call(
+    "/api/patients",
+    { DB: e2eAuthDb("reader", false), NEUROPED_JWT_SECRET: secret, NEUROPED_E2E_EMAIL: "e2e@example.com" },
+    e2eToken,
+  )).status,
+  200,
+  "sentinela válida (reader, sem membership) continua autorizada",
+);
+
+assert.equal(
+  (await call(
+    "/api/patients",
+    { DB: e2eAuthDb("reader", true), NEUROPED_JWT_SECRET: secret, NEUROPED_E2E_EMAIL: "e2e@example.com" },
+    e2eToken,
+  )).status,
+  401,
+  "access token da sentinela deve falhar fechado se uma clinic_membership existir, mesmo sem refresh",
+);
+
+assert.equal(
+  (await call(
+    "/api/patients",
+    { DB: e2eAuthDb("admin", false), NEUROPED_JWT_SECRET: secret, NEUROPED_E2E_EMAIL: "e2e@example.com" },
+    e2eToken,
+  )).status,
+  401,
+  "role incompatível com a sentinela deve falhar fechado na autorização global",
+);
+
+assert.equal(
+  (await call(
+    "/api/patients",
+    { DB: e2eAuthDb("reader", true), NEUROPED_JWT_SECRET: secret },
+    e2eToken,
+  )).status,
+  200,
+  "sem NEUROPED_E2E_EMAIL configurado, a guarda extra não se aplica a nenhum usuário",
+);
+
 console.log("✓ Functions clínicas exigem JWT quando D1 está ativo e documentos demo falham fechado");
