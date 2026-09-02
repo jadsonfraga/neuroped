@@ -1,142 +1,17 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { isValidCalendarDate, selectInventorySerial } from "./generate-daily-authorial-inventory.mts";
+import {
+  isValidCalendarDate,
+  selectInventorySerial,
+  selectTopic,
+} from "./generate-daily-authorial-inventory.mts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT_DIR = process.env.NEUROPED_DAILY_OUTPUT_DIR
   ? path.resolve(process.env.NEUROPED_DAILY_OUTPUT_DIR)
   : path.join(ROOT, "client/src/data/daily-authorial");
-
-type Risk = "baixo" | "moderado" | "alto";
-type Respondent =
-  | "pais_cuidadores"
-  | "professor"
-  | "clinico"
-  | "crianca_adolescente"
-  | "multiplo";
-type Context = "casa" | "escola" | "clinica" | "multicontexto";
-type AssessmentUse =
-  | "triagem_estruturada"
-  | "monitoramento"
-  | "registro_clinico"
-  | "observacao_clinica";
-
-type FallbackTopic = {
-  id: string;
-  code: string;
-  title: string;
-  category: string;
-  subcategory: string;
-  ageMinMonths: number;
-  ageMaxMonths: number;
-  respondent: Respondent;
-  contexts: Context[];
-  assessmentUse: AssessmentUse;
-  riskClass: Risk;
-  focus: string;
-};
-
-const TOPICS: FallbackTopic[] = [
-  {
-    id: "contingencia_familia_continuidade",
-    code: "FAM",
-    title: "Continuidade do cuidado e rotina familiar",
-    category: "Família e cuidado",
-    subcategory: "Monitoramento funcional",
-    ageMinMonths: 0,
-    ageMaxMonths: 215,
-    respondent: "pais_cuidadores",
-    contexts: ["casa", "multicontexto"],
-    assessmentUse: "monitoramento",
-    riskClass: "moderado",
-    focus: "barreiras, previsibilidade, participação e necessidades de apoio",
-  },
-  {
-    id: "contingencia_comunicacao_participacao",
-    code: "COM",
-    title: "Comunicação funcional e participação social",
-    category: "Neurodesenvolvimento",
-    subcategory: "Comunicação e interação",
-    ageMinMonths: 12,
-    ageMaxMonths: 215,
-    respondent: "multiplo",
-    contexts: ["casa", "escola", "clinica", "multicontexto"],
-    assessmentUse: "observacao_clinica",
-    riskClass: "baixo",
-    focus: "iniciativa, resposta, compreensão, reparo comunicativo e participação",
-  },
-  {
-    id: "contingencia_funcoes_executivas",
-    code: "FEX",
-    title: "Organização executiva em tarefas cotidianas",
-    category: "Funções executivas",
-    subcategory: "Organização e autorregulação",
-    ageMinMonths: 48,
-    ageMaxMonths: 251,
-    respondent: "multiplo",
-    contexts: ["casa", "escola", "multicontexto"],
-    assessmentUse: "monitoramento",
-    riskClass: "baixo",
-    focus: "iniciação, manutenção, conclusão, tempo e necessidade de ajuda",
-  },
-  {
-    id: "contingencia_emocional_seguranca",
-    code: "EMO",
-    title: "Mudanças emocionais, funcionamento e segurança",
-    category: "Saúde mental infantil",
-    subcategory: "Monitoramento emocional",
-    ageMinMonths: 48,
-    ageMaxMonths: 251,
-    respondent: "multiplo",
-    contexts: ["casa", "escola", "clinica", "multicontexto"],
-    assessmentUse: "triagem_estruturada",
-    riskClass: "alto",
-    focus: "mudança basal, sofrimento, evitação, recuperação e proteção",
-  },
-  {
-    id: "contingencia_desregulacao_seguranca",
-    code: "REG",
-    title: "Desregulação comportamental e necessidades de segurança",
-    category: "Comportamento",
-    subcategory: "Regulação e segurança",
-    ageMinMonths: 24,
-    ageMaxMonths: 251,
-    respondent: "multiplo",
-    contexts: ["casa", "escola", "clinica", "multicontexto"],
-    assessmentUse: "registro_clinico",
-    riskClass: "alto",
-    focus: "antecedentes, intensidade, duração, impacto, recuperação e proteção",
-  },
-  {
-    id: "contingencia_aprendizagem_funcional",
-    code: "APR",
-    title: "Desempenho funcional e participação escolar",
-    category: "Aprendizagem e linguagem",
-    subcategory: "Funcionamento escolar",
-    ageMinMonths: 60,
-    ageMaxMonths: 215,
-    respondent: "multiplo",
-    contexts: ["escola", "clinica", "multicontexto"],
-    assessmentUse: "triagem_estruturada",
-    riskClass: "baixo",
-    focus: "acesso à tarefa, esforço, autonomia, compreensão e adaptações úteis",
-  },
-  {
-    id: "contingencia_neurologia_seguranca",
-    code: "NEU",
-    title: "Eventos neurológicos e sinais de alerta",
-    category: "Neurologia infantil",
-    subcategory: "Registro e segurança",
-    ageMinMonths: 0,
-    ageMaxMonths: 251,
-    respondent: "multiplo",
-    contexts: ["casa", "escola", "clinica", "multicontexto"],
-    assessmentUse: "registro_clinico",
-    riskClass: "alto",
-    focus: "início, duração, responsividade, recuperação, mudança de padrão e segurança",
-  },
-];
+const DUPLICATE_COOLDOWN_DAYS = 30;
 
 const dateNow = () =>
   process.env.NEUROPED_GENERATION_DATE ||
@@ -147,8 +22,6 @@ const dateNow = () =>
     day: "2-digit",
   }).format(new Date());
 
-const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
-
 // A contingência precisa ser determinística: a mesma data-alvo deve gerar
 // bytes idênticos em qualquer re-execução (o watchdog compara SHA-256 do
 // artefato com o arquivo da branch). Por isso o carimbo é derivado da data
@@ -156,6 +29,12 @@ const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 // instante real podem injetá-lo via NEUROPED_GENERATION_TIMESTAMP.
 const generatedAtFor = (date: string) =>
   process.env.NEUROPED_GENERATION_TIMESTAMP || `${date}T00:00:00.000Z`;
+
+const topicSlug = (topicId: string) =>
+  topicId
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
 
 async function catalog(): Promise<any[]> {
   await mkdir(OUTPUT_DIR, { recursive: true });
@@ -167,7 +46,7 @@ async function catalog(): Promise<any[]> {
   );
 }
 
-function buildItems(topic: FallbackTopic) {
+function buildItems(topic: { title: string }) {
   const target = topic.title.toLowerCase();
   return [
     {
@@ -288,7 +167,7 @@ function buildItems(topic: FallbackTopic) {
       text: "Após a ocorrência, não há retorno ao estado de responsividade ou funcionamento habitual.",
       responseMode: "presente_ausente",
       redFlag: true,
-      clinicalNote: "Situação que pode exigir avaliação urgente conforme o estado clínico.",
+      clinicalNote: "Situação que pode exigir avaliação urgente conforme responsividade, respiração, trauma e condição clínica geral.",
     },
   ];
 }
@@ -305,13 +184,17 @@ async function main() {
     return;
   }
 
-  const topic = TOPICS[weekday(date)];
+  // A contingência usa a mesma rotação temática e a mesma catraca de 30 dias
+  // do gerador principal. Isso impede que o fallback replique um tema recente
+  // apenas porque a data caiu no mesmo dia da semana.
+  const topic = selectTopic(date, records);
   const serial = selectInventorySerial(date, records);
   const items = buildItems(topic);
+  const compactTopic = topicSlug(topic.id);
   const record = {
     schemaVersion: "1.0.0",
     id: `NEUROPED-DIARIO-${date.replaceAll("-", "")}-${serial}`,
-    slug: `contingencia-${topic.code.toLowerCase()}-${date}`,
+    slug: `contingencia-${compactTopic}-${date}`,
     version: "1.0.0",
     generatedOn: date,
     generatedAt: generatedAtFor(date),
@@ -320,7 +203,7 @@ async function main() {
     validationStatus: "nao_validado_psicometricamente",
     status: "rascunho_revisao",
     title: `Registro Autoral de Contingência — ${topic.title}`,
-    shortTitle: `RAC-${topic.code}-NeuroPed`,
+    shortTitle: `RAC-${compactTopic.toUpperCase()}-NeuroPed`,
     topicId: topic.id,
     topic: topic.title,
     category: topic.category,
@@ -428,18 +311,18 @@ async function main() {
       "segurança",
       topic.category.toLowerCase(),
     ],
-    duplicateCooldownDays: 30,
+    duplicateCooldownDays: DUPLICATE_COOLDOWN_DAYS,
     contingency: true,
     needsUpgrade: true,
     generation: {
       model: "fallback-deterministic-v1",
       reasoningMode: "pro",
       reasoningEffort: "high",
-      pipelineVersion: "1.1.0-contingency",
+      pipelineVersion: "1.2.0-contingency",
     },
   };
 
-  const filename = `${date}-contingencia-${topic.code.toLowerCase()}.json`;
+  const filename = `${date}-contingencia-${compactTopic}.json`;
   await writeFile(
     path.join(OUTPUT_DIR, filename),
     `${JSON.stringify(record, null, 2)}\n`,
