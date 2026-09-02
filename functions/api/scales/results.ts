@@ -21,13 +21,7 @@ import {
   normalizeClinicalResponses,
 } from "../_clinicalValidation";
 import { isPlainObject } from "../_request";
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+import { json as jsonResponse } from "../_request";
 
 function errorResponse(
   message: string,

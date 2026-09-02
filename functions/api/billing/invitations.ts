@@ -9,15 +9,12 @@ import {
   normalizeInvitationEmail,
 } from "./_onboarding";
 import { requireBillingEntitlement } from "./_guard";
+import { boundedText as clean } from "../_request";
 
 interface Env {
   DB?: D1Database;
   APP_BASE_URL?: string;
   ENVIRONMENT?: string;
-}
-
-function clean(value: unknown, max: number): string {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
 async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {

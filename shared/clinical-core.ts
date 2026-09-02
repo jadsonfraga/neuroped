@@ -308,6 +308,26 @@ export type ClinicalEvent = ClinicalEventInput & {
   storageMode?: "remote" | "demo-db";
 };
 
+/**
+ * Parse tolerante dos filtros da rota GET de eventos. Express e Cloudflare
+ * compartilham este contrato de clamp (valores fora da faixa são ajustados,
+ * não rejeitados); `clinicalEventQuerySchema` continua sendo a forma estrita
+ * para payloads programáticos.
+ */
+export function clampClinicalEventQueryDays(raw: unknown): number {
+  const value = Number(raw ?? 365);
+  return Number.isFinite(value) ? Math.min(3_650, Math.max(1, Math.round(value))) : 365;
+}
+
+export function parseClinicalEventTypesParam(raw: unknown): ClinicalEventType[] | null {
+  if (raw == null || raw === "") return [];
+  if (typeof raw !== "string") return null;
+  const unique = [...new Set(raw.split(",").map((item) => item.trim()).filter(Boolean))];
+  if (unique.length > clinicalEventTypes.length) return null;
+  if (unique.some((item) => !clinicalEventTypes.includes(item as ClinicalEventType))) return null;
+  return unique as ClinicalEventType[];
+}
+
 export const clinicalEventQuerySchema = z
   .object({
     patientId: boundedId,

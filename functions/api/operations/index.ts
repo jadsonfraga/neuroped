@@ -1,5 +1,4 @@
 import { getContextUser } from "../auth/_authorization";
-import { isPlainObject } from "../_request";
 import {
   appointmentToApi,
   assertLocalDateTime,
@@ -39,6 +38,7 @@ import {
   type OperationsPrincipal,
 } from "./_access";
 import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
+import { readJsonBody as readBody, nowInProviderTimezone as localNow } from "./_core";
 
 function canConfigure(role: string): boolean {
   return role === "admin" || role === "professional";
@@ -46,15 +46,6 @@ function canConfigure(role: string): boolean {
 
 function canOperate(role: string): boolean {
   return canConfigure(role) || role === "operator";
-}
-
-async function readBody(request: Request): Promise<Record<string, unknown> | null> {
-  try {
-    const body = await request.json();
-    return isPlainObject(body) ? body : null;
-  } catch {
-    return null;
-  }
 }
 
 function moneyCents(value: unknown): number | null {
@@ -69,24 +60,6 @@ function integerBetween(value: unknown, min: number, max: number): number | null
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) return null;
   return parsed;
-}
-
-function localNow(timezone: string): string {
-  try {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(new Date());
-    const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-    return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
-  } catch {
-    return new Date().toISOString().slice(0, 16);
-  }
 }
 
 function addDaysLocalMinute(value: string, days: number): string {

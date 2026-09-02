@@ -10,6 +10,7 @@ import { escapeHtml } from "@/lib/htmlEscape";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { gerarEValidar, type EntradaLaudo } from "@/lib/laudo/gerador";
 import { laudoParaTexto } from "@/lib/laudo/paraTexto";
+import { dateStamp } from "@/lib/printDocument";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — WebUI de geração assistida (embutida)
@@ -48,12 +49,6 @@ const CAMPOS_CLINICOS: { key: keyof EntradaLaudo; label: string; ajuda: string; 
 
 function limpo(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
-}
-
-function dateStamp(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
 }
 
 function buildPrintHtml(texto: string): string {

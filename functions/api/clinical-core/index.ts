@@ -1,6 +1,7 @@
 import {
+  clampClinicalEventQueryDays,
+  parseClinicalEventTypesParam,
   clinicalEventInputSchema,
-  clinicalEventTypes,
   type ClinicalEvent,
   type ClinicalEventStatus,
   type ClinicalEventType,
@@ -13,6 +14,7 @@ import {
   getPatientAccess,
 } from "../auth/_authorization";
 import { ensureClinicalCoreDemoSchema } from "./_schema";
+import { json } from "../_request";
 
 interface Env {
   DB?: D1Database;
@@ -38,13 +40,6 @@ interface DemoPayload {
   note?: string;
   sourceLabel?: string;
   capturedAt?: string;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
 }
 
 function error(message: string, code: string, status: number): Response {
@@ -83,14 +78,6 @@ function present(row: D1ClinicalEventRow): ClinicalEvent | null {
   }
 }
 
-function parseTypes(raw: string | null): ClinicalEventType[] | null {
-  if (!raw) return [];
-  const unique = [...new Set(raw.split(",").map((item) => item.trim()).filter(Boolean))];
-  if (unique.length > clinicalEventTypes.length) return null;
-  if (unique.some((item) => !clinicalEventTypes.includes(item as ClinicalEventType))) return null;
-  return unique as ClinicalEventType[];
-}
-
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env, request } = context;
   if (!env.DB) {
@@ -108,9 +95,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
   if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
 
-  const rawDays = Number(url.searchParams.get("days") ?? 365);
-  const days = Number.isFinite(rawDays) ? Math.min(3650, Math.max(1, Math.round(rawDays))) : 365;
-  const eventTypes = parseTypes(url.searchParams.get("types"));
+  const days = clampClinicalEventQueryDays(url.searchParams.get("days"));
+  const eventTypes = parseClinicalEventTypesParam(url.searchParams.get("types"));
   if (eventTypes == null) return error("types inválido.", "VALIDATION_ERROR", 400);
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   const placeholders = eventTypes.map(() => "?").join(", ");

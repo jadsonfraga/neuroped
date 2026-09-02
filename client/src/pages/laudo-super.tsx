@@ -15,6 +15,7 @@ import {
   medicoSuper,
   type SuperEntrada,
 } from "@/lib/laudo/modeloSuper";
+import { dateStamp } from "@/lib/printDocument";
 
 /* ────────────────────────────────────────────────────────────
    Laudo SuperNeuroPed — WebUI de geração assistida (embutida)
@@ -68,12 +69,6 @@ function vazia(e: SuperEntrada): boolean {
     if (Array.isArray(v) && v.length) return false;
   }
   return true;
-}
-
-function dateStamp(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
 }
 
 // ── Impressão no perfil SuperNeuroPed ───────────────────────────────────────

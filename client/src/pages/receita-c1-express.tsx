@@ -22,6 +22,8 @@ import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
 import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
 import { buildAppHashUrl } from "@/lib/appUrl";
+import { escapeHtml as escHtml } from "@/lib/htmlEscape";
+import { dateStamp } from "@/lib/printDocument";
 
 /* ──────────────────────────────────────────────────────────────
    Receita C1 Express — Receita de Controle Especial
@@ -45,27 +47,7 @@ function todayBr(): string {
   return new Date().toLocaleDateString("pt-BR");
 }
 
-function dateStamp(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
-}
-
-function escHtml(v: string) {
-  return String(v || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 // ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
-async function _sha256HexText(value: string): Promise<string> {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 function _canonicalExpressPayload(f: FormFields, issuedAt: string) {
   return [
     `${CLINIC_NAME} - Receita C1 Express`,
@@ -409,7 +391,7 @@ function buildC1PrintHtml(f: FormFields): string {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Receita C1 — Dr. Jadson — ${dateStamp()}</title>
+<title>Receita C1 — Dr. Jadson — ${dateStamp(false)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -579,7 +561,7 @@ export default function ReceitaC1ExpressPage() {
         widgetRect: [218, 44, 394, 110],
         widgetPageIndex: 0,
       });
-      downloadBytes(signed, `receita-c1-${dateStamp()}-assinada.pdf`);
+      downloadBytes(signed, `receita-c1-${dateStamp(false)}-assinada.pdf`);
       setOk("Receita assinada e baixada com sucesso.");
     } catch (error) {
       const { icpErrorMessage } = await import("@/lib/icpSign");
@@ -613,7 +595,7 @@ export default function ReceitaC1ExpressPage() {
     try {
       const bytes = await buildC1TemplatePdfBytes(form);
       const { downloadBytes } = await import("@/lib/icpSign");
-      downloadBytes(bytes, `receita-c1-${dateStamp()}.pdf`);
+      downloadBytes(bytes, `receita-c1-${dateStamp(false)}.pdf`);
       setOk("PDF gerado (sem assinatura digital).");
     } catch {
       setError("Falha ao gerar o PDF.");

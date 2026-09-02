@@ -18,3 +18,14 @@ export function printPlainTextDocument(options: { title: string; text: string })
   window.setTimeout(() => printWindow.print(), 50);
   return true;
 }
+
+/**
+ * Carimbo de data para nomes de arquivo de documentos impressos/exportados
+ * (AAAAMMDD-HHMM por padrão; só a data quando `withTime` é false).
+ */
+export function dateStamp(withTime = true): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const date = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  return withTime ? `${date}-${pad(d.getHours())}${pad(d.getMinutes())}` : date;
+}

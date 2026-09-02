@@ -206,12 +206,8 @@ export async function ensureOperationsSchema(db: D1Database): Promise<void> {
   await db.batch(SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)));
 }
 
-export function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
-}
+import { json as jsonResponse, isPlainObject } from "../_request";
+export { jsonResponse };
 
 export function errorResponse(message: string, code: string, status: number): Response {
   return jsonResponse({ error: message, code }, status);
@@ -632,4 +628,33 @@ export async function enqueueNotification(
 export function assertLocalDateTime(value: unknown): string | null {
   const text = cleanText(value, 16);
   return isValidLocalDateTime(text) ? text : null;
+}
+
+/** Corpo JSON de request como objeto plano, ou null (fail-closed). */
+export async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
+  try {
+    const parsed = await request.json();
+    return isPlainObject(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Instante atual "YYYY-MM-DDTHH:MM" no fuso do provider (fallback UTC). */
+export function nowInProviderTimezone(timezone: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date());
+    const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
+  } catch {
+    return new Date().toISOString().slice(0, 16);
+  }
 }

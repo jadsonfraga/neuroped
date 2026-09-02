@@ -4,16 +4,10 @@ import {
   getPatientAccess,
 } from "../auth/_authorization";
 import { ensureConectaDemoSchema } from "./_schema";
+import { json } from "../_request";
 
 interface Env {
   DB?: D1Database;
-}
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
 }
 
 function error(message: string, code: string, status: number): Response {

@@ -26,16 +26,7 @@ import {
   normalizeClinicalResponses,
 } from "./_clinicalValidation";
 import { isPlainObject } from "./_request";
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-    },
-  });
-}
+import { json } from "./_request";
 
 function slug(s: string): string {
   return (

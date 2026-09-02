@@ -12,6 +12,7 @@ import {
   exportWithinSyncLimits,
   type TenantLifecycleStatus,
 } from "../../../../shared/tenantLifecycle";
+import { sha256Hex } from "../../auth/_crypto";
 
 interface LifecycleRow {
   status: TenantLifecycleStatus;
@@ -60,11 +61,6 @@ interface EventRow {
 function clinicIdFrom(params: Record<string, string | string[]>): string {
   const raw = params.id;
   return String(Array.isArray(raw) ? raw[0] : (raw ?? "")).trim().slice(0, 80);
-}
-
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {

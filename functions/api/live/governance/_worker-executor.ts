@@ -50,6 +50,13 @@ export interface ExecuteEncryptedExportParams {
   generatedAt?: Date | string;
   complete: (evidence: LgpdExportEvidence) => Promise<boolean>;
   fail: (failureCode: string) => Promise<unknown>;
+  /**
+   * Reconsulta o ledger quando `complete` falha: se a conclusão de fato
+   * commitou com esta evidência (ack perdido), o artefato NÃO pode ser
+   * apagado — ele já é a prova material registrada. Ligar a
+   * `isExportJobCompletedWithEvidence` do worker-core.
+   */
+  confirmCompleted?: (evidence: LgpdExportEvidence) => Promise<boolean>;
 }
 
 function normalizedIso(value: Date | string): string {
@@ -193,6 +200,15 @@ export async function executeEncryptedExport(
       completed = false;
     }
     if (!completed) {
+      const landed = params.confirmCompleted
+        ? await params.confirmCompleted(evidence).catch(() => false)
+        : false;
+      if (landed) {
+        // O batch de conclusão commitou e só o ack se perdeu: o job/request já
+        // estão 'completed' apontando para este artefato. Apagá-lo destruiria a
+        // prova material registrada e o titular nunca receberia o export.
+        return evidence;
+      }
       await bestEffortDelete(params.store, key);
       await params.fail("EXPORT_COMPLETION_FAILED");
       return null;

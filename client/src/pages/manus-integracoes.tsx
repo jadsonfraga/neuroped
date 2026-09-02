@@ -3,6 +3,7 @@ import { ExternalLink, Globe2, RefreshCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { resolveFrameLoadStatus, type FrameStatus } from "@/lib/frameStatus";
 
 type ManusSite = {
   id: "missao" | "institucional";
@@ -40,12 +41,15 @@ const sites: ManusSite[] = [
 export default function ManusIntegracoesPage() {
   const [activeId, setActiveId] = useState<ManusSite["id"]>("missao");
   const [frameKey, setFrameKey] = useState(0);
-  const [frameStatus, setFrameStatus] = useState<"loading" | "ready" | "timeout" | "error">("loading");
+  const [frameStatus, setFrameStatus] = useState<FrameStatus>("loading");
   const activeSite = useMemo(() => sites.find((site) => site.id === activeId) ?? sites[0], [activeId]);
 
   useEffect(() => {
     setFrameStatus("loading");
-    const timeout = window.setTimeout(() => setFrameStatus("timeout"), 10_000);
+    const timeout = window.setTimeout(
+      () => setFrameStatus((status) => (status === "loading" ? "timeout" : status)),
+      10_000,
+    );
     return () => window.clearTimeout(timeout);
   }, [activeSite.id, frameKey]);
 
@@ -96,7 +100,13 @@ export default function ManusIntegracoesPage() {
               </div>
             </div>
           )}
-          <iframe key={`${activeSite.id}-${frameKey}`} title={activeSite.label} src={activeSite.url} className="h-[min(76vh,850px)] min-h-[560px] w-full border-0 bg-background" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay" onLoad={() => setFrameStatus("ready")} onError={() => setFrameStatus("error")} />
+          {frameStatus === "unverified" && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-amber-500/10 px-4 py-2 text-xs leading-5 text-muted-foreground" role="status">
+              <span><strong className="text-foreground">Carregamento não confirmado:</strong> o domínio externo não permite verificação. Se a área abaixo estiver em branco, ele bloqueia incorporação — use a nova guia.</span>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => window.open(activeSite.url, "_blank", "noopener,noreferrer")}><ExternalLink className="h-3.5 w-3.5" />Abrir em nova guia</Button>
+            </div>
+          )}
+          <iframe key={`${activeSite.id}-${frameKey}`} title={activeSite.label} src={activeSite.url} className="h-[min(76vh,850px)] min-h-[560px] w-full border-0 bg-background" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay" onLoad={(event) => setFrameStatus(resolveFrameLoadStatus(event.currentTarget))} onError={() => setFrameStatus("error")} />
         </CardContent>
       </Card>
     </div>

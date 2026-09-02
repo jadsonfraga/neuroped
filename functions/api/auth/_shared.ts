@@ -53,12 +53,7 @@ export const REFRESH_TTL = 7 * 24 * 60 * 60; // 7 dias
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
 
-export function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
-}
+export { json } from "../_request";
 
 export function publicUser(u: UserRow): PublicUser {
   return {

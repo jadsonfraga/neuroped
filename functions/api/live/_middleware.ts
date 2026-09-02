@@ -24,6 +24,21 @@ export function clinicalLiveReadAuditTarget(request: Request): string {
 }
 
 /**
+ * A clínica auditada precisa ser a que o handler efetivamente serviu. Todas as
+ * rotas GET do Clinical LIVE recebem a clínica via `?clinicId=`; quando o
+ * parâmetro existe, ele é a fonte de verdade da leitura (o handler valida
+ * membership + entitlement dessa clínica antes de responder sucesso — e só
+ * sucesso é auditado). Sem o parâmetro, cai no contexto resolvido por
+ * header/membership única. Antes desta função, um usuário com membership em
+ * duas clínicas podia ler dados da clínica B com x-tenant-id apontando para A,
+ * e o evento `clinical.read` era atribuído à clínica errada.
+ */
+export function clinicalLiveAuditClinicId(request: Request, fallback: string): string {
+  const fromQuery = (new URL(request.url).searchParams.get("clinicId") ?? "").trim().slice(0, 80);
+  return fromQuery || fallback;
+}
+
+/**
  * Audita apenas leituras que chegaram ao handler e retornaram sucesso.
  * Falhas de autenticação/autorização continuam sendo tratadas pelos guards
  * próprios e não são convertidas em eventos clínicos de leitura.
@@ -69,7 +84,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // transforme uma leitura autorizada em falha assistencial.
     context.waitUntil(
       writeSaasAudit(db, {
-        clinicId,
+        clinicId: clinicalLiveAuditClinicId(context.request, clinicId),
         actorUserId: user.id,
         action: "clinical.read",
         targetType,

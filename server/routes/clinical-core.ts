@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import {
+  clampClinicalEventQueryDays,
+  parseClinicalEventTypesParam,
   clinicalEventInputSchema,
-  clinicalEventTypes,
   type ClinicalEvent,
   type ClinicalEventStatus,
   type ClinicalEventType,
@@ -110,15 +111,6 @@ function decodeRow(row: StoredClinicalEventRow): ClinicalEvent | null {
   }
 }
 
-function parseEventTypes(raw: unknown): ClinicalEventType[] | null {
-  if (raw == null || raw === "") return [];
-  if (typeof raw !== "string") return null;
-  const unique = [...new Set(raw.split(",").map((item) => item.trim()).filter(Boolean))];
-  if (unique.length > clinicalEventTypes.length) return null;
-  if (unique.some((item) => !clinicalEventTypes.includes(item as ClinicalEventType))) return null;
-  return unique as ClinicalEventType[];
-}
-
 export function registerClinicalCoreRoutes(app: Express): void {
   ensureClinicalCoreSchema();
 
@@ -135,9 +127,10 @@ export function registerClinicalCoreRoutes(app: Express): void {
       });
     }
 
-    const daysRaw = typeof req.query.days === "string" ? Number(req.query.days) : 365;
-    const days = Number.isFinite(daysRaw) ? Math.min(3650, Math.max(1, Math.round(daysRaw))) : 365;
-    const eventTypes = parseEventTypes(req.query.types);
+    const days = clampClinicalEventQueryDays(
+      typeof req.query.days === "string" ? req.query.days : undefined,
+    );
+    const eventTypes = parseClinicalEventTypesParam(req.query.types);
     if (eventTypes == null) {
       return res.status(400).json({ error: "types inválido", code: "VALIDATION_ERROR" });
     }
