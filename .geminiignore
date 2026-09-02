@@ -1,0 +1,32 @@
+# Arquivos que o Gemini CLI não deve ler como contexto normal
+.git/**
+.github/workflows/**
+node_modules/**
+dist/**
+build/**
+coverage/**
+playwright-report/**
+test-results/**
+
+# Segredos e configuração local
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*CREDENCIAIS*
+*credenciais*
+*credentials*
+*secret*
+*token*.log
+
+# Bancos locais e artefatos potencialmente sensíveis
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Telemetria/estado local do próprio Gemini
+.gemini/**
+gha-creds-*.json

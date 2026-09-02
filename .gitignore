@@ -86,3 +86,7 @@ drizzle/
 
 # Claude Code local permissions (session/connector-specific)
 .claude/settings.local.json
+
+# Gemini CLI local state / telemetry / GitHub App temp credentials
+.gemini/
+gha-creds-*.json
