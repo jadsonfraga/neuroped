@@ -1,0 +1,113 @@
+name: SaaS remote intake D1
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0018_saas_remote_intake.sql"
+      - "functions/api/public-intake.ts"
+      - "functions/api/live/intake/index.ts"
+      - "functions/api/intake/_shared.ts"
+      - ".github/workflows/saas-remote-intake-d1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0018_saas_remote_intake.sql"
+      - "functions/api/public-intake.ts"
+      - "functions/api/live/intake/index.ts"
+      - "functions/api/intake/_shared.ts"
+      - ".github/workflows/saas-remote-intake-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Grupo próprio: as migrações D1 são idempotentes e não podem ser canceladas
+# pela corrida do grupo compartilhado cloudflare-pages (uma vaga pendente por
+# grupo — o deploy e ~8 workflows disputando já engoliu runs nesta main).
+concurrency:
+  group: d1-remote-intake
+  cancel-in-progress: false
+
+jobs:
+  validate-remote-intake-migration:
+    name: Validate remote intake migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Security boundary regression
+        run: node tests/unit/saas-remote-intake-static.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+  migrate-remote-intake:
+    name: Apply remote intake schema to D1
+    needs: validate-remote-intake-migration
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Apply migration 0018
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0018_saas_remote_intake.sql
+
+      - name: Verify tables and trigger without exposing PII
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('live_intake_invitations','live_intake_submissions') ORDER BY name;" \
+            > /tmp/intake-tables.txt 2>&1
+          cat /tmp/intake-tables.txt
+          grep -q "live_intake_invitations" /tmp/intake-tables.txt
+          grep -q "live_intake_submissions" /tmp/intake-tables.txt
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_live_intake_submission_matches_invitation';" \
+            > /tmp/intake-trigger.txt 2>&1
+          cat /tmp/intake-trigger.txt
+          grep -q "trg_live_intake_submission_matches_invitation" /tmp/intake-trigger.txt
+
+          echo "✅ Schema do remote intake instalado sem consultar conteúdo identificável."
