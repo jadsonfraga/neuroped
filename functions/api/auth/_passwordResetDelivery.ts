@@ -38,7 +38,10 @@ export async function sendPasswordResetEmail(
   const from = env.AUTH_EMAIL_FROM?.trim();
   if (!baseUrl || !apiKey || !from) return false;
 
-  const resetUrl = `${baseUrl}/login?reset=${encodeURIComponent(token)}`;
+  // O frontend usa wouter/useHashLocation. Gerar o link no mesmo contrato evita
+  // depender de rewrites de servidor e mantém o token apenas no fragmento, que
+  // não é enviado ao origin/CDN em requisições HTTP.
+  const resetUrl = `${baseUrl}/#/login?reset=${encodeURIComponent(token)}`;
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
