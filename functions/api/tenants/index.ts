@@ -183,7 +183,15 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         ),
     ]);
 
-    if (results.some((result) => Number(result?.meta?.changes ?? 0) !== 1)) {
+    // O INSERT de clinic dispara triggers de billing/settings; dependendo do driver,
+    // meta.changes do primeiro statement pode contabilizar também esses efeitos.
+    // As demais escritas desta operação devem afetar exatamente uma linha cada.
+    if (
+      Number(results[0]?.meta?.changes ?? 0) < 1 ||
+      Number(results[1]?.meta?.changes ?? 0) !== 1 ||
+      Number(results[2]?.meta?.changes ?? 0) !== 1 ||
+      Number(results[3]?.meta?.changes ?? 0) !== 1
+    ) {
       return tenantError("A criação da clínica não foi concluída integralmente.", "TENANT_CREATE_STALE", 409);
     }
   } catch (error) {
