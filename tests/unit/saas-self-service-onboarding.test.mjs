@@ -38,6 +38,15 @@ test("organization settings require exact membership and manager permission", ()
   assert.doesNotMatch(source, /SELECT \* FROM clinic_settings/);
 });
 
+test("billing snapshot is scoped to the requested active tenant", () => {
+  const source = read("functions/api/billing/me.ts");
+  assert.match(source, /clinicIdFromRequest/);
+  assert.match(source, /AND cm\.clinic_id = \?/);
+  assert.match(source, /TENANT_REQUIRED/);
+  assert.match(source, /TENANT_FORBIDDEN/);
+  assert.doesNotMatch(source, /WHERE cm\.user_id = \? AND cm\.active = 1[\s\S]*LIMIT 1`/);
+});
+
 test("password reset tokens never persist or return plaintext", () => {
   const forgot = read("functions/api/auth/forgot-password.ts");
   const reset = read("functions/api/auth/reset-password.ts");
