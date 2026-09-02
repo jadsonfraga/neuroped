@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { authFetch } from "@/lib/authClient";
+import { queryClient } from "@/lib/queryClient";
 import {
   getRemoteIntakeTemplate,
   remoteIntakeFormKinds,
@@ -79,6 +80,24 @@ function responseEntries(item: IntakeItem): Array<{ label: string; value: string
   });
 }
 
+async function readApiJson<T>(response: Response): Promise<T> {
+  const payload = await response.json().catch(() => null) as ({ error?: string } & T) | null;
+  if (!response.ok) {
+    throw new Error(payload?.error || `Falha na API (${response.status}).`);
+  }
+  return payload as T;
+}
+
+function publicIntakeOrigin(): string {
+  const configured = (import.meta.env?.VITE_API_URL ?? "").replace(/\/$/, "");
+  if (!configured) return window.location.origin;
+  try {
+    return new URL(configured, window.location.origin).origin;
+  } catch {
+    return window.location.origin;
+  }
+}
+
 export function RemoteIntakePanel({ patientId }: { patientId: string }) {
   const { toast } = useToast();
   const { accessMode, isAuthenticated } = useAuth();
@@ -89,25 +108,36 @@ export function RemoteIntakePanel({ patientId }: { patientId: string }) {
   const [shareLink, setShareLink] = useState("");
 
   const queryUrl = `/api/live/intake?clinicId=${encodeURIComponent(activeClinicId ?? "")}&patientId=${encodeURIComponent(patientId)}`;
+
+  async function intakeRequest<T>(method: "GET" | "POST" | "PATCH", url: string, body?: unknown): Promise<T> {
+    const response = await authFetch(url, {
+      method,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(activeClinicId ? { "X-Tenant-Id": activeClinicId } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return readApiJson<T>(response);
+  }
+
   const intakeQuery = useQuery<IntakeListResponse>({
     queryKey: [queryUrl],
+    queryFn: () => intakeRequest<IntakeListResponse>("GET", queryUrl),
     enabled,
   });
   const items = useMemo(() => intakeQuery.data?.data ?? [], [intakeQuery.data]);
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/live/intake", {
-        clinicId: activeClinicId,
-        patientId,
-        respondentKind,
-        formKind,
-        expiresInHours: 168,
-      });
-      return response.json();
-    },
-    onSuccess: (data: { token: string; formTitle: string }) => {
-      const link = `${window.location.origin}/intake.html#token=${encodeURIComponent(data.token)}`;
+    mutationFn: () => intakeRequest<{ token: string; formTitle: string }>("POST", "/api/live/intake", {
+      clinicId: activeClinicId,
+      patientId,
+      respondentKind,
+      formKind,
+      expiresInHours: 168,
+    }),
+    onSuccess: (data) => {
+      const link = `${publicIntakeOrigin()}/intake.html#token=${encodeURIComponent(data.token)}`;
       setShareLink(link);
       toast({
         title: "Convite seguro criado",
@@ -127,14 +157,12 @@ export function RemoteIntakePanel({ patientId }: { patientId: string }) {
   });
 
   const actionMutation = useMutation({
-    mutationFn: async (input: { action: "revoke" | "accept" | "reject"; invitationId?: string; submissionId?: string }) => {
-      const response = await apiRequest("PATCH", "/api/live/intake", {
+    mutationFn: (input: { action: "revoke" | "accept" | "reject"; invitationId?: string; submissionId?: string }) =>
+      intakeRequest<{ id: string }>("PATCH", "/api/live/intake", {
         clinicId: activeClinicId,
         patientId,
         ...input,
-      });
-      return response.json();
-    },
+      }),
     onSuccess: (_data, variables) => {
       const labels = {
         revoke: "Convite revogado",
