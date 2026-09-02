@@ -42,9 +42,9 @@ test("billing snapshot is scoped to the requested active tenant", () => {
   const source = read("functions/api/billing/me.ts");
   assert.match(source, /clinicIdFromRequest/);
   assert.match(source, /AND cm\.clinic_id = \?/);
+  assert.match(source, /LIMIT 2/);
   assert.match(source, /TENANT_REQUIRED/);
   assert.match(source, /TENANT_FORBIDDEN/);
-  assert.doesNotMatch(source, /WHERE cm\.user_id = \? AND cm\.active = 1[\s\S]*LIMIT 1`/);
 });
 
 test("password reset tokens never persist or return plaintext", () => {
@@ -58,6 +58,7 @@ test("password reset tokens never persist or return plaintext", () => {
   assert.match(reset, /DELETE FROM auth_refresh_sessions/);
   assert.match(delivery, /url\.protocol !== "https:"/);
   assert.match(delivery, /AUTH_PUBLIC_APP_URL/);
+  assert.match(delivery, /\/#\/login\?reset=/);
 });
 
 test("migration is additive and tenant settings are clinic-scoped", () => {
@@ -71,10 +72,22 @@ test("migration is additive and tenant settings are clinic-scoped", () => {
   assert.doesNotMatch(sql, /\bDROP\s+(TABLE|COLUMN|INDEX)\b/i);
 });
 
-test("login onboarding fails closed when tenant context cannot be loaded", () => {
+test("login onboarding and recovery remain fail-closed", () => {
   const source = read("client/src/pages/login.tsx");
   assert.match(source, /if \(!response\.ok\) \{/);
   assert.match(source, /throw new Error/);
   assert.match(source, /registerSelfService/);
   assert.match(source, /clinic-onboarding-form/);
+  assert.match(source, /forgot-password-form/);
+  assert.match(source, /reset-password-form/);
+  assert.match(source, /readResetToken/);
+});
+
+test("SaaS settings always send the active clinic to tenant and billing APIs", () => {
+  const source = read("client/src/components/SaaSOrganizationSettings.tsx");
+  assert.match(source, /activeClinicId/);
+  assert.match(source, /billing\/me\?scope=admin&clinicId=/);
+  assert.match(source, /tenants\/\$\{encodedClinicId\}\/settings/);
+  assert.match(source, /tenants\/\$\{encodedClinicId\}\/members/);
+  assert.match(source, /billing\/invitations\?clinicId=/);
 });
