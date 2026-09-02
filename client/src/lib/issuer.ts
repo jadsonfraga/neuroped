@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authFetch } from "@/lib/authClient";
+import { authFetch, getAccessToken } from "@/lib/authClient";
 
 /**
  * Emissor de documentos clínicos — fonte única de identidade.
@@ -103,6 +103,11 @@ function activeClinicId(): string {
 }
 
 export async function loadIssuer(): Promise<DocumentIssuer> {
+  // Sem sessão (mirror estático, preview, auditoria de performance) não há
+  // identidade a buscar: devolve o emissor vazio sem tocar a rede — um 401
+  // esperado ainda apareceria como erro no console do navegador.
+  if (!getAccessToken()) return { ...EMPTY_ISSUER };
+
   const key = activeClinicId();
   if (cachedIssuer && cacheKey === key) return cachedIssuer;
   if (inflight) return inflight;
