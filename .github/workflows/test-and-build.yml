@@ -68,6 +68,9 @@ jobs:
       - name: Validate Critical Security and Recovery Improvements
         run: npm run test:quick-wins
 
+      - name: Validate SaaS Self-Service And Tenant Boundaries
+        run: node tests/unit/saas-self-service-onboarding.test.mjs
+
       - name: Audit Initial JavaScript Payload
         run: npm run test:bundle-audit && npm run audit:bundle
 
