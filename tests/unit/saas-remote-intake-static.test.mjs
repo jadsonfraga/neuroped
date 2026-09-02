@@ -1,0 +1,53 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const root = process.cwd();
+const read = (path) => readFileSync(join(root, path), "utf8");
+
+const migration = read("db/migrations/0018_saas_remote_intake.sql");
+const publicEndpoint = read("functions/api/public-intake.ts");
+const staffEndpoint = read("functions/api/live/intake/index.ts");
+const shared = read("functions/api/intake/_shared.ts");
+const middleware = read("functions/api/_middleware.ts");
+const publicJs = read("public/intake.js");
+const publicHtml = read("public/intake.html");
+const cockpit = read("client/src/components/clinical/PatientCockpit.tsx");
+
+assert.match(migration, /token_hash TEXT NOT NULL/);
+assert.doesNotMatch(migration, /\btoken\s+TEXT\b/);
+assert.match(migration, /payload_encrypted TEXT NOT NULL/);
+assert.match(migration, /review_status[^\n]+pending[^\n]+accepted[^\n]+rejected/);
+assert.match(migration, /trg_live_intake_submission_matches_invitation/);
+
+assert.match(shared, /clinicalBlindIndex\(env, clinicId, "remote-intake-token", secret\)/);
+assert.match(shared, /crypto\.getRandomValues/);
+assert.match(shared, /constantTimeTextEqual/);
+
+assert.match(publicEndpoint, /readRemoteIntakeToken\(context\.request\)/);
+assert.doesNotMatch(publicEndpoint, /searchParams\.get\(["']token["']\)/);
+assert.match(publicEndpoint, /encryptClinicalJson/);
+assert.match(publicEndpoint, /review_status, submitted_at/);
+assert.doesNotMatch(publicEndpoint, /INSERT INTO live_clinical_events/);
+
+assert.match(staffEndpoint, /membershipCanWriteClinical/);
+assert.match(staffEndpoint, /requireBillingEntitlement/);
+assert.match(staffEndpoint, /event_type, occurred_at/);
+assert.match(staffEndpoint, /'document'/);
+assert.match(staffEndpoint, /'imported'/);
+assert.match(staffEndpoint, /provenanceSource/);
+assert.match(staffEndpoint, /review_status = 'accepted'/);
+
+assert.match(middleware, /"\/api\/public-intake"/);
+
+assert.match(publicHtml, /meta name="referrer" content="no-referrer"/);
+assert.match(publicHtml, /noindex,nofollow,noarchive/);
+assert.match(publicJs, /window\.location\.hash/);
+assert.match(publicJs, /history\.replaceState/);
+assert.match(publicJs, /Authorization: `Intake \$\{intakeToken\}`/);
+assert.doesNotMatch(publicJs, /localStorage/);
+assert.doesNotMatch(publicJs, /sessionStorage/);
+
+assert.match(cockpit, /RemoteIntakePanel/);
+
+console.log("saas remote intake security contract: ok");
