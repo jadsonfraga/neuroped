@@ -47,12 +47,11 @@ async function catalog(): Promise<any[]> {
 }
 
 function buildItems(topic: { title: string }) {
-  const target = topic.title.toLowerCase();
   return [
     {
       id: "CT01",
       domainId: "padrao",
-      text: `As manifestações relacionadas a ${target} foram observadas em mais de uma ocasião no período de referência.`,
+      text: `Foram observadas, em mais de uma ocasião, manifestações relacionadas ao tema "${topic.title}" no período de referência.`,
       responseMode: "frequencia_0_3",
       redFlag: false,
       clinicalNote: "Registrar exemplos concretos, datas e frequência aproximada.",
