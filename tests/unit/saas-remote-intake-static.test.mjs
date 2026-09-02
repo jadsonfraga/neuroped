@@ -13,6 +13,7 @@ const middleware = read("functions/api/_middleware.ts");
 const publicJs = read("public/intake.js");
 const publicHtml = read("public/intake.html");
 const cockpit = read("client/src/components/clinical/PatientCockpit.tsx");
+const intakePanel = read("client/src/components/clinical/RemoteIntakePanel.tsx");
 
 assert.match(migration, /token_hash TEXT NOT NULL/);
 assert.doesNotMatch(migration, /\btoken\s+TEXT\b/);
@@ -39,6 +40,7 @@ assert.match(staffEndpoint, /provenanceSource/);
 assert.match(staffEndpoint, /review_status = 'accepted'/);
 
 assert.match(middleware, /"\/api\/public-intake"/);
+assert.match(middleware, /Access-Control-Allow-Headers[^\n]+X-Tenant-Id/);
 
 assert.match(publicHtml, /meta name="referrer" content="no-referrer"/);
 assert.match(publicHtml, /noindex,nofollow,noarchive/);
@@ -49,5 +51,8 @@ assert.doesNotMatch(publicJs, /localStorage/);
 assert.doesNotMatch(publicJs, /sessionStorage/);
 
 assert.match(cockpit, /RemoteIntakePanel/);
+assert.match(intakePanel, /"X-Tenant-Id": activeClinicId/);
+assert.match(intakePanel, /VITE_API_URL/);
+assert.match(intakePanel, /\/intake\.html#token=/);
 
 console.log("saas remote intake security contract: ok");
