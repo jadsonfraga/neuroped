@@ -28,12 +28,17 @@ function scopeFromRequest(request: Request): BillingScope | null {
   return BILLING_SCOPES.has(raw as BillingScope) ? (raw as BillingScope) : null;
 }
 
-export async function billingMe(env: BillingEnv, user: PublicUser, scope: BillingScope): Promise<Response> {
-  const db = env?.DB ?? null;
-  if (!db) return tenantError("Backend de billing indisponível neste ambiente.", "BILLING_UNAVAILABLE", 503);
+function clinicIdFromRequest(request: Request): string | null {
+  const raw = (new URL(request.url).searchParams.get("clinicId") ?? "").trim();
+  return raw ? raw.slice(0, 80) : null;
+}
 
-  const row = await db.prepare(
-    `SELECT cm.user_id, cm.clinic_id, cm.role AS membership_role,
+async function billingRows(
+  db: D1Database,
+  userId: string,
+  clinicId: string | null,
+): Promise<SnapshotRow[]> {
+  const baseQuery = `SELECT cm.user_id, cm.clinic_id, cm.role AS membership_role,
             bs.plan_id, bs.status AS subscription_status,
             CASE
               WHEN bc.status = 'trial' AND bc.trial_ends_at IS NOT NULL
@@ -45,12 +50,50 @@ export async function billingMe(env: BillingEnv, user: PublicUser, scope: Billin
        FROM clinic_memberships cm
        LEFT JOIN billing_customers bc ON bc.clinic_id = cm.clinic_id
        LEFT JOIN billing_subscriptions bs ON bs.customer_id = bc.id
-      WHERE cm.user_id = ? AND cm.active = 1
-      ORDER BY cm.created_at ASC,
-               CASE bs.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
-               bs.updated_at DESC
-      LIMIT 1`,
-  ).bind(user.id).first<SnapshotRow>();
+      WHERE cm.user_id = ? AND cm.active = 1`;
+
+  const statement = clinicId
+    ? db.prepare(
+        `${baseQuery} AND cm.clinic_id = ?
+         ORDER BY CASE bs.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
+                  bs.updated_at DESC
+         LIMIT 1`,
+      ).bind(userId, clinicId)
+    : db.prepare(
+        `${baseQuery}
+         ORDER BY cm.created_at ASC,
+                  CASE bs.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
+                  bs.updated_at DESC
+         LIMIT 2`,
+      ).bind(userId);
+
+  const result = await statement.all<SnapshotRow>();
+  return result.results ?? [];
+}
+
+export async function billingMe(
+  env: BillingEnv,
+  user: PublicUser,
+  scope: BillingScope,
+  clinicId: string | null = null,
+): Promise<Response> {
+  const db = env?.DB ?? null;
+  if (!db) return tenantError("Backend de billing indisponível neste ambiente.", "BILLING_UNAVAILABLE", 503);
+
+  const rows = await billingRows(db, user.id, clinicId);
+  if (!clinicId && rows.length > 1) {
+    return tenantError(
+      "Selecione a clínica para consultar o plano e os limites aplicáveis.",
+      "TENANT_REQUIRED",
+      409,
+    );
+  }
+
+  const row = rows[0] ?? null;
+  if (clinicId && !row) {
+    // Não diferencia clinic inexistente de clinic sem membership: evita enumeração cross-tenant.
+    return tenantError("Acesso à clínica não autorizado.", "TENANT_FORBIDDEN", 403);
+  }
 
   const result = evaluateEntitlement(row, scope);
   return tenantJson({
@@ -76,5 +119,5 @@ export const onRequestGet: PagesFunction<BillingEnv> = async (context) => {
   const scope = scopeFromRequest(context.request);
   if (!scope) return tenantError("Escopo de billing inválido.", "BILLING_SCOPE_INVALID", 400);
 
-  return billingMe(context.env, user, scope);
+  return billingMe(context.env, user, scope, clinicIdFromRequest(context.request));
 };
