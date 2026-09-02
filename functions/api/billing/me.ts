@@ -33,55 +33,89 @@ function clinicIdFromRequest(request: Request): string | null {
   return raw ? raw.slice(0, 80) : null;
 }
 
-async function billingRows(
+async function resolveClinicId(
   db: D1Database,
   userId: string,
-  clinicId: string | null,
-): Promise<SnapshotRow[]> {
-  const baseQuery = `SELECT cm.user_id, cm.clinic_id, cm.role AS membership_role,
-            bs.plan_id, bs.status AS subscription_status,
-            CASE
-              WHEN bc.status = 'trial' AND bc.trial_ends_at IS NOT NULL
-               AND julianday(bc.trial_ends_at) > julianday('now') THEN 1
-              ELSE 0
-            END AS trial_active,
-            cm.active AS is_active,
-            bc.trial_ends_at, bc.status AS customer_status, bc.grace_ends_at
-       FROM clinic_memberships cm
-       LEFT JOIN billing_customers bc ON bc.clinic_id = cm.clinic_id
-       LEFT JOIN billing_subscriptions bs ON bs.customer_id = bc.id
-      WHERE cm.user_id = ? AND cm.active = 1`;
+  requestedClinicId: string | null,
+): Promise<{ clinicId: string | null; ambiguous: boolean; forbidden: boolean }> {
+  if (requestedClinicId) {
+    const membership = await db
+      .prepare(
+        `SELECT clinic_id
+           FROM clinic_memberships
+          WHERE user_id = ? AND clinic_id = ? AND active = 1
+          LIMIT 1`,
+      )
+      .bind(userId, requestedClinicId)
+      .first<{ clinic_id: string }>();
+    return {
+      clinicId: membership?.clinic_id ?? null,
+      ambiguous: false,
+      forbidden: !membership,
+    };
+  }
 
-  const statement = clinicId
-    ? db.prepare(
-        `${baseQuery} AND cm.clinic_id = ?
-         ORDER BY CASE bs.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
-                  bs.updated_at DESC
-         LIMIT 1`,
-      ).bind(userId, clinicId)
-    : db.prepare(
-        `${baseQuery}
-         ORDER BY cm.created_at ASC,
-                  CASE bs.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
-                  bs.updated_at DESC
-         LIMIT 2`,
-      ).bind(userId);
+  const memberships = await db
+    .prepare(
+      `SELECT clinic_id
+         FROM clinic_memberships
+        WHERE user_id = ? AND active = 1
+        ORDER BY created_at ASC
+        LIMIT 2`,
+    )
+    .bind(userId)
+    .all<{ clinic_id: string }>();
+  const rows = memberships.results ?? [];
+  return {
+    clinicId: rows[0]?.clinic_id ?? null,
+    ambiguous: rows.length > 1,
+    forbidden: false,
+  };
+}
 
-  const result = await statement.all<SnapshotRow>();
-  return result.results ?? [];
+async function billingRow(
+  db: D1Database,
+  userId: string,
+  clinicId: string,
+): Promise<SnapshotRow | null> {
+  return db
+    .prepare(
+      `SELECT cm.user_id, cm.clinic_id, cm.role AS membership_role,
+              bs.plan_id, bs.status AS subscription_status,
+              CASE
+                WHEN bc.status = 'trial' AND bc.trial_ends_at IS NOT NULL
+                 AND julianday(bc.trial_ends_at) > julianday('now') THEN 1
+                ELSE 0
+              END AS trial_active,
+              cm.active AS is_active,
+              bc.trial_ends_at, bc.status AS customer_status, bc.grace_ends_at
+         FROM clinic_memberships cm
+         LEFT JOIN billing_customers bc ON bc.clinic_id = cm.clinic_id
+         LEFT JOIN billing_subscriptions bs ON bs.customer_id = bc.id
+        WHERE cm.user_id = ? AND cm.clinic_id = ? AND cm.active = 1
+        ORDER BY CASE bs.status WHEN 'active' THEN 0 WHEN 'trial' THEN 1 WHEN 'past_due' THEN 2 ELSE 3 END,
+                 bs.updated_at DESC
+        LIMIT 1`,
+    )
+    .bind(userId, clinicId)
+    .first<SnapshotRow>();
 }
 
 export async function billingMe(
   env: BillingEnv,
   user: PublicUser,
   scope: BillingScope,
-  clinicId: string | null = null,
+  requestedClinicId: string | null = null,
 ): Promise<Response> {
   const db = env?.DB ?? null;
   if (!db) return tenantError("Backend de billing indisponível neste ambiente.", "BILLING_UNAVAILABLE", 503);
 
-  const rows = await billingRows(db, user.id, clinicId);
-  if (!clinicId && rows.length > 1) {
+  const resolved = await resolveClinicId(db, user.id, requestedClinicId);
+  if (resolved.forbidden) {
+    // Não diferencia clinic inexistente de clinic sem membership: evita enumeração cross-tenant.
+    return tenantError("Acesso à clínica não autorizado.", "TENANT_FORBIDDEN", 403);
+  }
+  if (resolved.ambiguous) {
     return tenantError(
       "Selecione a clínica para consultar o plano e os limites aplicáveis.",
       "TENANT_REQUIRED",
@@ -89,12 +123,7 @@ export async function billingMe(
     );
   }
 
-  const row = rows[0] ?? null;
-  if (clinicId && !row) {
-    // Não diferencia clinic inexistente de clinic sem membership: evita enumeração cross-tenant.
-    return tenantError("Acesso à clínica não autorizado.", "TENANT_FORBIDDEN", 403);
-  }
-
+  const row = resolved.clinicId ? await billingRow(db, user.id, resolved.clinicId) : null;
   const result = evaluateEntitlement(row, scope);
   return tenantJson({
     user: { id: user.id, email: user.email, name: user.name },
