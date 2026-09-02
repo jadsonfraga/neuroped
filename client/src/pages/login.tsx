@@ -65,7 +65,14 @@ export default function LoginPage() {
 
   async function hasClinicMembership(): Promise<boolean> {
     const response = await authFetch("/api/tenants");
-    if (!response.ok) return true;
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(
+        typeof body?.error === "string"
+          ? body.error
+          : `Não foi possível validar o contexto da clínica (${response.status}).`,
+      );
+    }
     const body = await response.json().catch(() => ({})) as { data?: unknown[] };
     return Array.isArray(body.data) && body.data.length > 0;
   }
