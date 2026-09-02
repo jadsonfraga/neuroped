@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -50,6 +50,7 @@ import { differenceInYears, parseISO, format } from "date-fns";
 import html2canvas from "html2canvas";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
+import { useIssuer } from "@/lib/issuer";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -95,8 +96,15 @@ export default function PacienteDetalhePage() {
   const [formName, setFormName] = useState("");
   const [formBirth, setFormBirth] = useState("");
   const [formNotes, setFormNotes] = useState("");
-  const [doctorName, setDoctorName] = useState("Dr. Jadson Fraga");
-  const [specialty, setSpecialty] = useState("Neuropediatra");
+  // Identidade do emissor pela fonte única (issuer.ts): começa vazia e é
+  // preenchida pelo perfil configurado — nunca um profissional hardcoded.
+  const { issuer } = useIssuer();
+  const [doctorName, setDoctorName] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  useEffect(() => {
+    if (issuer.doctorName) setDoctorName((prev) => prev || issuer.doctorName);
+    if (issuer.specialty) setSpecialty((prev) => prev || issuer.specialty);
+  }, [issuer.doctorName, issuer.specialty]);
   const [imageExporting, setImageExporting] = useState(false);
   const [reportCopying, setReportCopying] = useState(false);
   const [pdfExportingId, setPdfExportingId] = useState<string | null>(null);
@@ -269,9 +277,9 @@ export default function PacienteDetalhePage() {
         title: `Resultado da escala — ${scaleName}`,
         subtitle: "Registro clínico reemitido a partir do resultado salvo",
         credentials: [
-          `${doctorName} — ${specialty}`,
+          [doctorName, specialty].filter(Boolean).join(" — "),
           "NeuroPed SDG — registro vinculado ao paciente",
-        ],
+        ].filter(Boolean),
         sections: [
           {
             heading: "Identificação da aplicação",
@@ -323,7 +331,8 @@ export default function PacienteDetalhePage() {
     setReportCopying(true);
     try {
       const age = calcAge(patient.birthDate);
-      let text = `RELATÓRIO CLÍNICO\n${doctorName} — ${specialty}\n\n`;
+      const headerLine = [doctorName, specialty].filter(Boolean).join(" — ");
+      let text = `RELATÓRIO CLÍNICO${headerLine ? `\n${headerLine}` : ""}\n\n`;
       text += `Paciente: ${patient.name}\n`;
       if (age) text += `Idade: ${age}\n`;
       if (patient.notes) text += `Observações: ${patient.notes}\n`;

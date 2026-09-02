@@ -21,9 +21,16 @@ const forbidden = [
   "Av. Cardoso",
 ];
 
-const requiredInClinicalReport = [
+// Anti-regressão: os emissores de documentos migraram para a fonte única
+// client/src/lib/issuer.ts — identidade pessoal hardcoded não pode voltar.
+const tenantIssuerFiles = [
+  "client/src/components/ClinicalReport.tsx",
+  "client/src/lib/laudo/modeloSuper.ts",
+];
+
+const forbiddenInTenantIssuerFiles = [
   "drjadsonfraga@proton.me",
-  "CRM-PE 25227 · RQE 17756",
+  "CRM-PE 25227",
 ];
 
 function fail(message) {
@@ -46,10 +53,12 @@ for (const relPath of criticalFiles) {
   }
 }
 
-const clinicalReport = read("client/src/components/ClinicalReport.tsx");
-for (const needle of requiredInClinicalReport) {
-  if (!clinicalReport.includes(needle)) {
-    fail(`ClinicalReport.tsx não contém identidade institucional obrigatória: ${needle}`);
+for (const relPath of tenantIssuerFiles) {
+  const text = read(relPath);
+  for (const needle of forbiddenInTenantIssuerFiles) {
+    if (text.includes(needle)) {
+      fail(`Identidade pessoal hardcoded regrediu em ${relPath}: ${needle} (use client/src/lib/issuer.ts)`);
+    }
   }
 }
 

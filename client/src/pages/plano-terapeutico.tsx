@@ -14,8 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { escapeHtml } from "@/lib/htmlEscape";
 import childAssessmentImg from "@assets/images/child-assessment.webp";
 import { openEmailDraft } from "@/lib/shareText";
-
-const EMAIL_TO = "jadsonfraga@hotmail.com";
+import { useIssuer, type DocumentIssuer } from "@/lib/issuer";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -122,14 +121,16 @@ const examplePTI = {
 async function sendPtiEmail(
   patient: PatientData,
   areas: AreaPlan[],
+  issuer: DocumentIssuer,
   setSent: (v: boolean) => void,
   toast: (opts: any) => void
 ) {
   const dateStr = new Date().toLocaleDateString("pt-BR");
   const subject = `[NeuroPed] Plano Terapêutico (PTI) — ${patient.name} — ${dateStr}`;
 
+  // Identidade do emissor pela fonte única (issuer.ts) — nunca hardcoded.
   let body = `PLANO TERAPÊUTICO INDIVIDUALIZADO\n`;
-  body += `Elaborado com suporte do NeuroPed — Dr. Jadson Fraga Araújo Júnior\n`;
+  body += `Elaborado com suporte do NeuroPed${issuer.doctorName ? ` — ${issuer.doctorName}` : ""}\n`;
   body += `Data: ${dateStr}\n\n`;
   body += `DADOS DO PACIENTE\n`;
   body += `Nome/Iniciais: ${patient.name}\n`;
@@ -147,11 +148,12 @@ async function sendPtiEmail(
     body += `   Prazo: ${a.prazo}\n\n`;
   });
 
-  body += `\n— Dr. Jadson Fraga Araújo Júnior — Neuropediatra`;
+  const assinatura = [issuer.doctorName, issuer.specialty].filter(Boolean).join(" — ");
+  if (assinatura) body += `\n— ${assinatura}`;
 
   try {
     const outcome = await openEmailDraft({
-      to: EMAIL_TO,
+      to: issuer.documentEmail,
       subject,
       body,
       filename: `plano-terapeutico-${patient.name || "paciente"}`,
@@ -223,6 +225,7 @@ function TextareaField({ label, value, onChange, placeholder }: {
 
 export default function PlanoTerapeuticoPage() {
   const { toast } = useToast();
+  const { issuer } = useIssuer();
   const [step, setStep] = useState(1);
   const [emailSent, setEmailSent] = useState(false);
 
@@ -277,7 +280,7 @@ export default function PlanoTerapeuticoPage() {
       </head>
       <body>
         <h1>PLANO TERAPÊUTICO INDIVIDUALIZADO</h1>
-        <p class="subtitle">NeuroPed — Dr. Jadson Fraga Araújo Júnior — Neuropediatra</p>
+        <p class="subtitle">${escapeHtml(["NeuroPed", issuer.doctorName, issuer.specialty].filter(Boolean).join(" — "))}</p>
         <p class="subtitle">Data de elaboração: ${dateStr}</p>
         <div class="patient-info">
           <p><strong>Paciente:</strong> ${escapeHtml(patient.name || "—")}</p>
@@ -314,7 +317,7 @@ export default function PlanoTerapeuticoPage() {
           </table>
         </div>
         <div class="footer">
-          Dr. Jadson Fraga Araújo Júnior — Neuropediatra<br/>
+          ${[issuer.doctorName, issuer.specialty].filter(Boolean).length ? `${escapeHtml([issuer.doctorName, issuer.specialty].filter(Boolean).join(" — "))}<br/>` : ""}
           Documento gerado pelo NeuroPed — Ferramenta de apoio clínico
         </div>
       </body>
@@ -350,7 +353,7 @@ export default function PlanoTerapeuticoPage() {
           </div>
           <div className="space-y-2 min-w-0">
             <h1 className="text-xl font-bold leading-tight">
-              Plano Terapêutico Individualizado — Dr. Jadson
+              Plano Terapêutico Individualizado
             </h1>
             <p className="text-white/80 text-sm leading-relaxed">
               Ferramenta interativa para construir o PTI multiprofissional do paciente
@@ -650,7 +653,7 @@ export default function PlanoTerapeuticoPage() {
                     <Printer className="w-4 h-4 mr-1" /> Imprimir / PDF
                   </Button>
                   <Button
-                    onClick={() => sendPtiEmail(patient, completedPlans, setEmailSent, toast)}
+                    onClick={() => sendPtiEmail(patient, completedPlans, issuer, setEmailSent, toast)}
                     variant="outline"
                     disabled={emailSent}
                     data-testid="button-email-pti"

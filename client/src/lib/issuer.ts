@@ -40,6 +40,18 @@ export function issuerContactLine(issuer: DocumentIssuer): string {
     .join(" · ");
 }
 
+/**
+ * Melhor esforço para "Cidade/UF" do papel timbrado a partir da segunda linha
+ * de endereço configurada (ex.: "Petrolina/PE — CEP 56302-470" → "Petrolina/PE").
+ * Vazio quando a clínica não configurou endereço — nunca inventado.
+ */
+export function issuerCityLine(issuer: DocumentIssuer): string {
+  return (issuer.addressLine2 || "")
+    .split(/CEP/i)[0]
+    .replace(/[\s—·,-]+$/, "")
+    .trim();
+}
+
 const EMPTY_ISSUER: DocumentIssuer = {
   doctorName: "",
   credentialsLine: "",

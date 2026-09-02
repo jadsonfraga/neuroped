@@ -26,7 +26,7 @@
     "test:practical-filter": "node --import tsx tests/clinical/test-filter-practical-100.mjs",
     "test:interactive": "node --import tsx tests/clinical/test-interactive-scales.mjs",
     "test:scale-responses": "node --import tsx tests/clinical/test-scale-response-delivery.mjs",
-    "test:clinical-documents": "node tests/unit/pdf-clinical-workflows-static.test.mjs && node --import tsx tests/unit/pdf-p12-signing.test.ts && node --import tsx tests/unit/clinical-documents-retention.test.ts",
+    "test:clinical-documents": "node tests/unit/tenant-issuer-static.test.mjs && node tests/unit/pdf-clinical-workflows-static.test.mjs && node --import tsx tests/unit/pdf-p12-signing.test.ts && node --import tsx tests/unit/clinical-documents-retention.test.ts",
     "test:share-whatsapp": "node --import tsx tests/unit/share-whatsapp.test.ts",
     "test:phone": "node --import tsx tests/unit/phone-br.test.ts",
     "test:daily-inventory": "node --import tsx tests/unit/daily-inventory-regressions.test.ts",
