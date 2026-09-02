@@ -16,6 +16,7 @@ on:
       - "public/intake.html"
       - "public/intake.css"
       - "public/intake.js"
+      - "public/_headers"
       - "tests/unit/saas-remote-intake-static.test.mjs"
       - ".github/workflows/saas-remote-intake-guard.yml"
   push:
@@ -33,6 +34,7 @@ on:
       - "public/intake.html"
       - "public/intake.css"
       - "public/intake.js"
+      - "public/_headers"
       - "tests/unit/saas-remote-intake-static.test.mjs"
       - ".github/workflows/saas-remote-intake-guard.yml"
 

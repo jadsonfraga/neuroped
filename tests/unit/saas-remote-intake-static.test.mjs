@@ -12,6 +12,7 @@ const shared = read("functions/api/intake/_shared.ts");
 const middleware = read("functions/api/_middleware.ts");
 const publicJs = read("public/intake.js");
 const publicHtml = read("public/intake.html");
+const publicHeaders = read("public/_headers");
 const cockpit = read("client/src/components/clinical/PatientCockpit.tsx");
 const intakePanel = read("client/src/components/clinical/RemoteIntakePanel.tsx");
 
@@ -44,6 +45,13 @@ assert.match(middleware, /Access-Control-Allow-Headers[^\n]+X-Tenant-Id/);
 
 assert.match(publicHtml, /meta name="referrer" content="no-referrer"/);
 assert.match(publicHtml, /noindex,nofollow,noarchive/);
+assert.match(publicHtml, /http-equiv="Content-Security-Policy"/);
+assert.match(publicHtml, /default-src 'none'/);
+assert.match(publicHeaders, /\/intake\.html/);
+assert.match(publicHeaders, /Cache-Control: no-store/);
+assert.match(publicHeaders, /Referrer-Policy: no-referrer/);
+assert.match(publicHeaders, /X-Frame-Options: DENY/);
+assert.match(publicHeaders, /frame-ancestors 'none'/);
 assert.match(publicJs, /window\.location\.hash/);
 assert.match(publicJs, /history\.replaceState/);
 assert.match(publicJs, /Authorization: `Intake \$\{intakeToken\}`/);
