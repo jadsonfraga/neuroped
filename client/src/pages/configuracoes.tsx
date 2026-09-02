@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
+import { invalidateIssuerCache } from "@/lib/issuer";
 import { useToast } from "@/hooks/use-toast";
 
 type SectionId = "perfil" | "clinica" | "equipe" | "plano";
@@ -139,6 +140,7 @@ function PerfilSection() {
     setError(null);
     try {
       await readJson(await authFetch("/api/me/profile", { method: "PUT", body: JSON.stringify(form) }));
+      invalidateIssuerCache();
       setConfigured(true);
       toast({ title: "Perfil profissional salvo ✓", description: "Seus documentos passam a usar esta identidade." });
     } catch (saveError) {
@@ -224,6 +226,7 @@ function ClinicaSection({ clinicId }: { clinicId: string }) {
         }),
       );
       setDetail(updated);
+      invalidateIssuerCache();
       toast({ title: "Clínica atualizada ✓" });
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Falha ao salvar.");

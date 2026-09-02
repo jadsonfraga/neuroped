@@ -1,0 +1,72 @@
+name: SaaS self-service guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "functions/api/auth/signup.ts"
+      - "functions/api/auth/_shared.ts"
+      - "functions/api/_middleware.ts"
+      - "functions/api/me/**"
+      - "functions/api/tenants/**"
+      - "functions/api/tenant/_settings.ts"
+      - "functions/api/billing/**"
+      - "shared/entitlements.ts"
+      - "shared/billing.ts"
+      - "db/migrations/0019_saas_identity_settings.sql"
+      - "tests/unit/saas-self-service.test.ts"
+      - "tests/unit/saas-acceptance-journey.test.ts"
+      - ".github/workflows/saas-self-service-guard.yml"
+  push:
+    branches: [main]
+    paths:
+      - "functions/api/auth/signup.ts"
+      - "functions/api/auth/_shared.ts"
+      - "functions/api/_middleware.ts"
+      - "functions/api/me/**"
+      - "functions/api/tenants/**"
+      - "functions/api/tenant/_settings.ts"
+      - "functions/api/billing/**"
+      - "shared/entitlements.ts"
+      - "shared/billing.ts"
+      - "db/migrations/0019_saas_identity_settings.sql"
+      - "tests/unit/saas-self-service.test.ts"
+      - "tests/unit/saas-acceptance-journey.test.ts"
+      - ".github/workflows/saas-self-service-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saas-self-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-service-contract:
+    name: SaaS self-service and acceptance journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Self-service regressions (signup, settings, RBAC, anti-IDOR)
+        run: node --import tsx tests/unit/saas-self-service.test.ts
+
+      - name: Acceptance journey + adversarial multitenant (real migrations)
+        run: node --import tsx tests/unit/saas-acceptance-journey.test.ts
+
+      - name: TypeScript
+        run: npm run check
