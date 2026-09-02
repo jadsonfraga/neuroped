@@ -1,10 +1,29 @@
 import { getContextUser } from "../auth/_authorization";
 import { normalizeClinicSlug, isValidClinicSlug } from "../../../shared/tenant";
 import { isValidTimeZone } from "../../../shared/operations";
+import { isPlainObject } from "../_request";
 import { tenantError, tenantJson, type TenantEnv } from "../tenant/_core";
 
 function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function validColor(value: string): boolean {
+  return value === "" || /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+function documentPreferences(value: unknown): Record<string, unknown> {
+  if (!isPlainObject(value)) return {};
+  const result: Record<string, unknown> = {};
+  if (typeof value.showLogo === "boolean") result.showLogo = value.showLogo;
+  if (typeof value.includeProfessionalRegistry === "boolean") {
+    result.includeProfessionalRegistry = value.includeProfessionalRegistry;
+  }
+  if (typeof value.defaultFooter === "string") {
+    result.defaultFooter = value.defaultFooter.trim().slice(0, 600);
+  }
+  if (value.defaultLanguage === "pt-BR") result.defaultLanguage = "pt-BR";
+  return result;
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -72,6 +91,13 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const timezone = cleanText(body.timezone, 80) || "America/Recife";
   const requestedSlug = cleanText(body.slug, 80);
   const slug = requestedSlug ? normalizeClinicSlug(requestedSlug) : normalizeClinicSlug(name);
+  const settings = isPlainObject(body.settings) ? body.settings : {};
+  const specialty = cleanText(settings.specialty, 120) || null;
+  const institutionalIdentity = cleanText(settings.institutionalIdentity, 240) || null;
+  const professionalDisplayName = cleanText(settings.professionalDisplayName, 160) || user.name;
+  const professionalRegistry = cleanText(settings.professionalRegistry, 80) || null;
+  const brandPrimaryColor = cleanText(settings.brandPrimaryColor, 32) || null;
+  const preferences = documentPreferences(settings.documentPreferences);
 
   if (name.length < 2) return tenantError("Nome da clínica é obrigatório.", "VALIDATION_ERROR", 400);
   if (!isValidClinicSlug(slug)) return tenantError("Slug da clínica inválido.", "VALIDATION_ERROR", 400);
@@ -82,13 +108,16 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       400,
     );
   }
+  if (brandPrimaryColor && !validColor(brandPrimaryColor)) {
+    return tenantError("Cor institucional inválida.", "VALIDATION_ERROR", 400);
+  }
 
   const clinicId = crypto.randomUUID();
   const now = new Date().toISOString();
   const auditId = crypto.randomUUID();
 
   try {
-    await db.batch([
+    const results = await db.batch([
       db
         .prepare(
           `INSERT INTO clinics
@@ -105,12 +134,58 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
         .bind(clinicId, user.id, user.id, now, now),
       db
         .prepare(
+          `INSERT INTO clinic_settings
+            (clinic_id, specialty, institutional_identity, professional_display_name,
+             professional_registry, document_preferences_json, brand_primary_color,
+             created_by_user_id, updated_by_user_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(clinic_id) DO UPDATE SET
+             specialty = excluded.specialty,
+             institutional_identity = excluded.institutional_identity,
+             professional_display_name = excluded.professional_display_name,
+             professional_registry = excluded.professional_registry,
+             document_preferences_json = excluded.document_preferences_json,
+             brand_primary_color = excluded.brand_primary_color,
+             updated_by_user_id = excluded.updated_by_user_id,
+             updated_at = excluded.updated_at`,
+        )
+        .bind(
+          clinicId,
+          specialty,
+          institutionalIdentity,
+          professionalDisplayName,
+          professionalRegistry,
+          JSON.stringify(preferences),
+          brandPrimaryColor,
+          user.id,
+          user.id,
+          now,
+          now,
+        ),
+      db
+        .prepare(
           `INSERT INTO saas_audit_log
             (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
            VALUES (?, ?, ?, 'clinic_create', 'clinic', ?, ?, ?)`,
         )
-        .bind(auditId, clinicId, user.id, clinicId, JSON.stringify({ slug }), now),
+        .bind(
+          auditId,
+          clinicId,
+          user.id,
+          clinicId,
+          JSON.stringify({
+            slug,
+            settingsConfigured: Boolean(
+              specialty || institutionalIdentity || professionalRegistry || Object.keys(preferences).length,
+            ),
+          }),
+          now,
+        ),
     ]);
+
+    if (results.some((result) => Number(result?.meta?.changes ?? 0) !== 1)) {
+      return tenantError("A criação da clínica não foi concluída integralmente.", "TENANT_CREATE_STALE", 409);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (/unique|constraint/i.test(message)) {
@@ -129,6 +204,14 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       timezone,
       status: "active",
       role: "owner",
+      settings: {
+        specialty,
+        institutionalIdentity,
+        professionalDisplayName,
+        professionalRegistry,
+        documentPreferences: preferences,
+        brandPrimaryColor,
+      },
     },
     201,
   );
