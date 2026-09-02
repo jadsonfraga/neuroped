@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS auth_password_reset_tokens (
   token_hash TEXT NOT NULL UNIQUE,
   expires_at DATETIME NOT NULL,
   consumed_at DATETIME,
+  consumed_by_request_id TEXT,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK (length(token_hash) = 64)
 );
