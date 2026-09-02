@@ -143,9 +143,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
   if (!existing) {
+    // Papel global derivado do papel de tenant: clínicos viram 'professional';
+    // 'assistant' vira 'operator' — o papel global que a suíte operacional
+    // (agenda/recepção via booking_staff_links) reconhece; antes caía em
+    // 'reader' e o assento de recepção era um login sem função. 'financial'
+    // permanece 'reader' (acesso financeiro é por membership, não global).
     const globalRole = ["owner", "clinic_admin", "professional"].includes(invitation.role)
       ? "professional"
-      : "reader";
+      : invitation.role === "assistant"
+        ? "operator"
+        : "reader";
     statements.push(
       env.DB.prepare(
         `INSERT INTO users

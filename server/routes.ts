@@ -43,7 +43,6 @@ import { registerBookingRoutes } from "./routes/booking-adapter.js";
 import { registerDocumentRoutes } from "./routes/documents.js";
 import { registerMemoryRoutes } from "./routes/memory.js";
 
-const PROFESSIONAL_REPORT_EMAIL = "drjadsonfraga@proton.me";
 const MAX_PATIENT_RESULTS_PAGE_SIZE = 200;
 
 function queryInteger(
@@ -597,7 +596,10 @@ export async function registerRoutes(
             code: "FORBIDDEN",
           });
         }
-        const recipient = parsed.to || PROFESSIONAL_REPORT_EMAIL;
+        // Sem destinatário explícito, o relatório vai para a caixa do próprio
+        // profissional autenticado. Um fallback fixo de plataforma enviaria
+        // conteúdo clínico de qualquer tenant para uma caixa de terceiro.
+        const recipient = parsed.to || req.user!.email;
         const result = await sendEmail({
           to: recipient,
           subject: parsed.subject,
