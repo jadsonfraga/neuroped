@@ -1,0 +1,75 @@
+name: SaaS remote intake guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "shared/remote-intake.ts"
+      - "functions/api/intake/**"
+      - "functions/api/live/intake/**"
+      - "functions/api/public-intake.ts"
+      - "functions/api/_middleware.ts"
+      - "db/migrations/0018_saas_remote_intake.sql"
+      - "client/src/components/clinical/RemoteIntakePanel.tsx"
+      - "client/src/components/clinical/PatientCockpit.tsx"
+      - "public/intake.html"
+      - "public/intake.css"
+      - "public/intake.js"
+      - "public/_headers"
+      - "tests/unit/saas-remote-intake-static.test.mjs"
+      - ".github/workflows/saas-remote-intake-guard.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "shared/remote-intake.ts"
+      - "functions/api/intake/**"
+      - "functions/api/live/intake/**"
+      - "functions/api/public-intake.ts"
+      - "functions/api/_middleware.ts"
+      - "db/migrations/0018_saas_remote_intake.sql"
+      - "client/src/components/clinical/RemoteIntakePanel.tsx"
+      - "client/src/components/clinical/PatientCockpit.tsx"
+      - "public/intake.html"
+      - "public/intake.css"
+      - "public/intake.js"
+      - "public/_headers"
+      - "tests/unit/saas-remote-intake-static.test.mjs"
+      - ".github/workflows/saas-remote-intake-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saas-remote-intake-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  remote-intake-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Security boundary regression
+        run: node tests/unit/saas-remote-intake-static.test.mjs
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint

@@ -46,7 +46,7 @@ function getCorsHeaders(origin: string | null, requestOrigin: string): Record<st
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Tenant-Id",
     "Access-Control-Max-Age": "600",
     Vary: "Origin",
   };
@@ -60,6 +60,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/refresh",
   "/api/auth/logout",
   "/api/public-booking",
+  "/api/public-intake",
 ]);
 
 const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([

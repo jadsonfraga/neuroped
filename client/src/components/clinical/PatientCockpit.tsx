@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, AlertTriangle, Pill, Stethoscope } from "lucide-react";
 import type { ClinicalEvent } from "@shared/clinical-core";
 import { TherapyGoalsPanel } from "@/components/clinical/TherapyGoalsPanel";
+import { RemoteIntakePanel } from "@/components/clinical/RemoteIntakePanel";
 
 interface PatientCockpitProps {
   patientId: string;
@@ -216,6 +217,8 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
           icon={<Activity className="h-4 w-4" />}
         />
       </div>
+
+      <RemoteIntakePanel patientId={patientId} />
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <Card className="border-card-border">
