@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Configurar Node.js 24
         uses: actions/setup-node@v6
@@ -83,6 +85,16 @@ jobs:
           node scripts/guards/audit-navigation-routes.mjs
         continue-on-error: true
 
+      - name: Validar governança de migrations
+        id: migration_governance
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python scripts/guards/check-migration-governance.py
+        continue-on-error: true
+
       - name: Comentar resultado no PR
         uses: actions/github-script@v7
         with:
@@ -95,7 +107,8 @@ jobs:
             const conectaStatus = '${{ steps.conecta.outcome }}' === 'success';
             const clinicalCoreStatus = '${{ steps.clinical_core.outcome }}' === 'success';
             const operationsStatus = '${{ steps.operations.outcome }}' === 'success';
-            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus;
+            const migrationGovernanceStatus = '${{ steps.migration_governance.outcome }}' === 'success';
+            const ready = buildStatus && typecheckStatus && lintStatus && functionsBuildStatus && accessStatus && conectaStatus && clinicalCoreStatus && operationsStatus && migrationGovernanceStatus;
 
             const icon = (ok) => ok ? '✅' : '❌';
             const label = (ok) => ok ? 'passou' : 'falhou';
@@ -114,10 +127,11 @@ jobs:
             | ${icon(conectaStatus)} NeuroPed Conecta | ${label(conectaStatus)} |
             | ${icon(clinicalCoreStatus)} Clinical Core + Cockpit | ${label(clinicalCoreStatus)} |
             | ${icon(operationsStatus)} Agenda + Booking | ${label(operationsStatus)} |
+            | ${icon(migrationGovernanceStatus)} Governança de migrations | ${label(migrationGovernanceStatus)} |
 
             ${ready
               ? '> ✅ **Build bem-sucedido.** Este PR está pronto para revisão.'
-              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core e Operational Suite antes de solicitar revisão.'}
+              : '> ❌ **Há gates pendentes.** Corrija TypeScript, build, lint, bundle das Functions, acesso, Conecta, Clinical Core, Operational Suite e governança de migrations antes de solicitar revisão.'}
 
             *Rodou em commit \`${{ github.sha }}\`*`;
 
@@ -156,6 +170,7 @@ jobs:
              [ "${{ steps.conecta.outcome }}" != "success" ] || \
              [ "${{ steps.clinical_core.outcome }}" != "success" ] || \
              [ "${{ steps.operations.outcome }}" != "success" ] || \
+             [ "${{ steps.migration_governance.outcome }}" != "success" ] || \
              [ "${{ steps.access.outcome }}" != "success" ]; then
             echo "Uma ou mais verificações críticas falharam."
             exit 1
