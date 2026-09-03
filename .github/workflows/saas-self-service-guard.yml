@@ -13,9 +13,10 @@ on:
       - "functions/api/billing/**"
       - "shared/entitlements.ts"
       - "shared/billing.ts"
-      - "db/migrations/0019_saas_identity_settings.sql"
+      - "db/migrations/**"
       - "tests/unit/saas-self-service.test.ts"
       - "tests/unit/saas-acceptance-journey.test.ts"
+      - "tests/unit/migration-prefix-guard.test.mjs"
       - ".github/workflows/saas-self-service-guard.yml"
   push:
     branches: [main]
@@ -29,9 +30,10 @@ on:
       - "functions/api/billing/**"
       - "shared/entitlements.ts"
       - "shared/billing.ts"
-      - "db/migrations/0019_saas_identity_settings.sql"
+      - "db/migrations/**"
       - "tests/unit/saas-self-service.test.ts"
       - "tests/unit/saas-acceptance-journey.test.ts"
+      - "tests/unit/migration-prefix-guard.test.mjs"
       - ".github/workflows/saas-self-service-guard.yml"
 
 permissions:
@@ -61,6 +63,9 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
+
+      - name: Migration prefix collision lock
+        run: node tests/unit/migration-prefix-guard.test.mjs
 
       - name: Self-service regressions (signup, settings, RBAC, anti-IDOR)
         run: node --import tsx tests/unit/saas-self-service.test.ts
