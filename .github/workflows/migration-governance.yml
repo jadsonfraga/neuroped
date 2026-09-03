@@ -1,0 +1,40 @@
+name: Migration governance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "db/migrations/**"
+      - "scripts/guards/check-migration-governance.py"
+      - ".github/workflows/migration-governance.yml"
+      - ".github/workflows/pr-check.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * *"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: migration-governance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Migration governance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Enforce immutable monotonic migrations and detect open-PR collisions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python scripts/guards/check-migration-governance.py
