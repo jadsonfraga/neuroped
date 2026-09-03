@@ -36,7 +36,10 @@ const MUST_BE_GATED = [
 
 // Rotas que DEVEM ficar públicas (para as famílias).
 const MUST_BE_PUBLIC = [
-  "/login", "/sessao-expirada", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  "/login", "/sessao-expirada",
+  // Recuperação de senha self-service: por definição sem sessão; nenhuma tela
+  // exibe dado clínico e o reset exige token de uso único enviado por e-mail.
+  "/esqueci-senha", "/redefinir-senha", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",

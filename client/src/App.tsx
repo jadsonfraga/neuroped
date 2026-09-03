@@ -40,6 +40,8 @@ const MotionPreferences = lazy(() =>
 // primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
 const LoginPage = lazy(() => import("@/pages/login"));
 const SessionExpiredPage = lazy(() => import("@/pages/session-expired"));
+const ForgotPasswordPage = lazy(() => import("@/pages/esqueci-senha"));
+const ResetPasswordPage = lazy(() => import("@/pages/redefinir-senha"));
 const LgpdConsentPage = lazy(() => import("@/pages/lgpd-consent"));
 const PreferencesPanel = lazy(() =>
   import("@/components/PreferencesPanel").then(({ PreferencesPanel }) => ({
@@ -334,6 +336,8 @@ function AppRouter() {
             <PageTransition>
           <Switch>
             <Route path="/login" component={LoginPage} />
+            <Route path="/esqueci-senha" component={ForgotPasswordPage} />
+            <Route path="/redefinir-senha" component={ResetPasswordPage} />
             <Route path="/sessao-expirada" component={SessionExpiredPage} />
             <Route path="/consentimento-lgpd" component={LgpdConsentPage} />
 

@@ -11,6 +11,8 @@
 
 export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
+  "/esqueci-senha", // Solicita link de redefinição — por definição, sem sessão
+  "/redefinir-senha", // Consome o token de redefinição enviado por e-mail
   "/sessao-expirada", // Recuperação de sessão remota
   "/familia", // Capa pública (home das famílias)
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos

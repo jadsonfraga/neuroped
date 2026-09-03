@@ -207,6 +207,9 @@ const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/RequiredPasswordChangeGate.tsx",
   "client/src/pages/generic-scale.tsx",
   "client/src/pages/login.tsx",
+  // Redefinição self-service: consome o token de uso único enviado por e-mail
+  // e envia a nova senha SOMENTE para POST /api/auth/reset-password.
+  "client/src/pages/redefinir-senha.tsx",
 ].sort();
 
 await check("somente superfícies de autenticação/segurança explicitamente aprovadas podem receber senha", () => {

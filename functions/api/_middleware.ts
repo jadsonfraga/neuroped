@@ -59,6 +59,11 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
+  // Recuperação de senha self-service: por definição acontece SEM sessão.
+  // forgot-password é anti-enumeração (202 genérico) e rate-limited por IP;
+  // reset-password exige o token de uso único enviado por e-mail.
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
   "/api/public-booking",
   "/api/public-intake",
 ]);
