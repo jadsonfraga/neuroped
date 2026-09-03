@@ -30,6 +30,9 @@ function readableAcceptError(status: number, body: { error?: string; code?: stri
     return "Este convite foi emitido para outro e-mail. Saia desta conta e abra o link com a conta convidada.";
   }
   if (code === "INVITATION_EXPIRED") return "Este convite expirou. Peça um novo à clínica.";
+  if (code === "INVITE_ACCOUNT_CREATION_DISABLED") {
+    return "A criação de conta por convite ainda não está habilitada nesta instalação. Se você já tem conta com este e-mail, entre primeiro e reabra o link.";
+  }
   if (code === "SEAT_LIMIT_REACHED") return "A clínica está sem assentos disponíveis. Peça ao gestor para ampliar a assinatura.";
   if (code === "ACCOUNT_EXISTS_LOGIN_REQUIRED" || status === 409) {
     return body.error || "Este e-mail já possui conta. Entre primeiro e abra o link do convite novamente.";

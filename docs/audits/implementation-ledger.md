@@ -85,6 +85,16 @@ zero UI de equipe/plano/settings, emissores de documentos hardcoded).
 | Cenário de aceite + adversarial multitenant | DONE (`dcda6d94`) | saas-acceptance-journey.test.ts sobre handlers+migrações REAIS: signup→clínica+trial(trigger)→convite/aceite→2ª clínica→B não lê/edita/enumera/convida em A→teto de assentos. Workflow saas-self-service-guard no CI. |
 | Contratos duplos de acesso atualizados com justificativa | DONE | validate-public-split (3 rotas do funil aprovadas: sem dado clínico) e assert-open-access (senha em /cadastro e /invite: direto p/ signup/accept, nunca persistida). |
 
+### Gates de governança (comentário do dono, 03/09/2026 — PR #771 em Draft)
+
+| Gate | Status | Evidência |
+|---|---|---|
+| 1. Revisão adversarial independente (signup, auth opcional do accept, anti-IDOR/RBAC, X-Tenant-Id, emissor, 0019) | DONE (revisão executada; 1 achado MÉDIO corrigido) | Varredura confirmou: interpolações de issuer nos HTMLs de impressão todas escapadas; SQL 100% parametrizado; X-Tenant-Id só vale após validação de membership; billing/me sempre restrito a `cm.user_id`; PATCH de tenant gated por gestão. ACHADO: aceite anônimo podia criar identidade de login para e-mail de terceiro (token fica com o convidante; sem verificação de e-mail) → corrigido: criação de conta via convite agora exige o MESMO opt-in `SAAS_SIGNUP_ENABLED` (produção volta à postura pré-PR); definitivo = verificação de e-mail no porte do #770. Regressão no cenário 8 da jornada. |
+| 2. Trava de colisão de prefixo de migração | DONE (`f08004f7`) | migration-prefix-guard.test.mjs: prefixos únicos (0008 legado congelado), formato NNNN_snake_case, sequência contígua; em test:quick-wins e no saas-self-service-guard (paths db/migrations/**). |
+| 3. Não ativar SAAS_SIGNUP_ENABLED / dados clínicos reais | ACKNOWLEDGED | Flag continua fechada por padrão; nada neste PR a ativa. P0 #515 e P1 #685 permanecem gates externos abertos. |
+| 4. Recalibrar declaração de production-ready | DONE | Status do PR atualizado: além de gateway/signup/e-mail, os gates externos #515 (rotação/revogação de credenciais) e #685 (prova física de export/eliminação LGPD no runtime canônico) condicionam produção. |
+| 5. Password recovery (porte do #770) | ACKNOWLEDGED (rodada futura) | Portar token one-shot hash-only + expiração + revogação de sessões + rate limit persistente + Resend em PR separado, migração ≥0020, sem duplicar clinic_settings/signup; a verificação de e-mail desse porte destrava a criação de conta via convite sem o gate interino. |
+
 Documentado sem mudança (decisão futura): rotas institucionais do tenant
 fundador (sobre, servicos-clinica, marcacao, manus, branding/splash/mascote,
 manifest) permanecem como conteúdo do tenant incumbente; tabelas legadas

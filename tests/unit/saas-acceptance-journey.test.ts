@@ -316,6 +316,66 @@ assert.notEqual(clinicA, clinicB);
   assert.equal(body.code, "SEAT_LIMIT_REACHED");
 }
 
+// ── 8. Achado da revisão adversarial (03/09): sem o opt-in do operador, o ──
+// aceite anônimo NÃO cria identidade de login nova — o token do convite fica
+// com o convidante e, sem verificação de e-mail, ele poderia registrar uma
+// conta com o e-mail de um terceiro (impersonação + bloqueio do cadastro).
+{
+  const inviteB = await invitationsPost(
+    context(
+      jsonRequest("https://x.test/api/billing/invitations", "POST", {
+        clinicId: clinicB,
+        email: "vitima@hospital.test",
+        role: "professional",
+        action: "create",
+      }),
+      ownerB,
+    ) as never,
+  );
+  assert.equal(inviteB.status, 201);
+  const tokenB = decodeURIComponent(
+    ((await inviteB.json()) as { invitationUrl: string }).invitationUrl.split("token=")[1] ?? "",
+  );
+
+  const closedEnv = { ...env, SAAS_SIGNUP_ENABLED: undefined };
+  const closedAccept = await acceptPost({
+    env: closedEnv,
+    request: jsonRequest("https://x.test/api/billing/accept", "POST", {
+      token: tokenB,
+      name: "Dr. Impostor",
+      password: "SenhaImpostor1!",
+    }),
+    params: {},
+    data: {},
+    waitUntil: () => undefined,
+    next: async () => new Response(null),
+  } as never);
+  assert.equal(closedAccept.status, 503, "sem opt-in do operador, aceite anônimo não cria conta");
+  assert.equal(
+    ((await closedAccept.json()) as { code: string }).code,
+    "INVITE_ACCOUNT_CREATION_DISABLED",
+  );
+  assert.equal(
+    raw.prepare("SELECT COUNT(*) AS n FROM users WHERE email = 'vitima@hospital.test'").get()!.n,
+    0,
+    "nenhuma identidade de login nasce para o e-mail convidado sem o funil habilitado",
+  );
+
+  // Com o funil habilitado (go-live consciente do operador), o mesmo convite
+  // volta a funcionar — a trava não quebra o fluxo legítimo.
+  const openAccept = await acceptPost(
+    context(
+      jsonRequest("https://x.test/api/billing/accept", "POST", {
+        token: tokenB,
+        name: "Dra. Convidada Real",
+        password: "SenhaConvite2!",
+      }),
+      null,
+    ) as never,
+  );
+  assert.equal(openAccept.status, 201, "com SAAS_SIGNUP_ENABLED o aceite anônimo segue funcionando");
+}
+
 console.log(
-  "✓ jornada SaaS de aceite: signup → clínica+trial → convite/aceite → segunda clínica isolada; adversarial multitenant e teto de assentos aprovados",
+  "✓ jornada SaaS de aceite: signup → clínica+trial → convite/aceite → segunda clínica isolada; adversarial multitenant, teto de assentos e trava de conta-via-convite aprovados",
 );
