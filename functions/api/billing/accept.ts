@@ -9,6 +9,8 @@ interface Env {
   DB?: D1Database;
   /** Identidade técnica reservada; nunca pode aceitar convite de clínica. */
   NEUROPED_E2E_EMAIL?: string;
+  /** Mesmo opt-in do cadastro público: também gates a criação de conta via convite. */
+  SAAS_SIGNUP_ENABLED?: string;
 }
 
 interface InvitationRow {
@@ -130,6 +132,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   let userId = existing?.id ?? "";
   let passwordHash: string | null = null;
   if (!existing) {
+    // Criar uma IDENTIDADE DE LOGIN nova a partir de um aceite anônimo é a
+    // mesma decisão de go-live que abrir o cadastro público — e, sem e-mail
+    // transacional, o token do convite fica nas mãos do CONVIDANTE, que
+    // poderia aceitá-lo sozinho e registrar uma conta com o e-mail de um
+    // terceiro (impersonação + bloqueio do e-mail no cadastro; achado da
+    // revisão adversarial de 03/09/2026). Enquanto o operador não habilitar
+    // o funil (e a verificação de e-mail do porte do #770 não existir), o
+    // aceite anônimo só funciona para contas já existentes.
+    if (env.SAAS_SIGNUP_ENABLED !== "true") {
+      return json(
+        {
+          error:
+            "Criação de conta via convite não está habilitada nesta instalação. Peça ao gestor um convite para uma conta existente ou aguarde a liberação do cadastro.",
+          code: "INVITE_ACCOUNT_CREATION_DISABLED",
+        },
+        503,
+      );
+    }
     if (name.length < 2 || password.length < 10) {
       return json(
         { error: "Nome e senha de ao menos 10 caracteres são obrigatórios para criar a conta.", code: "ACCOUNT_DATA_REQUIRED" },
@@ -143,9 +163,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
   if (!existing) {
+    // Papel global derivado do papel de tenant: clínicos viram 'professional';
+    // 'assistant' vira 'operator' — o papel global que a suíte operacional
+    // (agenda/recepção via booking_staff_links) reconhece; antes caía em
+    // 'reader' e o assento de recepção era um login sem função. 'financial'
+    // permanece 'reader' (acesso financeiro é por membership, não global).
     const globalRole = ["owner", "clinic_admin", "professional"].includes(invitation.role)
       ? "professional"
-      : "reader";
+      : invitation.role === "assistant"
+        ? "operator"
+        : "reader";
     statements.push(
       env.DB.prepare(
         `INSERT INTO users

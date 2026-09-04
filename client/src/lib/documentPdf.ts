@@ -1,7 +1,9 @@
 // ============================================================
 // Construtor de PDF clínico premium — pdf-lib.
-// Gera A4 multipágina com identidade NeuroPed SDG, logo mestre, seções,
-// validação por QR e estrutura pronta para assinatura digital PFX/P12.
+// Gera A4 multipágina com a identidade do emissor (issuer) recebida no
+// DocSpec, logo opcional por tenant, seções, validação por QR e estrutura
+// pronta para assinatura digital PFX/P12. Nenhuma identidade é embutida
+// aqui: nome, credenciais, clínica e logo vêm sempre do chamador.
 // ============================================================
 import {
   PDFDocument,
@@ -13,7 +15,6 @@ import {
 import QRCode from "qrcode";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { wrapPdfText } from "@/lib/pdfTextWrap";
-import drJadsonLogoFile from "@assets/dr-jadson-logo.jpeg";
 
 export interface DocSection {
   heading: string;
@@ -29,6 +30,16 @@ export interface DocSpec {
   /** Texto do rodapé (aviso legal, validade etc.). */
   footer?: string;
   validationUrl?: string;
+  /**
+   * Logo do emissor como data URI (JPEG). Opcional: sem logo por tenant
+   * configurada, o documento sai sem selo gráfico — identidade nunca é
+   * herdada de um asset pessoal embutido no app.
+   */
+  logoDataUri?: string;
+  /** Nome da clínica do emissor para o selo textual das páginas. */
+  clinicName?: string;
+  /** Lema/assinatura editorial da clínica (opcional). */
+  motto?: string;
 }
 
 const A4 = { w: 595.28, h: 841.89 };
@@ -85,22 +96,23 @@ async function embedValidationQr(pdf: PDFDocument, url: string) {
   return pdf.embedPng(base64);
 }
 
-async function embedBrandLogo(pdf: PDFDocument): Promise<PDFImage | null> {
+async function embedBrandLogo(pdf: PDFDocument, logoDataUri?: string): Promise<PDFImage | null> {
+  if (!logoDataUri) return null;
   try {
-    const response = await fetch(drJadsonLogoFile);
+    const response = await fetch(logoDataUri);
     if (!response.ok) return null;
     return await pdf.embedJpg(await response.arrayBuffer());
   } catch {
-    // O documento continua gerável se o asset estiver temporariamente
-    // indisponível; o fallback visual abaixo mantém a identificação textual.
+    // O documento continua gerável se a logo do tenant estiver indisponível;
+    // a identificação segue textual, pelas linhas de credenciais.
     return null;
   }
 }
 
 function drawLogo(page: PDFPage, logo: PDFImage | null, x: number, y: number, box = 54) {
   if (!logo) {
-    page.drawRectangle({ x, y, width: box, height: box, color: C.bordo, borderColor: C.gold, borderWidth: 1.2 });
-    page.drawText("NF", { x: x + 14, y: y + 19, size: 15, font: undefined, color: C.white });
+    // Sem logo configurada não desenhamos selo algum: identidade visual
+    // nunca é inventada — o masthead segue apenas com o texto.
     return;
   }
   const scale = Math.min(box / logo.width, box / logo.height);
@@ -134,7 +146,9 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
   const maxW = A4.w - M * 2;
   const validationUrl = spec.validationUrl ?? defaultValidationUrl();
   const qrImage = await embedValidationQr(pdf, validationUrl);
-  const logo = await embedBrandLogo(pdf);
+  const logo = await embedBrandLogo(pdf, rawSpec.logoDataUri);
+  const clinicLabel = rawSpec.clinicName ? pdfSafe(rawSpec.clinicName) : "";
+  const mottoLabel = rawSpec.motto ? pdfSafe(rawSpec.motto) : "";
 
   const titleX = M + 70;
   const titleW = A4.w - M - titleX;
@@ -172,7 +186,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
 
     if (!continuation) {
       const metaY = bandY - 24;
-      page.drawText("NEUROPED SDG  |  DOCUMENTO CLINICO", {
+      page.drawText(clinicLabel ? `${clinicLabel.toUpperCase()}  |  DOCUMENTO CLINICO` : "DOCUMENTO CLINICO", {
         x: M,
         y: metaY,
         size: 7.2,
@@ -328,7 +342,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       color: C.gold,
       opacity: 0.65,
     });
-    currentPage.drawText("NeuroPed SDG  |  Soli Deo Gloria", {
+    currentPage.drawText([clinicLabel, mottoLabel].filter(Boolean).join("  |  ") || "Documento clinico", {
       x: M,
       y: 18,
       size: 6.4,

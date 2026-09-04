@@ -6,6 +6,7 @@
 // ============================================================
 
 import { neutralizeCsvFormula } from "./csv";
+import { issuerCredentials, loadIssuer } from "./issuer";
 
 export interface FilterExportRow {
   slot: string;
@@ -28,12 +29,6 @@ export interface FilterExportMeta {
   generatedAtLabel: string;
   qualitativeReport?: string;
 }
-
-// Credenciais institucionais (mesma convenção do laudo-neuroped).
-const CREDENTIALS = [
-  "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
-  "Neurologista Infantil / Neuropediatra",
-];
 
 const DISCLAIMER =
   "Recomendacao gerada pelo Filtro Clinico Inteligente da plataforma NeuroPed. " +
@@ -108,6 +103,13 @@ export async function buildFilterPdf(
   rows: FilterExportRow[]
 ): Promise<Uint8Array> {
   const { buildDocumentPdf } = await import("@/lib/documentPdf");
+  // Identidade do emissor pela fonte única (client/src/lib/issuer.ts):
+  // sem perfil configurado o PDF declara a ausência de registro — nunca inventa.
+  const issuer = await loadIssuer();
+  const credentials = [
+    [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join(" - "),
+    issuer.specialty,
+  ].filter(Boolean);
   const contextBody = [
     `Idade: ${meta.age}`,
     `Queixa(s): ${meta.queixas}`,
@@ -136,7 +138,9 @@ export async function buildFilterPdf(
   return buildDocumentPdf({
     title: "Recomendacao de Escalas - NeuroPed",
     subtitle: "Filtro Clinico Inteligente - triagem de apoio",
-    credentials: CREDENTIALS,
+    credentials,
+    clinicName: issuer.clinicName || undefined,
+    motto: issuer.motto || undefined,
     sections: [
       { heading: "Contexto clinico", body: asciiSafe(contextBody) },
       ...(meta.qualitativeReport ? [{ heading: "Relato qualitativo por extenso", body: asciiSafe(meta.qualitativeReport) }] : []),

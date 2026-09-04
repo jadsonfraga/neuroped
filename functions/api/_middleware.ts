@@ -59,9 +59,18 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",
+  "/api/auth/signup",
   "/api/public-booking",
   "/api/public-intake",
   "/api/public-scale",
+]);
+
+// Rotas onde a autenticação é opcional: sem Authorization a requisição segue
+// anônima (o handler valida seu próprio token de convite); com Authorization,
+// a validação completa de sessão se aplica — necessário para o caso "convidado
+// que já possui conta", que exige provar ser o destinatário do convite.
+const OPTIONAL_AUTH_API_PATHS = new Set([
+  "/api/billing/accept",
 ]);
 
 const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([
@@ -103,6 +112,13 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
   const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const isOwnConsentWrite = path === "/api/consents" && method === "POST";
   const isOwnPasswordChange = path === "/api/auth/change-password" && method === "POST";
+  // Aceitar convite de clínica é uma ação da própria conta, gated pelo token
+  // do convite — um convidado com papel global 'reader'/'operator' precisa
+  // conseguir aceitar mesmo sem permissão de escrita clínica.
+  const isOwnInvitationAccept = path === "/api/billing/accept" && method === "POST";
+  // Perfil profissional próprio (emissor de documentos) é dado da conta, não
+  // dado clínico de paciente.
+  const isOwnProfileWrite = path === "/api/me/profile" && method === "PUT";
   // `operator` pode escrever somente no endpoint operacional. A própria função
   // /api/operations resolve o vínculo com o profissional e filtra as ações;
   // nenhuma rota clínica herda esta exceção.
@@ -113,6 +129,8 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
     isWrite &&
     !isOwnConsentWrite &&
     !isOwnPasswordChange &&
+    !isOwnInvitationAccept &&
+    !isOwnProfileWrite &&
     !isDelegatedOperationalWrite &&
     !canWriteClinicalData(user)
   ) {
@@ -125,6 +143,11 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   if (!env.DB) return { failure: null, user: null };
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
   if (PUBLIC_API_PATHS.has(path)) return { failure: null, user: null };
+  // Auth opcional: sem header a requisição segue anônima e o handler aplica o
+  // próprio gate (token de convite); com header, validação integral abaixo.
+  if (OPTIONAL_AUTH_API_PATHS.has(path) && !request.headers.get("Authorization")) {
+    return { failure: null, user: null };
+  }
 
   const secret = env.NEUROPED_JWT_SECRET;
   if (!secret?.trim() || secret.trim().length < 32) {

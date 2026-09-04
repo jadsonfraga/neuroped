@@ -3,6 +3,7 @@ import {
   type AuthUser,
   getStoredUser,
   loginRequest,
+  signupRequest,
   changePasswordRequest,
   logoutRequest,
   authFetch,
@@ -23,6 +24,7 @@ interface AuthContextValue {
   accessMode: AccessMode;
   remoteConfigured: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -110,6 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
+  const signup = useCallback(async (name: string, email: string, password: string): Promise<void> => {
+    const data = await signupRequest(name, email, password);
+    await clearSessionScopedClientState();
+    setUser(data.user);
+  }, []);
+
   const changePassword = useCallback(async (
     currentPassword: string,
     newPassword: string,
@@ -149,11 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accessMode,
       remoteConfigured,
       login,
+      signup,
       changePassword,
       logout,
       refreshUser,
     }),
-    [user, isLoading, accessMode, remoteConfigured, login, changePassword, logout, refreshUser],
+    [user, isLoading, accessMode, remoteConfigured, login, signup, changePassword, logout, refreshUser],
   );
 
   return (

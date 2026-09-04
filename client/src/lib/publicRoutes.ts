@@ -11,6 +11,9 @@
 
 export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
+  "/cadastro", // Cadastro self-service do SaaS (o backend decide se está habilitado)
+  "/invite", // Aceite de convite de clínica (gated pelo token do convite)
+  "/billing/retorno", // Retorno do checkout de assinatura; não exibe dado algum
   "/sessao-expirada", // Recuperação de sessão remota
   "/familia", // Capa pública (home das famílias)
   "/brincando-e-aprendendo", // Experiência educativa infantil sem dados clínicos

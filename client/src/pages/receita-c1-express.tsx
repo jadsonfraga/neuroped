@@ -18,29 +18,23 @@ import { Input } from "@/components/ui/input";
 import { PageHero } from "@/components/PageHero";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import signatureImageUrl from "@/assets/images/jadson-signature.jpg";
-import { drJadsonMasterShieldLogo } from "@/assets/drJadsonMasterShieldLogo";
 import { purgeLegacyCertificateCache } from "@/lib/certificateSession";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { escapeHtml as escHtml } from "@/lib/htmlEscape";
+import {
+  issuerCityLine,
+  issuerContactLine,
+  issuerCredentials,
+  useIssuer,
+  type DocumentIssuer,
+} from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
 
 /* ──────────────────────────────────────────────────────────────
    Receita C1 Express — Receita de Controle Especial
+   Identidade do emissor: fonte única client/src/lib/issuer.ts
    Certificado acoplado: preencha a receita + insira apenas a senha
 ──────────────────────────────────────────────────────────────── */
-
-const CLINIC_NAME = "NeuroPed SDG";
-const DOCTOR_NAME = "Dr. Jadson Fraga Araújo Júnior";
-const DOCTOR_NAME_PDF = "Dr. Jadson Fraga Araujo Junior";
-const DOCTOR_CREDENTIALS = "CRM-PE 25.227 | RQE 17.756";
-const DOCTOR_SPECIALTY = "Neurologista Infantil / Neuropediatra";
-const DOCTOR_SPECIALTY_HTML = "Neurologista Infantil · Neuropediatra";
-const CLINIC_ADDRESS_1 = "Rua Raimundo Lacerda, 001 — Bairro São José";
-const CLINIC_ADDRESS_2 = "Petrolina/PE — CEP 56302-470";
-const CLINIC_PHONE = "Telefone: (87) 9 9109-7371";
-const CLINIC_ADDRESS_HTML = `${CLINIC_ADDRESS_1} · ${CLINIC_ADDRESS_2} · ${CLINIC_PHONE}`;
-const CLINIC_ADDRESS_PDF = "Rua Raimundo Lacerda, 001 - Bairro Sao Jose, Petrolina/PE - CEP 56302-470 - Telefone: (87) 9 9109-7371";
 
 // ── Helpers ──────────────────────────────────────────────────────
 function todayBr(): string {
@@ -48,12 +42,11 @@ function todayBr(): string {
 }
 
 // ── PDF assinável (template pdf-lib, 2 vias) ─────────────────────
-function _canonicalExpressPayload(f: FormFields, issuedAt: string) {
+function _canonicalExpressPayload(f: FormFields, issuedAt: string, issuer: DocumentIssuer) {
   return [
-    `${CLINIC_NAME} - Receita C1 Express`,
-    DOCTOR_NAME_PDF,
-    "CRM-PE 25.227",
-    "RQE 17.756",
+    [pdfSafe(issuer.clinicName), "Receita C1 Express"].filter(Boolean).join(" - "),
+    pdfSafe(issuer.doctorName),
+    pdfSafe(issuerCredentials(issuer)),
     `Emitida em: ${issuedAt}`,
     `Paciente: ${f.paciente || "-"}`,
     `Idade do paciente: ${f.idadePaciente || "-"}`,
@@ -72,9 +65,10 @@ function _canonicalExpressPayload(f: FormFields, issuedAt: string) {
 }
 
 // ── PDF assinável (texto estruturado) ────────────────────────────
-async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
+async function _buildC1PdfBytes(f: FormFields, issuer: DocumentIssuer): Promise<Uint8Array> {
   const { buildDocumentPdf } = await import("@/lib/documentPdf");
   const data = todayBr();
+  const cidadeUf = issuerCityLine(issuer);
   const validade = new Date();
   validade.setDate(validade.getDate() + 30);
   const valBr = validade.toLocaleDateString("pt-BR");
@@ -83,10 +77,12 @@ async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
     title: "RECEITA DE CONTROLE ESPECIAL — C1",
     subtitle: "Via para farmácia · Validade: 30 dias",
     credentials: [
-      `${DOCTOR_NAME}  ${DOCTOR_CREDENTIALS}`,
-      DOCTOR_SPECIALTY,
-      CLINIC_ADDRESS_HTML,
-    ],
+      [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join("  "),
+      issuer.specialty,
+      issuerContactLine(issuer),
+    ].filter(Boolean),
+    clinicName: issuer.clinicName,
+    motto: issuer.motto,
     sections: [
       {
         heading: "Dados do Paciente",
@@ -113,12 +109,12 @@ async function _buildC1PdfBytes(f: FormFields): Promise<Uint8Array> {
       {
         heading: "Validade e Assinatura",
         body: [
-          `Petrolina/PE, ${data}`,
+          `${cidadeUf ? `${cidadeUf}, ` : ""}${data}`,
           `Validade da receita: ${valBr}`,
           f.cid ? `CID-10: ${f.cid}` : "",
           "\n_________________________________",
-          DOCTOR_NAME,
-          DOCTOR_CREDENTIALS,
+          issuer.doctorName,
+          issuerCredentials(issuer),
           "Assinatura digital ICP-Brasil PAdES-BES",
         ].filter(Boolean).join("\n"),
       },
@@ -150,10 +146,11 @@ function fmtNasc(iso: string): string {
 }
 
 // ── HTML de impressão (2 vias em A5) ─────────────────────────────
-async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
+async function buildC1TemplatePdfBytes(f: FormFields, issuer: DocumentIssuer): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const QRCode = (await import("qrcode")).default;
   const data = todayBr();
+  const cidadeUf = pdfSafe(issuerCityLine(issuer));
   const validade = new Date();
   validade.setDate(validade.getDate() + 30);
   const valBr = validade.toLocaleDateString("pt-BR");
@@ -176,9 +173,8 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   const validationUrl = buildAppHashUrl("/verificar");
   const qrDataUrl = await QRCode.toDataURL(validationUrl, { width: 220, margin: 1, errorCorrectionLevel: "M" });
   const qrPng = await pdf.embedPng(qrDataUrl.split(",")[1] ?? "");
-  const signatureImageBytes = await fetch(signatureImageUrl).then((response) => response.arrayBuffer());
-  const signatureImage = await pdf.embedJpg(signatureImageBytes);
-  const logoImage = await pdf.embedJpg(drJadsonMasterShieldLogo.split(",")[1] ?? "");
+  // Sem logo/assinatura pessoais embutidas: a identidade visual do emissor só
+  // entra quando existir upload por tenant; a assinatura é a digital ICP-Brasil.
 
   const drawFitted = (page: import("pdf-lib").PDFPage, value: string, x: number, y: number, maxWidth: number, size: number, font = helv) => {
     let text = pdfSafe(value || "");
@@ -222,24 +218,17 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
 
     page.drawRectangle({ x: m, y: top - 55, width: contentW, height: 31, color: navy });
     page.drawRectangle({ x: A5.w - 155, y: top - 55, width: 141, height: 31, color: bordo });
-    const logoDims = logoImage.scaleToFit(24, 24);
-    page.drawImage(logoImage, {
-      x: m + 6,
-      y: top - 51 + (24 - logoDims.height) / 2,
-      width: logoDims.width,
-      height: logoDims.height,
-    });
-    page.drawText(CLINIC_NAME, { x: m + 36, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
-    page.drawText("NEUROPEDIATRIA - NEURODESENVOLVIMENTO", { x: m + 36, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
+    page.drawText(pdfSafe(issuer.clinicName), { x: m + 36, y: top - 39, size: 11, font: serif, color: rgb(1, 1, 1) });
+    page.drawText(pdfSafe(issuer.specialty).toUpperCase(), { x: m + 36, y: top - 48, size: 4.4, font: bold, color: rgb(0.85, 0.88, 1) });
     page.drawText(`${via} VIA - ${destino}`, { x: A5.w - 83, y: top - 35, size: 4.8, font: bold, color: rgb(0.95, 0.9, 0.85) });
     page.drawText("RECEITA DE CONTROLE ESPECIAL", { x: A5.w - 139, y: top - 46, size: 8, font: serif, color: rgb(1, 1, 1) });
     page.drawLine({ start: { x: m, y: top - 57 }, end: { x: A5.w - m, y: top - 57 }, thickness: 1.5, color: gold });
 
     page.drawRectangle({ x: m, y: top - 94, width: contentW, height: 32, color: rgb(0.97, 0.96, 0.92) });
     page.drawRectangle({ x: m, y: top - 94, width: 4, height: 32, color: gold });
-    drawFitted(page, `${CLINIC_NAME} - ${DOCTOR_NAME_PDF}`, m + 10, top - 73, contentW - 22, 5.8, bold);
-    page.drawText(`${DOCTOR_SPECIALTY} - ${DOCTOR_CREDENTIALS}`, { x: m + 10, y: top - 82, size: 5.6, font: helv, color: ink });
-    drawFitted(page, CLINIC_ADDRESS_PDF, m + 10, top - 91, contentW - 22, 5.4, helv);
+    drawFitted(page, [issuer.clinicName, issuer.doctorName].filter(Boolean).join(" - "), m + 10, top - 73, contentW - 22, 5.8, bold);
+    drawFitted(page, [issuer.specialty, issuerCredentials(issuer)].filter(Boolean).join(" - "), m + 10, top - 82, contentW - 22, 5.6, helv);
+    drawFitted(page, issuerContactLine(issuer), m + 10, top - 91, contentW - 22, 5.4, helv);
 
     const tableY = top - 122;
     const rowH = 13;
@@ -291,13 +280,12 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
     }
 
     page.drawLine({ start: { x: m, y: 120 }, end: { x: A5.w - m, y: 120 }, thickness: 0.4, color: line });
-    page.drawText(`Petrolina/PE, ${data}  -  Validade: ${valBr}${f.cid ? `  -  CID-10: ${f.cid}` : ""}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
+    page.drawText(`${cidadeUf ? `${cidadeUf}, ` : ""}${data}  -  Validade: ${valBr}${f.cid ? `  -  CID-10: ${f.cid}` : ""}`, { x: m, y: 108, size: 5.8, font: helv, color: muted });
 
     page.drawRectangle({ x: 218, y: 44, width: 176, height: 66, borderWidth: 0.6, borderColor: rgb(0.2, 0.45, 0.34), color: rgb(0.93, 0.99, 0.96) });
-    page.drawImage(signatureImage, { x: 226, y: 78, width: 152, height: 26 });
     page.drawLine({ start: { x: 228, y: 76 }, end: { x: 384, y: 76 }, thickness: 0.25, color: rgb(0.18, 0.22, 0.2) });
-    page.drawText(DOCTOR_NAME_PDF, { x: 238, y: 66, size: 6.2, font: bold, color: rgb(0.04, 0.22, 0.16) });
-    page.drawText(DOCTOR_CREDENTIALS, { x: 250, y: 58, size: 5.2, font: helv, color: muted });
+    drawFitted(page, issuer.doctorName, 238, 66, 148, 6.2, bold);
+    drawFitted(page, issuerCredentials(issuer), 238, 58, 148, 5.2, helv);
     page.drawText("Assinatura digital ICP-Brasil PAdES-BES", { x: 236, y: 50, size: 5.2, font: helv, color: rgb(0.05, 0.34, 0.22) });
     if (pageIndex === 0) page.drawText("Campo tecnico da assinatura digital embutida no PDF.", { x: 222, y: 35, size: 4.4, font: helv, color: muted });
 
@@ -314,8 +302,9 @@ async function buildC1TemplatePdfBytes(f: FormFields): Promise<Uint8Array> {
   return await pdf.save({ useObjectStreams: false });
 }
 
-function buildC1PrintHtml(f: FormFields): string {
+function buildC1PrintHtml(f: FormFields, issuer: DocumentIssuer): string {
   const hoje = todayBr();
+  const cidadeUf = issuerCityLine(issuer);
   const validade = new Date();
   validade.setDate(validade.getDate() + 30);
   const valBr = validade.toLocaleDateString("pt-BR");
@@ -324,8 +313,8 @@ function buildC1PrintHtml(f: FormFields): string {
 <div class="via">
   <div class="head">
     <div class="bk">
-      <div class="logo-nm">${CLINIC_NAME}</div>
-      <div class="logo-sub">${DOCTOR_NAME} · Neuropediatria</div>
+      <div class="logo-nm">${escHtml(issuer.clinicName)}</div>
+      <div class="logo-sub">${escHtml([issuer.doctorName, issuer.specialty].filter(Boolean).join(" · "))}</div>
     </div>
     <div class="rt">
       <div class="via-tag">${numero} VIA — ${destino}</div>
@@ -334,9 +323,9 @@ function buildC1PrintHtml(f: FormFields): string {
   </div>
 
   <div class="medico-box">
-    <strong>${CLINIC_NAME} — ${DOCTOR_NAME}</strong><br>
-    ${DOCTOR_SPECIALTY_HTML} · ${DOCTOR_CREDENTIALS}<br>
-    ${CLINIC_ADDRESS_HTML}
+    <strong>${escHtml([issuer.clinicName, issuer.doctorName].filter(Boolean).join(" — "))}</strong><br>
+    ${escHtml([issuer.specialty, issuerCredentials(issuer)].filter(Boolean).join(" · "))}<br>
+    ${escHtml(issuerContactLine(issuer))}
   </div>
 
   <table class="dados">
@@ -376,12 +365,11 @@ function buildC1PrintHtml(f: FormFields): string {
   </div>
 
   <div class="footer-row">
-    <div>Petrolina/PE, ${hoje} &nbsp;·&nbsp; Validade: <strong>${valBr}</strong>${f.cid ? ` &nbsp;·&nbsp; CID-10: ${escHtml(f.cid)}` : ""}</div>
+    <div>${cidadeUf ? `${escHtml(cidadeUf)}, ` : ""}${hoje} &nbsp;·&nbsp; Validade: <strong>${valBr}</strong>${f.cid ? ` &nbsp;·&nbsp; CID-10: ${escHtml(f.cid)}` : ""}</div>
     <div class="sig-area">
-      <img class="sig-img" src="${signatureImageUrl}" alt="">
       <div class="sig-line"></div>
-      <div class="sig-nm">${DOCTOR_NAME}</div>
-      <div class="sig-info">${DOCTOR_CREDENTIALS}</div>
+      <div class="sig-nm">${escHtml(issuer.doctorName)}</div>
+      <div class="sig-info">${escHtml(issuerCredentials(issuer))}</div>
       <div class="sig-digital">Assinatura digital ICP-Brasil PAdES-BES</div>
     </div>
   </div>
@@ -391,7 +379,7 @@ function buildC1PrintHtml(f: FormFields): string {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Receita C1 — Dr. Jadson — ${dateStamp(false)}</title>
+<title>Receita C1 — ${dateStamp(false)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -436,7 +424,6 @@ table.dados{width:100%;border-collapse:collapse;font-size:8pt}
 .footer-row{display:flex;align-items:flex-end;justify-content:space-between;
   border-top:.5pt solid var(--line);padding-top:2mm;font-size:7.5pt;color:var(--ink);flex-wrap:wrap;gap:2mm}
 .sig-area{text-align:center}
-.sig-img{width:42mm;height:9mm;object-fit:contain;display:block;margin:0 auto -1.2mm;opacity:.96}
 .sig-line{width:48mm;border-top:.6pt solid var(--charcoal);margin:0 auto 1mm}
 .sig-nm{font-size:8pt;font-weight:700;font-family:'Cormorant Garamond',Georgia,serif}
 .sig-info{font-size:6.5pt;color:var(--ink)}
@@ -481,6 +468,7 @@ type CertStatus = "ready" | "missing";
 
 // ── Componente principal ──────────────────────────────────────────
 export default function ReceitaC1ExpressPage() {
+  const { issuer } = useIssuer();
   const [form, setForm] = useState<FormFields>(EMPTY_FORM);
   const [senha, setSenha] = useState("");
   const [showSenha, setShowSenha] = useState(false);
@@ -552,12 +540,12 @@ export default function ReceitaC1ExpressPage() {
       return;
     }
     try {
-      const pdfBytes = await buildC1TemplatePdfBytes(form);
+      const pdfBytes = await buildC1TemplatePdfBytes(form, issuer);
       const { signPdfWithP12, downloadBytes } = await import("@/lib/icpSign");
       const signed = await signPdfWithP12(pdfBytes, p12, senha, {
         reason: "Receita de Controle Especial C1",
-        name: DOCTOR_NAME_PDF,
-        location: "Petrolina-PE",
+        name: pdfSafe(issuer.doctorName) || undefined,
+        location: issuerCityLine(issuer) || undefined,
         widgetRect: [218, 44, 394, 110],
         widgetPageIndex: 0,
       });
@@ -579,7 +567,7 @@ export default function ReceitaC1ExpressPage() {
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
-    win.document.write(buildC1PrintHtml(form));
+    win.document.write(buildC1PrintHtml(form, issuer));
     win.document.close();
     win.focus();
     setTimeout(() => win.print(), 500);
@@ -593,7 +581,7 @@ export default function ReceitaC1ExpressPage() {
     }
     setError(""); setOk(""); setBusy("plain");
     try {
-      const bytes = await buildC1TemplatePdfBytes(form);
+      const bytes = await buildC1TemplatePdfBytes(form, issuer);
       const { downloadBytes } = await import("@/lib/icpSign");
       downloadBytes(bytes, `receita-c1-${dateStamp(false)}.pdf`);
       setOk("PDF gerado (sem assinatura digital).");
@@ -799,7 +787,7 @@ export default function ReceitaC1ExpressPage() {
             <Input
               value={form.municipio}
               onChange={set("municipio")}
-              placeholder="Petrolina / PE"
+              placeholder="Cidade / UF"
               className="mt-1"
             />
           </div>
@@ -955,7 +943,7 @@ export default function ReceitaC1ExpressPage() {
             <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>✕</Button>
           </div>
           <iframe
-            srcDoc={buildC1PrintHtml(form)}
+            srcDoc={buildC1PrintHtml(form, issuer)}
             className="w-full"
             style={{ height: 640, border: "none" }}
             title="Prévia Receita C1"

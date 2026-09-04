@@ -78,13 +78,15 @@ assert.throws(() => monthlyPriceCents(PLAN, 0), /BILLING_INVALID_SEATS/);
 
 {
   const token = "token_teste";
+  // Formato hash: é a rota que o SPA de fato serve (/#/invite), e o token no
+  // fragment não chega a servidores/logs intermediários.
   assert.equal(
     buildInvitationUrl("https://superneuroped.vercel.app", token),
-    "https://superneuroped.vercel.app/invite?token=token_teste",
+    "https://superneuroped.vercel.app/#/invite?token=token_teste",
   );
   assert.equal(
     buildInvitationUrl("https://example.com/app/", token),
-    "https://example.com/app/invite?token=token_teste",
+    "https://example.com/app#/invite?token=token_teste",
   );
   for (const base of [
     undefined,

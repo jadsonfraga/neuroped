@@ -11,7 +11,10 @@ assert.match(signer, /ETSI\\\.CAdES\\\.detached|ETSI\.CAdES\.detached/);
 
 const documentPdf = read("client/src/lib/documentPdf.ts");
 assert.match(documentPdf, /PDFDocument\.create\(\)/);
-assert.match(documentPdf, /drJadsonLogoFile/);
+// Contrato novo (multi-tenant): a logo é opcional e parametrizada por tenant
+// (logoDataUri no DocSpec); o asset pessoal dr-jadson-logo não pode voltar.
+assert.doesNotMatch(documentPdf, /dr-jadson-logo/);
+assert.match(documentPdf, /logoDataUri\?/);
 assert.match(documentPdf, /embedBrandLogo/);
 assert.match(documentPdf, /VALIDACAO E ASSINATURA DIGITAL/);
 
@@ -24,7 +27,9 @@ const c1 = read("client/src/pages/receita-c1.tsx");
 assert.match(c1, /PDFDocument\.create\(\)/);
 assert.match(c1, /buildReceitaC1SignedPdfBytes/);
 assert.match(c1, /AssinaturaIcpPanel/);
-assert.match(c1, /embedJpg\(LOGO_SRC/);
+// Identidade agora vem da fonte única (@/lib/issuer); logo pessoal embutida saiu.
+assert.match(c1, /@\/lib\/issuer/);
+assert.doesNotMatch(c1, /embedJpg\(LOGO_SRC/);
 assert.match(c1, /idadePaciente/);
 assert.match(c1, /dosesPorDia/);
 assert.match(c1, /Idade do paciente/);

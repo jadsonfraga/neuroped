@@ -74,6 +74,9 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-5 flex w-full max-w-sm flex-col gap-3 text-center">
+        <a href="#/cadastro" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+          Criar conta profissional
+        </a>
         <a href={`#${PUBLIC_HOME}`} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Ir para o conteúdo das famílias
         </a>
