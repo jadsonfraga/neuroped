@@ -10,9 +10,9 @@ const publicEndpoint = read("functions/api/public-intake.ts");
 const staffEndpoint = read("functions/api/live/intake/index.ts");
 const shared = read("functions/api/intake/_shared.ts");
 const middleware = read("functions/api/_middleware.ts");
-const publicJs = read("public/intake.js");
-const publicHtml = read("public/intake.html");
-const publicHeaders = read("public/_headers");
+const publicJs = read("client/public/intake.js");
+const publicHtml = read("client/public/intake.html");
+const publicHeaders = read("client/public/_headers");
 const cockpit = read("client/src/components/clinical/PatientCockpit.tsx");
 const intakePanel = read("client/src/components/clinical/RemoteIntakePanel.tsx");
 

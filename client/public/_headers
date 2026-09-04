@@ -28,3 +28,22 @@
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Páginas públicas estáticas (fora da SPA/PIN/login): convites remotos por
+# token de uso único no fragmento da URL. CSP própria, mais restrita que a
+# da SPA — sem framework, sem fetch a terceiros, nunca indexável.
+/intake.html
+  Cache-Control: no-store, no-cache, must-revalidate
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+/escala.html
+  Cache-Control: no-store, no-cache, must-revalidate
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()

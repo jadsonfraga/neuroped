@@ -67,6 +67,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/reset-password",
   "/api/public-booking",
   "/api/public-intake",
+  "/api/public-scale",
 ]);
 
 // Rotas onde a autenticação é opcional: sem Authorization a requisição segue
