@@ -22,6 +22,7 @@ import { escapeHtml, escapeHtmlWithBreaks } from "@/lib/htmlEscape";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
+import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -272,14 +273,17 @@ function buildReport(
   marcos: Marcos,
   medicacoes: Medicacao[],
   terapias: Terapia[],
-  exames: Exame[]
+  exames: Exame[],
+  issuer: DocumentIssuer
 ): string {
   const linha = "─".repeat(60);
   const dateStr = formatInputDate(id.dataConsulta || today);
 
+  // Identidade do emissor pela fonte única (issuer.ts): sem perfil configurado,
+  // o relatório declara a ausência de registro — credencial nunca é inventada.
   let r = "";
-  r += `RELATÓRIO MÉDICO — DR. JADSON FRAGA ARAÚJO JÚNIOR\n`;
-  r += `Neuropediatra | CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119\n`;
+  r += `RELATÓRIO MÉDICO${issuer.doctorName ? ` — ${issuer.doctorName.toUpperCase()}` : ""}\n`;
+  r += `${[issuer.specialty, issuerCredentials(issuer)].filter(Boolean).join(" | ")}\n`;
   r += `NeuroPed — Escalas de Neuropediatria\n`;
   r += `${linha}\n\n`;
 
@@ -373,8 +377,10 @@ function buildReport(
   }
 
   r += `${linha}\n`;
-  r += `Dr. Jadson Fraga Araújo Júnior — Neuropediatra\n`;
-  r += `CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119\n`;
+  if ([issuer.doctorName, issuer.specialty].some(Boolean)) {
+    r += `${[issuer.doctorName, issuer.specialty].filter(Boolean).join(" — ")}\n`;
+  }
+  r += `${issuerCredentials(issuer)}\n`;
   r += `NeuroPed — Escalas de Neuropediatria\n`;
   return r;
 }
@@ -394,7 +400,8 @@ function printReport(
   marcos: Marcos,
   medicacoes: Medicacao[],
   terapias: Terapia[],
-  exames: Exame[]
+  exames: Exame[],
+  issuer: DocumentIssuer
 ) {
   const w = window.open("", "_blank");
   if (!w) return false;
@@ -487,7 +494,7 @@ table.milestones tr:nth-child(even) td { background: var(--doc-tint); }
 <body>
 <div class="header">
   <h1>🧠 NeuroPed — Prontuário Clínico</h1>
-  <div class="sub"><b>Dr. Jadson Fraga Araújo Júnior</b> — Neuropediatra | CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119</div>
+  <div class="sub">${issuer.doctorName ? `<b>${escapeHtml(issuer.doctorName)}</b> — ` : ""}${escapeHtml([issuer.specialty, issuerCredentials(issuer)].filter(Boolean).join(" | "))}</div>
   <div class="sub">Data da consulta: ${escapeHtml(dateStr)}</div>
 </div>
 
@@ -536,9 +543,9 @@ ${terRows ? `<div class="section"><h2>Terapias</h2>${terRows}</div>` : ""}
 ${examRows ? `<div class="section"><h2>Exames</h2>${examRows}</div>` : ""}
 
 <div class="footer">
-  <div class="name">Dr. Jadson Fraga Araújo Júnior</div>
-  Neuropediatra<br>
-  CRM-PE 25227 · CRM-BA 23384 | RQE 17756 / 14499 / 13119<br>
+  ${issuer.doctorName ? `<div class="name">${escapeHtml(issuer.doctorName)}</div>` : ""}
+  ${issuer.specialty ? `${escapeHtml(issuer.specialty)}<br>` : ""}
+  ${escapeHtml(issuerCredentials(issuer))}<br>
   NeuroPed — Escalas de Neuropediatria
 </div>
 </body>
@@ -572,7 +579,7 @@ function defaultMarcos(): Marcos {
 function defaultId(): Identificacao {
   return {
     nomeCompleto: "", dataNascimento: "", sexo: "", nomeResponsavel: "", parentesco: "",
-    telefone: "", email: "", convenio: "", medicoResponsavel: "Dr. Jadson Fraga",
+    telefone: "", email: "", convenio: "", medicoResponsavel: "",
     cid: "", hipoteseDiagnostica: "", dataConsulta: today,
   };
 }
@@ -586,6 +593,7 @@ export default function ProntuarioPage() {
   const { toast } = useToast();
   const { accessMode, isAuthenticated } = useAuth();
   const { activeClinicId } = useClinic();
+  const { issuer } = useIssuer();
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const patientId = patientIdFromQuery();
@@ -598,6 +606,13 @@ export default function ProntuarioPage() {
   const [exames, setExames] = useState<Exame[]>([]);
   const [copied, setCopied] = useState(false);
   const [recordLoading, setRecordLoading] = useState(Boolean(patientId));
+
+  // Pré-preenche o médico responsável com o emissor configurado (issuer.ts),
+  // sem sobrescrever um valor já digitado ou carregado do prontuário salvo.
+  useEffect(() => {
+    if (!issuer.doctorName) return;
+    setId((prev) => (prev.medicoResponsavel ? prev : { ...prev, medicoResponsavel: issuer.doctorName }));
+  }, [issuer.doctorName]);
   const [recordSaving, setRecordSaving] = useState(false);
   const [eventIds, setEventIds] = useState<Record<string, string>>({});
 
@@ -722,10 +737,10 @@ export default function ProntuarioPage() {
   const removeExame = (id: string) => setExames(p => p.filter(e => e.id !== id));
 
   // ── report ──
-  const reportText = buildReport(identificacao, anamnese, marcos, medicacoes, terapias, exames);
+  const reportText = buildReport(identificacao, anamnese, marcos, medicacoes, terapias, exames, issuer);
 
   const handlePrint = () => {
-    const ok = printReport(identificacao, anamnese, marcos, medicacoes, terapias, exames);
+    const ok = printReport(identificacao, anamnese, marcos, medicacoes, terapias, exames, issuer);
     if (!ok) {
       softError();
       haptic.error();

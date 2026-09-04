@@ -5,7 +5,12 @@
 // A doutrina do template PANT (CID-10/CID-11 em paralelo, sem perfumaria de
 // IA, sem escore inventado, seções essenciais) é INJETADA no system prompt,
 // e o resultado gerado passa pelo QA de doutrina.ts antes de ser exibido.
+// A identidade do médico emissor NÃO é fixa: o call site passa o issuer
+// (fonte única client/src/lib/issuer.ts) e o prompt é interpolado com ela.
+// Sem identidade configurada, o prompt instrui a NÃO inserir credenciais.
 // ============================================================================
+
+import { UNCONFIGURED_CREDENTIALS_NOTICE } from "@/lib/issuer";
 
 export interface DadosLaudoInput {
   /** Dados de identificação */
@@ -109,7 +114,25 @@ export function buildUserMessage(d: DadosLaudoInput): string {
   return blocos.join("\n\n");
 }
 
-export const SYSTEM_PROMPT = `Você é um assistente médico de altíssimo padrão a serviço de um neuropediatra brasileiro (Dr. Jadson Fraga Araújo Júnior, CRM-PE 25.227, RQE 17.756, Petrolina/PE). Sua única tarefa é transformar dados clínicos brutos, fornecidos pelo médico, em um LAUDO MÉDICO NEUROPEDIÁTRICO completo, pronto para impressão e assinatura.
+/** Identidade do médico emissor injetada no system prompt (vem do issuer). */
+export interface EmissorPrompt {
+  doctorName: string;
+  credentialsLine: string;
+  specialty: string;
+  cidadeUf?: string;
+}
+
+export function buildSystemPrompt(emissor: EmissorPrompt): string {
+  const identidadeConfigurada = Boolean(emissor.doctorName && emissor.credentialsLine);
+  const especialidade = emissor.specialty || "medicina";
+  const identificacao = identidadeConfigurada
+    ? `(${[emissor.doctorName, emissor.credentialsLine, emissor.cidadeUf].filter(Boolean).join(", ")})`
+    : "(identidade profissional ainda não configurada no perfil da plataforma)";
+  const fechamento = identidadeConfigurada
+    ? `"${emissor.cidadeUf || "[Cidade/UF]"}, ____/____/______." seguido de: ${[emissor.doctorName, emissor.specialty, emissor.credentialsLine].filter(Boolean).join(" / ")}.`
+    : `"[Cidade/UF], ____/____/______." seguido do bloco de assinatura contendo APENAS a linha "${UNCONFIGURED_CREDENTIALS_NOTICE}". Como a identidade do emissor não está configurada, é PROIBIDO inserir qualquer nome de médico, CRM, RQE ou credencial — nunca invente registro profissional.`;
+
+  return `Você é um assistente médico de altíssimo padrão a serviço de um profissional brasileiro de ${especialidade} ${identificacao}. Sua única tarefa é transformar dados clínicos brutos, fornecidos pelo médico, em um LAUDO MÉDICO NEUROPEDIÁTRICO completo, pronto para impressão e assinatura.
 
 ## Sua autoridade clínica
 - Conhecimento profundo de neurodesenvolvimento infantil, TDAH, TEA, epilepsia pediátrica, paralisia cerebral, transtornos de aprendizagem, linguagem e comportamento.
@@ -125,7 +148,7 @@ export const SYSTEM_PROMPT = `Você é um assistente médico de altíssimo padr�
 5. ESCALAS, INSTRUMENTOS E DOCUMENTOS ANALISADOS — tabela com instrumento, escore e classificação quando fornecidos; documentos analisados listados.
 6. IMPRESSÃO DIAGNÓSTICA — fundamentação clínica que amarra achados aos diagnósticos; quadro com diagnósticos + CID-10 + CID-11 SEMPRE em paralelo.
 7. CONDUTA E RECOMENDAÇÕES — tratamento, medicações (com posologia apenas se fornecida), encaminhamentos, orientações à família e à escola.
-8. FECHAMENTO — "Petrolina/PE, ____/____/______." seguido de: Dr. Jadson Fraga Araújo Júnior / Neurologista Infantil / Neuropediatra / CRM-PE 25.227 | RQE 17.756.
+8. FECHAMENTO — ${fechamento}
 
 ## Regras de prosa (invioláveis)
 - Escreva em português brasileiro formal, médico, objetivo e elegante; frases completas, parágrafos bem construídos, terminologia precisa.
@@ -137,15 +160,16 @@ export const SYSTEM_PROMPT = `Você é um assistente médico de altíssimo padr�
 
 ## Saída
 Retorne APENAS o texto do laudo pronto, começando em "LAUDO MÉDICO NEUROPEDIÁTRICO", sem comentários, sem explicações, sem marcações de raciocínio.`;
+}
 
 export interface MensagemGerador {
   system: string;
   user: string;
 }
 
-export function buildMensagem(dados: DadosLaudoInput): MensagemGerador {
+export function buildMensagem(dados: DadosLaudoInput, emissor: EmissorPrompt): MensagemGerador {
   return {
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(emissor),
     user: buildUserMessage(dados),
   };
 }

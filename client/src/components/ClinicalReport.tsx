@@ -36,14 +36,11 @@ import {
   safeTextFilename,
   shareWhatsAppDocument,
 } from "@/lib/shareText";
+import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
 
-const EMAIL_TO = "drjadsonfraga@proton.me";
-const PROFESSIONAL_SIGNATURE = {
-  name: "Dr. Jadson Fraga Araújo Júnior",
-  specialty: "Neuropediatra",
-  registry: "CRM-PE 25227 · RQE 17756",
-  service: "NeuroPed — Escalas de Neuropediatria",
-};
+// Identidade do emissor pela fonte única (client/src/lib/issuer.ts): nome,
+// credenciais e email de documentos vêm do perfil configurado — nunca hardcoded.
+const SERVICE_LINE = "NeuroPed — Escalas de Neuropediatria";
 
 interface ReportItem {
   question: string;
@@ -88,6 +85,7 @@ async function sendEmail(
   scaleName: string,
   reportText: string,
   applicationDate: Date,
+  emailTo: string,
   setSent: (v: boolean) => void,
   toast: (opts: any) => void,
 ) {
@@ -95,7 +93,7 @@ async function sendEmail(
 
   try {
     const outcome = await openEmailDraft({
-      to: EMAIL_TO,
+      to: emailTo,
       subject,
       body: reportText,
       filename: `${safeTextFilename(scaleName)}-respostas`,
@@ -124,8 +122,16 @@ async function sendEmail(
 function generateReportText(
   props: NormalizedReport,
   applicationDate: Date,
+  issuer: DocumentIssuer,
 ): string {
-  return `${buildScaleResponseText(props, applicationDate)}\n---\n${PROFESSIONAL_SIGNATURE.name} — ${PROFESSIONAL_SIGNATURE.specialty}\n${PROFESSIONAL_SIGNATURE.registry}\n${PROFESSIONAL_SIGNATURE.service}\n`;
+  const signature = [
+    [issuer.doctorName, issuer.specialty].filter(Boolean).join(" — "),
+    issuerCredentials(issuer),
+    SERVICE_LINE,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `${buildScaleResponseText(props, applicationDate)}\n---\n${signature}\n`;
 }
 
 export function ClinicalReport(rawProps: ClinicalReportProps) {
@@ -143,7 +149,8 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
   const [copied, setCopied] = useState(false);
   const [generatingPremiumPdf, setGeneratingPremiumPdf] = useState(false);
   const { toast } = useToast();
-  const reportText = generateReportText(props, applicationDate);
+  const { issuer } = useIssuer();
+  const reportText = generateReportText(props, applicationDate, issuer);
   const reportReady = Boolean(props.scaleName && props.items.length > 0);
 
   async function handleCopy() {
@@ -231,10 +238,10 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
         title: `Resultado da escala — ${props.scaleName}`,
         subtitle: props.scaleFullName || "Relatório clínico premium exportável",
         credentials: [
-          `${PROFESSIONAL_SIGNATURE.name} — ${PROFESSIONAL_SIGNATURE.specialty}`,
-          PROFESSIONAL_SIGNATURE.registry,
-          PROFESSIONAL_SIGNATURE.service,
-        ],
+          [issuer.doctorName, issuer.specialty].filter(Boolean).join(" — "),
+          issuerCredentials(issuer),
+          SERVICE_LINE,
+        ].filter(Boolean),
         sections: [
           {
             heading: "Identificação da aplicação",
@@ -324,6 +331,7 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
       props.scaleName,
       reportText,
       applicationDate,
+      issuer.documentEmail,
       setSent,
       toast,
     );
@@ -525,8 +533,8 @@ export function ClinicalReport(rawProps: ClinicalReportProps) {
 
           {sent && (
             <p className="text-center text-xs text-emerald-600 dark:text-emerald-400">
-              Email preparado para {EMAIL_TO}; confirme o envio no aplicativo de
-              email.
+              Email preparado{issuer.documentEmail ? ` para ${issuer.documentEmail}` : ""}; confirme o envio no
+              aplicativo de email.
             </p>
           )}
 

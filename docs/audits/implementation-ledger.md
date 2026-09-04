@@ -61,6 +61,51 @@ auditoria (duplicação, worker LGPD, Secretaria/booking público).
 | Trigger de consentimento de waitlist dispara em qualquer INSERT (não só fluxo público) | DOCUMENTED | Risco latente apenas se nascer fluxo interno de waitlist; comportamento herdado da migração 0016 e espelhado no bootstrap para não divergir. Ao criar fluxo interno, condicionar o trigger a uma coluna `source`. |
 | Consolidações menores restantes da matriz (#8/#9: `bytesEqual` local do executor, variantes de `cleanText`) | TODO | Baixo impacto; `bytesEqual` tem nota de timing já registrada (comparação não-constante aceitável: compara ciphertext readback, não segredo). |
 
+## Rodada 2026-09-02 — transformação SaaS (base `main@27093f25`)
+
+Mandato: "transformação cirúrgica em SaaS real" — preservar 100% do valor
+clínico, fechar o funil comercial multiusuário. Auditoria em 4 frentes
+(auth, tenancy/RBAC, pressupostos single-user, billing) concluiu: backend
+SaaS ~75% pronto (memberships 5 papéis, triggers de último owner, trial
+por trigger, entitlements, LGPD), produto 0% (sem signup, /invite 404,
+zero UI de equipe/plano/settings, emissores de documentos hardcoded).
+
+| Item | Status | Evidência |
+|---|---|---|
+| P0: /api/send-report caía numa caixa pessoal fixa (conteúdo clínico de qualquer tenant) | DONE (`aa43cacc`) | Fallback = e-mail do próprio profissional autenticado. |
+| Signup self-service | DONE (`aa43cacc`) | POST /api/auth/signup gated por SAAS_SIGNUP_ENABLED (fechado por padrão), política de senha forte, anti-oráculo 409 uniforme, balde de abuso por IP; página /cadastro. |
+| Aceite de convite era inalcançável (middleware 401 antes do token; /invite 404 no SPA) | DONE (`aa43cacc`+`e5daa384`) | Auth OPCIONAL no middleware p/ /api/billing/accept; buildInvitationUrl emite /#/invite (token no fragment); página /invite (conta nova ou logado). |
+| Settings por tenant + perfil profissional | DONE (`aa43cacc`) | Migração 0019 (user_profiles, clinic_settings) + bootstrap de runtime; GET/PATCH /api/tenants/:id; GET/PUT /api/me/profile; workflow D1 dedicado. |
+| UI de equipe/plano/clínica/perfil (endpoints existiam sem tela) | DONE (`e5daa384`) | /configuracoes: membros, convites com link copiável, revogações, papel timbrado, estado real da assinatura + checkout honesto; /onboarding cria clínica (owner+trial). |
+| Multi-clínica quebrava rotas legadas (409 CONTEXT_REQUIRED) | DONE (`e5daa384`) | authFetch envia X-Tenant-Id da clínica ativa (servidor valida membership antes de aceitar). |
+| Callbacks Asaas para rotas inexistentes | DONE (`e5daa384`) | /#/billing/retorno?status=… + página de confirmação honesta. |
+| Entitlements centrais | DONE (`aa43cacc`+`dcda6d94`) | shared/entitlements.ts (catálogo plano→capabilities fail-closed); billing/me alinhado ao guard (clinics.status + assinaturas vivas), trialDaysRemaining, assentos; badge de trial na sidebar. |
+| Papel assistant era um login sem função | DONE (`aa43cacc`) | Convite assistant deriva global 'operator' (suíte operacional o reconhece). |
+| Emissores de documentos com identidade hardcoded (~13 arquivos, regexes de nome, e-mails pessoais, CNPJ/logo) | DONE (`9c79488d`) | Fonte única client/src/lib/issuer.ts (perfil do usuário + timbrado da clínica); sem perfil, o documento DECLARA a ausência de registro (nunca inventa); guard de identidade invertido (proíbe identidade pessoal em ClinicalReport/modeloSuper); tenant-issuer-static.test.mjs. |
+| Cenário de aceite + adversarial multitenant | DONE (`dcda6d94`) | saas-acceptance-journey.test.ts sobre handlers+migrações REAIS: signup→clínica+trial(trigger)→convite/aceite→2ª clínica→B não lê/edita/enumera/convida em A→teto de assentos. Workflow saas-self-service-guard no CI. |
+| Contratos duplos de acesso atualizados com justificativa | DONE | validate-public-split (3 rotas do funil aprovadas: sem dado clínico) e assert-open-access (senha em /cadastro e /invite: direto p/ signup/accept, nunca persistida). |
+
+### Gates de governança (comentário do dono, 03/09/2026 — PR #771 em Draft)
+
+| Gate | Status | Evidência |
+|---|---|---|
+| 1. Revisão adversarial independente (signup, auth opcional do accept, anti-IDOR/RBAC, X-Tenant-Id, emissor, 0019) | DONE (revisão executada; 1 achado MÉDIO corrigido) | Varredura confirmou: interpolações de issuer nos HTMLs de impressão todas escapadas; SQL 100% parametrizado; X-Tenant-Id só vale após validação de membership; billing/me sempre restrito a `cm.user_id`; PATCH de tenant gated por gestão. ACHADO: aceite anônimo podia criar identidade de login para e-mail de terceiro (token fica com o convidante; sem verificação de e-mail) → corrigido: criação de conta via convite agora exige o MESMO opt-in `SAAS_SIGNUP_ENABLED` (produção volta à postura pré-PR); definitivo = verificação de e-mail no porte do #770. Regressão no cenário 8 da jornada. |
+| 2. Trava de colisão de prefixo de migração | DONE (`f08004f7`) | migration-prefix-guard.test.mjs: prefixos únicos (0008 legado congelado), formato NNNN_snake_case, sequência contígua; em test:quick-wins e no saas-self-service-guard (paths db/migrations/**). |
+| 3. Não ativar SAAS_SIGNUP_ENABLED / dados clínicos reais | ACKNOWLEDGED | Flag continua fechada por padrão; nada neste PR a ativa. P0 #515 e P1 #685 permanecem gates externos abertos. |
+| 4. Recalibrar declaração de production-ready | DONE | Status do PR atualizado: além de gateway/signup/e-mail, os gates externos #515 (rotação/revogação de credenciais) e #685 (prova física de export/eliminação LGPD no runtime canônico) condicionam produção. |
+| 5. Password recovery (porte do #770) | DONE (PR #774, Draft) | Migração 0020 (aditiva; só auth_password_reset_tokens hash-only + auth_password_reset_rate_limits, sem duplicar clinic_settings/signup); forgot-password/reset-password portados com sha256Hex canônico e política de senha da casa (endurecimento sobre o #770 original); link de reset para rota dedicada /#/redefinir-senha; teste adversarial contra o SQL real das 0003+0020 (anti-enumeração byte a byte, hash-only, revogação de sessões, uso único, rate limit); CI verde. Pendências operacionais fora do diff: secrets AUTH_PUBLIC_APP_URL/AUTH_RESEND_API_KEY/AUTH_EMAIL_FROM no Cloudflare Pages (sem eles, fail-closed: 202 genérico sem criar token). A verificação de posse de e-mail para destravar a criação de conta via convite sem o gate interino é follow-up separado. |
+
+Documentado sem mudança (decisão futura): rotas institucionais do tenant
+fundador (sobre, servicos-clinica, marcacao, manus, branding/splash/mascote,
+manifest) permanecem como conteúdo do tenant incumbente; tabelas legadas
+`*_demo`/agenda seguem por owner_user_id/provider_user_id (geração LIVE é o
+caminho multi-tenant; migrar legado = rodada própria); catálogo de planos
+continua com 1 plano e preço canônico em código (mudar exige decisão
+comercial); e-mail transacional inexiste no runtime (convite/reset por
+link manual); trial expira sem aviso prévio (job de dunning = rodada
+própria); operator não abre /configuracoes no client (RBAC de rota
+uniforme; perfil dele é editável via API).
+
 ## Bloqueios externos
 
 | Bloqueio | Causa | Ação necessária |

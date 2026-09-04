@@ -174,6 +174,28 @@ export async function loginRequest(email: string, password: string): Promise<Log
 }
 
 /**
+ * Cadastro self-service do SaaS. Só funciona quando o operador habilitou
+ * SAAS_SIGNUP_ENABLED no backend; caso contrário o servidor responde 503 e a
+ * UI mostra o estado honesto.
+ */
+export async function signupRequest(name: string, email: string, password: string): Promise<LoginResponse> {
+  const r = await fetch(`${API_BASE}/api/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const err = data as { error?: string; code?: string };
+    const error = new Error(err.error || `Cadastro falhou (${r.status})`);
+    (error as Error & { code?: string }).code = err.code;
+    throw error;
+  }
+  replaceAuthSession(data as LoginResponse);
+  return data as LoginResponse;
+}
+
+/**
  * Troca a senha no runtime Cloudflare e substitui atomicamente a família local
  * de tokens pela sessão nova emitida pelo servidor. A senha nunca é persistida.
  */
@@ -292,6 +314,18 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
   let token = getAccessToken();
   const headers = new Headers(init.headers);
   if (token && isSameOriginAsApi(requestUrl)) headers.set("Authorization", `Bearer ${token}`);
+  // Contexto de tenant em toda chamada autenticada: usuários com mais de uma
+  // clínica recebiam 409 BILLING_CLINIC_CONTEXT_REQUIRED nas rotas que
+  // resolvem a clínica pelo header (o servidor valida a membership antes de
+  // aceitar o valor — o header não concede nada por si).
+  if (token && isSameOriginAsApi(requestUrl) && !headers.has("X-Tenant-Id")) {
+    try {
+      const activeClinicId = sessionStorage.getItem("neuroped:active-clinic-id");
+      if (activeClinicId) headers.set("X-Tenant-Id", activeClinicId);
+    } catch {
+      // sessionStorage indisponível (SSR/preview): segue sem contexto explícito.
+    }
+  }
   if (!headers.has("Content-Type") && init.body && typeof init.body === "string") {
     headers.set("Content-Type", "application/json");
   }

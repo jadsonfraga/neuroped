@@ -10,11 +10,17 @@ import { escapeHtml } from "@/lib/htmlEscape";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { gerarEValidar, type EntradaLaudo } from "@/lib/laudo/gerador";
 import { laudoParaTexto } from "@/lib/laudo/paraTexto";
+import {
+  issuerCityLine,
+  issuerCredentials,
+  useIssuer,
+  type DocumentIssuer,
+} from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — WebUI de geração assistida (embutida)
-   Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17756
+   Identidade do emissor: fonte única client/src/lib/issuer.ts
    Geração 100% local (sem API externa), com a doutrina PANT:
      CID-10/CID-11 em paralelo · sem perfumaria de IA · sem "(est.)"
 ──────────────────────────────────────────────────────────── */
@@ -51,15 +57,19 @@ function limpo(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-function buildPrintHtml(texto: string): string {
+function buildPrintHtml(texto: string, issuer: DocumentIssuer): string {
   const today = new Date().toLocaleDateString("pt-BR");
   const safeText = escapeHtml(texto.trim() || "Sem conteúdo informado.");
+  const esc = escapeHtml;
+  const credenciais = issuerCredentials(issuer);
+  const emitLinha1 = [issuer.doctorName, credenciais].filter(Boolean).join(" · ");
+  const emitLinha2 = [issuer.specialty, issuerCityLine(issuer)].filter(Boolean).join(" · ");
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Laudo Médico Neuropediátrico — Dr. Jadson</title>
+<title>Laudo Médico Neuropediátrico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -103,20 +113,19 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 <body>
   <div class="head">
     <div class="bk">
-      <div class="wm">NeuroPed EDJ</div>
-      <div class="tg">Neuropediatria · Neurodesenvolvimento</div>
+      <div class="wm">${esc(issuer.clinicName)}</div>
+      <div class="tg">${esc(issuer.specialty)}</div>
     </div>
     <div class="rt">
       <div class="doc-title">Laudo Médico Neuropediátrico</div>
-      <div class="emit">Dr. Jadson Fraga Araújo Júnior · CRM-PE 25.227 · RQE 17.756<br>
-        Neurologista Infantil / Neuropediatra · Petrolina/PE</div>
+      <div class="emit">${esc(emitLinha1)}${emitLinha2 ? `<br>\n        ${esc(emitLinha2)}` : ""}</div>
     </div>
   </div>
   <div class="ribbon"><i class="g"></i><i class="t"></i><i class="b"></i><i class="n"></i></div>
   <main class="doc-text">${safeText}</main>
   <div class="sig-area">
-    <div class="sig-nm">Dr. Jadson Fraga Araújo Júnior</div>
-    <div class="sig-rg">CRM-PE 25.227 · RQE 17.756 — Neurologista Infantil / Neuropediatra</div>
+    <div class="sig-nm">${esc(issuer.doctorName)}</div>
+    <div class="sig-rg">${esc([credenciais, issuer.specialty].filter(Boolean).join(" — "))}</div>
     <div class="sig-rg" style="margin-top:6pt;font-size:6pt;color:var(--note)">
       Assinatura digital ICP-Brasil — conferir em validador oficial (iti.br/repositorio)
     </div>
@@ -156,6 +165,7 @@ const ENTRADA_VAZIA: EntradaLaudo = {
 };
 
 export default function LaudoNeuropedPage() {
+  const { issuer } = useIssuer();
   const [entrada, setEntrada] = useState<EntradaLaudo>(ENTRADA_VAZIA);
   const [texto, setTexto] = useState("");
   const [editando, setEditando] = useState(true);
@@ -206,7 +216,7 @@ export default function LaudoNeuropedPage() {
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
-    win.document.write(buildPrintHtml(texto));
+    win.document.write(buildPrintHtml(texto, issuer));
     win.document.close();
     win.focus();
     setTimeout(() => { win.print(); }, 400);
@@ -330,8 +340,8 @@ export default function LaudoNeuropedPage() {
         </div>
         <AssinaturaIcpPanel
           filename={filename}
-          signerName="Dr. Jadson Fraga Araujo Junior"
-          location="Petrolina-PE"
+          signerName={issuer.doctorName || undefined}
+          location={issuerCityLine(issuer) || undefined}
           reason="Laudo Neuropediatrico"
           archivePdf={async (bytes, meta) => {
             await archiveClinicalPdf({
@@ -355,9 +365,11 @@ export default function LaudoNeuropedPage() {
               title: "Laudo Medico Neuropediatrico",
               subtitle: "Gerado pela assistente embarcada NeuroPed EDJ",
               credentials: [
-                "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
-                "Neurologista Infantil / Neuropediatra",
-              ],
+                [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join(" - "),
+                issuer.specialty,
+              ].filter(Boolean),
+              clinicName: issuer.clinicName,
+              motto: issuer.motto,
               sections: [
                 { heading: "Conteudo integral do laudo", body: texto.trim() || "Sem conteudo informado." },
               ],
@@ -404,7 +416,7 @@ export default function LaudoNeuropedPage() {
             <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>✕</Button>
           </div>
           <iframe
-            srcDoc={buildPrintHtml(texto)}
+            srcDoc={buildPrintHtml(texto, issuer)}
             className="w-full"
             style={{ height: "680px", border: "none" }}
             title="Laudo Preview"

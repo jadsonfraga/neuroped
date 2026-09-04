@@ -79,9 +79,12 @@ export function buildInvitationUrl(base: string | undefined, token: string): str
     return null;
   }
 
+  // O SPA usa roteamento por hash: a rota real é /#/invite. Além de casar com
+  // o roteador, o token no fragment nunca é enviado ao servidor nem aparece em
+  // logs de acesso/referrer intermediários.
   const basePath = url.pathname.replace(/\/+$/, "");
-  url.pathname = `${basePath}/invite`;
-  url.searchParams.set("token", cleanToken);
+  url.pathname = basePath || "/";
+  url.hash = `#/invite?token=${encodeURIComponent(cleanToken)}`;
   return url.toString();
 }
 

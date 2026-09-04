@@ -1,6 +1,42 @@
+import { useEffect, useState } from "react";
 import { Building2, ChevronDown, Loader2 } from "lucide-react";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/authClient";
+
+interface BillingBadge {
+  label: string;
+  tone: "trial" | "warning";
+}
+
+/**
+ * Estado honesto da assinatura da clínica ativa, direto de /api/billing/me —
+ * o mesmo snapshot que o servidor aplica. Silencioso quando ativa e paga.
+ */
+function useBillingBadge(clinicId: string | null): BillingBadge | null {
+  const [badge, setBadge] = useState<BillingBadge | null>(null);
+  useEffect(() => {
+    setBadge(null);
+    if (!clinicId) return;
+    let cancelled = false;
+    void authFetch(`/api/billing/me?clinicId=${encodeURIComponent(clinicId)}`)
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((body: { entitlement?: { trialActive: boolean; trialDaysRemaining: number; isActive: boolean; isPastDue: boolean } } | null) => {
+        if (cancelled || !body?.entitlement) return;
+        const { trialActive, trialDaysRemaining, isActive, isPastDue } = body.entitlement;
+        if (trialActive) {
+          setBadge({ label: `Avaliação: ${trialDaysRemaining} dia(s) restante(s)`, tone: "trial" });
+        } else if (!isActive || isPastDue) {
+          setBadge({ label: "Assinatura pendente — ver Configurações › Plano", tone: "warning" });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId]);
+  return badge;
+}
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
@@ -13,6 +49,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function ClinicSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { accessMode, isAuthenticated } = useAuth();
   const { clinics, activeClinicId, activeClinic, isLoading, error, setActiveClinicId } = useClinic();
+  const billingBadge = useBillingBadge(accessMode === "remote" && isAuthenticated ? activeClinicId : null);
 
   if (accessMode !== "remote" || !isAuthenticated || (!isLoading && clinics.length === 0 && !error)) return null;
 
@@ -60,6 +97,19 @@ export function ClinicSwitcher({ collapsed = false }: { collapsed?: boolean }) {
               <p className="mt-1 px-1 text-[10px] text-muted-foreground">
                 {ROLE_LABELS[activeClinic.role] ?? activeClinic.role}
               </p>
+            )}
+            {billingBadge && (
+              <a
+                href="#/configuracoes"
+                className={`mt-1 block rounded-lg px-2 py-1 text-[10px] font-semibold leading-4 ${
+                  billingBadge.tone === "trial"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                }`}
+                data-testid="billing-badge"
+              >
+                {billingBadge.label}
+              </a>
             )}
           </>
         ) : (

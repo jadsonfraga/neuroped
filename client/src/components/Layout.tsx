@@ -13,6 +13,7 @@ import {
   Search,
   ClipboardList,
   KeyRound,
+  Settings2,
   Trash2,
   Zap,
   ArrowUpRight,
@@ -970,6 +971,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   {sessionRoleLabels[user.role] ?? user.role}
                 </span>
               </span>
+              <a
+                href="#/configuracoes"
+                className="np-side-session__exit inline-flex h-8 items-center justify-center rounded-md px-2 hover:bg-sidebar-accent"
+                data-testid="link-session-settings"
+                aria-label="Configurações da conta e da clínica"
+                title="Configurações"
+              >
+                <Settings2 className="w-4 h-4" />
+                <span className="sr-only">Configurações</span>
+              </a>
               <Button
                 variant="ghost"
                 size="sm"
