@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>NeuroPed SDG · Questionário seguro</title>
+    <link rel="stylesheet" href="/escala.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="brand" aria-label="NeuroPed SDG">
+        <div class="brand-mark" aria-hidden="true">N</div>
+        <div>
+          <p class="eyebrow">NeuroPed SDG</p>
+          <h1>Questionário seguro</h1>
+        </div>
+      </header>
+
+      <section id="loading" class="card status-card" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <div>
+          <h2>Validando o convite…</h2>
+          <p>Nenhuma informação clínica é salva neste dispositivo.</p>
+        </div>
+      </section>
+
+      <section id="error" class="card hidden" role="alert">
+        <p class="eyebrow danger">Convite indisponível</p>
+        <h2 id="error-title">Não foi possível abrir o questionário.</h2>
+        <p id="error-message" class="muted"></p>
+      </section>
+
+      <form id="scale-form" class="hidden" novalidate>
+        <section class="card intro-card">
+          <p id="clinic-name" class="eyebrow"></p>
+          <h2 id="scale-title"></h2>
+          <p id="scale-subtitle" class="muted"></p>
+          <p id="scale-instructions" class="muted compact"></p>
+          <div class="notice">
+            <strong>Importante</strong>
+            <p id="safety-notice"></p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Respondente</p>
+              <h2>Quem está preenchendo?</h2>
+            </div>
+            <span class="optional">opcional</span>
+          </div>
+          <div class="grid-two">
+            <label class="field">
+              <span>Nome</span>
+              <input id="respondent-name" name="respondentName" type="text" maxlength="160" autocomplete="name" />
+            </label>
+            <label class="field">
+              <span>Relação com o paciente</span>
+              <input id="relationship" name="relationship" type="text" maxlength="160" placeholder="Ex.: mãe, pai" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="progress-head">
+            <span id="progress-label" class="muted compact">0 de 0 respondidos</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progress-bar" class="progress-fill"></div>
+          </div>
+          <div id="items" class="items" role="list"></div>
+        </section>
+
+        <section class="card consent-card">
+          <label class="consent-row">
+            <input id="consent" type="checkbox" required />
+            <span id="consent-notice"></span>
+          </label>
+          <p class="privacy-copy">
+            O link funciona como uma credencial temporária. As respostas são enviadas ao servidor e armazenadas cifradas; a pontuação e a interpretação clínica ficam somente com a equipe assistencial.
+          </p>
+        </section>
+
+        <div id="submit-error" class="inline-error hidden" role="alert"></div>
+        <button id="submit-button" class="primary-button" type="submit" disabled>Enviar para revisão da equipe</button>
+      </form>
+
+      <section id="success" class="card hidden" aria-live="polite">
+        <div class="success-mark" aria-hidden="true">✓</div>
+        <p class="eyebrow">Envio concluído</p>
+        <h2>Respostas recebidas.</h2>
+        <p id="success-message" class="muted"></p>
+        <p class="review-note">A equipe revisa e interpreta as respostas antes de qualquer conduta clínica.</p>
+      </section>
+
+      <footer>
+        <span>NeuroPed SDG</span>
+        <span aria-hidden="true">·</span>
+        <span>canal estruturado de coleta prévia</span>
+      </footer>
+    </main>
+    <script type="module" src="/escala.js"></script>
+  </body>
+</html>

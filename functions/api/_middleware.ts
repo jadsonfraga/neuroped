@@ -61,6 +61,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/logout",
   "/api/public-booking",
   "/api/public-intake",
+  "/api/public-scale",
 ]);
 
 const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([
