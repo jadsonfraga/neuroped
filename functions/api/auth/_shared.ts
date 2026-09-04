@@ -23,6 +23,8 @@ export interface Env {
   NEUROPED_E2E_EMAIL?: string;
   NEUROPED_E2E_PASSWORD?: string;
   NEUROPED_E2E_NAME?: string;
+  /** Cadastro self-service do SaaS; fechado por padrão ("true" habilita). */
+  SAAS_SIGNUP_ENABLED?: string;
 }
 
 export interface UserRow {

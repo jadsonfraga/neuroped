@@ -91,10 +91,13 @@ export async function createAsaasRecurringCheckout(
     chargeTypes: ["RECURRENT"],
     minutesToExpire: 60,
     externalReference: params.externalReference,
+    // O SPA roteia por hash: /#/billing/retorno é a rota real. As URLs de
+    // caminho anteriores caíam no fallback do SPA e abriam a home, sem
+    // qualquer confirmação de pagamento para o usuário.
     callback: {
-      successUrl: `${callbackBase}/billing/success`,
-      cancelUrl: `${callbackBase}/billing/cancel`,
-      expiredUrl: `${callbackBase}/billing/expired`,
+      successUrl: `${callbackBase}/#/billing/retorno?status=success`,
+      cancelUrl: `${callbackBase}/#/billing/retorno?status=cancel`,
+      expiredUrl: `${callbackBase}/#/billing/retorno?status=expired`,
     },
     items: [{
       name: "NeuroPed SaaS — assento mensal",

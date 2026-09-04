@@ -12,19 +12,38 @@ import {
   gerarEValidarSuper,
   gerarLaudoSuper,
   laudoSuperParaTexto,
-  medicoSuper,
   type SuperEntrada,
+  type SuperMedico,
 } from "@/lib/laudo/modeloSuper";
+import {
+  issuerCityLine,
+  issuerContactLine,
+  issuerCredentials,
+  useIssuer,
+  type DocumentIssuer,
+} from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
 
 /* ────────────────────────────────────────────────────────────
    Laudo SuperNeuroPed — WebUI de geração assistida (embutida)
-   Dr. Jadson Fraga Araújo Júnior | CRM-PE 25.227 | RQE 17756
+   Identidade do emissor: fonte única client/src/lib/issuer.ts
    Perfil do modelo PANT real (Luiza Gonçalves Silva):
    capa rica · 14 seções · mapa funcional · hipóteses
-   com prós/contras · 3 cenários · assin. Soli Deo Gloria
+   com prós/contras · 3 cenários · assinatura institucional
    100% local — sem API externa (sem Claude)
 ──────────────────────────────────────────────────────────── */
+
+/** Monta a identidade do laudo a partir do emissor — nada é inventado. */
+function medicoDoIssuer(issuer: DocumentIssuer): SuperMedico {
+  return {
+    nome: issuer.doctorName,
+    titulos: issuer.specialty,
+    registro: issuerCredentials(issuer),
+    endereco: issuerContactLine(issuer),
+    motto: issuer.motto,
+    empresa: issuer.companyLine,
+  };
+}
 
 const ENTRADA_VAZIA: SuperEntrada = {
   nome: "",
@@ -73,7 +92,7 @@ function vazia(e: SuperEntrada): boolean {
 
 // ── Impressão no perfil SuperNeuroPed ───────────────────────────────────────
 
-function buildPrintHtmlSuper(texto: string, paciente: string): string {
+function buildPrintHtmlSuper(texto: string, paciente: string, medico: SuperMedico): string {
   const hoje = new Date().toLocaleDateString("pt-BR", {
     day: "numeric", month: "long", year: "numeric",
   });
@@ -161,8 +180,7 @@ body{font-family:'Carlito',Arial,sans-serif;font-size:10pt;color:var(--ink);back
   </div>
   <div class="syn">${safe.split("\\n").slice(0, 3).join("<br>").split("=".repeat(60))[0]}</div>
   <div class="medico">
-    <b>Dr. Jadson Fraga Araújo Júnior</b> · Neurologista Infantil · Neuropediatra · CRM-PE 25.227 · RQE 17.756<br>
-    Rua Raimundo Lacerda, 001 · São José · Petrolina/PE · CEP 56302-470 · (87) 9 9109-7371 · drjadsonfraga@proton.me
+    ${[medico.nome ? `<b>${esc(medico.nome)}</b>` : "", esc(medico.titulos || ""), esc(medico.registro)].filter(Boolean).join(" · ")}${medico.endereco ? `<br>\n    ${esc(medico.endereco)}` : ""}
   </div>
 </section>
 <main class="doc">
@@ -193,11 +211,13 @@ body{font-family:'Carlito',Arial,sans-serif;font-size:10pt;color:var(--ink);back
       const m = t.match(/^(INDICAÇÃO|EVIDÊNCIA|SOLICITAÇÕES DESTA CONSULTA):\s*(.*)$/i);
       return m ? `<p><span class="cap">${m[1]}:</span>${m[2]}</p>` : `<p>${t}</p>`;
     }
-    if (/^Dr\. Jadson/.test(t)) return `<div class="sig"><div class="nm">${t}</div></div>`;
-    if (/Neurologista Infantil · Neuropediatra/.test(t)) return `<div class="sig"><div class="tg">${t}</div></div>`;
-    if (/CRM-PE 25\.227 · RQE 17\.756/.test(t)) return `<div class="sig"><div class="rg">${t}</div></div>`;
-    if (/Soli Deo Gloria/.test(t)) return `<div class="sig"><div class="motto">${t}</div></div>`;
-    if (/Fraga Serviços Médicos/.test(t)) return `<div class="sig"><div class="emp">${t}</div></div>`;
+    // Bloco de assinatura formatado por COMPARAÇÃO com a identidade do
+    // emissor (issuer) — nunca por regex de nome/CRM fixos no template.
+    if (medico.nome && t === esc(medico.nome)) return `<div class="sig"><div class="nm">${t}</div></div>`;
+    if (medico.titulos && t === esc(medico.titulos)) return `<div class="sig"><div class="tg">${t}</div></div>`;
+    if (medico.registro && t === esc(medico.registro)) return `<div class="sig"><div class="rg">${t}</div></div>`;
+    if (medico.motto && t === esc(medico.motto)) return `<div class="sig"><div class="motto">${t}</div></div>`;
+    if (medico.empresa && t === esc(medico.empresa)) return `<div class="sig"><div class="emp">${t}</div></div>`;
     return `<p>${t}</p>`;
   }).join("\n")}
 </main>
@@ -650,6 +670,8 @@ function CidRepetidor({
 // ── Página ──────────────────────────────────────────────────────────────────
 
 export default function LaudoSuperPage() {
+  const { issuer } = useIssuer();
+  const medico = useMemo(() => medicoDoIssuer(issuer), [issuer]);
   const [entrada, setEntrada] = useState<SuperEntrada>(ENTRADA_VAZIA);
   const [texto, setTexto] = useState("");
   const [editando, setEditando] = useState(true);
@@ -672,7 +694,7 @@ export default function LaudoSuperPage() {
     return tem || limpo(entrada.quemE).length > 2 || limpo(entrada.motivo).length > 2;
   }, [entrada]);
 
-  const resultado = useMemo(() => (configurado ? gerarEValidarSuper(entrada) : null), [entrada, configurado]);
+  const resultado = useMemo(() => (configurado ? gerarEValidarSuper(entrada, medico) : null), [entrada, configurado, medico]);
 
   const set = (k: keyof SuperEntrada) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -699,7 +721,7 @@ export default function LaudoSuperPage() {
     const win = window.open("", "_blank");
     if (!win) return;
     win.opener = null;
-    win.document.write(buildPrintHtmlSuper(texto, entrada.nome));
+    win.document.write(buildPrintHtmlSuper(texto, entrada.nome, medico));
     win.document.close();
     win.focus();
     setTimeout(() => win.print(), 400);
@@ -720,7 +742,7 @@ export default function LaudoSuperPage() {
         icon={ShieldCheck}
         eyebrow="documento clínico · perfil premium"
         title="Laudo SuperNeuroPed"
-        subtitle="Geração assistida 100% local (sem Claude, sem API externa) no perfil real do modelo PANT: capa rica, 14 seções, mapa funcional, hipóteses com a favor/a ponderar, prognóstico em 3 cenários e assinatura Soli Deo Gloria."
+        subtitle="Geração assistida 100% local (sem Claude, sem API externa) no perfil real do modelo PANT: capa rica, 14 seções, mapa funcional, hipóteses com a favor/a ponderar, prognóstico em 3 cenários e assinatura institucional do emissor."
         gradient="from-primary to-chart-4"
       >
         <div className="flex flex-wrap gap-2">
@@ -850,7 +872,7 @@ export default function LaudoSuperPage() {
           <SecaoEditor titulo="14 · Síntese e encaminhamento" chave="sint" aberto={!!abertos.sint} onToggle={() => toggle("sint")}>
             <TextareaArea label="Síntese dirigida ao paciente" id="super-sintese" value={entrada.sintese} onChange={set("sintese")} placeholder='Ex.: Luiza, este documento não fecha o que ainda está em aberto…' />
             <p className="text-[11px] text-muted-foreground">
-              Assinatura institucional (Dr. Jadson Fraga Araújo Júnior · Neurologista Infantil · Neuropediatra · CRM-PE 25.227 · RQE 17.756 · Soli Deo Gloria · Fraga Serviços Médicos LTDA) é inserida automaticamente no PDF.
+              A assinatura institucional configurada em Configurações › Perfil e Configurações › Clínica é inserida automaticamente no PDF; sem perfil configurado, o documento declara a ausência de registro profissional.
             </p>
           </SecaoEditor>
 
@@ -867,15 +889,17 @@ export default function LaudoSuperPage() {
               buildPdf={async () => {
                 const { buildDocumentPdf } = await import("@/lib/documentPdf");
                 const textoAssinavel =
-                  texto || laudoSuperParaTexto(gerarLaudoSuper(entrada));
+                  texto || laudoSuperParaTexto(gerarLaudoSuper(entrada, medico));
                 return buildDocumentPdf({
                   title: "Laudo Neuropediatrico — Perfil SuperNeuroPed",
                   subtitle: `SuperNeuroPed nº ${dateStamp()} · Gerado pela assistente embarcada NeuroPed EDJ`,
                   credentials: [
-                    "Dr. Jadson Fraga Araujo Junior - CRM-PE 25.227 - RQE 17.756",
-                    "Neurologista Infantil / Neuropediatra",
-                    "Soli Deo Gloria",
-                  ],
+                    [issuer.doctorName, issuerCredentials(issuer)].filter(Boolean).join(" - "),
+                    issuer.specialty,
+                    issuer.motto,
+                  ].filter(Boolean),
+                  clinicName: issuer.clinicName,
+                  motto: issuer.motto,
                   sections: [
                     { heading: "Conteudo integral do laudo", body: textoAssinavel.trim() || "Sem conteudo informado." },
                   ],
@@ -886,8 +910,8 @@ export default function LaudoSuperPage() {
                 });
               }}
               filename={nomeArquivo}
-              signerName="Dr. Jadson Fraga Araujo Junior"
-              location="Petrolina-PE"
+              signerName={issuer.doctorName || undefined}
+              location={issuerCityLine(issuer) || undefined}
               reason="Laudo SuperNeuroPed"
               archivePdf={undefined}
             />
@@ -1003,5 +1027,3 @@ function TextareaArea({
     </div>
   );
 }
-
-export { medicoSuper as medicoInfo };

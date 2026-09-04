@@ -46,6 +46,10 @@ export const SENSITIVE_ROUTES = [
  */
 export const READER_CLINICAL_ROUTES = [
   "/",
+  // Conta e clínica: qualquer papel com sessão gerencia o próprio perfil e vê
+  // o estado do tenant; o RBAC fino (equipe, plano, edição) é do servidor.
+  "/onboarding",
+  "/configuracoes",
   "/mchat",
   "/cars",
   "/snap",

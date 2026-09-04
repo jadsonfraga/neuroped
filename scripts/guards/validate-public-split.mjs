@@ -48,6 +48,11 @@ const MUST_BE_PUBLIC = [
   // Filtro Clínico de Escalas: recomenda escalas por queixa/idade, sem exibir
   // nem armazenar dado de paciente — aberto por decisão do autor.
   "/filtro", "/filtro-escalas",
+  // Funil SaaS self-service (transformação SaaS, 2026-09): nenhuma das três
+  // exibe dado clínico. /cadastro é só formulário (o backend decide se o
+  // signup está habilitado); /invite é gated pelo token único do convite;
+  // /billing/retorno mostra apenas o status do checkout, sem dados.
+  "/cadastro", "/invite", "/billing/retorno",
 ];
 
 const errors = [];

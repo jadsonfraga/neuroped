@@ -9,8 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { openEmailDraft } from "@/lib/shareText";
 import { escapeHtml } from "@/lib/htmlEscape";
-
-const EMAIL_TO = "jadsonfraga@hotmail.com";
+import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
 
 // ── Data definitions ────────────────────────────────────────────────────────
 
@@ -244,7 +243,8 @@ function ScoreTable({
 function buildHtml(
   scaleKey: string,
   patient: PatientHeader,
-  scores: Record<string, ScoreRow>
+  scores: Record<string, ScoreRow>,
+  issuer: DocumentIssuer
 ): string {
   const scale = SCALES[scaleKey];
   const now = new Date();
@@ -308,8 +308,8 @@ function buildHtml(
   </table>
   <p class="note">${escapeHtml(scale.note)}</p>
   <div class="footer">
-    <div class="doc">Dr. Jadson Fraga Araújo Júnior</div>
-    CRM-PE 25227 | CRM-BA 23384 | RQE 17756 / 14499 / 13119<br>
+    ${issuer.doctorName ? `<div class="doc">${escapeHtml(issuer.doctorName)}</div>` : ""}
+    ${escapeHtml(issuerCredentials(issuer))}<br>
     NeuroPed — Escalas de Neuropediatria
   </div>
 </body>
@@ -319,7 +319,8 @@ function buildHtml(
 function buildText(
   scaleKey: string,
   patient: PatientHeader,
-  scores: Record<string, ScoreRow>
+  scores: Record<string, ScoreRow>,
+  issuer: DocumentIssuer
 ): string {
   const scale = SCALES[scaleKey];
   const dateStr = new Date().toLocaleDateString("pt-BR");
@@ -330,13 +331,14 @@ function buildText(
     txt += `${d.domain}: Bruto=${row.bruto || "—"} / Padronizado=${row.padronizado || "—"}\n`;
   });
   txt += `\n${scale.note}\n`;
-  txt += `---\nDr. Jadson Fraga — Neuropediatra | NeuroPed\n`;
+  txt += `---\n${[[issuer.doctorName, issuer.specialty].filter(Boolean).join(" — "), "NeuroPed"].filter(Boolean).join(" | ")}\n`;
   return txt;
 }
 
 // ── Per-scale tab content ────────────────────────────────────────────────────
 
 function ScaleTab({ scaleKey }: { scaleKey: string }) {
+  const { issuer } = useIssuer();
   const [patient, setPatient] = useState<PatientHeader>({
     nome: "",
     nascimento: "",
@@ -356,7 +358,7 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
       return;
     }
     win.opener = null;
-    win.document.write(buildHtml(scaleKey, patient, scores));
+    win.document.write(buildHtml(scaleKey, patient, scores, issuer));
     win.document.close();
     win.onload = () => win.print();
     toast({ title: "Impressão", description: "Janela de impressão aberta." });
@@ -365,10 +367,10 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
   async function handleEmail() {
     setSending(true);
     const subject = `[NeuroPed] Ficha ${scale.label} — ${patient.nome || "Paciente"} — ${new Date().toLocaleDateString("pt-BR")}`;
-    const body = buildText(scaleKey, patient, scores);
+    const body = buildText(scaleKey, patient, scores, issuer);
     try {
       const outcome = await openEmailDraft({
-        to: EMAIL_TO,
+        to: issuer.documentEmail,
         subject,
         body,
         filename: `ficha-${scale.label}-${patient.nome || "paciente"}`,

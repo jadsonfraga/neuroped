@@ -205,7 +205,13 @@ const EXPECTED_PASSWORD_INPUT_FILES = [
   "client/src/components/PreferencesPanel.tsx",
   "client/src/components/PrivateGate.tsx",
   "client/src/components/RequiredPasswordChangeGate.tsx",
+  // Funil SaaS self-service (revisado 2026-09): a senha vai direto para
+  // POST /api/auth/signup (cadastro) e POST /api/billing/accept (aceite de
+  // convite), nunca é persistida no client e segue a mesma política de
+  // complexidade do change-password.
+  "client/src/pages/cadastro.tsx",
   "client/src/pages/generic-scale.tsx",
+  "client/src/pages/invite.tsx",
   "client/src/pages/login.tsx",
   // Redefinição self-service: consome o token de uso único enviado por e-mail
   // e envia a nova senha SOMENTE para POST /api/auth/reset-password.

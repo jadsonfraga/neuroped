@@ -1,14 +1,14 @@
 {
   "/": {
-    "performance": 93,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 280,
-      "lcpMs": 1110,
-      "speedIndexMs": 871,
-      "tbtMs": 177,
+      "fcpMs": 282,
+      "lcpMs": 1118,
+      "speedIndexMs": 730,
+      "tbtMs": 9,
       "cls": 0,
       "actionableCls": 0
     },
@@ -68,18 +68,8 @@
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.84,
-        "title": "Total Blocking Time"
-      },
-      {
         "id": "max-potential-fid",
-        "score": 0.71,
+        "score": 0.99,
         "title": "Max Potential First Input Delay"
       },
       {
@@ -107,7 +97,8 @@
         "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/filtro": {
     "performance": 100,
@@ -115,10 +106,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 264,
-      "lcpMs": 530,
-      "speedIndexMs": 604,
-      "tbtMs": 40,
+      "fcpMs": 278,
+      "lcpMs": 518,
+      "speedIndexMs": 438,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -128,15 +119,50 @@
       "unsized-images": true,
       "bf-cache": true
     },
-    "layoutShifts": [],
-    "ignoredLayoutShifts": [],
-    "actionableLayoutShifts": [],
-    "failedAudits": [
+    "layoutShifts": [
       {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
+        "node": {
+          "type": "node",
+          "lhId": "page-1-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
+          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "boundingRect": {
+            "top": 799,
+            "bottom": 940,
+            "left": 0,
+            "right": 255,
+            "width": 255,
+            "height": 141
+          },
+          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
+          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+        },
+        "score": 0.000085208286923591
+      }
+    ],
+    "ignoredLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
+          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "boundingRect": {
+            "top": 799,
+            "bottom": 940,
+            "left": 0,
+            "right": 255,
+            "width": 255,
+            "height": 141
+          },
+          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
+          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+        },
+        "score": 0.000085208286923591
+      }
+    ],
+    "failedAudits": [
       {
         "id": "forced-reflow-insight",
         "score": 0,
@@ -157,7 +183,8 @@
         "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/mchat": {
     "performance": 100,
@@ -165,10 +192,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 296,
-      "lcpMs": 563,
-      "speedIndexMs": 672,
-      "tbtMs": 28,
+      "fcpMs": 272,
+      "lcpMs": 540,
+      "speedIndexMs": 479,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -222,21 +249,6 @@
       }
     ],
     "failedAudits": [
-      {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "score": 0,
-        "title": "Minimize main-thread work"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
       {
         "id": "image-delivery-insight",
         "score": 0.5,
@@ -257,7 +269,8 @@
         "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/cars": {
     "performance": 100,
@@ -265,10 +278,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 343,
-      "lcpMs": 467,
-      "speedIndexMs": 837,
-      "tbtMs": 72,
+      "fcpMs": 271,
+      "lcpMs": 540,
+      "speedIndexMs": 396,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -323,24 +336,9 @@
     ],
     "failedAudits": [
       {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.99,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.97,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -354,21 +352,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/vineland": {
-    "performance": 98,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 452,
-      "lcpMs": 556,
-      "speedIndexMs": 1007,
-      "tbtMs": 123,
+      "fcpMs": 277,
+      "lcpMs": 546,
+      "speedIndexMs": 404,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -423,24 +422,9 @@
     ],
     "failedAudits": [
       {
-        "id": "speed-index",
-        "score": 0.97,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.94,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.91,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -454,10 +438,11 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/cbcl": {
     "performance": 100,
@@ -465,10 +450,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 329,
-      "lcpMs": 454,
-      "speedIndexMs": 802,
-      "tbtMs": 46,
+      "fcpMs": 262,
+      "lcpMs": 532,
+      "speedIndexMs": 386,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -523,19 +508,9 @@
     ],
     "failedAudits": [
       {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.96,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -549,21 +524,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/caa": {
-    "performance": 65,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 754,
-      "lcpMs": 1278,
-      "speedIndexMs": 2160,
-      "tbtMs": 819,
+      "fcpMs": 276,
+      "lcpMs": 576,
+      "speedIndexMs": 518,
+      "tbtMs": 0,
       "cls": 0.001,
       "actionableCls": 0
     },
@@ -577,12 +553,12 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,4,NAV,1,DIV",
-          "selector": "div.np-app-shell > aside.print:hidden > nav#sidebar-nav > div.space-y-1",
+          "lhId": "page-2-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,1,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 425,
-            "bottom": 549,
+            "top": 469,
+            "bottom": 593,
             "left": 8,
             "right": 247,
             "width": 239,
@@ -592,18 +568,37 @@
           "nodeLabel": "TRIAGEM E FERRAMENTAS\nTriar sem cadastrar\nCAA · Vou Falar"
         },
         "score": 0.0008156107364100426
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
+          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "boundingRect": {
+            "top": 799,
+            "bottom": 940,
+            "left": 0,
+            "right": 255,
+            "width": 255,
+            "height": 141
+          },
+          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
+          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+        },
+        "score": 0.000085208286923591
       }
     ],
     "ignoredLayoutShifts": [
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,4,NAV,1,DIV",
-          "selector": "div.np-app-shell > aside.print:hidden > nav#sidebar-nav > div.space-y-1",
+          "lhId": "page-2-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,1,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 425,
-            "bottom": 549,
+            "top": 469,
+            "bottom": 593,
             "left": 8,
             "right": 247,
             "width": 239,
@@ -615,57 +610,32 @@
         "score": 0.0008156107364100426
       }
     ],
-    "actionableLayoutShifts": [],
+    "actionableLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-1-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
+          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "boundingRect": {
+            "top": 799,
+            "bottom": 940,
+            "left": 0,
+            "right": 255,
+            "width": 255,
+            "height": 141
+          },
+          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
+          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+        },
+        "score": 0.000085208286923591
+      }
+    ],
     "failedAudits": [
       {
-        "id": "first-contentful-paint",
-        "score": 0.96,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.87,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.55,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.09,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.23,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "interactive",
-        "score": 0.96,
-        "title": "Time to Interactive"
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "score": 0,
-        "title": "Minimize main-thread work"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "lcp-breakdown-insight",
-        "score": 0,
-        "title": "LCP breakdown"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -674,21 +644,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/espasticidade": {
-    "performance": 98,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 322,
-      "lcpMs": 403,
-      "speedIndexMs": 800,
-      "tbtMs": 125,
+      "fcpMs": 284,
+      "lcpMs": 564,
+      "speedIndexMs": 452,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -699,6 +670,25 @@
       "bf-cache": true
     },
     "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
       {
         "node": {
           "type": "node",
@@ -724,6 +714,25 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
@@ -743,29 +752,9 @@
     ],
     "failedAudits": [
       {
-        "id": "speed-index",
-        "score": 0.99,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.94,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.87,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -774,21 +763,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/prontuario": {
-    "performance": 64,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 648,
-      "lcpMs": 1006,
-      "speedIndexMs": 2376,
-      "tbtMs": 1111,
+      "fcpMs": 272,
+      "lcpMs": 560,
+      "speedIndexMs": 450,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -802,8 +792,27 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
-          "path": "1,HTML,1,BODY,0,DIV,5,BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
@@ -824,8 +833,27 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
-          "path": "1,HTML,1,BODY,0,DIV,5,BUTTON",
+          "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
@@ -843,49 +871,9 @@
     ],
     "failedAudits": [
       {
-        "id": "first-contentful-paint",
-        "score": 0.98,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.94,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.47,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.04,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.11,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "interactive",
-        "score": 0.94,
-        "title": "Time to Interactive"
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "score": 0,
-        "title": "Minimize main-thread work"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "lcp-breakdown-insight",
-        "score": 0,
-        "title": "LCP breakdown"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -899,21 +887,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/fluxograma": {
-    "performance": 79,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 573,
-      "lcpMs": 809,
-      "speedIndexMs": 1655,
-      "tbtMs": 412,
+      "fcpMs": 281,
+      "lcpMs": 548,
+      "speedIndexMs": 401,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -924,6 +913,25 @@
       "bf-cache": true
     },
     "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
       {
         "node": {
           "type": "node",
@@ -949,6 +957,25 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
@@ -968,44 +995,9 @@
     ],
     "failedAudits": [
       {
-        "id": "first-contentful-paint",
-        "score": 0.99,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.98,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0.77,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.4,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.29,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "score": 0,
-        "title": "Minimize main-thread work"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "lcp-breakdown-insight",
-        "score": 0,
-        "title": "LCP breakdown"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -1019,21 +1011,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/laudo-neuroped": {
-    "performance": 28,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 3627,
-      "lcpMs": 4511,
-      "speedIndexMs": 7532,
-      "tbtMs": 1668,
+      "fcpMs": 272,
+      "lcpMs": 558,
+      "speedIndexMs": 434,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -1044,6 +1037,25 @@
       "bf-cache": true
     },
     "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
       {
         "node": {
           "type": "node",
@@ -1069,6 +1081,25 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
@@ -1088,49 +1119,9 @@
     ],
     "failedAudits": [
       {
-        "id": "first-contentful-paint",
-        "score": 0.02,
-        "title": "First Contentful Paint"
-      },
-      {
-        "id": "largest-contentful-paint",
-        "score": 0.12,
-        "title": "Largest Contentful Paint"
-      },
-      {
-        "id": "speed-index",
-        "score": 0,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "interactive",
-        "score": 0.31,
-        "title": "Time to Interactive"
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "score": 0,
-        "title": "Minimize main-thread work"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "lcp-breakdown-insight",
-        "score": 0,
-        "title": "LCP breakdown"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "lcp-discovery-insight",
@@ -1144,21 +1135,22 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   },
   "/#/receita-c1": {
-    "performance": 98,
+    "performance": 100,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 308,
-      "lcpMs": 422,
-      "speedIndexMs": 1309,
-      "tbtMs": 100,
+      "fcpMs": 272,
+      "lcpMs": 538,
+      "speedIndexMs": 425,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -1169,6 +1161,25 @@
       "bf-cache": true
     },
     "layoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
       {
         "node": {
           "type": "node",
@@ -1194,6 +1205,25 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-4-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "boundingRect": {
+            "top": 328,
+            "bottom": 412,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"#/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.00014667058483384919
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
           "selector": "body > div#root > button.fixed",
@@ -1213,44 +1243,9 @@
     ],
     "failedAudits": [
       {
-        "id": "speed-index",
-        "score": 0.9,
-        "title": "Speed Index"
-      },
-      {
-        "id": "total-blocking-time",
-        "score": 0.97,
-        "title": "Total Blocking Time"
-      },
-      {
-        "id": "max-potential-fid",
-        "score": 0.97,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "server-response-time",
-        "score": 0,
-        "title": "Reduce initial server response time"
-      },
-      {
-        "id": "document-latency-insight",
-        "score": 0,
-        "title": "Document request latency"
-      },
-      {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
-        "id": "lcp-breakdown-insight",
-        "score": 0,
-        "title": "LCP breakdown"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
+        "id": "image-delivery-insight",
+        "score": 0.5,
+        "title": "Improve image delivery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -1259,9 +1254,10 @@
       },
       {
         "id": "render-blocking-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Render-blocking requests"
       }
-    ]
+    ],
+    "attempts": 1
   }
 }

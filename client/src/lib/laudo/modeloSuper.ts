@@ -136,21 +136,27 @@ function normaliza(texto: string): string {
   return texto.replace(/\s+/g, " ").trim();
 }
 
-const MEDICO = {
-  nome: "Dr. Jadson Fraga Araújo Júnior",
-  titulos: "Neurologista Infantil · Neuropediatra",
-  registro: "CRM-PE 25.227 · RQE 17.756",
-  endereco: "Rua Raimundo Lacerda, 001 · São José · Petrolina/PE · CEP 56302-470 · (87) 9 9109-7371 · drjadsonfraga@proton.me",
-  motto: "Soli Deo Gloria",
-  empresa: "Fraga Serviços Médicos LTDA · CNPJ 33.158.207/0001-48",
-};
+/**
+ * Identidade do médico emissor — SEMPRE fornecida pelo call site a partir da
+ * fonte única (client/src/lib/issuer.ts). Nenhum nome/CRM é embutido aqui:
+ * `registro` deve vir de issuerCredentials(issuer), que devolve o aviso de
+ * perfil não configurado quando não há credencial salva.
+ */
+export interface SuperMedico {
+  nome: string;
+  titulos?: string;
+  registro: string;
+  endereco: string;
+  motto?: string;
+  empresa?: string;
+}
 
 // ── Geração ─────────────────────────────────────────────────────────────────
 
 const DISCLAIMER_S8 =
   "Nenhum diagnóstico é firmado por este documento. Todas as hipóteses descritas na Seção 6 permanecem em investigação, condicionadas à avaliação complementar, instrumento validado específico e, quando aplicável, ao resultado de exames já solicitados por outras especialidades.";
 
-export function gerarLaudoSuper(e: SuperEntrada): SuperLaudo {
+export function gerarLaudoSuper(e: SuperEntrada, medico: SuperMedico): SuperLaudo {
   const quemE =
     e.quemE ||
     `${capitaliza(e.nome)}, ${e.idade || ""} de idade, chega a esta consulta ${e.tipoConsulta ? `para ${e.tipoConsulta}` : "para consulta"}${e.acompanhadoPor ? `, acompanhado(a) de ${semPontoFinal(e.acompanhadoPor)}` : ""}.`;
@@ -252,11 +258,11 @@ export function gerarLaudoSuper(e: SuperEntrada): SuperLaudo {
         `${e.nome ? primeiroNome(e.nome) + ", " : ""}este documento não fecha o que ainda está em aberto. As próximas etapas do acompanhamento seguirão o plano descrito nas seções anteriores.`,
     },
     assinatura: {
-      nome: MEDICO.nome,
-      titulos: MEDICO.titulos,
-      registro: MEDICO.registro,
-      motto: MEDICO.motto,
-      empresa: MEDICO.empresa,
+      nome: medico.nome,
+      titulos: medico.titulos ?? "",
+      registro: medico.registro,
+      motto: medico.motto ?? "",
+      empresa: medico.empresa ?? "",
     },
     pacienteNome: e.nome || "",
     totalPaginas: 7,
@@ -313,8 +319,8 @@ export function qaSuper(l: SuperLaudo): string {
   return `REPROVADO: ${falhas.length} ponto(s) a corrigir — ${falhas.join(" · ")}.`;
 }
 
-export function gerarEValidarSuper(e: SuperEntrada): { laudo: SuperLaudo; qa: string } {
-  const laudo = gerarLaudoSuper(e);
+export function gerarEValidarSuper(e: SuperEntrada, medico: SuperMedico): { laudo: SuperLaudo; qa: string } {
+  const laudo = gerarLaudoSuper(e, medico);
   return { laudo, qa: qaSuper(laudo) };
 }
 
@@ -450,12 +456,15 @@ export function laudoSuperParaTexto(l: SuperLaudo): string {
   add(s.sintese);
   add("");
   add("—");
-  add(l.assinatura.nome);
-  add(l.assinatura.titulos);
-  add(l.assinatura.registro);
-  add(l.assinatura.motto);
-  add(l.assinatura.empresa);
+  // Só as linhas de assinatura efetivamente configuradas — nada é inventado.
+  for (const linha of [
+    l.assinatura.nome,
+    l.assinatura.titulos,
+    l.assinatura.registro,
+    l.assinatura.motto,
+    l.assinatura.empresa,
+  ]) {
+    if (linha) add(linha);
+  }
   return linhas.join("\n");
 }
-
-export const medicoSuper = MEDICO;
