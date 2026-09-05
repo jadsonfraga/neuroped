@@ -660,7 +660,7 @@ export default function Tde2Page() {
                                       ? "bg-red-500 text-white border-red-500"
                                       : val === 1
                                         ? "bg-amber-500 text-white border-amber-500"
-                                        : "bg-emerald-600 text-white border-emerald-600"
+                                        : "bg-emerald-700 text-white border-emerald-700"
                                     : "bg-card text-foreground border-border hover:bg-muted"
                                 }`}
                               >

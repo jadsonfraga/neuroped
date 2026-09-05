@@ -565,6 +565,91 @@ export async function startMockClinicalServer(root, options = {}) {
           return;
         }
 
+        // Configurações da clínica (identidade do emissor, ajustes do tenant).
+        const tenantMatch = /^\/api\/tenants\/([^/]+)$/.exec(pathname);
+        if (tenantMatch) {
+          const clinic = [E2E_CLINIC, E2E_SECOND_CLINIC].find((item) => item.id === tenantMatch[1]);
+          if (!clinic) {
+            sendJson(response, 404, { error: "Clínica não encontrada.", code: "TENANT_NOT_FOUND" });
+            return;
+          }
+          if (request.method === "PATCH" || request.method === "PUT") {
+            sendJson(response, 200, { ok: true });
+            return;
+          }
+          sendJson(response, 200, {
+            data: {
+              ...clinic,
+              settings: {
+                doctorName: E2E_ACCOUNT.name,
+                specialty: "Neurologia Pediátrica (sintética)",
+                council: "CRM-XX 000000",
+                clinicName: clinic.name,
+                motto: "Documento sintético de auditoria",
+              },
+            },
+          });
+          return;
+        }
+
+        if (/^\/api\/tenants\/[^/]+\/members$/.test(pathname)) {
+          sendJson(response, 200, {
+            data: [
+              {
+                userId: E2E_ACCOUNT.id,
+                name: E2E_ACCOUNT.name,
+                email: E2E_ACCOUNT.email,
+                role: "owner",
+                status: "active",
+              },
+            ],
+          });
+          return;
+        }
+
+        // Envio remoto à família: formulário pré-consulta e convite de escala.
+        if (pathname === "/api/live/intake" || pathname === "/api/live/scale-invitations") {
+          if (request.method === "POST") {
+            sendJson(response, 201, {
+              token: `e2e-token-${randomUUID().slice(0, 8)}`,
+              formTitle: "Pré-consulta sintética",
+              scaleName: "SNAP-IV (sintética)",
+            });
+            return;
+          }
+          if (request.method === "PATCH") {
+            sendJson(response, 200, { id: `e2e-${randomUUID().slice(0, 8)}` });
+            return;
+          }
+          const patientId = url.searchParams.get("patientId");
+          const isScale = pathname.endsWith("scale-invitations");
+          const rows = scenario === "empty" || (patientId && patientId !== "e2e-pat-001")
+            ? []
+            : [
+                isScale
+                  ? {
+                      id: "e2e-invite-001",
+                      patientId: "e2e-pat-001",
+                      instrumentId: "snap-iv",
+                      scaleName: "SNAP-IV (sintética)",
+                      status: "sent",
+                      createdAt: "2026-08-20T12:00:00.000Z",
+                      expiresAt: "2026-09-20T12:00:00.000Z",
+                    }
+                  : {
+                      id: "e2e-intake-001",
+                      patientId: "e2e-pat-001",
+                      formKind: "pre_consulta",
+                      formTitle: "Pré-consulta sintética",
+                      status: "sent",
+                      createdAt: "2026-08-20T12:00:00.000Z",
+                      expiresAt: "2026-09-20T12:00:00.000Z",
+                    },
+              ];
+          sendJson(response, 200, { data: rows });
+          return;
+        }
+
         if (pathname === "/api/consultations" || pathname === "/api/conecta/events") {
           sendJson(response, 200, { data: [], total: 0, mode: "e2e-mock" });
           return;

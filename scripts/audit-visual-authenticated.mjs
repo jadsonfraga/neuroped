@@ -522,7 +522,15 @@ const CASES = [
   { id: "72-ajuda-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/ajuda", 700) },
   { id: "73-ajuda-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/ajuda", 700) },
   { id: "74-acessibilidade-desktop-dark", viewport: "desktop", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/acessibilidade", 700) },
-  { id: "75-configuracoes-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 900) },
+  { id: "75-configuracoes-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 1_400) },
+  { id: "75b-configuracoes-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 1_400) },
+  {
+    id: "75c-configuracoes-clinica-desktop-dark", viewport: "desktop", theme: "dark",
+    steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 1_400),
+    // Identidade do emissor e equipe vêm de /api/tenants/:id e :id/members —
+    // se o tenant não responder, os documentos clínicos saem sem emissor.
+    expectText: ["Clínica Sintética"],
+  },
 
   // ── 10. Sessão: expiração e logout ──
   {
