@@ -1,8 +1,9 @@
 /**
  * Jornada de aceite do SaaS, ponta a ponta, sobre HANDLERS REAIS e MIGRAÇÕES
- * REAIS (schema.d1.sql + 0003/0007/0008/0009/0010/0012/0013/0014/0015/0019):
+ * REAIS (schema.d1.sql + 0003/0007/0008/0009/0010/0012/0013/0014/0015/0019/0024):
  *
- * 1. Pessoa desconhecida cria conta (signup) e cria sua clínica;
+ * 1. Pessoa desconhecida cria conta (signup), CONFIRMA o e-mail e cria sua
+ *    clínica — a confirmação é parte do caminho vendável, não um contorno;
  * 2. trial de 14 dias + 2 assentos + lifecycle nascem por trigger;
  * 3. entitlement/capabilities refletem o trial;
  * 4. convida um profissional (link /#/invite), que aceita criando conta;
@@ -16,6 +17,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { onRequestPost as signupPost } from "../../functions/api/auth/signup";
+import { onRequestPost as verifyEmailPost } from "../../functions/api/auth/verify-email";
 import { onRequestPost as tenantsPost } from "../../functions/api/tenants/index";
 import {
   onRequestGet as tenantDetailGet,
@@ -80,6 +82,7 @@ for (const file of [
   "db/migrations/0014_saas_tenant_lifecycle.sql",
   "db/migrations/0015_saas_billing_trial_seats_hardening.sql",
   "db/migrations/0019_saas_identity_settings.sql",
+  "db/migrations/0024_email_verification.sql",
 ]) {
   raw.exec(readFileSync(file, "utf8"));
 }
@@ -89,7 +92,22 @@ const env = {
   NEUROPED_JWT_SECRET: SECRET,
   SAAS_SIGNUP_ENABLED: "true",
   APP_BASE_URL,
+  // Entrega configurada para que o cadastro emita de fato o link de
+  // confirmação: a jornada verifica o e-mail pelo caminho real, e não
+  // marcando a coluna na unha.
+  AUTH_PUBLIC_APP_URL: APP_BASE_URL,
+  AUTH_RESEND_API_KEY: "re_synthetic_journey_key",
+  AUTH_EMAIL_FROM: "NeuroPed <no-reply@neuroped.test>",
 };
+
+const sentEmails: Array<{ to: string[]; text: string }> = [];
+const realFetch = globalThis.fetch;
+globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = String(input);
+  if (url !== "https://api.resend.com/emails") return realFetch(input, init);
+  sentEmails.push(JSON.parse(String(init?.body)) as { to: string[]; text: string });
+  return new Response("{}", { status: 200 });
+}) as typeof fetch;
 
 interface SessionUser {
   id: string;
@@ -123,8 +141,34 @@ async function signup(name: string, email: string): Promise<SessionUser> {
     context(jsonRequest("https://x.test/api/auth/signup", "POST", { name, email, password: STRONG_PASSWORD }), null),
   );
   assert.equal(response.status, 201, `signup de ${email}`);
-  const body = (await response.json()) as { user: { id: string; email: string; name: string; role: string } };
+  const body = (await response.json()) as {
+    user: { id: string; email: string; name: string; role: string };
+    emailVerificationRequired?: boolean;
+  };
+  assert.equal(
+    body.emailVerificationRequired,
+    true,
+    `o cadastro de ${email} precisa exigir confirmação de e-mail`,
+  );
+  await confirmEmail(email);
   return { ...body.user, mustChangePassword: false };
+}
+
+/**
+ * Confirma a posse do e-mail pelo caminho real: pega o token do link que o
+ * cadastro enviou e troca pelo estado verificado. Marcar a coluna na unha
+ * provaria menos — a jornada precisa passar pelo mesmo fluxo do cliente.
+ */
+async function confirmEmail(email: string): Promise<void> {
+  const message = sentEmails.findLast((sent) => sent.to.includes(email));
+  assert.ok(message, `o cadastro de ${email} precisa ter enviado o link de confirmação`);
+  const match = message.text.match(/verificar-email\?token=([0-9a-f]{64})/);
+  assert.ok(match, `o e-mail para ${email} precisa conter o token de confirmação`);
+
+  const response = await verifyEmailPost(
+    context(jsonRequest("https://x.test/api/auth/verify-email", "POST", { token: match[1] }), null),
+  );
+  assert.equal(response.status, 200, `confirmação de e-mail de ${email}`);
 }
 
 async function createClinic(user: SessionUser, name: string): Promise<string> {
