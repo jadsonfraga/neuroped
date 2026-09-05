@@ -1,0 +1,148 @@
+name: Reconciliação de billing e jobs LGPD
+
+# Fase 8 (observabilidade) — as duas superfícies em que uma falha custa
+# dinheiro ou conformidade SEM gerar erro nenhum.
+#
+# O que este workflow procura é divergência silenciosa: estados que o código
+# nunca produz de propósito, e que portanto só existem se algo quebrou no
+# meio do caminho — um webhook que não chegou, um worker que morreu segurando
+# o lease, uma cobrança que compensou sem virar assinatura.
+#
+# Nada aqui detecta "erro": todos os quatro casos abaixo passam pelo sistema
+# sem exceção, sem log de falha e sem cliente reclamando na hora. É esse o
+# ponto.
+#
+# PRIVACIDADE: a consulta devolve exclusivamente CONTAGENS. Nenhuma coluna de
+# identificação — sem e-mail, sem nome, sem clinic_id, sem id de paciente,
+# sem referência do provedor. `tests/unit/reconciliation-query-safety.test.mjs`
+# trava isso: um SELECT que passe a devolver identificador reprova na CI.
+#
+# LEITURA APENAS: nenhum comando muta produção. Se um dia alguém precisar
+# corrigir a divergência, a correção é decisão humana com contexto — não é
+# trabalho de um monitor.
+
+on:
+  schedule:
+    # A cada 6 horas. Divergência de cobrança não é fenômeno de minuto, e uma
+    # consulta de contagem contra produção não precisa ser barata só por ser
+    # frequente — precisa ser rara o bastante para não virar ruído.
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: billing-lgpd-reconciliation
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Divergência silenciosa em billing e jobs LGPD
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Consultar divergências (somente contagens)
+        id: query
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --json --command "
+            SELECT
+              (SELECT COUNT(*) FROM billing_provider_checkouts c
+                WHERE c.status = 'paid'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM billing_subscriptions s
+                     WHERE s.customer_id = c.billing_customer_id
+                       AND s.status IN ('trial','active','past_due')))
+                AS checkout_pago_sem_assinatura,
+              (SELECT COUNT(*) FROM billing_customers bc
+                WHERE bc.status = 'active'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM billing_subscriptions s
+                     WHERE s.customer_id = bc.id
+                       AND s.status IN ('trial','active','past_due')))
+                AS customer_ativo_sem_assinatura,
+              (SELECT COUNT(*) FROM live_lgpd_worker_jobs
+                WHERE status = 'processing'
+                  AND lease_until IS NOT NULL
+                  AND julianday(lease_until) < julianday('now'))
+                AS job_lgpd_com_lease_expirado,
+              (SELECT COUNT(*) FROM live_lgpd_worker_jobs
+                WHERE status = 'failed'
+                  AND julianday(updated_at) >= julianday('now','-1 day'))
+                AS job_lgpd_falhado_recente;
+          " > /tmp/reconciliation.json
+          cat /tmp/reconciliation.json
+
+      - name: Avaliar
+        run: |
+          set -euo pipefail
+          leia() { jq -r "[.. | objects | select(has(\"$1\")) | .\"$1\"] | first // empty" /tmp/reconciliation.json; }
+
+          PAGO_SEM_ASSINATURA=$(leia checkout_pago_sem_assinatura)
+          ATIVO_SEM_ASSINATURA=$(leia customer_ativo_sem_assinatura)
+          LEASE_EXPIRADO=$(leia job_lgpd_com_lease_expirado)
+          FALHA_RECENTE=$(leia job_lgpd_falhado_recente)
+
+          for valor in "$PAGO_SEM_ASSINATURA" "$ATIVO_SEM_ASSINATURA" "$LEASE_EXPIRADO" "$FALHA_RECENTE"; do
+            if ! [[ "$valor" =~ ^[0-9]+$ ]]; then
+              echo "::error::Não consegui ler as contagens da reconciliação. Consulta ou formato mudaram — isto é falha do monitor, não ausência de divergência."
+              exit 1
+            fi
+          done
+
+          {
+            echo "## Reconciliação"
+            echo ""
+            echo "| Divergência | Contagem |"
+            echo "| --- | --- |"
+            echo "| Checkout pago sem assinatura viva | $PAGO_SEM_ASSINATURA |"
+            echo "| Customer ativo sem assinatura viva | $ATIVO_SEM_ASSINATURA |"
+            echo "| Job LGPD com lease expirado | $LEASE_EXPIRADO |"
+            echo "| Job LGPD falhado nas últimas 24h | $FALHA_RECENTE |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          FALHOU=0
+          if [ "$PAGO_SEM_ASSINATURA" -gt 0 ]; then
+            echo "::error::$PAGO_SEM_ASSINATURA checkout(s) pago(s) sem assinatura viva. Dinheiro entrou e entitlement não — o cliente pagou e não recebeu acesso."
+            FALHOU=1
+          fi
+          if [ "$ATIVO_SEM_ASSINATURA" -gt 0 ]; then
+            echo "::error::$ATIVO_SEM_ASSINATURA customer(s) com status 'active' sem nenhuma assinatura em trial/active/past_due. O estado do cliente e o da assinatura divergiram."
+            FALHOU=1
+          fi
+          if [ "$LEASE_EXPIRADO" -gt 0 ]; then
+            echo "::error::$LEASE_EXPIRADO job(s) LGPD com lease expirado em 'processing'. Um direito do titular parou no meio, e o prazo legal continua correndo."
+            FALHOU=1
+          fi
+          if [ "$FALHA_RECENTE" -gt 0 ]; then
+            echo "::error::$FALHA_RECENTE job(s) LGPD falharam nas últimas 24h. Falha recente é alarme; falha antiga já triada não reprova (a janela é de propósito)."
+            FALHOU=1
+          fi
+
+          if [ "$FALHOU" -ne 0 ]; then
+            echo "::error::Reconciliação encontrou divergência. A correção é decisão humana com contexto — este monitor não muta produção."
+            exit 1
+          fi
+
+          echo "✅ Sem divergência: cobrança e assinatura batem, e nenhum job LGPD está travado ou falhou nas últimas 24h."
