@@ -1,0 +1,162 @@
+name: SDG authorial intake and production reconciliation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "client/src/data/**"
+      - "scripts/gen-interactive-scale-ids.mts"
+      - "scripts/check-sdg-deployment.mjs"
+      - "scripts/guards/safety-classification-*.json"
+      - "tests/clinical/test-authorial-sdg-*.mjs"
+      - "tests/clinical/test-sdg-deployment-contract.mjs"
+      - ".github/workflows/authorial-sdg-pipeline.yml"
+  push:
+    branches: [main]
+    paths:
+      - "client/src/data/**"
+      - "scripts/gen-interactive-scale-ids.mts"
+      - "scripts/check-sdg-deployment.mjs"
+      - "scripts/guards/safety-classification-*.json"
+      - "tests/clinical/test-authorial-sdg-*.mjs"
+      - "tests/clinical/test-sdg-deployment-contract.mjs"
+      - ".github/workflows/authorial-sdg-pipeline.yml"
+  schedule:
+    - cron: "25 11,18,22 * * *" # 08h25, 15h25 e 19h25 em America/Recife
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdg-authorial-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contracts:
+    name: SDG source, filter and scoring contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Regenerate routes and public manifest from source
+        run: npm run gen:interactive-scale-ids
+      - name: Preserve reproducible generated files
+        uses: actions/upload-artifact@v6
+        with:
+          name: sdg-generated-catalog
+          path: |
+            client/src/data/interactiveScaleIds.generated.ts
+            client/public/authorial-sdg-manifest.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Source fidelity, complete scoring and every eligible age
+        run: node --import tsx tests/clinical/test-authorial-sdg-integration.mjs
+      - name: Reject false deployment confirmations
+        run: node tests/clinical/test-sdg-deployment-contract.mjs
+      - name: Existing clinical and filter guards
+        run: |
+          set -euo pipefail
+          npm run validate:safety
+          npm run validate:catalog
+          npm run test:filter
+          npm run test:interactive
+          npm run check
+      - name: Build real client and verify emitted manifest
+        run: |
+          set -euo pipefail
+          npm run build:client
+          cmp client/public/authorial-sdg-manifest.json dist/public/authorial-sdg-manifest.json
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ""
+
+  reconcile:
+    name: Reconcile canonical Cloudflare and Vercel mirror
+    needs: contracts
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    permissions:
+      contents: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Recreate only the deterministic expected manifest
+        run: |
+          mkdir -p /tmp/sdg
+          node --experimental-strip-types --input-type=module <<'NODE'
+          import { writeFileSync } from "node:fs";
+          import { buildSdgPublicManifest } from "./client/src/data/authorialSdgRegistry.ts";
+          writeFileSync("/tmp/sdg/expected.json", JSON.stringify(buildSdgPublicManifest(), null, 2) + "\n");
+          NODE
+      - name: Verify publication or invoke existing gated synchronizer
+        run: |
+          set -euo pipefail
+          current="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          if [ "$current" != "$EXPECTED_COMMIT" ]; then
+            echo "Execução superada por outro commit; nenhum deploy disparado." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if node scripts/check-sdg-deployment.mjs "$EXPECTED_COMMIT" /tmp/sdg/expected.json; then
+            echo "Cloudflare, Vercel, catálogo e backend confirmados em $EXPECTED_COMMIT." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          workflow="daily-authorial-static-sync.yml"
+          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --limit 30 --json databaseId,headSha,status --jq ".[] | select(.headSha == \"$EXPECTED_COMMIT\" and (.status == \"queued\" or .status == \"in_progress\" or .status == \"waiting\")) | .databaseId" | head -n 1)"
+          if [ -z "$run_id" ]; then
+            started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref main -f expected_commit="$EXPECTED_COMMIT"
+            for attempt in $(seq 1 18); do
+              run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --limit 30 --json databaseId,headSha,event,createdAt --jq ".[] | select(.headSha == \"$EXPECTED_COMMIT\" and .event == \"workflow_dispatch\" and .createdAt >= \"$started\") | .databaseId" | head -n 1)"
+              [ -z "$run_id" ] || break
+              sleep 5
+            done
+          fi
+          [ -n "$run_id" ] || { echo "::error::Sincronização solicitada, mas execução não localizada."; exit 1; }
+          echo "Sincronização oficial: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/$run_id" >> "$GITHUB_STEP_SUMMARY"
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status --interval 20
+          # O término do workflow NÃO basta: confirmar bytes/versões públicos e backend.
+          node scripts/check-sdg-deployment.mjs "$EXPECTED_COMMIT" /tmp/sdg/expected.json
+          echo "Publicação verificada: $EXPECTED_COMMIT, catálogo fiel nos dois provedores e backend saudável." >> "$GITHUB_STEP_SUMMARY"
+
+  report-failure:
+    name: Record actionable failure without clinical data
+    needs: [contracts, reconcile]
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (needs.contracts.result == 'failure' || needs.reconcile.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Create or update one incident
+        run: |
+          set -euo pipefail
+          title="[SDG] Falha de integração ou publicação de escalas autorais"
+          issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search '"[SDG] Falha de integração" in:title' --json number,title --jq '.[] | select(.title == "[SDG] Falha de integração ou publicação de escalas autorais") | .number' | head -n 1)"
+          body="Contratos ou confirmação de publicação falharam. Nenhuma validação clínica foi promovida automaticamente. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Verificar logs e permissões de Actions/Cloudflare/Vercel; repetir o fluxo após corrigir a causa. Rastreio: #789."
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi

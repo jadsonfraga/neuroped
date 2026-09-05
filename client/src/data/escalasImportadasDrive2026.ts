@@ -3,6 +3,7 @@ import { escalasImportadasDrive2026 as escalasImportadasDrive2026Base } from "./
 import { escalasAutoraisDrive2026Lote2 } from "./escalasAutoraisDrive2026Lote2";
 import { escalasAutoraisDrive2026Lote3 } from "./escalasAutoraisDrive2026Lote3";
 import { escalasAutoraisDrive2026Lote4 } from "./escalasAutoraisDrive2026Lote4";
+import { escalasAutoraisSdg } from "./authorialSdgRegistry";
 
 /**
  * Catálogo consolidado das escalas autorais do Drive.
@@ -30,4 +31,5 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
   ...escalasAutoraisDrive2026Lote2Operacionais,
   ...escalasAutoraisDrive2026Lote3,
   ...escalasAutoraisDrive2026Lote4,
+  ...escalasAutoraisSdg,
 ];
