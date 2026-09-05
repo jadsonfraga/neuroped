@@ -67,15 +67,42 @@ export function publicUser(u: UserRow): PublicUser {
   };
 }
 
+/**
+ * Identidade canônica de e-mail da plataforma: minúsculas, sem espaço nas
+ * bordas. Toda comparação e toda gravação passam por aqui — o índice único
+ * case-insensitive da migração 0022 garante o mesmo invariante no banco.
+ */
+export function canonicalEmail(value: string | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
 export async function getUserByEmail(db: D1Database, email: string): Promise<UserRow | null> {
-  return db
+  // lower(email) em vez de email = ?: uma linha herdada em caixa mista existe
+  // no banco mas era invisível para o login (que compara em binário), embora
+  // visível para a redefinição de senha (que já comparava em lower).
+  //
+  // match_count vem na mesma consulta de propósito: com duas linhas
+  // equivalentes, um LIMIT 1 sozinho devolveria a conta que o plano de execução
+  // escolher. A 0022 impede esse estado no banco; o contador mantém o
+  // comportamento fail-closed também contra um banco ainda não migrado.
+  const canonical = canonicalEmail(email);
+  const row = await db
     .prepare(
       `SELECT id, name, email, role, is_active, password_hash, must_change_password,
-              failed_login_attempts, locked_until
-         FROM users WHERE email = ? LIMIT 1`,
+              failed_login_attempts, locked_until,
+              (SELECT COUNT(*) FROM users WHERE lower(email) = ?) AS match_count
+         FROM users WHERE lower(email) = ? LIMIT 1`,
     )
-    .bind(email.toLowerCase().trim())
-    .first<UserRow>();
+    .bind(canonical, canonical)
+    .first<UserRow & { match_count: number }>();
+  if (!row) return null;
+  if (Number(row.match_count) > 1) {
+    console.error("[auth] identidade de e-mail ambígua no banco — autenticação recusada", {
+      matches: Number(row.match_count),
+    });
+    return null;
+  }
+  return row;
 }
 
 export async function getUserById(db: D1Database, id: string): Promise<UserRow | null> {

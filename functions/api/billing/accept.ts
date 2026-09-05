@@ -1,5 +1,5 @@
 import { hashPassword, sha256Hex } from "../auth/_crypto";
-import { getUserByEmail } from "../auth/_shared";
+import { canonicalEmail, getUserByEmail } from "../auth/_shared";
 import { validateInvitationForAccept } from "./_onboarding";
 import { isClinicMembershipRole } from "../../../shared/tenant";
 import { getContextUser } from "../auth/_authorization";
@@ -187,7 +187,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       ).bind(
         userId,
         name,
-        invitation.email,
+        canonicalEmail(invitation.email),
         globalRole,
         passwordHash,
         now,

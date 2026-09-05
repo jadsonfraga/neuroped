@@ -63,4 +63,32 @@ assert.match(intakePanel, /"X-Tenant-Id": activeClinicId/);
 assert.match(intakePanel, /VITE_API_URL/);
 assert.match(intakePanel, /\/intake\.html#token=/);
 
+// Auditoria do write público (0023): o intake é o outro caminho em que um
+// terceiro não autenticado grava dado clínico. A trilha precisa estar no MESMO
+// batch da submissão — auditoria fora da transação é auditoria que some quando
+// mais importa. O caminho equivalente da escala é provado ponta a ponta contra
+// SQL real em tests/unit/remote-scale-response.test.ts.
+const publicIntakeHandler = read("functions/api/public-intake.ts");
+const auditBatchBlock = publicIntakeHandler.slice(
+  publicIntakeHandler.indexOf("const results = await db.batch("),
+  publicIntakeHandler.indexOf("if (\n      (results[0]"),
+);
+assert.match(
+  auditBatchBlock,
+  /INSERT INTO public_submission_audit_log/,
+  "a submissão pública de intake precisa auditar dentro do próprio batch",
+);
+assert.match(auditBatchBlock, /WHERE EXISTS \(SELECT 1 FROM live_intake_submissions WHERE id = \?\)/);
+assert.match(publicIntakeHandler, /\(results\[2\]\?\.meta\?\.changes \?\? 0\) !== 1/);
+// Metadata-only: o insert de auditoria não pode carregar conteúdo clínico.
+assert.doesNotMatch(auditBatchBlock.split("public_submission_audit_log")[1], /payload_encrypted|patient_id|respondent/);
+
+const auditMigration = read("db/migrations/0023_public_submission_audit.sql");
+for (const proibida of ["patient_id", "token", "answers", "payload", "name"]) {
+  assert.ok(
+    !new RegExp(`^\\s*${proibida}\\b`, "m").test(auditMigration),
+    `a trilha de auditoria pública não pode ter coluna ${proibida}`,
+  );
+}
+
 console.log("saas remote intake security contract: ok");
