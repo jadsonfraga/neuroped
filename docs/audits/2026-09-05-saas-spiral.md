@@ -140,3 +140,77 @@ acionar `DR mechanism rehearsal (D1)` e preencher o RTO medido no runbook.
 Depois disso, o maior delta passa a ser observabilidade — métricas e
 reconciliação de billing, que são as duas superfícies onde uma falha custa
 dinheiro sem gerar erro.
+
+---
+
+# SPIRAL 3 — observabilidade com evidência executada
+
+Diferença desta volta para as anteriores: os monitores não foram apenas
+escritos, foram **acionados**, e o resultado está abaixo.
+
+## Smoke de produção — primeira execução, verde
+
+`production-health-smoke.yml` disparou sozinho após o deploy do #784
+(run `33975654247`, evento `workflow_run`) e o passo *Smoke against the
+published site* concluiu com sucesso. Os cinco alvos responderam dentro do
+contrato: sentinela de deploy do Cloudflare, `/api/health` com
+`status`/`authentication`/`database` esperados, sentinela e shell da Vercel, e
+o redirecionador canônico do GitHub Pages.
+
+É a primeira vez que a saúde do site publicado é medida fora de uma janela de
+deploy.
+
+## Reconciliação de cobrança e jobs LGPD — primeira execução, sem divergência
+
+`billing-lgpd-reconciliation.yml` acionado manualmente (run `33976209789`)
+contra o D1 de **produção**:
+
+```json
+{
+  "checkout_pago_sem_assinatura": 0,
+  "customer_ativo_sem_assinatura": 0,
+  "job_lgpd_com_lease_expirado": 0,
+  "job_lgpd_falhado_recente": 0
+}
+```
+
+O `meta` da resposta confirma o que o contrato promete: `"changed_db": false`,
+`"rows_written": 0`. Nenhum identificador apareceu no log — só as quatro
+contagens.
+
+Leitura honesta do resultado: **zero divergência hoje não é o mesmo que
+"cobrança comprovada"**. Nenhuma cobrança real jamais percorreu o provedor em
+produção, então parte destes zeros é ausência de tráfego, não prova de
+correção. O valor deste monitor aparece a partir da primeira cobrança real —
+e é justamente por isso que ele precisava existir antes dela.
+
+## Sellability Score revisado — 72/100
+
+Única alteração em relação à SPIRAL 2:
+
+- **Observabilidade 6,5 → 7,5.** Dois monitores contínuos, ambos executados,
+  ambos com saída verificada. Não passa disso porque continuam faltando as
+  três medidas que exigem um destino de dados: métricas, latência agregada e
+  taxa de erro.
+
+Maturidade permanece **M2 — HARDENED**. Nenhum dos quatro bloqueadores
+externos mudou.
+
+## Onde esta espiral encontra um limite real
+
+As três medidas que faltam em observabilidade — métricas, latência e taxa de
+erro — não são código que falta escrever: são **um destino de dados que não
+existe**. Sem Analytics Engine, um provedor de APM ou uma tabela dedicada com
+retenção definida, não há onde a série temporal viver.
+
+Escolher esse destino é decisão de arquitetura e de custo, não de
+implementação, e inventar um limiar de latência sem linha de base seria
+fabricar alarme — o erro que esta espiral evitou duas vezes (no deep smoke e
+no ensaio de DR). O próximo passo aqui é uma decisão, não um commit.
+
+## Próxima intervenção
+
+Continua sendo **acionar o ensaio de DR** (`DR mechanism rehearsal (D1)`,
+`workflow_dispatch`, digitar `ENSAIAR`) e preencher o RTO medido no runbook.
+É o único gate onde "não sabemos" e "não funciona" são indistinguíveis até o
+dia do incidente — e agora custa um clique.
