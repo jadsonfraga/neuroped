@@ -1,7 +1,51 @@
-"""Split SQLite migrations safely; never mutate migration files."""
+"""Compatibility transport for complete SQLite statements; historical files stay unchanged."""
 import json
+import re
 import sqlite3
 import sys
+
+
+def parenthesize_cases(source: str) -> str:
+    """D1 must not mistake CASE END for the end of a trigger (workers-sdk#4727)."""
+    pieces: list[str] = []
+    depth = 0
+    quote = None
+    i = 0
+    while i < len(source):
+        ch = source[i]
+        if quote:
+            pieces.append(ch)
+            if ch == quote:
+                if quote != ']' and i + 1 < len(source) and source[i + 1] == quote:
+                    pieces.append(source[i + 1])
+                    i += 1
+                else:
+                    quote = None
+            i += 1
+            continue
+        if ch in ("'", '"', '`', '['):
+            quote = ']' if ch == '[' else ch
+            pieces.append(ch)
+            i += 1
+            continue
+        match = re.match(r'[A-Za-z_][A-Za-z_0-9]*', source[i:])
+        if match:
+            word = match.group()
+            if word.upper() == 'CASE':
+                pieces.append('(' + word)
+                depth += 1
+            elif word.upper() == 'END' and depth:
+                pieces.append(word + ')')
+                depth -= 1
+            else:
+                pieces.append(word)
+            i += len(word)
+        else:
+            pieces.append(ch)
+            i += 1
+    if depth or quote:
+        raise ValueError('Incomplete CASE or quoted literal')
+    return ''.join(pieces)
 
 
 def split_sql(source: str) -> list[str]:
@@ -48,12 +92,12 @@ def split_sql(source: str) -> list[str]:
     for ch in ''.join(cleaned):
         pending += ch
         if ch == ';' and sqlite3.complete_statement(pending):
-            result.append(pending.strip())
+            result.append(parenthesize_cases(pending.strip()))
             pending = ''
     if pending.strip():
         if not sqlite3.complete_statement(pending + ';'):
             raise ValueError('Incomplete SQL statement')
-        result.append(pending.strip() + ';')
+        result.append(parenthesize_cases(pending.strip() + ';'))
     return result
 
 
