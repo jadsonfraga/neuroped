@@ -1,0 +1,30 @@
+{
+  "segments": [
+    {
+      "id": "DEMO-SEG-1",
+      "consultationId": "CONSULTA-DEMO-001",
+      "startMs": 0,
+      "endMs": 2500,
+      "text": "Texto de teste importado, não confirmado.",
+      "speaker": "mae",
+      "topics": [
+        "queixa_principal"
+      ],
+      "source": "relato_pais",
+      "createdAt": "2026-09-05T13:00:00-03:00"
+    },
+    {
+      "id": "DEMO-SEG-2",
+      "consultationId": "CONSULTA-DEMO-001",
+      "startMs": 2600,
+      "endMs": 5000,
+      "text": "Hipótese produzida no teste; não é fato clínico.",
+      "speaker": "outro",
+      "topics": [
+        "hipoteses"
+      ],
+      "source": "inferencia_ia",
+      "createdAt": "2026-09-05T13:00:03-03:00"
+    }
+  ]
+}

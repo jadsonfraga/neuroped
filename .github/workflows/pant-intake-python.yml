@@ -1,0 +1,41 @@
+name: PANT Python Intake
+on:
+  push:
+    branches: [feat/pant-intake-python-20260905]
+    paths:
+      - 'tools/pant_intake/**'
+      - '.github/workflows/pant-intake-python.yml'
+  pull_request:
+    paths:
+      - 'tools/pant_intake/**'
+      - '.github/workflows/pant-intake-python.yml'
+permissions:
+  contents: read
+jobs:
+  intake:
+    name: PANT Python Intake
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compilacao
+        run: python -m compileall -q tools/pant_intake
+      - name: Testes obrigatorios
+        working-directory: tools/pant_intake
+        run: |
+          test -f tests/test_core.py
+          test -f tests/test_gate_cli.py
+          python -m unittest discover -s tests -v
+      - name: Pacote de codigo sem dados clinicos
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuroped-pant-intake-source
+          path: tools/pant_intake
+          include-hidden-files: false
+          retention-days: 7
+          if-no-files-found: error
