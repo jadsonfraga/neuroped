@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { findUnreviewedSha256Literals } from "./public-provenance-digests.mjs";
 
 // POLÍTICA DE ACESSO — zona pública allowlisted + área clínica fail-closed.
 //
@@ -115,7 +116,6 @@ const allowDocs = new Set([
 ]);
 
 const suspiciousPatterns = [
-  { name: "hash SHA-256 fixo de possivel PIN", re: /["'][a-f0-9]{64}["']/i },
   {
     name: "verificador de PIN hardcoded",
     re: /\bVITE_PIN_HASH\s*[:=]\s*["']?(?:pbkdf2\$[^\s"']+|[a-f0-9]{64})/i,
@@ -180,6 +180,9 @@ for (const file of sourceFiles) {
   if (allowDocs.has(rel)) continue;
   const content = read(file);
   auditWorkflowSecretAssignments(rel, content);
+  if (findUnreviewedSha256Literals(rel, content).length > 0) {
+    fail(`hash SHA-256 fixo de possivel PIN em ${rel}`);
+  }
   for (const pattern of suspiciousPatterns) {
     if (pattern.re.test(content)) {
       fail(`${pattern.name} em ${rel}`);

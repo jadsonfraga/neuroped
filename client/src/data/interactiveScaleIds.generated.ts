@@ -1,6 +1,7 @@
 // GERADO por scripts/gen-interactive-scale-ids.mts - não editar manualmente.
 export const INTERACTIVE_SCALE_IDS = new Set([
   "ace",
+  "afi-12-sdg",
   "apgar",
   "aq10-adolescente",
   "ari",
@@ -36,6 +37,7 @@ export const INTERACTIVE_SCALE_IDS = new Set([
   "eidaf-neuroinfantil",
   "einpi-360",
   "einpi-drj-v1",
+  "ejia-15",
   "engel",
   "erc",
   "erp-np",
@@ -241,8 +243,10 @@ export const INTERACTIVE_SCALE_IDS = new Set([
   "qec-np",
   "rcads",
   "rflacc",
+  "sarf-12-sdg",
   "scas",
   "scoff",
+  "sdrd-12-sdg",
   "sinaf-neuroped",
   "sinapse-fi-60",
   "sinergi-neuroped",
@@ -262,6 +266,7 @@ export const INTERACTIVE_SCALE_IDS = new Set([
 ]);
 export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "ace": 10,
+  "afi-12-sdg": 12,
   "apgar": 5,
   "aq10-adolescente": 10,
   "ari": 6,
@@ -297,6 +302,7 @@ export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "eidaf-neuroinfantil": 50,
   "einpi-360": 48,
   "einpi-drj-v1": 48,
+  "ejia-15": 15,
   "engel": 1,
   "erc": 24,
   "erp-np": 10,
@@ -502,8 +508,10 @@ export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "qec-np": 12,
   "rcads": 30,
   "rflacc": 5,
+  "sarf-12-sdg": 12,
   "scas": 18,
   "scoff": 5,
+  "sdrd-12-sdg": 12,
   "sinaf-neuroped": 50,
   "sinapse-fi-60": 60,
   "sinergi-neuroped": 60,

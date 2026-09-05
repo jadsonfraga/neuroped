@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "brand": "NeuroPed SDG",
+  "instruments": [
+    {
+      "id": "afi-12-sdg",
+      "version": "1.0",
+      "sourceSha256": "f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d",
+      "ageMin": 60,
+      "ageMax": 215,
+      "itemCount": 12,
+      "validationStatus": "autoral_nao_validado"
+    },
+    {
+      "id": "sarf-12-sdg",
+      "version": "1.0",
+      "sourceSha256": "d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9",
+      "ageMin": 24,
+      "ageMax": 179,
+      "itemCount": 12,
+      "validationStatus": "autoral_nao_validado"
+    },
+    {
+      "id": "sdrd-12-sdg",
+      "version": "1.0",
+      "sourceSha256": "df63139cd65e52c46f99c772362b6ba36fcaad57794ab9616dbae7dce1c26225",
+      "ageMin": 36,
+      "ageMax": 215,
+      "itemCount": 12,
+      "validationStatus": "autoral_nao_validado"
+    }
+  ]
+}

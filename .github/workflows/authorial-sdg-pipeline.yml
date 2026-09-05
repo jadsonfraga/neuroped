@@ -5,8 +5,12 @@ on:
     branches: [main]
     paths:
       - "client/src/data/**"
+      - "client/public/authorial-sdg-manifest.json"
       - "scripts/gen-interactive-scale-ids.mts"
       - "scripts/check-sdg-deployment.mjs"
+      - "scripts/guards/audit-access-policy.mjs"
+      - "scripts/guards/public-provenance-digests.mjs"
+      - "tests/clinical/test-public-provenance-digests.mjs"
       - "scripts/guards/safety-classification-*.json"
       - "tests/clinical/test-authorial-sdg-*.mjs"
       - "tests/clinical/test-sdg-deployment-contract.mjs"
@@ -15,8 +19,12 @@ on:
     branches: [main]
     paths:
       - "client/src/data/**"
+      - "client/public/authorial-sdg-manifest.json"
       - "scripts/gen-interactive-scale-ids.mts"
       - "scripts/check-sdg-deployment.mjs"
+      - "scripts/guards/audit-access-policy.mjs"
+      - "scripts/guards/public-provenance-digests.mjs"
+      - "tests/clinical/test-public-provenance-digests.mjs"
       - "scripts/guards/safety-classification-*.json"
       - "tests/clinical/test-authorial-sdg-*.mjs"
       - "tests/clinical/test-sdg-deployment-contract.mjs"
@@ -67,6 +75,8 @@ jobs:
       - name: Existing clinical and filter guards
         run: |
           set -euo pipefail
+          node tests/clinical/test-public-provenance-digests.mjs
+          npm run audit:access
           npm run validate:safety
           npm run validate:catalog
           npm run test:filter
