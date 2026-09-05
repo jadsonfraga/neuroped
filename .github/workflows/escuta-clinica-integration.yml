@@ -38,8 +38,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Browser component contract and virtual microphone (not provider/auth E2E)
         run: node scripts/escuta-browser-qa.mjs
-      - name: Verify tracked source was not modified by tests
-        run: git diff --exit-code
+      - name: Verify authored source and official generated artifacts
+        run: node scripts/escuta-verify-source.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
