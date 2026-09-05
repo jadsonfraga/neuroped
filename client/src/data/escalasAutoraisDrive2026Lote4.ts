@@ -25,13 +25,14 @@ export const escalasAutoraisDrive2026Lote4: ScaleEntry[] = [
       "ansiedade",
       "social",
       "evolucao",
+      "efeitos",
     ],
     respondente: ["pais"],
     prioridade: "monitorizacao",
     tempo: "3–5 min",
     appRoute: "/generic-scale/ejia-15",
     description:
-      "Instrumento clínico autoral de 15 itens para acompanhar, em janelas de 7 dias, irritabilidade e frustração, agressividade e segurança, desregulação e recuperação, repetitividade associada à desregulação e impacto funcional. Preferir o mesmo cuidador nas reaplicações basal, semana 4, semana 8 e semana 12.",
+      "Instrumento clínico autoral de 15 itens para acompanhar, em janelas de 7 dias, irritabilidade e frustração, agressividade e segurança, desregulação e recuperação, repetitividade associada à desregulação e impacto funcional. Preferir o mesmo cuidador nas reaplicações basal, semana 4, semana 8 e semana 12. Também pode ser usado para acompanhar resposta comportamental após início ou ajuste de medicamento, nutracêutico ou intervenção não farmacológica, sem atribuir causalidade isoladamente ao tratamento.",
     fonte:
       "EJIA-15 v1.0 — Dr. Jadson Fraga, 05/09/2026. Instrumento clínico autoral aprovado pelo autor para incorporação ao NeuroPed.",
     tipo: "Monitorização comportamental longitudinal",
@@ -58,6 +59,7 @@ export const escalasAutoraisDrive2026Lote4: ScaleEntry[] = [
       "impacto_funcional",
       "evolucao_serial",
       "resposta_intervencao",
+      "resposta medicamentosa",
     ],
     exemploPais:
       "Pense somente nos últimos 7 dias e marque o que realmente aconteceu. Nas próximas aplicações, tente manter o mesmo responsável respondendo para tornar a comparação mais consistente.",
