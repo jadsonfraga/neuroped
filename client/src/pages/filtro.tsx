@@ -1,49 +1,56 @@
-import { lazy, Suspense, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { lazy, Suspense } from "react";
 
 const FiltroEngine = lazy(() => import("@/pages/filtro-engine"));
 
-export default function FiltroPage() {
-  const [ready, setReady] = useState(false);
-  const openFilter = () => setReady(true);
-
-  if (!ready) {
-    return (
-      <section
-        className="mx-auto flex min-h-[55vh] w-full max-w-3xl flex-col items-center justify-center gap-4 rounded-3xl border border-border/70 bg-card/80 p-8 text-center shadow-sm"
-        aria-busy="true"
-        data-testid="filter-shell-loading"
-      >
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary" aria-hidden="true">
-          <span className="text-2xl">⌛</span>
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-foreground">Filtro de escalas</h1>
-          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Preparando o catálogo clínico seguro. O conteúdo não é descartado nem enviado para terceiros.
-          </p>
-        </div>
-        <Button
-          type="button"
-          onClick={openFilter}
-          onFocus={openFilter}
-          onPointerEnter={openFilter}
-          data-testid="button-open-filter"
-        >
-          Abrir filtro agora
-        </Button>
-      </section>
-    );
-  }
-
+/**
+ * O catálogo do filtro é pesado e por isso continua em um chunk separado,
+ * carregado só nesta rota. O que mudou: antes a rota parava em uma tela que
+ * dizia "Preparando o catálogo clínico seguro" e, na verdade, não preparava
+ * nada — ficava esperando um clique em "Abrir filtro agora". Não havia
+ * requisito de segurança nessa etapa (o gate de acesso é o RouteGuard, e o
+ * conteúdo do filtro não expõe dado de paciente); era apenas adiamento de
+ * download convertido em trabalho para quem usa o app todo dia.
+ *
+ * Agora o carregamento começa no primeiro render e o esqueleto abaixo cobre a
+ * espera. Nenhuma proteção foi removida.
+ */
+function FilterSkeleton() {
   return (
-    <Suspense
-      fallback={
-        <section className="mx-auto flex min-h-[55vh] w-full max-w-3xl items-center justify-center rounded-3xl border border-border/70 bg-card/80 p-8 text-center" role="status" aria-live="polite">
-          <p className="text-sm text-muted-foreground">Carregando o catálogo clínico seguro…</p>
-        </section>
-      }
+    <section
+      className="mx-auto w-full max-w-5xl space-y-5"
+      aria-busy="true"
+      role="status"
+      aria-live="polite"
+      data-testid="filter-shell-loading"
     >
+      <span className="sr-only">Carregando o catálogo clínico de escalas…</span>
+      <div className="space-y-3">
+        <div className="h-7 w-56 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" />
+        <div className="h-4 w-full max-w-xl animate-pulse rounded bg-muted/70 motion-reduce:animate-none" />
+      </div>
+      <div className="flex gap-2 overflow-hidden">
+        {[0, 1, 2, 3].map((index) => (
+          <div
+            key={index}
+            className="h-11 w-32 shrink-0 animate-pulse rounded-full bg-muted/70 motion-reduce:animate-none"
+          />
+        ))}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((index) => (
+          <div
+            key={index}
+            className="h-40 animate-pulse rounded-2xl border border-border/60 bg-muted/50 motion-reduce:animate-none"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function FiltroPage() {
+  return (
+    <Suspense fallback={<FilterSkeleton />}>
       <FiltroEngine />
     </Suspense>
   );

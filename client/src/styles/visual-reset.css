@@ -364,7 +364,10 @@ header.fixed.md\:hidden {
 [data-testid^="home-flow-"] {
   border-radius: 1.25rem !important;
   border-color: hsl(var(--border) / 0.78) !important;
-  background: hsl(var(--card) / 0.94) !important;
+  /* Superfície OPACA: com 0.94 de alfa o texto secundário do cartão herdava o
+     fundo da página e o axe reprovava o contraste em tablet claro. O cartão é
+     conteúdo, não vidro. */
+  background: hsl(var(--card)) !important;
   box-shadow: var(--np-premium-shadow) !important;
   backdrop-filter: none !important;
   padding: 1.1rem !important;

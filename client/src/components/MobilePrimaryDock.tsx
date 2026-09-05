@@ -141,20 +141,26 @@ export function MobilePrimaryDock() {
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 lg:hidden print:hidden"
-      style={{ paddingBottom: "max(0.45rem, env(safe-area-inset-bottom))" }}
+      style={{ paddingBottom: "max(0.3rem, env(safe-area-inset-bottom))" }}
       data-testid="mobile-primary-dock"
     >
       <nav
         aria-label="Navegação principal"
-        className="pointer-events-auto mx-auto grid max-w-[34rem] rounded-[1.45rem] border border-white/70 bg-background/92 px-1.5 py-1.5 shadow-[0_-12px_40px_-22px_rgba(24,16,34,0.5)] backdrop-blur-2xl dark:border-white/10"
+        className="pointer-events-auto mx-auto grid max-w-[34rem] rounded-[1.3rem] border border-white/70 bg-background/92 px-1.5 py-1 shadow-[0_-12px_40px_-22px_rgba(24,16,34,0.5)] backdrop-blur-2xl dark:border-white/10"
         style={{ gridTemplateColumns: `repeat(${Math.max(1, visibleDockItems.length)}, minmax(0, 1fr))` }}
       >
         {visibleDockItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive?.(path) ?? false;
-          const commonClass = `relative flex min-h-[3.55rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
+          // O destino principal deixou de ser um bloco dourado que se projeta
+          // 20px acima do dock: aquilo custava altura de tela em toda rota e
+          // gritava mais alto que o próprio conteúdo clínico. A prioridade
+          // agora é sinalizada com peso e cor da marca, dentro da mesma linha.
+          const commonClass = `relative flex min-h-[2.95rem] flex-col items-center justify-center gap-0.5 rounded-[0.95rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
             item.highlighted
-              ? "-mt-5 min-h-[4.45rem] rounded-[1.3rem] bg-gradient-to-br from-amber-900 via-amber-600 to-amber-200 text-amber-950 shadow-xl shadow-amber-800/50 ring-2 ring-amber-100/90 hover:from-amber-800 hover:via-amber-500 hover:to-amber-100"
+              ? active
+                ? "bg-primary/15 text-primary"
+                : "text-primary hover:bg-primary/10"
               : active
               ? "bg-primary/12 text-primary"
               : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
@@ -169,20 +175,17 @@ export function MobilePrimaryDock() {
               aria-current={active ? "page" : undefined}
               data-testid={`mobile-dock-${item.label.toLowerCase()}`}
             >
-              {item.highlighted && (
-                <span aria-hidden="true" className="absolute inset-1 rounded-[1rem] border border-amber-50/65 motion-safe:animate-pulse motion-reduce:animate-none" />
-              )}
               <Icon
-                className={`relative z-10 ${item.highlighted ? "h-[21px] w-[21px]" : "h-[19px] w-[19px]"}`}
-                strokeWidth={item.highlighted ? 2.25 : active ? 2.2 : 1.9}
+                className="relative z-10 h-[19px] w-[19px]"
+                strokeWidth={item.highlighted ? 2.2 : active ? 2.2 : 1.9}
                 aria-hidden="true"
               />
-              <span className={`relative z-10 ${item.highlighted ? "font-extrabold tracking-[0.06em]" : ""}`}>
+              <span className={`relative z-10 ${item.highlighted ? "font-bold" : ""}`}>
                 {item.label}
               </span>
-              {active && !item.highlighted && (
+              {active && (
                 <span
-                  className="absolute bottom-1 h-1 w-1 rounded-full bg-primary"
+                  className="absolute bottom-0.5 h-1 w-1 rounded-full bg-primary"
                   aria-hidden="true"
                 />
               )}

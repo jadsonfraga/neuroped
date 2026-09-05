@@ -1120,7 +1120,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         {showClinicalFlow && (
           <div className="sticky top-14 lg:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
-            <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-2 overflow-x-auto text-[12px] text-muted-foreground">
               <ClipboardList className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="shrink-0 font-semibold text-foreground">
                 Fluxo clínico
@@ -1152,7 +1152,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="np-legal-disclosure mt-8 rounded-2xl border border-amber-300/55 bg-amber-50/75 px-3.5 py-3 text-amber-950 shadow-sm dark:border-amber-800/45 dark:bg-amber-950/25 dark:text-amber-100"
           >
             <details className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-2 text-[11px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[12.5px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <span aria-hidden="true" className="text-sm">
                   ⚕️
                 </span>
@@ -1160,14 +1160,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   Uso educativo — não substitui avaliação, diagnóstico ou
                   conduta profissional.
                 </span>
-                <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">
+                <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">
                   Detalhes
                 </span>
-                <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">
+                <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">
                   Recolher
                 </span>
               </summary>
-              <div className="mt-3 border-t border-amber-300/45 pt-3 text-[11px] leading-relaxed text-amber-900/90 dark:border-amber-800/45 dark:text-amber-100/85">
+              <div className="mt-3 border-t border-amber-300/45 pt-3 text-[12.5px] leading-[1.65] text-amber-950 dark:border-amber-800/45 dark:text-amber-50/90">
                 O NeuroPed é uma ferramenta de{" "}
                 <strong className="font-semibold">informação e educação</strong>
                 . Não é dispositivo médico e não realiza diagnóstico, prescrição
@@ -1177,7 +1177,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 médico ou serviço de saúde.{" "}
                 <Link
                   href="/termos"
-                  className="font-bold underline underline-offset-2 hover:opacity-80"
+                  className="inline-flex min-h-6 items-center font-bold underline underline-offset-2 hover:opacity-80"
                 >
                   Termos de Uso e Aviso Legal
                 </Link>
@@ -1186,7 +1186,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </details>
           </aside>
           {/* Assinatura autoral global: reconhecimento visível, sem competir com o conteúdo. */}
-          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-[9.5px] leading-snug text-muted-foreground/85">
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-[11px] leading-relaxed text-muted-foreground">
             <img
               src="/dr-jadson-shield-badge.webp"
               alt=""

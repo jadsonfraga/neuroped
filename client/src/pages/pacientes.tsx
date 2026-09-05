@@ -734,10 +734,12 @@ export default function PacientesPage() {
         />
         {search && (
           <button
+            type="button"
             onClick={() => setSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Limpar busca de pacientes"
+            className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -834,10 +836,16 @@ export default function PacientesPage() {
                         </div>
                       </Link>
                       <div className="flex gap-1">
+                        {/* Ícones sem rótulo textual precisam de nome acessível
+                            explícito — sem ele, leitor de tela anuncia apenas
+                            "botão" e editar fica indistinguível de excluir. O
+                            alvo cresce para 44px no toque e volta a 28px no
+                            desktop, onde o ponteiro é preciso. */}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0"
+                          className="h-11 w-11 shrink-0 p-0 lg:h-7 lg:w-7"
+                          aria-label={`Editar dados de ${p.name}`}
                           onClick={() => {
                             softTick();
                             haptic.tap();
@@ -845,12 +853,13 @@ export default function PacientesPage() {
                           }}
                           data-testid={`button-edit-${p.id}`}
                         >
-                          <Pencil className="w-3 h-3" />
+                          <Pencil className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          className="h-11 w-11 shrink-0 p-0 text-destructive hover:text-destructive lg:h-7 lg:w-7"
+                          aria-label={`Excluir ${p.name}`}
                           onClick={() => {
                             softTap();
                             haptic.warning();
@@ -858,7 +867,7 @@ export default function PacientesPage() {
                           }}
                           data-testid={`button-delete-${p.id}`}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
