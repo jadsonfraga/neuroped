@@ -3,17 +3,13 @@ import { escalasImportadasDrive2026 as escalasImportadasDrive2026Base } from "./
 import { escalasAutoraisDrive2026Lote2 } from "./escalasAutoraisDrive2026Lote2";
 import { escalasAutoraisDrive2026Lote3 } from "./escalasAutoraisDrive2026Lote3";
 import { escalasAutoraisDrive2026Lote4 } from "./escalasAutoraisDrive2026Lote4";
+import { authorialMonitoringCatalog } from "./authorialMonitoring";
 
 /**
- * Catálogo consolidado das escalas autorais do Drive.
- *
- * O lote histórico permanece versionado separadamente. Nesta composição, as
- * escalas do lote 2 recebem status "complete" porque agora possuem uma versão
- * operacional interativa no app (interactiveScaleItemsDrive2026Autorais).
- *
- * "Complete" descreve apenas a implementação no aplicativo (itens + escore +
- * fluxo). Todas continuam autorais, experimentais e sem validação psicométrica
- * publicada.
+ * Composição histórica do catálogo de importações e instrumentos autorais.
+ * A proveniência de cada instrumento é individual: o Pacote 01 veio dos PDFs
+ * fornecidos na conversa, não do Drive. "Complete" indica implementação,
+ * não revisão clínica, validação psicométrica ou equivalência diagnóstica.
  */
 const escalasAutoraisDrive2026Lote2Operacionais: ScaleEntry[] =
   escalasAutoraisDrive2026Lote2.map((scale) => ({
@@ -30,4 +26,5 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
   ...escalasAutoraisDrive2026Lote2Operacionais,
   ...escalasAutoraisDrive2026Lote3,
   ...escalasAutoraisDrive2026Lote4,
+  ...authorialMonitoringCatalog,
 ];
