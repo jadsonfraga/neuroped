@@ -20,10 +20,9 @@ const reviewedFields = new Map([
   ["tests/clinical/test-authorial-sdg-core.mjs", { field: "textSha256", digests: reviewedItemDigests }],
 ]);
 
-/** Mantém a detecção conservadora original para toda ocorrência não revisada. */
-export function findUnreviewedSha256Literals(relativePath, content) {
-  const reviewed = reviewedFields.get(relativePath);
-  return [...content.matchAll(/["']([a-f0-9]{64})["']/gi)].filter((match) => {
+/** Nenhuma exceção é concedida fora do campo e digest previamente revisados. */
+function findUnreviewedLiterals(content, reviewed, pattern) {
+  return [...content.matchAll(pattern)].filter((match) => {
     if (!reviewed || !reviewed.digests.has(`sha256:${match[1].toLowerCase()}`)) return true;
     // Apenas valor literal de propriedade; nunca variável PIN, argumento, array
     // ou uso em autenticação, mesmo que o valor seja um digest documental conhecido.
@@ -31,4 +30,21 @@ export function findUnreviewedSha256Literals(relativePath, content) {
     const field = prefix.match(/(?:^|[\n{,])\s*(?:["']([^"']+)["']|([A-Za-z_$][\w$]*))\s*:\s*$/);
     return (field?.[1] ?? field?.[2]) !== reviewed.field;
   }).map((match) => ({ index: match.index, digest: match[1] }));
+}
+
+/** Mantém a detecção conservadora original para toda ocorrência não revisada. */
+export function findUnreviewedSha256Literals(relativePath, content) {
+  return findUnreviewedLiterals(content, reviewedFields.get(relativePath), /["']([a-f0-9]{64})["']/gi);
+}
+
+/**
+ * O bundle conserva os campos sourceSha256 no chunk do catálogo. Só esse
+ * chunk e o manifesto público podem transportar os três digests documentais.
+ * Backticks continuam inspecionados, como no auditor compilado original.
+ */
+export function findUnreviewedBuiltSha256Literals(relativePath, content) {
+  const reviewed = relativePath === "authorial-sdg-manifest.json" || /^assets\/scaleFilter-[A-Za-z0-9_-]+\.js$/.test(relativePath)
+    ? { field: "sourceSha256", digests: reviewedPdfDigests }
+    : undefined;
+  return findUnreviewedLiterals(content, reviewed, /["'`]([a-f0-9]{64})["'`]/gi);
 }

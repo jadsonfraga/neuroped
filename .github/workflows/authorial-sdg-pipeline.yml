@@ -9,6 +9,8 @@ on:
       - "scripts/gen-interactive-scale-ids.mts"
       - "scripts/check-sdg-deployment.mjs"
       - "scripts/guards/audit-access-policy.mjs"
+      - "scripts/guards/audit-built-pin-verifier.mjs"
+      - "tests/clinical/test-built-provenance-digests.mjs"
       - "scripts/guards/public-provenance-digests.mjs"
       - "tests/clinical/test-public-provenance-digests.mjs"
       - "scripts/guards/safety-classification-*.json"
@@ -23,6 +25,8 @@ on:
       - "scripts/gen-interactive-scale-ids.mts"
       - "scripts/check-sdg-deployment.mjs"
       - "scripts/guards/audit-access-policy.mjs"
+      - "scripts/guards/audit-built-pin-verifier.mjs"
+      - "tests/clinical/test-built-provenance-digests.mjs"
       - "scripts/guards/public-provenance-digests.mjs"
       - "tests/clinical/test-public-provenance-digests.mjs"
       - "scripts/guards/safety-classification-*.json"
@@ -87,6 +91,8 @@ jobs:
           set -euo pipefail
           npm run build:client
           cmp client/public/authorial-sdg-manifest.json dist/public/authorial-sdg-manifest.json
+          node tests/clinical/test-built-provenance-digests.mjs
+          npm run audit:built-pin
         env:
           NODE_ENV: production
           VITE_AUTH_MODE: remote
@@ -163,7 +169,7 @@ jobs:
         run: |
           set -euo pipefail
           title="[SDG] Falha de integração ou publicação de escalas autorais"
-          issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search '"[SDG] Falha de integração" in:title' --json number,title --jq '.[] | select(.title == "[SDG] Falha de integração ou publicação de escalas autorais") | .number' | head -n 1)"
+          issue="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --search 'SDG in:title' --json number,title --jq '.[] | select(.title == "[SDG] Falha de integração ou publicação de escalas autorais") | .number' | head -n 1)"
           body="Contratos ou confirmação de publicação falharam. Nenhuma validação clínica foi promovida automaticamente. Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Verificar logs e permissões de Actions/Cloudflare/Vercel; repetir o fluxo após corrigir a causa. Rastreio: #789."
           if [ -n "$issue" ]; then
             gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"
