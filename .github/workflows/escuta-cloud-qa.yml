@@ -1,0 +1,54 @@
+name: Escuta isolated cloud acceptance
+on:
+  push:
+    branches: [feat/escuta-clinica-integrada-20260905]
+    paths:
+      - '.github/workflows/escuta-cloud-qa.yml'
+      - 'scripts/escuta-cloud-qa.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: escuta-isolated-cloud-qa
+  cancel-in-progress: false
+jobs:
+  isolated-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Full release gate before provisioning isolated resources
+        run: npm run verify
+      - name: Generate fictional speech only
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq espeak ffmpeg
+          espeak -v pt-br -s 145 -w /tmp/escuta-fixture.wav 'Consulta inteiramente ficticia para teste. Medico: a crianca tem sete anos. Mae: a escola relata distracao ha oito meses. Andou com treze meses. Nao houve perda de habilidades. Nao lembro a concentracao do medicamento. O relatorio escolar esta pendente. Medico: o diagnostico ainda esta em investigacao. Nao indiquei mudanca de medicacao.'
+          ffmpeg -v error -i /tmp/escuta-fixture.wav -ar 16000 -ac 1 -f s16le /tmp/escuta-fixture.pcm
+      - name: Deploy isolated copy and test actual authenticated service
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node --import tsx scripts/escuta-cloud-qa.mjs
+      - name: Preserve source snapshot without credentials
+        if: always()
+        run: git archive --format=zip HEAD -o /tmp/escuta-current-source.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-cloud-acceptance-${{ github.run_id }}
+          path: artifacts/escuta-cloud/
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-current-source-${{ github.run_id }}
+          path: /tmp/escuta-current-source.zip
+          retention-days: 1
