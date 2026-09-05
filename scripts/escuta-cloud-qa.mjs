@@ -118,7 +118,7 @@ try{
   report.browser=await verifyCloudBrowser({origin,password:passwords.get("alpha"),patientId:patient.id,microphoneFile,audioSeconds:report.audio.seconds,out});
   pass("deployed UI: normal login, virtual microphone, real transcription, real note, save and restoration after reload");
   report.status="passed";
-}catch(error){report.status="blocked_or_failed";report.reason=error instanceof Error?error.message:"UNKNOWN_ERROR";console.error(report.reason);process.exitCode=1;}
+}catch(error){report.status="blocked_or_failed";report.reason=error instanceof Error?error.message:"UNKNOWN_ERROR";if(error instanceof Error&&error.escutaStep){report.browserStep=error.escutaStep;report.reason=`${error.escutaStep}: ${report.reason}`;}console.error(`${report.stage} | ${report.reason}`);process.exitCode=1;}
 finally{
   writeFileSync(configFile,canonicalConfiguration);
   assert(readFileSync(configFile).equals(canonicalConfiguration),"Canonical configuration restoration failed");report.canonicalConfigRestored=true;
