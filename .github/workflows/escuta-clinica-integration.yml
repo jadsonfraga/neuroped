@@ -6,33 +6,79 @@ on:
     paths:
       - '.github/workflows/escuta-clinica-integration.yml'
       - '**/*escuta*'
-      - '**/*scribe*'
+      - 'shared/escuta/**'
+      - 'functions/api/live/escuta/**'
 permissions:
   contents: read
 concurrency:
   group: escuta-integration-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  source-and-baseline:
-    name: Escuta isolated baseline
+  integration:
+    name: Escuta code and integration
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - name: Archive tracked source only (no environment or credentials)
-        run: git archive --format=zip HEAD -o /tmp/neuroped-source.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: neuroped-source-${{ github.sha }}
-          path: /tmp/neuroped-source.zip
-          retention-days: 1
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
+      - run: node scripts/escuta-integrate.mjs
       - run: npm ci
       - run: npm run check
       - run: npm run lint
+      - run: node --experimental-strip-types tests/unit/escuta-core.test.ts
+      - run: node tests/unit/escuta-worklet.test.mjs
       - run: npm run build:client
+      - run: npx wrangler@4 pages functions build --outdir=/tmp/escuta-functions
+      - name: Commit verified integration wiring on feature branch only
+        if: github.event_name == 'push' && github.ref_name == 'feat/escuta-clinica-integrada-20260905'
+        run: |
+          git add client/src/App.tsx client/src/security/routeGuardPolicy.ts client/src/data/navigation.ts client/public/_headers vercel.json
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(escuta): wire protected route and same-origin microphone policy'
+            git push origin HEAD:feat/escuta-clinica-integrada-20260905
+          fi
+      - name: Archive tracked source for reproducible verification
+        if: always()
+        run: git archive --format=zip HEAD -o /tmp/neuroped-source.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-source-${{ github.run_id }}
+          path: /tmp/neuroped-source.zip
+          retention-days: 1
+  native-provider:
+    name: Escuta real native provider QA
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Create fictional Portuguese speech fixture
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq espeak ffmpeg
+          espeak -v pt-br -s 155 -w /tmp/escuta-fixture.wav 'Consulta inteiramente ficticia para teste. Medico: a crianca tem sete anos. Mae: a escola relata distracao ha oito meses. Andou com treze meses. Nao houve perda de habilidades. Nao lembro a concentracao do medicamento. O relatorio escolar esta pendente. Medico: o diagnostico ainda esta em investigacao. Nao indiquei mudanca de medicacao.'
+          ffmpeg -v error -i /tmp/escuta-fixture.wav -ar 16000 -ac 1 -f s16le /tmp/escuta-fixture.pcm
+      - name: Real provider requests without exposing credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node --experimental-strip-types scripts/escuta-provider-qa.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-provider-qa-${{ github.run_id }}
+          path: artifacts/escuta/
+          retention-days: 7
