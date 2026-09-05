@@ -6,12 +6,16 @@ on:
       - 'client/src/data/authorialMonitoring.json'
       - 'client/src/data/daily-authorial/**'
       - 'scripts/authorial_scale_delivery.py'
+      - 'scripts/authorial_delivery_failure.cjs'
       - '.github/workflows/authorial-scale-delivery.yml'
   pull_request:
     paths:
       - 'scripts/authorial_scale_delivery.py'
+      - 'scripts/authorial_delivery_failure.cjs'
+      - 'scripts/guards/assert-authorial-package-unique.mjs'
       - 'scripts/requirements-authorial-mail.txt'
       - 'tests/unit/test_authorial_scale_delivery.py'
+      - 'tests/unit/authorial-*.test.*'
       - 'config/authorial-*'
       - '.github/workflows/authorial-scale-delivery.yml'
   schedule:
@@ -37,10 +41,15 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.sha || 'main' }}
           persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Contratos de incidentes e fonte autoral única
+        run: node --test tests/unit/authorial-delivery-failure.test.cjs tests/unit/authorial-package-unique.test.mjs
       - name: Dependências isoladas
         run: |
           python3 -m venv .venv-scale-mail
-          .venv-scale-mail/bin/pip install -r scripts/requirements-authorial-mail.txt
+          .venv-scale-mail/bin/pip install --retries 3 --timeout 30 -r scripts/requirements-authorial-mail.txt
       - name: Contrato de anexos, deduplicação e falha fechada
         run: .venv-scale-mail/bin/python -m unittest discover -s tests/unit -p test_authorial_scale_delivery.py -v
   deliver:
@@ -59,7 +68,7 @@ jobs:
       - name: Dependências isoladas
         run: |
           python3 -m venv .venv-scale-mail
-          .venv-scale-mail/bin/pip install -r scripts/requirements-authorial-mail.txt
+          .venv-scale-mail/bin/pip install --retries 3 --timeout 30 -r scripts/requirements-authorial-mail.txt
       - name: Ler somente JSON do artefato do gerador autorizado
         if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
@@ -85,3 +94,28 @@ jobs:
           path: out/authorial-scales/*.pdf
           if-no-files-found: ignore
           retention-days: 90
+  report-failure:
+    needs: [test, deliver]
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (needs.test.result == 'failure' || needs.test.result == 'cancelled' || needs.deliver.result == 'failure' || needs.deliver.result == 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Abrir ou atualizar incidente sem expor logs ou credenciais
+        uses: actions/github-script@v8
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DELIVERY_RESULT: ${{ needs.deliver.result }}
+        with:
+          script: |
+            const report = require('./scripts/authorial_delivery_failure.cjs');
+            await report({ github, context, core, results: {
+              test: process.env.TEST_RESULT,
+              deliver: process.env.DELIVERY_RESULT,
+            }});
