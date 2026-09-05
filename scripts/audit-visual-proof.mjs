@@ -50,7 +50,14 @@ function intersects(a, b) {
 }
 
 const server = await startStaticServer(ensureClientBuild(repoRoot));
-const browser = await chromium.launch({ headless: true });
+// Mesma política do gate de a11y: quando o ambiente fornece um Chromium fora
+// da revisão fixada pelo Playwright, ele é usado explicitamente.
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+const browser = await chromium.launch(
+  executablePath
+    ? { headless: true, executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+    : { headless: true },
+);
 const results = [];
 
 try {

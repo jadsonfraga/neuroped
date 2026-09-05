@@ -88,8 +88,8 @@ assert.match(
 );
 assert.match(
   authContextSource,
-  /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,260}queryClient\.clear\(\);[\s\S]{0,80}secureClearAll\(\);/,
-  "limpeza explícita deve eliminar credenciais e cache clínico",
+  /async function clearSessionScopedClientState\(\): Promise<void> \{[\s\S]{0,400}queryClient\.clear\(\);[\s\S]{0,400}clearFocusPatient\(\);[\s\S]{0,200}secureClearAll\(\);/,
+  "limpeza explícita deve eliminar credenciais, cache clínico e paciente em foco",
 );
 assert.doesNotMatch(
   authContextSource,
