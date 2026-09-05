@@ -80,6 +80,11 @@ export default function LoginPage() {
         <a href="#/cadastro" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           Criar conta profissional
         </a>
+        {/* Quem chegou aqui sem conhecer o produto precisa de um caminho que
+            não comece pedindo senha. */}
+        <a href="#/planos" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="pricing-link">
+          Conhecer o NeuroPed e os planos
+        </a>
         <a href={`#${PUBLIC_HOME}`} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Ir para o conteúdo das famílias
         </a>

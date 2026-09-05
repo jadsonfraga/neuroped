@@ -30,6 +30,26 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2 }> 
   { id: "plano", label: "Plano", icon: CreditCard },
 ];
 
+/**
+ * Seção inicial a partir do link (`#/configuracoes?secao=plano`).
+ *
+ * Sem isto, todo link para Configurações caía em "Perfil" e quem precisava de
+ * Plano ou Equipe tinha que adivinhar em qual aba estava — inclusive o aviso
+ * de assinatura pendente, que já apontava para cá e deixava a pessoa a um
+ * clique de distância do que ela tinha acabado de pedir.
+ *
+ * Valor desconhecido cai em "perfil": a URL é entrada externa, não comando.
+ */
+function initialSectionFromLocation(): SectionId {
+  if (typeof window === "undefined") return "perfil";
+  const raw = window.location.hash.replace(/^#/, "");
+  const query = raw.includes("?") ? raw.slice(raw.indexOf("?") + 1) : "";
+  const requested = new URLSearchParams(query).get("secao");
+  return SECTIONS.some((entry) => entry.id === requested)
+    ? (requested as SectionId)
+    : "perfil";
+}
+
 const ROLE_LABEL: Record<string, string> = {
   owner: "Proprietário(a)",
   clinic_admin: "Administrador(a)",
@@ -573,7 +593,7 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
 export default function ConfiguracoesPage() {
   const { user } = useAuth();
   const { activeClinicId, clinics } = useClinic();
-  const [section, setSection] = useState<SectionId>("perfil");
+  const [section, setSection] = useState<SectionId>(initialSectionFromLocation);
 
   const activeClinic = useMemo(
     () => clinics.find((clinic) => clinic.id === activeClinicId) ?? null,

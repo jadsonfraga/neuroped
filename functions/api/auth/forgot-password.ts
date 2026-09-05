@@ -4,7 +4,9 @@
  * Invariantes de segurança:
  * - resposta SEMPRE 202 genérica (anti-enumeração de contas), inclusive quando
  *   o backend/entrega está indisponível ou o e-mail não existe;
- * - rate limit persistente por bucket HMAC de IP (sobrevive a cold starts);
+ * - rate limit persistente por bucket HMAC de IP (sobrevive a cold starts), com
+ *   balde sentinela compartilhado quando o IP não é identificável — ausência de
+ *   CF-Connecting-IP nunca libera a requisição;
  * - o token nunca é persistido em texto claro — apenas SHA-256;
  * - falha na entrega do e-mail apaga o token recém-criado (nada fica pendente
  *   sem que o destinatário tenha recebido o link).
@@ -44,9 +46,26 @@ function randomToken(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function resetBucket(secret: string, request: Request): Promise<string | null> {
-  const ip = request.headers.get("CF-Connecting-IP")?.trim();
-  if (!ip) return null;
+/**
+ * Identificador do balde de rate limit.
+ *
+ * CF-Connecting-IP é preenchido pela borda da Cloudflare e não é falsificável
+ * por quem chama — mas ele PODE faltar (origem acessada fora da borda, chamada
+ * interna, mudança de topologia). Antes, a ausência do header devolvia null e
+ * o chamador tratava "sem balde" como "pode passar": bastava alcançar a origem
+ * sem esse header para desligar o rate limiter por completo.
+ *
+ * Política explícita: sem IP identificável, a requisição não fica livre — ela
+ * cai num balde sentinela COMPARTILHADO, sujeito ao mesmo teto por janela.
+ * Não é fail-closed total (que derrubaria a redefinição de senha inteira se a
+ * borda parasse de enviar o header), e não é bypass: o pior caso é um teto
+ * global para tráfego sem IP, enquanto o tráfego real da borda continua
+ * limitado por IP.
+ */
+const NO_IP_BUCKET_SENTINEL = "sem-ip-identificavel";
+
+async function resetBucket(secret: string, request: Request): Promise<string> {
+  const ip = request.headers.get("CF-Connecting-IP")?.trim() || NO_IP_BUCKET_SENTINEL;
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -68,7 +87,6 @@ async function consumeResetAttempt(
   request: Request,
 ): Promise<boolean> {
   const bucket = await resetBucket(secret, request);
-  if (!bucket) return true;
 
   const existing = await db
     .prepare(

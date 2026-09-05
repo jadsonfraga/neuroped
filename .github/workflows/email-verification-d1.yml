@@ -1,0 +1,141 @@
+name: Email verification D1
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0024_email_verification.sql"
+      - "functions/api/auth/_emailVerification.ts"
+      - "functions/api/auth/verify-email.ts"
+      - "functions/api/auth/resend-verification.ts"
+      - "functions/api/auth/signup.ts"
+      - "functions/api/tenants/index.ts"
+      - "tests/unit/email-verification.test.ts"
+      - ".github/workflows/email-verification-d1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0024_email_verification.sql"
+      - "functions/api/auth/_emailVerification.ts"
+      - "functions/api/auth/verify-email.ts"
+      - "functions/api/auth/resend-verification.ts"
+      - "functions/api/auth/signup.ts"
+      - "functions/api/tenants/index.ts"
+      - "tests/unit/email-verification.test.ts"
+      - ".github/workflows/email-verification-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Grupo próprio: a migração não pode ser cancelada pela corrida do grupo
+# compartilhado cloudflare-pages.
+concurrency:
+  group: d1-email-verification
+  cancel-in-progress: false
+
+jobs:
+  validate-email-verification:
+    name: Validate email verification flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Adversarial email verification regression
+        run: node --import tsx tests/unit/email-verification.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+  migrate-email-verification:
+    name: Apply email verification schema to D1
+    needs: validate-email-verification
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      # ALTER TABLE ADD COLUMN não é idempotente no SQLite: reaplicar a 0024
+      # sobre um banco já migrado aborta com "duplicate column name". O gate
+      # abaixo torna a aplicação segura de repetir sem esconder outras falhas.
+      - name: Preflight — a coluna já existe?
+        id: preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS ja_migrado FROM pragma_table_info('users') WHERE name = 'email_verified_at';" \
+            > /tmp/email-verified-column.txt 2>&1
+          cat /tmp/email-verified-column.txt
+
+          if grep -qE '(ja_migrado[^0-9]*1[^0-9]|"ja_migrado":\s*1)' /tmp/email-verified-column.txt; then
+            echo "aplicada=true" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ 0024 já aplicada — nada a fazer."
+          else
+            echo "aplicada=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply migration 0024
+        if: steps.preflight.outputs.aplicada == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0024_email_verification.sql
+
+      - name: Verify schema without exposing accounts
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('auth_email_verification_tokens','auth_email_verification_rate_limits') ORDER BY name;" \
+            > /tmp/verification-tables.txt 2>&1
+          cat /tmp/verification-tables.txt
+          grep -q "auth_email_verification_tokens" /tmp/verification-tables.txt
+          grep -q "auth_email_verification_rate_limits" /tmp/verification-tables.txt
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS colunas FROM pragma_table_info('users') WHERE name IN ('email_verified_at','email_verified_source');" \
+            > /tmp/verification-columns.txt 2>&1
+          cat /tmp/verification-columns.txt
+          grep -qE '(colunas[^0-9]*2[^0-9]|"colunas":\s*2)' /tmp/verification-columns.txt
+
+          echo "✅ Verificação de e-mail instalada sem consultar nenhuma conta."
