@@ -76,6 +76,12 @@ jobs:
         run: npm run audit:scales:clinical
         continue-on-error: false
 
+      # A família responde sem supervisão: o descritor remoto não pode nomear
+      # um instrumento que o app não aplica por inteiro.
+      - name: Remote Scale Clinical Truth
+        run: npm run audit:remote-scale-truth
+        continue-on-error: false
+
       # Ownership isolation unit tests
       - name: Test Patient And Result Ownership
         run: npm run test:ownership

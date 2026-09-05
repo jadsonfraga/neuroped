@@ -12,6 +12,7 @@ on:
       - "functions/api/live/scale-invitations/index.ts"
       - "tests/unit/remote-scale-response.test.ts"
       - "tests/unit/saas-remote-scale-static.test.mjs"
+      - "scripts/guards/check-remote-scale-clinical-truth.mjs"
       - ".github/workflows/remote-scale-response-d1.yml"
   push:
     branches:
@@ -24,6 +25,7 @@ on:
       - "functions/api/live/scale-invitations/index.ts"
       - "tests/unit/remote-scale-response.test.ts"
       - "tests/unit/saas-remote-scale-static.test.mjs"
+      - "scripts/guards/check-remote-scale-clinical-truth.mjs"
       - ".github/workflows/remote-scale-response-d1.yml"
   workflow_dispatch:
 
@@ -62,6 +64,9 @@ jobs:
 
       - name: Adversarial remote scale response regression
         run: node --import tsx tests/unit/remote-scale-response.test.ts
+
+      - name: Clinical truth of the remote descriptors
+        run: npm run audit:remote-scale-truth
 
       - name: TypeScript
         run: npm run check
