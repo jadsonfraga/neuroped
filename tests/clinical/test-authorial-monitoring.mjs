@@ -4,6 +4,8 @@ import { allScales, filterScales } from "../../client/src/data/scaleFilter.ts";
 import { filterScalesIntelligently } from "../../client/src/data/advancedFilterLogic.ts";
 import { makeInteractiveConfig } from "../../client/src/data/interactiveScaleItems.ts";
 import { authorialMonitoringRecords, authorialMonitoringCatalog, authorialMonitoringItems, validateMonitoringRecords } from "../../client/src/data/authorialMonitoring.ts";
+import { escalasImportadasDrive2026 } from "../../client/src/data/escalasImportadasDrive2026.ts";
+import { assertUniqueAuthorialPackage } from "../../scripts/guards/assert-authorial-package-unique.mjs";
 
 const expected = {
   "afi12-sdg": { min: 60, max: 215, complaint: "tdah", respondents: ["pais", "professor"], domainSizes: [6, 6] },
@@ -11,6 +13,8 @@ const expected = {
   "sarf12-sdg": { min: 24, max: 179, complaint: "alimentacao", respondents: ["pais"], domainSizes: [4, 4, 4] },
 };
 let checks = 0;
+// Validate raw sources, not only allScales: deduplication can conceal competing registries.
+assertUniqueAuthorialPackage(escalasImportadasDrive2026); checks++;
 for (const [id, e] of Object.entries(expected)) {
   const r = authorialMonitoringRecords.find((r) => r.id === id);
   const entry = authorialMonitoringCatalog.find((r) => r.id === id);
