@@ -45,6 +45,16 @@ const PURGE_ORDER: ReadonlyArray<{ table: string; patientColumn: string }> = [
   { table: "live_patients", patientColumn: "id" },
 ];
 
+/**
+ * Tabelas de governança que apontam para o titular com ON DELETE RESTRICT e
+ * que são preservadas: o ponteiro precisa ser solto antes do DELETE do
+ * paciente, senão a própria requisição de eliminação impede a eliminação.
+ */
+const GOVERNANCE_PATIENT_REFERENCES: ReadonlyArray<string> = [
+  "live_export_requests",
+  "live_deletion_requests",
+];
+
 /** Tabelas deliberadamente preservadas (ver decisão 2 no topo do arquivo). */
 export const PURGE_PRESERVED_TABLES: ReadonlyArray<string> = [
   // Política de retenção é configuração da clínica (não tem sequer coluna
@@ -187,7 +197,13 @@ export async function executeTenantScopedPurge(
     return null;
   }
 
-  const statements = PURGE_ORDER.map(({ table, patientColumn }) =>
+  const deleteFor = ({
+    table,
+    patientColumn,
+  }: {
+    table: string;
+    patientColumn: string;
+  }) =>
     targets.scope === "patient"
       ? db
           .prepare(
@@ -196,16 +212,48 @@ export async function executeTenantScopedPurge(
           .bind(targets.clinicId, targets.patientId)
       : db
           .prepare(`DELETE FROM ${table} WHERE clinic_id = ?`)
+          .bind(targets.clinicId);
+
+  // As requisições de governança apontam para o titular com ON DELETE RESTRICT
+  // e são preservadas como evidência — ou seja, a própria requisição impediria
+  // apagar o paciente. Soltar o ponteiro ANTES do DELETE resolve sem perder a
+  // prova: a requisição sobrevive com id, tenant, escopo, status e datas, e o
+  // que some é o identificador do titular — exatamente o que a eliminação
+  // deveria fazer sumir.
+  const detachStatements = GOVERNANCE_PATIENT_REFERENCES.map((table) =>
+    targets.scope === "patient"
+      ? db
+          .prepare(
+            `UPDATE ${table} SET patient_id = NULL WHERE clinic_id = ? AND patient_id = ?`,
+          )
+          .bind(targets.clinicId, targets.patientId)
+      : db
+          .prepare(
+            `UPDATE ${table} SET patient_id = NULL WHERE clinic_id = ? AND patient_id IS NOT NULL`,
+          )
           .bind(targets.clinicId),
   );
+
+  const children = PURGE_ORDER.filter(({ table }) => table !== "live_patients");
+  const patientsEntry = PURGE_ORDER.find(
+    ({ table }) => table === "live_patients",
+  )!;
+  const statements = [
+    ...children.map(deleteFor),
+    ...detachStatements,
+    deleteFor(patientsEntry),
+  ];
 
   let deletedCounts: Record<string, number>;
   try {
     const results = await db.batch(statements);
     deletedCounts = {};
-    PURGE_ORDER.forEach(({ table }, index) => {
+    children.forEach(({ table }, index) => {
       deletedCounts[table] = Number(results[index]?.meta?.changes ?? 0);
     });
+    deletedCounts[patientsEntry.table] = Number(
+      results[statements.length - 1]?.meta?.changes ?? 0,
+    );
   } catch {
     // Batch é atômico: ou tudo apagou, ou nada. Uma ordem errada (órfão de FK)
     // cai aqui em vez de deixar o tenant meio apagado.
