@@ -178,11 +178,26 @@ export const onRequestPost: PagesFunction<PasswordResetDeliveryEnv> = async (con
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return genericAccepted();
   if (!passwordResetDeliveryConfigured(context.env)) return genericAccepted();
 
+  // match_count na mesma consulta: um LIMIT 1 sozinho faria o SQLite entregar a
+  // conta que o plano de execução escolher entre duas que só diferem na caixa
+  // do e-mail, e o link de redefinição poderia chegar à conta errada. A 0022
+  // impede esse estado no banco; o contador mantém o fail-closed também contra
+  // um banco ainda não migrado.
   const user = await db
-    .prepare(`SELECT id, email FROM users WHERE lower(email) = ? AND is_active = 1 LIMIT 1`)
-    .bind(email)
-    .first<{ id: string; email: string }>();
+    .prepare(
+      `SELECT id, email,
+              (SELECT COUNT(*) FROM users WHERE lower(email) = ? AND is_active = 1) AS match_count
+         FROM users WHERE lower(email) = ? AND is_active = 1 LIMIT 1`,
+    )
+    .bind(email, email)
+    .first<{ id: string; email: string; match_count: number }>();
   if (!user) return genericAccepted();
+  if (Number(user.match_count) > 1) {
+    console.error("[auth/forgot-password] identidade de e-mail ambígua — reset não emitido", {
+      matches: Number(user.match_count),
+    });
+    return genericAccepted();
+  }
 
   const e2eEmail = context.env.NEUROPED_E2E_EMAIL?.trim().toLowerCase();
   if (e2eEmail && user.email.trim().toLowerCase() === e2eEmail) return genericAccepted();
