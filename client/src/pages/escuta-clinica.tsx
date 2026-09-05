@@ -19,8 +19,8 @@ export default function EscutaClinicaPage() {
   const mounted = useRef(true); const inFlight = useRef(false);
   const active = state === "recording" || state === "paused" || state === "requesting";
   useEffect(()=> {
-    mounted.current = true; recorder.current = new EscutaRecorder((s,t,v)=>{if(mounted.current){setState(s);setSeconds(t);setLevel(v);}});
-    return ()=>{ mounted.current=false; controller.current?.abort(); recorder.current?.destroy(); transcribed.current.clear(); };
+    mounted.current = true; const chunks = transcribed.current; recorder.current = new EscutaRecorder((s,t,v)=>{if(mounted.current){setState(s);setSeconds(t);setLevel(v);}});
+    return ()=>{ mounted.current=false; controller.current?.abort(); recorder.current?.destroy(); chunks.clear(); };
   },[]);
   useEffect(()=>()=>{if(audioUrl) URL.revokeObjectURL(audioUrl);},[audioUrl]);
   useEffect(()=> {
@@ -49,6 +49,7 @@ export default function EscutaClinicaPage() {
   function clearDraft() {setNote(null);setReviewed(false);documentId.current=null;}
   async function generate(text: string) {
     if(!ready || !ack) throw new Error("O processamento precisa estar habilitado e autorizado.");
+    setNote(null); setReviewed(false); documentId.current=null;
     setProgress("Organizando a anamnese a partir da transcrição…");
     const result=await post("/api/live/escuta",{clinicId:activeClinicId,action:"generate",transcript:text,recordingAcknowledged:ack});
     if(mounted.current){setNote(result.note);setReviewed(false);setMessage("Rascunho gerado. Confira as informações e suas fontes antes de revisar.");}

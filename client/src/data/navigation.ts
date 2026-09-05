@@ -87,6 +87,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "golden",
     description: "Pré-agendamento pelo BoaConsulta",
   },
+  { href: "/escuta-clinica", label: "Escuta Clínica", icon: Waves, description: "Áudio e anamnese estruturada" },
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {
     href: "/servicos-clinica",

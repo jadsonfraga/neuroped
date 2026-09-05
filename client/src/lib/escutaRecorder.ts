@@ -36,7 +36,7 @@ export class EscutaRecorder {
     } catch (error) {
       if (generation !== this.generation) return;
       this.release(); this.state = "idle"; this.report();
-      if (error instanceof DOMException && error.name === "NotAllowedError") throw new Error("Microfone não autorizado. Libere a permissão do site no navegador.");
+      if (error instanceof DOMException && error.name === "NotAllowedError") throw new Error("Microfone não autorizado. Libere a permissão do site no navegador.", { cause: error });
       throw error;
     }
   }
