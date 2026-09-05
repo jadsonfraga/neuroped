@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-// Bootstrap idempotente, restrito a esta integração. Divergência do ponto de inserção bloqueia.
+// Bootstrap idempotente, restrito a esta integração. Divergência bloqueia.
 function patch(path, oldValue, value, marker) {
   const source = readFileSync(path, "utf8");
   if (source.includes(marker)) return;
@@ -14,4 +14,8 @@ for (const path of ["client/public/_headers", "vercel.json"]) {
   patch(path, 'microphone=()', 'microphone=(self)', 'microphone=(self)');
   patch(path, "worker-src 'self' blob:;", "media-src 'self' blob:; worker-src 'self' blob:;", "media-src 'self' blob:;");
 }
-console.log("Integration applied idempotently; public invitation restrictions preserved.");
+patch("client/src/lib/escutaRecorder.ts", 'throw new Error("Microfone não autorizado. Libere a permissão do site no navegador.");', 'throw new Error("Microfone não autorizado. Libere a permissão do site no navegador.", { cause: error });', 'navegador.", { cause: error }');
+patch("client/src/pages/escuta-clinica.tsx", 'mounted.current = true; recorder.current', 'mounted.current = true; const chunks = transcribed.current; recorder.current', 'const chunks = transcribed.current');
+patch("client/src/pages/escuta-clinica.tsx", 'recorder.current?.destroy(); transcribed.current.clear();', 'recorder.current?.destroy(); chunks.clear();', 'recorder.current?.destroy(); chunks.clear();');
+patch("client/src/pages/escuta-clinica.tsx", 'setProgress("Organizando a anamnese a partir da transcrição…");', 'setNote(null); setReviewed(false); documentId.current=null;\n    setProgress("Organizando a anamnese a partir da transcrição…");', 'setNote(null); setReviewed(false); documentId.current=null;');
+console.log("Integration applied idempotently; invitation restrictions and clinical guards preserved.");
