@@ -101,6 +101,23 @@ const PATIENT_ACTIONS: CockpitAction[] = [
   },
 ];
 
+/**
+ * Primeiro nome utilizável para a saudação. Títulos ("Dra. Fulana") não são
+ * nome: cortar no primeiro espaço produzia "Bom trabalho, Dra..", com o ponto
+ * da abreviação colado no ponto da frase.
+ */
+const HONORIFICS = new Set(["dr", "dra", "prof", "profa", "sr", "sra", "me", "ms"]);
+
+function greetingName(fullName: string | undefined): string | null {
+  for (const token of (fullName ?? "").trim().split(/\s+/)) {
+    const clean = token.replace(/[.,;:]+$/, "");
+    if (!clean) continue;
+    if (HONORIFICS.has(clean.toLocaleLowerCase("pt-BR"))) continue;
+    return clean;
+  }
+  return null;
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -132,7 +149,7 @@ export function ClinicalCockpit() {
 
   if (!isClinicalSession) return null;
 
-  const firstName = (user?.name ?? "").trim().split(/\s+/)[0] || "profissional";
+  const firstName = greetingName(user?.name);
 
   return (
     <section
@@ -204,7 +221,7 @@ export function ClinicalCockpit() {
         ) : (
           <div className="space-y-2">
             <p className="text-[15px] font-semibold leading-tight text-foreground">
-              Bom trabalho, {firstName}. Nenhum paciente em foco.
+              {firstName ? `${firstName}, nenhum paciente em foco.` : "Nenhum paciente em foco."}
             </p>
             <p className="text-[12.5px] leading-relaxed text-muted-foreground">
               Escolha um paciente para que prontuário, laudo e receita já abram
@@ -256,7 +273,7 @@ export function ClinicalCockpit() {
 
       {/* ── 3. Retomar ── */}
       <div className="min-w-0 space-y-2.5 lg:border-l lg:border-border/60 lg:pl-5">
-        <SectionLabel>Trocar de paciente</SectionLabel>
+        <SectionLabel>{focusPatient ? "Trocar de paciente" : "Escolher paciente"}</SectionLabel>
         {recentPatients.length === 0 ? (
           <p className="text-[12.5px] leading-relaxed text-muted-foreground">
             {isLoading

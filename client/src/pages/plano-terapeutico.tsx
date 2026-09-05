@@ -647,7 +647,7 @@ export default function PlanoTerapeuticoPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     onClick={handlePrint}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white"
                     data-testid="button-print-pti"
                   >
                     <Printer className="w-4 h-4 mr-1" /> Imprimir / PDF

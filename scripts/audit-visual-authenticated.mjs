@@ -87,6 +87,12 @@ async function loginThroughUi(page, origin) {
 async function logoutThroughUi(page, origin) {
   await gotoRoute(page, origin, "/", 700);
   const exit = page.getByTestId("button-session-exit");
+  // No celular/tablet a sessão vive dentro do drawer: é preciso abri-lo, que é
+  // exatamente o caminho que a pessoa percorre para sair.
+  if (!(await exit.isVisible().catch(() => false))) {
+    await page.getByRole("button", { name: "Abrir menu de navegação" }).click();
+    await page.waitForTimeout(500);
+  }
   await exit.waitFor({ state: "visible", timeout: 20_000 });
   await exit.click();
   await page.waitForFunction(
@@ -283,6 +289,31 @@ const CASES = [
     },
   },
 
+  {
+    id: "33b-pacientes-confirmacao-destrutiva-desktop-light", viewport: "desktop", theme: "light",
+    steps: async (page, ctx) => {
+      await gotoRoute(page, ctx.origin, "/#/pacientes", 900);
+      await page.getByTestId(`button-delete-${PATIENT_A}`).click();
+      await page.getByRole("alertdialog").or(page.getByRole("dialog")).first()
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(400);
+    },
+    expectDialogFocus: true,
+    expectText: ["Remover"],
+  },
+  {
+    id: "33c-pacientes-confirmacao-destrutiva-mobile-light", viewport: "mobile", theme: "light",
+    steps: async (page, ctx) => {
+      await gotoRoute(page, ctx.origin, "/#/pacientes", 900);
+      await page.getByTestId(`button-delete-${PATIENT_A}`).click();
+      await page.getByRole("alertdialog").or(page.getByRole("dialog")).first()
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(400);
+    },
+    expectDialogFocus: true,
+    expectText: ["Remover"],
+  },
+
   // ── 4. Seleção, troca e detalhe de paciente ──
   {
     id: "34-paciente-detalhe-desktop-light", viewport: "desktop", theme: "light",
@@ -360,6 +391,19 @@ const CASES = [
         await page.waitForTimeout(800);
       }
     },
+  },
+
+  {
+    id: "49b-prontuario-salvamento-desktop-light", viewport: "desktop", theme: "light",
+    steps: async (page, ctx) => {
+      await gotoRoute(page, ctx.origin, `/#/prontuario?patientId=${PATIENT_A}`, 1_400);
+      const save = page.getByRole("button", { name: /Salvar prontuário/i });
+      await save.waitFor({ state: "visible", timeout: 15_000 });
+      await save.scrollIntoViewIfNeeded();
+      await save.click();
+      await page.waitForTimeout(1_200);
+    },
+    expectText: ["Ana Sintética"],
   },
 
   // ── 6. Escalas: catálogo, execução, resultado ──
@@ -635,7 +679,16 @@ const DOM_AUDIT = () => {
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
     compactTargets,
-    dock: dockBox ? { height: Math.round(dockBox.height), reserve: Math.round(mainPaddingBottom) } : null,
+    dock: dockBox
+      ? {
+          height: Math.round(dockBox.height),
+          reserve: Math.round(mainPaddingBottom),
+          // Durante o carregamento de uma rota o dock já existe e o
+          // #main-content ainda não: não há conteúdo a ser coberto, e cobrar
+          // reserva aí seria cobrar de um layout que não existe.
+          mainPresent: main instanceof HTMLElement,
+        }
+      : null,
     dialog: openDialog
       ? { present: true, focusInside: openDialog.contains(document.activeElement) }
       : { present: false, focusInside: true },
@@ -699,6 +752,17 @@ async function runCase(browser, server, testCase) {
     stepError = error instanceof Error ? error.message : String(error);
   }
 
+  // Entradas animadas (opacidade 0 -> 1, com atraso escalonado por cartão) só
+  // terminam alguns frames depois do carregamento. Auditar contraste no meio
+  // dessa transição reprova um texto que está correto — o axe media a cor de um
+  // elemento ainda translúcido. Espera-se o fim das animações em curso.
+  await page.waitForFunction(
+    () => !document.getAnimations || document.getAnimations()
+      .filter((animation) => animation.playState === "running").length === 0,
+    undefined,
+    { timeout: 6_000 },
+  ).catch(() => {});
+
   // A reserva inferior do dock é aplicada por efeito (classe no <body>).
   // Auditar antes disso mediria "reserva 0" num layout que, um frame depois,
   // está correto — e transformaria o gate em fonte de ruído.
@@ -707,7 +771,14 @@ async function runCase(browser, server, testCase) {
     return !dock || document.body.classList.contains("np-mobile-dock-active");
   }, undefined, { timeout: 5_000 }).catch(() => {});
 
-  const audit = await page.evaluate(DOM_AUDIT);
+  let audit = await page.evaluate(DOM_AUDIT);
+  // A reserva é aplicada por classe no <body> e pode não estar refletida no
+  // primeiro frame após a montagem. Uma releitura evita reprovar um layout que,
+  // um instante depois, está correto — sem esconder uma reserva de fato ausente.
+  if (audit.dock && audit.dock.mainPresent && audit.dock.reserve < audit.dock.height + 8) {
+    await page.waitForTimeout(600);
+    audit = await page.evaluate(DOM_AUDIT);
+  }
 
   const axeResults = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -757,7 +828,7 @@ async function runCase(browser, server, testCase) {
     ...missingText.map((needle) => `contexto-ausente-na-tela:${needle}`),
     // O dock é fixo: sem reserva equivalente no conteúdo, ele cobre o fim da
     // página (justamente onde ficam salvar, enviar e concluir).
-    ...(audit.dock && audit.dock.reserve < audit.dock.height + 8
+    ...(audit.dock && audit.dock.mainPresent && audit.dock.reserve < audit.dock.height + 8
       ? [`reserva-dock:${audit.dock.reserve}px<${audit.dock.height + 8}px`]
       : []),
   ];

@@ -147,7 +147,7 @@ export function WhatsAppShare({ scaleName, reportText }: WhatsAppShareProps) {
             <Button
               type="submit"
               disabled={!phone || loading || !isValidPhone(phone)}
-              className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full gap-2 bg-emerald-700 hover:bg-emerald-800 text-white"
             >
               {loading ? (
                 <>

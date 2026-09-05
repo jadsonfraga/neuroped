@@ -1828,7 +1828,10 @@ export default function ProntuarioPage() {
                   size="lg"
                   onClick={handleSave}
                   disabled={recordLoading || recordSaving || !patientId}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-md h-11"
+                  // emerald-600 sobre branco rende 3,77:1 — abaixo do mínimo AA
+                  // para texto normal. emerald-700 rende 5,48:1 e mantém o
+                  // mesmo verde de "salvar" da identidade.
+                  className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white gap-2 shadow-md h-11"
                 >
                   <Save className="w-5 h-5" />
                   {recordLoading ? "Carregando…" : recordSaving ? "Salvando…" : "Salvar prontuário"}
