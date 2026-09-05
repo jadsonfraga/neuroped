@@ -39,6 +39,7 @@ const MotionPreferences = lazy(() =>
 // Fluxos de exceção (login/sessão/LGPD) saem da carga inicial: raramente são a
 // primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
 const LoginPage = lazy(() => import("@/pages/login"));
+const PlanosPage = lazy(() => import("@/pages/planos"));
 const CadastroPage = lazy(() => import("@/pages/cadastro"));
 const InvitePage = lazy(() => import("@/pages/invite"));
 const OnboardingPage = lazy(() => import("@/pages/onboarding"));
@@ -345,6 +346,7 @@ function AppRouter() {
             <Route path="/esqueci-senha" component={ForgotPasswordPage} />
             <Route path="/redefinir-senha" component={ResetPasswordPage} />
             <Route path="/verificar-email" component={VerifyEmailPage} />
+            <Route path="/planos" component={PlanosPage} />
             <Route path="/cadastro" component={CadastroPage} />
             <Route path="/invite" component={InvitePage} />
             <Route path="/onboarding" component={OnboardingPage} />
