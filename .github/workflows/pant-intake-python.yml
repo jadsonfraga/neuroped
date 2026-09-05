@@ -1,0 +1,24 @@
+name: PANT Python intake
+on:
+  pull_request:
+    paths:
+      - 'tools/pant_intake/**'
+      - '.github/workflows/pant-intake-python.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  python-intake:
+    name: PANT input gate tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Test isolated input gate
+        working-directory: tools/pant_intake
+        run: python -m unittest discover -s tests -v
