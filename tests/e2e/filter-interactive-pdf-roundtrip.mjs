@@ -87,10 +87,36 @@ async function openFilterEngine(page) {
 
     if (await ageBands.isVisible().catch(() => false)) return;
 
-    const open = page.getByTestId("button-open-filter");
-    await open.waitFor({ state: "visible", timeout: 10_000 });
-    await open.click();
-    await ageBands.waitFor({ state: "visible", timeout: 20_000 });
+    // A tela do filtro entra sob PageTransition — camada animada, carregada em
+    // lazy. Enquanto ela assenta, dois estados transitórios derrubam o clique:
+    // o overlay ainda intercepta o ponteiro, e o botão pode ser substituído por
+    // uma instância nova no meio do retry interno do Playwright. Foi
+    // exatamente esse par que o runner registrou:
+    //   "<html …> intercepts pointer events" → "retrying click action"
+    //   → "element was detached from the DOM, retrying"
+    //
+    // O retry EXTERNO resolve o locator de novo a cada tentativa, então a troca
+    // de instância deixa de ser fatal — o retry interno do Playwright não faz
+    // isso, ele insiste no elemento que já resolveu.
+    //
+    // Isto não mascara defeito real: se o filtro não abrir de verdade, as três
+    // tentativas se esgotam e o erro sobe com o mesmo diagnóstico de sempre.
+    let ultimoErro;
+    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+      try {
+        const open = page.getByTestId("button-open-filter");
+        await open.waitFor({ state: "visible", timeout: 10_000 });
+        await open.click();
+        await ageBands.waitFor({ state: "visible", timeout: 20_000 });
+        return;
+      } catch (erro) {
+        ultimoErro = erro;
+        // A tentativa pode ter aberto o filtro mesmo assim (o clique passou e
+        // só a espera seguinte estourou) — nesse caso não há o que repetir.
+        if (await ageBands.isVisible().catch(() => false)) return;
+      }
+    }
+    throw ultimoErro;
   } catch (error) {
     const body = await page.locator("body").innerText().catch(() => "");
     throw new Error(
