@@ -23,7 +23,9 @@
  *     com as contagens, e BLUE fica intacto;
  *  8. a trilha de auditoria não carrega patient_id;
  *  9. replay imediato não apaga de novo nem duplica evidência;
- * 10. admin de plataforma executa o escopo de clínica no tenant encerrado.
+ * 10. admin de plataforma executa o escopo de clínica no tenant encerrado;
+ * 11. dado do titular fora do alcance do purge BLOQUEIA a eliminação em vez de
+ *     reportar um `completed` incompleto (issue #783).
  */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -374,6 +376,59 @@ function ledger(requestId: string) {
   sqlite
     .prepare(`UPDATE tenant_lifecycle SET legal_hold = 0 WHERE clinic_id = ?`)
     .run(RED);
+}
+
+// ── 6b) Dado do titular fora do alcance do purge bloqueia a eliminação ────
+// Tabelas com patient_id sem clinic_id e sem FK (issue #783) não são apagadas
+// por suposição — mas também não podem ser ignoradas: uma linha remanescente
+// torna a eliminação incompleta, e reportar `completed` seria mentir.
+{
+  // appointments.patient_id é TEXT livre, sem FK — dá para cravar ali o id de
+  // um paciente do Clinical LIVE, que é justamente o cenário da #783.
+  sqlite
+    .prepare(
+      `INSERT INTO booking_services (id, provider_user_id, name, duration_minutes)
+              VALUES ('svc-run', ?, 'Consulta', 30)`,
+    )
+    .run(RED_OWNER.id);
+  sqlite
+    .prepare(
+      `INSERT INTO appointments
+        (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
+         booking_token_hash, status)
+       VALUES (?, ?, 'svc-run', ?, ?, ?, 'America/Recife', 'hash-appt-run', 'confirmed')`,
+    )
+    .run(
+      "appt-orfao",
+      RED_OWNER.id,
+      RED_PATIENT,
+      "2026-09-06T10:00",
+      "2026-09-06T10:30",
+    );
+
+  const antes = contar(RED);
+  const response = await runDeletion(
+    contexto(RED_OWNER, { clinicId: RED, requestId: "req-red-paciente" }),
+  );
+  const corpo = (await response.json()) as { code: string };
+  assert.equal(response.status, 500);
+  assert.equal(
+    corpo.code,
+    "PURGE_UNREACHABLE_DATA:appointments",
+    "o bloqueio precisa nomear a tabela que ficou fora do alcance",
+  );
+  assert.equal(
+    contar(RED),
+    antes,
+    "eliminação incompleta não pode apagar nada",
+  );
+  assert.equal(
+    ledger("req-red-paciente")?.status,
+    "failed",
+    "o ledger precisa registrar a falha, não um completed que mente",
+  );
+
+  sqlite.prepare(`DELETE FROM appointments WHERE id = 'appt-orfao'`).run();
 }
 
 // ── 7) Caminho feliz: elimina o titular e fecha o ledger ──────────────────

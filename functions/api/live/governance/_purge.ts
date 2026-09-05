@@ -55,6 +55,27 @@ const GOVERNANCE_PATIENT_REFERENCES: ReadonlyArray<string> = [
   "live_deletion_requests",
 ];
 
+/**
+ * Tabelas que guardam `patient_id` SEM `clinic_id` e sem foreign key para
+ * live_patients — o purge não as alcança com segurança, porque não dá para
+ * afirmar que o identificador ali é o mesmo espaço de ids do Clinical LIVE
+ * (ver issue #783). Apagar por suposição poderia apagar o registro de OUTRA
+ * pessoa, o que é pior do que a lacuna.
+ *
+ * A saída honesta não é ignorar: é FALHAR FECHADO. Se sobrar alguma linha
+ * apontando para o titular, a eliminação é incompleta do ponto de vista LGPD,
+ * e o executor recusa em vez de reportar um `completed` que mente. Enquanto os
+ * espaços de id não se cruzarem, a checagem custa uma consulta e nunca bloqueia
+ * nada; se cruzarem, ela impede exatamente o que a #783 descreve.
+ *
+ * As tabelas `*_demo` (conecta_events_demo, clinical_events_demo,
+ * clinical_memory_notes_demo) ficam de fora desta lista de propósito: elas têm
+ * foreign key para `patients_demo`, ou seja, são um espaço de identificadores
+ * DIFERENTE por construção — não uma lacuna do purge. Só `appointments` tem
+ * `patient_id` como TEXT livre, sem FK nenhuma, e por isso é a única ambígua.
+ */
+const UNREACHABLE_PATIENT_TABLES: ReadonlyArray<string> = ["appointments"];
+
 /** Tabelas deliberadamente preservadas (ver decisão 2 no topo do arquivo). */
 export const PURGE_PRESERVED_TABLES: ReadonlyArray<string> = [
   // Política de retenção é configuração da clínica (não tem sequer coluna
@@ -195,6 +216,37 @@ export async function executeTenantScopedPurge(
     // legal hold, retenção pendente ou tenant ativo — não um erro genérico.
     await params.fail(eligibility.code ?? "PURGE_BLOCKED");
     return null;
+  }
+
+  // Antes de apagar: a eliminação vai de fato alcançar tudo do titular?
+  // Uma linha remanescente em tabela fora do alcance torna a eliminação
+  // incompleta, e reportar `completed` nesse caso seria mentir na trilha.
+  for (const table of UNREACHABLE_PATIENT_TABLES) {
+    let remaining: { n: number } | null;
+    try {
+      remaining =
+        targets.scope === "patient"
+          ? await db
+              .prepare(
+                `SELECT COUNT(*) AS n FROM ${table} WHERE patient_id = ?`,
+              )
+              .bind(targets.patientId)
+              .first<{ n: number }>()
+          : await db
+              .prepare(
+                `SELECT COUNT(*) AS n FROM ${table}
+                  WHERE patient_id IN (SELECT id FROM live_patients WHERE clinic_id = ?)`,
+              )
+              .bind(targets.clinicId)
+              .first<{ n: number }>();
+    } catch {
+      // Tabela ausente neste banco não é motivo para bloquear a eliminação.
+      continue;
+    }
+    if (Number(remaining?.n ?? 0) > 0) {
+      await params.fail(`PURGE_UNREACHABLE_DATA:${table}`);
+      return null;
+    }
   }
 
   const deleteFor = ({
