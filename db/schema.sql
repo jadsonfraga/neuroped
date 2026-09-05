@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+-- UNIQUE em email usa colação binária: sem este índice, Medico@X e medico@X
+-- coexistem como duas identidades para o mesmo humano (migração 0022).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_canonical
+  ON users (lower(email)) WHERE email IS NOT NULL;
 
 -- Sessões revogáveis: refresh tokens ficam apenas como SHA-256.
 CREATE TABLE IF NOT EXISTS auth_refresh_sessions (
