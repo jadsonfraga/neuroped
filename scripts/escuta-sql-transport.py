@@ -6,7 +6,7 @@ import sys
 
 
 def parenthesize_cases(source: str) -> str:
-    """D1 must not mistake CASE END for the end of a trigger (workers-sdk#4727)."""
+    """D1 must not mistake CASE END for the end of a trigger."""
     pieces: list[str] = []
     depth = 0
     quote = None
@@ -101,5 +101,20 @@ def split_sql(source: str) -> list[str]:
     return result
 
 
+def d1_statements(source: str) -> list[str]:
+    """Return statements safe for D1 REST, which already provides transaction semantics.
+
+    Historical schemas/migrations may wrap DDL in top-level BEGIN/COMMIT. Sending those
+    wrappers through D1's query endpoint causes a nested-transaction error. Only complete,
+    standalone transaction-control statements are removed; trigger END tokens remain inside
+    their CREATE TRIGGER statement and are never filtered.
+    """
+    transaction_control = re.compile(
+        r'^\s*(?:BEGIN(?:\s+(?:DEFERRED|IMMEDIATE|EXCLUSIVE))?(?:\s+TRANSACTION)?|COMMIT(?:\s+TRANSACTION)?|END\s+TRANSACTION|ROLLBACK(?:\s+TRANSACTION)?)\s*;?\s*$',
+        re.IGNORECASE,
+    )
+    return [statement for statement in split_sql(source) if not transaction_control.fullmatch(statement)]
+
+
 if __name__ == '__main__':
-    print(json.dumps(split_sql(sys.stdin.read()), ensure_ascii=False))
+    print(json.dumps(d1_statements(sys.stdin.read()), ensure_ascii=False))
