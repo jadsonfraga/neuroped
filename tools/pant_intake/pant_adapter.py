@@ -6,7 +6,9 @@ Só emite após handoff textual válido, runtime verificado e QA aprovado.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
+import io
 import importlib.util
 import json
 import os
@@ -248,17 +250,35 @@ def emit_pant(contract: dict, runtime_dir: Path, output_path: Path, *,
                     for h in canonical["case"].get("hypotheses", []))
     with tempfile.TemporaryDirectory(prefix="neuroped-pant-") as tmp:
         scratch = Path(tmp)
-        provisional = scratch / "provisional.pdf"
         old = Path.cwd()
-        try:
-            os.chdir(scratch)
-            _, engine_report = info["_motor"].render(cover, body, str(provisional))
-        finally:
-            os.chdir(old)
-        qa_report = info["_qa"].medir(str(provisional), ordem_expressa_fechar=confirmed)
+
+        def render_and_measure(name: str, *, balancear: bool):
+            provisional = scratch / name
+            capture = io.StringIO()
+            try:
+                os.chdir(scratch)
+                with contextlib.redirect_stdout(capture):
+                    _, engine = info["_motor"].render(cover, body, str(provisional), balancear=balancear)
+            finally:
+                os.chdir(old)
+            qa = info["_qa"].medir(str(provisional), ordem_expressa_fechar=confirmed)
+            return provisional, engine, qa
+
+        provisional, engine_report, qa_report = render_and_measure("base.pdf", balancear=False)
+        engine_mode = "base_qa_approved"
         if not qa_report.get("passa") or qa_report.get("bloqueios"):
-            raise ValueError("QA PANT reprovou a emissão; nenhum PDF final foi gravado: "
-                             + "; ".join(map(str, qa_report.get("bloqueios", []))))
+            trap = info["_trap"]
+            layout_recoverable = (
+                float(engine_report.get("vao_mm", 0) or 0) > float(trap.TETO_VAO_MM)
+                or float(engine_report.get("branco_max_pct", 0) or 0) > float(trap.TETO_BRANCO_PCT)
+                or bool(engine_report.get("folhas_sem_marcacao"))
+            )
+            if layout_recoverable:
+                provisional, engine_report, qa_report = render_and_measure("balanced.pdf", balancear=True)
+                engine_mode = "balanced_fallback"
+            if not qa_report.get("passa") or qa_report.get("bloqueios"):
+                raise ValueError("QA PANT reprovou a emissão; nenhum PDF final foi gravado: "
+                                 + "; ".join(map(str, qa_report.get("bloqueios", []))))
         with output.open("xb") as dst, provisional.open("rb") as src:
             shutil.copyfileobj(src, dst, length=1024 * 1024)
             dst.flush()
@@ -272,6 +292,7 @@ def emit_pant(contract: dict, runtime_dir: Path, output_path: Path, *,
         "seal": info["seal"],
         "output_sha256": _sha(output),
         "output_bytes": output.stat().st_size,
+        "engine_mode": engine_mode,
         "engine_report": engine_report,
         "qa": qa_report,
         "final_pdf_emitted": True,
