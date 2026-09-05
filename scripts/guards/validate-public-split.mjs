@@ -52,6 +52,9 @@ const MUST_BE_PUBLIC = [
   // exibe dado clínico. /cadastro é só formulário (o backend decide se o
   // signup está habilitado); /invite é gated pelo token único do convite;
   // /billing/retorno mostra apenas o status do checkout, sem dados.
+  // Página comercial: quem ainda não é cliente precisa descobrir o que o
+  // produto é e quanto custa antes de existir uma conta. Nenhum dado clínico.
+  "/planos",
   "/cadastro", "/invite", "/billing/retorno",
 ];
 

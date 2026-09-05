@@ -13,6 +13,7 @@ export const PUBLIC_ROUTES = [
   "/login", // Entrada da autenticação remota
   "/esqueci-senha", // Solicita link de redefinição — por definição, sem sessão
   "/redefinir-senha", // Consome o token de redefinição enviado por e-mail
+  "/planos", // Página comercial pública: o que é, para quem, preço e CTA — sem dado clínico
   "/cadastro", // Cadastro self-service do SaaS (o backend decide se está habilitado)
   "/invite", // Aceite de convite de clínica (gated pelo token do convite)
   "/billing/retorno", // Retorno do checkout de assinatura; não exibe dado algum

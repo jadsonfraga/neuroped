@@ -85,6 +85,10 @@ export default function CadastroPage() {
         <a href="#/login" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Já tenho conta — entrar
         </a>
+        {/* Quem chegou direto no formulário ainda não viu preço nem escopo. */}
+        <a href="#/planos" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+          Ver o que está incluído e quanto custa
+        </a>
       </div>
     </section>
   );
