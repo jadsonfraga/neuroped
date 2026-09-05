@@ -67,6 +67,9 @@ raw.prepare("UPDATE escuta_usage SET used=719 WHERE clinic_id='c1' AND user_id='
 await check("last allowed request","POST",200);
 await check("quota exceeded","POST",429,"QUOTA_EXCEEDED");
 assert.equal((raw.prepare("SELECT used FROM escuta_usage WHERE clinic_id='c1' AND user_id='u1' AND day=?").get(day) as {used:number}).used,720);
+// Preserve the last-owner invariant instead of disabling its trigger to arrange this fixture.
+assert.throws(()=>raw.prepare("UPDATE clinic_memberships SET active=0 WHERE clinic_id='c1' AND user_id='u1'").run(),/LAST_OWNER_PROTECTED/);count++;
+raw.prepare("INSERT INTO clinic_memberships(clinic_id,user_id,role,active) VALUES('c1','u2','owner',1)").run();
 raw.prepare("UPDATE clinic_memberships SET active=0 WHERE clinic_id='c1' AND user_id='u1'").run();
 await check("revoked persisted membership","GET",403,"TENANT_FORBIDDEN");
 failDb=true;await check("database outage","GET",503,"ESCUTA_UNAVAILABLE");failDb=false;
