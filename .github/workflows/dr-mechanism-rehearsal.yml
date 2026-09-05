@@ -110,12 +110,30 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          npx wrangler@4 d1 execute "${{ steps.target.outputs.target }}" --remote --yes \
-            --file=./db/schema.d1.sql
+          TARGET="${{ steps.target.outputs.target }}"
+
+          # `db/schema.d1.sql` é a BASE, não o consolidado: ela já traz as
+          # colunas que 0001 e 0002 adicionam, mas NÃO traz as tabelas das
+          # migrações posteriores. Portanto o bootstrap correto é base +
+          # migrações, tolerando exclusivamente "duplicate column name" — que
+          # significa "o base já provê isto", e não "a migração quebrou".
+          # Qualquer outro erro derruba o ensaio.
+          # A política está travada em tests/unit/schema-bootstrap-contract.test.mjs.
+          npx wrangler@4 d1 execute "$TARGET" --remote --yes --file=./db/schema.d1.sql
+
           for migration in db/migrations/*.sql; do
             echo "→ $migration"
-            npx wrangler@4 d1 execute "${{ steps.target.outputs.target }}" --remote --yes \
-              --file="$migration"
+            if npx wrangler@4 d1 execute "$TARGET" --remote --yes \
+                 --file="$migration" > /tmp/migration.log 2>&1; then
+              continue
+            fi
+            if grep -qi "duplicate column name" /tmp/migration.log; then
+              echo "   (já provida pelo schema base — seguindo)"
+              continue
+            fi
+            echo "::error::Migração $migration falhou por motivo que não é sobreposição com o schema base:"
+            cat /tmp/migration.log
+            exit 1
           done
 
       # Etapa D — baseline metadata-only. Contagens, nunca conteúdo.
