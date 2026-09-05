@@ -1,0 +1,87 @@
+name: Arquivo recorrente de escalas por e-mail
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/data/authorialMonitoring.json'
+      - 'client/src/data/daily-authorial/**'
+      - 'scripts/authorial_scale_delivery.py'
+      - '.github/workflows/authorial-scale-delivery.yml'
+  pull_request:
+    paths:
+      - 'scripts/authorial_scale_delivery.py'
+      - 'scripts/requirements-authorial-mail.txt'
+      - 'tests/unit/test_authorial_scale_delivery.py'
+      - 'config/authorial-*'
+      - '.github/workflows/authorial-scale-delivery.yml'
+  schedule:
+    - cron: '7 11,18,22 * * *' # 08h07, 15h07 e 19h07 em Recife; reconcilia pendências
+  workflow_run:
+    workflows: ['Inventário autoral diário NeuroPed']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: authorial-scale-email
+  cancel-in-progress: false
+jobs:
+  test:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.sha || 'main' }}
+          persist-credentials: false
+      - name: Dependências isoladas
+        run: |
+          python3 -m venv .venv-scale-mail
+          .venv-scale-mail/bin/pip install -r scripts/requirements-authorial-mail.txt
+      - name: Contrato de anexos, deduplicação e falha fechada
+        run: .venv-scale-mail/bin/python -m unittest discover -s tests/unit -p test_authorial_scale_delivery.py -v
+  deliver:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Dependências isoladas
+        run: |
+          python3 -m venv .venv-scale-mail
+          .venv-scale-mail/bin/pip install -r scripts/requirements-authorial-mail.txt
+      - name: Ler somente JSON do artefato do gerador autorizado
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: inventario-autoral-*
+          merge-multiple: true
+          path: out/authorial-input
+      - name: Anexar PDFs e registrar aceite do SMTP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+        run: .venv-scale-mail/bin/python scripts/authorial_scale_delivery.py --send --extra out/authorial-input
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: modelos-autorais-pdf-${{ github.run_id }}
+          path: out/authorial-scales/*.pdf
+          if-no-files-found: ignore
+          retention-days: 90
