@@ -14,6 +14,7 @@ import {
 import { queryClient } from "@/lib/queryClient";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearInMemoryScaleDrafts } from "@/hooks/useSecureScaleDraft";
+import { clearFocusPatient } from "@/lib/patientFocus";
 
 export type AccessMode = "checking" | "remote" | "local";
 
@@ -44,6 +45,9 @@ async function clearSessionScopedClientState(): Promise<void> {
   }
   queryClient.clear();
   clearInMemoryScaleDrafts();
+  // O paciente em foco é contexto da sessão clínica atual. Expiração, logout ou
+  // troca de conta na mesma aba não podem herdá-lo para a próxima sessão.
+  clearFocusPatient();
   await secureClearAll();
 }
 
