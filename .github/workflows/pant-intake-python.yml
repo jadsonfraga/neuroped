@@ -25,14 +25,12 @@ jobs:
           python-version: '3.12'
       - name: Compilacao
         run: python -m compileall -q tools/pant_intake
-      - name: Testes disponiveis
+      - name: Testes obrigatorios
         working-directory: tools/pant_intake
         run: |
-          if [ -d tests ]; then
-            python -m unittest discover -s tests -v
-          else
-            echo 'Somente compilacao nesta etapa inicial; suite ainda nao adicionada.'
-          fi
+          test -f tests/test_core.py
+          test -f tests/test_gate_cli.py
+          python -m unittest discover -s tests -v
       - name: Pacote de codigo sem dados clinicos
         uses: actions/upload-artifact@v4
         with:

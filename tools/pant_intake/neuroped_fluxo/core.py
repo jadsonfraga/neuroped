@@ -48,8 +48,11 @@ def present(value: Any) -> bool:
 
 
 def number(value: Any, *, positive: bool = False) -> bool:
-    return (type(value) in (int, float) and math.isfinite(value)
-            and (value > 0 if positive else value >= 0))
+    try:
+        return (type(value) in (int, float) and math.isfinite(value)
+                and (value > 0 if positive else value >= 0))
+    except (OverflowError, ValueError):
+        return False
 
 
 def iso_date(value: Any) -> date | None:
@@ -286,7 +289,8 @@ def import_notes(payload: Any, base: dict) -> dict:
     result.setdefault("sources", [])
     result.setdefault("domains", {})
     result.setdefault("unassigned_segments", [])
-    known = {s.get("external_segment_id") for s in result["sources"] if isinstance(s, dict)}
+    known = {s.get("external_segment_id"): s.get("segment_sha256")
+             for s in result["sources"] if isinstance(s, dict)}
     encounter = base.get("encounter_id")
     for index, segment in enumerate(segments):
         if not isinstance(segment, dict) or not isinstance(segment.get("text"), str):
@@ -295,7 +299,10 @@ def import_notes(payload: Any, base: dict) -> dict:
             raise ValueError(f"Segmento {index}: id obrigatório.")
         if segment.get("consultationId") != encounter:
             raise ValueError(f"Segmento {index}: consultationId difere do atendimento; mistura de casos bloqueada.")
+        fingerprint = digest(segment)
         if segment["id"] in known:
+            if known[segment["id"]] != fingerprint:
+                raise ValueError("Segmento já importado com conteúdo diferente ou sem impressão verificável; reconcilie a versão.")
             continue
         if not number(segment.get("startMs")) or not number(segment.get("endMs")) or segment["endMs"] < segment["startMs"]:
             raise ValueError(f"Segmento {index}: intervalo temporal inválido.")
@@ -309,7 +316,8 @@ def import_notes(payload: Any, base: dict) -> dict:
         if any(s.get("id") == sid for s in result["sources"]):
             raise ValueError("Colisão de identificador de fonte.")
         result["sources"].append({"id": sid, "type": source_type, "date": str(segment.get("createdAt", ""))[:10],
-                                  "external_segment_id": segment["id"], "speaker": segment.get("speaker"),
+                                  "external_segment_id": segment["id"], "segment_sha256": fingerprint,
+                                  "speaker": segment.get("speaker"),
                                   "start_ms": segment["startMs"], "end_ms": segment["endMs"]})
         targets = set(NOTES_MAP[t] for t in topics if t in NOTES_MAP)
         fact = {"text": segment["text"], "source_id": sid, "review_status": "pendente", "status": "relatado"}
@@ -317,7 +325,7 @@ def import_notes(payload: Any, base: dict) -> dict:
             result["domains"].setdefault(target, []).append(copy.deepcopy(fact))
         if not targets:
             result["unassigned_segments"].append({**fact, "topics": topics})
-        known.add(segment["id"])
+        known[segment["id"]] = fingerprint
     return result
 
 
