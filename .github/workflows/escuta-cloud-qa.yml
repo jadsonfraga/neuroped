@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/escuta-cloud-qa.yml'
       - 'scripts/escuta-cloud-qa.mjs'
+      - 'scripts/escuta-cloud-entry.mjs'
+      - 'scripts/escuta-sql-transport.py'
 permissions:
   contents: read
 concurrency:
@@ -24,6 +26,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: python3 tests/unit/escuta-sql-transport.test.py
+      - run: node --import tsx tests/unit/escuta-handler.test.ts
       - name: Full release gate before provisioning isolated resources
         run: npm run verify
       - name: Generate fictional speech only
@@ -36,7 +40,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: node --import tsx scripts/escuta-cloud-qa.mjs
+        run: node --import tsx scripts/escuta-cloud-entry.mjs
       - name: Preserve source snapshot without credentials
         if: always()
         run: git archive --format=zip HEAD -o /tmp/escuta-current-source.zip
