@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { hashPassword } from "../functions/api/auth/_crypto.ts";
@@ -18,7 +18,10 @@ const token=process.env.CLOUDFLARE_API_TOKEN?.trim(),account=process.env.CLOUDFL
 const out="artifacts/escuta-cloud";mkdirSync(out,{recursive:true});
 const report={scope:"isolated deployed application, actual providers/authentication/persistence; synthetic speech and virtual microphone",commit:process.env.GITHUB_SHA,project,origin,assertions:[],status:"running",productionMutated:false,stage:"preflight"};
 let databaseId=null,projectCreated=false;
-const configFile="wrangler.escuta-qa.json";
+// Pages supports default config names, not --config. Temporary staging config is
+// confined to this disposable CI worktree and restored byte-for-byte in finally.
+const configFile="wrangler.toml",canonicalConfiguration=readFileSync(configFile);
+assert(!readdirSync(".").some(name=>["wrangler.json","wrangler.jsonc"].includes(name)),"Ambiguous default Wrangler configuration");
 const passwords=new Map(),maskedValues=[token,account].filter(Boolean);
 function pass(name){report.assertions.push(name);console.log(`PASS ${name}`);}
 function mask(value){assert(typeof value==="string"&&value.length>0);maskedValues.push(value);console.log(`::add-mask::${value}`);return value;}
@@ -69,12 +72,14 @@ try{
   };
   report.stage="create isolated Pages project";
   await cloud("/pages/projects","POST",{name:project,production_branch:"qa",deployment_configs:{production:{compatibility_date:"2024-11-01",compatibility_flags:["nodejs_compat"],env_vars:envVars,d1_databases:{DB:{id:databaseId}}}}});projectCreated=true;
-  writeFileSync(configFile,JSON.stringify({name:project,compatibility_date:"2024-11-01",compatibility_flags:["nodejs_compat"],pages_build_output_dir:"dist/public",ai:{binding:"AI"},d1_databases:[{binding:"DB",database_name:project,database_id:databaseId}],vars:Object.fromEntries(Object.entries(envVars).filter(([_k,v])=>v.type==="plain_text").map(([k,v])=>[k,v.value]))},null,2));
+  const stagingConfiguration=[`name = ${JSON.stringify(project)}`,'compatibility_date = "2024-11-01"','compatibility_flags = ["nodejs_compat"]','pages_build_output_dir = "dist/public"','[vars]',...Object.entries(envVars).filter(([_k,v])=>v.type==="plain_text").map(([k,v])=>`${k} = ${JSON.stringify(v.value)}`),'[ai]','binding = "AI"','[[d1_databases]]','binding = "DB"',`database_name = ${JSON.stringify(project)}`,`database_id = ${JSON.stringify(databaseId)}`,""].join("\n");
+  assert(!stagingConfiguration.includes("9b0919e5-93af-4b4f-851b-fc77dc1e5bae"),"Refuse canonical database in staging configuration");
+  writeFileSync(configFile,stagingConfiguration);
   report.stage="build isolated frontend";
   command("npm",["run","build:client"],{NODE_ENV:"production",VITE_AUTH_MODE:"remote",VITE_API_URL:"",VITE_ZONE:"full",VITE_ALLOWED_HOSTS:`${project}.pages.dev`,VITE_PIN_HASH:""});
   writeFileSync("dist/public/deploy-check.json",JSON.stringify({app:"NeuroPed",provider:"cloudflare-pages",scope:"isolated-qa",commit:process.env.GITHUB_SHA,branch:process.env.GITHUB_REF_NAME,production:false}));
   report.stage="deploy isolated application with native AI binding";
-  command("npx",["--yes","wrangler@4.129.0","pages","deploy","dist/public","--config",configFile,"--project-name",project,"--branch","qa","--commit-hash",process.env.GITHUB_SHA,"--commit-dirty=true"]);report.deployed=true;
+  command("npx",["--yes","wrangler@4.129.0","pages","deploy","dist/public","--project-name",project,"--branch","qa","--commit-hash",process.env.GITHUB_SHA,"--commit-dirty=true"]);report.deployed=true;
   let sentinel;
   for(let attempt=0;attempt<24;attempt++){
     try{sentinel=await request("/deploy-check.json");if(sentinel.response.ok&&sentinel.data.commit===process.env.GITHUB_SHA)break;}catch{/* deployment/DNS propagation only */}
@@ -115,7 +120,8 @@ try{
   report.status="passed";
 }catch(error){report.status="blocked_or_failed";report.reason=error instanceof Error?error.message:"UNKNOWN_ERROR";console.error(report.reason);process.exitCode=1;}
 finally{
-  rmSync(configFile,{force:true});
+  writeFileSync(configFile,canonicalConfiguration);
+  assert(readFileSync(configFile).equals(canonicalConfiguration),"Canonical configuration restoration failed");report.canonicalConfigRestored=true;
   if(databaseId){try{await sql("DELETE FROM auth_refresh_sessions; UPDATE users SET is_active=0 WHERE email IN ('alpha@escuta.invalid','beta@escuta.invalid');");report.testAccountsDisabled=true;}catch{report.cleanupFailure=true;process.exitCode=1;}}
   if(report.status!=="passed"){
     if(projectCreated){try{await cloud(`/pages/projects/${project}`,"DELETE");report.failedProjectRemoved=true;}catch{report.projectCleanupFailed=true;}}
