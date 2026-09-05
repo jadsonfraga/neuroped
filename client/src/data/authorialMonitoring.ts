@@ -21,7 +21,7 @@ interface MonitoringRecord {
   domains: Array<{ name: string; itemIds: string[] }>;
   items: Array<{ id: string; text: string }>;
   redFlags: string[];
-  source: { filename: string; sha256: string; date: string; kind: string };
+  source: { filename: string; integrity: string; date: string; kind: string };
 }
 
 const LABELS = [
@@ -60,7 +60,7 @@ export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
       if (!Array.isArray(r[field]) || r[field].some((x) => typeof x !== "string" || !x.trim())) fail(field);
     }
     if (!r.queixas.length) fail("queixas");
-    if (!r.source || !/^[a-f0-9]{64}$/.test(r.source.sha256) || typeof r.source.filename !== "string" || !r.source.filename.endsWith(".pdf")) fail("proveniência PDF");
+    if (!r.source || !/^sha256:[a-f0-9]{64}$/.test(r.source.integrity) || typeof r.source.filename !== "string" || !r.source.filename.endsWith(".pdf")) fail("proveniência PDF");
     if (!Array.isArray(r.items) || !r.items.length || r.items.some((x) => typeof x.id !== "string" || typeof x.text !== "string" || !x.text.trim())) fail("itens");
     const itemIds = r.items.map((x) => x.id);
     if (new Set(itemIds).size !== itemIds.length) fail("item duplicado");
@@ -86,7 +86,7 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   tempo: "Não aferido",
   appRoute: `/generic-scale/${r.id}`,
   description: `${r.purpose}. Janela: últimos ${r.timeframeDays} dias. ${WARNING}`,
-  fonte: `PDF autoral fornecido pelo Dr. Jadson Fraga: ${r.source.filename}; v${r.version}; SHA-256 ${r.source.sha256}.`,
+  fonte: `PDF autoral fornecido pelo Dr. Jadson Fraga: ${r.source.filename}; v${r.version}; integridade ${r.source.integrity}.`,
   tipo: "Instrumento autoral de monitorização, não validado",
   licencaUso: "autoral",
   pubmedId: null,
