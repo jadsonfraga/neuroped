@@ -165,7 +165,13 @@ jobs:
           # B1: estado COM a sentinela — é para cá que o restore precisa voltar.
           npx wrangler@4 d1 time-travel info "$TARGET" > /tmp/b1.txt 2>&1
           cat /tmp/b1.txt
-          BOOKMARK=$(grep -oE '[0-9a-f]{16,}-[0-9a-f-]+' /tmp/b1.txt | head -1 || true)
+          # O bookmark é lido do texto que o wrangler imprime entre aspas
+          # simples, e não por formato adivinhado. O ensaio de 05/09 falhou
+          # exatamente aqui: a regex anterior exigia >=16 hex no PRIMEIRO
+          # grupo, mas o formato real é 00000002-000000a0-000050dd-<32 hex>,
+          # cujo primeiro grupo tem 8. Ancorar na frase do wrangler não depende
+          # de quantos grupos ou de que largura a Cloudflare venha a usar.
+          BOOKMARK=$(sed -n "s/.*current bookmark is '\([0-9a-f][0-9a-f-]*\)'.*/\1/p" /tmp/b1.txt | head -1 || true)
           [ -n "$BOOKMARK" ] || { echo "::error::não consegui ler o bookmark do Time Travel"; exit 1; }
           echo "bookmark=$BOOKMARK" >> "$GITHUB_OUTPUT"
 
