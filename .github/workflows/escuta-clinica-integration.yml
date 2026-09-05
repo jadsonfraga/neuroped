@@ -18,12 +18,10 @@ jobs:
     name: Escuta code and integration
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -33,35 +31,21 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: node --experimental-strip-types tests/unit/escuta-core.test.ts
+      - run: node --experimental-strip-types tests/unit/escuta-patients.test.ts
       - run: node tests/unit/escuta-worklet.test.mjs
       - run: npm run build:client
       - run: npx wrangler@4 pages functions build --outdir=/tmp/escuta-functions
       - run: npx playwright install --with-deps chromium
       - name: Browser component contract and virtual microphone (not provider/auth E2E)
         run: node scripts/escuta-browser-qa.mjs
-      - name: Commit verified integration wiring on feature branch only
-        if: github.event_name == 'push' && github.ref_name == 'feat/escuta-clinica-integrada-20260905'
-        run: |
-          git add client/src/App.tsx client/src/security/routeGuardPolicy.ts client/src/data/navigation.ts client/public/_headers vercel.json client/src/lib/escutaRecorder.ts client/src/pages/escuta-clinica.tsx
-          if ! git diff --cached --quiet; then
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(escuta): wire protected route and verified recorder lifecycle'
-            git push origin HEAD:feat/escuta-clinica-integrada-20260905
-          fi
+      - name: Verify tracked source was not modified by tests
+        run: git diff --exit-code
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: escuta-browser-qa-${{ github.run_id }}
           path: artifacts/escuta/
           retention-days: 7
-      - name: Archive tracked source for reproducible verification
-        if: always()
-        run: git archive --format=zip HEAD -o /tmp/neuroped-source.zip
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: escuta-source-${{ github.run_id }}
-          path: /tmp/neuroped-source.zip
-          retention-days: 1
   native-provider:
     name: Escuta real native provider QA
     if: github.event_name == 'push'
