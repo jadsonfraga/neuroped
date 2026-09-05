@@ -212,8 +212,33 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
           resolved.row.clinic_id,
           submissionId,
         ),
+      // Auditoria no MESMO batch e condicionada à submissão ter persistido: a
+      // trilha não existe sem o envio, e o envio não existe sem a trilha.
+      // Metadata-only — nenhuma coluna aqui aceita nome, resposta, paciente,
+      // token ou qualquer conteúdo clínico.
+      db
+        .prepare(
+          `INSERT INTO public_submission_audit_log
+            (id, clinic_id, surface, action, invitation_id, consent_version,
+             outcome, origin, created_at)
+           SELECT ?, ?, 'public_intake', 'submitted', ?, ?, 'accepted',
+                  'public_invitation', ?
+            WHERE EXISTS (SELECT 1 FROM live_intake_submissions WHERE id = ?)`,
+        )
+        .bind(
+          crypto.randomUUID(),
+          resolved.row.clinic_id,
+          resolved.row.id,
+          REMOTE_INTAKE_CONSENT_VERSION,
+          submittedAt,
+          submissionId,
+        ),
     ]);
-    if ((results[0]?.meta?.changes ?? 0) !== 1 || (results[1]?.meta?.changes ?? 0) !== 1) {
+    if (
+      (results[0]?.meta?.changes ?? 0) !== 1 ||
+      (results[1]?.meta?.changes ?? 0) !== 1 ||
+      (results[2]?.meta?.changes ?? 0) !== 1
+    ) {
       return tenantError("O convite não está mais disponível.", "INTAKE_SUBMIT_RACE", 409);
     }
   } catch (error) {
