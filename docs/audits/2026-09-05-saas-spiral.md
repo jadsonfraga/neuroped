@@ -89,3 +89,54 @@ Observabilidade e Backup/DR são as duas menores notas proporcionais (5/10 e
 próxima intervenção de maior valor é o rehearsal de restore — porque é o único
 gate onde "não sabemos" e "não funciona" são indistinguíveis até o dia do
 incidente.
+
+---
+
+# SPIRAL 2 — os dois domínios onde a falha é silenciosa
+
+Aberta imediatamente após a SPIRAL 1, pelo maior delta registrado acima:
+observabilidade (5/10) e backup/DR (2/5). Os dois têm a mesma propriedade —
+quando falham, ninguém fica sabendo.
+
+## O que entrou (PR #784)
+
+| Lacuna | Estado anterior | O que mudou |
+| --- | --- | --- |
+| Preço não descobrível | Funil começava em `/cadastro`, um formulário pedindo senha | `/planos` pública, preço derivado de `CANONICAL_PRICE_CENTS`, ligada de `/login` e `/cadastro` |
+| Smoke de produção órfão | `grep -rl "test:e2e:published" .github/workflows` voltava **vazio** | Roda de hora em hora e após cada deploy, falhando fechado; contrato impede que qualquer gate `published*` volte a ficar sem dono |
+| Ensaio de DR nunca executado | RPO `NÃO VERIFICADO`, RTO `DESCONHECIDO` | Etapas B–I do runbook viram workflow; o humano digita `ENSAIAR` e clica |
+| Aviso de assinatura levava à aba errada | Link abria em "Perfil" | `#/configuracoes?secao=plano`, com a seção validada contra `SECTIONS` |
+
+## Sellability Score revisado — 71/100
+
+Alterações em relação à SPIRAL 1, e só elas:
+
+- **Observabilidade 5 → 6,5.** Existe monitoramento de produção contínuo pela
+  primeira vez. Continua sem métricas, latência, taxa de erro, reconciliação
+  de billing e monitor dos jobs de background — por isso não passa de 6,5.
+- **Backup/DR 2 → 3.** O ensaio deixou de ser um documento e virou um botão.
+  Não sobe mais que isso porque **ninguém apertou o botão ainda**: enquanto o
+  workflow não rodar, RPO e RTO continuam sem número, e um ensaio não
+  executado não é evidência de recuperação.
+- **UX comercial 6 → 7.** O preço passou a ser descobrível e o aviso de
+  assinatura leva onde diz que leva.
+
+Maturidade permanece **M2 — HARDENED**. Nenhum dos quatro bloqueadores
+externos da SPIRAL 1 foi resolvido, e é isso que separa M2 de M3 — não o
+volume de código entregue.
+
+## Limitação honesta desta volta
+
+Nem o smoke de produção nem o ensaio de DR foram executados por mim. A
+política de rede desta sessão bloqueia saída para `neuroped.pages.dev` e para
+a API do Cloudflare (`CONNECT 403`). Ambos rodam no runner do GitHub, que tem
+saída liberada — a primeira execução real de cada um é que produz a evidência
+que estes números ainda não têm.
+
+## Próxima intervenção
+
+Continua sendo backup/DR, agora com o custo humano reduzido a um clique:
+acionar `DR mechanism rehearsal (D1)` e preencher o RTO medido no runbook.
+Depois disso, o maior delta passa a ser observabilidade — métricas e
+reconciliação de billing, que são as duas superfícies onde uma falha custa
+dinheiro sem gerar erro.
