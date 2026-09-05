@@ -2,9 +2,9 @@ name: Escuta runtime authorization
 on:
   push:
     branches: [main, feat/escuta-clinica-integrada-20260905]
-    paths: ['functions/api/live/escuta/**', 'shared/escuta/**', 'tests/unit/escuta*', '.github/workflows/escuta-runtime.yml']
+    paths: ['functions/api/live/escuta/**', 'functions/api/health.ts', 'shared/escuta/**', 'tests/unit/escuta*', 'scripts/escuta-vercel-project.mjs', '.github/workflows/escuta-runtime.yml']
   pull_request:
-    paths: ['functions/api/live/escuta/**', 'shared/escuta/**', 'tests/unit/escuta*', '.github/workflows/escuta-runtime.yml']
+    paths: ['functions/api/live/escuta/**', 'functions/api/health.ts', 'shared/escuta/**', 'tests/unit/escuta*', 'scripts/escuta-vercel-project.mjs', '.github/workflows/escuta-runtime.yml']
 permissions:
   contents: read
 jobs:
@@ -24,4 +24,6 @@ jobs:
       - run: node --import tsx tests/unit/escuta-core.test.ts
       - run: node --import tsx tests/unit/escuta-patients.test.ts
       - run: node tests/unit/escuta-worklet.test.mjs
+      - run: node tests/unit/escuta-vercel-project.test.mjs
+      - run: python3 tests/unit/escuta-sql-transport.test.py
       - run: npx wrangler@4.129.0 pages functions build --outdir=/tmp/escuta-runtime
