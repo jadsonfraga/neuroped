@@ -112,7 +112,7 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (context
            (id, name, email, password_hash, must_change_password, failed_login_attempts,
             role, is_active, created_at, updated_at)
          SELECT ?, ?, ?, ?, 0, 0, 'professional', 1, ?, ?
-          WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = ?)`,
+          WHERE NOT EXISTS (SELECT 1 FROM users WHERE lower(email) = ?)`,
       )
       .bind(userId, name, email, passwordHash, now, now, email)
       .run();

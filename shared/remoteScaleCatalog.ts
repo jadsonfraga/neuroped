@@ -31,7 +31,10 @@ export const REMOTE_SCALE_IDS = [
 export type RemoteScaleId = (typeof REMOTE_SCALE_IDS)[number];
 
 export function isRemoteScaleId(value: unknown): value is RemoteScaleId {
-  return typeof value === "string" && (REMOTE_SCALE_IDS as readonly string[]).includes(value);
+  return (
+    typeof value === "string" &&
+    (REMOTE_SCALE_IDS as readonly string[]).includes(value)
+  );
 }
 
 export interface RemoteScaleOption {
@@ -58,20 +61,30 @@ export interface RemoteScaleDescriptor {
 
 const MCHAT_OPTIONS: RemoteScaleOption[] = [{ label: "Sim" }, { label: "Não" }];
 
+// O envio remoto coleta APENAS os 20 itens de triagem do M-CHAT-R. A entrevista
+// estruturada de seguimento (Follow-Up) do M-CHAT-R/F não é aplicada aqui: ela
+// exige um entrevistador treinado percorrendo o branching item a item, e um
+// escore obtido sem ela não é o escore do instrumento R/F. Por isso este
+// descritor NUNCA pode se apresentar como "R/F" nem como "with Follow-Up" —
+// seria representar um instrumento que o app não executa.
+// Regressão que trava o retorno da alegação: scripts/guards/check-remote-scale-clinical-truth.mjs
 function buildMchatDescriptor(): RemoteScaleDescriptor {
   return {
     id: "mchat",
-    name: "M-CHAT-R/F",
-    fullName: "Modified Checklist for Autism in Toddlers, Revised with Follow-Up",
+    name: "Registro M-CHAT-R",
+    fullName:
+      "Modified Checklist for Autism in Toddlers, Revised — registro dos 20 itens de triagem, sem a entrevista de seguimento",
     instructions:
-      "Responda pensando no comportamento HABITUAL do seu filho(a). Se o comportamento for raro (você viu uma ou duas vezes), responda como se a criança não o fizesse.",
+      "Responda pensando no comportamento HABITUAL do seu filho(a). Se o comportamento for raro (você viu uma ou duas vezes), responda como se a criança não o fizesse. Este é um registro de triagem: quem interpreta o resultado é o profissional, que conduzirá a entrevista de seguimento se ela for necessária.",
     ageLabel: "16–30 meses",
     respondent: "Pais/cuidador",
     items: mchatQuestions.map((text) => ({ text, options: MCHAT_OPTIONS })),
   };
 }
 
-function buildFromInteractiveScale(id: Exclude<RemoteScaleId, "mchat">): RemoteScaleDescriptor | null {
+function buildFromInteractiveScale(
+  id: Exclude<RemoteScaleId, "mchat">,
+): RemoteScaleDescriptor | null {
   const scale = getInteractiveScale(id);
   if (!scale) return null;
   return {
@@ -92,22 +105,39 @@ function buildFromInteractiveScale(id: Exclude<RemoteScaleId, "mchat">): RemoteS
   };
 }
 
-export function getRemoteScaleDescriptor(id: string): RemoteScaleDescriptor | null {
+export function getRemoteScaleDescriptor(
+  id: string,
+): RemoteScaleDescriptor | null {
   if (!isRemoteScaleId(id)) return null;
-  return id === "mchat" ? buildMchatDescriptor() : buildFromInteractiveScale(id);
+  return id === "mchat"
+    ? buildMchatDescriptor()
+    : buildFromInteractiveScale(id);
 }
 
 /** Só o essencial para listas/seletor no lado profissional (sem os itens). */
-export const REMOTE_SCALE_SUMMARIES: ReadonlyArray<{ id: RemoteScaleId; name: string; fullName: string }> =
-  REMOTE_SCALE_IDS.map((id) => {
-    const descriptor = getRemoteScaleDescriptor(id);
-    return { id, name: descriptor?.name ?? id, fullName: descriptor?.fullName ?? id };
-  });
+export const REMOTE_SCALE_SUMMARIES: ReadonlyArray<{
+  id: RemoteScaleId;
+  name: string;
+  fullName: string;
+}> = REMOTE_SCALE_IDS.map((id) => {
+  const descriptor = getRemoteScaleDescriptor(id);
+  return {
+    id,
+    name: descriptor?.name ?? id,
+    fullName: descriptor?.fullName ?? id,
+  };
+});
 
 export const remoteScaleRespondentKinds = ["family", "patient"] as const;
-export type RemoteScaleRespondentKind = (typeof remoteScaleRespondentKinds)[number];
-export function isRemoteScaleRespondentKind(value: unknown): value is RemoteScaleRespondentKind {
-  return typeof value === "string" && (remoteScaleRespondentKinds as readonly string[]).includes(value);
+export type RemoteScaleRespondentKind =
+  (typeof remoteScaleRespondentKinds)[number];
+export function isRemoteScaleRespondentKind(
+  value: unknown,
+): value is RemoteScaleRespondentKind {
+  return (
+    typeof value === "string" &&
+    (remoteScaleRespondentKinds as readonly string[]).includes(value)
+  );
 }
 
 export const REMOTE_SCALE_CONSENT_VERSION = "remote-scale-v1-2026-09-04";

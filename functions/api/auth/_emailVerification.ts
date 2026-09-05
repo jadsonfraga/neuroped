@@ -8,6 +8,7 @@
  * não integra a requisição HTTP ao origin/CDN).
  */
 import { sha256Hex } from "./_crypto";
+import { canonicalEmail } from "./_shared";
 import type { Env } from "./_shared";
 
 export interface EmailVerificationEnv extends Env {
@@ -135,7 +136,7 @@ export async function issueEmailVerification(
         tokenId,
         user.id,
         tokenHash,
-        user.email.trim().toLowerCase(),
+        canonicalEmail(user.email),
         expiresAt,
         nowIso,
       ),

@@ -12,14 +12,8 @@
  *   segundo clique no mesmo link dá o erro genérico, não um estado quebrado.
  */
 import { sha256Hex } from "./_crypto";
-import { json, type Env } from "./_shared";
+import { canonicalEmail, json, type Env } from "./_shared";
 import { boundedText, isPlainObject } from "../_request";
-
-function normalize(value: string | null | undefined): string {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
-}
 
 function invalidToken(): Response {
   return json(
@@ -73,7 +67,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // O token provou posse do endereço vigente na emissão. Se a conta trocou de
   // e-mail depois, confirmar aqui marcaria como verificado um endereço que
   // ninguém provou controlar.
-  if (normalize(row.email) !== normalize(row.email_at_issue)) {
+  if (canonicalEmail(row.email) !== canonicalEmail(row.email_at_issue)) {
     return invalidToken();
   }
 
