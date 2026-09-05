@@ -1,0 +1,38 @@
+name: Escuta Clinica Integration
+on:
+  push:
+    branches: [feat/escuta-clinica-integrada-20260905]
+  pull_request:
+    paths:
+      - '.github/workflows/escuta-clinica-integration.yml'
+      - '**/*escuta*'
+      - '**/*scribe*'
+permissions:
+  contents: read
+concurrency:
+  group: escuta-integration-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-and-baseline:
+    name: Escuta isolated baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive tracked source only (no environment or credentials)
+        run: git archive --format=zip HEAD -o /tmp/neuroped-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neuroped-source-${{ github.sha }}
+          path: /tmp/neuroped-source.zip
+          retention-days: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - run: npm run build:client
