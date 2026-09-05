@@ -16,6 +16,7 @@ on:
       - "db/migrations/**"
       - "tests/unit/saas-self-service.test.ts"
       - "tests/unit/saas-acceptance-journey.test.ts"
+      - "tests/unit/cliente-zero-journey.test.ts"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - ".github/workflows/saas-self-service-guard.yml"
   push:
@@ -33,6 +34,7 @@ on:
       - "db/migrations/**"
       - "tests/unit/saas-self-service.test.ts"
       - "tests/unit/saas-acceptance-journey.test.ts"
+      - "tests/unit/cliente-zero-journey.test.ts"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - ".github/workflows/saas-self-service-guard.yml"
 
@@ -72,6 +74,9 @@ jobs:
 
       - name: Acceptance journey + adversarial multitenant (real migrations)
         run: node --import tsx tests/unit/saas-acceptance-journey.test.ts
+
+      - name: Cliente Zero — funil externo ponta a ponta (duas clínicas)
+        run: node --import tsx tests/unit/cliente-zero-journey.test.ts
 
       - name: TypeScript
         run: npm run check
