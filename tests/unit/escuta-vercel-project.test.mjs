@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { PROJECT_ID, resolveOwner, verifiedOwner } from "../../scripts/escuta-vercel-project.mjs";
+const project = {id: PROJECT_ID, name: "renamed-display-label", accountId: "team_test_owner_only", link: {type: "github", org: "jadsonfraga", repo: "neuroped", repoId: 1231255433}};
+assert.equal(verifiedOwner(project), project.accountId);
+for (const bad of [{...project,id:"other-project"},{...project,accountId:""},{...project,link:{...project.link,repo:"other"}},{...project,link:{...project.link,org:"other"}},{...project,link:{...project.link,repoId:1}}]) assert.throws(()=>verifiedOwner(bad));
+let observed;
+const fixture = async url => {observed = url; return Response.json(project);};
+assert.equal(await resolveOwner("test-placeholder", "personal_scope_fixture", fixture), project.accountId);
+assert(!observed.includes("teamId="));
+await resolveOwner("test-placeholder", "team_known_scope", fixture);
+assert(observed.endsWith("?teamId=team_known_scope"));
+await assert.rejects(()=>resolveOwner("test-placeholder", "", async()=>new Response("", {status:403})),/HTTP_403/);
+console.log("PASS Vercel identity resolution: immutable project/repository, owner mismatch correction, personal/team scope and denial propagation.");
