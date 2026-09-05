@@ -149,6 +149,20 @@ function forgotContext(email: unknown, envOverride: Record<string, unknown> = en
   } as never;
 }
 
+/** Requisição que alcança a origem sem passar pela borda da Cloudflare. */
+function forgotContextWithoutIp(email: unknown, envOverride: Record<string, unknown> = env) {
+  return {
+    env: envOverride,
+    params: {},
+    data: {},
+    request: new Request("https://app.neuroped.example/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email }),
+    }),
+  } as never;
+}
+
 function resetContext(token: string, password: string) {
   return {
     env,
@@ -288,6 +302,42 @@ const rateRow = sqlite.prepare(
   "SELECT blocked_until FROM auth_password_reset_rate_limits LIMIT 1",
 ).get() as { blocked_until: string | null } | undefined;
 assert.ok(rateRow?.blocked_until, "o bucket deve registrar blocked_until persistente");
+
+// ── 10) Sem CF-Connecting-IP o limitador NÃO pode desaparecer ──────────────
+// Antes, resetBucket devolvia null sem o header e o chamador tratava "sem
+// balde" como "pode passar": alcançar a origem sem CF-Connecting-IP desligava
+// o rate limiter por completo. Agora essas requisições caem num balde
+// sentinela compartilhado, sujeito ao mesmo teto.
+const bucketsBeforeNoIp = (
+  sqlite.prepare("SELECT COUNT(*) AS n FROM auth_password_reset_rate_limits").get() as { n: number }
+).n;
+for (let attempt = 1; attempt <= 5; attempt++) {
+  const allowed = await forgotPassword(forgotContextWithoutIp(USER_EMAIL));
+  assert.equal(allowed.status, 202);
+}
+const bucketsAfterNoIp = (
+  sqlite.prepare("SELECT COUNT(*) AS n FROM auth_password_reset_rate_limits").get() as { n: number }
+).n;
+assert.equal(
+  bucketsAfterNoIp,
+  bucketsBeforeNoIp + 1,
+  "requisição sem IP precisa consumir um balde, não passar livre",
+);
+
+const emailsBeforeNoIpBlock = sentEmails.length;
+const tokensBeforeNoIpBlock = tokenRows().length;
+const noIpBlocked = await forgotPassword(forgotContextWithoutIp(USER_EMAIL));
+assert.equal(noIpBlocked.status, 202, "bloqueio não pode ser distinguível externamente");
+assert.equal(
+  sentEmails.length,
+  emailsBeforeNoIpBlock,
+  "sem CF-Connecting-IP o limitador continua valendo: 6ª solicitação não envia e-mail",
+);
+assert.equal(
+  tokenRows().length,
+  tokensBeforeNoIpBlock,
+  "sem CF-Connecting-IP o limitador continua valendo: 6ª solicitação não cria token",
+);
 
 globalThis.fetch = realFetch;
 sqlite.close();

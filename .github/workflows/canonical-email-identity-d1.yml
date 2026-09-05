@@ -1,0 +1,136 @@
+name: Canonical email identity D1
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0022_canonical_email_identity.sql"
+      - "functions/api/auth/_shared.ts"
+      - "functions/api/auth/signup.ts"
+      - "functions/api/auth/forgot-password.ts"
+      - "functions/api/billing/accept.ts"
+      - "functions/api/operations/_access.ts"
+      - "tests/unit/canonical-email-identity.test.ts"
+      - ".github/workflows/canonical-email-identity-d1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0022_canonical_email_identity.sql"
+      - "functions/api/auth/_shared.ts"
+      - "functions/api/auth/signup.ts"
+      - "functions/api/auth/forgot-password.ts"
+      - "functions/api/billing/accept.ts"
+      - "functions/api/operations/_access.ts"
+      - "tests/unit/canonical-email-identity.test.ts"
+      - ".github/workflows/canonical-email-identity-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Grupo próprio: a migração não pode ser cancelada pela corrida do grupo
+# compartilhado cloudflare-pages.
+concurrency:
+  group: d1-canonical-email-identity
+  cancel-in-progress: false
+
+jobs:
+  validate-canonical-email:
+    name: Validate canonical email identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Adversarial canonical email regression
+        run: node --import tsx tests/unit/canonical-email-identity.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+  migrate-canonical-email:
+    name: Apply canonical email identity to D1
+    needs: validate-canonical-email
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      # GATE: fundir duas identidades é decisão humana, não de migração. Se o
+      # banco já carrega contas que só diferem na caixa do e-mail, este job
+      # PARA aqui — sem aplicar nada, sem escolher qual conta sobrevive.
+      # A consulta é a mesma fixada em tests/unit/canonical-email-identity.test.ts.
+      - name: Preflight — nenhuma colisão de identidade de e-mail
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          # Conta apenas quantos grupos colidem: nenhum e-mail é impresso no log.
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS grupos_colididos FROM (SELECT lower(trim(email)) AS canonico FROM users WHERE email IS NOT NULL GROUP BY canonico HAVING COUNT(*) > 1);" \
+            > /tmp/email-collisions.txt 2>&1
+          cat /tmp/email-collisions.txt
+
+          if ! grep -qE '(grupos_colididos[^0-9]*0[^0-9]|"grupos_colididos":\s*0)' /tmp/email-collisions.txt; then
+            echo "::error::Preflight bloqueou a 0022: existem contas que só diferem na caixa do e-mail."
+            echo "::error::Reconcilie manualmente qual conta é a legítima ANTES de aplicar o índice canônico."
+            echo "::error::A migração não funde, não escolhe e não descarta conta — isso é decisão humana."
+            exit 1
+          fi
+
+          echo "✅ Preflight limpo: nenhuma identidade de e-mail duplicada por caixa."
+
+      - name: Apply migration 0022
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0022_canonical_email_identity.sql
+
+      - name: Verify index without exposing accounts
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_users_email_canonical';" \
+            > /tmp/email-index.txt 2>&1
+          cat /tmp/email-index.txt
+          grep -q "idx_users_email_canonical" /tmp/email-index.txt
+
+          echo "✅ Índice canônico de e-mail ativo — o banco passa a garantir o invariante que a aplicação assume."

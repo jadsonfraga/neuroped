@@ -56,6 +56,26 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Perfil sem permissão para criar clínica.", "FORBIDDEN", 403);
   }
 
+  // Criar clínica é o ponto em que uma conta de cadastro aberto passa a ter
+  // superfície clínica (owner de um tenant, com pacientes e prontuário). Sem
+  // prova de posse do e-mail, alguém poderia registrar o endereço de um
+  // terceiro e assumir essa posição em nome dele. O gate fica aqui, e não no
+  // login: a conta pode existir e entrar, mas não escala privilégio.
+  //
+  // A consulta lê do banco em vez de confiar no JWT: a verificação pode ter
+  // acontecido depois da emissão do token de sessão.
+  const verification = await db
+    .prepare(`SELECT email_verified_at FROM users WHERE id = ? LIMIT 1`)
+    .bind(user.id)
+    .first<{ email_verified_at: string | null }>();
+  if (!verification?.email_verified_at) {
+    return tenantError(
+      "Confirme seu e-mail antes de criar uma clínica. Reenviamos o link se você solicitar.",
+      "EMAIL_VERIFICATION_REQUIRED",
+      403,
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     const parsed = await context.request.json();

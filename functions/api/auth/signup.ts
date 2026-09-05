@@ -1,7 +1,8 @@
 import { hashPassword } from "./_crypto";
+import { issueEmailVerification, type EmailVerificationEnv } from "./_emailVerification";
 import { enforceLoginAbuseLimit, registerLoginAbuseFailure } from "./_rateLimit";
 import { createSessionTokens } from "./_sessions";
-import { getUserByEmail, json, publicUser, type Env, type UserRow } from "./_shared";
+import { getUserByEmail, json, publicUser, type UserRow } from "./_shared";
 import { isPlainObject } from "../_request";
 
 const PASSWORD_MIN = 12;
@@ -37,7 +38,7 @@ function validEmail(email: string): boolean {
   return email.length <= EMAIL_MAX && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (context) => {
   const { env, request } = context;
 
   if (env.SAAS_SIGNUP_ENABLED !== "true") {
@@ -111,7 +112,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
            (id, name, email, password_hash, must_change_password, failed_login_attempts,
             role, is_active, created_at, updated_at)
          SELECT ?, ?, ?, ?, 0, 0, 'professional', 1, ?, ?
-          WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = ?)`,
+          WHERE NOT EXISTS (SELECT 1 FROM users WHERE lower(email) = ?)`,
       )
       .bind(userId, name, email, passwordHash, now, now, email)
       .run();
@@ -133,9 +134,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Não foi possível concluir o cadastro.", code: "DB_ERROR" }, 500);
   }
 
+  // Dispara a confirmação de posse do e-mail. É best-effort de propósito: a
+  // conta já existe e não tem privilégio clínico nenhum até verificar (o gate
+  // vive em POST /api/tenants), então falha de entrega não pode derrubar o
+  // cadastro — o usuário pede reenvio em /api/auth/resend-verification.
+  try {
+    await issueEmailVerification(env.DB, env, { id: user.id, email: user.email });
+  } catch (error) {
+    console.error("[auth/signup] verificação de e-mail não emitida", error);
+  }
+
   try {
     const tokens = await createSessionTokens(env.DB, user, secret);
-    return json({ ...tokens, user: publicUser(user) }, 201);
+    return json(
+      { ...tokens, user: publicUser(user), emailVerificationRequired: true },
+      201,
+    );
   } catch (error) {
     console.error("[auth/signup] sessão indisponível", error);
     // A conta existe; sem sessão revogável não emitimos tokens — o usuário

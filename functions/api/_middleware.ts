@@ -65,6 +65,11 @@ const PUBLIC_API_PATHS = new Set([
   // reset-password exige o token de uso único enviado por e-mail.
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  // Confirmação de posse do e-mail: quem abre o link do e-mail normalmente
+  // ainda não tem sessão. verify-email exige o token de uso único; o reenvio é
+  // anti-enumeração (202 genérico) e rate-limited.
+  "/api/auth/verify-email",
+  "/api/auth/resend-verification",
   "/api/public-booking",
   "/api/public-intake",
   "/api/public-scale",

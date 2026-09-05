@@ -57,6 +57,27 @@ Não declarar RTO cumprido com base apenas nesta estimativa.
 7. Logs em modo metadata-only; não usar `cat`, `head`, `grep` ou debug sobre export de dados.
 8. `CLINICAL_DATA_KEY`, `CLINICAL_INDEX_KEY` e versões necessárias disponíveis apenas como secrets do ambiente aprovado, nunca copiadas para relatório.
 
+## 4-bis. Ensaio do mecanismo, automatizado
+
+`.github/workflows/dr-mechanism-rehearsal.yml` executa as Etapas B, C
+(variante sintética), D, E, F, G e I abaixo em um D1 temporário, medindo a
+duração do restore. É `workflow_dispatch` com confirmação digitada — nunca
+roda sozinho, porque cria e destrói banco.
+
+O que ele prova: o Time Travel restaura estado neste provedor, a sentinela
+volta, e quanto tempo o comando leva.
+
+O que ele **não** prova, e por isso o campo RTO abaixo continua aberto: o
+tempo de um restore de produção com volume real. Ele usa dados sintéticos
+porque a Etapa C exige aprovação explícita de governança para copiar PHI
+para um alvo temporário — aprovação que não existe. Enquanto essa decisão
+não for tomada, o resultado é **mechanism rehearsal**, não restore integral.
+
+Produção não é lida nem escrita em passo algum do workflow; o alvo é criado
+pelo próprio job com a marca `dr-rehearsal` no nome, e um guard recusa
+qualquer alvo sem essa marca — inclusive no `d1 delete` final.
+`tests/unit/dr-rehearsal-safety.test.mjs` trava essas invariantes na CI.
+
 ## 5. Rehearsal seguro — procedimento obrigatório
 
 ### Etapa A — verdade de produção, somente metadata

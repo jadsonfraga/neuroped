@@ -112,6 +112,34 @@ if (orphans.length) {
   console.log(`  ⚠️  ${orphans.length} definições órfãs (id fora do catálogo/allScales) — dados mortos, não selecionáveis. Ex.: ${orphans.slice(0, 8).join(", ")}`);
 }
 
+// ---------- B.1) Contrato clínico EJIA-15 ----------
+head("B.1) EJIA-15 — contrato autoral longitudinal");
+const ejia = interactiveScaleItems["ejia-15"];
+ok(!!ejia, "ejia-15: definição interativa existe");
+if (ejia) {
+  const ejiaDomainSizes = ejia.domains.map((d) => d.items.length);
+  const ejiaTotal = ejiaDomainSizes.reduce((sum, n) => sum + n, 0);
+  ok(ejiaTotal === 15, `ejia-15: exatamente 15 itens (= ${ejiaTotal})`);
+  ok(
+    JSON.stringify(ejiaDomainSizes) === JSON.stringify([6, 4, 2, 2, 1]),
+    `ejia-15: domínios preservam 6/4/2/2/1 (= ${ejiaDomainSizes.join("/")})`,
+  );
+  ok(
+    JSON.stringify(ejia.optionPoints) === JSON.stringify([0, 1, 2, 3]),
+    "ejia-15: pontuação por item é 0–3",
+  );
+  ok(
+    ejia.bands.length === 1 && ejia.bands[0].minPct === 0,
+    "ejia-15: não cria cutoff transversal de gravidade",
+  );
+  ok(
+    ejia.bands[0].description.includes("basal") &&
+      ejia.bands[0].description.includes("não são critérios psicométricos validados"),
+    "ejia-15: interpretação deixa explícito o uso longitudinal e não validado",
+  );
+  ok(allIds.has("ejia-15"), "ejia-15: disponível no catálogo aplicável");
+}
+
 // ---------- C) Cobertura ----------
 head("C) Cobertura no filtro");
 const interactiveInCatalog = new Set(
@@ -121,7 +149,7 @@ console.log(`  runner=${runnerEntries.length} | acervo=${itemEntries.length} | i
 ok(interactiveInCatalog.size >= 100, `≥100 escalas interativas selecionáveis no filtro (=${interactiveInCatalog.size})`);
 const priorityClinicalPack = [
   "engel", "bears", "flacc", "rflacc", "comfort-b", "bars", "uku",
-  "psc17", "erc", "hine", "catclams", "fas-fluencia", "bisq", "nddie", "scas", "fas-pr",
+  "psc17", "erc", "hine", "catclams", "fas-fluencia", "bisq", "nddie", "scas", "fas-pr", "ejia-15",
 ];
 for (const id of priorityClinicalPack) {
   ok(interactiveInCatalog.has(id), `${id}: pacote prioritario abre como escala preenchivel`);

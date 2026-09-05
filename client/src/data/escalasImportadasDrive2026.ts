@@ -2,6 +2,7 @@ import { type ScaleEntry } from "./scaleFilter";
 import { escalasImportadasDrive2026 as escalasImportadasDrive2026Base } from "./escalasImportadasDrive2026Base";
 import { escalasAutoraisDrive2026Lote2 } from "./escalasAutoraisDrive2026Lote2";
 import { escalasAutoraisDrive2026Lote3 } from "./escalasAutoraisDrive2026Lote3";
+import { escalasAutoraisDrive2026Lote4 } from "./escalasAutoraisDrive2026Lote4";
 
 /**
  * Catálogo consolidado das escalas autorais do Drive.
@@ -28,4 +29,5 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
   ...escalasImportadasDrive2026Base,
   ...escalasAutoraisDrive2026Lote2Operacionais,
   ...escalasAutoraisDrive2026Lote3,
+  ...escalasAutoraisDrive2026Lote4,
 ];

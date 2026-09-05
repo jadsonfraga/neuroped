@@ -100,7 +100,9 @@ export function ClinicSwitcher({ collapsed = false }: { collapsed?: boolean }) {
             )}
             {billingBadge && (
               <a
-                href="#/configuracoes"
+                // Direto na aba Plano: o aviso fala de assinatura, então o
+                // clique tem que chegar na assinatura, não no perfil.
+                href="#/configuracoes?secao=plano"
                 className={`mt-1 block rounded-lg px-2 py-1 text-[10px] font-semibold leading-4 ${
                   billingBadge.tone === "trial"
                     ? "bg-primary/10 text-primary"

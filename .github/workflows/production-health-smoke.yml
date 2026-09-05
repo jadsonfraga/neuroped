@@ -1,0 +1,135 @@
+name: Production health smoke
+
+# Fase 8 (observabilidade/SRE) — o produto pode falhar às 03:00 e ninguém
+# descobrir por acaso.
+#
+# Antes deste workflow, `tests/e2e/published-health.mjs` existia no repositório
+# e no package.json (`test:e2e:published-health`) mas NENHUM workflow o
+# executava: nenhum agendamento tocava produção, e a única verificação do site
+# publicado acontecia dentro do próprio deploy. Ou seja: entre dois deploys, a
+# produção podia estar fora do ar por horas sem sinal nenhum.
+#
+# Este workflow roda o smoke que já existia, agora contra o site publicado, em
+# horário fixo. Ele falha fechado: qualquer alvo com HTTP != 2xx, sentinela de
+# deploy ausente, /api/health sem `status/authentication/database` esperados ou
+# shell sem a marca da aplicação derruba o job — e a falha vira notificação do
+# GitHub para quem tem o repositório em watch.
+#
+# O que ele NÃO é: não substitui uptime externo com histórico e SLA (o runner
+# do GitHub não garante minuto exato e o cron pode atrasar em janelas de pico).
+# É o piso de monitoramento que o repositório consegue garantir sozinho.
+
+on:
+  schedule:
+    # De hora em hora. Nenhum dado clínico é lido: o smoke bate em sentinela
+    # de deploy, /api/health (que não expõe conteúdo) e shell público.
+    - cron: "0 * * * *"
+  workflow_dispatch:
+  # Depois de todo deploy do Cloudflare Pages: se a publicação degradou o
+  # ambiente, o sinal aparece agora e não só no próximo tique do cron.
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+# Um smoke de produção por vez: dois tiques concorrentes só duplicariam
+# requisição e ruído. O tique em andamento não é cancelado — cancelar
+# esconderia justamente a execução que estava detectando a falha.
+concurrency:
+  group: production-health-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Published production health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      # Este smoke NÃO dirige navegador — `tests/e2e/published-health.mjs` usa
+      # só `fetch`. O passo está aqui porque a guarda
+      # `tests/unit/workflow-governance.test.mjs` exige Chromium em todo job que
+      # roda um gate `test:e2e:*`, sem distinguir quais usam Playwright.
+      # Respeitar a guarda custa ~20s por execução; afrouxá-la para acomodar
+      # este job custaria a proteção dos gates que realmente precisam do
+      # navegador. Tornar a guarda precisa é mudança própria, não efeito
+      # colateral desta.
+      - name: Install Chromium (exigido pela guarda de governança de workflows)
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke against the published site
+        run: npm run test:e2e:published-health
+
+      - name: Upload evidence
+        # `always()` de propósito: o relatório da execução que FALHOU é o que
+        # tem valor de diagnóstico. Sem isto, só sobraria a linha de log.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-health-${{ github.run_id }}
+          path: artifacts/e2e/published-health.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  deep-smoke:
+    name: Published deep smoke (sob demanda)
+    # Só por acionamento manual, e a razão é honestidade de alarme: estes dois
+    # gates abrem o site publicado num Chromium real e reprovam com QUALQUER
+    # erro de console, pageerror ou resposta >= 400 nas rotas percorridas.
+    # Nunca rodaram em CI, então não existe linha de base verde para eles.
+    # Colocá-los num cron sem essa linha de base criaria um alarme
+    # possivelmente vermelho desde o primeiro dia — e alarme cronicamente
+    # vermelho ensina todo mundo a ignorar alarme, o que é pior do que não ter.
+    #
+    # Promover para agenda depois de UMA execução verde: acrescentar este job
+    # ao `schedule` acima (diário basta; são minutos de runner, não segundos).
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Trace console/network errors on the published site
+        run: npm run test:e2e:published-errors
+
+      - name: Walk the published public journey
+        run: npm run test:e2e:published
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-deep-smoke-${{ github.run_id }}
+          path: artifacts/e2e/
+          if-no-files-found: warn
+          retention-days: 14
