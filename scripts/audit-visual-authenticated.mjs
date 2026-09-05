@@ -87,11 +87,14 @@ async function loginThroughUi(page, origin) {
 async function logoutThroughUi(page, origin) {
   await gotoRoute(page, origin, "/", 700);
   const exit = page.getByTestId("button-session-exit");
-  // No celular/tablet a sessão vive dentro do drawer: é preciso abri-lo, que é
-  // exatamente o caminho que a pessoa percorre para sair.
-  if (!(await exit.isVisible().catch(() => false))) {
+  // No celular/tablet a sessão vive dentro do drawer, que fica fora da tela e
+  // marcado como `inert` quando fechado — o elemento existe e o Playwright o
+  // considera "visível", mas ele está fora da viewport. A decisão é pela
+  // largura, não pela visibilidade, e reproduz o caminho real de quem sai.
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width < 1024) {
     await page.getByRole("button", { name: "Abrir menu de navegação" }).click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
   }
   await exit.waitFor({ state: "visible", timeout: 20_000 });
   await exit.click();

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -127,11 +127,16 @@ function normalize(text: string) {
 
 function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
   const Icon = flow.icon;
+  // `MotionConfig reducedMotion="user"` neutraliza transformações, mas mantém
+  // as transições de opacidade. Num cartão que entra com atraso escalonado,
+  // isso significa texto clínico legível só alguns frames depois — e é
+  // exatamente o tipo de movimento que quem pede movimento reduzido não quer.
+  const reduceMotion = useReducedMotion();
   return (
     <Link href={flow.href}>
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{
           delay: index * 0.05,
           duration: duration.normal,
