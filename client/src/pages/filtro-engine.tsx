@@ -1883,7 +1883,7 @@ export default function FiltroPage() {
                 <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Idade da criança
                 </p>
-                <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75 sm:hidden" aria-hidden="true">
+                <span className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden" aria-hidden="true">
                   Deslize →
                 </span>
               </div>
@@ -1924,6 +1924,9 @@ export default function FiltroPage() {
                     variant="ghost"
                     size="sm"
                     onClick={clearAll}
+                    // No celular o rótulo é ocultado e sobrava um botão só de
+                    // ícone, sem nome acessível (axe: button-name, crítico).
+                    aria-label="Limpar sintomas selecionados"
                     className="h-6 sm:h-7 gap-1 px-2 text-xs"
                   >
                     <RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" />{" "}
@@ -1959,7 +1962,7 @@ export default function FiltroPage() {
                         </span>
                         {q.parentHint && (
                           <span
-                            className={`whitespace-normal break-words text-[8px] sm:text-[9px] font-medium leading-tight ${sel ? "text-primary-foreground/75" : "text-muted-foreground"}`}
+                            className={`whitespace-normal break-words text-[9px] sm:text-[10px] font-medium leading-tight ${sel ? "text-primary-foreground" : "text-muted-foreground"}`}
                           >
                             {q.parentHint}
                           </span>

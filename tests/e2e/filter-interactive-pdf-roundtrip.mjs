@@ -75,22 +75,7 @@ async function openFilterEngine(page) {
   if (await ageBands.isVisible().catch(() => false)) return;
 
   try {
-    await page.waitForFunction(
-      () =>
-        Boolean(
-          document.querySelector('[data-testid="age-band-scroll"]') ||
-            document.querySelector('[data-testid="button-open-filter"]'),
-        ),
-      undefined,
-      { timeout: 20_000 },
-    );
-
-    if (await ageBands.isVisible().catch(() => false)) return;
-
-    const open = page.getByTestId("button-open-filter");
-    await open.waitFor({ state: "visible", timeout: 10_000 });
-    await open.click();
-    await ageBands.waitFor({ state: "visible", timeout: 20_000 });
+    await ageBands.waitFor({ state: "visible", timeout: 25_000 });
   } catch (error) {
     const body = await page.locator("body").innerText().catch(() => "");
     throw new Error(

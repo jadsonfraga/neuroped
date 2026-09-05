@@ -583,7 +583,7 @@ export default function ConfiguracoesPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-6">
+    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-6" data-testid="configuracoes-shell">
       <div>
         <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary"><ShieldCheck className="h-4 w-4" aria-hidden="true" />Configurações</div>
         <h1 className="text-2xl font-semibold tracking-tight">Sua conta e sua clínica</h1>

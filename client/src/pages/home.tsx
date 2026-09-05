@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
+import { ClinicalCockpit } from "@/components/clinical/ClinicalCockpit";
+import { useAuth } from "@/contexts/AuthContext";
 import { appMetrics } from "@/data/appMetrics";
 import { navigablePages } from "@/data/navigation";
 import type { ScaleEntry } from "@/data/scaleFilter";
@@ -184,6 +186,10 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
 }
 
 export default function HomePage() {
+  const { accessMode, isAuthenticated } = useAuth();
+  // A sessão clínica autenticada abre no cockpit; a vitrine institucional
+  // continua intacta para visitantes, mirrors públicos e modo local.
+  const inClinicalSession = accessMode === "remote" && isAuthenticated;
   const [searchQuery, setSearchQuery] = useState("");
   const [scaleSearchCatalog, setScaleSearchCatalog] = useState<ScaleEntry[]>(
     [],
@@ -235,8 +241,55 @@ export default function HomePage() {
     return [...pages, ...scales].slice(0, 10);
   }, [q, scaleSearchCatalog]);
 
+  const clinicalHeader = (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: duration.normal, ease: easing.smooth }}
+      className="space-y-4"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1
+            className="text-[1.6rem] font-semibold leading-tight tracking-[-0.03em] text-foreground sm:text-[1.9rem]"
+            style={{ fontFamily: "var(--font-display)" }}
+            data-testid="text-page-title"
+          >
+            Cockpit clínico
+          </h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Paciente em foco, contexto e a próxima ação — sem atravessar o menu.
+          </p>
+        </div>
+        <div className="relative w-full max-w-md" data-testid="search-container">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-primary" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Buscar escala ou página…"
+            aria-label="Buscar escala ou página"
+            className="h-12 rounded-2xl border-border/70 bg-card/70 pl-11 pr-10 text-[14px]"
+            data-testid="input-search"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Limpar busca"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+      <ClinicalCockpit />
+    </motion.section>
+  );
+
   return (
     <div className="page-enter proportion-safe-page space-y-9 pb-10">
+      {inClinicalSession ? clinicalHeader : (
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -339,6 +392,7 @@ export default function HomePage() {
           </div>
         </div>
       </motion.section>
+      )}
 
       {isSearching ? (
         <section className="space-y-4" aria-label="Resultados da busca da home">
@@ -390,13 +444,15 @@ export default function HomePage() {
             <div className="flex items-end justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                  Sua jornada
+                  {inClinicalSession ? "Ferramentas" : "Sua jornada"}
                 </p>
                 <h2
                   id="fluxos-principais"
-                  className="text-2xl font-semibold tracking-[-0.03em] text-foreground"
+                  className={`font-semibold tracking-[-0.03em] text-foreground ${inClinicalSession ? "text-xl" : "text-2xl"}`}
                 >
-                  O cuidado começa por aqui
+                  {inClinicalSession
+                    ? "Instrumentos e triagens"
+                    : "O cuidado começa por aqui"}
                 </h2>
               </div>
               <span className="shrink-0 rounded-full border border-border/70 bg-card/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden">
