@@ -87,13 +87,9 @@ export const featuredNavigation: NavItem[] = [
     tone: "priority",
     description: "Avaliações e serviços",
   },
-  {
-    href: "/conecta",
-    label: "NeuroPed Conecta",
-    icon: Activity,
-    tone: "connection",
-    description: "Portais e conexões",
-  },
+  // prettier-ignore — o guard de integração do Conecta casa a entrada nesta
+  // forma de uma linha (tests/unit/conecta-integration-static.test.mjs).
+  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection", description: "Portais e conexões" },
   {
     href: "/eletroencefalograma",
     label: "EEG & Vídeo-EEG",
