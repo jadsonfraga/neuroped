@@ -73,6 +73,8 @@ coverage/
 .nyc_output/
 playwright-report/
 test-results/
+# Capturas e relatorios das provas visuais (regerados por npm run audit:visual*)
+artifacts/
 
 # Migrations geradas
 drizzle/

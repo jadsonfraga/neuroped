@@ -88,9 +88,8 @@ async function openFilterEngine(page) {
     if (await ageBands.isVisible().catch(() => false)) return;
 
     const open = page.getByTestId("button-open-filter");
-    await open.waitFor({ state: "visible", timeout: 10_000 });
-    await open.click();
-    await ageBands.waitFor({ state: "visible", timeout: 20_000 });
+    if (await open.isVisible().catch(() => false)) await open.click();
+    await ageBands.waitFor({ state: "visible", timeout: 30_000 });
   } catch (error) {
     const body = await page.locator("body").innerText().catch(() => "");
     throw new Error(

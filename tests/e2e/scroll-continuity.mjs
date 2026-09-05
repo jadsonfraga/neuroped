@@ -269,9 +269,12 @@ async function openFilter(width, selectQuickStart = true) {
   await page
     .locator("#main-content")
     .waitFor({ state: "visible", timeout: 15000 });
+  // O filtro passou a preparar o catálogo sozinho; o botão manual é opcional.
   const filterOpenButton = page.getByTestId("button-open-filter");
-  await filterOpenButton.waitFor({ state: "visible", timeout: 15000 });
-  await filterOpenButton.click();
+  if (await filterOpenButton.isVisible().catch(() => false)) await filterOpenButton.click();
+  await page
+    .locator(".container-filtro")
+    .waitFor({ state: "visible", timeout: 30000 });
   if (selectQuickStart) {
     await page
       .getByRole("button", { name: "TDAH · 6–12 anos", exact: true })
