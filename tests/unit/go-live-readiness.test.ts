@@ -19,11 +19,21 @@
 import assert from "node:assert/strict";
 import { onRequestGet } from "../../functions/api/admin/go-live";
 
+import { randomBytes } from "node:crypto";
+
+/**
+ * Fixtures geradas em tempo de execução, não literais: (1) o guard
+ * audit-access-policy reprova — corretamente — qualquer literal atribuído a
+ * NEUROPED_JWT_SECRET no código-fonte; (2) um valor aleatório por execução
+ * torna a varredura de vazamento mais forte, porque nenhum trecho da resposta
+ * pode coincidir com ele por acaso.
+ */
+const sentinela = (rotulo: string) => `${rotulo}_${randomBytes(24).toString("hex")}`;
 const SEGREDOS = {
-  AUTH_RESEND_API_KEY: "re_SEGREDO_RESEND_NAO_PODE_VAZAR_0123456789",
-  ASAAS_API_KEY: "asaas_SEGREDO_API_NAO_PODE_VAZAR_0123456789",
-  ASAAS_WEBHOOK_TOKEN: "webhook_SEGREDO_TOKEN_NAO_PODE_VAZAR_0123456789",
-  NEUROPED_JWT_SECRET: "jwt_SEGREDO_SESSAO_NAO_PODE_VAZAR_0123456789",
+  AUTH_RESEND_API_KEY: sentinela("re"),
+  ASAAS_API_KEY: sentinela("asaas"),
+  ASAAS_WEBHOOK_TOKEN: sentinela("webhook"),
+  NEUROPED_JWT_SECRET: sentinela("jwt"),
 };
 
 const ADMIN = { id: "u-admin", name: "Admin", email: "admin@x.invalid", role: "admin" };
