@@ -656,9 +656,9 @@ async function main() {
         //  - 44px (falha) para os controles de navegação e ação primária que o
         //    projeto já trata como contrato — dock, ajuda persistente, abas do
         //    prontuário e as ações do cockpit;
-        //  - 24px (aviso) para o restante, que é o mínimo do WCAG 2.2 AA. Ficam
-        //    registrados no relatório em vez de sumirem, mas não reprovam o gate
-        //    por um alvo secundário herdado.
+        //  - 24px (falha) para o restante, que é o mínimo do WCAG 2.2 AA;
+        //    links inline no meio de um texto corrido ficam fora da régua porque
+        //    herdam a altura da linha.
         const PRIMARY_TARGETS = [
           '[data-testid="mobile-primary-dock"] button',
           '[data-testid="button-floating-help"]',
@@ -703,7 +703,9 @@ async function main() {
             const box = visibleBox(element);
             if (!box || inlineInText(element)) continue;
             if (element.matches(PRIMARY_TARGETS)) continue;
-            if (box.width < 24 || box.height < 24) targetWarnings.push(describe(element, box));
+            // 24px é o mínimo do WCAG 2.2 AA. Deixou de ser aviso: os alvos
+            // herdados foram corrigidos, então voltar abaixo disso é regressão.
+            if (box.width < 24 || box.height < 24) smallTargets.push(describe(element, box));
           }
         }
 

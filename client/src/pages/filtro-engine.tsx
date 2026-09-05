@@ -2579,7 +2579,7 @@ export default function FiltroPage() {
                               {item.hasScale ? (
                                 <Link
                                   href={item.route}
-                                  className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                                  className="inline-flex min-h-6 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                                 >
                                   {item.title}
                                 </Link>
@@ -2651,7 +2651,7 @@ export default function FiltroPage() {
                                 href={pm.href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-bold text-primary underline underline-offset-2 hover:opacity-80"
+                                className="inline-flex min-h-6 items-center font-bold text-primary underline underline-offset-2 hover:opacity-80"
                               >
                                 📄 Estudo (PubMed {pm.pmid})
                               </a>
@@ -2662,7 +2662,7 @@ export default function FiltroPage() {
                           {item.hasScale ? (
                             <Link
                               href={item.route}
-                              className="inline-flex items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                              className="inline-flex min-h-6 items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                             >
                               <span>{ctaLabel}</span>
                               <ArrowRight className="h-4 w-4" />

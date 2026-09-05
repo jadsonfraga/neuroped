@@ -855,7 +855,7 @@ export default function PacientesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0"
+                          className="h-9 w-9 p-0"
                           onClick={() => {
                             softTick();
                             haptic.tap();
@@ -865,12 +865,12 @@ export default function PacientesPage() {
                           title="Editar cadastro"
                           data-testid={`button-edit-${p.id}`}
                         >
-                          <Pencil className="w-3 h-3" />
+                          <Pencil className="w-4 h-4" aria-hidden="true" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          className="h-9 w-9 p-0 text-destructive hover:text-destructive"
                           onClick={() => {
                             softTap();
                             haptic.warning();
@@ -880,7 +880,7 @@ export default function PacientesPage() {
                           title="Excluir cadastro"
                           data-testid={`button-delete-${p.id}`}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
