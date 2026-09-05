@@ -44,7 +44,8 @@ def approved_handoff():
 def fake_runtime(root: Path, *, qa_pass=True):
     (root / "fonts").mkdir()
     law = "# LEI PANT VIGENTE — v5\nSubstitui a v1, a v2, a v3 e a v4.\n"
-    (root / "00_LEI_PANT_VIGENTE_v5.md").write_text(law, encoding="utf-8")
+    law_path = root / "00_LEI_PANT_VIGENTE_v5.md"
+    law_path.write_text(law, encoding="utf-8")
     (root / "marca_capa.png").write_bytes(b"PNG-cover")
     (root / "marca_miolo.png").write_bytes(b"PNG-body")
     (root / "00_TRAVA_ANTIRREGRESSAO.py").write_text('SELO="900cb06d69bb6da7"\nIDENTIDADE={"nome":"Médico fictício","titulacao":"Neuropediatra","crm":"CRM-XX 000","rqe":"RQE 000","cnpj":"00.000.000/0000-00","razao":"Clínica fictícia","endereco_capa":"Endereço fictício"}\n', encoding="utf-8")
@@ -54,7 +55,7 @@ def fake_runtime(root: Path, *, qa_pass=True):
     (root / "01_QA_PANT_HELENA_ESTHER.py").write_text(qa, encoding="utf-8")
     (root / "fonts/font.ttf").write_bytes(b"font")
     import hashlib
-    return hashlib.sha256(law.encode()).hexdigest()
+    return hashlib.sha256(law_path.read_bytes()).hexdigest()
 
 
 class AdapterTests(unittest.TestCase):
