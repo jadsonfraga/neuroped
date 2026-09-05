@@ -6,6 +6,7 @@ on:
       - '.github/workflows/escuta-cloud-qa.yml'
       - 'scripts/escuta-cloud-qa.mjs'
       - 'scripts/escuta-cloud-entry.mjs'
+      - 'scripts/escuta-cloud-browser.mjs'
       - 'scripts/escuta-sql-transport.py'
 permissions:
   contents: read
