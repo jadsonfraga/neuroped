@@ -39,7 +39,12 @@ const MUST_BE_PUBLIC = [
   "/login", "/sessao-expirada",
   // Recuperação de senha self-service: por definição sem sessão; nenhuma tela
   // exibe dado clínico e o reset exige token de uso único enviado por e-mail.
-  "/esqueci-senha", "/redefinir-senha", "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
+  "/esqueci-senha", "/redefinir-senha",
+  // Confirmação de posse do e-mail: quem abre o link do e-mail normalmente
+  // ainda não tem sessão. A tela não exibe dado clínico algum — só consome o
+  // token de uso único ou pede reenvio (resposta anti-enumeração).
+  "/verificar-email",
+  "/familia", "/agendar", "/marcacao", "/eletroencefalograma", "/pre-consulta", "/pre-retorno", "/efeitos-colaterais", "/verificar",
   "/orientacao-parental", "/glossario", "/portal-familia",
   "/portal-familia/novidades", "/portal-familia/acesso",
   "/marcos-desenvolvimento", "/curvas-crescimento", "/caa",

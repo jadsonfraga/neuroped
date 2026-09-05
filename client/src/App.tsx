@@ -48,6 +48,7 @@ const BillingRetornoPage = lazy(() => import("@/pages/billing-retorno"));
 const SessionExpiredPage = lazy(() => import("@/pages/session-expired"));
 const ForgotPasswordPage = lazy(() => import("@/pages/esqueci-senha"));
 const ResetPasswordPage = lazy(() => import("@/pages/redefinir-senha"));
+const VerifyEmailPage = lazy(() => import("@/pages/verificar-email"));
 const LgpdConsentPage = lazy(() => import("@/pages/lgpd-consent"));
 const PreferencesPanel = lazy(() =>
   import("@/components/PreferencesPanel").then(({ PreferencesPanel }) => ({
@@ -344,6 +345,7 @@ function AppRouter() {
             <Route path="/login" component={LoginPage} />
             <Route path="/esqueci-senha" component={ForgotPasswordPage} />
             <Route path="/redefinir-senha" component={ResetPasswordPage} />
+            <Route path="/verificar-email" component={VerifyEmailPage} />
             <Route path="/planos" component={PlanosPage} />
             <Route path="/cadastro" component={CadastroPage} />
             <Route path="/invite" component={InvitePage} />

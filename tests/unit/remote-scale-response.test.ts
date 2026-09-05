@@ -25,7 +25,7 @@ import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { onRequestGet as listInvitations, onRequestPost as createInvitation, onRequestPatch as patchInvitation } from "../../functions/api/live/scale-invitations/index";
 import { onRequestGet as publicGetScale, onRequestPost as publicPostScale } from "../../functions/api/public-scale";
-import { getRemoteScaleDescriptor } from "../../shared/remoteScaleCatalog";
+import { REMOTE_SCALE_CONSENT_VERSION, getRemoteScaleDescriptor } from "../../shared/remoteScaleCatalog";
 
 class D1StatementMock {
   constructor(
@@ -122,6 +122,7 @@ sqlite.exec(`
   );
 `);
 sqlite.exec(readFileSync("db/migrations/0021_remote_scale_response.sql", "utf8"));
+sqlite.exec(readFileSync("db/migrations/0023_public_submission_audit.sql", "utf8"));
 
 const CLINIC_A = "clinic-a-synthetic";
 const CLINIC_B = "clinic-b-synthetic";
@@ -281,6 +282,32 @@ assert.ok(
 const invitationRow = sqlite.prepare("SELECT status FROM live_scale_invitations WHERE token_hash = (SELECT token_hash FROM live_scale_invitations LIMIT 1)").get() as { status: string };
 assert.equal(invitationRow.status, "submitted");
 
+// ── 9b) Auditoria do write público: existe, é do tenant e não carrega PHI ──
+const auditRows = sqlite
+  .prepare("SELECT * FROM public_submission_audit_log")
+  .all() as Array<Record<string, unknown>>;
+assert.equal(auditRows.length, 1, "o envio público precisa deixar exatamente uma trilha");
+const audit = auditRows[0];
+assert.equal(audit.clinic_id, CLINIC_A, "a trilha precisa ser do tenant dono do convite");
+assert.equal(audit.surface, "public_scale");
+assert.equal(audit.action, "submitted");
+assert.equal(audit.outcome, "accepted");
+assert.equal(audit.origin, "public_invitation");
+assert.equal(audit.consent_version, REMOTE_SCALE_CONSENT_VERSION);
+
+const auditText = JSON.stringify(audit);
+assert.doesNotMatch(auditText, /Mãe da criança/, "a trilha não pode carregar nome do respondente");
+assert.ok(
+  !auditText.includes(mchatDescriptor.items[0].text),
+  "a trilha não pode carregar texto de item clínico",
+);
+assert.ok(!auditText.includes(PATIENT_A), "a trilha não pode expor o patient_id");
+assert.ok(!auditText.includes(plaintextToken), "a trilha não pode carregar o token do convite");
+assert.ok(
+  !Object.keys(audit).some((column) => /answer|resposta|payload|name|nome|patient|token/i.test(column)),
+  "a tabela de trilha não pode sequer ter coluna capaz de guardar PHI",
+);
+
 // ── 10) Reenvio ao mesmo convite: 409, sem duplicar ────────────────────────
 const resubmit = await publicPostScale(
   publicContext("POST", plaintextToken, { consentAccepted: true, answers: validAnswers }),
@@ -289,6 +316,10 @@ assert.equal(resubmit.status, 409);
 {
   const count = sqlite.prepare("SELECT COUNT(*) AS n FROM live_scale_responses").get() as { n: number };
   assert.equal(count.n, 1, "reenvio não pode criar segunda resposta");
+  const audits = sqlite
+    .prepare("SELECT COUNT(*) AS n FROM public_submission_audit_log")
+    .get() as { n: number };
+  assert.equal(audits.n, 1, "envio recusado não pode inflar a trilha de auditoria");
 }
 
 // ── 11) Convite expirado ────────────────────────────────────────────────────
