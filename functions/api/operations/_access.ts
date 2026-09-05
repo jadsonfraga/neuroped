@@ -253,7 +253,7 @@ export async function linkOperationsOperator(
   if (!principal.canConfigure) return { ok: false, code: "FORBIDDEN" };
   const normalized = email.trim().toLowerCase();
   const staff = await db
-    .prepare(`SELECT id, role, is_active FROM users WHERE email = ? LIMIT 1`)
+    .prepare(`SELECT id, role, is_active FROM users WHERE lower(email) = ? LIMIT 1`)
     .bind(normalized)
     .first<{ id: string; role: string; is_active: number }>();
   if (!staff) return { ok: false, code: "STAFF_NOT_FOUND" };
