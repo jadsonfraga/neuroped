@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, ExternalLink, KeyRound, Loader2, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUBLIC_HOME } from "@/lib/publicRoutes";
+import { readRouteParam } from "@/lib/routeQuery";
 import { MEDICAL_URL } from "@/lib/zone";
+
+/**
+ * Destino pós-login. Só caminhos internos são aceitos: `//host` e URLs
+ * absolutas seriam redirecionamento aberto a partir de uma tela de credencial.
+ */
+function safeNextPath(raw: string): string {
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
 
 function readableLoginError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -18,7 +28,7 @@ function readableLoginError(error: unknown): string {
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { login, isLoading, remoteConfigured } = useAuth();
+  const { login, isLoading, remoteConfigured, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,13 +40,23 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-      setLocation("/");
+      // A navegação NÃO acontece aqui. O roteador por hash reage ao
+      // `location.hash` antes de o React comitar o novo usuário, e a rota de
+      // destino era avaliada com `isAuthenticated` ainda falso — o RouteGuard
+      // devolvia a pessoa já autenticada para esta mesma tela, com a URL
+      // quebrada (`/?next=%2F#/login`). Navegar a partir do estado observado
+      // elimina a corrida: o efeito abaixo só dispara depois do commit.
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {
       setSubmitting(false);
     }
   }
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setLocation(safeNextPath(readRouteParam("next") || "/"));
+  }, [isAuthenticated, setLocation]);
 
   return (
     <section className="mx-auto flex min-h-[70vh] w-full max-w-lg flex-col items-center justify-center px-4 py-10">
@@ -74,17 +94,17 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-5 flex w-full max-w-sm flex-col gap-3 text-center">
-        <a href="#/esqueci-senha" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="forgot-password-link">
+        <a href="#/esqueci-senha" className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="forgot-password-link">
           <KeyRound className="h-4 w-4" aria-hidden="true" /> Esqueci minha senha
         </a>
-        <a href="#/cadastro" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+        <a href="#/cadastro" className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           Criar conta profissional
         </a>
-        <a href={`#${PUBLIC_HOME}`} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+        <a href={`#${PUBLIC_HOME}`} className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Ir para o conteúdo das famílias
         </a>
         {MEDICAL_URL && (
-          <a href={MEDICAL_URL} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:underline">
+          <a href={MEDICAL_URL} className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:underline">
             <ExternalLink className="h-4 w-4" aria-hidden="true" /> Abrir área médica protegida
           </a>
         )}

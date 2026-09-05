@@ -17,6 +17,7 @@ import {
   type DocumentIssuer,
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
+import { readRouteParam } from "@/lib/routeQuery";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — WebUI de geração assistida (embutida)
@@ -172,9 +173,7 @@ export default function LaudoNeuropedPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  const patientId = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("patientId")
-    : null;
+  const patientId = readRouteParam("patientId") || null;
 
   const configurado = useMemo(() => {
     return (

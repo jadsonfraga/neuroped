@@ -17,6 +17,7 @@ import {
   type DocumentIssuer,
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
+import { readRouteParam } from "@/lib/routeQuery";
 
 /* ────────────────────────────────────────────────────────────
    Receita de Controle Especial (Lista C1) — 2 vias
@@ -450,9 +451,7 @@ export default function ReceitaC1Page() {
   const [f, setF] = useState<ReceitaFields>({ ...EMPTY, data: todayBR() });
   const [showPreview, setShowPreview] = useState(false);
   const [patientLoading, setPatientLoading] = useState(false);
-  const patientId = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("patientId")
-    : null;
+  const patientId = readRouteParam("patientId") || null;
   const filename = `receita-c1-${dateStamp()}`;
 
   useEffect(() => {
