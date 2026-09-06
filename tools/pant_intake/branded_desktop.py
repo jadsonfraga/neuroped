@@ -19,6 +19,12 @@ class BrandedApp(App):
     def __init__(self, root):
         super().__init__(root)
         apply_brand_overlay(self)
+        screen_w = root.winfo_screenwidth()
+        screen_h = root.winfo_screenheight()
+        width = min(1280, max(980, screen_w - 60))
+        height = min(860, max(680, screen_h - 70))
+        root.geometry(f"{width}x{height}")
+        root.minsize(min(980, width), min(680, height))
         root.title("NeuroPed SDG | Dr. Jadson Fraga | Fluxo Desktop " + DESKTOP_VERSION)
 
 
