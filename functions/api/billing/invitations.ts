@@ -9,7 +9,7 @@ import {
   normalizeInvitationEmail,
 } from "./_onboarding";
 import { requireBillingEntitlement } from "./_guard";
-import { invitationDeliveryMode, sendInvitationEmail } from "./_invitationDelivery";
+import { invitationDeliveryConfigured, sendInvitationEmail } from "./_invitationDelivery";
 import type { MailTransportEnv } from "../auth/_mailTransport";
 import { boundedText as clean } from "../_request";
 
@@ -20,28 +20,29 @@ interface Env extends MailTransportEnv {
 }
 
 /**
- * Entrega o convite e decide o que a API pode devolver ao convidante.
- *
- * Quando há transporte de e-mail, o token vai DIRETO a quem precisa provar
- * posse do endereço, e a resposta NÃO devolve a URL. Isso fecha o vetor que a
- * revisão adversarial de 03/09 nomeou: com o link em mãos, o convidante podia
- * criar a conta em nome de um terceiro.
- *
- * Sem transporte, o comportamento anterior continua — link devolvido e
- * rotulado como manual —, para que uma instalação sem e-mail não perca a
- * capacidade de convidar. É degradação declarada, não silenciosa.
+ * O token do convite é um bearer secret e só pode sair pelo canal que prova
+ * posse do e-mail convidado. Nunca há fallback que devolva URL/token ao gestor.
  */
 async function deliverInvitation(
   env: Env,
   params: { to: string; clinicName: string; role: string; invitationUrl: string; expiresAt: string },
-): Promise<{ delivery: "email" | "manual"; invitationUrl?: string }> {
-  if (invitationDeliveryMode(env) !== "email") {
-    return { delivery: "manual", invitationUrl: params.invitationUrl };
+): Promise<Response | null> {
+  if (!invitationDeliveryConfigured(env)) {
+    return tenantError(
+      "Entrega de convites por e-mail não está configurada.",
+      "INVITATION_DELIVERY_NOT_CONFIGURED",
+      503,
+    );
   }
   const sent = await sendInvitationEmail(env, params);
-  // Falha de entrega não pode deixar o convite inalcançável: o link volta ao
-  // gestor com o rótulo manual, e ele decide como conduzir.
-  return sent ? { delivery: "email" } : { delivery: "manual", invitationUrl: params.invitationUrl };
+  if (!sent) {
+    return tenantError(
+      "Não foi possível entregar o convite por e-mail. Tente novamente.",
+      "INVITATION_EMAIL_DELIVERY_FAILED",
+      502,
+    );
+  }
+  return null;
 }
 
 async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {
@@ -118,6 +119,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (action !== "create" && action !== "resend") {
     return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
   }
+  if (!invitationDeliveryConfigured(context.env)) {
+    return tenantError(
+      "Entrega de convites por e-mail não está configurada.",
+      "INVITATION_DELIVERY_NOT_CONFIGURED",
+      503,
+    );
+  }
 
   const now = isoUtc(new Date());
   const expiresAt = isoUtc(new Date(Date.now() + INVITATION_EXPIRY_MS));
@@ -166,19 +174,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if ((result.meta?.changes ?? 0) !== 1) {
       return tenantError("Convite mudou durante o reenvio.", "INVITATION_STALE", 409);
     }
-    const delivered = await deliverInvitation(context.env, {
+    const deliveryFailure = await deliverInvitation(context.env, {
       to: existing.email,
       clinicName: auth.membership.clinicName,
       role: existing.role,
       invitationUrl,
       expiresAt,
     });
+    if (deliveryFailure) return deliveryFailure;
     return tenantJson({
       id: existingId,
       email: existing.email,
       role: existing.role,
       expiresAt,
-      ...delivered,
+      delivery: "email",
     });
   }
 
@@ -239,19 +248,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return tenantError("Não foi possível criar o convite.", "INVITATION_CREATE_FAILED", 500);
   }
 
-  const delivered = await deliverInvitation(context.env, {
+  const deliveryFailure = await deliverInvitation(context.env, {
     to: email,
     clinicName: auth.membership.clinicName,
     role,
     invitationUrl,
     expiresAt,
   });
+  if (deliveryFailure) return deliveryFailure;
   return tenantJson({
     id: invitationId,
     email,
     role,
     expiresAt,
-    ...delivered,
+    delivery: "email",
   }, 201);
 };
 
