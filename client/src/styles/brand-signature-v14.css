@@ -27,9 +27,17 @@ html:not(.dark) body {
     hsl(var(--background));
 }
 
-/* Sidebar e barra móvel: assinatura azul-marinho + ouro do escudo. */
+/* Sidebar e barra móvel: assinatura azul-marinho + ouro do escudo.
+ *
+ * `color` explícito é obrigatório, não decorativo. Estas duas superfícies levam
+ * a classe `dark` no Layout, o que troca os tokens para o conjunto escuro — mas
+ * `color` herdado é resolvido no elemento que o declarou, e quem apenas herda
+ * (todo `<button>`, por causa do `color: inherit` do preflight) continuava
+ * puxando a tinta calculada no `body`, quase preta. Declarar a tinta aqui é o
+ * que fecha o contrato: superfície escura, texto claro, sem exceção. */
 .np-app-sidebar,
 .np-app-mobile-header {
+  color: hsl(var(--sidebar-foreground));
   background:
     radial-gradient(16rem 11rem at 8% -8%, hsl(40.6 64.9% 53.1% / 0.15), transparent 65%),
     linear-gradient(180deg, var(--np-signature-navy-2), var(--np-signature-navy)) !important;
@@ -79,11 +87,24 @@ html:not(.dark) body {
     0 34px 90px -50px hsl(214.1 75.9% 11.4% / 0.46) !important;
 }
 
+/* O destaque do título acompanha o CTA primário, que esta mesma camada tornou
+ * vermelho. Antes a regra pedia um degradê navy→vermelho→ouro sem `!important`
+ * e perdia para `.np-title-gradient` de visual-reset.css: o resultado servido
+ * era um título teal acima de um botão vermelho.
+ *
+ * Cor sólida, não degradê, por duas razões: o ouro da assinatura fica em ~2,6:1
+ * sobre o creme do hero (reprova em AA mesmo como texto grande), e texto pintado
+ * por `background-clip` tem `color: transparent`, o que o torna invisível para
+ * qualquer medidor de contraste — inclusive o gate audit:contrast. */
 .np-home-hero .np-title-gradient {
-  background: linear-gradient(92deg, var(--np-signature-navy), var(--np-signature-red), var(--np-signature-gold));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background: none !important;
+  -webkit-text-fill-color: var(--np-signature-red) !important;
+  color: var(--np-signature-red) !important;
+}
+
+.dark .np-home-hero .np-title-gradient {
+  -webkit-text-fill-color: var(--np-signature-gold-soft) !important;
+  color: var(--np-signature-gold-soft) !important;
 }
 
 .np-home-hero .np-primary-cta {

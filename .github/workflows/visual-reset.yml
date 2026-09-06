@@ -11,6 +11,8 @@ on:
       - "client/src/styles/premium-app-shell-v12.css"
       - "client/src/styles/tablet-coarse-perf.css"
       - "client/src/styles/brand-signature-v14.css"
+      # Fonte única de estilo da sidebar: mudava sem acionar o gate visual.
+      - "client/src/styles/sidebar-v13.css"
       - "client/src/main.tsx"
       - "client/src/components/Layout.tsx"
       - "client/src/components/MobilePrimaryDock.tsx"
@@ -33,6 +35,7 @@ on:
       - "scripts/audit-a11y.mjs"
       - "scripts/audit-lighthouse.mjs"
       - "scripts/audit-design.mjs"
+      - "scripts/guards/audit-surface-contrast.mjs"
       - "tests/unit/visual-reset-static.test.mjs"
       - "tests/unit/premium-polish-10-static.test.mjs"
       - "tests/unit/flow-os-navigation-static.test.mjs"
@@ -80,6 +83,12 @@ jobs:
         run: npm run audit:a11y
       - name: Design token audit
         run: npm run audit:design
+      # Contraste medido no pixel pintado, não deduzido do CSS. O axe devolve
+      # `incomplete` (e não `violation`) quando o fundo é gradiente ou imagem,
+      # que é exatamente o caso das superfícies de marca — foi por esse vão que
+      # a sidebar do modo claro chegou a 1:1 com o gate de a11y verde.
+      - name: Surface contrast audit
+        run: npm run audit:contrast
       - name: Lighthouse in Chromium — 12 archetypes
         id: browser-lighthouse
         continue-on-error: true
@@ -101,6 +110,7 @@ jobs:
           retention-days: 14
           path: |
             artifacts/visual-proof
+            artifacts/surface-contrast.json
             scripts/guards/a11y-report.json
             scripts/guards/lighthouse-report.json
       - name: Enforce real-browser gates
