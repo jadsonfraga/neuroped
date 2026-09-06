@@ -22,6 +22,10 @@ export function PremiumVisualPanel({
   headingLevel = "p",
 }: PremiumVisualPanelProps) {
   const TitleTag = headingLevel;
+  const titleSize =
+    headingLevel === "h1"
+      ? "text-[1.45rem] sm:text-[1.75rem]"
+      : "text-base sm:text-lg";
 
   return (
     <aside
@@ -52,7 +56,7 @@ export function PremiumVisualPanel({
             {badge}
           </Badge>
           <TitleTag
-            className="max-w-2xl text-base font-semibold leading-tight text-foreground sm:text-lg"
+            className={`max-w-2xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground ${titleSize}`}
             style={{ fontFamily: "var(--font-display)" }}
           >
             {title}
