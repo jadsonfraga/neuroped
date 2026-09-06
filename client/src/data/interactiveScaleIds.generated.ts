@@ -1,6 +1,7 @@
 // GERADO por scripts/gen-interactive-scale-ids.mts - não editar manualmente.
 export const INTERACTIVE_SCALE_IDS = new Set([
   "ace",
+  "afi12-sdg",
   "apgar",
   "aq10-adolescente",
   "ari",
@@ -242,8 +243,10 @@ export const INTERACTIVE_SCALE_IDS = new Set([
   "qec-np",
   "rcads",
   "rflacc",
+  "sarf12-sdg",
   "scas",
   "scoff",
+  "sdrd12-sdg",
   "sinaf-neuroped",
   "sinapse-fi-60",
   "sinergi-neuroped",
@@ -263,6 +266,7 @@ export const INTERACTIVE_SCALE_IDS = new Set([
 ]);
 export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "ace": 10,
+  "afi12-sdg": 12,
   "apgar": 5,
   "aq10-adolescente": 10,
   "ari": 6,
@@ -504,8 +508,10 @@ export const INTERACTIVE_SCALE_ITEM_COUNTS: Readonly<Record<string, number>> = {
   "qec-np": 12,
   "rcads": 30,
   "rflacc": 5,
+  "sarf12-sdg": 12,
   "scas": 18,
   "scoff": 5,
+  "sdrd12-sdg": 12,
   "sinaf-neuroped": 50,
   "sinapse-fi-60": 60,
   "sinergi-neuroped": 60,
