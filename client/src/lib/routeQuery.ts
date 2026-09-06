@@ -1,15 +1,13 @@
 /**
  * Leitura de parâmetros de consulta em um app roteado por HASH.
  *
- * O NeuroPed usa `wouter` com `useHashLocation`, então um link como
- * `/prontuario?patientId=abc` vira a URL `.../#/prontuario?patientId=abc`.
- * Nesse formato `window.location.search` está VAZIO — a consulta vive dentro
- * do hash. Ler apenas `location.search` faz o parâmetro sumir silenciosamente:
- * a tela abre em branco, sem erro, e a pessoa preenche uma ficha que nunca
- * será vinculada ao paciente.
- *
- * Este helper lê o hash primeiro e só então cai para a query real da URL, que
- * continua valendo para links externos (e-mail, QR, retorno de checkout).
+ * O NeuroPed usa `wouter` com hash location, então um link como
+ * `/prontuario?patientId=abc` pode chegar de duas formas: `#/prontuario?...`
+ * (digitado, copiado ou salvo) ou `/?patientId=abc#/prontuario` (produzido
+ * pela navegação interna do wouter). Ler apenas `location.search` perde a
+ * primeira; ler apenas o hash perde a segunda. Nos dois casos a tela abre em
+ * branco, sem erro, e a pessoa preenche uma ficha que nunca será vinculada ao
+ * paciente.
  */
 export function readRouteParam(name: string): string {
   if (typeof window === "undefined") return "";

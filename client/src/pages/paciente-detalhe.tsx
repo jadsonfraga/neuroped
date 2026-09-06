@@ -51,7 +51,6 @@ import html2canvas from "html2canvas";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useIssuer } from "@/lib/issuer";
-import { setFocusPatientId } from "@/lib/patientFocus";
 
 function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
@@ -92,13 +91,6 @@ export default function PacienteDetalhePage() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/paciente/:id");
   const patientId = params?.id || "";
-
-  // Abrir a ficha é o gesto que declara "estou atendendo esta pessoa". A partir
-  // daqui a home e os documentos já abrem nesse contexto. Só o identificador
-  // opaco é guardado (client/src/lib/patientFocus.ts) — nenhum dado clínico.
-  useEffect(() => {
-    if (patientId) setFocusPatientId(patientId);
-  }, [patientId]);
 
   const [editOpen, setEditOpen] = useState(false);
   const [formName, setFormName] = useState("");

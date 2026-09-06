@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { authFetch } from "@/lib/authClient";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { clearFocusPatient } from "@/lib/patientFocus";
 
 export interface ClinicMembership {
   id: string;
@@ -119,9 +118,6 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
     const generation = ++switchGeneration.current;
     setActiveClinicIdState(null);
     persistClinicId(null);
-    // O paciente em foco pertence ao tenant anterior. O servidor já negaria o
-    // acesso, mas nem o identificador deve atravessar a fronteira de clínica.
-    clearFocusPatient();
 
     void (async () => {
       await clearClinicalClientCaches();
