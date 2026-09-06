@@ -92,6 +92,14 @@ const appShellCss = readFileSync(
   resolve(repoRoot, "client/src/styles/premium-app-shell-v12.css"),
   "utf8",
 );
+const homePage = readFileSync(
+  resolve(repoRoot, "client/src/pages/home.tsx"),
+  "utf8",
+);
+const brandAssetsTsx = readFileSync(
+  resolve(repoRoot, "client/src/components/BrandAssets.tsx"),
+  "utf8",
+);
 
 const contractFailures = [];
 if (/\.shadcn-card:hover\s*\{/.test(brandCss)) {
@@ -141,6 +149,30 @@ if (/\.np-app-sidebar,\s*\n\.np-app-mobile-header\s*\{/.test(brandCss)) {
 // marinho no rail e creme no topo — a mesma identidade em duas cores.
 if (!/header\.fixed\.lg\\:hidden:not\(\.np-app-mobile-header\)/.test(appShellCss)) {
   contractFailures.push("premium-app-shell voltou a disputar a cor do cabeçalho móvel com a camada de marca");
+}
+
+// Entrada institucional (vitrine da home): a fotografia real, a assinatura do
+// médico com credencial e o halo desligado são o que separa a versão atual da
+// regressão de 06/09/2026. Nenhum teste automatizado olhava para home.tsx até
+// aqui — sem este contrato, remover qualquer um desses elementos silenciosamente
+// derrubaria a entrada de volta ao estado anterior sem quebrar gate nenhum.
+if (!/brandAssets\.photography\.atendimentoCrianca/.test(homePage)) {
+  contractFailures.push("entrada da home perdeu a fotografia real do atendimento");
+}
+if (!/np-hero-signature__crm/.test(homePage) || !/CRM-PE 25227/.test(homePage)) {
+  contractFailures.push("entrada da home perdeu a assinatura do médico com credencial");
+}
+// A prop `priority` sem valor (JSX boolean shorthand) deve aparecer no bloco do
+// <SafeAssetImage> que carrega a foto do hero — não em qualquer lugar do arquivo.
+const heroImageBlock = homePage.match(/<SafeAssetImage[^>]*atendimentoCrianca[\s\S]*?\/>/);
+if (!heroImageBlock || !/\bpriority\b/.test(heroImageBlock[0])) {
+  contractFailures.push("foto do hero da home perdeu `priority` (volta a carregar como LCP lento)");
+}
+if (!/priority\?:\s*boolean/.test(brandAssetsTsx) || !/loading=\{priority \? "eager" : "lazy"\}/.test(brandAssetsTsx)) {
+  contractFailures.push("SafeAssetImage perdeu o modo `priority` (imagens acima da dobra voltam a ser `lazy` sempre)");
+}
+if (!/\.np-home-hero::before\s*\{\s*\n\s*display:\s*none/.test(brandCss)) {
+  contractFailures.push("halo de anéis de premium-app-shell-v12 voltou a cruzar o título da home");
 }
 
 if (contractFailures.length > 0) {

@@ -409,6 +409,7 @@ export default function HomePage() {
                 src={brandAssets.photography.atendimentoCrianca}
                 alt="Dr. Jadson Fraga em atendimento, montando uma torre de blocos com uma criança"
                 className="np-hero-photo__img"
+                priority
               />
               <figcaption className="np-hero-photo__caption">
                 Dr. Jadson Fraga · Neuropediatra

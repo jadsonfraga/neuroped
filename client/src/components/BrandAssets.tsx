@@ -257,6 +257,13 @@ interface SafeAssetImageProps {
   className?: string;
   fallbackClassName?: string;
   onLoadStateChange?: (loaded: boolean) => void;
+  /**
+   * Para a imagem mais provável de ser o LCP da rota (ex.: a foto do hero da
+   * home, acima da dobra). `loading="lazy"` é o padrão certo para o resto do
+   * app, mas aplicado sem exceção também atrasava essa foto — o navegador só
+   * prioriza o download depois do layout, empurrando o LCP.
+   */
+  priority?: boolean;
 }
 
 export function SafeAssetImage({
@@ -265,6 +272,7 @@ export function SafeAssetImage({
   className = "",
   fallbackClassName = "",
   onLoadStateChange,
+  priority = false,
 }: SafeAssetImageProps) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -288,7 +296,8 @@ export function SafeAssetImage({
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
       decoding="async"
       className={`${className} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-200`}
       onLoad={() => {
