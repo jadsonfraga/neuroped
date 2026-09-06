@@ -209,7 +209,7 @@ export default function EspecialidadesPremiumPage() {
     <div className="min-h-screen overflow-x-hidden bg-[hsl(42_44%_96%)] text-[hsl(214_58%_15%)] dark:bg-background dark:text-foreground">
       <BrandHeader />
 
-      <main>
+      <div role="presentation">
         <section className="relative overflow-hidden border-b border-amber-500/20 bg-[radial-gradient(48rem_24rem_at_68%_18%,hsl(41_82%_72%/0.28),transparent_70%),linear-gradient(135deg,hsl(43_100%_98%),hsl(38_70%_94%))] dark:bg-[linear-gradient(145deg,hsl(214_76%_11%),hsl(212_70%_17%))]">
           <div className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full border border-amber-500/10" aria-hidden="true" />
           <div className="mx-auto grid max-w-[1600px] gap-5 px-4 pb-12 pt-5 sm:px-6 lg:h-[25rem] lg:grid-cols-[0.86fr_1.02fr_0.72fr] lg:items-stretch lg:px-8 lg:pb-9 lg:pt-6">
@@ -360,7 +360,7 @@ export default function EspecialidadesPremiumPage() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
 
       <footer className="border-t border-amber-400/20 bg-[hsl(214_76%_9%)] text-white">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-3 text-[8px] sm:px-6 lg:px-8">
