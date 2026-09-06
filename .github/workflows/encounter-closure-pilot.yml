@@ -1,0 +1,27 @@
+name: Encounter closure pilot
+on:
+  pull_request:
+    paths:
+      - 'shared/encounter-closure.mjs'
+      - 'shared/clinical-core.ts'
+      - 'tests/unit/encounter-closure.test.mjs'
+      - 'tools/encounter-pilot/**'
+      - '.github/workflows/encounter-closure-pilot.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Test pure closure rules against synthetic cases
+        run: node --test tests/unit/encounter-closure.test.mjs
+      - name: Execute synthetic projection examples
+        run: node tools/encounter-pilot/demo.mjs
