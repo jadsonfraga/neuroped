@@ -1,0 +1,157 @@
+name: Membership seat fix D1
+
+# A migração 0025 corrige um bug que afeta TODA clínica com os assentos
+# cheios: mudar o papel de um membro devolvia SEAT_LIMIT_REACHED, porque o
+# SQLite dispara o trigger BEFORE INSERT antes de detectar o conflito do
+# upsert. Enquanto ela não estiver aplicada em produção, o bug continua lá —
+# mesclar a migração não a aplica.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0025_membership_role_change_seat_fix.sql"
+      - "functions/api/tenants/[id]/members.ts"
+      - "tests/unit/cliente-zero-journey.test.ts"
+      - ".github/workflows/membership-seat-fix-d1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0025_membership_role_change_seat_fix.sql"
+      - "functions/api/tenants/[id]/members.ts"
+      - "tests/unit/cliente-zero-journey.test.ts"
+      - ".github/workflows/membership-seat-fix-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Grupo próprio: a migração não pode ser cancelada pela corrida do grupo
+# compartilhado cloudflare-pages.
+concurrency:
+  group: d1-membership-seat-fix
+  cancel-in-progress: false
+
+jobs:
+  validate-seat-fix:
+    name: Validate membership seat fix
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      # A jornada exercita a promoção de papel com os assentos cheios contra o
+      # schema real. É ela que reprova se a 0025 for revertida.
+      - name: Cliente Zero — promoção de papel com assentos cheios
+        run: node --import tsx tests/unit/cliente-zero-journey.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+  migrate-seat-fix:
+    name: Apply membership seat fix to D1
+    needs: validate-seat-fix
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      # A 0025 é idempotente por construção (DROP IF EXISTS + CREATE IF NOT
+      # EXISTS), então o preflight não existe para evitar erro — existe para
+      # não reescrever um trigger que já está correto e para registrar, no log,
+      # em que estado o banco estava antes.
+      #
+      # O marcador é `cm.user_id = NEW.user_id`: ASCII puro e exclusivo da
+      # versão corrigida. A versão antiga do trigger nunca referenciava
+      # NEW.user_id.
+      - name: Preflight — o trigger já ignora o membro existente?
+        id: preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT CASE WHEN sql LIKE '%cm.user_id = NEW.user_id%' THEN 1 ELSE 0 END AS ja_aplicada FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_membership_insert_seat_limit';" \
+            > /tmp/seat-trigger.txt 2>&1
+          cat /tmp/seat-trigger.txt
+
+          if grep -qE '(ja_aplicada[^0-9]*1[^0-9]|"ja_aplicada":\s*1)' /tmp/seat-trigger.txt; then
+            echo "aplicada=true" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ 0025 já aplicada — nada a fazer."
+          else
+            echo "aplicada=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply migration 0025
+        if: steps.preflight.outputs.aplicada == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0025_membership_role_change_seat_fix.sql
+
+      # Verificação que falha fechado. Duas asserções, não uma:
+      #
+      #   1. o trigger de INSERT precisa ignorar a linha já existente — é a
+      #      correção em si;
+      #   2. o trigger de UPDATE precisa CONTINUAR existindo — é ele que cobre
+      #      a transição inativo → ativo. Sem ele, a correção viraria um furo
+      #      no teto de assentos em vez de uma correção.
+      #
+      # A consulta devolve apenas contagens e um booleano derivado do DDL do
+      # trigger. Nenhuma linha de clinic_memberships é lida, então nada
+      # identificável entra no log.
+      - name: Verify triggers without reading memberships
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT (SELECT CASE WHEN sql LIKE '%cm.user_id = NEW.user_id%' THEN 1 ELSE 0 END FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_membership_insert_seat_limit') AS insert_corrigido, (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_membership_reactivate_seat_limit') AS reativacao_presente;" \
+            > /tmp/seat-verify.txt 2>&1
+          cat /tmp/seat-verify.txt
+
+          if ! grep -qE '(insert_corrigido[^0-9]*1[^0-9]|"insert_corrigido":\s*1)' /tmp/seat-verify.txt; then
+            echo "::error::O trigger de INSERT NAO ficou com a correcao. Mudanca de papel continua bloqueada em clinica com assentos cheios."
+            exit 1
+          fi
+          if ! grep -qE '(reativacao_presente[^0-9]*1[^0-9]|"reativacao_presente":\s*1)' /tmp/seat-verify.txt; then
+            echo "::error::O trigger de reativacao sumiu. A transicao inativo -> ativo ficaria SEM verificacao de assento — isto e um furo no teto, nao uma correcao."
+            exit 1
+          fi
+          echo "✅ 0025 aplicada: INSERT ignora membro existente e a reativação continua coberta."
