@@ -23,6 +23,7 @@ assert.equal(
 
 const handler = fs.readFileSync("functions/api/billing/invitations.ts", "utf8");
 const delivery = fs.readFileSync("functions/api/billing/_invitationDelivery.ts", "utf8");
+const teamUi = fs.readFileSync("client/src/pages/configuracoes.tsx", "utf8");
 
 assert.match(handler, /INVITATION_DELIVERY_NOT_CONFIGURED/);
 assert.match(handler, /INVITATION_EMAIL_DELIVERY_FAILED/);
@@ -54,4 +55,10 @@ assert.match(
   "revogação de token órfão precisa ser tenant-scoped e não sobrescrever estado concorrente",
 );
 
-console.log("✓ invitation delivery: fail-closed, origem canônica única, sem bearer URL e sem token órfão após falha de entrega");
+assert.doesNotMatch(teamUi, /delivery\?:\s*["']email["']\s*\|\s*["']manual["']/);
+assert.doesNotMatch(teamUi, /inviteUrl/);
+assert.doesNotMatch(teamUi, /Entrega por e-mail não configurada nesta instalação/);
+assert.doesNotMatch(teamUi, /Copiar link|Link copiado/);
+assert.match(teamUi, /body\.delivery !== ["']email["']/);
+
+console.log("✓ invitation delivery: fail-closed, origem canônica única, sem bearer URL/token órfão e sem UI de fallback manual");
