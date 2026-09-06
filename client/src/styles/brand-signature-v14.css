@@ -12,6 +12,11 @@
   --np-signature-red-2: hsl(355.7 63.3% 48%);
   --np-signature-gold: hsl(40.6 64.9% 53.1%);
   --np-signature-gold-soft: hsl(42.5 82.2% 71.4%);
+  /* O ouro da marca (53% de luminosidade) fica em ~2,6:1 sobre o creme do hero
+   * e reprova em AA mesmo como texto grande. Esta é a versão para tinta: mesmo
+   * matiz, escurecida até ~5,3:1, para que o acento dourado exista como texto
+   * de verdade e não só como enfeite ilegível. */
+  --np-signature-gold-ink: hsl(41 72% 31%);
   --np-signature-cream: hsl(40 100% 97.1%);
   --np-signature-paper: hsl(42.9 100% 98.6%);
   --np-signature-ink: hsl(213.3 58.4% 15.1%);
@@ -87,19 +92,18 @@ html:not(.dark) body {
     0 34px 90px -50px hsl(214.1 75.9% 11.4% / 0.46) !important;
 }
 
-/* O destaque do título acompanha o CTA primário, que esta mesma camada tornou
- * vermelho. Antes a regra pedia um degradê navy→vermelho→ouro sem `!important`
- * e perdia para `.np-title-gradient` de visual-reset.css: o resultado servido
- * era um título teal acima de um botão vermelho.
+/* Título navy com o acento em ouro, como na arte institucional. O ouro entra
+ * na versão tinta (`--np-signature-gold-ink`): o ouro de superfície reprovaria
+ * em AA sobre o creme.
  *
- * Cor sólida, não degradê, por duas razões: o ouro da assinatura fica em ~2,6:1
- * sobre o creme do hero (reprova em AA mesmo como texto grande), e texto pintado
- * por `background-clip` tem `color: transparent`, o que o torna invisível para
- * qualquer medidor de contraste — inclusive o gate audit:contrast. */
+ * Cor sólida, não degradê: texto pintado por `background-clip` tem
+ * `color: transparent`, o que o torna invisível para qualquer medidor de
+ * contraste — inclusive o gate audit:contrast. O `!important` é necessário
+ * porque `.np-title-gradient` de visual-reset.css também usa `!important`. */
 .np-home-hero .np-title-gradient {
   background: none !important;
-  -webkit-text-fill-color: var(--np-signature-red) !important;
-  color: var(--np-signature-red) !important;
+  -webkit-text-fill-color: var(--np-signature-gold-ink) !important;
+  color: var(--np-signature-gold-ink) !important;
 }
 
 .dark .np-home-hero .np-title-gradient {
@@ -118,54 +122,304 @@ html:not(.dark) body {
   filter: brightness(1.04) saturate(1.04);
 }
 
+/* ─────────────────── Entrada institucional (vitrine) ───────────────────
+ *
+ * A home tem duas caras: o cockpit do médico autenticado e esta vitrine, que
+ * é o que visitante, mirror público e modo local veem primeiro. Só a vitrine
+ * é tratada aqui — o cockpit continua sóbrio e denso, como o trabalho pede.
+ *
+ * A fotografia saiu do CSS e virou markup (<figure> + legenda). Antes vivia
+ * como `background-image` numa regra que alcançava `div:last-child` do grid:
+ * qualquer reordenação do JSX apagava a foto sem quebrar teste nenhum. */
+
+/* Os orbes decorativos vinham de trás do hero antigo e cruzavam o título. Numa
+ * composição editorial eles não leem como luz, leem como mancha sobre a
+ * tipografia — e a superfície já tem o brilho dourado da própria assinatura. */
+.np-home-hero .np-home-orb {
+  display: none;
+}
+
+/* Mesmo motivo, para o halo de anéis concêntricos que premium-app-shell-v12
+ * desenha em `.np-home-hero::before`: no layout antigo ele ficava atrás do
+ * mascote; nesta composição cai em cima da primeira palavra do título. */
+.np-home-hero::before {
+  display: none !important;
+}
+
+.np-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--np-signature-gold-ink);
+}
+
+/* O ouro-tinta é escuro para vencer o creme; sobre o navy do modo escuro ele
+ * cai para 2,8:1. No escuro o papel se inverte e quem contrasta é o ouro claro. */
+.dark .np-hero-eyebrow {
+  color: var(--np-signature-gold-soft);
+}
+
+/* Sem o limite o texto ocupa toda a coluna, quebra em duas linhas curtas e
+ * empurra o fio para longe — ele passa a flutuar solto em vez de encostar. */
+.np-hero-eyebrow > span:first-child {
+  flex: 0 1 auto;
+  max-width: 30ch;
+}
+
+.np-hero-eyebrow__rule {
+  flex: 1 1 2rem;
+  height: 1px;
+  max-width: 6.5rem;
+  background: linear-gradient(90deg, var(--np-signature-gold), transparent);
+}
+
+.np-hero-title {
+  font-size: clamp(2.5rem, 5.4vw, 4.2rem);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.042em;
+  color: var(--np-signature-navy);
+  text-wrap: balance;
+}
+
+.dark .np-hero-title {
+  color: hsl(var(--foreground));
+}
+
+/* Assinatura do médico: o nome em display itálico, credencial em caixa alta.
+ * Fio dourado à esquerda em vez de caixa — é rubrica, não cartão. */
+.np-hero-signature {
+  border-left: 2px solid var(--np-signature-gold);
+  padding-left: 0.9rem;
+}
+
+.np-hero-signature__name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--np-signature-navy);
+}
+
+.dark .np-hero-signature__name {
+  color: hsl(var(--foreground));
+}
+
+.np-hero-signature__role {
+  margin-top: 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--np-signature-gold-ink);
+}
+
+.dark .np-hero-signature__role {
+  color: var(--np-signature-gold-soft);
+}
+
+.np-hero-signature__crm {
+  margin-top: 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Especificidade alta de propósito: premium-polish-10.css pinta este input por
+ * `.np-home-hero [data-testid="search-container"] input` com `!important`. Sem
+ * empatar o alcance do seletor, a borda dourada do hero não existiria. */
+.np-home-hero [data-testid="search-container"] input.np-hero-search {
+  border-color: hsl(40.6 64.9% 53.1% / 0.34) !important;
+  background: hsl(var(--card) / 0.9) !important;
+  box-shadow: 0 14px 35px -24px hsl(214.1 75.9% 11.4% / 0.5) !important;
+}
+
+.np-home-hero [data-testid="search-container"] input.np-hero-search:focus-visible {
+  border-color: hsl(40.6 64.9% 53.1% / 0.62) !important;
+}
+
+.np-hero-cta-ghost {
+  border: 1px solid hsl(40.6 64.9% 53.1% / 0.34);
+  background: hsl(var(--card) / 0.72);
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.np-hero-cta-ghost:hover {
+  border-color: hsl(40.6 64.9% 53.1% / 0.55);
+  background: hsl(var(--card) / 0.95);
+}
+
+.np-hero-metrics {
+  border: 1px solid hsl(40.6 64.9% 53.1% / 0.26);
+  background: hsl(40.6 64.9% 53.1% / 0.2);
+}
+
+.np-hero-metrics__cell {
+  background: hsl(var(--card) / 0.82);
+}
+
+/* Fotografia: proporção estável, moldura dourada e legenda ancorada. */
+.np-hero-photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.6rem;
+  border: 1px solid hsl(40.6 64.9% 53.1% / 0.38);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.5),
+    0 30px 70px -42px hsl(214.1 75.9% 11.4% / 0.6);
+  aspect-ratio: 4 / 3;
+}
+
 @media (min-width: 1024px) {
-  .np-home-hero > .relative.grid {
-    grid-template-columns: minmax(0, 1.08fr) minmax(22rem, 0.92fr) !important;
-    gap: 2.1rem !important;
+  .np-hero-photo {
+    aspect-ratio: 5 / 5.2;
   }
+}
 
-  .np-home-hero > .relative.grid > div:last-child {
-    min-height: 29rem !important;
-    overflow: hidden;
-    border-radius: 2rem;
-    border: 1px solid hsl(40.6 64.9% 53.1% / 0.35);
-    background:
-      linear-gradient(180deg, transparent 48%, hsl(214.1 75.9% 11.4% / 0.34)),
-      /* Enquadramento à esquerda de propósito: é o lado que carrega o escudo
-         inteiro, a criança e as mãos na torre de blocos. Centralizar cortava o
-         escudo ao meio, o que lê como recorte descuidado da própria marca. */
-      url("../../../attached_assets/images/dr-jadson-atendimento-crianca.webp") 12% 38% / cover no-repeat;
-    box-shadow:
-      inset 0 1px 0 hsl(0 0% 100% / 0.52),
-      0 30px 70px -42px hsl(214.1 75.9% 11.4% / 0.6);
-  }
+.np-hero-photo__img {
+  height: 100%;
+  width: 100%;
+  /* Enquadramento à esquerda de propósito: é o lado que carrega o escudo
+     inteiro, a criança e as mãos na torre de blocos. Centralizar cortava o
+     escudo ao meio, o que lê como recorte descuidado da própria marca. */
+  object-fit: cover;
+  object-position: 12% 38%;
+}
 
-  .np-home-hero > .relative.grid > div:last-child > div[aria-hidden="true"] {
-    display: none;
-  }
+.np-hero-photo__caption {
+  position: absolute;
+  left: 0.9rem;
+  bottom: 0.9rem;
+  max-width: calc(100% - 1.8rem);
+  border: 1px solid hsl(0 0% 100% / 0.28);
+  border-radius: 0.9rem;
+  background: hsl(214.1 75.9% 11.4% / 0.78);
+  padding: 0.6rem 0.8rem;
+  color: hsl(0 0% 100% / 0.97);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  box-shadow: 0 14px 32px -22px hsl(214.1 75.9% 11.4% / 0.82);
+  backdrop-filter: blur(10px);
+}
 
-  /* A foto real já é o protagonista. O mascote continua no mobile, não sobre a fotografia. */
-  .np-home-hero [data-testid="mascote-dr-jadson-guide"] {
-    display: none !important;
-  }
+/* Chip de atendimento: onde o cuidado acontece, dito sem abrir outra página. */
+.np-hero-place {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  border-radius: 1.1rem;
+  border: 1px solid hsl(40.6 64.9% 53.1% / 0.3);
+  background: linear-gradient(120deg, var(--np-signature-navy-2), var(--np-signature-navy));
+  padding: 0.7rem 0.95rem;
+  box-shadow: 0 20px 44px -34px hsl(214.1 75.9% 11.4% / 0.85);
+}
 
-  .np-home-hero > .relative.grid > div:last-child::after {
-    content: "Dr. Jadson Fraga · Neuropediatra";
-    position: absolute;
-    left: 1rem;
-    bottom: 1rem;
-    max-width: calc(100% - 2rem);
-    border: 1px solid hsl(0 0% 100% / 0.28);
-    border-radius: 0.9rem;
-    background: hsl(214.1 75.9% 11.4% / 0.76);
-    padding: 0.65rem 0.85rem;
-    color: hsl(0 0% 100% / 0.96);
-    font-size: 0.72rem;
-    font-weight: 650;
-    letter-spacing: 0.01em;
-    box-shadow: 0 14px 32px -22px hsl(214.1 75.9% 11.4% / 0.82);
-    backdrop-filter: blur(10px);
+.np-hero-place__pin {
+  display: flex;
+  height: 1.9rem;
+  width: 1.9rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.7rem;
+  background: hsl(40.6 64.9% 53.1% / 0.18);
+  color: var(--np-signature-gold-soft);
+}
+
+.np-hero-place__id {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.np-hero-place__kicker {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--np-signature-gold-soft);
+}
+
+.np-hero-place__city {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: hsl(0 0% 100% / 0.97);
+}
+
+.np-hero-place__note {
+  flex: 1 1 11rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: hsl(0 0% 100% / 0.82);
+}
+
+/* Faixa dos cinco pilares: fecha o hero, como na arte institucional. */
+.np-hero-trust {
+  position: relative;
+  margin-top: 2.2rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  border-radius: 1.2rem;
+  border: 1px solid hsl(40.6 64.9% 53.1% / 0.3);
+  background: linear-gradient(120deg, var(--np-signature-navy-2), var(--np-signature-navy));
+  padding: 1rem 1.1rem;
+  box-shadow: 0 26px 56px -42px hsl(214.1 75.9% 11.4% / 0.85);
+}
+
+@media (min-width: 640px) {
+  .np-hero-trust {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 1024px) {
+  .np-hero-trust {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1.1rem;
+  }
+}
+
+.np-hero-trust__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.np-hero-trust__icon {
+  height: 1.35rem;
+  width: 1.35rem;
+  flex-shrink: 0;
+  color: var(--np-signature-gold-soft);
+}
+
+.np-hero-trust__title {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: hsl(0 0% 100% / 0.96);
+}
+
+.np-hero-trust__note {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: hsl(0 0% 100% / 0.8);
 }
 
 @media (max-width: 1023.98px) {
