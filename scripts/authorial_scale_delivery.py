@@ -24,6 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RECIPIENT = "jadsonfraga@hotmail.com"
 STATE_BRANCH = "automation/scale-email-receipts"
 WARNING = "Instrumento autoral não validado psicometricamente. Uso descritivo e longitudinal; não estabelece diagnóstico, gravidade clínica ou indicação de tratamento isoladamente."
+AUTHORIAL_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+DAILY_ID_RE = re.compile(r"NEUROPED-DIARIO-\d{8}-\d{3}")
 
 
 def fingerprint(record: dict) -> str:
@@ -32,7 +34,14 @@ def fingerprint(record: dict) -> str:
 
 
 def validate(record: dict) -> dict:
-    if not isinstance(record, dict) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", str(record.get("id", ""))):
+    if not isinstance(record, dict):
+        raise ValueError("ID de instrumento inválido")
+    instrument_id = str(record.get("id", ""))
+    source_type = record.get("sourceType")
+    valid_id = AUTHORIAL_ID_RE.fullmatch(instrument_id) or (
+        source_type == "autoral_diario" and DAILY_ID_RE.fullmatch(instrument_id)
+    )
+    if not valid_id:
         raise ValueError("ID de instrumento inválido")
     if not isinstance(record.get("version"), str) or not record["version"].strip() or not isinstance(record.get("items"), list) or not 1 <= len(record["items"]) <= 200:
         raise ValueError("Versão ou número de itens inválido")
@@ -50,7 +59,7 @@ def validate(record: dict) -> dict:
         coverage = [x for d in record["domains"] for x in d["itemIds"]]
         if sorted(coverage) != sorted(ids):
             raise ValueError("Domínios não cobrem exatamente os itens")
-    elif record.get("sourceType") == "autoral_diario":
+    elif source_type == "autoral_diario":
         if record.get("validationStatus") != "nao_validado_psicometricamente" or record.get("scoring", {}).get("totalScoreEnabled") is not False:
             raise ValueError("Inventário diário não pode ganhar total ou validação por exportação")
         if not record.get("responseOptions") or not record.get("timeframe"):
