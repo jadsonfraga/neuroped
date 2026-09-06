@@ -51,6 +51,34 @@ class DeliveryTest(unittest.TestCase):
     def test_qualitative_does_not_acquire_total(self):
         row = {"id": "fixture-diario", "version": "1.0", "sourceType": "autoral_diario", "validationStatus": "nao_validado_psicometricamente", "items": [{"id": "1", "text": "Item sintético."}], "scoring": {"totalScoreEnabled": True}}
         with self.assertRaisesRegex(ValueError, "não pode ganhar total"): delivery.validate(row)
+    def test_daily_canonical_id_is_accepted_without_normalization(self):
+        row = {
+            "id": "NEUROPED-DIARIO-20260905-006",
+            "version": "1.0.0",
+            "sourceType": "autoral_diario",
+            "validationStatus": "nao_validado_psicometricamente",
+            "items": [{"id": "CT01", "text": "Item sintético."}],
+            "responseOptions": [{"code": "N", "label": "Não observado", "value": 0}],
+            "timeframe": "Últimos sete dias.",
+            "scoring": {"totalScoreEnabled": False},
+        }
+        before = delivery.fingerprint(row)
+        self.assertIs(delivery.validate(row), row)
+        self.assertEqual(row["id"], "NEUROPED-DIARIO-20260905-006")
+        self.assertEqual(delivery.fingerprint(row), before)
+    def test_daily_id_contract_rejects_malformed_uppercase_ids(self):
+        row = {
+            "id": "NEUROPED-DIARIO-2026-09-05-006",
+            "version": "1.0.0",
+            "sourceType": "autoral_diario",
+            "validationStatus": "nao_validado_psicometricamente",
+            "items": [{"id": "CT01", "text": "Item sintético."}],
+            "responseOptions": [{"code": "N", "label": "Não observado", "value": 0}],
+            "timeframe": "Últimos sete dias.",
+            "scoring": {"totalScoreEnabled": False},
+        }
+        with self.assertRaisesRegex(ValueError, "ID de instrumento inválido"):
+            delivery.validate(row)
     def test_render_pdf_is_real_and_deterministic(self):
         with tempfile.TemporaryDirectory() as temp:
             first = Path(temp)/"one.pdf"; second = Path(temp)/"two.pdf"
