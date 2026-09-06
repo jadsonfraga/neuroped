@@ -25,8 +25,10 @@ import "./styles/flow-os.css";
 import "./styles/premium-app-shell-v12.css";
 // Fonte única de estilo da sidebar; depois do shell para vencer sem !important.
 import "./styles/sidebar-v13.css";
-// Último por design: vence o shell compacto (≤1023 px) e o perfil touch até 1366 px.
+// Perfil touch preserva tamanho de alvo e performance em tablet/coarse pointer.
 import "./styles/tablet-coarse-perf.css";
+// Último por design: direção editorial homogênea Dr. Jadson, sem tocar no núcleo clínico.
+import "./styles/brand-signature-v14.css";
 
 // Instalada antes de qualquer rota clínica: após login remoto, namespaces de PHI
 // conhecidos falham fechados inclusive quando código legado usa Storage direto.
