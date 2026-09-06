@@ -1,17 +1,11 @@
 /**
- * Entrega do convite de equipe por e-mail.
+ * Entrega de convites de equipe por e-mail.
  *
- * Até aqui o convite era o único e-mail transacional do funil que NÃO saía
- * pelo sistema: a API devolvia o link ao gestor e a tela pedia "copie e envie
- * ao convidado". Isso viola a definição de vendável (nenhum fluxo externo
- * depende do operador copiar link) e abre um vetor que a revisão adversarial
- * de 03/09 já tinha nomeado: o token de aceite ficava nas mãos do convidante,
- * que poderia usá-lo para criar a conta em nome de terceiro.
- *
- * Com entrega por e-mail, o token vai direto a quem tem que provar posse do
- * endereço — e a API deixa de devolvê-lo ao gestor. Sem transporte configurado
- * o comportamento anterior continua (link exibido, rotulado como manual), para
- * que uma instalação sem e-mail não perca a capacidade de convidar.
+ * O token de aceite é um bearer secret: quem o possui pode consumir o convite.
+ * Por isso ele nunca pode ser devolvido ao convidante como fallback operacional.
+ * Convites ficam disponíveis somente quando o transporte transacional está
+ * configurado; qualquer indisponibilidade falha fechado e preserva a prova de
+ * posse do endereço do destinatário.
  */
 import {
   mailTransportConfigured,
@@ -19,10 +13,8 @@ import {
   type MailTransportEnv,
 } from "../auth/_mailTransport";
 
-export type InvitationDelivery = "email" | "manual";
-
-export function invitationDeliveryMode(env: MailTransportEnv): InvitationDelivery {
-  return mailTransportConfigured(env) ? "email" : "manual";
+export function invitationDeliveryConfigured(env: MailTransportEnv): boolean {
+  return mailTransportConfigured(env);
 }
 
 export async function sendInvitationEmail(
