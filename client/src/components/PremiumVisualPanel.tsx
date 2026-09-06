@@ -9,6 +9,7 @@ interface PremiumVisualPanelProps {
   badge?: string;
   className?: string;
   imageClassName?: string;
+  headingLevel?: "h1" | "h2" | "p";
 }
 
 export function PremiumVisualPanel({
@@ -18,7 +19,10 @@ export function PremiumVisualPanel({
   badge = "NeuroPed",
   className = "",
   imageClassName = "",
+  headingLevel = "p",
 }: PremiumVisualPanelProps) {
+  const TitleTag = headingLevel;
+
   return (
     <aside
       className={`np-brand-visual-panel relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/88 shadow-sm backdrop-blur ${className}`}
@@ -47,12 +51,12 @@ export function PremiumVisualPanel({
           >
             {badge}
           </Badge>
-          <p
+          <TitleTag
             className="max-w-2xl text-base font-semibold leading-tight text-foreground sm:text-lg"
             style={{ fontFamily: "var(--font-display)" }}
           >
             {title}
-          </p>
+          </TitleTag>
           <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
             {subtitle}
           </p>
