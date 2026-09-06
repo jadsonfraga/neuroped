@@ -1,9 +1,10 @@
-import { hashPassword, sha256Hex } from "../auth/_crypto";
-import { canonicalEmail, getUserByEmail } from "../auth/_shared";
-import { validateInvitationForAccept } from "./_onboarding";
-import { isClinicMembershipRole } from "../../../shared/tenant";
 import { getContextUser } from "../auth/_authorization";
+import { hashPassword, sha256Hex } from "../auth/_crypto";
+import { passwordPolicyError } from "../auth/_passwordPolicy";
+import { canonicalEmail, getUserByEmail } from "../auth/_shared";
 import { json, boundedText as text } from "../_request";
+import { isClinicMembershipRole } from "../../../shared/tenant";
+import { validateInvitationForAccept } from "./_onboarding";
 
 interface Env {
   DB?: D1Database;
@@ -40,7 +41,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const token = text(body.token, 300);
   const name = text(body.name, 160);
-  const password = text(body.password, 200);
+  // Senha é dado opaco: não passa por boundedText, que faria trim/truncamento.
+  const password = typeof body.password === "string" ? body.password : "";
   if (token.length < 32) return json({ error: "Convite inválido.", code: "INVITATION_INVALID" }, 400);
 
   const tokenHash = await sha256Hex(token);
@@ -66,11 +68,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // O aceite nunca pode anexar a conta de outra pessoa à clínica: quem chama
-  // esta rota autenticado precisa ser o próprio destinatário do convite.
-  // Sem isso, qualquer usuário autenticado (por exemplo o próprio convidante,
-  // de posse do link retornado por POST /api/billing/invitations) poderia
-  // convidar o e-mail de terceiro já cadastrado e aceitar em nome dele.
   if (authUser && authUser.email.trim().toLowerCase() !== invitation.email.trim().toLowerCase()) {
     return json(
       { error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" },
@@ -132,14 +129,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   let userId = existing?.id ?? "";
   let passwordHash: string | null = null;
   if (!existing) {
-    // Criar uma IDENTIDADE DE LOGIN nova a partir de um aceite anônimo é a
-    // mesma decisão de go-live que abrir o cadastro público — e, sem e-mail
-    // transacional, o token do convite fica nas mãos do CONVIDANTE, que
-    // poderia aceitá-lo sozinho e registrar uma conta com o e-mail de um
-    // terceiro (impersonação + bloqueio do e-mail no cadastro; achado da
-    // revisão adversarial de 03/09/2026). Enquanto o operador não habilitar
-    // o funil (e a verificação de e-mail do porte do #770 não existir), o
-    // aceite anônimo só funciona para contas já existentes.
     if (env.SAAS_SIGNUP_ENABLED !== "true") {
       return json(
         {
@@ -150,11 +139,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         503,
       );
     }
-    if (name.length < 2 || password.length < 10) {
-      return json(
-        { error: "Nome e senha de ao menos 10 caracteres são obrigatórios para criar a conta.", code: "ACCOUNT_DATA_REQUIRED" },
-        400,
-      );
+    if (name.length < 2) {
+      return json({ error: "Informe seu nome completo.", code: "ACCOUNT_DATA_REQUIRED" }, 400);
+    }
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      return json({ error: policyError, code: "WEAK_PASSWORD" }, 400);
     }
     userId = crypto.randomUUID();
     passwordHash = await hashPassword(password);
@@ -163,11 +153,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const now = new Date().toISOString();
   const statements: D1PreparedStatement[] = [];
   if (!existing) {
-    // Papel global derivado do papel de tenant: clínicos viram 'professional';
-    // 'assistant' vira 'operator' — o papel global que a suíte operacional
-    // (agenda/recepção via booking_staff_links) reconhece; antes caía em
-    // 'reader' e o assento de recepção era um login sem função. 'financial'
-    // permanece 'reader' (acesso financeiro é por membership, não global).
     const globalRole = ["owner", "clinic_admin", "professional"].includes(invitation.role)
       ? "professional"
       : invitation.role === "assistant"
