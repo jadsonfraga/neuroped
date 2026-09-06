@@ -57,14 +57,17 @@ try {
 
     const audit = await page.evaluate(() => {
       const root = document.querySelector('[data-testid="especialidades-premium-surface"]');
-      const ctas = [...document.querySelectorAll('a[href="#/agendar"]')].length;
-      const whatsapp = [...document.querySelectorAll('a[href^="https://wa.me/"]')].length;
+      const rootElement = root instanceof HTMLElement ? root : null;
+      const ctas = rootElement ? [...rootElement.querySelectorAll('a[href="#/agendar"]')].length : 0;
+      const whatsapp = rootElement ? [...rootElement.querySelectorAll('a[href^="https://wa.me/"]')].length : 0;
       return {
-        rootVisible: root instanceof HTMLElement && root.getBoundingClientRect().width > 0,
-        horizontalOverflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+        rootVisible: Boolean(rootElement && rootElement.getBoundingClientRect().width > 0),
+        horizontalOverflow: rootElement
+          ? Math.max(0, rootElement.scrollWidth - rootElement.clientWidth)
+          : Number.POSITIVE_INFINITY,
         ctas,
         whatsapp,
-        headingCount: document.querySelectorAll("h1").length,
+        headingCount: rootElement ? rootElement.querySelectorAll("h1").length : 0,
       };
     });
 
