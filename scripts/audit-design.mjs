@@ -6,6 +6,10 @@
  * client/src. Catraca: falha se o total exceder baseline.designRawValues
  * (não pode piorar). Atualize o baseline conscientemente ao reduzir.
  *
+ * Também protege decisões estruturais da camada Signature Clinical: ouro é
+ * acento, cards estáticos não "pulam", cabeçalhos clínicos não viram galeria
+ * de retratos e a área familiar mantém hierarquia editorial calma.
+ *
  * Observação: tokens do design system vivem como CSS variables
  * (var(--...)) e classes utilitárias Tailwind (text-primary, bg-card…),
  * que NÃO são contadas — só valores literais crus.
@@ -63,3 +67,53 @@ if (typeof limit === "number") {
 } else {
   console.log("[design] baseline.designRawValues = null — execução informativa (catraca ainda não travada).");
 }
+
+const brandCss = readFileSync(
+  resolve(repoRoot, "client/src/styles/brand-signature-v14.css"),
+  "utf8",
+);
+const pageHero = readFileSync(
+  resolve(repoRoot, "client/src/components/PageHero.tsx"),
+  "utf8",
+);
+const premiumPanel = readFileSync(
+  resolve(repoRoot, "client/src/components/PremiumVisualPanel.tsx"),
+  "utf8",
+);
+const familyPortal = readFileSync(
+  resolve(repoRoot, "client/src/pages/portal-familia.tsx"),
+  "utf8",
+);
+
+const contractFailures = [];
+if (/\.shadcn-card:hover\s*\{/.test(brandCss)) {
+  contractFailures.push("cards estáticos voltaram a receber hover global");
+}
+if (!/\.shadcn-card\.cursor-pointer:hover/.test(brandCss)) {
+  contractFailures.push("cards interativos perderam o hover seletivo");
+}
+if (/brandAssets\.mascots\.doctorSelfie/.test(pageHero)) {
+  contractFailures.push("PageHero voltou a repetir retrato médico em todas as telas");
+}
+if (!/brandAssets\.masterShield/.test(pageHero)) {
+  contractFailures.push("PageHero perdeu a assinatura institucional compacta");
+}
+if (/Cuidado com identidade e propósito/.test(premiumPanel)) {
+  contractFailures.push("painel premium voltou ao slogan redundante");
+}
+if (!/headingLevel/.test(premiumPanel)) {
+  contractFailures.push("painel premium perdeu hierarquia semântica configurável");
+}
+if (/AssetShowcase|AlertTriangle/.test(familyPortal)) {
+  contractFailures.push("portal da família voltou a parecer galeria/auditoria ou alerta de risco");
+}
+if (!/Área segura para famílias/.test(familyPortal) || !/headingLevel="h1"/.test(familyPortal)) {
+  contractFailures.push("portal da família perdeu hierarquia editorial ou sinal de confiança");
+}
+
+if (contractFailures.length > 0) {
+  console.error("[design] ✗ contrato Signature Clinical regressou:");
+  for (const failure of contractFailures) console.error(`  - ${failure}`);
+  process.exit(1);
+}
+console.log("[design] ✓ contrato Signature Clinical: hierarquia, confiança e interação seletiva preservadas.");
