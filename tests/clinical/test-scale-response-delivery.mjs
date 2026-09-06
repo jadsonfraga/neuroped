@@ -200,75 +200,61 @@ assert.doesNotMatch(
   "fichas dedicadas devem encontrar instrumentos documentados sem torná-los aplicáveis",
 );
 
-assert.match(directTestsSource, /buildDirectSessionItems\(\s*results/);
-assert.match(
-  directTestsSource,
-  /sessionItems\.length > 0[\s\S]*?<ClinicalReport[\s\S]*?items=\{sessionItems\}/,
-  "ações de entrega dos testes diretos só devem existir após uma conclusão",
-);
-assert.match(directTestsSource, /<Link\s+href=\{test\.route\}/);
-assert.doesNotMatch(
-  directTestsSource,
-  /UNIFIED_TEST_COMPONENTS|SelectedUnifiedComponent/,
-  "módulos legados devem abrir em rota dedicada",
-);
-assert.match(
-  directTestsSource,
-  /age < minimumAge \|\| age > maximumAge[\s\S]*?return null/,
-  "idade fora de 2–19 deve ser rejeitada, não redirecionada para a última faixa",
-);
-assert.match(
-  directTestsSource,
-  /const ageIsInvalid = age !== null && selectedAgeBand === null/,
-);
-assert.match(
-  directTestsSource,
-  /role="alert"[\s\S]*?Informe uma idade entre 2 e 19 anos/,
-);
-assert.doesNotMatch(directTestsSource, /Math\.max\(0, Math\.min\(18/);
-assert.match(
-  directTestsSource,
-  /aria-label=\{`Símbolo \$\{a\}, linha \$\{row\}, coluna \$\{column\}`\}/,
-  "cada célula visual deve anunciar símbolo e posição únicos",
-);
-assert.doesNotMatch(directTestsSource, /aria-label="célula"/);
-assert.match(
-  directTestsSource,
-  /aria-label=\{`Figura \$\{a\}\$\{picked\.includes\(a\)/,
-  "cada opção de memória visual deve anunciar a figura e seu estado",
-);
-assert.match(
-  directTestsSource,
-  /id: "avaliacao-cognitiva-infantil"[\s\S]{0,220}?ageMin: 2,[\s\S]{0,80}?ageMax: 19/,
-  "a bateria cognitiva agregada deve preservar sua faixa de 2–19 anos",
-);
-assert.match(
-  directTestsSource,
-  /test\.ageMin <= age && test\.ageMax >= age/,
-  "o catálogo deve filtrar pela idade exata, não pela mera sobreposição da faixa",
-);
-for (const [id, min, max] of [
-  ["testes-reconhecimento", 2, 7],
-  ["linguagem-fonologia", 3, 10],
-  ["motricidade-teste", 2, 9],
-  ["escrita-desenho", 3, 11],
-  ["conhecimento-visual", 4, 11],
-  ["conhecimentos-gerais", 5, 12],
-  ["atencao-concentracao", 4, 12],
-  ["funcoes-executivas", 4, 12],
-  ["memoria-teste", 3, 12],
-  ["processamento-visuoauditivo", 4, 12],
-  ["academico-interativo", 6, 14],
-  ["testes-academicos", 5, 14],
-  ["tde2", 4, 14],
+// Sonda Dez substitui a antiga vitrine de módulos diretos. O contrato aqui
+// protege o novo objetivo: faixa etária exata, transcrição integral, análise
+// descritiva com trava antinormatização e ausência de persistência silenciosa.
+assert.match(directTestsSource, /const BANDS:\s*BandDef\[\]\s*=\s*\[/);
+for (const [id, minMonths, maxMonths] of [
+  ["12-23m", 12, 23],
+  ["24-35m", 24, 35],
+  ["3-4a", 36, 59],
+  ["5-7a", 60, 95],
+  ["8-11a", 96, 143],
+  ["12-17a", 144, 215],
 ]) {
   assert.match(
     directTestsSource,
-    new RegExp(`id: "${id}"[\\s\\S]{0,220}?ageMin: ${min},[\\s\\S]{0,80}?ageMax: ${max}`),
-    `${id} deve anunciar exatamente ${min}–${max} anos`,
+    new RegExp(
+      `id: "${id}"[\\s\\S]{0,180}?minMonths: ${minMonths},[\\s\\S]{0,80}?maxMonths: ${maxMonths}`,
+    ),
+    `${id} deve preservar a faixa canônica em meses`,
   );
 }
-assert.doesNotMatch(directTestsSource, forbiddenOutput);
+assert.match(
+  directTestsSource,
+  /BANDS\.find\(\(band\) => months >= band\.minMonths && months <= band\.maxMonths\)/,
+  "seleção da trilha deve respeitar idade em meses e as duas fronteiras",
+);
+assert.match(directTestsSource, /const reportText = band/);
+assert.match(directTestsSource, /"REGISTRO COMPLETO"/);
+assert.match(directTestsSource, /`Fala\/pergunta: \$\{item\.say\.join\(" \/ "\)\}`/);
+assert.match(
+  directTestsSource,
+  /item\.fields\.map\(\(field\) => `• \$\{field\.label\}: \$\{fieldValueText\(field, record\?\.values\[field\.id\]\)\}`\)/,
+  "cada campo observado deve aparecer no registro completo",
+);
+assert.match(directTestsSource, /"ANÁLISE AUTOMÁTICA DESCRITIVA"/);
+assert.match(directTestsSource, /const auditFindings = auditAnalysis\(analysis\)/);
+assert.match(
+  directTestsSource,
+  /disabled=\{auditFindings\.length > 0\}[\s\S]*?onClick=\{copyReport\}/,
+  "cópia deve ficar bloqueada se a trava antinormatização disparar",
+);
+assert.match(
+  directTestsSource,
+  /Prova observacional clínica piloto\. Não gera diagnóstico, percentil ou escore total\. Interpretação integrada pelo médico\./,
+);
+assert.match(directTestsSource, /String\(value\) === "NA"/);
+assert.match(directTestsSource, /não foi avaliável/);
+assert.doesNotMatch(directTestsSource, /localStorage\s*\./);
+assert.doesNotMatch(directTestsSource, /authFetch\s*\(/);
+assert.doesNotMatch(directTestsSource, /<SaveToPatient\b/);
+assert.doesNotMatch(directTestsSource, /<ClinicalReport\b/);
+assert.doesNotMatch(
+  directTestsSource,
+  /UNIFIED_TEST_COMPONENTS|SelectedUnifiedComponent/,
+  "módulos legados não devem voltar a disputar a rota unificada",
+);
 
 assert.match(pantSource, /if \(!allAnswered\) return;/);
 assert.match(
@@ -389,5 +375,5 @@ for (const patientApiPath of [
 }
 
 console.log(
-  "✓ Entrega de escalas: perguntas + respostas integrais, sem cálculo ou análise.",
+  "✓ Entrega de escalas: perguntas + respostas integrais; Sonda Dez com transcrição e análise descritiva guardada.",
 );
