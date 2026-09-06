@@ -1,0 +1,52 @@
+name: Operational crypto rotation guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "functions/api/admin/_operationalEnvelopes.ts"
+      - "functions/api/admin/operational-crypto.ts"
+      - "functions/api/operations/_core.ts"
+      - "tests/unit/operational-crypto-rotation*.test.ts"
+      - "tests/unit/operational-crypto-foreign-keyid.test.ts"
+      - ".github/workflows/operational-crypto-rotation-guard.yml"
+  push:
+    branches: [main]
+    paths:
+      - "functions/api/admin/_operationalEnvelopes.ts"
+      - "functions/api/admin/operational-crypto.ts"
+      - "functions/api/operations/_core.ts"
+      - "tests/unit/operational-crypto-rotation*.test.ts"
+      - "tests/unit/operational-crypto-foreign-keyid.test.ts"
+      - ".github/workflows/operational-crypto-rotation-guard.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: operational-crypto-rotation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fail-closed-keyring-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+      - name: Rotation readiness against real schema
+        run: node --import tsx tests/unit/operational-crypto-rotation-readiness.test.ts
+      - name: Foreign keyId must fail closed
+        run: node --import tsx tests/unit/operational-crypto-foreign-keyid.test.ts
+      - name: Existing keyring regression suite
+        run: node --import tsx tests/unit/operational-crypto-rotation.test.ts
+      - name: TypeScript
+        run: npm run check
+      - name: Lint
+        run: npm run lint
