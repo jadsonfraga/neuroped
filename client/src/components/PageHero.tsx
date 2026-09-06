@@ -30,7 +30,7 @@ export function PageHero({
   children,
 }: PageHeroProps) {
   return (
-    <header className="np-page-hero np-brand-page-hero relative overflow-hidden rounded-[1.55rem] border border-border/80 bg-card/92 p-5 shadow-[0_1px_1px_hsl(var(--foreground)/0.025),0_16px_42px_-34px_hsl(var(--foreground)/0.38)] sm:p-6">
+    <header className="np-page-hero np-brand-page-hero relative overflow-hidden rounded-[1.55rem] border border-border/80 bg-card/90 p-5 shadow-[0_1px_1px_hsl(var(--foreground)/0.025),0_16px_42px_-34px_hsl(var(--foreground)/0.38)] sm:p-6">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(41_65%_53%/0.72)] to-transparent"

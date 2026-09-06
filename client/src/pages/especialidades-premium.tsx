@@ -122,7 +122,7 @@ function BrandHeader() {
         </a>
 
         <nav
-          className="ml-auto hidden items-center gap-5 text-[12px] font-medium text-white/78 lg:flex"
+          className="ml-auto hidden items-center gap-5 text-[12px] font-medium text-white/80 lg:flex"
           aria-label="Navegação institucional"
         >
           <a href="#/" className="transition-colors hover:text-amber-300">Início</a>
@@ -186,7 +186,10 @@ function SpecialtyCard({ specialty }: { specialty: Specialty }) {
           >
             {specialty.title}
           </h3>
-          <p className="mt-0.5 text-[9px] font-semibold leading-snug text-primary/80">
+          {/* `/80` sobre o degradê pastel do cartão media 3,7–3,9:1 nos cinco
+              tons — abaixo do mínimo AA para texto de 9px. Cor cheia do
+              primary resolve nos cinco sem precisar calibrar tom a tom. */}
+          <p className="mt-0.5 text-[9px] font-semibold leading-snug text-primary">
             {specialty.subtitle}
           </p>
         </div>
@@ -209,10 +212,22 @@ export default function EspecialidadesPremiumPage() {
     <div className="min-h-screen overflow-x-hidden bg-[hsl(42_44%_96%)] text-[hsl(214_58%_15%)] dark:bg-background dark:text-foreground">
       <BrandHeader />
 
-      <div role="presentation">
+      {/* `role="region"`, não `<main>`: esta página é portada por cima do app
+          inteiro (ver not-found.tsx), mas o `<main id="main-content">` do
+          Layout clínico continua no DOM por baixo, só visualmente coberto —
+          dois `<main>` simultâneos violam `landmark-no-duplicate-main` (axe,
+          moderate). Uma `<div>` sem role, por sua vez, tira as 14 seções daqui
+          de dentro de qualquer landmark e viola a regra `region` (axe,
+          moderate) — o oposto do problema, mesma severidade. `region` com
+          nome próprio resolve os dois: landmark único, sem duplicar `main`. */}
+      <div role="region" aria-label="Especialidades em Neurologia Infantil">
         <section className="relative overflow-hidden border-b border-amber-500/20 bg-[radial-gradient(48rem_24rem_at_68%_18%,hsl(41_82%_72%/0.28),transparent_70%),linear-gradient(135deg,hsl(43_100%_98%),hsl(38_70%_94%))] dark:bg-[linear-gradient(145deg,hsl(214_76%_11%),hsl(212_70%_17%))]">
           <div className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full border border-amber-500/10" aria-hidden="true" />
-          <div className="mx-auto grid max-w-[1600px] gap-5 px-4 pb-12 pt-5 sm:px-6 lg:h-[25rem] lg:grid-cols-[0.86fr_1.02fr_0.72fr] lg:items-stretch lg:px-8 lg:pb-9 lg:pt-6">
+          {/* `min-h`, não `h`: com `h-[25rem]` fixo, o texto do H1 (4 linhas no
+              clamp deste tamanho) precisava de ~427px reais e a grade
+              transbordava ~27px além da caixa — cortando silenciosamente o
+              conteúdo da coluna direita (ver abaixo) sem avisar ninguém. */}
+          <div className="mx-auto grid max-w-[1600px] gap-5 px-4 pb-12 pt-5 sm:px-6 lg:min-h-[25rem] lg:grid-cols-[0.86fr_1.02fr_0.72fr] lg:items-stretch lg:px-8 lg:pb-9 lg:pt-6">
             <div className="relative z-10 flex flex-col justify-center py-2">
               <div className="mb-3 flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.23em] text-amber-700 dark:text-amber-300">
                 <span>Cuidando de cada fase do desenvolvimento</span>
@@ -224,7 +239,7 @@ export default function EspecialidadesPremiumPage() {
               >
                 Especialidades em Neurologia <span className="text-amber-700 dark:text-amber-300">Infantil</span>
               </h1>
-              <p className="mt-4 max-w-lg text-sm leading-relaxed text-[hsl(214_38%_26%)] dark:text-white/76 sm:text-[15px]">
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-[hsl(214_38%_26%)] dark:text-white/80 sm:text-[15px]">
                 Ciência, empatia e propósito para compreender o neurodesenvolvimento e construir próximos passos individualizados para cada criança e adolescente.
               </p>
               <div className="mt-4 flex items-end gap-3">
@@ -243,24 +258,29 @@ export default function EspecialidadesPremiumPage() {
               </div>
             </div>
 
-            <div className="relative min-h-[24rem] overflow-hidden rounded-[2rem] border border-white/70 bg-[hsl(39_38%_84%)] shadow-[0_32px_70px_-44px_hsl(214_76%_11%/0.72)] lg:min-h-0">
+            {/* Antes: a mesma selfie renderizada duas vezes (uma ampliada e
+                borrada atrás, outra nítida na frente) para simular profundidade
+                ambiente. O contêiner é mais largo que a foto, então a versão
+                borrada não lia como glow — lia como um segundo rosto fantasma
+                ao lado do real. Fotografia profissional cobre o contêiner
+                inteiro sem precisar do truque. */}
+            <div className="relative min-h-[24rem] overflow-hidden rounded-[2rem] border border-white/70 shadow-[0_32px_70px_-44px_hsl(214_76%_11%/0.72)] lg:min-h-0">
               <img
-                src={brandAssets.mascots.doctorSelfie}
-                alt="Dr. Jadson Fraga"
+                src={brandAssets.photography.atendimentoCrianca}
+                alt="Dr. Jadson Fraga em atendimento, montando uma torre de blocos com uma criança"
                 loading="eager"
+                fetchPriority="high"
                 decoding="async"
-                className="absolute inset-0 h-full w-full scale-110 object-cover object-center opacity-35 blur-sm"
-                aria-hidden="true"
-              />
-              <img
-                src={brandAssets.mascots.doctorSelfie}
-                alt="Dr. Jadson Fraga"
-                loading="eager"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-contain object-bottom"
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ objectPosition: "18% 32%" }}
               />
               <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[hsl(214_76%_11%/0.58)] via-transparent to-transparent" aria-hidden="true" />
-              <div className="absolute bottom-3 left-3 rounded-xl border border-white/30 bg-[hsl(214_76%_11%/0.68)] px-3 py-2 text-white backdrop-blur-md">
+              {/* No topo, não embaixo: a seção "Nossas Especialidades" logo abaixo
+                  sobrepõe este cartão com `-mt-7` e `z-20`. Esta foto é mais alta
+                  que a da direita (a proporção do grid a deixa mais baixa que a
+                  coluna de texto ao lado), então o canto inferior fica coberto —
+                  uma legenda em `bottom-3` nunca chegava a aparecer. */}
+              <div className="absolute left-3 top-3 rounded-xl border border-white/30 bg-[hsl(214_76%_11%/0.68)] px-3 py-2 text-white backdrop-blur-md">
                 <p className="text-[11px] font-semibold">Dr. Jadson Fraga</p>
                 <p className="text-[8px] uppercase tracking-[0.13em] text-amber-200">Neuropediatra · Petrolina-PE</p>
               </div>
@@ -275,19 +295,25 @@ export default function EspecialidadesPremiumPage() {
                   decoding="async"
                   className="absolute inset-0 h-full w-full object-cover object-center"
                 />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[hsl(214_76%_11%/0.78)] to-transparent px-4 pb-3 pt-10 text-[11px] font-semibold text-white">
+                {/* Era um degradê difuso (`from-.../0.78 to-transparent`) medido a
+                    3,90:1 — a opacidade real no ponto exato do texto depende de
+                    onde a linha cai dentro da rampa, e varia com o tom da foto
+                    por trás. Cartão com fundo quase opaco e `backdrop-blur`,
+                    igual à legenda da primeira foto: contraste garantido
+                    independente da foto. */}
+                <div className="absolute bottom-3 left-3 right-3 rounded-lg bg-[hsl(214_76%_11%/0.82)] px-3 py-2 text-[11px] font-semibold text-white backdrop-blur-md">
                   Escuta, vínculo e acompanhamento
                 </div>
               </div>
               <div className="grid grid-cols-[1.05fr_0.95fr] gap-3">
-                <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/28 bg-[hsl(214_76%_11%)] px-3 py-3 text-white shadow-lg">
+                <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/30 bg-[hsl(214_76%_11%)] px-3 py-3 text-white shadow-lg">
                   <MapPin className="h-6 w-6 shrink-0 text-amber-300" />
                   <div>
                     <p className="text-[7px] uppercase tracking-[0.14em] text-amber-100/80">Atendimento em</p>
                     <p className="text-base font-semibold" style={{ fontFamily: "var(--font-display)" }}>Petrolina-PE</p>
                   </div>
                 </div>
-                <div className="relative overflow-hidden rounded-2xl border border-amber-500/24 bg-white/76 p-3 pr-16 shadow-sm dark:bg-white/5">
+                <div className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-white/75 p-3 pr-16 shadow-sm dark:bg-white/5">
                   <p className="text-[10px] font-semibold italic leading-snug text-[hsl(214_65%_24%)] dark:text-amber-200" style={{ fontFamily: "var(--font-display)" }}>
                     Juntos por um futuro com mais possibilidades.
                   </p>
@@ -298,7 +324,14 @@ export default function EspecialidadesPremiumPage() {
           </div>
         </section>
 
-        <section className="relative z-20 mx-auto -mt-7 max-w-[1600px] px-4 sm:px-6 lg:px-8" aria-labelledby="especialidades-premium-title">
+        {/* `-mt-3`, não `-mt-7`: com a grade acima em `min-h` (e não mais em `h`
+            fixo), a coluna da direita empilha foto + chip de local + citação até
+            o fim real do conteúdo — não há mais "sobra" de altura vazia para
+            absorver a sobreposição. Um recuo de 28px cortava esse chip e a
+            citação inteiros; 12px basta para manter o efeito de cartão
+            flutuante sem esconder texto algum (medido: zero sobreposição real
+            em desktop/tablet/mobile em scripts/guards/audit-surface-contrast.mjs). */}
+        <section className="relative z-20 mx-auto -mt-3 max-w-[1600px] px-4 sm:px-6 lg:px-8" aria-labelledby="especialidades-premium-title">
           <div className="rounded-[1.8rem] border border-amber-500/25 bg-[hsl(43_100%_99%/0.97)] p-4 shadow-[0_30px_80px_-50px_hsl(214_76%_11%/0.65)] backdrop-blur-xl dark:bg-card/95">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-3 px-1">
               <div>
@@ -332,12 +365,15 @@ export default function EspecialidadesPremiumPage() {
                     <span className="inline-flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" />Agendar consulta</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </a>
-                  <a href={whatsAppHref} target="_blank" rel="noreferrer" className="flex min-h-10 items-center justify-between rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-700 px-3 py-2 text-xs font-semibold shadow-lg">
+                  {/* emerald-500→700 media ~3,67:1 com texto branco (abaixo do
+                      mínimo AA 4,5:1) — o mesmo tom mais escuro que o botão
+                      "Agendar consulta" já usa (rose-600→800) ao lado. */}
+                  <a href={whatsAppHref} target="_blank" rel="noreferrer" className="flex min-h-10 items-center justify-between rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-800 px-3 py-2 text-xs font-semibold shadow-lg">
                     <span className="inline-flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5" />Falar no WhatsApp</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </a>
                 </div>
-                <div className="relative z-10 mt-3 flex flex-col gap-1 text-[8px] text-white/68">
+                <div className="relative z-10 mt-3 flex flex-col gap-1 text-[8px] text-white/70">
                   <span className="inline-flex items-center gap-1"><MessageCircle className="h-3 w-3 text-emerald-300" />87 9 9109-7371</span>
                   <span className="inline-flex items-center gap-1"><AtSign className="h-3 w-3 text-fuchsia-300" />@drjadsonfraganeuroped</span>
                 </div>
@@ -354,7 +390,7 @@ export default function EspecialidadesPremiumPage() {
                 <Icon className="h-5 w-5 shrink-0 text-amber-300" aria-hidden="true" />
                 <div>
                   <p className="text-[8px] font-semibold uppercase tracking-[0.11em]">{title}</p>
-                  <p className="mt-0.5 text-[8px] text-white/58">{text}</p>
+                  <p className="mt-0.5 text-[8px] text-white/60">{text}</p>
                 </div>
               </div>
             ))}
@@ -364,7 +400,7 @@ export default function EspecialidadesPremiumPage() {
 
       <footer className="border-t border-amber-400/20 bg-[hsl(214_76%_9%)] text-white">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-3 text-[8px] sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-5 text-white/68">
+          <div className="flex flex-wrap gap-5 text-white/70">
             <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-amber-300" />Petrolina-PE</span>
             <a href={whatsAppHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5 text-emerald-300" />87 9 9109-7371</a>
             <span className="inline-flex items-center gap-1.5"><AtSign className="h-3.5 w-3.5 text-fuchsia-300" />@drjadsonfraganeuroped</span>

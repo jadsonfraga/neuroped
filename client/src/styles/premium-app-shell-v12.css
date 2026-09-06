@@ -372,7 +372,12 @@ a[class*="inline-flex"]:active {
     padding-bottom: calc(3.75rem + var(--np-safe-bottom));
   }
 
-  header.fixed.lg\:hidden {
+  /* O cabeçalho do app (np-app-mobile-header) sai desta regra: sua cor é
+     decidida em brand-signature-v14.css, fonte única do chrome. Antes as duas
+     folhas disputavam com `!important` e a mais específica vencia aqui, então o
+     rail lateral ficava marinho e a barra do topo, creme — a mesma marca com
+     duas cores dependendo da viewport. */
+  header.fixed.lg\:hidden:not(.np-app-mobile-header) {
     background: linear-gradient(
       180deg,
       hsl(var(--card) / 0.97),
@@ -380,6 +385,10 @@ a[class*="inline-flex"]:active {
     ) !important;
     border-bottom-color: hsl(var(--border) / 0.58) !important;
     box-shadow: 0 14px 42px -34px hsl(var(--foreground) / 0.5) !important;
+  }
+
+  .np-app-mobile-header {
+    box-shadow: 0 14px 42px -34px hsl(214 76% 6% / 0.6) !important;
   }
 
   #main-content > div:last-child {

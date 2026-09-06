@@ -212,7 +212,7 @@ export default function InstrumentosPadronizadosPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* ───────── Hero ───────── */}
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-border/70 bg-gradient-to-br from-primary/12 via-chart-2/8 to-transparent p-5 shadow-sm backdrop-blur sm:p-7">
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-border/70 bg-gradient-to-br from-primary/10 via-chart-2/10 to-transparent p-5 shadow-sm backdrop-blur sm:p-7">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
         <div className="relative flex items-start gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 text-white shadow-md">

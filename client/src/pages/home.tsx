@@ -5,18 +5,24 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   ArrowUpRight,
+  Brain,
   ClipboardCheck,
   Clock3,
   FileText,
   Eye,
   Filter,
+  HeartHandshake,
   LineChart,
+  MapPin,
   Search,
+  ShieldCheck,
+  Sparkles,
   Stethoscope,
+  Users,
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Mascote } from "@/components/Mascote";
+import { SafeAssetImage, brandAssets } from "@/components/BrandAssets";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { ClinicalCockpit } from "@/components/clinical/ClinicalCockpit";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +42,15 @@ interface ClinicalFlow {
   icon: LucideIcon;
   emphasis: "primary" | "gold" | "teal" | "blue" | "slate";
 }
+
+/** Pilares da marca, na mesma ordem e redação da arte institucional. */
+const trustPillars = [
+  { icon: Brain, title: "Experiência", note: "e atualização constante" },
+  { icon: HeartHandshake, title: "Atendimento", note: "humano e individualizado" },
+  { icon: Users, title: "Família", note: "sempre no centro" },
+  { icon: ShieldCheck, title: "Ciência que acolhe", note: "infâncias reais" },
+  { icon: Sparkles, title: "Mais possibilidades", note: "para o amanhã" },
+] as const;
 
 const clinicalFlows: ClinicalFlow[] = [
   {
@@ -294,45 +309,50 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className="np-home-hero relative overflow-hidden rounded-3xl border border-white/70 p-6 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] sm:p-10 lg:min-h-[34rem] dark:border-white/10"
+        className="np-home-hero relative overflow-hidden rounded-[1.9rem] border p-6 sm:p-9 lg:p-11"
       >
         <div className="np-home-orb np-home-orb-one" aria-hidden="true" />
         <div className="np-home-orb np-home-orb-two" aria-hidden="true" />
-        <div className="absolute right-2 top-2 lg:hidden">
-          <Mascote contexto="home" size="sm" fala="" />
-        </div>
-        <div className="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
-          <div className="space-y-7">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/65 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur dark:bg-white/5">
-              <span className="relative flex h-2 w-2" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40 motion-reduce:animate-none" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
-              </span>
-              Painel clínico inteligente
+        <div className="relative grid gap-9 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
+          <div className="space-y-6">
+            <div className="np-hero-eyebrow">
+              <span>Cuidando de cada fase do desenvolvimento</span>
+              <span className="np-hero-eyebrow__rule" aria-hidden="true" />
             </div>
             <div className="max-w-3xl space-y-4">
               <h1
-                className="max-w-2xl text-[2.65rem] font-semibold leading-[0.98] tracking-[-0.045em] text-foreground sm:text-[4rem] lg:text-[4.65rem]"
+                className="np-hero-title max-w-2xl"
                 style={{ fontFamily: "var(--font-display)" }}
                 data-testid="text-page-title"
               >
                 Menos ruído.{" "}
                 <span className="np-title-gradient">Mais clareza clínica.</span>
               </h1>
-              <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
+              <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
                 Escalas, triagem e acompanhamento em uma jornada segura,
                 acolhedora e feita para o ritmo do consultório.
               </p>
             </div>
 
+            {/* Assinatura: a mesma credencial já publicada em /sobre-neuroped e
+                /qualidade. Quem entra sabe de quem é o cuidado antes de clicar. */}
+            <div className="np-hero-signature">
+              <p className="np-hero-signature__name">Dr. Jadson Fraga</p>
+              <p className="np-hero-signature__role">Neuropediatra</p>
+              <p className="np-hero-signature__crm">CRM-PE 25227 · RQE 17756</p>
+            </div>
+
             <div className="relative max-w-2xl" data-testid="search-container">
-              <Search className="pointer-events-none absolute left-5 top-1/2 h-[19px] w-[19px] -translate-y-1/2 text-primary" />
+              {/* `z-10`: o input vem depois no DOM e tem fundo praticamente
+                  opaco — sem elevar o ícone, a lupa era pintada por baixo dele
+                  e simplesmente não aparecia no desktop. */}
+              <Search className="pointer-events-none absolute left-5 top-1/2 z-10 h-[19px] w-[19px] -translate-y-1/2 text-primary" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Buscar escala ou página…"
                 aria-label="Buscar escala ou página"
-                className="h-14 rounded-[1.15rem] border-white/80 bg-white/80 pl-13 pr-10 text-[15px] shadow-[0_14px_35px_-22px_rgba(45,25,58,0.4)] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70 focus-visible:border-primary/30 focus-visible:shadow-[0_18px_42px_-22px_rgba(91,42,116,0.4)] dark:border-white/10 dark:bg-slate-950/50"
+                className="np-hero-search h-14 rounded-[1.15rem] pl-12 pr-10 text-[15px] backdrop-blur-xl transition-[box-shadow,border-color] placeholder:text-muted-foreground/70"
                 data-testid="input-search"
               />
               {searchQuery && (
@@ -356,7 +376,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/filtro-escalas?mode=flash"
-                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-primary/15 bg-white/55 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/80 dark:bg-white/5 dark:hover:bg-white/10"
+                className="np-hero-cta-ghost inline-flex min-h-11 items-center gap-2 rounded-2xl px-4 py-2.5 text-[13px] font-semibold text-foreground"
               >
                 <Clock3 className="h-4 w-4 text-primary" aria-hidden="true" />
                 Triagem rápida
@@ -364,14 +384,11 @@ export default function HomePage() {
             </div>
 
             <div
-              className="grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/60 bg-white/45 sm:grid-cols-4 dark:border-white/10 dark:bg-white/5"
+              className="np-hero-metrics grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded-2xl sm:grid-cols-4"
               aria-label="Métricas do app"
             >
               {metricCards.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="bg-white/35 px-3.5 py-3.5 dark:bg-slate-950/20"
-                >
+                <div key={metric.label} className="np-hero-metrics__cell px-3.5 py-3.5">
                   <div className="text-xl font-semibold tracking-[-0.03em] text-foreground sm:text-2xl">
                     {metric.value}
                     <span className="ml-0.5 text-primary">+</span>
@@ -383,14 +400,53 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div className="relative hidden min-h-[27rem] items-center justify-center lg:flex">
-            <div
-              className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]"
-              aria-hidden="true"
-            />
-            <Mascote contexto="home" size="lg" className="relative z-10" />
+          {/* A fotografia deixou de ser `background-image` numa regra que
+              alcançava `div:last-child` do grid: virou markup real, com <figure>
+              e legenda, e por isso também aparece no celular. */}
+          <div className="space-y-3.5">
+            <figure className="np-hero-photo">
+              <SafeAssetImage
+                src={brandAssets.photography.atendimentoCrianca}
+                alt="Dr. Jadson Fraga em atendimento, montando uma torre de blocos com uma criança"
+                className="np-hero-photo__img"
+                priority
+              />
+              <figcaption className="np-hero-photo__caption">
+                Dr. Jadson Fraga · Neuropediatra
+              </figcaption>
+            </figure>
+            <div className="np-hero-place">
+              <span className="np-hero-place__pin" aria-hidden="true">
+                <MapPin className="h-4 w-4" strokeWidth={2} />
+              </span>
+              <span className="np-hero-place__id">
+                <span className="np-hero-place__kicker">Atendimento em</span>
+                <span className="np-hero-place__city">Petrolina-PE</span>
+              </span>
+              <span className="np-hero-place__note">
+                Cuidado técnico e humano, mais perto da sua família.
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Faixa de confiança: os cinco pilares da marca, no mesmo lugar em que a
+            arte institucional os coloca — fechando o hero em vez de largá-lo. */}
+        <ul className="np-hero-trust" aria-label="Compromissos do atendimento">
+          {trustPillars.map((pillar) => (
+            <li key={pillar.title} className="np-hero-trust__item">
+              <pillar.icon
+                className="np-hero-trust__icon"
+                strokeWidth={1.6}
+                aria-hidden="true"
+              />
+              <span>
+                <span className="np-hero-trust__title">{pillar.title}</span>
+                <span className="np-hero-trust__note">{pillar.note}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </motion.section>
       )}
 
