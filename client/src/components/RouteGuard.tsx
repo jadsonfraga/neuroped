@@ -16,6 +16,17 @@ export { isRouteSensitive, SENSITIVE_ROUTES };
 
 type RouteRole = "admin" | "professional" | "reader" | "operator";
 
+/** Caminho + consulta da navegação atual, para retomar o destino após o login. */
+function currentHashTarget(path: string): string {
+  if (typeof window === "undefined") return path;
+  const raw = window.location.hash.replace(/^#/, "");
+  const queryIndex = raw.indexOf("?");
+  const hashQuery = queryIndex >= 0 ? raw.slice(queryIndex) : "";
+  if (hashQuery) return `${path}${hashQuery}`;
+  const search = window.location.search;
+  return search ? `${path}${search}` : path;
+}
+
 function operationalRolesForPath(path: string, roles?: RouteRole[]): RouteRole[] | undefined {
   if (!roles || path !== "/agenda" || roles.includes("operator")) return roles;
   // A agenda é a única superfície explicitamente compartilhada com a recepção.
@@ -61,7 +72,11 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
   }
 
   if (decision === "login") {
-    return <Redirect to={`/login?next=${encodeURIComponent(location)}`} />;
+    // `location` já vem sem a query (o roteador separa caminho de consulta).
+    // O destino pós-login precisa preservá-la: sem isso, um link profundo como
+    // `#/prontuario?patientId=abc` voltaria depois do login como um prontuário
+    // em branco, sem o paciente que motivou o acesso.
+    return <Redirect to={`/login?next=${encodeURIComponent(currentHashTarget(location))}`} />;
   }
 
   if (decision === "forbidden") {

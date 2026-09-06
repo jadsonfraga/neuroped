@@ -1,6 +1,6 @@
 // @ts-check
 import { createServer } from "node:http";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, resolve, sep } from "node:path";
 import { execFileSync } from "node:child_process";
 import { gzipSync } from "node:zlib";
@@ -37,9 +37,36 @@ function newestMtime(path) {
   return newest;
 }
 
-export function ensureClientBuild(repoRoot) {
+/**
+ * Perfis de build servidos aos gates de navegador.
+ *
+ * `open` reproduz a instalação sem backend obrigatório (a maioria dos gates:
+ * a11y, Lighthouse, prova visual pública). `authenticated` reproduz a produção
+ * canônica — login remoto obrigatório e nenhuma tranca de UI dispensável — e é
+ * o único perfil capaz de certificar o cockpit clínico depois do login.
+ */
+export const BUILD_PROFILES = {
+  open: {
+    VITE_AUTH_MODE: "auto",
+    VITE_API_URL: "",
+    VITE_ZONE: "full",
+  },
+  authenticated: {
+    VITE_AUTH_MODE: "remote",
+    VITE_OPEN_ACCESS: "false",
+    VITE_API_URL: "",
+    VITE_ZONE: "full",
+  },
+};
+
+const BUILD_MARKER = ".audit-build-profile.json";
+
+export function ensureClientBuild(repoRoot, profileName = "open") {
+  const profile = BUILD_PROFILES[profileName];
+  if (!profile) throw new Error(`Perfil de build desconhecido: ${profileName}`);
   const dist = resolve(repoRoot, "dist/public");
   const indexHtml = resolve(dist, "index.html");
+  const markerPath = resolve(dist, BUILD_MARKER);
   // Antes esta função só reconstruía quando dist/public NÃO existia. Um dist
   // deixado por uma execução anterior era servido como se fosse o código atual,
   // então a11y e Lighthouse podiam aprovar (ou reprovar) fonte que já não é o
@@ -48,9 +75,24 @@ export function ensureClientBuild(repoRoot) {
   // o gate determinístico.
   const built = existsSync(indexHtml) ? statSync(indexHtml).mtimeMs : 0;
   const newestSource = Math.max(...BUILD_INPUTS.map((input) => newestMtime(resolve(repoRoot, input))));
-  const reason = built === 0 ? "dist/public ausente" : newestSource > built ? "fonte mais novo que o build" : null;
+  // O perfil de build também invalida o dist: um build `authenticated` deixado
+  // em disco redireciona todo o app para /login e faria um gate `open` medir
+  // uma tela de login achando que mediu o app.
+  let builtProfile = null;
+  try {
+    builtProfile = JSON.parse(readFileSync(markerPath, "utf8")).profile ?? null;
+  } catch {
+    builtProfile = null;
+  }
+  const reason = built === 0
+    ? "dist/public ausente"
+    : newestSource > built
+      ? "fonte mais novo que o build"
+      : builtProfile !== profileName
+        ? `build atual é do perfil "${builtProfile ?? "desconhecido"}", necessário "${profileName}"`
+        : null;
   if (reason) {
-    console.log(`[browser-audit] ${reason} - executando build:client.`);
+    console.log(`[browser-audit] ${reason} - executando build:client (perfil ${profileName}).`);
     const npm = process.platform === "win32" ? "npm.cmd" : "npm";
     execFileSync(npm, ["run", "build:client"], {
       cwd: repoRoot,
@@ -61,15 +103,13 @@ export function ensureClientBuild(repoRoot) {
       shell: process.platform === "win32",
       env: {
         ...process.env,
-        // Os audits de navegador servem um backend local que declara auth
-        // desnecessária. `auto` deve respeitar essa capacidade; usar o default
-        // remoto aqui redireciona o shell para login e mascara regressões de
-        // layout como timeout do dock/tablet.
-        VITE_AUTH_MODE: "auto",
-        VITE_API_URL: "",
-        VITE_ZONE: "full",
+        ...profile,
       },
     });
+    writeFileSync(
+      markerPath,
+      `${JSON.stringify({ profile: profileName, env: profile, builtAt: new Date().toISOString() }, null, 2)}\n`,
+    );
   }
   return dist;
 }

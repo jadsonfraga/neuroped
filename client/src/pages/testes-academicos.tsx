@@ -620,7 +620,7 @@ const SCORE_OPTIONS: {
     color:
       "border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30",
     selectedColor:
-      "bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700",
+      "bg-emerald-700 border-emerald-700 text-white hover:bg-emerald-800",
     icon: "✅",
   },
   {
@@ -764,7 +764,7 @@ function DomainTab({
                       className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${
                         isAnswered
                           ? val === 2
-                            ? "bg-emerald-600 text-white"
+                            ? "bg-emerald-700 text-white"
                             : val === 1
                               ? "bg-amber-500 text-white"
                               : "bg-red-600 text-white"
@@ -1231,7 +1231,7 @@ export default function TestesAcademicosPage() {
                   step === s.n
                     ? "bg-white/20"
                     : step > s.n
-                      ? "bg-emerald-600 text-white"
+                      ? "bg-emerald-700 text-white"
                       : "bg-muted-foreground/20"
                 }`}
               >

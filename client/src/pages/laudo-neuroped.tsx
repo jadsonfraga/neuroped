@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FileText, Printer, RefreshCw, PenSquare, Sparkles, Copy, ClipboardPaste, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/PageHero";
@@ -17,6 +17,8 @@ import {
   type DocumentIssuer,
 } from "@/lib/issuer";
 import { dateStamp } from "@/lib/printDocument";
+import { apiRequest } from "@/lib/queryClient";
+import { readRouteParam } from "@/lib/routeQuery";
 
 /* ────────────────────────────────────────────────────────────
    Laudo Neuropediátrico — WebUI de geração assistida (embutida)
@@ -172,9 +174,38 @@ export default function LaudoNeuropedPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  const patientId = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("patientId")
-    : null;
+  const patientId = readRouteParam("patientId") || null;
+
+  // Aberto a partir de um paciente, o laudo já nasce identificado. Antes, o
+  // `patientId` só era usado nos metadados do documento salvo: quem vinha da
+  // ficha do paciente redigitava nome e data de nascimento — justamente os
+  // campos em que um erro de digitação compromete o documento. A receita C1 já
+  // fazia isso; o laudo estava fora do padrão.
+  //
+  // Só preenche campo VAZIO: conteúdo já digitado nunca é sobrescrito.
+  useEffect(() => {
+    if (!patientId) return;
+    let cancelled = false;
+    apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`)
+      .then((response) => response.json())
+      .then((payload) => {
+        if (cancelled) return;
+        const patient = payload?.patient ?? payload?.data ?? payload;
+        if (!patient?.name) return;
+        setEntrada((current) => ({
+          ...current,
+          paciente: current.paciente || patient.name,
+          dataNascimento: current.dataNascimento || patient.birthDate || "",
+          cid10: current.cid10 || patient.diagnosisCode || "",
+        }));
+      })
+      .catch(() => {
+        // Sem backend alcançável o laudo continua totalmente preenchível à mão.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [patientId]);
 
   const configurado = useMemo(() => {
     return (

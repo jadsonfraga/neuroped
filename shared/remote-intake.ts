@@ -189,6 +189,18 @@ export function isRemoteIntakeFormKind(value: unknown): value is RemoteIntakeFor
   return typeof value === "string" && remoteIntakeFormKinds.includes(value as RemoteIntakeFormKind);
 }
 
+/**
+ * Um `formKind` desconhecido (backend adiante do cliente, ou registro antigo)
+ * devolvia `undefined` e o primeiro acesso a `.questions` derrubava a ficha
+ * inteira do paciente pelo error boundary. Sem modelo, o item é listado sem
+ * detalhamento — nenhuma resposta é inventada.
+ */
+const emptyRemoteIntakeTemplate: RemoteIntakeTemplate = {
+  ...remoteIntakeTemplates.pre_consulta,
+  title: "Formulário não reconhecido",
+  questions: [],
+};
+
 export function getRemoteIntakeTemplate(kind: RemoteIntakeFormKind): RemoteIntakeTemplate {
-  return remoteIntakeTemplates[kind];
+  return remoteIntakeTemplates[kind] ?? emptyRemoteIntakeTemplate;
 }

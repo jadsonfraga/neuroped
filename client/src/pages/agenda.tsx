@@ -251,7 +251,15 @@ export default function AgendaPage() {
         </div>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Em telas compactas o CSS do shell converte esta faixa em rolagem
+          horizontal com scroll-snap (premium-polish-10.css). Uma região que
+          rola precisa ser alcançável pelo teclado, senão os indicadores fora
+          da área visível ficam inacessíveis (axe: scrollable-region-focusable). */}
+      <section
+        className="grid gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-2 xl:grid-cols-4"
+        tabIndex={0}
+        aria-label="Indicadores da agenda"
+      >
         <Metric icon={CalendarClock} label="Hoje" value={String(data.metrics.today)} />
         <Metric icon={Clock3} label="Próximas" value={String(data.metrics.upcoming)} detail={`${data.metrics.requested} aguardando confirmação`} />
         {canConfigure
@@ -305,7 +313,15 @@ export default function AgendaPage() {
               <div className="grid grid-cols-[4.5rem_1fr] gap-2 border-b px-2 pb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span>Hora</span><span>Paciente / situação</span>
               </div>
-              <div className="max-h-[34rem] space-y-1 overflow-y-auto pr-1">
+              {/* Região com rolagem própria: sem foco de teclado, quem navega por Tab
+                  não alcança os horários fora da área visível (axe:
+                  scrollable-region-focusable). O rótulo diz o que a região é. */}
+              <div
+                className="max-h-[34rem] space-y-1 overflow-y-auto pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                tabIndex={0}
+                role="group"
+                aria-label="Grade de horários da agenda"
+              >
                 {scheduleRows.map((time) => {
                   const appointment = appointmentsByTime.get(time);
                   const occupied = Boolean(appointment);

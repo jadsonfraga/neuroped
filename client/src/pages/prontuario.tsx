@@ -23,6 +23,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
+import { readRouteParam } from "@/lib/routeQuery";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -144,8 +145,7 @@ const marcoKeys: (keyof Marcos)[] = [
 ];
 
 function patientIdFromQuery(): string {
-  if (typeof window === "undefined") return "";
-  return new URLSearchParams(window.location.search).get("patientId")?.trim() ?? "";
+  return readRouteParam("patientId");
 }
 
 function parseClinicalNote(note: unknown): Record<string, unknown> {
