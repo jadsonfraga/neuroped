@@ -41,7 +41,6 @@ export const PUBLIC_ROUTES = [
   "/caa", // CAA · Vou Falar
   "/sobre", // Sobre
   "/servicos-clinica", // Serviços institucionais da Clínica Jadson Fraga
-  "/especialidades", // Vitrine institucional premium de especialidades — sem dado clínico
   "/termos", // Termos de uso e aviso legal público
   "/sobre-neuroped", // Sobre o NeuroPed
   "/ajuda", // Ajuda
