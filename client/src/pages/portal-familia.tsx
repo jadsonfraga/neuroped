@@ -10,9 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/VisualStates";
 import { PremiumVisualPanel } from "@/components/PremiumVisualPanel";
-import { AssetShowcase, brandAssets } from "@/components/BrandAssets";
+import { brandAssets } from "@/components/BrandAssets";
 import {
-  AlertTriangle,
   BookOpen,
   Calendar,
   Eye,
@@ -24,7 +23,6 @@ import {
   MessageCircle,
   Newspaper,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 
 interface FamilyDocument {
@@ -139,75 +137,78 @@ export default function PortalFamiliaPage() {
   }
 
   return (
-    <div className="proportion-safe-page mx-auto max-w-3xl space-y-6 py-4">
+    <div className="proportion-safe-page mx-auto max-w-5xl space-y-7 py-4">
       <PremiumVisualPanel
         src={brandAssets.illustrations.childDevelopment}
-        badge="Família e desenvolvimento"
-        title="Orientação clara para a rotina, a escola e os próximos passos."
-        subtitle="Conteúdos educativos ficam acessíveis aos pais; documentos individuais seguem somente por acesso autenticado ou canal seguro do médico."
-        className="min-h-44"
+        badge="Portal da família"
+        title="Apoio claro para a rotina, a escola e os próximos passos."
+        subtitle="Orientações educativas ficam acessíveis às famílias; documentos individuais continuam protegidos e só aparecem quando houver liberação adequada."
+        className="min-h-48"
+        headingLevel="h1"
       />
 
-      <AssetShowcase
-        variant="family"
-        title="Figuras de apoio para famílias"
-        subtitle="Imagens e mascotes oficiais usados com proporção estável, sem corte agressivo em celular."
-        max={6}
-        compact
-      />
-
-      <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-950/20">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-        <div className="space-y-1 text-sm">
-          <p className="font-semibold text-amber-800 dark:text-amber-300">Área dos pais — conteúdo não sensível</p>
-          <p className="leading-relaxed text-amber-700 dark:text-amber-400">
-            Esta aba reúne psicoeducação, orientação familiar, materiais escolares e documentos expressamente liberados. Prontuário, dados médicos individualizados e documentos sensíveis não ficam abertos aqui.
+      <div className="flex items-start gap-3 rounded-[1.4rem] border border-primary/15 bg-primary/[0.035] p-4 shadow-sm sm:p-5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
+          <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <div className="max-w-3xl space-y-1.5">
+          <p className="text-sm font-semibold text-foreground">Área segura para famílias</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Aqui ficam psicoeducação, orientações para o dia a dia, materiais escolares e documentos expressamente liberados. Prontuário e informações clínicas sensíveis permanecem fora da área aberta.
           </p>
-          <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
-            O ID do paciente nunca funciona como senha. Um acesso familiar a
-            documentos exige link/token próprio e liberação profissional.
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            O ID do paciente nunca funciona como senha. O acesso a documentos individuais exige autenticação própria ou um canal seguro autorizado.
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-blue-600 shadow-sm">
-          <Users className="h-5 w-5 text-white" />
-        </div>
+      <section className="space-y-3" aria-labelledby="family-resources-title">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Portal dos Pais / Psicoeducação</h1>
-          <p className="text-xs text-muted-foreground">Informações gerais, escola, rotina e documentos liberados</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+            Para o dia a dia
+          </p>
+          <h2
+            id="family-resources-title"
+            className="mt-1 text-xl font-semibold tracking-tight text-foreground"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Orientações e recursos
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Acesse diretamente o conteúdo mais útil para acompanhar desenvolvimento, comunicação e rotina.
+          </p>
         </div>
-      </div>
 
-      <section className="grid gap-3 sm:grid-cols-2" aria-label="Conteúdos não sensíveis para pais">
-        {parentResources.map((resource) => {
-          const Icon = resource.icon;
-          return (
-            <Link key={resource.href} href={resource.href}>
-              <Card className="h-full cursor-pointer border-border transition hover:border-primary/40 hover:shadow-md">
-                <CardContent className="flex items-start gap-3 p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-sm font-semibold text-foreground">{resource.title}</h2>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{resource.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {parentResources.map((resource) => {
+            const Icon = resource.icon;
+            return (
+              <Link key={resource.href} href={resource.href}>
+                <Card className="h-full cursor-pointer border-border/70 bg-card/90 transition-colors hover:border-primary/30">
+                  <CardContent className="flex items-start gap-3 p-4 sm:p-5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-foreground">{resource.title}</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{resource.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
-      <Card className="border-border">
+      <Card className="border-border/70 bg-card/95">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Documentos individuais
+            <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+            Documentos individuais
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 p-4 pt-0">
+        <CardContent className="space-y-3 p-4 pt-0 sm:p-6 sm:pt-0">
           {!canPreviewDocuments ? (
             <div
               className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-muted-foreground"
@@ -235,7 +236,9 @@ export default function PortalFamiliaPage() {
                   placeholder={accessMode === "local" ? "ID fictício (ex.: demo-001)" : "ID interno do paciente"}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch();
+                  }}
                   className="h-10 flex-1"
                   aria-label="ID interno do paciente para prévia"
                   data-testid="input-family-access-code"
@@ -246,7 +249,7 @@ export default function PortalFamiliaPage() {
                   className="h-10 gap-2"
                   data-testid="button-search-documents"
                 >
-                  <Eye className="h-4 w-4" /> Visualizar
+                  <Eye className="h-4 w-4" aria-hidden="true" /> Visualizar
                 </Button>
               </div>
             </>
@@ -300,7 +303,7 @@ export default function PortalFamiliaPage() {
                         variant="ghost"
                         onClick={() => setExpandedId(expandedId === doc.id ? null : doc.id)}
                       >
-                        <FileText className="mr-1 h-4 w-4" />
+                        <FileText className="mr-1 h-4 w-4" aria-hidden="true" />
                         {expandedId === doc.id ? "Ocultar" : "Ver"}
                       </Button>
                     </div>

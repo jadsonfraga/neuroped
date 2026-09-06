@@ -20,12 +20,11 @@
     0 24px 70px -42px hsl(214.1 75.9% 11.4% / 0.42);
 }
 
-/* Superfície global mais luminosa, sem trocar os tokens clínicos existentes. */
+/* A marca entra como luz, não como tinta de fundo em toda a aplicação. */
 html:not(.dark) body {
   background:
-    radial-gradient(72rem 36rem at 88% -10%, hsl(40.6 64.9% 53.1% / 0.12), transparent 68%),
-    radial-gradient(52rem 32rem at 12% 98%, hsl(353.8 68.5% 38.6% / 0.07), transparent 72%),
-    linear-gradient(180deg, hsl(42.9 100% 98.6%), hsl(40 46.2% 94.9%) 78%, hsl(42.9 100% 98.6%));
+    radial-gradient(72rem 36rem at 88% -10%, hsl(40.6 64.9% 53.1% / 0.055), transparent 68%),
+    hsl(var(--background));
 }
 
 /* Sidebar e barra móvel: assinatura azul-marinho + ouro do escudo. */
@@ -68,7 +67,7 @@ html:not(.dark) body {
   color: hsl(40 100% 95.9%) !important;
 }
 
-/* HOME: mantém busca, métricas e handlers; troca somente a direção de arte. */
+/* HOME: fotografia real + mensagem editorial. Um único protagonista por área. */
 .np-home-hero {
   border-color: hsl(40.6 64.9% 53.1% / 0.34) !important;
   background:
@@ -110,7 +109,7 @@ html:not(.dark) body {
     border-radius: 2rem;
     border: 1px solid hsl(40.6 64.9% 53.1% / 0.35);
     background:
-      linear-gradient(180deg, transparent 50%, hsl(214.1 75.9% 11.4% / 0.28)),
+      linear-gradient(180deg, transparent 48%, hsl(214.1 75.9% 11.4% / 0.34)),
       url("../../../attached_assets/images/dr-jadson-consultorio-full.jpeg") center 22% / cover no-repeat;
     box-shadow:
       inset 0 1px 0 hsl(0 0% 100% / 0.52),
@@ -121,14 +120,27 @@ html:not(.dark) body {
     display: none;
   }
 
+  /* A foto real já é o protagonista. O mascote continua no mobile, não sobre a fotografia. */
   .np-home-hero [data-testid="mascote-dr-jadson-guide"] {
-    position: absolute !important;
-    right: -1rem;
-    bottom: -1.1rem;
-    z-index: 4;
-    scale: 0.58;
-    transform-origin: bottom right;
-    filter: drop-shadow(0 16px 18px hsl(214.1 75.9% 11.4% / 0.24));
+    display: none !important;
+  }
+
+  .np-home-hero > .relative.grid > div:last-child::after {
+    content: "Dr. Jadson Fraga · Neuropediatra";
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    max-width: calc(100% - 2rem);
+    border: 1px solid hsl(0 0% 100% / 0.28);
+    border-radius: 0.9rem;
+    background: hsl(214.1 75.9% 11.4% / 0.76);
+    padding: 0.65rem 0.85rem;
+    color: hsl(0 0% 100% / 0.96);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+    box-shadow: 0 14px 32px -22px hsl(214.1 75.9% 11.4% / 0.82);
+    backdrop-filter: blur(10px);
   }
 }
 
@@ -151,14 +163,14 @@ html:not(.dark) body {
 .np-page-hero,
 .np-brand-page-hero,
 .np-brand-visual-panel {
-  border-color: hsl(40.6 64.9% 53.1% / 0.3) !important;
+  border-color: hsl(40.6 64.9% 53.1% / 0.26) !important;
   box-shadow: var(--np-signature-shadow) !important;
 }
 
 .np-brand-page-hero {
   background:
-    radial-gradient(30rem 12rem at 86% 0%, hsl(40.6 64.9% 53.1% / 0.13), transparent 70%),
-    linear-gradient(135deg, hsl(42.9 100% 98.6% / 0.98), hsl(41.1 100% 96.3% / 0.91)) !important;
+    radial-gradient(30rem 12rem at 86% 0%, hsl(40.6 64.9% 53.1% / 0.1), transparent 70%),
+    linear-gradient(135deg, hsl(var(--card) / 0.99), hsl(41.1 100% 96.3% / 0.58)) !important;
 }
 
 .dark .np-brand-page-hero {
@@ -167,12 +179,12 @@ html:not(.dark) body {
     linear-gradient(135deg, hsl(212 69.8% 16.9% / 0.92), hsl(214.1 75.9% 11.4% / 0.9)) !important;
 }
 
-/* Cards “puff” controlados: mais profundidade sem aumentar padding ou reflow. */
+/* Profundidade em todos; movimento somente onde existe intenção de clique. */
 .shadcn-card {
-  border-color: hsl(40.6 64.9% 53.1% / 0.18) !important;
+  border-color: hsl(var(--card-border)) !important;
   box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / 0.45),
-    0 20px 50px -38px hsl(214.1 75.9% 11.4% / 0.46) !important;
+    inset 0 1px 0 hsl(0 0% 100% / 0.42),
+    0 20px 50px -38px hsl(214.1 75.9% 11.4% / 0.42) !important;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -180,7 +192,10 @@ html:not(.dark) body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .shadcn-card:hover {
+  .shadcn-card.cursor-pointer:hover,
+  a .shadcn-card:hover,
+  button .shadcn-card:hover,
+  .shadcn-card[data-interactive="true"]:hover {
     transform: translateY(-2px);
     border-color: hsl(40.6 64.9% 53.1% / 0.32) !important;
     box-shadow:
