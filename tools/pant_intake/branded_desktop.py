@@ -10,6 +10,8 @@ import tempfile
 from pathlib import Path
 import tkinter as tk
 
+from PIL import ImageGrab
+
 from brand_ui import apply_brand_overlay
 from desktop import App, demonstration
 from desktop_support import DESKTOP_VERSION, export_case_bundle, pretty, save_new
@@ -46,12 +48,23 @@ def smoke_gui(report_path: Path) -> None:
         expected = folder / "RASCUNHO_anamnese.md"
         if not expected.exists():
             raise RuntimeError("Exportação não comprovada.")
+
+    root.lift()
+    root.update()
+    x, y = root.winfo_rootx(), root.winfo_rooty()
+    w, h = root.winfo_width(), root.winfo_height()
+    preview_path = report_path.with_suffix(".png")
+    ImageGrab.grab(bbox=(x, y, x + w, y + h), all_screens=True).save(preview_path)
+    if not preview_path.exists() or preview_path.stat().st_size < 20_000:
+        raise RuntimeError("Prévia visual Windows não foi comprovada.")
+
     evidence = {
         "version": DESKTOP_VERSION,
         "gui": "tkinter-native-branded",
         "tabs": len(app.tabs.tabs()),
         "brand_images_loaded": len(app._brand_images),
         "brand_shell": "NeuroPed SDG / Dr. Jadson Fraga",
+        "preview_written": True,
         "synthetic_only": True,
         "gate_status": app.session.report["status"],
         "drafts": len(app.session.draft["documents"]),
