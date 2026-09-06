@@ -145,6 +145,7 @@ export default function PortalFamiliaPage() {
         subtitle="Orientações educativas ficam acessíveis às famílias; documentos individuais continuam protegidos e só aparecem quando houver liberação adequada."
         className="min-h-48"
         headingLevel="h1"
+        portrait="familia"
       />
 
       <div className="flex items-start gap-3 rounded-[1.4rem] border border-primary/15 bg-primary/[0.035] p-4 shadow-sm sm:p-5">

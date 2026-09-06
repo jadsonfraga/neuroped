@@ -165,7 +165,7 @@ export function MobilePrimaryDock() {
               type="button"
               className={`relative flex min-h-[2.75rem] flex-col items-center justify-center gap-[1px] rounded-xl px-1 text-[9.5px] font-semibold leading-none transition-[background-color,color] duration-150 active:scale-[0.97] ${
                 active
-                  ? "bg-primary/12 text-primary"
+                  ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
               }`}
               onClick={() => navigateTo(item.href)}

@@ -9,6 +9,12 @@ import drArteMascot from "@assets/images/dr-jadson-arte.jpeg";
 import drSelfieMascot from "@assets/images/dr-jadson-selfie.jpeg";
 import drBatmanMascot from "@assets/images/dr-jadson-consultorio-batman.jpeg";
 import drConsultorioFull from "@assets/images/dr-jadson-consultorio-full.jpeg";
+// Fotografia institucional 2026: material profissional que substitui as fotos
+// de costume nas superfícies de marca. Mascotes e fantasias seguem existindo,
+// mas em uso pediátrico pontual — não como retrato do serviço.
+import drAtendimentoCrianca from "@assets/images/dr-jadson-atendimento-crianca.webp";
+import drRetratoJaleco from "@assets/images/dr-jadson-retrato-jaleco.webp";
+import drRetratoInstitucional from "@assets/images/dr-jadson-retrato-institucional.webp";
 import heroBrain from "@assets/images/hero-brain.webp";
 import childAssessment from "@assets/images/child-assessment.webp";
 import childDevelopment from "@assets/images/child-development.webp";
@@ -27,6 +33,12 @@ export const brandAssets = {
     doctorSelfie: drSelfieMascot,
     consultorioBatman: drBatmanMascot,
     consultorioFull: drConsultorioFull,
+  },
+  /** Fotografia real do serviço: o que aparece nas superfícies institucionais. */
+  photography: {
+    atendimentoCrianca: drAtendimentoCrianca,
+    retratoJaleco: drRetratoJaleco,
+    retratoInstitucional: drRetratoInstitucional,
   },
   illustrations: {
     heroBrain,
@@ -133,6 +145,36 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     auditRoute: "/qualidade",
   },
   {
+    id: "dr-atendimento-crianca",
+    group: "Fotografia institucional",
+    name: "Atendimento com a criança",
+    path: "attached_assets/images/dr-jadson-atendimento-crianca.webp",
+    src: brandAssets.photography.atendimentoCrianca,
+    status: "ativo",
+    usage: "fotografia principal do hero da home: mostra o atendimento real, não uma encenação de personagem",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-retrato-institucional",
+    group: "Fotografia institucional",
+    name: "Retrato institucional — uniforme navy",
+    path: "attached_assets/images/dr-jadson-retrato-institucional.webp",
+    src: brandAssets.photography.retratoInstitucional,
+    status: "ativo",
+    usage: "retrato das superfícies profissionais; o navy e o ouro do uniforme são os mesmos do chrome do app",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-retrato-jaleco",
+    group: "Fotografia institucional",
+    name: "Retrato clínico — jaleco vermelho",
+    path: "attached_assets/images/dr-jadson-retrato-jaleco.webp",
+    src: brandAssets.photography.retratoJaleco,
+    status: "ativo",
+    usage: "retrato das superfícies voltadas à família, onde a leitura pedida é aproximação e não protocolo",
+    auditRoute: "/qualidade",
+  },
+  {
     id: "hero-brain",
     group: "Ilustração",
     name: "Cérebro infantil",
@@ -215,6 +257,13 @@ interface SafeAssetImageProps {
   className?: string;
   fallbackClassName?: string;
   onLoadStateChange?: (loaded: boolean) => void;
+  /**
+   * Para a imagem mais provável de ser o LCP da rota (ex.: a foto do hero da
+   * home, acima da dobra). `loading="lazy"` é o padrão certo para o resto do
+   * app, mas aplicado sem exceção também atrasava essa foto — o navegador só
+   * prioriza o download depois do layout, empurrando o LCP.
+   */
+  priority?: boolean;
 }
 
 export function SafeAssetImage({
@@ -223,6 +272,7 @@ export function SafeAssetImage({
   className = "",
   fallbackClassName = "",
   onLoadStateChange,
+  priority = false,
 }: SafeAssetImageProps) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -246,7 +296,8 @@ export function SafeAssetImage({
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
       decoding="async"
       className={`${className} ${loaded ? "opacity-100" : "opacity-0"} transition-opacity duration-200`}
       onLoad={() => {

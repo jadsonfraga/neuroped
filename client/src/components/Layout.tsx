@@ -586,9 +586,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <OfflineBanner />
 
       {/* Mobile top header bar */}
+      {/* `dark`: o chrome do app é uma ilha escura em qualquer tema. A camada
+          Brand Signature pinta esta barra de azul-marinho nos dois modos, então
+          a tinta precisa vir do conjunto escuro de tokens — sem isto, o modo
+          claro escreve texto quase preto sobre marinho. */}
       <header
         ref={mobileHeaderRef}
-        className="np-app-mobile-header print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md lg:hidden"
+        className="dark np-app-mobile-header print:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-md lg:hidden"
       >
         <div className="flex items-center gap-3">
           <motion.div
@@ -728,7 +732,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         aria-label="Menu de navegação"
         className={[
           "print:hidden",
-          "np-app-sidebar fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
+          // `dark`: mesma ilha escura da barra móvel. A sidebar é marinho nos
+          // dois temas desde a Brand Signature v14; herdar os tokens claros
+          // deixava toda a navegação em ~1:1 de contraste no modo claro.
+          "dark np-app-sidebar fixed left-0 top-0 h-full z-50 flex flex-col border-r border-sidebar-border bg-sidebar",
           "transition-transform duration-300 lg:transition-all lg:duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           "lg:translate-x-0",

@@ -125,7 +125,7 @@ export function ParentTestsRecommender({
           <CardHeader className="gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/12 text-amber-700 dark:text-amber-300">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300">
                   <Award className="h-4.5 w-4.5" aria-hidden="true" />
                 </span>
                 <span>{assessmentPath.label}</span>
