@@ -732,7 +732,15 @@ async function main() {
           .analyze();
         axeViolations = axe.violations
           .filter((violation) => violation.impact === "critical" || violation.impact === "serious")
-          .map((violation) => `${violation.id}(${violation.impact})`);
+          // O alvo entra na mensagem: sem ele o gate diz QUE reprovou, mas não
+          // ONDE, e cada investigação exige reexecutar a suíte inteira.
+          .map((violation) => {
+            const targets = violation.nodes
+              .slice(0, 3)
+              .map((node) => node.target.join(" "))
+              .join(" | ");
+            return `${violation.id}(${violation.impact})${targets ? `@${targets}` : ""}`;
+          });
       } catch (error) {
         failures.push(`axe-falhou:${error instanceof Error ? error.message : String(error)}`);
       }
