@@ -44,6 +44,9 @@ const CASES = [
   { id: "prontuario-tablet-dark", route: "/#/prontuario", width: 820, height: 1180, theme: "dark" },
   { id: "prontuario-desktop-dark", route: "/#/prontuario", width: 1440, height: 1000, theme: "dark" },
   { id: "mchat-mobile-light", route: "/#/mchat", width: 390, height: 844, theme: "light" },
+  { id: "familia-mobile-light", route: "/#/portal-familia", width: 390, height: 844, theme: "light" },
+  { id: "familia-tablet-light", route: "/#/portal-familia", width: 820, height: 1180, theme: "light" },
+  { id: "familia-desktop-dark", route: "/#/portal-familia", width: 1440, height: 1000, theme: "dark" },
 ];
 
 function intersects(a, b) {

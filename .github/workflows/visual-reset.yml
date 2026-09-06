@@ -84,7 +84,7 @@ jobs:
         id: browser-lighthouse
         continue-on-error: true
         run: npm run audit:lighthouse
-      - name: Responsive visual proof — 12 cases / 24 captures
+      - name: Responsive visual proof — 15 cases / 30 captures
         id: browser-visual
         continue-on-error: true
         run: node scripts/audit-visual-proof.mjs
