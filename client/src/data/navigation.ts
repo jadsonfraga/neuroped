@@ -226,3 +226,61 @@ export function normalizeNavigationPath(pathname: string): string {
   const path = withoutQuery.startsWith("/") ? withoutQuery : `/${withoutQuery}`;
   return path !== "/" ? path.replace(/\/$/, "") : "/";
 }
+
+function matchesNavigationItem(pathname: string, href: string): boolean {
+  const path = normalizeNavigationPath(pathname);
+  const normalizedHref = normalizeNavigationPath(href);
+  if (normalizedHref === "/") return path === "/";
+  return path === normalizedHref || path.startsWith(`${normalizedHref}/`);
+}
+
+const filterOwnedRoutes = new Set([
+  "/mchat", "/cars", "/denver", "/asq3", "/snap", "/sdq", "/vanderbilt",
+  "/scared", "/phqa", "/cssrs", "/conners", "/cbcl", "/brief2", "/abc",
+  "/vineland", "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
+  "/psc17", "/gad7", "/aq10", "/tea", "/tea-comportamentos", "/emdi", "/eaf",
+  "/ecsm", "/ips", "/ecar-si", "/edi", "/eai", "/easi", "/ems", "/etare",
+  "/eaah", "/tde2", "/pant",
+]);
+
+/** Rotas antigas de teste direto continuam resolvendo para a Sonda Dez. */
+const sondaOwnedRoutes = new Set([
+  "/testes-reconhecimento",
+  "/testes-academicos",
+  "/cognitive-lab",
+  "/avaliacao-cognitiva-infantil",
+  "/academico-interativo",
+  "/escrita-desenho",
+  "/conhecimento-visual",
+  "/motricidade-teste",
+  "/conhecimentos-gerais",
+  "/funcoes-executivas",
+  "/atencao-concentracao",
+  "/linguagem-fonologia",
+  "/memoria-teste",
+  "/processamento-visuoauditivo",
+]);
+
+export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
+  const matches = allNavigationSections.flatMap((section) =>
+    section.items
+      .filter((item) => matchesNavigationItem(pathname, item.href))
+      .map((item) => ({ section, item })),
+  );
+  const directMatch = matches.sort((a, b) => b.item.href.length - a.item.href.length)[0];
+  if (directMatch) return directMatch;
+
+  const normalizedPath = normalizeNavigationPath(pathname);
+  if (sondaOwnedRoutes.has(normalizedPath) || normalizedPath.startsWith("/cognitive-lab/")) {
+    const item = featuredNavigation.find((candidate) => candidate.href === "/testes-diretos");
+    if (item) return { section: featuredSection, item };
+  }
+  if (filterOwnedRoutes.has(normalizedPath)) {
+    const item = featuredNavigation.find((candidate) => candidate.href === "/filtro");
+    if (item) return { section: featuredSection, item };
+  }
+  return undefined;
+}
+
+export const getNavigationMatch = findNavigationMatch;
+export { filterOwnedRoutes };
