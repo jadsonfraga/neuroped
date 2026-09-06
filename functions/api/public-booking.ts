@@ -64,7 +64,7 @@ async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
     reviews: await Promise.all(
       (reviews.results ?? []).map(async (row) => ({
         rating: row.rating,
-        comment: await decryptText(env, row.comment_encrypted),
+        comment: await decryptText(env, row.comment_encrypted, "comment"),
         createdAt: row.created_at,
       })),
     ),
@@ -207,10 +207,10 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
           chosen.endsAtLocal,
           provider.timezone,
           await sha256(token),
-          await encryptText(env, guardianName),
-          await encryptText(env, guardianEmail || null),
-          await encryptText(env, guardianPhone || null),
-          await encryptText(env, patientName),
+          await encryptText(env, guardianName, "guardian_name"),
+          await encryptText(env, guardianEmail || null, "guardian_email"),
+          await encryptText(env, guardianPhone || null, "guardian_phone"),
+          await encryptText(env, patientName, "patient_name"),
           service.price_cents,
           now,
           now,
@@ -284,7 +284,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
         template: "booking_cancelled",
-        recipient: await decryptText(env, appointment.guardian_phone_encrypted) || await decryptText(env, appointment.guardian_email_encrypted),
+        recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, appointment.guardian_email_encrypted, "guardian_email"),
         message: `Reserva cancelada para ${appointment.starts_at_local}.`,
       });
       return jsonResponse({ ok: true, status: "cancelled" });
@@ -350,7 +350,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
         template: "booking_rescheduled",
-        recipient: await decryptText(env, appointment.guardian_phone_encrypted) || await decryptText(env, appointment.guardian_email_encrypted),
+        recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, appointment.guardian_email_encrypted, "guardian_email"),
         message: `Remarcação solicitada para ${chosen.startsAtLocal}. A clínica precisa reconfirmar.`,
       });
       return jsonResponse({ ok: true, status: "requested", startsAtLocal: chosen.startsAtLocal, endsAtLocal: chosen.endsAtLocal });
@@ -396,10 +396,10 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         service.id,
         preferredDate,
         await sha256(token),
-        await encryptText(env, guardianName),
-        await encryptText(env, guardianEmail || null),
-        await encryptText(env, guardianPhone || null),
-        await encryptText(env, patientName),
+        await encryptText(env, guardianName, "guardian_name"),
+        await encryptText(env, guardianEmail || null, "guardian_email"),
+        await encryptText(env, guardianPhone || null, "guardian_phone"),
+        await encryptText(env, patientName, "patient_name"),
         now,
         now,
       ).run();
@@ -428,7 +428,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
           appointment.id,
           appointment.provider_user_id,
           rating,
-          await encryptText(env, comment),
+          await encryptText(env, comment, "comment"),
           now,
           now,
         ).run();
