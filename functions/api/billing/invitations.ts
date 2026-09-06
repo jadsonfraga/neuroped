@@ -45,6 +45,28 @@ async function deliverInvitation(
   return null;
 }
 
+/**
+ * Um token que não teve entrega confirmada não pode continuar utilizável nem
+ * bloquear uma nova tentativa. A revogação é restrita ao mesmo tenant e ao
+ * estado pending; aceite/revogação concorrentes nunca são sobrescritos.
+ */
+async function revokeUndeliveredInvitation(
+  db: D1Database,
+  clinicId: string,
+  invitationId: string,
+): Promise<void> {
+  try {
+    await db.prepare(
+      `UPDATE clinic_invitations SET status = 'revoked'
+        WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
+    ).bind(invitationId, clinicId).run();
+  } catch (error) {
+    // O bearer nunca foi devolvido ao chamador. Falhar ao registrar a revogação
+    // deve ficar observável, mas não pode converter erro de entrega em sucesso.
+    console.error("[billing.invitations] revoke undelivered", error);
+  }
+}
+
 async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {
   const db = context.env.DB;
   const user = getContextUser(context);
@@ -181,7 +203,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       invitationUrl,
       expiresAt,
     });
-    if (deliveryFailure) return deliveryFailure;
+    if (deliveryFailure) {
+      await revokeUndeliveredInvitation(auth.db, clinicId, existingId);
+      return deliveryFailure;
+    }
     return tenantJson({
       id: existingId,
       email: existing.email,
@@ -255,7 +280,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     invitationUrl,
     expiresAt,
   });
-  if (deliveryFailure) return deliveryFailure;
+  if (deliveryFailure) {
+    await revokeUndeliveredInvitation(auth.db, clinicId, invitationId);
+    return deliveryFailure;
+  }
   return tenantJson({
     id: invitationId,
     email,
