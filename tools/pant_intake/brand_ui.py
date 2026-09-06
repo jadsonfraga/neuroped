@@ -95,9 +95,9 @@ def _cta(parent, text: str, command, *, primary: bool = True) -> tk.Button:
                      bd=0, padx=15, pady=9, cursor="hand2")
 
 
-def add_brand_hero(parent, app) -> None:
+def add_brand_hero(parent, app, *, before=None) -> None:
     hero = tk.Frame(parent, bg=NAVY, padx=18, pady=14)
-    hero.pack(fill="x")
+    hero.pack(fill="x", before=before)
     logo = _photo(app, "logo-master.jpeg", (108, 108), 20)
     tk.Label(hero, image=logo, bg=NAVY).pack(side="left", padx=(0, 16))
 
@@ -123,10 +123,10 @@ def add_brand_hero(parent, app) -> None:
              font=("Segoe UI", 8, "bold")).pack(anchor="e", pady=(6, 0))
 
 
-def add_action_strip(parent, app) -> None:
+def add_action_strip(parent, app, *, before=None) -> None:
     strip = tk.Frame(parent, bg=WHITE, padx=18, pady=10,
                      highlightbackground=BORDER, highlightthickness=1)
-    strip.pack(fill="x", padx=14, pady=(10, 8))
+    strip.pack(fill="x", padx=14, pady=(10, 8), before=before)
     tk.Label(strip, text="ATALHOS", bg=WHITE, fg=MUTED,
              font=("Segoe UI", 8, "bold")).pack(side="left", padx=(0, 12))
     actions = (
@@ -143,12 +143,12 @@ def add_action_strip(parent, app) -> None:
 
 
 def add_tab_banner(parent, app, *, photo: str, eyebrow: str, headline: str,
-                   body: str, cta: str, command, tone: str = "gold") -> None:
+                   body: str, cta: str, command, tone: str = "gold", before=None) -> None:
     bg = SOFT_GOLD if tone == "gold" else SOFT_RED if tone == "red" else "#EAF2FB"
     card = tk.Frame(parent, bg=bg, padx=14, pady=10,
                     highlightbackground=GOLD if tone == "gold" else BORDER,
                     highlightthickness=1)
-    card.pack(fill="x", pady=(0, 12))
+    card.pack(fill="x", pady=(0, 12), before=before)
 
     portrait = _photo(app, photo, (90, 76), 17)
     tk.Label(card, image=portrait, bg=bg).pack(side="left", padx=(0, 13))
@@ -188,3 +188,50 @@ def add_brand_footer(parent, status_var: tk.StringVar) -> None:
              bg=NAVY, fg=WHITE, font=("Segoe UI", 9)).pack(side="left")
     tk.Label(footer, text="@drjadsonfraganeuroped  ·  Soli Deo Gloria",
              bg=NAVY, fg="#BFD0E3", font=("Segoe UI", 8)).pack(side="right")
+
+
+def apply_brand_overlay(app) -> None:
+    """Reestiliza a janela já construída sem alterar handlers ou dados."""
+    app._brand_images = []
+    app.root.geometry("1280x900")
+    app.root.minsize(1020, 720)
+    app.root.configure(bg=SOFT)
+    app.configure(padding=0)
+    configure_styles(app.root)
+
+    children = list(app.winfo_children())
+    tab_index = children.index(app.tabs)
+    for child in children[:tab_index] + children[tab_index + 1:]:
+        child.pack_forget()
+
+    add_brand_hero(app, app, before=app.tabs)
+    add_action_strip(app, app, before=app.tabs)
+
+    banners = (
+        (app.entry, "dr-jadson-consultorio-full.jpeg", "01 · CASO ESTRUTURADO",
+         "Dados com hierarquia, identidade e foco.",
+         "O núcleo continua igual; a apresentação agora destaca o que importa e mantém sua marca em primeiro plano.",
+         "CARREGAR DEMO", lambda: app.action(app.demo), "gold"),
+        (app.capture, "dr-jadson-consultorio-superman.jpeg", "02 · PRÉ-CONSULTA",
+         "Receba o relato com presença de marca.",
+         "Foto, mascote e chamada clara acompanham a entrada sem modificar o contrato do caso nem confirmar dados automaticamente.",
+         "IMPORTAR TEXTO", lambda: app.action(app.open_text), "blue"),
+        (app.review, "dr-jadson-arte.jpeg", "03 · REVISÃO",
+         "Do dado ao rascunho, com Dr. Jadson no centro.",
+         "Validação, pendências e rascunhos permanecem funcionais; a tela ganha contraste, assinatura visual e CTA inequívoco.",
+         "VALIDAR AGORA", lambda: app.action(app.validate), "red"),
+        (app.batch, "dr-jadson-selfie.jpeg", "04 · FLUXO LOCAL",
+         "Seu método. Sua identidade. Seu fluxo.",
+         "A automação de pastas continua local e separada da emissão final, agora com uma superfície mais memorável e proprietária.",
+         "PROCESSAR PASTA", lambda: app.action(app.process), "gold"),
+    )
+    for parent, photo, eyebrow, headline, body, cta, command, tone in banners:
+        first = parent.winfo_children()[0] if parent.winfo_children() else None
+        add_tab_banner(parent, app, photo=photo, eyebrow=eyebrow, headline=headline,
+                       body=body, cta=cta, command=command, tone=tone, before=first)
+
+    for text in (app.json_text, app.transcript, app.document, app.batch_result):
+        style_textbox(text)
+
+    app.tabs.pack_configure(fill="both", expand=True, padx=14)
+    add_brand_footer(app, app.status)
