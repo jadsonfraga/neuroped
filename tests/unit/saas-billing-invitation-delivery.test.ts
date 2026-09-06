@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { passwordPolicyError } from "../../functions/api/auth/_passwordPolicy";
 import { invitationDeliveryConfigured } from "../../functions/api/billing/_invitationDelivery";
 
 assert.equal(invitationDeliveryConfigured({}), false);
@@ -23,6 +24,9 @@ assert.equal(
 
 const handler = fs.readFileSync("functions/api/billing/invitations.ts", "utf8");
 const delivery = fs.readFileSync("functions/api/billing/_invitationDelivery.ts", "utf8");
+const accept = fs.readFileSync("functions/api/billing/accept.ts", "utf8");
+const signup = fs.readFileSync("functions/api/auth/signup.ts", "utf8");
+const changePassword = fs.readFileSync("functions/api/auth/change-password.ts", "utf8");
 const teamUi = fs.readFileSync("client/src/pages/configuracoes.tsx", "utf8");
 
 assert.match(handler, /INVITATION_DELIVERY_NOT_CONFIGURED/);
@@ -61,4 +65,20 @@ assert.doesNotMatch(teamUi, /Entrega por e-mail não configurada nesta instalaç
 assert.doesNotMatch(teamUi, /Copiar link|Link copiado/);
 assert.match(teamUi, /body\.delivery !== ["']email["']/);
 
-console.log("✓ invitation delivery: fail-closed, origem canônica única, sem bearer URL/token órfão e sem UI de fallback manual");
+assert.equal(passwordPolicyError("Aa1!12345678"), null);
+for (const weak of [
+  "Aa1!1234567",
+  "aaaaaaaaaaaa!1",
+  "AAAAAAAAAAAA!1",
+  "Aa!aaaaaaaaa",
+  "Aa1aaaaaaaaa",
+]) {
+  assert.ok(passwordPolicyError(weak), `senha fraca deve ser recusada: ${weak}`);
+}
+assert.match(accept, /passwordPolicyError\(password\)/);
+assert.match(signup, /passwordPolicyError\(password\)/);
+assert.match(changePassword, /passwordPolicyError\(newPassword, ["']A nova senha["']\)/);
+assert.doesNotMatch(accept, /text\(body\.password/);
+assert.match(accept, /typeof body\.password === ["']string["'] \? body\.password : ["']["']/);
+
+console.log("✓ onboarding seguro: convite fail-closed, origem única, sem bearer manual/token órfão e política de senha canônica");
