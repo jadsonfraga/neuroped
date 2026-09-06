@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, ExternalLink, KeyRound, Loader2, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,20 @@ function readableLoginError(error: unknown): string {
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { login, isLoading, remoteConfigured } = useAuth();
+  const { login, isLoading, remoteConfigured, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authenticatedHere, setAuthenticatedHere] = useState(false);
+
+  // Navegar dentro do submit corria com o commit do estado de sessão: o
+  // RouteGuard avaliava "/" antes de enxergar o usuário e devolvia para
+  // /login?next=/ com a sessão já válida, prendendo quem acabou de entrar na
+  // própria tela de login. Sair daqui só quando o contexto já publicou a sessão.
+  useEffect(() => {
+    if (authenticatedHere && isAuthenticated) setLocation("/");
+  }, [authenticatedHere, isAuthenticated, setLocation]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,7 +39,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-      setLocation("/");
+      setAuthenticatedHere(true);
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {
