@@ -240,26 +240,26 @@ function VectorScene({ kind }: { kind: StimulusKind }) {
       <div className="grid w-full max-w-4xl grid-cols-3 gap-5">
         <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
           <svg viewBox="0 0 160 160" className="h-4/5 w-4/5" aria-label="bola">
-            <circle cx="80" cy="80" r="55" fill="#f8fafc" stroke="#0f172a" strokeWidth="8" />
-            <path d="M80 25 110 52 99 91 61 91 50 52Z" fill="#0f172a" />
-            <path d="M50 52 25 72M110 52 135 72M61 91 46 130M99 91 114 130" stroke="#0f172a" strokeWidth="7" />
+            <circle cx="80" cy="80" r="55" fill="hsl(210 40% 98%)" stroke="hsl(222 47% 11%)" strokeWidth="8" />
+            <path d="M80 25 110 52 99 91 61 91 50 52Z" fill="hsl(222 47% 11%)" />
+            <path d="M50 52 25 72M110 52 135 72M61 91 46 130M99 91 114 130" stroke="hsl(222 47% 11%)" strokeWidth="7" />
           </svg>
         </div>
         <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
           <svg viewBox="0 0 180 140" className="h-4/5 w-4/5" aria-label="carrinho">
-            <rect x="25" y="55" width="125" height="45" rx="14" fill="#2563eb" />
-            <path d="M55 55 75 25h45l22 30" fill="#93c5fd" stroke="#1e3a8a" strokeWidth="6" />
-            <circle cx="58" cy="108" r="16" fill="#0f172a" /><circle cx="126" cy="108" r="16" fill="#0f172a" />
+            <rect x="25" y="55" width="125" height="45" rx="14" fill="hsl(221 83% 53%)" />
+            <path d="M55 55 75 25h45l22 30" fill="hsl(212 96% 78%)" stroke="hsl(224 64% 33%)" strokeWidth="6" />
+            <circle cx="58" cy="108" r="16" fill="hsl(222 47% 11%)" /><circle cx="126" cy="108" r="16" fill="hsl(222 47% 11%)" />
           </svg>
         </div>
         <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
           <svg viewBox="0 0 180 180" className="h-4/5 w-4/5" aria-label="bebê">
-            <circle cx="90" cy="55" r="38" fill="#f5cfae" stroke="#7c2d12" strokeWidth="5" />
-            <path d="M62 45 Q90 18 118 45" fill="none" stroke="#7c2d12" strokeWidth="8" strokeLinecap="round" />
-            <circle cx="77" cy="55" r="4" fill="#0f172a" /><circle cx="103" cy="55" r="4" fill="#0f172a" />
-            <path d="M78 70 Q90 80 102 70" fill="none" stroke="#9a3412" strokeWidth="4" strokeLinecap="round" />
-            <path d="M48 158 Q48 96 90 92 Q132 96 132 158Z" fill="#fbbf24" stroke="#92400e" strokeWidth="5" />
-            <path d="M58 116 30 140M122 116 150 140" stroke="#f5cfae" strokeWidth="14" strokeLinecap="round" />
+            <circle cx="90" cy="55" r="38" fill="hsl(28 78% 82%)" stroke="hsl(15 75% 28%)" strokeWidth="5" />
+            <path d="M62 45 Q90 18 118 45" fill="none" stroke="hsl(15 75% 28%)" strokeWidth="8" strokeLinecap="round" />
+            <circle cx="77" cy="55" r="4" fill="hsl(222 47% 11%)" /><circle cx="103" cy="55" r="4" fill="hsl(222 47% 11%)" />
+            <path d="M78 70 Q90 80 102 70" fill="none" stroke="hsl(15 79% 34%)" strokeWidth="4" strokeLinecap="round" />
+            <path d="M48 158 Q48 96 90 92 Q132 96 132 158Z" fill="hsl(43 96% 56%)" stroke="hsl(23 82% 31%)" strokeWidth="5" />
+            <path d="M58 116 30 140M122 116 150 140" stroke="hsl(28 78% 82%)" strokeWidth="14" strokeLinecap="round" />
           </svg>
         </div>
       </div>
@@ -271,22 +271,22 @@ function VectorScene({ kind }: { kind: StimulusKind }) {
       <div className="grid w-full max-w-4xl grid-cols-3 gap-5">
         <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
           <svg viewBox="0 0 160 160" className="h-4/5 w-4/5" aria-label="bola">
-            <circle cx="80" cy="80" r="55" fill="#f8fafc" stroke="#0f172a" strokeWidth="8" />
-            <path d="M80 25 110 52 99 91 61 91 50 52Z" fill="#0f172a" />
-            <path d="M50 52 25 72M110 52 135 72M61 91 46 130M99 91 114 130" stroke="#0f172a" strokeWidth="7" />
+            <circle cx="80" cy="80" r="55" fill="hsl(210 40% 98%)" stroke="hsl(222 47% 11%)" strokeWidth="8" />
+            <path d="M80 25 110 52 99 91 61 91 50 52Z" fill="hsl(222 47% 11%)" />
+            <path d="M50 52 25 72M110 52 135 72M61 91 46 130M99 91 114 130" stroke="hsl(222 47% 11%)" strokeWidth="7" />
           </svg>
         </div>
         <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
           <svg viewBox="0 0 180 140" className="h-4/5 w-4/5" aria-label="carrinho">
-            <rect x="25" y="55" width="125" height="45" rx="14" fill="#2563eb" />
-            <path d="M55 55 75 25h45l22 30" fill="#93c5fd" stroke="#1e3a8a" strokeWidth="6" />
-            <circle cx="58" cy="108" r="16" fill="#0f172a" /><circle cx="126" cy="108" r="16" fill="#0f172a" />
+            <rect x="25" y="55" width="125" height="45" rx="14" fill="hsl(221 83% 53%)" />
+            <path d="M55 55 75 25h45l22 30" fill="hsl(212 96% 78%)" stroke="hsl(224 64% 33%)" strokeWidth="6" />
+            <circle cx="58" cy="108" r="16" fill="hsl(222 47% 11%)" /><circle cx="126" cy="108" r="16" fill="hsl(222 47% 11%)" />
           </svg>
         </div>
         <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
           <svg viewBox="0 0 160 180" className="h-4/5 w-4/5" aria-label="banana">
-            <path d="M35 35c8 88 55 118 100 72-44 10-72-17-75-82Z" fill="#facc15" stroke="#854d0e" strokeWidth="7" />
-            <path d="M39 32 57 24" stroke="#854d0e" strokeWidth="9" strokeLinecap="round" />
+            <path d="M35 35c8 88 55 118 100 72-44 10-72-17-75-82Z" fill="hsl(48 96% 53%)" stroke="hsl(32 81% 29%)" strokeWidth="7" />
+            <path d="M39 32 57 24" stroke="hsl(32 81% 29%)" strokeWidth="9" strokeLinecap="round" />
           </svg>
         </div>
       </div>
@@ -315,18 +315,18 @@ function VectorScene({ kind }: { kind: StimulusKind }) {
   if (kind === "story") {
     return (
       <svg viewBox="0 0 900 520" className="w-full max-w-5xl rounded-[32px] bg-sky-50 text-slate-800" role="img" aria-label="cena narrativa autoral">
-        <rect width="900" height="520" fill="#eef6ff" />
-        <rect y="375" width="900" height="145" fill="#d8e7c8" />
-        <rect x="570" y="95" width="250" height="260" rx="12" fill="#f8fafc" stroke="#334155" strokeWidth="8" />
-        <polygon points="545,105 695,18 845,105" fill="#b45309" />
-        <rect x="660" y="230" width="70" height="125" fill="#94a3b8" />
-        <path d="M80 60 130 95M170 55 205 90M250 62 280 98" stroke="#60a5fa" strokeWidth="8" strokeLinecap="round" />
-        <path d="M320 80 360 120M410 65 450 105M500 75 540 115" stroke="#60a5fa" strokeWidth="8" strokeLinecap="round" />
+        <rect width="900" height="520" fill="hsl(212 100% 97%)" />
+        <rect y="375" width="900" height="145" fill="hsl(89 39% 85%)" />
+        <rect x="570" y="95" width="250" height="260" rx="12" fill="hsl(210 40% 98%)" stroke="hsl(215 25% 27%)" strokeWidth="8" />
+        <polygon points="545,105 695,18 845,105" fill="hsl(26 90% 37%)" />
+        <rect x="660" y="230" width="70" height="125" fill="hsl(215 20% 65%)" />
+        <path d="M80 60 130 95M170 55 205 90M250 62 280 98" stroke="hsl(213 94% 68%)" strokeWidth="8" strokeLinecap="round" />
+        <path d="M320 80 360 120M410 65 450 105M500 75 540 115" stroke="hsl(213 94% 68%)" strokeWidth="8" strokeLinecap="round" />
         <g transform="translate(350 245)" className="text-indigo-700"><Person x={0} y={0} /></g>
-        <path d="M300 330 Q365 270 430 330" fill="none" stroke="#7c3aed" strokeWidth="12" />
-        <path d="M300 330 282 365M430 330 447 365" stroke="#7c3aed" strokeWidth="10" />
-        <ellipse cx="370" cy="410" rx="120" ry="28" fill="#93c5fd" opacity="0.75" />
-        <circle cx="505" cy="342" r="30" fill="#f59e0b" /><path d="M500 370 470 410" stroke="#92400e" strokeWidth="10" />
+        <path d="M300 330 Q365 270 430 330" fill="none" stroke="hsl(262 83% 58%)" strokeWidth="12" />
+        <path d="M300 330 282 365M430 330 447 365" stroke="hsl(262 83% 58%)" strokeWidth="10" />
+        <ellipse cx="370" cy="410" rx="120" ry="28" fill="hsl(212 96% 78%)" opacity="0.75" />
+        <circle cx="505" cy="342" r="30" fill="hsl(38 92% 50%)" /><path d="M500 370 470 410" stroke="hsl(23 82% 31%)" strokeWidth="10" />
       </svg>
     );
   }
@@ -334,26 +334,26 @@ function VectorScene({ kind }: { kind: StimulusKind }) {
   if (kind === "social") {
     return (
       <svg viewBox="0 0 900 520" className="w-full max-w-5xl rounded-[32px] bg-slate-50 text-slate-800" role="img" aria-label="cena social ambígua autoral">
-        <rect width="900" height="520" fill="#f8fafc" />
-        <rect y="390" width="900" height="130" fill="#e2e8f0" />
-        <rect x="70" y="70" width="200" height="150" rx="20" fill="#dbeafe" /><rect x="630" y="80" width="180" height="140" rx="20" fill="#fef3c7" />
+        <rect width="900" height="520" fill="hsl(210 40% 98%)" />
+        <rect y="390" width="900" height="130" fill="hsl(214 32% 91%)" />
+        <rect x="70" y="70" width="200" height="150" rx="20" fill="hsl(214 95% 93%)" /><rect x="630" y="80" width="180" height="140" rx="20" fill="hsl(48 96% 89%)" />
         <g className="text-blue-700"><Person x={365} y={215} /><Person x={515} y={215} facing={-1} /></g>
         <g className="text-rose-700"><Person x={165} y={250} /></g>
-        <path d="M382 170 Q440 125 500 170" fill="none" stroke="#64748b" strokeWidth="7" strokeDasharray="12 12" />
-        <rect x="390" y="115" width="110" height="58" rx="20" fill="#fff" stroke="#94a3b8" strokeWidth="4" />
-        <circle cx="420" cy="143" r="7" fill="#64748b" /><circle cx="447" cy="143" r="7" fill="#64748b" /><circle cx="474" cy="143" r="7" fill="#64748b" />
+        <path d="M382 170 Q440 125 500 170" fill="none" stroke="hsl(215 16% 47%)" strokeWidth="7" strokeDasharray="12 12" />
+        <rect x="390" y="115" width="110" height="58" rx="20" fill="hsl(0 0% 100%)" stroke="hsl(215 20% 65%)" strokeWidth="4" />
+        <circle cx="420" cy="143" r="7" fill="hsl(215 16% 47%)" /><circle cx="447" cy="143" r="7" fill="hsl(215 16% 47%)" /><circle cx="474" cy="143" r="7" fill="hsl(215 16% 47%)" />
       </svg>
     );
   }
 
   if (kind === "blocks") {
     const cells = [
-      [1, 0, "#2563eb"], [2, 0, "#eab308"], [0, 1, "#ef4444"],
-      [1, 1, "#22c55e"], [2, 1, "#8b5cf6"], [1, 2, "#f97316"],
+      [1, 0, "hsl(221 83% 53%)"], [2, 0, "hsl(45 93% 47%)"], [0, 1, "hsl(0 84% 60%)"],
+      [1, 1, "hsl(142 71% 45%)"], [2, 1, "hsl(258 90% 66%)"], [1, 2, "hsl(25 95% 53%)"],
     ] as const;
     return (
       <svg viewBox="0 0 480 420" className="w-full max-w-xl rounded-[30px] bg-white" aria-label="modelo de seis blocos">
-        {cells.map(([x, y, fill], i) => <rect key={i} x={70 + x * 110} y={45 + y * 110} width="96" height="96" rx="12" fill={fill} stroke="#0f172a" strokeWidth="5" />)}
+        {cells.map(([x, y, fill], i) => <rect key={i} x={70 + x * 110} y={45 + y * 110} width="96" height="96" rx="12" fill={fill} stroke="hsl(222 47% 11%)" strokeWidth="5" />)}
       </svg>
     );
   }
@@ -424,8 +424,8 @@ function RapidNaming() {
 function NumberLine() {
   return (
     <svg viewBox="0 0 1000 260" className="w-full max-w-5xl rounded-[30px] bg-white" aria-label="reta numérica de zero a cem">
-      <line x1="90" y1="120" x2="910" y2="120" stroke="#0f172a" strokeWidth="10" strokeLinecap="round" />
-      {Array.from({ length: 11 }, (_, i) => <g key={i}><line x1={90 + i * 82} y1="92" x2={90 + i * 82} y2="148" stroke="#0f172a" strokeWidth="5" />{(i === 0 || i === 10) && <text x={90 + i * 82} y="205" textAnchor="middle" fontSize="44" fontWeight="800" fill="#0f172a">{i * 10}</text>}</g>)}
+      <line x1="90" y1="120" x2="910" y2="120" stroke="hsl(222 47% 11%)" strokeWidth="10" strokeLinecap="round" />
+      {Array.from({ length: 11 }, (_, i) => <g key={i}><line x1={90 + i * 82} y1="92" x2={90 + i * 82} y2="148" stroke="hsl(222 47% 11%)" strokeWidth="5" />{(i === 0 || i === 10) && <text x={90 + i * 82} y="205" textAnchor="middle" fontSize="44" fontWeight="800" fill="hsl(222 47% 11%)">{i * 10}</text>}</g>)}
     </svg>
   );
 }
