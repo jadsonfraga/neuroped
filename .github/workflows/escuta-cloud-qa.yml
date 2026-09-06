@@ -1,4 +1,5 @@
 name: Escuta isolated cloud acceptance
+# Gate final da PR: valida a revisão exata em cópia isolada, sem ativar produção.
 on:
   push:
     branches: [feat/escuta-clinica-integrada-20260905]
