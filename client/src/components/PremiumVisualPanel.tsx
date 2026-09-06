@@ -72,10 +72,10 @@ export function PremiumVisualPanel({
             className="absolute inset-0 h-full w-full object-cover object-top"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-t from-[rgba(7,26,51,0.35)] via-transparent to-[rgba(255,255,255,0.08)]"
+            className="absolute inset-0 bg-gradient-to-t from-[hsl(214_76%_11%/0.35)] via-transparent to-[hsl(0_0%_100%/0.08)]"
             aria-hidden="true"
           />
-          <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/35 bg-[rgba(7,26,51,0.72)] px-3 py-2 text-white shadow-lg backdrop-blur-md">
+          <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/35 bg-[hsl(214_76%_11%/0.72)] px-3 py-2 text-white shadow-lg backdrop-blur-md">
             <p className="text-[10px] font-semibold">Dr. Jadson Fraga</p>
             <p className="mt-0.5 text-[8px] uppercase tracking-[0.12em] text-amber-200">Cuidado com identidade e propósito</p>
           </div>
