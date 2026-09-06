@@ -15,6 +15,7 @@ on:
       - 'client/public/audio/escuta-recorder.js'
       - 'client/src/App.tsx'
       - 'client/src/data/navigation.ts'
+      - 'client/src/data/interactiveScaleIds.generated.ts'
       - 'client/src/lib/escutaRecorder.ts'
       - 'client/src/pages/escuta-clinica.tsx'
       - 'client/src/pages/login.tsx'
