@@ -33,7 +33,7 @@ export function PageHero({
     <header className="np-page-hero np-brand-page-hero relative overflow-hidden rounded-[1.55rem] border border-border/80 bg-card/92 p-5 shadow-[0_1px_1px_hsl(var(--foreground)/0.025),0_16px_42px_-34px_hsl(var(--foreground)/0.38)] sm:p-6">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[rgb(213_163_58/0.72)] to-transparent"
+        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(41_65%_53%/0.72)] to-transparent"
       />
       <div className="relative flex items-start gap-4">
         <div
@@ -63,7 +63,7 @@ export function PageHero({
         </div>
 
         <div className="hidden shrink-0 items-center gap-3 xl:flex" aria-label="Identidade do Dr. Jadson Fraga">
-          <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-amber-300/45 bg-background shadow-[0_14px_30px_-20px_rgba(7,26,51,0.55)]">
+          <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-amber-300/45 bg-background shadow-[0_14px_30px_-20px_hsl(214_76%_11%/0.55)]">
             <SafeAssetImage
               src={brandAssets.mascots.doctorSelfie}
               alt="Dr. Jadson Fraga"
