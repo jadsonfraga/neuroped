@@ -178,7 +178,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : path === "/recepcao" && userRole === "operator"
+        : (path === "/recepcao" || path === "/testes-diretos") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -288,6 +288,17 @@ assert.equal(
     allowedRoles: ["admin", "professional", "operator"],
   }),
   "allow",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/testes-diretos",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "assistente/operator deve poder abrir a Sonda Dez sem ampliar acesso às demais rotas clínicas",
 );
 assert.equal(
   decideRouteAccess({
