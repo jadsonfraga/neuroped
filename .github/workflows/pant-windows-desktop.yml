@@ -1,14 +1,17 @@
 name: PANT Windows Desktop
 on:
   push:
-    branches: [feat/pant-intake-python-20260905]
+    branches: [feat/pant-intake-python-20260905, feat/desktop-brand-refresh-20260906]
     paths:
       - 'tools/pant_intake/**'
+      - 'attached_assets/images/**'
       - '.github/workflows/pant-windows-desktop.yml'
   pull_request:
     paths:
       - 'tools/pant_intake/**'
+      - 'attached_assets/images/**'
       - '.github/workflows/pant-windows-desktop.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -28,21 +31,36 @@ jobs:
         with:
           python-version: '3.12'
           architecture: x64
+      - name: Install desktop dependencies
+        run: |
+          python -m pip install --disable-pip-version-check pillow==11.3.0 pyinstaller==6.22.2
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop dependency installation failed' }
       - name: Unit tests required
         run: |
           python -m unittest discover -s tests -v 2>&1 | Tee-Object -FilePath desktop-tests.txt
           if ($LASTEXITCODE -ne 0) { throw 'Python regression tests failed' }
-      - name: Native source GUI smoke test
+      - name: Core source GUI smoke test
         run: |
-          python desktop.py --smoke-gui source-gui-smoke.json
-          if ($LASTEXITCODE -ne 0) { throw 'Native source GUI smoke failed' }
-          $proof = Get-Content source-gui-smoke.json -Raw | ConvertFrom-Json
-          if (-not $proof.export_verified -or $proof.drafts -ne 5) { throw 'Source GUI export not verified' }
-      - name: Build standalone executable
+          python desktop.py --smoke-gui source-core-smoke.json
+          if ($LASTEXITCODE -ne 0) { throw 'Core source GUI smoke failed' }
+          $proof = Get-Content source-core-smoke.json -Raw | ConvertFrom-Json
+          if (-not $proof.export_verified -or $proof.drafts -ne 5 -or $proof.final_pdfs_emitted -ne 0) { throw 'Core source GUI export not verified' }
+      - name: Branded source GUI smoke test
         run: |
-          python -m pip install --disable-pip-version-check pyinstaller==6.22.2
-          if ($LASTEXITCODE -ne 0) { throw 'Build dependency installation failed' }
-          python -m PyInstaller --clean --noconfirm --onefile --windowed --name NeuroPedFluxo --paths . desktop.py
+          python branded_desktop.py --smoke-gui source-brand-smoke.json
+          if ($LASTEXITCODE -ne 0) { throw 'Branded source GUI smoke failed' }
+          $proof = Get-Content source-brand-smoke.json -Raw | ConvertFrom-Json
+          if (-not $proof.export_verified -or $proof.drafts -ne 5 -or $proof.brand_images_loaded -lt 10 -or $proof.gui -ne 'tkinter-native-branded') { throw 'Branded source GUI evidence invalid' }
+      - name: Build standalone branded executable
+        run: |
+          python -m PyInstaller --clean --noconfirm --onefile --windowed --name NeuroPedFluxo --paths . `
+            --add-data "../../attached_assets/images/dr-jadson-logo-super.jpeg;assets" `
+            --add-data "../../attached_assets/images/dr-jadson-selfie.jpeg;assets" `
+            --add-data "../../attached_assets/images/dr-jadson-consultorio-full.jpeg;assets" `
+            --add-data "../../attached_assets/images/dr-jadson-consultorio-superman.jpeg;assets" `
+            --add-data "../../attached_assets/images/dr-jadson-arte.jpeg;assets" `
+            --add-data "../../attached_assets/images/dr-fraga-kids/mascote.png;assets" `
+            branded_desktop.py
           if ($LASTEXITCODE -ne 0) { throw 'Windows executable build failed' }
       - name: Test the packaged executable without Python on PATH
         run: |
@@ -54,7 +72,7 @@ jobs:
             if ($p.ExitCode -ne 0) { throw "Packaged executable failed: $($p.ExitCode)" }
           } finally { $env:PATH = $savedPath }
           $proof = Get-Content $report -Raw | ConvertFrom-Json
-          if (-not $proof.frozen -or -not $proof.export_verified -or $proof.platform -ne 'win32' -or $proof.final_pdfs_emitted -ne 0) { throw 'Frozen executable evidence invalid' }
+          if (-not $proof.frozen -or -not $proof.export_verified -or $proof.platform -ne 'win32' -or $proof.final_pdfs_emitted -ne 0 -or $proof.brand_images_loaded -lt 10) { throw 'Frozen executable evidence invalid' }
       - name: Prepare verifiable portable package
         run: |
           New-Item -ItemType Directory -Path release -ErrorAction Stop | Out-Null
@@ -67,18 +85,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Missing source revision' }
       - uses: actions/upload-artifact@v4
         with:
-          name: NeuroPed-Fluxo-Desktop-1.1.0-Windows-x64
+          name: NeuroPed-Fluxo-Desktop-1.1.0-Brand-Windows-x64
           path: tools/pant_intake/release/
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
-          name: NeuroPed-Fluxo-Desktop-source-1.1.0
+          name: NeuroPed-Fluxo-Desktop-source-1.1.0-Brand
           path: |
             tools/pant_intake/*.py
             tools/pant_intake/*.md
             tools/pant_intake/neuroped_fluxo/*.py
             tools/pant_intake/exemplos/*.json
             tools/pant_intake/tests/*.py
+            attached_assets/images/dr-jadson-logo-super.jpeg
+            attached_assets/images/dr-jadson-selfie.jpeg
+            attached_assets/images/dr-jadson-consultorio-full.jpeg
+            attached_assets/images/dr-jadson-consultorio-superman.jpeg
+            attached_assets/images/dr-jadson-arte.jpeg
+            attached_assets/images/dr-fraga-kids/mascote.png
           if-no-files-found: error
           retention-days: 14
