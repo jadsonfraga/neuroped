@@ -1,0 +1,44 @@
+name: Refresh generated clinical provenance once
+on:
+  push:
+    branches: [feat/escuta-clinica-integrada-20260905]
+    paths: ['.github/workflows/escuta-refresh-derived-once.yml']
+permissions:
+  contents: write
+concurrency:
+  group: escuta-refresh-derived-once
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Regenerate canonical clinical provenance from catalog
+        run: npm run validate:catalog
+      - name: Assert only the expected generated artifact changed
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          [ "$changed" = 'docs/PROVENIENCIA_CLINICA.md' ] || {
+            echo "::error::Regenerator changed unexpected paths: $changed"
+            exit 1
+          }
+          grep -q '\*\*Total de instrumentos:\*\* 258' docs/PROVENIENCIA_CLINICA.md
+          grep -q '\*\*Aguardando validação psicométrica publicada:\*\* 82' docs/PROVENIENCIA_CLINICA.md
+      - name: Commit regenerated artifact and remove this one-shot workflow
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/PROVENIENCIA_CLINICA.md
+          git rm .github/workflows/escuta-refresh-derived-once.yml
+          git commit -m 'chore(catalog): regenerate clinical provenance after main reconciliation'
+          git push origin HEAD:feat/escuta-clinica-integrada-20260905
