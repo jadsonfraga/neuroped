@@ -224,7 +224,7 @@ export default function AgendaPage() {
   const publicHref = `/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 pb-16" data-testid="agenda-shell">
       <header className="rounded-[2rem] border border-primary/15 bg-gradient-to-br from-primary/10 via-background to-indigo-500/10 p-5 sm:p-7">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -279,7 +279,7 @@ export default function AgendaPage() {
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <Field label="Serviço"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.serviceId} onChange={(e) => setManual((p) => ({ ...p, serviceId: e.target.value }))}><option value="">Selecione</option>{data.services.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
               <Field label="Data e horário"><Input type="datetime-local" value={manual.startsAtLocal} onChange={(e) => setManual((p) => ({ ...p, startsAtLocal: e.target.value }))} /></Field>
-              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar por nome ou identificador" aria-label="Buscar paciente para vínculo clínico" /><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientsQuery.data?.total ?? patientOptions.length} resultado(s) encontrado(s).</p></div></Field>}
+              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar por nome ou identificador" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientsQuery.data?.total ?? patientOptions.length} resultado(s) encontrado(s).</p></div></Field>}
               <Field label="Criança"><Input value={manual.patientName} onChange={(e) => setManual((p) => ({ ...p, patientName: e.target.value }))} placeholder="Nome" /></Field>
               <Field label="Responsável"><Input value={manual.guardianName} onChange={(e) => setManual((p) => ({ ...p, guardianName: e.target.value }))} /></Field>
               <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
@@ -483,8 +483,22 @@ function Metric({ icon: Icon, label, value, detail }: { icon: typeof CalendarClo
   return <Card><CardContent className="flex items-start gap-3 p-4"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span><div className="min-w-0"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-black">{value}</p>{detail && <p className="mt-1 text-[11px] text-muted-foreground">{detail}</p>}</div></CardContent></Card>;
 }
 
+/**
+ * Campo rotulado da Agenda.
+ *
+ * O rótulo envolve o controle: sem isso o `<Label>` ficava órfão e o axe
+ * apontava `label`/`select-name` (críticos) em datas, e-mail, serviço e
+ * situação de pagamento — a agenda inteira era operável só por quem enxerga o
+ * texto ao lado. A associação implícita cobre o primeiro controle rotulável;
+ * campos compostos declaram `aria-label` no controle extra.
+ */
 function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="space-y-1.5"><Label>{label}</Label>{children}</div>;
+  return (
+    <label className="block space-y-1.5">
+      <Label asChild><span>{label}</span></Label>
+      {children}
+    </label>
+  );
 }
 
 function Empty({ text }: { text: string }) {

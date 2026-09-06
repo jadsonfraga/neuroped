@@ -4,6 +4,9 @@ node_modules/
 
 # Build artifacts
 dist/
+# Saída das auditorias de navegador (capturas + relatórios) — publicada como
+# artefato de workflow, nunca versionada.
+artifacts/
 build/
 .cache/
 .parcel-cache/

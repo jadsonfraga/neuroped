@@ -1,0 +1,50 @@
+name: Escuta Vercel scope verification
+on:
+  push:
+    branches: [feat/escuta-clinica-integrada-20260905]
+    paths: ['.github/workflows/escuta-vercel-scope.yml']
+permissions:
+  contents: read
+jobs:
+  authorized-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable project ID, repository link and aliases; read only
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync,writeFileSync } from 'node:fs';
+          const token=process.env.VERCEL_TOKEN?.trim(),org=process.env.VERCEL_ORG_ID?.trim();
+          const report={scope:'canonical project identity metadata only; no mutation',status:'running',organizationType:org?.startsWith('team_')?'team':'personal_or_unknown'};
+          try {
+            if(!token||!org)throw new Error('VERCEL_CREDENTIAL_MISSING');
+            const headers={Authorization:`Bearer ${token}`};
+            const suffix=org.startsWith('team_')?`?teamId=${encodeURIComponent(org)}`:'';
+            const result=await fetch(`https://api.vercel.com/v9/projects/prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b${suffix}`,{headers,signal:AbortSignal.timeout(20000)});
+            const data=await result.json().catch(()=>({}));
+            report.projectHttp=result.status;report.projectErrorCode=data.error?.code ?? null;
+            if(!result.ok)throw new Error('VERCEL_CANONICAL_PROJECT_ACCESS_DENIED');
+            report.projectId=data.id;report.projectName=data.name;report.ownerMatchesConfigured=data.accountId===org;
+            report.repository=data.link?{type:data.link.type,repo:data.link.repo,org:data.link.org,repoId:data.link.repoId}:null;
+            report.production=data.targets?.production?{id:data.targets.production.id,url:data.targets.production.url,alias:data.targets.production.alias,readyState:data.targets.production.readyState}:null;
+            if(data.id!=='prj_8gsXbaQoOZHgbhjnqiMPR9A5jg5b')throw new Error('VERCEL_PROJECT_IDENTITY_MISMATCH');
+            const aliases=(data.targets?.production?.alias||[]);
+            const linked=data.link?.type==='github'&&data.link?.repo==='neuroped'&&data.link?.org==='jadsonfraga';
+            report.canonicalLinkVerified=linked||aliases.includes('superneuroped.vercel.app');
+            if(!report.canonicalLinkVerified)throw new Error('VERCEL_CANONICAL_REPOSITORY_OR_ALIAS_NOT_CONFIRMED');
+            report.status='passed';
+          }catch(error){report.status='blocked';report.reason=error.message;process.exitCode=1;}
+          mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/vercel-scope.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-vercel-scope-${{ github.run_id }}
+          path: artifacts/vercel-scope.json
+          retention-days: 7

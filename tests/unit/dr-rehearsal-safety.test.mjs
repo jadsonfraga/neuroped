@@ -19,6 +19,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { execFileSync } from "node:child_process";
+import { writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { randomUUID } from "node:crypto";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const workflow = readFileSync(
@@ -80,6 +84,63 @@ assert.match(
   "o destroy precisa rodar mesmo quando um passo anterior falha — alvo órfão custa dinheiro",
 );
 
+// 4.5) A extração do bookmark roda contra a saída REAL do wrangler.
+//
+// O ensaio de 05/09 falhou aqui, e falhou silencioso do ponto de vista do
+// autor: a regex `[0-9a-f]{16,}-[0-9a-f-]+` parecia certa, mas exigia 16+ hex
+// no PRIMEIRO grupo, e o formato real começa com 8. Um ensaio de DR que não
+// consegue ler o próprio ponto de restauração não ensaia nada — e a única
+// forma de provar que a leitura funciona é exercitá-la sobre o texto que o
+// wrangler de fato imprime, extraído do próprio workflow para que teste e
+// workflow não possam divergir.
+{
+  const linhaExtracao = workflow
+    .split("\n")
+    .find((linha) => linha.includes("BOOKMARK=$("));
+  assert.ok(linhaExtracao, "o workflow precisa extrair o bookmark em uma linha própria");
+
+  // Saída real do `wrangler d1 time-travel info`, copiada do run 33999372591.
+  const saidaReal = [
+    " ⛅️ wrangler 4.129.0",
+    "────────────────────",
+    "Resource location: remote ",
+    "",
+    "🚧 Time Traveling...",
+    "⚠️ The current bookmark is '00000002-000000a0-000050dd-bd03473216fd82dca4e0ded3b39c4c5a'",
+    "⚡️ To restore to this specific bookmark, run:",
+    " `wrangler d1 time-travel restore alvo --bookmark=00000002-000000a0-000050dd-bd03473216fd82dca4e0ded3b39c4c5a`",
+  ].join("\n");
+
+  const extrair = (texto) => {
+    const arquivo = join(tmpdir(), `dr-bookmark-${randomUUID()}.txt`);
+    writeFileSync(arquivo, `${texto}\n`);
+    try {
+      return execFileSync(
+        "bash",
+        ["-c", `${linhaExtracao.trim().replace("/tmp/b1.txt", arquivo)}\nprintf '%s' "$BOOKMARK"`],
+        { encoding: "utf8" },
+      );
+    } finally {
+      rmSync(arquivo, { force: true });
+    }
+  };
+
+  assert.equal(
+    extrair(saidaReal),
+    "00000002-000000a0-000050dd-bd03473216fd82dca4e0ded3b39c4c5a",
+    "a extração precisa ler o bookmark exato da saída real do wrangler",
+  );
+
+  // E precisa devolver vazio quando o bookmark NÃO está lá, para que o
+  // `[ -n "$BOOKMARK" ]` do workflow falhe fechado em vez de restaurar para
+  // um ponto inventado.
+  assert.equal(
+    extrair("🚧 Time Traveling...\nerro: database not found"),
+    "",
+    "sem bookmark na saída a extração precisa devolver vazio, nunca um palpite",
+  );
+}
+
 // 5) O relatório não pode prometer mais do que o ensaio prova.
 assert.match(
   workflow,
@@ -88,5 +149,5 @@ assert.match(
 );
 
 console.log(
-  "✅ ensaio de DR: só por acionamento humano confirmado, nenhum comando nomeia produção, destroy reconfere a marca e o relatório não superdeclara.",
+  "✅ ensaio de DR: só por acionamento humano confirmado, nenhum comando nomeia produção, destroy reconfere a marca, o bookmark é lido da saída real do wrangler e o relatório não superdeclara.",
 );

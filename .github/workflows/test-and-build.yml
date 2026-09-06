@@ -60,6 +60,20 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # Estes guards precisam rodar antes do build: prebuild regenera os artefatos
+      # e poderia mascarar uma divergência já presente no checkout.
+      - name: Interactive scale ids match their source
+        run: npm run guard:interactive-scale-ids
+        continue-on-error: false
+
+      - name: Derived clinical artifacts match the catalog
+        run: npm run guard:clinical-artifacts
+        continue-on-error: false
+
+      - name: Clinical artifact guard restores on generator failure
+        run: node tests/unit/generated-clinical-artifact-guard.test.mjs
+        continue-on-error: false
+
       # Build client
       - name: Build Client
         run: npm run build:client

@@ -88,11 +88,35 @@ function cacheControlFor(pathname) {
   return "no-cache";
 }
 
-export async function startStaticServer(root, preferredPort = 4173) {
+/**
+ * @param {string} root
+ * @param {number|{port?: number, apiHandler?: (request: any, response: any, pathname: string, searchParams: URLSearchParams) => Promise<boolean>}} [options]
+ *   Número mantém a assinatura histórica (porta preferida). O objeto habilita
+ *   `apiHandler`, usado pela prova visual autenticada para servir o contrato
+ *   clínico sintético na mesma origem do bundle — sem isso o app não sai do gate
+ *   de login e a auditoria só certifica a tela pública.
+ */
+export async function startStaticServer(root, options = 4173) {
+  const { port: preferredPort = 4173, apiHandler = null } = typeof options === "number"
+    ? { port: options }
+    : options;
   const rootPrefix = `${resolve(root)}${sep}`;
   const server = createServer((request, response) => {
     try {
-      const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://audit.local").pathname);
+      const requestUrl = new URL(request.url ?? "/", "http://audit.local");
+      const pathname = decodeURIComponent(requestUrl.pathname);
+      if (apiHandler && pathname.startsWith("/api/")) {
+        void Promise.resolve(apiHandler(request, response, pathname, requestUrl.searchParams))
+          .then((handled) => {
+            if (!handled && !response.writableEnded) response.writeHead(404).end("Not found");
+          })
+          .catch((error) => {
+            if (!response.writableEnded) {
+              response.writeHead(500).end(error instanceof Error ? error.message : String(error));
+            }
+          });
+        return;
+      }
       if (pathname === "/api/health") {
         // Capacidade não-sensível, buscada em todo carregamento: `no-cache`
         // (não `no-store`) para não bloquear bf-cache — igual ao middleware real.
@@ -137,6 +161,25 @@ export async function startStaticServer(root, preferredPort = 4173) {
   return {
     origin: `http://127.0.0.1:${address.port}`,
     close: () => new Promise((resolveClose, reject) => server.close((error) => error ? reject(error) : resolveClose())),
+  };
+}
+
+/**
+ * Opções de launch do Chromium das auditorias.
+ *
+ * `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` — mesma variável já usada por
+ * `scripts/audit-a11y.mjs` — aponta para um Chromium presente na imagem quando o
+ * runner não pode baixar o browser gerenciado. Sem a variável o comportamento é
+ * exatamente o anterior: o Chromium do Playwright.
+ */
+export function auditBrowserLaunchOptions(extra = {}) {
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  return {
+    headless: true,
+    ...(executablePath
+      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+      : {}),
+    ...extra,
   };
 }
 

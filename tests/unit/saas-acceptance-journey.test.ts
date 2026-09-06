@@ -230,11 +230,18 @@ const inviteToken = await (async () => {
     ) as never,
   );
   assert.equal(response.status, 201, "gestora convida com assento livre");
-  const body = (await response.json()) as { invitationUrl: string };
-  assert.match(body.invitationUrl, /\/#\/invite\?token=/, "link do convite aponta para a rota real do SPA");
-  const token = decodeURIComponent(body.invitationUrl.split("token=")[1] ?? "");
-  assert.ok(token.length >= 32);
-  return token;
+    // Com transporte configurado o servidor NÃO devolve o link ao convidante:
+    // o token vai por e-mail a quem precisa provar posse do endereço. A jornada
+    // lê o link do e-mail entregue, que é o caminho real do convidado.
+    const body = (await response.json()) as { delivery: string; invitationUrl?: string };
+    assert.equal(body.delivery, "email", "com entrega configurada o convite sai por e-mail");
+    assert.equal(body.invitationUrl, undefined, "o link do convite não pode voltar ao convidante");
+    const message = sentEmails.findLast((sent) => sent.to.includes("bruno@a.test"));
+    assert.ok(message, "o convite precisa ter sido enviado por e-mail");
+    assert.match(message.text, /\/#\/invite\?token=/, "link do convite aponta para a rota real do SPA");
+    const token = decodeURIComponent(message.text.match(/invite\?token=([^\s]+)/)?.[1] ?? "");
+    assert.ok(token.length >= 32);
+    return token;
 })();
 {
   const response = await acceptPost(
@@ -377,9 +384,14 @@ assert.notEqual(clinicA, clinicB);
     ) as never,
   );
   assert.equal(inviteB.status, 201);
+  // Mesmo aqui o link vem do e-mail: é assim que a vítima o receberia, e é
+  // justamente por isso que o convidante não consegue usá-lo em nome dela.
+  const inviteBMessage = sentEmails.findLast((sent) => sent.to.includes("vitima@hospital.test"));
+  assert.ok(inviteBMessage, "o convite precisa ter sido enviado à pessoa convidada");
   const tokenB = decodeURIComponent(
-    ((await inviteB.json()) as { invitationUrl: string }).invitationUrl.split("token=")[1] ?? "",
+    inviteBMessage.text.match(/invite\?token=([^\s]+)/)?.[1] ?? "",
   );
+  assert.ok(tokenB.length >= 32);
 
   const closedEnv = { ...env, SAAS_SIGNUP_ENABLED: undefined };
   const closedAccept = await acceptPost({

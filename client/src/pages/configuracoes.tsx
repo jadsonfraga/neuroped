@@ -2,7 +2,6 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Check,
-  Copy,
   CreditCard,
   Loader2,
   Mail,
@@ -326,7 +325,6 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("professional");
   const [busy, setBusy] = useState(false);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
 
   const load = useCallback(() => {
@@ -359,17 +357,21 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    setInviteUrl(null);
     try {
-      const body = await readJson<{ invitationUrl?: string }>(
+      const body = await readJson<{ delivery?: "email" }>(
         await authFetch("/api/billing/invitations", {
           method: "POST",
           body: JSON.stringify({ clinicId, email: inviteEmail.trim(), role: inviteRole, action: "create" }),
         }),
       );
-      setInviteUrl(body.invitationUrl ?? null);
+      if (body.delivery !== "email") {
+        throw new Error("O servidor não confirmou a entrega segura do convite por e-mail.");
+      }
       setInviteEmail("");
-      toast({ title: "Convite criado ✓", description: "Copie o link e envie ao convidado — ele expira em 7 dias." });
+      toast({
+        title: "Convite enviado ✓",
+        description: "O link foi enviado por e-mail ao convidado e expira em 7 dias.",
+      });
       load();
     } catch (inviteError) {
       setError(inviteError instanceof Error ? inviteError.message : "Falha ao convidar.");
@@ -436,7 +438,7 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
         </ul>
       </SectionCard>
 
-      <SectionCard title="Convidar membro" description="O convite gera um link único com validade de 7 dias, limitado aos assentos da assinatura. Envie o link ao convidado pelo seu canal seguro.">
+      <SectionCard title="Convidar membro" description="O convite gera um link único com validade de 7 dias, limitado aos assentos da assinatura, e o envia diretamente ao e-mail do convidado.">
         <form onSubmit={invite} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
             <Label htmlFor="equipe-email">E-mail do convidado</Label>
@@ -462,24 +464,6 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
             Convidar
           </Button>
         </form>
-        {inviteUrl && (
-          <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/[0.04] p-3">
-            <code className="min-w-0 flex-1 truncate text-xs">{inviteUrl}</code>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              onClick={() => {
-                void navigator.clipboard?.writeText(inviteUrl).then(
-                  () => toast({ title: "Link copiado ✓" }),
-                  () => toast({ title: "Copie manualmente o link acima.", variant: "destructive" }),
-                );
-              }}
-            >
-              <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copiar
-            </Button>
-          </div>
-        )}
         {pending.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Convites pendentes</p>
@@ -603,7 +587,7 @@ export default function ConfiguracoesPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-6">
+    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-6" data-testid="configuracoes-shell">
       <div>
         <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary"><ShieldCheck className="h-4 w-4" aria-hidden="true" />Configurações</div>
         <h1 className="text-2xl font-semibold tracking-tight">Sua conta e sua clínica</h1>

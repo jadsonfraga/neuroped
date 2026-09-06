@@ -15,6 +15,7 @@ export default function SessionExpiredPage() {
       initial="hidden"
       animate="visible"
       className="min-h-screen flex items-center justify-center px-4"
+      data-testid="sessao-expirada-shell"
       style={{
         background: "radial-gradient(ellipse at center, hsl(var(--sidebar)) 0%, hsl(var(--background)) 100%)",
       }}

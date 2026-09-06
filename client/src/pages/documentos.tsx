@@ -57,7 +57,7 @@ export default function DocumentosPage() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-testid="documentos-shell">
       {/* Header */}
       <PageHero
         icon={FileText}

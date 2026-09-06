@@ -294,6 +294,39 @@ assert.ok(
   "o token em claro não pode aparecer em nenhuma coluna",
 );
 
+// ── 2b) Cadastro sem entrega configurada recusa em vez de gerar conta morta ─
+// Com o gate da 0024 ativo, uma conta que não consegue confirmar o e-mail
+// nunca cria clínica. Deixar o cadastro aberto nesse estado só produziria
+// contas mortas — o funil precisa fechar antes, não depois.
+{
+  const semEntrega = { ...env, AUTH_RESEND_API_KEY: undefined };
+  const antes = (
+    sqlite.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number }
+  ).n;
+  const response = await signup(
+    postContext(
+      "/api/auth/signup",
+      {
+        name: "Conta Morta",
+        email: "conta.morta@example.test",
+        password: STRONG_PASSWORD,
+      },
+      { envOverride: semEntrega },
+    ),
+  );
+  assert.equal(response.status, 503);
+  assert.equal(
+    ((await response.json()) as { code: string }).code,
+    "EMAIL_VERIFICATION_NOT_CONFIGURED",
+  );
+  assert.equal(
+    (sqlite.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number })
+      .n,
+    antes,
+    "nenhuma conta pode nascer sem caminho de confirmação",
+  );
+}
+
 // ── 3) O gate: conta não confirmada não cria clínica ───────────────────────
 const unverifiedUser = {
   id: newUser.id,
