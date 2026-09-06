@@ -1,0 +1,52 @@
+name: Reconcile Sonda visual colors
+
+on:
+  push:
+    branches:
+      - feat/sonda-dez-stimuli-daily-20260906
+    paths:
+      - ".github/workflows/sonda-stimuli-color-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/sonda-dez-stimuli-daily-20260906
+      - name: Convert raw SVG hex colors to HSL
+        shell: python
+        run: |
+          from pathlib import Path
+          import colorsys
+          import re
+
+          path = Path("client/src/pages/sonda-dez-daily.tsx")
+          text = path.read_text(encoding="utf-8")
+
+          def convert(match):
+              raw = match.group(0)[1:]
+              if len(raw) == 3:
+                  raw = ''.join(ch * 2 for ch in raw)
+              if len(raw) != 6:
+                  return match.group(0)
+              r, g, b = (int(raw[i:i+2], 16) / 255 for i in (0, 2, 4))
+              h, l, s = colorsys.rgb_to_hls(r, g, b)
+              return f"hsl({round(h * 360)} {round(s * 100)}% {round(l * 100)}%)"
+
+          updated = re.sub(r"#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b", convert, text)
+          if updated == text:
+              raise SystemExit("no raw SVG hex colors found")
+          path.write_text(updated, encoding="utf-8")
+      - name: Remove one-shot workflow
+        run: git rm .github/workflows/sonda-stimuli-color-reconcile.yml
+      - name: Commit color reconciliation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/sonda-dez-daily.tsx
+          git commit -m "fix(sonda): remover cores cruas do banco visual"
+          git push origin HEAD:feat/sonda-dez-stimuli-daily-20260906
