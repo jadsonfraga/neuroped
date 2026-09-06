@@ -91,6 +91,13 @@ for (const base of [
  */
 const intentionalPageReplacements = new Map([
   [
+    "testes-diretos",
+    {
+      replacementRoute: "/testes-diretos",
+      reason: "núcleo clínico interno preservado; a rota canônica é composta pelo wrapper sonda-dez-daily",
+    },
+  ],
+  [
     "filtro-engine",
     {
       replacementRoute: "/filtro",

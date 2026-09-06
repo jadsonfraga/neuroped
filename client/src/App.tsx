@@ -124,7 +124,7 @@ const TestesReconhecimentoPage = lazy(
   () => import("@/pages/testes-reconhecimento"),
 );
 const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
-const TestesDiretosPage = lazy(() => import("@/pages/testes-diretos"));
+const TestesDiretosPage = lazy(() => import("@/pages/sonda-dez-daily"));
 const CognitiveLabPage = lazy(() => import("@/pages/cognitive-lab"));
 const CognitiveTaskPage = lazy(() => import("@/pages/cognitive-task"));
 const AvaliacaoCognitivaInfantilPage = lazy(
