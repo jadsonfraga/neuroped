@@ -15,15 +15,15 @@ spec.loader.exec_module(delivery)
 
 class DeliveryTest(unittest.TestCase):
     def setUp(self):
-        self.rows = json.loads((ROOT / "client/src/data/authorialMonitoring.json").read_text())
+        self.rows = json.loads((ROOT / "client/src/data/authorialMonitoring.json").read_text(encoding="utf-8"))
     def test_originals_are_already_sent(self):
-        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text())
+        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
         originals = [r for r in self.rows if r["id"] in {"afi12-sdg", "sdrd12-sdg", "sarf12-sdg"}]
         self.assertEqual(len(originals), 3)
         self.assertEqual(delivery.select_pending(originals, receipts["receipts"]), [])
     def test_future_model_remains_pending(self):
         row = copy.deepcopy(self.rows[0]); row["id"] = "fixture-novo-modelo"
-        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text())
+        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
         self.assertEqual(delivery.select_pending([row], receipts["receipts"]), [row])
     def test_fingerprint_order_independent(self):
         self.assertEqual(delivery.fingerprint(self.rows[0]), delivery.fingerprint(dict(reversed(list(self.rows[0].items())))))
@@ -86,6 +86,19 @@ class DeliveryTest(unittest.TestCase):
             self.assertTrue(first.read_bytes().startswith(b"%PDF-"))
             self.assertGreater(len(first.read_bytes()), 10000)
             self.assertEqual(first.read_bytes(), second.read_bytes())
+    def test_vs1_source_preserves_unscored_no(self):
+        row = next(r for r in self.rows if r["id"] == "irritabilidade-desregulacao-vs1")
+        self.assertTrue(row["responseLabels"][-1].startswith("NO"))
+        self.assertIn(len(row["responseLabels"]) - 1, row["unscoredOptionIndexes"])
+        self.assertIn("NO", row["scoringNote"])
+    def test_pending_artifacts_exist_before_transport_preflight(self):
+        row = copy.deepcopy(self.rows[0]); row["id"] = "fixture-novo-arquivo"
+        with tempfile.TemporaryDirectory() as temp:
+            total = delivery.render_pending_artifacts([row], {}, Path(temp))
+            files = list(Path(temp).glob("*.pdf"))
+            self.assertEqual(total, 1)
+            self.assertEqual(len(files), 2)
+            self.assertTrue(all(p.read_bytes().startswith(b"%PDF-") for p in files))
     def test_tls_mime_and_receipt_order(self):
         class Store:
             data = {"receipts": {}}

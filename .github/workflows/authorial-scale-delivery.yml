@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.sha || 'main' }}
+          ref: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'push' && github.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
           persist-credentials: false
       - uses: actions/setup-node@v6
         with:
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'push' && github.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
           persist-credentials: false
       - name: Dependências isoladas
         run: |
@@ -105,7 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'push' && github.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
           persist-credentials: false
       - name: Abrir ou atualizar incidente sem expor logs ou credenciais
         uses: actions/github-script@v8
