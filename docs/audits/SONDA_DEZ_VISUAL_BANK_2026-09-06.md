@@ -20,7 +20,8 @@ Inclui objetos/conceitos, cenas narrativas, cena social ambígua, sequências de
 - sem nova persistência clínica ou localStorage;
 - sem escore normativo, percentil, ponto de corte ou diagnóstico automático;
 - objetos físicos continuam preferidos nas tarefas em que a manipulação faz parte da observação; o apoio visual infantil é contingência, não substituição automática;
-- `scripts/guards/audit-inventory.mjs` registra explicitamente que `testes-diretos.tsx` permanece como núcleo interno da rota composta pelo wrapper diário.
+- `scripts/guards/audit-inventory.mjs` registra explicitamente que `testes-diretos.tsx` permanece como núcleo interno da rota composta pelo wrapper diário;
+- as cores vetoriais do novo banco usam HSL, sem aumentar o contador de cores cruas protegido por `audit:design`.
 
 ## Critério de publicação
 
