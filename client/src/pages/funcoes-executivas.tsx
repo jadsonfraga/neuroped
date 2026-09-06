@@ -1,2 +1,2 @@
-/** Tarefas diretas de funções executivas foram consolidadas na Sonda Dez. */
-export { default } from "./sonda-dez";
+/** Superfície legada preservada: os testes diretos convergem para a Sonda Dez. */
+export { default } from "./testes-diretos";
