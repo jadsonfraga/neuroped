@@ -4,6 +4,7 @@ import {
   issueEmailVerification,
   type EmailVerificationEnv,
 } from "./_emailVerification";
+import { passwordPolicyError } from "./_passwordPolicy";
 import {
   enforceLoginAbuseLimit,
   registerLoginAbuseFailure,
@@ -12,8 +13,6 @@ import { createSessionTokens } from "./_sessions";
 import { getUserByEmail, json, publicUser, type UserRow } from "./_shared";
 import { isPlainObject } from "../_request";
 
-const PASSWORD_MIN = 12;
-const PASSWORD_MAX = 128;
 const EMAIL_MAX = 254;
 
 /**
@@ -27,20 +26,9 @@ const EMAIL_MAX = 254;
  * A conta nasce com papel global 'professional' e nenhuma clínica: o acesso a
  * dados clínicos continua condicionado a criar/entrar numa clínica (membership
  * + entitlement de billing), então o cadastro em si não expande superfície
- * clínica. Mesma política de senha do change-password; mesmo balde de abuso
- * por IP do login para conter criação em massa.
+ * clínica. Usa a política canônica compartilhada por signup, convite e troca
+ * de senha; mesmo balde de abuso por IP do login contém criação em massa.
  */
-function passwordPolicyError(password: string): string | null {
-  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
-    return `A senha deve ter entre ${PASSWORD_MIN} e ${PASSWORD_MAX} caracteres.`;
-  }
-  if (!/[A-Z]/.test(password)) return "A senha deve conter letra maiúscula.";
-  if (!/[a-z]/.test(password)) return "A senha deve conter letra minúscula.";
-  if (!/[0-9]/.test(password)) return "A senha deve conter número.";
-  if (!/[^A-Za-z0-9]/.test(password)) return "A senha deve conter símbolo.";
-  return null;
-}
-
 function validEmail(email: string): boolean {
   return email.length <= EMAIL_MAX && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -59,11 +47,6 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
       503,
     );
   }
-  // Sem entrega de e-mail configurada, o cadastro produziria contas que NUNCA
-  // conseguem confirmar o endereço — e, com o gate da 0024, nunca criam
-  // clínica. Um funil que só gera contas mortas é pior do que um funil
-  // fechado: recusar aqui evita o estado incoerente "cadastro ligado,
-  // verificação impossível", que só apareceria depois, na cara do cliente.
   if (!emailVerificationConfigured(env)) {
     return json(
       {
@@ -124,9 +107,6 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
   if (policyError)
     return json({ error: policyError, code: "WEAK_PASSWORD" }, 400);
 
-  // Identidades reservadas da plataforma nunca podem nascer pelo cadastro
-  // público — resposta idêntica à de e-mail em uso para não servir de oráculo
-  // de configuração.
   const reservedEmails = [env.NEUROPED_E2E_EMAIL, env.ADMIN_EMAIL]
     .map((value) => value?.trim().toLowerCase())
     .filter(Boolean);
@@ -184,10 +164,6 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
     );
   }
 
-  // Dispara a confirmação de posse do e-mail. É best-effort de propósito: a
-  // conta já existe e não tem privilégio clínico nenhum até verificar (o gate
-  // vive em POST /api/tenants), então falha de entrega não pode derrubar o
-  // cadastro — o usuário pede reenvio em /api/auth/resend-verification.
   try {
     await issueEmailVerification(env.DB, env, {
       id: user.id,
@@ -205,8 +181,6 @@ export const onRequestPost: PagesFunction<EmailVerificationEnv> = async (
     );
   } catch (error) {
     console.error("[auth/signup] sessão indisponível", error);
-    // A conta existe; sem sessão revogável não emitimos tokens — o usuário
-    // entra pelo login normal.
     return json(
       {
         created: true,
