@@ -10,8 +10,8 @@
  * passa a subdeclarar quantos instrumentos ainda aguardam validação
  * psicométrica. Subdeclarar incerteza clínica é pior que não declarar nada.
  *
- * O guard não escreve nada: gera em memória, compara, restaura o estado
- * original em disco e falha nomeando o arquivo divergente.
+ * O guard não escreve nada de forma persistente: gera, compara e restaura o
+ * estado original em disco mesmo quando o gerador falha depois de escrever.
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -45,19 +45,38 @@ for (const { arquivo, gerador, conserto } of ARTEFATOS) {
   }
 
   const [cmd, args] = gerador;
+  let depois;
+  let geradorFalhou = false;
+
   try {
     execFileSync(cmd, args, { cwd: repoRoot, stdio: "pipe" });
+    depois = readFileSync(caminho, "utf8");
   } catch (error) {
     // Um gerador que não roda é falha do guard, não licença para passar.
     falhas.push(
       `${arquivo}: o gerador falhou (${error.status ?? "erro"}); rode ${conserto}`,
     );
-    continue;
+    geradorFalhou = true;
+  } finally {
+    // O gerador pode escrever o artefato e só depois descobrir uma falha
+    // estrutural. A restauração precisa ocorrer também nesse caminho de erro.
+    try {
+      let atual;
+      try {
+        atual = readFileSync(caminho, "utf8");
+      } catch {
+        atual = null;
+      }
+      if (atual !== antes) writeFileSync(caminho, antes, "utf8");
+    } catch (error) {
+      falhas.push(
+        `${arquivo}: falha ao restaurar o artefato após a conferência (${error.code ?? "erro"})`,
+      );
+      geradorFalhou = true;
+    }
   }
 
-  const depois = readFileSync(caminho, "utf8");
-  // Restaura sempre: o guard confere, não conserta.
-  if (depois !== antes) writeFileSync(caminho, antes, "utf8");
+  if (geradorFalhou || depois === undefined) continue;
 
   if (depois !== antes) {
     const conta = (texto, rotulo) => {
