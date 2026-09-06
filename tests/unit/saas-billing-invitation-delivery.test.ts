@@ -35,4 +35,17 @@ const preflight = handler.indexOf("if (!invitationDeliveryConfigured(context.env
 const tokenGeneration = handler.indexOf("const generated = await generateInvitationToken()");
 assert.ok(preflight >= 0 && tokenGeneration > preflight, "preflight de e-mail deve ocorrer antes da geração do bearer token");
 
-console.log("✓ invitation delivery: fail-closed, sem fallback manual nem exposição do bearer URL");
+assert.match(handler, /async function revokeUndeliveredInvitation/);
+const revokeCalls = [...handler.matchAll(/await revokeUndeliveredInvitation\(auth\.db, clinicId,/g)];
+assert.equal(
+  revokeCalls.length,
+  2,
+  "create e resend devem revogar token pending quando a entrega não for confirmada",
+);
+assert.match(
+  handler,
+  /UPDATE clinic_invitations SET status = 'revoked'[\s\S]*WHERE id = \? AND clinic_id = \? AND status = 'pending'/,
+  "revogação de token órfão precisa ser tenant-scoped e não sobrescrever estado concorrente",
+);
+
+console.log("✓ invitation delivery: fail-closed, sem fallback manual, sem bearer URL e sem token órfão após falha de entrega");
