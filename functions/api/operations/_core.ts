@@ -319,7 +319,7 @@ interface OperationalKeyDescriptor {
   secret: string;
 }
 
-const OPERATIONAL_KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
+export const OPERATIONAL_KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
 
 function operationalDescriptor(
   secret: string | undefined,
@@ -355,6 +355,57 @@ function previousOperationalKey(env: OperationsEnv): OperationalKeyDescriptor | 
     throw new Error("OPERATIONAL_KEY_ID_COLLISION");
   }
   return previous;
+}
+
+/**
+ * Identidade das chaves do keyring — nunca o material secreto.
+ *
+ * Existe para o inventário de envelopes (`/api/admin/operational-crypto`)
+ * poder dizer QUAL chave cada registro cita sem nunca tocar no segredo que o
+ * decifra. Devolve resultado discriminado em vez de lançar porque uma rota de
+ * status precisa REPORTAR a má configuração; engolir o erro aqui esconderia
+ * exatamente o estado que ela existe para denunciar.
+ */
+export type OperationalKeyringStatus =
+  | { ok: true; currentId: string; previousId: string | null }
+  | {
+      ok: false;
+      code:
+        | "OPERATIONAL_CRYPTO_NOT_CONFIGURED"
+        | "OPERATIONAL_KEY_ID_INVALID"
+        | "OPERATIONAL_KEY_ID_COLLISION";
+    };
+
+export function operationalKeyringStatus(
+  env: OperationsEnv,
+): OperationalKeyringStatus {
+  let current: OperationalKeyDescriptor;
+  try {
+    current = currentOperationalKey(env);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return {
+      ok: false,
+      code:
+        message === "OPERATIONAL_KEY_ID_INVALID"
+          ? "OPERATIONAL_KEY_ID_INVALID"
+          : "OPERATIONAL_CRYPTO_NOT_CONFIGURED",
+    };
+  }
+
+  try {
+    const previous = previousOperationalKey(env);
+    return { ok: true, currentId: current.id, previousId: previous?.id ?? null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return {
+      ok: false,
+      code:
+        message === "OPERATIONAL_KEY_ID_COLLISION"
+          ? "OPERATIONAL_KEY_ID_COLLISION"
+          : "OPERATIONAL_KEY_ID_INVALID",
+    };
+  }
 }
 
 async function operationalKey(

@@ -106,6 +106,32 @@ link manual); trial expira sem aviso prévio (job de dunning = rodada
 própria); operator não abre /configuracoes no client (RBAC de rota
 uniforme; perfil dele é editável via API).
 
+## Rodada 2026-09-06 — rotação da chave de PII operacional (base `main@7cc8841f`)
+
+Achado de auditoria da #575, encontrado lendo o código antes de alterar
+qualquer coisa. A issue pedia duas coisas; uma estava feita sem registro e a
+outra não existia.
+
+| Achado                                                                                                                                                                                                                                                                                                                                  | Correção                                                                                                                                                                     | Estado                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| O fallback `OPERATIONAL_DATA_KEY \|\| NEUROPED_JWT_SECRET` já estava removido e guardado por teste estático, mas a #575 seguia aberta como se nada tivesse sido feito                                                                                                                                                                   | Reconciliada com evidência de código (`_core.ts`, `booking-adapter.ts:138`, `operations-integration-static.test.mjs:157,160`)                                                | ✅ documentado              |
+| A rotação da chave era **possível, não executável**: registros `v1` só migram para `v2` ao serem reescritos, `v1` não registra qual chave o cifrou, e nada contava quantos sobraram — aposentar `OPERATIONAL_DATA_KEY_PREVIOUS` era aposta cujo erro só aparece como `OPERATIONAL_DECRYPT_FAILED` na agenda, depois da chave descartada | `GET /api/admin/operational-crypto`: inventário das 11 colunas de PII operacional por versão e chave citada, sem nunca decifrar, com `previousKeyRetirementSafe` fail-closed | 🟡 #809 pronto para revisão |
+
+### Decisões que não são óbvias
+
+- **Incerteza bloqueia.** v1 remanescente, v2 citando a anterior, envelope não classificável, tabela ausente do schema e keyring quebrado respondem `false` igualmente. A rota autoriza operação irreversível: "não sei dizer" não pode virar "pode aposentar".
+- **Tabela ausente ≠ zero linhas.** Entra em `missingTables`. É a mesma doutrina do `decryptText`, que distingue campo vazio de campo ilegível — confundir os dois foi o defeito que o envelope v2 veio corrigir.
+- **`keyId` fora do padrão é contado, nunca ecoado.** São bytes arbitrários do banco; ecoá-los faria de uma rota de status um canal de leitura do armazenado.
+- **Allowlist congelada de tabela/coluna.** Identificador não pode ser bound parameter; é a allowlist, não sanitização, que torna a interpolação segura. Mantida à mão para que coluna nova de PII exija decisão explícita.
+
+### O que este ciclo NÃO entregou
+
+Migração ativa dos `v1` remanescentes. É mutação em massa sobre PII e merece PR
+próprio com rollback próprio. A migração passiva continua acontecendo conforme
+registros são reescritos, e agora há como medir o progresso. A #575 fecha com
+#809 mesclado **e** `previousKeyRetirementSafe: true` observado contra o D1 de
+produção — leitura de produção, não minha para executar.
+
 ## Rodada 2026-09-05 — hardening P0/P1 e LGPD operacional (base `main@4188833c`)
 
 Ciclo dirigido pela missão "tornar o NeuroPed vendável". Todo achado abaixo foi
