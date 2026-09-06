@@ -1,0 +1,39 @@
+name: Reconcile release a11y blocker
+
+on:
+  push:
+    branches:
+      - feat/sonda-dez-stimuli-daily-20260906
+    paths:
+      - ".github/workflows/sonda-release-a11y-reconcile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/sonda-dez-stimuli-daily-20260906
+      - name: Remove nested main landmark from Especialidades
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path("client/src/pages/especialidades-premium.tsx")
+          text = path.read_text(encoding="utf-8")
+          if text.count("<main>") != 1 or text.count("</main>") != 1:
+              raise SystemExit("expected exactly one local main landmark")
+          text = text.replace("<main>", '<div role="presentation">', 1)
+          text = text.replace("</main>", "</div>", 1)
+          path.write_text(text, encoding="utf-8")
+      - name: Remove one-shot workflow
+        run: git rm .github/workflows/sonda-release-a11y-reconcile.yml
+      - name: Commit release blocker fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/especialidades-premium.tsx
+          git commit -m "fix(a11y): remover main duplicado de Especialidades"
+          git push origin HEAD:feat/sonda-dez-stimuli-daily-20260906
