@@ -15,7 +15,6 @@ import { boundedText as clean } from "../_request";
 
 interface Env extends MailTransportEnv {
   DB?: D1Database;
-  APP_BASE_URL?: string;
   ENVIRONMENT?: string;
 }
 
@@ -152,7 +151,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const now = isoUtc(new Date());
   const expiresAt = isoUtc(new Date(Date.now() + INVITATION_EXPIRY_MS));
   const generated = await generateInvitationToken();
-  const invitationUrl = buildInvitationUrl(context.env.APP_BASE_URL, generated.token);
+  const invitationUrl = buildInvitationUrl(context.env.AUTH_PUBLIC_APP_URL, generated.token);
   if (!invitationUrl) {
     return tenantError(
       "URL pública HTTPS do onboarding não configurada.",
