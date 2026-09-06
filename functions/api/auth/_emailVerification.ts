@@ -10,41 +10,24 @@
 import { sha256Hex } from "./_crypto";
 import { canonicalEmail } from "./_shared";
 import type { Env } from "./_shared";
+import {
+  mailTransportConfigured,
+  publicAppBaseUrl,
+  sendTransactionalEmail,
+  type MailTransportEnv,
+} from "./_mailTransport";
 
-export interface EmailVerificationEnv extends Env {
-  AUTH_PUBLIC_APP_URL?: string;
-  AUTH_RESEND_API_KEY?: string;
-  AUTH_EMAIL_FROM?: string;
-}
+export interface EmailVerificationEnv extends Env, MailTransportEnv {}
 
 export const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 export const VERIFICATION_WINDOW_MS = 60 * 60 * 1000;
 export const VERIFICATION_MAX_ATTEMPTS = 5;
 export const VERIFICATION_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
-function normalizeBaseUrl(value: string | undefined): string | null {
-  if (!value) return null;
-  try {
-    const url = new URL(value.trim());
-    // HTTPS obrigatório: um link de verificação em http seria interceptável.
-    if (url.protocol !== "https:") return null;
-    url.pathname = url.pathname.replace(/\/$/, "");
-    url.search = "";
-    url.hash = "";
-    return url.toString().replace(/\/$/, "");
-  } catch {
-    return null;
-  }
-}
-
 export function emailVerificationConfigured(
   env: EmailVerificationEnv,
 ): boolean {
-  return Boolean(
-    normalizeBaseUrl(env.AUTH_PUBLIC_APP_URL) &&
-    env.AUTH_RESEND_API_KEY?.trim() &&
-    env.AUTH_EMAIL_FROM?.trim(),
-  );
+  return mailTransportConfigured(env);
 }
 
 export function randomVerificationToken(): string {
@@ -60,37 +43,25 @@ export async function sendEmailVerification(
   recipient: string,
   token: string,
 ): Promise<boolean> {
-  const baseUrl = normalizeBaseUrl(env.AUTH_PUBLIC_APP_URL);
-  const apiKey = env.AUTH_RESEND_API_KEY?.trim();
-  const from = env.AUTH_EMAIL_FROM?.trim();
-  if (!baseUrl || !apiKey || !from) return false;
+  const baseUrl = publicAppBaseUrl(env);
+  if (!baseUrl) return false;
 
   const verifyUrl = `${baseUrl}/#/verificar-email?token=${encodeURIComponent(token)}`;
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [recipient],
-      subject: "Confirme seu e-mail — NeuroPed",
-      text: [
-        "Uma conta NeuroPed foi criada com este endereço de e-mail.",
-        "",
-        `Confirme que o endereço é seu abrindo: ${verifyUrl}`,
-        "",
-        "O link expira em 24 horas e só pode ser usado uma vez.",
-        "Enquanto o e-mail não for confirmado, a conta não pode criar uma clínica.",
-        "",
-        "Se você não criou esta conta, ignore esta mensagem — sem a confirmação,",
-        "quem a criou não consegue avançar.",
-      ].join("\n"),
-    }),
+  return sendTransactionalEmail(env, {
+    to: recipient,
+    subject: "Confirme seu e-mail — NeuroPed",
+    text: [
+      "Uma conta NeuroPed foi criada com este endereço de e-mail.",
+      "",
+      `Confirme que o endereço é seu abrindo: ${verifyUrl}`,
+      "",
+      "O link expira em 24 horas e só pode ser usado uma vez.",
+      "Enquanto o e-mail não for confirmado, a conta não pode criar uma clínica.",
+      "",
+      "Se você não criou esta conta, ignore esta mensagem — sem a confirmação,",
+      "quem a criou não consegue avançar.",
+    ].join("\n"),
   });
-
-  return response.ok;
 }
 
 /**
