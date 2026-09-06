@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - "functions/api/billing/**"
+      - "functions/api/auth/_passwordPolicy.ts"
+      - "functions/api/auth/signup.ts"
+      - "functions/api/auth/change-password.ts"
       - "shared/billing.ts"
       - "server/lib/billingEntitlement.ts"
       - "db/migrations/0012_saas_billing_onboarding.sql"
@@ -18,6 +21,9 @@ on:
       - main
     paths:
       - "functions/api/billing/**"
+      - "functions/api/auth/_passwordPolicy.ts"
+      - "functions/api/auth/signup.ts"
+      - "functions/api/auth/change-password.ts"
       - "shared/billing.ts"
       - "server/lib/billingEntitlement.ts"
       - "db/migrations/0012_saas_billing_onboarding.sql"
