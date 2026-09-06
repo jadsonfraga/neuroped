@@ -1,0 +1,8 @@
+{
+  "recipient": "jadsonfraga@hotmail.com",
+  "receipts": {
+    "sha256:73d47977fe753d3487cb94e0987e17d134fe86411bdf4d6bdbc8401d8fa5ff96": {"status":"sent_via_gmail","messageId":"1a072cdcc707a550","date":"2026-09-05"},
+    "sha256:e997dfaf392fdd111bfa410f1f79bafe5d04e8001d1eacf5eb7f752877712be6": {"status":"sent_via_gmail","messageId":"1a072cdcc707a550","date":"2026-09-05"},
+    "sha256:2fc40f7b1912923f046eb76397b2aef2737fb1224bcbe5d703e3e8835e203eb4": {"status":"sent_via_gmail","messageId":"1a072cdcc707a550","date":"2026-09-05"}
+  }
+}

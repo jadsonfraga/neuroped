@@ -6,9 +6,12 @@ import { softTap } from "@/lib/softSounds";
 /**
  * Tour guiado de boas-vindas.
  *
- * Versao atualizada para explicar: filtro ampliado, numeros reais, aba dos pais,
- * politica de acesso e separacao entre conteudo familiar nao sensivel e dados
- * clinicos individualizados.
+ * Ensina o **fluxo de trabalho**, não o inventário. A versão anterior abria com
+ * "253 escalas, 269 itens filtráveis e 142 medicações": prova de amplitude que
+ * não diz a ninguém como atender. Os números continuam presentes, mas como
+ * apoio de um passo — a mensagem principal passou a ser a sequência real do
+ * consultório: localizar paciente → escolher a tarefa → aplicar o instrumento →
+ * interpretar e registrar → produzir o documento → continuar o acompanhamento.
  */
 
 const DONE_KEY = "np_tour_v2_done";
@@ -22,56 +25,55 @@ interface TourStep {
 
 const STEPS: TourStep[] = [
   {
-    emoji: "",
-    title: "Bem-vindo ao NeuroPed",
-    body: `O app agora mostra numeros derivados do catalogo real: ${appMetrics.scaleCount} escalas, ${appMetrics.filterableInstrumentCount} itens filtraveis e ${appMetrics.medicationCount} medicacoes cadastradas.`,
+    emoji: "\u{1F9ED}",
+    title: "Seis passos, uma consulta",
+    body: "Este guia percorre o caminho completo de um atendimento no NeuroPed: encontrar o paciente, escolher a tarefa, aplicar, registrar, documentar e acompanhar. Leva menos de um minuto.",
   },
   {
-    emoji: "🔎",
-    title: "Filtro Clínico Inteligente",
-    body: "Digite uma queixa ou selecione idade. Toda busca devolve Ouro, Prata, Bronze, Teste Direto e Questionário Escolar — sem inventar pontuação clínica.",
-    target: '[data-testid="nav-Filtro Clínico Inteligente"]',
+    emoji: "1\uFE0F\u20E3",
+    title: "Comece pelo paciente",
+    body: "O cockpit da tela inicial abre com o paciente em foco e a próxima ação ao lado. Para trocar de contexto, use a lista de pacientes ali mesmo — um toque, sem atravessar o menu.",
+    target: '[data-testid="cockpit-context"]',
   },
   {
-    emoji: "📚",
-    title: "Escalas, questionários e inventários",
-    body: "O filtro inclui escalas do catálogo, instrumentos suplementares aplicáveis, inventários escolares, autoavaliações e 100 escalas mundiais sem custo quando disponíveis.",
-    target: '[data-testid="nav-100 escalas mundiais"]',
+    emoji: "2\uFE0F\u20E3",
+    title: "Escolha a tarefa",
+    body: "Prontuário para conduzir a consulta, histórico para revisar o que já foi aplicado, filtro para escolher instrumento. Cada ação do cockpit é um destino direto.",
+    target: '[data-testid="cockpit-action-prontuario"]',
   },
   {
-    emoji: "👨‍👩‍👧",
-    title: "Aba dos pais / psicoeducação",
-    body: "Informações não sensíveis ficam concentradas no Portal dos pais: orientações gerais, rotina, escola, novidades, CAA e política de acesso.",
-    target: '[data-testid="nav-Portal dos pais"]',
+    emoji: "3\uFE0F\u20E3",
+    title: "Aplique o instrumento certo",
+    body: `O Filtro de Escalas parte de idade, queixa e objetivo e devolve Ouro, Prata, Bronze, Teste Direto e Questionário Escolar — sem inventar pontuação clínica. É onde os ${appMetrics.scaleCount} instrumentos do catálogo viram uma escolha só.`,
+    target: '[data-testid="featured-Filtro de Escalas"]',
   },
   {
-    emoji: "🧭",
-    title: "Orientação parental",
-    body: "A orientação parental traz conteúdo educativo por tema, com linguagem familiar e sem expor prontuário, dados médicos individualizados ou documentos restritos.",
-    target: '[data-testid="nav-Orientação parental"]',
+    emoji: "4\uFE0F\u20E3",
+    title: "Interprete e registre",
+    body: "Ao concluir uma escala, o resultado traz a transcrição integral de perguntas e respostas. Vincule ao paciente para que entre no histórico longitudinal da ficha.",
+    target: '[data-testid="nav-Pacientes / Prontuário"]',
   },
   {
-    emoji: "📰",
-    title: "Novidades para famílias",
-    body: "Artigos e explicações gerais podem ser consultados pela família sem acessar áreas clínicas sensíveis.",
-    target: '[data-testid="nav-Novidades para famílias"]',
+    emoji: "5\uFE0F\u20E3",
+    title: "Produza o documento",
+    body: "Laudo neuropediátrico, SuperNeuroPed e Receita C1 partem da ficha já preenchida, com o emissor definido em Configurações.",
+    target: '[data-testid="nav-Laudos"]',
   },
   {
-    emoji: "🔐",
-    title: "Política de acesso",
-    body: "Documentos, prescrições, prontuário e dados de paciente só aparecem quando liberados pelo profissional ou protegidos por fluxo clínico. O app não deve misturar isso com psicoeducação aberta.",
-    target: '[data-testid="nav-Política de acesso"]',
+    emoji: "6\uFE0F\u20E3",
+    title: "Continue o acompanhamento",
+    body: "Agenda, retornos e a linha clínica do paciente mantêm o caso vivo entre consultas — a próxima visita não recomeça do zero.",
+    target: '[data-testid="nav-Agenda & Gestão"]',
   },
   {
-    emoji: "🏫",
-    title: "Questionário escolar",
-    body: "A área escolar permanece filtrável e também aparece para a família como ponte com professores, sem substituir avaliação médica.",
-    target: '[data-testid="nav-Questionário escolar"]',
+    emoji: "\u{1F510}",
+    title: "O que fica protegido",
+    body: "Prontuário, documentos e dados de paciente só aparecem em sessão autenticada. O conteúdo aberto às famílias vive em área separada e nunca se mistura com dado clínico individualizado.",
   },
   {
-    emoji: "✨",
+    emoji: "\u2728",
     title: "Tudo pronto",
-    body: "Toque no botão '?' sempre que quiser rever o guia. O tour cobre filtro, números reais e todos os pontos principais disponíveis para pais.",
+    body: "Toque no botão de ajuda a qualquer momento para rever este guia, ajustar preferências ou abrir a central de ajuda — tudo no mesmo lugar.",
   },
 ];
 

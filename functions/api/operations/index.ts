@@ -179,10 +179,10 @@ async function getDashboard(
       serviceId: row.service_id,
       preferredDate: row.preferred_date,
       status: row.status,
-      guardianName: await decryptText(env, row.guardian_name_encrypted),
-      guardianEmail: await decryptText(env, row.guardian_email_encrypted),
-      guardianPhone: await decryptText(env, row.guardian_phone_encrypted),
-      patientName: await decryptText(env, row.patient_name_encrypted),
+      guardianName: await decryptText(env, row.guardian_name_encrypted, "guardian_name"),
+      guardianEmail: await decryptText(env, row.guardian_email_encrypted, "guardian_email"),
+      guardianPhone: await decryptText(env, row.guardian_phone_encrypted, "guardian_phone"),
+      patientName: await decryptText(env, row.patient_name_encrypted, "patient_name"),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       serviceName: row.service_name,
@@ -194,7 +194,7 @@ async function getDashboard(
       appointmentId: row.appointment_id,
       providerUserId: row.provider_user_id,
       rating: row.rating,
-      comment: await decryptText(env, row.comment_encrypted),
+      comment: await decryptText(env, row.comment_encrypted, "comment"),
       approved: Boolean(row.approved),
       createdAt: row.created_at,
     })),
@@ -206,8 +206,8 @@ async function getDashboard(
       providerUserId: row.provider_user_id,
       channel: row.channel,
       template: row.template,
-      recipient: await decryptText(env, row.recipient_encrypted),
-      message: (await decryptText(env, row.payload_encrypted)) ?? "",
+      recipient: await decryptText(env, row.recipient_encrypted, "recipient"),
+      message: (await decryptText(env, row.payload_encrypted, "payload")) ?? "",
       status: row.status,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -512,9 +512,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
          VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       ).bind(
         appointmentId, user.id, service.id, patientId, starts, endsAtLocal,
-        profile.timezone, await sha256(token), await encryptText(env, cleanOptionalText(body.guardianName, 120)),
-        await encryptText(env, cleanOptionalText(body.guardianEmail, 180)), await encryptText(env, cleanOptionalText(body.guardianPhone, 40)),
-        await encryptText(env, cleanOptionalText(body.patientName, 120)), service.price_cents, now, now,
+        profile.timezone, await sha256(token), await encryptText(env, cleanOptionalText(body.guardianName, 120), "guardian_name"),
+        await encryptText(env, cleanOptionalText(body.guardianEmail, 180), "guardian_email"), await encryptText(env, cleanOptionalText(body.guardianPhone, 40), "guardian_phone"),
+        await encryptText(env, cleanOptionalText(body.patientName, 120), "patient_name"), service.price_cents, now, now,
       );
       await env.DB.batch([insertAppointment, ...slotLockStatements(env.DB, user.id, appointmentId, starts, endsAtLocal)]);
       auditTargetType = "appointment";
@@ -567,7 +567,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         appointmentId: id,
         providerUserId: user.id,
         template: `appointment_${status}`,
-        recipient: await decryptText(env, current.guardian_phone_encrypted) || await decryptText(env, current.guardian_email_encrypted),
+        recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, current.guardian_email_encrypted, "guardian_email"),
         message: `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
       });
       auditTargetType = "appointment";

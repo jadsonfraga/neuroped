@@ -8,6 +8,23 @@ on:
       - 'scripts/escuta-cloud-entry.mjs'
       - 'scripts/escuta-cloud-browser.mjs'
       - 'scripts/escuta-sql-transport.py'
+      - 'functions/api/live/escuta/**'
+      - 'functions/api/health.ts'
+      - 'shared/escuta/**'
+      - 'client/public/_headers'
+      - 'client/public/audio/escuta-recorder.js'
+      - 'client/src/App.tsx'
+      - 'client/src/data/navigation.ts'
+      - 'client/src/lib/escutaRecorder.ts'
+      - 'client/src/pages/escuta-clinica.tsx'
+      - 'client/src/pages/login.tsx'
+      - 'client/src/components/RouteGuard.tsx'
+      - 'client/src/security/routeGuardPolicy.ts'
+      - 'client/src/styles/escuta-clinica.css'
+      - 'tests/unit/escuta-*'
+      - 'tests/unit/login-navigation-regression.test.mjs'
+      - 'vercel.json'
+      - 'wrangler.toml'
 permissions:
   contents: read
 concurrency:
@@ -15,6 +32,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   isolated-acceptance:
+    name: Real provider, auth, D1 and browser acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -29,6 +47,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: python3 tests/unit/escuta-sql-transport.test.py
       - run: node --import tsx tests/unit/escuta-handler.test.ts
+      - run: node tests/unit/login-navigation-regression.test.mjs
       - name: Full release gate before provisioning isolated resources
         run: npm run verify
       - name: Generate fictional speech only

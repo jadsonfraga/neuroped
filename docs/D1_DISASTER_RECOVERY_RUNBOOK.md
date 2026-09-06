@@ -36,15 +36,47 @@ npx wrangler d1 time-travel restore <TEMP_DB> --bookmark=<BOOKMARK>
 - **Mecanismo:** D1 Time Travel.
 - **Granularidade operacional documentada pelo provider:** restauração para um minuto/ponto no tempo dentro da janela de Time Travel.
 - **RPO técnico esperado:** <= 1 minuto dentro da janela de retenção do plano.
-- **RPO comprovado no NeuroPed:** `NÃO VERIFICADO NESTA SESSÃO`.
+- **RPO comprovado no NeuroPed:** **verificado no mecanismo** em 05/09/2026
+  (run `33999561301`). O bookmark tomado imediatamente após a escrita da
+  sentinela restaurou exatamente o estado COM a sentinela: a mutação
+  destrutiva posterior foi desfeita e `SELECT COUNT(*)` voltou `1`.
+  Isso comprova que o ponto de restauração é preciso o suficiente para não
+  perder a última escrita antes dele. **Não** comprova a granularidade sob
+  escrita concorrente e volume real.
 
 ### RTO
 
 - **RTO alvo operacional:** <= 60 minutos para incidente de corrupção lógica isolado em D1.
 - **RTO estimado antes do rehearsal:** 30–60 minutos, incluindo decisão, criação/validação do alvo isolado, restore/import, migrations e smoke.
-- **RTO evidenciado:** `DESCONHECIDO` até medir um rehearsal completo de ponta a ponta.
+- **RTO medido do MECANISMO:** 05/09/2026, run
+  [`33999561301`](https://github.com/jadsonfraga/neuroped/actions/runs/33999561301),
+  em D1 isolado com dados sintéticos (1,17 MB):
 
-Não declarar RTO cumprido com base apenas nesta estimativa.
+  | Etapa | Medido |
+  | --- | --- |
+  | Criar o alvo isolado (B) | 8 s |
+  | Aplicar schema base + 26 migrações (C) | 82 s |
+  | `d1 time-travel restore` (F) | **4 s** |
+  | Validar que a sentinela voltou (G) | 2 s |
+  | Ensaio completo, ponta a ponta | **118 s** |
+
+  A sentinela sintética foi criada, um bookmark foi tomado, a linha foi
+  apagada e o restore a trouxe de volta: `{"sentinelas": 1}`. O mecanismo de
+  recuperação do provedor funciona nesta conta, e o comando de restore não é
+  o gargalo do RTO.
+
+- **RTO evidenciado para produção:** `AINDA DESCONHECIDO`.
+
+  O que o número acima NÃO autoriza a concluir: 4 segundos é o tempo do
+  comando sobre um banco de 1,17 MB recém-criado, sem tráfego. O RTO real de
+  produção inclui o que este ensaio não mede — detecção, decisão humana,
+  validação de que o ponto escolhido é o certo, e o restore sobre o volume
+  real. Os 82 s de migrações, esses sim, são um piso realista para a etapa de
+  reconstrução de schema e tendem a crescer com o número de migrações.
+
+Continua valendo: não declarar RTO de produção cumprido com base neste
+ensaio. O que mudou é que a linha "mecanismo funciona?" deixou de ser uma
+suposição — foi medida, com a sentinela voltando como critério de aceite.
 
 ## 4. Pré-condições
 
@@ -67,7 +99,7 @@ roda sozinho, porque cria e destrói banco.
 O que ele prova: o Time Travel restaura estado neste provedor, a sentinela
 volta, e quanto tempo o comando leva.
 
-O que ele **não** prova, e por isso o campo RTO abaixo continua aberto: o
+O que ele **não** prova, e por isso o RTO de produção continua aberto: o
 tempo de um restore de produção com volume real. Ele usa dados sintéticos
 porque a Etapa C exige aprovação explícita de governança para copiar PHI
 para um alvo temporário — aprovação que não existe. Enquanto essa decisão

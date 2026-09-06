@@ -134,7 +134,10 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* ─────────────────────────── Heróis dourados ─────────────────────────── */
+/* ───────────────────── Herói clínico (cor do produto) ───────────────────── */
+/* O topo da sidebar deixou de ser uma vitrine dourada: o único cartão alto é o
+ * atalho clínico de maior frequência, na cor primária do NeuroPed. O ouro
+ * migrou para o bloco "Conexões" mais abaixo, em linhas compactas. */
 
 .np-side-hero {
   position: relative;
@@ -144,15 +147,15 @@
   min-height: 4rem;
   padding: 0.625rem 0.75rem;
   border-radius: 1rem;
-  border: 1px solid hsl(43 90% 55% / 0.55);
+  border: 1px solid hsl(var(--primary) / 0.28);
   background: linear-gradient(
     135deg,
-    hsl(48 96% 95%),
-    hsl(45 93% 88% / 0.92),
-    hsl(43 90% 78% / 0.62)
+    hsl(var(--primary) / 0.14),
+    hsl(var(--primary) / 0.08) 60%,
+    hsl(var(--card) / 0.6)
   );
-  color: hsl(24 60% 12%);
-  box-shadow: 0 12px 28px -20px hsl(30 80% 30% / 0.65);
+  color: hsl(var(--foreground));
+  box-shadow: 0 12px 28px -22px hsl(var(--primary) / 0.55);
   overflow: hidden;
   cursor: pointer;
   transition:
@@ -163,29 +166,32 @@
 
 .np-side-hero:hover {
   transform: translateY(-1px);
-  border-color: hsl(43 92% 48% / 0.8);
-  box-shadow: 0 16px 32px -20px hsl(30 80% 30% / 0.75);
+  border-color: hsl(var(--primary) / 0.45);
+  box-shadow: 0 16px 32px -22px hsl(var(--primary) / 0.6);
 }
 
 .np-side-hero:active {
   transform: translateY(0) scale(0.99);
 }
 
+/* Estado ativo inequívoco: anel cheio na cor primária, o mesmo sinal que a
+ * lista de navegação usa — nada mais na sidebar recebe esse anel. */
 .np-side-hero[data-active] {
+  border-color: hsl(var(--primary) / 0.6);
   box-shadow:
-    0 0 0 2px hsl(var(--primary) / 0.3),
-    0 12px 28px -20px hsl(30 80% 30% / 0.65);
+    0 0 0 2px hsl(var(--primary) / 0.55),
+    0 12px 28px -22px hsl(var(--primary) / 0.55);
 }
 
 .dark .np-side-hero {
-  border-color: hsl(40 70% 40% / 0.6);
+  border-color: hsl(var(--primary) / 0.4);
   background: linear-gradient(
     135deg,
-    hsl(30 55% 14% / 0.85),
-    hsl(34 60% 18% / 0.65),
-    hsl(38 65% 24% / 0.45)
+    hsl(var(--primary) / 0.22),
+    hsl(var(--primary) / 0.12) 60%,
+    hsl(var(--card) / 0.5)
   );
-  color: hsl(46 90% 92%);
+  color: hsl(var(--foreground));
 }
 
 .np-side-hero__glow {
@@ -195,14 +201,14 @@
   height: 6rem;
   width: 6rem;
   border-radius: 9999px;
-  background: hsl(0 0% 100% / 0.5);
+  background: hsl(var(--primary) / 0.16);
   filter: blur(24px);
   transition: transform 0.5s ease;
   pointer-events: none;
 }
 
 .dark .np-side-hero__glow {
-  background: hsl(45 90% 80% / 0.14);
+  background: hsl(var(--primary) / 0.22);
 }
 
 .np-side-hero:hover .np-side-hero__glow {
@@ -219,14 +225,14 @@
   width: 2.25rem;
   flex-shrink: 0;
   border-radius: 0.75rem;
-  background: hsl(45 93% 65%);
-  color: hsl(24 60% 12%);
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.5);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.25);
 }
 
 .dark .np-side-hero__icon {
-  background: hsl(40 75% 45%);
-  color: hsl(30 60% 10%);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 .np-side-hero__label {
@@ -265,6 +271,83 @@
 }
 
 .np-side-hero:hover .np-side-hero__go {
+  transform: translateX(2px);
+}
+
+/* ─────────────────────── Conexões institucionais ─────────────────────── */
+/* Linha compacta com um traço dourado fino à esquerda: preserva a identidade
+ * Nesplora/EEG e a descoberta das ferramentas sem transformar duas parcerias
+ * no elemento mais pesado do menu. */
+
+.np-side-connection {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.6rem 0.35rem 0.75rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  color: hsl(var(--sidebar-foreground));
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.np-side-connection::before {
+  content: "";
+  position: absolute;
+  left: 0.25rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  border-radius: 9999px;
+  background: hsl(43 88% 52%);
+  opacity: 0.85;
+}
+
+.np-side-connection:hover {
+  background: hsl(var(--sidebar-accent) / 0.65);
+}
+
+.np-side-connection[data-active] {
+  background: hsl(var(--primary) / 0.12);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.35);
+}
+
+.np-side-connection__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  height: 1.6rem;
+  width: 1.6rem;
+  border-radius: 0.5rem;
+  background: hsl(43 88% 52% / 0.16);
+  color: hsl(38 80% 34%);
+}
+
+.dark .np-side-connection__icon {
+  color: hsl(45 90% 68%);
+}
+
+.np-side-connection__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.np-side-connection__go {
+  flex-shrink: 0;
+  opacity: 0.45;
+  transition: transform 0.2s ease;
+}
+
+.np-side-connection:hover .np-side-connection__go {
   transform: translateX(2px);
 }
 

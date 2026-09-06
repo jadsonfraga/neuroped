@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import {
   ACCEPTED_FIRST_VISIT_STORAGE,
+  auditBrowserLaunchOptions,
   ensureClientBuild,
   startStaticServer,
 } from "./lib/browser-audit-runtime.mjs";
@@ -50,7 +51,7 @@ function intersects(a, b) {
 }
 
 const server = await startStaticServer(ensureClientBuild(repoRoot));
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 const results = [];
 
 try {
