@@ -369,7 +369,7 @@ a[class*="inline-flex"]:active {
 /* ───────────────────────── Mobile: dock + tela nativa ───────────────────────── */
 @media screen and (max-width: 1023px) {
   body.np-mobile-dock-active {
-    padding-bottom: calc(5.4rem + var(--np-safe-bottom));
+    padding-bottom: calc(3.75rem + var(--np-safe-bottom));
   }
 
   header.fixed.lg\:hidden {
@@ -395,7 +395,7 @@ a[class*="inline-flex"]:active {
   [data-testid="mobile-primary-dock"] nav {
     position: relative;
     overflow: hidden;
-    border-radius: 1.55rem !important;
+    border-radius: 1.15rem !important;
     border-color: hsl(var(--border) / 0.52) !important;
     background: linear-gradient(
       180deg,
@@ -422,9 +422,12 @@ a[class*="inline-flex"]:active {
     pointer-events: none;
   }
 
+  /* 44px é o alvo de toque; os 3,6rem anteriores existiam para acomodar a
+     pastilha elevada de Prontuário, que saiu. Manter a altura antiga aqui
+     anularia a faixa rasa definida no componente. */
   [data-testid="mobile-primary-dock"] button {
-    min-height: 3.6rem !important;
-    border-radius: 1.05rem !important;
+    min-height: 2.75rem !important;
+    border-radius: 0.85rem !important;
   }
 
   [data-testid="mobile-primary-dock"] button[aria-current="page"] {
@@ -484,12 +487,12 @@ a[class*="inline-flex"]:active {
   }
 
   [data-testid="mobile-primary-dock"] nav {
-    min-height: 4.15rem;
-    border-radius: 1.65rem !important;
+    min-height: 3.25rem;
+    border-radius: 1.15rem !important;
   }
 
   [data-testid="mobile-primary-dock"] button {
-    min-height: 3.7rem !important;
+    min-height: 2.75rem !important;
   }
 }
 

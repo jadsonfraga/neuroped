@@ -659,12 +659,28 @@ export default function PacientesPage() {
               <p className="text-sm font-bold text-foreground">
                 Dados clínicos sob responsabilidade profissional
               </p>
+              {/* O aviso precisa descrever o modo em que a tela está de fato.
+                  O texto único falava em "modo sem senha" e em "Apagar dados
+                  locais" mesmo dentro de uma sessão profissional autenticada —
+                  onde há senha e onde nada clínico é gravado no navegador. */}
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A API de pacientes não é cacheada pelo service worker. Neste
-                modo sem senha, qualquer pessoa no mesmo perfil do navegador
-                pode ver os registros. Confirme consentimento, exporte backup e
-                use “Apagar dados locais” ao terminar em dispositivo
-                compartilhado.
+                {isRemoteClinical ? (
+                  <>
+                    Sessão profissional autenticada: os registros vivem no
+                    backend da clínica ativa e não são gravados neste navegador.
+                    A API de pacientes não é cacheada pelo service worker.
+                    Confirme consentimento e encerre a sessão ao terminar em
+                    dispositivo compartilhado.
+                  </>
+                ) : (
+                  <>
+                    A API de pacientes não é cacheada pelo service worker. Neste
+                    modo sem senha, qualquer pessoa no mesmo perfil do navegador
+                    pode ver os registros. Confirme consentimento, exporte
+                    backup e use “Apagar dados locais” ao terminar em
+                    dispositivo compartilhado.
+                  </>
+                )}
               </p>
             </div>
           </CardContent>
@@ -734,10 +750,12 @@ export default function PacientesPage() {
         />
         {search && (
           <button
+            type="button"
             onClick={() => setSearch("")}
+            aria-label="Limpar busca de pacientes"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -837,28 +855,32 @@ export default function PacientesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0"
+                          className="h-9 w-9 p-0"
                           onClick={() => {
                             softTick();
                             haptic.tap();
                             openEdit(p);
                           }}
+                          aria-label={`Editar cadastro de ${p.name}`}
+                          title="Editar cadastro"
                           data-testid={`button-edit-${p.id}`}
                         >
-                          <Pencil className="w-3 h-3" />
+                          <Pencil className="w-4 h-4" aria-hidden="true" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          className="h-9 w-9 p-0 text-destructive hover:text-destructive"
                           onClick={() => {
                             softTap();
                             haptic.warning();
                             setConfirmingDelete({ id: p.id, name: p.name });
                           }}
+                          aria-label={`Excluir cadastro de ${p.name}`}
+                          title="Excluir cadastro"
                           data-testid={`button-delete-${p.id}`}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>

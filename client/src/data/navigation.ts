@@ -53,29 +53,22 @@ export interface NavigationMatch {
 }
 
 /**
- * Atalhos que ficam no topo do shell clínico. São os destinos de uso mais
- * frequente e as conexões institucionais que não devem se perder no catálogo.
+ * Atalhos que ficam no topo do shell clínico.
+ *
+ * Hierarquia por **frequência de uso**, não por importância comercial. Até a
+ * auditoria de 2026-09 os seis itens eram `golden`: dois viravam cartões
+ * amarelos enormes no topo da sidebar e disputavam atenção com toda a
+ * navegação clínica abaixo. Agora o ouro identifica só as **conexões
+ * institucionais** (o parceiro externo e o serviço de exame), que ficam num
+ * grupo próprio e discreto; o que o consultório abre todo dia entra como
+ * atalho clínico neutro, com o item ativo sendo o único destaque real.
  */
 export const featuredNavigation: NavItem[] = [
-  {
-    href: "/nesplora/",
-    label: "Nesplora",
-    icon: Brain,
-    tone: "golden",
-    description: "Experiência imersiva em VR",
-  },
-  {
-    href: "/eletroencefalograma",
-    label: "EEG & Vídeo-EEG",
-    icon: Waves,
-    tone: "golden",
-    description: "Exames e orientação clínica",
-  },
   {
     href: "/filtro",
     label: "Filtro de Escalas",
     icon: Filter,
-    tone: "golden",
+    tone: "priority",
     description: "Por idade e queixa",
   },
   {
@@ -84,16 +77,32 @@ export const featuredNavigation: NavItem[] = [
     // visível na descrição do card e pesquisável no command palette.
     label: "Secretaria IA",
     icon: Calendar,
-    tone: "golden",
+    tone: "priority",
     description: "Pré-agendamento pelo BoaConsulta",
   },
-  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden", description: "Portais e conexões" },
   {
     href: "/servicos-clinica",
     label: "Serviços da Clínica",
     icon: Stethoscope,
-    tone: "golden",
+    tone: "priority",
     description: "Avaliações e serviços",
+  },
+  // prettier-ignore — o guard de integração do Conecta casa a entrada nesta
+  // forma de uma linha (tests/unit/conecta-integration-static.test.mjs).
+  { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection", description: "Portais e conexões" },
+  {
+    href: "/eletroencefalograma",
+    label: "EEG & Vídeo-EEG",
+    icon: Waves,
+    tone: "golden",
+    description: "Exames e orientação clínica",
+  },
+  {
+    href: "/nesplora/",
+    label: "Nesplora",
+    icon: Brain,
+    tone: "golden",
+    description: "Experiência imersiva em VR",
   },
 ];
 

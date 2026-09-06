@@ -141,10 +141,10 @@ async function verifyTouchPerformanceProfile(width = 1280) {
   try {
     await page.goto(`${server.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
     await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 });
-    const filterOpenButton = page.getByTestId("button-open-filter");
-    await filterOpenButton.waitFor({ state: "visible", timeout: 15000 });
-    await filterOpenButton.click();
-    await page.locator(".container-filtro").waitFor({ state: "visible", timeout: 15000 });
+    // O filtro carrega sozinho: o esqueleto cede lugar ao motor sem clique
+    // intermediário. Esperar o container prova o mesmo que antes — e falharia se
+    // alguém reintroduzisse uma etapa manual de confirmação.
+    await page.locator(".container-filtro").waitFor({ state: "visible", timeout: 20000 });
     await page
       .getByRole("button", { name: "TDAH · 6–12 anos", exact: true })
       .click();
