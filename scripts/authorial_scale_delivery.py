@@ -70,7 +70,7 @@ def validate(record: dict) -> dict:
 
 
 def load_records(extra: Path | None = None) -> list[dict]:
-    records = json.loads((ROOT / "client/src/data/authorialMonitoring.json").read_text())
+    records = json.loads((ROOT / "client/src/data/authorialMonitoring.json").read_text(encoding="utf-8"))
     paths = sorted((ROOT / "client/src/data/daily-authorial").glob("*.json"))
     if extra and extra.exists():
         paths += sorted(extra.rglob("*.json"))
@@ -79,7 +79,7 @@ def load_records(extra: Path | None = None) -> list[dict]:
     for path in paths:
         if path.is_symlink() or path.stat().st_size > 1_000_000:
             raise ValueError("Entrada excede limites de segurança")
-        record = json.loads(path.read_text())
+        record = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(record, dict) or record.get("sourceType") != "autoral_diario":
             continue
         if str(record.get("generatedOn", "")) >= "2026-09-05":
@@ -107,7 +107,7 @@ def render_pdf(records: list[dict], destination: Path) -> None:
     small = ParagraphStyle("small", parent=style, fontSize=8, leading=10)
     p = lambda text, chosen=style: Paragraph(escape(str(text)).replace("\n", "<br/>"), chosen)
     story = []
-    logo = base64.b64decode((ROOT / "config/authorial-scale-logo.b64").read_text(), validate=False)
+    logo = base64.b64decode((ROOT / "config/authorial-scale-logo.b64").read_text(encoding="ascii"), validate=False)
     for index, r in enumerate(records):
         validate(r)
         if index:
@@ -123,16 +123,21 @@ def render_pdf(records: list[dict], destination: Path) -> None:
         age = f"{r['ageMinMonths']} a {r['ageMaxMonths']} meses"
         story += [p(f"Faixa sugerida: {age}. Janela: {window}."), p(r.get("purpose", ""))]
         if scored:
-            instruction = "0 = não ocorreu/sem dificuldade; 1 = leve ou ocasional; 2 = frequente ou com impacto; 3 = muito frequente/intenso ou difícil de contornar."
+            response_labels = r.get("responseLabels")
+            if not isinstance(response_labels, list) or len(response_labels) < 2 or any(not isinstance(x, str) or not x.strip() for x in response_labels):
+                response_labels = ["0 — não ocorreu/sem dificuldade", "1 — leve ou ocasional", "2 — frequente ou com impacto", "3 — muito frequente/intenso ou difícil de contornar"]
+            instruction = "; ".join(response_labels)
+            response_codes = [re.split(r"\s+[—–-]\s+", label, maxsplit=1)[0].strip() for label in response_labels]
         else:
             instruction = "; ".join(f"{o['code']} = {o['label']}" for o in r["responseOptions"])
+            response_codes = []
         story += [p(instruction, small), p("Marque uma opção por item. Não observado não é zero. Mantenha o mesmo respondente e contexto no seguimento.", small)]
         if not scored:
             instructions = r.get("instructions", [])
             story += [p(x, small) for x in (instructions if isinstance(instructions, list) else [instructions])]
         rows = [[p("Item observado", small), p("Resposta", small)]]
         for n, item in enumerate(r["items"], 1):
-            choices = "0 ( )  1 ( )  2 ( )  3 ( )" if scored else "________________"
+            choices = "  ".join(f"{code} ( )" for code in response_codes) if scored else "________________"
             rows.append([p(f"{n}. {item['text']}"), p(choices, small)])
         table = Table(rows, colWidths=[367, 140], repeatRows=1, hAlign="LEFT")
         table.setStyle(TableStyle([
@@ -143,8 +148,13 @@ def render_pdf(records: list[dict], destination: Path) -> None:
         ]))
         story += [table, Spacer(1, 9)]
         if scored:
-            domains = "; ".join(f"{d['name']}: ____/{len(d['itemIds']) * 3}" for d in r["domains"])
-            story += [p(domains, small), p(f"Total descritivo: ____/{len(r['items']) * 3}. Sem pontos de corte. Não somar se faltar resposta.", small)]
+            points = r.get("optionPoints")
+            unscored = set(r.get("unscoredOptionIndexes") or [])
+            valid_points = [value for i, value in enumerate(points) if i not in unscored] if isinstance(points, list) else []
+            max_per_item = max(valid_points) if valid_points and all(isinstance(value, (int, float)) for value in valid_points) else 3
+            domains = "; ".join(f"{d['name']}: ____/{len(d['itemIds']) * max_per_item:g}" for d in r["domains"])
+            scoring_note = r.get("scoringNote") or f"Total descritivo: ____/{len(r['items']) * max_per_item:g}. Sem pontos de corte. Não somar se faltar resposta."
+            story += [p(domains, small), p(scoring_note, small)]
         else:
             story += [p("Perfil qualitativo por item/domínio. Não calcular soma, percentil ou faixa diagnóstica.", small)]
         alerts = r.get("redFlags", [])
@@ -180,7 +190,7 @@ class ReceiptStore:
             if not branch:
                 main = self.api("GET", "git/ref/heads/main")
                 self.api("POST", "git/refs", {"ref": "refs/heads/" + STATE_BRANCH, "sha": main["object"]["sha"]})
-            self.data = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text())
+            self.data = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
         if self.data.get("recipient") != RECIPIENT or not isinstance(self.data.get("receipts"), dict):
             raise ValueError("Recibos inconsistentes; não enviar")
 
@@ -227,6 +237,18 @@ def smtp_settings() -> dict:
     if int(cfg["SMTP_PORT"]) not in {465, 587} or not re.fullmatch(r"[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+", cfg["SMTP_FROM"]):
         raise ValueError("Exigir remetente válido e SMTP com TLS (465 ou 587)")
     return cfg
+
+
+def render_pending_artifacts(records: list[dict], receipts: dict, output: Path) -> int:
+    todo = select_pending(records, receipts)
+    for start in range(0, len(todo), 5):
+        batch = todo[start:start + 5]
+        keys = [fingerprint(r) for r in batch]
+        batch_id = hashlib.sha256("|".join(sorted(keys)).encode()).hexdigest()
+        for r in batch:
+            render_pdf([r], output / f"{r['id']}-{fingerprint(r)[7:19]}.pdf")
+        render_pdf(batch, output / f"pacote-{batch_id[:12]}.pdf")
+    return len(todo)
 
 
 def send_records(records: list[dict], store: ReceiptStore, output: Path, cfg: dict) -> int:
@@ -285,8 +307,14 @@ def main():
     args = parser.parse_args()
     records = load_records(args.extra)
     if args.send:
+        store = ReceiptStore()
+        rendered = render_pending_artifacts(records, store.data["receipts"], args.output)
+        print(f"{rendered} modelo(s) pendente(s) renderizado(s) antes da tentativa de transporte.")
+        if rendered == 0:
+            print("Nenhum modelo pendente; transporte não é necessário nesta execução.")
+            return
         cfg = smtp_settings()
-        total = send_records(records, ReceiptStore(), args.output, cfg)
+        total = send_records(records, store, args.output, cfg)
         print(f"{total} modelo(s) aceito(s) pelo SMTP. Aceite não comprova leitura/entrega final.")
     else:
         for record in records:
