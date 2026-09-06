@@ -2,7 +2,6 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Check,
-  Copy,
   CreditCard,
   Loader2,
   Mail,
@@ -326,7 +325,6 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("professional");
   const [busy, setBusy] = useState(false);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
 
   const load = useCallback(() => {
@@ -359,25 +357,20 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    setInviteUrl(null);
     try {
-      const body = await readJson<{ invitationUrl?: string; delivery?: "email" | "manual" }>(
+      const body = await readJson<{ delivery?: "email" }>(
         await authFetch("/api/billing/invitations", {
           method: "POST",
           body: JSON.stringify({ clinicId, email: inviteEmail.trim(), role: inviteRole, action: "create" }),
         }),
       );
-      // Com transporte de e-mail configurado o servidor NÃO devolve o link: o
-      // token vai direto a quem precisa provar posse do endereço. A tela
-      // precisa dizer a verdade sobre qual dos dois aconteceu.
-      const sentByEmail = body.delivery === "email";
-      setInviteUrl(sentByEmail ? null : (body.invitationUrl ?? null));
+      if (body.delivery !== "email") {
+        throw new Error("O servidor não confirmou a entrega segura do convite por e-mail.");
+      }
       setInviteEmail("");
       toast({
-        title: sentByEmail ? "Convite enviado ✓" : "Convite criado ✓",
-        description: sentByEmail
-          ? "O link foi enviado por e-mail ao convidado e expira em 7 dias."
-          : "Entrega por e-mail não está configurada: copie o link e envie você mesmo. Expira em 7 dias.",
+        title: "Convite enviado ✓",
+        description: "O link foi enviado por e-mail ao convidado e expira em 7 dias.",
       });
       load();
     } catch (inviteError) {
@@ -445,7 +438,7 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
         </ul>
       </SectionCard>
 
-      <SectionCard title="Convidar membro" description="O convite gera um link único com validade de 7 dias, limitado aos assentos da assinatura. Envie o link ao convidado pelo seu canal seguro.">
+      <SectionCard title="Convidar membro" description="O convite gera um link único com validade de 7 dias, limitado aos assentos da assinatura, e o envia diretamente ao e-mail do convidado.">
         <form onSubmit={invite} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
             <Label htmlFor="equipe-email">E-mail do convidado</Label>
@@ -471,30 +464,6 @@ function EquipeSection({ clinicId }: { clinicId: string }) {
             Convidar
           </Button>
         </form>
-        {inviteUrl && (
-          <div className="space-y-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3">
-            <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
-              Entrega por e-mail não configurada nesta instalação — envie o link
-              você mesmo, por um canal seguro, e só ao convidado.
-            </p>
-            <div className="flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate text-xs">{inviteUrl}</code>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              onClick={() => {
-                void navigator.clipboard?.writeText(inviteUrl).then(
-                  () => toast({ title: "Link copiado ✓" }),
-                  () => toast({ title: "Copie manualmente o link acima.", variant: "destructive" }),
-                );
-              }}
-            >
-              <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copiar
-            </Button>
-            </div>
-          </div>
-        )}
         {pending.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Convites pendentes</p>
