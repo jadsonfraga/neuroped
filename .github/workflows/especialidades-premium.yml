@@ -56,4 +56,9 @@ jobs:
           name: especialidades-premium-${{ github.sha }}
           retention-days: 14
           if-no-files-found: error
-          path: artifacts/especialidades-premium
+          path: |
+            artifacts/especialidades-premium
+            attached_assets/images/dr-jadson-arte.jpeg
+            attached_assets/images/dr-jadson-consultorio-batman.jpeg
+            attached_assets/images/dr-jadson-consultorio-superman.jpeg
+            attached_assets/images/dr-fraga-kids/mascote.png
