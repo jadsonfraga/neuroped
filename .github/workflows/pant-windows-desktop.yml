@@ -50,7 +50,8 @@ jobs:
           python branded_desktop.py --smoke-gui source-brand-smoke.json
           if ($LASTEXITCODE -ne 0) { throw 'Branded source GUI smoke failed' }
           $proof = Get-Content source-brand-smoke.json -Raw | ConvertFrom-Json
-          if (-not $proof.export_verified -or $proof.drafts -ne 5 -or $proof.brand_images_loaded -lt 10 -or $proof.gui -ne 'tkinter-native-branded') { throw 'Branded source GUI evidence invalid' }
+          if (-not $proof.export_verified -or $proof.drafts -ne 5 -or $proof.brand_images_loaded -lt 10 -or -not $proof.preview_written -or $proof.gui -ne 'tkinter-native-branded') { throw 'Branded source GUI evidence invalid' }
+          if (-not (Test-Path source-brand-smoke.png)) { throw 'Source branded preview missing' }
       - name: Build standalone branded executable
         run: |
           python -m PyInstaller --clean --noconfirm --onefile --windowed --name NeuroPedFluxo --paths . `
@@ -72,13 +73,15 @@ jobs:
             if ($p.ExitCode -ne 0) { throw "Packaged executable failed: $($p.ExitCode)" }
           } finally { $env:PATH = $savedPath }
           $proof = Get-Content $report -Raw | ConvertFrom-Json
-          if (-not $proof.frozen -or -not $proof.export_verified -or $proof.platform -ne 'win32' -or $proof.final_pdfs_emitted -ne 0 -or $proof.brand_images_loaded -lt 10) { throw 'Frozen executable evidence invalid' }
+          if (-not $proof.frozen -or -not $proof.export_verified -or $proof.platform -ne 'win32' -or $proof.final_pdfs_emitted -ne 0 -or $proof.brand_images_loaded -lt 10 -or -not $proof.preview_written) { throw 'Frozen executable evidence invalid' }
+          if (-not (Test-Path windows-exe-smoke.png)) { throw 'Frozen branded preview missing' }
       - name: Prepare verifiable portable package
         run: |
           New-Item -ItemType Directory -Path release -ErrorAction Stop | Out-Null
           Copy-Item dist/NeuroPedFluxo.exe release/NeuroPedFluxo.exe
           Copy-Item DESKTOP.md release/LEIA_PRIMEIRO.md
           Copy-Item windows-exe-smoke.json release/TESTE_WINDOWS.json
+          Copy-Item windows-exe-smoke.png release/PREVIA_WINDOWS.png
           Copy-Item desktop-tests.txt release/TESTES.txt
           (Get-FileHash release/NeuroPedFluxo.exe -Algorithm SHA256).Hash | Set-Content release/EXECUTAVEL_SHA256.txt
           git rev-parse HEAD | Set-Content release/BUILD_COMMIT.txt
