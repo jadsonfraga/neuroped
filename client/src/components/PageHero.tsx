@@ -17,8 +17,8 @@ interface PageHeroProps {
 
 /**
  * Cabeçalho editorial Signature Clinical.
- * A superfície permanece calma; identidade de cada módulo fica concentrada no
- * medalhão, na assinatura Dr. Jadson e, quando solicitado, no mascote contextual.
+ * A superfície permanece calma; a hierarquia é módulo → conteúdo → assinatura.
+ * A marca institucional aparece de forma compacta, sem competir com a tarefa clínica.
  */
 export function PageHero({
   icon: Icon,
@@ -62,25 +62,32 @@ export function PageHero({
           {children && <div className="mt-4">{children}</div>}
         </div>
 
-        <div className="hidden shrink-0 items-center gap-3 xl:flex" aria-label="Identidade do Dr. Jadson Fraga">
-          <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-amber-300/45 bg-background shadow-[0_14px_30px_-20px_hsl(214_76%_11%/0.55)]">
+        <div
+          className="hidden shrink-0 items-center gap-2.5 rounded-2xl border border-amber-500/20 bg-background/55 px-2.5 py-2 shadow-sm backdrop-blur xl:flex"
+          aria-label="Identidade institucional NeuroPed SDG"
+        >
+          <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-background/90 p-1 ring-1 ring-amber-500/25">
             <SafeAssetImage
-              src={brandAssets.mascots.doctorSelfie}
-              alt="Dr. Jadson Fraga"
-              className="h-full w-full object-cover object-top"
+              src={brandAssets.masterShield}
+              alt="Escudo NeuroPed SDG"
+              className="h-full w-full object-contain"
             />
           </div>
-          <div className="max-w-[10.5rem] leading-tight">
-            <p className="text-[12px] font-semibold text-foreground">Dr. Jadson Fraga</p>
-            <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
-              Neuropediatra
+          <div className="max-w-[11.5rem] leading-tight">
+            <p className="text-[11px] font-semibold tracking-tight text-foreground">
+              NeuroPed SDG
             </p>
-            <p className="mt-1 text-[9px] text-muted-foreground">CRM-PE 25227 · RQE 17756</p>
+            <p className="mt-0.5 text-[9px] text-muted-foreground">
+              Dr. Jadson Fraga · Neuropediatra
+            </p>
           </div>
         </div>
 
         {mascotContext && (
-          <div className="hidden shrink-0 self-center md:block" aria-hidden="true">
+          <div
+            className="hidden shrink-0 self-center md:block xl:hidden"
+            aria-hidden="true"
+          >
             <Mascote contexto={mascotContext} size="sm" fala="" className="opacity-90" />
           </div>
         )}
