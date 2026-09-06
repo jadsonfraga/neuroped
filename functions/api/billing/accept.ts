@@ -4,13 +4,11 @@ import { passwordPolicyError } from "../auth/_passwordPolicy";
 import { canonicalEmail, getUserByEmail } from "../auth/_shared";
 import { json, boundedText as text } from "../_request";
 import { isClinicMembershipRole } from "../../../shared/tenant";
-import { validateInvitationForAccept } from "./_onboarding";
+import { isCurrentInvitationToken, validateInvitationForAccept } from "./_onboarding";
 
 interface Env {
   DB?: D1Database;
-  /** Identidade técnica reservada; nunca pode aceitar convite de clínica. */
   NEUROPED_E2E_EMAIL?: string;
-  /** Mesmo opt-in do cadastro público: também gates a criação de conta via convite. */
   SAAS_SIGNUP_ENABLED?: string;
 }
 
@@ -41,9 +39,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const token = text(body.token, 300);
   const name = text(body.name, 160);
-  // Senha é dado opaco: não passa por boundedText, que faria trim/truncamento.
   const password = typeof body.password === "string" ? body.password : "";
-  if (token.length < 32) return json({ error: "Convite inválido.", code: "INVITATION_INVALID" }, 400);
+  // Cutover de segurança: tokens do regime legado podem ter sido expostos pelo
+  // antigo fallback manual e são inválidos independentemente do hash no D1.
+  if (!isCurrentInvitationToken(token)) {
+    return json({ error: "Convite inválido ou precisa ser reenviado.", code: "INVITATION_LEGACY_TOKEN" }, 409);
+  }
 
   const tokenHash = await sha256Hex(token);
   const invitation = await env.DB.prepare(
@@ -62,17 +63,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const reservedEmail = env.NEUROPED_E2E_EMAIL?.trim().toLowerCase() ?? "";
   if (reservedEmail && invitation.email.trim().toLowerCase() === reservedEmail) {
-    return json(
-      { error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" },
-      409,
-    );
+    return json({ error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" }, 409);
   }
 
   if (authUser && authUser.email.trim().toLowerCase() !== invitation.email.trim().toLowerCase()) {
-    return json(
-      { error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" },
-      403,
-    );
+    return json({ error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" }, 403);
   }
 
   const billing = await env.DB.prepare(
@@ -108,44 +103,29 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Conta existente está inativa.", code: "ACCOUNT_INACTIVE" }, 409);
   }
   if (existing && reservedEmail && existing.email.trim().toLowerCase() === reservedEmail) {
-    return json(
-      { error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" },
-      409,
-    );
+    return json({ error: "A conta técnica E2E é reservada e não pode integrar uma clínica.", code: "TECHNICAL_ACCOUNT_RESERVED" }, 409);
   }
   if (existing && !authUser) {
-    return json(
-      { error: "Faça login com a conta convidada para aceitar este convite.", code: "AUTHENTICATION_REQUIRED" },
-      401,
-    );
+    return json({ error: "Faça login com a conta convidada para aceitar este convite.", code: "AUTHENTICATION_REQUIRED" }, 401);
   }
   if (existing && authUser && existing.id !== authUser.id) {
-    return json(
-      { error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" },
-      403,
-    );
+    return json({ error: "Convite deve ser aceito pela conta com o e-mail convidado.", code: "INVITATION_EMAIL_MISMATCH" }, 403);
   }
 
   let userId = existing?.id ?? "";
   let passwordHash: string | null = null;
   if (!existing) {
     if (env.SAAS_SIGNUP_ENABLED !== "true") {
-      return json(
-        {
-          error:
-            "Criação de conta via convite não está habilitada nesta instalação. Peça ao gestor um convite para uma conta existente ou aguarde a liberação do cadastro.",
-          code: "INVITE_ACCOUNT_CREATION_DISABLED",
-        },
-        503,
-      );
+      return json({
+        error: "Criação de conta via convite não está habilitada nesta instalação. Peça ao gestor um convite para uma conta existente ou aguarde a liberação do cadastro.",
+        code: "INVITE_ACCOUNT_CREATION_DISABLED",
+      }, 503);
     }
     if (name.length < 2) {
       return json({ error: "Informe seu nome completo.", code: "ACCOUNT_DATA_REQUIRED" }, 400);
     }
     const policyError = passwordPolicyError(password);
-    if (policyError) {
-      return json({ error: policyError, code: "WEAK_PASSWORD" }, 400);
-    }
+    if (policyError) return json({ error: policyError, code: "WEAK_PASSWORD" }, 400);
     userId = crypto.randomUUID();
     passwordHash = await hashPassword(password);
   }
@@ -169,18 +149,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
              WHERE id = ? AND token_hash = ? AND status = 'pending'
                AND julianday(expires_at) > julianday(?)
           )`,
-      ).bind(
-        userId,
-        name,
-        canonicalEmail(invitation.email),
-        globalRole,
-        passwordHash,
-        now,
-        now,
-        invitation.id,
-        tokenHash,
-        now,
-      ),
+      ).bind(userId, name, canonicalEmail(invitation.email), globalRole, passwordHash, now, now, invitation.id, tokenHash, now),
     );
   }
 
@@ -204,19 +173,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
          active = 1,
          invited_by_user_id = excluded.invited_by_user_id,
          updated_at = excluded.updated_at`,
-    ).bind(
-      invitation.clinic_id,
-      userId,
-      invitation.role,
-      invitation.invited_by_user_id,
-      now,
-      now,
-      invitation.id,
-      tokenHash,
-      now,
-      userId,
-      reservedEmail,
-    ),
+    ).bind(invitation.clinic_id, userId, invitation.role, invitation.invited_by_user_id, now, now, invitation.id, tokenHash, now, userId, reservedEmail),
     env.DB.prepare(
       `UPDATE clinic_invitations
           SET status = 'accepted', accepted_at = ?
@@ -229,14 +186,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
        SELECT ?, ?, ?, 'invitation.accepted', 'clinic_invitation', ?, ?, ?
         WHERE changes() = 1`,
-    ).bind(
-      crypto.randomUUID(),
-      invitation.clinic_id,
-      userId,
-      invitation.id,
-      JSON.stringify({ role: invitation.role }),
-      now,
-    ),
+    ).bind(crypto.randomUUID(), invitation.clinic_id, userId, invitation.id, JSON.stringify({ role: invitation.role }), now),
   );
 
   try {
@@ -249,10 +199,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       (invitationUpdate?.meta?.changes ?? 0) !== 1 ||
       (auditInsert?.meta?.changes ?? 0) !== 1
     ) {
-      return json(
-        { error: "Convite mudou durante o aceite ou a identidade está reservada.", code: "INVITATION_STALE" },
-        409,
-      );
+      return json({ error: "Convite mudou durante o aceite ou a identidade está reservada.", code: "INVITATION_STALE" }, 409);
     }
   } catch (error) {
     const message = String(error);
@@ -266,11 +213,5 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Não foi possível aceitar o convite.", code: "INVITATION_ACCEPT_FAILED" }, 500);
   }
 
-  return json({
-    ok: true,
-    clinicId: invitation.clinic_id,
-    userId,
-    role: invitation.role,
-    accountCreated: !existing,
-  }, 201);
+  return json({ ok: true, clinicId: invitation.clinic_id, userId, role: invitation.role, accountCreated: !existing }, 201);
 };
