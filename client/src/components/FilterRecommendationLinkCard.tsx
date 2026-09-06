@@ -29,13 +29,13 @@ const toneConfig: Record<
 > = {
   primary: {
     accent: "bg-emerald-500",
-    icon: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
+    icon: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
     wash: "from-emerald-500/[0.08] via-card to-card",
     border: "group-hover:border-emerald-500/45",
   },
   secondary: {
     accent: "bg-amber-500",
-    icon: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
+    icon: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
     wash: "from-amber-500/[0.08] via-card to-card",
     border: "group-hover:border-amber-500/45",
   },

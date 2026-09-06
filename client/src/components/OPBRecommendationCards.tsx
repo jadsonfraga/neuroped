@@ -42,7 +42,7 @@ const sealConfig: Record<Seal, SealVisual> = {
     border: "border-amber-500/35",
     wash: "from-amber-500/[0.11] via-card to-card",
     icon: "bg-amber-500/15 text-amber-800 dark:text-amber-200",
-    badge: "border-amber-500/30 bg-amber-500/12 text-amber-900 dark:text-amber-100",
+    badge: "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-100",
   },
   prata: {
     order: 2,
@@ -51,7 +51,7 @@ const sealConfig: Record<Seal, SealVisual> = {
     Icon: Medal,
     border: "border-slate-400/40",
     wash: "from-slate-400/[0.10] via-card to-card",
-    icon: "bg-slate-500/12 text-slate-700 dark:text-slate-200",
+    icon: "bg-slate-500/10 text-slate-700 dark:text-slate-200",
     badge: "border-slate-400/35 bg-slate-500/10 text-slate-800 dark:text-slate-100",
   },
   bronze: {
@@ -61,7 +61,7 @@ const sealConfig: Record<Seal, SealVisual> = {
     Icon: Star,
     border: "border-orange-500/30",
     wash: "from-orange-500/[0.09] via-card to-card",
-    icon: "bg-orange-500/12 text-orange-800 dark:text-orange-200",
+    icon: "bg-orange-500/10 text-orange-800 dark:text-orange-200",
     badge: "border-orange-500/30 bg-orange-500/10 text-orange-900 dark:text-orange-100",
   },
 };

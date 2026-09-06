@@ -28,6 +28,12 @@ on:
       - "client/src/pages/filtro.tsx"
       - "client/src/pages/prontuario.tsx"
       - "client/src/pages/portal-familia.tsx"
+      # Superfícies portadas fora do shell clínico (fullscreen, sem sidebar):
+      # o `<main>` do Layout continua no DOM por baixo, então uma landmark
+      # `<main>` extra aqui é `landmark-no-duplicate-main` — só o sweep
+      # A11Y_FULL cobre `/#/especialidades`, e ele só roda neste workflow.
+      - "client/src/pages/especialidades-premium.tsx"
+      - "client/src/pages/not-found.tsx"
       - "client/src/components/clinical/PatientCockpit.tsx"
       - "client/src/components/ui/**"
       - "scripts/audit-visual-proof.mjs"
@@ -36,6 +42,7 @@ on:
       - "scripts/audit-lighthouse.mjs"
       - "scripts/audit-design.mjs"
       - "scripts/guards/audit-surface-contrast.mjs"
+      - "scripts/guards/audit-tailwind-opacity-modifiers.mjs"
       - "tests/unit/visual-reset-static.test.mjs"
       - "tests/unit/premium-polish-10-static.test.mjs"
       - "tests/unit/flow-os-navigation-static.test.mjs"
@@ -89,6 +96,12 @@ jobs:
       # a sidebar do modo claro chegou a 1:1 com o gate de a11y verde.
       - name: Surface contrast audit
         run: npm run audit:contrast
+      # Detecta `dark:text-white/76` e semelhantes: opacidade fora da escala
+      # de 5% do tema não gera CSS nenhum — sem erro, sem warning — e o
+      # elemento herda a cor de outra classe. Foi assim que um parágrafo
+      # ficou ilegível no modo escuro em /especialidades sem nenhum gate acusar.
+      - name: Tailwind opacity modifier audit
+        run: npm run audit:tailwind-opacity
       - name: Lighthouse in Chromium — 12 archetypes
         id: browser-lighthouse
         continue-on-error: true

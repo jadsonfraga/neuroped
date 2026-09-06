@@ -45,6 +45,8 @@ const CASES = [
   { id: "mobile-header-dark", route: "/", width: 390, height: 844, theme: "dark", surface: ".np-app-mobile-header" },
   { id: "home-hero-light", route: "/", width: 1440, height: 1000, theme: "light", surface: ".np-home-hero" },
   { id: "home-hero-dark", route: "/", width: 1440, height: 1000, theme: "dark", surface: ".np-home-hero" },
+  { id: "especialidades-light", route: "/#/especialidades", width: 1440, height: 2200, theme: "light", surface: '[data-testid="especialidades-premium-surface"]' },
+  { id: "especialidades-dark", route: "/#/especialidades", width: 1440, height: 2200, theme: "dark", surface: '[data-testid="especialidades-premium-surface"]' },
 ];
 
 const NORMAL_MIN = 4.5;

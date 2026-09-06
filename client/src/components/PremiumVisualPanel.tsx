@@ -40,7 +40,7 @@ export function PremiumVisualPanel({
 
   return (
     <section
-      className={`np-brand-visual-panel relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/88 shadow-sm backdrop-blur ${className}`}
+      className={`np-brand-visual-panel relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/90 shadow-sm backdrop-blur ${className}`}
     >
       <SafeImage
         src={src}
