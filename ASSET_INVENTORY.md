@@ -30,6 +30,19 @@ Este inventário consolida os assets premium reaproveitados na identidade atual,
 | `attached_assets/images/dr-jadson-consultorio-batman.jpeg` | B — aceitável | Uso pediátrico/superpoder pontual, sem visual gamer; renderizado em `/qualidade`. |
 | `attached_assets/images/dr-jadson-consultorio-full.jpeg` | B — aceitável | Conteúdo institucional e sobre a clínica; renderizado em `/qualidade`. |
 
+## Fotografia institucional
+
+Fotografia profissional do serviço, incorporada em 06/09/2026. É esta faixa —
+não os mascotes nem as fantasias — que representa o atendimento nas superfícies
+de marca. Entregues em WebP já dimensionado (84–132 KB) a partir de originais
+PNG de ~3 MB, que não vão para o repositório.
+
+| Asset | Classificação | Reaproveitamento |
+| --- | --- | --- |
+| `attached_assets/images/dr-jadson-atendimento-crianca.webp` | A — premium e reutilizável | Fotografia principal do hero da home: atendimento real, com a criança e o escudo em quadro; renderizada em `/qualidade`. |
+| `attached_assets/images/dr-jadson-retrato-institucional.webp` | A — premium e reutilizável | Retrato das superfícies profissionais; o navy e o ouro do uniforme repetem o chrome do app. Renderizado em `/qualidade`. |
+| `attached_assets/images/dr-jadson-retrato-jaleco.webp` | A — premium e reutilizável | Retrato das superfícies dirigidas à família, onde a leitura pedida é aproximação; renderizado em `/qualidade`. |
+
 ## Ilustrações, fundos e banners
 
 | Asset | Classificação | Reaproveitamento |

@@ -9,6 +9,12 @@ import drArteMascot from "@assets/images/dr-jadson-arte.jpeg";
 import drSelfieMascot from "@assets/images/dr-jadson-selfie.jpeg";
 import drBatmanMascot from "@assets/images/dr-jadson-consultorio-batman.jpeg";
 import drConsultorioFull from "@assets/images/dr-jadson-consultorio-full.jpeg";
+// Fotografia institucional 2026: material profissional que substitui as fotos
+// de costume nas superfícies de marca. Mascotes e fantasias seguem existindo,
+// mas em uso pediátrico pontual — não como retrato do serviço.
+import drAtendimentoCrianca from "@assets/images/dr-jadson-atendimento-crianca.webp";
+import drRetratoJaleco from "@assets/images/dr-jadson-retrato-jaleco.webp";
+import drRetratoInstitucional from "@assets/images/dr-jadson-retrato-institucional.webp";
 import heroBrain from "@assets/images/hero-brain.webp";
 import childAssessment from "@assets/images/child-assessment.webp";
 import childDevelopment from "@assets/images/child-development.webp";
@@ -27,6 +33,12 @@ export const brandAssets = {
     doctorSelfie: drSelfieMascot,
     consultorioBatman: drBatmanMascot,
     consultorioFull: drConsultorioFull,
+  },
+  /** Fotografia real do serviço: o que aparece nas superfícies institucionais. */
+  photography: {
+    atendimentoCrianca: drAtendimentoCrianca,
+    retratoJaleco: drRetratoJaleco,
+    retratoInstitucional: drRetratoInstitucional,
   },
   illustrations: {
     heroBrain,
@@ -130,6 +142,36 @@ export const visualAssetRegistry: VisualAssetRegistryItem[] = [
     src: brandAssets.mascots.consultorioFull,
     status: "apoio",
     usage: "conteúdo institucional, sobre a clínica e painel de qualidade",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-atendimento-crianca",
+    group: "Fotografia institucional",
+    name: "Atendimento com a criança",
+    path: "attached_assets/images/dr-jadson-atendimento-crianca.webp",
+    src: brandAssets.photography.atendimentoCrianca,
+    status: "ativo",
+    usage: "fotografia principal do hero da home: mostra o atendimento real, não uma encenação de personagem",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-retrato-institucional",
+    group: "Fotografia institucional",
+    name: "Retrato institucional — uniforme navy",
+    path: "attached_assets/images/dr-jadson-retrato-institucional.webp",
+    src: brandAssets.photography.retratoInstitucional,
+    status: "ativo",
+    usage: "retrato das superfícies profissionais; o navy e o ouro do uniforme são os mesmos do chrome do app",
+    auditRoute: "/qualidade",
+  },
+  {
+    id: "dr-retrato-jaleco",
+    group: "Fotografia institucional",
+    name: "Retrato clínico — jaleco vermelho",
+    path: "attached_assets/images/dr-jadson-retrato-jaleco.webp",
+    src: brandAssets.photography.retratoJaleco,
+    status: "ativo",
+    usage: "retrato das superfícies voltadas à família, onde a leitura pedida é aproximação e não protocolo",
     auditRoute: "/qualidade",
   },
   {

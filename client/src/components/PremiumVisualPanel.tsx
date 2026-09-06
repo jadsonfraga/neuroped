@@ -10,6 +10,12 @@ interface PremiumVisualPanelProps {
   className?: string;
   imageClassName?: string;
   headingLevel?: "h1" | "h2" | "p";
+  /**
+   * Retrato da coluna direita. O padrão é o institucional (uniforme navy, que
+   * repete o navy e o ouro do chrome); superfícies dirigidas à família pedem
+   * `familia`, onde a leitura desejada é aproximação, não protocolo.
+   */
+  portrait?: "institucional" | "familia";
 }
 
 export function PremiumVisualPanel({
@@ -20,8 +26,13 @@ export function PremiumVisualPanel({
   className = "",
   imageClassName = "",
   headingLevel = "p",
+  portrait = "institucional",
 }: PremiumVisualPanelProps) {
   const TitleTag = headingLevel;
+  const portraitSrc =
+    portrait === "familia"
+      ? brandAssets.photography.retratoJaleco
+      : brandAssets.photography.retratoInstitucional;
   const titleSize =
     headingLevel === "h1"
       ? "text-[1.45rem] sm:text-[1.75rem]"
@@ -47,7 +58,9 @@ export function PremiumVisualPanel({
         aria-hidden="true"
       />
 
-      <div className="relative grid min-h-44 items-stretch sm:grid-cols-[minmax(0,1fr)_13rem] lg:grid-cols-[minmax(0,1fr)_15rem]">
+      {/* A altura extra vale só onde a coluna do retrato existe (sm+). No
+          celular ela é `hidden`, e subir o mínimo ali só criaria vão vazio. */}
+      <div className="relative grid min-h-44 items-stretch sm:min-h-64 sm:grid-cols-[minmax(0,1fr)_13rem] lg:grid-cols-[minmax(0,1fr)_15rem]">
         <div className="flex flex-col justify-end p-5 sm:p-6">
           <Badge
             variant="outline"
@@ -77,9 +90,12 @@ export function PremiumVisualPanel({
 
         <div className="relative hidden overflow-hidden border-l border-amber-500/15 sm:block">
           <SafeAssetImage
-            src={brandAssets.mascots.consultorioFull}
-            alt="Dr. Jadson Fraga no consultório"
-            className="absolute inset-0 h-full w-full object-cover object-top"
+            src={portraitSrc}
+            alt="Dr. Jadson Fraga, neuropediatra"
+            /* Retratos verticais em caixa baixa: `object-top` encostava o corte
+               na altura dos olhos e a legenda cobria o queixo. Descer o ponto
+               de foco dá cabeceira ao rosto e deixa a legenda sobre os ombros. */
+            className="absolute inset-0 h-full w-full object-cover object-[center_18%]"
           />
           <div
             className="absolute inset-0 bg-gradient-to-t from-[hsl(214_76%_11%/0.38)] via-transparent to-[hsl(0_0%_100%/0.06)]"

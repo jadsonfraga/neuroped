@@ -131,7 +131,10 @@ html:not(.dark) body {
     border: 1px solid hsl(40.6 64.9% 53.1% / 0.35);
     background:
       linear-gradient(180deg, transparent 48%, hsl(214.1 75.9% 11.4% / 0.34)),
-      url("../../../attached_assets/images/dr-jadson-consultorio-full.jpeg") center 22% / cover no-repeat;
+      /* Enquadramento à esquerda de propósito: é o lado que carrega o escudo
+         inteiro, a criança e as mãos na torre de blocos. Centralizar cortava o
+         escudo ao meio, o que lê como recorte descuidado da própria marca. */
+      url("../../../attached_assets/images/dr-jadson-atendimento-crianca.webp") 12% 38% / cover no-repeat;
     box-shadow:
       inset 0 1px 0 hsl(0 0% 100% / 0.52),
       0 30px 70px -42px hsl(214.1 75.9% 11.4% / 0.6);
