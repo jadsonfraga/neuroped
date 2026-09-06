@@ -56,12 +56,14 @@ export function PremiumVisualPanel({
           <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
             {subtitle}
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-semibold uppercase tracking-[0.11em] text-muted-foreground">
-            <span className="text-amber-700 dark:text-amber-300">Dr. Jadson Fraga</span>
+          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-semibold uppercase tracking-[0.11em] text-muted-foreground">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-amber-500"
+              aria-hidden="true"
+            />
+            <span className="text-amber-700 dark:text-amber-300">NeuroPed SDG</span>
             <span aria-hidden="true">·</span>
-            <span>Neuropediatra</span>
-            <span aria-hidden="true">·</span>
-            <span>CRM-PE 25227 · RQE 17756</span>
+            <span>Neuropediatria infantil</span>
           </div>
         </div>
 
@@ -72,12 +74,14 @@ export function PremiumVisualPanel({
             className="absolute inset-0 h-full w-full object-cover object-top"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-t from-[hsl(214_76%_11%/0.35)] via-transparent to-[hsl(0_0%_100%/0.08)]"
+            className="absolute inset-0 bg-gradient-to-t from-[hsl(214_76%_11%/0.38)] via-transparent to-[hsl(0_0%_100%/0.06)]"
             aria-hidden="true"
           />
-          <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/35 bg-[hsl(214_76%_11%/0.72)] px-3 py-2 text-white shadow-lg backdrop-blur-md">
+          <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/30 bg-[hsl(214_76%_11%/0.76)] px-3 py-2 text-white shadow-lg backdrop-blur-md">
             <p className="text-[10px] font-semibold">Dr. Jadson Fraga</p>
-            <p className="mt-0.5 text-[8px] uppercase tracking-[0.12em] text-amber-200">Cuidado com identidade e propósito</p>
+            <p className="mt-0.5 text-[8px] uppercase tracking-[0.12em] text-amber-200">
+              Neuropediatra
+            </p>
           </div>
         </div>
       </div>
