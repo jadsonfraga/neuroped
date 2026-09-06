@@ -10,6 +10,7 @@ import { RouteGuard } from "@/components/RouteGuard";
 // dedicada em App.tsx casa antes deste catch-all, e o import estático puxava
 // a página para o chunk principal, anulando o code-splitting.
 const DocumentosPage = lazy(() => import("./documentos"));
+const EspecialidadesPremiumPage = lazy(() => import("./especialidades-premium"));
 
 export default function NotFound() {
   const [location] = useLocation();
@@ -21,6 +22,20 @@ export default function NotFound() {
           <DocumentosPage />
         </Suspense>
       </RouteGuard>
+    );
+  }
+
+  // Superfície institucional pública, deliberadamente fullscreen. Enquanto o
+  // roteador principal cresce, o catch-all fornece uma entrada real, code-split
+  // e sem acesso a dados clínicos. A navegação e a política pública mantêm essa
+  // rota explicitamente registradas e auditadas.
+  if (location === "/especialidades") {
+    return (
+      <div className="fixed inset-0 z-[100] overflow-y-auto bg-background" data-testid="especialidades-premium-surface">
+        <Suspense fallback={null}>
+          <EspecialidadesPremiumPage />
+        </Suspense>
+      </div>
     );
   }
 
