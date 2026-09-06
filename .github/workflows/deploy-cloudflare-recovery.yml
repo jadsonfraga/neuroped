@@ -3,6 +3,7 @@ name: Cloudflare production recovery
 # Recovery path for a rare GitHub Actions trigger gap. It runs automatically
 # only when this workflow file itself changes on main, and remains manually
 # dispatchable afterwards. It does not replace the canonical deploy workflow.
+# Rearm operacional: 2026-09-06 — republicar main após cancelamento precoce do deploy canônico.
 on:
   workflow_dispatch:
   push:
