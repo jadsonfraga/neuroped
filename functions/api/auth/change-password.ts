@@ -1,24 +1,11 @@
 import { getContextUser } from "./_authorization";
 import { hashPassword, verifyPassword } from "./_crypto";
 import { AUTH_INPUT_LIMITS } from "./_limits";
+import { passwordPolicyError } from "./_passwordPolicy";
 import { enforceLoginAbuseLimit, registerLoginAbuseFailure } from "./_rateLimit";
 import { getUserById, json, publicUser, type Env, type UserRow } from "./_shared";
 import { preparePasswordChangeSession } from "./_passwordChangeSession";
 import { isPlainObject } from "../_request";
-
-const PASSWORD_MIN = 12;
-const PASSWORD_MAX = 128;
-
-function passwordPolicyError(password: string): string | null {
-  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
-    return `A nova senha deve ter entre ${PASSWORD_MIN} e ${PASSWORD_MAX} caracteres.`;
-  }
-  if (!/[A-Z]/.test(password)) return "A nova senha deve conter letra maiúscula.";
-  if (!/[a-z]/.test(password)) return "A nova senha deve conter letra minúscula.";
-  if (!/[0-9]/.test(password)) return "A nova senha deve conter número.";
-  if (!/[^A-Za-z0-9]/.test(password)) return "A nova senha deve conter símbolo.";
-  return null;
-}
 
 function changedUser(user: UserRow, passwordHash: string): UserRow {
   return {
@@ -42,11 +29,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!env.DB) return json({ error: "Banco indisponível.", code: "DB_UNAVAILABLE" }, 503);
   if (!userContext) return json({ error: "Não autenticado.", code: "UNAUTHENTICATED" }, 401);
 
-  // A identidade E2E reservada é uma conta de máquina: seu ciclo de vida de
-  // credencial é gerenciado exclusivamente pela rotação de
-  // NEUROPED_E2E_PASSWORD, nunca pelo fluxo humano de troca de senha. Aceitar
-  // aqui abriria um caminho de emissão de sessão paralelo, sem os guards
-  // atômicos de clinic_membership já aplicados a login/refresh.
   const reservedE2EEmail = env.NEUROPED_E2E_EMAIL?.toLowerCase().trim();
   if (reservedE2EEmail && userContext.email.toLowerCase().trim() === reservedE2EEmail) {
     return json(
@@ -89,7 +71,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Senhas ausentes ou excedem o tamanho permitido.", code: "VALIDATION_ERROR" }, 400);
   }
 
-  const policyError = passwordPolicyError(newPassword);
+  const policyError = passwordPolicyError(newPassword, "A nova senha");
   if (policyError) return json({ error: policyError, code: "PASSWORD_POLICY" }, 400);
 
   const user = await getUserById(env.DB, userContext.id);

@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 const route = read("functions/api/auth/change-password.ts");
+const passwordPolicy = read("functions/api/auth/_passwordPolicy.ts");
 const session = read("functions/api/auth/_passwordChangeSession.ts");
 const middleware = read("functions/api/_middleware.ts");
 const authClient = read("client/src/lib/authClient.ts");
@@ -11,10 +12,13 @@ const preferences = read("client/src/components/PreferencesPanel.tsx");
 
 assert.match(route, /verifyPassword\(currentPassword, user\.password_hash\)/);
 assert.match(route, /verifyPassword\(newPassword, user\.password_hash\)/);
-assert.match(route, /PASSWORD_MIN = 12/);
-assert.match(route, /\[A-Z\]/);
-assert.match(route, /\[a-z\]/);
-assert.match(route, /\[0-9\]/);
+assert.match(route, /passwordPolicyError\(newPassword, ["']A nova senha["']\)/);
+assert.match(passwordPolicy, /PASSWORD_MIN = 12/);
+assert.match(passwordPolicy, /PASSWORD_MAX = 128/);
+assert.match(passwordPolicy, /\[A-Z\]/);
+assert.match(passwordPolicy, /\[a-z\]/);
+assert.match(passwordPolicy, /\[0-9\]/);
+assert.match(passwordPolicy, /\[\^A-Za-z0-9\]/);
 assert.match(route, /UPDATE auth_refresh_sessions[\s\S]*revoke_reason = 'password_changed'/);
 assert.match(route, /preparePasswordChangeSession/);
 assert.match(route, /env\.DB\.batch\(/);
@@ -51,4 +55,4 @@ assert.match(preferences, /window\.location\.reload\(\)/);
 assert.doesNotMatch(preferences, /localStorage\.setItem\([^\n]*password/i);
 assert.doesNotMatch(preferences, /sessionStorage\.setItem\([^\n]*password/i);
 
-console.log("✓ Cloudflare change-password: política, revogação, sessão nova, middleware e UX permanecem acoplados");
+console.log("✓ Cloudflare change-password: política canônica, revogação, sessão nova, middleware e UX permanecem acoplados");
