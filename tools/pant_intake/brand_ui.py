@@ -177,6 +177,16 @@ def add_tab_banner(parent, app, *, photo: str, eyebrow: str, headline: str,
 
     portrait = _photo(app, photo, (104, 74), 15)
     tk.Label(card, image=portrait, bg=bg).pack(side="left", padx=(0, 14))
+
+    right = tk.Frame(card, bg=bg, width=148)
+    right.pack(side="right", padx=(12, 0))
+    right.pack_propagate(False)
+    _cta(right, cta, command).pack(fill="x")
+    mascot_shell = tk.Frame(right, bg=accent, padx=2, pady=2)
+    mascot_shell.pack(anchor="e", pady=(7, 0))
+    mascot = _photo(app, "mascote.png", (46, 52), 12)
+    tk.Label(mascot_shell, image=mascot, bg=bg).pack()
+
     text = tk.Frame(card, bg=bg)
     text.pack(side="left", fill="both", expand=True)
     tk.Label(text, text=eyebrow, bg=bg, fg=BURGUNDY,
@@ -184,13 +194,7 @@ def add_tab_banner(parent, app, *, photo: str, eyebrow: str, headline: str,
     tk.Label(text, text=headline, bg=bg, fg=NAVY,
              font=("Georgia", 15, "bold")).pack(anchor="w", pady=(2, 2))
     tk.Label(text, text=body, bg=bg, fg=MUTED, font=("Segoe UI", 9),
-             wraplength=610, justify="left").pack(anchor="w")
-
-    mascot_shell = tk.Frame(card, bg=accent, padx=2, pady=2)
-    mascot_shell.pack(side="right", padx=(10, 0))
-    mascot = _photo(app, "mascote.png", (54, 62), 13)
-    tk.Label(mascot_shell, image=mascot, bg=bg).pack()
-    _cta(card, cta, command).pack(side="right", padx=(13, 0))
+             wraplength=560, justify="left").pack(anchor="w")
 
 
 def style_textbox(text: tk.Text) -> None:
