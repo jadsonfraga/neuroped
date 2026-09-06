@@ -23,6 +23,10 @@ Inclui objetos/conceitos, cenas narrativas, cena social ambígua, sequências de
 - `scripts/guards/audit-inventory.mjs` registra explicitamente que `testes-diretos.tsx` permanece como núcleo interno da rota composta pelo wrapper diário;
 - as cores vetoriais do novo banco usam HSL, sem aumentar o contador de cores cruas protegido por `audit:design`.
 
+## Reconciliação pré-publicação
+
+O gate integral de acessibilidade identificou um `main` duplicado em `/#/especialidades`, superfície já presente no `main` de base e não pertencente ao banco visual. A própria branch de publicação removeu apenas o landmark interno redundante dessa tela, preservando seu conteúdo e permitindo que a auditoria global valide novamente todas as rotas antes do merge.
+
 ## Critério de publicação
 
 Somente considerar o banco visual disponível para uso diário após os checks obrigatórios do PR e os workflows oficiais de produção no SHA mesclado.
