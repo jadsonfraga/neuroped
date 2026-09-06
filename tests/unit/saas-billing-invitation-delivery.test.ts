@@ -30,6 +30,12 @@ assert.match(handler, /if \(!invitationDeliveryConfigured\(context\.env\)\)/);
 assert.doesNotMatch(handler, /delivery:\s*["']manual["']/);
 assert.doesNotMatch(delivery, /["']manual["']/);
 assert.doesNotMatch(handler, /invitationUrl:\s*params\.invitationUrl/);
+assert.doesNotMatch(handler, /APP_BASE_URL/);
+assert.match(
+  handler,
+  /buildInvitationUrl\(context\.env\.AUTH_PUBLIC_APP_URL, generated\.token\)/,
+  "o bearer link deve usar a mesma origem HTTPS canônica validada pelo transporte",
+);
 
 const preflight = handler.indexOf("if (!invitationDeliveryConfigured(context.env))");
 const tokenGeneration = handler.indexOf("const generated = await generateInvitationToken()");
@@ -48,4 +54,4 @@ assert.match(
   "revogação de token órfão precisa ser tenant-scoped e não sobrescrever estado concorrente",
 );
 
-console.log("✓ invitation delivery: fail-closed, sem fallback manual, sem bearer URL e sem token órfão após falha de entrega");
+console.log("✓ invitation delivery: fail-closed, origem canônica única, sem bearer URL e sem token órfão após falha de entrega");
