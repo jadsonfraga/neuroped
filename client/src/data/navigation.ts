@@ -65,6 +65,13 @@ export const featuredNavigation: NavItem[] = [
     description: "Avaliação direta pré-consulta · 10 min",
   },
   {
+    href: "/especialidades",
+    label: "Especialidades Premium",
+    icon: Stethoscope,
+    tone: "golden",
+    description: "Vitrine institucional Dr. Jadson",
+  },
+  {
     href: "/filtro",
     label: "Filtro de Escalas",
     icon: Filter,
@@ -130,6 +137,7 @@ export const navSections: NavSection[] = [
   {
     title: "CLÍNICA E ACOMPANHAMENTO",
     items: [
+      { href: "/especialidades", label: "Especialidades", icon: Stethoscope, tone: "golden" },
       { href: "/neuroacompanhamento", label: "NeuroAcompanhamento", icon: Baby },
       { href: "/diario-escola", label: "Diário escolar", icon: ClipboardList },
       { href: "/avaliacao-multiprofissional", label: "Avaliação multiprofissional", icon: ClipboardCheck },

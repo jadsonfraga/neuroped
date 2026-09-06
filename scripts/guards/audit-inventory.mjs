@@ -8,11 +8,16 @@ const read = (file) => fs.readFileSync(rel(file), "utf8");
 const exists = (file) => fs.existsSync(rel(file));
 
 const app = read("client/src/App.tsx");
+const fallback = read("client/src/pages/not-found.tsx");
 const navigation = read("client/src/data/navigation.ts");
 
-const routePaths = [...app.matchAll(/<Route\b[^>]*\bpath="([^"]+)"/g)].map(
+const appRoutePaths = [...app.matchAll(/<Route\b[^>]*\bpath="([^"]+)"/g)].map(
   (match) => match[1],
 );
+const fallbackRoutePaths = [
+  ...fallback.matchAll(/location\s*===\s*["']([^"']+)["']/g),
+].map((match) => match[1]);
+const routePaths = [...new Set([...appRoutePaths, ...fallbackRoutePaths])];
 const navEntries = [
   ...navigation.matchAll(/\{\s*href:\s*"([^"]+)",\s*label:\s*"([^"]+)"/g),
 ].map((match) => ({
@@ -29,6 +34,11 @@ const lazyImports = [
   ...[...app.matchAll(/import\s+(\w+)\s+from\s+"@\/pages\/([^"]+)"/g)].map(
     (match) => ({ symbol: match[1], page: match[2] }),
   ),
+  ...[
+    ...fallback.matchAll(
+      /const\s+(\w+)\s*=\s*lazy\(\s*\(\)\s*=>\s*import\(\s*"\.\/([^"]+)"\s*\)\s*\)/g,
+    ),
+  ].map((match) => ({ symbol: match[1], page: match[2] })),
 ];
 
 const pageFiles = fs

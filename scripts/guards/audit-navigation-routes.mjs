@@ -4,20 +4,27 @@ import { routePatternMatches } from "./lib/route-matcher.mjs";
 
 const navigationPath = resolve("client/src/data/navigation.ts");
 const appPath = resolve("client/src/App.tsx");
+const fallbackPath = resolve("client/src/pages/not-found.tsx");
 
 const navigationSource = readFileSync(navigationPath, "utf8");
 const appSource = readFileSync(appPath, "utf8");
+const fallbackSource = readFileSync(fallbackPath, "utf8");
 
 const hrefs = [...navigationSource.matchAll(/href:\s*["']([^"']+)["']/g)].map(
   (match) => match[1],
 );
-const routePaths = [
+const appRoutePaths = [
   ...appSource.matchAll(/<Route\b[^>]*\bpath=["']([^"']+)["']/g),
 ].map((match) => match[1]);
+const fallbackHandledPaths = [
+  ...fallbackSource.matchAll(/location\s*===\s*["']([^"']+)["']/g),
+].map((match) => match[1]);
+const routePaths = [...appRoutePaths, ...fallbackHandledPaths];
 
 // Microsites estáticos são servidos diretamente pelo servidor/CDN e não
 // aparecem como <Route> no App.tsx. Mantemos a exceção explícita para que a
-// auditoria continue acusando links React quebrados.
+// auditoria continue acusando links React quebrados. Superfícies tratadas
+// explicitamente pelo catch-all também entram em routePaths acima.
 const staticMicrositeHrefs = new Set(["/nesplora/"]);
 const missingHrefs = [...new Set(hrefs)].filter(
   (href) =>

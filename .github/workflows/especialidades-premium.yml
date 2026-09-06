@@ -1,0 +1,64 @@
+name: Especialidades Premium proof
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/src/pages/especialidades-premium.tsx"
+      - "client/src/pages/not-found.tsx"
+      - "client/src/data/navigation.ts"
+      - "client/src/lib/publicRoutes.ts"
+      - "scripts/audit-navigation-routes.mjs"
+      - "scripts/audit-especialidades-premium.mjs"
+      - ".github/workflows/especialidades-premium.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "client/src/pages/especialidades-premium.tsx"
+      - "client/src/pages/not-found.tsx"
+      - "client/src/data/navigation.ts"
+      - "client/src/lib/publicRoutes.ts"
+      - "scripts/audit-especialidades-premium.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  render-real-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: TypeScript
+        run: npm run check
+      - name: Navigation audit
+        run: npm run audit:navigation
+      - name: Build real client
+        run: npm run build:client
+      - name: Render and inspect Especialidades
+        run: node scripts/audit-especialidades-premium.mjs
+      - name: Publish real screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: especialidades-premium-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            artifacts/especialidades-premium
+            attached_assets/images/dr-jadson-arte.jpeg
+            attached_assets/images/dr-jadson-consultorio-batman.jpeg
+            attached_assets/images/dr-jadson-consultorio-superman.jpeg
+            attached_assets/images/dr-fraga-kids/mascote.png
