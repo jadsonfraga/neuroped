@@ -6,6 +6,7 @@ import SondaDezBasePage from "@/pages/testes-diretos";
 type BandId = "12-23m" | "24-35m" | "3-4a" | "5-7a" | "8-11a" | "12-17a";
 type StimulusKind =
   | "objects"
+  | "objectsBaby"
   | "concepts"
   | "story"
   | "social"
@@ -57,8 +58,8 @@ const STIMULI: Stimulus[] = [
     band: "12-23m",
     title: "Objetos de apoio visual",
     subtitle: "Bola · carrinho · bebê",
-    instruction: "Use apenas como apoio se o objeto físico não puder ser apresentado.",
-    kind: "objects",
+    instruction: "Priorize os objetos físicos; esta tela é apoio visual de contingência.",
+    kind: "objectsBaby",
   },
   {
     id: "a2-nomeacao",
@@ -234,6 +235,37 @@ function Person({ x, y, facing = 1 }: { x: number; y: number; facing?: 1 | -1 })
 }
 
 function VectorScene({ kind }: { kind: StimulusKind }) {
+  if (kind === "objectsBaby") {
+    return (
+      <div className="grid w-full max-w-4xl grid-cols-3 gap-5">
+        <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
+          <svg viewBox="0 0 160 160" className="h-4/5 w-4/5" aria-label="bola">
+            <circle cx="80" cy="80" r="55" fill="#f8fafc" stroke="#0f172a" strokeWidth="8" />
+            <path d="M80 25 110 52 99 91 61 91 50 52Z" fill="#0f172a" />
+            <path d="M50 52 25 72M110 52 135 72M61 91 46 130M99 91 114 130" stroke="#0f172a" strokeWidth="7" />
+          </svg>
+        </div>
+        <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
+          <svg viewBox="0 0 180 140" className="h-4/5 w-4/5" aria-label="carrinho">
+            <rect x="25" y="55" width="125" height="45" rx="14" fill="#2563eb" />
+            <path d="M55 55 75 25h45l22 30" fill="#93c5fd" stroke="#1e3a8a" strokeWidth="6" />
+            <circle cx="58" cy="108" r="16" fill="#0f172a" /><circle cx="126" cy="108" r="16" fill="#0f172a" />
+          </svg>
+        </div>
+        <div className="flex aspect-square items-center justify-center rounded-[30px] border-4 border-slate-200 bg-white">
+          <svg viewBox="0 0 180 180" className="h-4/5 w-4/5" aria-label="bebê">
+            <circle cx="90" cy="55" r="38" fill="#f5cfae" stroke="#7c2d12" strokeWidth="5" />
+            <path d="M62 45 Q90 18 118 45" fill="none" stroke="#7c2d12" strokeWidth="8" strokeLinecap="round" />
+            <circle cx="77" cy="55" r="4" fill="#0f172a" /><circle cx="103" cy="55" r="4" fill="#0f172a" />
+            <path d="M78 70 Q90 80 102 70" fill="none" stroke="#9a3412" strokeWidth="4" strokeLinecap="round" />
+            <path d="M48 158 Q48 96 90 92 Q132 96 132 158Z" fill="#fbbf24" stroke="#92400e" strokeWidth="5" />
+            <path d="M58 116 30 140M122 116 150 140" stroke="#f5cfae" strokeWidth="14" strokeLinecap="round" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
   if (kind === "objects") {
     return (
       <div className="grid w-full max-w-4xl grid-cols-3 gap-5">
@@ -412,7 +444,7 @@ function EveningPlan() {
 }
 
 function StimulusContent({ kind }: { kind: StimulusKind }) {
-  if (["objects", "concepts", "story", "social", "blocks"].includes(kind)) return <VectorScene kind={kind} />;
+  if (["objects", "objectsBaby", "concepts", "story", "social", "blocks"].includes(kind)) return <VectorScene kind={kind} />;
   if (kind === "dogs15") return <SequenceGrid values={DOGS15} />;
   if (kind === "dogs20") return <SequenceGrid values={DOGS20} />;
   if (kind === "sunmoon") return <SunMoon />;
