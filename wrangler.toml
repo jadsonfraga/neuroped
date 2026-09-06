@@ -1,25 +1,17 @@
-# ============================================================
-# NeuroPed — Configuração Cloudflare Workers/Pages + D1
-# ============================================================
-
 name = "neuroped"
 compatibility_date = "2024-11-01"
-# Necessária para os módulos de segurança que usam APIs nativas do Node, como `crypto`.
 compatibility_flags = ["nodejs_compat"]
-
-# Diretório de output do frontend (usado pelo Cloudflare Pages)
 pages_build_output_dir = "dist/public"
 
-# ── Variáveis de ambiente (não-secretas) ──────────────────
 [vars]
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"
+CLINICAL_LIVE_ENABLED = "true"
+ESCUTA_ENABLED = "true"
 
-# ── Backend: binding Cloudflare D1 ───────────────────────────────────────
-# IMPORTANTE: o workflow Cloudflare sincroniza os bindings deste arquivo. Se o
-# bloco for removido, a publicação pode apagar o binding D1 do projeto.
-# Mantenha-o e publique somente pelo workflow oficial.
-# O id é o do D1 "neuroped-db" criado pelo workflow "Provision D1 backend".
+[ai]
+binding = "AI"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "neuroped-db"

@@ -4,13 +4,14 @@ import { appMetrics } from "@/data/appMetrics";
 import { softTap } from "@/lib/softSounds";
 
 /**
- * Tour guiado — ensina o FLUXO DE TRABALHO, não o inventário.
+ * Tour guiado de boas-vindas.
  *
- * A versão anterior abria anunciando quantas escalas, itens filtráveis e
- * medicações existem. Amplitude é prova de maturidade, não instrução de uso:
- * quem abre o app pela primeira vez precisa saber como conduzir um atendimento
- * do início ao fim. Os números continuam presentes, mas como fecho — não como
- * mensagem principal.
+ * Ensina o **fluxo de trabalho**, não o inventário. A versão anterior abria com
+ * "253 escalas, 269 itens filtráveis e 142 medicações": prova de amplitude que
+ * não diz a ninguém como atender. Os números continuam presentes, mas como
+ * apoio de um passo — a mensagem principal passou a ser a sequência real do
+ * consultório: localizar paciente → escolher a tarefa → aplicar o instrumento →
+ * interpretar e registrar → produzir o documento → continuar o acompanhamento.
  */
 
 const DONE_KEY = "np_tour_v2_done";
@@ -24,43 +25,55 @@ interface TourStep {
 
 const STEPS: TourStep[] = [
   {
-    emoji: "🩺",
-    title: "1. Comece pelo paciente",
-    body: "A home abre no cockpit clínico: quem está em atendimento, o contexto dessa pessoa e o próximo passo. Escolha ou troque o paciente aqui e todas as telas seguintes já abrem nesse contexto.",
-    target: '[data-testid="clinical-cockpit"]',
+    emoji: "\u{1F9ED}",
+    title: "Seis passos, uma consulta",
+    body: "Este guia percorre o caminho completo de um atendimento no NeuroPed: encontrar o paciente, escolher a tarefa, aplicar, registrar, documentar e acompanhar. Leva menos de um minuto.",
   },
   {
-    emoji: "🎯",
-    title: "2. Escolha a tarefa",
-    body: "Com o paciente em foco, prontuário, laudo e receita abrem já vinculados a ele. Nada de refazer o caminho lista → ficha → ferramenta a cada troca de tarefa.",
-    target: '[data-testid="cockpit-actions"]',
+    emoji: "1\uFE0F\u20E3",
+    title: "Comece pelo paciente",
+    body: "O cockpit da tela inicial abre com o paciente em foco e a próxima ação ao lado. Para trocar de contexto, use a lista de pacientes ali mesmo — um toque, sem atravessar o menu.",
+    target: '[data-testid="cockpit-context"]',
   },
   {
-    emoji: "🔎",
-    title: "3. Encontre o instrumento certo",
-    body: "Não sabe qual escala aplicar? O Filtro Clínico parte da queixa, da idade e do contexto e devolve as opções ordenadas por adequação — sem inventar pontuação clínica.",
-    target: '[data-testid="nav-Filtro Clínico Inteligente"]',
+    emoji: "2\uFE0F\u20E3",
+    title: "Escolha a tarefa",
+    body: "Prontuário para conduzir a consulta, histórico para revisar o que já foi aplicado, filtro para escolher instrumento. Cada ação do cockpit é um destino direto.",
+    target: '[data-testid="cockpit-action-prontuario"]',
   },
   {
-    emoji: "📝",
-    title: "4. Aplique e interprete",
-    body: "Cada instrumento indica itens obrigatórios, marca pendências e mostra o registro completo de perguntas e respostas. A leitura clínica é sua; o app organiza a evidência.",
+    emoji: "3\uFE0F\u20E3",
+    title: "Aplique o instrumento certo",
+    body: `O Filtro de Escalas parte de idade, queixa e objetivo e devolve Ouro, Prata, Bronze, Teste Direto e Questionário Escolar — sem inventar pontuação clínica. É onde os ${appMetrics.scaleCount} instrumentos do catálogo viram uma escolha só.`,
+    target: '[data-testid="featured-Filtro de Escalas"]',
   },
   {
-    emoji: "📄",
-    title: "5. Produza o documento",
-    body: "Do resultado ao laudo estruturado ou à receita C1 sem redigitar identificação: o paciente em foco preenche o cabeçalho e o documento sai pronto para revisão e assinatura.",
+    emoji: "4\uFE0F\u20E3",
+    title: "Interprete e registre",
+    body: "Ao concluir uma escala, o resultado traz a transcrição integral de perguntas e respostas. Vincule ao paciente para que entre no histórico longitudinal da ficha.",
+    target: '[data-testid="nav-Pacientes / Prontuário"]',
   },
   {
-    emoji: "📈",
-    title: "6. Continue o acompanhamento",
-    body: "A ficha do paciente guarda avaliações anteriores, linha clínica e documentos emitidos — é de onde parte o próximo retorno.",
+    emoji: "5\uFE0F\u20E3",
+    title: "Produza o documento",
+    body: "Laudo neuropediátrico, SuperNeuroPed e Receita C1 partem da ficha já preenchida, com o emissor definido em Configurações.",
+    target: '[data-testid="nav-Laudos"]',
   },
   {
-    emoji: "🧭",
-    title: "Ajuda sempre à mão",
-    body: `Este botão reúne tour, ajuda contextual, preferências e acessibilidade em um só lugar. Por baixo do fluxo há ${appMetrics.scaleCount} escalas, ${appMetrics.filterableInstrumentCount} itens filtráveis e ${appMetrics.medicationCount} medicações — amplitude que você usa sob demanda, não decora.`,
-    target: '[data-testid="button-floating-help"]',
+    emoji: "6\uFE0F\u20E3",
+    title: "Continue o acompanhamento",
+    body: "Agenda, retornos e a linha clínica do paciente mantêm o caso vivo entre consultas — a próxima visita não recomeça do zero.",
+    target: '[data-testid="nav-Agenda & Gestão"]',
+  },
+  {
+    emoji: "\u{1F510}",
+    title: "O que fica protegido",
+    body: "Prontuário, documentos e dados de paciente só aparecem em sessão autenticada. O conteúdo aberto às famílias vive em área separada e nunca se mistura com dado clínico individualizado.",
+  },
+  {
+    emoji: "\u2728",
+    title: "Tudo pronto",
+    body: "Toque no botão de ajuda a qualquer momento para rever este guia, ajustar preferências ou abrir a central de ajuda — tudo no mesmo lugar.",
   },
 ];
 

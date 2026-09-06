@@ -13,7 +13,7 @@ body.np-legal-gate-open {
 
 @media screen and (max-width: 1023px) {
   body.np-mobile-dock-active #main-content {
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important;
   }
 
   body.np-mobile-drawer-open [data-testid="mobile-primary-dock"],
@@ -22,12 +22,12 @@ body.np-legal-gate-open {
   }
 
   body.np-mobile-dock-active [data-testid="button-floating-help"] {
-    bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important;
+    bottom: calc(4.6rem + env(safe-area-inset-bottom)) !important;
   }
 
   body.np-mobile-dock-active [data-radix-toast-viewport] {
     top: auto !important;
-    bottom: calc(5.2rem + env(safe-area-inset-bottom)) !important;
+    bottom: calc(4.55rem + env(safe-area-inset-bottom)) !important;
     pointer-events: none !important;
   }
 }

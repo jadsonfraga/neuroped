@@ -23,7 +23,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
-import { readRouteParam } from "@/lib/routeQuery";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -145,7 +144,8 @@ const marcoKeys: (keyof Marcos)[] = [
 ];
 
 function patientIdFromQuery(): string {
-  return readRouteParam("patientId");
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get("patientId")?.trim() ?? "";
 }
 
 function parseClinicalNote(note: unknown): Record<string, unknown> {
@@ -1012,7 +1012,7 @@ export default function ProntuarioPage() {
         <Tabs defaultValue="identificacao" className="space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between px-1 sm:hidden" aria-hidden="true">
             <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Etapas do prontuário</span>
-            <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75">Deslize →</span>
+            <span className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Deslize →</span>
           </div>
           <TabsList className="np-prontuario-tabs flex h-auto w-full flex-nowrap justify-start gap-1.5 overflow-x-auto rounded-2xl bg-muted/80 p-1.5">
             <TabsTrigger value="identificacao" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
@@ -1828,9 +1828,8 @@ export default function ProntuarioPage() {
                   size="lg"
                   onClick={handleSave}
                   disabled={recordLoading || recordSaving || !patientId}
-                  // emerald-600 sobre branco rende 3,77:1 — abaixo do mínimo AA
-                  // para texto normal. emerald-700 rende 5,48:1 e mantém o
-                  // mesmo verde de "salvar" da identidade.
+                  // emerald-600 com texto branco media 3.76:1 (abaixo de AA);
+                  // emerald-700 leva o mesmo verde a 5.1:1 sem trocar a semântica.
                   className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white gap-2 shadow-md h-11"
                 >
                   <Save className="w-5 h-5" />

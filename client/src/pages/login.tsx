@@ -6,16 +6,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUBLIC_HOME } from "@/lib/publicRoutes";
-import { readRouteParam } from "@/lib/routeQuery";
 import { MEDICAL_URL } from "@/lib/zone";
 
 /**
- * Destino pós-login. Só caminhos internos são aceitos: `//host` e URLs
- * absolutas seriam redirecionamento aberto a partir de uma tela de credencial.
+ * Destino pós-login pedido pelo RouteGuard (`/login?next=...`).
+ *
+ * O parâmetro só pode devolver o profissional a uma rota interna: qualquer valor
+ * absoluto, protocolo-relativo ou com esquema é descartado, para que um link
+ * externo nunca use a tela de login como trampolim de redirecionamento.
  */
-function safeNextPath(raw: string): string {
-  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
-  return raw;
+function safeNextRoute(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = new URLSearchParams(window.location.search).get("next");
+  if (!raw) return null;
+  const candidate = raw.trim();
+  if (!candidate.startsWith("/") || candidate.startsWith("//")) return null;
+  if (/[:\\]/.test(candidate)) return null;
+  if (candidate === "/login") return null;
+  return candidate;
+}
+
+/** Remove o `next` já consumido para não contaminar as próximas navegações. */
+function clearNextParam(): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("next")) return;
+  url.searchParams.delete("next");
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 function readableLoginError(error: unknown): string {
@@ -28,11 +45,24 @@ function readableLoginError(error: unknown): string {
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { login, isLoading, remoteConfigured, isAuthenticated } = useAuth();
+  const { login, isLoading, isAuthenticated, remoteConfigured } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // A saída da tela de login é reativa ao estado de sessão, não à conclusão da
+  // chamada. Navegar dentro do `handleSubmit` trocava a rota antes de o
+  // AuthProvider ter comitado o usuário: o RouteGuard reavaliava a rota clínica
+  // como anônima e devolvia para `/login?next=...` — a sessão ficava válida e o
+  // profissional preso no formulário. Reagir a `isAuthenticated` elimina a
+  // corrida em qualquer ordem de commit.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const destination = safeNextRoute() ?? "/";
+    clearNextParam();
+    setLocation(destination);
+  }, [isAuthenticated, setLocation]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,12 +70,6 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-      // A navegação NÃO acontece aqui. O roteador por hash reage ao
-      // `location.hash` antes de o React comitar o novo usuário, e a rota de
-      // destino era avaliada com `isAuthenticated` ainda falso — o RouteGuard
-      // devolvia a pessoa já autenticada para esta mesma tela, com a URL
-      // quebrada (`/?next=%2F#/login`). Navegar a partir do estado observado
-      // elimina a corrida: o efeito abaixo só dispara depois do commit.
     } catch (loginError) {
       setError(readableLoginError(loginError));
     } finally {
@@ -53,13 +77,52 @@ export default function LoginPage() {
     }
   }
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    setLocation(safeNextPath(readRouteParam("next") || "/"));
-  }, [isAuthenticated, setLocation]);
-
   return (
-    <section className="mx-auto flex min-h-[70vh] w-full max-w-lg flex-col items-center justify-center px-4 py-10">
+    <section className="mx-auto grid w-full max-w-5xl items-center gap-10 px-4 py-10 lg:min-h-[72vh] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14">
+      {/* Painel de contexto: o desktop tinha um cartão pequeno no centro de um
+          canvas vazio e comunicava "portal de acesso". A coluna abaixo não expõe
+          nada clínico — só diz o que existe atrás do gate e sob que regra —, e
+          some no mobile, onde a tarefa é só entrar. */}
+      <div className="hidden lg:block">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+          Área profissional
+        </p>
+        <h2
+          className="mt-2 max-w-xl text-[2.4rem] font-semibold leading-[1.05] tracking-[-0.035em] text-foreground"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          O consultório inteiro atrás de uma sessão autenticada.
+        </h2>
+        <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+          Agenda, prontuário longitudinal, aplicação de instrumentos e emissão de documentos
+          operam sob a mesma sessão, com o servidor como autoridade de acesso.
+        </p>
+        <ul className="mt-7 grid max-w-lg gap-3 sm:grid-cols-2">
+          {[
+            { title: "Cockpit por paciente", detail: "Contexto atual e próxima ação na abertura." },
+            { title: "Prontuário longitudinal", detail: "Anamnese, marcos, medicações e exames." },
+            { title: "Filtro de escalas", detail: "Instrumento certo por idade e queixa." },
+            { title: "Documentos clínicos", detail: "Laudos e receita C1 a partir da ficha." },
+          ].map((item) => (
+            <li
+              key={item.title}
+              className="rounded-2xl border border-border/70 bg-card/60 p-3.5"
+            >
+              <p className="text-[13.5px] font-semibold text-foreground">{item.title}</p>
+              <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                {item.detail}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 flex max-w-lg items-start gap-2 text-[12px] leading-relaxed text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          Nenhum conteúdo clínico é renderizado antes da validação da sessão. Dados de paciente
+          não são gravados neste navegador durante a sessão remota.
+        </p>
+      </div>
+
+      <div className="flex w-full flex-col items-center justify-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-lg shadow-primary/25">
         <ShieldCheck className="h-7 w-7 text-primary-foreground" strokeWidth={1.75} />
       </div>
@@ -94,20 +157,26 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-5 flex w-full max-w-sm flex-col gap-3 text-center">
-        <a href="#/esqueci-senha" className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="forgot-password-link">
+        <a href="#/esqueci-senha" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="forgot-password-link">
           <KeyRound className="h-4 w-4" aria-hidden="true" /> Esqueci minha senha
         </a>
-        <a href="#/cadastro" className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+        <a href="#/cadastro" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           Criar conta profissional
         </a>
-        <a href={`#${PUBLIC_HOME}`} className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+        {/* Quem chegou aqui sem conhecer o produto precisa de um caminho que
+            não comece pedindo senha. */}
+        <a href="#/planos" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="pricing-link">
+          Conhecer o NeuroPed e os planos
+        </a>
+        <a href={`#${PUBLIC_HOME}`} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Ir para o conteúdo das famílias
         </a>
         {MEDICAL_URL && (
-          <a href={MEDICAL_URL} className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:underline">
+          <a href={MEDICAL_URL} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:underline">
             <ExternalLink className="h-4 w-4" aria-hidden="true" /> Abrir área médica protegida
           </a>
         )}
+      </div>
       </div>
     </section>
   );

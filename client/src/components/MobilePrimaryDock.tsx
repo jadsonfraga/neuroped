@@ -1,4 +1,12 @@
-// Design: dock móvel clínico com Prontuário como destino dourado central, alvos confortáveis e navegação enxuta.
+// Design: dock móvel clínico enxuto — quatro destinos de alta frequência numa
+// única faixa rasa.
+//
+// A versão anterior elevava "Prontuário" num pastilhão dourado que saltava
+// acima da faixa: o dock media ~79px visíveis e obrigava ~102px de reserva,
+// perto de 12% da viewport de um iPhone, para quatro destinos. A faixa atual
+// mantém os mesmos destinos e o alvo de 44px, mas custa pouco mais da metade
+// disso — no celular a tela pertence ao conteúdo clínico.
+//
 // Nesplora migrou para os Destaques da sidebar (client/src/data/navigation.ts) — o dock prioriza os
 // fluxos de maior frequência do dia a dia clínico (pacientes, prontuário, agenda).
 import { useEffect, useState } from "react";
@@ -21,7 +29,6 @@ interface DockItem {
   href: string;
   icon: LucideIcon;
   isActive?: (path: string) => boolean;
-  highlighted?: boolean;
 }
 
 // O dock é navegação do workspace clínico. Mesmo no host "full", fluxos
@@ -73,7 +80,6 @@ const dockItems: DockItem[] = [
       path.startsWith("/laudo-neuroped") ||
       path.startsWith("/laudo-super") ||
       path.startsWith("/receita-c1"),
-    highlighted: true,
   },
   {
     label: "Clínica",
@@ -140,55 +146,38 @@ export function MobilePrimaryDock() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2.5 lg:hidden print:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-2 lg:hidden print:hidden"
       style={{ paddingBottom: "max(0.3rem, env(safe-area-inset-bottom))" }}
       data-testid="mobile-primary-dock"
     >
       <nav
         aria-label="Navegação principal"
-        className="pointer-events-auto mx-auto grid max-w-[34rem] rounded-[1.3rem] border border-white/70 bg-background/92 px-1.5 py-1 shadow-[0_-12px_40px_-22px_rgba(24,16,34,0.5)] backdrop-blur-2xl dark:border-white/10"
+        className="pointer-events-auto mx-auto grid max-w-[34rem] rounded-2xl border border-border/70 bg-background/95 p-1 shadow-[0_-10px_30px_-24px_hsl(var(--foreground)/0.55)] backdrop-blur-xl"
         style={{ gridTemplateColumns: `repeat(${Math.max(1, visibleDockItems.length)}, minmax(0, 1fr))` }}
       >
         {visibleDockItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive?.(path) ?? false;
-          // O destino principal deixou de ser um bloco dourado que se projeta
-          // 20px acima do dock: aquilo custava altura de tela em toda rota e
-          // gritava mais alto que o próprio conteúdo clínico. A prioridade
-          // agora é sinalizada com peso e cor da marca, dentro da mesma linha.
-          const commonClass = `relative flex min-h-[2.95rem] flex-col items-center justify-center gap-0.5 rounded-[0.95rem] px-1 text-[10px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
-            item.highlighted
-              ? active
-                ? "bg-primary/15 text-primary"
-                : "text-primary hover:bg-primary/10"
-              : active
-              ? "bg-primary/12 text-primary"
-              : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
-          }`;
 
           return (
             <button
               key={item.label}
               type="button"
-              className={commonClass}
+              className={`relative flex min-h-[2.75rem] flex-col items-center justify-center gap-[1px] rounded-xl px-1 text-[9.5px] font-semibold leading-none transition-[background-color,color] duration-150 active:scale-[0.97] ${
+                active
+                  ? "bg-primary/12 text-primary"
+                  : "text-muted-foreground hover:bg-muted/65 hover:text-foreground"
+              }`}
               onClick={() => navigateTo(item.href)}
               aria-current={active ? "page" : undefined}
               data-testid={`mobile-dock-${item.label.toLowerCase()}`}
             >
               <Icon
-                className="relative z-10 h-[19px] w-[19px]"
-                strokeWidth={item.highlighted ? 2.2 : active ? 2.2 : 1.9}
+                className="h-[18px] w-[18px]"
+                strokeWidth={active ? 2.2 : 1.9}
                 aria-hidden="true"
               />
-              <span className={`relative z-10 ${item.highlighted ? "font-bold" : ""}`}>
-                {item.label}
-              </span>
-              {active && (
-                <span
-                  className="absolute bottom-0.5 h-1 w-1 rounded-full bg-primary"
-                  aria-hidden="true"
-                />
-              )}
+              <span className="max-w-full truncate">{item.label}</span>
             </button>
           );
         })}

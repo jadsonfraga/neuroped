@@ -5,11 +5,11 @@
  *   criar clínica → owner → convite por e-mail → aceite com token →
  *   primeiro profissional/assistente — tudo sem intervenção manual.
  *
- * - token: bytes aleatórios gerados na rota e armazenados como SHA-256;
+ * - token: bytes aleatórios gerados na rota, versionados e armazenados como SHA-256;
  * - expiração padrão: 7 dias; reenvio reseta `last_sent_at` (máx. 3 reenvios/dia
  *   é política da rota, não do domínio);
- * - aceite: cria `clinic_memberships` se o usuário já existe ou pendencia o
- *   cadastro (o registro normal consulta `clinic_invitations` pelo e-mail).
+ * - aceite: cria `clinic_memberships` se o usuário já existe ou cria a conta
+ *   somente quando o funil self-service está explicitamente habilitado.
  */
 import { sha256Hex } from "../auth/_crypto";
 import {
@@ -21,6 +21,12 @@ import { isInvitationAcceptable } from "../../../shared/billing";
 
 export const INVITATION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
 export const INVITATION_TOKEN_BYTES = 32;
+/**
+ * Barreira de cutover de segurança.
+ * Tokens sem este prefixo pertencem ao regime legado que admitia fallback
+ * manual e, portanto, podem ter sido expostos ao convidante. Não são aceitos.
+ */
+export const INVITATION_TOKEN_VERSION = "np2_";
 
 export interface InvitationInput {
   clinicId: string;
@@ -38,8 +44,13 @@ function randomTokenBase64Url(byteLength: number): string {
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+export function isCurrentInvitationToken(token: string): boolean {
+  return token.startsWith(INVITATION_TOKEN_VERSION)
+    && token.length >= INVITATION_TOKEN_VERSION.length + 40;
+}
+
 export async function generateInvitationToken(): Promise<{ token: string; tokenHash: string }> {
-  const token = randomTokenBase64Url(INVITATION_TOKEN_BYTES);
+  const token = `${INVITATION_TOKEN_VERSION}${randomTokenBase64Url(INVITATION_TOKEN_BYTES)}`;
   const tokenHash = await sha256Hex(token);
   return { token, tokenHash };
 }
@@ -92,12 +103,6 @@ export function validateRoleForInvitation(role: string): role is ClinicMembershi
   return isClinicMembershipRole(role);
 }
 
-/**
- * Valida o aceite de um convite (domínio + dados da linha).
- * Retorna erro quando revogado/expirado/aceito; nunca aceita um convite cujo
- * usuário não corresponde ao e-mail convidado (a comparação de e-mail é feita
- * na rota, após a leitura da linha).
- */
 export function validateInvitationForAccept(row: {
   status: string;
   expires_at: string;

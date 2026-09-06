@@ -87,22 +87,7 @@ function latestBy<T>(items: T[], key: (item: T) => string): T[] {
     });
 }
 
-/**
- * Rótulos tolerantes. Um evento com `eventType` novo (backend adiante do
- * cliente) ou sem `provenance` não pode derrubar a ficha inteira do paciente
- * pelo error boundary — o registro clínico é o que a pessoa foi ver.
- */
-function safeEventTypeLabel(event: ClinicalEvent): string {
-  return eventTypeLabel[event?.eventType as ClinicalEvent["eventType"]] ?? "Registro clínico";
-}
-
-function safeProvenanceLabel(event: ClinicalEvent): string {
-  const kind = event?.provenance?.kind;
-  return (kind && provenanceLabel[kind]) || "Proveniência não informada";
-}
-
 function eventHeadline(event: ClinicalEvent): string {
-  if (!event?.data) return "Registro sem detalhamento";
   switch (event.eventType) {
     case "encounter":
       return event.data.reason || event.data.encounterType;
@@ -118,8 +103,6 @@ function eventHeadline(event: ClinicalEvent): string {
       return `${event.data.measure}${event.data.direction ? ` · ${event.data.direction}` : ""}`;
     case "safety":
       return `${event.data.domain} · ${event.data.severity}`;
-    default:
-      return "Registro clínico";
   }
 }
 
@@ -330,9 +313,12 @@ export function PatientCockpit({ patientId, scaleCount }: PatientCockpitProps) {
                 {recentEvents.map((event) => (
                   <li key={event.id} className="border-l-2 border-border pl-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">{safeEventTypeLabel(event)}</Badge>
+                      <Badge variant="outline">{eventTypeLabel[event.eventType] ?? "Registro"}</Badge>
                       <span className="text-xs text-muted-foreground">{formatDate(event.occurredAt)}</span>
-                      <span className="text-xs text-muted-foreground">· {safeProvenanceLabel(event)}</span>
+                      {/* Uma linha sem proveniência (migração parcial, escrita
+                          antiga) não pode derrubar a ficha inteira no error
+                          boundary: degrada só o rótulo daquele item. */}
+                      <span className="text-xs text-muted-foreground">· {provenanceLabel[event.provenance?.kind] ?? "Origem não declarada"}</span>
                     </div>
                     <p className="mt-1 text-sm font-medium">{eventHeadline(event)}</p>
                   </li>

@@ -9,12 +9,61 @@ import {
   normalizeInvitationEmail,
 } from "./_onboarding";
 import { requireBillingEntitlement } from "./_guard";
+import { invitationDeliveryConfigured, sendInvitationEmail } from "./_invitationDelivery";
+import type { MailTransportEnv } from "../auth/_mailTransport";
 import { boundedText as clean } from "../_request";
 
-interface Env {
+interface Env extends MailTransportEnv {
   DB?: D1Database;
-  APP_BASE_URL?: string;
   ENVIRONMENT?: string;
+}
+
+/**
+ * O token do convite é um bearer secret e só pode sair pelo canal que prova
+ * posse do e-mail convidado. Nunca há fallback que devolva URL/token ao gestor.
+ */
+async function deliverInvitation(
+  env: Env,
+  params: { to: string; clinicName: string; role: string; invitationUrl: string; expiresAt: string },
+): Promise<Response | null> {
+  if (!invitationDeliveryConfigured(env)) {
+    return tenantError(
+      "Entrega de convites por e-mail não está configurada.",
+      "INVITATION_DELIVERY_NOT_CONFIGURED",
+      503,
+    );
+  }
+  const sent = await sendInvitationEmail(env, params);
+  if (!sent) {
+    return tenantError(
+      "Não foi possível entregar o convite por e-mail. Tente novamente.",
+      "INVITATION_EMAIL_DELIVERY_FAILED",
+      502,
+    );
+  }
+  return null;
+}
+
+/**
+ * Um token que não teve entrega confirmada não pode continuar utilizável nem
+ * bloquear uma nova tentativa. A revogação é restrita ao mesmo tenant e ao
+ * estado pending; aceite/revogação concorrentes nunca são sobrescritos.
+ */
+async function revokeUndeliveredInvitation(
+  db: D1Database,
+  clinicId: string,
+  invitationId: string,
+): Promise<void> {
+  try {
+    await db.prepare(
+      `UPDATE clinic_invitations SET status = 'revoked'
+        WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
+    ).bind(invitationId, clinicId).run();
+  } catch (error) {
+    // O bearer nunca foi devolvido ao chamador. Falhar ao registrar a revogação
+    // deve ficar observável, mas não pode converter erro de entrega em sucesso.
+    console.error("[billing.invitations] revoke undelivered", error);
+  }
 }
 
 async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {
@@ -91,11 +140,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (action !== "create" && action !== "resend") {
     return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
   }
+  if (!invitationDeliveryConfigured(context.env)) {
+    return tenantError(
+      "Entrega de convites por e-mail não está configurada.",
+      "INVITATION_DELIVERY_NOT_CONFIGURED",
+      503,
+    );
+  }
 
   const now = isoUtc(new Date());
   const expiresAt = isoUtc(new Date(Date.now() + INVITATION_EXPIRY_MS));
   const generated = await generateInvitationToken();
-  const invitationUrl = buildInvitationUrl(context.env.APP_BASE_URL, generated.token);
+  const invitationUrl = buildInvitationUrl(context.env.AUTH_PUBLIC_APP_URL, generated.token);
   if (!invitationUrl) {
     return tenantError(
       "URL pública HTTPS do onboarding não configurada.",
@@ -139,12 +195,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if ((result.meta?.changes ?? 0) !== 1) {
       return tenantError("Convite mudou durante o reenvio.", "INVITATION_STALE", 409);
     }
+    const deliveryFailure = await deliverInvitation(context.env, {
+      to: existing.email,
+      clinicName: auth.membership.clinicName,
+      role: existing.role,
+      invitationUrl,
+      expiresAt,
+    });
+    if (deliveryFailure) {
+      await revokeUndeliveredInvitation(auth.db, clinicId, existingId);
+      return deliveryFailure;
+    }
     return tenantJson({
       id: existingId,
       email: existing.email,
       role: existing.role,
       expiresAt,
-      invitationUrl,
+      delivery: "email",
     });
   }
 
@@ -205,12 +272,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return tenantError("Não foi possível criar o convite.", "INVITATION_CREATE_FAILED", 500);
   }
 
+  const deliveryFailure = await deliverInvitation(context.env, {
+    to: email,
+    clinicName: auth.membership.clinicName,
+    role,
+    invitationUrl,
+    expiresAt,
+  });
+  if (deliveryFailure) {
+    await revokeUndeliveredInvitation(auth.db, clinicId, invitationId);
+    return deliveryFailure;
+  }
   return tenantJson({
     id: invitationId,
     email,
     role,
     expiresAt,
-    invitationUrl,
+    delivery: "email",
   }, 201);
 };
 

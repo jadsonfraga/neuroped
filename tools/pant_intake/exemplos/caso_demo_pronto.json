@@ -1,0 +1,70 @@
+{
+  "schema_version": "neuroped.intake.v1",
+  "case_id": "CASO-DEMO-001",
+  "encounter_id": "CONSULTA-DEMO-001",
+  "encounter_date": "2026-09-05",
+  "purpose": "evolucao",
+  "patient": {
+    "age_months": 72,
+    "dob": null,
+    "school_enrolled": true
+  },
+  "sources": [
+    {
+      "id": "pais",
+      "type": "relato_pais",
+      "date": "2026-09-05"
+    },
+    {
+      "id": "medico",
+      "type": "observacao_medico",
+      "date": "2026-09-05"
+    }
+  ],
+  "domains": {
+    "queixa": [
+      {
+        "text": "Exemplo fictício de acompanhamento. Não corresponde a uma criança real.",
+        "source_id": "pais",
+        "review_status": "confirmado"
+      }
+    ],
+    "historia_atual": [
+      {
+        "text": "A família apresenta informações para conferência no retorno simulado.",
+        "source_id": "pais",
+        "review_status": "confirmado"
+      }
+    ],
+    "conduta": [
+      {
+        "text": "Neste exemplo, o médico registra acompanhamento, sem mudança de medicação.",
+        "source_id": "medico",
+        "review_status": "confirmado"
+      }
+    ]
+  },
+  "hypotheses": [],
+  "medications": [],
+  "therapies": [],
+  "allergies": {
+    "status": "desconhecido",
+    "source_id": null
+  },
+  "weight": {
+    "kg": null,
+    "measured_at": null,
+    "source_id": null
+  },
+  "focus": {
+    "epilepsy": false
+  },
+  "seizures": {},
+  "risk": {
+    "signal": "ausente",
+    "assessment": "Campo preenchido apenas para teste estrutural.",
+    "plan": null
+  },
+  "contradictions": [],
+  "evidence_review": {}
+}

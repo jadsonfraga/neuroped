@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import {
   ACCEPTED_FIRST_VISIT_STORAGE,
+  auditBrowserLaunchOptions,
   ensureClientBuild,
   startStaticServer,
 } from "./lib/browser-audit-runtime.mjs";
@@ -56,7 +57,7 @@ async function openAssistanceState(page, state) {
 }
 
 const server = await startStaticServer(ensureClientBuild(repoRoot), 0);
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 const results = [];
 
 try {

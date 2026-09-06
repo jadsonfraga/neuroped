@@ -75,20 +75,13 @@ async function openFilterEngine(page) {
   if (await ageBands.isVisible().catch(() => false)) return;
 
   try {
-    await page.waitForFunction(
-      () =>
-        Boolean(
-          document.querySelector('[data-testid="age-band-scroll"]') ||
-            document.querySelector('[data-testid="button-open-filter"]'),
-        ),
-      undefined,
-      { timeout: 20_000 },
-    );
-
-    if (await ageBands.isVisible().catch(() => false)) return;
-
-    const open = page.getByTestId("button-open-filter");
-    if (await open.isVisible().catch(() => false)) await open.click();
+    // O `main` trazia um retry externo em volta do clique em
+    // `button-open-filter`, porque a tela do filtro entra sob PageTransition e
+    // o botão podia ser trocado por uma instância nova no meio do retry
+    // interno do Playwright. Esse botão deixou de existir: o filtro carrega o
+    // motor sozinho, então não há clique a repetir — só a espera pelo
+    // conteúdo, com folga para a mesma transição animada. Se o filtro não
+    // abrir de verdade, o timeout sobe com o mesmo diagnóstico de antes.
     await ageBands.waitFor({ state: "visible", timeout: 30_000 });
   } catch (error) {
     const body = await page.locator("body").innerText().catch(() => "");

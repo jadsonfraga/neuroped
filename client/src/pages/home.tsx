@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -16,10 +16,10 @@ import {
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ClinicalCockpit } from "@/components/clinical/ClinicalCockpit";
-import { useAuth } from "@/contexts/AuthContext";
 import { Mascote } from "@/components/Mascote";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
+import { ClinicalCockpit } from "@/components/clinical/ClinicalCockpit";
+import { useAuth } from "@/contexts/AuthContext";
 import { appMetrics } from "@/data/appMetrics";
 import { navigablePages } from "@/data/navigation";
 import type { ScaleEntry } from "@/data/scaleFilter";
@@ -127,16 +127,11 @@ function normalize(text: string) {
 
 function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
   const Icon = flow.icon;
-  // `MotionConfig reducedMotion="user"` neutraliza transformações, mas mantém
-  // as transições de opacidade. Num cartão que entra com atraso escalonado,
-  // isso significa texto clínico legível só alguns frames depois — e é
-  // exatamente o tipo de movimento que quem pede movimento reduzido não quer.
-  const reduceMotion = useReducedMotion();
   return (
     <Link href={flow.href}>
       <motion.div
-        initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{
           delay: index * 0.05,
           duration: duration.normal,
@@ -149,7 +144,7 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           softTap();
           haptic.tap();
         }}
-        className="group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-[1.75rem] border border-white/75 bg-card p-5 shadow-[0_18px_55px_-38px_rgba(38,24,53,0.38)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-300 hover:border-primary/20 hover:shadow-[0_24px_60px_-32px_rgba(87,37,113,0.3)] dark:border-white/10"
+        className="group relative flex h-full cursor-pointer flex-col gap-5 overflow-hidden rounded-[1.75rem] border border-white/75 bg-card/90 p-5 shadow-[0_18px_55px_-38px_rgba(38,24,53,0.38)] backdrop-blur-xl transition-[transform,box-shadow,border-color] duration-300 hover:border-primary/20 hover:shadow-[0_24px_60px_-32px_rgba(87,37,113,0.3)] dark:border-white/10"
         data-testid={`home-flow-${index + 1}`}
       >
         <div className="flex items-start justify-between">
@@ -168,7 +163,7 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           />
         </div>
         <div className="flex flex-1 flex-col">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             {flow.useCase}
           </p>
           <h2 className="mt-1.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground">
@@ -177,7 +172,7 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
           <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
             {flow.subtitle}
           </p>
-          <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-foreground transition-colors group-hover:text-primary">
+          <span className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground/70 transition-colors group-hover:text-primary">
             {flow.action}
             <ArrowRight
               className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
@@ -192,10 +187,9 @@ function FlowCard({ flow, index }: { flow: ClinicalFlow; index: number }) {
 
 export default function HomePage() {
   const { accessMode, isAuthenticated } = useAuth();
-  // Em sessão clínica a home deixa de ser capa institucional e vira posto de
-  // trabalho: o cockpit assume o topo, e o herói encolhe para não empurrar o
-  // conteúdo operacional para baixo da dobra.
-  const isClinicalSession = accessMode === "remote" && isAuthenticated;
+  // A sessão clínica autenticada abre no cockpit; a vitrine institucional
+  // continua intacta para visitantes, mirrors públicos e modo local.
+  const inClinicalSession = accessMode === "remote" && isAuthenticated;
   const [searchQuery, setSearchQuery] = useState("");
   const [scaleSearchCatalog, setScaleSearchCatalog] = useState<ScaleEntry[]>(
     [],
@@ -247,30 +241,68 @@ export default function HomePage() {
     return [...pages, ...scales].slice(0, 10);
   }, [q, scaleSearchCatalog]);
 
+  const clinicalHeader = (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: duration.normal, ease: easing.smooth }}
+      className="space-y-4"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1
+            className="text-[1.6rem] font-semibold leading-tight tracking-[-0.03em] text-foreground sm:text-[1.9rem]"
+            style={{ fontFamily: "var(--font-display)" }}
+            data-testid="text-page-title"
+          >
+            Cockpit clínico
+          </h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Paciente em foco, contexto e a próxima ação — sem atravessar o menu.
+          </p>
+        </div>
+        <div className="relative w-full max-w-md" data-testid="search-container">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-primary" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Buscar escala ou página…"
+            aria-label="Buscar escala ou página"
+            className="h-12 rounded-2xl border-border/70 bg-card/70 pl-11 pr-10 text-[14px]"
+            data-testid="input-search"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Limpar busca"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+      <ClinicalCockpit />
+    </motion.section>
+  );
+
   return (
-    <div className={`page-enter proportion-safe-page pb-10 ${isClinicalSession ? "space-y-5" : "space-y-9"}`}>
-      {isClinicalSession && <ClinicalCockpit />}
+    <div className="page-enter proportion-safe-page space-y-9 pb-10">
+      {inClinicalSession ? clinicalHeader : (
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: duration.normal, ease: easing.smooth }}
-        className={`np-home-hero relative overflow-hidden rounded-3xl border border-white/70 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] dark:border-white/10 ${
-          isClinicalSession
-            ? "np-home-hero--compact p-5 sm:p-6"
-            : "p-6 sm:p-10 lg:min-h-[34rem]"
-        }`}
+        className="np-home-hero relative overflow-hidden rounded-3xl border border-white/70 p-6 shadow-[0_30px_90px_-52px_rgba(53,24,70,0.5)] sm:p-10 lg:min-h-[34rem] dark:border-white/10"
       >
         <div className="np-home-orb np-home-orb-one" aria-hidden="true" />
         <div className="np-home-orb np-home-orb-two" aria-hidden="true" />
         <div className="absolute right-2 top-2 lg:hidden">
           <Mascote contexto="home" size="sm" fala="" />
         </div>
-        <div
-          className={`relative grid items-center gap-8 ${
-            isClinicalSession ? "" : "lg:grid-cols-[1.25fr_0.75fr]"
-          }`}
-        >
-          <div className={isClinicalSession ? "space-y-4" : "space-y-7"}>
+        <div className="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-center">
+          <div className="space-y-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/65 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur dark:bg-white/5">
               <span className="relative flex h-2 w-2" aria-hidden="true">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40 motion-reduce:animate-none" />
@@ -280,23 +312,17 @@ export default function HomePage() {
             </div>
             <div className="max-w-3xl space-y-4">
               <h1
-                className={`max-w-2xl font-semibold leading-[0.98] tracking-[-0.045em] text-foreground ${
-                  isClinicalSession
-                    ? "text-[1.6rem] sm:text-[2rem]"
-                    : "text-[2.65rem] sm:text-[4rem] lg:text-[4.65rem]"
-                }`}
+                className="max-w-2xl text-[2.65rem] font-semibold leading-[0.98] tracking-[-0.045em] text-foreground sm:text-[4rem] lg:text-[4.65rem]"
                 style={{ fontFamily: "var(--font-display)" }}
                 data-testid="text-page-title"
               >
                 Menos ruído.{" "}
                 <span className="np-title-gradient">Mais clareza clínica.</span>
               </h1>
-              {!isClinicalSession && (
-                <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
-                  Escalas, triagem e acompanhamento em uma jornada segura,
-                  acolhedora e feita para o ritmo do consultório.
-                </p>
-              )}
+              <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
+                Escalas, triagem e acompanhamento em uma jornada segura,
+                acolhedora e feita para o ritmo do consultório.
+              </p>
             </div>
 
             <div className="relative max-w-2xl" data-testid="search-container">
@@ -338,9 +364,7 @@ export default function HomePage() {
             </div>
 
             <div
-              className={`grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/60 bg-white/45 sm:grid-cols-4 dark:border-white/10 dark:bg-white/5 ${
-                isClinicalSession ? "hidden" : ""
-              }`}
+              className="grid max-w-2xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/60 bg-white/45 sm:grid-cols-4 dark:border-white/10 dark:bg-white/5"
               aria-label="Métricas do app"
             >
               {metricCards.map((metric) => (
@@ -359,11 +383,7 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div
-            className={`relative min-h-[27rem] items-center justify-center ${
-              isClinicalSession ? "hidden" : "hidden lg:flex"
-            }`}
-          >
+          <div className="relative hidden min-h-[27rem] items-center justify-center lg:flex">
             <div
               className="absolute inset-8 rounded-full border border-white/40 bg-white/20 shadow-[inset_0_0_70px_rgba(255,255,255,0.35)] backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03]"
               aria-hidden="true"
@@ -372,6 +392,7 @@ export default function HomePage() {
           </div>
         </div>
       </motion.section>
+      )}
 
       {isSearching ? (
         <section className="space-y-4" aria-label="Resultados da busca da home">
@@ -423,13 +444,15 @@ export default function HomePage() {
             <div className="flex items-end justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                  Sua jornada
+                  {inClinicalSession ? "Ferramentas" : "Sua jornada"}
                 </p>
                 <h2
                   id="fluxos-principais"
-                  className="text-2xl font-semibold tracking-[-0.03em] text-foreground"
+                  className={`font-semibold tracking-[-0.03em] text-foreground ${inClinicalSession ? "text-xl" : "text-2xl"}`}
                 >
-                  O cuidado começa por aqui
+                  {inClinicalSession
+                    ? "Instrumentos e triagens"
+                    : "O cuidado começa por aqui"}
                 </h2>
               </div>
               <span className="shrink-0 rounded-full border border-border/70 bg-card/75 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden">

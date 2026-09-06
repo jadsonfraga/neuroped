@@ -8,6 +8,7 @@ export const SENSITIVE_ROUTES = [
   "/pant",
   "/assinatura-digital",
   "/documentos",
+  "/escuta-clinica",
   "/pacientes",
   "/memoria-clinica",
   "/paciente",

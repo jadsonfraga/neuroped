@@ -390,9 +390,27 @@ assert.match(
 );
 assert.match(
   css,
-  /\[data-testid="button-floating-help"\][\s\S]*?bottom:\s*calc\(6\.65rem \+ env\(safe-area-inset-bottom\)\)/,
+  /\[data-testid="button-floating-help"\][\s\S]*?bottom:\s*calc\(4\.6rem \+ env\(safe-area-inset-bottom\)\)/,
   "ajuda flutuante única deve ficar acima do dock no shell compacto",
 );
+// O dock raso é contrato: nenhuma pastilha elevada pode voltar a cobrar quase
+// 12% da viewport do celular por quatro destinos.
+assert.doesNotMatch(
+  dock,
+  /highlighted/,
+  "dock não pode reintroduzir a pastilha elevada de Prontuário",
+);
+assert.doesNotMatch(
+  dock,
+  /-mt-5|min-h-\[4\.45rem\]/,
+  "dock deve permanecer numa faixa rasa de linha única",
+);
+assert.match(
+  dock,
+  /min-h-\[2\.75rem\]/,
+  "alvos do dock devem manter os 44px de toque",
+);
+
 assert.match(
   floatingHelp,
   /bottom-6/,

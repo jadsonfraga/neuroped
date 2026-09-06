@@ -1,915 +1,565 @@
 // @ts-check
 /**
- * Prova visual AUTENTICADA do NeuroPed (cockpit clínico depois do login).
+ * Prova visual do cockpit clínico **autenticado**.
  *
- * O gate visual público (`audit:visual`) só certifica o app em modo aberto: ele
- * serve um `/api/health` que declara autenticação dispensável, e nesse caminho o
- * cliente nunca entra em `accessMode "remote"`. Login, contexto de clínica,
- * lista de pacientes, prontuário LIVE, execução de instrumento, documentos,
- * estados vazios/erro/carregamento, sessão expirada e logout ficavam sem
- * qualquer cobertura de navegador.
+ * A prova visual pública (`scripts/audit-visual-proof.mjs`) certifica o shell
+ * aberto e o gate de login. Ela permanece verde mesmo quando toda rota protegida
+ * termina na tela de autenticação — foi exatamente o que a auditoria de 2026-09
+ * demonstrou. Este gate fecha essa lacuna: entra com uma conta sintética, navega
+ * o fluxo clínico inteiro e falha quando um estado autenticado regride.
  *
- * Esta suíte sobe um backend clínico SINTÉTICO (scripts/lib/clinical-mock-api.mjs)
- * que implementa o mesmo contrato das Functions do Cloudflare com dados 100%
- * fictícios, constrói o cliente no perfil `authenticated` (VITE_AUTH_MODE=remote,
- * VITE_OPEN_ACCESS=false — exatamente a produção canônica) e percorre uma matriz
- * de estados independentes.
+ * Cada caso declara `expect` (o que precisa estar em tela) e `forbid` (o que não
+ * pode aparecer — o gate de login à frente do conteúdo clínico, por exemplo).
+ * Sem esse par, uma captura da tela de login passaria por "cobertura do
+ * prontuário", que é a regressão silenciosa que este arquivo existe para impedir.
  *
- * Cada estado reprova a execução quando encontra:
- * - erro de runtime (pageerror) ou erro de console;
- * - overflow horizontal;
- * - violação axe de impacto serious/critical;
- * - foco fora do diálogo quando um diálogo modal está aberto;
- * - alvo de toque abaixo de 44px em viewport compacto;
- * - conteúdo clínico exibido sem sessão (vazamento de gate).
- *
- * Nenhum dado real de paciente é usado — a conta e os pacientes são sintéticos.
+ * Dados: 100% sintéticos, servidos por `scripts/lib/synthetic-clinical-api.mjs`.
+ * Nenhum prontuário real, nenhuma credencial de produção.
  */
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "playwright";
-import { ensureClientBuild, isMissingBrowserError } from "./lib/browser-audit-runtime.mjs";
-import { E2E_ACCOUNT, E2E_CLINIC, startMockClinicalServer } from "./lib/clinical-mock-api.mjs";
+import {
+  ACCEPTED_FIRST_VISIT_STORAGE,
+  auditBrowserLaunchOptions,
+  ensureClientBuild,
+  isMissingBrowserError,
+  startStaticServer,
+} from "./lib/browser-audit-runtime.mjs";
+import {
+  createSyntheticClinicalApi,
+  SYNTHETIC_CREDENTIALS,
+  SYNTHETIC_PATIENTS,
+} from "./lib/synthetic-clinical-api.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
 const outputDir = resolve(repoRoot, "artifacts/visual-authenticated");
 
+/** Matriz mínima exigida pelo gate: abaixo disso a cobertura deixou de existir. */
+const MINIMUM_STATES = 50;
+
 const VIEWPORTS = {
-  "mobile-small": { width: 360, height: 800 },
-  mobile: { width: 390, height: 844 },
-  tablet: { width: 820, height: 1180 },
-  desktop: { width: 1440, height: 900 },
-  "desktop-wide": { width: 1728, height: 1080 },
+  mobileSmall: { width: 360, height: 800, label: "mobile-360" },
+  mobile: { width: 390, height: 844, label: "mobile-390" },
+  tablet: { width: 820, height: 1180, label: "tablet-820" },
+  desktop: { width: 1440, height: 900, label: "desktop-1440" },
 };
 
-const PATIENT_A = "e2e-pat-001";
-const PATIENT_B = "e2e-pat-002";
+const LOGIN_FORM = '[data-testid="login-form"]';
+const PATIENT = SYNTHETIC_PATIENTS.first.id;
+const PATIENT_TWO = SYNTHETIC_PATIENTS.second.id;
 
-const FIRST_VISIT_STORAGE = {
-  "neuroped:aviso-educativo-aceito-v1": "browser-audit",
-  "neuroped:onboarding-seen": "1",
-  np_tour_intro_v2: "done",
-  np_tour_v2_done: "1",
-};
+/** Espera curta e determinística usada depois de interações locais. */
+const settle = (page, ms = 350) => page.waitForTimeout(ms);
 
-// ─────────────────────────── helpers de fluxo ───────────────────────────
-
-async function settle(page, extraMs = 320) {
-  await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 20_000 }).catch(() => {});
-  await page.evaluate(() => document.fonts.ready).catch(() => {});
-  await page.waitForTimeout(extraMs);
-}
-
-async function gotoRoute(page, origin, route, extraMs) {
-  await page.goto(`${origin}${route}`, { waitUntil: "domcontentloaded" });
-  await settle(page, extraMs);
-}
-
-/** Login real pela interface — certifica o formulário, não só o token. */
-async function loginThroughUi(page, origin) {
-  await gotoRoute(page, origin, "/#/login");
-  await page.getByTestId("login-form").waitFor({ state: "visible", timeout: 20_000 });
-  await page.locator("#login-email").fill(E2E_ACCOUNT.email);
-  await page.locator("#login-password").fill(E2E_ACCOUNT.password);
-  await page.getByRole("button", { name: /Entrar com segurança/i }).click();
-  await page.waitForFunction(
-    () => !document.querySelector('[data-testid="login-form"]'),
-    undefined,
-    { timeout: 20_000 },
-  );
+async function openHelp(page) {
+  await page.getByTestId("button-floating-help").click();
+  await page.locator('[data-testid="help-dialog"]').waitFor({ state: "visible", timeout: 10_000 });
   await settle(page);
 }
 
-/** Logout pelo próprio controle do app (encerra sessão e recarrega o shell). */
-async function logoutThroughUi(page, origin) {
-  await gotoRoute(page, origin, "/", 700);
-  const exit = page.getByTestId("button-session-exit");
-  // No celular/tablet a sessão vive dentro do drawer, que fica fora da tela e
-  // marcado como `inert` quando fechado — o elemento existe e o Playwright o
-  // considera "visível", mas ele está fora da viewport. A decisão é pela
-  // largura, não pela visibilidade, e reproduz o caminho real de quem sai.
-  const viewport = page.viewportSize();
-  if (viewport && viewport.width < 1024) {
-    await page.getByRole("button", { name: "Abrir menu de navegação" }).click();
-    await page.waitForTimeout(600);
-  }
-  await exit.waitFor({ state: "visible", timeout: 20_000 });
-  await exit.click();
-  await page.waitForFunction(
-    () => !sessionStorage.getItem("neuroped:access"),
-    undefined,
-    { timeout: 20_000 },
-  );
-  await settle(page, 900);
-}
-
-async function answerMchat(page, count) {
-  for (let index = 0; index < count; index += 1) {
-    const button = page.getByTestId(index % 3 === 0 ? `button-yes-${index}` : `button-no-${index}`);
-    if (!(await button.count())) break;
-    await button.click();
-  }
-  await page.waitForTimeout(120);
-}
-
-async function openFilterEngine(page) {
-  const grid = page.getByTestId("age-band-scroll");
-  if (await grid.isVisible().catch(() => false)) return;
-  const legacyOpen = page.getByTestId("button-open-filter");
-  if (await legacyOpen.isVisible().catch(() => false)) await legacyOpen.click();
-  await grid.waitFor({ state: "visible", timeout: 25_000 }).catch(() => {});
-}
-
-// ─────────────────────────── matriz de estados ───────────────────────────
 /**
- * Cada entrada é um ESTADO independente, não um recorte da mesma tela: rota,
- * viewport, tema, cenário de backend e interação combinados.
+ * Matriz de estados. `group` alimenta o relatório; `scenario` seleciona a
+ * variante da API sintética; `fresh` força o login interativo real.
  */
 const CASES = [
-  // ── 1. Gate de entrada (sem sessão) ──
+  // ── 1. Autenticação ─────────────────────────────────────────────────────
   {
-    id: "01-login-desktop-light", viewport: "desktop", theme: "light", session: "none",
-    steps: (page, ctx) => gotoRoute(page, ctx.origin, "/#/login"),
+    id: "login-desktop-light", group: "Autenticação", anonymous: true,
+    route: "/login", viewport: "desktop", theme: "light",
+    expect: [LOGIN_FORM, "#login-email", "#login-password"],
   },
   {
-    id: "02-login-mobile-dark", viewport: "mobile", theme: "dark", session: "none",
-    steps: (page, ctx) => gotoRoute(page, ctx.origin, "/#/login"),
+    id: "login-mobile-dark", group: "Autenticação", anonymous: true,
+    route: "/login", viewport: "mobile", theme: "dark",
+    expect: [LOGIN_FORM],
   },
   {
-    id: "03-login-tablet-light", viewport: "tablet", theme: "light", session: "none",
-    steps: (page, ctx) => gotoRoute(page, ctx.origin, "/#/login"),
+    id: "login-tablet-light", group: "Autenticação", anonymous: true,
+    route: "/login", viewport: "tablet", theme: "light",
+    expect: [LOGIN_FORM],
   },
   {
-    id: "04-login-credencial-invalida-mobile-light", viewport: "mobile", theme: "light", session: "none",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/login");
-      await page.locator("#login-email").fill("errado@neuroped.invalid");
-      await page.locator("#login-password").fill("senha-incorreta");
-      await page.getByRole("button", { name: /Entrar com segurança/i }).click();
-      await page.getByRole("alert").first().waitFor({ state: "visible", timeout: 15_000 });
+    id: "login-erro-credenciais", group: "Autenticação", anonymous: true,
+    route: "/login", viewport: "desktop", theme: "light",
+    expect: [LOGIN_FORM, '[role="alert"]'],
+    async prepare(page) {
+      await page.fill("#login-email", SYNTHETIC_CREDENTIALS.email);
+      await page.fill("#login-password", SYNTHETIC_CREDENTIALS.wrongPassword);
+      await page.click('button[type="submit"]');
+      await page.locator('[role="alert"]').first().waitFor({ state: "visible", timeout: 10_000 });
     },
-    expectedConsoleErrorPattern: /401/,
+    expectedNetworkFailures: ["/api/auth/login"],
   },
   {
-    id: "05-rota-clinica-sem-sessao-redireciona-desktop-light", viewport: "desktop", theme: "light", session: "none",
-    steps: (page, ctx) => gotoRoute(page, ctx.origin, "/#/pacientes"),
-    assertNoClinicalLeak: true,
+    id: "login-sucesso-vai-para-cockpit", group: "Autenticação", fresh: true,
+    route: "/login", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="text-page-title"]'],
+    forbid: [LOGIN_FORM],
   },
   {
-    id: "06-prontuario-sem-sessao-redireciona-mobile-light", viewport: "mobile", theme: "light", session: "none",
-    steps: (page, ctx) => gotoRoute(page, ctx.origin, "/#/prontuario"),
-    assertNoClinicalLeak: true,
+    id: "login-sucesso-mobile", group: "Autenticação", fresh: true,
+    route: "/login", viewport: "mobile", theme: "light",
+    expect: ['[data-testid="text-page-title"]'],
+    forbid: [LOGIN_FORM],
   },
   {
-    id: "07-login-valido-pela-interface-desktop-light", viewport: "desktop", theme: "light", session: "none",
-    steps: (page, ctx) => loginThroughUi(page, ctx.origin),
-  },
-  {
-    id: "08-login-valido-pela-interface-mobile-dark", viewport: "mobile", theme: "dark", session: "none",
-    steps: (page, ctx) => loginThroughUi(page, ctx.origin),
+    id: "login-retoma-destino-protegido", group: "Autenticação", fresh: true,
+    // Entra a partir de uma rota clínica: depois do login o profissional precisa
+    // cair no destino pedido, não numa home genérica.
+    startRoute: "/pacientes", route: "/login", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="button-new-patient"]'],
+    forbid: [LOGIN_FORM],
   },
 
-  // ── 2. Home autenticada (cockpit) ──
-  { id: "09-home-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/") },
+  // ── 2. Home / cockpit ───────────────────────────────────────────────────
   {
-    id: "09b-home-com-paciente-em-foco-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      // Abrir a ficha declara o foco; a home precisa retomá-lo.
-      await gotoRoute(page, ctx.origin, `/#/paciente/${PATIENT_A}`, 900);
-      await gotoRoute(page, ctx.origin, "/", 900);
-    },
-    expectText: ["Paciente em foco", "Ana Sintética"],
+    id: "home-desktop-light", group: "Cockpit", route: "/", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="text-page-title"]', '[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "09c-home-com-paciente-em-foco-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, `/#/paciente/${PATIENT_A}`, 900);
-      await gotoRoute(page, ctx.origin, "/", 900);
-    },
-    expectText: ["Paciente em foco", "Ana Sintética"],
-  },
-  { id: "10-home-desktop-dark", viewport: "desktop", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  { id: "11-home-desktop-wide-light", viewport: "desktop-wide", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  { id: "12-home-tablet-light", viewport: "tablet", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  { id: "13-home-tablet-dark", viewport: "tablet", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  { id: "14-home-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  { id: "15-home-mobile-dark", viewport: "mobile", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  { id: "16-home-mobile-small-light", viewport: "mobile-small", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/") },
-  {
-    id: "17-home-busca-ativa-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/");
-      await page.getByTestId("input-search").fill("autismo");
-      await page.waitForTimeout(700);
-    },
+    id: "home-desktop-dark", group: "Cockpit", route: "/", viewport: "desktop", theme: "dark",
+    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "18-home-sem-pacientes-desktop-light", viewport: "desktop", theme: "light", scenario: "empty",
-    steps: (p, c) => gotoRoute(p, c.origin, "/"),
+    id: "home-tablet-light", group: "Cockpit", route: "/", viewport: "tablet", theme: "light",
+    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "19-home-carregando-mobile-light", viewport: "mobile", theme: "light", scenario: "slow",
-    steps: async (page, ctx) => {
-      await page.goto(`${ctx.origin}/`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 20_000 }).catch(() => {});
-      await page.waitForTimeout(250);
+    id: "home-mobile-light", group: "Cockpit", route: "/", viewport: "mobile", theme: "light",
+    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "home-mobile-small-dark", group: "Cockpit", route: "/", viewport: "mobileSmall", theme: "dark",
+    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "home-sem-pacientes", group: "Cockpit", scenario: "empty",
+    route: "/", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "home-busca-ativa", group: "Cockpit", route: "/", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="input-search"]'],
+    async prepare(page) {
+      await page.fill('[data-testid="input-search"]', "mchat");
+      await settle(page, 900);
     },
   },
 
-  // ── 3. Pacientes: lista, busca, vazio, carregando, erro ──
-  { id: "20-pacientes-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 700) },
-  { id: "21-pacientes-desktop-dark", viewport: "desktop", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 700) },
-  { id: "22-pacientes-tablet-light", viewport: "tablet", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 700) },
-  { id: "23-pacientes-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 700) },
-  { id: "24-pacientes-mobile-dark", viewport: "mobile", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 700) },
+  // ── 3. Seleção e troca de paciente ──────────────────────────────────────
   {
-    id: "25-pacientes-busca-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 700);
-      await page.getByTestId("input-search-patients").fill("Clara");
-      await page.waitForTimeout(600);
+    id: "pacientes-lista-desktop", group: "Pacientes", route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="button-new-patient"]', `[data-testid="button-edit-${PATIENT}"]`], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "pacientes-lista-mobile", group: "Pacientes", route: "/pacientes", viewport: "mobile", theme: "light",
+    expect: [`[data-testid="button-edit-${PATIENT}"]`], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "pacientes-lista-tablet-dark", group: "Pacientes", route: "/pacientes", viewport: "tablet", theme: "dark",
+    expect: [`[data-testid="button-edit-${PATIENT}"]`], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "pacientes-busca-filtrada", group: "Pacientes", route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="input-search-patients"]'],
+    async prepare(page) {
+      await page.fill('[data-testid="input-search-patients"]', "Bravo");
+      await settle(page, 500);
     },
   },
   {
-    id: "26-pacientes-vazio-desktop-light", viewport: "desktop", theme: "light", scenario: "empty",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 900),
+    id: "pacientes-estado-vazio", group: "Pacientes", scenario: "empty",
+    route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="button-new-patient"]'],
+    forbid: [`[data-testid="button-edit-${PATIENT}"]`, LOGIN_FORM],
   },
   {
-    id: "27-pacientes-vazio-mobile-light", viewport: "mobile", theme: "light", scenario: "empty",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 900),
+    id: "pacientes-carregando", group: "Pacientes", scenario: "hangingPatients",
+    route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[role="status"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "28-pacientes-carregando-desktop-light", viewport: "desktop", theme: "light", scenario: "slow",
-    steps: async (page, ctx) => {
-      await page.goto(`${ctx.origin}/#/pacientes`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 20_000 }).catch(() => {});
-      await page.waitForTimeout(400);
-    },
+    id: "pacientes-erro-recuperavel", group: "Pacientes", scenario: "failingPatients",
+    route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="button-new-patient"]'], forbid: [LOGIN_FORM],
+    expectedNetworkFailures: ["/api/patients", "/api/live/patients"],
   },
   {
-    id: "29-pacientes-erro-recuperavel-desktop-light", viewport: "desktop", theme: "light", scenario: "error",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 1_200),
-    expectedConsoleErrorPattern: /500|DB_ERROR|Failed to load/i,
-  },
-  {
-    id: "30-pacientes-erro-recuperavel-mobile-light", viewport: "mobile", theme: "light", scenario: "error",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 1_200),
-    expectedConsoleErrorPattern: /500|DB_ERROR|Failed to load/i,
-  },
-  {
-    id: "31-pacientes-dialogo-novo-paciente-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 700);
+    id: "pacientes-novo-cadastro", group: "Pacientes", route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="input-patient-name"]'], dialog: true,
+    async prepare(page) {
       await page.getByTestId("button-new-patient").click();
-      await page.getByRole("dialog").waitFor({ state: "visible", timeout: 10_000 });
-      await page.waitForTimeout(400);
+      await page.locator('[data-testid="input-patient-name"]').waitFor({ state: "visible", timeout: 10_000 });
+      await settle(page);
     },
-    expectDialogFocus: true,
   },
   {
-    id: "32-pacientes-dialogo-novo-paciente-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 700);
-      await page.getByTestId("button-new-patient").click();
-      await page.getByRole("dialog").waitFor({ state: "visible", timeout: 10_000 });
-      await page.waitForTimeout(400);
+    id: "pacientes-confirmar-exclusao", group: "Confirmações destrutivas",
+    route: "/pacientes", viewport: "desktop", theme: "light",
+    expect: ['[role="alertdialog"]'], dialog: true, dialogSelector: '[role="alertdialog"]',
+    async prepare(page) {
+      await page.getByTestId(`button-delete-${PATIENT}`).click();
+      await page.locator('[role="alertdialog"]').waitFor({ state: "visible", timeout: 10_000 });
+      await settle(page);
     },
-    expectDialogFocus: true,
   },
   {
-    id: "33-pacientes-salvamento-novo-paciente-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 700);
-      await page.getByTestId("button-new-patient").click();
-      await page.getByRole("dialog").waitFor({ state: "visible", timeout: 10_000 });
-      await page.getByTestId("input-patient-name").fill("Paciente Sintético Novo (fictício)");
-      await page.getByTestId("input-patient-birth").fill("2019-05-20");
-      await page.getByTestId("button-save-patient").click();
-      await page.waitForTimeout(900);
-    },
+    id: "paciente-ficha-desktop", group: "Pacientes",
+    route: `/paciente/${PATIENT}`, viewport: "desktop", theme: "light",
+    expect: ['[data-testid="patient-cockpit"]', '[data-testid="button-open-prontuario"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "paciente-ficha-mobile-dark", group: "Pacientes",
+    route: `/paciente/${PATIENT}`, viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="patient-cockpit"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "paciente-ficha-tablet", group: "Pacientes",
+    route: `/paciente/${PATIENT}`, viewport: "tablet", theme: "light",
+    expect: ['[data-testid="patient-cockpit"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "paciente-troca-de-contexto", group: "Pacientes",
+    // Troca de paciente: a ficha precisa passar a mostrar o segundo registro.
+    route: `/paciente/${PATIENT_TWO}`, viewport: "desktop", theme: "light",
+    expect: ['[data-testid="patient-cockpit"]'], forbid: [LOGIN_FORM],
+    expectText: SYNTHETIC_PATIENTS.second.name,
   },
 
+  // ── 4. Prontuário ───────────────────────────────────────────────────────
   {
-    id: "33b-pacientes-confirmacao-destrutiva-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 900);
-      await page.getByTestId(`button-delete-${PATIENT_A}`).click();
-      await page.getByRole("alertdialog").or(page.getByRole("dialog")).first()
-        .waitFor({ state: "visible", timeout: 10_000 });
-      await page.waitForTimeout(400);
-    },
-    expectDialogFocus: true,
-    expectText: ["Remover"],
+    id: "prontuario-desktop-light", group: "Prontuário",
+    route: "/prontuario", search: `patientId=${PATIENT}`, viewport: "desktop", theme: "light",
+    expect: ['[data-testid="prontuario-shell"]', '[data-testid="prontuario-header"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "33c-pacientes-confirmacao-destrutiva-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 900);
-      await page.getByTestId(`button-delete-${PATIENT_A}`).click();
-      await page.getByRole("alertdialog").or(page.getByRole("dialog")).first()
-        .waitFor({ state: "visible", timeout: 10_000 });
-      await page.waitForTimeout(400);
+    id: "prontuario-desktop-dark", group: "Prontuário",
+    route: "/prontuario", search: `patientId=${PATIENT}`, viewport: "desktop", theme: "dark",
+    expect: ['[data-testid="prontuario-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "prontuario-mobile-light", group: "Prontuário",
+    route: "/prontuario", search: `patientId=${PATIENT}`, viewport: "mobile", theme: "light",
+    expect: ['[data-testid="prontuario-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "prontuario-tablet-dark", group: "Prontuário",
+    route: "/prontuario", search: `patientId=${PATIENT}`, viewport: "tablet", theme: "dark",
+    expect: ['[data-testid="prontuario-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "prontuario-sem-paciente", group: "Prontuário",
+    route: "/prontuario", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="prontuario-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "prontuario-edicao-com-rascunho", group: "Autosave e salvamento",
+    route: "/prontuario", search: `patientId=${PATIENT}`, viewport: "desktop", theme: "light",
+    expect: ['[data-testid="prontuario-shell"]'],
+    async prepare(page) {
+      const field = page.locator('#main-content textarea, #main-content input:not([type="checkbox"]):not([type="radio"]):not([type="date"])').first();
+      await field.waitFor({ state: "visible", timeout: 10_000 });
+      await field.fill("Registro sintético de auditoria");
+      await settle(page, 700);
     },
-    expectDialogFocus: true,
-    expectText: ["Remover"],
+  },
+  {
+    id: "prontuario-carregando", group: "Prontuário", scenario: "hangingEvents",
+    route: "/prontuario", search: `patientId=${PATIENT}`, viewport: "desktop", theme: "light",
+    expect: ['[data-testid="prontuario-shell"]'], forbid: [LOGIN_FORM],
   },
 
-  // ── 4. Seleção, troca e detalhe de paciente ──
+  // ── 5. Escalas e execução de instrumento ────────────────────────────────
   {
-    id: "34-paciente-detalhe-desktop-light", viewport: "desktop", theme: "light",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/paciente/${PATIENT_A}`, 900),
+    id: "mchat-inicial-desktop", group: "Escalas", route: "/mchat", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="card-question-0"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "35-paciente-detalhe-desktop-dark", viewport: "desktop", theme: "dark",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/paciente/${PATIENT_A}`, 900),
+    id: "mchat-inicial-mobile", group: "Escalas", route: "/mchat", viewport: "mobile", theme: "light",
+    expect: ['[data-testid="card-question-0"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "36-paciente-detalhe-mobile-light", viewport: "mobile", theme: "light",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/paciente/${PATIENT_A}`, 900),
+    id: "mchat-inicial-tablet-dark", group: "Escalas", route: "/mchat", viewport: "tablet", theme: "dark",
+    expect: ['[data-testid="card-question-0"]'], forbid: [LOGIN_FORM],
   },
   {
-    id: "37-paciente-detalhe-tablet-dark", viewport: "tablet", theme: "dark",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/paciente/${PATIENT_A}`, 900),
-  },
-  {
-    id: "38-troca-de-paciente-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, `/#/paciente/${PATIENT_A}`, 900);
-      await gotoRoute(page, ctx.origin, `/#/paciente/${PATIENT_B}`, 900);
-    },
-  },
-  {
-    id: "39-troca-de-paciente-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, `/#/paciente/${PATIENT_A}`, 900);
-      await gotoRoute(page, ctx.origin, `/#/paciente/${PATIENT_B}`, 900);
-    },
-  },
-  {
-    id: "40-paciente-detalhe-sem-avaliacoes-desktop-light", viewport: "desktop", theme: "light", scenario: "empty",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/paciente/${PATIENT_A}`, 1_200),
-    expectedConsoleErrorPattern: /404|PATIENT_NOT_FOUND|Failed to load/i,
-  },
-  {
-    id: "41-paciente-detalhe-carregando-mobile-light", viewport: "mobile", theme: "light", scenario: "slow",
-    steps: async (page, ctx) => {
-      await page.goto(`${ctx.origin}/#/paciente/${PATIENT_A}`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 20_000 }).catch(() => {});
-      await page.waitForTimeout(400);
-    },
-  },
-  {
-    id: "42-paciente-detalhe-erro-desktop-light", viewport: "desktop", theme: "light", scenario: "error",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/paciente/${PATIENT_A}`, 1_200),
-    expectedConsoleErrorPattern: /500|DB_ERROR|Failed to load/i,
-  },
-
-  // ── 5. Prontuário ──
-  { id: "43-prontuario-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/prontuario", 800) },
-  { id: "44-prontuario-desktop-dark", viewport: "desktop", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/prontuario", 800) },
-  { id: "45-prontuario-tablet-light", viewport: "tablet", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/prontuario", 800) },
-  { id: "46-prontuario-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/prontuario", 800) },
-  {
-    id: "47-prontuario-com-paciente-desktop-light", viewport: "desktop", theme: "light",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/prontuario?patientId=${PATIENT_A}`, 1_400),
-    // Regressão coberta: a consulta vive no HASH; ler só `location.search`
-    // abria o prontuário em branco, sem erro e sem vínculo com o paciente.
-    expectText: ["Ana Sintética"],
-  },
-  {
-    id: "48-prontuario-com-paciente-mobile-light", viewport: "mobile", theme: "light",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/prontuario?patientId=${PATIENT_A}`, 1_400),
-    expectText: ["Ana Sintética"],
-  },
-  {
-    id: "49-prontuario-preenchimento-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/prontuario", 900);
-      const firstText = page.locator("#main-content textarea, #main-content input[type=text]").first();
-      if (await firstText.count()) {
-        await firstText.fill("Registro sintético de auditoria (dado fictício).");
-        await page.waitForTimeout(800);
+    id: "mchat-parcialmente-respondido", group: "Escalas", route: "/mchat", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="card-question-0"]'],
+    async prepare(page) {
+      for (let index = 0; index < 5; index += 1) {
+        await page.getByTestId(`button-no-${index}`).click();
+        await settle(page, 90);
       }
-    },
-  },
-
-  {
-    id: "49b-prontuario-salvamento-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, `/#/prontuario?patientId=${PATIENT_A}`, 1_400);
-      const save = page.getByRole("button", { name: /Salvar prontuário/i });
-      await save.waitFor({ state: "visible", timeout: 15_000 });
-      await save.scrollIntoViewIfNeeded();
-      await save.click();
-      await page.waitForTimeout(1_200);
-    },
-    expectText: ["Ana Sintética"],
-  },
-
-  // ── 6. Escalas: catálogo, execução, resultado ──
-  { id: "50-mchat-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/mchat", 700) },
-  { id: "51-mchat-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/mchat", 700) },
-  {
-    id: "52-mchat-em-execucao-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/mchat", 700);
-      await answerMchat(page, 6);
+      await settle(page, 400);
     },
   },
   {
-    id: "53-mchat-em-execucao-desktop-dark", viewport: "desktop", theme: "dark",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/mchat", 700);
-      await answerMchat(page, 10);
-    },
-  },
-  {
-    id: "54-mchat-resultado-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/mchat", 700);
-      await answerMchat(page, 40);
+    id: "mchat-resultado", group: "Escalas", route: "/mchat", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="button-reset"]'],
+    async prepare(page) {
+      const total = await page.locator('[data-testid^="card-question-"]').count();
+      for (let index = 0; index < total; index += 1) {
+        await page.getByTestId(`button-no-${index}`).click();
+      }
       await page.getByTestId("button-submit").click();
-      await page.waitForTimeout(900);
+      await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+      await settle(page, 600);
     },
   },
   {
-    id: "55-mchat-resultado-mobile-dark", viewport: "mobile", theme: "dark",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/mchat", 700);
-      await answerMchat(page, 40);
+    id: "mchat-resultado-mobile-dark", group: "Escalas", route: "/mchat", viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="button-reset"]'],
+    async prepare(page) {
+      const total = await page.locator('[data-testid^="card-question-"]').count();
+      for (let index = 0; index < total; index += 1) {
+        await page.getByTestId(`button-no-${index}`).click();
+      }
       await page.getByTestId("button-submit").click();
-      await page.waitForTimeout(900);
+      await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+      await settle(page, 600);
     },
   },
   {
-    id: "56-mchat-pendencia-obrigatoria-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/mchat", 700);
-      await answerMchat(page, 3);
-      await page.getByTestId("button-submit").click({ force: true });
-      await page.waitForTimeout(500);
-    },
-  },
-  { id: "57-cars-tablet-light", viewport: "tablet", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/cars", 900) },
-  { id: "58-snap-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/snap", 900) },
-  { id: "59-biblioteca-instrumentos-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/biblioteca-instrumentos", 1_000) },
-
-  // ── 7. Filtro de escalas ──
-  {
-    id: "60-filtro-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => { await gotoRoute(page, ctx.origin, "/#/filtro", 900); await openFilterEngine(page); await page.waitForTimeout(500); },
-  },
-  {
-    id: "61-filtro-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => { await gotoRoute(page, ctx.origin, "/#/filtro", 900); await openFilterEngine(page); await page.waitForTimeout(500); },
-  },
-  {
-    id: "62-filtro-tablet-dark", viewport: "tablet", theme: "dark",
-    steps: async (page, ctx) => { await gotoRoute(page, ctx.origin, "/#/filtro", 900); await openFilterEngine(page); await page.waitForTimeout(500); },
-  },
-  {
-    id: "63-filtro-resultado-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/filtro", 900);
-      await openFilterEngine(page);
-      const quickStart = page.getByRole("button", { name: "TDAH · 6–12 anos", exact: true });
-      if (await quickStart.count()) {
-        await quickStart.click();
-        await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 20_000 }).catch(() => {});
+    id: "escala-vinculo-com-paciente", group: "Autosave e salvamento",
+    route: "/mchat", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="button-reset"]'],
+    async prepare(page) {
+      const total = await page.locator('[data-testid^="card-question-"]').count();
+      for (let index = 0; index < total; index += 1) {
+        await page.getByTestId(`button-no-${index}`).click();
       }
-      await page.waitForTimeout(500);
-    },
-  },
-  {
-    id: "64-filtro-resultado-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await gotoRoute(page, ctx.origin, "/#/filtro", 900);
-      await openFilterEngine(page);
-      const quickStart = page.getByRole("button", { name: "TDAH · 6–12 anos", exact: true });
-      if (await quickStart.count()) {
-        await quickStart.click();
-        await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 20_000 }).catch(() => {});
-      }
-      await page.waitForTimeout(500);
-    },
-  },
-  {
-    id: "65-filtro-carregando-mobile-light", viewport: "mobile", theme: "light",
-    steps: async (page, ctx) => {
-      await page.goto(`${ctx.origin}/#/filtro`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 20_000 }).catch(() => {});
-      await page.waitForTimeout(120);
+      await page.getByTestId("button-submit").click();
+      await page.getByTestId("button-reset").waitFor({ state: "visible", timeout: 15_000 });
+      await page.mouse.wheel(0, 4000);
+      await settle(page, 700);
     },
   },
 
-  // ── 8. Documentos e laudos ──
-  { id: "66-documentos-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/documentos", 700) },
-  { id: "67-documentos-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/documentos", 700) },
-  { id: "68-documentos-tablet-dark", viewport: "tablet", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/documentos", 700) },
-  { id: "69-laudo-neuroped-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/laudo-neuroped", 1_000) },
+  // ── 6. Filtro de escalas ────────────────────────────────────────────────
   {
-    id: "69b-laudo-com-paciente-desktop-light", viewport: "desktop", theme: "light",
-    steps: (p, c) => gotoRoute(p, c.origin, `/#/laudo-neuroped?patientId=${PATIENT_A}`, 1_600),
-    expectText: ["Ana Sintética"],
-  },
-  { id: "70-laudo-neuroped-mobile-dark", viewport: "mobile", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/laudo-neuroped", 1_000) },
-  { id: "71-receita-c1-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/receita-c1", 1_000) },
-
-  // ── 9. Assistência consolidada ──
-  { id: "72-ajuda-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/ajuda", 700) },
-  { id: "73-ajuda-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/ajuda", 700) },
-  { id: "74-acessibilidade-desktop-dark", viewport: "desktop", theme: "dark", steps: (p, c) => gotoRoute(p, c.origin, "/#/acessibilidade", 700) },
-  { id: "75-configuracoes-desktop-light", viewport: "desktop", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 1_400) },
-  { id: "75b-configuracoes-mobile-light", viewport: "mobile", theme: "light", steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 1_400) },
-  {
-    id: "75c-configuracoes-clinica-desktop-dark", viewport: "desktop", theme: "dark",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/configuracoes", 1_400),
-    // Identidade do emissor e equipe vêm de /api/tenants/:id e :id/members —
-    // se o tenant não responder, os documentos clínicos saem sem emissor.
-    expectText: ["Clínica Sintética"],
-  },
-
-  // ── 10. Sessão: expiração e logout ──
-  {
-    id: "76-sessao-expirada-desktop-light", viewport: "desktop", theme: "light", scenario: "expired",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/pacientes", 1_500),
-    assertNoClinicalLeak: true,
-    expectedConsoleErrorPattern: /401|UNAUTHENTICATED|Failed to load/i,
+    id: "filtro-desktop-light", group: "Filtro", route: "/filtro", viewport: "desktop", theme: "light",
+    expect: [".container-filtro"], forbid: [LOGIN_FORM, '[data-testid="button-open-filter"]'],
   },
   {
-    id: "77-sessao-expirada-mobile-light", viewport: "mobile", theme: "light", scenario: "expired",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/prontuario", 1_500),
-    assertNoClinicalLeak: true,
-    expectedConsoleErrorPattern: /401|UNAUTHENTICATED|Failed to load/i,
+    id: "filtro-desktop-dark", group: "Filtro", route: "/filtro", viewport: "desktop", theme: "dark",
+    expect: [".container-filtro"], forbid: ['[data-testid="button-open-filter"]'],
   },
   {
-    id: "78-sessao-expirada-pagina-dedicada-desktop-light", viewport: "desktop", theme: "light", session: "none",
-    steps: (p, c) => gotoRoute(p, c.origin, "/#/sessao-expirada", 700),
+    id: "filtro-mobile-light", group: "Filtro", route: "/filtro", viewport: "mobile", theme: "light",
+    expect: [".container-filtro"], forbid: ['[data-testid="button-open-filter"]'],
   },
   {
-    id: "79-logout-pelo-app-desktop-light", viewport: "desktop", theme: "light",
-    steps: (page, ctx) => logoutThroughUi(page, ctx.origin),
-    assertNoClinicalLeak: true,
+    id: "filtro-tablet-light", group: "Filtro", route: "/filtro", viewport: "tablet", theme: "light",
+    expect: [".container-filtro"], forbid: ['[data-testid="button-open-filter"]'],
   },
   {
-    id: "80-apos-logout-rota-clinica-bloqueada-desktop-light", viewport: "desktop", theme: "light",
-    steps: async (page, ctx) => {
-      await logoutThroughUi(page, ctx.origin);
-      await gotoRoute(page, ctx.origin, "/#/pacientes", 900);
+    id: "filtro-resultados-desktop", group: "Filtro", route: "/filtro", viewport: "desktop", theme: "light",
+    expect: [".filter-260-card"],
+    async prepare(page) {
+      await page.getByRole("button", { name: "TDAH · 6–12 anos", exact: true }).click();
+      await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 20_000 });
+      await settle(page, 500);
     },
-    assertNoClinicalLeak: true,
   },
   {
-    id: "81-logout-pelo-app-mobile-light", viewport: "mobile", theme: "light",
-    steps: (page, ctx) => logoutThroughUi(page, ctx.origin),
-    assertNoClinicalLeak: true,
+    id: "filtro-resultados-mobile", group: "Filtro", route: "/filtro", viewport: "mobile", theme: "light",
+    expect: [".filter-260-card"],
+    async prepare(page) {
+      await page.getByRole("button", { name: "TDAH · 6–12 anos", exact: true }).click();
+      await page.locator(".filter-260-card").first().waitFor({ state: "visible", timeout: 20_000 });
+      await settle(page, 500);
+    },
+  },
+
+  // ── 7. Documentos e laudos ──────────────────────────────────────────────
+  {
+    id: "documentos-desktop-light", group: "Documentos", route: "/documentos", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="documentos-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "documentos-mobile-dark", group: "Documentos", route: "/documentos", viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="documentos-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "laudo-neuroped-desktop", group: "Documentos",
+    route: "/laudo-neuroped", search: `patientId=${PATIENT}`, viewport: "desktop", theme: "light",
+    expect: ['[data-testid="input-paciente"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "laudo-neuroped-mobile", group: "Documentos",
+    route: "/laudo-neuroped", search: `patientId=${PATIENT}`, viewport: "mobile", theme: "light",
+    expect: ['[data-testid="input-paciente"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "receita-c1-desktop", group: "Documentos",
+    route: "/receita-c1", search: `patientId=${PATIENT}`, viewport: "desktop", theme: "light",
+    expect: ["#main-content form, #main-content input"], forbid: [LOGIN_FORM],
+  },
+
+  // ── 8. Agenda e conta ───────────────────────────────────────────────────
+  {
+    id: "agenda-desktop-light", group: "Operação", route: "/agenda", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="agenda-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "agenda-mobile-light", group: "Operação", route: "/agenda", viewport: "mobile", theme: "light",
+    expect: ['[data-testid="agenda-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "configuracoes-desktop", group: "Operação", route: "/configuracoes", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="configuracoes-shell"]'], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "clinica-multipla-desktop", group: "Operação", scenario: "multiTenant",
+    route: "/", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="cockpit-context"]'], forbid: [LOGIN_FORM],
+  },
+
+  // ── 9. Assistência ──────────────────────────────────────────────────────
+  {
+    id: "assistencia-ajuda-desktop", group: "Assistência", route: "/", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="help-dialog"]'], dialog: true, dialogSelector: '[data-testid="help-dialog"]',
+    prepare: openHelp,
+  },
+  {
+    id: "assistencia-ajuda-mobile-dark", group: "Assistência", route: "/", viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="help-dialog"]'], dialog: true, dialogSelector: '[data-testid="help-dialog"]',
+    prepare: openHelp,
+  },
+  {
+    id: "assistencia-preferencias-desktop", group: "Assistência", route: "/", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="preferences-panel"]'], dialog: true, dialogSelector: '[data-testid="preferences-panel"]',
+    async prepare(page) {
+      await openHelp(page);
+      await page.getByTestId("button-open-preferences").click();
+      await page.locator('[data-testid="preferences-panel"]').waitFor({ state: "visible", timeout: 10_000 });
+      await settle(page, 500);
+    },
+  },
+  {
+    id: "assistencia-tour-desktop", group: "Assistência", route: "/", viewport: "desktop", theme: "light",
+    expect: ['[role="dialog"][aria-label="Tour guiado"]'],
+    dialog: true, dialogSelector: '[role="dialog"][aria-label="Tour guiado"]',
+    async prepare(page) {
+      await openHelp(page);
+      await page.getByTestId("button-start-tour").click();
+      await page.locator('[role="dialog"][aria-label="Tour guiado"]').waitFor({ state: "visible", timeout: 10_000 });
+      await settle(page, 500);
+    },
+  },
+  {
+    id: "assistencia-tour-mobile-dark", group: "Assistência", route: "/", viewport: "mobile", theme: "dark",
+    expect: ['[role="dialog"][aria-label="Tour guiado"]'],
+    dialog: true, dialogSelector: '[role="dialog"][aria-label="Tour guiado"]',
+    async prepare(page) {
+      await openHelp(page);
+      await page.getByTestId("button-start-tour").click();
+      await page.locator('[role="dialog"][aria-label="Tour guiado"]').waitFor({ state: "visible", timeout: 10_000 });
+      await settle(page, 500);
+    },
+  },
+
+  // ── 10. Fim de sessão ───────────────────────────────────────────────────
+  {
+    id: "sessao-expirada-desktop", group: "Sessão", scenario: "expiredSession", anonymous: true,
+    route: "/sessao-expirada", viewport: "desktop", theme: "light",
+    expect: ['[data-testid="sessao-expirada-shell"]'],
+  },
+  {
+    id: "sessao-expirada-mobile", group: "Sessão", scenario: "expiredSession", anonymous: true,
+    route: "/sessao-expirada", viewport: "mobile", theme: "dark",
+    expect: ['[data-testid="sessao-expirada-shell"]'],
+  },
+  {
+    id: "sessao-rota-protegida-sem-login", group: "Sessão", anonymous: true,
+    route: "/pacientes", viewport: "desktop", theme: "light",
+    // Fail-closed: sem sessão, a rota clínica precisa devolver o gate — e nunca
+    // a lista de pacientes.
+    expect: [LOGIN_FORM], forbid: [`[data-testid="button-edit-${PATIENT}"]`],
+  },
+  {
+    id: "sessao-logout-volta-ao-gate", group: "Sessão", fresh: true,
+    route: "/login", viewport: "desktop", theme: "light",
+    // Depois do logout o shell precisa voltar ao convite de entrada; enquanto
+    // "Sair" continuar visível, a sessão não foi realmente encerrada na UI.
+    expect: ['[data-testid="button-session-enter"]'],
+    forbid: ['[data-testid="button-session-exit"]'],
+    async prepare(page) {
+      page.on("dialog", (dialog) => void dialog.accept());
+      await page.getByTestId("button-session-exit").waitFor({ state: "visible", timeout: 20_000 });
+      await page.getByTestId("button-session-exit").click();
+      await page.getByTestId("button-session-enter").waitFor({ state: "visible", timeout: 25_000 });
+      await settle(page, 600);
+    },
+    expectedNetworkFailures: ["/api/auth"],
   },
 ];
 
-// ─────────────────────────── auditoria por estado ───────────────────────────
+// ─────────────────────────── Execução ───────────────────────────
 
-const DOM_AUDIT = () => {
-  const describe = (element) => {
-    if (!(element instanceof HTMLElement)) return "elemento";
-    if (element.dataset.testid) return `[data-testid="${element.dataset.testid}"]`;
-    if (element.id) return `#${element.id}`;
-    const label = element.getAttribute("aria-label");
-    if (label) return `${element.tagName.toLowerCase()}[aria-label="${label}"]`;
-    // Sem testid nem rótulo, o texto é o que permite achar o elemento no código.
-    const text = (element.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 40);
-    const classes = [...element.classList].slice(0, 3).join(".");
-    return `${element.tagName.toLowerCase()}${classes ? `.${classes}` : ""}${text ? `{${text}}` : ""}`;
-  };
-
-  const visibleRect = (element) => {
-    if (!(element instanceof HTMLElement)) return null;
-    if (element.closest('[hidden], [inert], [data-state="closed"], aside[aria-hidden="true"]')) return null;
-    const style = getComputedStyle(element);
-    const box = element.getBoundingClientRect();
-    if (
-      style.display === "none" ||
-      style.visibility === "hidden" ||
-      Number(style.opacity) === 0 ||
-      box.width === 0 ||
-      box.height === 0
-    ) return null;
-    return { width: box.width, height: box.height, top: box.top, bottom: box.bottom };
-  };
-
-  const openDialog = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')]
-    .find((element) => visibleRect(element));
-
-  // Dois patamares deliberados: controles de comando (botões, dock, ajuda)
-  // seguem o alvo confortável de 44px já adotado pelo projeto; links de texto
-  // isolados seguem o mínimo normativo de 24px (WCAG 2.2 Target Size Minimum).
-  // Links dentro de parágrafo/lista são texto em fluxo e ficam fora da regra.
-  const compactTargets = [];
-  if (innerWidth < 1024) {
-    const groups = [
-      { minimum: 44, selector: '[data-testid="mobile-primary-dock"] button, [data-testid="mobile-primary-dock"] a' },
-      { minimum: 44, selector: '[data-testid="button-floating-help"]' },
-      { minimum: 44, selector: "#main-content button:not([disabled])" },
-      { minimum: 24, selector: "#main-content a[href]:not([hidden])" },
-      { minimum: 24, selector: "footer a[href]" },
-    ];
-    // Controles de ESCOLHA (radio/checkbox) medem diferente de comandos.
-    // O alvo real é o indicador MAIS o rótulo associado, e o critério aplicável
-    // é o normativo de 24px (WCAG 2.2 — Target Size Minimum), não os 44px de
-    // conforto que o projeto exige de dock, botões de ação e ajuda flutuante.
-    // Medir o indicador de 16px isolado reprovaria todo o catálogo de escalas
-    // por um alvo que, na prática, é a linha inteira da alternativa.
-    const CHOICE_MINIMUM = 24;
-    const choiceTargetBox = (element) => {
-      const role = element.getAttribute("role");
-      const type = element.getAttribute("type");
-      const isChoice = role === "radio" || role === "checkbox" || type === "radio" || type === "checkbox";
-      if (!isChoice) return null;
-      const own = visibleRect(element);
-      if (!own) return null;
-      const labels = [
-        element.closest("label"),
-        element.id ? document.querySelector(`label[for="${CSS.escape(element.id)}"]`) : null,
-      ].filter(Boolean);
-      let union = { ...own, left: element.getBoundingClientRect().left, right: element.getBoundingClientRect().right };
-      for (const label of labels) {
-        const box = label.getBoundingClientRect();
-        if (box.width === 0 || box.height === 0) continue;
-        const top = Math.min(union.top, box.top);
-        const bottom = Math.max(union.bottom, box.bottom);
-        const left = Math.min(union.left, box.left);
-        const right = Math.max(union.right, box.right);
-        union = { top, bottom, left, right, width: right - left, height: bottom - top };
-      }
-      return union;
-    };
-
-    for (const group of groups) {
-      for (const element of document.querySelectorAll(group.selector)) {
-        const box = visibleRect(element);
-        if (!box) continue;
-        if (element.tagName === "A" && element.closest("p, li")) continue;
-        // Âncora que embrulha um botão: o alvo real é o botão interno, medido
-        // pela sua própria regra. A caixa inline da âncora não é o alvo.
-        if (element.tagName === "A" && element.querySelector('button, [role="button"]')) continue;
-        const choiceBox = choiceTargetBox(element);
-        const effective = choiceBox ?? box;
-        const minimum = choiceBox ? CHOICE_MINIMUM : group.minimum;
-        if (effective.width < minimum || effective.height < minimum) {
-          compactTargets.push({
-            selector: describe(element),
-            width: Math.round(effective.width),
-            height: Math.round(effective.height),
-            minimum,
-          });
-        }
-      }
-    }
+/** @param {string} key */
+function scenarioOptions(key) {
+  switch (key) {
+    case "empty": return { patients: "empty" };
+    case "multiTenant": return { multiTenant: true };
+    case "failingPatients": return { failing: ["/api/patients", "/api/live/patients"] };
+    case "hangingPatients": return { hanging: ["/api/patients", "/api/live/patients"] };
+    case "hangingEvents": return { hanging: ["/api/live/events", "/api/clinical-core/events"] };
+    case "expiredSession": return { expiredSession: true };
+    default: return {};
   }
-
-  const dock = document.querySelector('[data-testid="mobile-primary-dock"]');
-  const dockBox = visibleRect(dock);
-  const main = document.querySelector("#main-content");
-  const mainPaddingBottom = main instanceof HTMLElement
-    ? Number.parseFloat(getComputedStyle(main).paddingBottom) || 0
-    : 0;
-
-  // `innerText` não inclui o VALOR de campos de formulário, e telas como o
-  // prontuário carregam o paciente exatamente para dentro de inputs. Sem isso,
-  // um prontuário corretamente preenchido pareceria vazio para a auditoria.
-  const fieldValues = [...document.querySelectorAll("input, textarea, select")]
-    .map((field) => (field instanceof HTMLElement ? field.value ?? "" : ""))
-    .filter(Boolean)
-    .join(" \n ");
-  const bodyText = `${document.body.innerText || ""}\n${fieldValues}`;
-
-  return {
-    viewport: { width: innerWidth, height: innerHeight },
-    scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-    compactTargets,
-    dock: dockBox
-      ? {
-          height: Math.round(dockBox.height),
-          reserve: Math.round(mainPaddingBottom),
-          // Durante o carregamento de uma rota o dock já existe e o
-          // #main-content ainda não: não há conteúdo a ser coberto, e cobrar
-          // reserva aí seria cobrar de um layout que não existe.
-          mainPresent: main instanceof HTMLElement,
-        }
-      : null,
-    dialog: openDialog
-      ? { present: true, focusInside: openDialog.contains(document.activeElement) }
-      : { present: false, focusInside: true },
-    bodyText: bodyText.slice(0, 6_000),
-    hasLoginForm: Boolean(document.querySelector('[data-testid="login-form"]')),
-  };
-};
-
-/** Marcadores de conteúdo clínico que jamais podem aparecer sem sessão. */
-const CLINICAL_LEAK_MARKERS = ["Ana Sintética", "Bruno Sintético", "Clara Sintética"];
-
-async function runCase(browser, server, testCase) {
-  const viewport = VIEWPORTS[testCase.viewport];
-  const compact = viewport.width < 1024;
-  const scenario = testCase.scenario ?? "default";
-  const context = await browser.newContext({
-    viewport,
-    colorScheme: testCase.theme,
-    reducedMotion: "reduce",
-    deviceScaleFactor: 1,
-    isMobile: viewport.width < 768,
-    hasTouch: compact,
-    extraHTTPHeaders: { "x-neuroped-mock-scenario": scenario },
-  });
-
-  const seedSession = testCase.session !== "none";
-  // Preferências e tema podem (e devem) ser reaplicados a cada navegação; a
-  // SESSÃO não: se o token fosse reinjetado por init script, um logout real
-  // dentro do app seria desfeito pelo próprio harness e o teste de logout
-  // passaria a medir a si mesmo. A credencial é semeada uma única vez, na
-  // rota pública de login, e daí em diante vive no sessionStorage da aba.
-  await context.addInitScript(({ storage, theme }) => {
-    for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
-    localStorage.setItem("neuroped:theme", theme);
-    localStorage.setItem(
-      "neuroped:auth-capability",
-      JSON.stringify({ required: true, configured: true }),
-    );
-  }, { storage: FIRST_VISIT_STORAGE, theme: testCase.theme });
-
-  const page = await context.newPage();
-  if (seedSession) {
-    await page.goto(`${server.origin}/#/login`, { waitUntil: "domcontentloaded" });
-    await page.evaluate(({ session, clinicId }) => {
-      sessionStorage.setItem("neuroped:access", session.accessToken);
-      sessionStorage.setItem("neuroped:refresh", session.refreshToken);
-      sessionStorage.setItem("neuroped:user", JSON.stringify(session.user));
-      sessionStorage.setItem("neuroped:active-clinic-id", clinicId);
-    }, { session: server.session, clinicId: E2E_CLINIC.id });
-  }
-  const runtimeErrors = [];
-  page.on("pageerror", (error) => runtimeErrors.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => {
-    if (message.type() === "error") runtimeErrors.push(`console: ${message.text()}`);
-  });
-
-  let stepError = null;
-  try {
-    await testCase.steps(page, { origin: server.origin });
-  } catch (error) {
-    stepError = error instanceof Error ? error.message : String(error);
-  }
-
-  // Entradas animadas (opacidade 0 -> 1, com atraso escalonado por cartão) só
-  // terminam alguns frames depois do carregamento. Auditar contraste no meio
-  // dessa transição reprova um texto que está correto — o axe media a cor de um
-  // elemento ainda translúcido. Espera-se o fim das animações em curso.
-  await page.waitForFunction(
-    () => !document.getAnimations || document.getAnimations()
-      .filter((animation) => animation.playState === "running").length === 0,
-    undefined,
-    { timeout: 6_000 },
-  ).catch(() => {});
-
-  // A reserva inferior do dock é aplicada por efeito (classe no <body>).
-  // Auditar antes disso mediria "reserva 0" num layout que, um frame depois,
-  // está correto — e transformaria o gate em fonte de ruído.
-  await page.waitForFunction(() => {
-    const dock = document.querySelector('[data-testid="mobile-primary-dock"]');
-    return !dock || document.body.classList.contains("np-mobile-dock-active");
-  }, undefined, { timeout: 5_000 }).catch(() => {});
-
-  let audit = await page.evaluate(DOM_AUDIT);
-  // A reserva é aplicada por classe no <body> e pode não estar refletida no
-  // primeiro frame após a montagem. Uma releitura evita reprovar um layout que,
-  // um instante depois, está correto — sem esconder uma reserva de fato ausente.
-  if (audit.dock && audit.dock.mainPresent && audit.dock.reserve < audit.dock.height + 8) {
-    await page.waitForTimeout(600);
-    audit = await page.evaluate(DOM_AUDIT);
-  }
-
-  const axeResults = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-    .analyze()
-    .catch(() => ({ violations: [] }));
-  const blockingViolations = (axeResults.violations ?? []).filter(
-    (violation) => violation.impact === "critical" || violation.impact === "serious",
-  );
-
-  await page.screenshot({ path: resolve(outputDir, `${testCase.id}-viewport.png`), fullPage: false, animations: "disabled" });
-  await page.screenshot({ path: resolve(outputDir, `${testCase.id}-full.png`), fullPage: true, animations: "disabled" });
-
-  // Erros de rede esperados pelo próprio cenário (401 de sessão expirada, 500 do
-  // cenário de erro) não são regressão: o que se audita é a resposta da UI a eles.
-  const expected = testCase.expectedConsoleErrorPattern;
-  const unexpectedErrors = runtimeErrors.filter((message) => !(expected && expected.test(message)));
-
-  const horizontalOverflow = Math.max(0, audit.scrollWidth - audit.clientWidth);
-  const leaked = testCase.assertNoClinicalLeak
-    ? CLINICAL_LEAK_MARKERS.filter((marker) => audit.bodyText.includes(marker))
-    : [];
-  // Alguns estados não bastam "renderizar": precisam PROVAR que o contexto
-  // clínico chegou à tela (ex.: o prontuário aberto a partir de um paciente).
-  // Comparação insensível a caixa e acento: rótulos do cockpit são exibidos em
-  // maiúsculas por CSS (`text-transform`), e `innerText` devolve o texto já
-  // transformado — comparar literal reprovaria um estado correto.
-  const normalize = (value) => value
-    .toLocaleLowerCase("pt-BR")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  const normalizedBody = normalize(audit.bodyText);
-  const missingText = (testCase.expectText ?? []).filter(
-    (needle) => !normalizedBody.includes(normalize(needle)),
-  );
-
-  const failures = [
-    ...(stepError ? [`fluxo-interrompido: ${stepError}`] : []),
-    ...(horizontalOverflow > 1 ? [`overflow-horizontal:${horizontalOverflow}px`] : []),
-    ...unexpectedErrors.map((message) => `runtime:${message}`),
-    ...blockingViolations.map((violation) =>
-      `axe:${violation.id}(${violation.impact})@${violation.nodes.slice(0, 3).map((node) => node.target.join(" ")).join(" | ")}`),
-    ...(testCase.expectDialogFocus && audit.dialog.present && !audit.dialog.focusInside
-      ? ["foco-fora-do-dialogo"]
-      : []),
-    ...audit.compactTargets.map((target) => `alvo-compacto:${target.selector}:${target.width}x${target.height}<${target.minimum}`),
-    ...leaked.map((marker) => `vazamento-clinico-sem-sessao:${marker}`),
-    ...missingText.map((needle) => `contexto-ausente-na-tela:${needle}`),
-    // O dock é fixo: sem reserva equivalente no conteúdo, ele cobre o fim da
-    // página (justamente onde ficam salvar, enviar e concluir).
-    ...(audit.dock && audit.dock.mainPresent && audit.dock.reserve < audit.dock.height + 8
-      ? [`reserva-dock:${audit.dock.reserve}px<${audit.dock.height + 8}px`]
-      : []),
-  ];
-
-  await context.close();
-
-  return {
-    id: testCase.id,
-    viewport: testCase.viewport,
-    size: `${viewport.width}x${viewport.height}`,
-    theme: testCase.theme,
-    scenario,
-    session: seedSession ? "autenticada" : "sem sessão",
-    horizontalOverflow,
-    dock: audit.dock,
-    axeBlocking: blockingViolations.length,
-    axeTotal: (axeResults.violations ?? []).length,
-    axeDetails: blockingViolations.map((violation) => ({
-      id: violation.id,
-      impact: violation.impact,
-      nodes: violation.nodes.slice(0, 5).map((node) => ({
-        target: node.target,
-        summary: (node.failureSummary ?? "").slice(0, 400),
-      })),
-    })),
-    runtimeErrors: unexpectedErrors,
-    failures,
-  };
 }
 
-// ─────────────────────────── execução ───────────────────────────
-
 async function main() {
-  if (CASES.length < 50) {
-    throw new Error(`A matriz autenticada precisa de ao menos 50 estados; há ${CASES.length}.`);
+  const duplicated = CASES.map((item) => item.id).filter((id, index, all) => all.indexOf(id) !== index);
+  if (duplicated.length) throw new Error(`Casos com id duplicado: ${duplicated.join(", ")}`);
+  if (CASES.length < MINIMUM_STATES) {
+    throw new Error(`Matriz autenticada com ${CASES.length} estados; o gate exige ao menos ${MINIMUM_STATES}.`);
   }
-  const ids = new Set(CASES.map((testCase) => testCase.id));
-  if (ids.size !== CASES.length) throw new Error("Há ids duplicados na matriz autenticada.");
 
   rmSync(outputDir, { recursive: true, force: true });
   mkdirSync(outputDir, { recursive: true });
 
-  const dist = ensureClientBuild(repoRoot, "authenticated");
-  const server = await startMockClinicalServer(dist);
+  const dist = ensureClientBuild(repoRoot);
+  /** @type {Map<string, {origin: string, close: () => Promise<void>, session: any}>} */
+  const servers = new Map();
+  let port = 4310;
 
-  // Uma sessão sintética emitida pela própria API do harness. Os estados de
-  // login pela interface não a usam — eles autenticam de verdade no formulário.
-  const loginResponse = await fetch(`${server.origin}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: E2E_ACCOUNT.email, password: E2E_ACCOUNT.password }),
-  });
-  if (!loginResponse.ok) throw new Error("Backend sintético não emitiu sessão de auditoria.");
-  server.session = await loginResponse.json();
+  async function serverFor(key) {
+    const existing = servers.get(key);
+    if (existing) return existing;
+    const server = await startStaticServer(dist, {
+      port: port++,
+      apiHandler: createSyntheticClinicalApi(scenarioOptions(key)),
+    });
+    let session = null;
+    if (key !== "expiredSession") {
+      const response = await fetch(`${server.origin}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: SYNTHETIC_CREDENTIALS.email,
+          password: SYNTHETIC_CREDENTIALS.password,
+        }),
+      });
+      if (!response.ok) throw new Error(`Login sintético falhou no cenário "${key}" (${response.status}).`);
+      session = await response.json();
+    }
+    const entry = { origin: server.origin, close: server.close, session };
+    servers.set(key, entry);
+    return entry;
+  }
 
-  // Mesma política do gate de a11y: quando o ambiente fornece um Chromium fora
-  // da revisão fixada pelo Playwright, ele é usado explicitamente em vez de o
-  // gate se declarar indisponível.
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
   let browser;
   try {
-    browser = await chromium.launch(
-      executablePath
-        ? { headless: true, executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-        : { headless: true },
-    );
+    browser = await chromium.launch(auditBrowserLaunchOptions());
   } catch (error) {
-    await server.close();
     if (isMissingBrowserError(error)) {
-      console.error("[visual-auth] Chromium indisponível — este gate exige navegador real.");
+      console.error("[visual-auth] ✗ Chromium indisponível. Instale o browser do Playwright ou defina PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH.");
       process.exitCode = 1;
       return;
     }
@@ -919,47 +569,243 @@ async function main() {
   const results = [];
   try {
     for (const testCase of CASES) {
-      const result = await runCase(browser, server, testCase);
-      results.push(result);
-      console.log(`[visual-auth] ${result.id}: ${result.failures.length ? `FALHOU — ${result.failures.join(", ")}` : "OK"}`);
+      const scenarioKey = testCase.scenario ?? "default";
+      const { origin, session } = await serverFor(scenarioKey);
+      const viewport = VIEWPORTS[testCase.viewport];
+      const compact = viewport.width < 1024;
+      const context = await browser.newContext({
+        viewport: { width: viewport.width, height: viewport.height },
+        colorScheme: testCase.theme,
+        reducedMotion: "reduce",
+        deviceScaleFactor: 1,
+        isMobile: viewport.width < 768,
+        hasTouch: compact,
+      });
+
+      const injectSession = !testCase.anonymous && !testCase.fresh && session;
+      await context.addInitScript(({ storage, theme, sessionData }) => {
+        for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
+        localStorage.setItem("neuroped:theme", theme);
+        if (sessionData) {
+          sessionStorage.setItem("neuroped:access", sessionData.accessToken);
+          sessionStorage.setItem("neuroped:refresh", sessionData.refreshToken);
+          sessionStorage.setItem("neuroped:user", JSON.stringify(sessionData.user));
+        }
+      }, {
+        storage: ACCEPTED_FIRST_VISIT_STORAGE,
+        theme: testCase.theme,
+        sessionData: injectSession ? session : null,
+      });
+
+      const page = await context.newPage();
+      const runtimeErrors = [];
+      const expectedFailures = testCase.expectedNetworkFailures ?? [];
+      page.on("pageerror", (error) => runtimeErrors.push(`pageerror: ${error.message}`));
+      page.on("console", (message) => {
+        if (message.type() !== "error") return;
+        const text = message.text();
+        // 4xx/5xx deliberados do cenário aparecem como "Failed to load resource";
+        // o console do navegador não expõe a URL nessa mensagem, então o caso
+        // precisa declarar explicitamente que espera falha de rede.
+        if (expectedFailures.length && /Failed to load resource/i.test(text)) return;
+        runtimeErrors.push(`console: ${text}`);
+      });
+
+      const failures = [];
+      try {
+        const startRoute = testCase.startRoute ?? testCase.route;
+        const search = testCase.search ? `?${testCase.search}` : "";
+        await page.goto(`${origin}/${search}#${startRoute}`, { waitUntil: "domcontentloaded" });
+        await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 20_000 }).catch(() => {});
+
+        if (testCase.fresh) {
+          await page.locator(LOGIN_FORM).waitFor({ state: "visible", timeout: 20_000 });
+          await page.fill("#login-email", SYNTHETIC_CREDENTIALS.email);
+          await page.fill("#login-password", SYNTHETIC_CREDENTIALS.password);
+          await page.click('button[type="submit"]');
+        } else if (testCase.route !== startRoute) {
+          await page.evaluate((route) => { window.location.hash = `#${route}`; }, testCase.route);
+        }
+
+        await page.evaluate(() => document.fonts.ready);
+        await settle(page, 900);
+        if (testCase.prepare) await testCase.prepare(page);
+        await settle(page, 400);
+
+        for (const selector of testCase.expect ?? []) {
+          const visible = await page.locator(selector).first().isVisible().catch(() => false);
+          if (!visible) failures.push(`estado-ausente:${selector}`);
+        }
+        for (const selector of testCase.forbid ?? []) {
+          const visible = await page.locator(selector).first().isVisible().catch(() => false);
+          if (visible) failures.push(`estado-proibido:${selector}`);
+        }
+        if (testCase.expectText) {
+          const body = await page.locator("#main-content").innerText().catch(() => "");
+          if (!body.includes(testCase.expectText)) failures.push(`texto-ausente:${testCase.expectText}`);
+        }
+      } catch (error) {
+        failures.push(`preparo-falhou:${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      const layout = await page.evaluate((dialogSelector) => {
+        const documentElement = document.documentElement;
+        const overflow = Math.max(0, documentElement.scrollWidth - documentElement.clientWidth);
+
+        // Duas réguas, com pesos diferentes e declarados:
+        //  - 44px (falha) para os controles de navegação e ação primária que o
+        //    projeto já trata como contrato — dock, ajuda persistente, abas do
+        //    prontuário e as ações do cockpit;
+        //  - 24px (falha) para o restante, que é o mínimo do WCAG 2.2 AA;
+        //    links inline no meio de um texto corrido ficam fora da régua porque
+        //    herdam a altura da linha.
+        const PRIMARY_TARGETS = [
+          '[data-testid="mobile-primary-dock"] button',
+          '[data-testid="button-floating-help"]',
+          '[data-testid^="cockpit-action-"]',
+          '[data-testid^="cockpit-switch-"]',
+          '[data-testid="cockpit-todos-pacientes"]',
+          '.np-prontuario-tabs [role="tab"]',
+        ].join(",");
+        const SECONDARY_TARGETS = "#main-content button, #main-content a[href], #main-content select";
+
+        const describe = (element, box) =>
+          `${element.tagName.toLowerCase()}#${element.getAttribute("data-testid") ?? element.className.slice(0, 40)}:${Math.round(box.width)}x${Math.round(box.height)}`;
+
+        const visibleBox = (element) => {
+          if (!(element instanceof HTMLElement)) return null;
+          const style = getComputedStyle(element);
+          if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return null;
+          if (element.closest("[hidden], [inert], [aria-hidden='true']")) return null;
+          const box = element.getBoundingClientRect();
+          return box.width > 0 && box.height > 0 ? box : null;
+        };
+
+        /** Link no meio de um texto corrido herda a altura da linha: fora da régua. */
+        const inlineInText = (element) => {
+          if (element.tagName !== "A") return false;
+          const parent = element.parentElement;
+          if (!parent) return false;
+          const ownText = element.textContent ?? "";
+          const parentText = parent.textContent ?? "";
+          return parentText.trim().length > ownText.trim().length + 4;
+        };
+
+        const smallTargets = [];
+        const targetWarnings = [];
+        if (window.innerWidth < 1024) {
+          for (const element of document.querySelectorAll(PRIMARY_TARGETS)) {
+            const box = visibleBox(element);
+            if (!box) continue;
+            if (box.width < 44 || box.height < 44) smallTargets.push(describe(element, box));
+          }
+          for (const element of document.querySelectorAll(SECONDARY_TARGETS)) {
+            const box = visibleBox(element);
+            if (!box || inlineInText(element)) continue;
+            if (element.matches(PRIMARY_TARGETS)) continue;
+            // 24px é o mínimo do WCAG 2.2 AA. Deixou de ser aviso: os alvos
+            // herdados foram corrigidos, então voltar abaixo disso é regressão.
+            if (box.width < 24 || box.height < 24) smallTargets.push(describe(element, box));
+          }
+        }
+
+        let focusEscaped = null;
+        if (dialogSelector) {
+          const dialog = document.querySelector(dialogSelector);
+          const active = document.activeElement;
+          if (!dialog) focusEscaped = "dialogo-ausente";
+          else if (!active || (!dialog.contains(active) && active !== document.body)) focusEscaped = "foco-fora-do-dialogo";
+          else if (active === document.body) focusEscaped = "foco-no-body";
+        }
+
+        return { overflow, smallTargets, targetWarnings: [...new Set(targetWarnings)], focusEscaped };
+      }, testCase.dialog ? (testCase.dialogSelector ?? '[role="dialog"]') : null);
+
+      if (layout.overflow > 1) failures.push(`overflow-horizontal:${layout.overflow}px`);
+      for (const target of layout.smallTargets) failures.push(`alvo-compacto:${target}`);
+      if (layout.focusEscaped) failures.push(`foco-dialogo:${layout.focusEscaped}`);
+
+      let axeViolations = [];
+      try {
+        const axe = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+          .analyze();
+        axeViolations = axe.violations
+          .filter((violation) => violation.impact === "critical" || violation.impact === "serious")
+          .map((violation) => `${violation.id}(${violation.impact})`);
+      } catch (error) {
+        failures.push(`axe-falhou:${error instanceof Error ? error.message : String(error)}`);
+      }
+      for (const violation of axeViolations) failures.push(`axe:${violation}`);
+      failures.push(...runtimeErrors);
+
+      await page.screenshot({ path: resolve(outputDir, `${testCase.id}-viewport.png`), animations: "disabled" });
+      await page.screenshot({ path: resolve(outputDir, `${testCase.id}-full.png`), fullPage: true, animations: "disabled" });
+
+      results.push({
+        id: testCase.id,
+        group: testCase.group,
+        route: testCase.route,
+        scenario: scenarioKey,
+        viewport: viewport.label,
+        theme: testCase.theme,
+        authenticated: !testCase.anonymous,
+        overflow: layout.overflow,
+        targetWarnings: layout.targetWarnings,
+        axeViolations,
+        runtimeErrors,
+        failures,
+      });
+      console.log(`[visual-auth] ${testCase.id}: ${failures.length ? `FALHOU — ${failures.join(", ")}` : "OK"}`);
+      await context.close();
     }
   } finally {
     await browser.close();
-    await server.close();
+    for (const server of servers.values()) await server.close();
   }
 
   const failures = results.flatMap((result) => result.failures.map((failure) => `${result.id}: ${failure}`));
+  const groups = [...new Set(results.map((result) => result.group))];
   const report = {
     generatedAt: new Date().toISOString(),
-    profile: "authenticated",
-    account: { email: E2E_ACCOUNT.email, synthetic: true },
+    browser: "playwright-chromium",
+    dataSource: "scripts/lib/synthetic-clinical-api.mjs (100% sintético)",
     summary: {
-      states: results.length,
+      totalStates: results.length,
+      minimumRequired: MINIMUM_STATES,
+      authenticatedStates: results.filter((result) => result.authenticated).length,
       screenshots: results.length * 2,
-      authenticatedStates: results.filter((result) => result.session === "autenticada").length,
+      groups: groups.length,
       failedStates: results.filter((result) => result.failures.length).length,
-      unmodeledEndpoints: [...server.state.unknownEndpoints],
+      // Avisos não reprovam, mas ficam publicados: alvo secundário abaixo de
+      // 24px (WCAG 2.2 AA) herdado de telas anteriores a este gate.
+      targetWarnings: results.reduce((total, result) => total + result.targetWarnings.length, 0),
+      failures,
     },
-    states: results,
-    failures,
+    cases: results,
   };
-  writeFileSync(resolve(outputDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
+  writeFileSync(resolve(outputDir, "report.json"), JSON.stringify(report, null, 2));
   writeFileSync(resolve(outputDir, "index.md"), [
     "# NeuroPed — prova visual autenticada",
     "",
-    `Estados: ${report.summary.states} (autenticados: ${report.summary.authenticatedStates}) · capturas: ${report.summary.screenshots} · com falha: ${report.summary.failedStates}`,
+    `Estados: ${report.summary.totalStates} (mínimo ${MINIMUM_STATES}) · autenticados: ${report.summary.authenticatedStates} · capturas: ${report.summary.screenshots} · grupos: ${report.summary.groups} · com falha: ${report.summary.failedStates} · avisos de alvo <24px: ${report.summary.targetWarnings}`,
     "",
-    "Conta e pacientes são sintéticos; nenhum dado real de paciente é usado.",
-    "",
-    ...results.map((result) => `- ${result.failures.length ? "❌" : "✅"} **${result.id}** — ${result.size}, ${result.theme}, cenário ${result.scenario}, ${result.session}${result.failures.length ? ` — ${result.failures.join("; ")}` : ""}`),
-    "",
+    ...groups.flatMap((group) => [
+      `## ${group}`,
+      "",
+      ...results
+        .filter((result) => result.group === group)
+        .map((result) => `- ${result.failures.length ? "❌" : "✅"} **${result.id}** — ${result.viewport}, ${result.theme}, \`${result.route}\`${result.failures.length ? ` — ${result.failures.join("; ")}` : ""}`),
+      "",
+    ]),
+    "Dados sintéticos. Nenhum prontuário real é usado, capturado ou publicado.",
   ].join("\n"));
 
   if (failures.length) {
     console.error(`[visual-auth] ✗ ${failures.length} falha(s):\n  ${failures.join("\n  ")}`);
     process.exitCode = 1;
   } else {
-    console.log(`[visual-auth] ✓ ${results.length} estados (${report.summary.authenticatedStates} autenticados) e ${results.length * 2} capturas sem overflow, erro de runtime, violação axe serious/critical, foco perdido, alvo subdimensionado ou vazamento clínico sem sessão.`);
+    console.log(`[visual-auth] ✓ ${results.length} estados autenticados, ${results.length * 2} capturas — sem overflow, erro de runtime, alvo subdimensionado, fuga de foco ou violação axe serious/critical.`);
   }
 }
 

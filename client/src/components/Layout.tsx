@@ -52,11 +52,18 @@ import { useUiPreferences } from "@/hooks/useUiPreferences";
 const NESPLORA_SITE_URL = "/nesplora/";
 
 // ─────────────────────────── Atalhos em destaque ───────────────────────────
-// Hierarquia deliberada em dois níveis: dois cartões-herói dourados (as
-// conexões institucionais Nesplora e EEG) e, abaixo, uma grade de ações
-// rápidas neutras com o ícone acima do rótulo — o rótulo centralizado quebra
-// por palavra e nunca é cortado, em qualquer largura de drawer. Todo o visual
-// vive em styles/sidebar-v13.css; aqui ficam apenas estrutura e estado.
+// Hierarquia por frequência, em dois blocos com pesos visuais distintos:
+//
+//  1. "Atalhos clínicos" — o que se abre todo dia. O primeiro item é um cartão
+//     herói na cor primária do produto; os demais viram blocos neutros.
+//  2. "Conexões" — parceiro externo e serviço de exame. Continuam encontráveis,
+//     mas em linhas compactas com um traço dourado fino, não em cartões que
+//     competem com o menu clínico inteiro.
+//
+// Antes os seis atalhos eram dourados e os dois primeiros ocupavam dois
+// cartões amarelos no topo: o olho ia para a promoção institucional antes de
+// achar Pacientes ou Agenda. Todo o visual vive em styles/sidebar-v13.css;
+// aqui ficam apenas estrutura e estado.
 function FeaturedShortcuts({
   collapsed,
   activeHref,
@@ -92,8 +99,14 @@ function FeaturedShortcuts({
       </Link>
     );
 
-  const heroes = visibleFeaturedNavigation.slice(0, 2);
-  const tiles = visibleFeaturedNavigation.slice(2);
+  const clinicalShortcuts = visibleFeaturedNavigation.filter(
+    (item) => (item.tone ?? "priority") !== "golden",
+  );
+  const connections = visibleFeaturedNavigation.filter(
+    (item) => (item.tone ?? "priority") === "golden",
+  );
+  const heroes = clinicalShortcuts.slice(0, 1);
+  const tiles = clinicalShortcuts.slice(1);
 
   const renderHero = (item: (typeof featuredNavigation)[number]) => {
     const Icon = item.icon;
@@ -106,6 +119,7 @@ function FeaturedShortcuts({
         data-testid={`featured-${item.label}`}
         data-active={active || undefined}
         className="np-side-hero group"
+        data-tone="clinical"
       >
         <span aria-hidden="true" className="np-side-hero__glow" />
         <span className="np-side-hero__icon">
@@ -166,19 +180,53 @@ function FeaturedShortcuts({
     );
   });
 
+  const renderConnection = (item: (typeof featuredNavigation)[number]) => {
+    const Icon = item.icon;
+    const active = activeHref === item.href;
+    return withLink(
+      item,
+      <div
+        onClick={onPick}
+        onMouseEnter={() => softHover()}
+        data-testid={`featured-${item.label}`}
+        data-active={active || undefined}
+        title={item.description}
+        className="np-side-connection group"
+      >
+        <span className="np-side-connection__icon">
+          <Icon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+        </span>
+        <span className="np-side-connection__label">{item.label}</span>
+        <span className="np-side-connection__go">
+          {isExternalShortcut(item.href) ? (
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+        </span>
+      </div>,
+    );
+  };
+
   const expanded = (
     <>
-      <div className="np-side-kicker">
-        <p>Destaques</p>
-        <span className="np-side-kicker__badge">app</span>
-      </div>
-      <div className="space-y-1.5">{heroes.map(renderHero)}</div>
+      {heroes.length > 0 && (
+        <>
+          <div className="np-side-kicker">
+            <p>Atalhos clínicos</p>
+          </div>
+          <div className="space-y-1.5">{heroes.map(renderHero)}</div>
+        </>
+      )}
       {tiles.length > 0 && (
+        <div className="mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
+      )}
+      {connections.length > 0 && (
         <>
           <div className="np-side-kicker np-side-kicker--sub">
-            <p>Ações rápidas</p>
+            <p>Conexões</p>
           </div>
-          <div className="grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
+          <div className="space-y-1">{connections.map(renderConnection)}</div>
         </>
       )}
     </>
@@ -1120,7 +1168,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         {showClinicalFlow && (
           <div className="sticky top-14 lg:top-0 z-30 border-b border-border bg-background/90 backdrop-blur px-3 py-2">
-            <div className="flex items-center gap-2 overflow-x-auto text-[12px] text-muted-foreground">
+            <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-muted-foreground">
               <ClipboardList className="h-3.5 w-3.5 shrink-0 text-primary" />
               <span className="shrink-0 font-semibold text-foreground">
                 Fluxo clínico
@@ -1134,7 +1182,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 return (
                   <span
                     key={step}
-                    className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/50 bg-primary/15 text-primary font-medium" : "border-border/60 bg-muted/30 text-muted-foreground/80"}`}
+                    className={`shrink-0 rounded-full border px-2 py-1 ${active ? "border-primary/50 bg-primary/15 text-primary font-medium" : "border-border/60 bg-muted/30 text-muted-foreground"}`}
                   >
                     {step}
                   </span>
@@ -1152,7 +1200,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="np-legal-disclosure mt-8 rounded-2xl border border-amber-300/55 bg-amber-50/75 px-3.5 py-3 text-amber-950 shadow-sm dark:border-amber-800/45 dark:bg-amber-950/25 dark:text-amber-100"
           >
             <details className="group">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[12.5px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <summary className="flex cursor-pointer list-none items-center gap-2 text-[12px] font-semibold leading-relaxed marker:content-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <span aria-hidden="true" className="text-sm">
                   ⚕️
                 </span>
@@ -1160,14 +1208,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   Uso educativo — não substitui avaliação, diagnóstico ou
                   conduta profissional.
                 </span>
-                <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">
+                <span className="rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 transition group-open:hidden dark:bg-white/5 dark:text-amber-100">
                   Detalhes
                 </span>
-                <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">
+                <span className="hidden rounded-full border border-amber-400/45 bg-white/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-900 group-open:inline-flex dark:bg-white/5 dark:text-amber-100">
                   Recolher
                 </span>
               </summary>
-              <div className="mt-3 border-t border-amber-300/45 pt-3 text-[12.5px] leading-[1.65] text-amber-950 dark:border-amber-800/45 dark:text-amber-50/90">
+              <div className="mt-3 border-t border-amber-300/45 pt-3 text-[12px] leading-relaxed text-amber-900 dark:border-amber-800/45 dark:text-amber-100">
                 O NeuroPed é uma ferramenta de{" "}
                 <strong className="font-semibold">informação e educação</strong>
                 . Não é dispositivo médico e não realiza diagnóstico, prescrição
@@ -1177,7 +1225,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 médico ou serviço de saúde.{" "}
                 <Link
                   href="/termos"
-                  className="inline-flex min-h-6 items-center font-bold underline underline-offset-2 hover:opacity-80"
+                  className="font-bold underline underline-offset-2 hover:opacity-80"
                 >
                   Termos de Uso e Aviso Legal
                 </Link>
@@ -1185,7 +1233,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </details>
           </aside>
-          {/* Assinatura autoral global: reconhecimento visível, sem competir com o conteúdo. */}
+          {/* Assinatura autoral global: reconhecimento visível, sem competir com o
+              conteúdo. A 9,5px com opacidade 85% o texto media 4.15:1 sobre o
+              fundo claro — abaixo do mínimo AA e desconfortável no celular. O
+              corpo de 11px em cor cheia mantém a discrição e passa a ser
+              legível de fato. */}
           <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-[11px] leading-relaxed text-muted-foreground">
             <img
               src="/dr-jadson-shield-badge.webp"
@@ -1194,7 +1246,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               height="256"
               loading="lazy"
               decoding="async"
-              className="h-3.5 w-3.5 shrink-0 rounded-[0.3rem] object-cover opacity-75"
+              className="h-4 w-4 shrink-0 rounded-[0.3rem] object-cover opacity-80"
             />
             <span>NeuroPed é um projeto autoral de</span>
             {/* prettier-ignore */}

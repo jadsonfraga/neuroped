@@ -7,9 +7,17 @@ on:
     paths:
       - "functions/api/live/governance/_worker-core.ts"
       - "functions/api/live/governance/_worker-executor.ts"
+      - "functions/api/live/governance/_purge.ts"
+      - "functions/api/live/governance/run-deletion.ts"
+      - "functions/api/live/governance/run-export.ts"
+      - "functions/api/tenant/_exportPayload.ts"
+      - "functions/api/live/governance/_artifactStore.ts"
       - "functions/api/tenant/_crypto.ts"
       - "tests/unit/lgpd-worker-foundation.test.ts"
       - "tests/unit/lgpd-worker-executor-core.test.ts"
+      - "tests/unit/lgpd-purge-executor.test.ts"
+      - "tests/unit/lgpd-run-deletion-endpoint.test.ts"
+      - "tests/unit/lgpd-run-export-endpoint.test.ts"
       - ".github/workflows/lgpd-worker-executor-core.yml"
   push:
     branches:
@@ -17,9 +25,17 @@ on:
     paths:
       - "functions/api/live/governance/_worker-core.ts"
       - "functions/api/live/governance/_worker-executor.ts"
+      - "functions/api/live/governance/_purge.ts"
+      - "functions/api/live/governance/run-deletion.ts"
+      - "functions/api/live/governance/run-export.ts"
+      - "functions/api/tenant/_exportPayload.ts"
+      - "functions/api/live/governance/_artifactStore.ts"
       - "functions/api/tenant/_crypto.ts"
       - "tests/unit/lgpd-worker-foundation.test.ts"
       - "tests/unit/lgpd-worker-executor-core.test.ts"
+      - "tests/unit/lgpd-purge-executor.test.ts"
+      - "tests/unit/lgpd-run-deletion-endpoint.test.ts"
+      - "tests/unit/lgpd-run-export-endpoint.test.ts"
       - ".github/workflows/lgpd-worker-executor-core.yml"
 
 permissions:
@@ -55,6 +71,15 @@ jobs:
 
       - name: Prove encrypted export and purge policy
         run: node --import tsx tests/unit/lgpd-worker-executor-core.test.ts
+
+      - name: RED/BLUE purge executor regression
+        run: node --import tsx tests/unit/lgpd-purge-executor.test.ts
+
+      - name: Deletion orchestrator authorization and tenant boundary
+        run: node --import tsx tests/unit/lgpd-run-deletion-endpoint.test.ts
+
+      - name: Export orchestrator, artifact integrity and tenant boundary
+        run: node --import tsx tests/unit/lgpd-run-export-endpoint.test.ts
 
       - name: TypeScript
         run: npm run check

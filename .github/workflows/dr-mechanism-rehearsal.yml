@@ -1,0 +1,254 @@
+name: DR mechanism rehearsal (D1)
+
+# Fase 9 (backup e recuperação) — automatiza o ensaio descrito em
+# docs/D1_DISASTER_RECOVERY_RUNBOOK.md, na variante que o próprio runbook
+# chama de **mechanism rehearsal**: schema real, dados 100% sintéticos,
+# nenhuma cópia de PHI de produção.
+#
+# Por que essa variante, e não o restore integral: a Etapa C do runbook exige
+# aprovação explícita de governança para copiar PHI de produção para um D1
+# temporário. Sem essa aprovação, o runbook manda usar snapshot sintético e
+# rotular o resultado como mechanism rehearsal — que é exatamente o que este
+# workflow faz. Ele NÃO prova o RTO de um restore de produção com volume real;
+# prova que o mecanismo de Time Travel funciona, mede quanto ele demora sobre
+# um banco recém-criado e valida o pós-restore. O runbook continua sendo a
+# referência para o ensaio completo.
+#
+# Estado antes deste workflow: RPO "NÃO VERIFICADO" e RTO "DESCONHECIDO" no
+# runbook, nenhum ensaio jamais executado. Backup sem restore testado não é
+# backup — é esperança com nome técnico.
+#
+# SEGURANÇA — três travas, todas fail-closed:
+#   1. só `workflow_dispatch`, com confirmação digitada (nunca em agenda, nunca
+#      em push);
+#   2. o alvo é criado pelo próprio job, com nome contendo `dr-rehearsal`, e um
+#      guard aborta se o nome resolvido não bater com esse padrão ou colidir
+#      com o banco de produção;
+#   3. produção não é lida nem escrita em passo algum — nem metadata. Este
+#      ensaio não precisa dela.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Digite ENSAIAR para confirmar a criação e destruição de um D1 temporário'
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr-mechanism-rehearsal
+  cancel-in-progress: false
+
+env:
+  # Nome de produção, aqui apenas para o guard poder recusá-lo explicitamente.
+  PRODUCTION_D1: neuroped-db
+
+jobs:
+  rehearsal:
+    name: Time Travel rehearsal em D1 isolado
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Confirmação explícita
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirmar }}" != "ENSAIAR" ]; then
+            echo "::error::Confirmação ausente. Rode novamente digitando ENSAIAR."
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      # GUARD: o alvo é derivado aqui e conferido antes de qualquer comando de
+      # mutação. Se o nome não contiver `dr-rehearsal`, ou coincidir com
+      # produção, o job morre sem ter tocado em nada.
+      - name: Resolver e travar o alvo isolado
+        id: target
+        run: |
+          set -euo pipefail
+          TARGET="neuroped-dr-rehearsal-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}"
+          case "$TARGET" in
+            *dr-rehearsal*) ;;
+            *) echo "::error::Alvo sem marca dr-rehearsal: $TARGET"; exit 1 ;;
+          esac
+          if [ "$TARGET" = "$PRODUCTION_D1" ]; then
+            echo "::error::Alvo coincide com produção. Abortado."
+            exit 1
+          fi
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "🎯 Alvo isolado: $TARGET (produção $PRODUCTION_D1 não é tocada)"
+
+      # Etapa B do runbook.
+      - name: Etapa B — criar o D1 temporário
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@4 d1 create "${{ steps.target.outputs.target }}"
+
+      # Etapa C, variante sintética: schema real, zero dado de produção.
+      - name: Etapa C — schema real, dados sintéticos
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.target.outputs.target }}"
+
+          # `db/schema.d1.sql` é a BASE, não o consolidado: ela já traz as
+          # colunas que 0001 e 0002 adicionam, mas NÃO traz as tabelas das
+          # migrações posteriores. Portanto o bootstrap correto é base +
+          # migrações, tolerando exclusivamente "duplicate column name" — que
+          # significa "o base já provê isto", e não "a migração quebrou".
+          # Qualquer outro erro derruba o ensaio.
+          # A política está travada em tests/unit/schema-bootstrap-contract.test.mjs.
+          npx wrangler@4 d1 execute "$TARGET" --remote --yes --file=./db/schema.d1.sql
+
+          for migration in db/migrations/*.sql; do
+            echo "→ $migration"
+            if npx wrangler@4 d1 execute "$TARGET" --remote --yes \
+                 --file="$migration" > /tmp/migration.log 2>&1; then
+              continue
+            fi
+            if grep -qi "duplicate column name" /tmp/migration.log; then
+              echo "   (já provida pelo schema base — seguindo)"
+              continue
+            fi
+            echo "::error::Migração $migration falhou por motivo que não é sobreposição com o schema base:"
+            cat /tmp/migration.log
+            exit 1
+          done
+
+      # Etapa D — baseline metadata-only. Contagens, nunca conteúdo.
+      - name: Etapa D — baseline metadata-only
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute "${{ steps.target.outputs.target }}" --remote \
+            --command "SELECT COUNT(*) AS tabelas FROM sqlite_master WHERE type='table';"
+
+      # Etapa E — sentinela sintética, bookmark, destruição controlada.
+      - name: Etapa E — sentinela e ponto de restauração
+        id: sentinel
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.target.outputs.target }}"
+          # Sentinela sintética: identidade inventada, sem qualquer relação com
+          # pessoa real. É a única linha que este ensaio cria.
+          npx wrangler@4 d1 execute "$TARGET" --remote --yes --command \
+            "INSERT INTO users (id, name, email, password_hash, role, is_active, created_at, updated_at)
+             VALUES ('dr-rehearsal-sentinel', 'Sentinela DR', 'sentinela@dr-rehearsal.invalid',
+                     'nao-e-hash-real', 'professional', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);"
+
+          # B1: estado COM a sentinela — é para cá que o restore precisa voltar.
+          npx wrangler@4 d1 time-travel info "$TARGET" > /tmp/b1.txt 2>&1
+          cat /tmp/b1.txt
+          # O bookmark é lido do texto que o wrangler imprime entre aspas
+          # simples, e não por formato adivinhado. O ensaio de 05/09 falhou
+          # exatamente aqui: a regex anterior exigia >=16 hex no PRIMEIRO
+          # grupo, mas o formato real é 00000002-000000a0-000050dd-<32 hex>,
+          # cujo primeiro grupo tem 8. Ancorar na frase do wrangler não depende
+          # de quantos grupos ou de que largura a Cloudflare venha a usar.
+          BOOKMARK=$(sed -n "s/.*current bookmark is '\([0-9a-f][0-9a-f-]*\)'.*/\1/p" /tmp/b1.txt | head -1 || true)
+          [ -n "$BOOKMARK" ] || { echo "::error::não consegui ler o bookmark do Time Travel"; exit 1; }
+          echo "bookmark=$BOOKMARK" >> "$GITHUB_OUTPUT"
+
+          # Mutação destrutiva controlada — só sobre a sentinela sintética.
+          npx wrangler@4 d1 execute "$TARGET" --remote --yes --command \
+            "DELETE FROM users WHERE id = 'dr-rehearsal-sentinel';"
+          npx wrangler@4 d1 execute "$TARGET" --remote --command \
+            "SELECT COUNT(*) AS sentinelas FROM users WHERE id = 'dr-rehearsal-sentinel';"
+
+      # Etapa F — restore APENAS no alvo isolado, com duração medida.
+      - name: Etapa F — restore com RTO medido
+        id: restore
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          START=$(date +%s)
+          npx wrangler@4 d1 time-travel restore "${{ steps.target.outputs.target }}" \
+            --bookmark="${{ steps.sentinel.outputs.bookmark }}"
+          END=$(date +%s)
+          echo "duracao_s=$((END-START))" >> "$GITHUB_OUTPUT"
+          echo "⏱️ restore do mecanismo: $((END-START))s"
+
+      # Etapa G — o critério que transforma "comando rodou" em "restore funcionou".
+      - name: Etapa G — validação pós-restore
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute "${{ steps.target.outputs.target }}" --remote \
+            --command "SELECT COUNT(*) AS sentinelas FROM users WHERE id = 'dr-rehearsal-sentinel';" \
+            > /tmp/pos.txt 2>&1
+          cat /tmp/pos.txt
+          if ! grep -qE '(sentinelas[^0-9]*1[^0-9]|"sentinelas":\s*1)' /tmp/pos.txt; then
+            echo "::error::A sentinela NÃO voltou. O restore não recuperou o estado — isto é uma falha real de DR."
+            exit 1
+          fi
+          echo "✅ Sentinela recuperada: o mecanismo de Time Travel restaura estado neste D1."
+
+      # Etapa I — sempre, inclusive quando algo acima falhou: um alvo órfão
+      # custa dinheiro e vira ruído. O nome é reconferido antes do destroy.
+      - name: Etapa I — destruir o alvo isolado
+        if: always()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.target.outputs.target }}"
+          if [ -z "$TARGET" ]; then
+            echo "Nenhum alvo foi criado — nada a destruir."
+            exit 0
+          fi
+          case "$TARGET" in
+            *dr-rehearsal*) ;;
+            *) echo "::error::Recusando destruir alvo sem marca dr-rehearsal: $TARGET"; exit 1 ;;
+          esac
+          if [ "$TARGET" = "$PRODUCTION_D1" ]; then
+            echo "::error::Recusando destruir produção."
+            exit 1
+          fi
+          npx wrangler@4 d1 delete "$TARGET" --skip-confirmation
+
+      - name: Relatório metadata-only
+        if: always()
+        run: |
+          {
+            echo "## DR mechanism rehearsal"
+            echo ""
+            echo "- Alvo isolado: \`${{ steps.target.outputs.target }}\`"
+            echo "- Produção (\`$PRODUCTION_D1\`): **não lida, não escrita**"
+            echo "- Duração do restore: \`${{ steps.restore.outputs.duracao_s }}\`s"
+            echo ""
+            echo "Escopo: mechanism rehearsal com dados sintéticos, conforme a"
+            echo "Etapa C do runbook. NÃO mede o RTO de um restore de produção"
+            echo "com volume real — para isso é preciso a aprovação de"
+            echo "governança para cópia de PHI descrita no runbook."
+          } >> "$GITHUB_STEP_SUMMARY"

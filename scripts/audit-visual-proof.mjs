@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import {
   ACCEPTED_FIRST_VISIT_STORAGE,
+  auditBrowserLaunchOptions,
   ensureClientBuild,
   startStaticServer,
 } from "./lib/browser-audit-runtime.mjs";
@@ -50,14 +51,7 @@ function intersects(a, b) {
 }
 
 const server = await startStaticServer(ensureClientBuild(repoRoot));
-// Mesma política do gate de a11y: quando o ambiente fornece um Chromium fora
-// da revisão fixada pelo Playwright, ele é usado explicitamente.
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-const browser = await chromium.launch(
-  executablePath
-    ? { headless: true, executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-    : { headless: true },
-);
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 const results = [];
 
 try {

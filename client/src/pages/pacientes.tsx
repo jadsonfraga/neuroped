@@ -659,12 +659,28 @@ export default function PacientesPage() {
               <p className="text-sm font-bold text-foreground">
                 Dados clínicos sob responsabilidade profissional
               </p>
+              {/* O aviso precisa descrever o modo em que a tela está de fato.
+                  O texto único falava em "modo sem senha" e em "Apagar dados
+                  locais" mesmo dentro de uma sessão profissional autenticada —
+                  onde há senha e onde nada clínico é gravado no navegador. */}
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A API de pacientes não é cacheada pelo service worker. Neste
-                modo sem senha, qualquer pessoa no mesmo perfil do navegador
-                pode ver os registros. Confirme consentimento, exporte backup e
-                use “Apagar dados locais” ao terminar em dispositivo
-                compartilhado.
+                {isRemoteClinical ? (
+                  <>
+                    Sessão profissional autenticada: os registros vivem no
+                    backend da clínica ativa e não são gravados neste navegador.
+                    A API de pacientes não é cacheada pelo service worker.
+                    Confirme consentimento e encerre a sessão ao terminar em
+                    dispositivo compartilhado.
+                  </>
+                ) : (
+                  <>
+                    A API de pacientes não é cacheada pelo service worker. Neste
+                    modo sem senha, qualquer pessoa no mesmo perfil do navegador
+                    pode ver os registros. Confirme consentimento, exporte
+                    backup e use “Apagar dados locais” ao terminar em
+                    dispositivo compartilhado.
+                  </>
+                )}
               </p>
             </div>
           </CardContent>
@@ -737,7 +753,7 @@ export default function PacientesPage() {
             type="button"
             onClick={() => setSearch("")}
             aria-label="Limpar busca de pacientes"
-            className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -836,38 +852,35 @@ export default function PacientesPage() {
                         </div>
                       </Link>
                       <div className="flex gap-1">
-                        {/* Ícones sem rótulo textual precisam de nome acessível
-                            explícito — sem ele, leitor de tela anuncia apenas
-                            "botão" e editar fica indistinguível de excluir. O
-                            alvo cresce para 44px no toque e volta a 28px no
-                            desktop, onde o ponteiro é preciso. */}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-11 w-11 shrink-0 p-0 lg:h-7 lg:w-7"
-                          aria-label={`Editar dados de ${p.name}`}
+                          className="h-9 w-9 p-0"
                           onClick={() => {
                             softTick();
                             haptic.tap();
                             openEdit(p);
                           }}
+                          aria-label={`Editar cadastro de ${p.name}`}
+                          title="Editar cadastro"
                           data-testid={`button-edit-${p.id}`}
                         >
-                          <Pencil className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
+                          <Pencil className="w-4 h-4" aria-hidden="true" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-11 w-11 shrink-0 p-0 text-destructive hover:text-destructive lg:h-7 lg:w-7"
-                          aria-label={`Excluir ${p.name}`}
+                          className="h-9 w-9 p-0 text-destructive hover:text-destructive"
                           onClick={() => {
                             softTap();
                             haptic.warning();
                             setConfirmingDelete({ id: p.id, name: p.name });
                           }}
+                          aria-label={`Excluir cadastro de ${p.name}`}
+                          title="Excluir cadastro"
                           data-testid={`button-delete-${p.id}`}
                         >
-                          <Trash2 className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>

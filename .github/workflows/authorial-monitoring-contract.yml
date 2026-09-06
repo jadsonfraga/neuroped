@@ -1,0 +1,39 @@
+name: Contrato de escalas autorais de monitorização
+on:
+  pull_request:
+    paths:
+      - 'client/src/data/authorialMonitoring*'
+      - 'client/src/data/escalasImportadasDrive2026.ts'
+      - 'client/src/data/interactiveScaleItemsDrive2026.ts'
+      - 'tests/clinical/test-authorial-monitoring.mjs'
+      - '.github/workflows/authorial-monitoring-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: authorial-monitoring-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - run: npm run gen:interactive-scale-ids
+      - run: npm run check
+      - run: node --import tsx tests/clinical/test-authorial-monitoring.mjs
+      - run: npm run test:filter
+      - run: npm run test:interactive
+      - run: npm run build:client
+      - uses: actions/upload-artifact@v4
+        with:
+          name: authorial-monitoring-manifest-${{ github.sha }}
+          path: client/src/data/interactiveScaleIds.generated.ts
+          if-no-files-found: error

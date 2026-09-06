@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 253
-- **Com fonte declarada:** 253 (100.0%)
+- **Total de instrumentos:** 258
+- **Com fonte declarada:** 258 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 77 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 82 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -15,6 +15,7 @@
 | --- | --- | --- | --- | --- |
 | `abc` | ABC | Aman MG et al., 1985 (Aberrant Behavior Checklist) | não | não |
 | `ace` | ACE | Felitti VJ et al., 1998 (Adverse Childhood Experiences) | não | não |
+| `afi12-sdg` | AFI-12 SDG | PDF autoral fornecido ao fluxo NeuroPed: 01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf; v1.0; integridade sha256:f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d. | não | sim |
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não | não |
 | `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não | não |
 | `ari` | ARI | Stringaris A, Goodman R, Ferdinando S, Razdan V, Muhrer E, Leibenluft E, Brotman MA, 2012 (Affective Reactivity Index) — J Child Psychol Psychiatry 53(11):1109-17. PMID 22574736 · doi:10.1111/j.1469-7610.2012.02561.x | não | não |
@@ -69,6 +70,7 @@
 | `eidaf-neuroinfantil` | EIDAF-Neuroinfantil | 2026-06-25_ESCALA_AUTORAL_EIDAF_NEUROINFANTIL_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1gwcgHzyTCEVlIREiEY1ERzt951w89TOl0YhaWFIySFM/edit | não | sim |
 | `einpi-360` | EINPI-360 | 2026-06-19_ESCALA_AUTORAL_EINPI-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/13ExdP3OgfE7wi7WdXseawmihZ8jflUQSLxiePqUlmGo/edit | não | sim |
 | `einpi-drj-v1` | EINPI-DrJ v1 | 2026-06-24_ESCALA_AUTORAL_EINPI_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1cjErnbJMJNxBxmFrK-EEPdzYOPXVQmiExolCTnSfgcM/edit | não | sim |
+| `ejia-15` | EJIA-15 | EJIA-15 v1.0 — Dr. Jadson Fraga, 05/09/2026. Instrumento clínico autoral aprovado pelo autor para incorporação ao NeuroPed. | não | sim |
 | `emdi` | EMDI | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `ems` | EMS-NEXUS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `engel` | Engel Classification | Engel J et al., 1993 (Engel Surgical Outcome Classification) | não | não |
@@ -137,6 +139,7 @@
 | `ipn-tea-familia-100` | IPN-TEA · Família 100 | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `ipn-tea-observacao-60` | IPN-TEA · Observação 60 | IPN-TEA 200 — Inventário Pré-Consulta NeuroPed, volume 01, versão 1.0, 30/07/2026. Dr. Jadson Fraga / NeuroPed SDG. | não | sim |
 | `ips` | IPS | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
+| `irritabilidade-desregulacao-vs1` | Irritabilidade e Desregulação no Cotidiano — VS1 | PDF autoral fornecido ao fluxo NeuroPed: NeuroPed_SDG_Irritabilidade_Desregulacao_20_itens_VS1.pdf; vVS1; integridade sha256:00aad6f5375c08e2105e17dd3d81e808417a9e42025327de232dd09d5582c618. | não | sim |
 | `ita-adultos` | ITA-Adultos | Instrumento inspirado no AQ (Autism Spectrum Quotient) | não | não |
 | `j26-001` | Protocolo Dr. Jadson — Triagem Motora 0-6 Meses (NEXUS-001) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `j26-002` | Protocolo Dr. Jadson — Triagem Motora 6-12 Meses (NEXUS-002) | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
@@ -241,10 +244,12 @@
 | `q-chat-10` | Q-CHAT-10 | Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003 | não | não |
 | `qec-np` | QEC-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estresse do cuidador. | não | sim |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não | não |
+| `sarf12-sdg` | SARF-12 SDG | PDF autoral fornecido ao fluxo NeuroPed: 03_SARF12_Seletividade_Alimentar_Repertorio_Funcional_NeuroPed_SDG.pdf; v1.0; integridade sha256:d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9. | não | sim |
 | `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não | não |
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não | não |
 | `scoff` | SCOFF | Morgan JF et al., 1999 - BMJ | não | não |
 | `sdq` | SDQ | Goodman R, 1997 - Cambridge University | não | não |
+| `sdrd12-sdg` | SDRD-12 SDG | PDF autoral fornecido ao fluxo NeuroPed: 02_SDRD12_Sono_Despertares_Repercussao_Diurna_NeuroPed_SDG.pdf; v1.0; integridade sha256:df63139cd65e52c46f99c772362b6ba36fcaad57794ab9616dbae7dce1c26225. | não | sim |
 | `sinaf-neuroped` | SINAF-NeuroPed | 2026-07-02_ESCALA_AUTORAL_SINAF-NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1ohp0tqe_NfLBB32XLXRgE0NxpyHtxe5X6xhY8rRrjWc/edit | não | sim |
 | `sinapse-fi-60` | SINAPSE-FI 60 | 2026-06-20_ESCALA_AUTORAL_SINAPSE-FI_60_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/13F-krAjNvAUAtrGNoEibhuFt_2_f9l7kuM2PrMIuoXk/edit | não | sim |
 | `sinergi-neuroped` | SINERGI-NeuroPed | 2026-07-07_ESCALA_AUTORAL_SINERGI_NEUROPED_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1gZZlqN3AxgGKnQb94HiU-lohftfdIeEs1NxWub3oiok/edit | não | sim |

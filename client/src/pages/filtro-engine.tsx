@@ -1883,7 +1883,7 @@ export default function FiltroPage() {
                 <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Idade da criança
                 </p>
-                <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75 sm:hidden" aria-hidden="true">
+                <span className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:hidden" aria-hidden="true">
                   Deslize →
                 </span>
               </div>
@@ -1924,10 +1924,12 @@ export default function FiltroPage() {
                     variant="ghost"
                     size="sm"
                     onClick={clearAll}
-                    aria-label="Limpar filtros selecionados"
-                    className="h-9 min-w-11 gap-1 px-2 text-xs sm:h-7 sm:min-w-0"
+                    // No celular o rótulo é ocultado e sobrava um botão só de
+                    // ícone, sem nome acessível (axe: button-name, crítico).
+                    aria-label="Limpar sintomas selecionados"
+                    className="h-6 sm:h-7 gap-1 px-2 text-xs"
                   >
-                    <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />{" "}
+                    <RotateCcw className="h-3 sm:h-3.5 w-3 sm:w-3.5" />{" "}
                     <span className="hidden sm:inline">limpar</span>
                   </Button>
                 )}
@@ -1960,7 +1962,7 @@ export default function FiltroPage() {
                         </span>
                         {q.parentHint && (
                           <span
-                            className={`whitespace-normal break-words text-[10px] sm:text-[10.5px] font-medium leading-snug ${sel ? "text-primary-foreground" : "text-muted-foreground"}`}
+                            className={`whitespace-normal break-words text-[9px] sm:text-[10px] font-medium leading-tight ${sel ? "text-primary-foreground" : "text-muted-foreground"}`}
                           >
                             {q.parentHint}
                           </span>
@@ -2016,7 +2018,7 @@ export default function FiltroPage() {
                         : "teste_direto_crianca",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "teste_direto_crianca" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "teste_direto_crianca" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">🧒</span>{" "}
                   <span className="hidden sm:inline">Direto</span>
@@ -2032,7 +2034,7 @@ export default function FiltroPage() {
                       v === "pais" ? null : "pais",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "pais" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">👨‍👩‍👧</span>{" "}
                   <span className="hidden sm:inline">Pais</span>
@@ -2048,7 +2050,7 @@ export default function FiltroPage() {
                       v === "professor" ? null : "professor",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "professor" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">👨‍🏫</span>{" "}
                   <span className="hidden sm:inline">Escola</span>
@@ -2064,7 +2066,7 @@ export default function FiltroPage() {
                       v === "clinico" ? null : "clinico",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedRespondente === "clinico" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">👨‍⚕️</span>{" "}
                   <span className="hidden sm:inline">Clínico</span>
@@ -2088,7 +2090,7 @@ export default function FiltroPage() {
                       v === "verbal" ? null : "verbal",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "verbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "verbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">🗣️</span>{" "}
                   <span className="hidden sm:inline">Fala</span>
@@ -2104,7 +2106,7 @@ export default function FiltroPage() {
                       v === "nonverbal" ? null : "nonverbal",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "nonverbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedCommunication === "nonverbal" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">🤐</span>{" "}
                   <span className="hidden sm:inline">Não-Verbal</span>
@@ -2128,7 +2130,7 @@ export default function FiltroPage() {
                       v === "literate" ? null : "literate",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "literate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "literate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">📖</span>{" "}
                   <span className="hidden sm:inline">Alfabetizada</span>
@@ -2144,7 +2146,7 @@ export default function FiltroPage() {
                       v === "preliterate" ? null : "preliterate",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "preliterate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedLiteracy === "preliterate" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">👶</span>{" "}
                   <span className="hidden sm:inline">Pré-Alfab.</span>
@@ -2168,7 +2170,7 @@ export default function FiltroPage() {
                       v === "diagnostic" ? null : "diagnostic",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "diagnostic" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">🔍</span>{" "}
                   <span className="hidden sm:inline">Diagnóstico</span>
@@ -2184,7 +2186,7 @@ export default function FiltroPage() {
                       v === "monitoring" ? null : "monitoring",
                     )
                   }
-                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-3 py-1 sm:py-2 text-xs font-bold transition min-h-11 min-w-11 justify-center sm:min-h-10 sm:min-w-0 sm:justify-start flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${selectedAssessmentType === "monitoring" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                 >
                   <span aria-hidden="true">📊</span>{" "}
                   <span className="hidden sm:inline">Monitorização</span>
@@ -2309,7 +2311,7 @@ export default function FiltroPage() {
                     variant="outline"
                     size="sm"
                     onClick={copyRecommendation}
-                    className="min-w-11 gap-1.5 sm:min-w-0"
+                    className="gap-1.5"
                     aria-label="Copiar recomendação para o laudo"
                   >
                     <ClipboardCheck className="h-3.5 w-3.5" />
@@ -2321,7 +2323,7 @@ export default function FiltroPage() {
                     variant="outline"
                     size="sm"
                     onClick={exportPdf}
-                    className="min-w-11 gap-1.5 sm:min-w-0"
+                    className="gap-1.5"
                     aria-label="Exportar recomendação em PDF"
                   >
                     <FileDown className="h-3.5 w-3.5" />
@@ -2331,7 +2333,7 @@ export default function FiltroPage() {
                     variant="outline"
                     size="sm"
                     onClick={exportCsv}
-                    className="min-w-11 gap-1.5 sm:min-w-0"
+                    className="gap-1.5"
                     aria-label="Exportar recomendação em CSV (Excel)"
                   >
                     <Table className="h-3.5 w-3.5" />
@@ -2660,7 +2662,7 @@ export default function FiltroPage() {
                           {item.hasScale ? (
                             <Link
                               href={item.route}
-                              className="inline-flex min-h-9 items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                              className="inline-flex min-h-6 items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                             >
                               <span>{ctaLabel}</span>
                               <ArrowRight className="h-4 w-4" />
@@ -2987,7 +2989,7 @@ export default function FiltroPage() {
           </div>
           <Link
             href="/escalas-neuropsiquiatria"
-            className="inline-flex min-h-9 items-center text-xs font-bold text-primary"
+            className="text-xs font-bold text-primary"
           >
             Ver catálogo mundial
           </Link>

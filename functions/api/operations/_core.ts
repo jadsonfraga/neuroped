@@ -17,6 +17,9 @@ export interface OperationsEnv {
   DB?: D1Database;
   NEUROPED_JWT_SECRET?: string;
   OPERATIONAL_DATA_KEY?: string;
+  OPERATIONAL_DATA_KEY_ID?: string;
+  OPERATIONAL_DATA_KEY_PREVIOUS?: string;
+  OPERATIONAL_DATA_KEY_PREVIOUS_ID?: string;
 }
 
 interface ProviderIdentity {
@@ -282,41 +285,238 @@ function base64ToBytes(value: string): Uint8Array {
   return out;
 }
 
-async function operationalKey(env: OperationsEnv): Promise<CryptoKey> {
-  const source = env.OPERATIONAL_DATA_KEY?.trim();
-  if (!source || source.length < 32) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
-  const material = new TextEncoder().encode(`neuroped-operational-v1:${source}`);
+/**
+ * Cripto de PII operacional — nomes, e-mails e telefones de responsáveis em
+ * agendamentos, lista de espera, avaliações e fila de notificação.
+ *
+ * Este esquema tinha três defeitos que só apareciam no dia em que alguém
+ * precisasse dele:
+ *
+ * 1. **Não havia como rotacionar `OPERATIONAL_DATA_KEY`.** O envelope `v1` não
+ *    registrava QUAL chave o cifrou. Trocar a chave — a resposta óbvia a um
+ *    vazamento de chave — tornava ilegível todo nome de responsável já gravado,
+ *    sem volta.
+ * 2. **`decryptText` devolvia `null` em qualquer falha.** Chave errada,
+ *    registro corrompido e "esse campo está vazio" eram indistinguíveis. Uma
+ *    rotação malfeita esvaziaria a agenda em silêncio, e a tela mostraria
+ *    campos em branco em vez de um erro.
+ * 3. **Não havia AAD.** Um ciphertext de `guardian_email_encrypted` decifrava
+ *    sem reclamar se lido como `guardian_name_encrypted`.
+ *
+ * O envelope `v2` resolve os três: `v2.<keyId>.<iv>.<ciphertext>`, com keyring
+ * (atual + anterior) e AAD ligando versão, chave e NOME DO CAMPO.
+ *
+ * Limite honesto do AAD: ele impede confusão ENTRE CAMPOS, não a troca de um
+ * ciphertext entre duas linhas do MESMO campo — para isso o AAD teria que
+ * carregar a identidade do registro, que os INSERTs de hoje não têm em mãos no
+ * ponto da cifragem. Está registrado como próximo passo, não como resolvido.
+ *
+ * `v1` continua legível pelo keyring (tenta atual, depois anterior), porque
+ * v1 não diz qual chave usou. Registros v1 migram para v2 ao serem reescritos.
+ */
+interface OperationalKeyDescriptor {
+  id: string;
+  secret: string;
+}
+
+export const OPERATIONAL_KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
+
+function operationalDescriptor(
+  secret: string | undefined,
+  id: string | undefined,
+  fallbackId: string,
+): OperationalKeyDescriptor | null {
+  const normalized = secret?.trim();
+  if (!normalized || normalized.length < 32) return null;
+  const normalizedId = id?.trim() || fallbackId;
+  if (!OPERATIONAL_KEY_ID_PATTERN.test(normalizedId)) {
+    throw new Error("OPERATIONAL_KEY_ID_INVALID");
+  }
+  return { id: normalizedId, secret: normalized };
+}
+
+function currentOperationalKey(env: OperationsEnv): OperationalKeyDescriptor {
+  const current = operationalDescriptor(
+    env.OPERATIONAL_DATA_KEY,
+    env.OPERATIONAL_DATA_KEY_ID,
+    "k1",
+  );
+  if (!current) throw new Error("OPERATIONAL_CRYPTO_NOT_CONFIGURED");
+  return current;
+}
+
+function previousOperationalKey(env: OperationsEnv): OperationalKeyDescriptor | null {
+  const previous = operationalDescriptor(
+    env.OPERATIONAL_DATA_KEY_PREVIOUS,
+    env.OPERATIONAL_DATA_KEY_PREVIOUS_ID,
+    "previous",
+  );
+  if (previous && previous.id === currentOperationalKey(env).id) {
+    throw new Error("OPERATIONAL_KEY_ID_COLLISION");
+  }
+  return previous;
+}
+
+/**
+ * Identidade das chaves do keyring — nunca o material secreto.
+ *
+ * Existe para o inventário de envelopes (`/api/admin/operational-crypto`)
+ * poder dizer QUAL chave cada registro cita sem nunca tocar no segredo que o
+ * decifra. Devolve resultado discriminado em vez de lançar porque uma rota de
+ * status precisa REPORTAR a má configuração; engolir o erro aqui esconderia
+ * exatamente o estado que ela existe para denunciar.
+ */
+export type OperationalKeyringStatus =
+  | { ok: true; currentId: string; previousId: string | null }
+  | {
+      ok: false;
+      code:
+        | "OPERATIONAL_CRYPTO_NOT_CONFIGURED"
+        | "OPERATIONAL_KEY_ID_INVALID"
+        | "OPERATIONAL_KEY_ID_COLLISION";
+    };
+
+export function operationalKeyringStatus(
+  env: OperationsEnv,
+): OperationalKeyringStatus {
+  let current: OperationalKeyDescriptor;
+  try {
+    current = currentOperationalKey(env);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return {
+      ok: false,
+      code:
+        message === "OPERATIONAL_KEY_ID_INVALID"
+          ? "OPERATIONAL_KEY_ID_INVALID"
+          : "OPERATIONAL_CRYPTO_NOT_CONFIGURED",
+    };
+  }
+
+  try {
+    const previous = previousOperationalKey(env);
+    return { ok: true, currentId: current.id, previousId: previous?.id ?? null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return {
+      ok: false,
+      code:
+        message === "OPERATIONAL_KEY_ID_COLLISION"
+          ? "OPERATIONAL_KEY_ID_COLLISION"
+          : "OPERATIONAL_KEY_ID_INVALID",
+    };
+  }
+}
+
+async function operationalKey(
+  env: OperationsEnv,
+  descriptor?: OperationalKeyDescriptor,
+): Promise<CryptoKey> {
+  const chosen = descriptor ?? currentOperationalKey(env);
+  const material = new TextEncoder().encode(`neuroped-operational-v1:${chosen.secret}`);
   const digest = await crypto.subtle.digest("SHA-256", material);
   return crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
-export async function encryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
+/**
+ * AAD do envelope v2. `field` é o nome da coluna: é o que impede que o
+ * ciphertext do e-mail seja lido como se fosse o nome.
+ */
+function operationalAad(keyId: string, field: string): Uint8Array {
+  return new TextEncoder().encode(`neuroped-operational-v2|${keyId}|${field}`);
+}
+
+/** Erro de decifragem que NÃO pode ser confundido com "campo vazio". */
+export class OperationalDecryptError extends Error {
+  constructor(readonly field: string) {
+    super("OPERATIONAL_DECRYPT_FAILED");
+    this.name = "OperationalDecryptError";
+  }
+}
+
+export async function encryptText(
+  env: OperationsEnv,
+  value: string | null,
+  field: string,
+): Promise<string | null> {
   if (!value) return null;
-  const key = await operationalKey(env);
+  const descriptor = currentOperationalKey(env);
+  const key = await operationalKey(env, descriptor);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
+    { name: "AES-GCM", iv, additionalData: operationalAad(descriptor.id, field) },
     key,
     new TextEncoder().encode(value),
   );
-  return `v1.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(ciphertext))}`;
+  return `v2.${descriptor.id}.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(ciphertext))}`;
 }
 
-export async function decryptText(env: OperationsEnv, value: string | null): Promise<string | null> {
-  if (!value) return null;
-  const [version, ivB64, cipherB64] = value.split(".");
-  if (version !== "v1" || !ivB64 || !cipherB64) return null;
+async function tentarDecifrar(
+  env: OperationsEnv,
+  descriptor: OperationalKeyDescriptor,
+  iv: string,
+  cipher: string,
+  aad: Uint8Array | undefined,
+): Promise<string | null> {
   try {
-    const key = await operationalKey(env);
+    const key = await operationalKey(env, descriptor);
     const plain = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: base64ToBytes(ivB64) },
+      aad
+        ? { name: "AES-GCM", iv: base64ToBytes(iv), additionalData: aad }
+        : { name: "AES-GCM", iv: base64ToBytes(iv) },
       key,
-      base64ToBytes(cipherB64),
+      base64ToBytes(cipher),
     );
     return new TextDecoder().decode(plain);
   } catch {
     return null;
   }
+}
+
+/**
+ * Decifra um campo. Devolve `null` APENAS quando não havia valor guardado.
+ * Quando havia valor e ele não pôde ser lido, LANÇA `OperationalDecryptError`:
+ * "não consigo ler o nome do responsável" e "não há nome do responsável" são
+ * fatos diferentes, e tratá-los como o mesmo foi o que permitiria uma rotação
+ * de chave apagar a agenda em silêncio.
+ */
+export async function decryptText(
+  env: OperationsEnv,
+  value: string | null,
+  field: string,
+): Promise<string | null> {
+  if (!value) return null;
+  const partes = value.split(".");
+  const current = currentOperationalKey(env);
+  const previous = previousOperationalKey(env);
+
+  if (partes[0] === "v2") {
+    const [, keyId, iv, cipher] = partes;
+    if (!keyId || !iv || !cipher) throw new OperationalDecryptError(field);
+    const descriptor =
+      current.id === keyId ? current : previous?.id === keyId ? previous : null;
+    // Chave citada pelo envelope que não está mais no keyring: é falta de
+    // configuração, não campo vazio. Aposentar a chave anterior antes de
+    // reescrever os registros é justamente o erro que este caminho denuncia.
+    if (!descriptor) throw new OperationalDecryptError(field);
+    const plain = await tentarDecifrar(env, descriptor, iv, cipher, operationalAad(keyId, field));
+    if (plain === null) throw new OperationalDecryptError(field);
+    return plain;
+  }
+
+  if (partes[0] === "v1") {
+    // v1 não registra a chave: só resta tentar o keyring inteiro. Sem AAD,
+    // porque v1 foi escrito sem AAD.
+    const [, iv, cipher] = partes;
+    if (!iv || !cipher) throw new OperationalDecryptError(field);
+    for (const descriptor of [current, previous].filter(Boolean) as OperationalKeyDescriptor[]) {
+      const plain = await tentarDecifrar(env, descriptor, iv, cipher, undefined);
+      if (plain !== null) return plain;
+    }
+    throw new OperationalDecryptError(field);
+  }
+
+  throw new OperationalDecryptError(field);
 }
 
 export async function sha256(value: string): Promise<string> {
@@ -368,10 +568,10 @@ export async function appointmentToApi(env: OperationsEnv, row: AppointmentRow) 
     timezone: row.timezone,
     status: row.status,
     source: row.source,
-    guardianName: await decryptText(env, row.guardian_name_encrypted),
-    guardianEmail: await decryptText(env, row.guardian_email_encrypted),
-    guardianPhone: await decryptText(env, row.guardian_phone_encrypted),
-    patientName: await decryptText(env, row.patient_name_encrypted),
+    guardianName: await decryptText(env, row.guardian_name_encrypted, "guardian_name"),
+    guardianEmail: await decryptText(env, row.guardian_email_encrypted, "guardian_email"),
+    guardianPhone: await decryptText(env, row.guardian_phone_encrypted, "guardian_phone"),
+    patientName: await decryptText(env, row.patient_name_encrypted, "patient_name"),
     amountCents: row.amount_cents,
     paymentStatus: row.payment_status,
     paymentMethod: row.payment_method,
@@ -612,8 +812,8 @@ export async function enqueueNotification(
         options.appointmentId ?? null,
         options.providerUserId,
         options.template,
-        await encryptText(env, options.recipient ?? null),
-        await encryptText(env, options.message),
+        await encryptText(env, options.recipient ?? null, "recipient"),
+        await encryptText(env, options.message, "payload"),
         now,
         now,
       )

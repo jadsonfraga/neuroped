@@ -369,7 +369,7 @@ a[class*="inline-flex"]:active {
 /* ───────────────────────── Mobile: dock + tela nativa ───────────────────────── */
 @media screen and (max-width: 1023px) {
   body.np-mobile-dock-active {
-    padding-bottom: calc(4rem + var(--np-safe-bottom));
+    padding-bottom: calc(3.75rem + var(--np-safe-bottom));
   }
 
   header.fixed.lg\:hidden {
@@ -395,7 +395,7 @@ a[class*="inline-flex"]:active {
   [data-testid="mobile-primary-dock"] nav {
     position: relative;
     overflow: hidden;
-    border-radius: 1.55rem !important;
+    border-radius: 1.15rem !important;
     border-color: hsl(var(--border) / 0.52) !important;
     background: linear-gradient(
       180deg,
@@ -422,9 +422,12 @@ a[class*="inline-flex"]:active {
     pointer-events: none;
   }
 
+  /* 44px é o alvo de toque; os 3,6rem anteriores existiam para acomodar a
+     pastilha elevada de Prontuário, que saiu. Manter a altura antiga aqui
+     anularia a faixa rasa definida no componente. */
   [data-testid="mobile-primary-dock"] button {
-    min-height: 2.95rem !important;
-    border-radius: 0.95rem !important;
+    min-height: 2.75rem !important;
+    border-radius: 0.85rem !important;
   }
 
   [data-testid="mobile-primary-dock"] button[aria-current="page"] {
@@ -484,12 +487,12 @@ a[class*="inline-flex"]:active {
   }
 
   [data-testid="mobile-primary-dock"] nav {
-    min-height: 3.45rem;
-    border-radius: 1.45rem !important;
+    min-height: 3.25rem;
+    border-radius: 1.15rem !important;
   }
 
   [data-testid="mobile-primary-dock"] button {
-    min-height: 3.05rem !important;
+    min-height: 2.75rem !important;
   }
 }
 
@@ -708,32 +711,4 @@ a[class*="inline-flex"]:active {
 
 .np-app-mobile-header {
   box-shadow: 0 10px 26px -24px hsl(var(--foreground) / 0.72);
-}
-
-/* ─────────── Home em sessão clínica: capa cede espaço ao cockpit ───────────
-   A capa institucional (título display, orbes, mascote) é a primeira coisa que
-   um visitante deve ver. Para quem já está autenticado e atendendo, ela empurra
-   o cockpit e os fluxos para baixo da dobra sem acrescentar informação. A regra
-   usa duas classes para vencer, por especificidade, os `!important` da capa
-   original — sem removê-los, porque a capa pública continua valendo. */
-.np-home-hero.np-home-hero--compact h1 {
-  max-width: 30ch !important;
-  font-size: clamp(1.45rem, 2.9vw, 2.05rem) !important;
-  line-height: 1.08 !important;
-  letter-spacing: -0.03em !important;
-}
-
-.np-home-hero.np-home-hero--compact {
-  padding: 1.15rem !important;
-}
-
-@media (min-width: 640px) {
-  .np-home-hero.np-home-hero--compact {
-    padding: 1.45rem !important;
-  }
-}
-
-.np-home-hero.np-home-hero--compact::before,
-.np-home-hero.np-home-hero--compact .np-home-orb {
-  opacity: 0.45;
 }
