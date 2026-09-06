@@ -42,13 +42,10 @@ export const SENSITIVE_ROUTES = [
 
 /**
  * Rotas clínicas já existentes nas quais o papel `reader` preserva acesso à UI.
- * A allowlist é exata (parâmetros `:id` ocupam um único segmento) e não autoriza
- * novas rotas ou descendentes. Escritas continuam bloqueadas pelo backend.
+ * A allowlist é exata; escritas continuam bloqueadas pelo backend.
  */
 export const READER_CLINICAL_ROUTES = [
   "/",
-  // Conta e clínica: qualquer papel com sessão gerencia o próprio perfil e vê
-  // o estado do tenant; o RBAC fino (equipe, plano, edição) é do servidor.
   "/onboarding",
   "/configuracoes",
   "/mchat",
@@ -140,17 +137,15 @@ export const READER_CLINICAL_ROUTES = [
 ] as const;
 
 const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
-const READER_CLINICAL_ROLES: readonly RouteUserRole[] = [
-  "admin",
-  "professional",
-  "reader",
-];
+const READER_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional", "reader"];
 const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   route: string;
   roles: readonly RouteUserRole[];
 }> = [
-  // A recepção opera a fila, mas não recebe acesso às demais áreas clínicas.
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  // A Sonda Dez foi desenhada para aplicação pela assistente. Ela não persiste
+  // dados e entrega somente registro observacional para revisão médica.
+  { route: "/testes-diretos", roles: ["admin", "professional", "operator"] },
 ];
 
 function normalizePathname(path: string): string {
@@ -185,13 +180,9 @@ export function isReaderClinicalRoute(path: string): boolean {
 
 function getDefaultClinicalRoles(path: string): readonly RouteUserRole[] {
   const pathname = normalizePathname(path);
-  const override = CLINICAL_ROLE_OVERRIDES.find(
-    ({ route }) => pathname === route,
-  );
+  const override = CLINICAL_ROLE_OVERRIDES.find(({ route }) => pathname === route);
   if (override) return override.roles;
-  return isReaderClinicalRoute(pathname)
-    ? READER_CLINICAL_ROLES
-    : DEFAULT_CLINICAL_ROLES;
+  return isReaderClinicalRoute(pathname) ? READER_CLINICAL_ROLES : DEFAULT_CLINICAL_ROLES;
 }
 
 interface RouteAccessInput {
@@ -205,13 +196,6 @@ interface RouteAccessInput {
   localPinUnlocked?: boolean;
 }
 
-/**
- * Decide o acesso antes de qualquer página montar.
- *
- * No modo remoto, somente a allowlist pública abre sem sessão. Rotas clínicas
- * ficam bloqueadas enquanto o bootstrap de autenticação está em andamento e
- * redirecionam ao login apenas depois de a ausência de sessão ser confirmada.
- */
 export function decideRouteAccess({
   path,
   accessMode,
