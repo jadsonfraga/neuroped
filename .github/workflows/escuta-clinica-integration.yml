@@ -1,0 +1,56 @@
+name: Escuta Clinica Integration
+on:
+  push:
+    branches: [feat/escuta-clinica-integrada-20260905]
+  pull_request:
+    paths:
+      - '.github/workflows/escuta-clinica-integration.yml'
+      - '**/*escuta*'
+      - 'shared/escuta/**'
+      - 'functions/api/live/escuta/**'
+      - 'client/src/pages/login.tsx'
+      - 'client/src/components/RouteGuard.tsx'
+      - 'tests/unit/login-navigation-regression.test.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: escuta-integration-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    name: Escuta code and integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: node scripts/escuta-integrate.mjs
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - run: node --experimental-strip-types tests/unit/escuta-core.test.ts
+      - run: node --experimental-strip-types tests/unit/escuta-patients.test.ts
+      - run: node tests/unit/escuta-worklet.test.mjs
+      - run: node tests/unit/login-navigation-regression.test.mjs
+      - run: npm run build:client
+      - run: npx wrangler@4 pages functions build --outdir=/tmp/escuta-functions
+      - run: npx playwright install --with-deps chromium
+      - name: Browser component contract and virtual microphone (not provider/auth E2E)
+        run: node scripts/escuta-browser-qa.mjs
+      - name: Verify authored source and official generated artifacts
+        run: node scripts/escuta-verify-source.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-browser-qa-${{ github.run_id }}
+          path: artifacts/escuta/
+          retention-days: 7
+
+# O provedor real não é exercitado por REST com o token de deploy neste workflow.
+# A catraca real é "Escuta isolated cloud acceptance", que provisiona uma cópia
+# descartável, usa o binding nativo Workers AI e valida auth, D1, IA e navegador.

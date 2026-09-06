@@ -174,7 +174,11 @@ jobs:
         run: |
           set -euo pipefail
           token="$VERCEL_TOKEN"
-          unset VERCEL_TOKEN
+          resolved_org="$(node scripts/escuta-vercel-project.mjs)"
+          [ -n "$resolved_org" ] || { echo "::error::Proprietário Vercel não verificado."; exit 1; }
+          export VERCEL_ORG_ID="$resolved_org"
+          echo "::add-mask::$VERCEL_ORG_ID"
+          unset VERCEL_TOKEN resolved_org
 
           # Apenas este projeto possui alias público exclusivo e controlado.
           # O host neuroped.vercel.app pertence a outro aplicativo e nunca deve

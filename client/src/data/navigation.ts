@@ -81,6 +81,13 @@ export const featuredNavigation: NavItem[] = [
     description: "Pré-agendamento pelo BoaConsulta",
   },
   {
+    href: "/escuta-clinica",
+    label: "Escuta Clínica",
+    icon: Waves,
+    tone: "priority",
+    description: "Áudio e anamnese estruturada",
+  },
+  {
     href: "/servicos-clinica",
     label: "Serviços da Clínica",
     icon: Stethoscope,

@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
+import {readFileSync,writeFileSync,mkdirSync} from "node:fs";
+// O prebuild oficial regenera estes três arquivos. Isso não autoriza alteração do código-fonte.
+const generated=new Set(["client/public/sw-build.js","functions/api/_buildInfo.ts","client/src/data/interactiveScaleIds.generated.ts"]);
+const git=(...args)=>execFileSync("git",args,{encoding:"utf8"}).trim();
+const changed=git("diff","--name-only","-z").split("\0").filter(Boolean);
+assert.deepEqual(changed.filter(path=>!generated.has(path)),[],"Código-fonte inesperadamente alterado durante o CI.");
+const sha=git("rev-parse","--short","HEAD");const version=JSON.parse(readFileSync("package.json","utf8")).version;
+const build=readFileSync("functions/api/_buildInfo.ts","utf8");
+const match=build.match(/export const BUILD_INFO = (\{[\s\S]*?\}) as const/);
+assert(match,"Metadados gerados de build ausentes.");
+const info=JSON.parse(match[1]);assert.equal(info.commit,sha);assert.equal(info.version,version);assert(!Number.isNaN(Date.parse(info.buildDate)));
+assert(readFileSync("client/public/sw-build.js","utf8").includes(JSON.stringify(`${version}-${sha}`)),"Service worker não corresponde ao commit testado.");
+const catalog="client/src/data/interactiveScaleIds.generated.ts";const before=readFileSync(catalog,"utf8");
+execFileSync(process.execPath,["--import","tsx","scripts/gen-interactive-scale-ids.mts"],{stdio:"pipe"});
+assert.equal(readFileSync(catalog,"utf8"),before,"Inventário de escalas não reproduzível pelo gerador oficial.");
+mkdirSync("artifacts/escuta",{recursive:true});
+writeFileSync("artifacts/escuta/source-verification.json",JSON.stringify({status:"passed",sourceCommit:git("rev-parse","HEAD"),applicationSourceUnchanged:true,generatedArtifactsVerified:changed,buildInfo:info},null,2));
+console.log("PASS código-fonte inalterado; três saídas oficiais verificadas por SHA, versão e reprodução do inventário.");

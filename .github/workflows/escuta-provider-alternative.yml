@@ -1,0 +1,30 @@
+name: Escuta authorized provider preflight
+on:
+  push:
+    branches: [feat/escuta-clinica-integrada-20260905]
+    paths:
+      - '.github/workflows/escuta-provider-alternative.yml'
+      - 'scripts/escuta-gemini-preflight.mjs'
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify existing Gemini provider credential without displaying it
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node scripts/escuta-gemini-preflight.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: escuta-gemini-preflight-${{ github.run_id }}
+          path: artifacts/escuta/gemini-preflight.json
+          retention-days: 7
