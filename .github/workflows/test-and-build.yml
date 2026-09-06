@@ -82,6 +82,20 @@ jobs:
         run: npm run audit:remote-scale-truth
         continue-on-error: false
 
+      # prebuild regenera este arquivo antes de cada build, mas os testes
+      # importam a versão versionada: se as duas divergirem, o CI passa
+      # contra um conjunto de escalas que não é o que a produção serve.
+      - name: Interactive scale ids match their source
+        run: npm run guard:interactive-scale-ids
+        continue-on-error: false
+
+      # O documento de proveniência declara fonte e status de validação de cada
+      # instrumento. Desatualizado, ele SUBDECLARA quantos aguardam validação
+      # psicométrica — incerteza clínica a menos do que a real.
+      - name: Derived clinical artifacts match the catalog
+        run: npm run guard:clinical-artifacts
+        continue-on-error: false
+
       # Ownership isolation unit tests
       - name: Test Patient And Result Ownership
         run: npm run test:ownership
