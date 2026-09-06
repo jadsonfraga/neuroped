@@ -38,11 +38,12 @@ _ASSET_SOURCE = {
 
 def resource_path(name: str) -> Path:
     """Resolve ativos no fonte e no bundle PyInstaller."""
+    relative = Path(_ASSET_SOURCE[name])
     frozen = getattr(sys, "_MEIPASS", None)
     if frozen:
-        return Path(frozen) / "assets" / name
+        return Path(frozen) / "assets" / relative.name
     root = Path(__file__).resolve().parents[2]
-    return root / "attached_assets" / "images" / _ASSET_SOURCE[name]
+    return root / "attached_assets" / "images" / relative
 
 
 def _photo(app, name: str, size: tuple[int, int], radius: int = 20):
