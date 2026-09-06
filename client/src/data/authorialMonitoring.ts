@@ -18,6 +18,10 @@ interface MonitoringRecord {
   respondents: Respondente[];
   purpose: string;
   signalTags: string[];
+  responseLabels?: string[];
+  optionPoints?: number[];
+  unscoredOptionIndexes?: number[];
+  scoringNote?: string;
   domains: Array<{ name: string; itemIds: string[] }>;
   items: Array<{ id: string; text: string }>;
   redFlags: string[];
@@ -60,6 +64,16 @@ export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
       if (!Array.isArray(r[field]) || r[field].some((x) => typeof x !== "string" || !x.trim())) fail(field);
     }
     if (!r.queixas.length) fail("queixas");
+
+    const responseLabels = r.responseLabels ?? LABELS;
+    if (!Array.isArray(responseLabels) || responseLabels.length < 2 || responseLabels.length > 8 || responseLabels.some((x) => typeof x !== "string" || !x.trim())) fail("opções de resposta");
+    if (new Set(responseLabels).size !== responseLabels.length) fail("opções de resposta duplicadas");
+    if (r.optionPoints !== undefined && (!Array.isArray(r.optionPoints) || r.optionPoints.length !== responseLabels.length || r.optionPoints.some((x) => typeof x !== "number" || !Number.isFinite(x)))) fail("pontuação das opções");
+    if (r.unscoredOptionIndexes !== undefined) {
+      if (!Array.isArray(r.unscoredOptionIndexes) || new Set(r.unscoredOptionIndexes).size !== r.unscoredOptionIndexes.length || r.unscoredOptionIndexes.some((x) => !Number.isInteger(x) || x < 0 || x >= responseLabels.length)) fail("opções sem escore");
+    }
+    if (r.scoringNote !== undefined && (typeof r.scoringNote !== "string" || !r.scoringNote.trim())) fail("regra de apuração");
+
     if (!r.source || !/^sha256:[a-f0-9]{64}$/.test(r.source.integrity) || typeof r.source.filename !== "string" || !r.source.filename.endsWith(".pdf")) fail("proveniência PDF");
     if (!Array.isArray(r.items) || !r.items.length || r.items.some((x) => typeof x.id !== "string" || typeof x.text !== "string" || !x.text.trim())) fail("itens");
     const itemIds = r.items.map((x) => x.id);
@@ -86,12 +100,12 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   tempo: "Não aferido",
   appRoute: `/generic-scale/${r.id}`,
   description: `${r.purpose}. Janela: últimos ${r.timeframeDays} dias. ${WARNING}`,
-  fonte: `PDF autoral fornecido pelo Dr. Jadson Fraga: ${r.source.filename}; v${r.version}; integridade ${r.source.integrity}.`,
+  fonte: `PDF autoral fornecido ao fluxo NeuroPed: ${r.source.filename}; v${r.version}; integridade ${r.source.integrity}.`,
   tipo: "Instrumento autoral de monitorização, não validado",
   licencaUso: "autoral",
   pubmedId: null,
   validacaoBrasil: "Sem validação psicométrica publicada.",
-  scoringCutoff: "Soma descritiva; sem pontos de corte diagnósticos ou de gravidade.",
+  scoringCutoff: r.scoringNote ?? "Soma descritiva; sem pontos de corte diagnósticos ou de gravidade.",
   implementationStatus: "complete",
   pendente_validacao_clinica: r.clinicalReviewStatus !== "reviewed",
   pendencia: r.clinicalReviewStatus !== "reviewed" ? "Rascunho clínico autoral: revisão médica permanece necessária; disponibilidade no app não equivale a validação." : undefined,
@@ -103,18 +117,35 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
 }));
 
 export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Object.fromEntries(
-  authorialMonitoringRecords.map((r) => [r.id, {
-    instruction: `Responda sobre os últimos ${r.timeframeDays} dias. Mantenha o mesmo respondente e contexto; família e escola preenchem separadamente. Se um item não puder ser observado, deixe-o sem resposta: não conclua nem impute zero. Seguimento: Basal, S4, S8 e S12.`,
-    infoBox: `${r.name} — v${r.version}. ${WARNING}${r.redFlags.length ? ` Alertas para avaliação clínica prioritária, independentemente do total: ${r.redFlags.join("; ")}.` : ""}`,
-    labels: [...LABELS],
-    optionPoints: [0, 1, 2, 3],
-    scoreDirection: "higher_worse" as const,
-    totalLabel: `${r.name} — soma descritiva (0–${r.items.length * 3}); sem ponto de corte`,
-    domains: r.domains.map((d) => ({
-      name: d.name,
-      items: d.itemIds.map((id) => ({ text: r.items.find((item) => item.id === id)!.text })),
-    })),
-    // One label for the whole possible range: this is NOT a severity threshold.
-    bands: [{ minPct: 0, classification: "Registro descritivo — sem classificação diagnóstica", color: "amber", description: "Compare com registros anteriores do mesmo respondente e contexto. Queda sugere menor dificuldade relatada; aumento sugere maior dificuldade relatada. Não é evidência isolada de resposta terapêutica ou de diagnóstico. Alertas clínicos independem da soma." }],
-  }]),
+  authorialMonitoringRecords.map((r) => {
+    const labels = r.responseLabels ? [...r.responseLabels] : [...LABELS];
+    const optionPoints = r.optionPoints ? [...r.optionPoints] : labels.map((_, index) => index);
+    const hasUnscoredOptions = (r.unscoredOptionIndexes?.length ?? 0) > 0;
+    const respondentInstruction = r.respondents.includes("professor")
+      ? "Mantenha o mesmo respondente e contexto; família e escola preenchem separadamente."
+      : "Mantenha o mesmo responsável/cuidador e o mesmo ambiente de observação sempre que possível.";
+    const observabilityInstruction = hasUnscoredOptions
+      ? "Quando não houver oportunidade de observar ou a informação for insuficiente, marque NO. NO registra ausência de observabilidade e nunca deve ser convertido em zero. Siga a apuração do PDF: domínio com NO ou item em branco fica incompleto; soma global somente com todos os itens válidos."
+      : "Se um item não puder ser observado, deixe-o sem resposta: não conclua nem impute zero.";
+    const scoringDescription = hasUnscoredOptions
+      ? "O aplicativo registra as respostas por extenso. A apuração numérica é manual conforme o PDF: NO não recebe zero, domínio incompleto não é somado e a soma global só existe com todos os itens válidos. Compare longitudinalmente apenas o mesmo formulário, versão, respondente e ambiente."
+      : "Compare com registros anteriores do mesmo respondente e contexto. Queda sugere menor dificuldade relatada; aumento sugere maior dificuldade relatada. Não é evidência isolada de resposta terapêutica ou de diagnóstico. Alertas clínicos independem da soma.";
+
+    return [r.id, {
+      instruction: `Responda sobre os últimos ${r.timeframeDays} dias. ${respondentInstruction} ${observabilityInstruction} Seguimento: Basal, S4, S8 e S12.`,
+      infoBox: `${r.name} — v${r.version}. ${WARNING}${r.scoringNote ? ` ${r.scoringNote}` : ""}${r.redFlags.length ? ` Alertas independentes da soma: ${r.redFlags.join("; ")}.` : ""}`,
+      labels,
+      optionPoints,
+      scoreDirection: "higher_worse" as const,
+      totalLabel: hasUnscoredOptions
+        ? `${r.name} — apuração manual conforme PDF; NO não recebe zero`
+        : `${r.name} — soma descritiva (0–${r.items.length * 3}); sem ponto de corte`,
+      domains: r.domains.map((d) => ({
+        name: d.name,
+        items: d.itemIds.map((id) => ({ text: r.items.find((item) => item.id === id)!.text })),
+      })),
+      // Uma faixa única evita transformar a soma em classificação de gravidade.
+      bands: [{ minPct: 0, classification: "Registro descritivo — sem classificação diagnóstica", color: "amber", description: scoringDescription }],
+    } satisfies InteractiveScaleDef];
+  }),
 );
