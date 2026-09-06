@@ -250,7 +250,9 @@ export function PreferencesPanel() {
                 className="h-11 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
                 data-testid="range-sound-volume"
               />
-              <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/80">
+              {/* 9px com opacidade 80% media 3.84:1 — abaixo de AA. 10px em cor
+                  cheia mantém a discrição da régua e passa no contraste. */}
+              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
                 <span>Silencioso</span>
                 <span>Discreto</span>
                 <span>Máximo</span>
