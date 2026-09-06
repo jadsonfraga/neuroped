@@ -28,7 +28,7 @@ export function PremiumVisualPanel({
       : "text-base sm:text-lg";
 
   return (
-    <aside
+    <section
       className={`np-brand-visual-panel relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/88 shadow-sm backdrop-blur ${className}`}
     >
       <SafeImage
@@ -93,6 +93,6 @@ export function PremiumVisualPanel({
           </div>
         </div>
       </div>
-    </aside>
+    </section>
   );
 }
