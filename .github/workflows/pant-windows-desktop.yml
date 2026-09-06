@@ -1,0 +1,84 @@
+name: PANT Windows Desktop
+on:
+  push:
+    branches: [feat/pant-intake-python-20260905]
+    paths:
+      - 'tools/pant_intake/**'
+      - '.github/workflows/pant-windows-desktop.yml'
+  pull_request:
+    paths:
+      - 'tools/pant_intake/**'
+      - '.github/workflows/pant-windows-desktop.yml'
+permissions:
+  contents: read
+jobs:
+  windows-desktop:
+    name: Windows executable and native smoke test
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/pant_intake
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Unit tests required
+        run: |
+          python -m unittest discover -s tests -v 2>&1 | Tee-Object -FilePath desktop-tests.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Python regression tests failed' }
+      - name: Native source GUI smoke test
+        run: |
+          python desktop.py --smoke-gui source-gui-smoke.json
+          if ($LASTEXITCODE -ne 0) { throw 'Native source GUI smoke failed' }
+          $proof = Get-Content source-gui-smoke.json -Raw | ConvertFrom-Json
+          if (-not $proof.export_verified -or $proof.drafts -ne 5) { throw 'Source GUI export not verified' }
+      - name: Build standalone executable
+        run: |
+          python -m pip install --disable-pip-version-check pyinstaller==6.22.2
+          if ($LASTEXITCODE -ne 0) { throw 'Build dependency installation failed' }
+          python -m PyInstaller --clean --noconfirm --onefile --windowed --name NeuroPedFluxo --paths . desktop.py
+          if ($LASTEXITCODE -ne 0) { throw 'Windows executable build failed' }
+      - name: Test the packaged executable without Python on PATH
+        run: |
+          $savedPath = $env:PATH
+          $report = Join-Path (Get-Location) 'windows-exe-smoke.json'
+          try {
+            $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+            $p = Start-Process -FilePath '.\dist\NeuroPedFluxo.exe' -ArgumentList @('--smoke-gui', $report) -Wait -PassThru
+            if ($p.ExitCode -ne 0) { throw "Packaged executable failed: $($p.ExitCode)" }
+          } finally { $env:PATH = $savedPath }
+          $proof = Get-Content $report -Raw | ConvertFrom-Json
+          if (-not $proof.frozen -or -not $proof.export_verified -or $proof.platform -ne 'win32' -or $proof.final_pdfs_emitted -ne 0) { throw 'Frozen executable evidence invalid' }
+      - name: Prepare verifiable portable package
+        run: |
+          New-Item -ItemType Directory -Path release -ErrorAction Stop | Out-Null
+          Copy-Item dist/NeuroPedFluxo.exe release/NeuroPedFluxo.exe
+          Copy-Item DESKTOP.md release/LEIA_PRIMEIRO.md
+          Copy-Item windows-exe-smoke.json release/TESTE_WINDOWS.json
+          Copy-Item desktop-tests.txt release/TESTES.txt
+          (Get-FileHash release/NeuroPedFluxo.exe -Algorithm SHA256).Hash | Set-Content release/EXECUTAVEL_SHA256.txt
+          git rev-parse HEAD | Set-Content release/BUILD_COMMIT.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Missing source revision' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NeuroPed-Fluxo-Desktop-1.1.0-Windows-x64
+          path: tools/pant_intake/release/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NeuroPed-Fluxo-Desktop-source-1.1.0
+          path: |
+            tools/pant_intake/*.py
+            tools/pant_intake/*.md
+            tools/pant_intake/neuroped_fluxo/*.py
+            tools/pant_intake/exemplos/*.json
+            tools/pant_intake/tests/*.py
+          if-no-files-found: error
+          retention-days: 14
