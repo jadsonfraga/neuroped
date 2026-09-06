@@ -1,0 +1,40 @@
+name: TMP regenerate clinical artifacts
+on:
+  push:
+    branches:
+      - fix/authorial-pipeline-e2e-20260905
+    paths:
+      - '.github/workflows/tmp-regenerate-clinical-artifacts.yml'
+permissions:
+  contents: write
+concurrency:
+  group: tmp-regenerate-clinical-artifacts
+  cancel-in-progress: false
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/authorial-pipeline-e2e-20260905
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Regenerar somente artefatos derivados oficiais
+        run: |
+          npm run gen:interactive-scale-ids
+          npm run validate:catalog
+      - name: Versionar saída determinística
+        run: |
+          git config user.name "neuroped-artifact-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add client/src/data/interactiveScaleIds.generated.ts docs/PROVENIENCIA_CLINICA.md
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração derivada necessária."
+            exit 0
+          fi
+          git commit -m "chore(catalog): ressincronizar artefatos clínicos derivados"
+          git push origin HEAD:fix/authorial-pipeline-e2e-20260905
