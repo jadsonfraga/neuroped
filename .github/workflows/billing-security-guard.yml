@@ -63,6 +63,9 @@ jobs:
       - name: Adversarial webhook and seat attacks
         run: node --import tsx tests/unit/saas-billing-adversarial.test.ts
 
+      - name: Invitation bearer delivery remains fail-closed
+        run: node --import tsx tests/unit/saas-billing-invitation-delivery.test.ts
+
       - name: Production wiring remains server authoritative
         run: node tests/unit/saas-billing-production-wiring.test.mjs
 
