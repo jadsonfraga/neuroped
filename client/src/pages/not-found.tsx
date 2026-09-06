@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import { createPortal } from "react-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
@@ -25,17 +26,18 @@ export default function NotFound() {
     );
   }
 
-  // Superfície institucional pública, deliberadamente fullscreen. Enquanto o
-  // roteador principal cresce, o catch-all fornece uma entrada real, code-split
-  // e sem acesso a dados clínicos. A navegação e a política pública mantêm essa
-  // rota explicitamente registradas e auditadas.
-  if (location === "/especialidades") {
-    return (
+  // Superfície institucional pública, deliberadamente fullscreen. O portal
+  // remove a página do contexto transformado/overflow do PageTransition e do
+  // Layout clínico, de modo que o resultado renderizado ocupe o viewport real
+  // sem a sidebar por baixo. Não há acesso a dados clínicos nesta superfície.
+  if (location === "/especialidades" && typeof document !== "undefined") {
+    return createPortal(
       <div className="fixed inset-0 z-[100] overflow-y-auto bg-background" data-testid="especialidades-premium-surface">
         <Suspense fallback={null}>
           <EspecialidadesPremiumPage />
         </Suspense>
-      </div>
+      </div>,
+      document.body,
     );
   }
 
