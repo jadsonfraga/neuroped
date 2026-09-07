@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 258
-- **Com fonte declarada:** 258 (100.0%)
+- **Total de instrumentos:** 262
+- **Com fonte declarada:** 262 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 82 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 86 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -23,6 +23,7 @@
 | `asq-suicide` | ASQ | Horowitz LM et al., 2012 (Ask Suicide-Screening Questions) | não | não |
 | `asq3` | ASQ-3 | Squires J & Bricker D, 2009 | não | não |
 | `atec` | ATEC | Rimland B & Edelson SM — Autism Research Institute (ATEC) | não | não |
+| `balanco-med-24-sdg` | BALANÇO-MED 24 | PDF autoral fornecido ao fluxo NeuroPed: BALANCO_MED_24_v1.1_NeuroPed_SDG.pdf; v1.1-app; integridade sha256:98326fc57f8a4ee19c3c37769fddaf067a9064fe52fd529d40d85300ad18ea74. | não | sim |
 | `ballard` | Ballard | Ballard JL et al., 1991 (New Ballard Score) | não | não |
 | `bars` | BARS | Barnes TRE, 1989 (Barnes Akathisia Rating Scale) | não | não |
 | `bears` | BEARS | Owens JA & Dalzell V, 2005 - Brown University | não | não |
@@ -199,6 +200,7 @@
 | `lsss` | LSSS | Baker GA et al., 1991 (Liverpool Seizure Severity Scale) | não | não |
 | `macs` | MACS | Eliasson AC et al., 2006 (MACS) | não | não |
 | `mapa-360` | MAPA-360 NeuroPed | 2026-07-03_ESCALA_AUTORAL_MAPA-360_NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1NwNXTRm2HNC1v1J_kiYRVaVY3_Uy-26dyInqHbC27tI/edit | não | sim |
+| `mapa-ri-18-sdg` | MAPA-RI 18 | PDF autoral fornecido ao fluxo NeuroPed: MAPA_RI_18_v1.1_NeuroPed_SDG.pdf; v1.1-app; integridade sha256:c1035675085d14a4f97a415abbc20dc577da7b99a59368b2bd4372b95dcde885. | não | sim |
 | `mchat` | M-CHAT-R/F | Robins DL et al., 2014 - Pediatrics | não | não |
 | `mini-macs` | Mini-MACS | Eliasson AC, Ullenhag A, Wahlström U, Krumlinde-Sundholm L, 2017 (Mini-MACS) — Dev Med Child Neurol 59(1):72-78. PMID 27273427 · doi:10.1111/dmcn.13162 | não | não |
 | `mnp-psi-100` | MATRIX-NEUROPED PSI 100 | 2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1M5DH27_CCCZiwV2O7Xe43OIoYsznG8cV0HsgfE74rqU/edit | não | não |
@@ -218,6 +220,7 @@
 | `nefi-ped-96` | NEFI-PED 96 | 2026-06-27_ESCALA_AUTORAL_NEFI-PED_96_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1w_T-YQmk6gdCsRpYscsHbtRURNuoQlzwj2aQ8pFT6YI/edit | não | sim |
 | `nepedq` | Escala Pedagógica Neuropediátrica | NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica \| NeuroPed App — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/16OO1BHZRx06J81BZRtZqnlokJ4Jt33tL/view | não | não |
 | `neurofunc-360` | NEUROFUNC-360 | 2026-07-05_ESCALA_AUTORAL_NEUROFUNC-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ss2fQeYp7LrbAQ63nTdSiCCld_FyTjUrACEMtyBh6yE/edit | não | sim |
+| `nexo-s-24-sdg` | NEXO-S 24 | PDF autoral fornecido ao fluxo NeuroPed: NEXO_S_24_NeuroPed_SDG.pdf; v1.0; integridade sha256:f1ee15559a36827ebeda1f3a33caaeee534909b7c628725bcaf843e092ce706a. | não | sim |
 | `nexus-ped-52` | NEXUS-PED 52 | 2026-06-19_ESCALA_AUTORAL_NEXUS-PED_52_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1SdrxKveoDOH8YwwwEptTlqCaoRFGWQQjh4swqPHimO8/edit | não | sim |
 | `nexus360-neuroped` | NEXUS-360 NeuroPed | Conteúdo autoral criado em 2026-07-09 no projeto Escalas Autorais Dr. Jadson; documento do Drive não confirmado nesta integração. | não | sim |
 | `nrs-pain` | NRS Pain | von Baeyer CL, Spagrud LJ, McCormick JC, Choo E, Neville K, Connelly MA, 2009 (NRS-11) — Pain 143(3):223-227. PMID 19359097 · doi:10.1016/j.pain.2009.03.002 · RESSALVA: os autores apoiam o uso a partir de 8 anos; abaixo disso a evidência é insuficiente. | não | não |
@@ -266,6 +269,7 @@
 | `uku` | UKU | Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale) | não | não |
 | `vanderbilt` | Vanderbilt | Wolraich ML et al., 2003 (NICHQ Vanderbilt) | não | não |
 | `vas-pain` | VAS Pain | Scott J, Huskisson EC, 1976 (Visual Analogue Scale) — Pain 2(2):175-84. PMID 1026900 · RESSALVA: descrição original em adultos; em pediatria costuma ser ancorada por equivalência à FPS-R/NRS (von Baeyer 2009, PMID 19359097). | não | não |
+| `vigia-sd-20-sdg` | VIGIA-SD 20 | PDF autoral fornecido ao fluxo NeuroPed: VIGIA_SD_20_v1.1_NeuroPed_SDG.pdf; v1.1-app; integridade sha256:5c8603630b4071c27c95b397e145c06567e076f6d39a4d25772315f3efe3aeb2. | não | sim |
 | `viking-speech` | Viking Speech Scale | Pennington L, Virella D, Mjøen T, et al., 2013 (Viking Speech Scale) — Res Dev Disabil 34(10):3202-10. PMID 23891732 · doi:10.1016/j.ridd.2013.06.035 | não | não |
 | `who5` | WHO-5 | WHO Collaborating Centre, 1998 | não | não |
 | `wongbaker` | Wong-Baker FACES | Wong DL, Baker CM, 1988 (Wong-Baker FACES Pain Rating Scale) | não | não |
