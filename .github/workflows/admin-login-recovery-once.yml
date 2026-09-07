@@ -1,0 +1,44 @@
+name: One-time admin login recovery
+
+on:
+  push:
+    branches:
+      - fix/admin-login-recovery-20260906
+    paths:
+      - ".github/workflows/admin-login-recovery-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  request-password-reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate production auth and administrator identity secret
+        env:
+          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          set -euo pipefail
+          [ -n "$ADMIN_MAIL" ] || { echo "::error::ADMIN_EMAIL ausente"; exit 1; }
+          echo "::add-mask::$ADMIN_MAIL"
+          case "$ADMIN_MAIL" in *@*) ;; *) echo "::error::ADMIN_EMAIL inválido"; exit 1;; esac
+
+          status="$(curl -sS -o /tmp/health.json -w '%{http_code}' https://neuroped.pages.dev/api/health)"
+          [ "$status" = "200" ] || { echo "::error::Health de produção respondeu HTTP $status"; exit 1; }
+          grep -q '"authentication"' /tmp/health.json || { echo "::error::Health sem estado de autenticação"; exit 1; }
+          echo "Produção e autenticação respondendo."
+
+      - name: Request self-service password reset without exposing credentials
+        env:
+          ADMIN_MAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$ADMIN_MAIL"
+          payload="$(jq -nc --arg email "$ADMIN_MAIL" '{email:$email}')"
+          status="$(curl -sS -o /tmp/reset.json -w '%{http_code}' \
+            -X POST https://neuroped.pages.dev/api/auth/forgot-password \
+            -H 'Content-Type: application/json' \
+            --data "$payload")"
+          [ "$status" = "202" ] || { echo "::error::Recuperação respondeu HTTP $status"; exit 1; }
+          echo "Solicitação de redefinição aceita pelo backend. Nenhuma senha ou token foi exposto."
