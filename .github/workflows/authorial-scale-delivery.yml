@@ -3,8 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'client/src/data/authorialMonitoring.json'
-      - 'client/src/data/authorialMonitoringChannel2026.json'
+      - 'client/src/data/authorialMonitoring*.json'
       - 'client/src/data/daily-authorial/**'
       - 'scripts/authorial_scale_delivery.py'
       - 'scripts/prepare_authorial_delivery_sources.py'
@@ -12,8 +11,7 @@ on:
       - '.github/workflows/authorial-scale-delivery.yml'
   pull_request:
     paths:
-      - 'client/src/data/authorialMonitoring.json'
-      - 'client/src/data/authorialMonitoringChannel2026.json'
+      - 'client/src/data/authorialMonitoring*.json'
       - 'scripts/authorial_scale_delivery.py'
       - 'scripts/prepare_authorial_delivery_sources.py'
       - 'scripts/authorial_delivery_failure.cjs'
@@ -49,7 +47,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - name: Reconciliar fontes autorais sem alterar identidade
+      - name: Reconciliar todas as fontes autorais sem alterar identidade
         run: python3 scripts/prepare_authorial_delivery_sources.py
       - name: Contratos de incidentes e fonte autoral única
         run: node --test tests/unit/authorial-delivery-failure.test.cjs tests/unit/authorial-package-unique.test.mjs
@@ -72,7 +70,7 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.sha || github.event_name == 'push' && github.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
           persist-credentials: false
-      - name: Reconciliar fontes autorais sem alterar identidade
+      - name: Reconciliar todas as fontes autorais sem alterar identidade
         run: python3 scripts/prepare_authorial_delivery_sources.py
       - name: Dependências isoladas
         run: |
