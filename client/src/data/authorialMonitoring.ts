@@ -1,5 +1,6 @@
 import source from "./authorialMonitoring.json";
 import channelSource from "./authorialMonitoringChannel2026.json";
+import mcriSource from "./authorialMonitoringMcri2026.json";
 import type { ScaleEntry, Respondente } from "./scaleFilter";
 import type { InteractiveScaleDef } from "./interactiveScaleItems";
 
@@ -86,7 +87,7 @@ export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
   });
 }
 
-export const authorialMonitoringRecords = validateMonitoringRecords([...source, ...channelSource]);
+export const authorialMonitoringRecords = validateMonitoringRecords([...source, ...channelSource, ...mcriSource]);
 
 export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecords.map((r) => ({
   id: r.id,
