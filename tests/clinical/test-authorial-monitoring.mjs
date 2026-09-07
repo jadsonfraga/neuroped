@@ -16,6 +16,7 @@ const expected = {
   "mapa-ri-18-sdg": { min: 36, max: 215, complaint: "comportamento", respondents: ["pais", "professor"], domainSizes: [5, 4, 5, 4], timeframe: 14, itemCount: 18, labelCount: 5, maxAnswer: 4, maxTotal: 72, hasNo: false, signals: ["irritabilidade", "desregulacao"] },
   "vigia-sd-20-sdg": { min: 24, max: 215, complaint: "sono", respondents: ["pais"], domainSizes: [5, 5, 5, 5], timeframe: 7, itemCount: 20, labelCount: 4, maxAnswer: 3, maxTotal: 60, hasNo: false, signals: ["sono", "sonolencia"] },
   "balanco-med-24-sdg": { min: 0, max: 215, complaint: "comportamento", respondents: ["pais", "clinico"], domainSizes: [5, 5, 5, 5, 4], timeframe: 7, itemCount: 24, labelCount: 4, maxAnswer: 3, maxTotal: 72, hasNo: false, signals: ["medicacao", "tolerabilidade"] },
+  "mcri-24-sdg": { min: 36, max: 215, complaint: "comportamento", respondents: ["pais"], domainSizes: [4, 4, 4, 4, 4, 4], timeframe: 14, itemCount: 24, labelCount: 6, maxAnswer: 4, maxTotal: 96, hasNo: true, signals: ["irritabilidade", "desregulacao", "frustracao"], legacyRaw: false },
 };
 let checks = 0;
 
@@ -27,7 +28,9 @@ for (const [id, e] of Object.entries(expected)) {
   assert.ok(r && entry, id); checks++;
   assert.equal(r.timeframeDays, e.timeframe); checks++;
   assert.deepEqual([entry.ageMin, entry.ageMax], [e.min, e.max]); checks++;
-  assert.equal(escalasImportadasDrive2026.filter((s) => s.id === id).length, 1, `${id}: fonte bruta única`); checks++;
+  if (e.legacyRaw !== false) {
+    assert.equal(escalasImportadasDrive2026.filter((s) => s.id === id).length, 1, `${id}: fonte bruta única`); checks++;
+  }
   assert.equal(allScales.filter((s) => s.id === id).length, 1, `${id}: catálogo visível único`); checks++;
   assert.equal(entry.prioridade, "monitorizacao"); checks++;
   assert.equal(entry.assessmentUse, "monitorizacao"); checks++;
