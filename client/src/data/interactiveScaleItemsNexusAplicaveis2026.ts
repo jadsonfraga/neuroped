@@ -6,6 +6,7 @@
 // ============================================================
 import type { InteractiveScaleDef } from "./interactiveScaleItems";
 import { ipnTea200Items } from "./interactiveScaleItemsIpnTea200";
+import { authorialMonitoringItems } from "./authorialMonitoring";
 
 const FREQ4 = ["Nunca ou raramente", "Às vezes (1–2x/semana)", "Frequentemente (3–4x/semana)", "Quase sempre (diariamente)"];
 
@@ -206,5 +207,8 @@ export const nexusAplicaveis2026Items: Record<string, InteractiveScaleDef> = {
       ] },
     ],
   },
+  // Ponte canônica: itens e regras de resposta dos instrumentos autorais de
+  // monitorização entram no mesmo runner usado pelo /generic-scale/:id.
+  ...authorialMonitoringItems,
   ...ipnTea200Items,
 };
