@@ -1,4 +1,5 @@
 import source from "./authorialMonitoring.json";
+import channelSource from "./authorialMonitoringChannel2026.json";
 import type { ScaleEntry, Respondente } from "./scaleFilter";
 import type { InteractiveScaleDef } from "./interactiveScaleItems";
 
@@ -36,7 +37,7 @@ const LABELS = [
 ];
 const WARNING = "Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.";
 
-/** One source supplies both catalog metadata and the delivered questions. */
+/** Validated authorial sources supply both catalog metadata and delivered questions. */
 export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
   if (!Array.isArray(input)) throw new Error("Catálogo autoral deve ser uma lista.");
   const ids = new Set<string>();
@@ -85,7 +86,7 @@ export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
   });
 }
 
-export const authorialMonitoringRecords = validateMonitoringRecords(source);
+export const authorialMonitoringRecords = validateMonitoringRecords([...source, ...channelSource]);
 
 export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecords.map((r) => ({
   id: r.id,
@@ -121,6 +122,7 @@ export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Obj
     const labels = r.responseLabels ? [...r.responseLabels] : [...LABELS];
     const optionPoints = r.optionPoints ? [...r.optionPoints] : labels.map((_, index) => index);
     const hasUnscoredOptions = (r.unscoredOptionIndexes?.length ?? 0) > 0;
+    const maxScoredPoint = Math.max(0, ...optionPoints.filter((_, index) => !(r.unscoredOptionIndexes ?? []).includes(index)));
     const respondentInstruction = r.respondents.includes("professor")
       ? "Mantenha o mesmo respondente e contexto; família e escola preenchem separadamente."
       : "Mantenha o mesmo responsável/cuidador e o mesmo ambiente de observação sempre que possível.";
@@ -139,7 +141,7 @@ export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Obj
       scoreDirection: "higher_worse" as const,
       totalLabel: hasUnscoredOptions
         ? `${r.name} — apuração manual conforme PDF; NO não recebe zero`
-        : `${r.name} — soma descritiva (0–${r.items.length * 3}); sem ponto de corte`,
+        : `${r.name} — soma descritiva (0–${r.items.length * maxScoredPoint}); sem ponto de corte`,
       domains: r.domains.map((d) => ({
         name: d.name,
         items: d.itemIds.map((id) => ({ text: r.items.find((item) => item.id === id)!.text })),
