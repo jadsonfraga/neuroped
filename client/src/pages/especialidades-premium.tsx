@@ -134,6 +134,10 @@ function BrandHeader() {
           </a>
           <a href="#/" className="transition-colors hover:text-amber-300">Portal Profissional</a>
           <a href="#/sobre" className="transition-colors hover:text-amber-300">Sobre</a>
+          {/* "Contato" é o WhatsApp — não uma página própria. */}
+          <a href={whatsAppHref} target="_blank" rel="noreferrer" className="transition-colors hover:text-amber-300">
+            Contato
+          </a>
         </nav>
 
         <div className="ml-auto hidden items-center gap-3 xl:flex">
@@ -287,13 +291,18 @@ export default function EspecialidadesPremiumPage() {
             </div>
 
             <div className="flex min-h-0 flex-col gap-3">
+              {/* Era a sala vazia com o manequim de Super-Homem — sem o médico
+                  presente. Retrato de jaleco no lugar: o mesmo tratamento de
+                  enquadramento do PremiumVisualPanel (`center 18%`), porque a
+                  foto é vertical e a caixa é mais larga que alta. */}
               <div className="relative min-h-[15rem] flex-1 overflow-hidden rounded-[1.8rem] border-4 border-white bg-white shadow-[0_24px_55px_-38px_hsl(214_76%_11%/0.7)]">
                 <img
-                  src={brandAssets.mascots.consultorioFull}
-                  alt="Dr. Jadson Fraga em ambiente de atendimento infantil"
+                  src={brandAssets.photography.retratoJaleco}
+                  alt="Dr. Jadson Fraga, neuropediatra"
                   loading="eager"
                   decoding="async"
-                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ objectPosition: "center 18%" }}
                 />
                 {/* Era um degradê difuso (`from-.../0.78 to-transparent`) medido a
                     3,90:1 — a opacidade real no ponto exato do texto depende de
