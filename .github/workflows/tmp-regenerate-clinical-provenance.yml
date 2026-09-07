@@ -1,0 +1,39 @@
+name: Temporary regenerate clinical provenance
+
+on:
+  push:
+    branches:
+      - fix/proveniencia-nexo-s-831
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Regenerate derived clinical provenance
+        run: npm run validate:catalog
+      - name: Commit only the generated provenance artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- client/src/data/authorialMonitoring.json client/src/data/scaleFilter.ts
+          if git diff --quiet -- docs/PROVENIENCIA_CLINICA.md; then
+            echo "docs/PROVENIENCIA_CLINICA.md já está sincronizado."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/PROVENIENCIA_CLINICA.md
+          git diff --cached --name-only | grep -qx 'docs/PROVENIENCIA_CLINICA.md'
+          git commit -m "chore: regenerate clinical provenance"
+          git push origin HEAD:${GITHUB_REF_NAME}
