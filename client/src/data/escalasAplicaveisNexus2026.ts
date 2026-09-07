@@ -16,6 +16,7 @@ import { escalasIpnTdahFe200 } from "./escalasIpnTdahFe200";
 import { escalasIpnPcFun200 } from "./escalasIpnPcFun200";
 import { escalasIpnLfc200 } from "./escalasIpnLfc200";
 import { escalasIpnEpiSeg200 } from "./escalasIpnEpiSeg200";
+import { authorialMonitoringCatalog } from "./authorialMonitoring";
 
 const PENDENCIA_VALIDACAO_AUTORAL =
   "Instrumento autoral em desenvolvimento; conteúdo, propriedades psicométricas e uso clínico aguardam validação formal.";
@@ -155,6 +156,9 @@ export const escalasAplicaveisNexus2026: ScaleEntry[] = [
     applicationMode: "questionario_pais",
     signalTags: ["revivescência", "pesadelos", "evitação", "sobressalto", "regressão", "irritabilidade", "brincar repetitivo do evento"],
   },
+  // Ponte canônica: instrumentos autorais de monitorização (JSON + itens) entram
+  // no mesmo catálogo aplicável consumido pelo filtro e pelo /generic-scale/:id.
+  ...authorialMonitoringCatalog,
   ...escalasIpnTea200,
   ...escalasIpnTdahFe200,
   ...escalasIpnPcFun200,
