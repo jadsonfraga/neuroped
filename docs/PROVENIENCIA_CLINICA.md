@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 262
-- **Com fonte declarada:** 262 (100.0%)
+- **Total de instrumentos:** 263
+- **Com fonte declarada:** 263 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 86 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 87 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -202,6 +202,7 @@
 | `mapa-360` | MAPA-360 NeuroPed | 2026-07-03_ESCALA_AUTORAL_MAPA-360_NEUROPED_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1NwNXTRm2HNC1v1J_kiYRVaVY3_Uy-26dyInqHbC27tI/edit | não | sim |
 | `mapa-ri-18-sdg` | MAPA-RI 18 | PDF autoral fornecido ao fluxo NeuroPed: MAPA_RI_18_v1.1_NeuroPed_SDG.pdf; v1.1-app; integridade sha256:c1035675085d14a4f97a415abbc20dc577da7b99a59368b2bd4372b95dcde885. | não | sim |
 | `mchat` | M-CHAT-R/F | Robins DL et al., 2014 - Pediatrics | não | não |
+| `mcri-24-sdg` | MCRI-24 | PDF autoral fornecido ao fluxo NeuroPed: MCRI_24_NeuroPed_SDG.pdf; v1.0; integridade sha256:80d31ddc68467a6db8edc86b973665823c3bd9956cad518640046deee5016d6f. | não | sim |
 | `mini-macs` | Mini-MACS | Eliasson AC, Ullenhag A, Wahlström U, Krumlinde-Sundholm L, 2017 (Mini-MACS) — Dev Med Child Neurol 59(1):72-78. PMID 27273427 · doi:10.1111/dmcn.13162 | não | não |
 | `mnp-psi-100` | MATRIX-NEUROPED PSI 100 | 2026-06-29_ESCALA_AUTORAL_MATRIX_NEUROPED_PSI_100_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://docs.google.com/document/d/1M5DH27_CCCZiwV2O7Xe43OIoYsznG8cV0HsgfE74rqU/edit | não | não |
 | `mosaico-np-72` | MOSAICO-NP 72 | 2026-07-12_ESCALA_AUTORAL_MOSAICO_NP_72_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1e-1NNgQl2MjbowMNo7Tv6taRVIv7flQDEO9ikYRc1-E/edit | não | sim |
