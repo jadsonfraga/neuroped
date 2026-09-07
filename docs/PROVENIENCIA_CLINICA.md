@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 258
-- **Com fonte declarada:** 258 (100.0%)
+- **Total de instrumentos:** 259
+- **Com fonte declarada:** 259 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 82 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 83 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -218,6 +218,7 @@
 | `nefi-ped-96` | NEFI-PED 96 | 2026-06-27_ESCALA_AUTORAL_NEFI-PED_96_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1w_T-YQmk6gdCsRpYscsHbtRURNuoQlzwj2aQ8pFT6YI/edit | não | sim |
 | `nepedq` | Escala Pedagógica Neuropediátrica | NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica \| NeuroPed App — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/16OO1BHZRx06J81BZRtZqnlokJ4Jt33tL/view | não | não |
 | `neurofunc-360` | NEUROFUNC-360 | 2026-07-05_ESCALA_AUTORAL_NEUROFUNC-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ss2fQeYp7LrbAQ63nTdSiCCld_FyTjUrACEMtyBh6yE/edit | não | sim |
+| `nexo-s-24-sdg` | NEXO-S 24 | PDF autoral fornecido ao fluxo NeuroPed: NEXO_S_24_NeuroPed_SDG.pdf; v1.0; integridade sha256:f1ee15559a36827ebeda1f3a33caaeee534909b7c628725bcaf843e092ce706a. | não | sim |
 | `nexus-ped-52` | NEXUS-PED 52 | 2026-06-19_ESCALA_AUTORAL_NEXUS-PED_52_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1SdrxKveoDOH8YwwwEptTlqCaoRFGWQQjh4swqPHimO8/edit | não | sim |
 | `nexus360-neuroped` | NEXUS-360 NeuroPed | Conteúdo autoral criado em 2026-07-09 no projeto Escalas Autorais Dr. Jadson; documento do Drive não confirmado nesta integração. | não | sim |
 | `nrs-pain` | NRS Pain | von Baeyer CL, Spagrud LJ, McCormick JC, Choo E, Neville K, Connelly MA, 2009 (NRS-11) — Pain 143(3):223-227. PMID 19359097 · doi:10.1016/j.pain.2009.03.002 · RESSALVA: os autores apoiam o uso a partir de 8 anos; abaixo disso a evidência é insuficiente. | não | não |
