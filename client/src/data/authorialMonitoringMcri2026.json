@@ -1,0 +1,79 @@
+[
+  {
+    "id": "mcri-24-sdg",
+    "version": "1.0",
+    "name": "MCRI-24",
+    "fullName": "Mapa Clínico de Regulação e Irritabilidade",
+    "author": "Dr. Jadson Fraga",
+    "brand": "NeuroPed SDG",
+    "validationStatus": "not_validated_authorial",
+    "clinicalReviewStatus": "pending",
+    "ageMinMonths": 36,
+    "ageMaxMonths": 215,
+    "timeframeDays": 14,
+    "queixas": ["comportamento"],
+    "respondents": ["pais"],
+    "purpose": "monitorar longitudinalmente limiar de frustração, escalada da desregulação, recuperação, flexibilidade e transições, influência do contexto e impacto funcional e de segurança",
+    "signalTags": ["irritabilidade", "desregulacao", "frustracao", "escalada", "recuperacao", "flexibilidade", "transicao", "sobrecarga", "impacto funcional", "agressividade", "autorregulacao"],
+    "responseLabels": [
+      "0 — não ocorreu",
+      "1 — raro/leve, sem mudar a rotina",
+      "2 — algumas vezes, exigiu apoio breve",
+      "3 — frequente ou com interferência clara",
+      "4 — muito frequente/intenso, impediu atividade ou gerou risco",
+      "NO — não observado/informação insuficiente"
+    ],
+    "optionPoints": [0, 1, 2, 3, 4, 0],
+    "unscoredOptionIndexes": [5],
+    "scoringNote": "Apuração descritiva manual. Some os quatro itens de cada domínio apenas quando todos forem válidos (0 a 16 por domínio). NO ou item em branco torna o domínio incompleto e nunca recebe zero. Soma global opcional de 0 a 96 somente com os 24 itens válidos. Sem pontos de corte, percentis ou classificação de gravidade validada.",
+    "domains": [
+      {"name": "A. Limiar de frustração", "itemIds": ["1", "2", "3", "4"]},
+      {"name": "B. Escalada da desregulação", "itemIds": ["5", "6", "7", "8"]},
+      {"name": "C. Recuperação após o episódio", "itemIds": ["9", "10", "11", "12"]},
+      {"name": "D. Flexibilidade e transições", "itemIds": ["13", "14", "15", "16"]},
+      {"name": "E. Contexto e sobrecarga", "itemIds": ["17", "18", "19", "20"]},
+      {"name": "F. Impacto funcional e segurança", "itemIds": ["21", "22", "23", "24"]}
+    ],
+    "items": [
+      {"id": "1", "text": "Pequenas negativas, limites ou contratempos provocaram mudança rápida de humor ou irritação."},
+      {"id": "2", "text": "Quando algo não saiu como esperava, teve dificuldade para aceitar o resultado e seguir adiante."},
+      {"id": "3", "text": "Precisou de várias concessões, negociações ou mudanças do adulto para tolerar uma frustração comum do dia."},
+      {"id": "4", "text": "Sinais de incômodo apareceram antes de conseguir explicar, pedir ajuda ou comunicar o que precisava."},
+      {"id": "5", "text": "A reação aumentou mesmo depois de receber uma proposta de ajuda simples e clara."},
+      {"id": "6", "text": "Choro, gritos, agitação corporal ou comportamento agressivo ganharam intensidade em poucos minutos."},
+      {"id": "7", "text": "Durante o episódio, teve dificuldade para interromper ações impulsivas mesmo após orientação direta do adulto."},
+      {"id": "8", "text": "Foi necessário retirar demandas, pessoas ou objetos do ambiente para reduzir risco ou impedir piora."},
+      {"id": "9", "text": "Demorou mais que o habitual para recuperar calma suficiente para conversar ou retomar uma atividade."},
+      {"id": "10", "text": "Depois de parecer mais calmo, voltou a se desregular ao lembrar do que havia acontecido."},
+      {"id": "11", "text": "Precisou de apoio contínuo de um adulto para conseguir organizar-se novamente."},
+      {"id": "12", "text": "Retornou à atividade ainda irritado, agitado ou abalado e não conseguiu mantê-la como de costume."},
+      {"id": "13", "text": "Mudanças simples na sequência do dia provocaram irritação ou resistência maior que o esperado para a situação."},
+      {"id": "14", "text": "Encerrar uma atividade preferida para iniciar outra gerou reação difícil de manejar."},
+      {"id": "15", "text": "Teve dificuldade para aceitar uma alternativa razoável quando a primeira opção não estava disponível."},
+      {"id": "16", "text": "Mesmo com aviso prévio ou preparação, uma transição desencadeou desconforto ou desorganização importante."},
+      {"id": "17", "text": "Cansaço, fome ou sono ruim coincidiram com piora clara da irritabilidade ou da capacidade de se regular."},
+      {"id": "18", "text": "Ambientes muito ruidosos, quentes, cheios ou estimulantes antecederam episódios de desregulação."},
+      {"id": "19", "text": "Várias demandas em sequência aumentaram progressivamente a irritação, a oposição ou a agitação."},
+      {"id": "20", "text": "Conflitos sociais, dificuldade de comunicação ou sentir-se mal compreendido contribuíram para a desregulação."},
+      {"id": "21", "text": "Um episódio impediu ou atrasou de forma relevante autocuidado, alimentação, sono, tarefa ou outra rotina necessária."},
+      {"id": "22", "text": "A desregulação interrompeu escola, terapia, passeio ou atividade familiar que estava planejada."},
+      {"id": "23", "text": "Houve fuga, corrida para local inseguro, arremesso de objetos, agressão ou autoagressão exigindo proteção ativa do adulto."},
+      {"id": "24", "text": "A família, escola ou equipe precisou mudar planos ou aumentar supervisão de forma importante por causa dos episódios."}
+    ],
+    "redFlags": [
+      "Autoagressão, fala de morte ou risco suicida.",
+      "Agressão com risco relevante para outras pessoas.",
+      "Fuga, corrida para via pública, altura, água ou outro ambiente de risco.",
+      "Alteração aguda do nível de consciência, confusão ou comportamento muito diferente do habitual.",
+      "Perda de habilidades previamente adquiridas ou regressão funcional.",
+      "Piora abrupta associada a início, suspensão ou mudança de dose de medicação, ou acompanhada de dor, febre ou doença clínica.",
+      "Em emergência com risco imediato à vida ou segurança, acione o SAMU 192."
+    ],
+    "source": {
+      "filename": "MCRI_24_NeuroPed_SDG.pdf",
+      "integrity": "sha256:80d31ddc68467a6db8edc86b973665823c3bd9956cad518640046deee5016d6f",
+      "date": "2026-09-07",
+      "kind": "conversation_generated_authorial_pdf"
+    }
+  }
+]
