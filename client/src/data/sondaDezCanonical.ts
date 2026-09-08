@@ -10,6 +10,12 @@ export type SondaResponseCode = "E" | "I" | "P" | "0" | "NA";
 
 export const SONDA_DEZ_VERSION = "2026-09-08";
 
+export const SONDA_DEZ_PROVENANCE = {
+  source: "AFN-10 / Sonda Dez",
+  instrumentType: "registro observacional clínico piloto",
+  validationStatus: "não psicométrico; sem normas, percentis ou pontos de corte",
+} as const;
+
 export const SONDA_DEZ_GOLDEN_RULES = [
   "Registre o que você viu nesta aplicação, não substitua pelo relato do responsável.",
   "Ajuda conta como ajuda: não converta resposta mediada em desempenho independente.",
