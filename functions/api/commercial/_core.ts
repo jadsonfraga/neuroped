@@ -17,7 +17,8 @@ export interface CommercialLicenseSnapshot {
   offerName: string;
   priceCents: number;
   currency: string;
-  contractVersion: string;
+  /** Snapshots reais sempre carregam a versão; opcional só preserva fixtures legadas. */
+  contractVersion?: string;
   status: CommercialLicenseStatus;
   unitLabel: string;
   activatedAt: string | null;
@@ -171,7 +172,7 @@ export function evaluateCommercialAccess(
 ): { ok: true } | { ok: false; reason: CommercialAccessDeniedReason } {
   if (!snapshot) return { ok: false, reason: "COMMERCIAL_LICENSE_MISSING" };
   const offer = getCommercialOffer(snapshot.offerCode);
-  if (!offer || snapshot.contractVersion !== offer.termsVersion) {
+  if (!offer || (snapshot.contractVersion && snapshot.contractVersion !== offer.termsVersion)) {
     return { ok: false, reason: "COMMERCIAL_OFFER_UNKNOWN" };
   }
   if (
