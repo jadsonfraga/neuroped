@@ -15,12 +15,18 @@ function cleanText(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+function cleanAuditReason(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.replace(/\s+/g, " ").trim().slice(0, 240);
+}
+
 /**
  * POST /api/commercial/provision
  *
  * Operação de plataforma, não de tenant: cria uma licença PENDENTE depois que
  * a oportunidade comercial foi aprovada/conciliada. Não concede acesso e não
- * aceita termos em nome da instituição.
+ * aceita termos em nome da instituição. Toda ação exige justificativa humana
+ * curta e auditável; não inserir PHI nesse campo.
  */
 export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (context) => {
   const db = context.env.DB;
@@ -47,9 +53,17 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   const unitLabel = cleanText(body.unitLabel, 120);
   const contractVersion = cleanText(body.contractVersion, 80);
   const billingReference = cleanText(body.billingReference, 120);
-  if (!clinicId || !offerCode || !unitLabel || !contractVersion || !billingReference) {
+  const reason = cleanAuditReason(body.reason);
+  if (
+    !clinicId ||
+    !offerCode ||
+    !unitLabel ||
+    !contractVersion ||
+    !billingReference ||
+    reason.length < 12
+  ) {
     return tenantError(
-      "clinicId, offerCode, unitLabel, contractVersion e billingReference são obrigatórios.",
+      "clinicId, offerCode, unitLabel, contractVersion, billingReference e reason (mín. 12 caracteres) são obrigatórios.",
       "COMMERCIAL_PROVISION_VALIDATION_ERROR",
       400,
     );
@@ -95,7 +109,8 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
 
   if (offer.maxLicenses !== null) {
     // maxLicenses é teto histórico do SKU/coorte. Cancelamento/expiração não
-    // deve reabrir silenciosamente uma quarta vaga do piloto.
+    // deve reabrir silenciosamente uma quarta vaga do piloto. O trigger do D1
+    // repete esta regra atomicamente para eliminar corrida entre admins.
     const countRow = await db
       .prepare(
         `SELECT COUNT(*) AS total
@@ -143,7 +158,12 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
         action: "commercial_license_provisioned",
         targetType: "commercial_license",
         targetId: licenseId,
-        metadata: { offerCode: offer.code, status: "pending" },
+        metadata: {
+          offerCode: offer.code,
+          status: "pending",
+          scope: "commercial_license_provision",
+          reason,
+        },
       }),
     ]);
   } catch (error) {
