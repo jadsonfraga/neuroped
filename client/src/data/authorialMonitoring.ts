@@ -38,7 +38,7 @@ const LABELS = [
 ];
 const WARNING = "Instrumento clínico autoral de monitorização NeuroPed SDG. Não é teste psicométrico validado e não deve ser usado isoladamente para diagnóstico, indicação terapêutica ou perícia. Não há pontos de corte diagnósticos nem classificação de gravidade validada.";
 
-/** Validated authorial sources supply both catalog metadata and delivered questions. */
+/** Schema-validated authorial sources supply both catalog metadata and delivered questions. This is structural validation only, not clinical or psychometric validation. */
 export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
   if (!Array.isArray(input)) throw new Error("Catálogo autoral deve ser uma lista.");
   const ids = new Set<string>();
@@ -102,7 +102,7 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   tempo: "Não aferido",
   appRoute: `/generic-scale/${r.id}`,
   description: `${r.purpose}. Janela: últimos ${r.timeframeDays} dias. ${WARNING}`,
-  fonte: `PDF autoral fornecido ao fluxo NeuroPed: ${r.source.filename}; v${r.version}; integridade ${r.source.integrity}.`,
+  fonte: `Proveniência autoral registrada: ${r.source.filename}; v${r.version}; integridade ${r.source.integrity}.`,
   tipo: "Instrumento autoral de monitorização, não validado",
   licencaUso: "autoral",
   pubmedId: null,
@@ -126,7 +126,9 @@ export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Obj
     const maxScoredPoint = Math.max(0, ...optionPoints.filter((_, index) => !(r.unscoredOptionIndexes ?? []).includes(index)));
     const respondentInstruction = r.respondents.includes("professor")
       ? "Mantenha o mesmo respondente e contexto; família e escola preenchem separadamente."
-      : "Mantenha o mesmo responsável/cuidador e o mesmo ambiente de observação sempre que possível.";
+      : r.respondents.includes("clinico")
+        ? "Mantenha o mesmo respondente e contexto por aplicação; cuidador e clínico registram separadamente quando ambos forem utilizados."
+        : "Mantenha o mesmo responsável/cuidador e o mesmo ambiente de observação sempre que possível.";
     const observabilityInstruction = hasUnscoredOptions
       ? "Quando não houver oportunidade de observar ou a informação for insuficiente, marque NO. NO registra ausência de observabilidade e nunca deve ser convertido em zero. Siga a apuração do PDF: domínio com NO ou item em branco fica incompleto; soma global somente com todos os itens válidos."
       : "Se um item não puder ser observado, deixe-o sem resposta: não conclua nem impute zero.";
@@ -135,7 +137,7 @@ export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Obj
       : "Compare com registros anteriores do mesmo respondente e contexto. Queda sugere menor dificuldade relatada; aumento sugere maior dificuldade relatada. Não é evidência isolada de resposta terapêutica ou de diagnóstico. Alertas clínicos independem da soma.";
 
     return [r.id, {
-      instruction: `Responda sobre os últimos ${r.timeframeDays} dias. ${respondentInstruction} ${observabilityInstruction} Seguimento: Basal, S4, S8 e S12.`,
+      instruction: `Responda sobre os últimos ${r.timeframeDays} dias. ${respondentInstruction} ${observabilityInstruction} Repita no intervalo definido pelo plano clínico, mantendo versão, respondente e contexto comparáveis.`,
       infoBox: `${r.name} — v${r.version}. ${WARNING}${r.scoringNote ? ` ${r.scoringNote}` : ""}${r.redFlags.length ? ` Alertas independentes da soma: ${r.redFlags.join("; ")}.` : ""}`,
       labels,
       optionPoints,
