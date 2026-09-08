@@ -28,9 +28,9 @@ function cleanAuditReason(value: unknown): string {
  * aceita termos em nome da instituição. Toda ação exige justificativa humana
  * curta e auditável; não inserir PHI nesse campo.
  *
- * A versão contratual é derivada do offer canônico. O cliente pode enviar
- * `termsVersion` somente como precondição otimista; se divergir, a operação
- * falha em vez de criar uma licença contra termos inventados/desatualizados.
+ * A versão contratual é derivada do offer canônico e gravada em
+ * `commercial_licenses.contract_version`. O cliente pode enviá-la somente
+ * como precondição otimista; se divergir, a operação falha.
  */
 export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (context) => {
   const db = context.env.DB;
@@ -82,7 +82,6 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   const expansionGateOpen = context.env.COMMERCIAL_EXPANSION_GATE_OPEN?.trim().toLowerCase() === "true";
   const orderGate = canOrderCommercialOffer({
     offerCode,
-    // Provisionar o piloto pela plataforma equivale a um convite explícito.
     invited: offer.saleMode === "invite_only",
     expansionGateOpen,
   });
@@ -115,9 +114,6 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   }
 
   if (offer.maxLicenses !== null) {
-    // maxLicenses é teto histórico do SKU/coorte. Cancelamento/expiração não
-    // deve reabrir silenciosamente uma quarta vaga do piloto. O trigger do D1
-    // repete esta regra atomicamente para eliminar corrida entre admins.
     const countRow = await db
       .prepare(
         `SELECT COUNT(*) AS total
@@ -133,23 +129,11 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   }
 
   const offerRow = await db
-    .prepare(
-      `SELECT id, terms_version
-         FROM commercial_offers
-        WHERE code = ? AND lifecycle_status = 'active'
-        LIMIT 1`,
-    )
+    .prepare(`SELECT id FROM commercial_offers WHERE code = ? AND lifecycle_status = 'active' LIMIT 1`)
     .bind(offer.code)
-    .first<{ id: string; terms_version: string | null }>();
+    .first<{ id: string }>();
   if (!offerRow) {
     return tenantError("Oferta não está persistida/ativa neste ambiente.", "COMMERCIAL_OFFER_NOT_PERSISTED", 503);
-  }
-  if (offerRow.terms_version !== offer.termsVersion) {
-    return tenantError(
-      "Versão contratual persistida diverge do domínio canônico.",
-      "COMMERCIAL_OFFER_TERMS_DRIFT",
-      503,
-    );
   }
 
   const licenseId = crypto.randomUUID();
