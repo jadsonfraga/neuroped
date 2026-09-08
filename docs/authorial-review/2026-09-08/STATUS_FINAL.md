@@ -28,3 +28,7 @@ Este arquivo supersede o estado de decisão pendente descrito no snapshot inicia
 ## Regra semântica
 
 `reviewed` significa revisão clínica/editorial concluída pelo autor. Não significa validação psicométrica, normatização, ponto de corte diagnóstico, sensibilidade/especificidade demonstradas ou validação pericial.
+
+## Estado de integração
+
+A aprovação foi aplicada na branch de auditoria e permanece sujeita às travas automáticas do repositório antes de incorporação ao `main`. O snapshot histórico e os PDFs-base permanecem inalterados; qualquer regeneração futura de PDF deverá receber nova versão/hash e declarar sua linhagem de origem.
