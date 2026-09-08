@@ -1,0 +1,54 @@
+name: Sonda Dez consolidation guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "client/src/data/sondaDezCanonical.ts"
+      - "client/src/pages/sonda-dez-daily.tsx"
+      - "client/src/components/sonda-dez/SondaDezDailyCore.tsx"
+      - "client/src/pages/testes-diretos.tsx"
+      - "tests/unit/sonda-dez-consolidation.test.ts"
+      - ".github/workflows/sonda-dez-consolidation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "client/src/data/sondaDezCanonical.ts"
+      - "client/src/pages/sonda-dez-daily.tsx"
+      - "client/src/components/sonda-dez/SondaDezDailyCore.tsx"
+      - "client/src/pages/testes-diretos.tsx"
+      - "tests/unit/sonda-dez-consolidation.test.ts"
+      - ".github/workflows/sonda-dez-consolidation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  consolidation:
+    name: Sonda Dez canonical consolidation
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Canonical Sonda regression
+        run: node --import tsx tests/unit/sonda-dez-consolidation.test.ts
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Inventory and design anti-regression
+        run: npm run audit:inventory && npm run audit:design
