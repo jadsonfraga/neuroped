@@ -1,15 +1,10 @@
 /**
  * Contrato da página comercial pública (/planos).
  *
- * O que está sendo protegido: a página que um desconhecido usa para decidir se
- * compra. Dois modos de ela mentir sem ninguém perceber:
- *
- * 1. Preço escrito à mão. No dia em que o plano mudar, `shared/billing.ts` e o
- *    checkout mudam juntos — e a vitrine continua anunciando o valor antigo.
- *    Só o domínio pode ser fonte do preço.
- * 2. A rota deixar de ser pública. Se /planos cair atrás do gate, o funil
- *    comercial volta a começar em /cadastro, que já pede senha de quem ainda
- *    não sabe o que está comprando.
+ * A vitrine pública deve refletir o PRODUTO COMERCIAL CANÔNICO, não o billing
+ * genérico por assento do SaaS amplo. O piloto é invite_only; o plano anual é
+ * gated. Portanto esta página informa e coleta interesse, mas não pode abrir
+ * checkout/cadastro self-service por acidente.
  *
  * Rodar: node tests/unit/planos-page-contract.test.mjs
  */
@@ -22,73 +17,66 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (relative) => readFileSync(join(repoRoot, relative), "utf8");
 
 const page = read("client/src/pages/planos.tsx");
-const billing = read("shared/billing.ts");
+const commercial = read("shared/commercial.ts");
 const publicRoutes = read("client/src/lib/publicRoutes.ts");
 const publicSplitGuard = read("scripts/guards/validate-public-split.mjs");
 const app = read("client/src/App.tsx");
 
-// 1) O preço vem do domínio.
+// 1) Preço e escopo vêm do domínio comercial, não do billing por assento.
 assert.match(
   page,
-  /import\s*\{[^}]*CANONICAL_PRICE_CENTS[^}]*\}\s*from\s*"@shared\/billing"/s,
-  "a página de planos precisa importar o preço canônico de @shared/billing",
+  /INSTITUTIONAL_PILOT_OFFER[\s\S]*INSTITUTIONAL_ANNUAL_OFFER[\s\S]*from\s*"@shared\/commercial"/,
+  "a página precisa importar os offers canônicos de @shared/commercial",
 );
-assert.match(
+assert.doesNotMatch(
   page,
-  /CANONICAL_PRICE_CENTS\s*\/\s*100/,
-  "o valor exibido precisa ser derivado de CANONICAL_PRICE_CENTS, não escrito à mão",
+  /CANONICAL_PRICE_CENTS|@shared\/billing/,
+  "a vitrine institucional não pode usar o billing genérico por assento como fonte do produto",
 );
+assert.match(page, /INSTITUTIONAL_PILOT_OFFER\.priceCents\s*\/\s*100/);
+assert.match(page, /INSTITUTIONAL_ANNUAL_OFFER\.priceCents\s*\/\s*100/);
 
-// 2) Nenhum preço literal na vitrine. Procuramos a forma como um preço em real
-//    apareceria escrito (R$ 99, 99,00, 9900) fora de comentário.
-const priceCents = Number(
-  /export const CANONICAL_PRICE_CENTS\s*=\s*(\d+)/.exec(billing)?.[1],
+// 2) Os preços estão no domínio e a página não os duplica como centavos.
+const pilotCents = Number(
+  /INSTITUTIONAL_PILOT_OFFER[\s\S]*?priceCents:\s*([\d_]+)/.exec(commercial)?.[1]?.replaceAll("_", ""),
 );
-assert.ok(Number.isInteger(priceCents) && priceCents > 0, "CANONICAL_PRICE_CENTS ilegível");
-const reais = String(Math.trunc(priceCents / 100));
+const annualCents = Number(
+  /INSTITUTIONAL_ANNUAL_OFFER[\s\S]*?priceCents:\s*([\d_]+)/.exec(commercial)?.[1]?.replaceAll("_", ""),
+);
+assert.equal(pilotCents, 149000, "preço piloto canônico inesperado");
+assert.equal(annualCents, 249000, "preço anual canônico inesperado");
 
 const codeOnly = page
   .replace(/\/\*[\s\S]*?\*\//g, "")
   .replace(/^\s*\/\/.*$/gm, "");
-for (const literal of [
-  new RegExp(`R\\$\\s*${reais}\\b`),
-  new RegExp(`\\b${reais},\\d{2}\\b`),
-  new RegExp(`\\b${priceCents}\\b`),
-]) {
+for (const cents of [pilotCents, annualCents]) {
   assert.doesNotMatch(
     codeOnly,
-    literal,
-    `preço literal (${literal}) na página — o único preço válido é o derivado do domínio`,
+    new RegExp(`\\b${cents}\\b`),
+    "centavos literais na página duplicariam a fonte comercial canônica",
   );
 }
 
-// 3) A rota é pública nos três lugares que decidem isso.
+// 3) A rota continua pública nos três lugares que decidem isso.
 assert.match(publicRoutes, /"\/planos"/, "/planos precisa estar em PUBLIC_ROUTES");
-assert.match(
-  publicSplitGuard,
-  /"\/planos"/,
-  "/planos precisa estar em MUST_BE_PUBLIC do guard de split público",
-);
-assert.match(
-  app,
-  /<Route path="\/planos" component=\{PlanosPage\} \/>/,
-  "/planos precisa estar registrada no roteador",
+assert.match(publicSplitGuard, /"\/planos"/, "/planos precisa estar em MUST_BE_PUBLIC");
+assert.match(app, /<Route path="\/planos" component=\{PlanosPage\} \/>/);
+
+// 4) Pilot invite_only: CTA pode pedir convite, mas NÃO pode abrir cadastro ou checkout.
+assert.match(page, /Solicitar convite/);
+assert.match(page, /mailto:/, "o piloto fechado precisa de um canal explícito de interesse");
+assert.doesNotMatch(
+  page,
+  /href="\/cadastro"|href="\/billing|Criar conta e avaliar/,
+  "o piloto invite_only não pode ser convertido em self-service pela vitrine",
 );
 
-// 4) A página leva a algum lugar: sem CTA, é um panfleto.
-assert.match(
-  page,
-  /href="\/cadastro"/,
-  "a página de planos precisa oferecer o caminho para criar conta",
-);
-
-// 5) Verdade clínica na vitrine: a página não pode prometer diagnóstico.
-assert.match(
-  page,
-  /Não emite diagnóstico/,
-  "a vitrine precisa dizer explicitamente que o produto não emite diagnóstico",
-);
+// 5) Verdade de produto e fronteira clínica precisam estar visíveis.
+assert.match(page, /Não recebe dado identificável de paciente/);
+assert.match(page, /Não inclui consulta, parecer de caso, diagnóstico, prescrição ou apoio à decisão clínica/);
+assert.match(page, /Não disponível para contratação/);
+assert.match(page, /cinco materiais/i);
 
 console.log(
-  "✅ /planos: preço derivado do domínio, rota pública nos três registros, CTA presente e sem promessa de diagnóstico.",
+  "✅ /planos alinhado ao SKU institucional: preços canônicos, piloto por convite, anual gated e sem checkout público.",
 );
