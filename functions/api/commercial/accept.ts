@@ -88,7 +88,7 @@ export const onRequestPost: PagesFunction<CommercialAcceptEnv> = async (context)
   if (license.status !== "pending") {
     return tenantError("Licença não está pendente de aceite.", "COMMERCIAL_LICENSE_NOT_PENDING", 409);
   }
-  if (!license.billing_reference) {
+  if (!license.billing_reference?.trim()) {
     return tenantError("Conciliação comercial ausente.", "COMMERCIAL_BILLING_REFERENCE_REQUIRED", 409);
   }
   if (license.contract_version !== termsVersion) {
@@ -140,16 +140,8 @@ export const onRequestPost: PagesFunction<CommercialAcceptEnv> = async (context)
 
   const expiryModifier = `+${Number(license.term_days)} days`;
   const statements: D1PreparedStatement[] = [
-    db
-      .prepare(
-        `UPDATE commercial_licenses
-            SET status = 'active',
-                activated_at = datetime('now'),
-                expires_at = datetime('now', ?),
-                updated_at = datetime('now')
-          WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
-      )
-      .bind(expiryModifier, licenseId, clinicId),
+    // O aceite e os usuários entram primeiro. O trigger do banco recusa a
+    // transição para active enquanto qualquer desses pré-requisitos faltar.
     db
       .prepare(
         `INSERT INTO commercial_license_acceptances
@@ -173,6 +165,16 @@ export const onRequestPost: PagesFunction<CommercialAcceptEnv> = async (context)
   }
 
   statements.push(
+    db
+      .prepare(
+        `UPDATE commercial_licenses
+            SET status = 'active',
+                activated_at = datetime('now'),
+                expires_at = datetime('now', ?),
+                updated_at = datetime('now')
+          WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
+      )
+      .bind(expiryModifier, licenseId, clinicId),
     prepareSaasAudit(db, {
       clinicId,
       actorUserId: user.id,
