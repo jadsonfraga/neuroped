@@ -32,3 +32,7 @@ Este arquivo supersede o estado de decisão pendente descrito no snapshot inicia
 ## Estado de integração
 
 A aprovação foi aplicada na branch de auditoria e permanece sujeita às travas automáticas do repositório antes de incorporação ao `main`. O snapshot histórico e os PDFs-base permanecem inalterados; qualquer regeneração futura de PDF deverá receber nova versão/hash e declarar sua linhagem de origem.
+
+## Fechamento da revisão humana
+
+Não há decisão clínica remanescente nesta coorte. Qualquer mudança futura de item, domínio, faixa etária, respondente, âncora ou regra de apuração deve abrir nova revisão versionada, em vez de alterar silenciosamente este fechamento.
