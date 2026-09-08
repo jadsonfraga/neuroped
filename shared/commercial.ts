@@ -40,6 +40,8 @@ export interface CommercialOffer {
   priceCents: number;
   currency: "BRL";
   termDays: number;
+  /** Versão contratual exata aceita para este SKU. */
+  termsVersion: string;
   saleMode: CommercialSaleMode;
   maxUnits: number;
   maxAuthorizedUsers: number;
@@ -76,6 +78,7 @@ export const INSTITUTIONAL_PILOT_OFFER: CommercialOffer = Object.freeze({
   priceCents: 149_000,
   currency: "BRL",
   termDays: 365,
+  termsVersion: "institutional-pilot-terms-v1",
   saleMode: "invite_only",
   maxUnits: 1,
   maxAuthorizedUsers: 10,
@@ -92,6 +95,7 @@ export const INSTITUTIONAL_ANNUAL_OFFER: CommercialOffer = Object.freeze({
   priceCents: 249_000,
   currency: "BRL",
   termDays: 365,
+  termsVersion: "institutional-annual-terms-v1",
   // Permanece fechado até o gate pós-piloto. Alterar para `public` exige PR.
   saleMode: "gated",
   maxUnits: 1,
@@ -113,6 +117,11 @@ export function getCommercialOffer(code: string): CommercialOffer | null {
   return Object.prototype.hasOwnProperty.call(COMMERCIAL_OFFERS, code)
     ? COMMERCIAL_OFFERS[code as CommercialOfferCode]
     : null;
+}
+
+export function offerAcceptsTermsVersion(offerCode: string, termsVersion: string): boolean {
+  const offer = getCommercialOffer(offerCode);
+  return Boolean(offer && offer.termsVersion === termsVersion);
 }
 
 export interface CommercialOrderGateInput {
