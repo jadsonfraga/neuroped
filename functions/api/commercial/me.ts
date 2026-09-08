@@ -16,7 +16,8 @@ interface CommercialEnv {
  *
  * Snapshot estritamente tenant-scoped. Não retorna PHI, dados de paciente nem
  * detalhes de cobrança do PSP. Capabilities só ficam true quando o usuário é
- * membro ativo da clínica E está explicitamente autorizado na licença.
+ * membro ativo da clínica, a clínica está ativa E o usuário está explicitamente
+ * autorizado na licença.
  */
 export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
   const db = context.env.DB;
@@ -34,6 +35,16 @@ export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
   const membership = await getClinicMembership(db, clinicId, user);
   if (!membership) {
     return tenantError("Clínica indisponível para este usuário.", "TENANT_FORBIDDEN", 403);
+  }
+  if (membership.clinicStatus === "closed") {
+    return tenantError("A clínica está encerrada.", "TENANT_CLOSED", 410);
+  }
+  if (membership.clinicStatus !== "active") {
+    return tenantError(
+      "A clínica está suspensa; materiais comerciais não ficam disponíveis neste estado.",
+      "TENANT_EXPORT_ONLY",
+      423,
+    );
   }
 
   const snapshot = await getCommercialLicenseSnapshot(db, clinicId);
