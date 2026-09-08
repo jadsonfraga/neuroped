@@ -9,7 +9,7 @@ import {
 } from "../../client/src/data/sondaDezCanonical";
 
 const wrapper = fs.readFileSync("client/src/pages/sonda-dez-daily.tsx", "utf8");
-const preservedCore = fs.readFileSync("client/src/pages/sonda-dez-daily-core.tsx", "utf8");
+const preservedCore = fs.readFileSync("client/src/components/sonda-dez/SondaDezDailyCore.tsx", "utf8");
 const clinicalCore = fs.readFileSync("client/src/pages/testes-diretos.tsx", "utf8");
 
 test("Sonda Dez mantém seis especializações etárias canônicas", () => {
@@ -42,7 +42,7 @@ test("contrato continua observacional e não normativo", () => {
 });
 
 test("camada consolidada preserva núcleo diário e núcleo clínico", () => {
-  assert.match(wrapper, /sonda-dez-daily-core/);
+  assert.match(wrapper, /components\/sonda-dez\/SondaDezDailyCore/);
   assert.match(preservedCore, /const STIMULI: Stimulus\[\]/);
   assert.match(preservedCore, /SondaDezBasePage/);
   assert.match(clinicalCore, /const BANDS: BandDef\[\]/);
