@@ -20,7 +20,7 @@ import {
   SONDA_DEZ_SAFETY_CONTRACT,
   SONDA_DEZ_VERSION,
 } from "@/data/sondaDezCanonical";
-import SondaDezDailyCorePage from "@/pages/sonda-dez-daily-core";
+import SondaDezDailyCorePage from "@/components/sonda-dez/SondaDezDailyCore";
 
 const PREFLIGHT = [
   "ambiente com baixa distração",
@@ -33,7 +33,7 @@ const PREFLIGHT = [
  * Camada operacional consolidada da Sonda Dez.
  *
  * O núcleo clínico e o banco visual já publicados são preservados integralmente
- * em sonda-dez-daily-core.tsx. Esta camada acrescenta contrato único de uso,
+ * em SondaDezDailyCore.tsx. Esta camada acrescenta contrato único de uso,
  * especialização etária, escada semântica de mediação e pré-voo sem alterar
  * itens, tempos, registros, alertas ou a trava antinormatização do núcleo.
  */
