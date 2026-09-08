@@ -11,6 +11,10 @@ import {
   validateCommercialActivation,
   validateCommercialUsageMetadata,
 } from "../../shared/commercial";
+import {
+  evaluateCommercialAccess,
+  type CommercialLicenseSnapshot,
+} from "../../functions/api/commercial/_core";
 
 assert.equal(commercialFeatureCodes.length, 5, "produto inicial deve ter exatamente cinco materiais");
 assert.equal(INSTITUTIONAL_PILOT_OFFER.priceCents, 149_000);
@@ -107,6 +111,53 @@ assert.equal(
     new Date("2026-12-01T00:00:00Z"),
   ),
   false,
+);
+
+const activeSnapshot: CommercialLicenseSnapshot = {
+  licenseId: "lic-synthetic",
+  clinicId: "clinic-synthetic",
+  offerCode: "institutional-pilot-1-0",
+  offerName: "NeuroPed Institucional — Piloto 1.0",
+  priceCents: 149_000,
+  currency: "BRL",
+  status: "active",
+  unitLabel: "Unidade Sintética",
+  activatedAt: "2026-09-08T00:00:00Z",
+  expiresAt: "2027-09-08T00:00:00Z",
+  maxAuthorizedUsers: 10,
+  authorizedUsers: 1,
+  onboardingMinutes: 60,
+  supportMinutes: 120,
+  supportMinutesUsed: 0,
+  features: [...commercialFeatureCodes],
+};
+assert.deepEqual(
+  evaluateCommercialAccess(
+    activeSnapshot,
+    "form.preconsultation",
+    false,
+    new Date("2026-12-01T00:00:00Z"),
+  ),
+  { ok: false, reason: "COMMERCIAL_USER_NOT_AUTHORIZED" },
+  "membership do tenant não equivale a assento/licença autorizada",
+);
+assert.deepEqual(
+  evaluateCommercialAccess(
+    activeSnapshot,
+    "form.preconsultation",
+    true,
+    new Date("2026-12-01T00:00:00Z"),
+  ),
+  { ok: true },
+);
+assert.deepEqual(
+  evaluateCommercialAccess(
+    activeSnapshot,
+    "feature.inexistente",
+    true,
+    new Date("2026-12-01T00:00:00Z"),
+  ),
+  { ok: false, reason: "COMMERCIAL_FEATURE_NOT_LICENSED" },
 );
 
 assert.equal(
