@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
 import {
   INSTITUTIONAL_ANNUAL_OFFER,
   INSTITUTIONAL_PILOT_OFFER,
@@ -19,85 +18,24 @@ assert.equal(
 );
 assert.equal(offerAcceptsTermsVersion("unknown", "institutional-pilot-terms-v1"), false);
 
-const db = new DatabaseSync(":memory:");
-db.exec("PRAGMA foreign_keys = ON;");
-db.exec(`
-  CREATE TABLE users (id TEXT PRIMARY KEY);
-  CREATE TABLE clinics (id TEXT PRIMARY KEY);
-  CREATE TABLE clinic_memberships (
-    clinic_id TEXT NOT NULL REFERENCES clinics(id),
-    user_id TEXT NOT NULL REFERENCES users(id),
-    role TEXT NOT NULL,
-    active INTEGER NOT NULL DEFAULT 1,
-    PRIMARY KEY (clinic_id, user_id)
-  );
-`);
-db.exec(readFileSync("db/migrations/0026_saas_commercial_catalog.sql", "utf8"));
-db.exec(readFileSync("db/migrations/0027_saas_commercial_terms_binding.sql", "utf8"));
-
-const persisted = db
-  .prepare(`SELECT code, terms_version FROM commercial_offers ORDER BY code`)
-  .all() as Array<{ code: string; terms_version: string }>;
-const termsByCode = new Map(persisted.map((row) => [row.code, row.terms_version]));
-assert.equal(
-  termsByCode.get("institutional-pilot-1-0"),
-  INSTITUTIONAL_PILOT_OFFER.termsVersion,
-);
-assert.equal(
-  termsByCode.get("institutional-annual-1-0"),
-  INSTITUTIONAL_ANNUAL_OFFER.termsVersion,
+// A versão contratual persistida na licença não é escolhida pelo caller/admin:
+// provision.ts deve derivá-la do offer canônico e rejeitar precondição divergente.
+const provisionSource = readFileSync("functions/api/commercial/provision.ts", "utf8");
+assert.match(provisionSource, /requestedTermsVersion\s*!==\s*offer\.termsVersion/);
+assert.match(provisionSource, /COMMERCIAL_TERMS_VERSION_MISMATCH/);
+assert.match(provisionSource, /offer\.termsVersion,\s*billingReference/);
+assert.doesNotMatch(
+  provisionSource,
+  /\.bind\([\s\S]{0,300}requestedTermsVersion[\s\S]{0,300}billingReference/,
+  "requestedTermsVersion não pode ser persistida como contract_version",
 );
 
-db.exec(`
-  INSERT INTO users(id) VALUES ('owner');
-  INSERT INTO clinics(id) VALUES ('clinic-a');
-  INSERT INTO clinic_memberships(clinic_id, user_id, role, active)
-  VALUES ('clinic-a', 'owner', 'owner', 1);
-`);
+// O snapshot real recusa licença cuja contract_version tenha drift em relação
+// ao SKU atual, e accept.ts exige o mesmo valor antes de ativar.
+const coreSource = readFileSync("functions/api/commercial/_core.ts", "utf8");
+const acceptSource = readFileSync("functions/api/commercial/accept.ts", "utf8");
+assert.match(coreSource, /row\.contract_version\s*!==\s*canonicalOffer\.termsVersion/);
+assert.match(acceptSource, /license\.contract_version\s*!==\s*termsVersion/);
+assert.match(acceptSource, /COMMERCIAL_TERMS_VERSION_MISMATCH/);
 
-assert.throws(
-  () =>
-    db.exec(`
-      INSERT INTO commercial_licenses(
-        id, clinic_id, offer_id, status, unit_label, contract_version,
-        billing_reference, created_by_user_id
-      ) SELECT
-        'lic-wrong', 'clinic-a', id, 'pending', 'A', 'invented-terms-v99',
-        'bill-1', 'owner'
-      FROM commercial_offers WHERE code='institutional-pilot-1-0';
-    `),
-  /terms version mismatch/i,
-  "licença não pode nascer contra versão contratual inventada",
-);
-
-db.exec(`
-  INSERT INTO commercial_licenses(
-    id, clinic_id, offer_id, status, unit_label, contract_version,
-    billing_reference, created_by_user_id
-  ) SELECT
-    'lic-ok', 'clinic-a', id, 'pending', 'A', 'institutional-pilot-terms-v1',
-    'bill-2', 'owner'
-  FROM commercial_offers WHERE code='institutional-pilot-1-0';
-`);
-
-assert.throws(
-  () =>
-    db.exec(`
-      INSERT INTO commercial_license_acceptances(
-        license_id, accepted_by_user_id, terms_version,
-        no_patient_data_accepted, no_medical_service_accepted, no_redistribution_accepted
-      ) VALUES (
-        'lic-ok', 'owner', 'invented-terms-v99', 1, 1, 1
-      );
-      INSERT INTO commercial_license_users(
-        license_id, user_id, status, authorized_by_user_id
-      ) VALUES ('lic-ok', 'owner', 'active', 'owner');
-      UPDATE commercial_licenses
-         SET status='active', activated_at=datetime('now'), expires_at=datetime('now','+365 days')
-       WHERE id='lic-ok';
-    `),
-  /manager acceptance required/i,
-  "ativação exige aceite da mesma versão contratual da licença",
-);
-
-console.log("✓ SaaS commercial terms: offer → license → acceptance version binding locked");
+console.log("✓ SaaS commercial terms: SKU → license → acceptance version binding locked");
