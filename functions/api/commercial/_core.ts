@@ -39,7 +39,6 @@ interface LicenseRow {
   price_cents: number;
   currency: string;
   contract_version: string;
-  offer_terms_version: string | null;
   license_status: CommercialLicenseStatus;
   unit_label: string;
   activated_at: string | null;
@@ -58,8 +57,8 @@ export async function getCommercialLicenseSnapshot(
       `SELECT cl.id AS license_id, cl.clinic_id, cl.status AS license_status,
               cl.unit_label, cl.contract_version, cl.activated_at, cl.expires_at,
               co.code AS offer_code, co.name AS offer_name,
-              co.price_cents, co.currency, co.terms_version AS offer_terms_version,
-              co.max_authorized_users, co.onboarding_minutes, co.support_minutes
+              co.price_cents, co.currency, co.max_authorized_users,
+              co.onboarding_minutes, co.support_minutes
          FROM commercial_licenses cl
          JOIN commercial_offers co ON co.id = cl.offer_id
         WHERE cl.clinic_id = ?
@@ -73,13 +72,9 @@ export async function getCommercialLicenseSnapshot(
 
   if (!row) return null;
   const canonicalOffer = getCommercialOffer(row.offer_code);
-  if (
-    !canonicalOffer ||
-    row.offer_terms_version !== canonicalOffer.termsVersion ||
-    row.contract_version !== canonicalOffer.termsVersion
-  ) {
-    // Drift contratual nunca é normalizado silenciosamente. O chamador vê a
-    // licença como indisponível até o catálogo persistido ser reconciliado.
+  if (!canonicalOffer || row.contract_version !== canonicalOffer.termsVersion) {
+    // Drift contratual nunca é normalizado silenciosamente. A versão vive na
+    // licença e precisa coincidir com o offer canônico em código.
     return null;
   }
 
