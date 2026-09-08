@@ -126,16 +126,14 @@ BEGIN
   SELECT RAISE(ABORT, 'commercial license must start pending');
 END;
 
--- Protege o teto da coorte também contra concorrência/rotas futuras.
+-- max_licenses é teto histórico do SKU/coorte, não apenas de licenças vivas.
+-- Assim cancelar uma licença piloto não abre silenciosamente uma quarta vaga.
 CREATE TRIGGER IF NOT EXISTS trg_commercial_license_offer_cap
 BEFORE INSERT ON commercial_licenses
 WHEN (SELECT max_licenses FROM commercial_offers WHERE id = NEW.offer_id) IS NOT NULL
 BEGIN
   SELECT CASE WHEN (
-    SELECT COUNT(*)
-      FROM commercial_licenses cl
-     WHERE cl.offer_id = NEW.offer_id
-       AND cl.status IN ('pending','active','suspended')
+    SELECT COUNT(*) FROM commercial_licenses cl WHERE cl.offer_id = NEW.offer_id
   ) >= (
     SELECT max_licenses FROM commercial_offers WHERE id = NEW.offer_id
   ) THEN RAISE(ABORT, 'commercial offer license cap reached') END;
@@ -308,8 +306,8 @@ BEGIN
   ) THEN RAISE(ABORT, 'commercial feature not licensed') END;
 END;
 
--- Uso dos materiais exige ator autorizado na licença. Suporte/onboarding pode
--- ser registrado por operador da plataforma sem transformar suporte em acesso.
+-- Uso dos materiais exige ator autorizado na licença. A coerência de tenant é
+-- uma regra separada no trigger acima; não depende da ordem dos triggers.
 CREATE TRIGGER IF NOT EXISTS trg_commercial_material_usage_authorized_user
 BEFORE INSERT ON commercial_usage_events
 WHEN NEW.kind IN ('material_open','material_export')
@@ -321,7 +319,6 @@ BEGIN
      WHERE u.license_id = NEW.license_id
        AND u.user_id = NEW.actor_user_id
        AND u.status = 'active'
-       AND cl.clinic_id = NEW.clinic_id
        AND cl.status = 'active'
   ) THEN RAISE(ABORT, 'commercial material usage requires authorized active user') END;
 END;
