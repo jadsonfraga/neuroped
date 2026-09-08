@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   SONDA_DEZ_BANDS,
   SONDA_DEZ_GOLDEN_RULES,
+  SONDA_DEZ_PROVENANCE,
   SONDA_DEZ_RESPONSE_LADDER,
   SONDA_DEZ_SAFETY_CONTRACT,
   SONDA_DEZ_VERSION,
@@ -60,7 +61,7 @@ export default function SondaDezDailyPage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="gap-1.5"><Sparkles className="h-3.5 w-3.5" /> Sonda 10 · consolidada</Badge>
+                    <Badge className="gap-1.5"><Sparkles className="h-3.5 w-3.5" /> Sonda 10 · operação consolidada</Badge>
                     <Badge variant="outline">v{SONDA_DEZ_VERSION}</Badge>
                     <Badge variant="outline">{SONDA_DEZ_SAFETY_CONTRACT.durationMinutes} minutos</Badge>
                     <Badge variant="outline">6 trilhas etárias</Badge>
@@ -69,6 +70,20 @@ export default function SondaDezDailyPage() {
                   <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground">
                     Preparação segura, especialização por idade e grau de mediação em uma camada única. O núcleo observacional, os tempos, o banco visual e as travas clínicas permanecem preservados.
                   </p>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-xl border border-border/70 bg-background/90 p-3 text-xs">
+                      <span className="block font-black text-foreground">Proveniência</span>
+                      <span className="mt-1 block text-muted-foreground">{SONDA_DEZ_PROVENANCE.source}</span>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-background/90 p-3 text-xs">
+                      <span className="block font-black text-foreground">Natureza</span>
+                      <span className="mt-1 block text-muted-foreground">{SONDA_DEZ_PROVENANCE.instrumentType}</span>
+                    </div>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs dark:border-amber-900 dark:bg-amber-950/20">
+                      <span className="block font-black text-amber-950 dark:text-amber-100">Status de validação</span>
+                      <span className="mt-1 block text-amber-900 dark:text-amber-200">{SONDA_DEZ_PROVENANCE.validationStatus}</span>
+                    </div>
+                  </div>
                 </div>
                 <Button type="button" variant="outline" className="shrink-0 rounded-xl" onClick={() => setGuideOpen(false)}>
                   <X className="mr-2 h-4 w-4" /> Fechar guia
