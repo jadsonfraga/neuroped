@@ -17,6 +17,7 @@ export interface CommercialLicenseSnapshot {
   offerName: string;
   priceCents: number;
   currency: string;
+  contractVersion: string;
   status: CommercialLicenseStatus;
   unitLabel: string;
   activatedAt: string | null;
@@ -36,6 +37,8 @@ interface LicenseRow {
   offer_name: string;
   price_cents: number;
   currency: string;
+  contract_version: string;
+  offer_terms_version: string | null;
   license_status: CommercialLicenseStatus;
   unit_label: string;
   activated_at: string | null;
@@ -52,10 +55,10 @@ export async function getCommercialLicenseSnapshot(
   const row = await db
     .prepare(
       `SELECT cl.id AS license_id, cl.clinic_id, cl.status AS license_status,
-              cl.unit_label, cl.activated_at, cl.expires_at,
+              cl.unit_label, cl.contract_version, cl.activated_at, cl.expires_at,
               co.code AS offer_code, co.name AS offer_name,
-              co.price_cents, co.currency, co.max_authorized_users,
-              co.onboarding_minutes, co.support_minutes
+              co.price_cents, co.currency, co.terms_version AS offer_terms_version,
+              co.max_authorized_users, co.onboarding_minutes, co.support_minutes
          FROM commercial_licenses cl
          JOIN commercial_offers co ON co.id = cl.offer_id
         WHERE cl.clinic_id = ?
@@ -68,6 +71,16 @@ export async function getCommercialLicenseSnapshot(
     .first<LicenseRow>();
 
   if (!row) return null;
+  const canonicalOffer = getCommercialOffer(row.offer_code);
+  if (
+    !canonicalOffer ||
+    row.offer_terms_version !== canonicalOffer.termsVersion ||
+    row.contract_version !== canonicalOffer.termsVersion
+  ) {
+    // Drift contratual nunca é normalizado silenciosamente. O chamador vê a
+    // licença como indisponível até o catálogo persistido ser reconciliado.
+    return null;
+  }
 
   const [usersRow, supportRow, featureRows] = await Promise.all([
     db
@@ -105,6 +118,7 @@ export async function getCommercialLicenseSnapshot(
     offerName: row.offer_name,
     priceCents: Number(row.price_cents),
     currency: row.currency,
+    contractVersion: row.contract_version,
     status: row.license_status,
     unitLabel: row.unit_label,
     activatedAt: row.activated_at,
@@ -156,7 +170,8 @@ export function evaluateCommercialAccess(
   now: Date = new Date(),
 ): { ok: true } | { ok: false; reason: CommercialAccessDeniedReason } {
   if (!snapshot) return { ok: false, reason: "COMMERCIAL_LICENSE_MISSING" };
-  if (!getCommercialOffer(snapshot.offerCode)) {
+  const offer = getCommercialOffer(snapshot.offerCode);
+  if (!offer || snapshot.contractVersion !== offer.termsVersion) {
     return { ok: false, reason: "COMMERCIAL_OFFER_UNKNOWN" };
   }
   if (
