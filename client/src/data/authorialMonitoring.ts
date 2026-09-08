@@ -165,7 +165,10 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   fullName: `${r.fullName} — v${r.version}`,
   ageMin: r.ageMinMonths,
   ageMax: r.ageMaxMonths,
-  queixas: r.queixas,
+  // Entradas manuais/históricas permanecem no catálogo por nome/rota, mas não
+  // entram na recomendação automática baseada em queixa. A fonte clínica bruta
+  // continua preservando as queixas originais para rastreabilidade.
+  queixas: r.autoRecommend === false ? [] : r.queixas,
   respondente: r.respondents,
   prioridade: "monitorizacao",
   assessmentUse: "monitorizacao",
@@ -188,8 +191,6 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   suicideRiskInstrument: false,
   psychosisRiskInstrument: false,
   signalTags: r.signalTags,
-  autoRecommend: r.autoRecommend ?? true,
-  catalogStatus: r.catalogStatus ?? "active",
 }));
 
 export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Object.fromEntries(
@@ -225,9 +226,8 @@ export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Obj
       labels,
       optionPoints,
       scoreDirection: "higher_worse" as const,
-      suppressGlobalScore: r.suppressGlobalScore,
       totalLabel: r.suppressGlobalScore
-        ? `${r.name} — interpretar por domínios; sem total global`
+        ? `${r.name} — interpretar por domínios; sem total global clínico`
         : hasUnscoredOptions
           ? `${r.name} — apuração manual; NO não recebe zero`
           : `${r.name} — soma descritiva (0–${r.items.length * maxScoredPoint}); sem ponto de corte`,
