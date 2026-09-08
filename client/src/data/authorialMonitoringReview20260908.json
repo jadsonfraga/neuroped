@@ -1,0 +1,73 @@
+{
+  "reviewId": "authorial-clinical-review-2026-09-08",
+  "approvedAt": "2026-09-08",
+  "approvedBy": "Dr. Jadson Fraga",
+  "scope": "Fechamento editorial e clínico dos instrumentos autorais NeuroPed SDG formalmente pendentes nas fontes de monitorização.",
+  "overrides": {
+    "afi12-sdg": {
+      "clinicalReviewStatus": "reviewed",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo clínico, domínios e pontuação preservados."
+    },
+    "sdrd12-sdg": {
+      "clinicalReviewStatus": "reviewed",
+      "catalogRole": "Monitor breve de sono (12 itens). O VIGIA-SD 20 é a opção ampliada desta linhagem.",
+      "autoRecommend": false,
+      "applicationNote": "Selecionar manualmente quando se desejar um monitor breve. Evitar aplicação simultânea com o VIGIA-SD 20 no mesmo ponto temporal, salvo justificativa clínica.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; mantido como monitor breve, com VIGIA-SD 20 como opção ampliada."
+    },
+    "sarf12-sdg": {
+      "clinicalReviewStatus": "reviewed",
+      "applicationNote": "Achados de mastigação, organização oral, progressão de consistências ou deglutição exigem avaliação clínica própria e não devem ser reduzidos a seletividade alimentar.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo e pontuação preservados."
+    },
+    "irritabilidade-desregulacao-vs1": {
+      "clinicalReviewStatus": "reviewed",
+      "catalogRole": "Monitor breve de frequência observável de irritabilidade/desregulação em 14 dias.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; definido como monitor breve no cluster de irritabilidade."
+    },
+    "nexo-s-24-sdg": {
+      "version": "1.1-app",
+      "clinicalReviewStatus": "reviewed",
+      "respondents": ["pais", "professor", "clinico"],
+      "applicationNote": "Família, escola/professor e clínico/profissional podem preencher o instrumento, sempre em formulários separados. Não combinar numericamente respostas de informantes diferentes.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; itens e domínios preservados; respondentes formalizados como família, professor/escola e clínico/profissional em aplicações separadas."
+    },
+    "mapa-ri-18-sdg": {
+      "clinicalReviewStatus": "reviewed",
+      "catalogRole": "Mapa clínico expandido de irritabilidade/desregulação; complementar ao VS1 breve.",
+      "applicationNote": "A versão operacional 1.1-app mantém os itens 17-18 em direção de dificuldade. Comparações com o predecessor 1.0 devem ser tratadas como quebra de versão, com novo basal quando possível.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; versão 1.1-app confirmada como mapa clínico expandido."
+    },
+    "vigia-sd-20-sdg": {
+      "clinicalReviewStatus": "reviewed",
+      "catalogRole": "Monitor ampliado de sono e repercussão diurna (20 itens); opção automática preferencial da linhagem de sono.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; mantido como monitor ampliado, com SDRD-12 como opção breve manual."
+    },
+    "balanco-med-24-sdg": {
+      "version": "1.2-app",
+      "clinicalReviewStatus": "reviewed",
+      "responseLabels": [
+        "0 — ausente ou sem mudança desfavorável",
+        "1 — presente, sem repercussão funcional relevante",
+        "2 — repercussão funcional moderada ou necessidade clara de ajuste/supervisão",
+        "3 — repercussão funcional importante, limitante ou com risco",
+        "NO — não observado/não aplicável/informação insuficiente"
+      ],
+      "optionPoints": [0, 1, 2, 3, 0],
+      "unscoredOptionIndexes": [4],
+      "scoringNote": "Apure separadamente os quatro domínios de tolerabilidade (A-D; 0-15 cada quando completos) e as lacunas de benefício funcional (E; 0-12 quando completo). Não calcular nem interpretar total global. NO ou item em branco torna o domínio incompleto e nunca recebe zero. Não há ponto de corte diagnóstico ou de gravidade validado.",
+      "applicationNote": "Aplicável da primeira infância à adolescência somente quando o item for observável e pertinente ao nível de desenvolvimento. Quando não houver aplicabilidade ou observabilidade suficiente, marque NO. Cuidador e clínico registram separadamente.",
+      "suppressGlobalScore": true,
+      "catalogRole": "Monitor medicamentoso por perfil: tolerabilidade e lacunas de benefício funcional devem ser lidas separadamente.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; versão operacional 1.2-app introduz NO, âncoras predominantemente funcionais e suprime o total global, preservando os 24 itens e red flags."
+    },
+    "mcri-24-sdg": {
+      "clinicalReviewStatus": "reviewed",
+      "catalogStatus": "historical",
+      "autoRecommend": false,
+      "catalogRole": "Registro histórico rastreável. Não oferecer como terceira opção paralela ativa ao VS1 e ao MAPA-RI 18 enquanto não houver função diferencial própria.",
+      "applicationNote": "Não recomendado para novas aplicações rotineiras nesta arquitetura. Preservar registros prévios, versão, respostas e proveniência sem conversão para VS1 ou MAPA-RI 18.",
+      "reviewProvenance": "Revisão clínica/editorial aprovada pelo autor em 2026-09-08; preservado como histórico e retirado das recomendações automáticas, sem apagar ou reescrever a versão 1.0."
+    }
+  }
+}
