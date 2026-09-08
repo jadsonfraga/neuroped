@@ -7,7 +7,9 @@ on:
       - "shared/commercial.ts"
       - "functions/api/commercial/**"
       - "db/migrations/0026_saas_commercial_catalog.sql"
+      - "client/src/pages/planos.tsx"
       - "tests/unit/saas-commercial-canonical.test.ts"
+      - "tests/unit/planos-page-contract.test.mjs"
       - "docs/SAAS_COMERCIAL_CANONICO.md"
       - ".github/workflows/saas-commercial-canonical.yml"
   push:
@@ -16,7 +18,9 @@ on:
       - "shared/commercial.ts"
       - "functions/api/commercial/**"
       - "db/migrations/0026_saas_commercial_catalog.sql"
+      - "client/src/pages/planos.tsx"
       - "tests/unit/saas-commercial-canonical.test.ts"
+      - "tests/unit/planos-page-contract.test.mjs"
       - "docs/SAAS_COMERCIAL_CANONICO.md"
       - ".github/workflows/saas-commercial-canonical.yml"
 
@@ -46,6 +50,9 @@ jobs:
 
       - name: Canonical commercial regression
         run: node --import tsx tests/unit/saas-commercial-canonical.test.ts
+
+      - name: Public plans contract
+        run: node tests/unit/planos-page-contract.test.mjs
 
       - name: TypeScript
         run: npm run check
