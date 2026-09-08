@@ -118,6 +118,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_commercial_license_live_clinic
 CREATE INDEX IF NOT EXISTS idx_commercial_licenses_offer_status
   ON commercial_licenses(offer_id, status, created_at);
 
+-- Toda licença nasce pendente. Ativação só existe por transição auditável.
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_must_start_pending
+BEFORE INSERT ON commercial_licenses
+WHEN NEW.status <> 'pending'
+BEGIN
+  SELECT RAISE(ABORT, 'commercial license must start pending');
+END;
+
 -- Protege o teto da coorte também contra concorrência/rotas futuras.
 CREATE TRIGGER IF NOT EXISTS trg_commercial_license_offer_cap
 BEFORE INSERT ON commercial_licenses
@@ -219,14 +227,25 @@ BEGIN
   ) THEN RAISE(ABORT, 'commercial authorized user cap reached') END;
 END;
 
--- Uma licença não fica ativa sem aceite institucional e ao menos um usuário.
+-- Uma licença não fica ativa sem cobrança conciliada, aceite da versão exata
+-- por gestor ativo da unidade e ao menos um usuário autorizado.
 CREATE TRIGGER IF NOT EXISTS trg_commercial_license_activation_contract
 BEFORE UPDATE OF status ON commercial_licenses
 WHEN OLD.status <> 'active' AND NEW.status = 'active'
 BEGIN
+  SELECT CASE WHEN NEW.billing_reference IS NULL OR length(trim(NEW.billing_reference)) = 0
+    THEN RAISE(ABORT, 'commercial billing reference required before activation') END;
   SELECT CASE WHEN NOT EXISTS (
-    SELECT 1 FROM commercial_license_acceptances a WHERE a.license_id = NEW.id
-  ) THEN RAISE(ABORT, 'commercial acceptance required before activation') END;
+    SELECT 1
+      FROM commercial_license_acceptances a
+      JOIN clinic_memberships cm
+        ON cm.clinic_id = NEW.clinic_id
+       AND cm.user_id = a.accepted_by_user_id
+       AND cm.active = 1
+       AND cm.role IN ('owner','clinic_admin')
+     WHERE a.license_id = NEW.id
+       AND a.terms_version = NEW.contract_version
+  ) THEN RAISE(ABORT, 'commercial manager acceptance required before activation') END;
   SELECT CASE WHEN NOT EXISTS (
     SELECT 1
       FROM commercial_license_users u
@@ -287,4 +306,22 @@ BEGIN
        AND f.enabled = 1
      WHERE cl.id = NEW.license_id
   ) THEN RAISE(ABORT, 'commercial feature not licensed') END;
+END;
+
+-- Uso dos materiais exige ator autorizado na licença. Suporte/onboarding pode
+-- ser registrado por operador da plataforma sem transformar suporte em acesso.
+CREATE TRIGGER IF NOT EXISTS trg_commercial_material_usage_authorized_user
+BEFORE INSERT ON commercial_usage_events
+WHEN NEW.kind IN ('material_open','material_export')
+BEGIN
+  SELECT CASE WHEN NEW.actor_user_id IS NULL OR NOT EXISTS (
+    SELECT 1
+      FROM commercial_license_users u
+      JOIN commercial_licenses cl ON cl.id = u.license_id
+     WHERE u.license_id = NEW.license_id
+       AND u.user_id = NEW.actor_user_id
+       AND u.status = 'active'
+       AND cl.clinic_id = NEW.clinic_id
+       AND cl.status = 'active'
+  ) THEN RAISE(ABORT, 'commercial material usage requires authorized active user') END;
 END;
