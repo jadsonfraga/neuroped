@@ -1,6 +1,10 @@
 import { getContextUser } from "../auth/_authorization";
 import { getClinicMembership, tenantError, tenantJson } from "../tenant/_core";
-import { evaluateCommercialAccess, getCommercialLicenseSnapshot } from "./_core";
+import {
+  evaluateCommercialAccess,
+  getCommercialLicenseSnapshot,
+  isCommercialUserAuthorized,
+} from "./_core";
 import { commercialFeatureCodes } from "../../../shared/commercial";
 
 interface CommercialEnv {
@@ -11,8 +15,8 @@ interface CommercialEnv {
  * GET /api/commercial/me?clinicId=...
  *
  * Snapshot estritamente tenant-scoped. Não retorna PHI, dados de paciente nem
- * detalhes de cobrança do PSP. Serve para UI decidir quais materiais da licença
- * institucional devem aparecer, mantendo a decisão autoritativa no backend.
+ * detalhes de cobrança do PSP. Capabilities só ficam true quando o usuário é
+ * membro ativo da clínica E está explicitamente autorizado na licença.
  */
 export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
   const db = context.env.DB;
@@ -33,10 +37,13 @@ export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
   }
 
   const snapshot = await getCommercialLicenseSnapshot(db, clinicId);
+  const authorizedUser = snapshot
+    ? await isCommercialUserAuthorized(db, snapshot.licenseId, user.id)
+    : false;
   const capabilities = Object.fromEntries(
     commercialFeatureCodes.map((feature) => [
       feature,
-      evaluateCommercialAccess(snapshot, feature).ok,
+      evaluateCommercialAccess(snapshot, feature, authorizedUser).ok,
     ]),
   );
 
@@ -58,6 +65,7 @@ export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
           expiresAt: snapshot.expiresAt,
           authorizedUsers: snapshot.authorizedUsers,
           maxAuthorizedUsers: snapshot.maxAuthorizedUsers,
+          currentUserAuthorized: authorizedUser,
           supportMinutes: snapshot.supportMinutes,
           supportMinutesUsed: snapshot.supportMinutesUsed,
         }
