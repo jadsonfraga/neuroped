@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   SONDA_DEZ_BANDS,
   SONDA_DEZ_GOLDEN_RULES,
+  SONDA_DEZ_PROVENANCE,
   SONDA_DEZ_RESPONSE_LADDER,
   SONDA_DEZ_SAFETY_CONTRACT,
 } from "../../client/src/data/sondaDezCanonical";
@@ -39,6 +40,15 @@ test("contrato continua observacional e não normativo", () => {
   assert.equal(SONDA_DEZ_SAFETY_CONTRACT.percentile, false);
   assert.equal(SONDA_DEZ_SAFETY_CONTRACT.diagnosticOutput, false);
   assert.equal(SONDA_DEZ_SAFETY_CONTRACT.medicalIntegrationRequired, true);
+});
+
+test("guia expõe proveniência e status de validação corretos", () => {
+  assert.equal(SONDA_DEZ_PROVENANCE.source, "AFN-10 / Sonda Dez");
+  assert.match(SONDA_DEZ_PROVENANCE.instrumentType, /observacional clínico piloto/);
+  assert.match(SONDA_DEZ_PROVENANCE.validationStatus, /não psicométrico/);
+  assert.match(wrapper, /SONDA_DEZ_PROVENANCE\.source/);
+  assert.match(wrapper, /SONDA_DEZ_PROVENANCE\.instrumentType/);
+  assert.match(wrapper, /SONDA_DEZ_PROVENANCE\.validationStatus/);
 });
 
 test("camada consolidada preserva núcleo diário e núcleo clínico", () => {
