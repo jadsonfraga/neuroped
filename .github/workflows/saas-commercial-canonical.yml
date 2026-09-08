@@ -1,0 +1,51 @@
+name: SaaS commercial canonical guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "shared/commercial.ts"
+      - "functions/api/commercial/**"
+      - "db/migrations/0026_saas_commercial_catalog.sql"
+      - "tests/unit/saas-commercial-canonical.test.ts"
+      - "docs/SAAS_COMERCIAL_CANONICO.md"
+      - ".github/workflows/saas-commercial-canonical.yml"
+  push:
+    branches: [main]
+    paths:
+      - "shared/commercial.ts"
+      - "functions/api/commercial/**"
+      - "db/migrations/0026_saas_commercial_catalog.sql"
+      - "tests/unit/saas-commercial-canonical.test.ts"
+      - "docs/SAAS_COMERCIAL_CANONICO.md"
+      - ".github/workflows/saas-commercial-canonical.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-contract:
+    name: Commercial SKU and boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Canonical commercial regression
+        run: node --import tsx tests/unit/saas-commercial-canonical.test.ts
+
+      - name: TypeScript
+        run: npm run check
