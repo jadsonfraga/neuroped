@@ -59,6 +59,12 @@ test("guia operacional não desloca o alvo de rolagem das missões", () => {
   assert.ok(overlayIndex > coreIndex, "guia expandido deve ser overlay, não bloco acima da missão");
 });
 
+test("Tela da criança fica visualmente acima do atalho do guia", () => {
+  assert.match(wrapper, /fixed bottom-5 right-5 z-\[90\]/);
+  assert.match(preservedCore, /z-\[100\]/);
+  assert.doesNotMatch(wrapper, /fixed bottom-5 right-5 z-\[(10[0-9]|1[1-9][0-9]|[2-9][0-9]{2,})\]/);
+});
+
 test("consolidação não introduz persistência clínica nem dependência visual remota", () => {
   assert.doesNotMatch(wrapper, /localStorage|sessionStorage/);
   assert.doesNotMatch(preservedCore, /https?:\/\//);
