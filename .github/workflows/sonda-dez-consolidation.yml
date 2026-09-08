@@ -6,7 +6,7 @@ on:
     paths:
       - "client/src/data/sondaDezCanonical.ts"
       - "client/src/pages/sonda-dez-daily.tsx"
-      - "client/src/pages/sonda-dez-daily-core.tsx"
+      - "client/src/components/sonda-dez/SondaDezDailyCore.tsx"
       - "client/src/pages/testes-diretos.tsx"
       - "tests/unit/sonda-dez-consolidation.test.ts"
       - ".github/workflows/sonda-dez-consolidation.yml"
@@ -15,7 +15,7 @@ on:
     paths:
       - "client/src/data/sondaDezCanonical.ts"
       - "client/src/pages/sonda-dez-daily.tsx"
-      - "client/src/pages/sonda-dez-daily-core.tsx"
+      - "client/src/components/sonda-dez/SondaDezDailyCore.tsx"
       - "client/src/pages/testes-diretos.tsx"
       - "tests/unit/sonda-dez-consolidation.test.ts"
       - ".github/workflows/sonda-dez-consolidation.yml"
