@@ -1,56 +1,56 @@
-# Decisões clínicas pendentes — fechamento autoral NeuroPed SDG
+# Decisões clínicas — fechamento autoral NeuroPed SDG
 
-Este arquivo contém somente pontos que não devem ser resolvidos editorialmente sem revisão médica.
+Data: 2026-09-08
 
-## D1 — Cluster de irritabilidade: VS1 × MAPA-RI 18 × MCRI-24
+Status: **APROVADAS PELO AUTOR**.
 
-**Problema:** três instrumentos cobrem irritabilidade/desregulação com grande interseção. O MCRI-24 adiciona domínio de contexto/sobrecarga, mas usa âncoras que misturam frequência, intensidade, apoio, interferência e risco e ainda soma moduladores contextuais ao total.
+As quatro decisões clínicas que bloqueavam o fechamento foram aprovadas conforme proposta. Não há decisão clínica pendente nesta coorte.
 
-**Opção recomendada:**
+## D1 — Cluster de irritabilidade: VS1 × MAPA-RI 18 × MCRI-24 — APROVADA
 
-- manter **VS1** como monitor breve, ancorado em frequência por dias;
-- manter **MAPA-RI 18 v1.1** como mapa clínico expandido;
-- preservar **MCRI-24** com rastreabilidade, mas não promovê-lo como terceira opção paralela enquanto sua função diferencial não for definida.
+Arquitetura final:
 
-**Decisão solicitada:** aprovar essa arquitetura ou determinar uma função específica para o MCRI-24.
+- **VS1:** monitor breve, ancorado em frequência por dias;
+- **MAPA-RI 18 v1.1-app:** mapa clínico expandido;
+- **MCRI-24 v1.0:** preservado com rastreabilidade histórica, fora das recomendações automáticas e sem uso rotineiro como terceira opção paralela.
 
-## D2 — Sono: SDRD-12 × VIGIA-SD 20
+Consequência: como o MCRI-24 não permanece ativo para novas aplicações rotineiras, o redesenho de suas âncoras e a retirada do total 0–96 deixam de bloquear o fechamento atual. Se futuramente ele ganhar função diferencial própria, isso exigirá nova revisão versionada.
 
-**Problema:** o VIGIA-SD 20 contém grande parte do conteúdo do SDRD-12 e amplia o monitoramento.
+## D2 — Sono: SDRD-12 × VIGIA-SD 20 — APROVADA
 
-**Opção recomendada:** manter ambos, com papéis explícitos e sem recomendação simultânea automática:
+Arquitetura final:
 
-- **SDRD-12:** monitor breve;
-- **VIGIA-SD 20:** monitor ampliado.
+- **SDRD-12:** monitor breve, disponível para seleção manual;
+- **VIGIA-SD 20:** monitor ampliado e opção automática preferencial;
+- evitar aplicação/recomendação simultânea automática dos dois no mesmo ponto temporal, salvo justificativa clínica.
 
-Alternativa: deprecar SDRD-12 para novas aplicações e preservar apenas o histórico.
+## D3 — BALANÇO-MED 24 — APROVADA
 
-**Decisão solicitada:** breve + ampliado, ou VIGIA-SD como único instrumento de sono dessa linhagem.
+Versão operacional final: **1.2-app**.
 
-## D3 — BALANÇO-MED 24: arquitetura de mensuração
+Decisões:
 
-Quatro decisões estão vinculadas:
+1. manter faixa da primeira infância à adolescência, condicionada à observabilidade e pertinência desenvolvimental do item;
+2. incluir `NO — não observado/não aplicável/informação insuficiente`, sem pontuação;
+3. retirar o uso clínico do total global 0–72 e interpretar separadamente tolerabilidade e lacunas de benefício funcional;
+4. usar âncoras predominantemente baseadas em repercussão funcional;
+5. manter cuidador e clínico em aplicações separadas;
+6. preservar os 24 itens e red flags existentes.
 
-1. **Aplicabilidade/faixa etária:** manter 0–17 anos com regra explícita de não aplicável e linguagem funcional dependente da idade, ou restringir a idade mínima.
-2. **Resposta não observável:** recomenda-se incluir `NO — não observado/não aplicável/informação insuficiente`, sem pontuação.
-3. **Total global:** recomenda-se **não usar total 0–72**; apresentar tolerabilidade e lacunas de benefício separadamente, evitando que perfis clinicamente opostos se compensem em uma soma única.
-4. **Âncoras 1–3:** recomenda-se um eixo ordinal predominantemente baseado em repercussão funcional, em vez de misturar frequência e impacto na mesma categoria.
+## D4 — NEXO-S 24 — APROVADA
 
-**Decisão solicitada:** aprovar ou ajustar esses quatro pontos antes de marcar o BALANÇO-MED 24 como revisado.
+Versão operacional final: **1.1-app**.
 
-## D4 — NEXO-S 24: respondentes
+Respondentes formais:
 
-**Problema:** o PDF admite aplicações separadas por escola/terapeuta, enquanto o JSON canônico atual declara apenas `pais`.
+- família/cuidador;
+- professor/escola;
+- clínico/profissional.
 
-**Opção recomendada:** registrar `pais`, `professor` e `clinico`, com formulários separados e sem combinar numericamente respondentes diferentes.
+Regra: aplicações sempre separadas; respostas de informantes diferentes não são combinadas numericamente.
 
-**Decisão solicitada:** manter somente família ou ampliar formalmente os respondentes conforme acima.
+## Fechamento
 
-## Decisão condicional — MCRI-24, apenas se for mantido como instrumento ativo
+A revisão clínica/editorial dos nove instrumentos formalmente pendentes desta linhagem está encerrada. A aprovação é registrada por overlay versionado e rastreável, sem reescrever silenciosamente os JSON/PDF históricos de base.
 
-Se D1 optar por manter o MCRI-24 como terceira opção ativa, ainda será necessário decidir:
-
-- se as âncoras serão redefinidas para um eixo único;
-- se o total global 0–96 será suprimido e o perfil por domínio se tornará a única leitura numérica principal.
-
-Recomendação: se mantido, priorizar domínios e retirar o total global.
+`reviewed` significa revisão clínica/editorial concluída pelo autor. **Não significa validação psicométrica, normatização, estabelecimento de ponto de corte diagnóstico ou validação para uso pericial.**
