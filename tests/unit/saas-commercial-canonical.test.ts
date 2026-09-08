@@ -139,7 +139,7 @@ assert.deepEqual(
     new Date("2026-12-01T00:00:00Z"),
   ),
   { ok: false, reason: "COMMERCIAL_USER_NOT_AUTHORIZED" },
-  "membership do tenant não equivale a assento/licença autorizada",
+  "membership do tenant não equivale a usuário autorizado na licença",
 );
 assert.deepEqual(
   evaluateCommercialAccess(
@@ -176,14 +176,21 @@ for (const forbidden of [
   });
 }
 
-// Contrato persistente: preços, cinco features e constraints devem coincidir
-// com o domínio TypeScript. O teste usa somente entidades sintéticas.
+// Contrato persistente e adversarial: o banco precisa impor os mesmos limites
+// mesmo se uma rota futura esquecer de chamar os guards TypeScript.
 {
   const db = new DatabaseSync(":memory:");
   db.exec("PRAGMA foreign_keys = ON;");
   db.exec(`
     CREATE TABLE users (id TEXT PRIMARY KEY);
     CREATE TABLE clinics (id TEXT PRIMARY KEY);
+    CREATE TABLE clinic_memberships (
+      clinic_id TEXT NOT NULL REFERENCES clinics(id),
+      user_id TEXT NOT NULL REFERENCES users(id),
+      role TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY (clinic_id, user_id)
+    );
   `);
   db.exec(readFileSync("db/migrations/0026_saas_commercial_catalog.sql", "utf8"));
 
@@ -225,34 +232,185 @@ for (const forbidden of [
   }
 
   db.exec(`
-    INSERT INTO users(id) VALUES ('u-owner'), ('u-member');
-    INSERT INTO clinics(id) VALUES ('clinic-a');
+    INSERT INTO users(id) VALUES ('u-owner'), ('u-other');
+    INSERT INTO clinics(id) VALUES ('clinic-a'), ('clinic-b'), ('clinic-c'), ('clinic-d'), ('clinic-e');
+    INSERT INTO clinic_memberships(clinic_id, user_id, role, active) VALUES
+      ('clinic-a', 'u-owner', 'owner', 1),
+      ('clinic-b', 'u-other', 'owner', 1);
+  `);
+
+  // Licença nunca nasce ativa.
+  assert.throws(
+    () =>
+      db.exec(`
+        INSERT INTO commercial_licenses(
+          id, clinic_id, offer_id, status, unit_label, contract_version,
+          billing_reference, created_by_user_id, activated_at, expires_at
+        ) SELECT
+          'illegal-active', 'clinic-a', id, 'active', 'A', 'terms-v1',
+          'bill-x', 'u-owner', datetime('now'), datetime('now', '+365 days')
+        FROM commercial_offers WHERE code = 'institutional-pilot-1-0';
+      `),
+    /must start pending/i,
+  );
+
+  db.exec(`
     INSERT INTO commercial_licenses(
       id, clinic_id, offer_id, status, unit_label, contract_version,
-      created_by_user_id, activated_at, expires_at
+      billing_reference, created_by_user_id
     ) SELECT
-      'lic-a', 'clinic-a', id, 'active', 'Unidade A', 'commercial-terms-v1',
-      'u-owner', '2026-09-08T00:00:00Z', '2027-09-08T00:00:00Z'
+      'lic-a', 'clinic-a', id, 'pending', 'Unidade A', 'commercial-terms-v1',
+      'bill-a', 'u-owner'
     FROM commercial_offers WHERE code = 'institutional-pilot-1-0';
+  `);
+
+  // Cobrança sem aceite não ativa.
+  assert.throws(
+    () =>
+      db.exec(`UPDATE commercial_licenses
+                 SET status='active', activated_at=datetime('now'), expires_at=datetime('now','+365 days')
+               WHERE id='lic-a';`),
+    /manager acceptance required/i,
+  );
+
+  db.exec(`
     INSERT INTO commercial_license_acceptances(
       license_id, accepted_by_user_id, terms_version,
       no_patient_data_accepted, no_medical_service_accepted, no_redistribution_accepted
     ) VALUES ('lic-a', 'u-owner', 'commercial-terms-v1', 1, 1, 1);
-    INSERT INTO commercial_license_users(
-      license_id, user_id, status, authorized_by_user_id
-    ) VALUES ('lic-a', 'u-member', 'active', 'u-owner');
   `);
 
+  // Aceite sem usuário autorizado ainda não ativa.
+  assert.throws(
+    () =>
+      db.exec(`UPDATE commercial_licenses
+                 SET status='active', activated_at=datetime('now'), expires_at=datetime('now','+365 days')
+               WHERE id='lic-a';`),
+    /authorized user required/i,
+  );
+
+  db.exec(`
+    INSERT INTO commercial_license_users(license_id, user_id, status, authorized_by_user_id)
+    VALUES ('lic-a', 'u-owner', 'active', 'u-owner');
+    UPDATE commercial_licenses
+       SET status='active', activated_at=datetime('now'), expires_at=datetime('now','+365 days')
+     WHERE id='lic-a';
+  `);
+  assert.equal(
+    (db.prepare(`SELECT status FROM commercial_licenses WHERE id='lic-a'`).get() as { status: string }).status,
+    "active",
+  );
+
+  // Usuário de outra unidade não ganha assento comercial na clínica A.
+  assert.throws(
+    () =>
+      db.exec(`INSERT INTO commercial_license_users(license_id, user_id, status, authorized_by_user_id)
+               VALUES ('lic-a', 'u-other', 'active', 'u-owner');`),
+    /active clinic member/i,
+  );
+
+  // O banco também impõe o teto de 10 usuários autorizados.
+  for (let index = 2; index <= 11; index += 1) {
+    const id = `u-${index}`;
+    db.prepare(`INSERT INTO users(id) VALUES (?)`).run(id);
+    db.prepare(
+      `INSERT INTO clinic_memberships(clinic_id, user_id, role, active)
+       VALUES ('clinic-a', ?, 'professional', 1)`,
+    ).run(id);
+  }
+  for (let index = 2; index <= 10; index += 1) {
+    const id = `u-${index}`;
+    db.prepare(
+      `INSERT INTO commercial_license_users(license_id, user_id, status, authorized_by_user_id)
+       VALUES ('lic-a', ?, 'active', 'u-owner')`,
+    ).run(id);
+  }
+  assert.throws(
+    () =>
+      db.prepare(
+        `INSERT INTO commercial_license_users(license_id, user_id, status, authorized_by_user_id)
+         VALUES ('lic-a', 'u-11', 'active', 'u-owner')`,
+      ).run(),
+    /authorized user cap reached/i,
+  );
+
+  // Licença ativa + feature válida + ator autorizado: telemetria permitida.
+  db.exec(`
+    INSERT INTO commercial_usage_events(
+      id, clinic_id, license_id, actor_user_id, kind, feature_code, metadata_json
+    ) VALUES (
+      'event-ok', 'clinic-a', 'lic-a', 'u-owner', 'material_open',
+      'form.preconsultation', '{"materialId":"form.preconsultation"}'
+    );
+  `);
+  assert.throws(
+    () =>
+      db.exec(`
+        INSERT INTO commercial_usage_events(
+          id, clinic_id, license_id, actor_user_id, kind, feature_code
+        ) VALUES (
+          'event-unauthorized', 'clinic-a', 'lic-a', 'u-11', 'material_open',
+          'form.preconsultation'
+        );
+      `),
+    /authorized active user/i,
+  );
+  assert.throws(
+    () =>
+      db.exec(`
+        INSERT INTO commercial_usage_events(
+          id, clinic_id, license_id, actor_user_id, kind, feature_code
+        ) VALUES (
+          'event-cross-tenant', 'clinic-b', 'lic-a', 'u-owner', 'material_open',
+          'form.preconsultation'
+        );
+      `),
+    /license\/clinic mismatch/i,
+  );
+
+  // Coorte piloto é estruturalmente limitada a três licenças vivas.
+  db.exec(`
+    INSERT INTO commercial_licenses(
+      id, clinic_id, offer_id, status, unit_label, contract_version,
+      billing_reference, created_by_user_id
+    ) SELECT 'lic-c', 'clinic-c', id, 'pending', 'C', 'terms-v1', 'bill-c', 'u-owner'
+      FROM commercial_offers WHERE code='institutional-pilot-1-0';
+    INSERT INTO commercial_licenses(
+      id, clinic_id, offer_id, status, unit_label, contract_version,
+      billing_reference, created_by_user_id
+    ) SELECT 'lic-d', 'clinic-d', id, 'pending', 'D', 'terms-v1', 'bill-d', 'u-owner'
+      FROM commercial_offers WHERE code='institutional-pilot-1-0';
+  `);
+  assert.throws(
+    () =>
+      db.exec(`
+        INSERT INTO commercial_licenses(
+          id, clinic_id, offer_id, status, unit_label, contract_version,
+          billing_reference, created_by_user_id
+        ) SELECT 'lic-e', 'clinic-e', id, 'pending', 'E', 'terms-v1', 'bill-e', 'u-owner'
+          FROM commercial_offers WHERE code='institutional-pilot-1-0';
+      `),
+    /license cap reached/i,
+  );
+
+  // Aceite que viole explicitamente a fronteira de dados é recusado por CHECK.
+  db.exec(`
+    INSERT INTO commercial_licenses(
+      id, clinic_id, offer_id, status, unit_label, contract_version,
+      billing_reference, created_by_user_id
+    ) SELECT 'lic-annual', 'clinic-b', id, 'pending', 'B', 'terms-annual-v1', 'bill-b', 'u-other'
+      FROM commercial_offers WHERE code='institutional-annual-1-0';
+  `);
   assert.throws(
     () =>
       db.exec(`
         INSERT INTO commercial_license_acceptances(
           license_id, accepted_by_user_id, terms_version,
           no_patient_data_accepted, no_medical_service_accepted, no_redistribution_accepted
-        ) VALUES ('lic-a', 'u-owner', 'v-invalid', 0, 1, 1);
+        ) VALUES ('lic-annual', 'u-other', 'terms-annual-v1', 0, 1, 1);
       `),
-    /constraint|unique/i,
+    /constraint/i,
   );
 }
 
-console.log("✓ SaaS commercial canonical contract: pricing, scope, privacy and persistence locked");
+console.log("✓ SaaS commercial canonical: pricing, scope, privacy, lifecycle and tenant limits locked");
