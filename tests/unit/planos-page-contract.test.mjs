@@ -25,9 +25,11 @@ const app = read("client/src/App.tsx");
 // 1) Preço e escopo vêm do domínio comercial, não do billing por assento.
 assert.match(
   page,
-  /INSTITUTIONAL_PILOT_OFFER[\s\S]*INSTITUTIONAL_ANNUAL_OFFER[\s\S]*from\s*"@shared\/commercial"/,
-  "a página precisa importar os offers canônicos de @shared/commercial",
+  /from\s*"@shared\/commercial"/,
+  "a página precisa importar o domínio canônico @shared/commercial",
 );
+assert.match(page, /INSTITUTIONAL_PILOT_OFFER/, "offer piloto precisa vir do domínio comercial");
+assert.match(page, /INSTITUTIONAL_ANNUAL_OFFER/, "offer anual precisa vir do domínio comercial");
 assert.doesNotMatch(
   page,
   /CANONICAL_PRICE_CENTS|@shared\/billing/,
@@ -62,7 +64,7 @@ assert.match(publicRoutes, /"\/planos"/, "/planos precisa estar em PUBLIC_ROUTES
 assert.match(publicSplitGuard, /"\/planos"/, "/planos precisa estar em MUST_BE_PUBLIC");
 assert.match(app, /<Route path="\/planos" component=\{PlanosPage\} \/>/);
 
-// 4) Pilot invite_only: CTA pode pedir convite, mas NÃO pode abrir cadastro ou checkout.
+// 4) Piloto invite_only: CTA pode pedir convite, mas NÃO pode abrir cadastro ou checkout.
 assert.match(page, /Solicitar convite/);
 assert.match(page, /mailto:/, "o piloto fechado precisa de um canal explícito de interesse");
 assert.doesNotMatch(
