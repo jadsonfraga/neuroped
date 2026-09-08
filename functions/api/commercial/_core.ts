@@ -118,15 +118,41 @@ export async function getCommercialLicenseSnapshot(
   };
 }
 
+export async function isCommercialUserAuthorized(
+  db: D1Database,
+  licenseId: string,
+  userId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT 1 AS allowed
+         FROM commercial_license_users clu
+         JOIN commercial_licenses cl ON cl.id = clu.license_id
+         JOIN clinic_memberships cm
+           ON cm.clinic_id = cl.clinic_id
+          AND cm.user_id = clu.user_id
+          AND cm.active = 1
+        WHERE clu.license_id = ?
+          AND clu.user_id = ?
+          AND clu.status = 'active'
+        LIMIT 1`,
+    )
+    .bind(licenseId, userId)
+    .first<{ allowed: number }>();
+  return Boolean(row?.allowed);
+}
+
 export type CommercialAccessDeniedReason =
   | "COMMERCIAL_LICENSE_MISSING"
   | "COMMERCIAL_LICENSE_INACTIVE"
+  | "COMMERCIAL_USER_NOT_AUTHORIZED"
   | "COMMERCIAL_OFFER_UNKNOWN"
   | "COMMERCIAL_FEATURE_NOT_LICENSED";
 
 export function evaluateCommercialAccess(
   snapshot: CommercialLicenseSnapshot | null,
   feature: string,
+  userAuthorized: boolean,
   now: Date = new Date(),
 ): { ok: true } | { ok: false; reason: CommercialAccessDeniedReason } {
   if (!snapshot) return { ok: false, reason: "COMMERCIAL_LICENSE_MISSING" };
@@ -145,6 +171,9 @@ export function evaluateCommercialAccess(
   ) {
     return { ok: false, reason: "COMMERCIAL_LICENSE_INACTIVE" };
   }
+  if (!userAuthorized) {
+    return { ok: false, reason: "COMMERCIAL_USER_NOT_AUTHORIZED" };
+  }
   if (
     !offerHasCommercialFeature(snapshot.offerCode, feature) ||
     !snapshot.features.includes(feature as CommercialFeatureCode)
@@ -152,6 +181,18 @@ export function evaluateCommercialAccess(
     return { ok: false, reason: "COMMERCIAL_FEATURE_NOT_LICENSED" };
   }
   return { ok: true };
+}
+
+export async function evaluateCommercialUserAccess(
+  db: D1Database,
+  snapshot: CommercialLicenseSnapshot | null,
+  userId: string,
+  feature: string,
+  now: Date = new Date(),
+): Promise<{ ok: true } | { ok: false; reason: CommercialAccessDeniedReason }> {
+  if (!snapshot) return { ok: false, reason: "COMMERCIAL_LICENSE_MISSING" };
+  const authorized = await isCommercialUserAuthorized(db, snapshot.licenseId, userId);
+  return evaluateCommercialAccess(snapshot, feature, authorized, now);
 }
 
 export interface RecordCommercialUsageInput {
