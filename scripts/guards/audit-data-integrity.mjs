@@ -18,6 +18,26 @@ const validQueixas = new Set(queixas.map((q) => q.id));
 const validResp = new Set(["pais","clinico","professor","autoaplicavel","crianca","teste_direto_crianca"]);
 const validPrio = new Set(["triagem","diagnostica","monitorizacao"]);
 
+// Exceção deliberadamente estreita: alguns autorais permanecem acessíveis por
+// nome/rota para uso manual ou histórico, mas foram retirados da recomendação
+// automática por queixa após revisão clínica. `queixas: []` só é aceito quando
+// o próprio card documenta explicitamente essa disposição; qualquer outro
+// registro vazio continua sendo erro duro.
+const normalize = (value) => String(value ?? "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase();
+const isIntentionalManualOrHistoricalEntry = (scale) => {
+  if (scale.assessmentUse !== "monitorizacao" || scale.prioridade !== "monitorizacao") return false;
+  const text = normalize(scale.description);
+  return (
+    text.includes("selecionar manualmente") ||
+    text.includes("selecao manual") ||
+    text.includes("registro historico rastreavel") ||
+    text.includes("nao recomendado para novas aplicacoes rotineiras")
+  );
+};
+
 const bugs = [];
 const seen = new Map();
 const routeUsers = new Map();
@@ -27,8 +47,9 @@ for (const s of allScales) {
   if (s.ageMin > s.ageMax) bugs.push(["AGE_INVERTED", `${where} ${s.ageMin}>${s.ageMax}`]);
   if (s.ageMin < 0) bugs.push(["AGE_NEG", `${where}=${s.ageMin}`]);
   if (s.ageMax > 216) bugs.push(["AGE_OVER216", `${where}=${s.ageMax}`]);
-  if (!s.queixas?.length) bugs.push(["NO_QUEIXA", where]);
-  else for (const q of s.queixas) if (!validQueixas.has(q)) bugs.push(["BAD_QUEIXA", `${where}:${q}`]);
+  if (!s.queixas?.length) {
+    if (!isIntentionalManualOrHistoricalEntry(s)) bugs.push(["NO_QUEIXA", where]);
+  } else for (const q of s.queixas) if (!validQueixas.has(q)) bugs.push(["BAD_QUEIXA", `${where}:${q}`]);
   if (!s.respondente?.length) bugs.push(["NO_RESP", where]);
   else for (const r of s.respondente) if (!validResp.has(r)) bugs.push(["BAD_RESP", `${where}:${r}`]);
   if (!validPrio.has(s.prioridade)) bugs.push(["BAD_PRIO", `${where}:${s.prioridade}`]);
