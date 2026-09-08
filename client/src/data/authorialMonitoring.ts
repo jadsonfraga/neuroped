@@ -1,6 +1,7 @@
 import source from "./authorialMonitoring.json";
 import channelSource from "./authorialMonitoringChannel2026.json";
 import mcriSource from "./authorialMonitoringMcri2026.json";
+import reviewSource from "./authorialMonitoringReview20260908.json";
 import type { ScaleEntry, Respondente } from "./scaleFilter";
 import type { InteractiveScaleDef } from "./interactiveScaleItems";
 
@@ -24,10 +25,40 @@ interface MonitoringRecord {
   optionPoints?: number[];
   unscoredOptionIndexes?: number[];
   scoringNote?: string;
+  applicationNote?: string;
+  suppressGlobalScore?: boolean;
+  catalogRole?: string;
+  catalogStatus?: "active" | "historical";
+  autoRecommend?: boolean;
+  reviewProvenance?: string;
   domains: Array<{ name: string; itemIds: string[] }>;
   items: Array<{ id: string; text: string }>;
   redFlags: string[];
   source: { filename: string; integrity: string; date: string; kind: string };
+}
+
+interface MonitoringReviewOverride {
+  version?: string;
+  clinicalReviewStatus?: "pending" | "reviewed";
+  respondents?: Respondente[];
+  responseLabels?: string[];
+  optionPoints?: number[];
+  unscoredOptionIndexes?: number[];
+  scoringNote?: string;
+  applicationNote?: string;
+  suppressGlobalScore?: boolean;
+  catalogRole?: string;
+  catalogStatus?: "active" | "historical";
+  autoRecommend?: boolean;
+  reviewProvenance?: string;
+}
+
+interface MonitoringReviewSource {
+  reviewId: string;
+  approvedAt: string;
+  approvedBy: string;
+  scope: string;
+  overrides: Record<string, MonitoringReviewOverride>;
 }
 
 const LABELS = [
@@ -75,6 +106,13 @@ export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
       if (!Array.isArray(r.unscoredOptionIndexes) || new Set(r.unscoredOptionIndexes).size !== r.unscoredOptionIndexes.length || r.unscoredOptionIndexes.some((x) => !Number.isInteger(x) || x < 0 || x >= responseLabels.length)) fail("opções sem escore");
     }
     if (r.scoringNote !== undefined && (typeof r.scoringNote !== "string" || !r.scoringNote.trim())) fail("regra de apuração");
+    for (const field of ["applicationNote", "catalogRole", "reviewProvenance"] as const) {
+      if (r[field] !== undefined && (typeof r[field] !== "string" || !r[field]!.trim())) fail(field);
+    }
+    if (r.suppressGlobalScore !== undefined && typeof r.suppressGlobalScore !== "boolean") fail("supressão de escore global");
+    if (r.autoRecommend !== undefined && typeof r.autoRecommend !== "boolean") fail("recomendação automática");
+    if (r.catalogStatus !== undefined && !["active", "historical"].includes(r.catalogStatus)) fail("status de catálogo");
+    if (r.clinicalReviewStatus === "reviewed" && !r.reviewProvenance) fail("proveniência da revisão clínica");
 
     if (!r.source || !/^sha256:[a-f0-9]{64}$/.test(r.source.integrity) || typeof r.source.filename !== "string" || !r.source.filename.endsWith(".pdf")) fail("proveniência PDF");
     if (!Array.isArray(r.items) || !r.items.length || r.items.some((x) => typeof x.id !== "string" || typeof x.text !== "string" || !x.text.trim())) fail("itens");
@@ -87,7 +125,39 @@ export function validateMonitoringRecords(input: unknown): MonitoringRecord[] {
   });
 }
 
-export const authorialMonitoringRecords = validateMonitoringRecords([...source, ...channelSource, ...mcriSource]);
+function applyApprovedReview(records: MonitoringRecord[]): MonitoringRecord[] {
+  const review = reviewSource as MonitoringReviewSource;
+  if (!review.reviewId || !review.approvedAt || !review.approvedBy || !review.scope || !review.overrides) {
+    throw new Error("Metadados da revisão clínica autoral inválidos.");
+  }
+  const knownIds = new Set(records.map((record) => record.id));
+  for (const id of Object.keys(review.overrides)) {
+    if (!knownIds.has(id)) throw new Error(`Revisão clínica aponta instrumento desconhecido: ${id}`);
+  }
+  return records.map((record) => {
+    const override = review.overrides[record.id];
+    if (!override) return record;
+    return {
+      ...record,
+      version: override.version ?? record.version,
+      clinicalReviewStatus: override.clinicalReviewStatus ?? record.clinicalReviewStatus,
+      respondents: override.respondents ?? record.respondents,
+      responseLabels: override.responseLabels ?? record.responseLabels,
+      optionPoints: override.optionPoints ?? record.optionPoints,
+      unscoredOptionIndexes: override.unscoredOptionIndexes ?? record.unscoredOptionIndexes,
+      scoringNote: override.scoringNote ?? record.scoringNote,
+      applicationNote: override.applicationNote ?? record.applicationNote,
+      suppressGlobalScore: override.suppressGlobalScore ?? record.suppressGlobalScore,
+      catalogRole: override.catalogRole ?? record.catalogRole,
+      catalogStatus: override.catalogStatus ?? record.catalogStatus,
+      autoRecommend: override.autoRecommend ?? record.autoRecommend,
+      reviewProvenance: override.reviewProvenance ?? record.reviewProvenance,
+    };
+  });
+}
+
+const rawAuthorialMonitoringRecords = validateMonitoringRecords([...source, ...channelSource, ...mcriSource]);
+export const authorialMonitoringRecords = validateMonitoringRecords(applyApprovedReview(rawAuthorialMonitoringRecords));
 
 export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecords.map((r) => ({
   id: r.id,
@@ -101,9 +171,11 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   assessmentUse: "monitorizacao",
   tempo: "Não aferido",
   appRoute: `/generic-scale/${r.id}`,
-  description: `${r.purpose}. Janela: últimos ${r.timeframeDays} dias. ${WARNING}`,
-  fonte: `Proveniência autoral registrada: ${r.source.filename}; v${r.version}; integridade ${r.source.integrity}.`,
-  tipo: "Instrumento autoral de monitorização, não validado",
+  description: [r.catalogRole, r.purpose, `Janela: últimos ${r.timeframeDays} dias.`, r.applicationNote, WARNING].filter(Boolean).join(" "),
+  fonte: `Base documental autoral: ${r.source.filename}; integridade ${r.source.integrity}. ${r.reviewProvenance ?? `Versão operacional registrada: ${r.version}.`}`,
+  tipo: r.catalogStatus === "historical"
+    ? "Instrumento autoral de monitorização — histórico, não validado"
+    : "Instrumento autoral de monitorização, não validado",
   licencaUso: "autoral",
   pubmedId: null,
   validacaoBrasil: "Sem validação psicométrica publicada.",
@@ -116,6 +188,8 @@ export const authorialMonitoringCatalog: ScaleEntry[] = authorialMonitoringRecor
   suicideRiskInstrument: false,
   psychosisRiskInstrument: false,
   signalTags: r.signalTags,
+  autoRecommend: r.autoRecommend ?? true,
+  catalogStatus: r.catalogStatus ?? "active",
 }));
 
 export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Object.fromEntries(
@@ -124,27 +198,39 @@ export const authorialMonitoringItems: Record<string, InteractiveScaleDef> = Obj
     const optionPoints = r.optionPoints ? [...r.optionPoints] : labels.map((_, index) => index);
     const hasUnscoredOptions = (r.unscoredOptionIndexes?.length ?? 0) > 0;
     const maxScoredPoint = Math.max(0, ...optionPoints.filter((_, index) => !(r.unscoredOptionIndexes ?? []).includes(index)));
-    const respondentInstruction = r.respondents.includes("professor")
-      ? "Mantenha o mesmo respondente e contexto; família e escola preenchem separadamente."
-      : r.respondents.includes("clinico")
-        ? "Mantenha o mesmo respondente e contexto por aplicação; cuidador e clínico registram separadamente quando ambos forem utilizados."
-        : "Mantenha o mesmo responsável/cuidador e o mesmo ambiente de observação sempre que possível.";
+    const hasProfessor = r.respondents.includes("professor");
+    const hasClinician = r.respondents.includes("clinico");
+    const respondentInstruction = hasProfessor && hasClinician
+      ? "Mantenha o mesmo respondente e contexto por aplicação; família, escola/professor e clínico/profissional preenchem em formulários separados e não devem ter respostas combinadas numericamente."
+      : hasProfessor
+        ? "Mantenha o mesmo respondente e contexto; família e escola preenchem separadamente."
+        : hasClinician
+          ? "Mantenha o mesmo respondente e contexto por aplicação; cuidador e clínico registram separadamente quando ambos forem utilizados."
+          : "Mantenha o mesmo responsável/cuidador e o mesmo ambiente de observação sempre que possível.";
     const observabilityInstruction = hasUnscoredOptions
-      ? "Quando não houver oportunidade de observar ou a informação for insuficiente, marque NO. NO registra ausência de observabilidade e nunca deve ser convertido em zero. Siga a apuração do PDF: domínio com NO ou item em branco fica incompleto; soma global somente com todos os itens válidos."
+      ? r.suppressGlobalScore
+        ? "Quando não houver oportunidade de observar, o item não for aplicável ou a informação for insuficiente, marque NO. NO registra ausência de observabilidade/aplicabilidade e nunca deve ser convertido em zero. Domínio com NO ou item em branco fica incompleto; não calcule total global."
+        : "Quando não houver oportunidade de observar ou a informação for insuficiente, marque NO. NO registra ausência de observabilidade e nunca deve ser convertido em zero. Siga a apuração registrada: domínio com NO ou item em branco fica incompleto; soma global somente com todos os itens válidos."
       : "Se um item não puder ser observado, deixe-o sem resposta: não conclua nem impute zero.";
     const scoringDescription = hasUnscoredOptions
-      ? "O aplicativo registra as respostas por extenso. A apuração numérica é manual conforme o PDF: NO não recebe zero, domínio incompleto não é somado e a soma global só existe com todos os itens válidos. Compare longitudinalmente apenas o mesmo formulário, versão, respondente e ambiente."
+      ? r.suppressGlobalScore
+        ? "O aplicativo registra as respostas por extenso. A apuração numérica é por domínio: NO não recebe zero, domínio incompleto não é somado e não existe total global clínico. Compare longitudinalmente apenas o mesmo formulário, versão, respondente e ambiente."
+        : "O aplicativo registra as respostas por extenso. A apuração numérica é manual: NO não recebe zero, domínio incompleto não é somado e a soma global só existe com todos os itens válidos. Compare longitudinalmente apenas o mesmo formulário, versão, respondente e ambiente."
       : "Compare com registros anteriores do mesmo respondente e contexto. Queda sugere menor dificuldade relatada; aumento sugere maior dificuldade relatada. Não é evidência isolada de resposta terapêutica ou de diagnóstico. Alertas clínicos independem da soma.";
+    const applicationInstruction = r.applicationNote ? ` ${r.applicationNote}` : "";
 
     return [r.id, {
-      instruction: `Responda sobre os últimos ${r.timeframeDays} dias. ${respondentInstruction} ${observabilityInstruction} Repita no intervalo definido pelo plano clínico, mantendo versão, respondente e contexto comparáveis.`,
+      instruction: `Responda sobre os últimos ${r.timeframeDays} dias. ${respondentInstruction} ${observabilityInstruction}${applicationInstruction} Repita no intervalo definido pelo plano clínico, mantendo versão, respondente e contexto comparáveis.`,
       infoBox: `${r.name} — v${r.version}. ${WARNING}${r.scoringNote ? ` ${r.scoringNote}` : ""}${r.redFlags.length ? ` Alertas independentes da soma: ${r.redFlags.join("; ")}.` : ""}`,
       labels,
       optionPoints,
       scoreDirection: "higher_worse" as const,
-      totalLabel: hasUnscoredOptions
-        ? `${r.name} — apuração manual conforme PDF; NO não recebe zero`
-        : `${r.name} — soma descritiva (0–${r.items.length * maxScoredPoint}); sem ponto de corte`,
+      suppressGlobalScore: r.suppressGlobalScore,
+      totalLabel: r.suppressGlobalScore
+        ? `${r.name} — interpretar por domínios; sem total global`
+        : hasUnscoredOptions
+          ? `${r.name} — apuração manual; NO não recebe zero`
+          : `${r.name} — soma descritiva (0–${r.items.length * maxScoredPoint}); sem ponto de corte`,
       domains: r.domains.map((d) => ({
         name: d.name,
         items: d.itemIds.map((id) => ({ text: r.items.find((item) => item.id === id)!.text })),
