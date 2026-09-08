@@ -1,115 +1,111 @@
-# Candidatas finais — instrumentos autorais NeuroPed SDG
+# Versões finais aprovadas — instrumentos autorais NeuroPed SDG
 
 Data: 2026-09-08
 
-Estas candidatas são revisões editoriais rastreáveis, não novos instrumentos. O conteúdo de itens e domínios permanece herdado da fonte canônica atual. Nenhuma candidata altera produção, substitui arquivos históricos ou muda `clinicalReviewStatus` antes da aprovação médica.
+Status: **fechamento clínico/editorial aprovado pelo autor**. Estas revisões não criam instrumentos novos, não alegam validação psicométrica e não apagam versões históricas. A implementação operacional é feita por camada de revisão rastreável (`authorialMonitoringReview20260908.json`) sobre as fontes canônicas anteriores, preservando PDF/hash de base.
 
-## Contrato comum
+## Contrato comum aprovado
 
-- manter o caráter autoral e de monitorização clínica;
-- declarar ausência de validação psicométrica publicada e de pontos de corte diagnósticos;
-- não converter resposta ausente/NO/não observada em zero;
-- comparar longitudinalmente apenas versão, respondente e contexto compatíveis;
-- tratar alertas clínicos independentemente da soma;
-- periodicidade de repetição definida pelo plano clínico, e não imposta globalmente pelo aplicativo.
+- natureza autoral NeuroPed SDG e finalidade de monitorização clínica preservadas;
+- ausência de validação psicométrica publicada explicitada;
+- ausência de pontos de corte diagnósticos e de classificação de gravidade validada;
+- escore ou registro nunca deve, isoladamente, estabelecer diagnóstico, indicar/retirar tratamento ou fundamentar perícia;
+- `NO`, item não observado, não aplicável ou em branco nunca é convertido em zero;
+- comparação longitudinal exige versão, respondente, contexto e janela comparáveis;
+- red flags independem de qualquer soma;
+- periodicidade de repetição é definida pelo plano clínico, sem imposição global de S4/S8/S12;
+- versões predecessoras permanecem rastreáveis e não são sobrescritas silenciosamente.
 
-## AFI-12 SDG
+## AFI-12 SDG — final aprovado
 
-Candidata: `AFI-12-SDG@1.0-rc-final.20260908`.
+Versão operacional: **1.0**.
 
-Fonte congelada: `client/src/data/authorialMonitoring.json#afi12-sdg`, v1.0.
+Fonte de base: `client/src/data/authorialMonitoring.json#afi12-sdg` e PDF `01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf`.
 
-Manter 12 itens, 2 domínios e pontuação atuais. Acrescentar apenas instrução sobre resposta não observável e retirar da interface a imposição global de S4/S8/S12.
+Decisão: manter 12 itens, 2 domínios e pontuação existentes. Acrescentar somente instrução de não imputação de zero quando o item não puder ser observado e periodicidade definida pelo plano clínico.
 
-Status: candidata editorialmente fechada, sem alteração estrutural.
+## SDRD-12 SDG — final aprovado
 
-## SDRD-12 SDG
+Versão operacional: **1.0**.
 
-Candidata: `SDRD-12-SDG@1.0-rc-final.20260908`.
+Fonte de base: `client/src/data/authorialMonitoring.json#sdrd12-sdg`.
 
-Fonte congelada: `client/src/data/authorialMonitoring.json#sdrd12-sdg`, v1.0.
+Decisão: manter conteúdo e pontuação como **monitor breve de sono**. O VIGIA-SD 20 fica definido como monitor ampliado. Para impedir recomendação automática simultânea, o SDRD-12 permanece disponível por nome/rota, mas não participa da recomendação automática baseada em queixa.
 
-Manter conteúdo e pontuação. Acrescentar regra de resposta não observável. Se mantido junto ao VIGIA-SD 20, usar rótulo funcional de monitor breve de sono.
+## SARF-12 SDG — final aprovado
 
-Bloqueio: decisão clínica sobre coexistência com VIGIA-SD 20.
+Versão operacional: **1.0**.
 
-## SARF-12 SDG
+Fonte de base: `client/src/data/authorialMonitoring.json#sarf12-sdg`.
 
-Candidata: `SARF-12-SDG@1.0-rc-final.20260908`.
+Decisão: manter conteúdo e pontuação. Achados de mastigação, organização oral, progressão de consistências ou deglutição exigem avaliação clínica própria e não devem ser reduzidos a seletividade alimentar. Red flags independem da soma.
 
-Fonte congelada: `client/src/data/authorialMonitoring.json#sarf12-sdg`, v1.0.
+## Irritabilidade e Desregulação no Cotidiano — VS1 — final aprovado
 
-Manter conteúdo e pontuação. Acrescentar instrução de resposta não observável e nota de que achados orais/motores/de deglutição exigem avaliação própria, não sendo reduzidos a seletividade.
+Versão operacional: **VS1**.
 
-Status: candidata editorialmente fechada, sem alteração estrutural.
+Fonte de base: `client/src/data/authorialMonitoring.json#irritabilidade-desregulacao-vs1`.
 
-## Irritabilidade e Desregulação no Cotidiano — VS1
+Decisão: manter integralmente itens, domínios, âncoras por número de dias, opção `NO` e regras de incompletude. Papel final: **monitor breve de frequência observável** dentro do cluster de irritabilidade/desregulação.
 
-Candidata: `IRRITABILIDADE-VS1@VS1-rc-final.20260908`.
+## NEXO-S 24 — final aprovado
 
-Fonte congelada: `client/src/data/authorialMonitoring.json#irritabilidade-desregulacao-vs1`, VS1.
+Versão operacional: **1.1-app**.
 
-Manter integralmente itens, domínios, âncoras por dias, opção NO e regras de incompletude. Alterar somente o posicionamento no catálogo depois da decisão sobre o cluster de irritabilidade.
+Fonte de base: `client/src/data/authorialMonitoring.json#nexo-s-24-sdg`; PDF predecessor `NEXO_S_24_NeuroPed_SDG.pdf`, SHA-256 `f1ee15559a36827ebeda1f3a33caaeee534909b7c628725bcaf843e092ce706a`.
 
-Bloqueio: relação funcional com MAPA-RI 18 e MCRI-24.
+Decisão: preservar os 24 itens, 4 domínios, opções 0–4 + `NO` e regra de apuração. Respondentes formalizados: **família, professor/escola e clínico/profissional**, sempre em aplicações separadas e sem combinação numérica entre informantes.
 
-## NEXO-S 24
+A alteração de respondentes caracteriza revisão operacional do app; o PDF predecessor permanece como base documental e não é apresentado como se já contivesse a revisão 1.1-app.
 
-Candidata: `NEXO-S-24@1.0-rc-final.20260908`.
+## MAPA-RI 18 — final aprovado
 
-Fonte congelada: `client/src/data/authorialMonitoring.json#nexo-s-24-sdg`, v1.0. Proveniência registrada: `NEXO_S_24_NeuroPed_SDG.pdf`, SHA-256 `f1ee15559a36827ebeda1f3a33caaeee534909b7c628725bcaf843e092ce706a`.
+Versão operacional: **1.1-app**.
 
-Manter 24 itens, 4 domínios, opções 0–4 + NO e regra de soma atual. Corrigir somente tipografia/diacríticos do artefato e uniformizar instruções.
+Fonte de base: `client/src/data/authorialMonitoringChannel2026.json#mapa-ri-18-sdg`; predecessor v1.0 preservado.
 
-Bloqueio: decidir se o respondente canônico permanece apenas `pais` ou inclui escola/profissional, sempre em aplicações separadas.
+Decisão: manter a semântica v1.1-app, inclusive itens 17–18 em direção de dificuldade e pontuação direta. Papel final: **mapa clínico expandido** de irritabilidade/desregulação, complementar ao VS1 breve.
 
-## MAPA-RI 18
+Comparação v1.0→v1.1 deve declarar quebra de versão; novo basal em v1.1 é recomendado quando possível.
 
-Candidata: `MAPA-RI-18@1.1-rc-final.20260908`.
+## VIGIA-SD 20 — final aprovado
 
-Fonte operacional congelada: `client/src/data/authorialMonitoringChannel2026.json#mapa-ri-18-sdg`, v1.1-app.
+Versão operacional: **1.1-app**.
 
-Manter a semântica v1.1-app, inclusive os itens 17–18 em direção de dificuldade e pontuação direta. O predecessor v1.0 deve permanecer preservado. Comparação v1.0→v1.1 deve declarar quebra de versão; novo basal em v1.1 é recomendado.
+Fonte de base: `client/src/data/authorialMonitoringChannel2026.json#vigia-sd-20-sdg`.
 
-Após aprovação, gerar novo snapshot/PDF a partir do JSON vigente, com novo hash e referência explícita ao predecessor, sem declarar recuperação literal de arquivo não verificado.
+Decisão: manter 20 itens, 4 domínios e resposta 0–3. Papel final: **monitor ampliado de sono e repercussão diurna**, opção automática preferencial da linhagem; SDRD-12 permanece como versão breve manual.
 
-Bloqueio: papel no cluster de irritabilidade.
+## BALANÇO-MED 24 — final aprovado
 
-## VIGIA-SD 20
+Versão operacional: **1.2-app**.
 
-Candidata: `VIGIA-SD-20@1.1-rc-final.20260908`.
+Fonte de base: `client/src/data/authorialMonitoringChannel2026.json#balanco-med-24-sdg`; PDF predecessor `BALANCO_MED_24_v1.1_NeuroPed_SDG.pdf`, SHA-256 `98326fc57f8a4ee19c3c37769fddaf067a9064fe52fd529d40d85300ad18ea74`.
 
-Fonte operacional congelada: `client/src/data/authorialMonitoringChannel2026.json#vigia-sd-20-sdg`, v1.1-app.
+Decisões aprovadas:
 
-Manter 20 itens, 4 domínios e resposta 0–3. Acrescentar regra de não imputação quando o item não for observável/aplicável. Novo snapshot/PDF, se aprovado, deve ser criado do JSON vigente e receber novo hash.
+- manter aplicabilidade da primeira infância à adolescência somente quando o item for observável e pertinente ao nível de desenvolvimento;
+- incluir `NO — não observado/não aplicável/informação insuficiente`, sem pontuação;
+- usar âncoras predominantemente baseadas em **repercussão funcional**;
+- manter os 24 itens e red flags atuais;
+- apurar separadamente tolerabilidade (A–D) e lacunas de benefício funcional (E);
+- **não calcular nem interpretar total global**;
+- cuidador e clínico registram em formulários separados.
 
-Bloqueio: manter SDRD-12 como versão breve ou deprecar uma das entradas, preservando histórico.
+O PDF v1.1 permanece como predecessor documental; não é apresentado como equivalente literal à revisão operacional 1.2-app.
 
-## BALANÇO-MED 24
+## MCRI-24 — final de disposição aprovado
 
-Candidata: `BALANCO-MED-24@1.1-rc-final.20260908`.
+Versão preservada: **1.0**.
 
-Fonte operacional congelada: `client/src/data/authorialMonitoringChannel2026.json#balanco-med-24-sdg`, v1.1-app.
+Fonte de base: `client/src/data/authorialMonitoringMcri2026.json#mcri-24-sdg`.
 
-Manter os 24 itens e alertas atuais enquanto as decisões abaixo não forem tomadas. Ajustes editoriais já seguros: aplicações de cuidador e clínico separadas; direção de escore preservada pela leitura de benefício como lacuna/insuficiência; novo snapshot rastreado a partir do JSON vigente.
+Decisão: preservar integralmente para rastreabilidade e histórico, mas **não oferecer como terceira opção paralela ativa** ao VS1 e ao MAPA-RI 18. Não recomendar para novas aplicações rotineiras nesta arquitetura. Registros prévios permanecem válidos como registros da versão utilizada e não devem ser convertidos retrospectivamente para outro instrumento.
 
-Bloqueios clínicos: faixa etária mínima/estratégia por desenvolvimento; inclusão ou não de opção NO; manutenção ou retirada do total global; manutenção das âncoras atuais ou escolha de um único eixo ordinal.
+Como o MCRI-24 não permanece ativo para novas aplicações rotineiras, as decisões condicionais sobre redesenho de âncoras e retirada do total 0–96 deixam de bloquear o fechamento desta coorte.
 
-## MCRI-24
+## Estado final da coorte
 
-Candidata: `MCRI-24@1.0-rc-final.20260908`.
+Os nove instrumentos formalmente pendentes nesta linhagem tiveram revisão clínica/editorial encerrada em 08/09/2026. O status de revisão clínica operacional passa a `reviewed` por overlay rastreável, sem alterar os JSON/PDF históricos de base.
 
-Fonte operacional congelada: `client/src/data/authorialMonitoringMcri2026.json#mcri-24-sdg`, v1.0.
-
-Manter 24 itens, 6 domínios, NO e alertas. Dar prioridade editorial ao perfil por domínio. Novo snapshot/PDF deve nascer do JSON vigente e receber novo hash.
-
-Bloqueios clínicos: manter ou redesenhar âncoras que hoje combinam múltiplos eixos; manter ou suprimir a soma global; definir papel em relação a VS1 e MAPA-RI 18.
-
-## Estado final da coorte candidata
-
-- sem mudança estrutural: AFI-12 e SARF-12;
-- conteúdo preservado, decisão de posicionamento: SDRD-12, VS1, MAPA-RI 18 e VIGIA-SD 20;
-- conteúdo preservado, decisão de respondente: NEXO-S 24;
-- decisão de arquitetura de mensuração ainda necessária: BALANÇO-MED 24 e MCRI-24.
-
-Nenhum registro deve ser marcado `reviewed` automaticamente com base neste arquivo.
+A revisão clínica **não** equivale a validação psicométrica. Todos permanecem classificados como instrumentos autorais de monitorização clínica não validados, conforme aplicável.
