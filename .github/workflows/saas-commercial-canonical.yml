@@ -7,8 +7,10 @@ on:
       - "shared/commercial.ts"
       - "functions/api/commercial/**"
       - "db/migrations/0026_saas_commercial_catalog.sql"
+      - "db/migrations/0027_saas_commercial_terms_binding.sql"
       - "client/src/pages/planos.tsx"
       - "tests/unit/saas-commercial-canonical.test.ts"
+      - "tests/unit/saas-commercial-terms.test.ts"
       - "tests/unit/planos-page-contract.test.mjs"
       - "docs/SAAS_COMERCIAL_CANONICO.md"
       - ".github/workflows/saas-commercial-canonical.yml"
@@ -18,8 +20,10 @@ on:
       - "shared/commercial.ts"
       - "functions/api/commercial/**"
       - "db/migrations/0026_saas_commercial_catalog.sql"
+      - "db/migrations/0027_saas_commercial_terms_binding.sql"
       - "client/src/pages/planos.tsx"
       - "tests/unit/saas-commercial-canonical.test.ts"
+      - "tests/unit/saas-commercial-terms.test.ts"
       - "tests/unit/planos-page-contract.test.mjs"
       - "docs/SAAS_COMERCIAL_CANONICO.md"
       - ".github/workflows/saas-commercial-canonical.yml"
@@ -50,6 +54,9 @@ jobs:
 
       - name: Canonical commercial regression
         run: node --import tsx tests/unit/saas-commercial-canonical.test.ts
+
+      - name: Canonical terms binding
+        run: node --import tsx tests/unit/saas-commercial-terms.test.ts
 
       - name: Public plans contract
         run: node tests/unit/planos-page-contract.test.mjs
