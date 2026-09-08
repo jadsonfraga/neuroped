@@ -27,6 +27,10 @@ function cleanAuditReason(value: unknown): string {
  * a oportunidade comercial foi aprovada/conciliada. Não concede acesso e não
  * aceita termos em nome da instituição. Toda ação exige justificativa humana
  * curta e auditável; não inserir PHI nesse campo.
+ *
+ * A versão contratual é derivada do offer canônico. O cliente pode enviar
+ * `termsVersion` somente como precondição otimista; se divergir, a operação
+ * falha em vez de criar uma licença contra termos inventados/desatualizados.
  */
 export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (context) => {
   const db = context.env.DB;
@@ -51,19 +55,12 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   const clinicId = cleanText(body.clinicId, 80);
   const offerCode = cleanText(body.offerCode, 80);
   const unitLabel = cleanText(body.unitLabel, 120);
-  const contractVersion = cleanText(body.contractVersion, 80);
+  const requestedTermsVersion = cleanText(body.termsVersion ?? body.contractVersion, 80);
   const billingReference = cleanText(body.billingReference, 120);
   const reason = cleanAuditReason(body.reason);
-  if (
-    !clinicId ||
-    !offerCode ||
-    !unitLabel ||
-    !contractVersion ||
-    !billingReference ||
-    reason.length < 12
-  ) {
+  if (!clinicId || !offerCode || !unitLabel || !billingReference || reason.length < 12) {
     return tenantError(
-      "clinicId, offerCode, unitLabel, contractVersion, billingReference e reason (mín. 12 caracteres) são obrigatórios.",
+      "clinicId, offerCode, unitLabel, billingReference e reason (mín. 12 caracteres) são obrigatórios.",
       "COMMERCIAL_PROVISION_VALIDATION_ERROR",
       400,
     );
@@ -71,6 +68,16 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
 
   const offer = getCommercialOffer(offerCode);
   if (!offer) return tenantError("Oferta comercial desconhecida.", "COMMERCIAL_OFFER_UNKNOWN", 400);
+  if (requestedTermsVersion && requestedTermsVersion !== offer.termsVersion) {
+    return tenantJson(
+      {
+        error: "Versão contratual informada diverge da versão canônica do SKU.",
+        code: "COMMERCIAL_TERMS_VERSION_MISMATCH",
+        expectedTermsVersion: offer.termsVersion,
+      },
+      409,
+    );
+  }
 
   const expansionGateOpen = context.env.COMMERCIAL_EXPANSION_GATE_OPEN?.trim().toLowerCase() === "true";
   const orderGate = canOrderCommercialOffer({
@@ -126,11 +133,23 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   }
 
   const offerRow = await db
-    .prepare(`SELECT id FROM commercial_offers WHERE code = ? AND lifecycle_status = 'active' LIMIT 1`)
+    .prepare(
+      `SELECT id, terms_version
+         FROM commercial_offers
+        WHERE code = ? AND lifecycle_status = 'active'
+        LIMIT 1`,
+    )
     .bind(offer.code)
-    .first<{ id: string }>();
+    .first<{ id: string; terms_version: string | null }>();
   if (!offerRow) {
     return tenantError("Oferta não está persistida/ativa neste ambiente.", "COMMERCIAL_OFFER_NOT_PERSISTED", 503);
+  }
+  if (offerRow.terms_version !== offer.termsVersion) {
+    return tenantError(
+      "Versão contratual persistida diverge do domínio canônico.",
+      "COMMERCIAL_OFFER_TERMS_DRIFT",
+      503,
+    );
   }
 
   const licenseId = crypto.randomUUID();
@@ -148,7 +167,7 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
           clinicId,
           offerRow.id,
           unitLabel,
-          contractVersion,
+          offer.termsVersion,
           billingReference,
           user.id,
         ),
@@ -160,6 +179,7 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
         targetId: licenseId,
         metadata: {
           offerCode: offer.code,
+          termsVersion: offer.termsVersion,
           status: "pending",
           scope: "commercial_license_provision",
           reason,
@@ -176,6 +196,7 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
       licenseId,
       clinicId,
       offerCode: offer.code,
+      termsVersion: offer.termsVersion,
       status: "pending",
       next: "institution_acceptance",
     },
