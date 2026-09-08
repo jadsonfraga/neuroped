@@ -118,6 +118,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_commercial_license_live_clinic
 CREATE INDEX IF NOT EXISTS idx_commercial_licenses_offer_status
   ON commercial_licenses(offer_id, status, created_at);
 
+-- Protege o teto da coorte também contra concorrência/rotas futuras.
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_offer_cap
+BEFORE INSERT ON commercial_licenses
+WHEN (SELECT max_licenses FROM commercial_offers WHERE id = NEW.offer_id) IS NOT NULL
+BEGIN
+  SELECT CASE WHEN (
+    SELECT COUNT(*)
+      FROM commercial_licenses cl
+     WHERE cl.offer_id = NEW.offer_id
+       AND cl.status IN ('pending','active','suspended')
+  ) >= (
+    SELECT max_licenses FROM commercial_offers WHERE id = NEW.offer_id
+  ) THEN RAISE(ABORT, 'commercial offer license cap reached') END;
+END;
+
 CREATE TABLE IF NOT EXISTS commercial_license_acceptances (
   license_id TEXT PRIMARY KEY REFERENCES commercial_licenses(id) ON DELETE CASCADE,
   accepted_by_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -139,6 +154,85 @@ CREATE TABLE IF NOT EXISTS commercial_license_users (
 );
 CREATE INDEX IF NOT EXISTS idx_commercial_license_users_active
   ON commercial_license_users(license_id, status, authorized_at);
+
+-- Assento comercial exige membership ativa da mesma clínica.
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_user_membership_insert
+BEFORE INSERT ON commercial_license_users
+WHEN NEW.status = 'active'
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1
+      FROM commercial_licenses cl
+      JOIN clinic_memberships cm
+        ON cm.clinic_id = cl.clinic_id
+       AND cm.user_id = NEW.user_id
+       AND cm.active = 1
+     WHERE cl.id = NEW.license_id
+  ) THEN RAISE(ABORT, 'commercial user must be active clinic member') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_user_membership_reactivate
+BEFORE UPDATE OF status ON commercial_license_users
+WHEN OLD.status <> 'active' AND NEW.status = 'active'
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1
+      FROM commercial_licenses cl
+      JOIN clinic_memberships cm
+        ON cm.clinic_id = cl.clinic_id
+       AND cm.user_id = NEW.user_id
+       AND cm.active = 1
+     WHERE cl.id = NEW.license_id
+  ) THEN RAISE(ABORT, 'commercial user must be active clinic member') END;
+END;
+
+-- Teto de usuários pertence ao offer e é imposto no banco, não só na API.
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_user_cap_insert
+BEFORE INSERT ON commercial_license_users
+WHEN NEW.status = 'active'
+BEGIN
+  SELECT CASE WHEN (
+    SELECT COUNT(*)
+      FROM commercial_license_users clu
+     WHERE clu.license_id = NEW.license_id AND clu.status = 'active'
+  ) >= (
+    SELECT co.max_authorized_users
+      FROM commercial_licenses cl
+      JOIN commercial_offers co ON co.id = cl.offer_id
+     WHERE cl.id = NEW.license_id
+  ) THEN RAISE(ABORT, 'commercial authorized user cap reached') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_user_cap_reactivate
+BEFORE UPDATE OF status ON commercial_license_users
+WHEN OLD.status <> 'active' AND NEW.status = 'active'
+BEGIN
+  SELECT CASE WHEN (
+    SELECT COUNT(*)
+      FROM commercial_license_users clu
+     WHERE clu.license_id = NEW.license_id AND clu.status = 'active'
+  ) >= (
+    SELECT co.max_authorized_users
+      FROM commercial_licenses cl
+      JOIN commercial_offers co ON co.id = cl.offer_id
+     WHERE cl.id = NEW.license_id
+  ) THEN RAISE(ABORT, 'commercial authorized user cap reached') END;
+END;
+
+-- Uma licença não fica ativa sem aceite institucional e ao menos um usuário.
+CREATE TRIGGER IF NOT EXISTS trg_commercial_license_activation_contract
+BEFORE UPDATE OF status ON commercial_licenses
+WHEN OLD.status <> 'active' AND NEW.status = 'active'
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1 FROM commercial_license_acceptances a WHERE a.license_id = NEW.id
+  ) THEN RAISE(ABORT, 'commercial acceptance required before activation') END;
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1
+      FROM commercial_license_users u
+     WHERE u.license_id = NEW.id AND u.status = 'active'
+  ) THEN RAISE(ABORT, 'commercial authorized user required before activation') END;
+END;
 
 CREATE TABLE IF NOT EXISTS commercial_usage_events (
   id TEXT PRIMARY KEY,
@@ -170,3 +264,27 @@ CREATE INDEX IF NOT EXISTS idx_commercial_usage_license_time
   ON commercial_usage_events(license_id, occurred_at DESC);
 CREATE INDEX IF NOT EXISTS idx_commercial_usage_clinic_kind
   ON commercial_usage_events(clinic_id, kind, occurred_at DESC);
+
+CREATE TRIGGER IF NOT EXISTS trg_commercial_usage_same_tenant
+BEFORE INSERT ON commercial_usage_events
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1 FROM commercial_licenses cl
+     WHERE cl.id = NEW.license_id AND cl.clinic_id = NEW.clinic_id
+  ) THEN RAISE(ABORT, 'commercial usage license/clinic mismatch') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_commercial_usage_licensed_feature
+BEFORE INSERT ON commercial_usage_events
+WHEN NEW.feature_code IS NOT NULL
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1
+      FROM commercial_licenses cl
+      JOIN commercial_offer_features f
+        ON f.offer_id = cl.offer_id
+       AND f.feature_code = NEW.feature_code
+       AND f.enabled = 1
+     WHERE cl.id = NEW.license_id
+  ) THEN RAISE(ABORT, 'commercial feature not licensed') END;
+END;
