@@ -70,6 +70,7 @@ export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
           id: snapshot.licenseId,
           offerCode: snapshot.offerCode,
           offerName: snapshot.offerName,
+          contractVersion: snapshot.contractVersion,
           status: snapshot.status,
           unitLabel: snapshot.unitLabel,
           activatedAt: snapshot.activatedAt,
