@@ -50,6 +50,15 @@ test("camada consolidada preserva núcleo diário e núcleo clínico", () => {
   assert.match(clinicalCore, /estado desta tela vive apenas em memória/);
 });
 
+test("guia operacional não desloca o alvo de rolagem das missões", () => {
+  const coreIndex = wrapper.indexOf("<SondaDezDailyCorePage />");
+  const floatingGuideIndex = wrapper.indexOf("fixed bottom-5 right-5");
+  const overlayIndex = wrapper.indexOf("fixed inset-0 z-[130]");
+  assert.ok(coreIndex >= 0, "núcleo diário deve ser renderizado");
+  assert.ok(floatingGuideIndex > coreIndex, "atalho do guia deve ficar fora do fluxo antes do núcleo");
+  assert.ok(overlayIndex > coreIndex, "guia expandido deve ser overlay, não bloco acima da missão");
+});
+
 test("consolidação não introduz persistência clínica nem dependência visual remota", () => {
   assert.doesNotMatch(wrapper, /localStorage|sessionStorage/);
   assert.doesNotMatch(preservedCore, /https?:\/\//);
