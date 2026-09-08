@@ -11,6 +11,7 @@ function publicProjection(offer: CommercialOffer) {
     priceCents: offer.priceCents,
     currency: offer.currency,
     termDays: offer.termDays,
+    termsVersion: offer.termsVersion,
     saleMode: offer.saleMode,
     orderablePublicly: offer.saleMode === "public",
     maxUnits: offer.maxUnits,
@@ -35,6 +36,7 @@ function publicProjection(offer: CommercialOffer) {
  * GET /api/commercial/catalog
  *
  * Catálogo informativo. Não inicia checkout e não contorna `saleMode`.
+ * `termsVersion` é o identificador exato que o tenant deve visualizar/aceitar.
  * `institutional-pilot-1-0` permanece por convite; o plano anual permanece
  * gated até decisão formal pós-piloto.
  */
