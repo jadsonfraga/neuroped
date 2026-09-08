@@ -34,6 +34,7 @@ const PREFLIGHT = [
  * O núcleo clínico e o banco visual publicados são preservados integralmente
  * em SondaDezDailyCore.tsx. O guia adicional vive em overlay: assim não altera
  * a posição vertical do núcleo e preserva os scroll targets usados nas missões.
+ * O atalho fica abaixo da Tela da criança (z-100), preservando o estímulo puro.
  */
 export default function SondaDezDailyPage() {
   const [guideOpen, setGuideOpen] = useState(false);
@@ -46,7 +47,7 @@ export default function SondaDezDailyPage() {
 
       <Button
         type="button"
-        className="fixed bottom-5 right-5 z-[105] rounded-2xl shadow-xl"
+        className="fixed bottom-5 right-5 z-[90] rounded-2xl shadow-xl"
         onClick={() => setGuideOpen(true)}
       >
         <Sparkles className="mr-2 h-4 w-4" /> Guia Sonda 10
