@@ -94,12 +94,14 @@ export const onRequestPost: PagesFunction<CommercialProvisionEnv> = async (conte
   }
 
   if (offer.maxLicenses !== null) {
+    // maxLicenses é teto histórico do SKU/coorte. Cancelamento/expiração não
+    // deve reabrir silenciosamente uma quarta vaga do piloto.
     const countRow = await db
       .prepare(
         `SELECT COUNT(*) AS total
            FROM commercial_licenses cl
            JOIN commercial_offers co ON co.id = cl.offer_id
-          WHERE co.code = ? AND cl.status IN ('pending','active','suspended')`,
+          WHERE co.code = ?`,
       )
       .bind(offer.code)
       .first<{ total: number }>();
