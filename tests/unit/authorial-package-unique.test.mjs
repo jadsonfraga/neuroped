@@ -1,7 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assertUniqueAuthorialPackage } from '../../scripts/guards/assert-authorial-package-unique.mjs';
-const rows = () => ['afi12-sdg', 'sdrd12-sdg', 'sarf12-sdg'].map((id) => ({ id, name: id, pendente_validacao_clinica: true }));
+
+const baseRow = (id) => ({
+  id,
+  name: id,
+  licencaUso: 'autoral',
+  assessmentUse: 'monitorizacao',
+  prioridade: 'monitorizacao',
+  tipo: 'nao_validado_autoral',
+  validacaoBrasil: 'sem_validacao_psicometrica',
+  pubmedId: null,
+  pendente_validacao_clinica: true,
+});
+const rows = () => ['afi12-sdg', 'sdrd12-sdg', 'sarf12-sdg'].map(baseRow);
 
 test('one canonical unvalidated entry per instrument is accepted', () => {
   assert.doesNotThrow(() => assertUniqueAuthorialPackage(rows()));
@@ -22,9 +34,19 @@ test('an alternate ID cannot silently replace the canonical ID', () => {
   const data = rows(); data[0].id = 'afi-12-sdg';
   assert.throws(() => assertUniqueAuthorialPackage(data), /explicit migration/);
 });
-test('psychometric validation cannot be promoted to make CI green', () => {
+test('clinical review can close without claiming psychometric validation', () => {
   const data = rows(); data[0].pendente_validacao_clinica = false;
-  assert.throws(() => assertUniqueAuthorialPackage(data), /presumed validation/);
+  assert.doesNotThrow(() => assertUniqueAuthorialPackage(data));
+});
+test('psychometric validation cannot be fabricated to make CI green', () => {
+  const data = rows(); data[0].validacaoBrasil = 'validacao_psicometrica_publicada';
+  assert.throws(() => assertUniqueAuthorialPackage(data), /must not be presented as psychometric validation/);
+});
+test('authorial provenance and monitoring role remain mandatory', () => {
+  const data = rows(); data[0].licencaUso = 'comercial';
+  assert.throws(() => assertUniqueAuthorialPackage(data), /authorial provenance\/licensing was lost/);
+  const data2 = rows(); data2[0].assessmentUse = 'diagnostico';
+  assert.throws(() => assertUniqueAuthorialPackage(data2), /must remain a monitoring tool/);
 });
 test('unrelated existing catalogue entries are preserved', () => {
   const data = rows(); data.push({ id: 'unrelated-existing-instrument', name: 'Other' });
