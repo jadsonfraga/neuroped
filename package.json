@@ -24,7 +24,7 @@
     "test:podium": "node --import tsx tests/clinical/test-filter-podium.mjs",
     "test:ideal-choice": "node --import tsx tests/clinical/test-filter-ideal-choice.mjs",
     "test:practical-filter": "node --import tsx tests/clinical/test-filter-practical-100.mjs",
-    "test:interactive": "node --import tsx tests/clinical/test-interactive-scales.mjs",
+    "test:interactive": "node --import tsx tests/clinical/test-interactive-scales.mjs && node --import tsx tests/clinical/test-generated-scale-pdf-registry.mjs && node --import tsx tests/clinical/test-authorial-20260909-integration.mjs",
     "test:scale-responses": "node --import tsx tests/clinical/test-scale-response-delivery.mjs",
     "test:clinical-documents": "node tests/unit/tenant-issuer-static.test.mjs && node tests/unit/pdf-clinical-workflows-static.test.mjs && node --import tsx tests/unit/pdf-p12-signing.test.ts && node --import tsx tests/unit/clinical-documents-retention.test.ts",
     "test:share-whatsapp": "node --import tsx tests/unit/share-whatsapp.test.ts",

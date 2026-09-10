@@ -1,5 +1,6 @@
 import type { ScaleEntry } from "@/data/scaleFilter";
 import { applyUploadedInstrumentOverridesForApp } from "@/data/uploadedInstrumentFilterBridge";
+import { PENDING_AUTHORIAL_SOURCE_IDS } from "@/data/pendingAuthorialScaleIntake";
 
 /**
  * Itens aplicaveis que existem como paginas/ferramentas do app, mas nao estavam
@@ -270,5 +271,9 @@ export function mergeFilterableCatalog(primary: ScaleEntry[]): ScaleEntry[] {
   return uniqueById([
     ...primary.map(applyUploadedInstrumentOverridesForApp),
     ...supplementalFilterableInstruments,
-  ]).filter((scale) => !FILTER_EXCLUDED_IDS.has(scale.id));
+  ]).filter(
+    (scale) =>
+      !FILTER_EXCLUDED_IDS.has(scale.id) &&
+      !PENDING_AUTHORIAL_SOURCE_IDS.has(scale.id),
+  );
 }
