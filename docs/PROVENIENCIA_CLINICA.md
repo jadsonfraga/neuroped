@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 263
-- **Com fonte declarada:** 263 (100.0%)
+- **Total de instrumentos:** 267
+- **Com fonte declarada:** 267 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 99 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 103 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -221,6 +221,7 @@
 | `nefi-ped-96` | NEFI-PED 96 | 2026-06-27_ESCALA_AUTORAL_NEFI-PED_96_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1w_T-YQmk6gdCsRpYscsHbtRURNuoQlzwj2aQ8pFT6YI/edit | não | sim |
 | `nepedq` | Escala Pedagógica Neuropediátrica | NEPEDQ — Escala de Avaliação Pedagógica Neuropediátrica \| NeuroPed App — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/16OO1BHZRx06J81BZRtZqnlokJ4Jt33tL/view | não | sim |
 | `neurofunc-360` | NEUROFUNC-360 | 2026-07-05_ESCALA_AUTORAL_NEUROFUNC-360_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1Ss2fQeYp7LrbAQ63nTdSiCCld_FyTjUrACEMtyBh6yE/edit | não | sim |
+| `nexo-fam-24` | NEXO-FAM 24 | NEXO_FAM_24_NeuroPed_SDG.pdf · v1.0 · 2026 · Google Drive fileId 16Oji1nMFCgc7VDXcqjNZs83PAfRSVxTD · SHA-256 3eb4e4f460fa7d5c6bb9accc5424f0db71a0d158b2730f028e2aa48825ed773c. | não | sim |
 | `nexo-s-24-sdg` | NEXO-S 24 | Base documental autoral: NEXO_S_24_NeuroPed_SDG.pdf; integridade sha256:f1ee15559a36827ebeda1f3a33caaeee534909b7c628725bcaf843e092ce706a. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; itens e domínios preservados; respondentes formalizados como família, professor/escola e clínico/profissional em aplicaçõ | não | sim |
 | `nexus-ped-52` | NEXUS-PED 52 | 2026-06-19_ESCALA_AUTORAL_NEXUS-PED_52_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/1SdrxKveoDOH8YwwwEptTlqCaoRFGWQQjh4swqPHimO8/edit | não | sim |
 | `nexus360-neuroped` | NEXUS-360 NeuroPed | Conteúdo autoral criado em 2026-07-09 no projeto Escalas Autorais Dr. Jadson; documento do Drive não confirmado nesta integração. | não | sim |
@@ -248,6 +249,7 @@
 | `q-chat-10` | Q-CHAT-10 | Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003 | não | não |
 | `qec-np` | QEC-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estresse do cuidador. | não | sim |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não | não |
+| `ritmo-18-sdg` | RITMO-18 SDG | RITMO-18_SDG_Fadiga_Neurofuncional_v1.0_2026-09-09.pdf · Google Drive fileId 1rs1GPtJpwcn-6ZH6F_EOk9Ojo2NmN9dR · SHA-256 99bc7a121c7fb668ec159908fd5dabeb34b845bc712da91cbee49b9e72ca8a91 · fonte integral verificada em 09/09/2026. | não | sim |
 | `sarf12-sdg` | SARF-12 SDG | Base documental autoral: 03_SARF12_Seletividade_Alimentar_Repertorio_Funcional_NeuroPed_SDG.pdf; integridade sha256:d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo e pontuação preservados. | não | sim |
 | `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não | não |
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não | não |
@@ -266,10 +268,12 @@
 | `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
 | `toc-drj-psicologia` | Escala Clínica de Gravidade do TOC – Adolescentes | ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1UiBCEPBHfEVUR3k3FyiHO1EqN-jbFV0N/view | não | sim |
 | `tpp-np` | TPP-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: TEPT pré-escolar (heterorrelato). | não | sim |
+| `trilha-20-sdg` | TRILHA-20 SDG | TRILHA-20_SDG_Autogestao_Transicao_Cuidado_v1.0_2026-09-09.pdf · Google Drive fileId 1JBWGK19QmRy6GlySFrgjvX7TWGmzSLv_ · SHA-256 e7932a955ffeffe194e965671d4045ff3fcd00843bd8408d7d7bbc2ab1c7d1ab · fonte integral verificada em 09/09/2026. | não | sim |
 | `tsi` | TSI | NIH-supported research | não | não |
 | `uku` | UKU | Lingjaerde O et al., 1987 (UKU Side Effect Rating Scale) | não | não |
 | `vanderbilt` | Vanderbilt | Wolraich ML et al., 2003 (NICHQ Vanderbilt) | não | não |
 | `vas-pain` | VAS Pain | Scott J, Huskisson EC, 1976 (Visual Analogue Scale) — Pain 2(2):175-84. PMID 1026900 · RESSALVA: descrição original em adultos; em pediatria costuma ser ancorada por equivalência à FPS-R/NRS (von Baeyer 2009, PMID 19359097). | não | não |
+| `vigia-med-24` | VIGIA-MED 24 | VIGIA_MED_24_NeuroPed_SDG.pdf · v1.0 · 07/09/2026 · Google Drive fileId 165X23pVefUkvflIHOHLESMZ0y9XmQukK · SHA-256 154d7e0a0eacc4a37dde4ce4084455a6dcaf28edc09a83264cd2c3e087d22b4b. | não | sim |
 | `vigia-sd-20-sdg` | VIGIA-SD 20 | Base documental autoral: VIGIA_SD_20_v1.1_NeuroPed_SDG.pdf; integridade sha256:5c8603630b4071c27c95b397e145c06567e076f6d39a4d25772315f3efe3aeb2. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; mantido como monitor ampliado, com SDRD-12 como opção breve manual. | não | sim |
 | `viking-speech` | Viking Speech Scale | Pennington L, Virella D, Mjøen T, et al., 2013 (Viking Speech Scale) — Res Dev Disabil 34(10):3202-10. PMID 23891732 · doi:10.1016/j.ridd.2013.06.035 | não | não |
 | `who5` | WHO-5 | WHO Collaborating Centre, 1998 | não | não |

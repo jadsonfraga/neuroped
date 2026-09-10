@@ -9,8 +9,8 @@ import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
 import { GenericScale } from "@/components/GenericScale";
 import {
   getInteractiveScale as getInteractiveItemScale,
-  makeInteractiveConfig,
 } from "@/data/interactiveScaleItems";
+import { makeAuthorialAwareInteractiveConfig } from "@/data/authorialScaleCalculators";
 import { getInteractiveScale as getInteractiveRunnerScale } from "@/data/interactiveScales";
 import { InteractiveScaleRunner } from "@/components/InteractiveScaleRunner";
 import { ClinicalReport } from "@/components/ClinicalReport";
@@ -470,7 +470,7 @@ export default function GenericScalePage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Filtro
         </Button>
-        <GenericScale config={makeInteractiveConfig(scale, itemDef)} />
+        <GenericScale config={makeAuthorialAwareInteractiveConfig(scale, itemDef)} />
       </div>
     );
   }

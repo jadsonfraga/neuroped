@@ -3,6 +3,8 @@ import { escalasImportadasDrive2026 as escalasImportadasDrive2026Base } from "./
 import { escalasAutoraisDrive2026Lote2 } from "./escalasAutoraisDrive2026Lote2";
 import { escalasAutoraisDrive2026Lote3 } from "./escalasAutoraisDrive2026Lote3";
 import { escalasAutoraisDrive2026Lote4 } from "./escalasAutoraisDrive2026Lote4";
+import { escalasAutoraisDrive2026Lote5 } from "./escalasAutoraisDrive2026Lote5";
+import { escalasAutoraisDrive2026Lote6 } from "./escalasAutoraisDrive2026Lote6";
 import { authorialMonitoringCatalog } from "./authorialMonitoring";
 
 /**
@@ -26,5 +28,7 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
   ...escalasAutoraisDrive2026Lote2Operacionais,
   ...escalasAutoraisDrive2026Lote3,
   ...escalasAutoraisDrive2026Lote4,
+  ...escalasAutoraisDrive2026Lote5,
+  ...escalasAutoraisDrive2026Lote6,
   ...authorialMonitoringCatalog,
 ];
