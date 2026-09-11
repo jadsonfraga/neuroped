@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ExternalLink, KeyRound, Loader2, Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ExternalLink, Eye, EyeOff, KeyRound, Loader2, Mail, ShieldCheck } from "lucide-react";
+import { SafeAssetImage, brandAssets } from "@/components/BrandAssets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ export default function LoginPage() {
   const { login, isLoading, isAuthenticated, remoteConfigured } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,60 +80,38 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="mx-auto grid w-full max-w-5xl items-center gap-10 px-4 py-10 lg:min-h-[72vh] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14">
-      {/* Painel de contexto: o desktop tinha um cartão pequeno no centro de um
-          canvas vazio e comunicava "portal de acesso". A coluna abaixo não expõe
-          nada clínico — só diz o que existe atrás do gate e sob que regra —, e
-          some no mobile, onde a tarefa é só entrar. */}
-      <div className="hidden lg:block">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-          Área profissional
-        </p>
-        <h2
-          className="mt-2 max-w-xl text-[2.4rem] font-semibold leading-[1.05] tracking-[-0.035em] text-foreground"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          O consultório inteiro atrás de uma sessão autenticada.
-        </h2>
-        <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
-          Agenda, prontuário longitudinal, aplicação de instrumentos e emissão de documentos
-          operam sob a mesma sessão, com o servidor como autoridade de acesso.
-        </p>
-        <ul className="mt-7 grid max-w-lg gap-3 sm:grid-cols-2">
-          {[
-            { title: "Cockpit por paciente", detail: "Contexto atual e próxima ação na abertura." },
-            { title: "Prontuário longitudinal", detail: "Anamnese, marcos, medicações e exames." },
-            { title: "Filtro de escalas", detail: "Instrumento certo por idade e queixa." },
-            { title: "Documentos clínicos", detail: "Laudos e receita C1 a partir da ficha." },
-          ].map((item) => (
-            <li
-              key={item.title}
-              className="rounded-2xl border border-border/70 bg-card/60 p-3.5"
-            >
-              <p className="text-[13.5px] font-semibold text-foreground">{item.title}</p>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
-                {item.detail}
-              </p>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-6 flex max-w-lg items-start gap-2 text-[12px] leading-relaxed text-muted-foreground">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-          Nenhum conteúdo clínico é renderizado antes da validação da sessão. Dados de paciente
-          não são gravados neste navegador durante a sessão remota.
-        </p>
-      </div>
+    <section className="np-signature-login" data-testid="signature-login">
+      <aside className="np-signature-login__brand" aria-label="NeuroPed SDG">
+        <div className="np-signature-login__wordmark">
+          <SafeAssetImage src={brandAssets.masterShieldFile} alt="" className="np-signature-login__shield" />
+          <div><p>NeuroPed</p><span>NEUROPED SDG · SOLI DEO GLORIA</span></div>
+        </div>
+        <figure className="np-signature-login__portrait">
+          <SafeAssetImage src={brandAssets.photography.retratoInstitucional}
+            alt="Retrato institucional do Dr. Jadson Fraga" className="np-signature-login__photo" priority />
+          <figcaption>
+            <strong>Dr. Jadson Fraga</strong>
+            <span>Neuropediatra · CRM-PE 25227 · RQE 17756</span>
+          </figcaption>
+        </figure>
+        <div className="np-signature-login__message">
+          <h2>Ciência e cuidado.<br />Clareza em cada decisão.</h2>
+          <p>Pacientes, avaliações e documentos em um só lugar.</p>
+          <span>Um espaço profissional. Cada criança, uma história.</span>
+        </div>
+      </aside>
 
-      <div className="flex w-full flex-col items-center justify-center">
+      <div className="np-signature-login__access flex w-full flex-col items-center justify-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-lg shadow-primary/25">
         <ShieldCheck className="h-7 w-7 text-primary-foreground" strokeWidth={1.75} />
       </div>
-      <h1 className="text-xl font-bold text-foreground">Entrar na área profissional</h1>
+      <p className="np-signature-eyebrow">ÁREA PROFISSIONAL</p>
+      <h1 className="text-xl font-bold text-foreground">Seu consultório, organizado.</h1>
       <p className="mt-2 max-w-md text-center text-sm leading-relaxed text-muted-foreground">
-        Use sua conta profissional para acessar Agenda, Receitas C1, Laudos, prontuários e demais ferramentas clínicas protegidas.
+        Entre para continuar seus atendimentos, avaliações e documentos.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 w-full max-w-sm space-y-4 rounded-3xl border border-primary/15 bg-card p-5 text-left shadow-xl shadow-primary/5 sm:p-6" data-testid="login-form">
+      <form onSubmit={handleSubmit} className="np-signature-login__form mt-6 w-full max-w-sm space-y-4 rounded-3xl border border-primary/15 bg-card p-5 text-left shadow-xl shadow-primary/5 sm:p-6" data-testid="login-form">
         <div className="space-y-2">
           <Label htmlFor="login-email">E-mail profissional</Label>
           <div className="relative">
@@ -143,20 +123,23 @@ export default function LoginPage() {
           <Label htmlFor="login-password">Senha</Label>
           <div className="relative">
             <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input id="login-password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="pl-9" placeholder="Sua senha" />
+            <Input id="login-password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="pl-9 pr-12" placeholder="Sua senha" />
+            <button type="button" className="np-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} aria-pressed={showPassword} data-testid="toggle-password">
+              {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+            </button>
           </div>
         </div>
         {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs leading-relaxed text-destructive">{error}</p>}
         {!isLoading && !remoteConfigured && (
           <p className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3 text-xs leading-relaxed text-amber-700 dark:text-amber-300">A autenticação profissional não está configurada neste endereço público. Use a área médica protegida ou peça a configuração do backend antes de operar dados clínicos.</p>
         )}
-        <Button type="submit" disabled={submitting || isLoading} className="w-full gap-2 rounded-xl bg-gradient-to-r from-primary to-chart-2">
+        <Button type="submit" disabled={submitting || isLoading} className="np-signature-submit w-full gap-2 rounded-xl">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
           {submitting ? "Entrando…" : "Entrar com segurança"}
         </Button>
       </form>
 
-      <div className="mt-5 flex w-full max-w-sm flex-col gap-3 text-center">
+      <div className="np-signature-login__links mt-5 flex w-full max-w-sm flex-col gap-3 text-center">
         <a href="#/esqueci-senha" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="forgot-password-link">
           <KeyRound className="h-4 w-4" aria-hidden="true" /> Esqueci minha senha
         </a>
