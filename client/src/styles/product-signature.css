@@ -134,3 +134,38 @@
 @media print {
   .np-workspace-welcome, .np-workspace-actions { display: none; }
 }
+
+/* Passagem final: menos ruído e mais sensação de produto nativo. */
+@media screen {
+  .np-mascot-layer[data-route="/login"] { display: none !important; }
+  .np-workspace-context > .flex:first-child h2 { display: none; }
+  .np-workspace-context > .flex:first-child {
+    align-items: center;
+    min-height: 1.75rem;
+  }
+  .np-workspace-context > .flex:first-child p:first-child {
+    letter-spacing: .18em;
+  }
+}
+
+@media screen and (max-width: 639px) {
+  .np-workspace-support {
+    display: flex !important;
+    grid-template-columns: none !important;
+    gap: .75rem;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin-inline: -.875rem;
+    padding-inline: .875rem;
+    padding-bottom: .25rem;
+  }
+  .np-workspace-support::-webkit-scrollbar { display: none; }
+  .np-workspace-support > article {
+    flex: 0 0 min(82vw, 20rem);
+    scroll-snap-align: start;
+  }
+  .np-workspace-context { padding: .9rem !important; }
+  .np-workspace-context > .flex:first-child { margin-bottom: .3rem; }
+}
