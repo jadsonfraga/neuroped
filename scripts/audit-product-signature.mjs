@@ -82,17 +82,21 @@ try {
           if (await page.locator("#login-password").getAttribute("type") !== "password") failures.push("senha-nao-ocultada");
         }
 
-        const dock = page.getByTestId("product-mobile-dock");
+        const dock = page.getByTestId("mobile-primary-dock");
         const dockVisible = await dock.isVisible().catch(() => false);
         const clinicalDockExpected = !route.anonymous && route.id !== "familia" && size.width < 768;
         if (clinicalDockExpected && !dockVisible) failures.push("dock-mobile-ausente");
         if (!clinicalDockExpected && dockVisible) failures.push("dock-mobile-fora-do-contexto");
+        if (clinicalDockExpected) {
+          const dockCount = await page.locator('[data-testid="mobile-primary-dock"]').count();
+          if (dockCount !== 1) failures.push(`dock-mobile-duplicado:${dockCount}`);
+        }
         if (route.id === "inicio" && size.width >= 1024) {
           const utilityVisible = await page.getByTestId("product-utility-bar").isVisible().catch(() => false);
           if (!utilityVisible) failures.push("barra-utilitaria-desktop-ausente");
         }
         if (route.anonymous) {
-          const chromeCount = await page.locator('[data-testid="product-mobile-dock"], [data-testid="product-utility-bar"]').count();
+          const chromeCount = await page.locator('[data-testid="mobile-primary-dock"], [data-testid="product-utility-bar"]').count();
           if (chromeCount) failures.push("chrome-profissional-no-login");
         }
 
