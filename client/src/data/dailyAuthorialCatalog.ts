@@ -137,8 +137,9 @@ export const dailyAuthorialReviewCatalog = loaded
  * alterado por engano.
  */
 export const dailyAuthorialCatalog = dailyAuthorialReviewCatalog.filter(
+  (record) => record.status === "revisado_clinicamente",
+).filter(
   (record) =>
-    record.status === "revisado_clinicamente" &&
     record.contingency !== true &&
     record.needsUpgrade !== true,
 );
