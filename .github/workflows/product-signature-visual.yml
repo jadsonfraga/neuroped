@@ -32,7 +32,7 @@ jobs:
       - name: Typecheck and changed-component lint
         run: |
           npm run check
-          npx eslint client/src/main.tsx client/src/pages/login.tsx client/src/components/clinical/ClinicalCockpit.tsx --max-warnings=0
+          npx eslint client/src/main.tsx client/src/pages/login.tsx client/src/components/clinical/ClinicalCockpit.tsx client/src/components/ProductChrome.tsx client/src/components/SkipNav.tsx --max-warnings=0
       - name: Preserve visual, identity and patient contracts
         run: |
           node tests/unit/product-signature.test.mjs
