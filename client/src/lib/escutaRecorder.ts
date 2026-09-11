@@ -8,8 +8,10 @@ export class EscutaRecorder {
   private generation = 0;
   private raf = 0;
   private finish: (() => void) | null = null;
+  private audible = false;
+  private silenceWarning = 0;
   state: RecordingState = "idle";
-  constructor(private changed: (state: RecordingState, seconds: number, level: number) => void) {}
+  constructor(private changed: (state: RecordingState, seconds: number, level: number, warning?: string) => void) {}
   private report(level = 0) { this.changed(this.state, this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE, level); }
   async start() {
     if (["requesting","recording","paused"].includes(this.state)) return;
@@ -18,21 +20,26 @@ export class EscutaRecorder {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }, video: false });
       if (generation !== this.generation) { stream.getTracks().forEach(t=>t.stop()); return; }
+      const track = stream.getAudioTracks()[0];
+      if (!track || track.readyState !== "live") { stream.getTracks().forEach(t=>t.stop()); throw new Error("O navegador não entregou uma trilha de microfone ativa."); }
       this.stream = stream; const context = new AudioContext(); this.context = context;
-      await context.audioWorklet.addModule("/audio/escuta-recorder.js");
+      await context.audioWorklet.addModule("/audio/escuta-recorder.js?v=escuta-audio-health-20260911");
       if (generation !== this.generation) { stream.getTracks().forEach(t=>t.stop()); await context.close(); return; }
-      const source = context.createMediaStreamSource(stream); const node = new AudioWorkletNode(context,"escuta-recorder"); this.node = node;
+      const source = context.createMediaStreamSource(stream); const node = new AudioWorkletNode(context,"escuta-recorder",{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]}); this.node = node;
+      track.addEventListener("mute",()=>{if(generation===this.generation && this.state==="recording")this.changed(this.state,this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE,0,"O microfone ficou sem sinal. Confira o dispositivo e fale antes de continuar.");});
+      track.addEventListener("ended",()=>{if(generation===this.generation && ["recording","paused"].includes(this.state)){this.state="stopped";this.release();this.changed(this.state,this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE,0,"A trilha do microfone foi encerrada pelo navegador. O áudio disponível foi preservado.");}});
       const silent = context.createGain(); silent.gain.value = 0; source.connect(node); node.connect(silent); silent.connect(context.destination);
       const analyser = context.createAnalyser(); analyser.fftSize = 256; source.connect(analyser); const values = new Float32Array(analyser.fftSize);
-      this.parts = []; this.state = "recording";
+      this.parts = []; this.audible = false; this.state = "recording";
       node.port.onmessage = ({ data }) => {
         if (generation !== this.generation) return;
-        if (data.pcm instanceof Int16Array) this.parts.push(data.pcm);
+        if (data.pcm instanceof Int16Array) { this.parts.push(data.pcm); if (Number(data.peak) >= 0.0005) this.audible = true; }
         if (data.ended) { this.state = "stopped"; this.release(); this.finish?.(); this.finish = null; }
         this.report();
       };
       const meter = () => { if (generation !== this.generation || !this.context) return; analyser.getFloatTimeDomainData(values); const level = Math.min(1,Math.sqrt(values.reduce((s,v)=>s+v*v,0)/values.length)*5); this.report(this.state === "paused" ? 0 : level); this.raf = requestAnimationFrame(meter); };
       await context.resume(); meter();
+      clearTimeout(this.silenceWarning); this.silenceWarning = window.setTimeout(()=>{if(generation===this.generation && this.state==="recording" && !this.audible)this.changed(this.state,this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE,0,"Nenhum sinal audível foi detectado. Teste o microfone agora; um WAV silencioso não será exportado.");},8000);
     } catch (error) {
       if (generation !== this.generation) return;
       this.release(); this.state = "idle"; this.report();
@@ -42,6 +49,7 @@ export class EscutaRecorder {
   }
   pause() { if (this.state === "recording") { this.node?.port.postMessage("pause"); this.state = "paused"; this.report(); } }
   resume() { if (this.state === "paused") { this.node?.port.postMessage("resume"); this.state = "recording"; this.report(); } }
+  ensureAudible(): void { if (this.audible) return; for (const part of this.parts) for (let i=0;i<part.length;i++) if (Math.abs(part[i])>=16) { this.audible=true; return; } throw new Error("O microfone não registrou sinal audível. O arquivo silencioso não foi exportado; selecione/teste o microfone e grave novamente."); }
   async stop(): Promise<void> {
     if (!["recording","paused"].includes(this.state)) return;
     await new Promise<void>((resolve,reject) => {
@@ -49,7 +57,7 @@ export class EscutaRecorder {
       this.finish = ()=>{clearTimeout(timer); resolve();}; this.node?.port.postMessage("stop");
     });
   }
-  private release() { cancelAnimationFrame(this.raf); this.stream?.getTracks().forEach(t=>t.stop()); this.stream = null; this.node?.disconnect(); this.node = null; const context = this.context; this.context = null; if (context && context.state !== "closed") void context.close().catch(()=>undefined); }
+  private release() { clearTimeout(this.silenceWarning); cancelAnimationFrame(this.raf); this.stream?.getTracks().forEach(t=>t.stop()); this.stream = null; this.node?.disconnect(); this.node = null; const context = this.context; this.context = null; if (context && context.state !== "closed") void context.close().catch(()=>undefined); }
   destroy() { ++this.generation; this.release(); this.parts = []; this.finish?.(); this.finish = null; this.state = "idle"; }
 }
 export function* wavChunks(parts: readonly Int16Array[]): Generator<Uint8Array> {
