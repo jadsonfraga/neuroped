@@ -56,6 +56,24 @@
     letter-spacing: -.025em !important;
   }
 
+  /* Login é uma superfície de entrada, não um workspace: remove chrome lateral
+     e deixa a fotografia + autenticação ocuparem o foco principal. */
+  body:has([data-testid='signature-login']) .np-app-sidebar,
+  body:has([data-testid='signature-login']) .np-app-mobile-header,
+  body:has([data-testid='signature-login']) .np-product-dock { display: none !important; }
+  body:has([data-testid='signature-login']) .np-app-main {
+    margin-left: 0 !important;
+    padding-top: 0 !important;
+  }
+  body:has([data-testid='signature-login']) .np-app-content {
+    max-width: 92rem !important;
+    padding-top: clamp(1rem, 4vh, 3rem) !important;
+  }
+  body:has([data-testid='signature-login']) .np-signature-login {
+    margin-top: 0 !important;
+    box-shadow: 0 28px 80px -52px hsl(214 68% 8% / .5) !important;
+  }
+
   .np-clinical-workspace,
   [data-testid='documentos-shell'],
   [data-testid='prontuario-shell'],
@@ -139,6 +157,9 @@
     backdrop-filter: blur(18px) saturate(1.15);
   }
   body:has([data-testid='product-utility-bar']) .np-app-content { padding-top: 5.2rem !important; }
+  /* A barra utilitária desktop assume a busca global; evita duas buscas
+     concorrendo visualmente no mesmo primeiro viewport. */
+  body:has([data-testid='product-utility-bar']) [data-testid='search-container'] { display: none !important; }
   .np-product-search {
     display: flex;
     flex: 1;
@@ -174,6 +195,7 @@
 @media screen and (max-width: 767px) {
   .np-app-mobile-header { height: 4rem !important; padding-inline: 1rem !important; }
   .np-app-main { padding-top: 4rem !important; }
+  body:has([data-testid='signature-login']) .np-app-main { padding-top: 0 !important; }
 
   .np-product-dock {
     position: fixed;
