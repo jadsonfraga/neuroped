@@ -43,12 +43,21 @@ export interface RefinedScaleMatch {
   applicationMode: ApplicationMode;
   licenseRestricted: boolean;
   signalSpecificityScore?: number;
+  semanticFocusScore?: number;
   /** true quando veio do fallback de triagem ampla (sem instrumento específico). */
   isBroadbandFallback?: boolean;
 }
 
 const POST_CONSULT_QUEIXAS = new Set(["efeitos", "evolucao"]);
 const ACUTE_RISK_QUEIXAS = new Set(["suicidio", "psicose"]);
+
+const QUEIXA_SEMANTIC_FOCUS: Record<string, string[]> = {
+  efeitos: ["efeitos adversos", "efeito adverso", "tolerabilidade", "seguranca medicamentosa", "reacao adversa"],
+  autonomia: ["autonomia", "autogestao", "responsabilidade", "pedido de ajuda", "vida diaria"],
+  funcionalidade: ["impacto funcional", "participacao", "habilidades adaptativas", "vida diaria"],
+  sono: ["sono", "sonolencia", "despertares", "latencia", "ronco"],
+  evolucao: ["monitorizacao", "seguimento", "basal", "evolucao", "longitudinal"],
+};
 
 /**
  * Contextos de risco agudo nunca recebem um rastreador de outro domínio só
@@ -673,6 +682,18 @@ function scaleClinicalText(scale: ScaleEntry): string {
   ].join(" ");
 }
 
+function calculateSemanticFocus(scale: ScaleEntry, ctx: FilterContext): number {
+  if (!ctx.queixas.length) return 0;
+  const text = normalizeClinicalText(scaleClinicalText(scale));
+  let hits = 0;
+  for (const queixa of ctx.queixas) {
+    for (const hint of QUEIXA_SEMANTIC_FOCUS[queixa] || []) {
+      if (text.includes(normalizeClinicalText(hint))) hits += 1;
+    }
+  }
+  return Math.min(12, hits * 2);
+}
+
 function calculateSignalSpecificity(
   scale: ScaleEntry,
   ctx: FilterContext,
@@ -808,6 +829,12 @@ export function calculateRefinedScore(
     if (signalSpecificity.reason) reasons.push(signalSpecificity.reason);
   }
 
+  const semanticFocus = calculateSemanticFocus(scale, ctx);
+  if (semanticFocus > 0) {
+    score += Math.min(6, semanticFocus);
+    reasons.push("Foco semântico coerente com a queixa");
+  }
+
   // 3. Finalidade clínica (0–15).
   const use = getAssessmentUse(scale);
   if (!ctx.assessmentUse) {
@@ -906,6 +933,7 @@ export function calculateRefinedScore(
     applicationMode: mode,
     licenseRestricted,
     signalSpecificityScore: signalSpecificity.rawScore,
+    semanticFocusScore: semanticFocus,
   };
 }
 
@@ -937,6 +965,9 @@ export function filterScalesIntelligently(
     .sort((a, b) => {
       if (b.relevanceScore !== a.relevanceScore)
         return b.relevanceScore - a.relevanceScore;
+      if ((b.semanticFocusScore ?? 0) !== (a.semanticFocusScore ?? 0)) {
+        return (b.semanticFocusScore ?? 0) - (a.semanticFocusScore ?? 0);
+      }
       if (tierOrder[a.tier] !== tierOrder[b.tier])
         return tierOrder[a.tier] - tierOrder[b.tier];
       if ((b.signalSpecificityScore ?? 0) !== (a.signalSpecificityScore ?? 0)) {

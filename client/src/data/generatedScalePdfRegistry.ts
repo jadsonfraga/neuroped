@@ -114,4 +114,47 @@ export const generatedScalePdfRegistry: GeneratedScalePdfManifest[] = [
       { id: "ipn-epi-seg-sintese-20", expectedItems: 20, ageMin: 0, ageMax: 215, respondent: "clinico" },
     ],
   },
+  {
+    slug: "vigia-med-24",
+    title: "VIGIA-MED 24",
+    sourcePdf: "VIGIA_MED_24_NeuroPed_SDG.pdf",
+    version: "1.0",
+    generatedAt: "2026-09-07",
+    totalOperationalItems: 24,
+    modules: [
+      { id: "vigia-med-24", expectedItems: 24, ageMin: 36, ageMax: 215, respondent: "pais" },
+    ],
+  },
+  {
+    slug: "nexo-fam-24",
+    title: "NEXO-FAM 24",
+    sourcePdf: "NEXO_FAM_24_NeuroPed_SDG.pdf",
+    version: "1.0",
+    generatedAt: "2026-09-08",
+    totalOperationalItems: 24,
+    modules: [
+      { id: "nexo-fam-24", expectedItems: 24, ageMin: 0, ageMax: 215, respondent: "pais" },
+    ],
+  },  {
+    slug: "ritmo-18-sdg",
+    title: "RITMO-18 SDG",
+    sourcePdf: "RITMO-18_SDG_Fadiga_Neurofuncional_v1.0_2026-09-09.pdf",
+    version: "1.0",
+    generatedAt: "2026-09-09",
+    totalOperationalItems: 18,
+    modules: [
+      { id: "ritmo-18-sdg", expectedItems: 18, ageMin: 60, ageMax: 215, respondent: "pais" },
+    ],
+  },
+  {
+    slug: "trilha-20-sdg",
+    title: "TRILHA-20 SDG",
+    sourcePdf: "TRILHA-20_SDG_Autogestao_Transicao_Cuidado_v1.0_2026-09-09.pdf",
+    version: "1.0",
+    generatedAt: "2026-09-09",
+    totalOperationalItems: 20,
+    modules: [
+      { id: "trilha-20-sdg", expectedItems: 20, ageMin: 120, ageMax: 216, respondent: "autoaplicavel" },
+    ],
+  },
 ];

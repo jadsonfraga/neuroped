@@ -2,6 +2,8 @@ import type { InteractiveScaleDef } from "./interactiveScaleItems";
 import { buildScale, buildWithSentinels } from "./authorialScaleBuilder";
 import { mariaClara } from "./authorialMariaClara";
 import { ejia15OperationalItems } from "./interactiveScaleItemsEjia15";
+import { authorial202609OperationalItems } from "./interactiveScaleItemsAuthorial202609";
+import { authorial202609ExtraOperationalItems } from "./interactiveScaleItemsAuthorial202609Extras";
 
 export const authorialDrive2026OperationalItems: Record<string, InteractiveScaleDef> = {
   "nef-360": buildScale("nef-360", ["development", "language", "social", "attention", "executive", "learning", "behavior", "emotion", "sensory", "sleep", "epilepsy", "functionality"], 5),
@@ -26,4 +28,6 @@ export const authorialDrive2026OperationalItems: Record<string, InteractiveScale
   "einpi-drj-v1": buildWithSentinels("einpi-drj-v1", ["development", "language", "social", "attention", "executive", "learning", "emotion", "functionality"], 5, 8),
   "escala-maria-clara-ansiedade": mariaClara(),
   ...ejia15OperationalItems,
+  ...authorial202609OperationalItems,
+  ...authorial202609ExtraOperationalItems,
 };
