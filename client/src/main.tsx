@@ -27,8 +27,10 @@ import "./styles/premium-app-shell-v12.css";
 import "./styles/sidebar-v13.css";
 // Perfil touch preserva tamanho de alvo e performance em tablet/coarse pointer.
 import "./styles/tablet-coarse-perf.css";
-// Último por design: direção editorial homogênea Dr. Jadson, sem tocar no núcleo clínico.
+// Direção editorial homogênea Dr. Jadson, sem tocar no núcleo clínico.
 import "./styles/brand-signature-v14.css";
+// Acabamento de produto: entrada, navegação e área de trabalho; sem regras clínicas.
+import "./styles/product-signature.css";
 
 // Instalada antes de qualquer rota clínica: após login remoto, namespaces de PHI
 // conhecidos falham fechados inclusive quando código legado usa Storage direto.

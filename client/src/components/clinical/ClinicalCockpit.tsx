@@ -209,7 +209,7 @@ function PortalQuickAction({ item }: { item: PortalLinkItem }) {
   return (
     <Link
       href={item.href}
-      className="group flex min-h-[4.75rem] items-center gap-3 border-t border-amber-300/30 bg-card/80 px-4 py-3 transition-colors hover:bg-amber-50/80 dark:border-amber-400/15 dark:bg-card/60 dark:hover:bg-amber-950/15 sm:border-l sm:first:border-l-0"
+      className="np-workspace-action group flex min-h-[4.75rem] items-center gap-3 border-t border-amber-300/30 bg-card/80 px-4 py-3 transition-colors hover:bg-amber-50/80 dark:border-amber-400/15 dark:bg-card/60 dark:hover:bg-amber-950/15 sm:border-l sm:first:border-l-0"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 ring-1 ring-amber-300/50 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-500/20">
         <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -257,223 +257,24 @@ export function ClinicalCockpit() {
     <section
       data-testid="cockpit-context"
       aria-label="Portal profissional e contexto clínico atual"
-      className="space-y-4"
+      className="np-clinical-workspace space-y-4"
     >
-      <section
-        aria-label="Entrada do Portal Profissional"
-        data-testid="professional-portal-entry"
-        className="overflow-hidden rounded-[2rem] border border-amber-300/35 bg-card shadow-[0_30px_80px_-52px_hsl(var(--foreground)/0.55)] dark:border-amber-400/15"
-      >
-        <div className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1.1fr)]">
-          <div className="relative z-10 flex flex-col justify-center bg-gradient-to-br from-card via-card to-amber-50/70 p-5 sm:p-7 lg:p-8 dark:to-amber-950/10">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.28em] text-amber-700 dark:text-amber-300">
-              Seja bem-vindo ao
-            </p>
-            <h2
-              className="mt-2 max-w-[8ch] text-[2.45rem] font-semibold leading-[0.9] tracking-[-0.055em] text-foreground sm:text-[3.2rem] lg:text-[3.7rem]"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Portal{" "}
-              <span className="text-amber-700 dark:text-amber-300">
-                Profissional
-              </span>
-            </h2>
-            <p className="mt-4 max-w-xl text-[13.5px] leading-relaxed text-muted-foreground sm:text-[14.5px]">
-              Um espaço para facilitar sua rotina, organizar o atendimento e
-              ampliar o impacto positivo na vida de cada criança e família.
-            </p>
-            <p
-              className="mt-5 max-w-sm text-[18px] italic leading-snug text-foreground/85"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Conhecimento hoje. Mais infâncias possíveis amanhã.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              <Link
-                href="/pacientes"
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-[13px] font-bold text-amber-950 shadow-[0_14px_28px_-18px_hsl(40_95%_45%/0.8)] transition-transform hover:-translate-y-0.5"
-              >
-                <UserPlus className="h-4 w-4" aria-hidden="true" />
-                Nova avaliação
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <Link
-                href="/documentos"
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-muted/60"
-              >
-                <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
-                Revisar documentos
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="relative min-h-[20rem] overflow-hidden bg-muted sm:min-h-[23rem] lg:min-h-[27rem]">
-            <SafeAssetImage
-              src={brandAssets.photography.retratoJaleco}
-              alt="Retrato institucional do Dr. Jadson Fraga"
-              className="absolute inset-0 h-full w-full object-cover object-[52%_30%]"
-              priority
-            />
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-card/30 via-transparent to-transparent lg:from-card/10"
-              aria-hidden="true"
-            />
-            <figure className="absolute bottom-4 right-4 w-[47%] min-w-[11rem] max-w-[20rem] overflow-hidden rounded-[1.4rem] border-4 border-card bg-card shadow-[0_24px_55px_-28px_hsl(var(--foreground)/0.65)] sm:bottom-5 sm:right-5">
-              <SafeAssetImage
-                src={brandAssets.photography.atendimentoCrianca}
-                alt="Dr. Jadson Fraga em atendimento com uma criança"
-                className="aspect-[4/3] h-full w-full object-cover object-center"
-              />
-              <figcaption className="sr-only">
-                Atendimento neuropediátrico em contexto lúdico.
-              </figcaption>
-            </figure>
-            <div className="absolute right-4 top-4 max-w-[12rem] rounded-2xl border border-white/70 bg-card/90 p-3 shadow-lg backdrop-blur-md sm:right-5 sm:top-5 sm:max-w-[14rem]">
-              <p
-                className="text-[16px] italic leading-snug text-foreground"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Cada criança tem um grande potencial.
-              </p>
-            </div>
-          </div>
+      <section aria-label="Entrada do Portal Profissional" data-testid="professional-portal-entry" className="np-workspace-welcome">
+        <div className="np-workspace-welcome__copy">
+          <p className="np-signature-eyebrow">NEUROPED · ÁREA PROFISSIONAL</p>
+          <h2>{firstName ? `Olá, ${firstName}. Vamos ao atendimento?` : "Vamos ao atendimento?"}</h2>
+          <p>Contexto clínico, instrumentos e próximos passos em um só lugar.</p>
+          {activeClinic && <span className="np-workspace-clinic">{activeClinic.name}</span>}
         </div>
-
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4">
-          {portalQuickActions.map((item) => (
-            <PortalQuickAction key={item.href} item={item} />
-          ))}
+        <div className="np-workspace-welcome__portrait" aria-hidden="true">
+          <SafeAssetImage src={brandAssets.photography.retratoInstitucional} alt="" className="np-workspace-welcome__photo" />
         </div>
       </section>
+      <nav className="np-workspace-actions" aria-label="Atalhos de atendimento">
+        {portalQuickActions.map((item) => <PortalQuickAction key={item.href} item={item} />)}
+      </nav>
 
-      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.15fr_0.95fr]">
-        <article className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.4)] sm:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                <CalendarDays className="h-[18px] w-[18px]" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Rotina
-                </p>
-                <h3 className="text-[17px] font-semibold text-foreground">
-                  Agenda do dia
-                </h3>
-              </div>
-            </div>
-            <Link
-              href="/agenda"
-              className="inline-flex min-h-11 items-center gap-1 px-2 text-[11.5px] font-semibold text-primary hover:underline"
-            >
-              Ver agenda
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
-          <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
-            Consulte horários, retornos e status de atendimento diretamente na
-            agenda clínica, sem duplicar dados de pacientes nesta página.
-          </p>
-          <div className="mt-4 grid gap-2">
-            <ActionLink
-              testId="portal-action-agenda"
-              href="/agenda"
-              icon={CalendarDays}
-              label="Abrir agenda clínica"
-              hint="Consultas, check-in e retornos"
-              primary
-            />
-            <ActionLink
-              testId="portal-action-preconsulta"
-              href="/pre-consulta"
-              icon={ClipboardCheck}
-              label="Pré-consultas"
-              hint="Organizar dados antes do atendimento"
-            />
-          </div>
-        </article>
-
-        <article className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.4)] sm:p-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Stethoscope className="h-[18px] w-[18px]" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Jornada clínica
-              </p>
-              <h3 className="text-[17px] font-semibold text-foreground">
-                Fluxo de atendimento
-              </h3>
-            </div>
-          </div>
-          <ol className="mt-4 space-y-1.5">
-            {portalFlow.map((item) => (
-              <li key={item.step}>
-                <Link
-                  href={item.href}
-                  className="group flex min-h-[3.5rem] items-center gap-3 rounded-2xl px-2.5 py-2 transition-colors hover:bg-muted/55"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[12px] font-bold text-amber-800 ring-1 ring-amber-300/50 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-500/20">
-                    {item.step}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-semibold text-foreground">
-                      {item.label}
-                    </span>
-                    <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
-                      {item.hint}
-                    </span>
-                  </span>
-                  <ArrowRight
-                    className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ol>
-        </article>
-
-        <article className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.4)] sm:p-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-              <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Apoio
-              </p>
-              <h3 className="text-[17px] font-semibold text-foreground">
-                Modelos e materiais
-              </h3>
-            </div>
-          </div>
-          <ul className="mt-4 space-y-1.5">
-            {portalResources.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="group flex min-h-11 items-center gap-2 rounded-xl px-2.5 text-[12.5px] font-medium text-foreground transition-colors hover:bg-muted/55"
-                >
-                  <FileText
-                    className="h-4 w-4 shrink-0 text-primary/80"
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  <ArrowRight
-                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground/45 transition-transform group-hover:translate-x-0.5"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </div>
-
-      <div className="rounded-3xl border border-border/70 bg-card/70 p-4 shadow-[0_18px_50px_-40px_hsl(var(--foreground)/0.45)] sm:p-5">
+      <div className="np-workspace-context rounded-3xl border border-border/70 bg-card/70 p-4 shadow-[0_18px_50px_-40px_hsl(var(--foreground)/0.45)] sm:p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
@@ -675,6 +476,132 @@ export function ClinicalCockpit() {
           </div>
         </div>
       </div>
+      <div className="np-workspace-support grid gap-4 xl:grid-cols-[0.9fr_1.15fr_0.95fr]">
+        <article className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.4)] sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                <CalendarDays className="h-[18px] w-[18px]" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Rotina
+                </p>
+                <h3 className="text-[17px] font-semibold text-foreground">
+                  Agenda do dia
+                </h3>
+              </div>
+            </div>
+            <Link
+              href="/agenda"
+              className="inline-flex min-h-11 items-center gap-1 px-2 text-[11.5px] font-semibold text-primary hover:underline"
+            >
+              Ver agenda
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+          <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">
+            Consulte horários, retornos e status de atendimento diretamente na
+            agenda clínica, sem duplicar dados de pacientes nesta página.
+          </p>
+          <div className="mt-4 grid gap-2">
+            <ActionLink
+              testId="portal-action-agenda"
+              href="/agenda"
+              icon={CalendarDays}
+              label="Abrir agenda clínica"
+              hint="Consultas, check-in e retornos"
+              primary
+            />
+            <ActionLink
+              testId="portal-action-preconsulta"
+              href="/pre-consulta"
+              icon={ClipboardCheck}
+              label="Pré-consultas"
+              hint="Organizar dados antes do atendimento"
+            />
+          </div>
+        </article>
+
+        <article className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.4)] sm:p-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Stethoscope className="h-[18px] w-[18px]" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Jornada clínica
+              </p>
+              <h3 className="text-[17px] font-semibold text-foreground">
+                Fluxo de atendimento
+              </h3>
+            </div>
+          </div>
+          <ol className="mt-4 space-y-1.5">
+            {portalFlow.map((item) => (
+              <li key={item.step}>
+                <Link
+                  href={item.href}
+                  className="group flex min-h-[3.5rem] items-center gap-3 rounded-2xl px-2.5 py-2 transition-colors hover:bg-muted/55"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[12px] font-bold text-amber-800 ring-1 ring-amber-300/50 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-500/20">
+                    {item.step}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-semibold text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="mt-0.5 block text-[11.5px] leading-snug text-muted-foreground">
+                      {item.hint}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </article>
+
+        <article className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-[0_18px_50px_-42px_hsl(var(--foreground)/0.4)] sm:p-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+              <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Apoio
+              </p>
+              <h3 className="text-[17px] font-semibold text-foreground">
+                Modelos e materiais
+              </h3>
+            </div>
+          </div>
+          <ul className="mt-4 space-y-1.5">
+            {portalResources.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="group flex min-h-11 items-center gap-2 rounded-xl px-2.5 text-[12.5px] font-medium text-foreground transition-colors hover:bg-muted/55"
+                >
+                  <FileText
+                    className="h-4 w-4 shrink-0 text-primary/80"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  <ArrowRight
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground/45 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </article>
+      </div>
+
     </section>
   );
 }

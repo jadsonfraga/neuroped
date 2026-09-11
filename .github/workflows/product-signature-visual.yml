@@ -1,0 +1,56 @@
+name: Product signature visual proof
+
+on:
+  pull_request:
+    paths:
+      - 'client/**'
+      - 'scripts/audit-product-signature.mjs'
+      - 'scripts/lib/**'
+      - 'tests/unit/product-signature.test.mjs'
+      - '.github/workflows/product-signature-visual.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-signature-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    name: Signature UI - types, contracts and 50 synthetic states
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and changed-component lint
+        run: |
+          npm run check
+          npx eslint client/src/main.tsx client/src/pages/login.tsx client/src/components/clinical/ClinicalCockpit.tsx --max-warnings=0
+      - name: Preserve visual, identity and patient contracts
+        run: |
+          node tests/unit/product-signature.test.mjs
+          npm run audit:design
+          npm run audit:identity
+          npm run audit:assets
+          npm run audit:navigation
+          npm run test:patient-safety
+          npm run test:visual-authenticated-contract
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture 50 states with synthetic API only
+        run: node scripts/audit-product-signature.mjs
+      - name: Save evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-signature-${{ github.sha }}
+          path: artifacts/product-signature
+          if-no-files-found: warn
+          retention-days: 14
