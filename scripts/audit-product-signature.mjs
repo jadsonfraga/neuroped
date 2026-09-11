@@ -84,7 +84,9 @@ try {
 
         const dock = page.getByTestId("mobile-primary-dock");
         const dockVisible = await dock.isVisible().catch(() => false);
-        const clinicalDockExpected = !route.anonymous && route.id !== "familia" && size.width < 768;
+        // O dock nativo usa `lg:hidden`: portanto celular e tablet <1024 px
+        // pertencem à mesma família responsiva para esta prova.
+        const clinicalDockExpected = !route.anonymous && route.id !== "familia" && size.width < 1024;
         if (clinicalDockExpected && !dockVisible) failures.push("dock-mobile-ausente");
         if (!clinicalDockExpected && dockVisible) failures.push("dock-mobile-fora-do-contexto");
         if (clinicalDockExpected) {
