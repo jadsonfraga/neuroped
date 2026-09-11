@@ -32,15 +32,17 @@ export function ProductChrome() {
   if (!professionalSession) {
     if (path !== "/login") return null;
     return (
-      <button
-        type="button"
-        className="np-login-session-entry print:hidden"
-        data-testid="button-session-enter"
-        onClick={() => document.getElementById("login-email")?.focus()}
-      >
-        <KeyRound className="h-4 w-4" aria-hidden="true" />
-        <span>Entrar</span>
-      </button>
+      <aside className="np-login-session-landmark print:hidden" aria-label="Acesso à área profissional">
+        <button
+          type="button"
+          className="np-login-session-entry"
+          data-testid="button-session-enter"
+          onClick={() => document.getElementById("login-email")?.focus()}
+        >
+          <KeyRound className="h-4 w-4" aria-hidden="true" />
+          <span>Entrar</span>
+        </button>
+      </aside>
     );
   }
   if (publicOnly) return null;
