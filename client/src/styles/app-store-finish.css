@@ -178,7 +178,7 @@
   .np-product-profile small { margin-top: .18rem; color: hsl(var(--muted-foreground)); font-size: .58rem; }
 }
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 1023px) {
   .np-app-mobile-header { height: 4rem !important; padding-inline: 1rem !important; }
   .np-app-main { padding-top: 4rem !important; }
   body:has([data-testid='signature-login']) .np-app-main { padding-top: 0 !important; }
