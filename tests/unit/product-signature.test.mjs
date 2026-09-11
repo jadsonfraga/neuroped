@@ -4,6 +4,8 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), '
 const login = read('client/src/pages/login.tsx');
 const cockpit = read('client/src/components/clinical/ClinicalCockpit.tsx');
 const chrome = read('client/src/components/ProductChrome.tsx');
+const mobileDock = read('client/src/components/MobilePrimaryDock.tsx');
+const app = read('client/src/App.tsx');
 const skipNav = read('client/src/components/SkipNav.tsx');
 const css = read('client/src/styles/product-signature.css');
 const finishCss = read('client/src/styles/app-store-finish.css');
@@ -33,20 +35,26 @@ assert.ok(css.includes('prefers-reduced-motion'));
 
 assert.ok(skipNav.includes('ProductChrome'), 'chrome de produto deve estar montado no shell global');
 assert.ok(skipNav.includes('app-store-finish.css'), 'acabamento final deve carregar no shell global');
-for (const route of ['/', '/pacientes', '/agenda', '/filtro', '/documentos']) {
-  assert.ok(chrome.includes(`href: "${route}"`), `dock móvel sem rota essencial ${route}`);
-}
-assert.ok(chrome.includes('accessMode !== "remote" || isAuthenticated'), 'dock deve depender da sessão profissional');
-assert.ok(chrome.includes('isPublicRoute(path) && path !== "/filtro"'), 'rotas públicas não devem receber navegação clínica');
+assert.ok(chrome.includes('accessMode !== "remote" || isAuthenticated'), 'chrome deve depender da sessão profissional');
+assert.ok(chrome.includes('isPublicRoute(path) && path !== "/filtro"'), 'rotas públicas não devem receber chrome clínico');
 assert.ok(chrome.includes('<aside className="np-product-utility print:hidden"') && chrome.includes('aria-label="Sessão profissional"'), 'identidade da sessão deve viver em landmark nomeado');
 assert.ok(chrome.includes('data-testid="button-session-enter"'), 'logout deve preservar convite visível ao gate');
 assert.ok(chrome.includes('document.getElementById("login-email")?.focus()'), 'convite de entrada deve levar ao campo nominal sem mudar de rota');
+assert.ok(!chrome.includes('product-mobile-dock') && !chrome.includes('<nav'), 'ProductChrome não pode duplicar a navegação móvel canônica');
 assert.ok(!chrome.includes('product-global-search') && !chrome.includes('openCommandPalette'), 'chrome não deve duplicar a busca canônica da home');
 assert.ok(!/\b(?:localStorage|sessionStorage|fetch)\s*\./.test(chrome), 'chrome não pode criar persistência ou transporte clínico');
+
+assert.ok(mobileDock.includes('data-testid="mobile-primary-dock"'), 'dock móvel canônico ausente');
+assert.ok(mobileDock.includes('canRenderNavigationItem'), 'dock canônico deve filtrar destinos por RBAC');
+assert.ok(mobileDock.includes('userRole: user?.role'), 'dock deve respeitar a role autenticada');
+assert.ok(mobileDock.includes('"/login"') && mobileDock.includes('"/portal-familia"'), 'dock deve sumir de login e superfícies familiares');
+assert.equal((app.match(/<MobilePrimaryDock \/>/g) ?? []).length, 1, 'o app deve montar exatamente um dock móvel');
+
 assert.ok(finishCss.includes("dr-jadson-shield-logo.svg"), 'marca institucional deve substituir o retrato na navegação');
 assert.ok(finishCss.includes("body:has([data-testid='signature-login']) .np-app-sidebar"), 'login deve remover chrome lateral e preservar foco de autenticação');
 assert.ok(!finishCss.includes("[data-testid='search-container'] { display: none"), 'busca canônica da home não pode ser escondida');
-assert.ok(finishCss.includes('.np-product-dock'), 'dock móvel ausente');
+assert.ok(finishCss.includes("[data-testid='mobile-primary-dock']"), 'acabamento deve reutilizar o dock canônico');
+assert.ok(!finishCss.includes('.np-product-dock'), 'acabamento não pode manter um segundo dock móvel');
 assert.ok(finishCss.includes('.np-product-utility'), 'identidade desktop da sessão ausente');
 assert.ok(finishCss.includes('prefers-reduced-motion'), 'acabamento deve respeitar redução de movimento');
-console.log('PASS: identidade, login focado, logout gate, dock móvel, busca canônica e redução de movimento');
+console.log('PASS: identidade, login focado, logout gate, dock único com RBAC, busca canônica e redução de movimento');
