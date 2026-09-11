@@ -1,0 +1,243 @@
+/* NeuroPed SDG — acabamento de produto para uso clínico diário.
+   Camada estritamente visual: não altera dados, rotas, instrumentos ou impressão. */
+@media screen {
+  .np-product-utility,
+  .np-product-dock { display: none; }
+
+  .np-app-shell {
+    background:
+      radial-gradient(circle at 74% -8%, hsl(41 54% 54% / .055), transparent 24rem),
+      hsl(var(--background));
+  }
+
+  .np-app-sidebar {
+    background: linear-gradient(180deg, hsl(214 68% 13%), hsl(214 62% 11%)) !important;
+    border-right-color: hsl(41 54% 54% / .14) !important;
+    box-shadow: 12px 0 42px -32px hsl(214 68% 6% / .75);
+  }
+
+  .np-side-brand {
+    min-height: 4.9rem;
+    border-bottom-color: hsl(41 54% 54% / .17) !important;
+  }
+  .np-side-brand > .relative.flex-shrink-0 > div,
+  .np-app-mobile-header .relative.w-8.h-8 > div {
+    background: url('/dr-jadson-shield-logo.svg') center / contain no-repeat !important;
+    box-shadow: none !important;
+    ring: 0 !important;
+  }
+  .np-side-brand > .relative.flex-shrink-0 img,
+  .np-app-mobile-header .relative.w-8.h-8 img { opacity: 0 !important; }
+  .np-side-brand > .relative.flex-shrink-0 > span,
+  .np-app-mobile-header .relative.w-8.h-8 > span { display: none !important; }
+  .np-side-brand h1 { letter-spacing: -.025em !important; }
+  .np-side-brand p { color: hsl(41 64% 67%) !important; letter-spacing: .16em !important; }
+
+  .np-side-kicker p {
+    color: hsl(41 54% 72%) !important;
+    letter-spacing: .14em;
+  }
+  .np-side-tile,
+  .np-side-connection {
+    border-color: hsl(0 0% 100% / .06) !important;
+    background: hsl(0 0% 100% / .025) !important;
+  }
+  .np-side-tile:hover,
+  .np-side-connection:hover { background: hsl(0 0% 100% / .055) !important; }
+
+  .np-app-mobile-header {
+    background: hsl(214 68% 13% / .97) !important;
+    border-bottom-color: hsl(41 54% 54% / .18) !important;
+    box-shadow: 0 10px 28px -24px hsl(214 68% 6% / .8);
+  }
+  .np-app-mobile-header > div:first-child > span {
+    font-family: var(--font-display) !important;
+    font-weight: 650 !important;
+    letter-spacing: -.025em !important;
+  }
+
+  .np-clinical-workspace,
+  [data-testid='documentos-shell'],
+  [data-testid='prontuario-shell'],
+  .container-filtro { max-width: 78rem; margin-inline: auto; }
+
+  .np-workspace-welcome {
+    border-top-color: hsl(41 54% 54% / .52) !important;
+    background:
+      linear-gradient(115deg, hsl(var(--card)), hsl(40 55% 97% / .82)) !important;
+  }
+  .dark .np-workspace-welcome {
+    background: linear-gradient(115deg, hsl(var(--card)), hsl(214 42% 16%)) !important;
+  }
+  .np-workspace-welcome::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, hsl(41 54% 54%), hsl(351 61% 30%));
+    opacity: .88;
+  }
+  .np-workspace-welcome__photo { filter: saturate(.9) contrast(1.025); }
+  .np-workspace-welcome h2 { font-family: var(--font-display); }
+
+  .np-workspace-action {
+    border-color: hsl(var(--border) / .82) !important;
+    box-shadow: 0 12px 28px -24px hsl(214 68% 13% / .32) !important;
+    transition: transform .18s ease, border-color .18s ease, background-color .18s ease !important;
+  }
+  .np-workspace-action:hover {
+    transform: translateY(-1px);
+    border-color: hsl(var(--primary) / .28) !important;
+  }
+  .np-workspace-context,
+  .np-workspace-support > article {
+    border-color: hsl(var(--border) / .78) !important;
+    box-shadow: 0 16px 38px -32px hsl(214 68% 13% / .35) !important;
+  }
+
+  [data-testid='prontuario-shell'] > div:first-child,
+  [data-testid='documentos-shell'] > div:first-child,
+  .container-filtro > div:first-child {
+    border-radius: 1.25rem;
+  }
+
+  .np-legal-disclosure {
+    border-color: hsl(var(--border) / .8) !important;
+    background: hsl(var(--card) / .72) !important;
+    color: hsl(var(--muted-foreground)) !important;
+    box-shadow: none !important;
+  }
+  .np-legal-disclosure summary { color: hsl(var(--foreground) / .78) !important; }
+
+  .np-mascot-layer[data-route='/login'],
+  .np-mascot-layer[data-route='/'],
+  .np-mascot-layer[data-route='/pacientes'],
+  .np-mascot-layer[data-route='/agenda'],
+  .np-mascot-layer[data-route='/documentos'],
+  .np-mascot-layer[data-route='/prontuario'],
+  .np-mascot-layer[data-route='/laudo-neuroped'],
+  .np-mascot-layer[data-route='/mchat'],
+  .np-mascot-layer[data-route='/filtro'] { display: none !important; }
+}
+
+@media screen and (min-width: 1024px) {
+  .np-product-utility {
+    position: fixed;
+    z-index: 36;
+    top: .85rem;
+    right: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    width: min(42rem, calc(100vw - 19rem));
+    min-height: 3.4rem;
+    padding: .42rem;
+    border: 1px solid hsl(var(--border) / .82);
+    border-radius: 1rem;
+    background: hsl(var(--card) / .9);
+    box-shadow: 0 18px 44px -34px hsl(214 68% 13% / .45);
+    backdrop-filter: blur(18px) saturate(1.15);
+  }
+  body:has([data-testid='product-utility-bar']) .np-app-content { padding-top: 5.2rem !important; }
+  .np-product-search {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 2.55rem;
+    align-items: center;
+    gap: .6rem;
+    padding: 0 .8rem;
+    border-radius: .72rem;
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted) / .52);
+    text-align: left;
+    font-size: .78rem;
+  }
+  .np-product-search span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .np-product-search kbd {
+    border: 1px solid hsl(var(--border));
+    border-radius: .42rem;
+    padding: .14rem .38rem;
+    background: hsl(var(--card));
+    color: hsl(var(--foreground) / .68);
+    font-size: .62rem;
+    font-family: inherit;
+  }
+  .np-product-search:hover { color: hsl(var(--foreground)); background: hsl(var(--muted) / .72); }
+  .np-product-profile { display: flex; align-items: center; gap: .55rem; padding: .2rem .5rem .2rem .25rem; }
+  .np-product-profile img { width: 2.15rem; height: 2.15rem; border-radius: .7rem; object-fit: cover; box-shadow: 0 0 0 1px hsl(41 54% 54% / .25); }
+  .np-product-profile span { display: grid; line-height: 1.1; }
+  .np-product-profile strong { color: hsl(var(--foreground)); font-size: .72rem; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .np-product-profile small { margin-top: .18rem; color: hsl(var(--muted-foreground)); font-size: .58rem; }
+}
+
+@media screen and (max-width: 767px) {
+  .np-app-mobile-header { height: 4rem !important; padding-inline: 1rem !important; }
+  .np-app-main { padding-top: 4rem !important; }
+
+  .np-product-dock {
+    position: fixed;
+    z-index: 45;
+    left: .65rem;
+    right: .65rem;
+    bottom: max(.6rem, env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-height: 4.25rem;
+    padding: .38rem .25rem;
+    border: 1px solid hsl(var(--border) / .82);
+    border-radius: 1.15rem;
+    background: hsl(var(--card) / .94);
+    box-shadow: 0 18px 48px -22px hsl(214 68% 8% / .42);
+    backdrop-filter: blur(22px) saturate(1.25);
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  .dark .np-product-dock { background: hsl(214 44% 13% / .94); }
+  .np-mobile-drawer-open .np-product-dock { opacity: 0; pointer-events: none; transform: translateY(1rem); }
+  body:has(.np-product-dock) .np-app-content { padding-bottom: calc(6.3rem + env(safe-area-inset-bottom)) !important; }
+
+  .np-product-dock__item {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 3.45rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .22rem;
+    border-radius: .8rem;
+    color: hsl(var(--muted-foreground));
+    font-size: .57rem;
+    font-weight: 620;
+    letter-spacing: -.01em;
+    transition: color .16s ease, background-color .16s ease, transform .16s ease;
+  }
+  .np-product-dock__item::before {
+    content: '';
+    position: absolute;
+    top: -.39rem;
+    width: 1.25rem;
+    height: 2px;
+    border-radius: 999px;
+    background: transparent;
+  }
+  .np-product-dock__item[data-active] {
+    color: hsl(var(--primary));
+    background: hsl(var(--primary) / .075);
+  }
+  .np-product-dock__item[data-active]::before { background: hsl(41 54% 54%); }
+  .np-product-dock__item:active { transform: scale(.96); }
+
+  .np-clinical-workspace { gap: .75rem; }
+  .np-workspace-welcome { border-radius: 1.05rem !important; }
+  .np-workspace-actions { gap: .55rem !important; }
+  .np-workspace-context,
+  .np-workspace-support > article { border-radius: 1.05rem !important; }
+  .np-legal-disclosure { margin-top: 1.1rem !important; border-radius: 1rem !important; }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  .np-workspace-action,
+  .np-product-dock,
+  .np-product-dock__item { transition: none !important; }
+}
