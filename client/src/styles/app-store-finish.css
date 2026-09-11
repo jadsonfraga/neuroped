@@ -1,8 +1,7 @@
 /* NeuroPed SDG — acabamento de produto para uso clínico diário.
    Camada estritamente visual: não altera dados, rotas, instrumentos ou impressão. */
 @media screen {
-  .np-product-utility,
-  .np-product-dock { display: none; }
+  .np-product-utility { display: none; }
 
   .np-app-shell {
     background:
@@ -59,8 +58,7 @@
   /* Login é uma superfície de entrada, não um workspace: remove chrome lateral
      e deixa a fotografia + autenticação ocuparem o foco principal. */
   body:has([data-testid='signature-login']) .np-app-sidebar,
-  body:has([data-testid='signature-login']) .np-app-mobile-header,
-  body:has([data-testid='signature-login']) .np-product-dock { display: none !important; }
+  body:has([data-testid='signature-login']) .np-app-mobile-header { display: none !important; }
   body:has([data-testid='signature-login']) .np-app-main {
     margin-left: 0 !important;
     padding-top: 0 !important;
@@ -102,8 +100,7 @@
 
   .np-workspace-welcome {
     border-top-color: hsl(41 54% 54% / .52) !important;
-    background:
-      linear-gradient(115deg, hsl(var(--card)), hsl(40 55% 97% / .82)) !important;
+    background: linear-gradient(115deg, hsl(var(--card)), hsl(40 55% 97% / .82)) !important;
   }
   .dark .np-workspace-welcome {
     background: linear-gradient(115deg, hsl(var(--card)), hsl(214 42% 16%)) !important;
@@ -187,58 +184,47 @@
   body:has([data-testid='signature-login']) .np-app-main { padding-top: 0 !important; }
   .np-login-session-entry { display: none; }
 
-  .np-product-dock {
-    position: fixed;
-    z-index: 45;
-    left: .65rem;
-    right: .65rem;
-    bottom: max(.6rem, env(safe-area-inset-bottom));
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    min-height: 4.25rem;
-    padding: .38rem .25rem;
-    border: 1px solid hsl(var(--border) / .82);
-    border-radius: 1.15rem;
-    background: hsl(var(--card) / .94);
-    box-shadow: 0 18px 48px -22px hsl(214 68% 8% / .42);
-    backdrop-filter: blur(22px) saturate(1.25);
+  /* O dock abaixo é o MobilePrimaryDock original do app: mantém RBAC e rotas
+     canônicas, mas recebe o acabamento visual do conceito App Store. */
+  [data-testid='mobile-primary-dock'] {
+    left: .65rem !important;
+    right: .65rem !important;
+    bottom: max(.6rem, env(safe-area-inset-bottom)) !important;
+    padding: 0 !important;
     transition: opacity .18s ease, transform .18s ease;
   }
-  .dark .np-product-dock { background: hsl(214 44% 13% / .94); }
-  .np-mobile-drawer-open .np-product-dock { opacity: 0; pointer-events: none; transform: translateY(1rem); }
-  body:has(.np-product-dock) .np-app-content { padding-bottom: calc(6.3rem + env(safe-area-inset-bottom)) !important; }
-
-  .np-product-dock__item {
-    position: relative;
-    display: flex;
-    min-width: 0;
-    min-height: 3.45rem;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: .22rem;
-    border-radius: .8rem;
-    color: hsl(var(--muted-foreground));
-    font-size: .57rem;
-    font-weight: 620;
-    letter-spacing: -.01em;
-    transition: color .16s ease, background-color .16s ease, transform .16s ease;
+  [data-testid='mobile-primary-dock'] > nav {
+    max-width: 34rem !important;
+    min-height: 4.25rem;
+    padding: .38rem .25rem !important;
+    border-color: hsl(var(--border) / .82) !important;
+    border-radius: 1.15rem !important;
+    background: hsl(var(--card) / .94) !important;
+    box-shadow: 0 18px 48px -22px hsl(214 68% 8% / .42) !important;
+    backdrop-filter: blur(22px) saturate(1.25) !important;
   }
-  .np-product-dock__item::before {
+  .dark [data-testid='mobile-primary-dock'] > nav { background: hsl(214 44% 13% / .94) !important; }
+  .np-mobile-drawer-open [data-testid='mobile-primary-dock'] { opacity: 0; pointer-events: none; transform: translateY(1rem); }
+  [data-testid='mobile-primary-dock'] button {
+    min-height: 3.45rem !important;
+    border-radius: .8rem !important;
+    color: hsl(var(--muted-foreground));
+    font-size: .57rem !important;
+    letter-spacing: -.01em;
+  }
+  [data-testid='mobile-primary-dock'] button[aria-current='page'] {
+    color: hsl(var(--primary)) !important;
+    background: hsl(var(--primary) / .075) !important;
+  }
+  [data-testid='mobile-primary-dock'] button[aria-current='page']::before {
     content: '';
     position: absolute;
     top: -.39rem;
     width: 1.25rem;
     height: 2px;
     border-radius: 999px;
-    background: transparent;
+    background: hsl(41 54% 54%);
   }
-  .np-product-dock__item[data-active] {
-    color: hsl(var(--primary));
-    background: hsl(var(--primary) / .075);
-  }
-  .np-product-dock__item[data-active]::before { background: hsl(41 54% 54%); }
-  .np-product-dock__item:active { transform: scale(.96); }
 
   .np-clinical-workspace { gap: .75rem; }
   .np-workspace-welcome { border-radius: 1.05rem !important; }
@@ -250,6 +236,6 @@
 
 @media screen and (prefers-reduced-motion: reduce) {
   .np-workspace-action,
-  .np-product-dock,
-  .np-product-dock__item { transition: none !important; }
+  [data-testid='mobile-primary-dock'],
+  [data-testid='mobile-primary-dock'] button { transition: none !important; }
 }
