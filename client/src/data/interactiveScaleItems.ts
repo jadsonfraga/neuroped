@@ -60,6 +60,16 @@ export interface InteractiveScaleDef {
   domains: InteractiveDomainDef[];
   /** Faixas de interpretação por % do escore máximo (maior = melhor). */
   bands: InteractiveBand[];
+  /**
+   * Identifica a versão do contrato de resposta desta escala nos registros
+   * salvos (`assessment.instrumentVersion`). Default "client-v1" (ver
+   * SaveToPatient.tsx) quando omitido. Declare um valor próprio sempre que
+   * `labels`/`optionPoints`/`scoreDirection` mudarem de um jeito que torna
+   * aplicações antigas e novas não diretamente comparáveis — sem isso, o
+   * mesmo `instrumentId` (derivado do título) mistura formatos diferentes
+   * na proveniência longitudinal do paciente.
+   */
+  instrumentVersion?: string;
 }
 
 // ------------------------------------------------------------
@@ -128,6 +138,7 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
     labels,
     infoBox: def.infoBox,
     scaleId: scale.id,
+    instrumentVersion: def.instrumentVersion,
     domains: def.domains.map((d) => ({
       name: d.name,
       color: d.color ?? "text-primary",
@@ -2295,6 +2306,11 @@ const atecItems: Record<string, InteractiveScaleDef> = {
     scoreDirection: "higher_worse",
     totalLabel: "grau global de preocupação",
     bands: ATEC_BANDS,
+    // 09/09/2026: contrato de resposta mudou de 4 opções de intensidade para
+    // 3 respostas diretas (Não/Às vezes/Sim) — não comparável ao formato
+    // anterior. Versão própria para que `assessment.instrumentVersion` (ver
+    // SaveToPatient.tsx) distinga aplicações salvas antes e depois da troca.
+    instrumentVersion: "atec-direct-v2",
     domains: [
       { name: "I. Fala / Linguagem / Comunicação", color: "text-blue-600 dark:text-blue-400", items: [
         { text: "Sabe o próprio nome", emoji: "🙋", example: "Ex.: Virar-se ou responder quando alguém chama pelo seu nome.", reversed: true },

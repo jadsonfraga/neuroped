@@ -164,6 +164,14 @@ export interface ScaleConfig {
   domains: DomainConfig[];
   infoBox?: string;
   scaleId?: string;
+  /**
+   * Passado a `SaveToPatient` como `instrumentVersion`. Default "client-v1"
+   * quando omitido. Uma escala cujo contrato de resposta muda de forma não
+   * diretamente comparável à anterior (rótulos, pontos, direção) deve
+   * declarar um valor próprio aqui, para que registros salvos antes e depois
+   * da mudança fiquem distinguíveis (ver SaveToPatient.tsx).
+   */
+  instrumentVersion?: string;
   onCalculate: (answers: Record<string, number>) => {
     total?: number;
     totalLabel?: string;
@@ -692,6 +700,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             scaleName={config.title}
             responses={qaItems}
             applicationDate={applicationDate ?? undefined}
+            instrumentVersion={config.instrumentVersion}
           />
         </Suspense>
 
