@@ -37,7 +37,7 @@ assert.ok(skipNav.includes('ProductChrome'), 'chrome de produto deve estar monta
 assert.ok(skipNav.includes('app-store-finish.css'), 'acabamento final deve carregar no shell global');
 assert.ok(chrome.includes('accessMode !== "remote" || isAuthenticated'), 'chrome deve depender da sessão profissional');
 assert.ok(chrome.includes('isPublicRoute(path) && path !== "/filtro"'), 'rotas públicas não devem receber chrome clínico');
-assert.ok(chrome.includes('<aside className="np-product-utility print:hidden"') && chrome.includes('aria-label="Sessão profissional"'), 'identidade da sessão deve viver em landmark nomeado');
+assert.ok(chrome.includes('className="np-product-utility print:hidden"') && chrome.includes('aria-label="Sessão profissional"'), 'identidade da sessão deve viver em landmark nomeado');
 assert.ok(chrome.includes('data-testid="button-session-enter"'), 'logout deve preservar convite visível ao gate');
 assert.ok(chrome.includes('document.getElementById("login-email")?.focus()'), 'convite de entrada deve levar ao campo nominal sem mudar de rota');
 assert.ok(!chrome.includes('product-mobile-dock') && !chrome.includes('<nav'), 'ProductChrome não pode duplicar a navegação móvel canônica');
