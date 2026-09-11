@@ -38,12 +38,15 @@ for (const route of ['/', '/pacientes', '/agenda', '/filtro', '/documentos']) {
 }
 assert.ok(chrome.includes('accessMode !== "remote" || isAuthenticated'), 'dock deve depender da sessão profissional');
 assert.ok(chrome.includes('isPublicRoute(path) && path !== "/filtro"'), 'rotas públicas não devem receber navegação clínica');
-assert.ok(chrome.includes('<aside className="np-product-utility print:hidden"') && chrome.includes('aria-label="Acesso rápido profissional"'), 'barra utilitária deve viver em landmark nomeado');
+assert.ok(chrome.includes('<aside className="np-product-utility print:hidden"') && chrome.includes('aria-label="Sessão profissional"'), 'identidade da sessão deve viver em landmark nomeado');
+assert.ok(chrome.includes('data-testid="button-session-enter"'), 'logout deve preservar convite visível ao gate');
+assert.ok(chrome.includes('document.getElementById("login-email")?.focus()'), 'convite de entrada deve levar ao campo nominal sem mudar de rota');
+assert.ok(!chrome.includes('product-global-search') && !chrome.includes('openCommandPalette'), 'chrome não deve duplicar a busca canônica da home');
 assert.ok(!/\b(?:localStorage|sessionStorage|fetch)\s*\./.test(chrome), 'chrome não pode criar persistência ou transporte clínico');
 assert.ok(finishCss.includes("dr-jadson-shield-logo.svg"), 'marca institucional deve substituir o retrato na navegação');
 assert.ok(finishCss.includes("body:has([data-testid='signature-login']) .np-app-sidebar"), 'login deve remover chrome lateral e preservar foco de autenticação');
-assert.ok(finishCss.includes("body:has([data-testid='product-utility-bar']) [data-testid='search-container']"), 'cockpit desktop deve expor uma única busca principal');
+assert.ok(!finishCss.includes("[data-testid='search-container'] { display: none"), 'busca canônica da home não pode ser escondida');
 assert.ok(finishCss.includes('.np-product-dock'), 'dock móvel ausente');
-assert.ok(finishCss.includes('.np-product-utility'), 'barra utilitária desktop ausente');
+assert.ok(finishCss.includes('.np-product-utility'), 'identidade desktop da sessão ausente');
 assert.ok(finishCss.includes('prefers-reduced-motion'), 'acabamento deve respeitar redução de movimento');
-console.log('PASS: identidade, login focado, sessão, landmarks, dock móvel, busca única e redução de movimento');
+console.log('PASS: identidade, login focado, logout gate, dock móvel, busca canônica e redução de movimento');
