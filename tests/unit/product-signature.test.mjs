@@ -40,8 +40,10 @@ assert.ok(chrome.includes('accessMode !== "remote" || isAuthenticated'), 'dock d
 assert.ok(chrome.includes('isPublicRoute(path) && path !== "/filtro"'), 'rotas públicas não devem receber navegação clínica');
 assert.ok(chrome.includes('<aside className="np-product-utility print:hidden"') && chrome.includes('aria-label="Acesso rápido profissional"'), 'barra utilitária deve viver em landmark nomeado');
 assert.ok(!/\b(?:localStorage|sessionStorage|fetch)\s*\./.test(chrome), 'chrome não pode criar persistência ou transporte clínico');
-assert.ok(finishCss.includes("dr-jadson-shield-logo.svg"), 'marca cerebral institucional deve substituir o retrato na navegação');
+assert.ok(finishCss.includes("dr-jadson-shield-logo.svg"), 'marca institucional deve substituir o retrato na navegação');
+assert.ok(finishCss.includes("body:has([data-testid='signature-login']) .np-app-sidebar"), 'login deve remover chrome lateral e preservar foco de autenticação');
+assert.ok(finishCss.includes("body:has([data-testid='product-utility-bar']) [data-testid='search-container']"), 'cockpit desktop deve expor uma única busca principal');
 assert.ok(finishCss.includes('.np-product-dock'), 'dock móvel ausente');
 assert.ok(finishCss.includes('.np-product-utility'), 'barra utilitária desktop ausente');
 assert.ok(finishCss.includes('prefers-reduced-motion'), 'acabamento deve respeitar redução de movimento');
-console.log('PASS: identidade, sessão, landmarks, dock móvel, busca desktop, contexto clínico e redução de movimento');
+console.log('PASS: identidade, login focado, sessão, landmarks, dock móvel, busca única e redução de movimento');
