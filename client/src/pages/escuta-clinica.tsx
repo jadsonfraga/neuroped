@@ -20,7 +20,7 @@ export default function EscutaClinicaPage() {
   const mounted = useRef(true); const inFlight = useRef(false);
   const active = state === "recording" || state === "paused" || state === "requesting";
   useEffect(()=> {
-    mounted.current = true; const chunks = transcribed.current; recorder.current = new EscutaRecorder((s,t,v)=>{if(mounted.current){setState(s);setSeconds(t);setLevel(v);}});
+    mounted.current = true; const chunks = transcribed.current; recorder.current = new EscutaRecorder((s,t,v,warning)=>{if(mounted.current){setState(s);setSeconds(t);setLevel(v);if(warning)setMessage(warning);}});
     return ()=>{ mounted.current=false; controller.current?.abort(); recorder.current?.destroy(); chunks.clear(); };
   },[]);
   useEffect(()=>()=>{if(audioUrl) URL.revokeObjectURL(audioUrl);},[audioUrl]);
@@ -57,7 +57,7 @@ export default function EscutaClinicaPage() {
   }
   async function processAudio() {
     if(!ready || !ack)throw new Error("Processamento não habilitado/autorizado.");
-    const parts=recorder.current?.parts || [];if(!parts.length)throw new Error("Nenhum áudio capturado.");
+    const parts=recorder.current?.parts || [];if(!parts.length)throw new Error("Nenhum áudio capturado.");recorder.current?.ensureAudible();
     clearDraft();
     let index=0;let elapsed=0;const total=Math.ceil(parts.reduce((n,p)=>n+p.length,0)/16000/60);
     for(const bytes of wavChunks(parts)){
@@ -74,6 +74,7 @@ export default function EscutaClinicaPage() {
     await generate(text);
   }
   function audioBlob(): Blob {
+    recorder.current?.ensureAudible();
     const chunks=Array.from(wavChunks(recorder.current?.parts || []));if(!chunks.length)throw new Error("Áudio ausente.");
     const header=chunks[0].slice(0,44);const size=chunks.reduce((n,c)=>n+c.length-44,0);const v=new DataView(header.buffer);v.setUint32(4,size+36,true);v.setUint32(40,size,true);
     return new Blob([header,...chunks.map(c=>c.subarray(44))] as BlobPart[],{type:"audio/wav"});
