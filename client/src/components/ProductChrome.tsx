@@ -34,7 +34,7 @@ export function ProductChrome() {
   return (
     <>
       {path === "/" && (
-        <div className="np-product-utility print:hidden" data-testid="product-utility-bar" aria-label="Acesso rápido profissional">
+        <aside className="np-product-utility print:hidden" data-testid="product-utility-bar" aria-label="Acesso rápido profissional">
           <button type="button" className="np-product-search" onClick={openCommandPalette} data-testid="product-global-search">
             <Search className="h-4 w-4" aria-hidden="true" />
             <span>Buscar paciente, avaliação ou documento…</span>
@@ -44,7 +44,7 @@ export function ProductChrome() {
             <img src="/dr-jadson-shield-badge.webp" alt="" width="256" height="256" decoding="async" />
             <span><strong>{firstName}</strong><small>Área profissional</small></span>
           </div>
-        </div>
+        </aside>
       )}
 
       <nav className="np-product-dock print:hidden" data-testid="product-mobile-dock" aria-label="Navegação principal móvel">
