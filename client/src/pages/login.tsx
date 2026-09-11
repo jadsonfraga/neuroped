@@ -105,8 +105,8 @@ export default function LoginPage() {
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-chart-2 shadow-lg shadow-primary/25">
         <ShieldCheck className="h-7 w-7 text-primary-foreground" strokeWidth={1.75} />
       </div>
-      <p className="np-signature-eyebrow">ÁREA PROFISSIONAL</p>
-      <h1 className="text-xl font-bold text-foreground">Seu consultório, organizado.</h1>
+      <p className="np-signature-eyebrow">SEU CONSULTÓRIO, ORGANIZADO</p>
+      <h1 className="text-xl font-bold text-foreground">Entrar na área profissional</h1>
       <p className="mt-2 max-w-md text-center text-sm leading-relaxed text-muted-foreground">
         Entre para continuar seus atendimentos, avaliações e documentos.
       </p>
@@ -123,7 +123,11 @@ export default function LoginPage() {
           <Label htmlFor="login-password">Senha</Label>
           <div className="relative">
             <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input id="login-password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="pl-9 pr-12" placeholder="Sua senha" />
+            {showPassword ? (
+              <Input id="login-password" name="password" type="text" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="pl-9 pr-12" placeholder="Sua senha" />
+            ) : (
+              <Input id="login-password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="pl-9 pr-12" placeholder="Sua senha" />
+            )}
             <button type="button" className="np-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} aria-pressed={showPassword} data-testid="toggle-password">
               {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
             </button>

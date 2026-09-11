@@ -10,10 +10,11 @@ assert.ok(css.includes('@media screen'), 'a camada não deve repintar documentos
 for (const value of ['214.47 68.12%', '350.87 60.53%', '41.57 54.04%', '175.34 77.44%']) {
   assert.ok(css.includes(value), `paleta ausente: ${value}`);
 }
-for (const contract of ['safeNextRoute()', 'clearNextParam()', 'await login(email.trim(), password)', 'data-testid="login-form"', 'autoComplete="current-password"', 'autoComplete="username"', 'data-testid="forgot-password-link"', 'data-testid="pricing-link"']) {
+for (const contract of ['safeNextRoute()', 'clearNextParam()', 'await login(email.trim(), password)', 'data-testid="login-form"', 'autoComplete="current-password"', 'autoComplete="username"', 'data-testid="forgot-password-link"', 'data-testid="pricing-link"', 'Entrar na área profissional']) {
   assert.ok(login.includes(contract), `contrato de entrada removido: ${contract}`);
 }
-assert.match(login, /type=\{showPassword \? "text" : "password"\}/);
+assert.match(login, /\[showPassword, setShowPassword\] = useState\(false\)/, 'senha inicia oculta');
+assert.match(login, /\{showPassword \? \(\s*<Input[^>]*type="text"[^>]*value=\{password\}[^>]*\/>\s*\) : \(\s*<Input[^>]*type="password"[^>]*value=\{password\}/, 'controle explícito de visibilidade sem credencial nova');
 assert.match(login, /aria-pressed=\{showPassword\}/);
 assert.match(login, /<button type="button" className="np-password-toggle"/);
 assert.ok(cockpit.indexOf('className="np-workspace-context') < cockpit.indexOf('className="np-workspace-support'), 'contexto deve preceder recursos no DOM');
