@@ -74,6 +74,8 @@ export interface DailyAuthorialInventory {
   safetyNote: string;
   tags: string[];
   duplicateCooldownDays: 30;
+  contingency?: boolean;
+  needsUpgrade?: boolean;
   generation: {
     model: string;
     reasoningMode: "pro";
@@ -98,7 +100,9 @@ function isDailyInventory(value: unknown): value is DailyAuthorialInventory {
     Array.isArray(item.items) &&
     item.scoring?.mode === "perfil_qualitativo_sem_total" &&
     item.scoring?.totalScoreEnabled === false &&
-    Array.isArray(item.redFlags)
+    Array.isArray(item.redFlags) &&
+    (item.contingency === undefined || typeof item.contingency === "boolean") &&
+    (item.needsUpgrade === undefined || typeof item.needsUpgrade === "boolean")
   );
 }
 
@@ -128,9 +132,13 @@ export const dailyAuthorialReviewCatalog = loaded
 
 /**
  * Catálogo operacional exibido no app. Publicação clínica exige promoção
- * humana explícita para `revisado_clinicamente`; rascunhos de automação e itens
- * arquivados nunca atravessam esta fronteira.
+ * humana explícita para `revisado_clinicamente`. Itens de contingência ou
+ * ainda marcados para upgrade permanecem bloqueados mesmo se o status for
+ * alterado por engano.
  */
 export const dailyAuthorialCatalog = dailyAuthorialReviewCatalog.filter(
-  (record) => record.status === "revisado_clinicamente",
+  (record) =>
+    record.status === "revisado_clinicamente" &&
+    record.contingency !== true &&
+    record.needsUpgrade !== true,
 );
