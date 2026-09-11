@@ -73,6 +73,27 @@
     margin-top: 0 !important;
     box-shadow: 0 28px 80px -52px hsl(214 68% 8% / .5) !important;
   }
+  .np-login-session-entry {
+    position: fixed;
+    z-index: 75;
+    top: .9rem;
+    right: 1rem;
+    display: inline-flex;
+    min-width: 5.25rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border: 1px solid hsl(var(--border) / .88);
+    border-radius: .85rem;
+    background: hsl(var(--card) / .9);
+    color: hsl(var(--foreground));
+    box-shadow: 0 16px 36px -28px hsl(214 68% 8% / .45);
+    backdrop-filter: blur(16px);
+    font-size: .75rem;
+    font-weight: 650;
+  }
+  .np-login-session-entry:hover { background: hsl(var(--muted) / .78); }
 
   .np-clinical-workspace,
   [data-testid='documentos-shell'],
@@ -115,9 +136,7 @@
 
   [data-testid='prontuario-shell'] > div:first-child,
   [data-testid='documentos-shell'] > div:first-child,
-  .container-filtro > div:first-child {
-    border-radius: 1.25rem;
-  }
+  .container-filtro > div:first-child { border-radius: 1.25rem; }
 
   .np-legal-disclosure {
     border-color: hsl(var(--border) / .8) !important;
@@ -146,46 +165,16 @@
     right: 1.25rem;
     display: flex;
     align-items: center;
-    gap: .65rem;
-    width: min(42rem, calc(100vw - 19rem));
-    min-height: 3.4rem;
-    padding: .42rem;
+    min-height: 3.2rem;
+    padding: .38rem .45rem;
     border: 1px solid hsl(var(--border) / .82);
     border-radius: 1rem;
     background: hsl(var(--card) / .9);
     box-shadow: 0 18px 44px -34px hsl(214 68% 13% / .45);
     backdrop-filter: blur(18px) saturate(1.15);
   }
-  body:has([data-testid='product-utility-bar']) .np-app-content { padding-top: 5.2rem !important; }
-  /* A barra utilitária desktop assume a busca global; evita duas buscas
-     concorrendo visualmente no mesmo primeiro viewport. */
-  body:has([data-testid='product-utility-bar']) [data-testid='search-container'] { display: none !important; }
-  .np-product-search {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-    min-height: 2.55rem;
-    align-items: center;
-    gap: .6rem;
-    padding: 0 .8rem;
-    border-radius: .72rem;
-    color: hsl(var(--muted-foreground));
-    background: hsl(var(--muted) / .52);
-    text-align: left;
-    font-size: .78rem;
-  }
-  .np-product-search span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .np-product-search kbd {
-    border: 1px solid hsl(var(--border));
-    border-radius: .42rem;
-    padding: .14rem .38rem;
-    background: hsl(var(--card));
-    color: hsl(var(--foreground) / .68);
-    font-size: .62rem;
-    font-family: inherit;
-  }
-  .np-product-search:hover { color: hsl(var(--foreground)); background: hsl(var(--muted) / .72); }
-  .np-product-profile { display: flex; align-items: center; gap: .55rem; padding: .2rem .5rem .2rem .25rem; }
+  body:has([data-testid='product-utility-bar']) .np-app-content { padding-top: 5rem !important; }
+  .np-product-profile { display: flex; align-items: center; gap: .55rem; padding: .1rem .45rem .1rem .15rem; }
   .np-product-profile img { width: 2.15rem; height: 2.15rem; border-radius: .7rem; object-fit: cover; box-shadow: 0 0 0 1px hsl(41 54% 54% / .25); }
   .np-product-profile span { display: grid; line-height: 1.1; }
   .np-product-profile strong { color: hsl(var(--foreground)); font-size: .72rem; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -196,6 +185,7 @@
   .np-app-mobile-header { height: 4rem !important; padding-inline: 1rem !important; }
   .np-app-main { padding-top: 4rem !important; }
   body:has([data-testid='signature-login']) .np-app-main { padding-top: 0 !important; }
+  .np-login-session-entry { display: none; }
 
   .np-product-dock {
     position: fixed;
