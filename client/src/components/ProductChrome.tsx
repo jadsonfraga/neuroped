@@ -1,7 +1,6 @@
-import { CalendarDays, ClipboardCheck, FileText, Home, Search, Users } from "lucide-react";
+import { CalendarDays, ClipboardCheck, FileText, Home, KeyRound, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { openCommandPalette } from "@/lib/commandPaletteBus";
 import { isPublicRoute, normalizePath } from "@/lib/publicRoutes";
 
 const dockItems = [
@@ -26,7 +25,25 @@ export function ProductChrome() {
   const professionalSession = accessMode !== "remote" || isAuthenticated;
   const publicOnly = isPublicRoute(path) && path !== "/filtro";
 
-  if (isLoading || !professionalSession || publicOnly) return null;
+  if (isLoading) return null;
+
+  // O login focado não exibe a sidebar, mas preserva o contrato de retorno ao
+  // gate após logout com um único convite discreto e funcional para o campo.
+  if (!professionalSession) {
+    if (path !== "/login") return null;
+    return (
+      <button
+        type="button"
+        className="np-login-session-entry print:hidden"
+        data-testid="button-session-enter"
+        onClick={() => document.getElementById("login-email")?.focus()}
+      >
+        <KeyRound className="h-4 w-4" aria-hidden="true" />
+        <span>Entrar</span>
+      </button>
+    );
+  }
+  if (publicOnly) return null;
 
   const displayName = user?.name?.trim() || "Profissional";
   const firstName = displayName.split(/\s+/)[0] || "Profissional";
@@ -34,12 +51,7 @@ export function ProductChrome() {
   return (
     <>
       {path === "/" && (
-        <aside className="np-product-utility print:hidden" data-testid="product-utility-bar" aria-label="Acesso rápido profissional">
-          <button type="button" className="np-product-search" onClick={openCommandPalette} data-testid="product-global-search">
-            <Search className="h-4 w-4" aria-hidden="true" />
-            <span>Buscar paciente, avaliação ou documento…</span>
-            <kbd>⌘ K</kbd>
-          </button>
+        <aside className="np-product-utility print:hidden" data-testid="product-utility-bar" aria-label="Sessão profissional">
           <div className="np-product-profile" aria-label={`Sessão de ${displayName}`}>
             <img src="/dr-jadson-shield-badge.webp" alt="" width="256" height="256" decoding="async" />
             <span><strong>{firstName}</strong><small>Área profissional</small></span>
