@@ -128,7 +128,7 @@ export default function LoginPage() {
             ) : (
               <Input id="login-password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="pl-9 pr-12" placeholder="Sua senha" />
             )}
-            <button type="button" className="np-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} aria-pressed={showPassword} data-testid="toggle-password">
+            <button type="button" className="np-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Ocultar caracteres" : "Exibir caracteres"} aria-controls="login-password" aria-pressed={showPassword} data-testid="toggle-password">
               {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
             </button>
           </div>

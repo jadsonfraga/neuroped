@@ -14,8 +14,9 @@ for (const contract of ['safeNextRoute()', 'clearNextParam()', 'await login(emai
   assert.ok(login.includes(contract), `contrato de entrada removido: ${contract}`);
 }
 assert.match(login, /\[showPassword, setShowPassword\] = useState\(false\)/, 'senha inicia oculta');
-assert.match(login, /\{showPassword \? \(\s*<Input[^>]*type="text"[^>]*value=\{password\}[^>]*\/>\s*\) : \(\s*<Input[^>]*type="password"[^>]*value=\{password\}/, 'controle explícito de visibilidade sem credencial nova');
+assert.match(login, /\{showPassword \? \(\s*<Input[^\n]*type="text"[^\n]*value=\{password\}[^\n]*\/>\s*\) : \(\s*<Input[^\n]*type="password"[^\n]*value=\{password\}/, 'controle explícito de visibilidade sem credencial nova');
 assert.match(login, /aria-pressed=\{showPassword\}/);
+assert.match(login, /aria-controls="login-password"/);
 assert.match(login, /<button type="button" className="np-password-toggle"/);
 assert.ok(cockpit.indexOf('className="np-workspace-context') < cockpit.indexOf('className="np-workspace-support'), 'contexto deve preceder recursos no DOM');
 for (const contract of ['cockpit-current-patient', 'cockpit-loading', 'cockpit-empty', 'cockpit-action-prontuario', 'enabled: isRemoteClinical && Boolean(activeClinicId)', 'queryKey: [queryKey]']) {
