@@ -1,7 +1,7 @@
-import { Suspense, lazy, useSyncExternalStore } from "react";
+import { Suspense, lazy, useEffect, useState, useSyncExternalStore } from "react";
 import { readRouteParam } from "@/lib/routeQuery";
 
-/** O catálogo grande e a aplicação autoral ficam em chunks separados. */
+/** Cada painel carrega somente após a primeira visita e preserva o estado em memória. */
 const FiltroEngine = lazy(() => import("@/pages/filtro-engine"));
 const Regula20Page = lazy(() => import("@/pages/regula20"));
 
@@ -42,14 +42,23 @@ function FiltroSkeleton() {
 
 export default function FiltroPage() {
   const authorial = useSyncExternalStore(subscribeRoute, isRegulaRoute, () => false);
+  const [visitedAuthorial, setVisitedAuthorial] = useState(authorial);
+  const [visitedGeneral, setVisitedGeneral] = useState(!authorial);
+  useEffect(() => {
+    if (authorial) setVisitedAuthorial(true);
+    else setVisitedGeneral(true);
+  }, [authorial]);
   return <div className="space-y-4">
     <div role="tablist" aria-label="Área do filtro de escalas" className="grid gap-2 sm:grid-cols-2">
       {[false, true].map((value) => <button key={String(value)} id={value ? "filter-authorial-tab" : "filter-general-tab"} type="button" role="tab" aria-selected={authorial === value} aria-controls={value ? "filter-authorial-panel" : "filter-general-panel"} tabIndex={authorial === value ? 0 : -1} onClick={() => selectTab(value)} onKeyDown={(event) => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) { event.preventDefault(); const next = event.key === "Home" ? false : event.key === "End" ? true : !value; selectTab(next); document.getElementById(next ? "filter-authorial-tab" : "filter-general-tab")?.focus(); } }} className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold ${authorial === value ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground"}`}>
         {value ? "Irritabilidade / Desregulação / Recuperação · Autoral" : "Filtro clínico geral"}
       </button>)}
     </div>
-    <div id={authorial ? "filter-authorial-panel" : "filter-general-panel"} role="tabpanel" aria-labelledby={authorial ? "filter-authorial-tab" : "filter-general-tab"} className={authorial ? "min-w-0 break-words [overflow-wrap:anywhere]" : undefined}>
-      <Suspense fallback={<FiltroSkeleton />}>{authorial ? <Regula20Page /> : <FiltroEngine />}</Suspense>
+    <div id="filter-general-panel" role="tabpanel" aria-labelledby="filter-general-tab" hidden={authorial}>
+      {(!authorial || visitedGeneral) && <Suspense fallback={<FiltroSkeleton />}><FiltroEngine /></Suspense>}
+    </div>
+    <div id="filter-authorial-panel" role="tabpanel" aria-labelledby="filter-authorial-tab" hidden={!authorial} className="min-w-0 break-words [overflow-wrap:anywhere]">
+      {(authorial || visitedAuthorial) && <Suspense fallback={<FiltroSkeleton />}><Regula20Page /></Suspense>}
     </div>
   </div>;
 }
