@@ -1,3 +1,4 @@
+import { EscutaSignalHealth } from "./escutaSignalHealth";
 import { CHUNK_SECONDS, SAMPLE_RATE, MAX_RECORDING_SECONDS, encodeWav } from "@shared/escuta/core";
 export type RecordingState = "idle" | "requesting" | "recording" | "paused" | "stopped";
 export class EscutaRecorder {
@@ -8,7 +9,8 @@ export class EscutaRecorder {
   private generation = 0;
   private raf = 0;
   private finish: (() => void) | null = null;
-  private audible = false;
+  private signal = new EscutaSignalHealth();
+  private lastSignalAt = 0;
   private silenceWarning = 0;
   private interruptionWarning: string | null = null;
   state: RecordingState = "idle";
@@ -31,16 +33,24 @@ export class EscutaRecorder {
       track.addEventListener("ended",()=>{if(generation===this.generation && ["recording","paused"].includes(this.state)){this.interruptionWarning="A trilha do microfone foi encerrada pelo navegador. O áudio disponível foi preservado.";this.node?.port.postMessage("stop");}});
       const silent = context.createGain(); silent.gain.value = 0; source.connect(node); node.connect(silent); silent.connect(context.destination);
       const analyser = context.createAnalyser(); analyser.fftSize = 256; source.connect(analyser); const values = new Float32Array(analyser.fftSize);
-      this.parts = []; this.audible = false; this.interruptionWarning = null; this.state = "recording";
+      this.parts = []; this.signal = new EscutaSignalHealth(); this.lastSignalAt = Date.now(); this.interruptionWarning = null; this.state = "recording";
       node.port.onmessage = ({ data }) => {
         if (generation !== this.generation) return;
-        if (data.pcm instanceof Int16Array) { this.parts.push(data.pcm); if (Number(data.peak) >= 0.0005) this.audible = true; }
+        if (data.pcm instanceof Int16Array) { this.parts.push(data.pcm); const before = this.signal.activeSamples; this.signal.add(data.pcm); if (this.signal.activeSamples > before) this.lastSignalAt = Date.now(); }
         if (data.ended) { const warning=this.interruptionWarning || undefined; this.interruptionWarning=null; this.state = "stopped"; this.release(); this.finish?.(); this.finish = null; this.changed(this.state,this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE,0,warning); return; }
         this.report();
       };
       const meter = () => { if (generation !== this.generation || !this.context) return; analyser.getFloatTimeDomainData(values); const level = Math.min(1,Math.sqrt(values.reduce((s,v)=>s+v*v,0)/values.length)*5); this.report(this.state === "paused" ? 0 : level); this.raf = requestAnimationFrame(meter); };
       await context.resume(); meter();
-      clearTimeout(this.silenceWarning); this.silenceWarning = window.setTimeout(()=>{if(generation===this.generation && this.state==="recording" && !this.audible)this.changed(this.state,this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE,0,"Nenhum sinal audível foi detectado. Teste o microfone agora; um WAV silencioso não será exportado.");},8000);
+      clearInterval(this.silenceWarning);
+      this.silenceWarning = window.setInterval(() => {
+        if (generation !== this.generation || this.state !== "recording") return;
+        if (Date.now() - this.lastSignalAt >= 8000) {
+          this.changed(this.state, this.parts.reduce((n,p)=>n+p.length,0)/SAMPLE_RATE, 0,
+            "Há pelo menos 8 segundos sem sinal consistente. Confira o microfone e teste sua voz; revise o áudio antes de processar.");
+          this.lastSignalAt = Date.now();
+        }
+      }, 1000);
     } catch (error) {
       if (generation !== this.generation) return;
       this.release(); this.state = "idle"; this.report();
@@ -49,8 +59,13 @@ export class EscutaRecorder {
     }
   }
   pause() { if (this.state === "recording") { this.node?.port.postMessage("pause"); this.state = "paused"; this.report(); } }
-  resume() { if (this.state === "paused") { this.node?.port.postMessage("resume"); this.state = "recording"; this.report(); } }
-  ensureAudible(): void { if (this.audible) return; for (const part of this.parts) for (let i=0;i<part.length;i++) if (Math.abs(part[i])>=16) { this.audible=true; return; } throw new Error("O microfone não registrou sinal audível. O arquivo silencioso não foi exportado; selecione/teste o microfone e grave novamente."); }
+  resume() { if (this.state === "paused") { this.node?.port.postMessage("resume"); this.state = "recording"; this.lastSignalAt = Date.now(); this.report(); } }
+  ensureAudible(): void {
+    // Recompute from actual PCM so an imported/replaced recording cannot inherit old health.
+    const signal = new EscutaSignalHealth();
+    for (const part of this.parts) signal.add(part);
+    if (!signal.usable) throw new Error("Sinal insuficiente ou gravação predominantemente silenciosa. O áudio permanece disponível na sessão; confira o microfone e grave novamente antes de exportar ou transcrever.");
+  }
   async stop(): Promise<void> {
     if (!["recording","paused"].includes(this.state)) return;
     await new Promise<void>((resolve,reject) => {
@@ -58,8 +73,8 @@ export class EscutaRecorder {
       this.finish = ()=>{clearTimeout(timer); resolve();}; this.node?.port.postMessage("stop");
     });
   }
-  private release() { clearTimeout(this.silenceWarning); cancelAnimationFrame(this.raf); this.stream?.getTracks().forEach(t=>t.stop()); this.stream = null; this.node?.disconnect(); this.node = null; const context = this.context; this.context = null; if (context && context.state !== "closed") void context.close().catch(()=>undefined); }
-  destroy() { ++this.generation; this.release(); this.parts = []; this.audible = false; this.interruptionWarning = null; this.finish?.(); this.finish = null; this.state = "idle"; }
+  private release() { clearInterval(this.silenceWarning); cancelAnimationFrame(this.raf); this.stream?.getTracks().forEach(t=>t.stop()); this.stream = null; this.node?.disconnect(); this.node = null; const context = this.context; this.context = null; if (context && context.state !== "closed") void context.close().catch(()=>undefined); }
+  destroy() { ++this.generation; this.release(); this.parts = []; this.signal = new EscutaSignalHealth(); this.lastSignalAt = Date.now(); this.interruptionWarning = null; this.finish?.(); this.finish = null; this.state = "idle"; }
 }
 export function* wavChunks(parts: readonly Int16Array[]): Generator<Uint8Array> {
   const total = parts.reduce((n,p)=>n+p.length,0);
