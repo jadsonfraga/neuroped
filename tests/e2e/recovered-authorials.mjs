@@ -25,6 +25,7 @@ page.on("pageerror", (error) => errors.push(error.message));
 page.on("request", (request) => { if (new URL(request.url()).pathname.startsWith("/api/") && !["GET", "HEAD", "OPTIONS"].includes(request.method()) && !request.url().includes("/auth/")) writes.push(`${request.method()} ${new URL(request.url()).pathname}`); });
 const user = { id: "authorials-local-fixture", email: "authorials@neuroped.invalid", name: "Equipe sintética", role: "professional" };
 await context.addInitScript((user) => {
+  if (window.location.protocol !== "http:") return; // fixture somente no servidor local
   for (const [key, value] of [["neuroped:aviso-educativo-aceito-v1", "e2e"], ["neuroped:onboarding-seen", "1"], ["np_tour_intro_v2", "done"], ["np_tour_v2_done", "1"]]) localStorage.setItem(key, value);
   sessionStorage.setItem("neuroped:access", "authorials-local-access-fixture");
   sessionStorage.setItem("neuroped:refresh", "authorials-local-refresh-fixture");
@@ -43,6 +44,7 @@ const cases = [
   { id: "ritmo-sono-20-sdg", focus: "sono", count: 20, value: 5, no: true },
 ];
 async function openHub() {
+  await page.goto("about:blank"); // cada caso usa nova carga; retenção é testada separadamente
   await page.goto(`${base}/#/filtro?autoral=acervo`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("authorial-hub").waitFor({ state: "visible", timeout: 30000 });
   await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 15000 }).catch(() => {});
@@ -122,6 +124,7 @@ try {
   assert.equal(await page.locator('[data-testid^="authorial-card-"]').count(), 2);
   await page.locator("#authorial-urgent").selectOption("incerto");
   assert.equal(await page.locator('[data-testid^="authorial-card-"]').count(), 0);
+  await page.locator("#authorial-urgent").selectOption("nao");
   await page.setViewportSize({ width: 1280, height: 900 });
   mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: join(OUT, "hub-desktop.png"), fullPage: true });
   await page.goto(`${base}/#/pre-consulta`, { waitUntil: "domcontentloaded" });
