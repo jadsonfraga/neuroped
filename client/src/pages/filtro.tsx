@@ -3,7 +3,7 @@ import { readRouteParam } from "@/lib/routeQuery";
 
 /** Cada painel carrega somente após a primeira visita e preserva o estado em memória. */
 const FiltroEngine = lazy(() => import("@/pages/filtro-engine"));
-const Regula20Page = lazy(() => import("@/pages/regula20"));
+const Regula20Page = lazy(() => import("@/components/Regula20Questionnaire"));
 
 function subscribeRoute(onChange: () => void) {
   window.addEventListener("hashchange", onChange);

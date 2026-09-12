@@ -26,7 +26,7 @@ test("N/O e cobertura insuficiente continuam distintos de zero nos resultados en
 });
 
 test("snapshot único contém a apuração e alimenta os dois canais de entrega", () => {
-  const ui = readFileSync("client/src/pages/regula20.tsx", "utf8");
+  const ui = readFileSync("client/src/components/Regula20Questionnaire.tsx", "utf8");
   assert.match(ui, /\.\.\.regula20ComputedRows\(answers\)/);
   assert.match(ui, /<ClinicalReport[\s\S]*?items=\{snapshot.responses\}/);
   assert.match(ui, /<SaveToPatient[\s\S]*?responses=\{snapshot.responses\}/);

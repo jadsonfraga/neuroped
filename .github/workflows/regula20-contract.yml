@@ -6,7 +6,7 @@ on:
       - 'client/src/data/regula20.ts'
       - 'client/src/data/filterableCatalog*.ts'
       - 'client/src/data/escalasImportadasDrive2026.ts'
-      - 'client/src/pages/regula20.tsx'
+      - 'client/src/components/Regula20Questionnaire.tsx'
       - 'client/src/pages/filtro.tsx'
       - 'client/src/lib/preConsultaCore.ts'
       - 'client/src/lib/regula20Report.ts'
@@ -42,6 +42,7 @@ jobs:
       - run: git diff --exit-code -- docs/PROVENIENCIA_CLINICA.md
       - run: npm run validate:public
       - run: npm run audit:access
+      - run: npm run audit:inventory
       - run: npm run check
       - run: npm run test:filter
       - run: node tests/unit/live-previsit-persistence-guard.test.mjs
