@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { regula20ComputedRows } from "@/lib/regula20Report";
 import {
   REGULA20_DOMAINS, REGULA20_ITEMS, REGULA20_OPTIONS, REGULA20_RED_FLAGS,
   REGULA20_SOURCE, REGULA20_VERSION, REGULA20_WARNING,
@@ -77,6 +78,7 @@ export default function Regula20Page() {
       { question: "Observador / contexto", answer: `${observer.trim()} · ${label(respondents, respondent)} · ${label(contexts, context)}. Registro separado; não combinar com outro informante.` },
       { question: "Janela de observação", answer: `${displayDate(windowStart(endDate))} a ${displayDate(endDate)} · 14 dias` },
       ...REGULA20_ITEMS.map((question, i) => ({ question: `Item ${i + 1}. ${question}`, answer: `${REGULA20_OPTIONS[answers[i]!].label} — ${REGULA20_OPTIONS[answers[i]!].description}` })),
+      ...regula20ComputedRows(answers),
       { question: "Dias com episódios / total aproximado (fora do escore)", answer: `${days === "" ? "Não informado" : days + "/14 dias"}; total: ${episodes === "" ? "não informado" : episodes}` },
       { question: "Duração típica (fora do escore)", answer: duration || "Não informada" },
       { question: "Gatilhos relatados (fora do escore)", answer: selectedTriggers.join("; ") || "Não informados" },
