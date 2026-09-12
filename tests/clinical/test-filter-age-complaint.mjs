@@ -33,6 +33,7 @@ for (const [query, months] of [["5 anos e 6 meses",66], ["5a6m",66], ["5a 6m",66
   equal(parseFilterSearchAge(query).ageMonths, months, query);
 }
 for (const query of ["5-6 anos", "5–6 anos", "5 a 6 anos", "5 ou 6 anos", "entre 5 e 6 anos",
+  "5 a 6 meses", "de 5 a 6 meses", "0 a 11 meses", "12 a 18 meses", "5 a6m", "5 a 6m", "3 a 4 m", "1,5 a 6 meses",
   "6 meses; irmão 5 anos", "5 anos e 12 meses", "-5 anos", "5.5 meses", "19 anos", "999 meses"]) {
   equal(parseFilterSearchAge(query).status, "invalid", query);
 }
@@ -40,6 +41,7 @@ equal(parseFilterSearchAge("medicação 10 mg, consulta 12/09/2026").status, "un
 equal(resolve(blank, "2-4a", "24 meses").ageMonths, 24, "idade pontual refina faixa sem midpoint conflitante");
 equal(resolve(blank, "2-4a", "24 meses").ageBand, null, "busca exata não preserva filtro de sobreposição");
 equal(resolve(blank, "2-4a", "7 anos").status, "invalid", "conflito pede correção");
+for (const band of faixasEtarias) equal(resolve(blank, band.id, "5 a 6 meses, sono").status, "invalid", `intervalo em meses não pode ser resgatado pela faixa ${band.id}`);
 equal(resolve({ years: "5", months: "6" }, "2-4a", "7 anos").ageMonths, 66, "campo próprio prevalece");
 for (const band of faixasEtarias) equal(resolve(blank, band.id).ageBand, {min:band.min,max:band.max}, `faixa ${band.id} preservada`);
 equal(formatFilterAge(66), "5 anos e 6 meses");

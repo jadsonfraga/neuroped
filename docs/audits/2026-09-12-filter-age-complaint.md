@@ -87,3 +87,25 @@ Sem migração de dados. Campos opcionais de sessão podem ser ignorados por ver
 anteriores; limpar o filtro ao trocar de versão remove contexto transitório.
 Arquivos de build gerados durante a validação foram restaurados apenas neste
 worktree; não integram a alteração. O checkout preexistente não foi modificado.
+
+## Preflight do deploy — correção do P1 de revisão
+
+Após a autorização explícita "Deploy" do Dr. Jadson Fraga, a PR saiu de draft
+para receber a revisão de código. O reviewer identificou um P1 real: a busca
+"5 a 6 meses" era interpretada como idade exata de 66 meses.
+
+Reprodução confirmada no HEAD remoto a58b58d23264fc9ca31fd85f1ba464483711d3b9.
+A regressão adicionada falhou antes da correção (exit 1: exact != invalid).
+A correção mínima rejeita o intervalo com "a" separado do primeiro número;
+"5a6m", "5a 6m" e "5 anos e 6 meses" permanecem idades compostas válidas.
+Inclui variações com "de", meses abreviados, lactentes, decimais e as sete
+faixas do catálogo. Nenhum dado clínico cadastrado nem regra de escore mudou.
+
+Após a correção: test:filter (105 segurança + 71 IPN-TEA + sessão + 661 novas
+verificações), check e lint terminaram com exit 0. O teste real Chromium,
+390 e 1280 px, também terminou com exit 0 e agora prova que "5 a 6 meses, sono"
+não libera cards nem recomendações auxiliares. O harness recompilou o frontend.
+
+Os resultados verdes do HEAD anterior não autorizam o novo HEAD: antes do merge
+é necessário aguardar novamente os checks do commit corrigido. Não houve bypass
+de proteção, aprovação em nome de terceiro ou publicação antecipada.

@@ -56,6 +56,11 @@ try {
       await clear();
       assert.equal(await years.inputValue(),""); assert.equal(await months.inputValue(),"");
       assert.equal(await options.locator('[aria-pressed="true"]').count(),0);
+      await page.getByTestId("input-search").fill("5 a 6 meses, sono");
+      await page.waitForFunction(()=>document.getElementById("filter-age-years")?.getAttribute("aria-invalid")==="true" && document.querySelectorAll('[data-testid="filter-result-card"]').length===0);
+      assert.match(await status.innerText(),/faixa ou idade ambígua/);
+      assert.equal(await page.getByTestId("direct-tests-recommendations").count(),0);
+      assert.equal(await page.getByTestId("parent-tests-recommendations").count(),0);
       await page.getByTestId("input-search").fill("5 anos e 6 meses, sono");
       await assertAge(66);
       assert.match(await status.innerText(),/5 anos e 6 meses/);
