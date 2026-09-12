@@ -13,8 +13,8 @@ function ReadJson([string]$Path){
   return $null
 }
 function LatestPdfMeta([string]$Path,[string]$Family='PANT'){
-  if(!(Test-Path -LiteralPath $Path)){ return [ordered]@{count=$null;changed_in_window=$null;latest_utc=$null;status='NOT_VERIFIED';coverage='LOCAL_FOLDER_ONLY'} }
   try {
+    if(!(Test-Path -LiteralPath $Path)){ return [ordered]@{count=$null;changed_in_window=$null;latest_utc=$null;status='NOT_VERIFIED';coverage='LOCAL_FOLDER_ONLY'} }
     $all=@(Get-ChildItem -LiteralPath $Path -File -Filter '*.pdf' -ErrorAction Stop)
     $f=@($all | Where-Object {
       $isPre=$_.BaseName -match '(?i)PRE[ _-]*PANT'
