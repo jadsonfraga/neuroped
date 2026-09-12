@@ -22,6 +22,7 @@ export const SAFE_EMPTY_MESSAGE =
 
 export interface FilterContext {
   queixas: string[];
+  ageInputInvalid?: boolean; // erro explícito: nunca ampliar o catálogo como fallback
   ageMonths: number | null; // representativo (midpoint da faixa) — usado em score e limiares de bloqueio
   ageBand?: { min: number; max: number } | null; // faixa selecionada em meses — usada para SOBREPOSIÇÃO de idade
   respondente?: Respondente | null;
@@ -479,9 +480,15 @@ export function clinicalHardBlock(
   ctx: FilterContext,
 ): string | null {
   const age = ctx.ageMonths;
+  if (ctx.ageInputInvalid ||
+      (age != null && (!Number.isFinite(age) || age < 0)) ||
+      (ctx.ageBand && (!Number.isFinite(ctx.ageBand.min) || !Number.isFinite(ctx.ageBand.max) ||
+        ctx.ageBand.min < 0 || ctx.ageBand.max < ctx.ageBand.min))) {
+    return "Idade informada inválida; confira os campos antes de recomendar";
+  }
 
   // Valida que a escala tem campos obrigatórios de idade
-  if (!Number.isFinite(scale.ageMin) || !Number.isFinite(scale.ageMax)) {
+  if (!Number.isFinite(scale.ageMin) || !Number.isFinite(scale.ageMax) || scale.ageMin < 0 || scale.ageMax < scale.ageMin) {
     return "Escala sem faixa etária definida";
   }
 
