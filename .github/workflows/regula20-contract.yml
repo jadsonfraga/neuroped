@@ -9,11 +9,10 @@ on:
       - 'client/src/pages/regula20.tsx'
       - 'client/src/pages/filtro.tsx'
       - 'client/src/lib/preConsultaCore.ts'
+      - 'scripts/guards/safety-classification-regula20-20260912.json'
       - 'tests/unit/regula20.test.ts'
       - 'tests/e2e/regula20-previsit.mjs'
       - '.github/workflows/regula20-contract.yml'
-  push:
-    branches: ['feat/regula20-filtro-clinico-20260912']
 
 permissions:
   contents: read
@@ -35,6 +34,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node --import tsx tests/unit/regula20.test.ts
+      - run: npm run validate:safety
       - run: npm run check
       - run: npm run test:filter
       - run: node tests/unit/live-previsit-persistence-guard.test.mjs
