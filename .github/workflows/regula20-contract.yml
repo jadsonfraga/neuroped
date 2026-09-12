@@ -9,8 +9,10 @@ on:
       - 'client/src/pages/regula20.tsx'
       - 'client/src/pages/filtro.tsx'
       - 'client/src/lib/preConsultaCore.ts'
+      - 'client/src/lib/regula20Report.ts'
+      - 'docs/PROVENIENCIA_CLINICA.md'
       - 'scripts/guards/safety-classification-regula20-20260912.json'
-      - 'tests/unit/regula20.test.ts'
+      - 'tests/unit/regula20*.test.ts'
       - 'tests/e2e/regula20-previsit.mjs'
       - '.github/workflows/regula20-contract.yml'
 
@@ -34,7 +36,12 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node --import tsx tests/unit/regula20.test.ts
+      - run: node --import tsx tests/unit/regula20-report.test.ts
       - run: npm run validate:safety
+      - run: npm run validate:catalog
+      - run: git diff --exit-code -- docs/PROVENIENCIA_CLINICA.md
+      - run: npm run validate:public
+      - run: npm run audit:access
       - run: npm run check
       - run: npm run test:filter
       - run: node tests/unit/live-previsit-persistence-guard.test.mjs
