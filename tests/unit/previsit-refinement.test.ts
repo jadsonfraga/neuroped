@@ -16,7 +16,7 @@ test("instrumento que aceita pais e professor não vira exclusivo do professor p
 });
 
 test("teto de tempo não interpreta limite inferior ou duração desconhecida como teto", () => {
-  const scale = allScales.find((s) => s.id === "snap")!;
+  const scale: ScaleEntry = allScales.find((s) => s.id === "snap")!;
   for (const [tempo, expected] of [["3–5 min", 5], ["10 minutos", 10], ["≤ 5 min", 5], ["2,5 min", 3]] as const) assert.equal(previsitUpperMinutes({ ...scale, tempo }), expected);
   for (const tempo of ["≥ 5 min", "mais de 5 min", "variável", "20 itens; tempo não aferido", "1 hora", "0 min"]) assert.equal(previsitUpperMinutes({ ...scale, tempo }), null);
 });
