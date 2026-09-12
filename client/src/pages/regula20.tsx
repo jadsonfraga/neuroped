@@ -94,7 +94,7 @@ export default function Regula20Page() {
     <p className="mt-2 text-sm leading-6">Apresente o registro ao profissional. Conversem sobre o que mais atrapalha a rotina e escolham uma meta observável. O profissional decidirá quando repetir. Não ajuste medicamentos nem retire apoios eficazes com base neste questionário. Alertas devem ser discutidos separadamente, mesmo quando as demais respostas forem baixas.</p>
   </section>;
 
-  return <main className="mx-auto max-w-3xl space-y-5 pb-10" data-testid="regula20-app">
+  return <article className="mx-auto max-w-3xl space-y-5 pb-10" data-testid="regula20-app">
     <header className="rounded-3xl border bg-card p-5">
       <Badge variant="outline">NeuroPed SDG · Autoral não validado</Badge>
       <h1 className="mt-3 text-2xl font-bold">REGULA-20 SDG</h1>
@@ -145,5 +145,5 @@ export default function Regula20Page() {
     </>}
     <Button variant="outline" className="min-h-11" onClick={reset}>Nova família / limpar esta aplicação</Button>
     <footer className="border-t pt-4 text-xs text-muted-foreground">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756<br />NeuroPed SDG · Soli Deo Gloria · {REGULA20_VERSION}</footer>
-  </main>;
+  </article>;
 }
