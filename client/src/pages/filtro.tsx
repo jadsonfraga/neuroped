@@ -48,7 +48,7 @@ export default function FiltroPage() {
         {value ? "Irritabilidade / Desregulação / Recuperação · Autoral" : "Filtro clínico geral"}
       </button>)}
     </div>
-    <div id={authorial ? "filter-authorial-panel" : "filter-general-panel"} role="tabpanel" aria-labelledby={authorial ? "filter-authorial-tab" : "filter-general-tab"}>
+    <div id={authorial ? "filter-authorial-panel" : "filter-general-panel"} role="tabpanel" aria-labelledby={authorial ? "filter-authorial-tab" : "filter-general-tab"} className={authorial ? "min-w-0 break-words [overflow-wrap:anywhere]" : undefined}>
       <Suspense fallback={<FiltroSkeleton />}>{authorial ? <Regula20Page /> : <FiltroEngine />}</Suspense>
     </div>
   </div>;
