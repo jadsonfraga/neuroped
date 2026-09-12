@@ -11,3 +11,9 @@ node tests/unit/product-signature.test.mjs, npm run check e npm run lint:
 exit 0 local. O gate completo de navegador será reexecutado no novo HEAD;
 a prova visual anterior verde não substitui essa nova execução.
 Rollback: reverter somente este commit; nenhuma mudança de autenticação/API.
+
+O gate Visual reset premium adicional (run 34695388274) expôs reserva inferior
+insuficiente (72px para dock que exige 81,34px) e translateX(-50%) legado cortando
+o dock no tablet. O acabamento agora reserva 6rem mais safe area, desloca ajuda
+e toast para cima e remove largura/transform legado do contêiner. Os mesmos
+testes de viewport e reserva permanecem obrigatórios, sem limiar relaxado.
