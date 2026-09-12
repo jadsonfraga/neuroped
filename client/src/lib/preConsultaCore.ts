@@ -1,6 +1,7 @@
 import { allScales, type ScaleEntry } from "@/data/scaleFilter";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { regula20CatalogEntry, regula20Eligibility } from "@/data/regula20";
 import {
   PREVISIT_SECURE_KEYS,
   previsitLegacyGet,
@@ -27,7 +28,7 @@ export interface PreConsultaRecord {
 }
 
 export interface PreConsultaRecommendation {
-  label: "Ouro" | "Prata" | "Questionário escolar";
+  label: "Ouro" | "Prata" | "Questionário escolar" | "Monitor autoral";
   scale?: ScaleEntry;
   reason: string;
 }
@@ -54,6 +55,7 @@ export const preConsultaQueixas = [
   { id: "tea", label: "Suspeita de TEA" },
   { id: "tdah", label: "TDAH / atenção" },
   { id: "comportamento", label: "Comportamento" },
+  { id: "irritabilidade-funcional", label: "Irritabilidade · registro funcional" },
   { id: "sono", label: "Sono" },
   { id: "ansiedade", label: "Ansiedade" },
   { id: "depressao", label: "Depressão / humor" },
@@ -143,6 +145,24 @@ function scoreScale(scale: ScaleEntry, form: Pick<PreConsultaRecord, "idadeMeses
 }
 
 export function recommendPreConsultaScales(form: Pick<PreConsultaRecord, "idadeMeses" | "queixa" | "respondente" | "contexto">): PreConsultaRecommendation[] {
+  // Via explícita, não diagnóstica: não completa Ouro/Prata com monitores redundantes.
+  if (form.queixa === "irritabilidade-funcional") {
+    const purpose = ["retorno", "acompanhamento"].includes(form.contexto) ? "seguimento-funcional" : "basal-funcional";
+    const eligibility = regula20Eligibility({
+      ageMonths: form.idadeMeses,
+      respondent: form.respondente === "secretaria" ? "pais" : form.respondente,
+      purpose,
+      focus: form.queixa,
+    });
+    return [{
+      label: "Monitor autoral",
+      scale: eligibility.eligible ? regula20CatalogEntry : undefined,
+      reason: eligibility.eligible
+        ? "REGULA-20: registro funcional autoral, não teste diagnóstico. Abra o filtro dedicado e confirme basal/seguimento, observador e contexto. A recepção apenas auxilia a leitura. Não aplicar MAPA-RI, VS1, MCRI ou ADAPTA junto apenas para completar a bateria."
+        : eligibility.reason,
+    }];
+  }
+
   const ranked = uniqueById(catalog)
     .map((scale) => ({ scale, score: scoreScale(scale, form) }))
     .filter((item) => item.score > 0)
