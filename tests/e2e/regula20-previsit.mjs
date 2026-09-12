@@ -82,6 +82,13 @@ async function clearFamily() {
   assert.equal(await page.locator("#regula-years").inputValue(), "");
   await assertDisabled("#regula-start");
 }
+async function switchAwayAndBack() {
+  await page.locator("#filter-general-tab").click();
+  await page.getByTestId("age-band-scroll").waitFor({ state: "visible", timeout: 30000 });
+  assert.equal(await page.getByTestId("regula20-app").isVisible(), false);
+  await page.locator("#filter-authorial-tab").click();
+  await opened();
+}
 
 try {
   await page.goto(`${base}/#/filtro?autoral=regula-20-sdg`, { waitUntil: "domcontentloaded" });
@@ -103,7 +110,7 @@ try {
   await page.locator("#regula-respondent").selectOption("pais");
   await page.locator("#regula-urgent").selectOption("sim");
   await assertDisabled("#regula-start");
-  assert.match(await page.locator("main").innerText(), /avise a equipe agora/);
+  assert.match(await page.getByTestId("regula20-app").innerText(), /avise a equipe agora/);
   await page.locator("#regula-urgent").selectOption("nao-sei");
   await assertDisabled("#regula-start");
   await page.locator("#regula-urgent").selectOption("nao");
@@ -111,9 +118,14 @@ try {
   await page.locator("#regula-start").click();
   assert.equal(await page.locator('[data-testid^="regula-item-"]').count(), 20);
   await page.locator("#regula-finish").click();
-  assert.match(await page.locator("main").innerText(), /responda aos 20 itens/);
+  assert.match(await page.getByTestId("regula20-app").innerText(), /responda aos 20 itens/);
   await answerAll("5");
+  await switchAwayAndBack();
+  assert.equal(await page.getByTestId("regula20-app").locator('input[type="radio"]:checked').count(), 20);
+  assert.equal(await page.locator('input[name="regula-item-19"][value="5"]').isChecked(), true);
+  assert.equal(await page.locator("#regula-next-steps").isChecked(), true);
   await verifyPrivacy();
+  checks.push("troca de abas preserva 20 respostas e contexto somente em memória");
   await page.locator("#regula-finish").click();
   await page.locator("[data-scale-response-report]").waitFor({ state: "visible", timeout: 15000 });
   const report = await page.locator("[data-scale-response-report] pre").first().textContent();
@@ -121,9 +133,13 @@ try {
   assert.ok(report.includes("Alerta 7"));
   assert.ok(report.includes("Próximos passos"));
   assert.ok(report.includes("1.0-pdf-20260912"));
-  assert.match(await page.locator("main").innerText(), /Média global não calculável/);
+  assert.ok(report.includes("Média global descritiva 0–4"));
+  assert.ok(report.includes("Não calculável: 0/20"));
+  assert.match(await page.getByTestId("regula20-app").innerText(), /Média global não calculável/);
+  await switchAwayAndBack();
+  assert.equal(await page.locator("[data-scale-response-report] pre").first().textContent(), report);
   await verifyPrivacy();
-  checks.push("20 N/O: relatório integral, versão e ausência de média enganosa");
+  checks.push("20 N/O: relatório integral preservado, versão e ausência de média enganosa");
   mkdirSync(OUT, { recursive: true });
   await page.screenshot({ path: join(OUT, "mobile-result.png"), fullPage: true });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), "sem overflow no celular");
@@ -131,24 +147,26 @@ try {
   await fillSetup();
   await page.locator("#regula-purpose").selectOption("seguimento-funcional");
   await page.locator("#regula-start").click();
-  assert.equal(await page.locator('input[type="radio"]:checked').count(), 0);
+  assert.equal(await page.getByTestId("regula20-app").locator('input[type="radio"]:checked').count(), 0);
   await answerAll("0", "presente");
   await page.locator("#regula-finish").click();
   await page.getByRole("button", { name: "Mostrar registro para avaliação da equipe" }).waitFor();
   assert.equal(await page.locator("[data-scale-response-report]").count(), 0);
   await page.getByRole("button", { name: "Mostrar registro para avaliação da equipe" }).click();
   await page.locator("[data-scale-response-report]").waitFor({ state: "visible" });
-  assert.match(await page.locator("main").innerText(), /Alertas presentes ou informação incerta/);
+  assert.match(await page.getByTestId("regula20-app").innerText(), /Alertas presentes ou informação incerta/);
+  const scoredReport = await page.locator("[data-scale-response-report] pre").first().textContent();
+  assert.ok(scoredReport.includes("Média global descritiva 0–4"));
+  assert.ok(scoredReport.includes("0,00/4"));
+  assert.ok(scoredReport.includes("0/80"));
+  assert.equal((scoredReport.match(/média descritiva 0–4/g) || []).length, 4);
   await verifyPrivacy();
-  checks.push("escores zero não anulam alerta; conclusão exige revisão explícita");
+  checks.push("médias/global/soma presentes no relatório; escores zero não anulam alerta");
   await clearFamily();
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.screenshot({ path: join(OUT, "desktop-filter.png"), fullPage: true });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
-  await page.locator("#filter-general-tab").click();
-  await page.getByTestId("age-band-scroll").waitFor({ state: "visible", timeout: 30000 });
-  await page.locator("#filter-authorial-tab").click();
-  await opened();
+  await switchAwayAndBack();
   await page.goto(`${base}/?autoral=regula-20-sdg#/filtro`, { waitUntil: "domcontentloaded" });
   await opened();
   assert.equal(await page.locator("#regula-purpose").inputValue(), "");
