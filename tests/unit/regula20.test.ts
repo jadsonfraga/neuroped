@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { allScales } from "../../client/src/data/scaleFilter";
-import { mergeFilterableCatalog } from "../../client/src/data/filterableCatalog";
+import { mergeFilterableCatalog, EXPLICIT_AUTHORIAL_FILTER_IDS } from "../../client/src/data/filterableCatalog";
 import { mergeFilterableCatalog as legacyComposition } from "../../client/src/data/filterableCatalogBase";
 import { recommendPreConsultaScales } from "../../client/src/lib/preConsultaCore";
 import {
@@ -115,8 +115,9 @@ test("catálogo único, rota dedicada e nenhuma entrada na bateria automática",
   assert.equal(entries[0].pendente_validacao_clinica, true);
   const filtered = mergeFilterableCatalog(allScales);
   assert.equal(filtered.some((scale) => scale.id === REGULA20_ID), false);
-  const previous = legacyComposition(allScales.filter((scale) => scale.id !== REGULA20_ID));
-  assert.deepEqual(filtered, previous, "sem alterações silenciosas na composição anterior");
+  const previous = legacyComposition(allScales.filter((scale) => !EXPLICIT_AUTHORIAL_FILTER_IDS.has(scale.id)));
+  assert.deepEqual(filtered, previous, "sem alterações silenciosas nos instrumentos da composição anterior");
+  for (const id of EXPLICIT_AUTHORIAL_FILTER_IDS) assert.equal(filtered.some((s) => s.id === id), false);
 });
 
 test("pré-consulta explícita: um formulário; nunca completa posições redundantes", () => {
