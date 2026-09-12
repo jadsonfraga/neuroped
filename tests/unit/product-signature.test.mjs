@@ -4,6 +4,7 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), '
 const login = read('client/src/pages/login.tsx');
 const cockpit = read('client/src/components/clinical/ClinicalCockpit.tsx');
 const chrome = read('client/src/components/ProductChrome.tsx');
+const layout = read('client/src/components/Layout.tsx');
 const mobileDock = read('client/src/components/MobilePrimaryDock.tsx');
 const app = read('client/src/App.tsx');
 const skipNav = read('client/src/components/SkipNav.tsx');
@@ -38,6 +39,7 @@ assert.ok(skipNav.includes('app-store-finish.css'), 'acabamento final deve carre
 assert.ok(chrome.includes('accessMode !== "remote" || isAuthenticated'), 'chrome deve depender da sessão profissional');
 assert.ok(chrome.includes('isPublicRoute(path) && path !== "/filtro"'), 'rotas públicas não devem receber chrome clínico');
 assert.ok(chrome.includes('className="np-product-utility print:hidden"') && chrome.includes('aria-label="Sessão profissional"'), 'identidade da sessão deve viver em landmark nomeado');
+assert.ok(layout.includes('normalizePath(location) !== "/login" && <Link href="/login">'), 'login focado não pode montar um segundo convite de entrada oculto na sidebar');
 assert.ok(chrome.includes('data-testid="button-session-enter"'), 'logout deve preservar convite visível ao gate');
 assert.ok(chrome.includes('document.getElementById("login-email")?.focus()'), 'convite de entrada deve levar ao campo nominal sem mudar de rota');
 assert.ok(!chrome.includes('product-mobile-dock') && !chrome.includes('<nav'), 'ProductChrome não pode duplicar a navegação móvel canônica');

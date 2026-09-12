@@ -1,5 +1,6 @@
 // Design: navegação clínica de alta clareza, com um sinal dourado Nesplora pontual e motion reduzido quando necessário.
 import { Link, useLocation } from "wouter";
+import { normalizePath } from "@/lib/publicRoutes";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -1052,7 +1053,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ) : accessMode === "remote" ? (
             // Sem sessão (ex.: tela de login) o rodapé convida a entrar —
             // mostrar "Sair" deslogado era um contrassenso.
-            <Link href="/login">
+            normalizePath(location) !== "/login" && <Link href="/login">
               <div
                 className={`np-side-login ${collapsed ? "np-side-session--rail" : ""}`}
                 onClick={() => {
