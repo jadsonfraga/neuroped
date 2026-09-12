@@ -4,18 +4,21 @@
  * Permite que usuários de teclado e leitores de tela saltem diretamente
  * para o conteúdo principal, evitando navegar por toda a barra de navegação.
  *
- * Também monta a camada decorativa global de mascotes no primeiro ponto
- * estável do Layout. A decoração é aria-hidden e pointer-events-none, então
- * não altera a ordem de foco nem a semântica do atalho de acessibilidade.
- *
- * USO:
- *  1. Adicione <SkipNav /> no início do Layout (antes do header)
- *  2. Adicione id="main-content" na tag <main> do Layout
+ * Também monta decoração e chrome de produto em pontos globais estáveis.
+ * Ambos respeitam a semântica do app; a navegação móvel só aparece em sessão
+ * profissional e não cria persistência clínica paralela.
  */
 import { lazy, Suspense, type MouseEvent } from "react";
+import "@/styles/app-store-finish.css";
 
 const PageMascotDecor = lazy(() =>
   import("@/components/PageMascotDecor").then(({ PageMascotDecor: Component }) => ({
+    default: Component,
+  })),
+);
+
+const ProductChrome = lazy(() =>
+  import("@/components/ProductChrome").then(({ ProductChrome: Component }) => ({
     default: Component,
   })),
 );
@@ -41,6 +44,7 @@ export function SkipNav() {
       </a>
       <Suspense fallback={null}>
         <PageMascotDecor />
+        <ProductChrome />
       </Suspense>
     </>
   );
