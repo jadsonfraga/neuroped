@@ -18,9 +18,27 @@ class DeliveryTest(unittest.TestCase):
         self.rows = json.loads((ROOT / "client/src/data/authorialMonitoring.json").read_text(encoding="utf-8"))
     def test_originals_are_already_sent(self):
         receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
-        originals = [r for r in self.rows if r["id"] in {"afi12-sdg", "sdrd12-sdg", "sarf12-sdg"}]
+        originals = json.loads((ROOT / "tests/fixtures/authorial-originals-20260905.json").read_text(encoding="utf-8"))
         self.assertEqual(len(originals), 3)
         self.assertEqual(delivery.select_pending(originals, receipts["receipts"]), [])
+    def test_reviewed_originals_require_their_own_receipts(self):
+        spec = importlib.util.spec_from_file_location("prepare", ROOT / "scripts/prepare_authorial_delivery_sources.py")
+        prepare = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(prepare)
+        originals = json.loads((ROOT / "tests/fixtures/authorial-originals-20260905.json").read_text(encoding="utf-8"))
+        path = ROOT / "client/src/data/authorialMonitoringReview20260908.json"
+        overlay = json.loads(path.read_text(encoding="utf-8"))
+        overlay["overrides"] = {r["id"]: overlay["overrides"][r["id"]] for r in originals}
+        reviewed = prepare.apply_overlays(copy.deepcopy(originals), [(path, overlay)])
+        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))["receipts"]
+        self.assertEqual(delivery.select_pending(reviewed, receipts), reviewed)
+        for original, revised in zip(originals, reviewed):
+            self.assertEqual(revised["deliveryReview"]["predecessorFingerprint"], delivery.fingerprint(original))
+            self.assertNotEqual(delivery.fingerprint(original), delivery.fingerprint(revised))
+            key = delivery.fingerprint(revised)
+            with self.assertRaisesRegex(RuntimeError, "resultado incerto"):
+                delivery.select_pending([revised], {**receipts, key: {"status": "pending"}})
+            self.assertEqual(delivery.select_pending([revised], {**receipts, key: {"status": "smtp_accepted"}}), [])
     def test_future_model_remains_pending(self):
         row = copy.deepcopy(self.rows[0]); row["id"] = "fixture-novo-modelo"
         receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
