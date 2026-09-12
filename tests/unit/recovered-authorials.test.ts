@@ -12,7 +12,7 @@ import { recommendPreConsultaScales } from "../../client/src/lib/preConsultaCore
 import { previsitUpperMinutes } from "../../client/src/lib/preConsultaSafeRanking";
 import { getApplicationMode, isPsychosisInstrument, isSuicideInstrument } from "../../client/src/data/advancedFilterLogic";
 
-const get = (id: string) => defs.find((d) => d.id === id)!;
+const get = (id: string): RecoveredMonitor => defs.find((d) => d.id === id)!;
 const defaults: MonitorSelectionInput = { ageMonths: 96, respondent: "pais", contexts: ["casa"], purpose: "basal", focuses: ["autonomia"], itemBudget: 20, observed: true, urgent: "nao" };
 const expected: Record<string, { count: number; hash: string }> = {
   "adapta-18-sdg": { count: 18, hash: "sha256:f7e60132b7282fca9371bed5d1993b2f67140f60e315bf6e43a4d96b11696c30" },
