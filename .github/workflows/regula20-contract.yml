@@ -1,0 +1,52 @@
+name: REGULA-20 clinical contract
+
+on:
+  pull_request:
+    paths:
+      - 'client/src/data/regula20.ts'
+      - 'client/src/data/filterableCatalog*.ts'
+      - 'client/src/data/escalasImportadasDrive2026.ts'
+      - 'client/src/pages/regula20.tsx'
+      - 'client/src/pages/filtro.tsx'
+      - 'client/src/lib/preConsultaCore.ts'
+      - 'tests/unit/regula20.test.ts'
+      - 'tests/e2e/regula20-previsit.mjs'
+      - '.github/workflows/regula20-contract.yml'
+  push:
+    branches: ['feat/regula20-filtro-clinico-20260912']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regula20-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: REGULA-20 source and previsit safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --import tsx tests/unit/regula20.test.ts
+      - run: npm run check
+      - run: npm run test:filter
+      - run: node tests/unit/live-previsit-persistence-guard.test.mjs
+      - run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Browser tests on local synthetic fixture only
+        run: node tests/e2e/regula20-previsit.mjs
+      - name: Attach local synthetic QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regula20-local-qa
+          path: artifacts/regula20/
+          if-no-files-found: ignore
+          retention-days: 7
