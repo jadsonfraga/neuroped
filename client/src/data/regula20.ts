@@ -6,7 +6,7 @@ export const REGULA20_ROUTE = "/filtro?autoral=regula-20-sdg";
 export const REGULA20_VERSION = "1.0-pdf-20260912";
 export const REGULA20_SOURCE = {
   filename: "REGULA_20_SDG_v1_0_12-09-2026.pdf",
-  sha256: "035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a",
+  integrity: "sha256:035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a",
   date: "2026-09-12",
   author: "Dr. Jadson Fraga",
   brand: "NeuroPed SDG",
@@ -77,7 +77,7 @@ export const regula20CatalogEntry: ScaleEntry = {
   appRoute: REGULA20_ROUTE,
   implementationStatus: "complete",
   description: "Registro basal ou seguimento da repercussão funcional de irritabilidade/desregulação nos últimos 14 dias. Aplicação dedicada com escolha explícita de finalidade, idade exata e observador. Casa, escola e terapia preenchem separadamente. " + REGULA20_WARNING,
-  fonte: `${REGULA20_SOURCE.author} · ${REGULA20_SOURCE.brand} · ${REGULA20_SOURCE.filename} · sha256:${REGULA20_SOURCE.sha256}`,
+  fonte: `${REGULA20_SOURCE.author} · ${REGULA20_SOURCE.brand} · ${REGULA20_SOURCE.filename} · ${REGULA20_SOURCE.integrity}`,
   tipo: "Autoral de monitorização funcional; seleção explícita",
   licencaUso: "autoral",
   validacaoBrasil: "Sem validação psicométrica; não é teste diagnóstico validado.",
