@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 267
-- **Com fonte declarada:** 267 (100.0%)
+- **Total de instrumentos:** 268
+- **Com fonte declarada:** 268 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 103 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 104 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -248,6 +248,7 @@
 | `psn-np` | PSN-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: processamento sensorial. | não | sim |
 | `q-chat-10` | Q-CHAT-10 | Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003 | não | não |
 | `qec-np` | QEC-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estresse do cuidador. | não | sim |
+| `regula-20-sdg` | REGULA-20 SDG | Dr. Jadson Fraga · NeuroPed SDG · REGULA_20_SDG_v1_0_12-09-2026.pdf · sha256:035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a | não | sim |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não | não |
 | `ritmo-18-sdg` | RITMO-18 SDG | RITMO-18_SDG_Fadiga_Neurofuncional_v1.0_2026-09-09.pdf · Google Drive fileId 1rs1GPtJpwcn-6ZH6F_EOk9Ojo2NmN9dR · SHA-256 99bc7a121c7fb668ec159908fd5dabeb34b845bc712da91cbee49b9e72ca8a91 · fonte integral verificada em 09/09/2026. | não | sim |
 | `sarf12-sdg` | SARF-12 SDG | Base documental autoral: 03_SARF12_Seletividade_Alimentar_Repertorio_Funcional_NeuroPed_SDG.pdf; integridade sha256:d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo e pontuação preservados. | não | sim |
