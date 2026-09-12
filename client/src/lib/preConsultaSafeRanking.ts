@@ -1,5 +1,6 @@
 import type { ScaleEntry, Respondente, ApplicationMode } from "@/data/scaleFilter";
-import { clinicalHardBlock, filterScalesWithClinicalRescue, getApplicationMode, getAssessmentUse, getImplementationStatus, isLicenseRestricted, isPsychosisInstrument, isSuicideInstrument, type FilterContext } from "@/data/advancedFilterLogic";
+import { clinicalHardBlock, filterScalesWithClinicalRescue, getApplicationMode, getAssessmentUse, getImplementationStatus, isLicenseRestricted, isPsychosisInstrument, isSuicideInstrument, type FilterContext, type RefinedScaleMatch } from "@/data/advancedFilterLogic";
+import { firstLineByQueixa } from "@/data/preConsultaCurated";
 import type { PreConsultaRecord, PreConsultaRecommendation } from "./preConsultaCore";
 
 type Input = Pick<PreConsultaRecord, "idadeMeses" | "queixa" | "respondente" | "contexto">;
@@ -42,20 +43,30 @@ export function safePrevisitRecommendations(catalog: ScaleEntry[], input: Input)
     const use = getAssessmentUse(scale);
     return monitoring ? ["monitorizacao", "seguimento"].includes(use) : !["monitorizacao", "seguimento", "psicoeducacao"].includes(use);
   }
+  // Curadoria já existente não cria exceção a idade, licença, método ou tempo.
+  function prioritize(matches: RefinedScaleMatch[]) {
+    if (monitoring) return matches;
+    const order = firstLineByQueixa[input.queixa] ?? [];
+    const position = (scale: ScaleEntry) => {
+      const index = order.indexOf(scale.appRoute ?? "");
+      return index < 0 ? Number.MAX_SAFE_INTEGER : index;
+    };
+    return [...matches].sort((a, b) => position(a.scale) - position(b.scale) || b.relevanceScore - a.relevanceScore || a.scale.id.localeCompare(b.scale.id));
+  }
   const candidates = base.map((s) => previsitRespondentVariant(s, respondent)).filter((s) => suitable(s, respondent));
-  const ranked = filterScalesWithClinicalRescue(candidates, ctx).filter(({ scale }) => {
+  const ranked = prioritize(filterScalesWithClinicalRescue(candidates, ctx).filter(({ scale }) => {
     const upper = previsitUpperMinutes(scale);
     return upper !== null && upper <= 15;
-  });
+  }));
   const primary = ranked[0]?.scale;
   const result: PreConsultaRecommendation[] = primary ? [{
     label: "Ouro", scale: primary,
-    reason: `Compatível com idade exata, queixa, respondente e finalidade. Formulário completo no app; até ${previsitUpperMinutes(primary)} min informados no catálogo. Uma opção principal, sem repetir outra apenas para preencher posições. A recepção só auxilia a leitura.`,
+    reason: `Compatível com idade exata, queixa, respondente e finalidade; considera a curadoria clínica existente somente após esses critérios. Formulário completo no app; até ${previsitUpperMinutes(primary)} min informados no catálogo. Uma opção principal, sem repetir outra apenas para preencher posições. A recepção só auxilia a leitura.`,
   }] : [];
   if (respondent !== "professor" && (input.contexto === "avaliacao-escolar" || schoolRelevant.has(input.queixa))) {
     const schoolCtx = { ...ctx, respondente: "professor" as const };
     const schoolCandidates = base.map((s) => previsitRespondentVariant(s, "professor")).filter((s) => suitable(s, "professor") && s.id !== primary?.id);
-    const school = filterScalesWithClinicalRescue(schoolCandidates, schoolCtx)[0]?.scale;
+    const school = prioritize(filterScalesWithClinicalRescue(schoolCandidates, schoolCtx))[0]?.scale;
     if (school) result.push({ label: "Questionário escolar", scale: school, reason: "Aplicação separada, preenchida pelo professor. Não pedir aos pais que respondam pela escola; não somar informantes nem consumir o tempo da coleta familiar." });
   }
   return result;
