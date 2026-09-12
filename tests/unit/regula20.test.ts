@@ -17,8 +17,8 @@ const record = (answers: unknown[]) => ({ version: REGULA20_VERSION, respondent:
 test("20 itens preservam o PDF canônico: apenas espaços/quebras normalizados", () => {
   // Hash de JSON UTF-8 dos itens extraídos, em ordem, das páginas 2 e 3 do PDF.
   assert.equal(REGULA20_ITEMS.length, 20);
-  assert.equal(createHash("sha256").update(JSON.stringify(REGULA20_ITEMS)).digest("hex"), "8632ccb4efe560bc2e61d48833167577f2d838b8c15c996b34770312ebe166c0");
-  assert.equal(REGULA20_SOURCE.sha256, "035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a");
+  assert.equal(`sha256:${createHash("sha256").update(JSON.stringify(REGULA20_ITEMS)).digest("hex")}`, "sha256:8632ccb4efe560bc2e61d48833167577f2d838b8c15c996b34770312ebe166c0");
+  assert.equal(REGULA20_SOURCE.integrity, "sha256:035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a");
   assert.equal(REGULA20_DOMAINS.length, 4);
   assert.equal(REGULA20_OPTIONS.length, 6);
   assert.equal(REGULA20_RED_FLAGS.length, 7);
