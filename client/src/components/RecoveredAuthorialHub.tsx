@@ -18,6 +18,7 @@ const safetyLabels: Record<string, string> = { nao: "Não identificado nesta jan
 function today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
 function startOfWindow(end: string, days: number) { const d = new Date(`${end}T12:00:00Z`); if (!Number.isFinite(d.getTime())) return ""; d.setUTCDate(d.getUTCDate() - days + 1); return d.toISOString().slice(0, 10); }
 function dateIsValid(value: string) { const d = new Date(`${value}T12:00:00Z`); return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === value; }
+function inclusiveDaySpan(start: string, end: string) { const s = new Date(`${start}T12:00:00Z`); const e = new Date(`${end}T12:00:00Z`); if (!Number.isFinite(s.getTime()) || !Number.isFinite(e.getTime()) || e < s) return 0; return Math.floor((e.getTime() - s.getTime()) / 86_400_000) + 1; }
 function toggle(values: string[], value: string) { return values.includes(value) ? values.filter((v) => v !== value) : [...values, value]; }
 
 export default function RecoveredAuthorialHub() {
@@ -68,7 +69,7 @@ function RecoveredQuestionnaire({ definition: d, input, onBack }: { definition: 
   const [observer, setObserver] = useState(""); const [end, setEnd] = useState(today); const [schoolStart, setSchoolStart] = useState("");
   const [note, setNote] = useState(""); const [changes, setChanges] = useState(""); const [goal, setGoal] = useState("");
   const [supportResults, setSupportResults] = useState<Record<string, string>>({});
-  const [sourceAgreed, setSourceAgreed] = useState(false); const [reviewAgreed, setReviewAgreed] = useState(false); const [nextAgreed, setNextAgreed] = useState(false);
+  const [schoolWindowConfirmed, setSchoolWindowConfirmed] = useState(false); const [sourceAgreed, setSourceAgreed] = useState(false); const [reviewAgreed, setReviewAgreed] = useState(false); const [nextAgreed, setNextAgreed] = useState(false);
   const [error, setError] = useState(""); const [savedView, setSavedView] = useState(false);
   const [snapshot, setSnapshot] = useState<{ date: string; responses: Array<{ question: string; answer: string }>; needsReview: boolean } | null>(null);
   const result = calculateRecoveredMonitor(d, answers); const safetyState = monitorSafetyState(d, safety);
@@ -78,10 +79,11 @@ function RecoveredQuestionnaire({ definition: d, input, onBack }: { definition: 
     setError("");
     if (monitorEligibility(d, input) || !result.complete || !safetyState.complete || !observer.trim() || !nextAgreed || (d.sourceKind === "authored-app" && !sourceAgreed)) { setError("Complete a identificação, todos os itens (N/O é válido), alertas e confirmações. Nenhum campo em branco será convertido em zero."); return; }
     if (!dateIsValid(end) || !dateIsValid(start) || end > today() || start > end) { setError("Revise as datas reais da janela. Na escola, informe a data inicial dos 14 dias com frequência observada; não usamos 14 dias corridos automaticamente."); return; }
+    if (d.schoolDays && (inclusiveDaySpan(start, end) < 14 || !schoolWindowConfirmed)) { setError("PORTA-20 só pode ser concluído após uma janela compatível e confirmação explícita de pelo menos 14 dias escolares com frequência efetivamente observada."); return; }
     if (safetyState.needsReview && !reviewAgreed) { setError("Há alerta ou informação incerta. Avise a equipe e confirme que abrirá o registro para avaliação prioritária, não para conclusão rotineira."); return; }
     const responses = [
       { question: "Instrumento, versão e fonte", answer: `${d.name} · ${d.version}. ${d.source}. ${d.sourceNote}. ${AUTHORIAL_NOTICE}` },
-      { question: "Aplicação", answer: `${purposeLabels[input.purpose]}; ${input.ageMonths} meses; ${roleLabels[input.respondent]}; observador: ${observer.trim()}; contexto(s): ${input.contexts.join(", ")}; janela: ${start} a ${end}${d.schoolDays ? " — 14 dias de frequência escolar observada" : ` — ${d.windowDays} dias`}.` },
+      { question: "Aplicação", answer: `${purposeLabels[input.purpose]}; ${input.ageMonths} meses; ${roleLabels[input.respondent]}; observador: ${observer.trim()}; contexto(s): ${input.contexts.join(", ")}; janela: ${start} a ${end}${d.schoolDays ? " — pelo menos 14 dias escolares com frequência observada; confirmação explícita registrada" : ` — ${d.windowDays} dias`}.` },
       ...d.domains.flatMap((domain) => domain.items).map((question, i) => ({ question: `Item ${i + 1}. ${question}`, answer: d.labels[answers[i]!] })),
       ...monitorComputedRows(d, answers),
       ...d.redFlags.map((question, i) => ({ question: `Alerta ${i + 1} — fora do escore: ${question}`, answer: `${safety[i] === "nao" ? "" : "AVALIAR — "}${safetyLabels[safety[i]]}` })),
@@ -103,7 +105,7 @@ function RecoveredQuestionnaire({ definition: d, input, onBack }: { definition: 
       {savedView && <Suspense fallback={<p role="status">Preparando salvamento…</p>}><SaveToPatient scaleName={d.name} responses={snapshot.responses} patientAge={`${input.ageMonths} meses`} instrumentVersion={d.version} applicationDate={snapshot.date} /></Suspense>}
       <Button variant="outline" onClick={() => { setSnapshot(null); setSavedView(false); setReviewAgreed(false); }}>Revisar respostas</Button>
     </> : <>
-      <section className={box}><label className="block">Observador — identificação ou função<Input id="monitor-observer" maxLength={100} value={observer} onChange={(e) => setObserver(e.target.value)} /></label><label className="block">Fim da janela<Input id="monitor-window-end" type="date" max={today()} value={end} onChange={(e) => setEnd(e.target.value)} /></label>{d.schoolDays ? <label className="block">Início dos 14 dias com frequência escolar observada<Input id="monitor-window-start" type="date" max={end} value={schoolStart} onChange={(e) => setSchoolStart(e.target.value)} /></label> : <p className="text-xs">Janela: {start} a {end}.</p>}
+      <section className={box}><label className="block">Observador — identificação ou função<Input id="monitor-observer" maxLength={100} value={observer} onChange={(e) => setObserver(e.target.value)} /></label><label className="block">Fim da janela<Input id="monitor-window-end" type="date" max={today()} value={end} onChange={(e) => { setEnd(e.target.value); if (d.schoolDays) setSchoolWindowConfirmed(false); }} /></label>{d.schoolDays ? <><label className="block">Início dos 14 dias com frequência escolar observada<Input id="monitor-window-start" type="date" max={end} value={schoolStart} onChange={(e) => { setSchoolStart(e.target.value); setSchoolWindowConfirmed(false); }} /></label><label className="flex items-start gap-3 text-sm"><input id="monitor-school-window-confirmed" type="checkbox" checked={schoolWindowConfirmed} onChange={(e) => setSchoolWindowConfirmed(e.target.checked)} />Confirmo que, dentro do período informado, houve pelo menos 14 dias escolares com frequência efetivamente observada. Não estou contando apenas dias corridos.</label></> : <p className="text-xs">Janela: {start} a {end}.</p>}
         {d.sourceKind === "authored-app" && <label className="flex items-start gap-3 text-sm"><input id="monitor-source-agreed" type="checkbox" checked={sourceAgreed} onChange={(e) => setSourceAgreed(e.target.checked)} />Esta aplicação usa a revisão operacional já existente no app; entendo que não foi declarada equivalência a um PDF anterior não recuperado.</label>}
       </section>
       <p role="status" className="text-sm font-semibold">{answers.filter((v) => v !== undefined).length}/{result.count} respostas</p>
