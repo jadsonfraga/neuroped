@@ -17,8 +17,9 @@
  * touch não mudam em nenhuma largura. Nada de lógica clínica, breakpoints,
  * acessibilidade ou bloqueio de pinch-zoom.
  *
- * Precisa ser importado por último em main.tsx: várias regras do shell usam
- * !important e a vitória aqui é por cascata + !important.
+ * Deve continuar vencendo camadas visuais carregadas depois. Além da cascata,
+ * os alvos fixos usam especificidade superior para que nenhum acabamento
+ * posterior reative blur no perfil touch.
  */
 
 @media (any-pointer: coarse) and (max-width: 1366px) {
@@ -33,11 +34,12 @@
     -webkit-backdrop-filter: none !important;
   }
 
-  /* Regras do shell com !important e especificidade alta não perdem para o
-     universal (especificidade 0); repete-as aqui para vencer por cascata. */
-  header.fixed.lg\:hidden,
-  [data-testid="mobile-primary-dock"] nav,
-  #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
+  /* Regras do shell com !important e especificidade alta recebem alvos
+     deliberadamente mais específicos. Assim a mitigação touch permanece
+     soberana mesmo se uma camada estética for carregada depois. */
+  body header.fixed.lg\:hidden,
+  body [data-testid="mobile-primary-dock"] > nav,
+  body #main-content:has(header a[href="/recepcao"]) [role="tablist"] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
