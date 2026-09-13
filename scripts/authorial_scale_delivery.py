@@ -28,7 +28,7 @@ AUTHORIAL_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 DAILY_ID_RE = re.compile(r"NEUROPED-DIARIO-\d{8}-\d{3}")
 DELIVERY_METADATA_KEYS = frozenset({
     "applicationNote", "autoRecommend", "catalogRole", "catalogStatus",
-    "clinicalReviewStatus", "deliveryReview", "reviewProvenance",
+    "deliveryReview", "reviewProvenance",
 })
 
 
