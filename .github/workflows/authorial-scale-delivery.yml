@@ -18,6 +18,7 @@ on:
       - 'scripts/guards/assert-authorial-package-unique.mjs'
       - 'scripts/requirements-authorial-mail.txt'
       - 'tests/unit/test_authorial_scale_delivery.py'
+      - 'tests/fixtures/authorial-originals-20260905.json'
       - 'tests/unit/authorial-*.test.*'
       - 'config/authorial-*'
       - '.github/workflows/authorial-scale-delivery.yml'
