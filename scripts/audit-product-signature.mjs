@@ -52,7 +52,6 @@ try {
       const page = await context.newPage();
       page.setDefaultTimeout(30_000);
       page.on("pageerror", (error) => failures.push(`runtime:${error.message}`));
-      // Nenhuma requisição de documento/API pode sair do ambiente de teste.
       await context.route("**/*", async (request) => {
         const type = request.request().resourceType();
         if (["document", "xhr", "fetch"].includes(type) && new URL(request.request().url()).origin !== server.origin) {
@@ -82,6 +81,27 @@ try {
           await toggle.click();
           if (await page.locator("#login-password").getAttribute("type") !== "password") failures.push("senha-nao-ocultada");
         }
+
+        const dock = page.getByTestId("mobile-primary-dock");
+        const dockVisible = await dock.isVisible().catch(() => false);
+        // O dock nativo usa `lg:hidden`: portanto celular e tablet <1024 px
+        // pertencem à mesma família responsiva para esta prova.
+        const clinicalDockExpected = !route.anonymous && route.id !== "familia" && size.width < 1024;
+        if (clinicalDockExpected && !dockVisible) failures.push("dock-mobile-ausente");
+        if (!clinicalDockExpected && dockVisible) failures.push("dock-mobile-fora-do-contexto");
+        if (clinicalDockExpected) {
+          const dockCount = await page.locator('[data-testid="mobile-primary-dock"]').count();
+          if (dockCount !== 1) failures.push(`dock-mobile-duplicado:${dockCount}`);
+        }
+        if (route.id === "inicio" && size.width >= 1024) {
+          const utilityVisible = await page.getByTestId("product-utility-bar").isVisible().catch(() => false);
+          if (!utilityVisible) failures.push("barra-utilitaria-desktop-ausente");
+        }
+        if (route.anonymous) {
+          const chromeCount = await page.locator('[data-testid="mobile-primary-dock"], [data-testid="product-utility-bar"]').count();
+          if (chromeCount) failures.push("chrome-profissional-no-login");
+        }
+
         layout = await page.evaluate(() => ({
           overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
           brokenImages: [...document.images].filter((image) => image.getBoundingClientRect().width > 0 && image.complete && image.naturalWidth === 0).map((image) => image.getAttribute("alt") || "imagem sem alternativa"),
