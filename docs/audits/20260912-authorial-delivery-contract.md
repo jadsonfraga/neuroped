@@ -43,3 +43,25 @@ seguido de 22 testes Python (exit 0, reportlab 4.4.9 instalado como no runner) e
 21 testes Node de incidente e unicidade (exit 0). Nenhum recibo, conteúdo
 clínico ou regra de envio foi alterado; o bloqueio BLOCKED_EXTERNAL_SCALE_MAIL
 permanece válido enquanto os secrets SMTP não existirem.
+
+## Guard do catálogo commitado — 13/09/2026
+
+`client/src/data/authorialMonitoring.ts` espalha as três fontes autorais no
+import (`[...source, ...channelSource, ...mcriSource]`) e valida o resultado;
+`prepare_authorial_delivery_sources.py` funde as mesmas três em
+`authorialMonitoring.json` e aplica os overlays. A saída do prepare é estado de
+entrega, descartável, produzida dentro do runner — commitá-la faz o módulo
+lançar `mapa-ri-18-sdg: id duplicado inválido` já no import e derruba o catálogo
+de escalas do app.
+
+Reproduzido nesta sessão: após rodar o prepare na árvore de trabalho, o import
+do módulo falha e `secure-storage.test.ts` quebra com erro que não menciona a
+causa. `tests/unit/authorial-sources-committed-raw.test.mjs` passa a falhar
+antes, nomeando o arquivo, o instrumento e o remédio (`git checkout --`). Está
+na cadeia `test:quick-wins`, executada por `test-and-build.yml` e por
+`verify:release`.
+
+O guard cobre as duas assinaturas da saída do prepare: presença de
+`deliveryReview` nos registros commitados e colisão de id ou nome entre as três
+fontes. Verificado em ambos os sentidos — falha com o catálogo preparado, passa
+com o catálogo restaurado.
