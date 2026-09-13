@@ -30,6 +30,33 @@ class DeliveryTest(unittest.TestCase):
     def test_content_change_changes_fingerprint(self):
         changed = copy.deepcopy(self.rows[0]); changed["items"][0]["text"] += " Exemplo sintético."
         self.assertNotEqual(delivery.fingerprint(changed), delivery.fingerprint(self.rows[0]))
+    def test_editorial_review_reuses_predecessor_receipt_when_delivery_content_is_unchanged(self):
+        row = copy.deepcopy(self.rows[0])
+        predecessor = delivery.fingerprint(row)
+        predecessor_delivery = delivery.delivery_content_fingerprint(row)
+        row["clinicalReviewStatus"] = "reviewed"
+        row["reviewProvenance"] = "Synthetic editorial review."
+        row["deliveryReview"] = {
+            "predecessorFingerprint": predecessor,
+            "predecessorDeliveryFingerprint": predecessor_delivery,
+            "deliveryContentChanged": False,
+        }
+        receipts = {predecessor: {"status": "sent_via_gmail"}}
+        self.assertEqual(delivery.select_pending([row], receipts), [])
+
+    def test_predecessor_receipt_never_hides_delivery_content_change(self):
+        row = copy.deepcopy(self.rows[0])
+        predecessor = delivery.fingerprint(row)
+        predecessor_delivery = delivery.delivery_content_fingerprint(row)
+        row["items"][0]["text"] += " Synthetic clinical change."
+        row["deliveryReview"] = {
+            "predecessorFingerprint": predecessor,
+            "predecessorDeliveryFingerprint": predecessor_delivery,
+            "deliveryContentChanged": False,
+        }
+        receipts = {predecessor: {"status": "sent_via_gmail"}}
+        self.assertEqual(delivery.select_pending([row], receipts), [row])
+
     def test_pending_never_retries(self):
         with self.assertRaisesRegex(RuntimeError, "resultado incerto"):
             delivery.select_pending(self.rows, {delivery.fingerprint(self.rows[0]): {"status": "pending"}})
