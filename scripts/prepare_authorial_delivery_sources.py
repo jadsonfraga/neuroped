@@ -13,7 +13,7 @@ CANONICAL_GLOB = "authorialMonitoring*.json"
 OVERLAY_KEY = "overrides"
 DELIVERY_METADATA_KEYS = frozenset({
     "applicationNote", "autoRecommend", "catalogRole", "catalogStatus",
-    "clinicalReviewStatus", "deliveryReview", "reviewProvenance",
+    "deliveryReview", "reviewProvenance",
 })
 
 
