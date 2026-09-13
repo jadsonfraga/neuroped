@@ -26,6 +26,16 @@ STATE_BRANCH = "automation/scale-email-receipts"
 WARNING = "Instrumento autoral não validado psicometricamente. Uso descritivo e longitudinal; não estabelece diagnóstico, gravidade clínica ou indicação de tratamento isoladamente."
 AUTHORIAL_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 DAILY_ID_RE = re.compile(r"NEUROPED-DIARIO-\d{8}-\d{3}")
+DELIVERY_METADATA_KEYS = frozenset({
+    "applicationNote", "autoRecommend", "catalogRole", "catalogStatus",
+    "clinicalReviewStatus", "deliveryReview", "reviewProvenance",
+})
+
+
+def delivery_content_fingerprint(record: dict) -> str:
+    deliverable = {key: value for key, value in record.items() if key not in DELIVERY_METADATA_KEYS}
+    canonical = json.dumps(deliverable, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def fingerprint(record: dict) -> str:
@@ -215,10 +225,34 @@ class ReceiptStore:
         self.sha = result["content"]["sha"]
 
 
+def receipt_for_record(record: dict, receipts: dict) -> dict | None:
+    keys = [fingerprint(record)]
+    review = record.get("deliveryReview")
+    if isinstance(review, dict):
+        predecessor = review.get("predecessorFingerprint")
+        predecessor_delivery = review.get("predecessorDeliveryFingerprint")
+        content_changed = review.get("deliveryContentChanged")
+        if (
+            content_changed is False
+            and isinstance(predecessor, str)
+            and predecessor.startswith("sha256:")
+            and isinstance(predecessor_delivery, str)
+            and predecessor_delivery == delivery_content_fingerprint(record)
+        ):
+            keys.append(predecessor)
+    matches = [receipts[key] for key in dict.fromkeys(keys) if key in receipts]
+    if not matches:
+        return None
+    statuses = {receipt.get("status") for receipt in matches}
+    if len(statuses) != 1:
+        raise ValueError("Recibos conflitantes para o mesmo conteudo autoral")
+    return matches[0]
+
+
 def select_pending(records: list[dict], receipts: dict) -> list[dict]:
     selected = []
     for r in records:
-        receipt = receipts.get(fingerprint(r))
+        receipt = receipt_for_record(r, receipts)
         if receipt and receipt.get("status") == "pending":
             raise RuntimeError("Envio anterior com resultado incerto; reconciliar recibo antes de reenviar")
         if receipt and receipt.get("status") not in {"smtp_accepted", "sent_via_gmail", "pending"}:
