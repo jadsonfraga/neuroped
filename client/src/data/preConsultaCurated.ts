@@ -13,33 +13,33 @@
 
 // Primeira linha por queixa isolada (rotas existentes no app, em ordem de prioridade).
 export const firstLineByQueixa: Record<string, string[]> = {
-  tea: ["/mchat", "/ips", "/cars", "/tea", "/vineland", "/testes-diretos"],
+  tea: ["/mchat", "/ips", "/cars", "/tea", "/generic-scale/vineland", "/testes-diretos"],
   tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-diretos", "/testes-reconhecimento"],
   ansiedade: ["/scared", "/sdq", "/cbcl", "/testes-diretos"],
   depressao: ["/cdi2", "/phqa", "/cssrs", "/sdq"],
   suicidio: ["/cssrs", "/phqa"],
   aprendizagem: ["/tde2", "/testes-academicos", "/testes-diretos", "/testes-reconhecimento"],
   linguagem: ["/asq3", "/denver", "/testes-diretos", "/testes-reconhecimento"],
-  atraso: ["/denver", "/asq3", "/vineland", "/pant"],
+  atraso: ["/denver", "/asq3", "/generic-scale/vineland", "/pant"],
   comportamento: ["/sdq", "/cbcl", "/conners", "/vanderbilt", "/eaah"],
   sono: ["/cshq"],
   tiques: ["/ygtss", "/conners"],
   cognicao: ["/testes-diretos", "/testes-reconhecimento", "/testes-academicos", "/pant"],
-  funcionalidade: ["/vineland", "/gmfcs"],
+  funcionalidade: ["/generic-scale/vineland", "/gmfcs"],
 };
 
 // Baterias para QUEIXAS CRUZADAS (comorbidade). Chave = queixas ordenadas
 // alfabeticamente e unidas por "+". Combina broadband (SDQ/CBCL) com alvos.
 export const firstLineByCrossed: Record<string, string[]> = {
-  "tdah+tea": ["/mchat", "/snap", "/conners", "/vineland", "/sdq"],
+  "tdah+tea": ["/mchat", "/snap", "/conners", "/generic-scale/vineland", "/sdq"],
   "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/cbcl"],
   "aprendizagem+tdah": ["/snap", "/testes-academicos", "/testes-diretos", "/tde2"],
   "ansiedade+depressao": ["/scared", "/cdi2", "/phqa", "/cssrs"],
   "depressao+suicidio": ["/cssrs", "/phqa", "/cdi2"],
   "linguagem+tea": ["/mchat", "/asq3", "/testes-reconhecimento"],
-  "atraso+tea": ["/mchat", "/denver", "/asq3", "/vineland"],
+  "atraso+tea": ["/mchat", "/denver", "/asq3", "/generic-scale/vineland"],
   "comportamento+tdah": ["/snap", "/conners", "/sdq", "/eaah"],
-  "aprendizagem+tea": ["/testes-academicos", "/vineland"],
+  "aprendizagem+tea": ["/testes-academicos", "/generic-scale/vineland"],
   "ansiedade+tea": ["/scared", "/sdq", "/cars"],
 };
 

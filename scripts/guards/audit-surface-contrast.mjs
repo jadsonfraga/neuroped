@@ -30,6 +30,10 @@ import {
   isMissingBrowserError,
   startStaticServer,
 } from "../lib/browser-audit-runtime.mjs";
+import {
+  createSyntheticClinicalApi,
+  SYNTHETIC_CREDENTIALS,
+} from "../lib/synthetic-clinical-api.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
@@ -47,6 +51,13 @@ const CASES = [
   { id: "home-hero-dark", route: "/", width: 1440, height: 1000, theme: "dark", surface: ".np-home-hero" },
   { id: "especialidades-light", route: "/#/especialidades", width: 1440, height: 2200, theme: "light", surface: '[data-testid="especialidades-premium-surface"]' },
   { id: "especialidades-dark", route: "/#/especialidades", width: 1440, height: 2200, theme: "dark", surface: '[data-testid="especialidades-premium-surface"]' },
+  // Ficha canônica de instrumento (/generic-scale/:id sem itens interativos).
+  // Em 09/2026 ela ainda usava paleta escura hardcoded (slate-*) e ficou
+  // ilegível quando o tema claro repintou os cards — este par de casos trava
+  // a superfície nos dois temas. Usa uma ficha externa (portage) que renderiza
+  // sem exigir sessão sintética.
+  { id: "ficha-instrumento-light", route: "/#/generic-scale/portage", width: 1440, height: 2400, theme: "light", surface: '[data-testid="scale-ficha-surface"]', auth: true },
+  { id: "ficha-instrumento-dark", route: "/#/generic-scale/portage", width: 1440, height: 2400, theme: "dark", surface: '[data-testid="scale-ficha-surface"]', auth: true },
 ];
 
 const NORMAL_MIN = 4.5;
@@ -81,12 +92,35 @@ function parseColor(value) {
   return [parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : 1];
 }
 
-const server = await startStaticServer(ensureClientBuild(repoRoot));
+// Dois servidores sobre o mesmo build: o anônimo (sem API) preserva o
+// comportamento offline/local dos casos públicos; o sintético serve os casos
+// `auth: true` (rotas atrás do gate) com uma sessão real do login sintético.
+const dist = ensureClientBuild(repoRoot);
+const server = await startStaticServer(dist);
+const authServer = await startStaticServer(dist, {
+  port: 4321,
+  apiHandler: createSyntheticClinicalApi({}),
+});
+const loginResponse = await fetch(`${authServer.origin}/api/auth/login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: SYNTHETIC_CREDENTIALS.email,
+    password: SYNTHETIC_CREDENTIALS.password,
+  }),
+});
+if (!loginResponse.ok) {
+  await server.close();
+  await authServer.close();
+  throw new Error(`login sintético falhou (${loginResponse.status})`);
+}
+const syntheticSession = await loginResponse.json();
 let browser;
 try {
   browser = await chromium.launch(auditBrowserLaunchOptions());
 } catch (error) {
   await server.close();
+  await authServer.close();
   if (isMissingBrowserError(error)) {
     console.log("[contraste] Chromium indisponível — gate ignorado nesta máquina.");
     process.exit(0);
@@ -107,13 +141,22 @@ try {
       isMobile: testCase.width < 768,
       hasTouch: testCase.width < 1024,
     });
-    await context.addInitScript(({ storage, theme }) => {
+    await context.addInitScript(({ storage, theme, session }) => {
       for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
       localStorage.setItem("neuroped:theme", theme);
-    }, { storage: ACCEPTED_FIRST_VISIT_STORAGE, theme: testCase.theme });
+      if (session) {
+        sessionStorage.setItem("neuroped:access", session.accessToken);
+        sessionStorage.setItem("neuroped:refresh", session.refreshToken);
+        sessionStorage.setItem("neuroped:user", JSON.stringify(session.user));
+      }
+    }, {
+      storage: ACCEPTED_FIRST_VISIT_STORAGE,
+      theme: testCase.theme,
+      session: testCase.auth ? syntheticSession : null,
+    });
 
     const page = await context.newPage();
-    await page.goto(`${server.origin}${testCase.route}`, { waitUntil: "networkidle" });
+    await page.goto(`${(testCase.auth ? authServer : server).origin}${testCase.route}`, { waitUntil: "networkidle" });
     await page.getByTestId("splash-screen").waitFor({ state: "detached", timeout: 10_000 }).catch(() => {});
     await page.waitForTimeout(600);
 
@@ -137,6 +180,9 @@ try {
         if (Number(style.opacity) === 0) continue;
         // Texto só para leitor de tela não é pintado — não tem contraste a medir.
         if (element.closest(".sr-only, [aria-hidden='true']")) continue;
+        // WCAG 1.4.3 isenta componentes INATIVOS de mínimo de contraste; medir
+        // texto de controle desabilitado geraria reprovação sistêmica falsa.
+        if (element.closest("[disabled], [aria-disabled='true']")) continue;
         const range = document.createRange();
         range.selectNodeContents(node);
         const rect = range.getBoundingClientRect();
@@ -215,6 +261,7 @@ try {
 } finally {
   await browser.close();
   await server.close();
+  await authServer.close();
 }
 
 mkdirSync(resolve(repoRoot, "artifacts"), { recursive: true });

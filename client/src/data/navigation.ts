@@ -237,7 +237,7 @@ function matchesNavigationItem(pathname: string, href: string): boolean {
 const filterOwnedRoutes = new Set([
   "/mchat", "/cars", "/denver", "/asq3", "/snap", "/sdq", "/vanderbilt",
   "/scared", "/phqa", "/cssrs", "/conners", "/cbcl", "/brief2", "/abc",
-  "/vineland", "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
+  "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
   "/psc17", "/gad7", "/aq10", "/tea", "/tea-comportamentos", "/emdi", "/eaf",
   "/ecsm", "/ips", "/ecar-si", "/edi", "/eai", "/easi", "/ems", "/etare",
   "/eaah", "/tde2", "/pant",
@@ -275,7 +275,10 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
     const item = featuredNavigation.find((candidate) => candidate.href === "/testes-diretos");
     if (item) return { section: featuredSection, item };
   }
-  if (filterOwnedRoutes.has(normalizedPath)) {
+  if (
+    filterOwnedRoutes.has(normalizedPath) ||
+    normalizedPath.startsWith("/generic-scale/")
+  ) {
     const item = featuredNavigation.find((candidate) => candidate.href === "/filtro");
     if (item) return { section: featuredSection, item };
   }
