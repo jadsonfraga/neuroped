@@ -117,7 +117,6 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/receita-c1-express",
   "/diario-escola",
   "/inventarios-escola",
-  "/generic-scale",
   "/cognitive-lab",
   "/testes-diretos",
   "/epilepsia",
@@ -146,6 +145,20 @@ const registeredRoutePatterns = [
 ].map((match) => match[1]);
 const registeredRouteSet = new Set(registeredRoutePatterns);
 assert.equal(registeredRouteSet.size, registeredRoutePatterns.length);
+// As origens dos redirects legados de instrumento são <Route> reais no App,
+// renderizadas data-driven a partir do mapa (não aparecem como literal no
+// fonte). Sem elas o inventário reader reprovaria rotas que existem de fato.
+const { LEGACY_INSTRUMENT_REDIRECTS } = await import(
+  "../../client/src/data/legacyInstrumentRoutes.ts"
+);
+for (const from of Object.keys(LEGACY_INSTRUMENT_REDIRECTS)) {
+  assert.equal(
+    registeredRouteSet.has(from),
+    false,
+    `${from} não pode ser redirect legado e <Route> literal ao mesmo tempo`,
+  );
+  registeredRouteSet.add(from);
+}
 
 const materializeRoute = (route: string) =>
   route.replace(/:[^/]+/g, "__test_param__");
@@ -207,6 +220,25 @@ for (const path of clinicalRouteSamples) {
     );
   }
 }
+
+// Regressão Codex/PR #866: consolidar as fichas nominais em /generic-scale/:id
+// não pode custar ao reader o acesso que ele já tinha (bookmarks /vineland,
+// /wisc5… e a própria superfície canônica).
+assert.equal(isRouteSensitive("/generic-scale/vineland"), false);
+assert.equal(isReaderClinicalRoute("/generic-scale/vineland"), true);
+assert.equal(isReaderClinicalRoute("/generic-scale/vineland/extra"), false);
+assert.equal(isReaderClinicalRoute("/vineland"), true);
+assert.equal(
+  decideRouteAccess({
+    path: "/generic-scale/vineland",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "reader",
+  }),
+  "allow",
+  "reader deve manter acesso à ficha canônica que substituiu as rotas nominais",
+);
 
 assert.equal(isReaderClinicalRoute("/classificacao/exemplo"), true);
 assert.equal(isReaderClinicalRoute("/classificacao/exemplo/extra"), false);

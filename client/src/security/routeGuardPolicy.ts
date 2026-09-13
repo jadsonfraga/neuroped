@@ -27,7 +27,6 @@ export const SENSITIVE_ROUTES = [
   "/diario-escola",
   "/neuroacompanhamento",
   "/inventarios-escola",
-  "/generic-scale",
   "/cognitive-lab",
   "/testes-diretos",
   "/epilepsia",
@@ -118,6 +117,30 @@ export const READER_CLINICAL_ROUTES = [
   "/eusm10",
   "/instrumentos-padronizados",
   "/qualidade",
+  // Superfície canônica de instrumento (ficha/aplicação). O reader sempre teve
+  // acesso às páginas de escala (/mchat, /cars, /cbcl…) e às antigas fichas
+  // nominais (/vineland, /wisc5…); ao consolidar tudo em /generic-scale/:id,
+  // negar aqui removeria acesso que o papel já tinha. Escritas continuam
+  // bloqueadas pelo backend e o registro autoral segue atrás do PIN master.
+  "/generic-scale/:id",
+  // Origens dos redirects legados de instrumento: precisam liberar o reader,
+  // senão o guard bloqueia o bookmark antes do <Redirect> canônico rodar.
+  "/wisc5",
+  "/bayley",
+  "/vineland",
+  "/vineland-completo",
+  "/leiter3",
+  "/raven",
+  "/wppsi",
+  "/nepsy2",
+  "/griffiths",
+  "/masc2",
+  "/rcads",
+  "/tde",
+  "/confias",
+  "/pedicat",
+  "/portage",
+  "/cbcl-interativo",
 ] as const;
 
 const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
