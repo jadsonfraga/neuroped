@@ -11,6 +11,16 @@ DATA_DIR = ROOT / "client/src/data"
 PRIMARY = DATA_DIR / "authorialMonitoring.json"
 CANONICAL_GLOB = "authorialMonitoring*.json"
 OVERLAY_KEY = "overrides"
+DELIVERY_METADATA_KEYS = frozenset({
+    "applicationNote", "autoRecommend", "catalogRole", "catalogStatus",
+    "clinicalReviewStatus", "deliveryReview", "reviewProvenance",
+})
+
+
+def delivery_content_fingerprint(record: dict) -> str:
+    deliverable = {key: value for key, value in record.items() if key not in DELIVERY_METADATA_KEYS}
+    canonical = json.dumps(deliverable, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def fingerprint(record: dict) -> str:
@@ -85,6 +95,7 @@ def apply_overlays(records: list[dict], overlays: list[tuple[Path, dict]]) -> li
                 raise ValueError(f"Override inválido para {instrument_id} em {path.name}")
             current = by_id[instrument_id]
             predecessor = fingerprint(current)
+            predecessor_delivery = delivery_content_fingerprint(current)
             updated = copy.deepcopy(current)
             updated.update(copy.deepcopy(patch))
             if updated.get("id") != instrument_id:
@@ -96,6 +107,8 @@ def apply_overlays(records: list[dict], overlays: list[tuple[Path, dict]]) -> li
                 "approvedAt": approved_at,
                 "approvedBy": approved_by,
                 "predecessorFingerprint": predecessor,
+                "predecessorDeliveryFingerprint": predecessor_delivery,
+                "deliveryContentChanged": predecessor_delivery != delivery_content_fingerprint(updated),
             }
             by_id[instrument_id].clear()
             by_id[instrument_id].update(updated)
