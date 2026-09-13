@@ -31,6 +31,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { FilterAgeInputs } from "@/components/FilterAgeInputs";
+import { resolveFilterAge, inferComplaintIds, expandComplaintSearch, filterComplaintOptions, type ExactFilterAge } from "@/lib/filterClinicalInput";
+import { classifyRecommendationAgeFit, formatRecommendationAgeRange } from "@/data/recommendationAgeFit";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
@@ -82,6 +85,7 @@ import {
 import {
   clearFilterSessionState,
   loadFilterSessionState,
+  parseFilterSessionState,
   saveFilterSessionState,
 } from "@/lib/filterSessionState";
 
@@ -248,123 +252,11 @@ function rowToScale(row: Row): ScaleEntry {
   } as ScaleEntry;
 }
 
-function matchAge(scale: ScaleEntry, selectedAge: string | null) {
-  const age = faixasEtarias.find((a) => a.id === selectedAge);
-  return !age || (scale.ageMax >= age.min && scale.ageMin <= age.max);
-}
-
-const SEARCH_SYNONYMS: Record<string, string[]> = {
-  atraso: [
-    "desenvolvimento",
-    "marcos",
-    "bebe",
-    "bebê",
-    "lactente",
-    "prematuro",
-  ],
-  tea: ["autismo", "autista", "espectro", "social", "mchat", "m-chat"],
-  tdah: [
-    "adhd",
-    "atencao",
-    "atenção",
-    "hiperatividade",
-    "impulsividade",
-    "desatencao",
-    "desatenção",
-  ],
-  linguagem: [
-    "fala",
-    "comunicacao",
-    "comunicação",
-    "fonologia",
-    "vocabulario",
-    "vocabulário",
-  ],
-  aprendizagem: [
-    "escola",
-    "escolar",
-    "leitura",
-    "escrita",
-    "dislexia",
-    "matematica",
-    "matemática",
-  ],
-  ansiedade: [
-    "medo",
-    "panico",
-    "pânico",
-    "fobia",
-    "preocupacao",
-    "preocupação",
-  ],
-  depressao: ["humor", "tristeza", "depressivo"],
-  comportamento: [
-    "conduta",
-    "oposicao",
-    "oposição",
-    "agressividade",
-    "irritabilidade",
-  ],
-  sono: ["dormir", "insonia", "insônia", "ronco"],
-  epilepsia: ["crise", "convulsao", "convulsão"],
-  pc: ["paralisia", "cerebral", "espasticidade"],
-  motor: ["coordenacao", "coordenação", "motricidade", "fino", "grossa"],
-  sensorial: ["sensorial", "integracao", "integração", "hipersensibilidade"],
-  suicidio: ["suicidio", "suicídio", "autolesao", "autolesão", "risco"],
-  efeitos: [
-    "medicacao",
-    "medicação",
-    "remedio",
-    "remédio",
-    "efeito colateral",
-    "adesao",
-    "adesão",
-  ],
-};
-
-function expandSearchText(query: string): string {
-  if (typeof query !== "string" || query.length === 0) return "";
-  const normalized = norm(query);
-  const extra: string[] = [];
-  for (const [queixa, words] of Object.entries(SEARCH_SYNONYMS)) {
-    if (
-      normalized.includes(queixa) ||
-      words.some((w) => normalized.includes(norm(w)))
-    ) {
-      extra.push(queixa, ...words);
-    }
-  }
-  return `${query} ${extra.join(" ")}`;
-}
-
-function inferQueixasFromSearch(query: string): string[] {
-  const normalized = norm(query);
-  if (normalized.length < 2) return [];
-  return queixas
-    .filter((q) => {
-      const words = SEARCH_SYNONYMS[q.id] ?? [];
-      return (
-        normalized.includes(norm(q.id)) ||
-        normalized.includes(norm(q.label)) ||
-        words.some((w) => normalized.includes(norm(w)))
-      );
-    })
-    .map((q) => q.id);
-}
-
-function inferAgeMonthsFromSearch(query: string): number | null {
-  const normalized = norm(query).replace(",", ".");
-  const month = normalized.match(/\b(\d{1,2})\s*(m|mes|meses)\b/);
-  if (month) return Number(month[1]);
-  const year = normalized.match(/\b(\d{1,2})(?:\s*(a|ano|anos)|a\b)/);
-  if (year) return Number(year[1]) * 12;
-  return null;
-}
 // Realce textual leve para a busca livre. NÃO decide pertinência clínica —
 // apenas reordena, dentro dos candidatos já validados pelo motor, os que casam
 // com o termo digitado. (A segurança/score clínico vem do advancedFilterLogic.)
 function searchBoost(scale: ScaleEntry, query: string) {
-  const tokens = norm(expandSearchText(query)).split(/\s+/).filter(Boolean);
+  const tokens = norm(expandComplaintSearch(query, queixas)).split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return 0;
   const text = norm(
     `${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte ?? ""}`,
@@ -373,15 +265,6 @@ function searchBoost(scale: ScaleEntry, query: string) {
   for (const token of tokens)
     if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
   return value;
-}
-
-// Idade representativa (meses) da faixa selecionada — usada para consultar o
-// ranking clínico curado (clinicalRanking). null quando a idade não foi escolhida.
-function ageMonthsFromBand(selectedAge: string | null): number | null {
-  const band = selectedAge
-    ? faixasEtarias.find((a) => a.id === selectedAge)
-    : null;
-  return band ? Math.round((band.min + band.max) / 2) : null;
 }
 
 // Primeira frase de uma descrição (corta em quebra de linha ou ponto).
@@ -798,22 +681,20 @@ function getScaleVisual(scale: ScaleEntry): ScaleVisual {
 function getRecommendationReasons(
   scale: ScaleEntry | undefined,
   selectedQueixas: string[],
-  selectedAge: string | null,
+  ageRange: { min: number; max: number } | null,
 ): string[] {
   if (!scale) return [];
   const reasons: string[] = [];
 
-  // Motivo contextual por idade
-  if (selectedAge && matchAge(scale, selectedAge)) {
-    if (scale.ageMin > 0) {
-      const minYears = Math.round(scale.ageMin / 12);
-      reasons.push(`✓ Recomendado a partir de ${minYears} anos`);
-    } else {
-      reasons.push("✓ Aplicável nesta faixa etária");
-    }
-  } else if (selectedAge && !matchAge(scale, selectedAge)) {
-    const minYears = Math.round(scale.ageMin / 12);
-    reasons.push(`⚠ Recomendado apenas a partir de ${minYears} anos`);
+  // Faixa parcial não equivale a idade individual confirmada.
+  if (ageRange) {
+    const fit = classifyRecommendationAgeFit(scale.ageMin, scale.ageMax, ageRange);
+    const rangeLabel = formatRecommendationAgeRange(scale.ageMin, scale.ageMax);
+    reasons.push(fit === "full"
+      ? "✓ Faixa de uso: " + rangeLabel
+      : fit === "partial"
+        ? "⚠ Compatível em parte · confirme a idade (" + rangeLabel + ")"
+        : "⚠ Fora da faixa de uso (" + rangeLabel + ")");
   }
 
   // Motivo contextual por queixa
@@ -881,12 +762,6 @@ function joinNatural(items: string[]): string {
   return `${clean.slice(0, -1).join(", ")} e ${clean[clean.length - 1]}`;
 }
 
-function getAgeLabel(selectedAge: string | null): string {
-  return selectedAge
-    ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge)
-    : "idade não especificada";
-}
-
 function getQueixaLabels(selectedQueixas: string[]): string[] {
   return selectedQueixas.map(
     (id) => queixas.find((q) => q.id === id)?.label ?? id,
@@ -939,7 +814,7 @@ function buildQualitativeFilterReport(args: {
   refinedMatches: RefinedScaleMatch[];
   clinicalRecommendation: string;
   selectedQueixas: string[];
-  selectedAge: string | null;
+  ageLabel: string;
   selectedRespondente: ScaleEntry["respondente"][number] | null;
   selectedAssessmentType: AssessmentFilterType;
   selectedSignalIds: string[];
@@ -950,7 +825,7 @@ function buildQualitativeFilterReport(args: {
     refinedMatches,
     clinicalRecommendation,
     selectedQueixas,
-    selectedAge,
+    ageLabel,
     selectedRespondente,
     selectedAssessmentType,
     selectedSignalIds,
@@ -958,7 +833,6 @@ function buildQualitativeFilterReport(args: {
   } = args;
   if (refinedMatches.length === 0) return "";
 
-  const ageLabel = getAgeLabel(selectedAge);
   const queixaLabel = selectedQueixas.length
     ? joinNatural(getQueixaLabels(selectedQueixas))
     : "queixa não especificada";
@@ -1167,6 +1041,12 @@ export default function FiltroPage() {
         ? navigationPrefill.age
         : sessionAge,
   );
+  const [exactAge, setExactAge] = useState<ExactFilterAge>(
+    flashMode || useNavigationPrefill
+      ? { years: "", months: "" }
+      : (sessionFilters?.exactAge ?? { years: "", months: "" }),
+  );
+  const [complaintSearch, setComplaintSearch] = useState("");
   const [selectedRespondente, setSelectedRespondente] = useState<
     ScaleEntry["respondente"][number] | null
   >(
@@ -1232,6 +1112,7 @@ export default function FiltroPage() {
         selectedAge?: string | null;
         selectedQueixas?: string[];
       };
+      setExactAge(parseFilterSessionState(JSON.stringify(saved)).exactAge ?? { years: "", months: "" });
       if (typeof saved.search === "string") setSearch(saved.search);
       if (typeof saved.selectedAge === "string" || saved.selectedAge === null)
         setSelectedAge(saved.selectedAge);
@@ -1247,12 +1128,12 @@ export default function FiltroPage() {
     try {
       sessionStorage.setItem(
         FLASH_STORAGE_KEY,
-        JSON.stringify({ search, selectedAge, selectedQueixas }),
+        JSON.stringify({ search, selectedAge, selectedQueixas, exactAge }),
       );
     } catch {
       /* sessionStorage indisponível — modo flash segue sem persistir */
     }
-  }, [flashMode, search, selectedAge, selectedQueixas]);
+  }, [flashMode, search, selectedAge, selectedQueixas, exactAge]);
 
   // Auto-close welcome tour on /filtro — ensures filter content is visible immediately
   useEffect(() => {
@@ -1275,6 +1156,7 @@ export default function FiltroPage() {
   useEffect(() => {
     if (flashMode) return;
     saveFilterSessionState({
+      exactAge,
       search,
       selectedAge,
       selectedQueixas,
@@ -1286,6 +1168,7 @@ export default function FiltroPage() {
     });
   }, [
     flashMode,
+    exactAge,
     search,
     selectedAge,
     selectedQueixas,
@@ -1340,7 +1223,23 @@ export default function FiltroPage() {
     return availabilityMode === "all" ? routed : routed.filter(isFullApp);
   }, [dedupedWorld, availabilityMode]);
 
+  const resolvedAge = useMemo(
+    () => resolveFilterAge(exactAge, selectedAge, search, faixasEtarias),
+    [exactAge, selectedAge, search],
+  );
+  const effectiveAgeRange = resolvedAge.status === "exact"
+    ? { id: "exact", label: resolvedAge.label, min: resolvedAge.ageMonths!, max: resolvedAge.ageMonths! }
+    : resolvedAge.status === "band"
+      ? faixasEtarias.find((age) => age.id === selectedAge) ?? null
+      : null;
+  const effectiveAgeOptions = effectiveAgeRange ? [effectiveAgeRange] : [];
+  const visibleQueixas = useMemo(
+    () => filterComplaintOptions(queixas, complaintSearch, selectedQueixas),
+    [complaintSearch, selectedQueixas],
+  );
+
   const hasSearch =
+    resolvedAge.status !== "unspecified" ||
     search.trim().length >= 2 ||
     selectedQueixas.length > 0 ||
     Boolean(selectedAge) ||
@@ -1353,21 +1252,13 @@ export default function FiltroPage() {
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===
   const filterContext = useMemo<FilterContext>(() => {
-    const ageRange = selectedAge
-      ? faixasEtarias.find((a) => a.id === selectedAge)
-      : null;
-    const inferredAgeMonths = !ageRange
-      ? inferAgeMonthsFromSearch(search)
-      : null;
-    const ageMonths = ageRange
-      ? Math.round((ageRange.min + ageRange.max) / 2)
-      : inferredAgeMonths;
     const inferredQueixas =
-      selectedQueixas.length === 0 ? inferQueixasFromSearch(search) : [];
+      selectedQueixas.length === 0 ? inferComplaintIds(search, queixas) : [];
     return {
       queixas: selectedQueixas.length > 0 ? selectedQueixas : inferredQueixas,
-      ageMonths,
-      ageBand: ageRange ? { min: ageRange.min, max: ageRange.max } : null,
+      ageMonths: resolvedAge.ageMonths,
+      ageBand: resolvedAge.ageBand,
+      ageInputInvalid: resolvedAge.status === "invalid",
       respondente: selectedRespondente ?? null,
       isVerbal:
         selectedCommunication === "verbal"
@@ -1391,7 +1282,7 @@ export default function FiltroPage() {
     };
   }, [
     selectedQueixas,
-    selectedAge,
+    resolvedAge,
     selectedRespondente,
     selectedCommunication,
     selectedLiteracy,
@@ -1412,15 +1303,9 @@ export default function FiltroPage() {
     () => new Map(refinedMatches.map((m) => [m.scale.id, m])),
     [refinedMatches],
   );
-  // Idade para a curadoria do pódio/OPB: uma faixa larga (ex.: "2–4 anos") vira
-  // um único ponto (midpoint) ao consultar o fluxograma, o que pode pular o
-  // rastreio de 1ª linha do extremo mais novo (ex.: M-CHAT numa criança de 2a).
-  // Se o profissional digitou a idade exata na busca (ex.: "24 meses"), usamos
-  // ela — mais precisa; senão, o midpoint da faixa (comportamento padrão).
-  const curatedAgeMonths = useMemo(
-    () => inferAgeMonthsFromSearch(search) ?? ageMonthsFromBand(selectedAge),
-    [search, selectedAge],
-  );
+  // A curadoria usa a mesma idade resolvida pelo motor.
+  const curatedAgeMonths = filterContext.ageMonths;
+  const activeQueixas = filterContext.queixas;
   const rankedPool = useMemo(
     () => refinedMatches.map((m) => m.scale),
     [refinedMatches],
@@ -1438,19 +1323,19 @@ export default function FiltroPage() {
   const curatedTiers = useMemo(
     () =>
       selectCuratedTiers(
-        selectedQueixas,
+        activeQueixas,
         curatedAgeMonths,
         refinedById,
         selectedRespondente,
       ),
-    [selectedQueixas, curatedAgeMonths, selectedRespondente, refinedById],
+    [activeQueixas, curatedAgeMonths, selectedRespondente, refinedById],
   );
 
   // === PÓDIO: score-ordered, curated tiers as soft tiebreaker, quality threshold ≥60 ===
   const auditedPodium = useMemo(
     () =>
       selectPodium(hasSafeResults ? refinedMatches : [], curatedTiers, {
-        selectedQueixas,
+        selectedQueixas: activeQueixas,
         ageMonths: curatedAgeMonths,
         selectedSignals: selectedSignalIds,
       }),
@@ -1458,7 +1343,7 @@ export default function FiltroPage() {
       refinedMatches,
       hasSafeResults,
       curatedTiers,
-      selectedQueixas,
+      activeQueixas,
       curatedAgeMonths,
       selectedSignalIds,
     ],
@@ -1514,8 +1399,8 @@ export default function FiltroPage() {
         ranking,
         refinedMatches,
         clinicalRecommendation,
-        selectedQueixas,
-        selectedAge,
+        selectedQueixas: activeQueixas,
+        ageLabel: resolvedAge.label,
         selectedRespondente,
         selectedAssessmentType,
         selectedSignalIds,
@@ -1530,11 +1415,9 @@ export default function FiltroPage() {
   // Cálculo direto (barato) para não depender do array `ranking` recriado a cada render.
   const recommendationText = ((): string => {
     if (!hasSafeResults) return "";
-    const ageLbl = selectedAge
-      ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge)
-      : "não especificada";
-    const queixasLbl = selectedQueixas.length
-      ? selectedQueixas
+    const ageLbl = resolvedAge.label;
+    const queixasLbl = activeQueixas.length
+      ? activeQueixas
           .map((id) => queixas.find((q) => q.id === id)?.label ?? id)
           .join(", ")
       : "não especificada";
@@ -1584,7 +1467,7 @@ export default function FiltroPage() {
         clinicalTier: r.clinicalTier ?? "",
         name: s.name,
         fullName: s.fullName,
-        ageRange: `${Math.round(s.ageMin / 12)}–${Math.round(s.ageMax / 12)} anos`,
+        ageRange: formatRecommendationAgeRange(s.ageMin, s.ageMax),
         respondente: s.respondente.join(" · "),
         validacaoBrasil: s.validacaoBrasil ?? "",
         tempo: s.tempo ?? "",
@@ -1595,11 +1478,9 @@ export default function FiltroPage() {
     });
 
   const buildExportMeta = (): FilterExportMeta => ({
-    age: selectedAge
-      ? (faixasEtarias.find((a) => a.id === selectedAge)?.label ?? selectedAge)
-      : "não especificada",
-    queixas: selectedQueixas.length
-      ? selectedQueixas
+    age: resolvedAge.label,
+    queixas: activeQueixas.length
+      ? activeQueixas
           .map((id) => queixas.find((q) => q.id === id)?.label ?? id)
           .join(", ")
       : "não especificada",
@@ -1666,7 +1547,7 @@ export default function FiltroPage() {
     {
       label: "Faixa etária",
       get: (s) =>
-        `${Math.round(s.ageMin / 12)}–${Math.round(s.ageMax / 12)} anos`,
+        formatRecommendationAgeRange(s.ageMin, s.ageMax),
     },
     { label: "Respondente", get: (s) => s.respondente.join(" · ") },
     {
@@ -1720,6 +1601,8 @@ export default function FiltroPage() {
     haptic.tap();
     clearFilterSessionState();
     setSearch("");
+    setExactAge({ years: "", months: "" });
+    setComplaintSearch("");
     setSelectedAge(null);
     setSelectedQueixas([]);
     setSelectedRespondente(null);
@@ -1857,6 +1740,7 @@ export default function FiltroPage() {
                       onClick={() => {
                         softTap();
                         haptic.tap();
+                        setExactAge({ years: "", months: "" });
                         setSelectedAge(q.age);
                         setSelectedQueixas(q.queixas);
                       }}
@@ -1887,6 +1771,8 @@ export default function FiltroPage() {
                   Deslize →
                 </span>
               </div>
+              <FilterAgeInputs value={exactAge} resolved={resolvedAge}
+                onChange={(value) => { setExactAge(value); setSelectedAge(null); }} />
               <div className="np-horizontal-chips flex gap-1 sm:gap-2 overflow-x-auto pb-1" data-testid="age-band-scroll" aria-label="Faixas etárias; deslize horizontalmente para ver todas">
                 {faixasEtarias.map((age) => (
                   <button
@@ -1895,9 +1781,10 @@ export default function FiltroPage() {
                     aria-pressed={selectedAge === age.id}
                     aria-label={`Faixa etária ${age.label}`}
                     onMouseEnter={() => softHover()}
-                    onClick={() =>
-                      setSelectedAge((v) => (v === age.id ? null : age.id))
-                    }
+                    onClick={() => {
+                      setExactAge({ years: "", months: "" });
+                      setSelectedAge((v) => (v === age.id ? null : age.id));
+                    }}
                     className={`shrink-0 rounded-2xl border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                   >
                     {age.label}
@@ -1934,8 +1821,19 @@ export default function FiltroPage() {
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                {queixas.map((q) => {
+              <Input value={complaintSearch} onChange={(event) => setComplaintSearch(event.target.value)}
+                aria-label="Localizar queixa ou sintoma" data-testid="filter-complaint-search"
+                placeholder="Localizar: sono, fala, cefaleia, irritabilidade…"
+                className="h-10 rounded-xl text-sm" maxLength={120} />
+              <p className="text-xs text-muted-foreground" data-testid="filter-complaint-help">
+                Marque uma ou mais queixas. Resultados específicos correspondem a pelo menos uma delas;
+                complementos de triagem ampla são identificados separadamente. As marcadas continuam visíveis.
+              </p>
+              {visibleQueixas.length === 0 && (
+                <p role="status" className="text-xs text-muted-foreground">Nenhuma queixa encontrada. Tente outro termo.</p>
+              )}
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3 lg:grid-cols-4" data-testid="filter-complaint-options">
+                {visibleQueixas.map((q) => {
                   const sel = selectedQueixas.includes(q.id);
                   return (
                     <button
@@ -2378,8 +2276,8 @@ export default function FiltroPage() {
             clínico curado; só aparecem quando o trio inteiro já passou pelo
             motor clínico para este perfil. */}
             {(() => {
-              if (!hasSafeResults || selectedQueixas.length !== 1) return null;
-              const queixaId = selectedQueixas[0];
+              if (!hasSafeResults || activeQueixas.length !== 1) return null;
+              const queixaId = activeQueixas[0];
               const rule = getClinicalTiers(queixaId, curatedAgeMonths);
               if (!rule || !rule.prata || !rule.bronze) return null;
 
@@ -2398,11 +2296,8 @@ export default function FiltroPage() {
 
               const queixaLabel =
                 queixas.find((q) => q.id === queixaId)?.label ?? queixaId;
-              const ageBand = selectedAge
-                ? faixasEtarias.find((a) => a.id === selectedAge)
-                : null;
-              const ageRangeLabel = ageBand
-                ? ageBand.label
+              const ageRangeLabel = effectiveAgeRange
+                ? effectiveAgeRange.label
                 : `${rule.ageMin}–${rule.ageMax} meses`;
 
               const recommendations: QueixaAgeRecommendations = {
@@ -2442,14 +2337,14 @@ export default function FiltroPage() {
             {hasSafeResults && (
               <>
                 <DirectTestsRecommender
-                  selectedQueixas={selectedQueixas}
-                  selectedAge={selectedAge}
-                  faixasEtarias={faixasEtarias}
+                  selectedQueixas={activeQueixas}
+                  selectedAge={effectiveAgeRange?.id ?? null}
+                  faixasEtarias={effectiveAgeOptions}
                 />
                 <ParentTestsRecommender
-                  selectedQueixas={selectedQueixas}
-                  selectedAge={selectedAge}
-                  faixasEtarias={faixasEtarias}
+                  selectedQueixas={activeQueixas}
+                  selectedAge={effectiveAgeRange?.id ?? null}
+                  faixasEtarias={effectiveAgeOptions}
                 />
               </>
             )}
@@ -2482,7 +2377,7 @@ export default function FiltroPage() {
               <Card className="border-2 border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
                 <CardContent className="flex items-start gap-3 p-5 text-sm font-bold text-amber-900 dark:text-amber-100">
                   <ShieldAlert className="h-5 w-5 shrink-0" />
-                  <span>{SAFE_EMPTY_MESSAGE}</span>
+                  <span>{resolvedAge.status === "invalid" ? resolvedAge.message : SAFE_EMPTY_MESSAGE}</span>
                 </CardContent>
               </Card>
             ) : (
@@ -2491,8 +2386,8 @@ export default function FiltroPage() {
                   const reasons = item.hasScale
                     ? getRecommendationReasons(
                         item.scale,
-                        selectedQueixas,
-                        selectedAge,
+                        activeQueixas,
+                        effectiveAgeRange,
                       )
                     : [];
                   const ctaLabel = !item.hasScale
@@ -2503,6 +2398,10 @@ export default function FiltroPage() {
                       : "Abrir uso interno";
                   const cardInner = (
                     <Card
+                      data-testid={item.hasScale ? "filter-result-card" : undefined}
+                      data-scale-id={item.scale?.id}
+                      data-age-min={item.scale?.ageMin}
+                      data-age-max={item.scale?.ageMax}
                       className={`filter-260-card group h-full border-border/70 bg-card/90 transition-all duration-200 ${item.hasScale ? "cursor-pointer hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0" : "opacity-70"} ${item.tier ? `tier-${item.tier}` : ""}`}
                     >
                       <CardContent className="filter-260-card-content">
@@ -2610,7 +2509,7 @@ export default function FiltroPage() {
                             <strong>Por que vazio:</strong>{" "}
                             {emptySlotReason(item.slot, {
                               hasQueixa: selectedQueixas.length > 0,
-                              hasAge: Boolean(selectedAge),
+                              hasAge: Boolean(effectiveAgeRange),
                               respondente: selectedRespondente,
                               communication: selectedCommunication,
                             })}

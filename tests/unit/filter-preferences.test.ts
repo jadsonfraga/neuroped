@@ -99,7 +99,7 @@ const navigationMerged = applyFilterSessionNavigationPrefill(
   sessionStorage,
 );
 assert.deepEqual(navigationMerged, {
-  search: "TDAH 7 anos",
+  search: "",
   selectedAge: "2-4a",
   selectedQueixas: ["tea"],
   selectedRespondente: "pais",
