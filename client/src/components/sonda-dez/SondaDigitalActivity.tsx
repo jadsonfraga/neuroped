@@ -66,6 +66,9 @@ export default function SondaDigitalActivity({
   const [cupTrial, setCupTrial] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
   const [soundError, setSoundError] = useState("");
+  const [verbalAnswers, setVerbalAnswers] = useState<Record<number, string>>(
+    {},
+  );
   const push = useCallback((type: string, value: string) => {
     events.current.push({
       type,
@@ -223,15 +226,18 @@ export default function SondaDigitalActivity({
       push("toque", String(actual));
   }
   const timed = spec.kind === "sequence" || spec.kind === "grid";
-  const completeAllowed = timed
-    ? ended
-    : spec.kind === "cups"
-      ? cupTrial === 1 && cup !== null
-      : spec.kind === "model"
-        ? !modelVisible
-        : spec.kind === "imitation"
-          ? index === 3
-          : true;
+  const completeAllowed =
+    waitSeconds && seconds < waitSeconds
+      ? false
+      : timed
+        ? ended
+        : spec.kind === "cups"
+          ? cupTrial === 1 && cup !== null
+          : spec.kind === "model"
+            ? !modelVisible
+            : spec.kind === "imitation"
+              ? index === 3
+              : true;
   const operatorOnly = spec.prompt === "operator-only";
   return createPortal(
     <dialog
@@ -501,6 +507,62 @@ export default function SondaDigitalActivity({
                   {index + 1}/{spec.items?.length} cartões
                 </p>
               )}
+              {operatorOnly && spec.responseRule && !ended && (
+                <fieldset className="w-full max-w-xl rounded-xl border bg-white p-4">
+                  <legend className="px-1 font-semibold">
+                    O que a criança respondeu a este cartão?
+                  </legend>
+                  <p className="mb-3 text-sm">
+                    Registre o que ouviu. Sem marcação significa resposta não
+                    registrada, não erro.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      ...new Set([
+                        ...(spec.items ?? []),
+                        ...Object.values(spec.responseRule),
+                        "Outra resposta",
+                        "Sem resposta",
+                      ]),
+                    ].map((answer) => (
+                      <Button
+                        key={answer}
+                        variant={
+                          verbalAnswers[index] === answer
+                            ? "default"
+                            : "outline"
+                        }
+                        aria-pressed={verbalAnswers[index] === answer}
+                        onClick={() => {
+                          const actual = Math.floor(
+                            (performance.now() - started.current) /
+                              (spec.intervalMs ?? 2500),
+                          );
+                          if (
+                            finished.current ||
+                            actual !== currentIndex.current
+                          )
+                            return;
+                          setVerbalAnswers((old) => ({
+                            ...old,
+                            [index]: answer,
+                          }));
+                          push(
+                            "resposta-verbal",
+                            JSON.stringify({
+                              item: index + 1,
+                              stimulus: spec.items?.[index],
+                              answer,
+                            }),
+                          );
+                        }}
+                      >
+                        {answer}
+                      </Button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
             </>
           )}
           {spec.kind === "grid" && (
@@ -622,6 +684,11 @@ export default function SondaDigitalActivity({
           )}
         </div>
         <footer className="flex flex-wrap justify-center gap-3 border-t bg-white p-4">
+          {waitSeconds && seconds < waitSeconds && (
+            <p className="w-full text-center text-sm">
+              Aguarde a observação. Se houver incômodo, use Pausar e voltar.
+            </p>
+          )}
           <Button disabled={!completeAllowed} onClick={() => close("complete")}>
             {timed ? "Voltar ao registro" : "Concluir observação"}
           </Button>

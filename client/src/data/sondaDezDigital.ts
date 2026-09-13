@@ -5,7 +5,7 @@ import {
   type MissionDef,
 } from "./sondaDezProtocol";
 
-export const DIGITAL_VERSION = "2026-09-13.1";
+export const DIGITAL_VERSION = "2026-09-13.2";
 export const DIGITAL_NATURE =
   "Adaptação digital autoral da Sonda Dez / AFN-10; registro observacional piloto, requer validação clínica; sem normas, percentis, pontos de corte ou diagnóstico.";
 export const DIGITAL_LIMIT =
@@ -31,6 +31,7 @@ export type ActivitySpec = {
   prompt?: string;
   // Hide naming labels; the image itself remains accessible to the operator.
   naming?: boolean;
+  responseRule?: Record<string, string>;
 };
 export type DigitalStep = {
   title: string;
@@ -39,6 +40,7 @@ export type DigitalStep = {
   observe: string;
   activity: ActivitySpec;
   waitSeconds?: number;
+  silent?: boolean;
 };
 export type DigitalMission = MissionDef & {
   steps: DigitalStep[];
@@ -300,16 +302,25 @@ const inhibition = (items: string[], reverse = false) => [
       : "Quando aparecer SOL, bata uma palma. Quando aparecer LUA, fique parado.",
     "A aplicadora lê a regra antes de virar a tela. Verifique a compreensão verbal, sem fornecer respostas durante a sequência. Registre palmas observadas depois.",
     "O botão de resposta não é usado aqui. Uma palma é observação da aplicadora, não detecção automática do microfone.",
-    serial(items),
+    {
+      ...serial(items),
+      responseRule: reverse
+        ? { sol: "Esperar", lua: "Uma palma" }
+        : { sol: "Uma palma", lua: "Esperar" },
+    },
   ),
 ];
-const verbal = (items: string[], instruction: string) => [
+const verbal = (
+  items: string[],
+  instruction: string,
+  responseRule: Record<string, string>,
+) => [
   step(
     "Regra verbal",
     instruction,
     "A tela mostrará um cartão por vez para a aplicadora. Mantenha o visor fora da visão da criança, leia cada palavra e anote sua resposta. Não conte respostas corretas pela simples passagem dos cartões.",
     "A palavra escrita é roteiro da aplicadora; a criança responde à voz. Não aumentar o ritmo se houver dificuldade.",
-    { ...serial(items), prompt: "operator-only" },
+    { ...serial(items), prompt: "operator-only", responseRule },
   ),
 ];
 const narrative = (kind: "juice" | "rain") => [
@@ -512,10 +523,12 @@ const configs: Record<string, DigitalStep[]> = {
   "d-inibicao": verbal(
     DAY12,
     "Quando eu disser DIA, responda NOITE. Quando eu disser NOITE, responda DIA.",
+    { DIA: "NOITE", NOITE: "DIA" },
   ),
   "d-flexibilidade": verbal(
     DAY12.slice(0, 8),
     "Agora mudou: quando eu disser DIA, responda SOL. Quando eu disser NOITE, responda LUA.",
+    { DIA: "SOL", NOITE: "LUA" },
   ),
   "d-planejamento": [
     step(
@@ -597,10 +610,12 @@ const configs: Record<string, DigitalStep[]> = {
   "e-inibicao": verbal(
     SIDE12,
     "Quando eu disser DIREITA, responda ESQUERDA. Quando eu disser ESQUERDA, responda DIREITA.",
+    { DIREITA: "ESQUERDA", ESQUERDA: "DIREITA" },
   ),
   "e-troca": verbal(
     SIDE12.slice(0, 8),
     "Agora responda o mesmo lado: DIREITA é DIREITA e ESQUERDA é ESQUERDA.",
+    { DIREITA: "DIREITA", ESQUERDA: "ESQUERDA" },
   ),
   "e-planejamento": [
     step(
@@ -667,7 +682,10 @@ export const DIGITAL_BANDS: DigitalBand[] = SONDA_DEZ_PROTOCOL.map((band) => ({
       throw new Error(`Roteiro digital ausente: ${mission.id}`);
     return {
       ...mission,
-      steps,
+      steps: steps.map((s) => ({
+        ...s,
+        silent: /^(Aguarde|Chame o nome)/.test(s.say),
+      })),
       digitalLimit: DIGITAL_LIMIT,
       reading: mission.interpretation,
       fields: mission.fields.map((field) => ({
@@ -737,7 +755,7 @@ export const TRAINING_CASES = [
 ];
 export function fieldGuidance(field: FieldDef): string {
   if (field.kind === "count")
-    return `Contagem bruta de oportunidades observadas${field.max !== undefined ? ` (máximo ${field.max})` : ""}. Deixe em branco se ainda não contou; use NA quando não houve condição. Zero só se houve oportunidade válida e nenhuma ocorrência.`;
+    return `${COUNT_GUIDANCE[field.id] ?? "Conte apenas as ocorrências deste campo que você observou."} Contagem bruta${field.max !== undefined ? ` (máximo ${field.max})` : ""}. Deixe em branco se ainda não contou; use NA quando não houve condição. Zero só se houve oportunidade válida e nenhuma ocorrência.`;
   if (field.options?.includes("E") || field.options?.includes("P"))
     return "E: antes de instrução; I: após uma instrução; P: depois de repetir, modelar ou dar pista; 0: não demonstrado em oportunidade válida; NA: condição insuficiente. Não há soma de pontos.";
   if (/inteligibilidade/i.test(field.label))
@@ -754,3 +772,44 @@ export function fieldGuidance(field: FieldDef): string {
     return "Boa: houve trocas ligadas ao que o outro disse/fez; limitada: ocorreram poucas trocas ou foi preciso conduzir. Anote uma troca concreta. Ansiedade ou pouco vínculo podem interferir.";
   return "Marque somente o que observou neste item e descreva um exemplo. “Sim” exige ocorrência observada; “não” exige oportunidade válida. Se houve dúvida, recusa, ajuda que contaminou ou condição sensorial/motora, use NA e explique.";
 }
+
+const COUNT_GUIDANCE: Record<string, string> = {
+  acertos:
+    "Conte respostas de acordo com a regra vigente. Nas tarefas de palmas, esperar quando a regra pede também é uma resposta correta; nas de cachorro, conte somente alvos respondidos.",
+  omissoes:
+    "Conte alvos apresentados que ficaram sem a resposta pedida. Ex.: apareceu cachorro e não houve toque. Não conte estímulos que não chegaram a aparecer.",
+  comissoes:
+    "Conte respostas a estímulos que pediam esperar. Ex.: toque no gato ou palma quando a regra pedia ficar parado. Na grade, conte distratores que ficaram marcados ao final.",
+  falsos:
+    "Conte figuras que ficaram marcadas ao final e não eram o alvo da grade.",
+  alvos:
+    "Conte somente os alvos que ficaram marcados ao final, sem duplicar toques nem incluir marcações desfeitas.",
+  redirecionamentos:
+    "Conte cada intervenção sua para trazer a criança de volta à tarefa. Ex.: dizer “vamos continuar”. Registre a frase nas notas.",
+  autocorrecoes:
+    "Conte mudanças iniciadas pela própria criança, antes de você corrigir. Um segundo toque ou mudança aleatória, por si só, não comprova autocorreção.",
+  repeticao:
+    "Conte quantas vezes a instrução precisou ser dita novamente. A primeira leitura não é repetição. Registre quem pediu e o que foi repetido.",
+  antecipacoes:
+    "Conte respostas iniciadas antes de o estímulo ser apresentado. Diferencie uma resposta antecipada de um erro depois da apresentação.",
+  perseveracoes:
+    "Conte respostas que seguem a regra anterior depois da troca. Anote qual resposta ocorreu; não conte automaticamente todo erro como perseveração.",
+  adaptou:
+    "Registre o número do primeiro item a partir do qual a nova regra foi mantida até o fim. Se não houve adaptação identificável, use NA e descreva; não invente zero ou um item.",
+  erros:
+    "Conte respostas que não seguiram a regra. Descreva o que foi dito; erro isolado não demonstra impulsividade.",
+  etapas:
+    "Conte as ações pedidas que foram realizadas. Registre a ordem separadamente: realizar os objetos certos fora da ordem não preserva a sequência.",
+  hipoteses:
+    "Conte explicações diferentes para a situação. Repetir a mesma ideia com outras palavras não acrescenta uma hipótese.",
+};
+
+export const NOVICE_STEPS = [
+  "Prepare sem a criança: confira idade, conforto, tela e som. Faça os três ensaios e os cinco exemplos de registro.",
+  "Acolha a criança e o responsável: “Vamos fazer algumas atividades curtas. Não precisa acertar tudo. Podemos parar se ficar desconfortável.” Peça ao responsável que não antecipe respostas.",
+  "Antes de cada etapa, leia a fala e o que observar com a tela voltada para você. Se precisar, use Familiarizar com os controles; os exemplos neutros não entram nas respostas da missão.",
+  "Diga somente a fala indicada. Quando estiver escrito Observação em silêncio, não leia a orientação em voz alta. Abra o estímulo e vire a tela; nos cartões verbais, mantenha a tela voltada para você.",
+  "Observe antes de ajudar. Registre uma repetição, pista, demonstração ou toque feito por outra pessoa. Não invente respostas a partir do que o responsável conta.",
+  "Ao voltar, anote a resposta e a ajuda antes da próxima etapa. Se não houve condição, use Não avaliar esta etapa ou Toda a missão: NA e escreva o motivo. Confira os campos e conclua a missão.",
+  "Na revisão, confira lacunas, ajudas e interferentes. Copie ou baixe o registro antes de sair desta tela e entregue ao médico. A fala para a família já está pronta no encerramento.",
+];

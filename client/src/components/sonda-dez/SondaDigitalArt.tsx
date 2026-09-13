@@ -116,11 +116,11 @@ export function SondaObject({ item }: { item: string }) {
         <g>
           <path
             d="M25 46 L78 21 L135 45 V106 L81 131 L25 103Z"
-            fill="hsl(33 62%  60)"
+            fill="hsl(33 62%  60%)"
           />
           <path d="M25 46 L78 21 L135 45 L81 70Z" fill="hsl(33 65% 72%)" />
           <path d="M25 46 V103 L81 131 V70Z" fill="hsl(33 50% 52%)" />
-          <path d="M81 70 L135 45 V106 L81 131Z" fill="hsl(33 45%  40)" />
+          <path d="M81 70 L135 45 V106 L81 131Z" fill="hsl(33 45%  40%)" />
         </g>
       )}
       {item === "banana" && (
@@ -150,7 +150,7 @@ export function SondaObject({ item }: { item: string }) {
               item === "gato"
                 ? "hsl(32 75% 66%)"
                 : item === "coelho"
-                  ? "hsl(210 15%  80)"
+                  ? "hsl(210 15%  80%)"
                   : "hsl(28  40% 65%)"
             }
           />
@@ -167,7 +167,7 @@ export function SondaObject({ item }: { item: string }) {
         </g>
       )}
       {item === "peixe" && (
-        <g fill="hsl(192 65%  50)">
+        <g fill="hsl(192 65%  50%)">
           <ellipse cx="68" cy=" 70" rx=" 40" ry="30" />
           <path d="M103 70 L141 36 V104Z" />
           <circle cx="47" cy="63" r="5" fill="hsl(220 20% 20%)" />
@@ -188,7 +188,7 @@ export function SondaObject({ item }: { item: string }) {
       {item === "lua" && (
         <path
           d="M104 19 C38 0 14 88 66 116 Q102 136 132 98 C71 109 59 48 104 19Z"
-          fill="hsl(221 45%  60)"
+          fill="hsl(221 45%  60%)"
         />
       )}
       {!ART_LABELS[item] && (

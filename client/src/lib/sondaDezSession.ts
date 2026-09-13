@@ -86,6 +86,14 @@ export function recordProblems(
     const activity = mission.steps[i].activity;
     if (
       run?.status === "complete" &&
+      mission.steps[i].waitSeconds &&
+      run.elapsedMs < mission.steps[i].waitSeconds! * 1000
+    )
+      issues.push(
+        `Etapa ${i + 1}: observação encerrada antes do tempo previsto.`,
+      );
+    if (
+      run?.status === "complete" &&
       activity.kind === "sequence" &&
       (!run.events.some((e) => e.type === "serie-concluida") ||
         new Set(
@@ -103,6 +111,17 @@ export function recordProblems(
     )
       issues.push(`Etapa ${i + 1}: grade encerrada antes do tempo previsto.`);
   });
+  if (
+    mission.steps.every((_, i) => record.runs[i]?.status === "skipped") &&
+    mission.fields.some((field) => record.values[field.id] !== "NA")
+  )
+    issues.push(
+      "Nenhuma etapa foi avaliável: mantenha os campos como NA, com motivo.",
+    );
+  if (Object.values(record.values).includes("P") && !record.notes.trim())
+    issues.push(
+      "Descreva nas notas a repetição, pista ou ajuda que levou ao registro P.",
+    );
   mission.fields.forEach((field) => {
     if (!fieldValid(field, record.values[field.id], record.reasons[field.id]))
       issues.push(`${field.label}: registro ausente ou inválido.`);
@@ -137,7 +156,10 @@ export function markMissionUnavailable(
     reviewed: false,
     values: Object.fromEntries(mission.fields.map((f) => [f.id, "NA"])),
     reasons: Object.fromEntries(
-      mission.fields.map((f) => [f.id, reason.trim()]),
+      mission.fields.map((f) => [
+        f.id,
+        physicalFieldReason(mission.id, f.id) ?? reason.trim(),
+      ]),
     ),
     runs: Object.fromEntries(
       mission.steps.map((_, i) => [
@@ -204,6 +226,28 @@ export function gridMetrics(
     commissions: unique.filter((i) => items[i] !== target).length,
   };
 }
+export function recordedGridMetrics(
+  items: string[],
+  target: string,
+  run: StepRun,
+) {
+  const last = run.events.findLast((e) => e.type === "grade-concluida");
+  if (!last || run.status !== "complete") return undefined;
+  try {
+    const value: unknown = JSON.parse(last.value);
+    if (
+      value &&
+      typeof value === "object" &&
+      "selected" in value &&
+      Array.isArray(value.selected) &&
+      value.selected.every((i) => typeof i === "number")
+    )
+      return gridMetrics(items, target, value.selected);
+  } catch {
+    /* An incomplete event never becomes a zero count. */
+  }
+  return undefined;
+}
 export function timingAdvance(
   previous: number,
   elapsedMs: number,
@@ -238,6 +282,7 @@ export type ReportContext = {
   flags: string[];
   operator: string;
   elapsedSeconds: number;
+  familiarizations?: string[];
 };
 export function buildDigitalReport(
   band: DigitalBand,
@@ -259,6 +304,7 @@ export function buildDigitalReport(
     `Aplicadora (código): ${context.operator.trim() || "não informado"}. Tempo ativo: ${context.elapsedSeconds}s; referência operacional 600s${context.elapsedSeconds > 600 ? "; tempo ampliado" : ""}.`,
     `Interferentes: ${context.confounders.join("; ") || "nenhum assinalado; não equivale a investigação negativa"}.`,
     `Alertas ao médico: ${context.flags.join("; ") || "nenhum assinalado"}.`,
+    `Familiarização com controles durante a aplicação: ${context.familiarizations?.join("; ") || "não acionada"}. Eventos do ensaio não entram nas respostas das missões.`,
     "",
   ];
   band.missions.forEach((mission, index) => {

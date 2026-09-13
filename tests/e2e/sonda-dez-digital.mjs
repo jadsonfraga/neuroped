@@ -4,7 +4,7 @@
  * suspended browser and verify interrupted presentations fail closed.
  */
 import assert from "node:assert/strict";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import {
@@ -42,6 +42,8 @@ const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
 page.on("dialog", (dialog) => dialog.accept());
 let stepsTested = 0;
+const checkedKinds = new Set();
+const a11yResults = [];
 const btn = (name) => page.getByRole("button", { name, exact: true });
 async function click(name) {
   await btn(name).click();
@@ -54,9 +56,45 @@ async function noOverflow() {
     false,
   );
 }
-async function finishActivity(spec) {
+async function auditScreen(label, scope = '[data-testid="sonda-digital"]') {
+  await noOverflow();
+  const result = await new AxeBuilder({ page }).include(scope).analyze();
+  if (result.violations.length) await writeFile(`${artifactDir}/axe-${label}-failure.json`, JSON.stringify(result.violations, null, 2));
+  assert.deepEqual(
+    result.violations.map((v) => ({
+      id: v.id,
+      nodes: v.nodes.map((n) => n.target),
+    })),
+    [],
+    label,
+  );
+  a11yResults.push({ label, violations: 0, passes: result.passes.length });
+}
+async function finishActivity(spec, waitSeconds) {
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
+  if (waitSeconds) {
+    assert.equal(
+      await btn("Concluir observação").isDisabled(),
+      true,
+      "Free observation must not finish early",
+    );
+    await page.clock.runFor(waitSeconds * 1000 + 100);
+  }
+  const invalidPaint = await dialog
+    .locator("svg [fill], svg [stroke]")
+    .evaluateAll((nodes) =>
+      nodes.flatMap((node) =>
+        ["fill", "stroke"]
+          .filter(
+            (prop) =>
+              node.hasAttribute(prop) &&
+              !CSS.supports(prop, node.getAttribute(prop)),
+          )
+          .map((prop) => node.getAttribute(prop)),
+      ),
+    );
+  assert.deepEqual(invalidPaint, [], "Stimulus colors must be valid CSS");
   if (spec.kind === "objects") {
     const buttons = dialog.getByRole("button", {
       name: spec.items[0],
@@ -87,9 +125,17 @@ async function finishActivity(spec) {
       await dialog
         .getByRole("button", { name: "Responder ao alvo", exact: true })
         .click();
-    await page.clock.runFor(
-      spec.items.length * (spec.intervalMs ?? 2500) + 150,
-    );
+    if (spec.prompt === "operator-only") {
+      for (const item of spec.items) {
+        await dialog
+          .getByRole("button", { name: spec.responseRule[item], exact: true })
+          .click();
+        await page.clock.runFor(spec.intervalMs ?? 2500);
+      }
+    } else
+      await page.clock.runFor(
+        spec.items.length * (spec.intervalMs ?? 2500) + 150,
+      );
   } else if (spec.kind === "grid") {
     const cell = dialog.getByRole("button", { name: /Posição 1:/ });
     await cell.click();
@@ -112,6 +158,11 @@ async function finishActivity(spec) {
   } else if (spec.kind === "locked" && spec.prompt === "unlock")
     await click("Abrir caixa");
   await noOverflow();
+  if (!checkedKinds.has(spec.kind) && spec.kind !== "blank") {
+    // Run accessibility scanning after timed presentations to avoid delaying stimuli.
+    await auditScreen(`activity-${spec.kind}`, "dialog");
+    checkedKinds.add(spec.kind);
+  }
   await click(
     spec.kind === "sequence" || spec.kind === "grid"
       ? "Voltar ao registro"
@@ -136,6 +187,7 @@ async function prepare(band) {
     await checkbox.check();
   await click("Usar sem som eletrônico");
   await click("Ir para o ensaio");
+  assert.equal(await btn("Iniciar aplicação").isDisabled(), true);
   for (const [i, spec] of [
     { kind: "objects", items: ["sol", "lua", "caixa"] },
     {
@@ -162,6 +214,23 @@ async function prepare(band) {
       .filter({ has: page.locator("legend", { hasText: q.question }) })
       .getByRole("button", { name: q.answer, exact: true })
       .click();
+  if (band === DIGITAL_BANDS[0]) {
+    const group = page.getByRole("group").filter({
+      has: page.locator("legend", { hasText: TRAINING_CASES[0].question }),
+    });
+    await group.getByRole("button", { name: "E", exact: true }).click();
+    assert.equal(
+      await btn("Iniciar aplicação").isDisabled(),
+      true,
+      "Wrong interpretation blocks training completion",
+    );
+    await group.getByRole("button", { name: "I", exact: true }).click();
+    await auditScreen("training");
+    await page.screenshot({
+      path: `${artifactDir}/ensaio-desktop.png`,
+      fullPage: true,
+    });
+  }
   await click("Iniciar aplicação");
 }
 try {
@@ -199,13 +268,47 @@ try {
     [],
   );
   await page.clock.install();
+  assert.equal(await btn("Ouvi e está confortável").isDisabled(), true);
+  await click("Testar som");
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll("button")].some(
+      (b) => b.textContent.trim() === "Ouvi e está confortável" && !b.disabled,
+    ),
+  );
+  assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
+  await page.getByLabel("Idade em anos", { exact: true }).fill("18");
+  assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
+  await page.setViewportSize({ width: 320, height: 740 });
+  await auditScreen("preparation-320");
+  await page.screenshot({
+    path: `${artifactDir}/preparacao-mobile.png`,
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   for (const [bandIndex, band] of DIGITAL_BANDS.entries()) {
     if (bandIndex > 0) {
       await click("Nova aplicação");
       await click("Apagar e começar outra");
     }
     await prepare(band);
+    if (bandIndex === 0) {
+      await page
+        .getByText("Familiarizar com os controles", { exact: true })
+        .click();
+      await click("1. Treinar seleção e relação");
+      await finishActivity({ kind: "objects", items: ["sol", "lua", "caixa"] });
+      assert.equal(await btn("Abrir estímulo desta etapa").isDisabled(), true);
+      await click("Retomar");
+      await page.setViewportSize({ width: 390, height: 844 });
+      await auditScreen("application-mobile");
+      await page.screenshot({
+        path: `${artifactDir}/aplicacao-mobile.png`,
+        fullPage: true,
+      });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+    }
     for (const [mi, mission] of band.missions.entries()) {
+      const observedCounts = {};
       const finish = btn(
         mi < band.missions.length - 1
           ? "Concluir missão e continuar"
@@ -244,22 +347,30 @@ try {
             [],
           );
         }
-        await finishActivity(step.activity);
+        await finishActivity(step.activity, step.waitSeconds);
+        if (step.activity.kind === "sequence" && step.activity.target) {
+          const targets = step.activity.items.filter((item) => item === step.activity.target).length;
+          Object.assign(observedCounts, {acertos:1, omissoes:targets - 1, comissoes:0});
+          assert.ok(await page.getByText(`Toques registrados: 1 em alvos; ${targets - 1} alvos sem toque; 0 em outros estímulos.`, {exact:false}).count());
+        }
+        if (step.activity.kind === "grid") {
+          const hits = step.activity.items[1] === step.activity.target ? 1 : 0;
+          const omissions = step.activity.items.filter((item) => item === step.activity.target).length - hits;
+          Object.assign(observedCounts, {alvos:hits, omissoes:omissions, falsos:1 - hits, comissoes:1 - hits});
+          assert.ok(await page.getByText(`Alvos marcados: ${hits}. Omissões: ${omissions}. Distratores marcados: ${1 - hits}.`, {exact:true}).count());
+        }
+        if (step.activity.prompt === "operator-only") Object.assign(observedCounts, {acertos: step.activity.items.length, erros:0, perseveracoes:0});
         stepsTested++;
         if (si < mission.steps.length - 1) await click("Próxima etapa");
       }
       for (const field of mission.fields) {
-        const group = page
-          .getByRole("group")
-          .filter({
-            has: page
-              .locator("legend")
-              .filter({
-                hasText: new RegExp(
-                  `^${field.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
-                ),
-              }),
-          });
+        const group = page.getByRole("group").filter({
+          has: page.locator("legend").filter({
+            hasText: new RegExp(
+              `^${field.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+            ),
+          }),
+        });
         if (physicalFieldReason(mission.id, field.id)) {
           assert.equal(
             await group
@@ -270,7 +381,7 @@ try {
           continue;
         }
         if (field.kind === "count")
-          await group.getByRole("spinbutton").fill("0");
+          await group.getByRole("spinbutton").fill(String(observedCounts[field.id] ?? 0));
         else
           await group
             .getByRole("button", {
@@ -307,6 +418,12 @@ try {
     assert.match(report, /Missões registradas: 7\/7/);
     assert.doesNotMatch(report, /DADO AUSENTE/);
     assert.match(report, /requer validação clínica/);
+    if (bandIndex === 0)
+      assert.match(
+        report,
+        /Familiarização com controles durante a aplicação:.*concluída/,
+      );
+    if (bandIndex >= 4) assert.match(report, /resposta-verbal/);
     assert.doesNotMatch(
       report,
       /relação — sol para lua/,
@@ -316,6 +433,25 @@ try {
     await click("Baixar registro");
     const file = await download;
     assert.equal(await readFile(await file.path(), "utf8"), report);
+    await writeFile(`${artifactDir}/registro-${band.id}.txt`, report);
+    if (bandIndex === 0) {
+      await auditScreen("complete-report");
+      await page.screenshot({
+        path: `${artifactDir}/revisao-desktop.png`,
+        fullPage: true,
+      });
+      await click("Nova aplicação");
+      await page.setViewportSize({ width: 320, height: 740 });
+      await noOverflow();
+      await click("Manter esta aplicação");
+      assert.equal(
+        await page
+          .getByRole("textbox", { name: "Registro completo", exact: true })
+          .inputValue(),
+        report,
+      );
+      await page.setViewportSize({ width: 1440, height: 1000 });
+    }
     console.log(
       `PASS ${band.id}: ${band.missions.length} missões, exportação fiel`,
     );
@@ -366,8 +502,137 @@ try {
     path: `${artifactDir}/revisao-mobile.png`,
     fullPage: true,
   });
+  // Real UI negative paths: missing NA reason, all-skipped scoring, keyboard pause,
+  // help attribution, and denied clipboard. Only the clipboard failure is injected.
+  await page
+    .getByRole("button", {
+      name: `3. ${DIGITAL_BANDS[3].missions[2].title}`,
+      exact: true,
+    })
+    .click();
+  await click("Retomar");
+  assert.equal(await btn("Toda a missão: NA").isDisabled(), true);
+  await page
+    .getByLabel("Se não pôde apresentar, descreva o motivo", { exact: true })
+    .fill("Exemplo sintético: recusou esta atividade.");
+  await click("Toda a missão: NA");
+  const cause = page
+    .getByRole("group")
+    .filter({ has: page.locator("legend", { hasText: /^Causalidade$/ }) });
+  await cause.getByRole("button", { name: "0", exact: true }).click();
+  await page
+    .getByLabel("Observação direta, fala e ajudas oferecidas", { exact: true })
+    .fill("Nenhuma oportunidade foi apresentada.");
+  await page
+    .getByLabel(
+      "Conferi as oportunidades, ajudas, registros e motivos de NA desta missão.",
+      { exact: true },
+    )
+    .check();
+  assert.equal(await btn("Concluir missão e continuar").isDisabled(), true);
+  await cause.getByRole("button", { name: "NA", exact: true }).click();
+  await page.getByLabel("Motivo de NA — Causalidade", { exact: true }).fill("");
+  await page
+    .getByLabel(
+      "Conferi as oportunidades, ajudas, registros e motivos de NA desta missão.",
+      { exact: true },
+    )
+    .check();
+  assert.equal(await btn("Concluir missão e continuar").isDisabled(), true);
+  await page
+    .getByLabel("Motivo de NA — Causalidade", { exact: true })
+    .fill("Recusa observada.");
+  await page
+    .getByLabel(
+      "Conferi as oportunidades, ajudas, registros e motivos de NA desta missão.",
+      { exact: true },
+    )
+    .check();
+  assert.equal(await btn("Concluir missão e continuar").isEnabled(), true);
+  await click("Reabrir etapa não avaliável");
+  await click("Retomar");
+  await page
+    .getByLabel("Li a instrução e sei o que observar nesta etapa.", {
+      exact: true,
+    })
+    .check();
+  await click("Abrir estímulo desta etapa");
+  await finishActivity(DIGITAL_BANDS[3].missions[2].steps[0].activity);
+  await cause.getByRole("button", { name: "P", exact: true }).click();
+  await page
+    .getByLabel("Observação direta, fala e ajudas oferecidas", { exact: true })
+    .fill("");
+  await page
+    .getByLabel(
+      "Conferi as oportunidades, ajudas, registros e motivos de NA desta missão.",
+      { exact: true },
+    )
+    .check();
+  assert.equal(
+    await btn("Concluir missão e continuar").isDisabled(),
+    true,
+    "P without the actual help is incomplete",
+  );
+  await page
+    .getByLabel("Observação direta, fala e ajudas oferecidas", { exact: true })
+    .fill("Exemplo sintético: respondeu após uma repetição da pergunta.");
+  await page
+    .getByLabel(
+      "Conferi as oportunidades, ajudas, registros e motivos de NA desta missão.",
+      { exact: true },
+    )
+    .check();
+  assert.equal(await btn("Concluir missão e continuar").isEnabled(), true);
+  await click("Revisar / encerrar");
+  await page
+    .getByRole("button", {
+      name: `1. ${DIGITAL_BANDS[3].missions[0].title}`,
+      exact: true,
+    })
+    .click();
+  await click("Retomar");
+  await page
+    .getByLabel("Li a instrução e sei o que observar nesta etapa.", {
+      exact: true,
+    })
+    .check();
+  await click("Abrir estímulo desta etapa");
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "detached" });
+  assert.equal(await btn("Abrir estímulo desta etapa").isDisabled(), true);
+  await click("Revisar / encerrar");
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new Error("denied for E2E");
+        },
+      },
+    }),
+  );
+  await click("Copiar registro");
+  assert.ok(
+    await page.getByText("Não foi possível copiar.", { exact: false }).count(),
+  );
+  assert.equal(await btn("Copiado").count(), 0);
+  await auditScreen("partial-report-mobile");
+  await page.getByTestId("button-theme-toggle-mobile").click();
+  await page.waitForFunction(() => document.documentElement.classList.contains("dark"));
+  // Finish finite color transitions before measuring contrast in the final theme.
+  // A screenshot with animations disabled advances CSS transitions to their end.
+  await page.screenshot({
+    path: `${artifactDir}/revisao-dark-mobile.png`,
+    fullPage: true,
+    animations: "disabled",
+  });
+  await auditScreen("partial-report-dark");
   assert.deepEqual(errors, []);
   assert.equal(stepsTested, 76);
+  await writeFile(
+    `${artifactDir}/a11y.json`,
+    JSON.stringify(a11yResults, null, 2),
+  );
   console.log(
     `PASS: ${stepsTested} etapas, 6 trilhas, exportações, controles móveis, ausência de dados do ensaio, pausa e série interrompida.`,
   );

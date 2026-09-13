@@ -23,6 +23,7 @@ import {
   PREPARATION,
   CONFOUNDERS,
   TRAINING_CASES,
+  NOVICE_STEPS,
   digitalBandForMonths,
   physicalFieldReason,
   type ActivitySpec,
@@ -37,6 +38,7 @@ import {
   markMissionUnavailable,
   recordProblems,
   sequenceMetrics,
+  recordedGridMetrics,
   type DigitalRecord,
   type StepRun,
 } from "@/lib/sondaDezSession";
@@ -124,6 +126,7 @@ export default function SondaDigitalGuided({
   const [skipReason, setSkipReason] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [familiarizations, setFamiliarizations] = useState<string[]>([]);
   const ageValid =
     /^\d+$/.test(years) && /^\d+$/.test(months) && Number(months) <= 11;
   const ageMonths = ageValid ? Number(years) * 12 + Number(months) : NaN;
@@ -145,6 +148,9 @@ export default function SondaDigitalGuided({
     band?.missions.filter((m) => recordProblems(m, records[m.id]).length === 0)
       .length ?? 0;
   const dirty = Object.keys(records).length > 0;
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [phase]);
   useEffect(() => {
     if (phase !== "run" || paused) return;
     let previous = performance.now();
@@ -194,12 +200,26 @@ export default function SondaDigitalGuided({
     const step = active?.stepIndex;
     if (active?.practiceIndex !== undefined) {
       const i = active.practiceIndex;
+      if (phase === "run") {
+        setFamiliarizations((old) => [
+          ...old,
+          `${mission?.title}: ${PRACTICES[i].title}; ${run.status === "complete" ? "concluída" : "interrompida"}`,
+        ]);
+        setMessage(
+          "Familiarização encerrada; os toques do ensaio não entram nas respostas. Registre dificuldade ou mediação nas notas e use Retomar quando houver condição.",
+        );
+        setActive(null);
+        return;
+      }
       const demonstrated =
         i === 0
           ? run.events.some((e) => e.type === "relação")
           : i === 1
             ? run.events.some((e) => e.type === "toque")
-            : run.events.filter((e) => e.type === "marcação").length >= 2;
+            : run.events.some(
+                (e) =>
+                  e.type === "marcação" && e.value.includes('"selected":false'),
+              );
       if (run.status === "complete" && demonstrated) {
         setPracticed((old) => ({ ...old, [i]: true }));
         setMessage(
@@ -269,6 +289,7 @@ export default function SondaDigitalGuided({
           ),
           flags,
           elapsedSeconds: elapsed,
+          familiarizations,
         })
       : "";
   async function copy() {
@@ -317,6 +338,7 @@ export default function SondaDigitalGuided({
     setCopied(false);
     setMessage("");
     setConfirmNew(false);
+    setFamiliarizations([]);
   }
   const panel = "rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7";
   return (
@@ -357,6 +379,26 @@ export default function SondaDigitalGuided({
         <p role="status" className="rounded-xl border bg-muted p-4 text-sm">
           {message}
         </p>
+      )}
+      {(phase === "prepare" || phase === "learn" || phase === "run") && (
+        <details
+          className={panel}
+          open={phase === "prepare" ? true : undefined}
+        >
+          <summary className="cursor-pointer text-lg font-bold">
+            Guia da primeira aplicação — do acolhimento à entrega
+          </summary>
+          <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-relaxed">
+            {NOVICE_STEPS.map((text) => (
+              <li key={text}>{text}</li>
+            ))}
+          </ol>
+          <p className="mt-4 rounded-xl bg-muted p-3 text-sm">
+            Este registro não é salvo automaticamente. Mantenha esta tela aberta
+            durante a aplicação; antes de navegar para outra parte do
+            aplicativo, revise e baixe o registro.
+          </p>
+        </details>
       )}
       {phase === "prepare" && (
         <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
@@ -521,6 +563,18 @@ export default function SondaDigitalGuided({
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {DIGITAL_LIMIT}
             </p>
+            {!ready && (
+              <p className="mt-4 text-sm" role="status">
+                Para liberar o ensaio:{" "}
+                {!band ? "informe uma idade válida; " : ""}
+                {PREPARATION.some((_, i) => !checks[i])
+                  ? "confirme os itens acima; "
+                  : ""}
+                {sound === "unchecked"
+                  ? "confirme o som ou escolha usar sem som eletrônico."
+                  : ""}
+              </p>
+            )}
             <Button
               className="mt-5 w-full"
               disabled={!ready}
@@ -633,12 +687,18 @@ export default function SondaDigitalGuided({
                 <Play className="ml-2 h-4 w-4" />
               </Button>
             </div>
+            {!trained && (
+              <p className="mt-3 text-sm" role="status">
+                Para iniciar: conclua os três ensaios com os controles
+                solicitados e revise os cinco exemplos até aparecer “Correto”.
+              </p>
+            )}
           </section>
         </>
       )}
       {phase === "run" && band && mission && currentStep && (
         <>
-          <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-background/95 p-4 shadow-sm">
+          <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-background/95 p-4 shadow-sm lg:top-2">
             <div>
               <p className="font-bold">
                 Missão {missionIndex + 1}/{band.missions.length} ·{" "}
@@ -686,6 +746,32 @@ export default function SondaDigitalGuided({
               para prosseguir.
             </p>
           )}
+          <details className={panel}>
+            <summary className="cursor-pointer font-bold">
+              Familiarizar com os controles
+            </summary>
+            <p className="mt-3 text-sm leading-relaxed">
+              Use antes de uma tarefa se a criança ainda não conhece o controle.
+              Demonstre um toque e permita que experimente com estas figuras.
+              Não ensine respostas das missões. O tempo da aplicação fica
+              pausado. Se não compreender ou não tolerar, use NA e explique.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {PRACTICES.map((p, i) => (
+                <Button
+                  key={p.title}
+                  variant="outline"
+                  className="h-auto whitespace-normal py-3"
+                  onClick={() => {
+                    setPaused(true);
+                    setActive({ spec: p.spec, practiceIndex: i });
+                  }}
+                >
+                  {p.title}
+                </Button>
+              ))}
+            </div>
+          </details>
           <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr]">
             <section className={panel}>
               <p className="text-sm font-semibold text-primary">
@@ -694,9 +780,15 @@ export default function SondaDigitalGuided({
               <h2 className="mt-2 text-2xl font-bold">{currentStep.title}</h2>
               <div className="mt-5 space-y-4">
                 <div className="rounded-2xl bg-primary/10 p-4">
-                  <h3 className="text-sm font-semibold">1. Diga exatamente</h3>
+                  <h3 className="text-sm font-semibold">
+                    {currentStep.silent
+                      ? "1. Orientação para você — não ler em voz alta"
+                      : "1. Diga exatamente"}
+                  </h3>
                   <p className="mt-2 text-xl leading-relaxed">
-                    “{currentStep.say}”
+                    {currentStep.silent
+                      ? currentStep.say
+                      : `“${currentStep.say}”`}
                   </p>
                 </div>
                 <div>
@@ -707,6 +799,37 @@ export default function SondaDigitalGuided({
                   <h3 className="font-semibold">3. Observe</h3>
                   <p className="mt-2 leading-relaxed">{currentStep.observe}</p>
                 </div>
+                {currentStep.activity.responseRule && (
+                  <div className="rounded-xl border p-3 text-sm">
+                    <h3 className="font-semibold">
+                      Referência da regra — somente para a aplicadora
+                    </h3>
+                    <table className="mt-2 w-full text-left">
+                      <thead>
+                        <tr>
+                          <th className="p-2">Estímulo</th>
+                          <th className="p-2">Resposta pedida</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(currentStep.activity.responseRule).map(
+                          ([item, answer]) => (
+                            <tr key={item}>
+                              <td className="p-2">{item}</td>
+                              <td className="p-2">{answer}</td>
+                            </tr>
+                          ),
+                        )}
+                      </tbody>
+                    </table>
+                    <p className="mt-2">
+                      Confira a resposta observada com esta regra. Não anuncie
+                      acerto ou erro. Nos cartões verbais, registre o que ouviu
+                      nos botões da tela da aplicadora; se perder uma resposta,
+                      não adivinhe.
+                    </p>
+                  </div>
+                )}
                 {currentStep.waitSeconds && (
                   <div className="rounded-xl bg-muted p-3 text-sm">
                     Aguarde {currentStep.waitSeconds} segundos na exploração,
@@ -747,6 +870,34 @@ export default function SondaDigitalGuided({
                         : "Apresentação interrompida. Registre o motivo de não avaliar antes de seguir."}
                   </p>
                 )}
+                {current.runs[stepIndex]?.status === "skipped" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      updateRecord((r) => ({
+                        ...r,
+                        reviewed: false,
+                        runs: {
+                          ...r.runs,
+                          [stepIndex]: withRunHistory(r.runs[stepIndex], {
+                            status: "interrupted",
+                            events: [],
+                            elapsedMs: 0,
+                            reason:
+                              "Etapa reaberta pela aplicadora; confira condições antes de reapresentar.",
+                          }),
+                        },
+                      }));
+                      setRead(false);
+                      setPaused(true);
+                      setMessage(
+                        "Etapa reaberta. O motivo anterior foi preservado. Confira as condições, retome e leia a instrução; depois revise os campos que ficaram NA.",
+                      );
+                    }}
+                  >
+                    Reabrir etapa não avaliável
+                  </Button>
+                )}
                 {currentStep.activity.target &&
                   currentStep.activity.kind === "sequence" &&
                   current.runs[stepIndex]?.status === "complete" &&
@@ -765,6 +916,30 @@ export default function SondaDigitalGuided({
                         atenção por si sós.
                       </p>
                     );
+                  })()}
+                {currentStep.activity.kind === "grid" &&
+                  current.runs[stepIndex]?.status === "complete" &&
+                  (() => {
+                    const metrics = recordedGridMetrics(
+                      currentStep.activity.items ?? [],
+                      currentStep.activity.target ?? "",
+                      current.runs[stepIndex],
+                    );
+                    return metrics ? (
+                      <div className="rounded-xl bg-cyan-50 p-4 text-sm text-cyan-950">
+                        <strong>Conferência da grade</strong>
+                        <p className="mt-2">
+                          Alvos marcados: {metrics.hits}. Omissões:{" "}
+                          {metrics.omissions}. Distratores marcados:{" "}
+                          {metrics.commissions}.
+                        </p>
+                        <p className="mt-2">
+                          São as seleções finais. Confira quem operou e as
+                          ajudas antes de preencher os campos; não atribua à
+                          criança um toque feito por outra pessoa.
+                        </p>
+                      </div>
+                    ) : null;
                   })()}
                 {!!current.runs[stepIndex]?.previousRuns?.length && (
                   <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
@@ -972,6 +1147,7 @@ export default function SondaDigitalGuided({
               <label className="mt-5 block font-semibold">
                 Observação direta, fala e ajudas oferecidas
                 <textarea
+                  aria-label="Observação direta, fala e ajudas oferecidas"
                   className="mt-2 min-h-32 w-full rounded-xl border bg-background p-3 text-sm font-normal"
                   value={current.notes}
                   maxLength={4000}
@@ -1148,7 +1324,7 @@ export default function SondaDigitalGuided({
                   A nova aplicação apaga os dados desta tela. Copie ou baixe o
                   registro antes de continuar.
                 </p>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setConfirmNew(false)}

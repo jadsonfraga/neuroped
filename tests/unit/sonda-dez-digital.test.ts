@@ -18,6 +18,7 @@ import {
   emptyRecord,
   fieldValid,
   gridMetrics,
+  recordedGridMetrics,
   markMissionUnavailable,
   recordProblems,
   sequenceMetrics,
@@ -261,8 +262,81 @@ test("registro com NA continua explícito, sem diagnóstico e sem transformar re
   const m = band.missions.find((m) => m.id === "b-receptivo")!;
   records[m.id].values.repetir = "0";
   records[m.id].notes = "Este campo foi observado antes da interrupção.";
+  records[m.id].runs[0] = { status: "complete", events: [], elapsedMs: 5000 };
   text = buildDigitalReport(band, records, context);
   assert.match(text, /Precisou repetir: 0\.\nDescrição da aplicadora: 0\./);
+});
+
+test("todas as etapas não avaliáveis impedem resposta ou zero, mesmo com nota", () => {
+  const mission = DIGITAL_BANDS[3].missions[1];
+  const record = markMissionUnavailable(mission, emptyRecord(), "Recusou");
+  record.reviewed = true;
+  record.notes = "Nenhuma oportunidade válida";
+  record.values.ordem1 = "0";
+  assert.ok(
+    recordProblems(mission, record).some((p) => p.includes("Nenhuma etapa")),
+  );
+  record.values.ordem1 = "NA";
+  assert.deepEqual(recordProblems(mission, record), []);
+});
+
+test("P exige descrição da ajuda e exploração exige o tempo previsto", () => {
+  const mission = DIGITAL_BANDS[0].missions.find((m) => m.id === "a1-ajuda")!;
+  const record = markMissionUnavailable(mission, emptyRecord(), "Parcial");
+  record.reviewed = true;
+  record.runs[0] = { status: "complete", events: [], elapsedMs: 100 };
+  record.values[mission.fields.find((field) => field.options?.includes("P"))!.id] = "P";
+  const issues = recordProblems(mission, record);
+  assert.ok(issues.some((p) => p.includes("tempo previsto")));
+  assert.ok(issues.some((p) => p.includes("registro P")));
+  record.runs[0].elapsedMs = 30000;
+  record.notes =
+    "Repeti a instrução uma vez; a criança respondeu após a repetição.";
+  assert.ok(
+    !recordProblems(mission, record).some((p) =>
+      /tempo previsto|registro P/.test(p),
+    ),
+  );
+  assert.deepEqual(recordProblems(mission, record), []);
+});
+
+test("conferência da grade deriva seleções finais e não transforma evento ausente em zero", () => {
+  const run = {
+    status: "complete" as const,
+    elapsedMs: 60000,
+    events: [
+      {
+        type: "grade-concluida",
+        value: JSON.stringify({ selected: [0, 1] }),
+        elapsedMs: 60000,
+      },
+    ],
+  };
+  assert.deepEqual(recordedGridMetrics(["A", "B", "A"], "A", run), {
+    hits: 1,
+    omissions: 1,
+    commissions: 1,
+  });
+  assert.equal(
+    recordedGridMetrics(["A"], "A", { ...run, events: [] }),
+    undefined,
+  );
+  assert.equal(
+    recordedGridMetrics(["A"], "A", { ...run, status: "interrupted" }),
+    undefined,
+  );
+});
+
+test("referências da regra cobrem cada cartão e orientação silenciosa não vira fala", () => {
+  for (const band of DIGITAL_BANDS)
+    for (const mission of band.missions)
+      for (const step of mission.steps) {
+        if (step.activity.responseRule)
+          for (const item of step.activity.items ?? [])
+            assert.ok(step.activity.responseRule[item]);
+        if (/^(Aguarde|Chame o nome)/.test(step.say))
+          assert.equal(step.silent, true);
+      }
 });
 
 test("modalidade não introduz persistência clínica, imagens remotas, gravação ou reconhecimento automático", () => {

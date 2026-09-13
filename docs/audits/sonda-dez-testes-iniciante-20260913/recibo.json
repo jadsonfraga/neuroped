@@ -1,0 +1,65 @@
+{
+  "date": "2026-09-13",
+  "version": "2026-09-13.2",
+  "base_commit": "0c9dfa2886edfbee0096d82383777a9339263b77",
+  "synthetic_only": true,
+  "human_usability_test": false,
+  "browser": "Chromium 153.0.8010.0 (Linux, headless)",
+  "e2e": {
+    "bands": 6,
+    "missions": 42,
+    "steps": 76,
+    "downloads_byte_equal": 6,
+    "axe_scenarios": 15,
+    "axe_violations": 0
+  },
+  "unit_tests": 24,
+  "commands": [
+    {
+      "command": "npm run test:sonda",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:cognitive",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:scale-responses",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run check",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run build:client",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run audit:design",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:podium",
+      "exit_code": 0
+    },
+    {
+      "command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/sonda-browser/chromium npm run test:e2e:sonda",
+      "exit_code": 0
+    }
+  ],
+  "source_sha256": {
+    "client/src/components/sonda-dez/SondaDigitalActivity.tsx": "588e7602f7ae45e046e47487d145cd66fbd72f70aa64be053214578e9836c699",
+    "client/src/components/sonda-dez/SondaDigitalArt.tsx": "c6ed5c00b11972e4eea730c4e2f40871dcb7e82a80384c68dca8d290029126e8",
+    "client/src/components/sonda-dez/SondaDigitalGuided.tsx": "900832111880918a725dc6d5a7a48c744795afc07de174ea77d11ecdfc41fd08",
+    "client/src/data/sondaDezDigital.ts": "72eed41f91e4d4ca243f2a03ed01120b9dbf682bad1580a46d28edac1b35ebd2",
+    "client/src/lib/sondaDezSession.ts": "3b87bd05e5c30ac6a87bb9ccb0c9aad3a3590b642cf433c95dab72ce67d38546",
+    "tests/clinical/test-scale-response-delivery.mjs": "85b2aede7d69dd9c01c81d1499a6a5745da53f061011fc18ae174bdc9edf8760",
+    "tests/e2e/sonda-dez-digital.mjs": "f3890a04a01f8de47b12de57f89759a022ea4e8f6ce4556861524968a6e510be",
+    "tests/unit/sonda-dez-digital.test.ts": "dedcb18dadbd0e05c8c5490cbc8f7eac588bf866bb4edee89a43d41baf885e27"
+  }
+}
