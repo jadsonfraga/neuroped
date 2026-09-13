@@ -146,7 +146,7 @@ const saveSource = source("client/src/components/SaveToPatient.tsx");
 const patientSource = source("client/src/pages/paciente-detalhe.tsx");
 const genericSource = source("client/src/components/GenericScale.tsx");
 const runnerSource = source("client/src/components/InteractiveScaleRunner.tsx");
-const scaleFichaSource = source("client/src/components/ScaleFichaPage.tsx");
+const genericScalePageSource = source("client/src/pages/generic-scale.tsx");
 const directTestsSource = source("client/src/pages/testes-diretos.tsx");
 const pantSource = source("client/src/pages/pant.tsx");
 
@@ -186,18 +186,23 @@ assert.doesNotMatch(
 );
 assert.doesNotMatch(runnerSource, /totalScore|classification|domainResults/);
 
+// A superfície canônica de ficha é /generic-scale/:id. Ela resolve o catálogo
+// COMPLETO (allScalesComFichas) para que fichas de instrumentos licenciados
+// abram — mas a aplicação continua decidida exclusivamente pelos acervos
+// interativos (runner/itens): entrar no catálogo jamais torna aplicável.
 assert.match(
-  scaleFichaSource,
-  /import \{ allScalesComFichas \} from "@\/data\/scaleFilter"/,
-);
-assert.match(
-  scaleFichaSource,
+  genericScalePageSource,
   /allScalesComFichas\.find\(\(s\) => s\.id === scaleId\)/,
 );
+assert.match(
+  genericScalePageSource,
+  /getInteractiveItemScale\(scaleId\)/,
+  "a aplicação real deve ser decidida pelo acervo interativo, não pelo catálogo",
+);
 assert.doesNotMatch(
-  scaleFichaSource,
+  genericScalePageSource,
   /\ballScales\.find\(/,
-  "fichas dedicadas devem encontrar instrumentos documentados sem torná-los aplicáveis",
+  "a página não deve resolver o instrumento pelo subconjunto aplicável — fichas documentadas precisam abrir sem virar aplicação",
 );
 
 // Sonda Dez substitui a antiga vitrine de módulos diretos. O contrato aqui

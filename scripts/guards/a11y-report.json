@@ -8,12 +8,12 @@
       "seriousCritical": 0,
       "violations": []
     },
-    "/#/nesplora/": {
+    "/#/testes-diretos": {
       "total": 0,
       "seriousCritical": 0,
       "violations": []
     },
-    "/#/eletroencefalograma": {
+    "/#/especialidades": {
       "total": 0,
       "seriousCritical": 0,
       "violations": []
@@ -28,12 +28,27 @@
       "seriousCritical": 0,
       "violations": []
     },
-    "/#/conecta": {
+    "/#/escuta-clinica": {
       "total": 0,
       "seriousCritical": 0,
       "violations": []
     },
     "/#/servicos-clinica": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/conecta": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/eletroencefalograma": {
+      "total": 0,
+      "seriousCritical": 0,
+      "violations": []
+    },
+    "/#/nesplora/": {
       "total": 0,
       "seriousCritical": 0,
       "violations": []
@@ -129,21 +144,6 @@
       "violations": []
     },
     "/#/psiquiatria": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
-    },
-    "/#/testes-diretos": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
-    },
-    "/#/cognitive-lab": {
-      "total": 0,
-      "seriousCritical": 0,
-      "violations": []
-    },
-    "/#/avaliacao-cognitiva-infantil": {
       "total": 0,
       "seriousCritical": 0,
       "violations": []
