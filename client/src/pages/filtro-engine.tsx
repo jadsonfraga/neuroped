@@ -37,6 +37,7 @@ import { classifyRecommendationAgeFit, formatRecommendationAgeRange } from "@/da
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
 import { OPBRecommendationCards } from "@/components/OPBRecommendationCards";
+import { AssessmentPlanCard } from "@/components/AssessmentPlanCard";
 import {
   allScales,
   scales,
@@ -2331,6 +2332,12 @@ export default function FiltroPage() {
                 </div>
               );
             })()}
+
+            {/* Plano de avaliação em fases — leitura operacional do pódio
+            auditado (herdeiro honesto do antigo showcase BLOCO 3): mesmas
+            escalas já aprovadas pelo motor, com ordem de aplicação e orçamento
+            de tempo real do catálogo. */}
+            {hasSafeResults && <AssessmentPlanCard podium={podium} />}
 
             {/* Testes Diretos / para Pais — só quando o motor achou escala segura.
             Coerência: não sugerir testes quando a saída é "nenhuma escala segura". */}
