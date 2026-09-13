@@ -33,6 +33,7 @@ import {
   isMasterPinUnlocked,
   verifyMasterPin,
 } from "@/lib/masterPin";
+import { formatScaleAgeRange } from "@/lib/scaleAgeRange";
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
   questionario_pais: "Questionário — pais/cuidador",
@@ -77,12 +78,6 @@ function queixaLabel(id: string): string {
     QUEIXA_LABEL[id] ??
     id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ")
   );
-}
-
-// Idade legível: meses até 24m, anos acima. Evita o "0-0a" das escalas neonatais.
-function ageLabel(min: number, max: number): string {
-  const fmt = (m: number) => (m < 24 ? `${m} m` : `${Math.round(m / 12)} a`);
-  return min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`;
 }
 
 // "Como usar" adaptado ao modo de aplicação (honesto: orienta o uso real do
@@ -326,12 +321,12 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
           scaleName={scale.name}
           scaleFullName={scale.fullName}
           items={reportItems}
-          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+          patientAge={formatScaleAgeRange(scale.ageMin, scale.ageMax)}
         />
         <SaveToPatient
           scaleName={scale.name}
           responses={reportItems}
-          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+          patientAge={formatScaleAgeRange(scale.ageMin, scale.ageMax)}
         />
         <Button
           onClick={() => setShowResponses(false)}
@@ -537,9 +532,13 @@ export default function GenericScalePage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">ID: {scale.id}</p>
-                <CardTitle className="text-3xl font-bold text-foreground mb-2">
+                {/* h2 real (CardTitle renderiza <div>): o shell tem o h1 e as
+                    seções abaixo usam h3 — sem este nível o axe/Lighthouse
+                    acusa heading-order (h1→h3) e o leitor de tela perde a
+                    âncora da página. */}
+                <h2 className="text-3xl font-bold leading-tight tracking-[-0.02em] text-foreground mb-2">
                   {scale.name}
-                </CardTitle>
+                </h2>
                 <p className="text-lg text-muted-foreground">{scale.fullName}</p>
               </div>
 
@@ -562,7 +561,7 @@ export default function GenericScalePage() {
                     Faixa Etária
                   </p>
                   <p className="text-sm font-semibold text-foreground/90">
-                    {ageLabel(scale.ageMin, scale.ageMax)}
+                    {formatScaleAgeRange(scale.ageMin, scale.ageMax)}
                   </p>
                 </div>
                 <div>
@@ -658,7 +657,7 @@ export default function GenericScalePage() {
                 <div
                   className={`p-4 rounded capitalize font-semibold ${
                     scale.licencaUso === "livre"
-                      ? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/40"
+                      ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border border-emerald-500/40"
                       : scale.licencaUso === "comercial"
                         ? "bg-amber-500/10 text-amber-800 dark:text-amber-200 border border-amber-500/40"
                         : scale.licencaUso === "autoral"
@@ -743,7 +742,14 @@ export default function GenericScalePage() {
           </CardContent>
         </Card>
 
-        <InternalScaleApplication scale={scale} />
+        {/* Registro autoral interno (PIN master). Suprimido quando o catálogo
+            declara external_only: instrumento licenciado cuja aplicação
+            acontece FORA do app — oferecer um registro pontuável sob o nome
+            do instrumento contradiria o banner acima e a política de nunca
+            simular instrumento proprietário (AGENTS.md). */}
+        {implStatus !== "external_only" && (
+          <InternalScaleApplication scale={scale} />
+        )}
 
         {/* Instruções de Uso */}
         <Card className="border-card-border mb-6">
@@ -783,9 +789,9 @@ export default function GenericScalePage() {
                     <p className="text-xs text-muted-foreground line-clamp-1">
                       {o.fullName}
                     </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground/80">
+                    <p className="mt-1 text-[11px] text-muted-foreground">
                       {o.respondente.join(" · ")} ·{" "}
-                      {ageLabel(o.ageMin, o.ageMax)}
+                      {formatScaleAgeRange(o.ageMin, o.ageMax)}
                     </p>
                   </Link>
                 ))}

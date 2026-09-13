@@ -419,12 +419,17 @@ check(
 // removida em 09/2026 — uma superfície só). Invariantes preservados: idade da
 // primeira infância em meses (nunca "0 anos"), catálogo completo para fichas
 // sem torná-las aplicáveis, e banner honesto de disponibilidade.
+const ageRangeSource = read("client/src/lib/scaleAgeRange.ts");
 check(
-  fichaSource.includes("m < 24") && fichaSource.includes("function ageLabel"),
-  "ficha: precisão de idade em meses removida",
+  fichaSource.includes('from "@/lib/scaleAgeRange"') &&
+    fichaSource.includes("formatScaleAgeRange(") &&
+    ageRangeSource.includes("months < 24") &&
+    ageRangeSource.includes("remainingMonths"),
+  "ficha: precisão de idade em meses (formatScaleAgeRange) removida",
 );
 check(
-  !fichaSource.includes("function anos("),
+  !fichaSource.includes("function anos(") &&
+    !fichaSource.includes("Math.round(m / 12)"),
   "ficha: arredondamento regressivo para anos inteiros reintroduzido",
 );
 check(
