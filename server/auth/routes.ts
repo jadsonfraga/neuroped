@@ -6,6 +6,8 @@
  *  POST /api/auth/logout    â€” revoga refresh token
  *  GET  /api/auth/me        â€” retorna usuario atual
  *  POST /api/auth/change-password â€” troca senha do usuario logado
+ *  POST /api/auth/forgot-password | /reset-password â€” contrato explicito:
+ *       fluxo atendido apenas em producao (Cloudflare); aqui responde 503.
  */
 
 import type { Express, Request, Response } from "express";
@@ -23,6 +25,7 @@ import { signAccessToken, issueRefreshToken, hashRefreshToken } from "../lib/jwt
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
 import { loginRateLimit } from "../middleware/security.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { PASSWORD_RECOVERY_REMOTE_ONLY } from "./passwordRecoveryContract.js";
 
 export function registerAuthRoutes(app: Express): void {
   // ----- Register -----
@@ -416,6 +419,21 @@ export function registerAuthRoutes(app: Express): void {
       code: "PIN_DISABLED",
     });
   });
+
+  // ----- Password recovery (arquitetura explícita; ver passwordRecoveryContract) -----
+  for (const path of ["/api/auth/forgot-password", "/api/auth/reset-password"] as const) {
+    app.post(path, loginRateLimit, async (req: Request, res: Response) => {
+      await logAudit({
+        eventType: "auth.password.reset.request",
+        context: getAuditContextFromRequest(req),
+        metadata: { path, reason: "remote_only_runtime" },
+        success: false,
+      });
+      return res
+        .status(PASSWORD_RECOVERY_REMOTE_ONLY.status)
+        .json(PASSWORD_RECOVERY_REMOTE_ONLY.body);
+    });
+  }
 
   // ----- Change password -----
   app.post("/api/auth/change-password", requireAuth, async (req: Request, res: Response) => {

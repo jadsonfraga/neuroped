@@ -18,10 +18,18 @@ export default function ForgotPasswordPage() {
     try {
       await requestPasswordReset(email.trim());
       setSent(true);
-    } catch {
+    } catch (err) {
       // A API é anti-enumeração (202 genérico); um erro aqui é indisponibilidade
       // real de rede/backend — sem revelar nada sobre a existência da conta.
-      setError("Não foi possível registrar a solicitação agora. Verifique a conexão e tente novamente.");
+      // Quando o backend explica a indisponibilidade (ex.: runtime local
+      // responde PASSWORD_RESET_REMOTE_ONLY — o fluxo por e-mail vive na
+      // produção), a explicação do servidor é mais honesta que o texto
+      // genérico de conexão. Nenhuma dessas mensagens cita contas.
+      setError(
+        err instanceof Error && err.message && !/\(\d+\)$/.test(err.message)
+          ? err.message
+          : "Não foi possível registrar a solicitação agora. Verifique a conexão e tente novamente.",
+      );
     } finally {
       setSubmitting(false);
     }
