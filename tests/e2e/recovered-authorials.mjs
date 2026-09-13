@@ -76,13 +76,26 @@ try {
     assert.match(await page.getByTestId("recovered-questionnaire").innerText(), /Complete a identificação/);
     await page.locator("#monitor-observer").fill("OBSERVADOR_FIXTURE_SEM_PERSISTENCIA");
     if (c.school) {
-      const start = new Date(); start.setDate(start.getDate() - 22);
-      await page.locator("#monitor-window-start").fill(start.toISOString().slice(0, 10));
+      const currentEnd = await page.locator("#monitor-window-end").inputValue();
+      await page.locator("#monitor-window-start").fill(currentEnd);
     }
     for (let i = 0; i < c.count; i++) await page.locator(`input[name="monitor-item-${i}"][value="${c.value}"]`).check();
     const alerts = page.locator('select[id^="monitor-alert-"]');
     for (let i = 0; i < await alerts.count(); i++) await alerts.nth(i).selectOption(c.id === "adapta-18-sdg" && i === 0 ? "incerto" : "nao");
     await page.locator("#monitor-next-agreed").check();
+    if (c.school) {
+      await page.locator("#monitor-school-window-confirmed").check();
+      await page.locator("#monitor-finish").click();
+      assert.equal(await page.locator("[data-scale-response-report]").count(), 0, "same-day school window must stay blocked");
+      assert.match(await page.getByTestId("recovered-questionnaire").innerText(), /pelo menos 14 dias escolares/);
+      const start = new Date(); start.setDate(start.getDate() - 22);
+      await page.locator("#monitor-window-start").fill(start.toISOString().slice(0, 10));
+      assert.equal(await page.locator("#monitor-school-window-confirmed").isChecked(), false, "changing the school window must invalidate prior confirmation");
+      await page.locator("#monitor-finish").click();
+      assert.equal(await page.locator("[data-scale-response-report]").count(), 0, "plausible dates alone must not create a snapshot");
+      assert.match(await page.getByTestId("recovered-questionnaire").innerText(), /confirmação explícita/);
+      await page.locator("#monitor-school-window-confirmed").check();
+    }
     if (c.operational) {
       await page.locator("#monitor-finish").click();
       assert.equal(await page.locator("[data-scale-response-report]").count(), 0);
@@ -104,7 +117,7 @@ try {
     if (c.no) assert.ok(text.includes("Não calculável com a cobertura observada"));
     else if (c.value === 4) assert.ok(text.includes("100,0% descritivo (não percentil)"));
     else assert.ok(text.includes("3,00/3"));
-    if (c.school) assert.ok(text.includes("Apoio escolar"));
+    if (c.school) { assert.ok(text.includes("Apoio escolar")); assert.ok(text.includes("confirmação explícita registrada")); }
     await switchTabs();
     assert.equal(await page.locator("[data-scale-response-report] pre").first().textContent(), text);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${c.id}: mobile overflow`);
