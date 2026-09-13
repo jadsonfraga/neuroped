@@ -39,16 +39,16 @@ export function parseExactFilterAge(input?: ExactFilterAge): ResolvedFilterAge {
 /** Idades compostas são somadas, não truncadas para a parcela de meses. */
 export function parseFilterSearchAge(query: string): ResolvedFilterAge {
   const text = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  // Um "a" separado do primeiro número pode indicar intervalo em meses,
+  // "a" ou "aos" separado do primeiro número pode indicar intervalo etário,
   // não abreviação de anos. Falha fechado; preserva 5a6m e 5 anos e 6 meses.
-  if (/(?<![\w.,])\d+(?:[.,]\d+)?\s+a\s*\d+(?:[.,]\d+)?\s*(?:meses|mes|m)(?![a-z0-9])/.test(text)) {
+  if (/(?<![\w.,])\d+(?:[.,]\d+)?\s+a(?:os)?\s*\d+(?:[.,]\d+)?\s*(?:anos?|a|meses|mes|m)(?![a-z0-9])/.test(text)) {
     return invalidAge("A busca contém uma faixa ou idade ambígua. Escolha uma faixa nos botões ou informe a idade exata.");
   }
   const matches = [...text.matchAll(/(?<![\w.,])([+-]?\d+(?:[.,]\d+)?)\s*(anos?|a)(?:\s*(?:e\s*)?([+-]?\d+(?:[.,]\d+)?)\s*(?:meses|mes|m))?(?![a-z0-9])|(?<![\w.,])([+-]?\d+(?:[.,]\d+)?)\s*(?:meses|mes|m)(?![a-z0-9])/g)];
   if (!matches.length) return { ...EMPTY };
   if (matches.length !== 1) return invalidAge("Há mais de uma idade na busca. Informe uma única idade nos campos próprios.");
   const match = matches[0];
-  if (/\d\s*(?:[-–—/]|ate|ou|e)\s*$/.test(text.slice(0, match.index))) {
+  if (/\d\s*(?:[-–—/]|aos|ate|ou|e)\s*$/.test(text.slice(0, match.index))) {
     return invalidAge("A busca contém uma faixa ou idade ambígua. Escolha uma faixa nos botões ou informe a idade exata.");
   }
   const yearText = match[1], monthText = match[3] ?? match[4];

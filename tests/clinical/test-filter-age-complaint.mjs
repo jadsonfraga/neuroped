@@ -28,11 +28,14 @@ for (const input of [{ years: "-1", months: "0" }, { years: "5", months: "12" },
   equal(resolve(input, "6-12a", "7 anos").status, "invalid", "entrada inválida não usa faixa/texto como substituto");
 }
 for (const [query, months] of [["5 anos e 6 meses",66], ["5a6m",66], ["5a 6m",66],
+  ["aos 12 meses",12], ["aos 6 anos",72], ["aos 5 anos e 6 meses",66],
   ["1 ano e 1 mês",13], ["24 meses, fala pouco",24], ["216 meses",216], ["7 anos",84],
   ["1,5 anos",18], ["12.5 anos",150], ["0 meses",0], ["cefaleia aos 17 anos e 11 meses",215]]) {
   equal(parseFilterSearchAge(query).ageMonths, months, query);
 }
 for (const query of ["5-6 anos", "5–6 anos", "5 a 6 anos", "5 ou 6 anos", "entre 5 e 6 anos",
+  "dos 5 aos 12 meses", "5 aos 12 meses", "dos 0 aos 11 meses", "dos 5 aos 6 anos",
+  "5 aos 12m", "1,5 aos 6 meses", "dos 5 aos 6a", "5 aos12meses",
   "5 a 6 meses", "de 5 a 6 meses", "0 a 11 meses", "12 a 18 meses", "5 a6m", "5 a 6m", "3 a 4 m", "1,5 a 6 meses",
   "6 meses; irmão 5 anos", "5 anos e 12 meses", "-5 anos", "5.5 meses", "19 anos", "999 meses"]) {
   equal(parseFilterSearchAge(query).status, "invalid", query);
@@ -42,6 +45,7 @@ equal(resolve(blank, "2-4a", "24 meses").ageMonths, 24, "idade pontual refina fa
 equal(resolve(blank, "2-4a", "24 meses").ageBand, null, "busca exata não preserva filtro de sobreposição");
 equal(resolve(blank, "2-4a", "7 anos").status, "invalid", "conflito pede correção");
 for (const band of faixasEtarias) equal(resolve(blank, band.id, "5 a 6 meses, sono").status, "invalid", `intervalo em meses não pode ser resgatado pela faixa ${band.id}`);
+for (const band of faixasEtarias) for (const range of ["dos 5 aos 12 meses", "dos 5 aos 6 anos"]) equal(resolve(blank, band.id, range).status, "invalid", `${range}: faixa não transforma intervalo em idade pontual`);
 equal(resolve({ years: "5", months: "6" }, "2-4a", "7 anos").ageMonths, 66, "campo próprio prevalece");
 for (const band of faixasEtarias) equal(resolve(blank, band.id).ageBand, {min:band.min,max:band.max}, `faixa ${band.id} preservada`);
 equal(formatFilterAge(66), "5 anos e 6 meses");
