@@ -14,17 +14,17 @@
 // Primeira linha por queixa isolada (rotas existentes no app, em ordem de prioridade).
 export const firstLineByQueixa: Record<string, string[]> = {
   tea: ["/mchat", "/ips", "/cars", "/tea", "/generic-scale/vineland", "/testes-diretos"],
-  tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-diretos", "/testes-reconhecimento"],
+  tdah: ["/snap", "/vanderbilt", "/conners", "/brief2", "/sdq", "/testes-diretos"],
   ansiedade: ["/scared", "/sdq", "/cbcl", "/testes-diretos"],
   depressao: ["/cdi2", "/phqa", "/cssrs", "/sdq"],
   suicidio: ["/cssrs", "/phqa"],
-  aprendizagem: ["/tde2", "/testes-academicos", "/testes-diretos", "/testes-reconhecimento"],
-  linguagem: ["/asq3", "/denver", "/testes-diretos", "/testes-reconhecimento"],
+  aprendizagem: ["/tde2", "/testes-diretos"],
+  linguagem: ["/asq3", "/denver", "/testes-diretos"],
   atraso: ["/denver", "/asq3", "/generic-scale/vineland", "/pant"],
   comportamento: ["/sdq", "/cbcl", "/conners", "/vanderbilt", "/eaah"],
   sono: ["/cshq"],
   tiques: ["/ygtss", "/conners"],
-  cognicao: ["/testes-diretos", "/testes-reconhecimento", "/testes-academicos", "/pant"],
+  cognicao: ["/testes-diretos", "/pant"],
   funcionalidade: ["/generic-scale/vineland", "/gmfcs"],
 };
 
@@ -33,13 +33,13 @@ export const firstLineByQueixa: Record<string, string[]> = {
 export const firstLineByCrossed: Record<string, string[]> = {
   "tdah+tea": ["/mchat", "/snap", "/conners", "/generic-scale/vineland", "/sdq"],
   "ansiedade+tdah": ["/snap", "/scared", "/sdq", "/cbcl"],
-  "aprendizagem+tdah": ["/snap", "/testes-academicos", "/testes-diretos", "/tde2"],
+  "aprendizagem+tdah": ["/snap", "/testes-diretos", "/tde2"],
   "ansiedade+depressao": ["/scared", "/cdi2", "/phqa", "/cssrs"],
   "depressao+suicidio": ["/cssrs", "/phqa", "/cdi2"],
-  "linguagem+tea": ["/mchat", "/asq3", "/testes-reconhecimento"],
+  "linguagem+tea": ["/mchat", "/asq3", "/testes-diretos"],
   "atraso+tea": ["/mchat", "/denver", "/asq3", "/generic-scale/vineland"],
   "comportamento+tdah": ["/snap", "/conners", "/sdq", "/eaah"],
-  "aprendizagem+tea": ["/testes-academicos", "/generic-scale/vineland"],
+  "aprendizagem+tea": ["/testes-diretos", "/generic-scale/vineland"],
   "ansiedade+tea": ["/scared", "/sdq", "/cars"],
 };
 

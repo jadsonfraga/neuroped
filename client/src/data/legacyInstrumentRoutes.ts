@@ -32,3 +32,32 @@ export const LEGACY_INSTRUMENT_REDIRECTS: Record<string, string> = {
   // a aplicação real e completa do CBCL vive em /cbcl.
   "/cbcl-interativo": "/cbcl",
 };
+
+/**
+ * Redirects das rotas legadas de teste direto para a Sonda Dez.
+ *
+ * Por que existe: a consolidação "os testes diretos convergem para a Sonda
+ * Dez" (commit f2d7f48) esvaziou 15 páginas em shims de duas linhas que
+ * reexportavam /testes-diretos — 16 rotas e 15 lazy chunks para renderizar a
+ * MESMA página, cada rota com política de acesso própria divergindo da
+ * canônica. Estas entradas preservam bookmarks antigos e fazem a política de
+ * acesso do destino valer também na origem (ver CLINICAL_ROLE_OVERRIDES em
+ * routeGuardPolicy.ts). Sanidade travada por audit-instruments.mjs.
+ */
+export const LEGACY_DIRECT_TEST_REDIRECTS: Record<string, string> = {
+  "/testes-reconhecimento": "/testes-diretos",
+  "/testes-academicos": "/testes-diretos",
+  "/cognitive-lab": "/testes-diretos",
+  "/cognitive-lab/:taskId": "/testes-diretos",
+  "/avaliacao-cognitiva-infantil": "/testes-diretos",
+  "/academico-interativo": "/testes-diretos",
+  "/escrita-desenho": "/testes-diretos",
+  "/conhecimento-visual": "/testes-diretos",
+  "/motricidade-teste": "/testes-diretos",
+  "/conhecimentos-gerais": "/testes-diretos",
+  "/funcoes-executivas": "/testes-diretos",
+  "/atencao-concentracao": "/testes-diretos",
+  "/linguagem-fonologia": "/testes-diretos",
+  "/memoria-teste": "/testes-diretos",
+  "/processamento-visuoauditivo": "/testes-diretos",
+};

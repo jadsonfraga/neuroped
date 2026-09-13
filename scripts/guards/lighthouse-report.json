@@ -1,14 +1,14 @@
 {
   "/": {
-    "performance": 95,
+    "performance": 97,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 349,
-      "lcpMs": 1537,
-      "speedIndexMs": 910,
-      "tbtMs": 50,
+      "fcpMs": 254,
+      "lcpMs": 1268,
+      "speedIndexMs": 602,
+      "tbtMs": 25,
       "cls": 0,
       "actionableCls": 0
     },
@@ -102,23 +102,13 @@
     "failedAudits": [
       {
         "id": "largest-contentful-paint",
-        "score": 0.79,
+        "score": 0.88,
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "speed-index",
-        "score": 0.98,
-        "title": "Speed Index"
-      },
-      {
         "id": "max-potential-fid",
-        "score": 0.96,
-        "title": "Max Potential First Input Delay"
-      },
-      {
-        "id": "interactive",
         "score": 0.99,
-        "title": "Time to Interactive"
+        "title": "Max Potential First Input Delay"
       },
       {
         "id": "image-delivery-insight",
@@ -149,10 +139,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 262,
-      "lcpMs": 1025,
-      "speedIndexMs": 706,
-      "tbtMs": 54,
+      "fcpMs": 272,
+      "lcpMs": 1012,
+      "speedIndexMs": 611,
+      "tbtMs": 7,
       "cls": 0.01,
       "actionableCls": 0.01
     },
@@ -250,11 +240,6 @@
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "max-potential-fid",
-        "score": 0.97,
-        "title": "Max Potential First Input Delay"
-      },
-      {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
@@ -288,10 +273,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 249,
-      "lcpMs": 549,
-      "speedIndexMs": 449,
-      "tbtMs": 5,
+      "fcpMs": 279,
+      "lcpMs": 542,
+      "speedIndexMs": 400,
+      "tbtMs": 3,
       "cls": 0,
       "actionableCls": 0
     },
@@ -407,10 +392,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 266,
-      "lcpMs": 556,
-      "speedIndexMs": 455,
-      "tbtMs": 6,
+      "fcpMs": 261,
+      "lcpMs": 561,
+      "speedIndexMs": 431,
+      "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
     },
@@ -526,10 +511,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 262,
-      "lcpMs": 1050,
-      "speedIndexMs": 515,
-      "tbtMs": 40,
+      "fcpMs": 272,
+      "lcpMs": 1060,
+      "speedIndexMs": 510,
+      "tbtMs": 12,
       "cls": 0,
       "actionableCls": 0
     },
@@ -627,11 +612,6 @@
         "title": "Largest Contentful Paint"
       },
       {
-        "id": "max-potential-fid",
-        "score": 0.99,
-        "title": "Max Potential First Input Delay"
-      },
-      {
         "id": "valid-source-maps",
         "score": 0,
         "title": "Missing source maps for large first-party JavaScript"
@@ -666,8 +646,8 @@
     "seo": 100,
     "metrics": {
       "fcpMs": 261,
-      "lcpMs": 541,
-      "speedIndexMs": 433,
+      "lcpMs": 521,
+      "speedIndexMs": 413,
       "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
@@ -784,9 +764,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 273,
-      "lcpMs": 561,
-      "speedIndexMs": 541,
+      "fcpMs": 257,
+      "lcpMs": 537,
+      "speedIndexMs": 539,
       "tbtMs": 0,
       "cls": 0.025,
       "actionableCls": 0
@@ -903,9 +883,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 260,
-      "lcpMs": 529,
-      "speedIndexMs": 493,
+      "fcpMs": 254,
+      "lcpMs": 534,
+      "speedIndexMs": 484,
       "tbtMs": 0,
       "cls": 0.04,
       "actionableCls": 0
@@ -1067,8 +1047,8 @@
     "seo": 100,
     "metrics": {
       "fcpMs": 264,
-      "lcpMs": 554,
-      "speedIndexMs": 482,
+      "lcpMs": 524,
+      "speedIndexMs": 487,
       "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
@@ -1185,10 +1165,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 273,
-      "lcpMs": 559,
-      "speedIndexMs": 508,
-      "tbtMs": 2,
+      "fcpMs": 256,
+      "lcpMs": 536,
+      "speedIndexMs": 475,
+      "tbtMs": 0,
       "cls": 0.006,
       "actionableCls": 0
     },
@@ -1305,10 +1285,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 264,
-      "lcpMs": 584,
-      "speedIndexMs": 462,
-      "tbtMs": 0,
+      "fcpMs": 263,
+      "lcpMs": 563,
+      "speedIndexMs": 448,
+      "tbtMs": 5,
       "cls": 0,
       "actionableCls": 0
     },
@@ -1386,10 +1366,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 273,
-      "lcpMs": 542,
-      "speedIndexMs": 468,
-      "tbtMs": 0,
+      "fcpMs": 262,
+      "lcpMs": 522,
+      "speedIndexMs": 437,
+      "tbtMs": 15,
       "cls": 0,
       "actionableCls": 0
     },

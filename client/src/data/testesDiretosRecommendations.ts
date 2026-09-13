@@ -20,7 +20,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "atencao-concentracao",
     name: "Atenção e Concentração",
-    route: "/atencao-concentracao",
+    route: "/testes-diretos",
     queixas: ["tdah", "aprendizagem", "comportamento"],
     ageMin: 48,
     ageMax: 144,
@@ -32,7 +32,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "funcoes-executivas",
     name: "Funções Executivas",
-    route: "/funcoes-executivas",
+    route: "/testes-diretos",
     queixas: ["tdah", "cognicao", "comportamento"],
     ageMin: 48,
     ageMax: 144,
@@ -46,7 +46,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "linguagem-fonologia",
     name: "Linguagem e Fonologia",
-    route: "/linguagem-fonologia",
+    route: "/testes-diretos",
     queixas: ["linguagem", "aprendizagem", "atraso"],
     ageMin: 36,
     ageMax: 120,
@@ -60,7 +60,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "academico-interativo",
     name: "Acadêmico Interativo",
-    route: "/academico-interativo",
+    route: "/testes-diretos",
     queixas: ["aprendizagem", "tdah", "cognicao"],
     ageMin: 72,
     ageMax: 168,
@@ -74,7 +74,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "motricidade-teste",
     name: "Motricidade",
-    route: "/motricidade-teste",
+    route: "/testes-diretos",
     queixas: ["motor", "atraso", "cognicao"],
     ageMin: 24,
     ageMax: 108,
@@ -88,7 +88,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "conhecimento-visual",
     name: "Conhecimento Visual",
-    route: "/conhecimento-visual",
+    route: "/testes-diretos",
     queixas: ["cognicao", "atraso", "aprendizagem"],
     ageMin: 48,
     ageMax: 132,
@@ -102,7 +102,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "escrita-desenho",
     name: "Escrita e Desenho",
-    route: "/escrita-desenho",
+    route: "/testes-diretos",
     queixas: ["aprendizagem", "motor", "atraso"],
     ageMin: 36,
     ageMax: 132,
@@ -116,7 +116,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "conhecimentos-gerais",
     name: "Conhecimentos Gerais",
-    route: "/conhecimentos-gerais",
+    route: "/testes-diretos",
     queixas: ["cognicao", "atraso", "aprendizagem"],
     ageMin: 60,
     ageMax: 144,
@@ -130,7 +130,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "memoria-teste",
     name: "Memória",
-    route: "/memoria-teste",
+    route: "/testes-diretos",
     queixas: ["aprendizagem", "atraso", "cognicao", "tdah"],
     ageMin: 36,
     ageMax: 144,
@@ -144,7 +144,7 @@ export const testesDiretosRecommendations: DirectTestRecommendation[] = [
   {
     id: "processamento-visuoauditivo",
     name: "Processamento Visual-Auditivo",
-    route: "/processamento-visuoauditivo",
+    route: "/testes-diretos",
     queixas: ["linguagem", "aprendizagem", "cognicao"],
     ageMin: 48,
     ageMax: 144,

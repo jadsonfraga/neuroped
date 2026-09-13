@@ -119,8 +119,6 @@ const filterCatalog = unique([
 
 const VERIFIED_INTERACTIVE_ROUTES = new Set([
   "/testes-diretos",
-  "/testes-reconhecimento",
-  "/testes-academicos",
   "/mchat",
   "/snap",
   "/vanderbilt",
