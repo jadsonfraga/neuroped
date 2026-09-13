@@ -56,12 +56,19 @@ de escalas do app.
 
 Reproduzido nesta sessão: após rodar o prepare na árvore de trabalho, o import
 do módulo falha e `secure-storage.test.ts` quebra com erro que não menciona a
-causa. `tests/unit/authorial-sources-committed-raw.test.mjs` passa a falhar
-antes, nomeando o arquivo, o instrumento e o remédio (`git checkout --`). Está
-na cadeia `test:quick-wins`, executada por `test-and-build.yml` e por
-`verify:release`.
+causa. `scripts/guards/assert-authorial-sources-raw.mjs` passa a falhar antes,
+nomeando o arquivo, o instrumento e o remédio (`git checkout --`).
+
+A posição importa: o guard roda em `prebuild`/`prebuild:client` — antes de
+qualquer bundle, já que o cliente importa o catálogo — e como primeiro comando
+de `test:quick-wins`, à frente de `secure-storage.test.ts`, que importaria o
+módulo e abortaria primeiro com o erro opaco. Cobertura de CI por
+`test-and-build.yml` e `verify:release`.
 
 O guard cobre as duas assinaturas da saída do prepare: presença de
 `deliveryReview` nos registros commitados e colisão de id ou nome entre as três
-fontes. Verificado em ambos os sentidos — falha com o catálogo preparado, passa
-com o catálogo restaurado.
+fontes. `tests/unit/authorial-sources-committed-raw.test.mjs` exercita os dois
+sentidos sem depender de rodar o prepare: o estado commitado passa, e catálogos
+sintéticos com overlay, id repetido ou nome repetido falham com o diagnóstico
+esperado. Verificado também na árvore real — com o catálogo preparado, tanto
+`npm run build` quanto `npm run test:quick-wins` param no guard.
