@@ -208,7 +208,18 @@ assert.doesNotMatch(
 // Sonda Dez substitui a antiga vitrine de módulos diretos. O contrato aqui
 // protege o novo objetivo: faixa etária exata, transcrição integral, análise
 // descritiva com trava antinormatização e ausência de persistência silenciosa.
-assert.match(directTestsSource, /const BANDS:\s*BandDef\[\]\s*=\s*\[/);
+assert.match(
+  directTestsSource,
+  /const BANDS:\s*BandDef\[\]\s*=\s*SONDA_DEZ_PROTOCOL/,
+);
+assert.match(
+  directTestsSource,
+  /import[\s\S]*SONDA_DEZ_PROTOCOL[\s\S]*from ["']@\/data\/sondaDezProtocol["']/,
+);
+const { SONDA_DEZ_PROTOCOL } =
+  await import("../../client/src/data/sondaDezProtocol.ts");
+assert.equal(SONDA_DEZ_PROTOCOL.length, 6);
+assert.equal(SONDA_DEZ_PROTOCOL.flatMap((band) => band.missions).length, 42);
 for (const [id, minMonths, maxMonths] of [
   ["12-23m", 12, 23],
   ["24-35m", 24, 35],
@@ -217,13 +228,11 @@ for (const [id, minMonths, maxMonths] of [
   ["8-11a", 96, 143],
   ["12-17a", 144, 215],
 ]) {
-  assert.match(
-    directTestsSource,
-    new RegExp(
-      `id: "${id}"[\\s\\S]{0,180}?minMonths: ${minMonths},[\\s\\S]{0,80}?maxMonths: ${maxMonths}`,
-    ),
-    `${id} deve preservar a faixa canônica em meses`,
-  );
+  const band = SONDA_DEZ_PROTOCOL.find((item) => item.id === id);
+  assert.ok(band, `${id} deve existir`);
+  assert.equal(band.minMonths, minMonths, `${id}: fronteira inferior`);
+  assert.equal(band.maxMonths, maxMonths, `${id}: fronteira superior`);
+  assert.equal(band.missions.length, 7, `${id}: sete missões preservadas`);
 }
 assert.match(
   directTestsSource,
@@ -232,14 +241,20 @@ assert.match(
 );
 assert.match(directTestsSource, /const reportText = band/);
 assert.match(directTestsSource, /"REGISTRO COMPLETO"/);
-assert.match(directTestsSource, /`Fala\/pergunta: \$\{item\.say\.join\(" \/ "\)\}`/);
+assert.match(
+  directTestsSource,
+  /`Fala\/pergunta: \$\{item\.say\.join\(" \/ "\)\}`/,
+);
 assert.match(
   directTestsSource,
   /item\.fields\.map\(\(field\) => `• \$\{field\.label\}: \$\{fieldValueText\(field, record\?\.values\[field\.id\]\)\}`\)/,
   "cada campo observado deve aparecer no registro completo",
 );
 assert.match(directTestsSource, /"ANÁLISE AUTOMÁTICA DESCRITIVA"/);
-assert.match(directTestsSource, /const auditFindings = auditAnalysis\(analysis\)/);
+assert.match(
+  directTestsSource,
+  /const auditFindings = auditAnalysis\(analysis\)/,
+);
 assert.match(
   directTestsSource,
   /disabled=\{auditFindings\.length > 0\}[\s\S]*?onClick=\{copyReport\}/,
@@ -351,7 +366,9 @@ assert.doesNotMatch(
   "backup antigo não pode reintroduzir pontuação",
 );
 
-const centralizedResponseValidation = source("functions/api/_clinicalValidation.ts");
+const centralizedResponseValidation = source(
+  "functions/api/_clinicalValidation.ts",
+);
 assert.match(centralizedResponseValidation, /code:\s*"RESPONSES_REQUIRED"/);
 
 for (const apiPath of [

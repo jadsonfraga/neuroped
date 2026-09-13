@@ -1,0 +1,65 @@
+{
+  "date": "2026-09-13",
+  "version": "2026-09-13.2",
+  "base_commit": "0c9dfa2886edfbee0096d82383777a9339263b77",
+  "synthetic_only": true,
+  "human_usability_test": false,
+  "browser": "Chromium 153.0.8010.0 (Linux, headless)",
+  "e2e": {
+    "bands": 6,
+    "missions": 42,
+    "steps": 76,
+    "downloads_byte_equal": 6,
+    "axe_scenarios": 15,
+    "axe_violations": 0
+  },
+  "unit_tests": 24,
+  "commands": [
+    {
+      "command": "npm run test:sonda",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:cognitive",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:scale-responses",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run check",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run build:client",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run audit:design",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run test:podium",
+      "exit_code": 0
+    },
+    {
+      "command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/sonda-browser/chromium npm run test:e2e:sonda",
+      "exit_code": 0
+    }
+  ],
+  "source_git_blob_sha1": {
+    "client/src/components/sonda-dez/SondaDigitalActivity.tsx": "c6252bec0ce3b0a338e5de5b086f0d40dbccd140",
+    "client/src/components/sonda-dez/SondaDigitalArt.tsx": "d99ceefd5a04360912de71aff4afcc096f1da0ab",
+    "client/src/components/sonda-dez/SondaDigitalGuided.tsx": "89fac0da7333c72e132589e4b306e0ec0a42ee12",
+    "client/src/data/sondaDezDigital.ts": "fabdd8b07f76376f39726041c698aa7d4c5e367c",
+    "client/src/lib/sondaDezSession.ts": "ee8dcc702d06a8a8d1dee0f5294433d66642814a",
+    "tests/clinical/test-scale-response-delivery.mjs": "6014246400a891c15c269a3f19bb8351636d2490",
+    "tests/e2e/sonda-dez-digital.mjs": "8de3ff025eb1872f17ee35cd22052c136ae3cadb",
+    "tests/unit/sonda-dez-digital.test.ts": "a5b479ce9ffb6c027fa1d31c1a6d1ae4fd316eb9"
+  }
+}
