@@ -12,6 +12,10 @@ import {
   parseReferenceAgeRange,
 } from "../../client/src/lib/instrument-library-filters.ts";
 import {
+  dailyResponseContractIsUnambiguous,
+  dailyResponseOptionsForMode,
+} from "../../client/src/lib/daily-inventory-response-contract.ts";
+import {
   isValidCalendarDate,
   positiveModulo,
   replaceDatedRecord,
@@ -111,6 +115,39 @@ const libraryPage = await readFile(
   path.join(ROOT, "client/src/pages/biblioteca-instrumentos.tsx"),
   "utf8",
 );
+const pr858Record = JSON.parse(
+  await readFile(
+    path.join(
+      ROOT,
+      "client/src/data/daily-authorial/2026-09-11-contingencia-apr.json",
+    ),
+    "utf8",
+  ),
+);
+assert.equal(dailyResponseContractIsUnambiguous(pr858Record), true);
+const safetyOptions = dailyResponseOptionsForMode(
+  pr858Record,
+  "presente_ausente",
+);
+assert.deepEqual(
+  safetyOptions.map(({ storageValue, scoreValue }) => [storageValue, scoreValue]),
+  [["present", null], ["absent", null], ["unknown", null]],
+);
+assert.equal(
+  safetyOptions.find((option) => option.storageValue === "absent")?.label,
+  "Ausente — houve oportunidade de observar",
+);
+assert.notEqual(
+  safetyOptions.find((option) => option.semantic === "absent")?.storageValue,
+  safetyOptions.find((option) => option.semantic === "unknown")?.storageValue,
+);
+assert.match(libraryPage, /dailyResponseOptionsForMode\(record, mode\)/);
+assert.doesNotMatch(
+  libraryPage,
+  /record\.responseOptions\.map\(\(option\)/,
+  "a UI não pode aplicar opções globais a todo responseMode",
+);
+
 const watchdogWorkflow = await readFile(
   path.join(ROOT, ".github/workflows/daily-authorial-watchdog.yml"),
   "utf8",

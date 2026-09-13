@@ -26,6 +26,18 @@ sem total e sem inferência de normalidade para informação ausente.
 - Há itens de dificuldade e itens de apoio/recuperação em direções diferentes.
 Não converter o perfil em total de gravidade ou gráfico numérico agregado.
 
+## Correção de contrato — 13/09/2026
+
+O JSON determinístico permaneceu sem diff Git e sem edição manual. A camada de
+apresentação agora resolve opções por `responseMode`: frequência conserva as
+opções do registro; `presente_ausente` usa Presente, Ausente com oportunidade
+de observação e Desconhecido por informação insuficiente. Os três estados têm
+tokens semânticos distintos e nenhum item binário recebe valor numérico de
+escore. Respostas descritivas permanecem sem escala fechada.
+
+A regressão cobre CT13–CT15, separa `absent` de `unknown` e impede a UI de
+voltar a aplicar `responseOptions` globais indiscriminadamente.
+
 Parecer técnico: manter como rascunho; decidir se a repetição é intencional como
 continuidade ou se deve ser consolidada. Nenhuma aprovação clínica foi atribuída.
 Revisão limitada ao contrato dos arquivos; não é validação científica/psicométrica.
