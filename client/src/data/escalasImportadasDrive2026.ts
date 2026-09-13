@@ -6,6 +6,7 @@ import { escalasAutoraisDrive2026Lote4 } from "./escalasAutoraisDrive2026Lote4";
 import { escalasAutoraisDrive2026Lote5 } from "./escalasAutoraisDrive2026Lote5";
 import { escalasAutoraisDrive2026Lote6 } from "./escalasAutoraisDrive2026Lote6";
 import { authorialMonitoringCatalog } from "./authorialMonitoring";
+import { regula20CatalogEntry } from "./regula20";
 
 /**
  * Composição histórica do catálogo de importações e instrumentos autorais.
@@ -31,4 +32,5 @@ export const escalasImportadasDrive2026: ScaleEntry[] = [
   ...escalasAutoraisDrive2026Lote5,
   ...escalasAutoraisDrive2026Lote6,
   ...authorialMonitoringCatalog,
+  regula20CatalogEntry,
 ];
