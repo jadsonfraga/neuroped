@@ -1,0 +1,173 @@
+SONDA DEZ — MODALIDADE DIGITAL GUIADA v2026-09-13.2
+Adaptação digital autoral da Sonda Dez / AFN-10; registro observacional piloto, requer validação clínica; sem normas, percentis, pontos de corte ou diagnóstico.
+Estado: registro preenchido para revisão médica. Missões registradas: 7/7.
+Código: CASO-SINTETICO. Idade: 96 meses. Trilha: 8–11 anos. Escolaridade: não informada.
+Aplicadora (código): não informado. Tempo ativo: 124s; referência operacional 600s.
+Interferentes: Aplicação sem som eletrônico.
+Alertas ao médico: nenhum assinalado.
+Familiarização com controles durante a aplicação: não acionada. Eventos do ensaio não entram nas respostas das missões.
+
+1. Pragmática espontânea
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Conversar e escutar. Instrução: Me conta como foi seu dia até chegar aqui.
+Apresentação: concluída.
+Organização: boa.
+Descrição da aplicadora: boa.
+Reciprocidade: boa.
+Descrição da aplicadora: boa.
+Mantém tópico: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: A pragmática é descrita a partir desta conversa breve e deve ser correlacionada com contextos naturais.
+
+2. Inferência social
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Uma cena com mais de uma leitura. Instrução: O que acontece? Como a pessoa se sente? O que faz você pensar isso?
+Apresentação: concluída.
+Identifica contexto: sim.
+Descrição da aplicadora: sim.
+Identifica emoção: sim.
+Descrição da aplicadora: sim.
+Justificativa: I.
+Surgiu após uma instrução direta.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Uma justificativa espontânea mostra que a criança explicitou pistas usadas; ausência nesta cena não define cognição social global.
+
+3. Memória operacional
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Ordem 1. Instrução: Toque na colher, no carro, na bola e no bebê, nessa ordem.
+Apresentação: concluída.
+  Evento 125ms: objeto-tocado — bola
+  Evento 195ms: objeto-tocado — carro
+  Evento 195ms: relação — bola para carro
+Etapas corretas: 0.
+Contagem bruta, sem comparação normativa.
+Ordem preservada: sim.
+Descrição da aplicadora: sim.
+Pediu repetição: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Pedir repetição pode ser estratégia adaptativa; registre em separado do número de etapas executadas.
+
+4. Atenção seletiva/sustentada
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Busca visual de 60 segundos. Instrução: Marque apenas os círculos com ponto dentro. Você pode desmarcar tocando de novo.
+Apresentação: concluída.
+  Evento 0ms: grade-apresentada — 24
+  Evento 113ms: marcação — {"position":0,"selected":true}
+  Evento 186ms: marcação — {"position":0,"selected":false}
+  Evento 221ms: marcação — {"position":1,"selected":true}
+  Evento 60000ms: grade-concluida — {"hits":0,"omissions":8,"commissions":1,"selected":[1]}
+Alvos marcados: 0.
+Contagem bruta, sem comparação normativa.
+Omissões: 8.
+Contagem bruta, sem comparação normativa.
+Falsos positivos: 1.
+Contagem bruta, sem comparação normativa.
+Varredura: organizada.
+Descrição da aplicadora: organizada.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Varredura organizada ou aleatória descreve a estratégia visível; omissões e falsos positivos permanecem medidas brutas desta grade.
+
+5. Inibição verbal
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Regra verbal. Instrução: Quando eu disser DIA, responda NOITE. Quando eu disser NOITE, responda DIA.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 107ms: resposta-verbal — {"item":1,"stimulus":"DIA","answer":"NOITE"}
+  Evento 2500ms: apresentado — 1
+  Evento 2655ms: resposta-verbal — {"item":2,"stimulus":"NOITE","answer":"DIA"}
+  Evento 5000ms: apresentado — 2
+  Evento 5188ms: resposta-verbal — {"item":3,"stimulus":"DIA","answer":"NOITE"}
+  Evento 7500ms: apresentado — 3
+  Evento 7718ms: resposta-verbal — {"item":4,"stimulus":"DIA","answer":"NOITE"}
+  Evento 10000ms: apresentado — 4
+  Evento 10257ms: resposta-verbal — {"item":5,"stimulus":"NOITE","answer":"DIA"}
+  Evento 12500ms: apresentado — 5
+  Evento 12789ms: resposta-verbal — {"item":6,"stimulus":"NOITE","answer":"DIA"}
+  Evento 15000ms: apresentado — 6
+  Evento 15323ms: resposta-verbal — {"item":7,"stimulus":"DIA","answer":"NOITE"}
+  Evento 17500ms: apresentado — 7
+  Evento 17856ms: resposta-verbal — {"item":8,"stimulus":"NOITE","answer":"DIA"}
+  Evento 20000ms: apresentado — 8
+  Evento 20390ms: resposta-verbal — {"item":9,"stimulus":"DIA","answer":"NOITE"}
+  Evento 22500ms: apresentado — 9
+  Evento 22935ms: resposta-verbal — {"item":10,"stimulus":"NOITE","answer":"DIA"}
+  Evento 25000ms: apresentado — 10
+  Evento 25477ms: resposta-verbal — {"item":11,"stimulus":"NOITE","answer":"DIA"}
+  Evento 27500ms: apresentado — 11
+  Evento 28012ms: resposta-verbal — {"item":12,"stimulus":"DIA","answer":"NOITE"}
+  Evento 30000ms: serie-concluida — 12
+Acertos: 12.
+Contagem bruta, sem comparação normativa.
+Erros impulsivos: 0.
+Contagem bruta, sem comparação normativa.
+Autocorreções: 0.
+Contagem bruta, sem comparação normativa.
+Latência: estável.
+Descrição da aplicadora: estável.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Erro impulsivo aqui significa resposta automática antes de aplicar a regra oposta; não equivale por si só a impulsividade clínica.
+
+6. Flexibilidade
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Regra verbal. Instrução: Agora mudou: quando eu disser DIA, responda SOL. Quando eu disser NOITE, responda LUA.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 146ms: resposta-verbal — {"item":1,"stimulus":"DIA","answer":"SOL"}
+  Evento 2500ms: apresentado — 1
+  Evento 2685ms: resposta-verbal — {"item":2,"stimulus":"NOITE","answer":"LUA"}
+  Evento 5000ms: apresentado — 2
+  Evento 5218ms: resposta-verbal — {"item":3,"stimulus":"DIA","answer":"SOL"}
+  Evento 7500ms: apresentado — 3
+  Evento 7749ms: resposta-verbal — {"item":4,"stimulus":"DIA","answer":"SOL"}
+  Evento 10000ms: apresentado — 4
+  Evento 10284ms: resposta-verbal — {"item":5,"stimulus":"NOITE","answer":"LUA"}
+  Evento 12500ms: apresentado — 5
+  Evento 12817ms: resposta-verbal — {"item":6,"stimulus":"NOITE","answer":"LUA"}
+  Evento 15000ms: apresentado — 6
+  Evento 15360ms: resposta-verbal — {"item":7,"stimulus":"DIA","answer":"SOL"}
+  Evento 17500ms: apresentado — 7
+  Evento 17905ms: resposta-verbal — {"item":8,"stimulus":"NOITE","answer":"LUA"}
+  Evento 20000ms: serie-concluida — 8
+Acertos: 8.
+Contagem bruta, sem comparação normativa.
+Perseverações: 0.
+Contagem bruta, sem comparação normativa.
+Adaptação: rápida.
+Descrição da aplicadora: rápida.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Adaptação descreve o comportamento após a troca; não há ponto de corte para rápida/gradual nesta prova piloto.
+
+7. Planejamento + imprevisto
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Ordenar a manhã. Instrução: Organize esta rotina antes de sair às 7h30.
+Apresentação: concluída.
+  Evento 152ms: plano-reiniciado — 
+  Evento 254ms: cartão-ordenado — Sair às 7h30
+  Evento 316ms: cartão-ordenado — Conferir a mochila
+  Evento 367ms: cartão-ordenado — Escovar os dentes
+  Evento 416ms: cartão-ordenado — Tomar café
+  Evento 466ms: cartão-ordenado — Vestir-se
+  Evento 1597ms: plano-final — ["Sair às 7h30","Conferir a mochila","Escovar os dentes","Tomar café","Vestir-se"]
+Etapa 2 — Modificar o plano. Instrução: O material ainda não está pronto. O que muda?
+Apresentação: concluída.
+  Evento 235ms: plano-reiniciado — 
+  Evento 319ms: cartão-ordenado — Sair às 7h30
+  Evento 368ms: cartão-ordenado — Conferir a mochila
+  Evento 417ms: cartão-ordenado — Escovar os dentes
+  Evento 488ms: cartão-ordenado — Tomar café
+  Evento 549ms: cartão-ordenado — Vestir-se
+  Evento 596ms: plano-final — ["Sair às 7h30","Conferir a mochila","Escovar os dentes","Tomar café","Vestir-se"]
+Prioriza: sim.
+Descrição da aplicadora: sim.
+Sequência: coerente.
+Descrição da aplicadora: coerente.
+Flexibiliza após imprevisto: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Planejamento e replanejamento são registrados como respostas à situação proposta; o produto não estima função executiva por norma.
+
+Entrega à família: “Registramos como participou destas atividades e quanta ajuda precisou. O médico vai reunir estas observações com a história e as outras avaliações.”
+Próxima ação: entregar o registro ao médico; informar interferentes e alertas antes da interpretação. Não comunicar diagnóstico ou normalidade pela Sonda.
+Não há gravação de áudio/vídeo nem salvamento automático de dados clínicos nesta tela.
