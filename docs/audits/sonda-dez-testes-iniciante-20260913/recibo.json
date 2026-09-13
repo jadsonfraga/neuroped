@@ -52,14 +52,14 @@
       "exit_code": 0
     }
   ],
-  "source_sha256": {
-    "client/src/components/sonda-dez/SondaDigitalActivity.tsx": "588e7602f7ae45e046e47487d145cd66fbd72f70aa64be053214578e9836c699",
-    "client/src/components/sonda-dez/SondaDigitalArt.tsx": "c6ed5c00b11972e4eea730c4e2f40871dcb7e82a80384c68dca8d290029126e8",
-    "client/src/components/sonda-dez/SondaDigitalGuided.tsx": "900832111880918a725dc6d5a7a48c744795afc07de174ea77d11ecdfc41fd08",
-    "client/src/data/sondaDezDigital.ts": "72eed41f91e4d4ca243f2a03ed01120b9dbf682bad1580a46d28edac1b35ebd2",
-    "client/src/lib/sondaDezSession.ts": "3b87bd05e5c30ac6a87bb9ccb0c9aad3a3590b642cf433c95dab72ce67d38546",
-    "tests/clinical/test-scale-response-delivery.mjs": "85b2aede7d69dd9c01c81d1499a6a5745da53f061011fc18ae174bdc9edf8760",
-    "tests/e2e/sonda-dez-digital.mjs": "f3890a04a01f8de47b12de57f89759a022ea4e8f6ce4556861524968a6e510be",
-    "tests/unit/sonda-dez-digital.test.ts": "dedcb18dadbd0e05c8c5490cbc8f7eac588bf866bb4edee89a43d41baf885e27"
+  "source_git_blob_sha1": {
+    "client/src/components/sonda-dez/SondaDigitalActivity.tsx": "c6252bec0ce3b0a338e5de5b086f0d40dbccd140",
+    "client/src/components/sonda-dez/SondaDigitalArt.tsx": "d99ceefd5a04360912de71aff4afcc096f1da0ab",
+    "client/src/components/sonda-dez/SondaDigitalGuided.tsx": "89fac0da7333c72e132589e4b306e0ec0a42ee12",
+    "client/src/data/sondaDezDigital.ts": "fabdd8b07f76376f39726041c698aa7d4c5e367c",
+    "client/src/lib/sondaDezSession.ts": "ee8dcc702d06a8a8d1dee0f5294433d66642814a",
+    "tests/clinical/test-scale-response-delivery.mjs": "6014246400a891c15c269a3f19bb8351636d2490",
+    "tests/e2e/sonda-dez-digital.mjs": "8de3ff025eb1872f17ee35cd22052c136ae3cadb",
+    "tests/unit/sonda-dez-digital.test.ts": "a5b479ce9ffb6c027fa1d31c1a6d1ae4fd316eb9"
   }
 }

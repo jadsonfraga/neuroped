@@ -66,7 +66,7 @@ Navegador: Chromium 153.0.8010.0, Linux, execução local do build. Os testes de
 
 Provas versionadas:
 
-- [Recibo com hashes dos arquivos testados](sonda-dez-testes-iniciante-20260913/recibo.json) e [log da execução final](sonda-dez-testes-iniciante-20260913/execucao-e2e.log).
+- [Recibo com identificadores Git dos arquivos testados](sonda-dez-testes-iniciante-20260913/recibo.json) e [log da execução final](sonda-dez-testes-iniciante-20260913/execucao-e2e.log). Na reconciliação para release, os hashes SHA-256 foram substituídos pelos IDs de blob retornados por `git hash-object <arquivo>`: a auditoria de acesso interpreta literais de 64 caracteres como possíveis verificadores de PIN. Os IDs permitem conferir os mesmos bytes testados sem alterar ou excepcionar o guard de segurança.
 - [Resultados de acessibilidade](sonda-dez-testes-iniciante-20260913/a11y.json).
 - Capturas: [aplicação móvel](sonda-dez-testes-iniciante-20260913/aplicacao-mobile.png), [estímulo da criança](sonda-dez-testes-iniciante-20260913/objetos-mobile.png), [revisão desktop](sonda-dez-testes-iniciante-20260913/revisao-desktop.png), [revisão em tema escuro](sonda-dez-testes-iniciante-20260913/revisao-dark-mobile.png).
 - Registros sintéticos: [12–23 meses](sonda-dez-testes-iniciante-20260913/registro-12-23m.txt), [24–35 meses](sonda-dez-testes-iniciante-20260913/registro-24-35m.txt), [3–4 anos](sonda-dez-testes-iniciante-20260913/registro-3-4a.txt), [5–7 anos](sonda-dez-testes-iniciante-20260913/registro-5-7a.txt), [8–11 anos](sonda-dez-testes-iniciante-20260913/registro-8-11a.txt), [12–17 anos](sonda-dez-testes-iniciante-20260913/registro-12-17a.txt).
