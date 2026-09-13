@@ -4,10 +4,29 @@
   .np-product-utility { display: none; }
 
   .np-app-shell {
+    --np-elevation-soft: 0 1px 1px hsl(var(--foreground) / .018), 0 18px 46px -36px hsl(214 68% 8% / .34);
+    --np-elevation-card: 0 1px 1px hsl(var(--foreground) / .025), 0 18px 44px -34px hsl(214 68% 8% / .42);
+    --np-hairline: hsl(var(--border) / .74);
+    --np-gold-hairline: hsl(41 54% 54% / .22);
+    position: relative;
+    isolation: isolate;
     background:
       radial-gradient(circle at 74% -8%, hsl(41 54% 54% / .055), transparent 24rem),
+      radial-gradient(circle at 22% 0%, hsl(var(--primary) / .035), transparent 31rem),
       hsl(var(--background));
   }
+
+  .np-app-content {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    scrollbar-gutter: stable;
+  }
+  .np-app-content ::selection {
+    background: hsl(var(--primary) / .17);
+    color: hsl(var(--foreground));
+  }
+  .np-app-content :where(h1, h2) { text-wrap: balance; }
+  .np-app-content :where(p, li) { text-wrap: pretty; }
 
   .np-app-sidebar {
     background: linear-gradient(180deg, hsl(214 68% 13%), hsl(214 62% 11%)) !important;
@@ -68,8 +87,19 @@
     padding-top: clamp(1rem, 4vh, 3rem) !important;
   }
   body:has([data-testid='signature-login']) .np-signature-login {
+    position: relative;
     margin-top: 0 !important;
-    box-shadow: 0 28px 80px -52px hsl(214 68% 8% / .5) !important;
+    border-color: hsl(var(--border) / .7) !important;
+    box-shadow: 0 32px 90px -56px hsl(214 68% 8% / .58) !important;
+    overflow: clip;
+  }
+  body:has([data-testid='signature-login']) .np-signature-login::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / .5);
   }
   .np-login-session-entry {
     position: fixed;
@@ -98,9 +128,36 @@
   [data-testid='prontuario-shell'],
   .container-filtro { max-width: 78rem; margin-inline: auto; }
 
+  /* Terceira passagem: as superfícies principais ganham uma hierarquia única.
+     O acabamento fica restrito ao shell de tela e às classes já canônicas. */
+  .np-clinical-workspace,
+  [data-testid='documentos-shell'],
+  [data-testid='prontuario-shell'],
+  .container-filtro {
+    --np-surface-edge: hsl(var(--border) / .7);
+  }
+  .np-app-content .shadcn-card {
+    border-color: var(--np-surface-edge, hsl(var(--card-border) / .9));
+    box-shadow: var(--np-elevation-soft);
+  }
+  .dark .np-app-content .shadcn-card {
+    border-color: hsl(var(--border) / .62);
+    box-shadow: 0 1px 0 hsl(0 0% 100% / .025), 0 20px 48px -38px hsl(214 70% 4% / .82);
+  }
+  .np-app-content :where(input:not([type='checkbox']):not([type='radio']), textarea, [role='combobox']) {
+    caret-color: hsl(var(--primary));
+  }
+  .np-app-content :where(input:not([type='checkbox']):not([type='radio']), textarea, [role='combobox']):focus-visible {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / .11), inset 0 1px 0 hsl(0 0% 100% / .3);
+  }
+  .np-app-content :where(button, a, input, textarea, select, [role='button'], [role='combobox']):focus-visible {
+    outline-offset: 3px;
+  }
+
   .np-workspace-welcome {
     border-top-color: hsl(41 54% 54% / .52) !important;
     background: linear-gradient(115deg, hsl(var(--card)), hsl(40 55% 97% / .82)) !important;
+    box-shadow: var(--np-elevation-card) !important;
   }
   .dark .np-workspace-welcome {
     background: linear-gradient(115deg, hsl(var(--card)), hsl(214 42% 16%)) !important;
@@ -117,14 +174,19 @@
   .np-workspace-welcome h2 { font-family: var(--font-display); }
 
   .np-workspace-action {
+    position: relative;
     border-color: hsl(var(--border) / .82) !important;
+    background: linear-gradient(180deg, hsl(var(--card) / .98), hsl(var(--card) / .86)) !important;
     box-shadow: 0 12px 28px -24px hsl(214 68% 13% / .32) !important;
-    transition: transform .18s ease, border-color .18s ease, background-color .18s ease !important;
+    transition: transform .18s ease, border-color .18s ease, background-color .18s ease, box-shadow .18s ease !important;
+    contain: paint;
   }
   .np-workspace-action:hover {
-    transform: translateY(-1px);
-    border-color: hsl(var(--primary) / .28) !important;
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / .3) !important;
+    box-shadow: 0 18px 34px -27px hsl(214 68% 13% / .44) !important;
   }
+  .np-workspace-action:active { transform: translateY(0) scale(.995); }
   .np-workspace-context,
   .np-workspace-support > article {
     border-color: hsl(var(--border) / .78) !important;
@@ -133,7 +195,28 @@
 
   [data-testid='prontuario-shell'] > div:first-child,
   [data-testid='documentos-shell'] > div:first-child,
-  .container-filtro > div:first-child { border-radius: 1.25rem; }
+  .container-filtro > div:first-child {
+    border-radius: 1.35rem;
+    border-color: hsl(var(--border) / .66) !important;
+    box-shadow: var(--np-elevation-soft);
+  }
+
+  /* Filtro: reduz a sensação de planilha sem mexer em ranking ou seleção. */
+  .container-filtro fieldset {
+    border-color: hsl(var(--border) / .66) !important;
+    background: linear-gradient(180deg, hsl(var(--card) / .72), hsl(var(--muted) / .18));
+  }
+  .container-filtro fieldset legend {
+    color: hsl(var(--foreground) / .82);
+    letter-spacing: .01em;
+  }
+  .container-filtro .shadcn-card {
+    background: linear-gradient(180deg, hsl(var(--card) / .99), hsl(var(--card) / .92));
+  }
+  .dark .container-filtro .shadcn-card,
+  .dark .container-filtro fieldset {
+    background: linear-gradient(180deg, hsl(var(--card) / .97), hsl(214 34% 13% / .78));
+  }
 
   .np-legal-disclosure {
     border-color: hsl(var(--border) / .8) !important;
@@ -155,6 +238,9 @@
 }
 
 @media screen and (min-width: 1024px) {
+  .np-app-content {
+    padding-inline: clamp(1.35rem, 2.4vw, 2.5rem) !important;
+  }
   .np-product-utility {
     position: fixed;
     z-index: 36;
@@ -166,9 +252,10 @@
     padding: .38rem .45rem;
     border: 1px solid hsl(var(--border) / .82);
     border-radius: 1rem;
-    background: hsl(var(--card) / .9);
-    box-shadow: 0 18px 44px -34px hsl(214 68% 13% / .45);
+    background: linear-gradient(180deg, hsl(var(--card) / .94), hsl(var(--card) / .86));
+    box-shadow: 0 18px 44px -34px hsl(214 68% 13% / .45), inset 0 1px 0 hsl(0 0% 100% / .35);
     backdrop-filter: blur(18px) saturate(1.15);
+    contain: paint;
   }
   body:has([data-testid='product-utility-bar']) .np-app-content { padding-top: 5rem !important; }
   .np-product-profile { display: flex; align-items: center; gap: .55rem; padding: .1rem .45rem .1rem .15rem; }
@@ -176,11 +263,17 @@
   .np-product-profile span { display: grid; line-height: 1.1; }
   .np-product-profile strong { color: hsl(var(--foreground)); font-size: .72rem; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .np-product-profile small { margin-top: .18rem; color: hsl(var(--muted-foreground)); font-size: .58rem; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .np-app-content .shadcn-card { transition: border-color .18s ease, box-shadow .18s ease; }
+    .np-app-content .shadcn-card:hover { border-color: hsl(var(--border) / .9); }
+  }
 }
 
 @media screen and (max-width: 1023px) {
   .np-app-mobile-header { height: 4rem !important; padding-inline: 1rem !important; }
   .np-app-main { padding-top: 4rem !important; }
+  .np-app-content { padding-inline: clamp(.85rem, 3vw, 1.2rem) !important; }
   body:has([data-testid='signature-login']) .np-app-main { padding-top: 0 !important; }
   .np-login-session-entry { display: none; }
 
@@ -216,10 +309,11 @@
     border-color: hsl(var(--border) / .82) !important;
     border-radius: 1.15rem !important;
     background: hsl(var(--card) / .94) !important;
-    box-shadow: 0 18px 48px -22px hsl(214 68% 8% / .42) !important;
-    backdrop-filter: blur(22px) saturate(1.25) !important;
+    box-shadow: 0 20px 52px -23px hsl(214 68% 8% / .46), inset 0 1px 0 hsl(0 0% 100% / .34) !important;
+    backdrop-filter: blur(20px) saturate(1.18) !important;
+    contain: paint;
   }
-  .dark [data-testid='mobile-primary-dock'] > nav { background: hsl(214 44% 13% / .94) !important; }
+  .dark [data-testid='mobile-primary-dock'] > nav { background: hsl(214 44% 13% / .95) !important; }
   .np-mobile-drawer-open [data-testid='mobile-primary-dock'] { opacity: 0; pointer-events: none; transform: translateY(1rem); }
   [data-testid='mobile-primary-dock'] button {
     min-height: 3.45rem !important;
@@ -230,7 +324,8 @@
   }
   [data-testid='mobile-primary-dock'] button[aria-current='page'] {
     color: hsl(var(--primary)) !important;
-    background: hsl(var(--primary) / .075) !important;
+    background: linear-gradient(180deg, hsl(var(--primary) / .1), hsl(var(--primary) / .055)) !important;
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / .06);
   }
   [data-testid='mobile-primary-dock'] button[aria-current='page']::before {
     content: '';
@@ -240,6 +335,7 @@
     height: 2px;
     border-radius: 999px;
     background: hsl(41 54% 54%);
+    box-shadow: 0 0 12px hsl(41 54% 54% / .34);
   }
 
   .np-clinical-workspace { gap: .75rem; }
@@ -248,10 +344,24 @@
   .np-workspace-context,
   .np-workspace-support > article { border-radius: 1.05rem !important; }
   .np-legal-disclosure { margin-top: 1.1rem !important; border-radius: 1rem !important; }
+
+  /* Em telas menores a composição evita efeitos caros fora do dock e mantém
+     transform/opacity como propriedades predominantes de animação. */
+  .np-workspace-action { box-shadow: 0 10px 24px -22px hsl(214 68% 13% / .34) !important; }
+  .np-app-content .shadcn-card { box-shadow: 0 1px 1px hsl(var(--foreground) / .02), 0 12px 28px -26px hsl(214 68% 8% / .3); }
 }
 
 @media screen and (prefers-reduced-motion: reduce) {
   .np-workspace-action,
+  .np-app-content .shadcn-card,
   [data-testid='mobile-primary-dock'],
   [data-testid='mobile-primary-dock'] button { transition: none !important; }
+}
+
+@media screen and (prefers-contrast: more) {
+  .np-app-content .shadcn-card,
+  .np-workspace-context,
+  .np-workspace-support > article,
+  .container-filtro fieldset { border-color: hsl(var(--foreground) / .32) !important; }
+  [data-testid='mobile-primary-dock'] > nav { border-color: hsl(var(--foreground) / .32) !important; }
 }
