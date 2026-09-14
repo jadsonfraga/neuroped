@@ -58,6 +58,31 @@ function calcAge(birthDate: string | null | undefined): string | null {
   }
 }
 
+// Identidade visual do card de paciente: iniciais sobre um tom determinístico
+// da própria paleta de tokens — reconhecimento rápido na lista sem foto (e sem
+// PHI extra: derivado apenas do nome já exibido).
+const AVATAR_TONES = [
+  "bg-chart-1/15 text-chart-1",
+  "bg-chart-3/15 text-chart-3",
+  "bg-chart-2/15 text-chart-2",
+  "bg-chart-4/15 text-chart-4",
+  "bg-chart-5/15 text-chart-5",
+] as const;
+
+function patientInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "?";
+  const first = words[0][0] ?? "";
+  const last = words.length > 1 ? (words[words.length - 1][0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+
+function avatarTone(name: string): (typeof AVATAR_TONES)[number] {
+  let hash = 0;
+  for (const ch of name) hash = (hash * 31 + ch.codePointAt(0)!) % 997;
+  return AVATAR_TONES[hash % AVATAR_TONES.length];
+}
+
 const BACKUP_PAGE_SIZE = 50;
 const MAX_BACKUP_PAGES = 10_000;
 
@@ -773,6 +798,7 @@ export default function PacientesPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Users className="w-7 h-7 text-muted-foreground" />}
+          mascot={patients.length === 0 ? "vazio" : undefined}
           title={
             patients.length === 0
               ? "Nenhum paciente cadastrado"
@@ -804,7 +830,7 @@ export default function PacientesPage() {
             hidden: { opacity: 0 },
             visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
           }}
-          className="grid gap-3 sm:grid-cols-2"
+          className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
         >
           {filtered.map((p: any) => {
             const age = calcAge(p.birthDate);
@@ -823,32 +849,40 @@ export default function PacientesPage() {
                   },
                 }}
               >
-                <Card className="card-premium group">
+                <Card className="card-premium np-pressable group overflow-hidden">
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between">
                       <Link href={`/paciente/${p.id}`}>
                         <div
-                          className="cursor-pointer flex-1"
+                          className="flex flex-1 cursor-pointer items-start gap-3"
                           onClick={() => {
                             softTap();
                             haptic.tap();
                           }}
                         >
-                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                            {p.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {age && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Calendar className="w-3 h-3" /> {age}
-                              </span>
+                          <span
+                            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[0.85rem] text-sm font-bold tracking-tight ring-1 ring-inset ring-border/60 ${avatarTone(p.name ?? "")}`}
+                            aria-hidden="true"
+                          >
+                            {patientInitials(p.name ?? "")}
+                          </span>
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                              {p.name}
+                            </h3>
+                            <div className="mt-0.5 flex items-center gap-2">
+                              {age && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                  <Calendar className="w-3 h-3" aria-hidden="true" /> {age}
+                                </span>
+                              )}
+                            </div>
+                            {p.notes && (
+                              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
+                                {p.notes}
+                              </p>
                             )}
                           </div>
-                          {p.notes && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {p.notes}
-                            </p>
-                          )}
                         </div>
                       </Link>
                       <div className="flex gap-1">
@@ -886,15 +920,16 @@ export default function PacientesPage() {
                     </div>
                     <Link href={`/paciente/${p.id}`}>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           softTap();
                           haptic.tap();
                         }}
-                        className="w-full gap-1.5 text-xs mt-1"
+                        className="mt-1 w-full justify-between gap-1.5 rounded-[0.8rem] border border-border/60 bg-muted/40 text-xs font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                       >
-                        Ver detalhes <ArrowRight className="w-3 h-3" />
+                        Ver detalhes
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                       </Button>
                     </Link>
                   </CardContent>
