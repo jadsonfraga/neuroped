@@ -1,0 +1,34 @@
+name: Runtime readiness contract
+on:
+  pull_request:
+    paths:
+      - "functions/api/health.ts"
+      - "functions/api/live/governance/_artifactStore.ts"
+      - "tests/unit/runtime-readiness.test.ts"
+      - ".github/workflows/runtime-readiness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "functions/api/health.ts"
+      - "functions/api/live/governance/_artifactStore.ts"
+      - "tests/unit/runtime-readiness.test.ts"
+      - ".github/workflows/runtime-readiness.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readiness:
+    name: Runtime readiness and LGPD binding
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: node --import tsx --test tests/unit/runtime-readiness.test.ts
+      - run: node --import tsx tests/unit/cloudflare-auth-middleware.test.ts
+      - run: node --import tsx tests/unit/lgpd-run-export-endpoint.test.ts
+      - run: node --import tsx tests/unit/lgpd-run-deletion-endpoint.test.ts

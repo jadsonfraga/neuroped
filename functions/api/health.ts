@@ -1,7 +1,9 @@
 /** GET /api/health — capacidades não sensíveis, sem dados clínicos nem inferência. */
 import { clinicalLiveEnabled, type TenantEnv } from "./tenant/_core";
 import { clinicalCryptoReady } from "./tenant/_crypto";
-interface Env extends TenantEnv {
+import { resolvePrivateArtifactStore, type ArtifactStoreEnv } from "./live/governance/_artifactStore";
+interface Env extends TenantEnv, ArtifactStoreEnv {
+  ENVIRONMENT?: string;
   NEUROPED_JWT_SECRET?: string;
   ESCUTA_ENABLED?: string;
   AI?: unknown;
@@ -22,8 +24,28 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
   const authConfigured = Boolean(env.DB) && authSchemaReady !== false && (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) >= 32;
   const cryptoReady = clinicalCryptoReady(env);
+  const coreRequired = env.ENVIRONMENT === "production" || Boolean(env.DB);
+  const coreReady = dbStatus === "ok" && authSchemaReady === true && authConfigured;
+  const degraded = coreRequired && !coreReady;
+  const storageBindingPresent = resolvePrivateArtifactStore(env) !== null;
+  const blockers: string[] = [];
+  if (coreRequired && dbStatus !== "ok") blockers.push("DATABASE_NOT_READY");
+  if (coreRequired && authSchemaReady === false) blockers.push("AUTH_SCHEMA_NOT_READY");
+  if (coreRequired && !authConfigured) blockers.push("AUTH_NOT_CONFIGURED");
+  if (clinicalLiveEnabled(env) && !cryptoReady) blockers.push("CLINICAL_CRYPTO_NOT_READY");
+  if (!storageBindingPresent) blockers.push("LGPD_BUCKET_NOT_CONFIGURED");
   const response = {
-    status: "ok",
+    status: degraded ? "degraded" : "ok",
+    readiness: {
+      coreReady,
+      clinicalCryptoConfigured: cryptoReady,
+      lgpdExport: {
+        configured: coreReady && cryptoReady && storageBindingPresent,
+        storageBindingPresent,
+        executionVerified: false,
+      },
+      blockers,
+    },
     service: "neuroped-edj-api",
     version: "2.0.0",
     timestamp: now,
@@ -31,7 +53,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     database: dbStatus,
     authentication: {
       // Binding presente exige login inclusive durante indisponibilidade do banco.
-      required: Boolean(env.DB),
+      required: coreRequired,
       configured: authConfigured,
     },
     escuta: {
@@ -48,7 +70,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     },
   };
   return new Response(JSON.stringify(response), {
-    status: 200,
+    status: degraded ? 503 : 200,
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-cache",
