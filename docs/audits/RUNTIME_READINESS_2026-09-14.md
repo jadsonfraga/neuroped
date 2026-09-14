@@ -28,40 +28,53 @@ na indisponibilidade transitoria do D1 para nao mudar o contrato de autenticacao
 Producao sem DB continua exigindo autenticacao remota e nao permite fallback local.
 readiness separa saude do nucleo, disponibilidade criptografica e binding de exportacao.
 A existencia do binding NAO prova exportacao/purge: executionVerified e false.
-Readiness de exportacao tambem exige o schema LIVE/LGPD minimo das migrations 0014/0017;
-schema parcial gera LGPD_SCHEMA_NOT_READY e nunca configured=true. O gate inclui
-tabelas, colunas criticas e os sete triggers da 0017 que vinculam tenant e exigem
-prova fisica antes de marcar exportacao ou eliminacao como completed.
+Readiness de exportacao exige a flag LIVE, keyring, storage privado e o schema
+real tocado pelo runtime de exportacao. O health usa probes SELECT ... WHERE 0
+sobre as colunas de clinics, memberships, pacientes, eventos, billing, lifecycle,
+requests e worker, sem ler linhas, e exige os sete triggers da migration 0017.
+Isso cobre inclusive canceled_at/grace_ends_at de billing_customers (0013) e
+impede configured=true em deploys parciais de 0013/0014/0017.
 Binding R2 parcial (sem put/get/delete) e recusado antes de iniciar a operacao.
 Nenhum conteudo, identificador de paciente, erro bruto ou segredo entra no health.
+
+## Evidencia Cloudflare read-only de fechamento
+
+Em 14/09/2026 foi executada auditoria metadata-only via GitHub Actions usando as
+credenciais ja existentes do repositorio, sem PHI e sem imprimir valores secretos.
+O projeto Pages neuroped mostrou CLINICAL_LIVE_ENABLED=true e ESCUTA_ENABLED=true;
+NEUROPED_JWT_SECRET, CLINICAL_DATA_KEY, CLINICAL_DATA_KEY_ID, CLINICAL_INDEX_KEY e
+OPERATIONAL_DATA_KEY aparecem presentes como secret_text. O D1 canonico respondeu
+e continha as tabelas e colunas LGPD/LIVE inspecionadas. A configuracao de producao
+Pages, porem, nao possui binding R2. A listagem de inventario R2 retornou HTTP403,
+logo o token atual nao autoriza afirmar se existe bucket reutilizavel na conta.
+Presenca de secret nao e prova de keyring valido; a prova runtime continua sendo o
+health apos deploy e, para exportacao, execucao sintetica somente depois do R2.
 
 ## Bloqueios externos reais
 
 ### BLOCKED_EXTERNAL_CLINICAL_CRYPTO
 
-Sistema: Cloudflare Pages / ambiente de producao. Permissao: Pages Edit e acesso
-ao cofre autorizado das chaves clinicas EXISTENTES. Validar CLINICAL_DATA_KEY,
-CLINICAL_DATA_KEY_ID, CLINICAL_INDEX_KEY e keyring anterior quando aplicavel.
+As chaves clinicas atuais estao presentes no Pages como secret_text, portanto o
+bloqueio nao e mais "segredo ausente". Falta comprovar que o keyring existente e
+semanticamente valido para o runtime publicado e para ciphertext ja existente.
 Nao substituir/gerar chaves cegamente: isso pode tornar ciphertext existente ilegivel.
-Fechamento: configuracao conferida sem imprimir segredos, health coerente e prova
-sintetica cifrar/persistir/ler/decifrar, sem dados reais e sem chamar isso de prova clinica.
-Risco aberto: Clinical LIVE/Escuta continuam nao prontos apesar do site acessivel.
+Fechamento: health publicado com clinicalCryptoConfigured=true e prova sintetica
+cifrar/persistir/ler/decifrar, sem dados reais e sem chamar isso de prova clinica.
 
 ### BLOCKED_EXTERNAL_R2
 
-Sistema: Cloudflare R2 + Pages. Permissoes: R2 Edit e Pages Edit na conta correta.
-Falta comprovar bucket privado e LGPD_EXPORT_BUCKET no deployment. Nao ativar
-r2.dev publico, dominio publico nem fallback local. Criar/bindar apenas apos
-conferir recursos existentes. Configuracao de binding exige novo deploy.
-Fechamento: put/get/delete sinteticos, exportacao cifrada com readback e ledger,
-e purge sintetico verificado. Nao executar eliminacao real para testar.
-Risco aberto: direitos operacionais de exportacao dependem de infraestrutura nao comprovada.
-Os tres caminhos padrao de Wrangler consultados e variaveis locais nao forneceram
-credenciais; conector Cloudflare nao foi encontrado. Nao equivale a ausencia global.
+Sistema: Cloudflare R2 + Pages. O projeto Pages confirma ausencia de binding R2 em
+producao. O token atual consegue ler Pages/D1, mas recebeu HTTP403 ao listar R2;
+portanto nao ha permissao suficiente para inventariar, criar ou bindar storage com
+seguranca. Nao ativar r2.dev publico, dominio publico nem fallback local.
+Fechamento: operador/token com R2 Read/Edit confirma bucket privado existente ou cria
+um dedicado, adiciona LGPD_EXPORT_BUCKET ao Pages e faz novo deploy; depois executar
+put/get/delete sinteticos, exportacao cifrada com readback/ledger e purge sintetico.
+Nao executar eliminacao real para testar.
 
 ## Validacao e rollback
 
-Regressoes novas: tests/unit/runtime-readiness.test.ts (9 casos, sem skip), mais
+Regressoes novas: tests/unit/runtime-readiness.test.ts (10 casos, sem skip), mais
 contratos existentes de autenticacao e endpoints LGPD. CI dedicada executa todos.
 Resultados efetivamente executados sao registrados na PR; verify:release completo
 nao deve ser presumido. Reverter por PR restaura o contrato antigo mas reintroduz
@@ -69,10 +82,10 @@ falso positivo de health; rollback nao altera storage, schema ou dados.
 Nao mesclar sem checks/revisao do HEAD. Nao afirmar deploy nem conformidade LGPD
 integral a partir desta alteracao.
 
-### Execucao local confirmada
+### Execucao confirmada
 
-Readiness 9/9, autenticacao Cloudflare, exportacao LGPD, eliminacao LGPD,
-contrato de monitoramento, governanca de workflows, npm run check, npm run lint
-e git diff --check: todos exit 0 no delta testado antes da publicacao da branch.
-Nenhuma assercao removida ou ignorada. A CI do HEAD publicado permanece a fonte
-de verdade para merge; estes resultados nao atestam deploy nem conformidade integral.
+No delta publicado, a CI dedicada de readiness e os checks gerais devem ser a fonte
+de verdade antes do merge. A rodada local anterior validou autenticacao Cloudflare,
+exportacao LGPD, eliminacao LGPD, governanca de workflows, TypeScript, lint e diff-check
+sem skip. Nenhuma assercao foi removida ou ignorada. A auditoria read-only Cloudflare
+tambem concluiu com sucesso no run 34828175726, sem mutacoes de infraestrutura.
