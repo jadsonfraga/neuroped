@@ -1,0 +1,77 @@
+[
+  {
+    "label": "preparation-320",
+    "violations": 0,
+    "passes": 25
+  },
+  {
+    "label": "activity-objects",
+    "violations": 0,
+    "passes": 19
+  },
+  {
+    "label": "activity-sequence",
+    "violations": 0,
+    "passes": 13
+  },
+  {
+    "label": "activity-grid",
+    "violations": 0,
+    "passes": 13
+  },
+  {
+    "label": "training",
+    "violations": 0,
+    "passes": 18
+  },
+  {
+    "label": "application-mobile",
+    "violations": 0,
+    "passes": 22
+  },
+  {
+    "label": "activity-imitation",
+    "violations": 0,
+    "passes": 23
+  },
+  {
+    "label": "activity-locked",
+    "violations": 0,
+    "passes": 20
+  },
+  {
+    "label": "activity-cups",
+    "violations": 0,
+    "passes": 19
+  },
+  {
+    "label": "complete-report",
+    "violations": 0,
+    "passes": 16
+  },
+  {
+    "label": "activity-scene",
+    "violations": 0,
+    "passes": 18
+  },
+  {
+    "label": "activity-model",
+    "violations": 0,
+    "passes": 13
+  },
+  {
+    "label": "activity-plan",
+    "violations": 0,
+    "passes": 15
+  },
+  {
+    "label": "partial-report-mobile",
+    "violations": 0,
+    "passes": 21
+  },
+  {
+    "label": "partial-report-dark",
+    "violations": 0,
+    "passes": 22
+  }
+]

@@ -1,5 +1,9 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { Switch, Route, Router, useLocation } from "wouter";
+import { Switch, Route, Router, Redirect, useLocation } from "wouter";
+import {
+  LEGACY_DIRECT_TEST_REDIRECTS,
+  LEGACY_INSTRUMENT_REDIRECTS,
+} from "@/data/legacyInstrumentRoutes";
 import { useAppHashLocation } from "@/lib/hashLocation";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -71,7 +75,6 @@ const DenverPage = lazy(() => import("@/pages/denver"));
 const SdqPage = lazy(() => import("@/pages/sdq"));
 const ScaredPage = lazy(() => import("@/pages/scared"));
 const ConnersPage = lazy(() => import("@/pages/conners"));
-const VinelandPage = lazy(() => import("@/pages/vineland"));
 const PantPage = lazy(() => import("@/pages/pant"));
 const FluxogramaPage = lazy(() => import("@/pages/fluxograma"));
 const Cdi2Page = lazy(() => import("@/pages/cdi2"));
@@ -120,38 +123,7 @@ const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
-const TestesReconhecimentoPage = lazy(
-  () => import("@/pages/testes-reconhecimento"),
-);
-const TestesAcademicosPage = lazy(() => import("@/pages/testes-academicos"));
 const TestesDiretosPage = lazy(() => import("@/pages/sonda-dez-daily"));
-const CognitiveLabPage = lazy(() => import("@/pages/cognitive-lab"));
-const CognitiveTaskPage = lazy(() => import("@/pages/cognitive-task"));
-const AvaliacaoCognitivaInfantilPage = lazy(
-  () => import("@/pages/avaliacao-cognitiva-infantil"),
-);
-const AcademicoInterativoPage = lazy(
-  () => import("@/pages/academico-interativo"),
-);
-const EscritaDesenhoPage = lazy(() => import("@/pages/escrita-desenho"));
-const ConhecimentoVisualPage = lazy(
-  () => import("@/pages/conhecimento-visual"),
-);
-const MotricidadeTestePage = lazy(() => import("@/pages/motricidade-teste"));
-const ConhecimentosGeraisPage = lazy(
-  () => import("@/pages/conhecimentos-gerais"),
-);
-const FuncoesExecutivasPage = lazy(() => import("@/pages/funcoes-executivas"));
-const AtencaoConcentracaoPage = lazy(
-  () => import("@/pages/atencao-concentracao"),
-);
-const LinguagemFonologiaPage = lazy(
-  () => import("@/pages/linguagem-fonologia"),
-);
-const MemoriaTestePage = lazy(() => import("@/pages/memoria-teste"));
-const ProcessamentoVisuoauditivoPage = lazy(
-  () => import("@/pages/processamento-visuoauditivo"),
-);
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -180,21 +152,6 @@ const FarmacologiaPage = lazy(() => import("@/pages/farmacologia"));
 const MedicamentosPage = lazy(() => import("@/pages/medicamentos"));
 const Eusm10Page = lazy(() => import("@/pages/eusm10"));
 const GenericScalePage = lazy(() => import("@/pages/generic-scale"));
-const BayleyPage = lazy(() => import("@/pages/bayley"));
-const GriffithsPage = lazy(() => import("@/pages/griffiths"));
-const RcadsPage = lazy(() => import("@/pages/rcads"));
-const Masc2Page = lazy(() => import("@/pages/masc2"));
-const Leiter3Page = lazy(() => import("@/pages/leiter3"));
-const Nepsy2Page = lazy(() => import("@/pages/nepsy2"));
-const RavenPage = lazy(() => import("@/pages/raven"));
-const Wisc5Page = lazy(() => import("@/pages/wisc5"));
-const WppsiPage = lazy(() => import("@/pages/wppsi"));
-const PedicatPage = lazy(() => import("@/pages/pedicat"));
-const TdePage = lazy(() => import("@/pages/tde"));
-const ConfiasPage = lazy(() => import("@/pages/confias"));
-const PortagePage = lazy(() => import("@/pages/portage"));
-const VinelandCompletePage = lazy(() => import("@/pages/vineland"));
-const CbclInterativoPage = lazy(() => import("@/pages/cbcl-interativo"));
 const AvaliacaoMultiprofissionalPage = lazy(
   () => import("@/pages/avaliacao-multiprofissional"),
 );
@@ -364,7 +321,6 @@ function AppRouter() {
             <Route path="/sdq" component={SdqPage} />
             <Route path="/scared" component={ScaredPage} />
             <Route path="/conners" component={ConnersPage} />
-            <Route path="/vineland" component={VinelandPage} />
             <Route path="/pant" component={PantPage} />
             <Route path="/fluxograma" component={FluxogramaPage} />
             <Route path="/cdi2" component={Cdi2Page} />
@@ -415,53 +371,8 @@ function AppRouter() {
             <Route path="/pac" component={PacPage} />
             <Route path="/ahsd-tea" component={AhsdTeaPage} />
             <Route path="/tde2" component={Tde2Page} />
-            <Route
-              path="/testes-reconhecimento"
-              component={TestesReconhecimentoPage}
-            />
-            <Route path="/testes-academicos" component={TestesAcademicosPage} />
             <Route path="/testes-diretos" component={TestesDiretosPage} />
-            <Route path="/cognitive-lab" component={CognitiveLabPage} />
-            <Route
-              path="/cognitive-lab/:taskId"
-              component={CognitiveTaskPage}
-            />
-            <Route
-              path="/avaliacao-cognitiva-infantil"
-              component={AvaliacaoCognitivaInfantilPage}
-            />
-            <Route
-              path="/academico-interativo"
-              component={AcademicoInterativoPage}
-            />
-            <Route path="/escrita-desenho" component={EscritaDesenhoPage} />
-            <Route
-              path="/conhecimento-visual"
-              component={ConhecimentoVisualPage}
-            />
-            <Route path="/motricidade-teste" component={MotricidadeTestePage} />
-            <Route
-              path="/conhecimentos-gerais"
-              component={ConhecimentosGeraisPage}
-            />
-            <Route
-              path="/funcoes-executivas"
-              component={FuncoesExecutivasPage}
-            />
-            <Route
-              path="/atencao-concentracao"
-              component={AtencaoConcentracaoPage}
-            />
-            <Route
-              path="/linguagem-fonologia"
-              component={LinguagemFonologiaPage}
-            />
-            <Route path="/memoria-teste" component={MemoriaTestePage} />
             <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
-            <Route
-              path="/processamento-visuoauditivo"
-              component={ProcessamentoVisuoauditivoPage}
-            />
             <Route path="/inventarios-auto" component={InventariosAutoPage} />
             <Route path="/ajuda" component={AjudaPage} />
             <Route
@@ -504,21 +415,17 @@ function AppRouter() {
               component={AvaliacaoMultiprofissionalPage}
             />
             <Route path="/generic-scale/:id" component={GenericScalePage} />
-            <Route path="/bayley" component={BayleyPage} />
-            <Route path="/griffiths" component={GriffithsPage} />
-            <Route path="/rcads" component={RcadsPage} />
-            <Route path="/masc2" component={Masc2Page} />
-            <Route path="/leiter3" component={Leiter3Page} />
-            <Route path="/nepsy2" component={Nepsy2Page} />
-            <Route path="/raven" component={RavenPage} />
-            <Route path="/wisc5" component={Wisc5Page} />
-            <Route path="/wppsi" component={WppsiPage} />
-            <Route path="/pedicat" component={PedicatPage} />
-            <Route path="/tde" component={TdePage} />
-            <Route path="/confias" component={ConfiasPage} />
-            <Route path="/portage" component={PortagePage} />
-            <Route path="/vineland-completo" component={VinelandCompletePage} />
-            <Route path="/cbcl-interativo" component={CbclInterativoPage} />
+            {/* Rotas nominais legadas de instrumentos: uma única superfície
+                canônica (/generic-scale/:id ou aplicação dedicada), preservando
+                bookmarks antigos. Mapa em data/legacyInstrumentRoutes.ts. */}
+            {Object.entries({
+              ...LEGACY_INSTRUMENT_REDIRECTS,
+              ...LEGACY_DIRECT_TEST_REDIRECTS,
+            }).map(([from, to]) => (
+              <Route key={from} path={from}>
+                <Redirect to={to} replace />
+              </Route>
+            ))}
 
             <Route path="/pre-consulta" component={PreConsultaPage} />
             <Route path="/pre-retorno" component={PreRetornoPage} />

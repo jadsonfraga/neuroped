@@ -1,0 +1,68 @@
+name: Recovered authorial instruments
+
+on:
+  pull_request:
+    paths:
+      - 'client/src/data/recovered*.ts'
+      - 'client/src/data/escalasImportadasDrive2026.ts'
+      - 'client/src/data/filterableCatalog*.ts'
+      - 'client/src/components/RecoveredAuthorialHub.tsx'
+      - 'client/src/pages/filtro.tsx'
+      - 'client/src/lib/recoveredAuthorialLogic.ts'
+      - 'client/src/lib/preConsulta*.ts'
+      - 'scripts/guards/safety-classification-recovered-20260912.json'
+      - 'tests/unit/recovered-authorials.test.ts'
+      - 'tests/unit/previsit-refinement.test.ts'
+      - 'tests/e2e/recovered-authorials.mjs'
+      - 'docs/PROVENIENCIA_CLINICA.md'
+      - '.github/workflows/recovered-authorials-contract.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recovered-authorials-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clinical-contract:
+    name: Source fidelity and intelligent previsit selection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run check
+      - run: npm run lint
+      - run: node --import tsx tests/unit/recovered-authorials.test.ts
+      - run: node --import tsx tests/unit/previsit-refinement.test.ts
+      - run: node --import tsx tests/unit/regula20.test.ts
+      - run: node --import tsx tests/unit/regula20-report.test.ts
+      - run: npm run validate:safety
+      - run: npm run validate:catalog
+      - run: git diff --exit-code -- docs/PROVENIENCIA_CLINICA.md
+      - run: npm run audit:access
+      - run: npm run audit:inventory
+      - run: npm run validate:public
+      - run: npm run test:filter
+      - run: node tests/unit/live-previsit-persistence-guard.test.mjs
+      - run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: All six instruments — synthetic localhost fixtures only
+        run: node tests/e2e/recovered-authorials.mjs
+      - name: Preserve existing REGULA flow
+        run: node tests/e2e/regula20-previsit.mjs
+      - name: Synthetic browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovered-authorials-qa
+          path: |
+            artifacts/recovered-authorials/
+            artifacts/regula20/
+          if-no-files-found: ignore
+          retention-days: 7

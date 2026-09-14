@@ -686,7 +686,7 @@ head("M) OPB — somente resultados refinados e seguros");
     readFileSync(resolve(repoRoot, "client/src/pages/filtro-engine.tsx"), "utf8"),
   ].join("\n");
   ok(
-    /if \(!hasSafeResults \|\| selectedQueixas\.length !== 1\) return null;/.test(
+    /if \(!hasSafeResults \|\| activeQueixas\.length !== 1\) return null;/.test(
       filtroSource,
     ),
     "OPB não renderiza quando o motor falha fechado",

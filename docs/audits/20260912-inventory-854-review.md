@@ -42,5 +42,17 @@ Parecer técnico: manter como rascunho; decidir se a repetição é intencional 
 continuidade ou se deve ser consolidada. Nenhuma aprovação clínica foi atribuída.
 Revisão limitada ao contrato dos arquivos; não é validação científica/psicométrica.
 
+## Curadoria estrutural — 13/09/2026
+
+A elegibilidade operacional foi centralizada em um gate fail-closed. Cada registro
+recebe uma decisão de curadoria com estado `operational` ou `review_only` e motivos
+explícitos: revisão clínica pendente, contingência, upgrade autoral pendente ou
+contrato de resposta ambíguo. O catálogo clínico operacional deriva exclusivamente
+dessa decisão, enquanto o catálogo de revisão preserva o registro e seus bloqueios.
+
+Assim, alterar apenas `status` não promove um registro inseguro. O RAC-APR da #858
+permanece `review_only` por ser contingência e exigir upgrade, embora o contrato de
+resposta agora esteja íntegro. O JSON gerado continua sem edição manual.
+
 Rollback: retirar somente este documento de auditoria. O JSON gerado foi preservado
 sem edição manual, conforme AGENTS.md.

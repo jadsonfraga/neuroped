@@ -15,6 +15,7 @@ import {
   dailyResponseContractIsUnambiguous,
   dailyResponseOptionsForMode,
 } from "../../client/src/lib/daily-inventory-response-contract.ts";
+import { curateDailyInventory } from "../../client/src/lib/daily-inventory-curation.ts";
 import {
   isValidCalendarDate,
   positiveModulo,
@@ -130,8 +131,15 @@ const safetyOptions = dailyResponseOptionsForMode(
   "presente_ausente",
 );
 assert.deepEqual(
-  safetyOptions.map(({ storageValue, scoreValue }) => [storageValue, scoreValue]),
-  [["present", null], ["absent", null], ["unknown", null]],
+  safetyOptions.map(({ storageValue, scoreValue }) => [
+    storageValue,
+    scoreValue,
+  ]),
+  [
+    ["present", null],
+    ["absent", null],
+    ["unknown", null],
+  ],
 );
 assert.equal(
   safetyOptions.find((option) => option.storageValue === "absent")?.label,
@@ -147,6 +155,32 @@ assert.doesNotMatch(
   /record\.responseOptions\.map\(\(option\)/,
   "a UI não pode aplicar opções globais a todo responseMode",
 );
+
+const pr858Curation = curateDailyInventory(pr858Record);
+assert.equal(pr858Curation.operational, false);
+assert.deepEqual(pr858Curation.blockers, [
+  "status_not_reviewed",
+  "contingency",
+  "needs_upgrade",
+]);
+const promotedCandidate = structuredClone(pr858Record);
+promotedCandidate.status = "revisado_clinicamente";
+promotedCandidate.contingency = false;
+promotedCandidate.needsUpgrade = false;
+assert.equal(curateDailyInventory(promotedCandidate).operational, true);
+const ambiguousCandidate = structuredClone(promotedCandidate);
+ambiguousCandidate.responseOptions = ambiguousCandidate.responseOptions.filter(
+  (option: { code: string }) => option.code !== "D",
+);
+assert.deepEqual(curateDailyInventory(ambiguousCandidate).blockers, [
+  "response_contract_ambiguous",
+]);
+const catalogSource = await readFile(
+  path.join(ROOT, "client/src/data/dailyAuthorialCatalog.ts"),
+  "utf8",
+);
+assert.match(catalogSource, /dailyAuthorialCurationCatalog/);
+assert.match(catalogSource, /decision\.operational/);
 
 const watchdogWorkflow = await readFile(
   path.join(ROOT, ".github/workflows/daily-authorial-watchdog.yml"),
@@ -325,20 +359,16 @@ try {
     "scripts/generate-daily-authorial-fallback.mts",
   );
   const fallbackRuns = deterministicDirs.map((outputDir) =>
-    spawnSync(
-      process.execPath,
-      ["--import", "tsx", fallbackPath],
-      {
-        cwd: ROOT,
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          NEUROPED_DAILY_OUTPUT_DIR: outputDir,
-          NEUROPED_GENERATION_DATE: "2027-01-15",
-          NEUROPED_GENERATION_TIMESTAMP: "",
-        },
+    spawnSync(process.execPath, ["--import", "tsx", fallbackPath], {
+      cwd: ROOT,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        NEUROPED_DAILY_OUTPUT_DIR: outputDir,
+        NEUROPED_GENERATION_DATE: "2027-01-15",
+        NEUROPED_GENERATION_TIMESTAMP: "",
       },
-    ),
+    }),
   );
   for (const run of fallbackRuns) {
     assert.equal(run.status, 0, `${run.stdout}${run.stderr}`);
@@ -349,7 +379,11 @@ try {
       return readFile(path.join(outputDir, filename), "utf8");
     }),
   );
-  assert.equal(firstFile, secondFile, "a contingência deve gerar bytes estáveis");
+  assert.equal(
+    firstFile,
+    secondFile,
+    "a contingência deve gerar bytes estáveis",
+  );
   assert.equal(
     createHash("sha256").update(firstFile).digest("hex"),
     createHash("sha256").update(secondFile).digest("hex"),
@@ -358,7 +392,9 @@ try {
   assert.equal(JSON.parse(firstFile).generatedAt, "2027-01-15T00:00:00.000Z");
 } finally {
   await Promise.all(
-    deterministicDirs.map((outputDir) => rm(outputDir, { recursive: true, force: true })),
+    deterministicDirs.map((outputDir) =>
+      rm(outputDir, { recursive: true, force: true }),
+    ),
   );
 }
 

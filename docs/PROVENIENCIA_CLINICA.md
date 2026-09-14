@@ -3,10 +3,10 @@
 > Documento gerado automaticamente por `scripts/guards/validate-catalog.mjs`.
 > Não edite à mão — rode `npm run verify` para regenerar.
 
-- **Total de instrumentos:** 267
-- **Com fonte declarada:** 267 (100.0%)
+- **Total de instrumentos:** 274
+- **Com fonte declarada:** 274 (100.0%)
 - **Sem fonte declarada:** 0
-- **Aguardando validação psicométrica publicada:** 103 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
+- **Aguardando validação psicométrica publicada:** 110 — em geral instrumentos autorais, que têm origem declarada mas ainda não têm estudo de validação.
 
 > As duas últimas linhas medem coisas diferentes e não se somam: um
 > instrumento pode ter fonte e ainda assim aguardar validação.
@@ -15,6 +15,7 @@
 | --- | --- | --- | --- | --- |
 | `abc` | ABC | Aman MG et al., 1985 (Aberrant Behavior Checklist) | não | não |
 | `ace` | ACE | Felitti VJ et al., 1998 (Adverse Childhood Experiences) | não | não |
+| `adapta-18-sdg` | ADAPTA-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `afi12-sdg` | AFI-12 SDG | Base documental autoral: 01_AFI12_Atencao_Freio_Impacto_NeuroPed_SDG.pdf; integridade sha256:f2123c61e7f03c52e20a24348b444f5c66293457c76b87756c0800435221b74d. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo clínico, domínios e pontuação preservados. | não | sim |
 | `apgar` | APGAR | Apgar V, 1953 (APGAR Score) | não | não |
 | `aq10-adolescente` | AQ-10 Adolescente | Allison C, Auyeung B, Baron-Cohen S, 2012 (AQ-10) | não | não |
@@ -241,15 +242,20 @@
 | `podj-tea-prime-6-12a` | PODJ-TEA PRIME 6–12A | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |
 | `podj-tea-prime-escola-terapia` | PODJ-TEA Escola/Terapia | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |
 | `podj-tea-prime-familiar` | PODJ-TEA Familiar | PODJ-TEA PRIME — Kit Fichas por Paciente, Dr. Jadson Fraga | não | não |
+| `ponte-16-sdg` | PONTE-16 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `ponte-ped-72` | PONTE-PED 72 | 2026-06-20_ESCALA_AUTORAL_PONTE-PED_72_V1 — instrumento autoral Dr. Jadson Fraga (Google Drive) · Documento original: https://docs.google.com/document/d/14YSFjE2cvgAnyM_H9J_BzqHcu6v_eYiIDflZ82-Ab8U/edit | não | sim |
+| `porta-20-sdg` | PORTA-20 SDG | NeuroPed_SDG_PORTA20_Premium_v2_1_2026-09-10.pdf · sha256:4686c65cb711a6e09ba5481ae9c63073792b6a8f459eba093bd5677b64005198 | não | sim |
 | `prime-screen` | PRIME Screen | Miller TJ et al., 2004 (PRIME Screen for Psychosis Risk) | não | não |
 | `prisma-nf-60` | PRISMA-NF 60 | 2026-07-11_ESCALA_AUTORAL_PRISMA_NF_60_V1 — Dr. Jadson Fraga · Documento original: https://docs.google.com/document/d/1hf2yqGeJd2sBW8QFNrTAbNJP_Fqv9Hu8jk3INh2lyT0/edit | não | sim |
 | `psc17` | PSC-17 | Jellinek MS et al., 1988 (Pediatric Symptom Checklist); PSC-17 Gardner W et al., 1999 | não | não |
 | `psn-np` | PSN-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: processamento sensorial. | não | sim |
 | `q-chat-10` | Q-CHAT-10 | Allison C, Auyeung B, Baron-Cohen S, 2012 (Q-CHAT-10) — J Am Acad Child Adolesc Psychiatry 51(2):202-212.e7. PMID 22265366 · doi:10.1016/j.jaac.2011.11.003 | não | não |
 | `qec-np` | QEC-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: estresse do cuidador. | não | sim |
+| `regula-20-sdg` | REGULA-20 SDG | Dr. Jadson Fraga · NeuroPed SDG · REGULA_20_SDG_v1_0_12-09-2026.pdf · sha256:035f93b584f7b2580de5567e1fd8b8eeaf0a32a88d042dca442d9bbc3151777a | não | sim |
 | `rflacc` | r-FLACC | Malviya S et al., 2006 (revised FLACC) | não | não |
 | `ritmo-18-sdg` | RITMO-18 SDG | RITMO-18_SDG_Fadiga_Neurofuncional_v1.0_2026-09-09.pdf · Google Drive fileId 1rs1GPtJpwcn-6ZH6F_EOk9Ojo2NmN9dR · SHA-256 99bc7a121c7fb668ec159908fd5dabeb34b845bc712da91cbee49b9e72ca8a91 · fonte integral verificada em 09/09/2026. | não | sim |
+| `ritmo-sono-20-sdg` | RITMO-SONO 20 SDG | RITMO_SONO_20_SDG_v1_0_12-09-2026.pdf · sha256:e710cf4a8fbc596698e3e41c4d8a9e959927233774309d8d868e7ddceff47e01 | não | sim |
+| `rota-aut-18-sdg` | ROTA-AUT 18 SDG | ROTA_AUT_18_SDG_v1_0_11-09-2026.pdf · sha256:1bc9ce1fda6ae6b57012621e6a803917169f8f09928ca7db68d5345447161aca | não | sim |
 | `sarf12-sdg` | SARF-12 SDG | Base documental autoral: 03_SARF12_Seletividade_Alimentar_Repertorio_Funcional_NeuroPed_SDG.pdf; integridade sha256:d0c55e5b29718bdf7b0ccfdb869914ce4f81d69b9dc5c38586c8ffb60194d8e9. Revisão clínica/editorial aprovada pelo autor em 2026-09-08; conteúdo e pontuação preservados. | não | sim |
 | `scared` | SCARED | Birmaher B et al., 1997 - University of Pittsburgh | não | não |
 | `scas` | SCAS | Spence SH, 1998 (Spence Children's Anxiety Scale) | não | não |
@@ -266,6 +272,7 @@
 | `tdn-bebe` | TDN-Bebê | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: desenvolvimento do lactente. | não | sim |
 | `tea-checklists` | Checklists TEA | Compilação clínica NeuroPed dos instrumentos ADOS-2, ADI-R, CARS-2, GARS-3 e SRS-2 | não | não |
 | `tea-comportamentos` | Comport. Atípicos TEA | Dr. Jadson Fraga, NeuroPed — Protocolo Autoral (NEXUS) | não | não |
+| `ticar-18-sdg` | TICAR-18 SDG | github:jadsonfraga/neuroped@b7adca686b8dba657b4b1317583f485cede7a0c8:client/src/data/interactiveScaleItemsAuthorial20260910.ts | não | sim |
 | `toc-drj-psicologia` | Escala Clínica de Gravidade do TOC – Adolescentes | ESCALA TOC PSICOLOGIA.docx — instrumento autoral Dr. Jadson Fraga (Google Drive, 2026-07) · Documento original: https://drive.google.com/file/d/1UiBCEPBHfEVUR3k3FyiHO1EqN-jbFV0N/view | não | sim |
 | `tpp-np` | TPP-NP | Instrumento autoral NeuroPed — Dr. Jadson Fraga, 2026. Construto: TEPT pré-escolar (heterorrelato). | não | sim |
 | `trilha-20-sdg` | TRILHA-20 SDG | TRILHA-20_SDG_Autogestao_Transicao_Cuidado_v1.0_2026-09-09.pdf · Google Drive fileId 1JBWGK19QmRy6GlySFrgjvX7TWGmzSLv_ · SHA-256 e7932a955ffeffe194e965671d4045ff3fcd00843bd8408d7d7bbc2ab1c7d1ab · fonte integral verificada em 09/09/2026. | não | sim |

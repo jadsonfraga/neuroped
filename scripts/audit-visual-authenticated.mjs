@@ -491,7 +491,12 @@ const CASES = [
     async prepare(page) {
       page.on("dialog", (dialog) => void dialog.accept());
       await page.getByTestId("button-session-exit").waitFor({ state: "visible", timeout: 20_000 });
-      await page.getByTestId("button-session-exit").click();
+      // Logout clears encrypted storage and reloads. Do not accept the transient
+      // pre-reload login UI as the final gate or inspect a destroyed document.
+      await Promise.all([
+        page.waitForEvent("load", { timeout: 25_000 }),
+        page.getByTestId("button-session-exit").click(),
+      ]);
       await page.getByTestId("button-session-enter").waitFor({ state: "visible", timeout: 25_000 });
       await settle(page, 600);
     },

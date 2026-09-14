@@ -1,0 +1,12 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> neuroped-edj@2.0.0-fullstack test:e2e:sonda
+> node --import tsx tests/e2e/sonda-dez-digital.mjs
+
+PASS 12-23m: 7 missões, exportação fiel
+PASS 24-35m: 7 missões, exportação fiel
+PASS 3-4a: 7 missões, exportação fiel
+PASS 5-7a: 7 missões, exportação fiel
+PASS 8-11a: 7 missões, exportação fiel
+PASS 12-17a: 7 missões, exportação fiel
+PASS: 76 etapas, 6 trilhas, exportações, controles móveis, ausência de dados do ensaio, pausa e série interrompida.

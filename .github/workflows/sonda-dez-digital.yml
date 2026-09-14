@@ -1,0 +1,31 @@
+name: Sonda Dez digital
+on:
+  pull_request:
+    paths:
+      - 'client/src/components/sonda-dez/**'
+      - 'client/src/pages/sonda-dez-daily.tsx'
+      - 'client/src/pages/testes-diretos.tsx'
+      - 'client/src/data/sondaDez*.ts'
+      - 'client/src/lib/sondaDez*.ts'
+      - 'tests/unit/sonda-dez*.ts'
+      - 'tests/e2e/sonda-dez-digital.mjs'
+      - 'package.json'
+      - '.github/workflows/sonda-dez-digital.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guided-flow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:sonda
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+      - run: npm run test:e2e:sonda

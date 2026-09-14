@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { WifiOff, AlertCircle, CheckCircle2, RefreshCw, Loader2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Mascote, type MascoteContexto } from "@/components/Mascote";
 
 // ====================================================
 // LOADING STATE
@@ -105,17 +106,24 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
+  /** Quando presente, o guia do NeuroPed acolhe o vazio no lugar do ícone
+   *  genérico — vazio vira convite, não beco. */
+  mascot?: MascoteContexto;
 }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, mascot }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-4">
-      <div
-        className="w-14 h-14 rounded-full bg-muted flex items-center justify-center"
-        aria-hidden="true"
-      >
-        {icon ?? <Inbox className="w-7 h-7 text-muted-foreground" />}
-      </div>
+      {mascot ? (
+        <Mascote contexto={mascot} size="sm" fala="" className="mb-1" />
+      ) : (
+        <div
+          className="w-14 h-14 rounded-full bg-muted flex items-center justify-center ring-4 ring-muted/40"
+          aria-hidden="true"
+        >
+          {icon ?? <Inbox className="w-7 h-7 text-muted-foreground" />}
+        </div>
+      )}
       <div className="space-y-1.5 max-w-sm">
         <p className="font-semibold text-foreground">{title}</p>
         {description && (

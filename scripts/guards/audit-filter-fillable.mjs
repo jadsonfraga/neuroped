@@ -119,8 +119,6 @@ const filterCatalog = unique([
 
 const VERIFIED_INTERACTIVE_ROUTES = new Set([
   "/testes-diretos",
-  "/testes-reconhecimento",
-  "/testes-academicos",
   "/mchat",
   "/snap",
   "/vanderbilt",
@@ -194,6 +192,13 @@ const registeredRoutes = new Set(
     (match) => match[1],
   ),
 );
+// Rotas paramétricas (ex.: /generic-scale/:id) também contam como registradas.
+const registeredRouteMatchers = [...registeredRoutes]
+  .filter((route) => route.includes(":"))
+  .map((route) => new RegExp(`^${route.replace(/:[^/]+/g, "[^/]+")}$`));
+const isRegisteredRoute = (route) =>
+  registeredRoutes.has(route) ||
+  registeredRouteMatchers.some((matcher) => matcher.test(route));
 
 function validateRecommendationSet(label, items) {
   const ids = new Set();
@@ -228,7 +233,7 @@ function validateRecommendationSet(label, items) {
       `${label}/${item.id}: rota contém estado transitório em query (${item.route})`,
     );
     check(
-      registeredRoutes.has(item.route),
+      isRegisteredRoute(item.route),
       `${label}/${item.id}: rota não registrada em App.tsx (${item.route})`,
     );
   }
@@ -334,7 +339,7 @@ const symptomSource = read(
 const podiumSource = read(
   "client/src/components/OPBRecommendationCards.tsx",
 );
-const fichaSource = read("client/src/components/ScaleFichaPage.tsx");
+const fichaSource = read("client/src/pages/generic-scale.tsx");
 
 for (const [label, source] of [
   ["testes diretos", directSource],
@@ -408,20 +413,27 @@ check(
   "pódio: alinhamento responsivo de alturas removido",
 );
 
+// A ficha canônica vive em /generic-scale/:id (a ScaleFichaPage paralela foi
+// removida em 09/2026 — uma superfície só). Invariantes preservados: idade da
+// primeira infância em meses (nunca "0 anos"), catálogo completo para fichas
+// sem torná-las aplicáveis, e banner honesto de disponibilidade.
+const ageRangeSource = read("client/src/lib/scaleAgeRange.ts");
 check(
-  fichaSource.includes("export function formatScaleAgeRange") &&
-    fichaSource.includes("maxMonths < 24"),
-  "ficha: precisão de idade em meses removida",
+  fichaSource.includes('from "@/lib/scaleAgeRange"') &&
+    fichaSource.includes("formatScaleAgeRange(") &&
+    ageRangeSource.includes("months < 24") &&
+    ageRangeSource.includes("remainingMonths"),
+  "ficha: precisão de idade em meses (formatScaleAgeRange) removida",
 );
 check(
   !fichaSource.includes("function anos(") &&
-    !/Math\.floor\(min\s*\/\s*12\)/.test(fichaSource),
+    !fichaSource.includes("Math.round(m / 12)"),
   "ficha: arredondamento regressivo para anos inteiros reintroduzido",
 );
 check(
-  fichaSource.includes("Button asChild") &&
-    fichaSource.includes('copyStatus === "error"'),
-  "ficha: ação semântica ou feedback de cópia removido",
+  fichaSource.includes("allScalesComFichas.find") &&
+    fichaSource.includes("getImplementationLabel(implStatus)"),
+  "ficha: resolução pelo catálogo completo ou banner de disponibilidade removidos",
 );
 
 // ─────────────────────────── 5. Gate oficial ────────────────────────────────

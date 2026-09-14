@@ -146,7 +146,7 @@ const saveSource = source("client/src/components/SaveToPatient.tsx");
 const patientSource = source("client/src/pages/paciente-detalhe.tsx");
 const genericSource = source("client/src/components/GenericScale.tsx");
 const runnerSource = source("client/src/components/InteractiveScaleRunner.tsx");
-const scaleFichaSource = source("client/src/components/ScaleFichaPage.tsx");
+const genericScalePageSource = source("client/src/pages/generic-scale.tsx");
 const directTestsSource = source("client/src/pages/testes-diretos.tsx");
 const pantSource = source("client/src/pages/pant.tsx");
 
@@ -186,24 +186,40 @@ assert.doesNotMatch(
 );
 assert.doesNotMatch(runnerSource, /totalScore|classification|domainResults/);
 
+// A superfície canônica de ficha é /generic-scale/:id. Ela resolve o catálogo
+// COMPLETO (allScalesComFichas) para que fichas de instrumentos licenciados
+// abram — mas a aplicação continua decidida exclusivamente pelos acervos
+// interativos (runner/itens): entrar no catálogo jamais torna aplicável.
 assert.match(
-  scaleFichaSource,
-  /import \{ allScalesComFichas \} from "@\/data\/scaleFilter"/,
-);
-assert.match(
-  scaleFichaSource,
+  genericScalePageSource,
   /allScalesComFichas\.find\(\(s\) => s\.id === scaleId\)/,
 );
+assert.match(
+  genericScalePageSource,
+  /getInteractiveItemScale\(scaleId\)/,
+  "a aplicação real deve ser decidida pelo acervo interativo, não pelo catálogo",
+);
 assert.doesNotMatch(
-  scaleFichaSource,
+  genericScalePageSource,
   /\ballScales\.find\(/,
-  "fichas dedicadas devem encontrar instrumentos documentados sem torná-los aplicáveis",
+  "a página não deve resolver o instrumento pelo subconjunto aplicável — fichas documentadas precisam abrir sem virar aplicação",
 );
 
 // Sonda Dez substitui a antiga vitrine de módulos diretos. O contrato aqui
 // protege o novo objetivo: faixa etária exata, transcrição integral, análise
 // descritiva com trava antinormatização e ausência de persistência silenciosa.
-assert.match(directTestsSource, /const BANDS:\s*BandDef\[\]\s*=\s*\[/);
+assert.match(
+  directTestsSource,
+  /const BANDS:\s*BandDef\[\]\s*=\s*SONDA_DEZ_PROTOCOL/,
+);
+assert.match(
+  directTestsSource,
+  /import[\s\S]*SONDA_DEZ_PROTOCOL[\s\S]*from ["']@\/data\/sondaDezProtocol["']/,
+);
+const { SONDA_DEZ_PROTOCOL } =
+  await import("../../client/src/data/sondaDezProtocol.ts");
+assert.equal(SONDA_DEZ_PROTOCOL.length, 6);
+assert.equal(SONDA_DEZ_PROTOCOL.flatMap((band) => band.missions).length, 42);
 for (const [id, minMonths, maxMonths] of [
   ["12-23m", 12, 23],
   ["24-35m", 24, 35],
@@ -212,13 +228,11 @@ for (const [id, minMonths, maxMonths] of [
   ["8-11a", 96, 143],
   ["12-17a", 144, 215],
 ]) {
-  assert.match(
-    directTestsSource,
-    new RegExp(
-      `id: "${id}"[\\s\\S]{0,180}?minMonths: ${minMonths},[\\s\\S]{0,80}?maxMonths: ${maxMonths}`,
-    ),
-    `${id} deve preservar a faixa canônica em meses`,
-  );
+  const band = SONDA_DEZ_PROTOCOL.find((item) => item.id === id);
+  assert.ok(band, `${id} deve existir`);
+  assert.equal(band.minMonths, minMonths, `${id}: fronteira inferior`);
+  assert.equal(band.maxMonths, maxMonths, `${id}: fronteira superior`);
+  assert.equal(band.missions.length, 7, `${id}: sete missões preservadas`);
 }
 assert.match(
   directTestsSource,
@@ -227,14 +241,20 @@ assert.match(
 );
 assert.match(directTestsSource, /const reportText = band/);
 assert.match(directTestsSource, /"REGISTRO COMPLETO"/);
-assert.match(directTestsSource, /`Fala\/pergunta: \$\{item\.say\.join\(" \/ "\)\}`/);
+assert.match(
+  directTestsSource,
+  /`Fala\/pergunta: \$\{item\.say\.join\(" \/ "\)\}`/,
+);
 assert.match(
   directTestsSource,
   /item\.fields\.map\(\(field\) => `• \$\{field\.label\}: \$\{fieldValueText\(field, record\?\.values\[field\.id\]\)\}`\)/,
   "cada campo observado deve aparecer no registro completo",
 );
 assert.match(directTestsSource, /"ANÁLISE AUTOMÁTICA DESCRITIVA"/);
-assert.match(directTestsSource, /const auditFindings = auditAnalysis\(analysis\)/);
+assert.match(
+  directTestsSource,
+  /const auditFindings = auditAnalysis\(analysis\)/,
+);
 assert.match(
   directTestsSource,
   /disabled=\{auditFindings\.length > 0\}[\s\S]*?onClick=\{copyReport\}/,
@@ -346,7 +366,9 @@ assert.doesNotMatch(
   "backup antigo não pode reintroduzir pontuação",
 );
 
-const centralizedResponseValidation = source("functions/api/_clinicalValidation.ts");
+const centralizedResponseValidation = source(
+  "functions/api/_clinicalValidation.ts",
+);
 assert.match(centralizedResponseValidation, /code:\s*"RESPONSES_REQUIRED"/);
 
 for (const apiPath of [

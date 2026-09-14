@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 import {
   Activity,
   Baby,
@@ -237,29 +238,20 @@ function matchesNavigationItem(pathname: string, href: string): boolean {
 const filterOwnedRoutes = new Set([
   "/mchat", "/cars", "/denver", "/asq3", "/snap", "/sdq", "/vanderbilt",
   "/scared", "/phqa", "/cssrs", "/conners", "/cbcl", "/brief2", "/abc",
-  "/vineland", "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
+  "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
   "/psc17", "/gad7", "/aq10", "/tea", "/tea-comportamentos", "/emdi", "/eaf",
   "/ecsm", "/ips", "/ecar-si", "/edi", "/eai", "/easi", "/ems", "/etare",
   "/eaah", "/tde2", "/pant",
 ]);
 
-/** Rotas antigas de teste direto continuam resolvendo para a Sonda Dez. */
-const sondaOwnedRoutes = new Set([
-  "/testes-reconhecimento",
-  "/testes-academicos",
-  "/cognitive-lab",
-  "/avaliacao-cognitiva-infantil",
-  "/academico-interativo",
-  "/escrita-desenho",
-  "/conhecimento-visual",
-  "/motricidade-teste",
-  "/conhecimentos-gerais",
-  "/funcoes-executivas",
-  "/atencao-concentracao",
-  "/linguagem-fonologia",
-  "/memoria-teste",
-  "/processamento-visuoauditivo",
-]);
+/**
+ * Rotas antigas de teste direto continuam resolvendo para a Sonda Dez —
+ * derivadas do mapa de redirects (fonte única; padrões :param ficam de fora
+ * porque a navegação compara caminhos literais normalizados).
+ */
+const sondaOwnedRoutes = new Set(
+  Object.keys(LEGACY_DIRECT_TEST_REDIRECTS).filter((route) => !route.includes(":")),
+);
 
 export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
   const matches = allNavigationSections.flatMap((section) =>
@@ -275,7 +267,10 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
     const item = featuredNavigation.find((candidate) => candidate.href === "/testes-diretos");
     if (item) return { section: featuredSection, item };
   }
-  if (filterOwnedRoutes.has(normalizedPath)) {
+  if (
+    filterOwnedRoutes.has(normalizedPath) ||
+    normalizedPath.startsWith("/generic-scale/")
+  ) {
     const item = featuredNavigation.find((candidate) => candidate.href === "/filtro");
     if (item) return { section: featuredSection, item };
   }
