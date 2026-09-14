@@ -631,6 +631,19 @@ export function createSyntheticClinicalApi(scenario = {}) {
       return true;
     }
 
+    // Escuta Clínica: só a capacidade do serviço, nunca áudio nem transcrição.
+    // `configured: false` reproduz a produção aferida — o piloto aparece com o
+    // processamento desabilitado — e é o estado que a prova visual precisa
+    // certificar: a página tem de avisar isso antes de qualquer captura.
+    if (pathname === "/api/live/escuta") {
+      if (request.method === "POST") {
+        send(response, 503, { error: "Processamento de áudio não habilitado nesta auditoria sintética." });
+        return true;
+      }
+      send(response, 200, { configured: false, enabled: true });
+      return true;
+    }
+
     // Contrato honesto: rota clínica não modelada responde 404, nunca 200 vazio.
     send(response, 404, { error: `Rota sintética não modelada: ${pathname}` });
     return true;
