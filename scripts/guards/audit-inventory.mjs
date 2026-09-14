@@ -299,6 +299,44 @@ const unclassifiedOrphanPages = allOrphanPages.filter(
   (page) => !intentionalPageReplacements.has(page),
 );
 
+// ── Censo de features: diretório em client/src/features/ sem importador
+// externo é scaffolding morto (a classe inteira do BLOCO 3: 8 diretórios
+// órfãos removidos em 09/2026). Feature preservada de propósito precisa de
+// entrada explícita aqui, com motivo — igual às páginas patrimônio.
+const intentionalOrphanFeatures = new Map([
+  [
+    "cognitive-lab",
+    {
+      reason:
+        "runners cognitivos autorais testados (test:cognitive); desmontados da UI na consolidação Sonda Dez — reativação ou aposentadoria é decisão do autor",
+    },
+  ],
+]);
+const featureDirs = fs
+  .readdirSync(rel("client/src/features"), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+const clientSourceFiles = [];
+{
+  const stack = [rel("client/src")];
+  while (stack.length) {
+    const current = stack.pop();
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else if (/\.(ts|tsx)$/.test(entry.name)) clientSourceFiles.push(full);
+    }
+  }
+}
+const orphanFeatures = featureDirs.filter((name) => {
+  if (intentionalOrphanFeatures.has(name)) return false;
+  const marker = `features/${name}`;
+  return !clientSourceFiles.some((file) => {
+    if (file.includes(`${path.sep}features${path.sep}${name}${path.sep}`)) return false;
+    return fs.readFileSync(file, "utf8").includes(marker);
+  });
+});
+
 const missingEssentialRoutes = essentialRoutePaths.filter(
   (route) => !hasRegisteredRoute(routePaths, route),
 );
@@ -335,7 +373,8 @@ const blockingIssues =
   brokenReplacementTargets.length +
   brokenRestoredRouteContracts.length +
   brokenRoleContracts.length +
-  unclassifiedOrphanPages.length;
+  unclassifiedOrphanPages.length +
+  orphanFeatures.length;
 
 const classifications = [
   [
@@ -426,6 +465,12 @@ if (brokenReplacementTargets.length) {
   for (const [page, value] of brokenReplacementTargets) {
     console.error(`- ${page}.tsx -> ${value.replacementRoute}`);
   }
+}
+
+if (orphanFeatures.length) {
+  console.error("\nFeatures sem importador e sem classificação explícita (scaffolding morto):");
+  for (const name of orphanFeatures)
+    console.error(`- client/src/features/${name}/ (remova, monte, ou classifique em intentionalOrphanFeatures)`);
 }
 
 if (unclassifiedOrphanPages.length) {
