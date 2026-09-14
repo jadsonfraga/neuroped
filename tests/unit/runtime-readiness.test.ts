@@ -10,6 +10,7 @@ function db(mode = "ready") {
     if (sql.includes("pragma_table_info('users')")) return { present: mode === "schema" ? 4 : 5 };
     if (mode === "lgpd-schema" && sql.includes("FROM live_export_requests WHERE 0")) throw new Error("LGPD_SCHEMA_GAP");
     if (mode === "billing-schema" && sql.includes("FROM billing_customers WHERE 0") && sql.includes("grace_ends_at")) throw new Error("BILLING_SCHEMA_GAP");
+    if (mode === "audit-schema" && sql.includes("FROM saas_audit_log WHERE 0") && sql.includes("metadata_json")) throw new Error("AUDIT_SCHEMA_GAP");
     if (sql.includes("type = 'trigger'")) return { present: mode === "lgpd-trigger" ? 6 : 7 };
     return { present: 1 };
   } }; } };
@@ -131,6 +132,24 @@ test("export readiness fails closed when billing export columns from 0013 are mi
     CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
     CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
     CLINICAL_DATA_KEY_ID: "billing-schema-test",
+  });
+  assert.equal(body.readiness.coreReady, true);
+  assert.equal(body.readiness.clinicalCryptoConfigured, true);
+  assert.equal(body.readiness.lgpdSchemaReady, false);
+  assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
+  assert.equal(body.readiness.lgpdExport.configured, false);
+  assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
+});
+
+test("export readiness fails closed when the SaaS audit schema is incomplete", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const { body } = await health({
+    DB: db("audit-schema"),
+    CLINICAL_LIVE_ENABLED: "true",
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "audit-schema-test",
   });
   assert.equal(body.readiness.coreReady, true);
   assert.equal(body.readiness.clinicalCryptoConfigured, true);
