@@ -36,6 +36,12 @@ export const db = drizzle(sqlite);
  * ========================================================================= */
 
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
@@ -373,9 +379,53 @@ export async function bootstrapAdmin(): Promise<void> {
   if (!adminEmail || !adminPassword) return;
 
   const existing = sqlite
-    .prepare("SELECT id FROM users WHERE email = ?")
-    .get(adminEmail);
-  if (existing) return;
+    .prepare("SELECT id, password_hash FROM users WHERE email = ?")
+    .get(adminEmail) as { id: string; password_hash: string | null } | undefined;
+  if (existing) {
+    // Paridade com o bootstrap canônico (functions/api/auth/_shared.ts):
+    // ADMIN_FORCE_PASSWORD_RESET=true migra a senha de uma conta existente UMA
+    // vez (marcador em app_settings) e revoga as sessões. É o caminho real de
+    // recuperação de acesso neste runtime local — a redefinição self-service
+    // por e-mail vive só na produção (ver auth/passwordRecoveryContract.ts).
+    const markerKey = "auth.admin.bootstrap.v2";
+    const forcePasswordReset =
+      process.env.ADMIN_FORCE_PASSWORD_RESET?.trim().toLowerCase() === "true";
+    const marker = forcePasswordReset
+      ? sqlite
+          .prepare("SELECT value FROM app_settings WHERE key = ? LIMIT 1")
+          .get(markerKey)
+      : null;
+    const needsPasswordBootstrap =
+      !existing.password_hash || (forcePasswordReset && !marker);
+    if (!needsPasswordBootstrap) return;
+
+    const { hashPassword } = await import("./lib/password.js");
+    const hash = await hashPassword(adminPassword);
+    const now = new Date().toISOString();
+    const applyBootstrap = sqlite.transaction(() => {
+      sqlite
+        .prepare(
+          `UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 0,
+                  failed_login_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?`,
+        )
+        .run(hash, now, existing.id);
+      sqlite
+        .prepare(
+          `UPDATE refresh_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL`,
+        )
+        .run(now, existing.id);
+      sqlite
+        .prepare(
+          `INSERT OR REPLACE INTO app_settings (key, value, updated_at) VALUES (?, 'completed', ?)`,
+        )
+        .run(markerKey, now);
+    });
+    applyBootstrap();
+    console.log(
+      `[bootstrap] Senha do admin redefinida via ADMIN_FORCE_PASSWORD_RESET: ${adminEmail} (sessões revogadas)`,
+    );
+    return;
+  }
 
   const { hashPassword } = await import("./lib/password.js");
   const hash = await hashPassword(adminPassword);
