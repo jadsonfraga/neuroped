@@ -9,6 +9,28 @@ interface Env extends TenantEnv, ArtifactStoreEnv {
   AI?: unknown;
 }
 
+async function authSchemaIsReady(db: D1Database): Promise<boolean> {
+  try {
+    // Valida as colunas realmente usadas pelo login/refresh sem ler linhas.
+    await db.prepare(`SELECT id, user_id, family_id, token_hash, parent_session_id,
+      replaced_by_session_id, expires_at, revoked_at, revoke_reason, created_at, last_used_at
+      FROM auth_refresh_sessions WHERE 0`).first();
+    const authColumns = await db.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('users') WHERE name IN ('password_hash', 'must_change_password', 'failed_login_attempts', 'locked_until', 'last_login_at')`).first<{ present: number }>();
+    const sessionIdPk = await db.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('auth_refresh_sessions') WHERE name = 'id' AND pk = 1`).first<{ present: number }>();
+    const sessionTokenUnique = await db.prepare(`SELECT COUNT(*) AS present
+      FROM pragma_index_list('auth_refresh_sessions') il
+      WHERE il."unique" = 1
+        AND (SELECT group_concat(name, ',') FROM (
+          SELECT name FROM pragma_index_info(il.name) ORDER BY seqno
+        )) = 'token_hash'`).first<{ present: number }>();
+    return Number(authColumns?.present) === 5
+      && Number(sessionIdPk?.present) === 1
+      && Number(sessionTokenUnique?.present) >= 1;
+  } catch {
+    return false;
+  }
+}
+
 async function lgpdExportSchemaReady(db: D1Database): Promise<boolean> {
   try {
     // Probe exatamente as colunas tocadas pelo runtime de exportação. WHERE 0
@@ -27,7 +49,16 @@ async function lgpdExportSchemaReady(db: D1Database): Promise<boolean> {
     ];
     for (const sql of probes) await db.prepare(sql).first();
     const requiredLgpdTriggers = await db.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_lgpd_worker_export_request_tenant_insert','trg_lgpd_worker_delete_request_tenant_insert','trg_lgpd_worker_request_binding_immutable','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence','trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker')`).first<{ present: number }>();
-    return Number(requiredLgpdTriggers?.present) === 7;
+    const workerIdPk = await db.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('live_lgpd_worker_jobs') WHERE name = 'id' AND pk = 1`).first<{ present: number }>();
+    const workerRequestUnique = await db.prepare(`SELECT COUNT(*) AS present
+      FROM pragma_index_list('live_lgpd_worker_jobs') il
+      WHERE il."unique" = 1
+        AND (SELECT group_concat(name, ',') FROM (
+          SELECT name FROM pragma_index_info(il.name) ORDER BY seqno
+        )) = 'request_type,request_id'`).first<{ present: number }>();
+    return Number(requiredLgpdTriggers?.present) === 7
+      && Number(workerIdPk?.present) === 1
+      && Number(workerRequestUnique?.present) >= 1;
   } catch {
     return false;
   }
@@ -43,9 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     try {
       await env.DB.prepare("SELECT 1").first();
       dbStatus = "ok";
-      const sessionTable = await env.DB.prepare("SELECT 1 AS present FROM sqlite_master WHERE type = 'table' AND name = 'auth_refresh_sessions' LIMIT 1").first<{ present: number }>();
-      const authColumns = await env.DB.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('users') WHERE name IN ('password_hash', 'must_change_password', 'failed_login_attempts', 'locked_until', 'last_login_at')`).first<{ present: number }>();
-      authSchemaReady = sessionTable?.present === 1 && Number(authColumns?.present) === 5;
+      authSchemaReady = await authSchemaIsReady(env.DB);
       lgpdSchemaReady = await lgpdExportSchemaReady(env.DB);
     } catch { dbStatus = "error"; }
   }
