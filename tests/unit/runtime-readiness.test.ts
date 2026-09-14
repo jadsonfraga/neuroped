@@ -11,6 +11,7 @@ function db(mode = "ready") {
     if (sql.includes("name IN ('clinics','clinic_memberships'")) return { present: mode === "lgpd-schema" ? 9 : 10 };
     if (sql.includes("pragma_table_info('live_export_requests')")) return { present: mode === "lgpd-schema" ? 7 : 8 };
     if (sql.includes("pragma_table_info('live_lgpd_worker_jobs')")) return { present: mode === "lgpd-schema" ? 11 : 12 };
+    if (sql.includes("type = 'trigger'")) return { present: mode === "lgpd-trigger" ? 6 : 7 };
     return { present: 1 };
   } }; } };
 }
@@ -95,6 +96,24 @@ test("export readiness fails closed when LGPD/LIVE schema is incomplete", async 
     CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
     CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
     CLINICAL_DATA_KEY_ID: "schema-test",
+  });
+  assert.equal(body.readiness.coreReady, true);
+  assert.equal(body.readiness.clinicalCryptoConfigured, true);
+  assert.equal(body.readiness.lgpdSchemaReady, false);
+  assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
+  assert.equal(body.readiness.lgpdExport.configured, false);
+  assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
+});
+
+test("export readiness fails closed when 0017 completion triggers are incomplete", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const { body } = await health({
+    DB: db("lgpd-trigger"),
+    CLINICAL_LIVE_ENABLED: "true",
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "trigger-test",
   });
   assert.equal(body.readiness.coreReady, true);
   assert.equal(body.readiness.clinicalCryptoConfigured, true);
