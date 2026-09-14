@@ -42,7 +42,7 @@ test("production with no DB cannot advertise local auth", async () => {
   assert.deepEqual(body.authentication, { required: true, configured: false });
 });
 test("schema and signing-key failures are not healthy", async () => {
-  for (const extra of [{ DB: db("schema") }, { NEUROPED_JWT_SECRET: "short" }]) {
+  for (const extra of [{ DB: db("schema") }, { NEUROPED_JWT_SECRET: secret.slice(0, 5) }]) {
     const { response, body } = await health(extra);
     assert.equal(response.status, 503); assert.equal(body.readiness.coreReady, false);
   }
