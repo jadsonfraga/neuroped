@@ -61,6 +61,29 @@
 /* ── Pressão tátil ────────────────────────────────────────────────────────
  * Feedback de toque uniforme para superfícies clicáveis marcadas. Escala
  * mínima (0.985) para não "pular" — contrato do guard de cards estáticos. */
+/* ── Retrato do cockpit fundido à superfície ──────────────────────────────
+ * A foto institucional era colada com corte vertical seco na borda do hero.
+ * A máscara funde a borda esquerda ao card — colagem vira composição. No
+ * mobile o retrato vira avatar circular (product-signature) e não é mascarado. */
+@media (min-width: 640px) {
+  .np-workspace-welcome__photo {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 34%);
+    mask-image: linear-gradient(to right, transparent, black 34%);
+  }
+}
+@media (min-width: 1200px) {
+  .np-workspace-welcome__portrait {
+    flex-basis: 11.5rem;
+  }
+}
+
+/* ── Grade de atalhos da sidebar sem tile órfão ───────────────────────────
+ * Com contagem ímpar, o último atalho ocupava meia linha solta; agora ele
+ * fecha a grade em largura total. */
+.np-side-tile-grid > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .np-pressable {
   transition: transform 0.16s ease, box-shadow 0.2s ease;
 }

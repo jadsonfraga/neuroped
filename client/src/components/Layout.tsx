@@ -220,7 +220,7 @@ function FeaturedShortcuts({
         </>
       )}
       {tiles.length > 0 && (
-        <div className="mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
+        <div className="np-side-tile-grid mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
       )}
       {connections.length > 0 && (
         <>

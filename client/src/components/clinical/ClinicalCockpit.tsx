@@ -270,7 +270,7 @@ export function ClinicalCockpit() {
           <SafeAssetImage src={brandAssets.photography.retratoInstitucional} alt="" className="np-workspace-welcome__photo" />
         </div>
       </section>
-      <nav className="np-workspace-actions" aria-label="Atalhos de atendimento">
+      <nav className="np-workspace-actions np-stagger" aria-label="Atalhos de atendimento">
         {portalQuickActions.map((item) => <PortalQuickAction key={item.href} item={item} />)}
       </nav>
 
