@@ -328,12 +328,20 @@ const clientSourceFiles = [];
     }
   }
 }
+// Importador de verdade é um ESPECIFICADOR de import/export/import() com
+// fronteira de caminho — nome citado em comentário/string solta, ou como
+// prefixo de outro diretório (features/foo vs features/foo-extra), não conta.
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const featureImportSpecifier = (name) =>
+  new RegExp(
+    `(?:from\\s+|import\\s*\\(\\s*)["'](?:@/|(?:\\.\\./)+|\\./)?(?:[\\w./-]*/)?features/${escapeRegExp(name)}(?:/[^"']*)?["']`,
+  );
 const orphanFeatures = featureDirs.filter((name) => {
   if (intentionalOrphanFeatures.has(name)) return false;
-  const marker = `features/${name}`;
+  const specifier = featureImportSpecifier(name);
   return !clientSourceFiles.some((file) => {
     if (file.includes(`${path.sep}features${path.sep}${name}${path.sep}`)) return false;
-    return fs.readFileSync(file, "utf8").includes(marker);
+    return specifier.test(fs.readFileSync(file, "utf8"));
   });
 });
 
