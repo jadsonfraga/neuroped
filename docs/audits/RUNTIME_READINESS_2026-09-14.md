@@ -28,6 +28,8 @@ na indisponibilidade transitoria do D1 para nao mudar o contrato de autenticacao
 Producao sem DB continua exigindo autenticacao remota e nao permite fallback local.
 readiness separa saude do nucleo, disponibilidade criptografica e binding de exportacao.
 A existencia do binding NAO prova exportacao/purge: executionVerified e false.
+Readiness de exportacao tambem exige o schema LIVE/LGPD minimo das migrations 0014/0017;
+schema parcial gera LGPD_SCHEMA_NOT_READY e nunca configured=true.
 Binding R2 parcial (sem put/get/delete) e recusado antes de iniciar a operacao.
 Nenhum conteudo, identificador de paciente, erro bruto ou segredo entra no health.
 
@@ -57,7 +59,7 @@ credenciais; conector Cloudflare nao foi encontrado. Nao equivale a ausencia glo
 
 ## Validacao e rollback
 
-Regressoes novas: tests/unit/runtime-readiness.test.ts (6 casos, sem skip), mais
+Regressoes novas: tests/unit/runtime-readiness.test.ts (8 casos, sem skip), mais
 contratos existentes de autenticacao e endpoints LGPD. CI dedicada executa todos.
 Resultados efetivamente executados sao registrados na PR; verify:release completo
 nao deve ser presumido. Reverter por PR restaura o contrato antigo mas reintroduz
@@ -67,7 +69,7 @@ integral a partir desta alteracao.
 
 ### Execucao local confirmada
 
-Readiness 6/6, autenticacao Cloudflare, exportacao LGPD, eliminacao LGPD,
+Readiness 8/8, autenticacao Cloudflare, exportacao LGPD, eliminacao LGPD,
 contrato de monitoramento, governanca de workflows, npm run check, npm run lint
 e git diff --check: todos exit 0. Nenhuma assercao removida ou ignorada.
 Dependencias reutilizadas por junction somente apos conferir package-lock identico.
