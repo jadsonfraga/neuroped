@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - "functions/api/health.ts"
+      - "functions/api/tenant/_core.ts"
+      - "functions/api/tenant/_crypto.ts"
+      - "package.json"
+      - "package-lock.json"
       - "functions/api/live/governance/_artifactStore.ts"
       - "tests/unit/runtime-readiness.test.ts"
       - ".github/workflows/runtime-readiness.yml"
@@ -10,6 +14,10 @@ on:
     branches: [main]
     paths:
       - "functions/api/health.ts"
+      - "functions/api/tenant/_core.ts"
+      - "functions/api/tenant/_crypto.ts"
+      - "package.json"
+      - "package-lock.json"
       - "functions/api/live/governance/_artifactStore.ts"
       - "tests/unit/runtime-readiness.test.ts"
       - ".github/workflows/runtime-readiness.yml"

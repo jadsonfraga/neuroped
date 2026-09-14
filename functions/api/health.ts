@@ -24,7 +24,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
   const authConfigured = Boolean(env.DB) && authSchemaReady !== false && (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) >= 32;
   const cryptoReady = clinicalCryptoReady(env);
-  const coreRequired = env.ENVIRONMENT === "production" || Boolean(env.DB);
+  const coreRequired = (env.ENVIRONMENT ?? "").toLowerCase() === "production" || Boolean(env.DB);
   const coreReady = dbStatus === "ok" && authSchemaReady === true && authConfigured;
   const degraded = coreRequired && !coreReady;
   const storageBindingPresent = resolvePrivateArtifactStore(env) !== null;

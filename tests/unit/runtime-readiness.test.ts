@@ -37,9 +37,11 @@ test("database failure returns 503 without releasing remote authentication", asy
   assert.doesNotMatch(JSON.stringify(body), /PRIVATE_DETAIL/);
 });
 test("production with no DB cannot advertise local auth", async () => {
-  const { response, body } = await health({ DB: undefined });
-  assert.equal(response.status, 503);
-  assert.deepEqual(body.authentication, { required: true, configured: false });
+  for (const environment of ["production", "Production", "PRODUCTION"]) {
+    const { response, body } = await health({ DB: undefined, ENVIRONMENT: environment });
+    assert.equal(response.status, 503);
+    assert.deepEqual(body.authentication, { required: true, configured: false });
+  }
 });
 test("schema and signing-key failures are not healthy", async () => {
   for (const extra of [{ DB: db("schema") }, { NEUROPED_JWT_SECRET: secret.slice(0, 5) }]) {
