@@ -293,6 +293,75 @@ jobs:
           }
           echo "✅ Lifecycle SaaS e trilha de exportação migrados antes do deploy."
 
+      - name: Migrar D1 — contrato comercial canônico antes das Functions
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          # A migração comercial depende da fundação tenant. Não tentamos
+          # reconstruí-la silenciosamente aqui: release falha fechado se a base
+          # de produção estiver incompleta.
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','clinics','clinic_memberships') ORDER BY name;" \
+            > /tmp/commercial-dependencies.txt 2>&1
+          cat /tmp/commercial-dependencies.txt
+          for table in users clinics clinic_memberships; do
+            grep -q "\b$table\b" /tmp/commercial-dependencies.txt || {
+              echo "::error::dependência do SaaS comercial ausente em produção: $table"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0026_saas_commercial_catalog.sql
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'commercial_%' ORDER BY name;" \
+            > /tmp/commercial-tables.txt 2>&1
+          cat /tmp/commercial-tables.txt
+          for table in commercial_offers commercial_offer_features commercial_licenses commercial_license_acceptances commercial_license_users commercial_usage_events; do
+            grep -q "\b$table\b" /tmp/commercial-tables.txt || {
+              echo "::error::tabela comercial ausente após migração: $table"
+              exit 1
+            }
+          done
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT code || ':' || price_cents || ':' || sale_mode AS contract FROM commercial_offers WHERE code IN ('institutional-pilot-1-0','institutional-annual-1-0') ORDER BY code;" \
+            > /tmp/commercial-offers.txt 2>&1
+          cat /tmp/commercial-offers.txt
+          grep -q "institutional-pilot-1-0:149000:invite_only" /tmp/commercial-offers.txt || {
+            echo "::error::contrato persistido do piloto diverge do canônico"
+            exit 1
+          }
+          grep -q "institutional-annual-1-0:249000:gated" /tmp/commercial-offers.txt || {
+            echo "::error::contrato persistido anual diverge do canônico"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT 'pilot_features=' || COUNT(*) AS invariant FROM commercial_offer_features f JOIN commercial_offers o ON o.id=f.offer_id WHERE o.code='institutional-pilot-1-0' AND f.enabled=1;" \
+            > /tmp/commercial-features.txt 2>&1
+          cat /tmp/commercial-features.txt
+          grep -q "pilot_features=5" /tmp/commercial-features.txt || {
+            echo "::error::piloto não possui exatamente cinco entitlements persistidos"
+            exit 1
+          }
+
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_commercial_license_must_start_pending','trg_commercial_license_offer_cap','trg_commercial_license_activation_contract','trg_commercial_material_usage_authorized_user') ORDER BY name;" \
+            > /tmp/commercial-triggers.txt 2>&1
+          cat /tmp/commercial-triggers.txt
+          for trigger in trg_commercial_license_must_start_pending trg_commercial_license_offer_cap trg_commercial_license_activation_contract trg_commercial_material_usage_authorized_user; do
+            grep -q "\b$trigger\b" /tmp/commercial-triggers.txt || {
+              echo "::error::trigger fail-closed comercial ausente: $trigger"
+              exit 1
+            }
+          done
+          echo "✅ Catálogo/licença comercial migrados e verificados antes do deploy das Functions."
+
       - name: Configurar secrets/vars de auth no Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
