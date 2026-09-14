@@ -105,13 +105,6 @@ const intentionalPageReplacements = new Map([
     },
   ],
   [
-    "bloco3-showcase",
-    {
-      replacementRoute: null,
-      reason: "showcase interno de desenvolvimento; não é tela de produção",
-    },
-  ],
-  [
     "diario-epilepsia",
     {
       replacementRoute: "/epilepsia",
