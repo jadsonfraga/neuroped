@@ -641,7 +641,7 @@ function tokensFromText(value: string): Set<string> {
   );
 }
 
-function selectedSignalText(ctx: FilterContext): string {
+function selectedSignalText(ctx: SignalMatchContext): string {
   const ids = new Set(ctx.selectedSignals || []);
   const labels: string[] = [];
   for (const queixa of ctx.queixas) {
@@ -701,11 +701,25 @@ function calculateSemanticFocus(scale: ScaleEntry, ctx: FilterContext): number {
   return Math.min(12, hits * 2);
 }
 
-function calculateSignalSpecificity(
+/**
+ * Correspondência CANÔNICA sinal marcado × escala (auditoria semanal, P1):
+ * a UI seleciona IDs como "tdah-dificuldade-focar", enquanto signalTags são
+ * termos clínicos ("desatencao"). Comparar ID com tag diretamente nunca casa —
+ * era exatamente o bug do pódio. Esta é a ÚNICA fonte de verdade: resolve o
+ * ID para rótulo+descrição e cruza por token, prefixo de queixa e tag exata.
+ * Score e pódio consomem a mesma função — nunca reimplementar a comparação.
+ */
+export interface SignalMatchContext {
+  queixas: string[];
+  selectedSignals?: string[];
+}
+
+function signalMatchComponents(
   scale: ScaleEntry,
-  ctx: FilterContext,
-): { score: number; rawScore: number; reason?: string } {
-  if (!ctx.selectedSignals?.length) return { score: 0, rawScore: 0 };
+  ctx: SignalMatchContext,
+): { matched: number; idPrefixHits: number; exactTagHits: number } {
+  if (!ctx.selectedSignals?.length)
+    return { matched: 0, idPrefixHits: 0, exactTagHits: 0 };
 
   const signalText = selectedSignalText(ctx);
   const selectedTokens = tokensFromText(signalText);
@@ -723,12 +737,52 @@ function calculateSignalSpecificity(
     normalizedSignalText.includes(normalizeClinicalText(tag)),
   ).length;
 
-  const rawScore = Math.round(
-    matched * 1.6 +
-      idPrefixHits * 2 +
-      exactTagHits * 3 +
-      Math.min(4, ctx.selectedSignals.length),
-  );
+  return { matched, idPrefixHits, exactTagHits };
+}
+
+export function scaleMatchesSelectedSignals(
+  scale: ScaleEntry,
+  ctx: SignalMatchContext,
+): boolean {
+  // O booleano "esta escala fala o sinal marcado" exige evidência FORTE:
+  // o sinal pertence a um domínio de queixa da escala (prefixo do ID) ou o
+  // texto do sinal contém uma signalTag exata. Sobreposição de token sozinha
+  // NÃO basta — verbos genéricos da descrição ("responde", "perguntas")
+  // fariam o M-CHAT "falar" um sinal de impulsividade do TDAH. Tokens seguem
+  // contribuindo no score graduado (calculateSignalSpecificity), onde ruído
+  // fraco não vira afirmação categórica.
+  const { idPrefixHits, exactTagHits } = signalMatchComponents(scale, ctx);
+  return idPrefixHits > 0 || exactTagHits > 0;
+}
+
+export function calculateEvidenceQuality(scale: ScaleEntry): number {
+  let points = 0;
+  const validation = (scale.validacaoBrasil ?? "").trim().toLowerCase();
+  if (validation.startsWith("sim")) points += 2;
+  else if (validation.startsWith("parcial")) points += 1;
+  if (scale.pubmedId?.trim()) points += 1;
+  return Math.min(3, points);
+}
+
+function calculateSignalSpecificity(
+  scale: ScaleEntry,
+  ctx: FilterContext,
+): { score: number; rawScore: number; reason?: string } {
+  if (!ctx.selectedSignals?.length) return { score: 0, rawScore: 0 };
+
+  const { matched, idPrefixHits, exactTagHits } = signalMatchComponents(scale, ctx);
+  // O termo base só entra quando HÁ correspondência real: antes ele era
+  // incondicional e toda escala ganhava "alguma correspondência" com qualquer
+  // sinal marcado — ruído que diluía exatamente o que o bônus deveria separar.
+  const anyHit = matched > 0 || idPrefixHits > 0 || exactTagHits > 0;
+  const rawScore = anyHit
+    ? Math.round(
+        matched * 1.6 +
+          idPrefixHits * 2 +
+          exactTagHits * 3 +
+          Math.min(4, ctx.selectedSignals.length),
+      )
+    : 0;
   const score = Math.min(18, rawScore);
 
   if (score >= 12)
@@ -836,6 +890,13 @@ export function calculateRefinedScore(
     if (signalSpecificity.reason) reasons.push(signalSpecificity.reason);
   }
 
+  // Qualidade da evidência como DESEMPATE limitado (auditoria semanal, P2):
+  // entre duas escalas igualmente aplicáveis, validação brasileira e fonte
+  // indexada valem um empurrão pequeno (teto 3) — nunca competem com bloqueio
+  // de segurança, idade ou respondente, que acontecem antes e fora do score.
+  const evidenceQuality = calculateEvidenceQuality(scale);
+  if (evidenceQuality > 0) score += evidenceQuality;
+
   const semanticFocus = calculateSemanticFocus(scale, ctx);
   if (semanticFocus > 0) {
     score += Math.min(6, semanticFocus);
@@ -939,7 +1000,10 @@ export function calculateRefinedScore(
     implementationLabel: getImplementationLabel(implementationStatus),
     applicationMode: mode,
     licenseRestricted,
-    signalSpecificityScore: signalSpecificity.rawScore,
+    // Auditoria semanal (P2): propagar o score CAPADO — o pódio multiplica
+    // este campo por 2.5, e o valor bruto sem teto dava a muitos sinais um
+    // peso desproporcional que o score principal tentava justamente limitar.
+    signalSpecificityScore: signalSpecificity.score,
     semanticFocusScore: semanticFocus,
   };
 }

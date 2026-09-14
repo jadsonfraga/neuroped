@@ -51,6 +51,7 @@ import { norm, guessQueixas, guessRespondente } from "@/data/queixaMapping";
 import { mergeFilterableCatalog } from "@/data/filterableCatalog";
 import { buildUploadedReferenceCatalogForApp } from "@/data/uploadedInstrumentFilterBridge";
 import { noCostWorldScales } from "@/data/noCostWorldScales";
+import { parseAgeRangeMonths } from "@/lib/ageRangeParse";
 import type {
   QueixaAgeRecommendations,
   RecommendationOPB,
@@ -213,12 +214,13 @@ function unique(scales: ScaleEntry[]) {
   );
 }
 
-function ageMonths(range: string) {
-  const m = range.replace(",", ".").match(/([0-9.]+)\s*[–-]\s*([0-9.]+)/);
-  return m
-    ? { min: Math.round(Number(m[1]) * 12), max: Math.round(Number(m[2]) * 12) }
-    : { min: 0, max: 216 };
-}
+// Faixa etária do registro mundial: parser canônico fail-closed
+// (lib/ageRangeParse). O parser antigo só reconhecia "X–Y" com travessão e
+// FALHAVA ABERTO para 0–216: 77 das 112 linhas ("0 a 6 anos", "Nascimento a
+// 68 meses") viravam faixas fabricadas de 0–18 anos — Bayley (≤42 meses)
+// aparecia elegível para adolescente. Linha ilegível agora é EXCLUÍDA do
+// ranking, e o gate de release (age-range-parse.test) exige o registro
+// inteiro parseável para o build passar.
 
 function rowToScale(row: Row): ScaleEntry {
   if (!Array.isArray(row) || row.length < 8) {
@@ -227,7 +229,10 @@ function rowToScale(row: Row): ScaleEntry {
     );
   }
   const [n, sigla, nome, categoria, idade, respondente, selo, politica] = row;
-  const a = ageMonths(idade);
+  const a = parseAgeRangeMonths(idade);
+  if (!a) {
+    throw new Error(`Faixa etária ilegível no registro: "${idade}" (${sigla})`);
+  }
   // Registro enriquecido (v2.0) traz queixas canônicas e sintomas curados por
   // evidência nas colunas 12 e 11; quando ausentes, mantém a inferência por
   // heurística (guessQueixas) como backup.
@@ -349,15 +354,19 @@ function rankSafely(
   catalog: ScaleEntry[],
   ctx: FilterContext,
   query: string,
-): RefinedScaleMatch[] {
+): { matches: RefinedScaleMatch[]; searchUnmatched: boolean } {
   const uniq = unique(catalog);
   let matches = filterScalesWithClinicalRescue(uniq, ctx);
+  let searchUnmatched = false;
   if (query.trim()) {
     // Busca FILTRA de verdade: entre os candidatos seguros, mantém só os que casam
     // com o termo digitado. Se nada casar (ex.: erro de digitação), não esvazia —
-    // cai para o conjunto seguro completo, reordenado por relevância.
+    // cai para o conjunto seguro completo, reordenado por relevância, e a UI
+    // DIZ isso (auditoria semanal, P3: fallback silencioso parecia resultado
+    // da busca).
     const scored = matches.map((m) => ({ m, b: searchBoost(m.scale, query) }));
     const anyMatch = scored.some((x) => x.b > 0);
+    searchUnmatched = !anyMatch;
     const kept = anyMatch ? scored.filter((x) => x.b > 0) : scored;
     matches = kept
       .sort((a, b) => b.m.relevanceScore + b.b - (a.m.relevanceScore + a.b))
@@ -371,7 +380,7 @@ function rankSafely(
   ) {
     matches = getBroadbandFallback(uniq, ctx);
   }
-  return matches;
+  return { matches, searchUnmatched };
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -1185,7 +1194,17 @@ export default function FiltroPage() {
     fetch(REGISTRY_URL, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((data: { escalas?: Row[] }) => {
-        const parsed = (data.escalas || []).map(rowToScale);
+        const parsed: ScaleEntry[] = [];
+        for (const row of data.escalas || []) {
+          // Fail-closed por LINHA: dado ilegível sai do ranking em silêncio
+          // zero — o gate de release já reprova o catálogo antes do deploy;
+          // aqui é só cinto de segurança contra um JSON servido divergente.
+          try {
+            parsed.push(rowToScale(row));
+          } catch {
+            /* linha excluída */
+          }
+        }
         if (parsed.length < 100) throw new Error("registro incompleto");
         if (alive) {
           setWorld(unique([...noCostWorldScales, ...parsed]));
@@ -1228,11 +1247,15 @@ export default function FiltroPage() {
     () => resolveFilterAge(exactAge, selectedAge, search, faixasEtarias),
     [exactAge, selectedAge, search],
   );
-  const effectiveAgeRange = resolvedAge.status === "exact"
-    ? { id: "exact", label: resolvedAge.label, min: resolvedAge.ageMonths!, max: resolvedAge.ageMonths! }
-    : resolvedAge.status === "band"
-      ? faixasEtarias.find((age) => age.id === selectedAge) ?? null
-      : null;
+  const effectiveAgeRange = useMemo(
+    () =>
+      resolvedAge.status === "exact"
+        ? { id: "exact", label: resolvedAge.label, min: resolvedAge.ageMonths!, max: resolvedAge.ageMonths! }
+        : resolvedAge.status === "band"
+          ? faixasEtarias.find((age) => age.id === selectedAge) ?? null
+          : null,
+    [resolvedAge, selectedAge],
+  );
   const effectiveAgeOptions = effectiveAgeRange ? [effectiveAgeRange] : [];
   const visibleQueixas = useMemo(
     () => filterComplaintOptions(queixas, complaintSearch, selectedQueixas),
@@ -1293,13 +1316,15 @@ export default function FiltroPage() {
   ]);
 
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
-  const refinedMatches = useMemo(
+  const safeRanking = useMemo(
     () => {
-      if (!hasSearch) return [];
+      if (!hasSearch) return { matches: [], searchUnmatched: false };
       return rankSafely(catalog, filterContext, search);
     },
     [catalog, filterContext, search, hasSearch],
   );
+  const refinedMatches = safeRanking.matches;
+  const searchUnmatched = safeRanking.searchUnmatched;
   const refinedById = useMemo(
     () => new Map(refinedMatches.map((m) => [m.scale.id, m])),
     [refinedMatches],
@@ -1339,8 +1364,12 @@ export default function FiltroPage() {
         selectedQueixas: activeQueixas,
         ageMonths: curatedAgeMonths,
         selectedSignals: selectedSignalIds,
+        ageBand: effectiveAgeRange
+          ? { min: effectiveAgeRange.min, max: effectiveAgeRange.max }
+          : null,
       }),
     [
+      effectiveAgeRange,
       refinedMatches,
       hasSafeResults,
       curatedTiers,
@@ -2257,6 +2286,21 @@ export default function FiltroPage() {
                 ? `${refinedMatches.length} escala${refinedMatches.length === 1 ? "" : "s"} segura${refinedMatches.length === 1 ? "" : "s"} encontrada${refinedMatches.length === 1 ? "" : "s"} para este perfil.`
                 : "Nenhuma escala segura para este perfil. Refine idade, queixa ou respondente."}
             </p>
+
+            {/* Termo de busca sem correspondência: os resultados vêm dos
+            filtros estruturados — dizer isso evita que um erro de digitação
+            pareça ter produzido resultados "da busca". */}
+            {hasSafeResults && searchUnmatched && (
+              <p
+                role="status"
+                data-testid="filter-search-unmatched"
+                className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-900 dark:text-amber-100"
+              >
+                Termo “{search.trim()}” não reconhecido no catálogo — o ranking
+                abaixo vem dos filtros estruturados (idade, queixa,
+                respondente), não da busca.
+              </p>
+            )}
 
             {/* Síntese clínica do motor de filtragem avançada */}
             {refinedMatches.length > 0 && (

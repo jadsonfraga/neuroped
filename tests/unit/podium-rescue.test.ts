@@ -110,6 +110,12 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
 // ── 3. Invariante combinado: sinal + curadoria + orçamento apertado ────────
 // Sob pressão simultânea (curadoria disponível, sinal marcado e teto justo),
 // o teto de 100 NUNCA cede e o sinal segue coberto quando há candidata viável.
+// INTEGRAÇÃO REAL (auditoria semanal, P1): o sinal chega no FORMATO DA UI —
+// o ID "tdah-impulsividade-basica" (signalsAndSymptoms), não o termo da tag.
+// A versão antiga deste fixture usava "impulsividade" (forma da signalTag) e
+// mantinha a suíte verde enquanto o pódio comparava ID×tag e nunca casava no
+// uso real. Só a correspondência canônica (ID → rótulo/descrição → tokens)
+// faz este caso passar.
 {
   const matches = [
     makeMatch({ id: "x-ouro", rel: 94, itens: 35, queixas: ["tdah"] }),
@@ -120,7 +126,7 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
   const podium = selectPodium(
     matches,
     { queixa: "tdah", ageMin: 0, ageMax: 216, ouro: "x-curada-grande", reason: "fixture" },
-    { selectedQueixas: ["tdah"], ageMonths: 96, selectedSignals: ["impulsividade"] },
+    { selectedQueixas: ["tdah"], ageMonths: 96, selectedSignals: ["tdah-impulsividade-basica"] },
   );
   const ids = podiumIds(podium);
   assert.ok(podiumTotal(podium) <= PODIUM_QUESTION_CAP, `teto estourou: ${podiumTotal(podium)}`);
@@ -129,6 +135,29 @@ function podiumTotal(p: ReturnType<typeof selectPodium>): number {
     `sinal marcado com candidata viável deve estar coberto (veio: ${ids.join(", ")})`,
   );
   console.log("✓ sob pressão combinada, teto absoluto e cobertura de sinal se mantêm");
+}
+
+// ── 4. Discriminação do matcher canônico contra o CATÁLOGO REAL ────────────
+// Evidência forte exigida: sinal de impulsividade do TDAH é "falado" pelas
+// escalas de TDAH e NUNCA por M-CHAT/CARS/Denver — sobreposição de verbos
+// genéricos da descrição não vira afirmação categórica.
+{
+  const { scaleMatchesSelectedSignals } = await import(
+    "../../client/src/data/advancedFilterLogic.ts"
+  );
+  const { allScales } = await import("../../client/src/data/scaleFilter.ts");
+  const ctx = { queixas: ["tdah"], selectedSignals: ["tdah-impulsividade-basica"] };
+  const check = (id: string, expected: boolean) => {
+    const scale = allScales.find((s) => s.id === id)!;
+    assert.equal(
+      scaleMatchesSelectedSignals(scale, ctx),
+      expected,
+      `${id}: esperado ${expected} para sinal real da UI`,
+    );
+  };
+  for (const id of ["snap", "conners", "vanderbilt", "brief2"]) check(id, true);
+  for (const id of ["mchat", "cars", "denver", "scared"]) check(id, false);
+  console.log("✓ matcher canônico discrimina sinais reais da UI no catálogo real");
 }
 
 console.log("✓ passes pós-teto do pódio (sinal + curadoria) travados por fixtures");

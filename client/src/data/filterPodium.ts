@@ -1,4 +1,4 @@
-import { getApplicationMode, getImplementationStatus, type RefinedScaleMatch } from "./advancedFilterLogic";
+import { getApplicationMode, getImplementationStatus, scaleMatchesSelectedSignals, type RefinedScaleMatch } from "./advancedFilterLogic";
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
 import { enforcePodiumHardCap } from "./podiumHardCap";
@@ -35,6 +35,11 @@ export interface PodiumSelectionContext {
   // Sinais/sintomas que o usuário marcou no filtro. O pódio deve conter ao
   // menos uma escala que fale a esses sinais quando o catálogo permite.
   selectedSignals?: string[];
+  // Faixa etária SELECIONADA (meses). O ranking admite qualquer sobreposição;
+  // o pódio prefere escala que cobre a faixa INTEIRA — uma "2–4 anos" não
+  // deve medalhar com instrumento válido só perto dos 2, salvo falta de
+  // alternativa (é bônus, nunca exclusão).
+  ageBand?: { min: number; max: number } | null;
 }
 
 export function selectCuratedTiers(
@@ -111,11 +116,20 @@ export function selectPodium(
   const selectedQueixas = [...new Set(context.selectedQueixas ?? [])];
   const selectedQueixaSet = new Set(selectedQueixas);
   const exactAge = context.ageMonths ?? null;
+  const ageBand = context.ageBand ?? null;
+  const coversBand = (match: RefinedScaleMatch) =>
+    ageBand === null ||
+    (match.scale.ageMin <= ageBand.min && match.scale.ageMax >= ageBand.max);
   const selectedSignals = context.selectedSignals ?? [];
   const containsAge = (match: RefinedScaleMatch) =>
     exactAge === null || (match.scale.ageMin <= exactAge && match.scale.ageMax >= exactAge);
+  // Correspondência canônica (auditoria semanal, P1): a comparação direta
+  // ID-selecionado × signalTag nunca casava ("tdah-dificuldade-focar" vs
+  // "desatencao") — o pódio concluía que nenhuma medalha cobria o sinal
+  // marcado. A única fonte de verdade vive em advancedFilterLogic.
+  const signalCtx = { queixas: selectedQueixas, selectedSignals };
   const signalHit = (match: RefinedScaleMatch) =>
-    selectedSignals.length > 0 && (match.scale.signalTags ?? []).some((tag) => selectedSignals.includes(tag));
+    selectedSignals.length > 0 && scaleMatchesSelectedSignals(match.scale, signalCtx);
   // REGRA DE OURO (obrigatória): o pódio deve indicar escala que o clínico
   // consegue ABRIR E APLICAR no app (itens + escore). Ficha técnica ou
   // instrumento licenciado só medalha quando NÃO existe candidata aplicável
@@ -154,6 +168,10 @@ export function selectPodium(
     // Uma escala cuja faixa NÃO contém a idade exata só deve medalhar na falta
     // de alternativa; idem para recomendações sem nada aplicável no app.
     const ageFitBonus = containsAge(match) ? 14 : 0;
+    // Cobertura integral da faixa selecionada (auditoria semanal, P2): mesmo
+    // desenho do ageFitBonus — preferência forte, com fallback natural quando
+    // nenhuma candidata cobre a faixa toda.
+    const bandCoverageBonus = coversBand(match) ? 10 : 0;
     const signalHitBonus = signalHit(match) ? 6 : 0;
     // Regra de ouro: aplicável no app vale bônus real no desempate.
     const applicableBonus = isApplicable(match) ? 12 : 0;
@@ -162,6 +180,7 @@ export function selectPodium(
     // rel=100 vs bears rel=84 — o clínico quer a versão que abre e pontua).
     const notImplementedPenalty = getImplementationStatus(match.scale) === "not_implemented" ? 20 : 0;
     return (
+      bandCoverageBonus +
       match.relevanceScore +
       explicitPreference +
       curatedBonus +
