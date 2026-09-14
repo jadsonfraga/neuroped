@@ -885,7 +885,7 @@ export default function PacientesPage() {
                           </div>
                         </div>
                       </Link>
-                      <div className="flex gap-1">
+                      <div className="flex shrink-0 gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
