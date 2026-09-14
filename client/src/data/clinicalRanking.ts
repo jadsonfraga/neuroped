@@ -142,7 +142,7 @@ export const clinicalRanking: ClinicalTierRule[] = [
     reason: "Denver II e ASQ-3 cobrem marcos pré-escolares; EMDI detalha o desenvolvimento infantil." },
   { queixa: "atraso", ageMin: 72, ageMax: 216,
     ouro: "efdi", prata: "ead-np", bronze: "pant",
-    reason: "Após os 6 anos o foco é funcionamento adaptativo (Vineland-3) e perfil neuropsicológico (PANT)." },
+    reason: "Após os 6 anos o foco é funcionamento adaptativo — EFDI e EAD-NP (construto Vineland, aplicáveis no app) — com perfil neuropsicológico pelo PANT." },
 
   // ============================ APRENDIZAGEM ============================
   { queixa: "aprendizagem", ageMin: 72, ageMax: 168,
@@ -257,10 +257,10 @@ export const clinicalRanking: ClinicalTierRule[] = [
   // ========================== FUNCIONALIDADE ============================
   { queixa: "funcionalidade", ageMin: 24, ageMax: 216,
     ouro: "ead-np", prata: "efdi", bronze: "pedsql",
-    reason: "Vineland-3 é o padrão de comportamento adaptativo; PedsQL mede qualidade de vida e EAF a funcionalidade." },
+    reason: "EAD-NP cobre comportamento adaptativo (construto Vineland) e EFDI a funcionalidade; PedsQL mede qualidade de vida." },
   { queixa: "funcionalidade", ageMin: 0, ageMax: 24,
     ouro: "denver", prata: "ead-np", bronze: "efdi",
-    reason: "No lactente, Vineland-3 (adaptativo) com Denver II e PANT cobrem funcionalidade e marcos." },
+    reason: "No lactente, Denver II rastreia marcos e EAD-NP/EFDI cobrem o adaptativo (construto Vineland) e a funcionalidade." },
 
   // ============================== EFEITOS ===============================
   { queixa: "efeitos", ageMin: 0, ageMax: 216,
@@ -275,11 +275,11 @@ export const clinicalRanking: ClinicalTierRule[] = [
   // ============================ SUBSTÂNCIAS =============================
   { queixa: "psicose", ageMin: 144, ageMax: 216,
     ouro: "prime-screen", prata: "erp-np", bronze: "ymrs",
-    reason: "Em adolescentes, SIPS/SOPS estrutura risco psicotico/prodromico; PRIME rastreia sintomas autorreferidos e YMRS quantifica mania quando a queixa e expansividade/agitação." },
+    reason: "Em adolescentes, PRIME rastreia sintomas autorreferidos de risco psicótico (construto SIPS/SOPS) e YMRS quantifica mania quando a queixa é expansividade/agitação." },
 
   { queixa: "toc", ageMin: 72, ageMax: 96,
     ouro: "cybocs", prata: "oci-cv", bronze: "fas-pr",
-    reason: "CY-BOCS e a entrevista de referencia para gravidade de obsessões/compulsões; FOCI-C/OCI-CV ajudam no rastreio quando a criança ja compreende os itens." },
+    reason: "CY-BOCS é a entrevista de referência para gravidade de obsessões/compulsões; OCI-CV ajuda no rastreio quando a criança já compreende os itens." },
   { queixa: "toc", ageMin: 96, ageMax: 204,
     ouro: "cybocs", prata: "oci-cv", bronze: "cybocs-sr",
     reason: "CY-BOCS ancora a gravidade clinica; OCI-CV e CY-BOCS-SR complementam o autorrelato em crianças maiores/adolescentes." },
