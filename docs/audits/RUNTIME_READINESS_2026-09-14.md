@@ -28,16 +28,27 @@ na indisponibilidade transitoria do D1 para nao mudar o contrato de autenticacao
 Producao sem DB continua exigindo autenticacao remota e nao permite fallback local.
 readiness separa saude do nucleo, disponibilidade criptografica e binding de exportacao.
 A existencia do binding NAO prova exportacao/purge: executionVerified e false.
-Readiness de exportacao exige a flag LIVE, keyring, storage privado e o schema
-real tocado pelo runtime de exportacao. O health usa probes SELECT ... WHERE 0
-sobre as colunas de clinics, memberships, pacientes, eventos, billing, lifecycle,
-requests, worker e saas_audit_log, sem ler linhas, e exige os sete triggers da
-migration 0017. O probe do worker inclui `id`, usado por claimLgpdRequest para
-criar e recuperar o job; uma tabela parcial sem essa chave agora falha fechada.
-O probe de auditoria valida exatamente id, clinic_id, actor_user_id, action,
-target_type, target_id e metadata_json, usados por prepareSaasAudit.
+
+O readiness de autenticacao valida as colunas efetivamente usadas em
+auth_refresh_sessions, exige `id` como primary key e `token_hash` com unicidade,
+alem das colunas de seguranca exigidas em users. Isso evita falso verde quando
+uma migration idempotente encontra tabela parcial preexistente.
+
+O readiness de exportacao exige a flag LIVE, keyring, storage privado e o schema
+real tocado pelo runtime. O health usa probes SELECT ... WHERE 0 sobre as colunas
+de clinics, memberships, pacientes, eventos, billing, lifecycle, requests, worker
+e saas_audit_log, sem ler linhas, e exige os sete triggers da migration 0017.
+O ledger do worker e validado por completo, incluindo `id` como primary key e a
+unicidade composta `(request_type, request_id)`, alem de claim/lease, evidencias,
+failure code e timestamps. O probe de auditoria valida exatamente id, clinic_id,
+actor_user_id, action, target_type, target_id e metadata_json, usados pelo runtime.
 Isso cobre inclusive canceled_at/grace_ends_at de billing_customers (0013) e
-impede configured=true em deploys parciais de 0013/0014/0017 ou sem trilha de auditoria.
+impede configured=true em deploys parciais de 0013/0014/0017, auth 0003 ou sem
+a trilha de auditoria necessaria.
+
+A CI dedicada de readiness observa tanto os handlers quanto suas dependencias de
+schema/runtime: auth sessions, export payload, worker core e migrations 0003,
+0009, 0012, 0013, 0014 e 0017. Mudancas nesses contratos passam a disparar o gate.
 Binding R2 parcial (sem put/get/delete) e recusado antes de iniciar a operacao.
 Nenhum conteudo, identificador de paciente, erro bruto ou segredo entra no health.
 
@@ -78,7 +89,7 @@ Nao executar eliminacao real para testar.
 
 ## Validacao e rollback
 
-Regressoes novas: tests/unit/runtime-readiness.test.ts (12 casos, sem skip), mais
+Regressoes novas: tests/unit/runtime-readiness.test.ts (17 casos, sem skip), mais
 contratos existentes de autenticacao e endpoints LGPD. CI dedicada executa todos.
 Resultados efetivamente executados sao registrados na PR; verify:release completo
 nao deve ser presumido. Reverter por PR restaura o contrato antigo mas reintroduz
@@ -88,8 +99,8 @@ integral a partir desta alteracao.
 
 ### Execucao confirmada
 
-No delta publicado, a CI dedicada de readiness e os checks gerais devem ser a fonte
-de verdade antes do merge. A rodada local anterior validou autenticacao Cloudflare,
+No delta publicado, a CI dedicada de readiness e os checks gerais sao a fonte de
+verdade antes do merge. A rodada local anterior validou autenticacao Cloudflare,
 exportacao LGPD, eliminacao LGPD, governanca de workflows, TypeScript, lint e diff-check
 sem skip. Nenhuma assercao foi removida ou ignorada. A auditoria read-only Cloudflare
 tambem concluiu com sucesso no run 34828175726, sem mutacoes de infraestrutura.
