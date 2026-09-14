@@ -7,12 +7,17 @@ const secret = crypto.randomUUID() + crypto.randomUUID();
 function db(mode = "ready") {
   return { prepare(sql: string) { return { async first() {
     if (mode === "error") throw new Error("PRIVATE_DETAIL_NOT_TO_BE_EXPOSED");
+    if (mode === "auth-session-schema" && sql.includes("FROM auth_refresh_sessions WHERE 0")) throw new Error("AUTH_SESSION_SCHEMA_GAP");
     if (sql.includes("pragma_table_info('users')")) return { present: mode === "schema" ? 4 : 5 };
+    if (sql.includes("pragma_table_info('auth_refresh_sessions')") && sql.includes("pk = 1")) return { present: mode === "auth-session-pk" ? 0 : 1 };
+    if (sql.includes("pragma_index_list('auth_refresh_sessions')")) return { present: mode === "auth-session-unique" ? 0 : 1 };
     if (mode === "lgpd-schema" && sql.includes("FROM live_export_requests WHERE 0")) throw new Error("LGPD_SCHEMA_GAP");
     if (mode === "billing-schema" && sql.includes("FROM billing_customers WHERE 0") && sql.includes("grace_ends_at")) throw new Error("BILLING_SCHEMA_GAP");
     if (mode === "audit-schema" && sql.includes("FROM saas_audit_log WHERE 0") && sql.includes("metadata_json")) throw new Error("AUDIT_SCHEMA_GAP");
     if (mode === "worker-schema" && sql.includes("FROM live_lgpd_worker_jobs WHERE 0") && sql.includes("SELECT id,")) throw new Error("WORKER_SCHEMA_GAP");
     if (sql.includes("type = 'trigger'")) return { present: mode === "lgpd-trigger" ? 6 : 7 };
+    if (sql.includes("pragma_table_info('live_lgpd_worker_jobs')") && sql.includes("pk = 1")) return { present: mode === "worker-pk" ? 0 : 1 };
+    if (sql.includes("pragma_index_list('live_lgpd_worker_jobs')")) return { present: mode === "worker-unique" ? 0 : 1 };
     return { present: 1 };
   } }; } };
 }
@@ -53,6 +58,24 @@ test("schema and signing-key failures are not healthy", async () => {
     const { response, body } = await health(extra);
     assert.equal(response.status, 503); assert.equal(body.readiness.coreReady, false);
   }
+});
+test("refresh-session required columns fail closed", async () => {
+  const { response, body } = await health({ DB: db("auth-session-schema") });
+  assert.equal(response.status, 503);
+  assert.equal(body.readiness.coreReady, false);
+  assert.ok(body.readiness.blockers.includes("AUTH_SCHEMA_NOT_READY"));
+});
+test("refresh-session id must remain the primary key", async () => {
+  const { response, body } = await health({ DB: db("auth-session-pk") });
+  assert.equal(response.status, 503);
+  assert.equal(body.readiness.coreReady, false);
+  assert.ok(body.readiness.blockers.includes("AUTH_SCHEMA_NOT_READY"));
+});
+test("refresh-session token hash must remain unique", async () => {
+  const { response, body } = await health({ DB: db("auth-session-unique") });
+  assert.equal(response.status, 503);
+  assert.equal(body.readiness.coreReady, false);
+  assert.ok(body.readiness.blockers.includes("AUTH_SCHEMA_NOT_READY"));
 });
 test("enabled feature with absent encryption is explicitly blocked", async () => {
   const { body } = await health({ CLINICAL_LIVE_ENABLED: "true", ESCUTA_ENABLED: "true" });
@@ -174,6 +197,38 @@ test("export readiness fails closed when the worker ledger id column is missing"
   assert.equal(body.readiness.clinicalCryptoConfigured, true);
   assert.equal(body.readiness.lgpdSchemaReady, false);
   assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
+  assert.equal(body.readiness.lgpdExport.configured, false);
+  assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
+});
+
+test("export readiness requires worker id primary-key integrity", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const { body } = await health({
+    DB: db("worker-pk"),
+    CLINICAL_LIVE_ENABLED: "true",
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "worker-pk-test",
+  });
+  assert.equal(body.readiness.coreReady, true);
+  assert.equal(body.readiness.lgpdSchemaReady, false);
+  assert.equal(body.readiness.lgpdExport.configured, false);
+  assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
+});
+
+test("export readiness requires one job per request", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const { body } = await health({
+    DB: db("worker-unique"),
+    CLINICAL_LIVE_ENABLED: "true",
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "worker-unique-test",
+  });
+  assert.equal(body.readiness.coreReady, true);
+  assert.equal(body.readiness.lgpdSchemaReady, false);
   assert.equal(body.readiness.lgpdExport.configured, false);
   assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
 });
