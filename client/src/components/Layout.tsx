@@ -220,7 +220,7 @@ function FeaturedShortcuts({
         </>
       )}
       {tiles.length > 0 && (
-        <div className="mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
+        <div className="np-side-tile-grid mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
       )}
       {connections.length > 0 && (
         <>
@@ -297,7 +297,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const sidebarRef = useRef<HTMLElement>(null);
   const mobileHeaderRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
+  const routeContentRef = useRef<HTMLDivElement>(null);
   const mobileMenuWasOpen = useRef(false);
+  // Transição de rota sem remount: re-aplica a classe de entrada (fade +
+  // subida sutil, motion-coherence-v15) no bloco da página a cada navegação.
+  // O reflow forçado reinicia a animação; reduced-motion a anula via CSS.
+  useEffect(() => {
+    const el = routeContentRef.current;
+    if (!el) return;
+    el.classList.remove("np-route-in");
+    void el.offsetWidth;
+    el.classList.add("np-route-in");
+  }, [location]);
   // As seções essenciais começam abertas; o restante permanece recolhido para
   // que a sidebar preserve ritmo de aplicativo mesmo com muitos módulos. A
   // escolha do usuário é lembrada entre visitas — reabrir tudo a cada sessão
@@ -1200,7 +1211,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="np-app-content p-3 md:p-5 max-w-[1600px] mx-auto">
-          <div className="min-h-[calc(100vh-4rem)]">{children}</div>
+          <div ref={routeContentRef} className="min-h-[calc(100vh-4rem)]">{children}</div>
           {/* Aviso educativo: síntese sempre visível; fundamentação completa sob demanda. */}
           <aside
             role="note"

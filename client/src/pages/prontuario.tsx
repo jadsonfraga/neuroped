@@ -240,11 +240,21 @@ function countMarcos(m: Marcos) {
 function SectionHeader({ icon: Icon, title, gradient, count }: {
   icon: any; title: string; gradient: string; count?: string;
 }) {
+  // Editorial, não faixa: a cor do módulo vive num medalhão compacto (que a
+  // camada product-signature recolore para a paleta institucional) e o título
+  // respira sobre uma linha-fio — hierarquia sem parede de cor.
   return (
-    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gradient-to-r ${gradient} text-white shadow-sm mb-4`}>
-      <Icon className="w-4 h-4 flex-shrink-0" />
-      <span className="font-semibold text-sm">{title}</span>
-      {count && <Badge className="ml-auto bg-white/25 text-white border-0 text-xs">{count}</Badge>}
+    <div className="mb-4 flex items-center gap-2.5 border-b border-border/70 pb-2.5">
+      <span
+        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[0.7rem] bg-gradient-to-br ${gradient} text-white shadow-[0_8px_18px_-12px_hsl(var(--foreground)/0.55)] ring-1 ring-white/20`}
+        aria-hidden="true"
+      >
+        <Icon className="w-4 h-4" />
+      </span>
+      <span className="text-sm font-bold tracking-tight text-foreground">{title}</span>
+      {count && (
+        <Badge variant="secondary" className="ml-auto text-xs font-semibold">{count}</Badge>
+      )}
     </div>
   );
 }
@@ -1017,33 +1027,33 @@ export default function ProntuarioPage() {
           <TabsList className="np-prontuario-tabs flex h-auto w-full flex-nowrap justify-start gap-1.5 overflow-x-auto rounded-2xl bg-muted/80 p-1.5">
             <TabsTrigger value="identificacao" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <User className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Identificação</span>
-              {idCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{idCount}</Badge>}
+              <span className="min-w-0 truncate">Identificação</span>
+              {idCount > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{idCount}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="anamnese" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Anamnese</span>
-              {anCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{anCount}</Badge>}
+              <span className="min-w-0 truncate">Anamnese</span>
+              {anCount > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{anCount}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="marcos" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Marcos</span>
-              {mkCount > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{mkCount}</Badge>}
+              <span className="min-w-0 truncate">Marcos</span>
+              {mkCount > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{mkCount}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="medicacoes" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <Pill className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Medicações</span>
-              {medicacoes.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{medicacoes.length}</Badge>}
+              <span className="min-w-0 truncate">Medicações</span>
+              {medicacoes.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{medicacoes.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="terapias" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <Heart className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Terapias</span>
-              {terapias.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{terapias.length}</Badge>}
+              <span className="min-w-0 truncate">Terapias</span>
+              {terapias.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{terapias.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="exames" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
               <FlaskConical className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Exames</span>
-              {exames.length > 0 && <Badge className="ml-1 bg-violet-600 text-white text-[10px] h-4 px-1">{exames.length}</Badge>}
+              <span className="min-w-0 truncate">Exames</span>
+              {exames.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{exames.length}</Badge>}
             </TabsTrigger>
           </TabsList>
 
