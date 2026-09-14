@@ -1,0 +1,81 @@
+/*
+ * NeuroPed — Motion & Coherence v15
+ *
+ * Última camada de acabamento: movimento com propósito e coerência geométrica.
+ * Três princípios (rodada estética "+2 pontos", set/2026):
+ *  1. Toda transição serve à orientação (de onde vim → onde estou), nunca ao
+ *     espetáculo: durações 180–420ms, easing de saída suave, deslocamentos ≤8px.
+ *  2. `prefers-reduced-motion` desliga TUDO desta camada — o app inteiro
+ *     permanece funcional sem nenhum movimento.
+ *  3. Nenhuma regra aqui altera layout, cor de texto ou contraste — apenas
+ *     opacidade, transform e sombra. Os guards de contraste/a11y não veem
+ *     esta camada.
+ */
+
+/* ── Transição de rota ────────────────────────────────────────────────────
+ * Replay via classe (Layout re-aplica .np-route-in ao trocar de rota), sem
+ * remount do conteúdo: apenas fade + leve subida do bloco da página. */
+@keyframes np-route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.np-route-in {
+  animation: np-route-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Entrada escalonada de grades ─────────────────────────────────────────
+ * Aplicar .np-stagger no contêiner de uma grade de cards estáticos: os oito
+ * primeiros filhos sobem em cascata curta (60ms de passo). Sem JS. */
+@keyframes np-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.np-stagger > * {
+  animation: np-rise-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.np-stagger > :nth-child(1) { animation-delay: 0ms; }
+.np-stagger > :nth-child(2) { animation-delay: 55ms; }
+.np-stagger > :nth-child(3) { animation-delay: 110ms; }
+.np-stagger > :nth-child(4) { animation-delay: 165ms; }
+.np-stagger > :nth-child(5) { animation-delay: 220ms; }
+.np-stagger > :nth-child(6) { animation-delay: 275ms; }
+.np-stagger > :nth-child(7) { animation-delay: 330ms; }
+.np-stagger > :nth-child(8) { animation-delay: 385ms; }
+/* do nono em diante, entra junto com o oitavo — cascata não vira espera */
+.np-stagger > :nth-child(n + 9) { animation-delay: 385ms; }
+
+/* ── Pressão tátil ────────────────────────────────────────────────────────
+ * Feedback de toque uniforme para superfícies clicáveis marcadas. Escala
+ * mínima (0.985) para não "pular" — contrato do guard de cards estáticos. */
+.np-pressable {
+  transition: transform 0.16s ease, box-shadow 0.2s ease;
+}
+.np-pressable:active {
+  transform: scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-route-in,
+  .np-stagger > * {
+    animation: none;
+  }
+  .np-pressable,
+  .np-pressable:active {
+    transition: none;
+    transform: none;
+  }
+}
