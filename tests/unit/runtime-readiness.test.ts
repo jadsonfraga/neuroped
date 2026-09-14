@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { onRequestGet } from "../../functions/api/health";
 import { resolvePrivateArtifactStore } from "../../functions/api/live/governance/_artifactStore";
-const secret = "synthetic-test-secret-not-a-real-key-1234567890";
+// Ephemeral test-only key; never a committed application secret.
+const secret = crypto.randomUUID() + crypto.randomUUID();
 function db(mode = "ready") {
   return { prepare(sql: string) { return { async first() {
     if (mode === "error") throw new Error("PRIVATE_DETAIL_NOT_TO_BE_EXPOSED");
