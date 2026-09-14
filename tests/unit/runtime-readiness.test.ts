@@ -8,9 +8,8 @@ function db(mode = "ready") {
   return { prepare(sql: string) { return { async first() {
     if (mode === "error") throw new Error("PRIVATE_DETAIL_NOT_TO_BE_EXPOSED");
     if (sql.includes("pragma_table_info('users')")) return { present: mode === "schema" ? 4 : 5 };
-    if (sql.includes("name IN ('clinics','clinic_memberships'")) return { present: mode === "lgpd-schema" ? 9 : 10 };
-    if (sql.includes("pragma_table_info('live_export_requests')")) return { present: mode === "lgpd-schema" ? 7 : 8 };
-    if (sql.includes("pragma_table_info('live_lgpd_worker_jobs')")) return { present: mode === "lgpd-schema" ? 11 : 12 };
+    if (mode === "lgpd-schema" && sql.includes("FROM live_export_requests WHERE 0")) throw new Error("LGPD_SCHEMA_GAP");
+    if (mode === "billing-schema" && sql.includes("FROM billing_customers WHERE 0") && sql.includes("grace_ends_at")) throw new Error("BILLING_SCHEMA_GAP");
     if (sql.includes("type = 'trigger'")) return { present: mode === "lgpd-trigger" ? 6 : 7 };
     return { present: 1 };
   } }; } };
@@ -114,6 +113,24 @@ test("export readiness fails closed when 0017 completion triggers are incomplete
     CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
     CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
     CLINICAL_DATA_KEY_ID: "trigger-test",
+  });
+  assert.equal(body.readiness.coreReady, true);
+  assert.equal(body.readiness.clinicalCryptoConfigured, true);
+  assert.equal(body.readiness.lgpdSchemaReady, false);
+  assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
+  assert.equal(body.readiness.lgpdExport.configured, false);
+  assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
+});
+
+test("export readiness fails closed when billing export columns from 0013 are missing", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const { body } = await health({
+    DB: db("billing-schema"),
+    CLINICAL_LIVE_ENABLED: "true",
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "billing-schema-test",
   });
   assert.equal(body.readiness.coreReady, true);
   assert.equal(body.readiness.clinicalCryptoConfigured, true);
