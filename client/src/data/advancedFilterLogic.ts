@@ -661,8 +661,11 @@ function selectedSignalText(ctx: SignalMatchContext): string {
 // Fonte ÚNICA de signalTags: une as tags inline da escala (scale.signalTags)
 // com o mapa central curado (SIGNAL_TAGS_BY_SCALE_ID), sem duplicatas. Assim os
 // dois acervos de tags são tratados igualmente em TODO o motor (texto clínico
-// e bônus de correspondência exata), sem tag "de segunda classe".
-function allSignalTags(scale: ScaleEntry): string[] {
+// e bônus de correspondência exata), sem tag "de segunda classe". Exportada
+// para o gate ideal-choice ler cobertura de sinal pelo MESMO catálogo de tags
+// que o motor — um oráculo sobre as tags inline flagraria "sinal ignorado"
+// em pódio que cobre o sinal via tag curada (fonte paralela de verdade).
+export function allSignalTags(scale: ScaleEntry): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const t of [
@@ -740,19 +743,51 @@ function signalMatchComponents(
   return { matched, idPrefixHits, exactTagHits };
 }
 
+/**
+ * Evidência GRADUADA "esta escala fala aos sinais marcados": alguma signalTag
+ * da escala aparece no texto resolvido dos sinais (ID → rótulo/descrição).
+ * Prefixo de queixa NÃO basta (achado Codex: compartilhar a queixa não prova
+ * cobertura do sintoma) e sobreposição de token solto também não — verbos
+ * genéricos fariam o M-CHAT "falar" impulsividade. Use para bônus/realce.
+ * Para GARANTIA de cobertura no pódio (contrato do gate ideal-choice), use
+ * scaleCoversSelectedSignalExactly.
+ */
 export function scaleMatchesSelectedSignals(
   scale: ScaleEntry,
   ctx: SignalMatchContext,
 ): boolean {
-  // O booleano "esta escala fala o sinal marcado" exige evidência FORTE:
-  // o sinal pertence a um domínio de queixa da escala (prefixo do ID) ou o
-  // texto do sinal contém uma signalTag exata. Sobreposição de token sozinha
-  // NÃO basta — verbos genéricos da descrição ("responde", "perguntas")
-  // fariam o M-CHAT "falar" um sinal de impulsividade do TDAH. Tokens seguem
-  // contribuindo no score graduado (calculateSignalSpecificity), onde ruído
-  // fraco não vira afirmação categórica.
-  const { idPrefixHits, exactTagHits } = signalMatchComponents(scale, ctx);
-  return idPrefixHits > 0 || exactTagHits > 0;
+  const { exactTagHits } = signalMatchComponents(scale, ctx);
+  return exactTagHits > 0;
+}
+
+/**
+ * Cobertura EXATA por sinal — a semântica do resgate do pódio e do gate
+ * ideal-choice: alguma signalTag da escala é IGUAL (normalizada) a uma forma
+ * resolvida do sinal marcado — o valor cru (seleção em forma de tag) ou o
+ * rótulo do registro/sintoma popular (seleção em ID da UI). Correspondência
+ * parcial NÃO cobre: uma tag "comunicação verbal" não cobre o sinal
+ * "comunicação não verbal", e um slot marcado como "cobrindo" por engano
+ * suprime o resgate da candidata realmente específica.
+ */
+export function scaleCoversSelectedSignalExactly(
+  scale: ScaleEntry,
+  ctx: SignalMatchContext,
+): boolean {
+  if (!ctx.selectedSignals?.length) return false;
+  const forms = new Set<string>();
+  for (const raw of ctx.selectedSignals) forms.add(normalizeClinicalText(raw));
+  for (const queixa of ctx.queixas) {
+    for (const signal of getAllSignalsForQueixa(queixa)) {
+      if (ctx.selectedSignals.includes(signal.id)) {
+        forms.add(normalizeClinicalText(signal.label));
+      }
+    }
+  }
+  for (const id of ctx.selectedSignals) {
+    const popular = popularSymptomById[id];
+    if (popular) forms.add(normalizeClinicalText(popular.label));
+  }
+  return allSignalTags(scale).some((tag) => forms.has(normalizeClinicalText(tag)));
 }
 
 export function calculateEvidenceQuality(scale: ScaleEntry): number {

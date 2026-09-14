@@ -1,4 +1,4 @@
-import { getApplicationMode, getImplementationStatus, scaleMatchesSelectedSignals, type RefinedScaleMatch } from "./advancedFilterLogic";
+import { getApplicationMode, getImplementationStatus, scaleCoversSelectedSignalExactly, scaleMatchesSelectedSignals, type RefinedScaleMatch } from "./advancedFilterLogic";
 import { getClinicalTiers, type ClinicalTierRule } from "./clinicalRanking";
 import { getDeliveredInteractiveItemCount, type Respondente } from "./scaleFilter";
 import { enforcePodiumHardCap } from "./podiumHardCap";
@@ -128,7 +128,15 @@ export function selectPodium(
   // "desatencao") — o pódio concluía que nenhuma medalha cobria o sinal
   // marcado. A única fonte de verdade vive em advancedFilterLogic.
   const signalCtx = { queixas: selectedQueixas, selectedSignals };
+  // Dois papéis, duas exigências (auditoria semanal, P1/P2):
+  // - signalHit (resgate/troca): cobertura EXATA por sinal — um slot marcado
+  //   como "cobrindo" por correspondência frouxa suprime o resgate da
+  //   candidata específica (o gate ideal-choice codifica este contrato);
+  // - signalAffinity (bônus de 6): evidência graduada via matcher canônico,
+  //   que também entende os IDs enviados pela UI.
   const signalHit = (match: RefinedScaleMatch) =>
+    selectedSignals.length > 0 && scaleCoversSelectedSignalExactly(match.scale, signalCtx);
+  const signalAffinity = (match: RefinedScaleMatch) =>
     selectedSignals.length > 0 && scaleMatchesSelectedSignals(match.scale, signalCtx);
   // REGRA DE OURO (obrigatória): o pódio deve indicar escala que o clínico
   // consegue ABRIR E APLICAR no app (itens + escore). Ficha técnica ou
@@ -172,7 +180,7 @@ export function selectPodium(
     // desenho do ageFitBonus — preferência forte, com fallback natural quando
     // nenhuma candidata cobre a faixa toda.
     const bandCoverageBonus = coversBand(match) ? 10 : 0;
-    const signalHitBonus = signalHit(match) ? 6 : 0;
+    const signalHitBonus = signalHit(match) ? 6 : signalAffinity(match) ? 3 : 0;
     // Regra de ouro: aplicável no app vale bônus real no desempate.
     const applicableBonus = isApplicable(match) ? 12 : 0;
     // Penalidade forte: um card "recomendação" (sem NADA aplicável no app) não

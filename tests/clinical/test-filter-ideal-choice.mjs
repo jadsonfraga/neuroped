@@ -43,6 +43,7 @@ const { mergeFilterableCatalog } = await imp(
 );
 const { noCostWorldScales } = await imp("client/src/data/noCostWorldScales.ts");
 const {
+  allSignalTags,
   clinicalHardBlock,
   filterScalesWithClinicalRescue,
   getBroadbandFallback,
@@ -266,8 +267,11 @@ for (const ctx of cases) {
 
   // R4 — sinais marcados
   if (ctx.selectedSignals.length) {
+    // Cobertura lida pelo MESMO catálogo de tags do motor (inline ∪ mapa
+    // curado): oráculo sobre as tags inline flagraria "sinal ignorado" em
+    // pódio que cobre o sinal via tag curada (ex.: Denver × "desenvolvimento").
     const hit = (s) =>
-      (s.scale.signalTags ?? []).some((t) => ctx.selectedSignals.includes(t));
+      allSignalTags(s.scale).some((t) => ctx.selectedSignals.includes(t));
     const viable = (m) =>
       hit(m) &&
       m.scale.ageMin <= ctx.ageMonths &&
