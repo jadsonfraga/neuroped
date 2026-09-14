@@ -44,9 +44,15 @@ const { INTERACTIVE_SCALE_IDS } = await imp(
   "client/src/data/interactiveScaleIds.generated.ts",
 );
 const { interactiveScales } = await imp("client/src/data/interactiveScales.ts");
-const { LEGACY_INSTRUMENT_REDIRECTS } = await imp(
+const { LEGACY_INSTRUMENT_REDIRECTS, LEGACY_DIRECT_TEST_REDIRECTS } = await imp(
   "client/src/data/legacyInstrumentRoutes.ts",
 );
+// Um único universo de redirects legados: instrumentos nominais e rotas
+// antigas de teste direto (Sonda Dez) obedecem aos mesmos contratos.
+const ALL_LEGACY_REDIRECTS = {
+  ...LEGACY_INSTRUMENT_REDIRECTS,
+  ...LEGACY_DIRECT_TEST_REDIRECTS,
+};
 
 const appSource = read("client/src/App.tsx");
 const appRoutePaths = new Set(
@@ -66,7 +72,9 @@ const routeRegistered = (route) => {
 };
 const runnerIds = new Set(Object.keys(interactiveScales));
 const catalogIds = new Set(allScalesComFichas.map((s) => s.id));
-const redirectFroms = new Set(Object.keys(LEGACY_INSTRUMENT_REDIRECTS));
+const redirectFroms = new Set(
+  Object.keys(ALL_LEGACY_REDIRECTS).map((from) => pathnameOf(from)),
+);
 
 const failures = [];
 const check = (ok, message) => {
@@ -136,7 +144,7 @@ for (const s of allScalesComFichas) {
 }
 
 // ── 4. sanidade dos redirects legados ───────────────────────────────────────
-for (const [from, to] of Object.entries(LEGACY_INSTRUMENT_REDIRECTS)) {
+for (const [from, to] of Object.entries(ALL_LEGACY_REDIRECTS)) {
   check(
     !appRoutePaths.has(from),
     `redirect legado ${from} colide com <Route> real ainda registrada em App.tsx`,

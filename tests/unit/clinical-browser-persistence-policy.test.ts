@@ -88,14 +88,22 @@ for (const namespace of [
 
 assert.deepEqual(
   [...LIVE_BROWSER_LOCAL_CLINICAL_ROUTES],
-  ["/caa", "/assinatura-digital", "/cognitive-lab"],
+  ["/caa", "/assinatura-digital"],
   "a lista fail-closed deve ser explícita e revisável",
 );
+// /cognitive-lab virou redirect legado puro para /testes-diretos: negar
+// pré-mount aqui impedia o <Redirect> de rodar em LIVE autenticado
+// (achado Codex no PR #871). O bookmark precisa redirecionar, não bloquear.
+for (const route of ["/cognitive-lab", "/cognitive-lab/go-no-go"]) {
+  assert.equal(
+    isLiveBrowserLocalClinicalRouteDenied(route, "remote", true),
+    false,
+    `${route} é redirect legado — deve montar para o <Redirect> canônico rodar`,
+  );
+}
 for (const route of [
   "/caa",
   "/assinatura-digital",
-  "/cognitive-lab",
-  "/cognitive-lab/go-no-go",
 ]) {
   assert.equal(
     isLiveBrowserLocalClinicalRouteDenied(route, "remote", true),

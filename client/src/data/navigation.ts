@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 import {
   Activity,
   Baby,
@@ -243,23 +244,14 @@ const filterOwnedRoutes = new Set([
   "/eaah", "/tde2", "/pant",
 ]);
 
-/** Rotas antigas de teste direto continuam resolvendo para a Sonda Dez. */
-const sondaOwnedRoutes = new Set([
-  "/testes-reconhecimento",
-  "/testes-academicos",
-  "/cognitive-lab",
-  "/avaliacao-cognitiva-infantil",
-  "/academico-interativo",
-  "/escrita-desenho",
-  "/conhecimento-visual",
-  "/motricidade-teste",
-  "/conhecimentos-gerais",
-  "/funcoes-executivas",
-  "/atencao-concentracao",
-  "/linguagem-fonologia",
-  "/memoria-teste",
-  "/processamento-visuoauditivo",
-]);
+/**
+ * Rotas antigas de teste direto continuam resolvendo para a Sonda Dez —
+ * derivadas do mapa de redirects (fonte única; padrões :param ficam de fora
+ * porque a navegação compara caminhos literais normalizados).
+ */
+const sondaOwnedRoutes = new Set(
+  Object.keys(LEGACY_DIRECT_TEST_REDIRECTS).filter((route) => !route.includes(":")),
+);
 
 export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
   const matches = allNavigationSections.flatMap((section) =>

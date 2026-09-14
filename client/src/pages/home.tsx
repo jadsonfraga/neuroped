@@ -73,24 +73,18 @@ const clinicalFlows: ClinicalFlow[] = [
     emphasis: "gold",
   },
   {
-    href: "/avaliacao-cognitiva-infantil",
-    title: "Avaliação Cognitiva Infantil",
+    // As antigas cartas "Avaliação Cognitiva Infantil" e "Reconhecimento
+    // Visual Infantil" apontavam para páginas já esvaziadas na convergência
+    // dos testes diretos — ambas renderizavam a própria Sonda Dez. Uma carta
+    // honesta substitui as duas.
+    href: "/testes-diretos",
+    title: "Sonda Dez — Avaliação Direta",
     subtitle:
-      "Triagem lúdica por faixa etária: visual, leitura, escrita e aritmética.",
-    action: "Abrir avaliação",
-    useCase: "Triagem 2–19 anos",
-    icon: ClipboardCheck,
-    emphasis: "blue",
-  },
-  {
-    href: "/testes-reconhecimento",
-    title: "Reconhecimento Visual Infantil",
-    subtitle:
-      "Triagem lúdica com frutas, transportes, corpo e conhecimentos gerais.",
-    action: "Iniciar teste visual",
-    useCase: "1–5 anos",
+      "Testagem direta pré-consulta por faixa etária, com banco visual e registro observacional estruturado.",
+    action: "Abrir Sonda Dez",
+    useCase: "Triagem direta com a criança",
     icon: Eye,
-    emphasis: "gold",
+    emphasis: "blue",
   },
   {
     href: "/marcos-desenvolvimento",

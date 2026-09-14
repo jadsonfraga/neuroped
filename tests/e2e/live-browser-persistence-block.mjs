@@ -39,7 +39,6 @@ const IDB_SENTINEL_KEYS = [
 const ROUTES = [
   "/pre-consulta",
   "/pre-retorno",
-  "/cognitive-lab",
   "/caa",
   "/assinatura-digital",
   "/agenda",

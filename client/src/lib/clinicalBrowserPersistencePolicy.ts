@@ -67,7 +67,11 @@ const clinicalNamespacePrefixes: Array<[string, ClinicalBrowserDataType]> = [
 export const LIVE_BROWSER_LOCAL_CLINICAL_ROUTES = [
   "/caa",
   "/assinatura-digital",
-  "/cognitive-lab",
+  // "/cognitive-lab" saiu da lista quando a rota virou redirect legado puro
+  // para /testes-diretos (extinção dos shims, 09/2026): não existe mais
+  // workspace browser-local atrás dela, e negar pré-mount impedia o
+  // <Redirect> canônico de rodar em LIVE autenticado. A limpeza das chaves
+  // legadas cognitive-lab:* continua na classificação de namespaces acima.
 ] as const;
 
 function stripSecureNamespace(namespace: string): string {

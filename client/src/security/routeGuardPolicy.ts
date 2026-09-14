@@ -1,4 +1,5 @@
 import { isClinicalRoute } from "@/security/accessPolicy";
+import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 
 export type RouteAccessMode = "checking" | "remote" | "local";
 export type RouteUserRole = "admin" | "professional" | "reader" | "operator";
@@ -27,7 +28,6 @@ export const SENSITIVE_ROUTES = [
   "/diario-escola",
   "/neuroacompanhamento",
   "/inventarios-escola",
-  "/cognitive-lab",
   "/testes-diretos",
   "/epilepsia",
   "/cefaleia",
@@ -88,19 +88,6 @@ export const READER_CLINICAL_ROUTES = [
   "/pac",
   "/ahsd-tea",
   "/tde2",
-  "/testes-reconhecimento",
-  "/testes-academicos",
-  "/avaliacao-cognitiva-infantil",
-  "/academico-interativo",
-  "/escrita-desenho",
-  "/conhecimento-visual",
-  "/motricidade-teste",
-  "/conhecimentos-gerais",
-  "/funcoes-executivas",
-  "/atencao-concentracao",
-  "/linguagem-fonologia",
-  "/memoria-teste",
-  "/processamento-visuoauditivo",
   "/inventarios-auto",
   "/psc17",
   "/gad7",
@@ -145,14 +132,28 @@ export const READER_CLINICAL_ROUTES = [
 
 const DEFAULT_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional"];
 const READER_CLINICAL_ROLES: readonly RouteUserRole[] = ["admin", "professional", "reader"];
+// A Sonda Dez foi desenhada para aplicação pela assistente. Ela não persiste
+// dados e entrega somente registro observacional para revisão médica.
+const DIRECT_TEST_ROLES: readonly RouteUserRole[] = [
+  "admin",
+  "professional",
+  "operator",
+];
 const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   route: string;
   roles: readonly RouteUserRole[];
 }> = [
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
-  // A Sonda Dez foi desenhada para aplicação pela assistente. Ela não persiste
-  // dados e entrega somente registro observacional para revisão médica.
-  { route: "/testes-diretos", roles: ["admin", "professional", "operator"] },
+  { route: "/testes-diretos", roles: DIRECT_TEST_ROLES },
+  // As origens de redirect legado da Sonda Dez herdam a política do destino:
+  // sem isso o guard decidiria a origem pelos papéis default (sem operator)
+  // e bloquearia o bookmark da assistente antes de o <Redirect> rodar. Antes
+  // desta unificação, 13 dessas rotas ainda liberavam o papel reader por
+  // shim — acesso incidental que a rota canônica nunca concedeu.
+  ...Object.keys(LEGACY_DIRECT_TEST_REDIRECTS).map((route) => ({
+    route,
+    roles: DIRECT_TEST_ROLES,
+  })),
 ];
 
 function normalizePathname(path: string): string {
@@ -187,7 +188,9 @@ export function isReaderClinicalRoute(path: string): boolean {
 
 function getDefaultClinicalRoles(path: string): readonly RouteUserRole[] {
   const pathname = normalizePathname(path);
-  const override = CLINICAL_ROLE_OVERRIDES.find(({ route }) => pathname === route);
+  const override = CLINICAL_ROLE_OVERRIDES.find(({ route }) =>
+    matchesExactRoutePattern(pathname, route),
+  );
   if (override) return override.roles;
   return isReaderClinicalRoute(pathname) ? READER_CLINICAL_ROLES : DEFAULT_CLINICAL_ROLES;
 }
