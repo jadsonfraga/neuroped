@@ -16,3 +16,8 @@ binding = "AI"
 binding = "DB"
 database_name = "neuroped-db"
 database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"
+
+# Metadata-only API metrics; no clinical content, token, path or user identifier.
+[[analytics_engine_datasets]]
+binding = "API_METRICS"
+dataset = "neuroped_api_metrics"
