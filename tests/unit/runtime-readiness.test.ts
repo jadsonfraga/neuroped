@@ -7,7 +7,10 @@ const secret = crypto.randomUUID() + crypto.randomUUID();
 function db(mode = "ready") {
   return { prepare(sql: string) { return { async first() {
     if (mode === "error") throw new Error("PRIVATE_DETAIL_NOT_TO_BE_EXPOSED");
-    if (sql.includes("pragma_table_info")) return { present: mode === "schema" ? 4 : 5 };
+    if (sql.includes("pragma_table_info('users')")) return { present: mode === "schema" ? 4 : 5 };
+    if (sql.includes("name IN ('clinics','clinic_memberships'")) return { present: mode === "lgpd-schema" ? 9 : 10 };
+    if (sql.includes("pragma_table_info('live_export_requests')")) return { present: mode === "lgpd-schema" ? 7 : 8 };
+    if (sql.includes("pragma_table_info('live_lgpd_worker_jobs')")) return { present: mode === "lgpd-schema" ? 11 : 12 };
     return { present: 1 };
   } }; } };
 }
@@ -18,7 +21,7 @@ async function health(extra: Record<string, unknown> = {}) {
   const body = await response.json() as { status: string;
     authentication: { required: boolean; configured: boolean };
     escuta: { enabled: boolean; configured: boolean };
-    readiness: { coreReady: boolean; clinicalCryptoConfigured: boolean; blockers: string[];
+    readiness: { coreReady: boolean; clinicalCryptoConfigured: boolean; lgpdSchemaReady: boolean | null; blockers: string[];
       lgpdExport: { configured: boolean; storageBindingPresent: boolean; executionVerified: boolean } } };
   return { response, body };
 }
@@ -81,4 +84,22 @@ test("export readiness includes the same LIVE feature gate as run-export", async
     assert.equal(body.readiness.blockers.includes("CLINICAL_LIVE_DISABLED"), flag !== "true");
     assert.equal(body.readiness.lgpdExport.executionVerified, false);
   }
+});
+
+test("export readiness fails closed when LGPD/LIVE schema is incomplete", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const { body } = await health({
+    DB: db("lgpd-schema"),
+    CLINICAL_LIVE_ENABLED: "true",
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "schema-test",
+  });
+  assert.equal(body.readiness.coreReady, true);
+  assert.equal(body.readiness.clinicalCryptoConfigured, true);
+  assert.equal(body.readiness.lgpdSchemaReady, false);
+  assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
+  assert.equal(body.readiness.lgpdExport.configured, false);
+  assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
 });
