@@ -23,6 +23,7 @@ async function lgpdExportSchemaReady(db: D1Database): Promise<boolean> {
       `SELECT clinic_id, status, reason_code, requested_at, retention_until, canceled_at, finalized_at, legal_hold FROM tenant_lifecycle WHERE 0`,
       `SELECT id, clinic_id, patient_id, scope, status, artifact_key, completed_at, updated_at FROM live_export_requests WHERE 0`,
       `SELECT request_type, request_id, clinic_id, status, attempts, claimed_at, lease_until, worker_run_id, artifact_key, artifact_digest_sha256, artifact_byte_length, failure_code FROM live_lgpd_worker_jobs WHERE 0`,
+      `SELECT id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json FROM saas_audit_log WHERE 0`,
     ];
     for (const sql of probes) await db.prepare(sql).first();
     const requiredLgpdTriggers = await db.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_lgpd_worker_export_request_tenant_insert','trg_lgpd_worker_delete_request_tenant_insert','trg_lgpd_worker_request_binding_immutable','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence','trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker')`).first<{ present: number }>();
