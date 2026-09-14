@@ -29,6 +29,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const degraded = coreRequired && !coreReady;
   const storageBindingPresent = resolvePrivateArtifactStore(env) !== null;
   const blockers: string[] = [];
+  if (!clinicalLiveEnabled(env)) blockers.push("CLINICAL_LIVE_DISABLED");
   if (coreRequired && dbStatus !== "ok") blockers.push("DATABASE_NOT_READY");
   if (coreRequired && authSchemaReady === false) blockers.push("AUTH_SCHEMA_NOT_READY");
   if (coreRequired && !authConfigured) blockers.push("AUTH_NOT_CONFIGURED");
@@ -40,7 +41,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       coreReady,
       clinicalCryptoConfigured: cryptoReady,
       lgpdExport: {
-        configured: coreReady && cryptoReady && storageBindingPresent,
+        configured: clinicalLiveEnabled(env) && coreReady && cryptoReady && storageBindingPresent,
         storageBindingPresent,
         executionVerified: false,
       },

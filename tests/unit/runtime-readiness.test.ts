@@ -62,3 +62,21 @@ test("partial R2 bindings fail closed and bucket alone is insufficient", async (
   assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
   assert.equal(body.readiness.lgpdExport.configured, false);
 });
+
+test("export readiness includes the same LIVE feature gate as run-export", async () => {
+  const bucket = { async put() {}, async get() { return null; }, async delete() {} };
+  const configured = {
+    LGPD_EXPORT_BUCKET: bucket,
+    CLINICAL_DATA_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_INDEX_KEY: crypto.randomUUID() + crypto.randomUUID(),
+    CLINICAL_DATA_KEY_ID: "readiness-test",
+  };
+  for (const flag of [undefined, "false", "true"]) {
+    const { body } = await health({ ...configured, CLINICAL_LIVE_ENABLED: flag });
+    assert.equal(body.readiness.clinicalCryptoConfigured, true);
+    assert.equal(body.readiness.lgpdExport.storageBindingPresent, true);
+    assert.equal(body.readiness.lgpdExport.configured, flag === "true");
+    assert.equal(body.readiness.blockers.includes("CLINICAL_LIVE_DISABLED"), flag !== "true");
+    assert.equal(body.readiness.lgpdExport.executionVerified, false);
+  }
+});
