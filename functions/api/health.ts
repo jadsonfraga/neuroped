@@ -24,9 +24,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const requiredLgpdTables = await env.DB.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'table' AND name IN ('clinics','clinic_memberships','live_patients','live_clinical_events','billing_customers','billing_subscriptions','tenant_lifecycle','live_export_requests','live_lgpd_worker_jobs','saas_audit_log')`).first<{ present: number }>();
       const exportColumns = await env.DB.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('live_export_requests') WHERE name IN ('id','clinic_id','patient_id','scope','status','artifact_key','completed_at','updated_at')`).first<{ present: number }>();
       const workerColumns = await env.DB.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('live_lgpd_worker_jobs') WHERE name IN ('request_type','request_id','clinic_id','status','attempts','claimed_at','lease_until','worker_run_id','artifact_key','artifact_digest_sha256','artifact_byte_length','failure_code')`).first<{ present: number }>();
+      const requiredLgpdTriggers = await env.DB.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_lgpd_worker_export_request_tenant_insert','trg_lgpd_worker_delete_request_tenant_insert','trg_lgpd_worker_request_binding_immutable','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence','trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker')`).first<{ present: number }>();
       lgpdSchemaReady = Number(requiredLgpdTables?.present) === 10
         && Number(exportColumns?.present) === 8
-        && Number(workerColumns?.present) === 12;
+        && Number(workerColumns?.present) === 12
+        && Number(requiredLgpdTriggers?.present) === 7;
     } catch { dbStatus = "error"; }
   }
   const authConfigured = Boolean(env.DB) && authSchemaReady !== false && (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) >= 32;
