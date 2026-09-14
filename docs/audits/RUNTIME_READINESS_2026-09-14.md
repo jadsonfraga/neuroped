@@ -32,8 +32,10 @@ Readiness de exportacao exige a flag LIVE, keyring, storage privado e o schema
 real tocado pelo runtime de exportacao. O health usa probes SELECT ... WHERE 0
 sobre as colunas de clinics, memberships, pacientes, eventos, billing, lifecycle,
 requests, worker e saas_audit_log, sem ler linhas, e exige os sete triggers da
-migration 0017. O probe de auditoria valida exatamente id, clinic_id, actor_user_id,
-action, target_type, target_id e metadata_json, usados por prepareSaasAudit.
+migration 0017. O probe do worker inclui `id`, usado por claimLgpdRequest para
+criar e recuperar o job; uma tabela parcial sem essa chave agora falha fechada.
+O probe de auditoria valida exatamente id, clinic_id, actor_user_id, action,
+target_type, target_id e metadata_json, usados por prepareSaasAudit.
 Isso cobre inclusive canceled_at/grace_ends_at de billing_customers (0013) e
 impede configured=true em deploys parciais de 0013/0014/0017 ou sem trilha de auditoria.
 Binding R2 parcial (sem put/get/delete) e recusado antes de iniciar a operacao.
@@ -76,7 +78,7 @@ Nao executar eliminacao real para testar.
 
 ## Validacao e rollback
 
-Regressoes novas: tests/unit/runtime-readiness.test.ts (11 casos, sem skip), mais
+Regressoes novas: tests/unit/runtime-readiness.test.ts (12 casos, sem skip), mais
 contratos existentes de autenticacao e endpoints LGPD. CI dedicada executa todos.
 Resultados efetivamente executados sao registrados na PR; verify:release completo
 nao deve ser presumido. Reverter por PR restaura o contrato antigo mas reintroduz
