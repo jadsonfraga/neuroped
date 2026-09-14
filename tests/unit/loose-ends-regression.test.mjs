@@ -17,15 +17,21 @@ const cloudflareAuthShared = read("functions/api/auth/_shared.ts");
 const cloudflareLogin = read("functions/api/auth/login.ts");
 const cloudflareRateLimit = read("functions/api/auth/_rateLimit.ts");
 const dailyAuthorialCatalog = read("client/src/data/dailyAuthorialCatalog.ts");
-const dailyAuthorialWorkflow = read(".github/workflows/daily-authorial-inventory.yml");
+const dailyAuthorialWorkflow = read(
+  ".github/workflows/daily-authorial-inventory.yml",
+);
 const visualStates = read("client/src/components/ui/VisualStates.tsx");
 const toastSystem = read("client/src/components/Toast.tsx");
-const cognitiveRunner = read("client/src/features/cognitive-lab/CognitiveTaskRunner.tsx");
+const cognitiveRunner = read(
+  "client/src/features/cognitive-lab/CognitiveTaskRunner.tsx",
+);
 const serverCrypto = read("server/lib/crypto.ts");
 const skipNav = read("client/src/components/SkipNav.tsx");
 const pageMascotDecor = read("client/src/components/PageMascotDecor.tsx");
 const secureStorage = read("client/src/lib/secureStorage.ts");
-const persistentSecureStorage = read("client/src/lib/persistentSecureStorage.ts");
+const persistentSecureStorage = read(
+  "client/src/lib/persistentSecureStorage.ts",
+);
 const diarioClinico = read("client/src/components/DiarioClinico.tsx");
 const epilepsyDiary = read("client/src/pages/epilepsy-diary.tsx");
 const headacheCalendar = read("client/src/pages/headache-calendar.tsx");
@@ -83,7 +89,10 @@ assert.match(
   /(?:async function logout\(\)(?:: Promise<void>)? \{|const logout = useCallback\(async \(\)(?:: Promise<void>)? =>)/,
 );
 assert.match(authContext, /await logoutRequest\(\)/);
-assert.match(authContext, /finally\s*\{\s*await clearSessionScopedClientState\(\)/s);
+assert.match(
+  authContext,
+  /finally\s*\{\s*await clearSessionScopedClientState\(\)/s,
+);
 
 // O lockout canônico D1 precisa incrementar no próprio UPDATE. Read + write absoluto
 // perde tentativas quando bcrypts concorrentes terminam quase ao mesmo tempo.
@@ -102,17 +111,27 @@ assert.doesNotMatch(
 
 // Credential stuffing entre contas diferentes precisa de bucket distribuído no D1,
 // pseudonimizado por HMAC do IP — não depender só de memória por isolate.
-assert.match(cloudflareRateLimit, /CREATE TABLE IF NOT EXISTS auth_login_rate_limits/);
+assert.match(
+  cloudflareRateLimit,
+  /CREATE TABLE IF NOT EXISTS auth_login_rate_limits/,
+);
 assert.match(cloudflareRateLimit, /idx_auth_login_rate_limits_updated/);
 assert.match(cloudflareRateLimit, /CF-Connecting-IP/);
 assert.match(cloudflareRateLimit, /name: "HMAC", hash: "SHA-256"/);
 assert.match(cloudflareRateLimit, /ON CONFLICT\(bucket_hash\) DO UPDATE SET/);
 assert.match(cloudflareRateLimit, /failed_attempts \+ 1 >= \?/);
-assert.match(cloudflareRateLimit, /DELETE FROM auth_login_rate_limits WHERE updated_at < \?/);
+assert.match(
+  cloudflareRateLimit,
+  /DELETE FROM auth_login_rate_limits WHERE updated_at < \?/,
+);
 assert.doesNotMatch(cloudflareRateLimit, /INSERT[^]*CF-Connecting-IP/i);
 assert.match(cloudflareLogin, /enforceLoginAbuseLimit\(env, request, secret\)/);
 assert.ok(
-  (cloudflareLogin.match(/registerLoginAbuseFailure\(env, request, secret\)/g) ?? []).length >= 2,
+  (
+    cloudflareLogin.match(
+      /registerLoginAbuseFailure\(env, request, secret\)/g,
+    ) ?? []
+  ).length >= 2,
   "e-mail inexistente e senha incorreta devem alimentar o bucket distribuído",
 );
 
@@ -121,7 +140,12 @@ assert.ok(
 assert.match(dailyAuthorialCatalog, /export const dailyAuthorialReviewCatalog/);
 assert.match(
   dailyAuthorialCatalog,
-  /dailyAuthorialReviewCatalog\.filter\(\s*\(record\) => record\.status === "revisado_clinicamente"/s,
+  /export const dailyAuthorialCurationCatalog = dailyAuthorialReviewCatalog\.map/,
+);
+assert.match(dailyAuthorialCatalog, /decision: curateDailyInventory\(record\)/);
+assert.match(
+  dailyAuthorialCatalog,
+  /\.filter\(\(\{ decision \}\) => decision\.operational\)/,
 );
 assert.doesNotMatch(
   dailyAuthorialCatalog,
@@ -132,7 +156,10 @@ assert.doesNotMatch(
 // A automação diária não pode mais ser uma exceção que escreve diretamente na main.
 // Ela deve versionar o rascunho em branch datada e abrir PR draft para revisão/checks independentes.
 assert.doesNotMatch(dailyAuthorialWorkflow, /git push origin HEAD:main/);
-assert.match(dailyAuthorialWorkflow, /automation\/daily-authorial-\$\{NEUROPED_GENERATION_DATE\}/);
+assert.match(
+  dailyAuthorialWorkflow,
+  /automation\/daily-authorial-\$\{NEUROPED_GENERATION_DATE\}/,
+);
 assert.match(dailyAuthorialWorkflow, /gh pr create[\s\S]{0,240}--draft/);
 assert.match(dailyAuthorialWorkflow, /pull-requests: write/);
 assert.match(
@@ -167,7 +194,10 @@ assert.match(visualStates, /onDismissRef\.current = onDismiss/);
 assert.match(visualStates, /onDismissRef\.current\?\.\(\)/);
 assert.match(visualStates, /\}, \[durationMs\]\);/);
 assert.match(toastSystem, /const onDismissRef = useRef\(onDismiss\)/);
-assert.match(toastSystem, /setTimeout\(\(\) => onDismissRef\.current\(\), toast\.duration \?\? 3600\)/);
+assert.match(
+  toastSystem,
+  /setTimeout\(\(\) => onDismissRef\.current\(\), toast\.duration \?\? 3600\)/,
+);
 assert.match(toastSystem, /\}, \[toast\.duration\]\);/);
 assert.doesNotMatch(toastSystem, /console\.(?:warn|error|log)\([^\n]*toast/i);
 
@@ -211,18 +241,34 @@ assert.equal(
 // mas continuar cifrados e destrutíveis no logout. O cofre persistente usa CryptoKey
 // não exportável no IndexedDB; rascunhos comuns continuam efêmeros.
 assert.match(secureStorage, /const PERSISTENT_SECURE_KEYS = new Set\(\[/);
-for (const key of ["caa:workspace:v3", "assinatura:registros:v2", "cognitive-lab:sessions:v2"]) {
-  assert.match(secureStorage, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+for (const key of [
+  "caa:workspace:v3",
+  "assinatura:registros:v2",
+  "cognitive-lab:sessions:v2",
+]) {
+  assert.match(
+    secureStorage,
+    new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+  );
 }
 assert.match(secureStorage, /const PERSISTENT_SECURE_PREFIXES = \["diario:"\]/);
-assert.match(secureStorage, /PERSISTENT_SECURE_PREFIXES\.some\(\(prefix\) => key\.startsWith\(prefix\)\)/);
+assert.match(
+  secureStorage,
+  /PERSISTENT_SECURE_PREFIXES\.some\(\(prefix\) => key\.startsWith\(prefix\)\)/,
+);
 assert.match(secureStorage, /await persistentSecureClearAll\(\)/);
-assert.match(persistentSecureStorage, /extractable false|false,\s*\["encrypt", "decrypt"\]/s);
+assert.match(
+  persistentSecureStorage,
+  /extractable false|false,\s*\["encrypt", "decrypt"\]/s,
+);
 // O cofre separa chave-mestra e valores em object stores distintas: a CryptoKey
 // não exportável vive em KEY_STORE e nunca se mistura aos envelopes cifrados.
 assert.match(persistentSecureStorage, /const KEY_STORE = "keys"/);
 assert.match(persistentSecureStorage, /const VALUE_STORE = "values"/);
-assert.match(persistentSecureStorage, /const MASTER_KEY_ID = "aes-gcm-master-v1"/);
+assert.match(
+  persistentSecureStorage,
+  /const MASTER_KEY_ID = "aes-gcm-master-v1"/,
+);
 assert.match(persistentSecureStorage, /deleteDatabase/);
 
 // Diário genérico e os dois diários dedicados não podem voltar a estado apenas em memória.
@@ -233,21 +279,54 @@ for (const [name, source, key] of [
   ["epilepsia", epilepsyDiary, "diario:epilepsia:v1"],
   ["cefaleia", headacheCalendar, "diario:cefaleia:v1"],
 ]) {
-  assert.match(source, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${name}: chave cifrada longitudinal ausente`);
-  assert.match(source, /secureGet<[^>]+>\(STORAGE_KEY\)/, `${name}: leitura cifrada ausente`);
-  assert.match(source, /secureSet\(STORAGE_KEY, snapshot\)/, `${name}: escrita cifrada ausente`);
-  assert.match(source, /storageError/, `${name}: falha de persistência deve ser visível`);
-  assert.doesNotMatch(source, /localStorage\.(?:getItem|setItem)/, `${name}: não pode persistir PHI em texto puro`);
-  assert.match(source, /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 2_000\)/, `${name}: blob deve sobreviver ao click`);
+  assert.match(
+    source,
+    new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+    `${name}: chave cifrada longitudinal ausente`,
+  );
+  assert.match(
+    source,
+    /secureGet<[^>]+>\(STORAGE_KEY\)/,
+    `${name}: leitura cifrada ausente`,
+  );
+  assert.match(
+    source,
+    /secureSet\(STORAGE_KEY, snapshot\)/,
+    `${name}: escrita cifrada ausente`,
+  );
+  assert.match(
+    source,
+    /storageError/,
+    `${name}: falha de persistência deve ser visível`,
+  );
+  assert.doesNotMatch(
+    source,
+    /localStorage\.(?:getItem|setItem)/,
+    `${name}: não pode persistir PHI em texto puro`,
+  );
+  assert.match(
+    source,
+    /setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 2_000\)/,
+    `${name}: blob deve sobreviver ao click`,
+  );
 }
 
 // Sessões explicitamente salvas do Cognitive Lab e o registro local de assinatura
 // usam chaves roteadas para o mesmo cofre persistente; logout destrói a chave comum.
-assert.match(cognitiveStorage, /const SECURE_KEY = "cognitive-lab:sessions:v2"/);
+assert.match(
+  cognitiveStorage,
+  /const SECURE_KEY = "cognitive-lab:sessions:v2"/,
+);
 assert.match(cognitiveStorage, /secureGet<CognitiveSession\[]>\(SECURE_KEY\)/);
 assert.match(cognitiveStorage, /secureSet\(SECURE_KEY, all\)/);
-assert.match(signatureRegistry, /const SECURE_REGISTRY_KEY = "assinatura:registros:v2"/);
-assert.match(signatureRegistry, /secureGet<Registro\[]>\(SECURE_REGISTRY_KEY\)/);
+assert.match(
+  signatureRegistry,
+  /const SECURE_REGISTRY_KEY = "assinatura:registros:v2"/,
+);
+assert.match(
+  signatureRegistry,
+  /secureGet<Registro\[]>\(SECURE_REGISTRY_KEY\)/,
+);
 assert.match(signatureRegistry, /secureSet\(SECURE_REGISTRY_KEY/);
 
 // Exports com texto livre do usuário não podem virar fórmula ao abrir no Excel
@@ -262,7 +341,11 @@ for (const [name, source] of [
   ["diário genérico", diarioClinico],
   ["filtro clínico", read("client/src/lib/filterExport.ts")],
 ]) {
-  assert.match(source, /neutralizeCsvFormula/, `${name}: export CSV sem neutralização de fórmula`);
+  assert.match(
+    source,
+    /neutralizeCsvFormula/,
+    `${name}: export CSV sem neutralização de fórmula`,
+  );
 }
 
 // Nenhuma revogação de blob: pode ser síncrona após o click — o download pode
@@ -281,18 +364,33 @@ for (const path of [
   const source = read(path);
   const bare = source
     .split("\n")
-    .filter((line) => line.includes("revokeObjectURL") && !line.includes("setTimeout"));
-  assert.equal(bare.length, 0, `${path}: revokeObjectURL síncrono reintroduzido`);
+    .filter(
+      (line) =>
+        line.includes("revokeObjectURL") && !line.includes("setTimeout"),
+    );
+  assert.equal(
+    bare.length,
+    0,
+    `${path}: revokeObjectURL síncrono reintroduzido`,
+  );
 }
 
 // Mascotes não competem com o questionário: as rotas de aplicação de escala no
 // PageMascotDecor espelham as chaves de scaleReferences SEM importar o catálogo
 // (dados de referência não podem entrar no chunk inicial). Sincronia obrigatória.
 {
-  const decorSlugs = (pageMascotDecor.match(/scaleApplicationSlugs = \[([\s\S]*?)\]/)?.[1] ?? "")
-    .match(/"([a-z0-9_-]+)"/g)?.map((s) => s.slice(1, -1)).sort() ?? [];
-  const catalogSlugs = [...read("client/src/data/scaleReferences.ts")
-    .matchAll(/^\s{2}"?([a-z0-9_-]+)"?:\s*\{/gm)].map((m) => m[1]).sort();
+  const decorSlugs =
+    (pageMascotDecor.match(/scaleApplicationSlugs = \[([\s\S]*?)\]/)?.[1] ?? "")
+      .match(/"([a-z0-9_-]+)"/g)
+      ?.map((s) => s.slice(1, -1))
+      .sort() ?? [];
+  const catalogSlugs = [
+    ...read("client/src/data/scaleReferences.ts").matchAll(
+      /^\s{2}"?([a-z0-9_-]+)"?:\s*\{/gm,
+    ),
+  ]
+    .map((m) => m[1])
+    .sort();
   assert.deepEqual(
     decorSlugs,
     catalogSlugs,
@@ -319,7 +417,11 @@ for (const path of [
   "audit-230-integrated.mjs",
   "audit-250-combinations.mjs",
 ]) {
-  assert.equal(existsSync(resolve(root, path)), false, `${path} não deve existir na raiz ativa`);
+  assert.equal(
+    existsSync(resolve(root, path)),
+    false,
+    `${path} não deve existir na raiz ativa`,
+  );
 }
 
 // O mini-backend CommonJS de laudo/receita/P12 foi aposentado. A assinatura atual
@@ -340,7 +442,11 @@ for (const path of [
   "server/lib/repositories",
   "shared/schema-pg.ts",
 ]) {
-  assert.equal(existsSync(resolve(root, path)), false, `${path} não deve reaparecer sem wiring real`);
+  assert.equal(
+    existsSync(resolve(root, path)),
+    false,
+    `${path} não deve reaparecer sem wiring real`,
+  );
 }
 
 console.log("✓ Pontas soltas críticas protegidas por regressão estática");
