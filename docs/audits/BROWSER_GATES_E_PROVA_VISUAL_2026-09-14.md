@@ -80,7 +80,17 @@ npm run audit:visual-authenticated exit 1   ANTES  → "Chromium indisponível"
 npm run audit:visual-authenticated exit 0   DEPOIS → 65/65 estados
 npm run audit:visual-authenticated exit 1   com Escuta → 1 falha real (ver 3.2)
 npm run audit:visual-authenticated exit 0   com tema escuro corrigido → 68/68
+
+npm run audit:contrast             exit 0   538 linhas medidas em pixel real
+npm run audit:a11y                 exit 0   modo=axe-playwright, 7 rotas, 0 violações
 ```
+
+Os dois últimos são a medida do problema descrito em 1.1 e 1.2. Nesta máquina,
+antes da correção, `audit:contrast` saía com exit 0 **sem medir uma única
+linha** e `audit:a11y` caía no lint estático. Agora o contraste mede 538 linhas
+de texto em pixel real e o axe roda em navegador (`modo=axe-playwright`, não o
+fallback). O verde continua verde — mas pela primeira vez neste ambiente ele
+corresponde a medição.
 
 ### 3.1 Regressão falha com o defeito reintroduzido
 
