@@ -22,7 +22,7 @@ async function lgpdExportSchemaReady(db: D1Database): Promise<boolean> {
       `SELECT customer_id, plan_id, seats, status, anchored_at, current_period_starts_at, current_period_ends_at, canceled_at, cancel_reason, created_at, updated_at FROM billing_subscriptions WHERE 0`,
       `SELECT clinic_id, status, reason_code, requested_at, retention_until, canceled_at, finalized_at, legal_hold FROM tenant_lifecycle WHERE 0`,
       `SELECT id, clinic_id, patient_id, scope, status, artifact_key, completed_at, updated_at FROM live_export_requests WHERE 0`,
-      `SELECT id, request_type, request_id, clinic_id, status, attempts, claimed_at, lease_until, worker_run_id, artifact_key, artifact_digest_sha256, artifact_byte_length, failure_code FROM live_lgpd_worker_jobs WHERE 0`,
+      `SELECT id, request_type, request_id, clinic_id, status, attempts, claimed_at, lease_until, worker_run_id, artifact_key, artifact_digest_sha256, artifact_byte_length, deleted_counts_json, failure_code, created_at, updated_at FROM live_lgpd_worker_jobs WHERE 0`,
       `SELECT id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json FROM saas_audit_log WHERE 0`,
     ];
     for (const sql of probes) await db.prepare(sql).first();
