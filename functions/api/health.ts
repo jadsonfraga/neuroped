@@ -8,6 +8,30 @@ interface Env extends TenantEnv, ArtifactStoreEnv {
   ESCUTA_ENABLED?: string;
   AI?: unknown;
 }
+
+async function lgpdExportSchemaReady(db: D1Database): Promise<boolean> {
+  try {
+    // Probe exatamente as colunas tocadas pelo runtime de exportação. WHERE 0
+    // valida schema sem ler nenhuma linha nem conteúdo clínico.
+    const probes = [
+      `SELECT id, slug, name, legal_name, timezone, status, created_at, updated_at FROM clinics WHERE 0`,
+      `SELECT clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at FROM clinic_memberships WHERE 0`,
+      `SELECT clinic_id, id, primary_professional_user_id, profile_encrypted, encryption_version, status, merged_into_patient_id, created_at, updated_at FROM live_patients WHERE 0`,
+      `SELECT clinic_id, id, patient_id, author_user_id, event_type, occurred_at, encounter_id, provenance_kind, provenance_source, payload_encrypted, encryption_version, supersedes_event_id, status, created_at FROM live_clinical_events WHERE 0`,
+      `SELECT id, clinic_id, provider, status, billing_email, trial_ends_at, last_failed_at, canceled_at, grace_ends_at, created_at, updated_at FROM billing_customers WHERE 0`,
+      `SELECT customer_id, plan_id, seats, status, anchored_at, current_period_starts_at, current_period_ends_at, canceled_at, cancel_reason, created_at, updated_at FROM billing_subscriptions WHERE 0`,
+      `SELECT clinic_id, status, reason_code, requested_at, retention_until, canceled_at, finalized_at, legal_hold FROM tenant_lifecycle WHERE 0`,
+      `SELECT id, clinic_id, patient_id, scope, status, artifact_key, completed_at, updated_at FROM live_export_requests WHERE 0`,
+      `SELECT request_type, request_id, clinic_id, status, attempts, claimed_at, lease_until, worker_run_id, artifact_key, artifact_digest_sha256, artifact_byte_length, failure_code FROM live_lgpd_worker_jobs WHERE 0`,
+    ];
+    for (const sql of probes) await db.prepare(sql).first();
+    const requiredLgpdTriggers = await db.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_lgpd_worker_export_request_tenant_insert','trg_lgpd_worker_delete_request_tenant_insert','trg_lgpd_worker_request_binding_immutable','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence','trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker')`).first<{ present: number }>();
+    return Number(requiredLgpdTriggers?.present) === 7;
+  } catch {
+    return false;
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
   const now = new Date().toISOString();
@@ -21,14 +45,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const sessionTable = await env.DB.prepare("SELECT 1 AS present FROM sqlite_master WHERE type = 'table' AND name = 'auth_refresh_sessions' LIMIT 1").first<{ present: number }>();
       const authColumns = await env.DB.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('users') WHERE name IN ('password_hash', 'must_change_password', 'failed_login_attempts', 'locked_until', 'last_login_at')`).first<{ present: number }>();
       authSchemaReady = sessionTable?.present === 1 && Number(authColumns?.present) === 5;
-      const requiredLgpdTables = await env.DB.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'table' AND name IN ('clinics','clinic_memberships','live_patients','live_clinical_events','billing_customers','billing_subscriptions','tenant_lifecycle','live_export_requests','live_lgpd_worker_jobs','saas_audit_log')`).first<{ present: number }>();
-      const exportColumns = await env.DB.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('live_export_requests') WHERE name IN ('id','clinic_id','patient_id','scope','status','artifact_key','completed_at','updated_at')`).first<{ present: number }>();
-      const workerColumns = await env.DB.prepare(`SELECT COUNT(*) AS present FROM pragma_table_info('live_lgpd_worker_jobs') WHERE name IN ('request_type','request_id','clinic_id','status','attempts','claimed_at','lease_until','worker_run_id','artifact_key','artifact_digest_sha256','artifact_byte_length','failure_code')`).first<{ present: number }>();
-      const requiredLgpdTriggers = await env.DB.prepare(`SELECT COUNT(*) AS present FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_lgpd_worker_export_request_tenant_insert','trg_lgpd_worker_delete_request_tenant_insert','trg_lgpd_worker_request_binding_immutable','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence','trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker')`).first<{ present: number }>();
-      lgpdSchemaReady = Number(requiredLgpdTables?.present) === 10
-        && Number(exportColumns?.present) === 8
-        && Number(workerColumns?.present) === 12
-        && Number(requiredLgpdTriggers?.present) === 7;
+      lgpdSchemaReady = await lgpdExportSchemaReady(env.DB);
     } catch { dbStatus = "error"; }
   }
   const authConfigured = Boolean(env.DB) && authSchemaReady !== false && (env.NEUROPED_JWT_SECRET?.trim().length ?? 0) >= 32;
