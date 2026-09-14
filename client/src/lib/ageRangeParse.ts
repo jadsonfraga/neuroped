@@ -47,8 +47,11 @@ function toMonths(value: number, unit: Unit): number {
 
 // "7 anos e 11 meses" / "4 anos e 2 meses" — idade composta.
 const COMPOSITE = /(\d+(?:[.,]\d+)?)\s*anos?\s*e\s*(\d+(?:[.,]\d+)?)\s*m[eê]s(?:es)?/;
-// lado de uma faixa: número + unidade opcional, ou "nascimento".
-const SIDE = String.raw`(nascimento|rec[eé]m[- ]nascidos?|\d+(?:[.,]\d+)?(?:\s*(?:dias?|semanas?|m[eê]s(?:es)?|anos?))?)`;
+// lado de uma faixa: idade composta ("2 anos e 6 meses"), número + unidade
+// opcional, ou "nascimento". O composto vem PRIMEIRO na alternância: sem ele,
+// "a 7 anos e 11 meses" pararia em "7 anos" (max 84 em vez de 95) e
+// "2 anos e 6 meses a ..." começaria a casar no "6 meses" interno.
+const SIDE = String.raw`(nascimento|rec[eé]m[- ]nascidos?|\d+(?:[.,]\d+)?\s*anos?\s*e\s*\d+(?:[.,]\d+)?\s*m[eê]s(?:es)?|\d+(?:[.,]\d+)?(?:\s*(?:dias?|semanas?|m[eê]s(?:es)?|anos?))?)`;
 const RANGE = new RegExp(`${SIDE}\\s*(?:a|até|[–—-])\\s*${SIDE}`, "gi");
 
 function parseSide(raw: string, fallbackUnit: Unit): number | null {
@@ -77,12 +80,25 @@ const OPEN_LOWER = new RegExp(
   "gi",
 );
 
+// Limite superior aberto: "≤ 24 meses" (CHOP INTEND), "< 2 anos" (GMFCS).
+// Sem esta regra, "≤ 24 meses" caía no valor único {24, 24} e EXCLUÍA os
+// lactentes de 0–23 meses — exatamente a população-alvo do instrumento.
+// Só símbolos: "até" isolado é ambíguo com o separador de faixa "X até Y".
+const OPEN_UPPER = new RegExp(
+  String.raw`(?:≤|<=|<)\s*(\d+(?:[.,]\d+)?)\s*(dias?|semanas?|m[eê]s(?:es)?|anos?)`,
+  "gi",
+);
+
 function rangesIn(text: string): ParsedAgeRange[] {
   const out: ParsedAgeRange[] = [];
   const adultText = text.replace(/adultos?\b/g, `${PEDIATRIC_CEILING / 12} anos`);
   for (const m of adultText.matchAll(RANGE)) {
-    // Unidade do lado direito governa um lado esquerdo sem unidade.
-    const rightUnit = unitOf(m[2].toLowerCase()) ?? "anos";
+    // Unidade do lado direito governa um lado esquerdo sem unidade. Um lado
+    // direito COMPOSTO ("16 anos e 11 meses") contém "meses", mas sua unidade
+    // dominante é anos — "6 a 16 anos e 11 meses" começa aos 6 ANOS.
+    const rightUnit = COMPOSITE.test(m[2])
+      ? "anos"
+      : (unitOf(m[2].toLowerCase()) ?? "anos");
     const max = parseSide(m[2], rightUnit);
     const min = parseSide(m[1], rightUnit);
     if (min === null || max === null) continue;
@@ -95,6 +111,14 @@ function rangesIn(text: string): ParsedAgeRange[] {
     const min = toMonths(Number(m[1].replace(",", ".")), unit);
     if (min >= 0 && min <= PEDIATRIC_CEILING) {
       out.push({ min: Math.round(min), max: PEDIATRIC_CEILING });
+    }
+  }
+  // Limite superior aberto: "≤ 24 meses" ⇒ do nascimento ao teto declarado.
+  for (const m of text.matchAll(OPEN_UPPER)) {
+    const unit = unitOf(m[2].toLowerCase()) ?? "anos";
+    const max = toMonths(Number(m[1].replace(",", ".")), unit);
+    if (max > 0 && max <= PEDIATRIC_CEILING) {
+      out.push({ min: 0, max: Math.round(max) });
     }
   }
   // Valor único com unidade explícita ("18 meses") — ponto etário conservador.

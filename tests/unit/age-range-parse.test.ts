@@ -13,7 +13,23 @@ assert.deepEqual(parseAgeRangeMonths("0 a 6 anos"), { min: 0, max: 72 });
 assert.deepEqual(parseAgeRangeMonths("Nascimento a 68 meses"), { min: 0, max: 68 });
 assert.deepEqual(parseAgeRangeMonths("1 a 66 meses"), { min: 1, max: 66 });
 assert.deepEqual(parseAgeRangeMonths("2,5–6 anos"), { min: 30, max: 72 });
-assert.deepEqual(parseAgeRangeMonths("Nascimento a 7 anos e 11 meses"), { min: 0, max: 84 });
+// composto no ENDPOINT da faixa: "7 anos e 11 meses" = 95, não 84 (o resto
+// truncado) — e uma faixa composto-a-composto casa inteira, sem começar no
+// "6 meses" interno do lado esquerdo.
+assert.deepEqual(parseAgeRangeMonths("Nascimento a 7 anos e 11 meses"), { min: 0, max: 95 });
+assert.deepEqual(
+  parseAgeRangeMonths("2 anos e 6 meses a 7 anos e 7 meses"),
+  { min: 30, max: 91 },
+);
+// limite superior aberto: "≤ 24 meses" inclui o lactente de 0–23 meses —
+// {24, 24} excluiria exatamente a população-alvo.
+assert.deepEqual(parseAgeRangeMonths("≤ 24 meses (lactentes com AME)"), { min: 0, max: 24 });
+assert.deepEqual(parseAgeRangeMonths("< 2 anos"), { min: 0, max: 24 });
+// lado esquerdo SEM unidade governado pelo composto à direita: unidade
+// dominante é anos — "6 a 16 anos e 11 meses" começa aos 6 ANOS (72), não
+// aos 6 meses (o "meses" interno do composto não governa o lado esquerdo).
+assert.deepEqual(parseAgeRangeMonths("6 a 16 anos e 11 meses"), { min: 72, max: 203 });
+assert.deepEqual(parseAgeRangeMonths("4 a 8 anos e 11 meses"), { min: 48, max: 107 });
 // parêntese é detalhamento — o texto principal governa
 assert.deepEqual(parseAgeRangeMonths("16 dias a 42 meses (4 anos e 2 meses)"), { min: 1, max: 42 });
 // múltiplas faixas ⇒ envelope
