@@ -1,5 +1,8 @@
 import { Clock } from "lucide-react";
-import type { RefinedScaleMatch } from "@/data/advancedFilterLogic";
+import {
+  getAssessmentUse,
+  type RefinedScaleMatch,
+} from "@/data/advancedFilterLogic";
 import type { PodiumSelection } from "@/data/filterPodium";
 import { formatMinutesBudget, sumScaleMinutes } from "@/lib/scaleTime";
 
@@ -19,6 +22,20 @@ interface AssessmentPlanCardProps {
   podium: PodiumSelection;
 }
 
+/**
+ * A finalidade exibida vem do CATÁLOGO (getAssessmentUse), nunca da posição
+ * no plano: rotular a fase como "triagem" reclassificaria clinicamente um
+ * ouro diagnóstico (ex.: CARS) ou de monitorização (ex.: EUSM-10). As fases
+ * têm nomes neutros de ordem de aplicação; a categoria clínica é por escala.
+ */
+const ASSESSMENT_USE_LABEL: Record<string, string> = {
+  triagem: "Triagem",
+  diagnostico: "Apoio diagnóstico",
+  monitorizacao: "Monitorização",
+  seguimento: "Seguimento",
+  psicoeducacao: "Psicoeducação",
+};
+
 interface PlanPhase {
   label: string;
   detail: string;
@@ -36,6 +53,9 @@ function PlanScaleRow({ match }: { match: RefinedScaleMatch }) {
         </span>
       </span>
       <span className="text-xs text-muted-foreground">
+        <span className="mr-2 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-semibold text-foreground/80">
+          {ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ?? getAssessmentUse(scale)}
+        </span>
         {scale.tempo?.trim() || "tempo variável"}
         {match.implementationStatus !== "complete" && (
           <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200">
@@ -50,12 +70,13 @@ function PlanScaleRow({ match }: { match: RefinedScaleMatch }) {
 export function AssessmentPlanCard({ podium }: AssessmentPlanCardProps) {
   const phases: PlanPhase[] = [
     {
-      label: "Fase 1 — Triagem inicial",
-      detail: "Comece por aqui: melhor cruzamento de idade, queixa e respondente.",
+      label: "Fase 1 — Instrumento principal",
+      detail:
+        "Comece por aqui: melhor cruzamento de idade, queixa e respondente para este perfil.",
       matches: [podium.ouro].filter(Boolean) as RefinedScaleMatch[],
     },
     {
-      label: "Fase 2 — Aprofundamento",
+      label: "Fase 2 — Complementares",
       detail: "Aplique se houver tempo e a suspeita clínica se mantiver.",
       matches: [podium.prata, podium.bronze].filter(
         Boolean,

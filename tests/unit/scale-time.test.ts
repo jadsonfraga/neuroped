@@ -44,11 +44,19 @@ const planCard = readFileSync(
 );
 assert.match(planCard, /sumScaleMinutes/);
 assert.doesNotMatch(planCard, /suggestBattery/);
+// A finalidade clínica exibida vem do catálogo (achado Codex P1): nomear a
+// fase de "triagem" reclassificaria um ouro diagnóstico (CARS) ou de
+// monitorização (EUSM-10). Fases têm nomes neutros; categoria é por escala.
+assert.match(planCard, /getAssessmentUse\(scale\)/);
+assert.doesNotMatch(planCard, /Triagem inicial/);
 
 for (const extinct of [
   "client/src/pages/bloco3-showcase.tsx",
   "client/src/features/clinical-assistant/suggestionEngine.ts",
   "client/src/features/battery-visualization/BatteryVisualization.tsx",
+  // Docs que ensinavam a importar/abrir o que foi extinto (achado Codex P2).
+  "BLOCO3_QUICKSTART.md",
+  "DEPLOYMENT_FINAL_BLOCO3.md",
 ]) {
   assert.equal(
     existsSync(extinct),
