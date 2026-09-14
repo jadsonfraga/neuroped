@@ -23,7 +23,7 @@ import { db } from "../storage.js";
 import { DUMMY_BCRYPT_HASH, PASSWORD_POLICY, hashPassword, verifyPassword, calculateLockoutUntil, isAccountLocked, isExpiredOrInvalidTimestamp } from "../lib/password.js";
 import { signAccessToken, issueRefreshToken, hashRefreshToken } from "../lib/jwt.js";
 import { logAudit, getAuditContextFromRequest } from "../lib/audit.js";
-import { loginRateLimit } from "../middleware/security.js";
+import { loginRateLimit, passwordRecoveryRateLimit } from "../middleware/security.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { PASSWORD_RECOVERY_REMOTE_ONLY } from "./passwordRecoveryContract.js";
 
@@ -422,7 +422,7 @@ export function registerAuthRoutes(app: Express): void {
 
   // ----- Password recovery (arquitetura explícita; ver passwordRecoveryContract) -----
   for (const path of ["/api/auth/forgot-password", "/api/auth/reset-password"] as const) {
-    app.post(path, loginRateLimit, async (req: Request, res: Response) => {
+    app.post(path, passwordRecoveryRateLimit, async (req: Request, res: Response) => {
       await logAudit({
         eventType: "auth.password.reset.request",
         context: getAuditContextFromRequest(req),

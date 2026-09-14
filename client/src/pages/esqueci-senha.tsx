@@ -3,7 +3,10 @@ import { ArrowLeft, Loader2, Mail, MailCheck, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { requestPasswordReset } from "@/lib/passwordRecoveryClient";
+import {
+  PasswordRecoveryServerError,
+  requestPasswordReset,
+} from "@/lib/passwordRecoveryClient";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -21,12 +24,12 @@ export default function ForgotPasswordPage() {
     } catch (err) {
       // A API é anti-enumeração (202 genérico); um erro aqui é indisponibilidade
       // real de rede/backend — sem revelar nada sobre a existência da conta.
-      // Quando o backend explica a indisponibilidade (ex.: runtime local
-      // responde PASSWORD_RESET_REMOTE_ONLY — o fluxo por e-mail vive na
-      // produção), a explicação do servidor é mais honesta que o texto
-      // genérico de conexão. Nenhuma dessas mensagens cita contas.
+      // RESPOSTA do servidor (erro tipado) traz explicação segura de exibir
+      // (ex.: PASSWORD_RESET_REMOTE_ONLY — o fluxo por e-mail vive na
+      // produção); falha de TRANSPORTE ("Failed to fetch"…) fica na mensagem
+      // genérica de conectividade, nunca no texto cru do navegador.
       setError(
-        err instanceof Error && err.message && !/\(\d+\)$/.test(err.message)
+        err instanceof PasswordRecoveryServerError
           ? err.message
           : "Não foi possível registrar a solicitação agora. Verifique a conexão e tente novamente.",
       );

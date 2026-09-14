@@ -119,6 +119,23 @@ export const loginRateLimit = rateLimit({
   },
 });
 
+/**
+ * Limite dedicado aos endpoints de recuperação de senha. Instância PRÓPRIA:
+ * compartilhar o contador do loginRateLimit faria as respostas 503 do
+ * contrato (nunca "successful") consumirem o teto do /login e trancarem o
+ * login real do mesmo IP pela janela inteira.
+ */
+export const passwordRecoveryRateLimit = rateLimit({
+  windowMs: 15 * 60_000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Muitas solicitações de redefinição. Aguarde 15 minutos.",
+    code: "PASSWORD_RESET_RATE_LIMIT",
+  },
+});
+
 /** Limite para endpoints de criacao de recurso. */
 export const writeRateLimit = rateLimit({
   windowMs: 60_000,
