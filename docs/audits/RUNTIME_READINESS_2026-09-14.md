@@ -29,7 +29,9 @@ Producao sem DB continua exigindo autenticacao remota e nao permite fallback loc
 readiness separa saude do nucleo, disponibilidade criptografica e binding de exportacao.
 A existencia do binding NAO prova exportacao/purge: executionVerified e false.
 Readiness de exportacao tambem exige o schema LIVE/LGPD minimo das migrations 0014/0017;
-schema parcial gera LGPD_SCHEMA_NOT_READY e nunca configured=true.
+schema parcial gera LGPD_SCHEMA_NOT_READY e nunca configured=true. O gate inclui
+tabelas, colunas criticas e os sete triggers da 0017 que vinculam tenant e exigem
+prova fisica antes de marcar exportacao ou eliminacao como completed.
 Binding R2 parcial (sem put/get/delete) e recusado antes de iniciar a operacao.
 Nenhum conteudo, identificador de paciente, erro bruto ou segredo entra no health.
 
@@ -59,7 +61,7 @@ credenciais; conector Cloudflare nao foi encontrado. Nao equivale a ausencia glo
 
 ## Validacao e rollback
 
-Regressoes novas: tests/unit/runtime-readiness.test.ts (8 casos, sem skip), mais
+Regressoes novas: tests/unit/runtime-readiness.test.ts (9 casos, sem skip), mais
 contratos existentes de autenticacao e endpoints LGPD. CI dedicada executa todos.
 Resultados efetivamente executados sao registrados na PR; verify:release completo
 nao deve ser presumido. Reverter por PR restaura o contrato antigo mas reintroduz
@@ -69,9 +71,8 @@ integral a partir desta alteracao.
 
 ### Execucao local confirmada
 
-Readiness 8/8, autenticacao Cloudflare, exportacao LGPD, eliminacao LGPD,
+Readiness 9/9, autenticacao Cloudflare, exportacao LGPD, eliminacao LGPD,
 contrato de monitoramento, governanca de workflows, npm run check, npm run lint
-e git diff --check: todos exit 0. Nenhuma assercao removida ou ignorada.
-Dependencias reutilizadas por junction somente apos conferir package-lock identico.
-Prova publica e baseline de tokens/billing tambem exit 0. CI do novo HEAD ainda
-precisa ser verificada; estes resultados nao atestam deploy.
+e git diff --check: todos exit 0 no delta testado antes da publicacao da branch.
+Nenhuma assercao removida ou ignorada. A CI do HEAD publicado permanece a fonte
+de verdade para merge; estes resultados nao atestam deploy nem conformidade integral.
