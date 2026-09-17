@@ -14,3 +14,17 @@
 @media(prefers-reduced-motion:reduce){.obs10-practical-task *{transition:none}}
 
 .obs10 .obs10-age-fieldset,.obs10 .obs10-context-fieldset,.obs10 .obs10-checklist{border:0;padding:0;min-width:0;margin:0}.obs10 fieldset.obs10-kit-grid{border:0;padding:0;min-width:0}.obs10 .obs10-materials-first .obs10-section-title h2{margin-bottom:6px}
+
+/* Documentation handoff: same semantic palette, no performance score colors. */
+.obs10-review-board,.obs10-import{margin-top:20px}
+.obs10-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.obs10-review-card{border:1px solid var(--o-line);border-radius:16px;padding:16px;background:var(--o-bg);min-width:0;overflow-wrap:anywhere}
+.obs10-review-card h3{margin:0 0 10px}.obs10-review-card p,.obs10-review-card summary{font-size:.84rem}
+.obs10-review-card button{width:100%;margin-top:10px}
+.obs10-review-warnings{border:1px solid var(--o-line);border-radius:14px;padding:14px;margin:14px 0;overflow-wrap:anywhere}
+.obs10-review-warnings p{margin:10px 0}.obs10-review-warnings button{font-size:.8rem;min-height:44px;padding:8px 11px}
+.obs10-review-code{max-width:420px;margin-top:22px!important}.obs10-records{scroll-margin-top:160px}
+.obs10-import input[type="file"]{max-width:100%;white-space:normal;font-size:.9rem}
+.obs10-import .obs10-preview{margin-top:14px}
+@media(max-width:900px){.obs10-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.obs10-review-grid{grid-template-columns:1fr}.obs10-records{scroll-margin-top:210px}}
