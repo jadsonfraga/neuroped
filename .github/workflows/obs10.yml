@@ -9,7 +9,9 @@ on:
       - 'client/src/data/navigation.ts'
       - 'client/src/security/**'
       - 'tests/unit/obs10.test.ts'
+      - 'tests/unit/obs10-practical.test.ts'
       - 'tests/e2e/obs10.mjs'
+      - 'tests/e2e/obs10-practical.mjs'
       - 'docs/features/obs10.md'
       - '.github/workflows/obs10.yml'
   push:
@@ -19,7 +21,9 @@ on:
       - 'client/src/pages/pre-consulta-obs10.tsx'
       - 'client/src/security/**'
       - 'tests/unit/obs10.test.ts'
+      - 'tests/unit/obs10-practical.test.ts'
       - 'tests/e2e/obs10.mjs'
+      - 'tests/e2e/obs10-practical.mjs'
       - '.github/workflows/obs10.yml'
 permissions:
   contents: read
@@ -42,10 +46,11 @@ jobs:
       - name: TypeScript and lint
         run: |
           npm run check
-          npx eslint client/src/features/obs10/*.ts client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10.test.ts --max-warnings=0
+          npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
       - name: Age, clock, factual reporting, authorization and existing regressions
         run: |
           node --import tsx tests/unit/obs10.test.ts
+          node --import tsx tests/unit/obs10-practical.test.ts
           npm run test:sonda
           npm run audit:navigation
           npm run test:operations
@@ -58,11 +63,17 @@ jobs:
         env:
           OBS10_ARTIFACT_DIR: /tmp/obs10-proof
         run: node tests/e2e/obs10.mjs
+      - name: Practical assistant journey and lifecycle regressions
+        env:
+          OBS10_PRACTICAL_ARTIFACT_DIR: /tmp/obs10-practical
+        run: node tests/e2e/obs10-practical.mjs
       - name: Preserve synthetic screenshots and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: obs10-verification
-          path: /tmp/obs10-proof
+          path: |
+            /tmp/obs10-proof
+            /tmp/obs10-practical
           if-no-files-found: ignore
           retention-days: 7
