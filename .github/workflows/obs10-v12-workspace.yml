@@ -1,0 +1,28 @@
+name: OBS-10 v1.2 read-only workspace
+on:
+  push:
+    branches: [feat/obs10-consolidacao-v12]
+    paths: ['.github/workflows/obs10-v12-workspace.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Archive tracked code only, without credentials or runtime data
+        run: |
+          git archive --format=tar HEAD > /tmp/obs10-source.tar
+          git rev-parse HEAD > /tmp/obs10-source-sha.txt
+          sha256sum /tmp/obs10-source.tar > /tmp/obs10-source.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-v12-source
+          path: |
+            /tmp/obs10-source.tar
+            /tmp/obs10-source-sha.txt
+            /tmp/obs10-source.sha256
+          retention-days: 1
