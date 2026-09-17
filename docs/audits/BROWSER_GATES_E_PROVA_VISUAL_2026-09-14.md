@@ -160,3 +160,90 @@ O gate de contraste passa a falhar fechado. Todos os workflows que o executam
 instalam `chromium` antes, então o resultado em CI não muda. Se algum workflow
 futuro rodar `audit:contrast` sem instalar o browser, ele vai **falhar** — e
 isso é o comportamento correto, não uma regressão a contornar.
+
+---
+
+# Rodada 2 — 2026-09-17: consolidação da camada de navegador
+
+Base: `main` em `57aa5007` (após #858), mesclada na branch sem conflito.
+Baseline pós-merge: lint, check, quick-wins, loose-ends e daily-inventory, exit 0.
+
+## 7. O que ainda estava inconsistente
+
+A rodada 1 unificou a resolução do Chromium em cinco gates. Um levantamento
+por `chromium.launch(` mostrou **18 outros pontos de entrada** — todos os e2e
+em `tests/e2e/` e os dois harnesses da Escuta — cada um com a própria cópia,
+e cada cópia com uma variação:
+
+| Variação | Onde |
+| --- | --- |
+| ternário padrão com flags de container | 12 e2e |
+| sem flags de container | `filter-age-complaint` |
+| caminho fixo do Chrome do Windows | `recovered-authorials`, `regula20-previsit` |
+| **nenhum executável** | `escuta-browser-qa`, `escuta-cloud-browser` |
+| `process.exit(0)` sem browser, dentro do `verify:release` | `missao-saude-accessibility` |
+
+A linha "nenhum executável" é a causa direta do
+`BLOCKED_EXTERNAL_ESCUTA_BROWSER_PREVIEW` registrado na PR #855: o harness
+de microfone virtual não tinha como encontrar o Chromium da imagem.
+
+## 8. O que foi feito
+
+- Os 18 passam a lançar por `auditBrowserLaunchOptions()`. O helper soma os
+  `args` do chamador aos flags de container em vez de substituí-los, para que
+  os harnesses de microfone virtual mantenham `--use-fake-device-for-media-stream`
+  e afins. O caminho do Chrome do Windows entra em `SYSTEM_BINARIES` do
+  resolvedor e vale para todos os gates.
+- `missao-saude-accessibility.mjs` falha fechado sem browser, como o contraste.
+- A regressão enumera os pontos de launch a partir do código (27 hoje) e reprova
+  qualquer script novo com resolução própria, além de proibir `exit 0` nos dois
+  e2e do `verify:release`.
+- Três truncamentos visíveis em 1440 px corrigidos (dicas do cockpit,
+  descrição do atalho de destaque e nome do usuário na sidebar).
+
+Deliberadamente **não** alterados: os fallbacks de `audit:a11y` (lint estático
+axe) e `audit:lighthouse` (bundle size). Ambos são medições substitutas
+documentadas, não um verde vazio — e com o resolvedor passam a rodar em
+navegador real nesta máquina de qualquer forma.
+
+## 9. Evidência
+
+```
+node tests/unit/browser-audit-chromium-resolution.test.mjs
+  exit 0  na correção (27 pontos de launch na resolução compartilhada)
+  exit 1  ao reintroduzir uma cópia própria em scale-smoke.mjs
+  exit 1  ao devolver o exit 0 da Missão Saúde
+
+npm run test:e2e:missao-saude             exit 0   (verify:release; antes não executava aqui)
+npm run test:e2e:neuroped-acompanhamento  exit 0   (verify:release; idem)
+npm run test:e2e:scales                   exit 0   20/20 com PDF válido e snapshot estável
+node scripts/escuta-browser-qa.mjs        exit 0   11 asserções: MediaStream e AudioWorklet reais,
+                                                   start/pause/resume/stop, WAV com bytes capturados,
+                                                   390 px sem overflow, negação de permissão tratada
+npm run audit:visual-authenticated        exit 0   68/68
+npm run audit:lighthouse                  exit 0   12 rotas em navegador real, 95/100/100/100
+                                                   (antes: fallback de bundle size nesta máquina)
+npm run check · lint · audit:design (210/212) · audit:tailwind-opacity   exit 0
+
+npm run verify:release                    exit 0   suíte de release COMPLETA, ponta a ponta
+```
+
+O `verify:release` integral reprovou na primeira tentativa, na etapa de lint:
+`escuta-browser-qa.mjs` empacota a página em `.tmp/` e `eslint .` lia o bundle
+gerado. Ou seja, executar o harness da Escuta deixava o lint reprovando em
+seguida. `.tmp/**` e `artifacts/**` passam a ser ignorados pelo ESLint (e
+`.tmp/` explicitado no `.gitignore`), com regressão que reprova se o ignore
+sumir. Na segunda tentativa a suíte inteira passou — inclusive
+`audit:visual-authenticated`, os dois e2e, `audit:contrast`, `audit:a11y` e
+`audit:lighthouse` em navegador real, e `check-baseline` sem regressão de
+catálogo (274/274/185, 89 pendentes, 775/630/145).
+
+O `escuta-browser-qa.mjs` roda sobre o código de `main`, isto é, **sem** o gate
+de sinal da PR #855. Ele prova que o harness executa neste ambiente; não prova
+a PR. A PR precisa rodar o mesmo harness sobre o próprio HEAD.
+
+## 10. Limites desta rodada
+
+- Não é prova em hardware nem em Safari. Chromium headless com microfone
+  virtual.
+- Nenhum merge, deploy, binding, segredo ou migração.

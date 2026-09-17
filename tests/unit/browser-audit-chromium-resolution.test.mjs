@@ -139,6 +139,17 @@ try {
     );
   }
 
+  // --- saídas de harness não podem reprovar o lint --------------------------
+  // escuta-browser-qa.mjs empacota a página em .tmp/ e os gates visuais gravam
+  // em artifacts/. `eslint .` lia o bundle gerado e verify:release caía na
+  // primeira etapa depois de qualquer execução local do harness.
+  const eslintConfig = read("eslint.config.js");
+  for (const ignored of ['".tmp/**"', '"artifacts/**"']) {
+    assert.ok(eslintConfig.includes(ignored), `eslint precisa ignorar ${ignored}: saída de harness não é código-fonte`);
+  }
+  const gitignore = read(".gitignore");
+  assert.ok(/^\.tmp\/$/m.test(gitignore) && /^artifacts\/$/m.test(gitignore), ".tmp/ e artifacts/ precisam estar no .gitignore");
+
   console.log(`PASS browser-audit: descoberta na imagem, precedência explícita, ${launchSites.length} pontos de launch na resolução compartilhada, gates fail-closed`);
 } finally {
   for (const key of ["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]) {
