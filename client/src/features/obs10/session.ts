@@ -1,3 +1,5 @@
+import type { EvidenceBundle } from "./evidence";
+import type { PilotRecord } from "./pilot";
 import { AGE_BANDS, OUTCOMES, PHASES, clock, type Outcome } from "./protocol";
 
 export interface SessionContext {
@@ -48,6 +50,8 @@ export interface SessionRecord {
   sourceRecording?: string;
   importedForReview?: boolean;
   handoff?: HandoffReview;
+  evidence?: EvidenceBundle;
+  pilot?: PilotRecord;
 }
 export function parseAge(years: string, months: string): number | null {
   if (!/^\d+$/.test(years) || !/^\d+$/.test(months)) return null;
@@ -104,7 +108,7 @@ export function makeReport(record: SessionRecord): string {
     `Prono autorizado pela equipe: ${c.proneAllowed ? "sim, apenas se acordado e tolerado" : "não; omitir posicionamento de bruços"}`,
     `Duração da aplicação: ${clock(record.durationSeconds)}. Encerramento: ${record.endReason || "em andamento"}.`,
     `Captação: ${record.recording}`,
-    ...(record.importedForReview ? ["JSON reaberto apenas para revisão. Nenhum vídeo foi reaberto, transmitido ou analisado pelo aplicativo.", `Captação descrita no registro de origem (não verificada nesta sessão): ${record.sourceRecording || "Não informada"}`] : []),
+    ...(record.importedForReview ? ["JSON reaberto apenas para revisão. O JSON não reabre vídeo. Arquivos associados separadamente e posições do reprodutor constam na seção de evidências; não houve transmissão ou análise automática.", `Captação descrita no registro de origem (não verificada nesta sessão): ${record.sourceRecording || "Não informada"}`] : []),
     "Os horários do cronômetro são da aplicação, não comprovam um trecho de vídeo. Clipe/tempo abaixo são referências digitadas pela aplicadora, ainda não verificadas.",
     "",
   ];
@@ -133,7 +137,7 @@ export function makeReport(record: SessionRecord): string {
     `Registros/blocos revistos: ${h?.recordsReviewed ? "declarado" : "não declarado"}. Áudio/enquadramento ou indisponibilidade conferidos: ${h?.mediaReviewed ? "declarado" : "não declarado"}. Arquivos exportados e conferidos: ${h?.filesChecked ? "declarado" : "não declarado"}.`,
     h?.declaredAt ? `Encaminhamento declarado em ${h.declaredAt} (horário do dispositivo, não autenticado). Não comprova recebimento, arquivamento ou revisão médica.` : "Encaminhamento não declarado nesta revisão.", "");
   lines.push("RELATO DO RESPONSÁVEL — NÃO É ACHADO OBSERVADO", textOrMissing(c.familyReport), "",
-    "ALCANCE E LIMITES", "Resumo montado exclusivamente a partir dos registros da aplicadora. Nenhuma análise automática de vídeo, inferência diagnóstica, escore, percentil ou idade cognitiva foi realizada.",
+    "ALCANCE E LIMITES", "Observações transcritas dos registros da aplicadora; eventuais comentários profissionais são identificados em seção separada. Nenhuma análise automática de vídeo, inferência diagnóstica, escore, percentil ou idade cognitiva foi realizada.",
     "Força segmentar, tônus, reflexos, sensibilidade e exame neurológico completo não foram examinados por este roteiro. Ausência de alteração na amostra não exclui dificuldade clínica.",
     "A assistente registra. O médico verifica as evidências, interpreta e decide. Risco e conteúdos sensíveis exigem atendimento presencial/confidencial, não espera por IA.",
     "Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756");

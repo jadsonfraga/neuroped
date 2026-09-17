@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — guia de aplicação prática
 
-**Versão 1.1.0 · 17/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
+**Versão da interface 1.3.0 · 17/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
 Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Fachetária**. Rótulo preservado conforme solicitação do proprietário. A Sonda Dez permanece independente.
 
@@ -163,3 +163,42 @@ node tests/e2e/obs10-review.mjs
 O contrato unitário cobre importação das três versões, todos os 145 IDs guiados, campos/idades/tempos inválidos, limites, duplicação, propriedades inesperadas, texto incompleto preservado, mídia não reaberta, aceite zerado, horário original e edição posterior separados. A jornada de navegador usa o componente real compilado e autenticação/arquivos sintéticos: revisão, exportação parcial, pendências, declaração invalidada por edição, exportação/importação, arquivo inválido, cancelamento, versão antiga, IDs livres e acessibilidade desktop/celular. As jornadas v1.0 e v1.1 continuam obrigatórias; apenas a expectativa de versão atual é atualizada para 1.2.0.
 
 Resultados de execução, SHA e publicação ficam registrados na PR vinculada à issue #897. Não tomar uma alteração de documentação como prova de CI ou implantação. Rollback: reverter somente a PR desta consolidação, sem migração ou persistência nova.
+
+
+## v1.3 — do registro à evidência revisável
+
+A mesma área oferece, após a coleta, **Do registro ao trecho de vídeo**. Não foi alterado o roteiro clínico: as 13 fichas e seus 145 cartões continuam observacionais e não validados. Esta versão acrescenta vínculo audiovisual local, comentário profissional separado e medição operacional voluntária. Não é “sucesso mundial” demonstrado nem software de diagnóstico automático.
+
+### Vídeo local, tarefa e revisão profissional
+
+1. Salve primeiro o vídeo da câmera integrada. Vídeos externos também podem ser usados. Abra o JSON correspondente no computador institucional quando necessário; o vídeo não acompanha o JSON.
+2. Selecione **Vídeo local para esta sessão**. Até 128 MiB por arquivo e oito clipes por sessão; somente um arquivo local permanece carregado por vez. MP4/WebM/MOV dependem dos codecs do navegador. Não converta o original sem preservar uma cópia e registrar sua origem.
+3. Confira o código e o conteúdo, então use **Conferi: este vídeo pertence a esta sessão**. O sistema calcula SHA-256 dos bytes para reconhecer o mesmo arquivo posteriormente. Isso não identifica a criança, não autentica a gravação nem substitui o consentimento. A identificação do código fica protegida após associação para evitar troca acidental.
+4. Escolha uma tarefa já registrada. O comando da ficha, a resposta da assistente e a ajuda aparecem ao lado do reprodutor. O relato familiar fica separado.
+5. Localize o início, clique **Marcar início do trecho**, localize o fim e clique **Marcar fim e vincular**. Os tempos vêm da posição do reprodutor, não da anotação da aplicação. É necessário um quadro carregado e intervalo crescente; o navegador pode não informar a duração total de certos WebM. O limite de posições é uma hora; não altera os dez minutos da coleta.
+6. **Abrir trecho** posiciona o vídeo no intervalo. Com o mesmo arquivo reanexado, seus bytes devem coincidir com o SHA-256 e o tamanho. Arquivo diferente é recusado sem substituir a referência antiga.
+7. Conta profissional/admin autenticada pode declarar que revisou o trecho, confrontar o registro e adicionar comentário. O perfil operador pode organizar trechos, mas não usar os controles de revisão médica. Esta restrição é da interface local: o JSON continua editável fora do app, portanto os comentários não são assinatura, prova de autoria nem prontuário autenticado.
+8. Novos comentários preservam os anteriores. Alterações no texto da assistente sinalizam comentários/trechos que precisam ser reconferidos. Tarefas com evidências vinculadas não podem ser apagadas silenciosamente; acrescente retificação. Ao importar JSON, comentários passam a ser explicitamente importados, com autoria não autenticada.
+9. Exporte novamente o JSON/TXT com as referências, cópias textuais e comentários. Não contém o vídeo nem seu nome original. Ao sair/recarregar, reanexe o arquivo local correto. Sem upload, persistência oculta ou análise de imagem/áudio por IA.
+
+### Teste de áudio sem criança
+
+O teste técnico opcional antes da coleta grava três segundos de fala de um adulto, permite ouvir e descartar. Não certifica automaticamente o som, não inicia o cronômetro e não entra no registro da criança. Cancelamento, troca de etapa e desmontagem liberam o microfone e invalidam respostas tardias. O teste deve ser feito sem criança e sem dados pessoais.
+
+### Medir o trabalho da equipe
+
+Abra **Medir o trabalho da equipe · piloto operacional**. Inicie explicitamente preparação, revisão da assistente, revisão médica ou entrega; pare ao concluir. Iniciar coleta interrompe preparação. Ocultar a aba interrompe medição; períodos em outro programa não contam. Os intervalos são voluntários, visíveis e limitados. “Não medido” não é zero. Não representam tempo total, trabalho de toda a equipe ou economia comparada ao atendimento habitual.
+
+Após a coleta, o profissional pode registrar utilidade percebida e necessidade de repetição, com opções iniciais **não avaliadas**. A assistente pode indicar dificuldade operacional. São opiniões e indicadores de processo, não medidas de acurácia, capacidade da criança, diagnóstico ou eficácia.
+
+**Exportar métricas sem textos clínicos** produz uma lista explícita de campos: versão, faixa, duração da coleta, períodos medidos, contagens documentais e opções fechadas. Exclui nome, código, identificador de sessão, datas clínicas, textos livres, arquivos e SHA-256. Não garante anonimato em grupos pequenos; é uma exportação local que exige governança. Exportações repetidas da mesma sessão não são aplicações independentes. Não há painel de resultados simulando dados reais.
+
+### Compatibilidade e verificação v1.3
+
+A importação aceita 1.0/1.1/1.2/1.3, com validação de referências, sessão, IDs, limites e tipos. Mantido teto do JSON de 4 MiB e de 200 observações. Os dados de evidência têm limites próprios; arquivo arbitrário não executa HTML nem URLs. Revisões importadas não são apresentadas como autoria autenticada.
+
+A suíte permanente mantém as três jornadas anteriores e inclui `tests/e2e/obs10-evidence.mjs`. Testes unitários adicionais: `tests/unit/obs10-evidence.test.ts`. Nenhuma validação clínica é inferida desses testes. Resultados e SHA final de publicação devem ser conferidos na PR vinculada à issue #899.
+
+Referências técnicas primárias: W3C Media Capture and Streams (`https://www.w3.org/TR/mediacapture-streams/`), Web Cryptography (`https://www.w3.org/TR/WebCryptoAPI/`) e WHATWG HTML media elements (`https://html.spec.whatwg.org/multipage/media.html`). SHA-256 confere bytes; seleção e revisão humanas continuam indispensáveis.
+
+Plano candidato a piloto em `docs/audits/obs10-v13-pilot.md`. Não inicia pesquisa com pacientes, não armazena dados clínicos e não faz upload sem autorização. Armazenamento institucional automatizado e IA semiológica continuam fora desta entrega, pois exigem implementação, governança e avaliação próprias.
