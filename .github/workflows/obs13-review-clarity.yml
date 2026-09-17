@@ -1,0 +1,48 @@
+name: OBS13 review-selection refinement
+on:
+  push:
+    branches: [feat/obs10-evidencia-piloto-v13]
+    paths: [.github/workflows/obs13-review-clarity.yml]
+permissions:
+  contents: read
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/obs10-evidencia-piloto-v13
+      - name: Keep task and professional opinion explicitly aligned
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const path = 'client/src/features/obs10/EvidencePanel.tsx';
+          let text = readFileSync(path, 'utf8');
+          const edits = [
+            ['useState<typeof DECISIONS[number]>(DECISIONS[0])', 'useState<typeof DECISIONS[number] | "">("")'],
+            ['setActiveMoment(m.id); setWatched(false); setStart(null);', 'setActiveMoment(m.id); setDecision(""); setComment(""); setWatched(false); setStart(null);'],
+            ['setActiveMoment(m.id); setTaskId(m.observationId);', 'setActiveMoment(m.id); setDecision(""); setTaskId(m.observationId);'],
+            ['!watched || !comment.trim()) return;', '!watched || !decision || !comment.trim()) return;'],
+            ['setTaskId(ev.target.value); setStart(null);', 'setTaskId(ev.target.value); setStart(null); setActiveMoment(""); setComment(""); setDecision(""); setWatched(false);'],
+            ['>{DECISIONS.map((d)', '><option value="">Selecione após conferir o trecho</option>{DECISIONS.map((d)'],
+            ['disabled={!watched || !comment.trim()}', 'disabled={!watched || !decision || !comment.trim()}'],
+          ];
+          for (const [from,to] of edits) {
+            if (text.split(from).length !== 2) throw new Error('Expected one exact review anchor: '+from);
+            text = text.replace(from,to);
+          }
+          writeFileSync(path,text);
+          const testPath = 'tests/e2e/obs10-evidence.mjs';
+          let test = readFileSync(testPath,'utf8');
+          const anchor = ' await page.getByRole("checkbox",{name:"Revisei este trecho e seus limites de imagem e áudio.",exact:true}).check();';
+          if(test.split(anchor).length!==2) throw new Error('Expected one browser review anchor');
+          test = test.replace(anchor, ' assert.equal(await field("Confronto com o registro").inputValue(),"");\n await field("Tarefa registrada para vincular").selectOption("");assert.equal(await field("Comentário profissional sobre este trecho").count(),0);await button("Abrir trecho 1").click();\n'+anchor);
+          writeFileSync(testPath,test);
+          JS
+          git diff --check
+          git add client/src/features/obs10/EvidencePanel.tsx tests/e2e/obs10-evidence.mjs
+          git -c user.name='NeuroPed Automation' -c user.email='actions@users.noreply.github.com' commit -m 'fix(obs10): require explicit opinion and reset review on task change'
+          git push origin HEAD:feat/obs10-evidencia-piloto-v13
