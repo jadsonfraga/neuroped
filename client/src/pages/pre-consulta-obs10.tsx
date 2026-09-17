@@ -48,6 +48,7 @@ export default function PreConsultaObs10Page() {
   const starting = useRef(false);
   const finishRef = useRef<(reason: string) => void>(() => undefined);
   const media = useLocalRecorder();
+  const stopRecording = media.stop;
   const chrono = parseAge(years, months);
   const correctedValid = validCorrectedAge(chrono, corrected, useCorrected);
   const effective = chrono === null || !correctedValid ? null : useCorrected ? Number(corrected) : chrono;
@@ -64,10 +65,10 @@ export default function PreConsultaObs10Page() {
     if (ended.current || started.current === null) return;
     ended.current = true;
     setElapsed(nowSecond());
-    media.stop();
+    stopRecording();
     setEndReason(reason);
     setStage("finished");
-  }, [media.stop, nowSecond]);
+  }, [stopRecording, nowSecond]);
   finishRef.current = finish;
   useEffect(() => {
     if (!running) return;
@@ -123,7 +124,7 @@ export default function PreConsultaObs10Page() {
     setObservations((current) => current.map((entry) => entry.id === id ? { ...entry, ...patch } : entry));
   }
   function addObservation() {
-    setObservations((current) => [...current, emptyObservation(String(++sequence.current), step, nowSecond())]);
+    setObservations((current) => [...current, emptyObservation(String(++sequence.current), step, running ? nowSecond() : elapsed)]);
   }
   const record: SessionRecord = {
     version: OBS10_VERSION, context, observations, durationSeconds: elapsed, endReason, encodingSecond, recallSecond,
