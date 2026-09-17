@@ -21,7 +21,7 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
   const [taskId, setTaskId] = useState(record.observations[0]?.id ?? "");
   const [start, setStart] = useState<{ second: number; taskId: string; clipId: string } | null>(null);
   const [activeMoment, setActiveMoment] = useState("");
-  const [decision, setDecision] = useState<typeof DECISIONS[number]>(DECISIONS[0]);
+  const [decision, setDecision] = useState<typeof DECISIONS[number] | "">("");
   const [comment, setComment] = useState("");
   const [watched, setWatched] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
@@ -93,15 +93,15 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
     if (!start || !currentObservation || start.taskId !== taskId || start.clipId !== confirmedId || n === null || !validMoment(start.second, n, local?.duration ?? null)) { setError("Marque o fim depois do início, no mesmo clipe e tarefa. Aguarde o vídeo concluir o deslocamento."); return; }
     if (e.moments.length >= MAX_MOMENTS) { setError("Limite de 200 trechos. Revise os já marcados."); return; }
     const m: EvidenceMoment = { id: key(), clipId: confirmedId, observationId: taskId, startSecond: start.second, endSecond: n, sourceSnapshot: snapshotObservation(currentObservation), createdAt: new Date().toISOString(), method: "player-position" };
-    onChange({ ...e, moments: [...e.moments, m] }); setActiveMoment(m.id); setWatched(false); setStart(null); setError("");
+    onChange({ ...e, moments: [...e.moments, m] }); setActiveMoment(m.id); setDecision(""); setComment(""); setWatched(false); setStart(null); setError("");
   }
   function openMoment(m: EvidenceMoment) {
-    setActiveMoment(m.id); setTaskId(m.observationId); setWatched(false); setComment(""); setStart(null); setError("");
+    setActiveMoment(m.id); setDecision(""); setTaskId(m.observationId); setWatched(false); setComment(""); setStart(null); setError("");
     if (!matching || confirmedId !== m.clipId || !video.current) { setTargetClip(m.clipId); setError("Reanexe e confirme o arquivo deste clipe antes de abrir o trecho. O JSON não contém vídeo."); return; }
     video.current.pause(); video.current.currentTime = m.startSecond; setPosition(m.startSecond); playEnd.current = m.endSecond;
   }
   function saveReview() {
-    if (!canReview || !user || !moment || !momentObservation || !matching || !playable || confirmedId !== moment.clipId || !watched || !comment.trim()) return;
+    if (!canReview || !user || !moment || !momentObservation || !matching || !playable || confirmedId !== moment.clipId || !watched || !decision || !comment.trim()) return;
     if (e.reviews.length >= MAX_REVIEWS) { setError("Limite de comentários alcançado. Exporte e preserve este registro."); return; }
     // Append-only: a new opinion never overwrites another professional's earlier text.
     onChange({ ...e, reviews: [...e.reviews, { id: key(), momentId: moment.id, decision, comment: comment.trim(), sourceSnapshot: snapshotObservation(momentObservation), createdAt: new Date().toISOString(), role: user.role as "admin" | "professional", origin: "local-session" }] });
@@ -127,7 +127,7 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
         </>}
       </div>
       <div>
-        <label>Tarefa registrada para vincular<select aria-label="Tarefa registrada para vincular" value={taskId} onChange={(ev) => { setTaskId(ev.target.value); setStart(null); }}><option value="">Selecione uma tarefa</option>{record.observations.map((o) => <option key={o.id} value={o.id}>{o.task || `Sem título · ${o.id}`}</option>)}</select></label>
+        <label>Tarefa registrada para vincular<select aria-label="Tarefa registrada para vincular" value={taskId} onChange={(ev) => { setTaskId(ev.target.value); setStart(null); setActiveMoment(""); setComment(""); setDecision(""); setWatched(false); }}><option value="">Selecione uma tarefa</option>{record.observations.map((o) => <option key={o.id} value={o.id}>{o.task || `Sem título · ${o.id}`}</option>)}</select></label>
         <div className="obs13-source"><h3>Comando e fonte da informação</h3><p><strong>Comando da ficha:</strong> {sourceTask?.say ?? "Registro livre; conferir a instrução descrita pela aplicadora."}</p><p><strong>Assistente registrou:</strong> {currentObservation?.response || "Sem descrição literal."}</p><p><strong>Ajuda registrada:</strong> {currentObservation?.assistance || "Não informada."}</p><details><summary>Relato familiar — fonte diferente</summary><p>{record.context.familyReport || "Não informado."}</p></details></div>
         <p>Localize o início e o fim com os controles do vídeo. Os botões capturam a posição atual; não afirmam que o conteúdo foi clinicamente validado.</p>
         <div className="obs10-actions"><button type="button" disabled={!matching || !playable || !currentObservation} onClick={markStart}>Marcar início do trecho</button><button type="button" disabled={!matching || !playable || !start} onClick={markEnd}>Marcar fim e vincular</button></div>
@@ -149,9 +149,9 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
       {moment && <><p><strong>Trecho selecionado:</strong> {momentObservation?.task} · {mediaClock(moment.startSecond)}–{mediaClock(moment.endSecond)}</p>
         <fieldset disabled={!canReview || !playable || !matching || confirmedId !== moment.clipId}>
           <label className="obs10-check"><input type="checkbox" checked={watched} onChange={(ev) => setWatched(ev.target.checked)} />Revisei este trecho e seus limites de imagem e áudio.</label>
-          <label>Confronto com o registro<select aria-label="Confronto com o registro" value={decision} onChange={(ev) => setDecision(ev.target.value as typeof decision)}>{DECISIONS.map((d) => <option key={d}>{d}</option>)}</select></label>
+          <label>Confronto com o registro<select aria-label="Confronto com o registro" value={decision} onChange={(ev) => setDecision(ev.target.value as typeof decision)}><option value="">Selecione após conferir o trecho</option>{DECISIONS.map((d) => <option key={d}>{d}</option>)}</select></label>
           <label>Comentário profissional sobre este trecho<textarea aria-label="Comentário profissional sobre este trecho" value={comment} maxLength={2000} onChange={(ev) => setComment(ev.target.value)} placeholder="Descreva o que foi visto, as divergências e o que precisa confirmar presencialmente." /></label>
-          <button type="button" className="obs10-primary" disabled={!watched || !comment.trim()} onClick={saveReview}>Registrar comentário profissional</button>
+          <button type="button" className="obs10-primary" disabled={!watched || !decision || !comment.trim()} onClick={saveReview}>Registrar comentário profissional</button>
         </fieldset></>}
       {!moment && <p>Abra um trecho para registrar a revisão.</p>}
       {e.reviews.map((r) => <article key={r.id} className="obs13-review-note"><strong>{r.decision}</strong><p>{r.comment}</p><p className="obs10-muted">{new Date(r.createdAt).toLocaleString("pt-BR")} · {r.origin === "imported-unverified" ? "Comentário importado; autoria não autenticada." : "Registrado nesta sessão, sem assinatura digital."}</p>{reviewChanged(r, e, record.observations) && <p className="obs10-caution">Registro alterado: este comentário precisa ser reconferido.</p>}</article>)}

@@ -41,6 +41,8 @@ try{
  await field("Vídeo local para esta sessão").setInputFiles(file);await button("Conferi: este vídeo pertence a esta sessão").waitFor();await button("Conferi: este vídeo pertence a esta sessão").click();
  assert.equal(await field("Código institucional do registro").isDisabled(),true);
  await seek(.2);await button("Marcar início do trecho").click();await seek(.9);await button("Marcar fim e vincular").click();
+ assert.equal(await field("Confronto com o registro").inputValue(),"");
+ await field("Tarefa registrada para vincular").selectOption("");assert.equal(await field("Comentário profissional sobre este trecho").count(),0);await button("Abrir trecho 1").click();
  await page.getByRole("checkbox",{name:"Revisei este trecho e seus limites de imagem e áudio.",exact:true}).check();await field("Confronto com o registro").selectOption("Trecho insuficiente");await field("Comentário profissional sobre este trecho").fill("Amostra sintetica: sem audio clinico. <script>window.obsInjected=true</script>");await button("Registrar comentário profissional").click();assert.equal(await page.evaluate(()=>window.obsInjected),undefined);
  const first=await exported("01-evidencia.json");assert.equal(first.evidence.clips.length,1);assert.equal(first.evidence.clips[0].sha256.length,64);assert.equal(first.evidence.moments[0].startSecond,.2);assert.equal(first.evidence.moments[0].endSecond,.9);assert.equal(first.evidence.reviews.length,1);assert.ok(first.pilot.logs.some(l=>l.phase==="Preparação"));assert.equal(JSON.stringify(first).includes(file.name),false);
  await screen("01-evidencia-desktop");await page.setViewportSize({width:390,height:844});await screen("02-evidencia-celular");await page.setViewportSize({width:1440,height:1000});
