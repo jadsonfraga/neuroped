@@ -30,6 +30,7 @@ async function prepare(years, months = 0) {
   await page.getByLabel("Meses adicionais", { exact: true }).fill(String(months));
   await page.getByLabel("Código institucional, sem nome", { exact: true }).fill("OBS-SINTETICO");
   for (const checkbox of await page.locator(".obs10-checklist input").all()) await checkbox.check();
+  await button("Separei o kit completo").click();
 }
 async function screen(label) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: no overflow`);
@@ -53,13 +54,13 @@ try {
     return true;
   });
   assert.equal(await button("Iniciar aplicação · 10 minutos").isDisabled(), true);
-  await page.getByText("Consultar as 13 fichas sem iniciar", { exact: true }).click();
-  assert.equal(await page.locator(".obs10-band-grid button").count(), 13);
-  for (const card of await page.locator(".obs10-band-grid button").all()) {
+  await page.getByText("Consultar material por faixa etária", { exact: true }).click();
+  assert.equal(await page.locator(".obs10-age-tabs button").count(), 13);
+  for (const card of await page.locator(".obs10-age-tabs button").all()) {
     await card.click();
-    assert.ok((await page.locator(".obs10-preview").textContent()).length > 200);
+    assert.ok((await page.locator(".obs10-printable-kit").textContent()).length > 200);
   }
-  await page.getByText("Consultar as 13 fichas sem iniciar", { exact: true }).click();
+  await page.getByText("Consultar material por faixa etária", { exact: true }).click();
   await prepare(7);
   assert.equal(await button("Iniciar aplicação · 10 minutos").isDisabled(), false);
   await page.locator(".obs10-checklist input").first().uncheck();
@@ -117,8 +118,10 @@ try {
   assert.equal(await button("Iniciar aplicação · 10 minutos").isDisabled(), true);
   await page.getByLabel("Idade corrigida em meses completos", { exact: true }).fill("5");
   assert.match(await page.locator(".obs10-band-selected").textContent(), /3–5 meses/);
+  await button("Separei o kit completo").click();
   await button("Iniciar aplicação · 10 minutos").click();
   await page.getByRole("button", { name: /4\. Movimentar com segurança/ }).click();
+  await button("Próxima tarefa").click();
   assert.match(await page.locator(".obs10-task").textContent(), /Sem autorização para prono/);
   await button("Interromper e chamar médico").click();
   assert.equal(await page.getByRole("heading", { name: "Pare a avaliação. Chame o médico agora." }).isVisible(), true);
@@ -128,7 +131,9 @@ try {
   await prepare(2, 3);
   await button("Iniciar aplicação · 10 minutos").click();
   await page.getByRole("button", { name: /4\. Movimentar com segurança/ }).click();
-  assert.match(await page.locator(".obs10-task").textContent(), /Menos de 30 meses/);
+  await button("Próxima tarefa").click();
+  await button("Próxima tarefa").click();
+  assert.match(await page.locator(".obs10-task").textContent(), /Não aplicar antes de 30 meses/);
   await button("Encerrar antes").click();
   await newSession();
   await prepare(12);
