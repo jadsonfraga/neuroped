@@ -1,8 +1,8 @@
-/** NeuroPed OBS-10 v1.0. Source: Manual e Fichas, 17/09/2026, approved conversation brief.
+/** NeuroPed OBS-10 v1.1. Source: Manual e Fichas, 17/09/2026, approved conversation brief.
  * Authorial observational workflow, NOT a validated diagnostic/psychometric instrument.
  * Durations, commands and response categories are operational, never normative scores.
  */
-export const OBS10_VERSION = "1.0.0";
+export const OBS10_VERSION = "1.1.0";
 export const OBS10_TITLE = "Avaliação de Pré-Consulta por Fachetária";
 export const OBS10_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
 export const MAX_SECONDS = 600;
@@ -136,7 +136,7 @@ export const AGE_BANDS: readonly AgeBand[] = [
   ] },
 ];
 export const OUTCOMES = [
-  { id: "E", label: "Espontâneo", description: "Realizou sem repetir ou acrescentar ajuda." },
+  { id: "E", label: "Na proposta inicial", description: "Sem ajuda adicional à proposta da tarefa; quando há modelo previsto, não significa produção espontânea." },
   { id: "V", label: "Após repetição", description: "Precisou ouvir o comando novamente." },
   { id: "M", label: "Após gesto/modelo", description: "Precisou de gesto ou demonstração permitida; registre se o modelo já fazia parte da tarefa." },
   { id: "A", label: "Com apoio habitual", description: "Descreva a adaptação ou apoio de segurança. Não executar pela criança." },

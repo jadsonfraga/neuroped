@@ -1,4 +1,4 @@
-import { AGE_BANDS, OBS10_VERSION, OUTCOMES, PHASES, clock, type Outcome } from "./protocol";
+import { AGE_BANDS, OUTCOMES, PHASES, clock, type Outcome } from "./protocol";
 
 export interface SessionContext {
   code: string;
@@ -11,6 +11,7 @@ export interface SessionContext {
   conditions: string;
   familyReport: string;
   proneAllowed: boolean;
+  missingMaterials?: string[];
 }
 export interface Observation {
   id: string;
@@ -23,9 +24,12 @@ export interface Observation {
   clip: string;
   videoTime: string;
   applicationSecond: number;
+  modelInInstruction?: boolean;
+  recordedAfterEnd?: boolean;
 }
 export interface SessionRecord {
   version: string;
+  sessionId?: string;
   context: SessionContext;
   observations: Observation[];
   durationSeconds: number;
@@ -50,18 +54,21 @@ export function emptyObservation(id: string, phase: number, second: number): Obs
 export function usableObservation(o: Observation): boolean {
   return Boolean(o.task.trim() && o.response.trim() && o.outcome);
 }
-export function exportFilename(code: string, extension: "txt" | "json" | "webm" | "mp4"): string {
+export function exportFilename(code: string, extension: "txt" | "json" | "webm" | "mp4", sessionId = ""): string {
   const safe = code.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32) || "sem-codigo";
-  return `OBS10-${safe}.${extension}`;
+  const suffix = sessionId.replace(/[^a-zA-Z0-9-]/g, "").slice(0, 45);
+  return `OBS10-${safe}${suffix ? `-${suffix}` : ""}.${extension}`;
 }
 const textOrMissing = (s: string) => s.trim() || "Não informado";
 export function makeReport(record: SessionRecord): string {
   const { context: c, observations } = record;
   const band = AGE_BANDS.find((b) => b.id === c.bandId);
   const lines = [
-    `NEUROPED OBS-10 · v${OBS10_VERSION}`,
+    `NEUROPED OBS-10 · v${record.version}`,
     "REGISTRO OBSERVACIONAL PARA REVISÃO MÉDICA — NÃO É LAUDO NEM DIAGNÓSTICO",
     `Código: ${textOrMissing(c.code)}`,
+    `Sessão: ${record.sessionId || "Não informada (registro anterior)"}`,
+    `Materiais ausentes referidos: ${c.missingMaterials?.join(", ") || "Nenhum informado"}`,
     `Idade cronológica: ${c.chronologicalMonths} meses | Corrigida: ${c.correctedMonths === null ? "não utilizada" : `${c.correctedMonths} meses, informada pela equipe`}`,
     `Ficha aplicada: ${band?.label ?? "Não informada"}`,
     `Escolaridade: ${textOrMissing(c.schooling)} | Idioma/comunicação: ${textOrMissing(c.language)}`,
@@ -83,7 +90,8 @@ export function makeReport(record: SessionRecord): string {
         `Ajuda/adaptação/motivo da não aplicação: ${textOrMissing(o.assistance)}`,
         `Qualidade referida pela aplicadora: ${o.quality || "Não verificada"}`,
         `Referência audiovisual informada: clipe ${textOrMissing(o.clip)} · ${textOrMissing(o.videoTime)}`,
-        `Registro iniciado aos ${clock(o.applicationSecond)} da aplicação.`,
+        o.recordedAfterEnd ? "Anotação realizada após o encerramento; não atribuir este horário à execução da tarefa." : `Registro iniciado aos ${clock(o.applicationSecond)} da aplicação.`,
+        ...(o.modelInInstruction ? ["Esta tarefa inclui modelo na proposta inicial; não confundir cópia/execução após modelo previsto com produção espontânea."] : []),
         ...(usableObservation(o) ? [] : ["Registro incompleto: completar tarefa, fato e categoria antes da revisão clínica."]));
     });
     lines.push("");
