@@ -139,9 +139,42 @@ try {
   await page.locator(".obs10-rehearsal fieldset").nth(2).getByRole("button", { name: "Não aplicado", exact: true }).click();
   assert.equal(await page.locator(".obs10-rehearsal [role=status]").count(), 3);
   await screen("05-treinamento-operacional");
+  // Inspect distinct motor illustrations on the shipped task cards.
+  await prepare(5); await b("Iniciar aplicação · 10 minutos").click();
+  await page.locator(".obs10-stepper button").nth(3).click();
+  for (let i = 0; i < 3; i++) await b("Próxima tarefa").click();
+  assert.match(await page.locator(".obs10-practical-task h3").textContent(), /Braços à frente/);
+  await screen("06-bracos-a-frente");
+  await b("Encerrar antes").click(); await newSession();
+  await prepare(2, 6); await b("Iniciar aplicação · 10 minutos").click();
+  await page.locator(".obs10-stepper button").nth(3).click();
+  await b("Próxima tarefa").click(); await b("Próxima tarefa").click();
+  assert.match(await page.locator(".obs10-practical-task h3").textContent(), /Pequeno salto com dois pés/);
+  await screen("07-salto-dois-pes");
+  await b("Encerrar antes").click(); await newSession();
+  // Every age sheet and every card must be reachable, not only the screenshots.
+  let inspectedCards = 0;
+  for (const [years, months] of [[0,0],[0,3],[0,6],[0,9],[1,0],[1,6],[2,0],[3,0],[4,0],[5,0],[6,0],[9,0],[12,0]]) {
+    await prepare(years, months); await b("Iniciar aplicação · 10 minutos").click();
+    for (let phase = 0; phase < 6; phase++) {
+      await page.locator(".obs10-stepper button").nth(phase).click();
+      const text = await page.locator(".obs10-task-position strong").textContent();
+      const count = Number(text.match(/de (\d+)/)[1]);
+      assert.ok(count > 0);
+      for (let card = 0; card < count; card++) {
+        assert.ok((await page.locator(".obs10-practical-task h3").textContent()).trim().length > 5);
+        assert.equal(await page.locator(".obs10-practical-task > svg").count(), 1);
+        assert.ok((await page.locator(".obs10-practical-task > svg title").textContent()).startsWith("Guia visual:"));
+        inspectedCards++;
+        if (card + 1 < count) await b("Próxima tarefa").click();
+      }
+    }
+    await b("Encerrar antes").click(); await newSession();
+  }
+  assert.equal(inspectedCards, 145, "all cards in all thirteen age sheets were rendered through the real interface");
   assert.deepEqual(errors, []);
   assert.ok(dialogs.filter((message) => /Sair elimina/.test(message)).length >= 2);
-  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, exceptions: errors, scope: "Actual built route, synthetic auth/media; no clinical validity claim.", checks: ["illustrated kits", "missing equipment", "one-task instructions", "no manufactured findings", "cancel internal/hash exit", "separate printing", "late permission failure", "camera preview", "track disconnect", "video retention", "rehearsal"] }, null, 2));
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, inspectedCards, ageSheets: 13, exceptions: errors, scope: "Actual built route, synthetic auth/media; no clinical validity claim.", checks: ["illustrated kits", "missing equipment", "one-task instructions", "no manufactured findings", "cancel internal/hash exit", "separate printing", "late permission failure", "camera preview", "track disconnect", "video retention", "rehearsal"] }, null, 2));
   console.log("OBS-10 practical workflow and lifecycle regressions passed.");
 } catch (error) {
   await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });

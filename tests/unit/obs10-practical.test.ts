@@ -75,3 +75,10 @@ assert.ok(!/https?:\/\//.test(visual), "instructional illustrations are local");
 assert.ok(!/dangerouslySetInnerHTML|\.innerHTML\s*=/.test(page + guide));
 assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(|\b(?:localStorage|sessionStorage|indexedDB)\./.test(page + media + guide));
 console.log(`OBS-10 v1.1: ${taskCount} task cards, 17 materials, 13 kits, budgets, omissions, clock, export and safety contracts passed.`);
+
+// A two-foot jump must never reuse the one-foot balance illustration.
+for (const task of Object.values(PRACTICAL_TASKS).flat().filter((item) => item.title === "Pequeno salto com dois pés")) {
+  assert.equal(task.scene, "jump");
+}
+assert.ok(visual.includes('case "jump":'));
+assert.ok(!visual.includes('case "arms": content = <>{floor}<Person'), "arms-forward illustration uses a side view rather than lateral wings");
