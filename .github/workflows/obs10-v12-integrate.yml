@@ -1,0 +1,96 @@
+name: OBS-10 v1.2 scoped integration and proof
+on:
+  push:
+    branches: [feat/obs10-consolidacao-v12]
+    paths: ['.github/workflows/obs10-v12-integrate.yml']
+permissions:
+  contents: read
+jobs:
+  integrate-and-prove:
+    if: github.ref == 'refs/heads/feat/obs10-consolidacao-v12'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/obs10-consolidacao-v12
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify source-only patch and integrate on feature branch
+        run: |
+          python3 - <<'PY'
+          import base64, bz2, hashlib, pathlib, re
+          parts = sorted(pathlib.Path('.github/obs10-v12-transfer').glob('*.b64'))
+          assert [p.name for p in parts] == ['000.b64','001.b64']
+          patch = bz2.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts), validate=True))
+          assert hashlib.sha256(patch).hexdigest() == 'ab037518d355e6def867184e6431d566bb7fcfc1e42f5433bdfb4f9c3e120bd5'
+          allowed = {
+            'client/src/features/obs10/SessionReview.tsx',
+            'client/src/features/obs10/importRecord.ts',
+            'client/src/features/obs10/obs10.css',
+            'client/src/features/obs10/protocol.ts',
+            'client/src/features/obs10/review.ts',
+            'client/src/features/obs10/session.ts',
+            'client/src/pages/pre-consulta-obs10.tsx',
+            'docs/features/obs10.md',
+            'tests/e2e/obs10-practical.mjs',
+            'tests/e2e/obs10-review.mjs',
+            'tests/unit/obs10-practical.test.ts',
+            'tests/unit/obs10-review.test.ts',
+          }
+          paths = re.findall(r'^diff --git a/(\S+) b/(\S+)$', patch.decode(), re.M)
+          assert len(paths) == len(allowed) and all(a == b and a in allowed for a,b in paths)
+          assert {a for a,b in paths} == allowed
+          pathlib.Path('/tmp/obs12.patch').write_bytes(patch)
+          print('12 source paths and patch checksum verified; no workflow, patient or secret changes.')
+          PY
+          git apply --check /tmp/obs12.patch
+          git apply /tmp/obs12.patch
+          git diff --check
+          git add client/src/features/obs10 client/src/pages/pre-consulta-obs10.tsx docs/features/obs10.md tests/e2e/obs10-practical.mjs tests/e2e/obs10-review.mjs tests/unit/obs10-practical.test.ts tests/unit/obs10-review.test.ts
+          git rm -r .github/obs10-v12-transfer
+          git -c user.name='NeuroPed Automation' -c user.email='actions@users.noreply.github.com' commit -m 'feat(obs10): consolidate review, bounded JSON continuity and declared handoff'
+          git push origin HEAD:feat/obs10-consolidacao-v12
+          git rev-parse HEAD
+      - run: npm ci
+      - name: Types, lint and preserved contract suites
+        run: |
+          npm run check
+          npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
+          node --import tsx tests/unit/obs10.test.ts
+          node --import tsx tests/unit/obs10-practical.test.ts
+          node --import tsx tests/unit/obs10-review.test.ts
+          node tests/unit/browser-audit-chromium-resolution.test.mjs
+          npm run audit:design
+      - name: Production build without access bypass
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Original browser journey
+        env:
+          OBS10_ARTIFACT_DIR: /tmp/obs10-proof
+        run: node tests/e2e/obs10.mjs
+      - name: Illustrated assistant and all age-card journey
+        env:
+          OBS10_PRACTICAL_ARTIFACT_DIR: /tmp/obs10-practical
+        run: node tests/e2e/obs10-practical.mjs
+      - name: Review, local JSON continuity and handoff journey
+        env:
+          OBS10_REVIEW_ARTIFACT_DIR: /tmp/obs10-review
+        run: node tests/e2e/obs10-review.mjs
+      - name: Preserve synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-v12-proof
+          path: |
+            /tmp/obs10-proof
+            /tmp/obs10-practical
+            /tmp/obs10-review
+          if-no-files-found: ignore
+          retention-days: 7
