@@ -1,3 +1,5 @@
+import { evidenceSchema, evidenceReferencesValid } from "./evidence";
+import { pilotSchema } from "./pilot";
 import { z } from "zod";
 import { AGE_BANDS, OUTCOMES, bandForMonths } from "./protocol";
 import { MATERIALS, PRACTICAL_TASKS } from "./practical";
@@ -7,7 +9,7 @@ export const MAX_RECORD_BYTES = 4 * 1024 * 1024;
 const text = (max: number) => z.string().max(max);
 const second = z.number().int().min(0).max(600);
 const schema = z.object({
-  version: z.enum(["1.0.0", "1.1.0", "1.2.0"]),
+  version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0"]),
   sessionId: text(100).regex(/^[a-zA-Z0-9-]*$/).optional(),
   context: z.object({
     code: text(32), chronologicalMonths: z.number().int().min(0).max(215),
@@ -25,6 +27,7 @@ const schema = z.object({
   }).strict()).max(200),
   durationSeconds: second, endReason: text(600).min(1), encodingSecond: second.nullable(), recallSecond: second.nullable(),
   recording: text(1000), sourceRecording: text(1000).optional(), importedForReview: z.boolean().optional(),
+  evidence: evidenceSchema.optional(), pilot: pilotSchema.optional(),
   handoff: z.object({ recordsReviewed: z.boolean(), mediaReviewed: z.boolean(), filesChecked: z.boolean(), declaredAt: z.string().datetime().nullable() }).strict().optional(),
 }).strict();
 export type ImportResult = { ok: true; record: SessionRecord } | { ok: false; error: string };
@@ -34,7 +37,7 @@ export function parseRecordJSON(raw: string): ImportResult {
   if (new TextEncoder().encode(raw).length > MAX_RECORD_BYTES) return { ok: false, error: "Arquivo maior que 4 MB. Escolha apenas o JSON de uma aplicação OBS-10." };
   try {
     const result = schema.safeParse(JSON.parse(raw.replace(/^\uFEFF/, "")));
-    if (!result.success) return { ok: false, error: "Arquivo incompatível ou incompleto. Aceitos registros OBS-10 1.0, 1.1 e 1.2; nenhum dado atual foi alterado." };
+    if (!result.success) return { ok: false, error: "Arquivo incompatível ou incompleto. Aceitos registros OBS-10 1.0, 1.1, 1.2 e 1.3; nenhum dado atual foi alterado." };
     const data = result.data;
     const c = data.context;
     if ((c.correctedMonths !== null && (c.chronologicalMonths >= 24 || c.correctedMonths > c.chronologicalMonths))
@@ -54,11 +57,14 @@ export function parseRecordJSON(raw: string): ImportResult {
         entry.modelInInstruction = Boolean(task.model);
       }
     }
+    if (data.evidence && !evidenceReferencesValid(data.evidence, data.sessionId, data.observations as SessionRecord["observations"])) throw new Error("Invalid evidence references");
     return { ok: true, record: {
       ...data, observations: data.observations as SessionRecord["observations"],
       sourceRecording: data.sourceRecording ?? data.recording,
       recording: "Vídeo não incluído no JSON. Nenhum arquivo de vídeo foi carregado ou verificado nesta revisão.",
       importedForReview: true, handoff: emptyHandoff(),
+      ...(data.evidence ? { evidence: { ...data.evidence, reviews: data.evidence.reviews.map((r) => ({ ...r, origin: "imported-unverified" as const })) } } : {}),
+      ...(data.pilot ? { pilot: { ...data.pilot, source: "imported-unverified" as const } } : {}),
     } };
   } catch {
     return { ok: false, error: "JSON inválido ou com idades, tarefas ou tempos inconsistentes. A sessão atual foi preservada." };
