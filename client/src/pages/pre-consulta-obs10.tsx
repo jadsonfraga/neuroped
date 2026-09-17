@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Baby, Camera, Check, ChevronLeft, ChevronRight, ClipboardList, Download, Heart, ShieldCheck, Square, Timer } from "lucide-react";
 import { AGE_BANDS, MAX_SECONDS, OBS10_TITLE, OBS10_VERSION, OUTCOMES, PHASES, SOURCES, bandForMonths, clock, phaseForSeconds } from "@/features/obs10/protocol";
-import { emptyObservation, exportFilename, makeReport, parseAge, usableObservation, validCorrectedAge, type Observation, type SessionContext, type SessionRecord } from "@/features/obs10/session";
+import { emptyObservation, amendObservation, emptyHandoff, exportFilename, makeReport, parseAge, usableObservation, validCorrectedAge, type Observation, type SessionContext, type SessionRecord } from "@/features/obs10/session";
 import { useLocalRecorder } from "@/features/obs10/useLocalRecorder";
 import { PracticalMaterials, PracticalTaskGuide, FramingGuide, OperatorRehearsal, completeKit, type KitState } from "@/features/obs10/PracticalGuide";
 import { KITS, MATERIALS, PRACTICAL_TASKS, type PracticalTask } from "@/features/obs10/practical";
@@ -9,6 +9,8 @@ import { sessionElapsed } from "@/features/obs10/safety";
 import { useExitGuard } from "@/features/obs10/useExitGuard";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import type { Outcome } from "@/features/obs10/protocol";
+import { ImportReview, SessionReview } from "@/features/obs10/SessionReview";
+import { reviewText } from "@/features/obs10/review";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -40,7 +42,9 @@ export default function PreConsultaObs10Page() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [kits, setKits] = useState<Record<string, KitState>>({});
   const [sessionId, setSessionId] = useState("");
-  const [handoff, setHandoff] = useState(false);
+  const [handoff, setHandoff] = useState(emptyHandoff);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importedRecord, setImportedRecord] = useState<SessionRecord | null>(null);
   const startTicket = useRef(0);
   const monotonicStart = useRef<number | null>(null);
   const lastElapsed = useRef(0);
@@ -68,7 +72,7 @@ export default function PreConsultaObs10Page() {
   const band = stage === "setup" ? selectedBand : AGE_BANDS.find((item) => item.id === context.bandId);
 
   const activeKit = kits[band?.id ?? ""] ?? {};
-  const ready = Boolean(selectedBand && checks.every(Boolean) && correctedValid && completeKit(selectedBand.id, kits[selectedBand.id] ?? {}) && kits[selectedBand.id]?.device === "ready");
+  const ready = Boolean(!importBusy && selectedBand && checks.every(Boolean) && correctedValid && completeKit(selectedBand.id, kits[selectedBand.id] ?? {}) && kits[selectedBand.id]?.device === "ready");
   const running = stage === "running";
   const finished = stage === "finished";
   const expectedStep = phaseForSeconds(elapsed);
@@ -140,7 +144,7 @@ export default function PreConsultaObs10Page() {
     if (!window.confirm("Exportou o registro e, se houver, o vídeo? Uma nova aplicação apaga os dados desta tela. Continuar?")) return;
     startTicket.current += 1; starting.current = false;
     media.reset();
-    monotonicStart.current = null; lastElapsed.current = 0; setSessionId(""); setHandoff(false); setKits({});
+    monotonicStart.current = null; lastElapsed.current = 0; setSessionId(""); setHandoff(emptyHandoff()); setKits({}); setImportedRecord(null); setImportBusy(false);
     started.current = null; ended.current = false; sequence.current = 0;
     setStage("setup"); setElapsed(0); setStep(0); setObservations([]); setEndReason("");
     setEncodingSecond(null); setRecallSecond(null); setUrgent(false); setMessage("");
@@ -148,32 +152,52 @@ export default function PreConsultaObs10Page() {
     setChecks(CHECKS.map(() => false)); setPreviewBand(null); setCameraEnabled(false);
   }
   function updateObservation(id: string, patch: Partial<Observation>) {
-    setHandoff(false);
-    setObservations((current) => current.map((entry) => entry.id === id ? { ...entry, ...patch, recordedAfterEnd: finished || entry.recordedAfterEnd } : entry));
+    setHandoff(emptyHandoff());
+    setObservations((current) => current.map((entry) => entry.id === id ? amendObservation(entry, patch, finished) : entry));
   }
   function addObservation() {
-    setHandoff(false);
-    setObservations((current) => [...current, { ...emptyObservation(String(++sequence.current), step, running ? nowSecond() : elapsed), recordedAfterEnd: !running }]);
+    if (observations.length >= 200) { setMessage("Limite de 200 registros. Exporte e revise os existentes; não crie duplicatas."); return; }
+    let id: string;
+    do { id = `manual-${++sequence.current}`; } while (observations.some((entry) => entry.id === id));
+    setHandoff(emptyHandoff());
+    setObservations((current) => [...current, { ...emptyObservation(id, step, running ? nowSecond() : elapsed), recordedAfterEnd: !running }]);
   }
   function quickRecord(task: PracticalTask, outcome: Outcome, reason: string) {
     const id = `guided-${task.id}`;
-    setHandoff(false);
+    if (observations.length >= 200 && !observations.some((entry) => entry.id === id)) { setMessage("Limite de registros atingido. Revise os já existentes."); return; }
+    setHandoff(emptyHandoff());
     setObservations((current) => {
       const existing = current.find((item) => item.id === id);
       const entry: Observation = { ...emptyObservation(id, task.phase, running ? nowSecond() : elapsed),
-        ...existing, task: task.title, outcome, modelInInstruction: Boolean(task.model), recordedAfterEnd: !running,
+        ...existing, task: task.title, outcome, modelInInstruction: Boolean(task.model), recordedAfterEnd: existing ? existing.recordedAfterEnd : !running, editedAfterEnd: finished || existing?.editedAfterEnd,
         ...(reason ? { response: "Tarefa não aplicada.", assistance: reason } : {}) };
       return existing ? current.map((item) => item.id === id ? entry : item) : [...current, entry];
     });
   }
   const record: SessionRecord = {
-    version: OBS10_VERSION, sessionId, context, observations, durationSeconds: elapsed, endReason, encodingSecond, recallSecond,
-    recording: cameraEnabled ? media.url ? "Vídeo local disponível; conteúdo e integridade ainda não verificados pelo médico." : "Câmera integrada solicitada; confirme a existência e a integridade do arquivo antes de sair." : "Filmagem externa orientada; nenhum vídeo recebido ou verificado por este aplicativo.",
+    version: importedRecord?.version ?? OBS10_VERSION, sessionId, context, observations, handoff,
+    ...(importedRecord ? { importedForReview: true, sourceRecording: importedRecord.sourceRecording } : {}), durationSeconds: elapsed, endReason, encodingSecond, recallSecond,
+    recording: importedRecord ? importedRecord.recording : cameraEnabled ? media.url ? "Vídeo local disponível; conteúdo e integridade ainda não verificados pelo médico." : "Câmera integrada solicitada; confirme a existência e a integridade do arquivo antes de sair." : "Filmagem externa orientada; nenhum vídeo recebido ou verificado por este aplicativo.",
   };
-  const report = makeReport(record);
+  const report = `${makeReport(record)}\n\n${reviewText(record)}`;
   const incomplete = observations.filter((o) => !usableObservation(o)).length;
   const stepObservations = observations.filter((o) => o.phase === step);
-  const updateContext = (patch: Partial<SessionContext>) => setContext((current) => ({ ...current, ...patch }));
+  const updateContext = (patch: Partial<SessionContext>) => { setHandoff(emptyHandoff()); setContext((current) => ({ ...current, ...patch })); };
+  function restoreForReview(value: SessionRecord) {
+    startTicket.current += 1; starting.current = false; media.reset();
+    started.current = null; monotonicStart.current = null; lastElapsed.current = value.durationSeconds; ended.current = true;
+    sequence.current = 0;
+    setContext(value.context); setObservations(value.observations); setImportedRecord(value); setSessionId(value.sessionId ?? "");
+    setElapsed(value.durationSeconds); setEndReason(value.endReason); setEncodingSecond(value.encodingSecond); setRecallSecond(value.recallSecond);
+    setCameraEnabled(false); setHandoff(emptyHandoff()); setUrgent(false); setStep(0); setImportBusy(false);
+    const kit = Object.fromEntries(KITS[value.context.bandId].filter((item) => value.context.missingMaterials?.includes(MATERIALS[item.id].label)).map((item) => [item.id, "missing"])) as KitState;
+    setKits({ [value.context.bandId]: kit });
+    setStage("finished"); setMessage("Registro reaberto apenas para revisão. Nenhum vídeo foi carregado; o cronômetro permanece encerrado.");
+  }
+  function openReviewPhase(index: number) {
+    setStep(index);
+    window.setTimeout(() => document.querySelector(".obs10-records")?.scrollIntoView({ block: "start", behavior: "auto" }), 0);
+  }
 
   return (
     <div className="obs10" data-testid="obs10-workspace">
@@ -188,9 +212,9 @@ export default function PreConsultaObs10Page() {
       </header>
       <div className="obs10-notice obs10-no-print"><ShieldCheck size={19} aria-hidden="true" /><p><strong>Você aplica e registra. O médico interpreta.</strong> Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência.</p></div>
       {stage === "setup" && <PracticalMaterials actualBand={selectedBand} previewId={previewBand} onPreview={setPreviewBand}
-        state={selectedBand ? kits[selectedBand.id] ?? {} : {}} locked={media.pending || starting.current}
+        state={selectedBand ? kits[selectedBand.id] ?? {} : {}} locked={media.pending || starting.current || importBusy}
         onState={(value) => { if (selectedBand) setKits((current) => ({ ...current, [selectedBand.id]: value })); }}>
-        <fieldset disabled={media.pending || starting.current} className="obs10-age-fieldset">
+        <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-age-fieldset">
           <p className="obs10-muted">Informe anos e meses completos. Para bebês, use zero no campo de anos.</p>
           <div className="obs10-fields">
 
@@ -217,7 +241,7 @@ export default function PreConsultaObs10Page() {
       {stage === "setup" && <div className="obs10-setup obs10-no-print">
         <section className="obs10-panel">
           <h2><span className="obs10-number">2</span>Identifique e adapte a aplicação</h2>
-          <fieldset disabled={media.pending || starting.current} className="obs10-context-fieldset">
+          <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-context-fieldset">
             <label>Código institucional, sem nome<input value={context.code} maxLength={32} placeholder="Ex.: OBS-001" onChange={(e) => updateContext({ code: e.target.value })} /></label>
           <div className="obs10-fields"><label>Escolaridade (sem nome da escola)<input value={context.schooling} maxLength={120} onChange={(e) => updateContext({ schooling: e.target.value })} /></label><label>Idioma / comunicação utilizada<input value={context.language} maxLength={120} onChange={(e) => updateContext({ language: e.target.value })} /></label></div>
           <label>Óculos, aparelho auditivo, comunicação e apoios habituais<textarea value={context.adaptations} maxLength={1500} onChange={(e) => updateContext({ adaptations: e.target.value })} /></label>
@@ -229,13 +253,13 @@ export default function PreConsultaObs10Page() {
         <section className="obs10-panel">
           <h2><span className="obs10-number">3</span>Confira e inicie com segurança</h2>
           <p>Antes do cronômetro, confirme os itens abaixo. Mudança aguda ou perda de habilidade: avise o médico antes da aplicação.</p>
-          <fieldset disabled={media.pending || starting.current} className="obs10-checklist">{CHECKS.map((item, index) => <label key={item} className={`obs10-check ${checks[index] ? "is-checked" : ""}`}><input type="checkbox" checked={checks[index]} onChange={(e) => setChecks((current) => current.map((value, i) => i === index ? e.target.checked : value))} /><span>{item}</span></label>)}</fieldset>
+          <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-checklist">{CHECKS.map((item, index) => <label key={item} className={`obs10-check ${checks[index] ? "is-checked" : ""}`}><input type="checkbox" checked={checks[index]} onChange={(e) => setChecks((current) => current.map((value, i) => i === index ? e.target.checked : value))} /><span>{item}</span></label>)}</fieldset>
           <FramingGuide />
           <OperatorRehearsal />
           <div className="obs10-privacy"><h3><ShieldCheck size={18} />Dados só nesta tela</h3><p>Sem salvamento automático, envio ao servidor ou análise por IA. Rosto e voz identificam a criança: um código não anonimiza o vídeo. Não use nome, escola, endereço ou uniforme identificável.</p><p>Exporte apenas para armazenamento institucional autorizado. Compartilhamento externo/IA depende de autorização e fluxo próprio da clínica. As marcações acima não substituem o termo institucional.</p></div>
-          <label className="obs10-check"><input type="checkbox" checked={cameraEnabled} disabled={media.pending} onChange={(e) => { if (!e.target.checked) cancelCamera(); setCameraEnabled(e.target.checked); }} /><span><strong>Usar câmera e microfone deste dispositivo</strong><br />Opcional. Sem esta opção, filme em outro dispositivo institucional.</span></label>
+          <label className="obs10-check"><input type="checkbox" checked={cameraEnabled} disabled={media.pending || importBusy} onChange={(e) => { if (!e.target.checked) cancelCamera(); setCameraEnabled(e.target.checked); }} /><span><strong>Usar câmera e microfone deste dispositivo</strong><br />Opcional. Sem esta opção, filme em outro dispositivo institucional.</span></label>
           {cameraEnabled && <div className="obs10-camera-test">
-            <button type="button" disabled={media.pending || media.status === "preview"} onClick={() => void media.prepare()}>Testar câmera antes de iniciar</button>
+            <button type="button" disabled={media.pending || importBusy || media.status === "preview"} onClick={() => void media.prepare()}>Testar câmera antes de iniciar</button>
             {media.stream && <><video ref={video} autoPlay muted playsInline aria-label="Teste de enquadramento antes da aplicação" /><p><strong>Prévia, sem gravação.</strong> Confira enquadramento e disponibilidade do microfone no navegador. Este vídeo não permite ouvir a própria captação; confirme o áudio do arquivo após gravar.</p><button type="button" onClick={cancelCamera}>Fechar prévia</button></>}
             <p>A primeira permissão abre a câmera. Iniciar aplicação começa a gravação e o cronômetro. Para filmagem externa, use outro dispositivo.</p>
           </div>}
@@ -248,6 +272,7 @@ export default function PreConsultaObs10Page() {
         </section>
       </div>}
 
+      {stage === "setup" && <ImportReview disabled={media.pending || Boolean(media.stream) || starting.current} onImport={restoreForReview} onBusy={setImportBusy} />}
       {stage !== "setup" && band && <div className="obs10-no-print">
         <div className="obs10-toolbar">
           <div className={`obs10-clock ${elapsed >= 510 ? "is-ending" : ""}`}><Timer size={21} /><span aria-label="Tempo de aplicação" data-testid="obs10-clock">{clock(elapsed)}</span><small>/ 10:00</small></div>
@@ -283,9 +308,10 @@ export default function PreConsultaObs10Page() {
           <section className="obs10-panel obs10-records">
             <h2><ClipboardList size={22} />Como registrar o que aconteceu</h2>
             <p>Marque uma categoria no cartão ao lado. <strong>Detalhe os fatos depois da coleta.</strong> As categorias não geram descrições nem diagnósticos. Os campos incompletos permanecerão sinalizados.</p>
-            <button type="button" className="obs10-secondary obs10-wide" onClick={addObservation}>+ Registrar uma tarefa deste bloco</button>
+            <button type="button" className="obs10-secondary obs10-wide" disabled={observations.length >= 200} onClick={addObservation}>+ Registrar uma tarefa deste bloco</button>
             {!stepObservations.length && <div className="obs10-empty"><span aria-hidden="true">🌱</span><p>Nenhuma tarefa registrada neste bloco.<br />Isso não significa habilidade ausente ou preservada.</p></div>}
             {stepObservations.map((entry, index) => <details className="obs10-record-details" key={entry.id} open={!running || !entry.id.startsWith("guided-")}><summary>{entry.task || `Tarefa observada ${index + 1}`} · {entry.response ? "descrição registrada" : "detalhar depois"}</summary><fieldset className="obs10-observation"><legend>Tarefa observada {index + 1}</legend>
+              {entry.editedAfterEnd && <p className="obs10-muted">Descrição complementada após a coleta; horário original preservado.</p>}
               <label>Qual tarefa?<input value={entry.task} maxLength={180} placeholder="Ex.: seguir comando de dois passos" onChange={(e) => updateObservation(entry.id, { task: e.target.value })} /></label>
               <label>O que fez ou falou? Descreva literalmente<textarea value={entry.response} maxLength={2000} placeholder="Ex.: realizou a primeira ação; concluiu a segunda após repetição." onChange={(e) => updateObservation(entry.id, { response: e.target.value })} /></label>
               <label>Como respondeu?<select aria-label="Como respondeu?" value={entry.outcome} onChange={(e) => updateObservation(entry.id, { outcome: e.target.value as Observation["outcome"] })}><option value="">Escolha sem presumir resultado</option>{OUTCOMES.map((option) => <option value={option.id} key={option.id}>{option.label}</option>)}</select></label>
@@ -293,10 +319,15 @@ export default function PreConsultaObs10Page() {
               <label>Ajuda, adaptação ou motivo de não aplicação<textarea value={entry.assistance} maxLength={1000} onChange={(e) => updateObservation(entry.id, { assistance: e.target.value })} /></label>
               <label>Qualidade do trecho, conferida por você<select aria-label="Qualidade do trecho, conferida por você" value={entry.quality} onChange={(e) => updateObservation(entry.id, { quality: e.target.value as Observation["quality"] })}><option value="">Ainda não conferida</option><option>Nítido</option><option>Parcial</option><option>Não avaliável</option></select></label>
               <div className="obs10-fields"><label>Clipe (opcional)<input value={entry.clip} maxLength={40} placeholder="Ex.: B" onChange={(e) => updateObservation(entry.id, { clip: e.target.value })} /></label><label>Tempo no vídeo (conferido)<input value={entry.videoTime} maxLength={20} placeholder="Ex.: 01:20" onChange={(e) => updateObservation(entry.id, { videoTime: e.target.value })} /></label></div>
-              <button type="button" className="obs10-text-button" onClick={() => { if (window.confirm("Excluir apenas este registro de tarefa?")) { setHandoff(false); setObservations((current) => current.filter((o) => o.id !== entry.id)); } }}>Excluir este registro</button>
+              <button type="button" className="obs10-text-button" onClick={() => { if (window.confirm("Excluir apenas este registro de tarefa?")) { setHandoff(emptyHandoff()); setObservations((current) => current.filter((o) => o.id !== entry.id)); } }}>Excluir este registro</button>
             </fieldset></details>)}
           </section>
         </div>
+        {finished && <>
+          {importedRecord && <div className="obs10-notice"><p><strong>Revisão de registro importado.</strong> Versão de origem {record.version}. O JSON não contém vídeo. Nenhuma coleta foi reiniciada.</p></div>}
+          <label className="obs10-review-code">Código institucional do registro<input value={context.code} maxLength={32} onChange={(e) => updateContext({ code: e.target.value })} /></label>
+          <SessionReview record={record} finalizing={media.status === "finalizing"} onOpenPhase={openReviewPhase} onChange={setHandoff} />
+        </>}
         {finished && <section className="obs10-panel obs10-delivery">
           <h2>🌷 Revisar e entregar ao médico</h2><p>Confirme ficha, tarefas, ajuda, áudio e enquadramento. Não complete lacunas com “normal”. Os registros podem ser corrigidos nos blocos acima sem reiniciar a aplicação.</p>
           <p className="obs10-note-counter">{PRACTICAL_TASKS[band.id].filter((task) => !observations.some((entry) => entry.id === `guided-${task.id}`)).length} cartões sem marcação guiada. Confira também seus registros livres; ausência de marcação não é prova de ausência de habilidade.</p>
@@ -305,8 +336,6 @@ export default function PreConsultaObs10Page() {
           {media.status === "finalizing" && <p role="status" className="obs10-caution">Finalizando o arquivo de vídeo. Não saia nem reinicie a sessão até aparecer o arquivo ou uma mensagem de falha.</p>}
           {media.url && <div className="obs10-video-result"><video controls playsInline src={media.url} aria-label="Revisão do vídeo local" /><a className="obs10-download" href={media.url} download={exportFilename(context.code, media.mime.includes("mp4") ? "mp4" : "webm", sessionId)}>Salvar vídeo no dispositivo institucional</a><p>Arquivo somente nesta sessão. Revise som, enquadramento e integridade. Não foi analisado por IA nem enviado ao prontuário.</p></div>}
           <p role="status">{message}</p><p className="obs10-caution"><strong>Antes de sair:</strong> exporte o registro e, se houver, salve o vídeo. Recarregar ou navegar para outra página elimina os dados desta sessão.</p>
-          <label className="obs10-check"><input type="checkbox" checked={handoff} onChange={(e) => setHandoff(e.target.checked)} />Conferi o arquivo exportado, identifiquei tarefas omitidas e encaminhei ao médico pelo fluxo institucional.</label>
-          <p className="obs10-muted">{handoff ? "Entrega marcada pela aplicadora; não é recibo automático de envio ou arquivamento." : "A aplicação termina no cronômetro; revisão e entrega ocorrem depois, sem novas tarefas."}</p>
           <button type="button" className="obs10-secondary" disabled={media.status === "finalizing"} onClick={resetSession}>Nova aplicação · limpar esta sessão</button>
         </section>}
       </div>}
