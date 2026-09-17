@@ -11,6 +11,12 @@ import { printPlainTextDocument } from "@/lib/printDocument";
 import type { Outcome } from "@/features/obs10/protocol";
 import { ImportReview, SessionReview } from "@/features/obs10/SessionReview";
 import { reviewText } from "@/features/obs10/review";
+import { AudioPreflight } from "@/features/obs10/AudioPreflight";
+import { EvidencePanel } from "@/features/obs10/EvidencePanel";
+import { emptyEvidence, evidenceText, type EvidenceBundle } from "@/features/obs10/evidence";
+import { PilotPanel } from "@/features/obs10/PilotPanel";
+import { emptyPilot, type PilotRecord } from "@/features/obs10/pilot";
+import { useWorkClock } from "@/features/obs10/useWorkClock";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -42,6 +48,10 @@ export default function PreConsultaObs10Page() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [kits, setKits] = useState<Record<string, KitState>>({});
   const [sessionId, setSessionId] = useState("");
+  const [evidence, setEvidence] = useState<EvidenceBundle>(emptyEvidence);
+  const [pilot, setPilot] = useState<PilotRecord>(emptyPilot);
+  const [reviewEpoch, setReviewEpoch] = useState(0);
+  const workClock = useWorkClock((log) => { setPilot((p) => ({ ...p, logs: [...p.logs, log].slice(0, 100) })); setHandoff(emptyHandoff()); });
   const [handoff, setHandoff] = useState(emptyHandoff);
   const [importBusy, setImportBusy] = useState(false);
   const [importedRecord, setImportedRecord] = useState<SessionRecord | null>(null);
@@ -82,7 +92,7 @@ export default function PreConsultaObs10Page() {
     lastElapsed.current = current;
     return current;
   }, []);
-  useExitGuard(stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
+  useExitGuard(Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
 
   const finish = useCallback((reason: string) => {
     if (ended.current || started.current === null) return;
@@ -124,6 +134,7 @@ export default function PreConsultaObs10Page() {
     if (startTicket.current !== ticket) return;
     starting.current = false;
     if (!permitted) return;
+    workClock.stop("início da coleta");
     setContext((current) => ({ ...current, chronologicalMonths: chrono, correctedMonths: useCorrected ? Number(corrected) : null, bandId: selectedBand.id,
       missingMaterials: KITS[selectedBand.id].filter((item) => (kits[selectedBand.id] ?? {})[item.id] === "missing").map((item) => MATERIALS[item.id].label) }));
     const suffix = typeof crypto.randomUUID === "function" ? crypto.randomUUID().slice(0, 8) : String(Math.floor(performance.now()));
@@ -143,7 +154,7 @@ export default function PreConsultaObs10Page() {
     if (media.status === "finalizing") return;
     if (!window.confirm("Exportou o registro e, se houver, o vídeo? Uma nova aplicação apaga os dados desta tela. Continuar?")) return;
     startTicket.current += 1; starting.current = false;
-    media.reset();
+    media.reset(); workClock.reset(); setPilot(emptyPilot()); setEvidence(emptyEvidence()); setReviewEpoch((n) => n + 1);
     monotonicStart.current = null; lastElapsed.current = 0; setSessionId(""); setHandoff(emptyHandoff()); setKits({}); setImportedRecord(null); setImportBusy(false);
     started.current = null; ended.current = false; sequence.current = 0;
     setStage("setup"); setElapsed(0); setStep(0); setObservations([]); setEndReason("");
@@ -175,19 +186,19 @@ export default function PreConsultaObs10Page() {
     });
   }
   const record: SessionRecord = {
-    version: importedRecord?.version ?? OBS10_VERSION, sessionId, context, observations, handoff,
+    version: importedRecord?.version ?? OBS10_VERSION, sessionId, context, observations, handoff, evidence, pilot,
     ...(importedRecord ? { importedForReview: true, sourceRecording: importedRecord.sourceRecording } : {}), durationSeconds: elapsed, endReason, encodingSecond, recallSecond,
-    recording: importedRecord ? importedRecord.recording : cameraEnabled ? media.url ? "Vídeo local disponível; conteúdo e integridade ainda não verificados pelo médico." : "Câmera integrada solicitada; confirme a existência e a integridade do arquivo antes de sair." : "Filmagem externa orientada; nenhum vídeo recebido ou verificado por este aplicativo.",
+    recording: evidence.clips.length ? `${evidence.clips.length} clipe(s) associado(s) por declaração. JSON guarda referências, não o vídeo. Reanexe o arquivo para conferir seus bytes e abrir os trechos.` : importedRecord ? importedRecord.recording : cameraEnabled ? media.url ? "Vídeo local disponível; conteúdo e integridade ainda não verificados pelo médico." : "Câmera integrada solicitada; confirme a existência e a integridade do arquivo antes de sair." : "Filmagem externa orientada; nenhum vídeo recebido ou verificado por este aplicativo.",
   };
-  const report = `${makeReport(record)}\n\n${reviewText(record)}`;
+  const report = `${makeReport(record)}\n\n${reviewText(record)}\n\n${evidenceText(record)}`;
   const incomplete = observations.filter((o) => !usableObservation(o)).length;
   const stepObservations = observations.filter((o) => o.phase === step);
   const updateContext = (patch: Partial<SessionContext>) => { setHandoff(emptyHandoff()); setContext((current) => ({ ...current, ...patch })); };
   function restoreForReview(value: SessionRecord) {
     startTicket.current += 1; starting.current = false; media.reset();
     started.current = null; monotonicStart.current = null; lastElapsed.current = value.durationSeconds; ended.current = true;
-    sequence.current = 0;
-    setContext(value.context); setObservations(value.observations); setImportedRecord(value); setSessionId(value.sessionId ?? "");
+    sequence.current = 0; workClock.reset(); setEvidence(value.evidence ?? emptyEvidence()); setPilot(value.pilot ?? emptyPilot()); setReviewEpoch((n) => n + 1);
+    setContext(value.context); setObservations(value.observations); setImportedRecord(value); setSessionId(value.sessionId || crypto.randomUUID());
     setElapsed(value.durationSeconds); setEndReason(value.endReason); setEncodingSecond(value.encodingSecond); setRecallSecond(value.recallSecond);
     setCameraEnabled(false); setHandoff(emptyHandoff()); setUrgent(false); setStep(0); setImportBusy(false);
     const kit = Object.fromEntries(KITS[value.context.bandId].filter((item) => value.context.missingMaterials?.includes(MATERIALS[item.id].label)).map((item) => [item.id, "missing"])) as KitState;
@@ -211,6 +222,7 @@ export default function PreConsultaObs10Page() {
         </div>
       </header>
       <div className="obs10-notice obs10-no-print"><ShieldCheck size={19} aria-hidden="true" /><p><strong>Você aplica e registra. O médico interpreta.</strong> Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência.</p></div>
+      <PilotPanel record={record} stage={stage} activePhase={workClock.phase} seconds={workClock.seconds} onStart={workClock.start} onStop={() => workClock.stop()} onChange={(p) => { setPilot(p); setHandoff(emptyHandoff()); }} />
       {stage === "setup" && <PracticalMaterials actualBand={selectedBand} previewId={previewBand} onPreview={setPreviewBand}
         state={selectedBand ? kits[selectedBand.id] ?? {} : {}} locked={media.pending || starting.current || importBusy}
         onState={(value) => { if (selectedBand) setKits((current) => ({ ...current, [selectedBand.id]: value })); }}>
@@ -272,6 +284,7 @@ export default function PreConsultaObs10Page() {
         </section>
       </div>}
 
+      {stage === "setup" && <AudioPreflight disabled={media.pending || Boolean(media.stream) || importBusy} />}
       {stage === "setup" && <ImportReview disabled={media.pending || Boolean(media.stream) || starting.current} onImport={restoreForReview} onBusy={setImportBusy} />}
       {stage !== "setup" && band && <div className="obs10-no-print">
         <div className="obs10-toolbar">
@@ -319,13 +332,13 @@ export default function PreConsultaObs10Page() {
               <label>Ajuda, adaptação ou motivo de não aplicação<textarea aria-label="Ajuda, adaptação ou motivo de não aplicação" value={entry.assistance} maxLength={1000} onChange={(e) => updateObservation(entry.id, { assistance: e.target.value })} /></label>
               <label>Qualidade do trecho, conferida por você<select aria-label="Qualidade do trecho, conferida por você" value={entry.quality} onChange={(e) => updateObservation(entry.id, { quality: e.target.value as Observation["quality"] })}><option value="">Ainda não conferida</option><option>Nítido</option><option>Parcial</option><option>Não avaliável</option></select></label>
               <div className="obs10-fields"><label>Clipe (opcional)<input value={entry.clip} maxLength={40} placeholder="Ex.: B" onChange={(e) => updateObservation(entry.id, { clip: e.target.value })} /></label><label>Tempo no vídeo (conferido)<input value={entry.videoTime} maxLength={20} placeholder="Ex.: 01:20" onChange={(e) => updateObservation(entry.id, { videoTime: e.target.value })} /></label></div>
-              <button type="button" className="obs10-text-button" onClick={() => { if (window.confirm("Excluir apenas este registro de tarefa?")) { setHandoff(emptyHandoff()); setObservations((current) => current.filter((o) => o.id !== entry.id)); } }}>Excluir este registro</button>
+              <button type="button" className="obs10-text-button" onClick={() => { if (evidence.moments.some((m) => m.observationId === entry.id)) { setMessage("Esta tarefa possui trechos vinculados. Preserve a origem e acrescente uma retificação na descrição."); return; } if (window.confirm("Excluir apenas este registro de tarefa?")) { setHandoff(emptyHandoff()); setObservations((current) => current.filter((o) => o.id !== entry.id)); } }}>Excluir este registro</button>
             </fieldset></details>)}
           </section>
         </div>
         {finished && <>
           {importedRecord && <div className="obs10-notice"><p><strong>Revisão de registro importado.</strong> Versão de origem {record.version}. O JSON não contém vídeo. Nenhuma coleta foi reiniciada.</p></div>}
-          <label className="obs10-review-code">Código institucional do registro<input value={context.code} maxLength={32} onChange={(e) => updateContext({ code: e.target.value })} /></label>
+          <label className="obs10-review-code">Código institucional do registro<input disabled={evidence.clips.length > 0} title={evidence.clips.length ? "Código protegido após associar vídeo; use nova sessão para outro registro." : undefined} value={context.code} maxLength={32} onChange={(e) => updateContext({ code: e.target.value })} /></label>
           <SessionReview record={record} finalizing={media.status === "finalizing"} onOpenPhase={openReviewPhase} onChange={setHandoff} />
         </>}
         {finished && <section className="obs10-panel obs10-delivery">
@@ -339,6 +352,7 @@ export default function PreConsultaObs10Page() {
           <button type="button" className="obs10-secondary" disabled={media.status === "finalizing"} onClick={resetSession}>Nova aplicação · limpar esta sessão</button>
         </section>}
       </div>}
+      {finished && <div className="obs10-no-print"><EvidencePanel key={`${sessionId}-${reviewEpoch}`} record={record} onChange={(value) => { setEvidence(value); setHandoff(emptyHandoff()); }} /></div>}
       {finished && <section className="obs10-summary"><h2>Resumo para revisão médica</h2><pre>{report}</pre></section>}
       {urgent && <section className="obs10-emergency obs10-no-print" role="alert" aria-labelledby="obs10-emergency-title"><h2 id="obs10-emergency-title">Pare a avaliação. Chame o médico agora.</h2><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, instabilidade nova, dor intensa ou risco imediato: acione o fluxo presencial da clínica. Em emergência, <a href="tel:192">SAMU 192</a>. Não espere vídeo ou IA.</p><p>Em crise: proteja de lesões, não contenha à força e não coloque nada na boca. Relato de autoagressão/abuso: pare a gravação sensível, acolha sem perguntas sugestivas e acione o médico; diante de risco imediato, não deixe sozinho.</p><button type="button" onClick={() => setUrgent(false)}>Entendido · manter aplicação encerrada</button></section>}
       <footer className="obs10-footer obs10-no-print"><details><summary>Fontes, versão e limites clínicos</summary><p>OBS-10 v{OBS10_VERSION} · Manual e fichas de 17/09/2026. Tempos, comandos e fluxo são propostas autorais; nenhuma fonte valida o conjunto como teste diagnóstico. Revisão médica e aplicações supervisionadas antecedem uso rotineiro.</p><p>Não inferir força 5/5, tônus/reflexos preservados, normalidade do exame, QI, idade mental, CID ou risco ausente. Investigação de saúde mental e risco suicida segue fluxo clínico confidencial, não interrogatório filmado pela secretária.</p>{SOURCES.map(([label, href]) => <p key={href}><a href={href} target="_blank" rel="noreferrer">{label}</a></p>)}</details><p>Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756</p></footer>
