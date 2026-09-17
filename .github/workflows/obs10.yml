@@ -11,10 +11,13 @@ on:
       - 'tests/unit/obs10.test.ts'
       - 'tests/unit/obs10-practical.test.ts'
       - 'tests/unit/obs10-review.test.ts'
+      - 'tests/unit/obs10-evidence.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
+      - 'tests/e2e/obs10-evidence.mjs'
       - 'docs/features/obs10.md'
+      - 'docs/audits/obs10-v13-pilot.md'
       - '.github/workflows/obs10.yml'
   push:
     branches: [main]
@@ -25,9 +28,11 @@ on:
       - 'tests/unit/obs10.test.ts'
       - 'tests/unit/obs10-practical.test.ts'
       - 'tests/unit/obs10-review.test.ts'
+      - 'tests/unit/obs10-evidence.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
+      - 'tests/e2e/obs10-evidence.mjs'
       - '.github/workflows/obs10.yml'
 permissions:
   contents: read
@@ -56,6 +61,7 @@ jobs:
           node --import tsx tests/unit/obs10.test.ts
           node --import tsx tests/unit/obs10-practical.test.ts
           node --import tsx tests/unit/obs10-review.test.ts
+          node --import tsx tests/unit/obs10-evidence.test.ts
           npm run test:sonda
           npm run audit:navigation
           npm run test:operations
@@ -76,6 +82,10 @@ jobs:
         env:
           OBS10_REVIEW_ARTIFACT_DIR: /tmp/obs10-review
         run: node tests/e2e/obs10-review.mjs
+      - name: Local evidence, professional review and operational metrics
+        env:
+          OBS10_EVIDENCE_ARTIFACT_DIR: /tmp/obs10-evidence
+        run: node tests/e2e/obs10-evidence.mjs
       - name: Preserve synthetic screenshots and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -85,5 +95,6 @@ jobs:
             /tmp/obs10-proof
             /tmp/obs10-practical
             /tmp/obs10-review
+            /tmp/obs10-evidence
           if-no-files-found: ignore
           retention-days: 7
