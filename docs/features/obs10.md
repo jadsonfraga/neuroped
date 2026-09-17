@@ -1,114 +1,110 @@
-# NeuroPed OBS-10 — pré-consulta por faixa etária
+# NeuroPed OBS-10 — guia de aplicação prática
 
-Versão do conteúdo: **1.1.0 — 17/09/2026**. Origem: issue #893 / PR #894. Segunda rodada: issue #895.
+**Versão 1.1.0 · 17/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
-## Entrada no aplicativo
+Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Fachetária**. Rótulo preservado conforme solicitação do proprietário. A Sonda Dez permanece independente.
 
-Rota interna: `/#/avaliacao-pre-consulta-faixa-etaria`.
+## 1. Antes da criança chegar: idade e kit
 
-Rótulo solicitado pelo proprietário, preservado literalmente: **Avaliação de Pré-Consulta por Fachetária**. A funcionalidade aparece nos destaques e na seção **PRÉ-CONSULTA GUIADA**. A Sonda Dez e seus redirecionamentos continuam independentes e intactos.
+Informe anos e meses completos. O primeiro painel seleciona a ficha e mostra materiais ilustrados, quantidades, segurança e substitutos. Consultar outra faixa não altera a idade aplicada. Idade corrigida só quando informada pelo médico, antes de 24 meses e nunca maior que a cronológica.
 
-Papéis remotos permitidos: `admin`, `professional`, `operator`. `reader` e usuário anônimo não recebem acesso. O modo local mantém as exigências de PIN configurado/desbloqueado que já existem no produto; nenhuma rota pública foi acrescentada.
+Todas as faixas precisam de **celular/tablet institucional carregado e suporte fixo**. Em filmagem externa, use um segundo aparelho para ler o roteiro. Prepare o ambiente, autorização e materiais antes do cronômetro. Quantidades são de organização, não critérios clínicos.
 
-
-## Comece pelo kit: material por idade
-
-O primeiro painel da página mostra a idade e os materiais ilustrados, antes do cadastro complementar e do botão de iniciar. Quantidades abaixo são de organização, não critérios clínicos. Cada item tem detalhe de segurança e substituto; não usar peças pequenas, comida ou vidro. O aplicativo é a fonte operacional dos itens e quantidades da ficha.
-
-| Faixa | Materiais, além do dispositivo de filmagem institucional |
+| Faixa | Kit, além do dispositivo de filmagem |
 |---|---|
-| 0–2 meses | Colchonete firme (1); Brinquedo para olhar e alcançar (1). |
-| 3–5 meses | Colchonete firme (1); Brinquedo para olhar e alcançar (1). |
-| 6–8 meses | Colchonete firme (1); Recipiente largo (1); Brinquedo para olhar e alcançar (2). |
-| 9–11 meses | Colchonete firme (1); Brinquedo para olhar e alcançar (1); Pano para esconder o brinquedo (1); Blocos grandes (2). |
-| 12–17 meses | Colchonete firme (1); Copo plástico vazio (1); Boneco (1); Livro com cenas simples (1); Cadeira estável (1); Blocos grandes (2). |
-| 18–23 meses | Colchonete firme (1); Boneco (1); Colher de brinquedo (1); Carrinho grande (1); Blocos grandes (6); Giz de cera grosso (2); Folhas em branco (3). |
-| 24–35 meses | Boneco (1); Copo plástico vazio (1); Colher de brinquedo (1); Livro com cenas simples (1); Bola grande e macia (1); Giz de cera grosso (2); Folhas em branco (3); Recipiente largo (1); Blocos grandes (6). |
-| 3 anos | Boneco (1); Copo plástico vazio (1); Colher de brinquedo (1); Livro com cenas simples (1); Folhas em branco (3); Giz de cera grosso (2); Blocos grandes (6); Bola grande e macia (1). |
-| 4 anos | Livro com cenas simples (1); Folhas em branco (3); Lápis (1); Blocos grandes (6); Bola grande e macia (1). |
-| 5 anos | Folhas em branco (3); Lápis (1); Trajeto livre e duas marcas (Cerca de 3 m, se disponível); Cadeira estável (1); Blocos grandes (5). |
-| 6–8 anos | Folhas em branco (3); Lápis (1); Trajeto livre e duas marcas (Cerca de 3 m, se disponível); Cadeira estável (1). |
-| 9–11 anos | Folhas em branco (3); Lápis (1); Trajeto livre e duas marcas (Cerca de 3 m, se disponível); Cadeira estável (1). |
-| 12–17 anos | Folhas em branco (3); Lápis (1); Trajeto livre e duas marcas (Cerca de 3 m, se disponível); Cadeira estável (1). |
+| 0–2 meses | 1 colchonete firme; 1 brinquedo grande para olhar e alcançar. |
+| 3–5 meses | 1 colchonete firme; 1 brinquedo grande para olhar e alcançar. |
+| 6–8 meses | 1 colchonete firme; 1 recipiente largo; 2 brinquedos grandes. |
+| 9–11 meses | 1 colchonete firme; 1 brinquedo grande; 1 pano para esconder somente o brinquedo; 2 blocos grandes. |
+| 12–17 meses | 1 colchonete firme; 1 copo plástico vazio; 1 boneco; 1 livro com cenas simples; 1 cadeira estável; 2 blocos grandes. |
+| 18–23 meses | 1 colchonete firme; 1 boneco; 1 colher grande de brinquedo; 1 carrinho grande; 6 blocos grandes; 2 gizes grossos; 3 folhas. |
+| 24–35 meses | 1 boneco; 1 copo plástico vazio; 1 colher de brinquedo; 1 livro; 1 bola grande e macia; 2 gizes grossos; 3 folhas; 1 recipiente largo; 6 blocos grandes. |
+| 3 anos | 1 boneco; 1 copo plástico vazio; 1 colher de brinquedo; 1 livro; 3 folhas; 2 gizes grossos; 6 blocos grandes; 1 bola grande e macia. |
+| 4 anos | 1 livro; 3 folhas; 1 lápis; 6 blocos grandes; 1 bola grande e macia. |
+| 5 anos | 3 folhas; 1 lápis; 5 blocos grandes; 1 cadeira estável; trajeto livre com duas marcas, cerca de 3 m se disponível. |
+| 6–8 anos | 3 folhas; 1 lápis; 1 cadeira estável; trajeto livre com duas marcas. Preparar a frase da ficha em papel separado. |
+| 9–11 anos | 3 folhas; 1 lápis; 1 cadeira estável; trajeto livre com duas marcas. Preparar as duas frases compatíveis com a escolarização. |
+| 12–17 anos | 3 folhas; 1 lápis; 1 cadeira estável; trajeto livre com duas marcas. |
 
-Marcar **Separado/substituído** ou **Ausente** para cada item; o botão **Separei o kit completo** é uma confirmação explícita da aplicadora, não inspeção automática. Dispositivo de filmagem ausente bloqueia o início. Outros itens ausentes bloqueiam apenas as tarefas que dependem deles, com registro explícito da omissão. Não improvisar alternativa insegura. Mudança de faixa exige conferir o kit daquela faixa. Consultar outra idade não altera a idade aplicada.
+A fonte operacional é `MATERIALS` / `KITS` em `client/src/features/obs10/practical.ts`. Não usar peças pequenas, alimentos, vidro ou objetos com partes destacáveis. Higienizar entre crianças. Colchonete sempre no chão, nunca em mesa/cama/superfície elevada. Não cobrir rosto com o pano.
 
-O botão **Imprimir kit e cenas** abre uma folha independente do aplicativo, com lista ilustrada e três cenas simples alternativas ao livro. As cenas são autorais, não padronizadas; não ensinar respostas antes da amostra. Nas tarefas de memória e regra, manter a tela de instruções fora da visão da criança.
+Marque **Separado/substituído** ou **Ausente**. **Separei o kit completo** é uma declaração da aplicadora, não inspeção automática. Dispositivo ausente bloqueia o início. Outros itens ausentes sinalizam omissão das tarefas dependentes; não improvisar material inseguro. Registre o substituto utilizado em adaptações.
 
-## Aplicação prática, uma tarefa de cada vez
+**Imprimir kit e cenas** abre documento independente com lista ilustrada e três cenas simples alternativas ao livro. São estímulos autorais não padronizados. Mostre somente o desenho escolhido, sem legenda/resposta. Não usar essas figuras para ensinar respostas de memória.
 
-A versão 1.1 organiza o conteúdo em **145 cartões de tarefa ao longo das 13 faixas**, não 145 tarefas por criança. Cada ficha usa apenas os cartões da sua faixa. São apresentados ilustração, comando curto, até três passos, ajuda permitida, janela operacional e orientação do que registrar. Há 17 ilustrações de materiais, diagramas de execução/enquadramento e três cenas imprimíveis; ilustrações são reutilizadas quando apropriado e não são fotografias clínicas.
+## 2. Conferir segurança e enquadramento
 
-Os tempos de cada cartão cabem nas seis janelas anteriores, incluindo pequenas transições. São limites operacionais, não normas de desempenho. Não prolongar a aplicação para completar cartões. Recusa, fadiga e segurança prevalecem.
+Registre código institucional sem nome, escolaridade sem nome da escola, idioma/comunicação, apoios habituais, condições do dia e relato familiar separado. Confirme autorização institucional, participação/conforto, treinamento, médico disponível, piso/apoios seguros, materiais e captação.
 
-Durante a coleta, basta marcar a categoria factual e avançar. Depois de encerrar, abrir os registros para completar o fato observado. **Uma categoria sozinha não gera um achado:** o resumo a mantém incompleta até que tarefa, resposta literal e categoria estejam documentadas. Registrar aproximações apenas como aproximações; não inventar falas a partir da memória. A opção “Na proposta inicial” substitui “Espontâneo” porque algumas tarefas já incluem um modelo. Cópia com modelo previsto não equivale a produção espontânea.
+A câmera deve mostrar rosto, mãos e interlocutor na interação; corpo inteiro e pés nas tarefas motoras; as duas mãos, lápis e folha no grafismo. Celular fixo e horizontal, luz adequada e áudio compreensível, sem filtros. Gravar tentativas e ajuda, não somente o acerto.
 
-A consulta à ficha integral permanece em um painel expansível. O treino com três situações fictícias explica repetição, recusa e trecho não avaliável; não certifica competência nem substitui supervisão médica.
+A opção **Testar câmera antes de iniciar** permite prévia de enquadramento sem gravar nem consumir os dez minutos. A prévia é silenciosa para evitar retorno de áudio: ela não confirma inteligibilidade das vozes. Confira a captação no dispositivo institucional antes do uso e a integridade do arquivo ao final.
 
-## Segunda rodada: falhas tratadas
+**Treinar o registro sem criança nem câmera** apresenta três exemplos fictícios de repetição, recusa e trecho não avaliável. Não certifica competência nem substitui aplicações supervisionadas.
 
-- Materiais antes pouco visíveis e comandos agrupados: kit ilustrado primeiro, cartões de tarefa e registro rápido.
-- Recusa de permissão antiga podia encerrar uma câmera recém-aberta: callbacks limitados à geração que os criou.
-- Desconexão inesperada de câmera/microfone: interrupção explícita, encerramento de recursos e indicação de arquivo parcial.
-- Sem teste de enquadramento antes do relógio: prévia opcional sem gravar e sem consumir tempo. Câmera/microfone só abrem mediante ação explícita. A prévia muda **enquadramento**, não confirma inteligibilidade do áudio; conferir o arquivo real.
-- Risco de perder vídeo na finalização e ao pressionar emergência depois do encerramento: estado de finalização, espera pelo último bloco de mídia e preservação do arquivo já finalizado.
-- Navegação interna não coberta por beforeunload: confirmação também em links internos e mudanças de hash, sem interceptar redirects de autenticação/expiração/consentimento. Fechamento forçado pelo sistema continua fora do controle do aplicativo.
-- Relógio sujeito a regressão do relógio civil: uso conjunto de tempo monotônico, tempo civil e último valor, com teto de 600 segundos.
-- Versão do resumo não era a do registro: exportação utiliza `record.version`. Nome de arquivo inclui identificador único da sessão; timestamp da anotação tardia não é apresentado como timestamp de vídeo.
-- Impressão dependente do layout transformado do aplicativo: resumo em documento separado, texto escapado e sem navegação.
+## 3. Aplicar uma tarefa por vez
 
-Sem upload, análise automática de vídeo, persistência clínica ou mudança do backend. Salvar/exportar e conferir arquivos antes de sair continua obrigatório.
+Os **145 cartões estão distribuídos entre as 13 fichas**, não são 145 tarefas por criança. Cada cartão tem ilustração, comando curto, até três passos, tempo operacional, orientação do que registrar e cuidados/omissões. São 17 tipos de material ilustrados e diagramas reutilizados quando apropriado; não são fotografias clínicas.
 
-## O que a assistente faz
+As imagens servem à aplicadora. Manter a tela fora da visão da criança em memória/regras e nas tarefas em que o modelo não faz parte da proposta. Braços à frente usam representação lateral; salto com dois pés tem imagem própria, distinta do equilíbrio em um pé.
 
-1. Informa código institucional, anos e meses completos. A ficha é selecionada automaticamente. A idade corrigida só é utilizada quando informada pela equipe, antes de 24 meses e nunca maior que a cronológica. As 13 fichas podem ser consultadas sem iniciar ou alterar a idade da sessão.
-2. Separa os materiais e confirma autorização institucional, participação/conforto, treinamento, disponibilidade do médico, segurança e enquadramento/áudio. Estas confirmações operacionais **não substituem** o termo institucional ou a avaliação de elegibilidade clínica.
-3. Escolhe filmagem externa em outro dispositivo institucional ou câmera/microfone local compatíveis. Permissão negada não inicia a sessão. A preparação não integra o cronômetro.
-4. Inicia a aplicação. Seis blocos: 00:00–00:30 acolhimento; 00:30–02:00 interação; 02:00–04:00 linguagem/cognição; 04:00–06:30 movimento; 06:30–08:30 mãos/grafismo; 08:30–10:00 retomada/encerramento. Pausas e transições após o início contam no limite.
-5. Lê os comandos, aguarda cerca de cinco segundos, repete uma vez e demonstra somente quando previsto. Não treina, não provoca sofrimento, não exige contato ocular e não retira apoios. Abre um registro **por tarefa**, não uma nota geral do bloco.
-6. Registra resposta literal, categoria descritiva, ajuda, adaptações, motivo de omissão, qualidade referida e eventual clipe/tempo conferido. As categorias são espontâneo, após repetição, após gesto/modelo, com apoio habitual, não demonstrado, recusou e não avaliável/não aplicado. Não há soma de pontos.
-7. Encerra antes se necessário. Aos dez minutos a coleta é encerrada. Sair da aba também encerra a coleta; não continuar atividades fora do cronômetro. Registros ainda podem ser completados posteriormente, sem realizar novas tarefas.
-8. Revê os registros, exporta TXT/JSON ou imprime o resumo. Se gravou no navegador, salva também o vídeo e confere a integridade. Somente depois inicia outra sessão ou sai da página.
+| Janela | Bloco |
+|---|---|
+| 00:00–00:30 | Acolher e observar. |
+| 00:30–02:00 | Interagir e conversar. |
+| 02:00–04:00 | Linguagem e raciocínio. |
+| 04:00–06:30 | Movimentar com segurança. |
+| 06:30–08:30 | Mãos, desenho e escrita. |
+| 08:30–10:00 | Retomar e encerrar. |
 
-## Cobertura e origem
+Dar comando, aguardar cerca de cinco segundos, repetir uma vez e demonstrar somente quando previsto. Registrar ajuda e seguir. Não treinar até acertar, pressionar, retirar apoios ou exigir olhar nos olhos. Pausas e transições após o início contam no limite. A janela é operacional, não norma de desempenho. Não prolongar para preencher todos os cartões.
 
-13 fichas: 0–2, 3–5, 6–8, 9–11, 12–17, 18–23 e 24–35 meses; 3, 4 e 5 anos; 6–8, 9–11 e 12–17 anos. Há distinção explícita entre referências de 12/15 e 24/30 meses. Tarefas adicionais de 30 meses são sinalizadas para omissão nos menores.
+A indicação de prono depende de autorização médica, vigília, supervisão e tolerância. Desafios adicionais de dois passos e salto da ficha de 24–35 meses são omitidos antes de 30 meses. Dor, instabilidade, recusa ou falta de proteção/espaço seguro impedem a tarefa motora. Não realizar manobras médicas, força contra resistência, reflexos, estímulo doloroso, tração, mobilização passiva, olhos fechados, escadas, sustos ou hiperventilação.
 
-Fonte autoral: **NeuroPed OBS-10 — Manual e Fichas** e **Guia Rápido da Assistente**, fornecidos/aprovados no briefing do proprietário de 17/09/2026. Referências de desenvolvimento (CDC/AAP), saúde mental (NIMH/AAP) e LGPD estão acessíveis no rodapé da interface. Essas fontes não validam o conjunto de tarefas ou seus tempos como instrumento diagnóstico.
+## 4. Registrar sem inventar achados
 
-**Status: proposta operacional não validada.** Não há sensibilidade, especificidade, percentil, escore, idade cognitiva, QI ou ponto de corte. Necessita revisão clínica, treinamento e primeiras aplicações supervisionadas. Expectativas de desenvolvimento contextualizam a observação; não constituem aprovação/reprovação.
+Durante a coleta, marque uma categoria no cartão; detalhe o fato depois de encerrar. As categorias são **Na proposta inicial, Após repetição, Após gesto/modelo, Com apoio habitual, Não demonstrado, Recusou, Não aplicado**. Não há soma de pontos.
 
-## Segurança clínica
+“Na proposta inicial” substitui o rótulo antigo “Espontâneo”: algumas propostas incluem modelo. Copiar após modelo previsto não é produção espontânea. Descreva ajuda extra separadamente.
 
-A assistente conduz tarefas seguras; não faz diagnóstico, prescrição nem exame neurológico completo. São proibidos resistência manual, reflexos, estímulo doloroso, tração, mobilizações passivas, desequilíbrio provocado, provas de olhos fechados, escadas, hiperventilação e exposição a estímulos perigosos. Prono depende de autorização clínica, vigília, tolerância e supervisão, sempre em superfície segura.
+**Categoria sozinha não gera descrição clínica.** Tarefa, resposta literal e categoria incompletas continuam sinalizadas. Não demonstrar aqui não prova incapacidade; recusa não equivale a alteração. Não preencher lacunas como “normal”. Relato familiar não é achado diretamente observado.
 
-Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, instabilidade nova, dor intensa ou risco imediato interrompem a coleta e exigem acionamento da equipe presencial; emergência: SAMU 192. Em crise, proteger de lesões, não conter e não colocar nada na boca. Não aguardar IA.
+A tarefa de memória tem marcação de registro inicial e evocação; apenas o intervalo efetivamente marcado é calculado. Sem aprendizagem inicial documentada não se interpreta retenção. Horário da anotação não é timestamp verificado do vídeo. Anotações posteriores ao encerramento são identificadas; não reaplicar tarefas para completá-las.
 
-Conteúdos sensíveis devem sair da filmagem e seguir fluxo clínico confidencial. Avaliação de risco suicida pertence à equipe treinada; aparência tranquila ou resposta negativa na amostra não exclui risco.
+## 5. Encerrar, revisar e entregar
 
-## Verdade do registro
+A coleta pode terminar antes e é encerrada aos dez minutos ou ao sair da aba. Não continuar tarefas depois. Revisão e entrega ocorrem fora do cronômetro.
 
-O resumo é produzido **a partir da digitação da aplicadora**, não da análise do vídeo. Relato do responsável permanece separado de observação. Domínios sem dados são explicitados como sem registro, nunca preenchidos como normais. Campos incompletos permanecem sinalizados.
+Abra os registros, complete fatos que possam ser sustentados, confira omissões e exporte TXT/JSON ou imprima o resumo em documento isolado. Na câmera integrada, aguarde finalização; confira som, enquadramento e integridade, então salve o vídeo. Nome do arquivo inclui identificador de sessão para reduzir colisões. A versão exportada é a do registro.
 
-Horários de aplicação não são timestamps verificados de vídeo. Clipe/tempo são referências digitadas pela aplicadora. O intervalo de memória só é calculado quando ela marca registro inicial e evocação; não gera nota nem interpretação de retenção sem aprendizagem inicial documentada.
+**Tudo permanece em memória: exportar e conferir antes de sair, recarregar ou começar outra sessão.** Não há upload, gravação automática no prontuário, Drive, e-mail ou IA. A marcação de entrega é declaração da aplicadora, não recibo automático de transmissão.
 
-Apenas o médico revisa a evidência e interpreta. Não há afirmação de força 5/5, tônus/reflexos preservados, exame normal, CID, diagnóstico, inteligência ou ausência de sofrimento.
+Permissão negada não inicia silenciosamente a sessão. Falha tardia de uma tentativa cancelada não pode fechar a nova câmera. Desconexão inesperada interrompe a coleta, encerra os recursos e sinaliza possível vídeo parcial. A finalização aguarda o último bloco de mídia, com falha explícita se não concluir. O botão de emergência após o encerramento preserva vídeo já finalizado.
 
-## Privacidade e câmera
+A navegação interna e o fechamento normal pedem confirmação quando há dados. Encerramento forçado, falha do aparelho ou sistema operacional podem impedir qualquer aviso; não presumir recuperação. Navegação de autenticação/expiração/consentimento não é bloqueada por essa proteção.
 
-- Estado e vídeo ficam em memória; não há banco, localStorage, sessionStorage, IndexedDB, upload, chamada de IA ou nova API clínica neste módulo.
-- TXT/JSON e vídeo só saem por ação explícita de download/impressão. Confirme o destino institucional. Não foi implementado envio ao prontuário, Drive, e-mail ou outro serviço.
-- Recarregar, encerrar ou navegar para outra página perde o que não foi exportado. Há aviso permanente e proteção de saída de documento. Bloqueios/encerramentos pelo sistema operacional podem impedir qualquer aviso; não presumir salvamento.
-- Câmera exige contexto seguro e suporte a MediaRecorder/getUserMedia. Formato é escolhido conforme suporte (WebM/MP4); recursos de mídia e URLs temporárias são liberados ao encerrar/limpar/desmontar. Permissão negada tem alternativa externa, sem início silencioso.
-- Testes automatizados cobrem Chromium com mídia sintética; não afirmam homologação de todos os aparelhos ou navegadores móveis. Validar câmera, áudio e posicionamento no dispositivo institucional antes de uso clínico. A alternativa externa é mantida.
-- Rosto/voz identificam a criança; código não anonimiza o vídeo. Autorização/base legal, acesso, retenção, armazenamento e eventual processamento externo/IA pertencem ao fluxo institucional.
+## Intercorrências e confidencialidade
 
-## Verificação reproduzível
+Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, instabilidade nova, dor intensa ou risco imediato: interromper e chamar a equipe presencial; emergência, SAMU 192. Em crise, proteger de lesões, não conter e não colocar nada na boca. Não aguardar vídeo ou IA.
+
+Conteúdos sensíveis devem sair da gravação e seguir avaliação médica confidencial. Aparência tranquila não exclui sofrimento ou risco. O roteiro não substitui investigação de risco suicida pela equipe treinada.
+
+Rosto e voz identificam a criança; código não anonimiza vídeo. As confirmações na tela não substituem autorização/base legal, controle de acesso, armazenamento, retenção e eventual processamento externo definidos pela clínica.
+
+## Natureza, acesso e origem
+
+Proposta autoral **observacional não validada**, originada do manual OBS-10 e do guia operacional discutidos com o proprietário em 17/09/2026. As referências CDC/AAP, NIMH e LGPD estão no rodapé; não validam o conjunto como teste diagnóstico.
+
+Sem sensibilidade/especificidade próprias, escore, percentil, QI, idade cognitiva, ponto de corte ou diagnóstico. Não inferir força 5/5, tônus/reflexos/sensibilidade preservados nem exame neurológico completo normal pelo roteiro. **O resumo utiliza os registros da aplicadora: não há análise semiológica automática de vídeo por IA.** Interpretação e decisão permanecem médicas.
+
+Acesso remoto: admin/professional/operator; reader e anônimo bloqueados. Modo local mantém as exigências existentes. Não há alteração de autenticação/PIN, tenant, banco, dados de pacientes ou segredos. Testes com mídia sintética em Chromium não homologam todos os aparelhos: conferir o dispositivo real e fazer as primeiras aplicações supervisionadas.
+
+## Verificação e manutenção
 
 ```sh
 npm ci
 npm run check
-npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10.test.ts --max-warnings=0
+npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
 node --import tsx tests/unit/obs10.test.ts
 node --import tsx tests/unit/obs10-practical.test.ts
 npm run test:sonda
@@ -120,14 +116,10 @@ node tests/e2e/obs10.mjs
 node tests/e2e/obs10-practical.mjs
 ```
 
-A jornada usa o componente real do build e o servidor sintético de autenticação já adotado pelo repositório. Não substitui lógica clínica nem injeta estado React. Cobre consulta às 13 fichas; validade/consentimento; faixa corrigida e restrições infantis; limite de tempo; registros; conteúdo escapado; exportação; interrupção; mídia local e liberação de tracks; permissão negada; saída de aba; ausência de escritas clínicas; acessibilidade e viewport desktop/celular.
+A suíte original permanece; a nova cobre materiais/omissões, cartões, ausência de achados fabricados, navegação cancelada, impressão isolada, prévia de câmera, resposta tardia de permissão, desconexão, retenção do vídeo, treino e percurso pelas treze faixas. Todas as 145 tarefas devem renderizar pela interface real. Mídia/autenticação de teste são sintéticas; não há dados de pacientes nem substituição de lógica clínica.
 
-**Primeira execução integral aprovada:** GitHub Actions run `35217438312`, job `105189144592`, código de aplicação verificado no commit `2bafd37899501824e3e90ec078d4954857ba20e4`. Todos os passos de tipo, lint, contrato, regressões, build e jornada de navegador concluíram com sucesso. Artefato `obs10-verification` contém capturas, relatórios axe e resultados sintéticos. A verificação final de PR ocorre novamente após remoção dos arquivos temporários de integração.
+Primeira execução integral desta rodada: run `35239850769`, artefato `10505021313`, dois resultados `passed: true`, onze capturas com zero violações detectadas pelo axe e nenhuma exceção JavaScript. A correção das duas figuras e a ampliação para todas as faixas têm verificação adicional. Resultados finais do HEAD e publicação devem ser consultados na PR #896.
 
-O workflow permanente `.github/workflows/obs10.yml` é somente leitura e não faz commits, deploys, alterações de segredos ou modificações em dados clínicos. O mecanismo temporário de integração foi removido da entrega.
+Workflow permanente `.github/workflows/obs10.yml` é somente leitura. Ferramentas temporárias de transferência/integração não fazem parte da entrega. Não remover assertivas, aumentar baseline ou usar saltos para aparentar aprovação.
 
-## Publicação e rollback
-
-Publicação segue exclusivamente a PR e os gates de produção já existentes. Cloudflare Pages/Functions é a produção canônica; Vercel é espelho. Não considerar a funcionalidade publicada só porque existe branch, PR, build ou preview: verificar merge, deploy e SHA servido.
-
-Rollback desta rodada: reverter somente a PR ligada à issue #895. A versão 1.0 veio da PR #894 e permanece separada no histórico. Não há migração nem persistência nova a reverter; arquivos exportados sob controle da clínica continuam sujeitos à sua política de retenção.
+Publicação segue os gates existentes: Cloudflare Pages/Functions é canônico, Vercel é espelho. Branch/PR/build não equivalem a publicação; confirmar merge, deploy e SHA servido. **Rollback:** reverter exclusivamente a PR #896; nenhuma migração ou persistência nova a desfazer. Arquivos exportados permanecem sob a política da clínica.
