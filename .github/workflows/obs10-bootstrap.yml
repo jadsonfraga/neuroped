@@ -1,0 +1,65 @@
+name: OBS-10 integration and verification
+on:
+  push:
+    branches: [feat/obs10-preconsulta-faixa-etaria]
+permissions:
+  contents: read
+concurrency:
+  group: obs10-feature-verification
+  cancel-in-progress: true
+jobs:
+  integrate-and-test:
+    if: github.ref == 'refs/heads/feat/obs10-preconsulta-faixa-etaria'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/obs10-preconsulta-faixa-etaria
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Apply exact feature integration anchors (branch only)
+        run: |
+          node scripts/obs10-integrate.mjs
+          git add client/src/App.tsx client/src/data/navigation.ts client/src/security/routeGuardPolicy.ts client/src/features/obs10/protocol.ts client/src/pages/pre-consulta-obs10.tsx tests/e2e/obs10.mjs
+          if ! git diff --cached --quiet; then
+            git -c user.name='NeuroPed Automation' -c user.email='actions@users.noreply.github.com' commit -m 'feat(obs10): integrate highlighted route and operator policy'
+            git push origin HEAD:feat/obs10-preconsulta-faixa-etaria
+          fi
+          git rev-parse HEAD
+      - name: Install locked dependencies
+        run: npm ci
+      - name: TypeScript
+        run: npm run check
+      - name: Lint changed TypeScript
+        run: npx eslint client/src/features/obs10/*.ts client/src/pages/pre-consulta-obs10.tsx client/src/App.tsx client/src/data/navigation.ts client/src/security/routeGuardPolicy.ts tests/unit/obs10.test.ts --max-warnings=0
+      - name: OBS-10 contract tests
+        run: node --import tsx tests/unit/obs10.test.ts
+      - name: Existing Sonda and navigation regression checks
+        run: |
+          npm run test:sonda
+          npm run audit:navigation
+          npm run test:operations
+      - name: Build production client without open access
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - name: Install Chromium for browser journey
+        run: npx playwright install --with-deps chromium
+      - name: Exercise the actual built route on desktop and mobile
+        env:
+          OBS10_ARTIFACT_DIR: /tmp/obs10-proof
+        run: node tests/e2e/obs10.mjs
+      - name: Upload synthetic verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs10-verification
+          path: /tmp/obs10-proof
+          if-no-files-found: ignore
+          retention-days: 7
