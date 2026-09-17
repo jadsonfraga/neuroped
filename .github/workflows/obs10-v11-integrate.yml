@@ -24,24 +24,9 @@ jobs:
         run: |
           python3 - <<'PY'
           import base64, bz2, hashlib, pathlib, re
-          expected = [
-            '3fe24fb2c4128ca040276d8eafc80d0d0149987c17cb4d88326e06fbb070f027',
-            'f0ae53d816dca0b352bb3e8c68e4615d2de9ee1a987f35d4d096893ba28d9c81',
-            'd805adb6c78a0ff759783662ac749d74562d811775ce4ee1c023b1a7e935d543',
-            '644e66aecba51cae4b14d6cfce0430b3d426e7f9022eb53236e885b5d0eb0bca',
-            '3376af2ca360110617e6b7cf70fb108bbf9fa61d707cd6c7fb8d5c72e4808e64',
-            '01c379c9ff0302a3a9f10e3658a2fd7cb2b31a6ebfef988bdf6846c2827d3686',
-            'ecf75be5b7e701c96a0d66caec7545eb76924305090ee5f631ebeac0147343fa',
-            '4f1cff6ba8335097eebc5cc22585174b07181bf9a9c001ff1366a66acabfbe74',
-            '06b35e6c1897fdc718177a6e68bf6833c3759cb450e90c8509947770d8929edd',
-          ]
           parts = sorted(pathlib.Path('.github/obs10-transfer').glob('*.b64'))
           assert [p.name for p in parts] == [f'{i:03}.b64' for i in range(9)]
-          strings = [p.read_text().strip() for p in parts]
-          for part, value, digest in zip(parts, strings, expected):
-              actual = hashlib.sha256(value.encode()).hexdigest()
-              assert actual == digest, f'Segment mismatch {part.name}: {actual}'
-          patch = bz2.decompress(base64.b64decode(''.join(strings), validate=True))
+          patch = bz2.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts), validate=True))
           assert hashlib.sha256(patch).hexdigest() == '5d8317774c3f0d49794c44d44c1d83040e84b0049c48fb31b5108804cbc82ec4'
           allowed = {
             '.github/workflows/obs10.yml',
@@ -64,13 +49,13 @@ jobs:
           assert len(paths) == len(allowed) and all(a == b and a in allowed for a,b in paths)
           assert {a for a,b in paths} == allowed
           pathlib.Path('/tmp/obs11.patch').write_bytes(patch)
-          print('15 source paths and patch checksum verified; no unrelated writes.')
+          print('Patch checksum and exact scope verified. Workflow updates remain outside this job.')
           PY
-          git apply --check /tmp/obs11.patch
-          git apply /tmp/obs11.patch
+          git apply --exclude=.github/workflows/obs10.yml --check /tmp/obs11.patch
+          git apply --exclude=.github/workflows/obs10.yml /tmp/obs11.patch
           git diff --check
-          git add .github/workflows/obs10.yml client/src/features/obs10 client/src/pages/pre-consulta-obs10.tsx docs/features/obs10.md tests/e2e/obs10.mjs tests/e2e/obs10-practical.mjs tests/unit/obs10-practical.test.ts
-          git rm -r .github/obs10-transfer .github/workflows/obs10-review-workspace.yml .github/workflows/obs10-v11-integrate.yml
+          git add client/src/features/obs10 client/src/pages/pre-consulta-obs10.tsx docs/features/obs10.md tests/e2e/obs10.mjs tests/e2e/obs10-practical.mjs tests/unit/obs10-practical.test.ts
+          git rm -r .github/obs10-transfer
           git -c user.name='NeuroPed Automation' -c user.email='actions@users.noreply.github.com' commit -m 'feat(obs10): consolidate illustrated age kits, task cards and safe assistant workflow'
           git push origin HEAD:feat/obs10-assistente-visual-v11
           git rev-parse HEAD
