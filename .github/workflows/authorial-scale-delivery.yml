@@ -31,7 +31,6 @@ on:
   # Recuperação sob demanda: depois de cadastrar os secrets SMTP, reexecutar a
   # entrega na hora, sem esperar o próximo cron nem um push em main.
   workflow_dispatch:
-  workflow_dispatch:
 permissions:
   contents: read
   actions: read
