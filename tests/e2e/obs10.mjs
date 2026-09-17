@@ -11,8 +11,7 @@ import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts
 const dir = process.env.OBS10_ARTIFACT_DIR || "/tmp/obs10-proof";
 await mkdir(dir, { recursive: true });
 const server = await startStaticServer("dist/public", { port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }) });
-const options = auditBrowserLaunchOptions();
-const browser = await chromium.launch({ ...options, args: [...(options.args || []), "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
+const browser = await chromium.launch(auditBrowserLaunchOptions({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] }));
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true, permissions: ["camera", "microphone"] });
 await context.addInitScript((storage) => { for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value); }, ACCEPTED_FIRST_VISIT_STORAGE);
 const page = await context.newPage();
