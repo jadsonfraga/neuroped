@@ -1,0 +1,38 @@
+name: OBS-10 stable field label regression fix
+on:
+  push:
+    branches: [feat/obs10-consolidacao-v12]
+    paths: ['.github/workflows/obs10-v12-label-fix.yml']
+permissions:
+  contents: read
+jobs:
+  stable-labels:
+    if: github.ref == 'refs/heads/feat/obs10-consolidacao-v12'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/obs10-consolidacao-v12
+      - name: Preserve accessible field name after controlled textarea changes
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const path = 'client/src/pages/pre-consulta-obs10.tsx';
+          let text = readFileSync(path, 'utf8');
+          const fixes = [
+            ['<textarea value={entry.response}', '<textarea aria-label="O que fez ou falou? Descreva literalmente" value={entry.response}'],
+            ['<textarea value={entry.assistance}', '<textarea aria-label="Ajuda, adaptação ou motivo de não aplicação" value={entry.assistance}'],
+          ];
+          for (const [from, to] of fixes) {
+            if (text.split(from).length !== 2) throw new Error('Expected one reviewed field anchor');
+            text = text.replace(from, to);
+          }
+          writeFileSync(path, text);
+          JS
+          git diff --check
+          git add client/src/pages/pre-consulta-obs10.tsx
+          git -c user.name='NeuroPed Automation' -c user.email='actions@users.noreply.github.com' commit -m 'fix(obs10): keep accessible description and assistance labels stable after editing'
+          git push origin HEAD:feat/obs10-consolidacao-v12
