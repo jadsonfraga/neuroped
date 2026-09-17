@@ -26,7 +26,15 @@ export interface Observation {
   applicationSecond: number;
   modelInInstruction?: boolean;
   recordedAfterEnd?: boolean;
+  editedAfterEnd?: boolean;
 }
+export interface HandoffReview {
+  recordsReviewed: boolean;
+  mediaReviewed: boolean;
+  filesChecked: boolean;
+  declaredAt: string | null;
+}
+export const emptyHandoff = (): HandoffReview => ({ recordsReviewed: false, mediaReviewed: false, filesChecked: false, declaredAt: null });
 export interface SessionRecord {
   version: string;
   sessionId?: string;
@@ -37,6 +45,9 @@ export interface SessionRecord {
   encodingSecond: number | null;
   recallSecond: number | null;
   recording: string;
+  sourceRecording?: string;
+  importedForReview?: boolean;
+  handoff?: HandoffReview;
 }
 export function parseAge(years: string, months: string): number | null {
   if (!/^\d+$/.test(years) || !/^\d+$/.test(months)) return null;
@@ -51,8 +62,24 @@ export function validCorrectedAge(chronological: number | null, corrected: strin
 export function emptyObservation(id: string, phase: number, second: number): Observation {
   return { id, phase, task: "", response: "", outcome: "", assistance: "", quality: "", clip: "", videoTime: "", applicationSecond: second };
 }
+export function observationIssues(o: Observation): string[] {
+  const issues: string[] = [];
+  if (!o.task.trim()) issues.push("Informe a tarefa.");
+  if (!o.response.trim()) issues.push("Descreva o fato ou a limitação; não complete por suposição.");
+  if (!o.outcome) issues.push("Selecione a categoria observada.");
+  if (["V", "M", "A", "NA"].includes(o.outcome) && !o.assistance.trim()) issues.push("Descreva repetição, ajuda, adaptação ou motivo da não aplicação.");
+  if (o.outcome && o.outcome !== "NA" && !o.quality) issues.push("Confira a qualidade audiovisual ou marque não avaliável.");
+  if (o.videoTime.trim() && !/^(?:[0-5]?[0-9]):[0-5][0-9]$/.test(o.videoTime.trim())) issues.push("Use minuto:segundo, por exemplo 01:20; não use horário da aplicação como trecho verificado.");
+  if (o.videoTime.trim() && !o.clip.trim()) issues.push("Identifique o clipe ao informar um tempo no vídeo.");
+  return issues;
+}
 export function usableObservation(o: Observation): boolean {
-  return Boolean(o.task.trim() && o.response.trim() && o.outcome);
+  return observationIssues(o).length === 0;
+}
+/** Editing a description later must not erase the original application timestamp. */
+export function amendObservation(o: Observation, patch: Partial<Observation>, afterEnd: boolean): Observation {
+  return { ...o, ...patch, id: o.id, phase: o.phase, applicationSecond: o.applicationSecond,
+    recordedAfterEnd: o.recordedAfterEnd, editedAfterEnd: afterEnd || o.editedAfterEnd };
 }
 export function exportFilename(code: string, extension: "txt" | "json" | "webm" | "mp4", sessionId = ""): string {
   const safe = code.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32) || "sem-codigo";
@@ -77,6 +104,7 @@ export function makeReport(record: SessionRecord): string {
     `Prono autorizado pela equipe: ${c.proneAllowed ? "sim, apenas se acordado e tolerado" : "não; omitir posicionamento de bruços"}`,
     `Duração da aplicação: ${clock(record.durationSeconds)}. Encerramento: ${record.endReason || "em andamento"}.`,
     `Captação: ${record.recording}`,
+    ...(record.importedForReview ? ["JSON reaberto apenas para revisão. Nenhum vídeo foi reaberto, transmitido ou analisado pelo aplicativo.", `Captação descrita no registro de origem (não verificada nesta sessão): ${record.sourceRecording || "Não informada"}`] : []),
     "Os horários do cronômetro são da aplicação, não comprovam um trecho de vídeo. Clipe/tempo abaixo são referências digitadas pela aplicadora, ainda não verificadas.",
     "",
   ];
@@ -91,14 +119,19 @@ export function makeReport(record: SessionRecord): string {
         `Qualidade referida pela aplicadora: ${o.quality || "Não verificada"}`,
         `Referência audiovisual informada: clipe ${textOrMissing(o.clip)} · ${textOrMissing(o.videoTime)}`,
         o.recordedAfterEnd ? "Anotação realizada após o encerramento; não atribuir este horário à execução da tarefa." : `Registro iniciado aos ${clock(o.applicationSecond)} da aplicação.`,
+        ...(o.editedAfterEnd ? ["Descrição complementada ou corrigida após a coleta; o horário e a origem da anotação inicial foram preservados."] : []),
         ...(o.modelInInstruction ? ["Esta tarefa inclui modelo na proposta inicial; não confundir cópia/execução após modelo previsto com produção espontânea."] : []),
-        ...(usableObservation(o) ? [] : ["Registro incompleto: completar tarefa, fato e categoria antes da revisão clínica."]));
+        ...observationIssues(o).map((issue) => `Registro incompleto: ${issue}`));
     });
     lines.push("");
   });
   const interval = record.encodingSecond !== null && record.recallSecond !== null && record.recallSecond >= record.encodingSecond
     ? `${record.recallSecond - record.encodingSecond} segundos` : "não medido";
   if (c.chronologicalMonths >= 72) lines.push(`Intervalo entre registro inicial e evocação marcado pela aplicadora: ${interval}. Interpretar somente se o registro inicial foi documentado.`, "");
+  const h = record.handoff;
+  lines.push("CONFERÊNCIA DECLARADA PELA APLICADORA — NÃO É RECIBO DE ENVIO",
+    `Registros/blocos revistos: ${h?.recordsReviewed ? "declarado" : "não declarado"}. Áudio/enquadramento ou indisponibilidade conferidos: ${h?.mediaReviewed ? "declarado" : "não declarado"}. Arquivos exportados e conferidos: ${h?.filesChecked ? "declarado" : "não declarado"}.`,
+    h?.declaredAt ? `Encaminhamento declarado em ${h.declaredAt} (horário do dispositivo, não autenticado). Não comprova recebimento, arquivamento ou revisão médica.` : "Encaminhamento não declarado nesta revisão.", "");
   lines.push("RELATO DO RESPONSÁVEL — NÃO É ACHADO OBSERVADO", textOrMissing(c.familyReport), "",
     "ALCANCE E LIMITES", "Resumo montado exclusivamente a partir dos registros da aplicadora. Nenhuma análise automática de vídeo, inferência diagnóstica, escore, percentil ou idade cognitiva foi realizada.",
     "Força segmentar, tônus, reflexos, sensibilidade e exame neurológico completo não foram examinados por este roteiro. Ausência de alteração na amostra não exclui dificuldade clínica.",

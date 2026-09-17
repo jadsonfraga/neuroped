@@ -123,3 +123,43 @@ Primeira execução integral desta rodada: run `35239850769`, artefato `10505021
 Workflow permanente `.github/workflows/obs10.yml` é somente leitura. Ferramentas temporárias de transferência/integração não fazem parte da entrega. Não remover assertivas, aumentar baseline ou usar saltos para aparentar aprovação.
 
 Publicação segue os gates existentes: Cloudflare Pages/Functions é canônico, Vercel é espelho. Branch/PR/build não equivalem a publicação; confirmar merge, deploy e SHA servido. **Rollback:** reverter exclusivamente a PR #896; nenhuma migração ou persistência nova a desfazer. Arquivos exportados permanecem sob a política da clínica.
+
+## Consolidação v1.2 — revisão e continuidade da documentação
+
+A v1.2 preserva os 13 kits ilustrados, os 145 cartões e os tempos da v1.1. Não altera expectativas clínicas nem acrescenta pontos de corte. O acréscimo é operacional: preparação → coleta de até dez minutos → revisão por bloco → exportação → conferência declarada.
+
+### Entrega à consulta
+
+Após encerrar, a assistente encontra seis cartões de revisão, com registros preenchidos, registros livres, itens a completar e os nomes dos cartões sem marcação guiada. Os números medem somente a documentação, nunca o desempenho da criança. Um registro livre não é equiparado automaticamente a um cartão. Cartão sem marcação permanece como tal: não se presume não aplicação ou habilidade ausente.
+
+A conferência sinaliza ausência de tarefa, fato, categoria, ajuda ou motivo quando requerido, qualidade audiovisual dos registros aplicados e formato de minuto/segundo com identificação do clipe. Também aponta divergência entre tarefa marcada como aplicada e restrições de idade, prono não autorizado ou material declarado ausente. Não julga o conteúdo clínico. Um trecho pode ser explicitamente não avaliável; nenhuma aparência de normalidade é inserida automaticamente.
+
+Exportação parcial permanece disponível, inclusive quando há pendências. O encaminhamento só pode ser declarado na interface após haver registros sem essas pendências e confirmação dos blocos, áudio/enquadramento ou indisponibilidade e arquivos exportados/conferidos. A declaração é da aplicadora, com horário não autenticado do dispositivo; não comprova envio, recebimento, arquivamento ou revisão pelo médico. Alterações em registros ou código desfazem as confirmações. Reexportar após confirmar registra a declaração no JSON e no texto.
+
+### Reabrir JSON institucional para revisão
+
+1. Na preparação, em **Reabrir um registro exportado**, selecionar o JSON OBS-10 local, não o vídeo.
+2. Conferir código, faixa, versão e tempo mostrados. Confirmar **Abrir somente para revisão**; cancelar preserva a preparação.
+3. O registro reabre encerrado. Não há gravação, reinício de cronômetro ou herança de aceite. Vídeo deve ser acessado separadamente no fluxo institucional. O texto original sobre captação fica rotulado como declaração de origem não verificada.
+4. Conferir e complementar a documentação já existente, preservando origem, sessão e instante inicial. Exportar o resultado. O JSON não autentica a origem ou a veracidade clínica de seus dados.
+
+Leitura estritamente local, até 4 MB e 200 registros; versões aceitas 1.0.0, 1.1.0 e 1.2.0. Esquema, tipos, limites, idade/faixa, IDs únicos, vínculo tarefa/faixa/bloco e tempos são validados. Propriedades inesperadas, JSON inválido ou incompatível são recusados sem substituir os dados atuais. Textos são renderizados como texto, nunca como HTML. Sem upload, armazenamento automático, banco ou restauração de mídia. Não há recuperação do que não foi previamente exportado.
+
+Referências de engenharia: o atributo `accept` do seletor de arquivos é uma indicação, não validação (MDN: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept); avisos `beforeunload` não são garantidos em dispositivos móveis (MDN: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event). Por isso, esquema e limite são conferidos localmente e exportação continua necessária; não se promete recuperação após encerramento pelo sistema.
+
+### Correções de rastreabilidade
+
+Completar a descrição depois da coleta não transforma a anotação original em anotação criada depois. `applicationSecond` e `recordedAfterEnd` originais permanecem; `editedAfterEnd` identifica a complementação posterior. Registros livres recebem IDs sem colisão ao reabrir arquivos. O código institucional pode ser corrigido na revisão, sem alterar retrospectivamente idade ou duração.
+
+### Verificações da v1.2
+
+Comandos adicionais obrigatórios no workflow OBS-10:
+
+```sh
+node --import tsx tests/unit/obs10-review.test.ts
+node tests/e2e/obs10-review.mjs
+```
+
+O contrato unitário cobre importação das três versões, todos os 145 IDs guiados, campos/idades/tempos inválidos, limites, duplicação, propriedades inesperadas, texto incompleto preservado, mídia não reaberta, aceite zerado, horário original e edição posterior separados. A jornada de navegador usa o componente real compilado e autenticação/arquivos sintéticos: revisão, exportação parcial, pendências, declaração invalidada por edição, exportação/importação, arquivo inválido, cancelamento, versão antiga, IDs livres e acessibilidade desktop/celular. As jornadas v1.0 e v1.1 continuam obrigatórias; apenas a expectativa de versão atual é atualizada para 1.2.0.
+
+Resultados de execução, SHA e publicação ficam registrados na PR vinculada à issue #897. Não tomar uma alteração de documentação como prova de CI ou implantação. Rollback: reverter somente a PR desta consolidação, sem migração ou persistência nova.

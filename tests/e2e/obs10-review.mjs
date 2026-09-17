@@ -1,0 +1,134 @@
+/** Actual built route, synthetic login, explicit local files; no mocked React/session state. */
+import assert from "node:assert/strict";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chromium } from "playwright";
+import AxeBuilder from "@axe-core/playwright";
+import { startStaticServer, auditBrowserLaunchOptions, ACCEPTED_FIRST_VISIT_STORAGE } from "../../scripts/lib/browser-audit-runtime.mjs";
+import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
+const dir = process.env.OBS10_REVIEW_ARTIFACT_DIR || "/tmp/obs10-review";
+await mkdir(dir, { recursive: true });
+const server = await startStaticServer("dist/public", { port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }) });
+const browser = await chromium.launch(auditBrowserLaunchOptions());
+const context = await browser.newContext({ viewport: { width: 1440, height: 1080 }, acceptDownloads: true });
+await context.addInitScript((storage) => { for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value); }, ACCEPTED_FIRST_VISIT_STORAGE);
+const page = await context.newPage();
+const errors = [], writes = [], screens = [];
+let dismissNext = false;
+page.on("dialog", async (dialog) => { if (dismissNext) { dismissNext = false; await dialog.dismiss(); } else await dialog.accept(); });
+page.on("pageerror", (error) => errors.push(error.message));
+page.on("request", (request) => { if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method()) && /\/api\//.test(request.url()) && !/\/api\/auth\//.test(request.url())) writes.push(request.url()); });
+const button = (name) => page.getByRole("button", { name, exact: true });
+const field = (name) => page.getByLabel(name, { exact: true });
+const declaration = () => page.getByRole("checkbox", { name: "Conferi o arquivo exportado, identifiquei tarefas omitidas e encaminhei ao médico pelo fluxo institucional.", exact: true });
+async function prepare() {
+  await field("Anos completos").fill("7"); await field("Meses adicionais").fill("0");
+  await field("Código institucional, sem nome").fill("OBS12-SINTETICO");
+  await button("Separei o kit completo").click();
+  for (const box of await page.locator(".obs10-checklist input").all()) await box.check();
+}
+async function exportJSON(name) {
+  const promise = page.waitForEvent("download"); await button("Exportar JSON").click();
+  const download = await promise; await download.saveAs(`${dir}/${name}`);
+  return JSON.parse(await readFile(`${dir}/${name}`, "utf8"));
+}
+async function chooseJSON(data) {
+  await field("Arquivo JSON para revisão").setInputFiles({ name: "OBS12-SINTETICO.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(data)) });
+}
+async function screen(name) {
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, name);
+  const result = await new AxeBuilder({ page }).include(".obs10").analyze();
+  await writeFile(`${dir}/${name}-axe.json`, JSON.stringify(result.violations, null, 2));
+  assert.deepEqual(result.violations.map((v) => ({ id: v.id, targets: v.nodes.map((n) => n.target) })), [], name);
+  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
+  const board = page.getByTestId("obs10-review-board");
+  if (await board.count()) await board.screenshot({ path: `${dir}/${name}-painel.png` });
+  screens.push(name);
+}
+try {
+  await page.goto(`${server.origin}/#/avaliacao-pre-consulta-faixa-etaria`);
+  await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
+  await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+  await page.locator('[data-testid="login-form"] button[type="submit"]').click();
+  await page.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
+  await page.waitForFunction(() => { let n = document.querySelector('[data-testid="obs10-workspace"]'); while (n) { if (Number(getComputedStyle(n).opacity) < .99) return false; n = n.parentElement; } return true; });
+  await prepare();
+  await page.clock.install();
+  await button("Iniciar aplicação · 10 minutos").click();
+  await page.clock.runFor(150000);
+  await page.getByRole("button", { name: /3\. Linguagem e raciocínio/ }).click();
+  await button("+ Registrar uma tarefa deste bloco").click();
+  await field("Qual tarefa?").fill("Comando de teste ficticio");
+  await field("O que fez ou falou? Descreva literalmente").fill("Concluiu apos repetir uma vez.");
+  await field("Como respondeu?").selectOption("V");
+  await button("Encerrar antes").click();
+  assert.equal(await page.locator(".obs10-review-card").count(), 6);
+  assert.equal(await declaration().isDisabled(), true);
+  assert.match(await page.getByTestId("obs10-review-board").textContent(), /Descreva repetição/);
+  const partial = await exportJSON("01-parcial.json");
+  assert.equal(partial.observations[0].recordedAfterEnd, false);
+  const timestamp = partial.observations[0].applicationSecond;
+  await field("Ajuda, adaptação ou motivo de não aplicação").fill("Uma repeticao verbal; sem gesto.");
+  await field("Qualidade do trecho, conferida por você").selectOption("Parcial");
+  await field("Clipe (opcional)").fill("A");
+  await field("Tempo no vídeo (conferido)").fill("02:79");
+  assert.match(await page.getByTestId("obs10-review-board").textContent(), /Use minuto:segundo/);
+  await field("Tempo no vídeo (conferido)").fill("02:30");
+  await field("O que fez ou falou? Descreva literalmente").fill("Concluiu apos repetir uma vez. <script>window.injected=true</script>");
+  assert.equal(await page.evaluate(() => window.injected), undefined);
+  await page.getByRole("checkbox", { name: /^Revisei os seis blocos/ }).check();
+  await page.getByRole("checkbox", { name: /^Conferi áudio, enquadramento/ }).check();
+  await page.getByRole("checkbox", { name: /^Exportei e conferi os arquivos/ }).check();
+  assert.equal(await declaration().isEnabled(), true);
+  await declaration().check();
+  const complete = await exportJSON("02-revisado.json");
+  assert.equal(complete.version, "1.2.0");
+  assert.equal(complete.observations[0].applicationSecond, timestamp);
+  assert.equal(complete.observations[0].recordedAfterEnd, false);
+  assert.equal(complete.observations[0].editedAfterEnd, true);
+  assert.ok(complete.handoff.declaredAt);
+  await screen("01-conferencia-desktop");
+  await page.setViewportSize({ width: 390, height: 844 }); await screen("02-conferencia-celular");
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await field("O que fez ou falou? Descreva literalmente").fill("Descricao retificada apos revisar.");
+  assert.equal(await declaration().isChecked(), false);
+  assert.equal(await page.getByRole("checkbox", { name: /^Revisei os seis blocos/ }).isChecked(), false);
+  await button("Nova aplicação · limpar esta sessão").click();
+  await chooseJSON(complete);
+  await button("Abrir somente para revisão").waitFor();
+  await screen("03-importacao-conferida");
+  await button("Abrir somente para revisão").click();
+  assert.equal(await button("Iniciar aplicação · 10 minutos").count(), 0);
+  assert.equal(await button("Encerrar antes").count(), 0);
+  assert.equal(await page.locator(".obs10-camera video, .obs10-video-result video").count(), 0);
+  assert.equal(await declaration().isChecked(), false);
+  const reopened = await exportJSON("03-reaberto.json");
+  assert.equal(reopened.sessionId, complete.sessionId);
+  assert.equal(reopened.durationSeconds, complete.durationSeconds);
+  assert.equal(reopened.observations[0].applicationSecond, timestamp);
+  assert.equal(reopened.recording.includes("não incluído no JSON"), true);
+  assert.equal(reopened.sourceRecording, complete.recording);
+  assert.equal(reopened.handoff.declaredAt, null);
+  await button("Revisar bloco 3").click();
+  await button("+ Registrar uma tarefa deste bloco").click();
+  assert.equal(await page.locator(".obs10-observation").count(), 2, "new manual ID cannot collide after reimport");
+  await screen("04-revisao-sem-reiniciar");
+  await button("Nova aplicação · limpar esta sessão").click();
+  await prepare();
+  await field("Código institucional, sem nome").fill("PRESERVAR-SINTETICO");
+  await chooseJSON({ ...complete, observations: [complete.observations[0], complete.observations[0]] });
+  await page.getByTestId("obs10-import").getByRole("alert").waitFor();
+  assert.equal(await field("Código institucional, sem nome").inputValue(), "PRESERVAR-SINTETICO");
+  assert.equal(await page.locator(".obs10-summary").count(), 0);
+  await chooseJSON({ ...complete, version: "1.1.0" });
+  await button("Abrir somente para revisão").waitFor();
+  dismissNext = true; await button("Abrir somente para revisão").click();
+  assert.equal(await field("Código institucional, sem nome").inputValue(), "PRESERVAR-SINTETICO");
+  await button("Abrir somente para revisão").click();
+  assert.match(await page.locator(".obs10-summary").textContent(), /v1\.1\.0/);
+  assert.deepEqual(errors, []); assert.deepEqual(writes, []);
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["partial-export", "per-block-review", "assistance-and-time-validation", "original-timestamp-preserved", "explicit-handoff-invalidated", "local-json-roundtrip", "no-camera-restoration", "invalid-import-preserves-session", "cancelled-import", "legacy-version", "unique-manual-ids", "escaped-content"] }, null, 2));
+  console.log("OBS-10 v1.2: real review/export/import journey passed; no new clinical API or video processing.");
+} catch (error) {
+  await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });
+  await writeFile(`${dir}/failure.txt`, String(error.stack || error)); throw error;
+} finally { await context.close(); await browser.close(); await server.close(); }

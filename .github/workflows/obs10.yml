@@ -10,8 +10,10 @@ on:
       - 'client/src/security/**'
       - 'tests/unit/obs10.test.ts'
       - 'tests/unit/obs10-practical.test.ts'
+      - 'tests/unit/obs10-review.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
+      - 'tests/e2e/obs10-review.mjs'
       - 'docs/features/obs10.md'
       - '.github/workflows/obs10.yml'
   push:
@@ -22,8 +24,10 @@ on:
       - 'client/src/security/**'
       - 'tests/unit/obs10.test.ts'
       - 'tests/unit/obs10-practical.test.ts'
+      - 'tests/unit/obs10-review.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
+      - 'tests/e2e/obs10-review.mjs'
       - '.github/workflows/obs10.yml'
 permissions:
   contents: read
@@ -51,6 +55,7 @@ jobs:
         run: |
           node --import tsx tests/unit/obs10.test.ts
           node --import tsx tests/unit/obs10-practical.test.ts
+          node --import tsx tests/unit/obs10-review.test.ts
           npm run test:sonda
           npm run audit:navigation
           npm run test:operations
@@ -67,6 +72,10 @@ jobs:
         env:
           OBS10_PRACTICAL_ARTIFACT_DIR: /tmp/obs10-practical
         run: node tests/e2e/obs10-practical.mjs
+      - name: Review, local JSON continuity and declared handoff
+        env:
+          OBS10_REVIEW_ARTIFACT_DIR: /tmp/obs10-review
+        run: node tests/e2e/obs10-review.mjs
       - name: Preserve synthetic screenshots and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -75,5 +84,6 @@ jobs:
           path: |
             /tmp/obs10-proof
             /tmp/obs10-practical
+            /tmp/obs10-review
           if-no-files-found: ignore
           retention-days: 7
