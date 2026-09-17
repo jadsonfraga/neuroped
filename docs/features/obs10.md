@@ -2,7 +2,7 @@
 
 **Versão da interface 1.3.0 · 17/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
-Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Fachetária**. Rótulo preservado conforme solicitação do proprietário. A Sonda Dez permanece independente.
+Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
 
 ## 1. Antes da criança chegar: idade e kit
 
