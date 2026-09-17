@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, resolve, sep } from "node:path";
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { gzipSync } from "node:zlib";
 
 const MIME = {
@@ -205,21 +206,122 @@ export async function startStaticServer(root, options = 4173) {
 }
 
 /**
+ * Diretórios de browser gerenciado, na ordem em que um Chromium instalado na
+ * imagem costuma aparecer. `PLAYWRIGHT_BROWSERS_PATH=0` significa "ao lado do
+ * pacote" e não é um diretório de busca.
+ */
+function managedBrowserRoots() {
+  const configured = process.env.PLAYWRIGHT_BROWSERS_PATH?.trim();
+  const roots = [];
+  if (configured && configured !== "0") roots.push(configured);
+  roots.push("/opt/pw-browsers", "/ms-playwright");
+  return roots.filter((root, index) => root && roots.indexOf(root) === index && existsSync(root));
+}
+
+/** Chromium completo antes do headless shell: o shell não serve a todos os gates. */
+const MANAGED_BINARIES = [
+  ["chromium-", join("chrome-linux", "chrome")],
+  ["chromium-", join("chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium")],
+  ["chromium_headless_shell-", join("chrome-headless-shell-linux64", "chrome-headless-shell")],
+];
+
+const SYSTEM_BINARIES = [
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/google-chrome",
+  "/usr/bin/google-chrome-stable",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  // Máquina Windows de trabalho: antes dois testes e2e traziam este caminho
+  // cada um por conta própria; agora ele vale para todos os gates.
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+];
+
+/** Revisão mais alta primeiro: `chromium-1194` vence `chromium-985`. */
+function revisionOf(name) {
+  const digits = /-(\d+)$/.exec(name);
+  return digits ? Number(digits[1]) : 0;
+}
+
+/**
+ * Melhor binário de browser gerenciado sob `roots`, ou `null`.
+ * Exportada para que a regressão possa exercitar a descoberta com uma árvore
+ * sintética, sem depender do que a máquina tem instalado.
+ */
+export function discoverManagedChromium(roots = managedBrowserRoots()) {
+  for (const [prefix, relative] of MANAGED_BINARIES) {
+    const candidates = [];
+    for (const root of roots) {
+      if (!existsSync(root)) continue;
+      for (const entry of readdirSync(root, { withFileTypes: true })) {
+        if (!entry.isDirectory() || !entry.name.startsWith(prefix)) continue;
+        const binary = join(root, entry.name, relative);
+        if (existsSync(binary)) candidates.push({ binary, revision: revisionOf(entry.name) });
+      }
+    }
+    candidates.sort((a, b) => b.revision - a.revision);
+    if (candidates.length) return candidates[0].binary;
+  }
+  return null;
+}
+
+/**
+ * Caminho do Chromium usado por todas as auditorias de navegador, ou `null`
+ * quando não existe nenhum.
+ *
+ * Antes cada gate resolvia isto sozinho e só enxergava duas fontes: a variável
+ * `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` e o browser gerenciado exatamente na
+ * revisão que o Playwright instalado espera. Imagens que já trazem um Chromium
+ * em outra revisão (o caso de runners com download de browser desligado) caíam
+ * no caminho "Chromium indisponível" — e gates que ignoram o browser ausente
+ * ficavam verdes sem medir nada. Procurar o binário que a imagem realmente tem
+ * é o que faz a prova visual existir nesses ambientes.
+ *
+ * A variável explícita continua tendo precedência absoluta, inclusive quando
+ * aponta para um caminho inexistente: o erro do launch é a resposta correta a
+ * uma configuração errada, não um fallback silencioso.
+ */
+export function resolveAuditChromiumPath() {
+  const configured = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  if (configured) return configured;
+
+  try {
+    const { chromium } = createRequire(import.meta.url)("playwright");
+    const managed = chromium.executablePath();
+    if (managed && existsSync(managed)) return managed;
+  } catch {
+    // Playwright ausente ou sem browser registrado: as buscas abaixo decidem.
+  }
+
+  const discovered = discoverManagedChromium();
+  if (discovered) return discovered;
+
+  for (const variable of ["CHROME_PATH", "LIGHTHOUSE_CHROME_PATH"]) {
+    const candidate = process.env[variable]?.trim();
+    if (candidate && existsSync(candidate)) return candidate;
+  }
+
+  return SYSTEM_BINARIES.find((binary) => existsSync(binary)) ?? null;
+}
+
+/**
  * Opções de launch do Chromium das auditorias.
  *
- * `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` — mesma variável já usada por
- * `scripts/audit-a11y.mjs` — aponta para um Chromium presente na imagem quando o
- * runner não pode baixar o browser gerenciado. Sem a variável o comportamento é
- * exatamente o anterior: o Chromium do Playwright.
+ * O executável vem de `resolveAuditChromiumPath()`. Quando nada é encontrado o
+ * launch segue sem `executablePath` para que o Playwright produza a sua própria
+ * mensagem de instalação — nenhum gate deve inventar um binário.
  */
 export function auditBrowserLaunchOptions(extra = {}) {
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  const executablePath = resolveAuditChromiumPath();
+  const { args: extraArgs = [], ...rest } = extra;
+  // Flags de container só fazem sentido com binário resolvido; os `args` do
+  // chamador (microfone virtual, política de autoplay…) somam-se, não substituem.
+  const args = executablePath ? ["--no-sandbox", "--disable-dev-shm-usage", ...extraArgs] : extraArgs;
   return {
     headless: true,
-    ...(executablePath
-      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-      : {}),
-    ...extra,
+    ...(executablePath ? { executablePath } : {}),
+    ...(args.length ? { args } : {}),
+    ...rest,
   };
 }
 

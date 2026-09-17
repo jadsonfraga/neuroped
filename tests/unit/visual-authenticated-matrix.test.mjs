@@ -46,6 +46,9 @@ for (const required of [
   "Escalas",
   "Filtro",
   "Documentos",
+  // A captura de consulta é fluxo clínico crítico: perder a prova visual dela
+  // outra vez não pode passar em silêncio.
+  "Escuta",
   "Operação",
   "Assistência",
   "Sessão",

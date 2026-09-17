@@ -400,6 +400,26 @@ const CASES = [
     expect: ["#main-content form, #main-content input"], forbid: [LOGIN_FORM],
   },
 
+  // ── 7b. Escuta Clínica ──────────────────────────────────────────────────
+  // A captura de consulta era a única superfície clínica sem nenhuma prova
+  // visual autenticada — justamente a que está em correção ativa. Aqui se
+  // certifica o enquadramento da página em três larguras e, principalmente,
+  // que o aviso de piloto e o estado do processamento continuam visíveis
+  // antes de qualquer botão de gravar: um layout que empurre esse aviso para
+  // fora da primeira dobra é regressão clínica, não estética.
+  {
+    id: "escuta-desktop-light", group: "Escuta", route: "/escuta-clinica", viewport: "desktop", theme: "light",
+    expect: [".escuta-page", ".escuta-notice", ".escuta-status"], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "escuta-mobile-light", group: "Escuta", route: "/escuta-clinica", viewport: "mobile", theme: "light",
+    expect: [".escuta-page", ".escuta-notice", ".escuta-recorder"], forbid: [LOGIN_FORM],
+  },
+  {
+    id: "escuta-tablet-dark", group: "Escuta", route: "/escuta-clinica", viewport: "tablet", theme: "dark",
+    expect: [".escuta-page", ".escuta-notice"], forbid: [LOGIN_FORM],
+  },
+
   // ── 8. Agenda e conta ───────────────────────────────────────────────────
   {
     id: "agenda-desktop-light", group: "Operação", route: "/agenda", viewport: "desktop", theme: "light",

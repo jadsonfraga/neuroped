@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const DIST = "dist/public";
 const RED_CLINIC = "tenant-red-synthetic";
@@ -367,10 +368,7 @@ async function main() {
 
   const server = await startServer();
   const base = `http://127.0.0.1:${server.address().port}`;
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-  const browser = await chromium.launch(
-    executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
-  );
+  const browser = await chromium.launch(auditBrowserLaunchOptions());
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
 

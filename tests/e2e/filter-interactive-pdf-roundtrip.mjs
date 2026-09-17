@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 import { PDFDocument } from "pdf-lib";
 
 const DIST = "dist/public";
@@ -180,12 +181,7 @@ async function main() {
 
   const server = await startStaticServer();
   const base = `http://127.0.0.1:${server.address().port}`;
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-  const browser = await chromium.launch(
-    executablePath
-      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-      : undefined,
-  );
+  const browser = await chromium.launch(auditBrowserLaunchOptions());
   const page = await browser.newPage({
     viewport: { width: 1365, height: 900 },
     acceptDownloads: true,

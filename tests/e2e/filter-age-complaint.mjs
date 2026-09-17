@@ -1,9 +1,8 @@
 ﻿import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { ACCEPTED_FIRST_VISIT_STORAGE, ensureClientBuild, startStaticServer } from "../../scripts/lib/browser-audit-runtime.mjs";
+import { auditBrowserLaunchOptions, ACCEPTED_FIRST_VISIT_STORAGE, ensureClientBuild, startStaticServer } from "../../scripts/lib/browser-audit-runtime.mjs";
 const server = await startStaticServer(ensureClientBuild(process.cwd()), 0);
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-const browser = await chromium.launch(executablePath ? {executablePath} : undefined);
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 try {
   for (const width of [390, 1280]) {
     const context = await browser.newContext({viewport:{width,height:900},reducedMotion:"reduce"});

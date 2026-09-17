@@ -6,22 +6,23 @@ import {
   ensureClientBuild,
   isMissingBrowserError,
   startStaticServer,
+  auditBrowserLaunchOptions,
 } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const repoRoot = process.cwd();
 const dist = ensureClientBuild(repoRoot);
 const server = await startStaticServer(dist, 0);
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 let browser;
 try {
-  browser = await chromium.launch(
-    executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
-  );
+  browser = await chromium.launch(auditBrowserLaunchOptions());
 } catch (error) {
   await server.close();
   if (isMissingBrowserError(error)) {
-    console.log("⊘ Missão Saúde: Chromium indisponível; o contrato estático permanece obrigatório no gate de release.");
-    process.exit(0);
+    // Este gate mede acessibilidade real da Missão Saúde e faz parte de
+    // verify:release. Sair com 0 sem browser era um verde que não mediu nada;
+    // o contrato estático é complemento, não substituto. Falha fechado.
+    console.error("✗ Missão Saúde: Chromium indisponível; o gate não pode ser medido e não passa por omissão.");
+    process.exit(1);
   }
   throw error;
 }

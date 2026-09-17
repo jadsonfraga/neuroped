@@ -1,12 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const origins = (process.env.PUBLISHED_ORIGINS ?? "https://neuroped.pages.dev,https://superneuroped.vercel.app,https://jadsonfraga.github.io/neuroped/")
   .split(",")
   .map((value) => value.trim().replace(/\/$/, ""))
   .filter(Boolean);
 const routes = ["/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/missao-saude", "/#/eletroencefalograma", "/#/prontuario"];
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 const result = { startedAt: new Date().toISOString(), origins, environments: [] };
 const e2eEmail = process.env.PUBLISHED_E2E_EMAIL?.trim();
 const e2ePassword = process.env.PUBLISHED_E2E_PASSWORD;
@@ -96,7 +96,7 @@ async function inspectEnvironment(browser, origin) {
 }
 
 async function main() {
-  const browser = await chromium.launch(executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined);
+  const browser = await chromium.launch(auditBrowserLaunchOptions());
   try {
     for (const origin of origins) result.environments.push(await inspectEnvironment(browser, origin));
   } finally {
