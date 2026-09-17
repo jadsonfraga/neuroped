@@ -1,0 +1,111 @@
+name: OBS-10 v1.1 scoped integration and proof
+on:
+  push:
+    branches: [feat/obs10-assistente-visual-v11]
+    paths: ['.github/workflows/obs10-v11-integrate.yml']
+permissions:
+  contents: read
+jobs:
+  integrate-and-prove:
+    if: github.ref == 'refs/heads/feat/obs10-assistente-visual-v11'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/obs10-assistente-visual-v11
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify exact source patch and integrate only this feature branch
+        run: |
+          python3 - <<'PY'
+          import base64, bz2, hashlib, pathlib, re
+          expected = [
+            '3fe24fb2c4128ca040276d8eafc80d0d0149987c17cb4d88326e06fbb070f027',
+            'f0ae53d816dca0b352bb3e8c68e4615d2de9ee1a987f35d4d096893ba28d9c81',
+            'd805adb6c78a0ff759783662ac749d74562d811775ce4ee1c023b1a7e935d543',
+            '644e66aecba51cae4b14d6cfce0430b3d426e7f9022eb53236e885b5d0eb0bca',
+            '3376af2ca360110617e6b7cf70fb108bbf9fa61d707cd6c7fb8d5c72e4808e64',
+            '01c379c9ff0302a3a9f10e3658a2fd7cb2b31a6ebfef988bdf6846c2827d3686',
+            'ecf75be5b7e701c96a0d66caec7545eb76924305090ee5f631ebeac0147343fa',
+            '4f1cff6ba8335097eebc5cc22585174b07181bf9a9c001ff1366a66acabfbe74',
+            '06b35e6c1897fdc718177a6e68bf6833c3759cb450e90c8509947770d8929edd',
+          ]
+          parts = sorted(pathlib.Path('.github/obs10-transfer').glob('*.b64'))
+          assert [p.name for p in parts] == [f'{i:03}.b64' for i in range(9)]
+          strings = [p.read_text().strip() for p in parts]
+          for part, value, digest in zip(parts, strings, expected):
+              actual = hashlib.sha256(value.encode()).hexdigest()
+              assert actual == digest, f'Segment mismatch {part.name}: {actual}'
+          patch = bz2.decompress(base64.b64decode(''.join(strings), validate=True))
+          assert hashlib.sha256(patch).hexdigest() == '5d8317774c3f0d49794c44d44c1d83040e84b0049c48fb31b5108804cbc82ec4'
+          allowed = {
+            '.github/workflows/obs10.yml',
+            'client/src/features/obs10/PracticalGuide.tsx',
+            'client/src/features/obs10/PracticalVisuals.tsx',
+            'client/src/features/obs10/obs10.css',
+            'client/src/features/obs10/practical.ts',
+            'client/src/features/obs10/protocol.ts',
+            'client/src/features/obs10/safety.ts',
+            'client/src/features/obs10/session.ts',
+            'client/src/features/obs10/useExitGuard.ts',
+            'client/src/features/obs10/useLocalRecorder.ts',
+            'client/src/pages/pre-consulta-obs10.tsx',
+            'docs/features/obs10.md',
+            'tests/e2e/obs10-practical.mjs',
+            'tests/e2e/obs10.mjs',
+            'tests/unit/obs10-practical.test.ts',
+          }
+          paths = re.findall(r'^diff --git a/(\S+) b/(\S+)$', patch.decode(), re.M)
+          assert len(paths) == len(allowed) and all(a == b and a in allowed for a,b in paths)
+          assert {a for a,b in paths} == allowed
+          pathlib.Path('/tmp/obs11.patch').write_bytes(patch)
+          print('15 source paths and patch checksum verified; no unrelated writes.')
+          PY
+          git apply --check /tmp/obs11.patch
+          git apply /tmp/obs11.patch
+          git diff --check
+          git add .github/workflows/obs10.yml client/src/features/obs10 client/src/pages/pre-consulta-obs10.tsx docs/features/obs10.md tests/e2e/obs10.mjs tests/e2e/obs10-practical.mjs tests/unit/obs10-practical.test.ts
+          git rm -r .github/obs10-transfer .github/workflows/obs10-review-workspace.yml .github/workflows/obs10-v11-integrate.yml
+          git -c user.name='NeuroPed Automation' -c user.email='actions@users.noreply.github.com' commit -m 'feat(obs10): consolidate illustrated age kits, task cards and safe assistant workflow'
+          git push origin HEAD:feat/obs10-assistente-visual-v11
+          git rev-parse HEAD
+      - run: npm ci
+      - name: Types, lint, content and lifecycle contracts
+        run: |
+          npm run check
+          npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
+          node --import tsx tests/unit/obs10.test.ts
+          node --import tsx tests/unit/obs10-practical.test.ts
+          node tests/unit/browser-audit-chromium-resolution.test.mjs
+          npm run audit:design
+          npm run test:sonda
+          npm run audit:navigation
+          npm run test:operations
+      - name: Production build without open-access bypass
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Preserve original OBS-10 browser journey
+        env:
+          OBS10_ARTIFACT_DIR: /tmp/obs10-proof
+        run: node tests/e2e/obs10.mjs
+      - name: Verify illustrated assistant flow and actual recorder lifecycle
+        env:
+          OBS10_PRACTICAL_ARTIFACT_DIR: /tmp/obs10-practical
+        run: node tests/e2e/obs10-practical.mjs
+      - name: Preserve synthetic verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-v11-proof
+          path: |
+            /tmp/obs10-proof
+            /tmp/obs10-practical
+          if-no-files-found: ignore
+          retention-days: 7
