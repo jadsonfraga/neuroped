@@ -98,6 +98,7 @@ assert.equal(
 );
 
 const REQUIRED_SENSITIVE_ROUTES = [
+  "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/assinatura-digital",
   "/documentos",
@@ -193,7 +194,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : (path === "/recepcao" || path === "/testes-diretos") && userRole === "operator"
+        : (path === "/recepcao" || path === "/testes-diretos" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -453,3 +454,8 @@ assert.equal(
 console.log(
   "✓ rotas remotas falham fechadas, preservam reader inventariado e aplicam RBAC defensivo",
 );
+
+// OBS-10 is an exact operator exception, never a public or descendant route.
+for (const path of ["/avaliacao-pre-consulta-faixa-etaria/interno", "/avaliacao-pre-consulta-faixa-etaria-extra"]) {
+  assert.equal(decideRouteAccess({ path, accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "operator" }), "forbidden");
+}

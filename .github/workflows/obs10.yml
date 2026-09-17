@@ -1,0 +1,68 @@
+name: OBS-10 clinical observation workflow
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'client/src/App.tsx'
+      - 'client/src/data/navigation.ts'
+      - 'client/src/security/**'
+      - 'tests/unit/obs10.test.ts'
+      - 'tests/e2e/obs10.mjs'
+      - 'docs/features/obs10.md'
+      - '.github/workflows/obs10.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'client/src/security/**'
+      - 'tests/unit/obs10.test.ts'
+      - 'tests/e2e/obs10.mjs'
+      - '.github/workflows/obs10.yml'
+permissions:
+  contents: read
+concurrency:
+  group: obs10-contract-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: TypeScript and lint
+        run: |
+          npm run check
+          npx eslint client/src/features/obs10/*.ts client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10.test.ts --max-warnings=0
+      - name: Age, clock, factual reporting, authorization and existing regressions
+        run: |
+          node --import tsx tests/unit/obs10.test.ts
+          npm run test:sonda
+          npm run audit:navigation
+          npm run test:operations
+      - name: Production build (no open-access bypass)
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Real route browser journey with synthetic credentials and media
+        env:
+          OBS10_ARTIFACT_DIR: /tmp/obs10-proof
+        run: node tests/e2e/obs10.mjs
+      - name: Preserve synthetic screenshots and results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-verification
+          path: /tmp/obs10-proof
+          if-no-files-found: ignore
+          retention-days: 7
