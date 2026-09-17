@@ -3,7 +3,7 @@
  * Durations, commands and response categories are operational, never normative scores.
  */
 export const OBS10_VERSION = "1.1.0";
-export const OBS10_TITLE = "Avaliação de Pré-Consulta por Fachetária";
+export const OBS10_TITLE = "Avaliação de Pré-Consulta por Faixa Etária";
 export const OBS10_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
 export const MAX_SECONDS = 600;
 export const PHASES = [

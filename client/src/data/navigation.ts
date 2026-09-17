@@ -59,7 +59,7 @@ export interface NavigationMatch {
  */
 const obs10Navigation: NavItem = {
   href: "/avaliacao-pre-consulta-faixa-etaria",
-  label: "Avaliação de Pré-Consulta por Fachetária",
+  label: "Avaliação de Pré-Consulta por Faixa Etária",
   icon: Baby,
   tone: "priority",
   description: "OBS-10 · 13 faixas · guia da assistente",
