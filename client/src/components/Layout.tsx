@@ -1033,7 +1033,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span
                 className={`np-side-session__id ${collapsed ? "lg:hidden" : ""}`}
               >
-                <span className="np-side-session__name">{user.name}</span>
+                <span className="np-side-session__name" title={user.name}>{user.name}</span>
                 <span className="np-side-session__role">
                   {sessionRoleLabels[user.role] ?? user.role}
                 </span>
