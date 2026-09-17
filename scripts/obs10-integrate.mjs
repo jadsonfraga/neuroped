@@ -16,5 +16,8 @@ if (!source.includes('const stopRecording = media.stop;')) {
   }
 }
 source = source.replace('emptyObservation(String(++sequence.current), step, nowSecond())', 'emptyObservation(String(++sequence.current), step, running ? nowSecond() : elapsed)');
+source = source.replace('<select value={entry.outcome}', '<select aria-label="Como respondeu?" value={entry.outcome}');
+source = source.replace('<select value={entry.quality}', '<select aria-label="Qualidade do trecho, conferida por você" value={entry.quality}');
+source = source.replace('Máximo de duas oportunidades; modelo apenas quando previsto.', 'Uma repetição verbal; uma demonstração somente quando prevista.');
 writeFileSync(path, source);
-console.log('OBS-10 callback and post-session timestamp corrected; checks remain mandatory.');
+console.log('OBS-10: accessible selector names and operational instructions refined; checks remain mandatory.');
