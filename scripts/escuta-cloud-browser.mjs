@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "./lib/browser-audit-runtime.mjs";
 
 // Cada espera nomeia o próprio passo. Sem isso, "waitForFunction: Timeout"
 // no CI não distingue login recusado de gravador que nunca partiu.
@@ -18,7 +19,7 @@ function first(promises) {
 
 /** Deployed frontend, virtual microphone with fictional speech, real APIs. No network interception. */
 export async function verifyCloudBrowser({origin,password,patientId,microphoneFile,audioSeconds,out}) {
-  const browser=await chromium.launch({headless:true,args:["--use-fake-device-for-media-stream","--use-fake-ui-for-media-stream",`--use-file-for-fake-audio-capture=${microphoneFile}`,"--autoplay-policy=no-user-gesture-required"]});
+  const browser=await chromium.launch(auditBrowserLaunchOptions({args:["--use-fake-device-for-media-stream","--use-fake-ui-for-media-stream",`--use-file-for-fake-audio-capture=${microphoneFile}`,"--autoplay-policy=no-user-gesture-required"]}));
   let page=null;
   try {
     const context=await browser.newContext({viewport:{width:1365,height:1000},permissions:["microphone"]});

@@ -11,12 +11,17 @@
  *    visual virava bloqueio externo permanente.
  * 2. O gate de contraste respondia a essa ausência com `process.exit(0)`.
  *    `verify:release` ficava verde tendo medido zero superfície — o "check
- *    verde via skip" que o AGENTS.md proíbe.
+ *    verde via skip" que o AGENTS.md proíbe. O e2e da Missão Saúde, também
+ *    no `verify:release`, fazia o mesmo.
+ * 3. A resolução estava copiada em 18 scripts de e2e e harness, cada um com
+ *    uma variação (sem flags de container, com caminho Windows fixo, sem
+ *    caminho nenhum). Os harnesses de microfone virtual da Escuta não
+ *    resolviam executável algum — daí o "harness bloqueado" da PR #855.
  *
- * Estas assertivas falham se qualquer um dos dois voltar.
+ * Estas assertivas falham se qualquer um dos três voltar.
  */
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,27 +95,51 @@ try {
     "nenhum caminho do gate de contraste pode devolver verde por omissão",
   );
 
-  // --- nenhum gate pode reabrir a resolução própria --------------------------
-  for (const file of [
-    "scripts/audit-a11y.mjs",
-    "scripts/audit-lighthouse.mjs",
-    "scripts/guards/audit-screens.mjs",
-    "scripts/guards/audit-surface-contrast.mjs",
-    "scripts/audit-visual-authenticated.mjs",
-    "scripts/audit-visual-proof.mjs",
-  ]) {
-    const source = read(file);
+  // --- os args do chamador somam-se aos flags de container -------------------
+  const merged = auditBrowserLaunchOptions({ args: ["--use-fake-device-for-media-stream"], headless: false });
+  assert.deepEqual(
+    merged.args,
+    ["--no-sandbox", "--disable-dev-shm-usage", "--use-fake-device-for-media-stream"],
+    "os harnesses de microfone virtual precisam manter seus flags E os de container",
+  );
+  assert.equal(merged.headless, false);
+
+  // --- nenhum ponto de entrada de navegador pode reabrir a resolução própria --
+  // Enumerado a partir do código, não de uma lista fixa: um 19º script com
+  // `chromium.launch` e resolução própria reprova aqui no dia em que nascer.
+  const launchSites = [];
+  function walk(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(mjs|js|ts)$/.test(entry.name) && readFileSync(full, "utf8").includes("chromium.launch(")) launchSites.push(full);
+    }
+  }
+  for (const root of ["scripts", "tests/e2e"]) walk(resolve(repoRoot, root));
+  assert.ok(launchSites.length >= 18, `esperava ao menos 18 pontos de launch, achei ${launchSites.length}`);
+  for (const file of launchSites) {
+    const source = readFileSync(file, "utf8");
+    const label = file.slice(repoRoot.length + 1);
     assert.ok(
       !source.includes("process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"),
-      `${file} deve resolver o Chromium pelo runtime compartilhado, não por leitura própria da variável`,
+      `${label} deve resolver o Chromium pelo runtime compartilhado, não por leitura própria da variável`,
     );
     assert.ok(
-      /auditBrowserLaunchOptions|resolveAuditChromiumPath/.test(source),
-      `${file} precisa usar a resolução compartilhada de Chromium`,
+      /chromium\.launch\(\s*auditBrowserLaunchOptions\(/.test(source),
+      `${label} precisa lançar o Chromium por auditBrowserLaunchOptions()`,
     );
   }
 
-  console.log("PASS browser-audit: descoberta na imagem, precedência explícita e contraste fail-closed");
+  // --- gates de release em navegador não podem passar por omissão -----------
+  for (const file of ["tests/e2e/missao-saude-accessibility.mjs", "tests/e2e/neuroped-acompanhamento.mjs"]) {
+    const source = read(file);
+    assert.ok(
+      !/process\.exit\(0\)|process\.exitCode\s*=\s*0/.test(source),
+      `${file} está em verify:release e não pode devolver verde sem medir`,
+    );
+  }
+
+  console.log(`PASS browser-audit: descoberta na imagem, precedência explícita, ${launchSites.length} pontos de launch na resolução compartilhada, gates fail-closed`);
 } finally {
   for (const key of ["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]) {
     if (key in savedEnv) process.env[key] = savedEnv[key];

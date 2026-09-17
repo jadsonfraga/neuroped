@@ -231,6 +231,10 @@ const SYSTEM_BINARIES = [
   "/usr/bin/google-chrome",
   "/usr/bin/google-chrome-stable",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  // Máquina Windows de trabalho: antes dois testes e2e traziam este caminho
+  // cada um por conta própria; agora ele vale para todos os gates.
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
 ];
 
 /** Revisão mais alta primeiro: `chromium-1194` vence `chromium-985`. */
@@ -309,12 +313,15 @@ export function resolveAuditChromiumPath() {
  */
 export function auditBrowserLaunchOptions(extra = {}) {
   const executablePath = resolveAuditChromiumPath();
+  const { args: extraArgs = [], ...rest } = extra;
+  // Flags de container só fazem sentido com binário resolvido; os `args` do
+  // chamador (microfone virtual, política de autoplay…) somam-se, não substituem.
+  const args = executablePath ? ["--no-sandbox", "--disable-dev-shm-usage", ...extraArgs] : extraArgs;
   return {
     headless: true,
-    ...(executablePath
-      ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-      : {}),
-    ...extra,
+    ...(executablePath ? { executablePath } : {}),
+    ...(args.length ? { args } : {}),
+    ...rest,
   };
 }
 
