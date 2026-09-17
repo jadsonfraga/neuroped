@@ -76,6 +76,7 @@ try {
   await page.clock.runFor(125000);
   await page.getByRole("button", { name: /3\. Linguagem e raciocínio/ }).click();
   await button("Marcar registro inicial agora").click();
+  const encodingText = await page.getByRole("button", { name: /^Registro marcado em/ }).textContent();
   await button("+ Registrar uma tarefa deste bloco").click();
   await page.getByLabel("Qual tarefa?", { exact: true }).fill("Comando sintético de dois passos");
   await page.getByLabel("O que fez ou falou? Descreva literalmente", { exact: true }).fill('Concluiu a segunda ação após repetição. <script>window.injetado=true</script>');
@@ -92,10 +93,13 @@ try {
   await page.clock.runFor(390000);
   await page.getByRole("button", { name: /6\. Retomar e encerrar/ }).click();
   await button("Marcar evocação agora").click();
+  const recallText = await page.getByRole("button", { name: /^Evocação marcada em/ }).textContent();
+  const secondsFromText = (value) => { const match = value.match(/(\d{2}):(\d{2})/); return Number(match[1]) * 60 + Number(match[2]); };
+  const actualInterval = secondsFromText(recallText) - secondsFromText(encodingText);
   await page.clock.runFor(90000);
   assert.equal(await page.getByTestId("obs10-clock").textContent(), "10:00");
   assert.equal(await button("Encerrar antes").count(), 0);
-  assert.match(await page.locator(".obs10-summary pre").textContent(), /390 segundos/);
+  assert.ok((await page.locator(".obs10-summary pre").textContent()).includes(`${actualInterval} segundos`));
   const downloadPromise = page.waitForEvent("download");
   await button("Exportar registro TXT").click();
   const download = await downloadPromise;

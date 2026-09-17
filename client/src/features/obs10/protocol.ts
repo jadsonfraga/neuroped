@@ -149,6 +149,7 @@ export function bandForMonths(months: number): AgeBand | undefined {
   return Number.isFinite(months) && months >= 0 ? AGE_BANDS.find((b) => months >= b.min && months < b.max) : undefined;
 }
 export function phaseForSeconds(seconds: number): number {
+  if (seconds >= MAX_SECONDS) return PHASES.length - 1;
   return Math.max(0, PHASES.findIndex((p) => seconds < p.end));
 }
 export function elapsedSeconds(start: number, now: number): number {

@@ -99,13 +99,14 @@ export default function PreConsultaObs10Page() {
   async function start() {
     if (!ready || !selectedBand || chrono === null || starting.current) return;
     starting.current = true;
+    if (!cameraEnabled) media.reset();
     if (cameraEnabled && !(await media.start())) { starting.current = false; return; }
     setContext((current) => ({ ...current, chronologicalMonths: chrono, correctedMonths: useCorrected ? Number(corrected) : null, bandId: selectedBand.id }));
     started.current = Date.now(); ended.current = false; setElapsed(0); setStep(0); setStage("running");
     starting.current = false;
   }
   function emergencyStop() {
-    media.cancel();
+    if (running) media.stop(); else media.cancel();
     if (running) finish("Interrompido por segurança; chamar médico/equipe imediatamente.");
     setUrgent(true);
   }
