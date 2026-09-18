@@ -2,10 +2,11 @@
  * Authorial observational workflow, NOT a validated diagnostic/psychometric instrument.
  * Durations, commands and response categories are operational, never normative scores.
  */
-export const OBS10_VERSION = "1.3.0";
+export const OBS10_VERSION = "1.4.0";
 export const OBS10_TITLE = "Avaliação de Pré-Consulta por Faixa Etária";
 export const OBS10_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
 export const MAX_SECONDS = 600;
+export const APPLICATION_RULES = ["Diga o comando da ficha.", "Aguarde cerca de 5 segundos.", "Repita uma única vez.", "Demonstre uma vez, só quando permitido.", "Registre a ajuda e siga. Não treine até acertar."] as const;
 export const PHASES = [
   { title: "Acolher e observar", start: 0, end: 30, icon: "🌱", camera: "Filme a chegada e os movimentos espontâneos. Não dê comandos imediatamente." },
   { title: "Interagir e conversar", start: 30, end: 120, icon: "💬", camera: "Mostre rosto, mãos, interlocutor e brinquedos. Grave sua voz e a resposta." },
