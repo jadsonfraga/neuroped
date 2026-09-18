@@ -32,14 +32,24 @@ check(!/localStorage|sessionStorage|fetch\(|indexedDB/.test(orientation) && orie
 for (const outcome of OUTCOMES) check(orientation.includes("OUTCOMES.map"), `legend lists ${outcome.id}`);
 
 // Finished stage: six ordered steps, done flags only from what the screen can know, targets exist on the page.
-const none = nextSteps({ described: false, exported: false, video: false, dossier: false, declared: false });
-const all = nextSteps({ described: true, exported: true, video: true, dossier: true, declared: true });
+const none = nextSteps({ described: false, reviewed: false, exported: false, video: false, dossier: false, declared: false });
+const all = nextSteps({ described: true, reviewed: true, exported: true, video: true, dossier: true, declared: true });
 check(none.length === 6 && none.every((s) => !s.done) && all.every((s) => s.done), "six steps, flags respected");
 check(none[0].label.startsWith("Descreva") && none[2].label.includes("TXT") && none[5].label.includes("encaminhamento"), "order: describe, check, export, video, dossier, declare");
+// Adversarial audit (commit 19f56f01): "described" and "reviewed" must be independent — a record with no missing
+// fields is not the same as the aplicadora having opened the review board and declared she read it.
+const describedOnly = nextSteps({ described: true, reviewed: false, exported: false, video: false, dossier: false, declared: false });
+check(describedOnly[0].done === true && describedOnly[1].done === false, "zero pendências never marks the review step by itself");
+const reviewedOnly = nextSteps({ described: false, reviewed: true, exported: false, video: false, dossier: false, declared: false });
+check(reviewedOnly[0].done === false && reviewedOnly[1].done === true, "the review step follows only the aplicadora's own declaration");
 const sources = page + readFileSync("client/src/features/obs10/SessionReview.tsx", "utf8") + readFileSync("client/src/features/obs10/Journey.tsx", "utf8");
 for (const step of none) { const id = /data-testid="([^"]+)"/.exec(step.target)?.[1]; check(id ? sources.includes(`data-testid="${id}"`) : sources.includes(step.target.slice(1)), `target exists: ${step.target}`); }
-check(page.includes("video: Boolean(evidence.clips.length)") && page.includes("exported: delivered.txt && delivered.json"), "video counts only a confirmed file; export needs both files");
-check(page.includes("setDelivered({ txt: false, json: false, md: false })"), "a new application resets the delivery flags");
+check(page.includes("reviewed: handoff.recordsReviewed"), "review step reads the self-declared checkbox, not a derived pendência count");
+check(page.includes("video: Boolean(evidence.clips.length) || delivered.videoClicked"), "video counts a confirmed clip or an actual click on the save link, never one alone implying the other");
+check(page.includes("exported: delivered.txt === report && delivered.json === JSON.stringify(record, null, 2)"), "export step compares the exported text to the current record, so a later edit un-marks it");
+check(page.includes("dossier: delivered.md === dossier"), "dossier step compares the downloaded text to the current dossier, so a later edit un-marks it");
+check(page.includes("setDelivered({ txt: null, json: null, md: null, videoClicked: false })"), "a new application resets the delivery snapshots");
+check(!/setDelivered\(\(d\) => \(\{ \.\.\.d, (?:txt|json|md): true \}\)\)/.test(page), "delivered flags are never set to a bare boolean; they store the exported text itself");
 const evidence = readFileSync("client/src/features/obs10/EvidencePanel.tsx", "utf8");
 check(evidence.includes("<strong>Opcional.</strong>"), "evidence panel declared optional");
 const css = readFileSync("client/src/features/obs10/obs10.css", "utf8");

@@ -78,10 +78,18 @@ export function LiveHelp() {
 }
 
 export interface NextStep { label: string; detail: string; target: string; done?: boolean }
-export function nextSteps(state: { described: boolean; exported: boolean; video: boolean; dossier: boolean; declared: boolean }): NextStep[] {
+/**
+ * Each flag must be something the screen actually witnessed, not inferred:
+ * - `reviewed` is the aplicadora's own declaration on the review board, never guessed from a zero pendência count.
+ * - `exported`/`dossier` compare the file just produced against the record right now; any later edit desyncs them,
+ *   so a stale artifact never reads as done. See the page's `delivered` state, which stores the exported text itself.
+ * - `video` requires either a confirmed local clip (bytes hashed) or an actual click on the save-video link;
+ *   picking a sheet or a codename is never enough.
+ */
+export function nextSteps(state: { described: boolean; reviewed: boolean; exported: boolean; video: boolean; dossier: boolean; declared: boolean }): NextStep[] {
   return [
     { label: "Descreva o que a criança fez em cada tarefa marcada", detail: "Bloco a bloco, com as palavras e ações observadas. Não escreva “normal” nem complete por suposição.", target: ".obs10-records", done: state.described },
-    { label: "Confira as pendências e os cartões sem marcação", detail: "A revisão por bloco lista o que falta. Cartão sem marcação fica explícito no registro; não é falha.", target: '[data-testid="obs10-review-board"]', done: state.described },
+    { label: "Confira as pendências e os cartões sem marcação", detail: "Abra a revisão por bloco e declare lá que conferiu. Ausência de pendência automática não é a mesma coisa que ter revisado.", target: '[data-testid="obs10-review-board"]', done: state.reviewed },
     { label: "Exporte o registro TXT e o JSON", detail: "Guarde os dois no destino institucional. Recarregar a página apaga tudo.", target: ".obs10-delivery", done: state.exported },
     { label: "Salve o vídeo separado do registro", detail: "Deste dispositivo, pelo botão de salvar; de outro dispositivo, pelo fluxo institucional. O JSON não contém vídeo.", target: ".obs10-delivery", done: state.video },
     { label: "Gere o dossiê, se a clínica autorizar análise externa", detail: "Copie ou baixe e cole junto da lei PRÉ na ferramenta autorizada. Este aplicativo não envia nada.", target: '[data-testid="obs10-dossier"]', done: state.dossier },

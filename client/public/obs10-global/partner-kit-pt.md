@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — Kit de conversa com parceiros
 
-Apresentação editorial 1.0.0 · Referência do produto 1.4.0. Sem cadastro, cookies de rastreamento, analytics ou envio automático nesta página.
+Apresentação editorial 1.0.0 · Referência do produto 1.6.1. Sem cadastro, cookies de rastreamento, analytics ou envio automático nesta página.
 
 ## Status e finalidade
 

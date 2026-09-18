@@ -11,7 +11,9 @@ const seconds = count(7200);
 /** Strict mirror of the export whitelist: any extra field, free text or unknown value is refused. */
 export const metricsSchema = z.object({
   schema: z.literal(METRICS_SCHEMA),
-  protocolVersion: z.string().regex(/^1\.\d\.0$/),
+  // Any released protocol version, patch included: a fixed ".0" here would reject the first patch release
+  // of any minor (found while shipping 1.6.1 — the same species of drift as the international presentation gap).
+  protocolVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
   ageBand: z.string().max(10).refine((id) => AGE_BANDS.some((band) => band.id === id)),
   collectionSeconds: count(600),
   workSecondsRecorded: z.object(Object.fromEntries(WORK_PHASES.map((phase) => [phase, seconds.nullable()])) as Record<WorkPhase, z.ZodNullable<typeof seconds>>).strict(),

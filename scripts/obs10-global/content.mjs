@@ -1,6 +1,8 @@
 /** Editorial translations of the presentation, never a validated translated clinical instrument. */
 export const RELEASE = '1.0.0';
-export const PRODUCT = '1.4.0';
+// Kept in lockstep with OBS10_VERSION (client/src/features/obs10/protocol.ts) by
+// tests/unit/obs10-global.test.mjs, which fails closed on drift instead of a silent stale reference.
+export const PRODUCT = '1.6.1';
 export const CANONICAL = 'https://neuroped.pages.dev';
 export const CONTACT = 'drjadsonfraga@proton.me';
 export const LANGUAGES = [
@@ -72,7 +74,7 @@ export const COPY = {
   references: 'Referências de método, não selos de aprovação',
   referencesText: 'As orientações de fatores humanos da FDA ajudam a formular perguntas sobre usuários, ambiente e interface. A orientação W3C fundamenta a identificação do idioma da página. Nenhuma entidade endossa ou certifica este produto.',
   footer: 'NeuroPed SDG · Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756',
-  footnote: 'Apresentação editorial 1.0.0 · Referência do produto 1.4.0. Sem cadastro, cookies de rastreamento, analytics ou envio automático nesta página.',
+  footnote: `Apresentação editorial 1.0.0 · Referência do produto ${PRODUCT}. Sem cadastro, cookies de rastreamento, analytics ou envio automático nesta página.`,
   noJs: 'O conteúdo e os downloads funcionam sem JavaScript. Para alternar as etapas da demonstração interativa, habilite JavaScript; todos os exemplos permanecem legíveis abaixo.',
   kitHeadings: ['Status e finalidade', 'O que o produto oferece', 'O que ainda não foi demonstrado', 'Portas de entrada do piloto', 'Medidas e análise', 'Critérios a preencher antes da coleta', 'Salvaguardas', 'Convite sugerido', 'Contato'],
   criteria: ['Responsável clínico e instituição; finalidade: assistência, melhoria de qualidade ou pesquisa.', 'Participantes, exclusões e amostra justificada pelo objetivo; não selecionar apenas quem completa as tarefas.', 'Métrica primária, denominador, comparador, limiar de sucesso e regra para dados ausentes, definidos previamente.', 'Interrupções de segurança, critérios de suspensão, tratamento de incidentes e responsável por decisão.', 'Dispositivos, idioma, acessibilidade, treinamento e conferência entre avaliadores.', 'Autorização, acesso, retenção, exportação, eliminação e aprovações aplicáveis.'],
@@ -115,7 +117,7 @@ export const COPY = {
   subject: 'OBS-10 — discussion of a supervised pilot', email: 'Hello NeuroPed team,\n\nI would like to learn about OBS-10 and discuss the feasibility of a supervised operational evaluation at our institution. We can align the intended purpose, clinical leads, training, governance and success criteria before any data collection.\n\nInstitution:\nProfessional lead:\nContext and language of interest:\n\nThis message contains no patient data.',
   references: 'Method references, not approval badges', referencesText: 'FDA human-factors guidance helps frame questions about users, environments and interfaces. W3C guidance informs page-language identification. Neither organization endorses or certifies this product.',
   footer: 'NeuroPed SDG · Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756',
-  footnote: 'Editorial presentation 1.0.0 · Product reference 1.4.0. No registration, tracking cookies, analytics or automatic sending on this page.',
+  footnote: `Editorial presentation 1.0.0 · Product reference ${PRODUCT}. No registration, tracking cookies, analytics or automatic sending on this page.`,
   noJs: 'Content and downloads work without JavaScript. Enable JavaScript to switch between interactive demonstration steps; all examples remain readable below.',
   kitHeadings: ['Status and purpose', 'What the product offers', 'What has not been demonstrated', 'Pilot entry gates', 'Measurements and analysis', 'Criteria to complete before collection', 'Safeguards', 'Suggested invitation', 'Contact'],
   criteria: ['Clinical lead and institution; purpose: care, quality improvement or research.', 'Participants, exclusions and a sample justified by the objective; do not select only people who complete tasks.', 'Primary measure, denominator, comparator, success threshold and missing-data rule, defined in advance.', 'Safety interruptions, suspension criteria, incident handling and decision owner.', 'Devices, language, accessibility, training and agreement between reviewers.', 'Authorization, access, retention, export, deletion and applicable approvals.'],
@@ -158,7 +160,7 @@ export const COPY = {
   subject: 'OBS-10 — conversación sobre piloto supervisado', email: 'Hola, equipo NeuroPed:\n\nMe gustaría conocer OBS-10 y conversar sobre la viabilidad de una evaluación operativa supervisada en nuestra institución. Podemos acordar finalidad, responsables, formación, gobernanza y criterios de éxito antes de recoger datos.\n\nInstitución:\nResponsable profesional:\nContexto e idioma de interés:\n\nEste mensaje no incluye datos de pacientes.',
   references: 'Referencias de método, no sellos de aprobación', referencesText: 'La orientación de factores humanos de la FDA ayuda a formular preguntas sobre usuarios, entorno e interfaz. La orientación W3C fundamenta la identificación del idioma de la página. Ninguna entidad avala ni certifica este producto.',
   footer: 'NeuroPed SDG · Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756',
-  footnote: 'Presentación editorial 1.0.0 · Referencia del producto 1.4.0. Sin registro, cookies de seguimiento, analytics ni envío automático en esta página.',
+  footnote: `Presentación editorial 1.0.0 · Referencia del producto ${PRODUCT}. Sin registro, cookies de seguimiento, analytics ni envío automático en esta página.`,
   noJs: 'El contenido y las descargas funcionan sin JavaScript. Actívelo para alternar las etapas de la demostración; todos los ejemplos siguen siendo legibles a continuación.',
   kitHeadings: ['Estado y finalidad', 'Qué ofrece el producto', 'Qué no se ha demostrado', 'Etapas de entrada al piloto', 'Medidas y análisis', 'Criterios por completar antes de recoger datos', 'Salvaguardas', 'Invitación sugerida', 'Contacto'],
   criteria: ['Responsable clínico e institución; finalidad: asistencia, mejora de calidad o investigación.', 'Participantes, exclusiones y muestra justificada por el objetivo; no seleccionar solo quienes completan las tareas.', 'Medida primaria, denominador, comparador, umbral de éxito y regla de datos ausentes definidos previamente.', 'Interrupciones de seguridad, criterios de suspensión, gestión de incidentes y responsable de decisión.', 'Dispositivos, idioma, accesibilidad, formación y concordancia entre revisores.', 'Autorización, acceso, conservación, exportación, eliminación y aprobaciones aplicables.'],

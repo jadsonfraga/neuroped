@@ -148,6 +148,16 @@ try {
   await button("Encerrar antes").click();
   await page.getByRole("link", { name: "Salvar vídeo no dispositivo institucional" }).waitFor({ timeout: 15000 });
   assert.equal(await page.evaluate(() => window.__obsTracks.every((track) => track.readyState === "ended")), true);
+  // Adversarial audit of 19f56f01: recording a video must not, by itself, mark the "vídeo salvo" step; only an
+  // actual click on the save link (or an evidence clip hashed and confirmed) can, since no clip was associated here.
+  const videoStep = page.getByTestId("obs10-next-steps").locator(".obs10-next-list > li").nth(3);
+  await videoStep.waitFor();
+  assert.equal(await videoStep.evaluate((el) => el.classList.contains("is-done")), false, "recording alone never marks the video step");
+  const videoDownloadPromise = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Salvar vídeo no dispositivo institucional" }).click();
+  await videoDownloadPromise;
+  assert.equal(await videoStep.evaluate((el) => el.classList.contains("is-done")), true, "clicking the save link marks it, with zero evidence clips associated");
+  assert.equal(await page.getByTestId("obs13-evidence").locator(".obs13-moments article").count(), 0);
   await screen("06-video-local");
   await newSession();
   await context.clearPermissions();

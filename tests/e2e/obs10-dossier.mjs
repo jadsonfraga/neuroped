@@ -109,16 +109,33 @@ try {
   await screen("02-dossie-desktop");
   await page.setViewportSize({ width: 390, height: 844 }); await screen("03-dossie-celular");
   await page.setViewportSize({ width: 1440, height: 1080 });
-  // Next-steps flags follow what the screen can confirm; edits after the download are deliberate here, after the preview/clipboard equality checks.
+  // Next-steps flags follow only what this screen can confirm right now, and no earned step survives a later edit
+  // to the record (adversarial audit of commit 19f56f01: false completion states must not persist past a change).
   assert.equal(await next.locator("li.is-done").count(), 1, "only the dossier download is confirmed; the record still lacks the quality check");
   const txtPromise = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise;
   assert.equal(await next.locator("li.is-done").count(), 1, "TXT alone does not complete the export step");
   const jsonPromise = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise;
-  assert.equal(await next.locator("li.is-done").count(), 2);
+  assert.equal(await next.locator("li.is-done").count(), 2, "dossier and export, both matching the current record");
+  // The review step follows only the aplicadora's own declaration, never a derived "no pendência left" count.
+  await page.getByLabel(/Revisei os seis blocos/).check();
+  assert.equal(await next.locator("li.is-done").count(), 2, "declaring review adds it, but baking the declaration into the JSON desyncs the earlier export");
+  assert.equal(await next.locator(".obs10-next-list > li").nth(1).evaluate((el) => el.classList.contains("is-done")), true, "review step now done");
+  assert.equal(await next.locator(".obs10-next-list > li").nth(2).evaluate((el) => el.classList.contains("is-done")), false, "export step reverted: the exported JSON did not carry this declaration");
+  // Any further edit to the record must wipe every previously earned step, including ones already downloaded.
   await page.getByLabel("Qualidade do trecho, conferida por você").first().selectOption("Não avaliável");
-  assert.equal(await next.locator("li.is-done").count(), 2, "the repetition still has to be described");
+  assert.equal(await next.locator("li.is-done").count(), 0, "editing the record after export/review/dossier un-marks all three at once");
+  assert.match(await next.getByRole("status").textContent(), /6 passo\(s\)/);
   await page.getByLabel("Ajuda, adaptação ou motivo de não aplicação").first().fill("Comando repetido uma vez.");
-  assert.equal(await next.locator("li.is-done").count(), 4, "resolving the last pendências completes the describe and check steps");
+  assert.equal(await next.locator("li.is-done").count(), 1, "only describing the task is now true; review, export and dossier must be redone");
+  await page.getByLabel(/Revisei os seis blocos/).check();
+  const txtPromise2 = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise2;
+  const jsonPromise2 = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise2;
+  const downloadPromise2 = page.waitForEvent("download"); await button("Baixar dossiê (.md)").click();
+  const download2 = await downloadPromise2; await download2.saveAs(`${dir}/dossie-atualizado.md`);
+  const dossierUpdated = await readFile(`${dir}/dossie-atualizado.md`, "utf8");
+  assert.notEqual(dossierUpdated, dossier, "the re-downloaded dossier reflects the edits, not a cached copy");
+  assert.match(dossierUpdated, /Comando repetido uma vez\./);
+  assert.equal(await next.locator("li.is-done").count(), 4, "re-exporting after the edit restores describe, review, export and dossier");
   assert.match(await next.getByRole("status").textContent(), /2 passo\(s\)/);
   // Pilot metrics: the exported whitelist file feeds the local consolidator; duplicates and clinical JSON are refused or counted once.
   await page.getByTestId("obs13-pilot").locator("summary").first().click();
@@ -150,7 +167,7 @@ try {
   assert.equal(agg.sessions, 2); assert.equal(agg.duplicatesIgnored, 1); assert.equal(agg.reachedLimit, 1);
   await screen("04-consolidacao-desktop");
   assert.deepEqual(errors, []); assert.deepEqual(writes, []);
-  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["first-time-guide", "age-from-birth-date", "opening-scripts", "live-help-legend", "next-steps-order", "journey-map", "readiness-list", "printed-script-isolated", "dossier-download", "dossier-clipboard", "dossier-preview", "no-fabricated-finding", "metrics-file-without-timestamp", "local-metrics-consolidation", "duplicate-counted-once", "clinical-json-refused"] }, null, 2));
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["first-time-guide", "age-from-birth-date", "opening-scripts", "live-help-legend", "next-steps-order", "next-steps-review-needs-declaration", "next-steps-invalidated-by-edit", "journey-map", "readiness-list", "printed-script-isolated", "dossier-download", "dossier-clipboard", "dossier-preview", "no-fabricated-finding", "metrics-file-without-timestamp", "local-metrics-consolidation", "duplicate-counted-once", "clinical-json-refused"] }, null, 2));
   console.log("OBS-10 v1.6: first-time orientation, journey, readiness, printed script, dossier and local pilot consolidation passed; no clinical API writes.");
 } catch (error) {
   await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });
