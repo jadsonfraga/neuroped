@@ -16,16 +16,25 @@ export function AudioPreflight({ disabled }: { disabled: boolean }) {
     if (r.url) URL.revokeObjectURL(r.url);
     resources.current = {};
   }
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; release(); }; }, []);
+  useEffect(() => {
+    mounted.current = true;
+    const hidden = () => {
+      if (!document.hidden) return;
+      release(); setStatus("idle"); setUrl("");
+    };
+    document.addEventListener("visibilitychange", hidden);
+    return () => { mounted.current = false; document.removeEventListener("visibilitychange", hidden); release(); };
+  }, []);
   useEffect(() => { if (disabled) { release(); setStatus("idle"); setUrl(""); } }, [disabled]);
   async function testAudio() {
-    if (disabled || status === "permission" || status === "recording") return;
+    if (document.hidden || disabled || status === "permission" || status === "recording") return;
     release(); setError(""); setUrl("");
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") { setError("Teste não disponível. Confira o áudio no dispositivo institucional antes da coleta."); return; }
     const ticket = ++generation.current; setStatus("permission");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (ticket !== generation.current || !mounted.current) { stream.getTracks().forEach((t) => t.stop()); return; }
+      if (document.hidden) { stream.getTracks().forEach((t) => t.stop()); release(); setStatus("idle"); return; }
       resources.current.stream = stream;
       const media = new MediaRecorder(stream); resources.current.recorder = media; const chunks: Blob[] = [];
       media.ondataavailable = (ev) => { if (ticket === generation.current && ev.data.size) chunks.push(ev.data); };
