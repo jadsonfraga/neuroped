@@ -1,0 +1,28 @@
+name: OBS131 pinned source delta
+on:
+  push:
+    branches: [fix/obs10-integridade-midia-v131]
+    paths: [.github/workflows/obs131-source.yml]
+permissions:
+  contents: read
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: f4e5ebc46f88cbd977a9764eea68fb2289bdf62f
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export source-only delta and file manifest
+        run: |
+          mkdir -p /tmp/obs131-source
+          git diff --binary 8898762d4220b209da1c770bc246c389b7ae7b2d f4e5ebc46f88cbd977a9764eea68fb2289bdf62f > /tmp/obs131-source/source.patch
+          git ls-tree -r HEAD > /tmp/obs131-source/tree.txt
+          git rev-parse HEAD > /tmp/obs131-source/sha.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs131-source-delta
+          path: /tmp/obs131-source
+          retention-days: 1
