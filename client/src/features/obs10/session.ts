@@ -85,7 +85,7 @@ export function amendObservation(o: Observation, patch: Partial<Observation>, af
   return { ...o, ...patch, id: o.id, phase: o.phase, applicationSecond: o.applicationSecond,
     recordedAfterEnd: o.recordedAfterEnd, editedAfterEnd: afterEnd || o.editedAfterEnd };
 }
-export function exportFilename(code: string, extension: "txt" | "json" | "webm" | "mp4", sessionId = ""): string {
+export function exportFilename(code: string, extension: "txt" | "json" | "md" | "webm" | "mp4", sessionId = ""): string {
   const safe = code.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32) || "sem-codigo";
   const suffix = sessionId.replace(/[^a-zA-Z0-9-]/g, "").slice(0, 45);
   return `OBS10-${safe}${suffix ? `-${suffix}` : ""}.${extension}`;

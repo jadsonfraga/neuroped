@@ -13,11 +13,13 @@ on:
       - 'tests/unit/obs10-review.test.ts'
       - 'tests/unit/obs10-evidence.test.ts'
       - 'tests/unit/obs10-media-regressions.test.ts'
+      - 'tests/unit/obs10-dossier.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
       - 'tests/e2e/obs10-evidence.mjs'
       - 'tests/e2e/obs10-media-regressions.mjs'
+      - 'tests/e2e/obs10-dossier.mjs'
       - 'docs/features/obs10.md'
       - 'docs/audits/obs10-v13-pilot.md'
       - 'docs/audits/obs10-media-regressions.md'
@@ -33,11 +35,13 @@ on:
       - 'tests/unit/obs10-review.test.ts'
       - 'tests/unit/obs10-evidence.test.ts'
       - 'tests/unit/obs10-media-regressions.test.ts'
+      - 'tests/unit/obs10-dossier.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
       - 'tests/e2e/obs10-evidence.mjs'
       - 'tests/e2e/obs10-media-regressions.mjs'
+      - 'tests/e2e/obs10-dossier.mjs'
       - '.github/workflows/obs10.yml'
 permissions:
   contents: read
@@ -68,6 +72,7 @@ jobs:
           node --import tsx tests/unit/obs10-review.test.ts
           node --import tsx tests/unit/obs10-evidence.test.ts
           node --import tsx tests/unit/obs10-media-regressions.test.ts
+          node --import tsx tests/unit/obs10-dossier.test.ts
           npm run test:sonda
           npm run audit:navigation
           npm run test:operations
@@ -96,6 +101,10 @@ jobs:
         env:
           OBS10_MEDIA_ARTIFACT_DIR: /tmp/obs10-media-regressions
         run: node tests/e2e/obs10-media-regressions.mjs
+      - name: Journey map, readiness, printed script and external-analysis dossier
+        env:
+          OBS10_DOSSIER_ARTIFACT_DIR: /tmp/obs10-dossier
+        run: node tests/e2e/obs10-dossier.mjs
       - name: Preserve synthetic screenshots and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -107,5 +116,6 @@ jobs:
             /tmp/obs10-review
             /tmp/obs10-evidence
             /tmp/obs10-media-regressions
+            /tmp/obs10-dossier
           if-no-files-found: ignore
           retention-days: 7

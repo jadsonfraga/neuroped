@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — guia de aplicação prática
 
-**Versão da interface 1.3.0 · 17/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
+**Versão da interface 1.4.0 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
 Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
 
@@ -202,3 +202,34 @@ A suíte permanente mantém as três jornadas anteriores e inclui `tests/e2e/obs
 Referências técnicas primárias: W3C Media Capture and Streams (`https://www.w3.org/TR/mediacapture-streams/`), Web Cryptography (`https://www.w3.org/TR/WebCryptoAPI/`) e WHATWG HTML media elements (`https://html.spec.whatwg.org/multipage/media.html`). SHA-256 confere bytes; seleção e revisão humanas continuam indispensáveis.
 
 Plano candidato a piloto em `docs/audits/obs10-v13-pilot.md`. Não inicia pesquisa com pacientes, não armazena dados clínicos e não faz upload sem autorização. Armazenamento institucional automatizado e IA semiológica continuam fora desta entrega, pois exigem implementação, governança e avaliação próprias.
+
+## v1.4 — jornada guiada, roteiro impresso e dossiê para análise externa
+
+Sem alteração do roteiro clínico: 13 fichas, 145 cartões, seis blocos e limite de dez minutos permanecem. A v1.4 organiza a execução e prepara a saída para redação clínica fora do aplicativo.
+
+### Mapa da jornada e prontidão explícita
+
+No alto da tela, quatro etapas (Preparar → Aplicar → Revisar → Entregar) mostram onde a aplicadora está. Na preparação, a lista **de prontidão** substitui a frase genérica de bloqueio: idade válida, idade corrigida (quando usada), ficha selecionada, kit conferido item a item, dispositivo de filmagem disponível e confirmações de segurança aparecem como itens individuais, cada um com seu estado. O botão de início continua bloqueado até todos estarem conferidos.
+
+### Roteiro completo da ficha, impresso
+
+**Imprimir roteiro completo da ficha** abre documento de texto isolado com o kit da faixa (quantidades e substitutos), as regras de aplicação, a referência e o cuidado da faixa, e, por bloco, cada proposta com comando, passos, o que registrar, materiais, tempo operacional e omissões previstas para a idade e autorização de prono informadas. Serve para ler ao lado da câmera sem mostrar a tela à criança. Só está disponível na preparação: abrir uma janela durante a coleta a encerraria.
+
+### Dossiê para análise por IA, fora do aplicativo
+
+Após encerrar, **Dossiê para análise por IA** gera localmente um texto em Markdown estruturado como a entrada «testagem direta com a criança na pré-consulta» da lei PRÉ (`00_LEI_ANALISE_PRE_CONSULTA_v1.md`, Drive, pasta `01.2.1. Modelos & Templates`):
+
+1. instruções de redação (prosa, ancoragem na idade e escolaridade, comportamento observável, fonte declarada, nada de roteiro, aplicativo, categorias ou contagens no texto final, sem diagnóstico);
+2. quem foi observado e em que condições;
+3. referência interna da faixa, para calibrar o grau, não para transcrever;
+4. bloco a bloco, cada proposta com o comando dado e, quando existe, o registro da aplicadora convertido em frase de comportamento («realizou após ouvir o comando novamente»), a descrição literal, ajuda, qualidade, referência de vídeo e marcações de tempo; proposta sem registro aparece como «sem observação registrada», nunca como achado;
+5. relato do responsável em seção própria, como fonte de anamnese;
+6. trechos de vídeo e comentários profissionais em seção própria, sem hashes;
+7. pendências: propostas sem observação por bloco, não demonstrado/recusado/não aplicado, registros incompletos, encerramento antecipado e domínios que o roteiro não examina;
+8. limites do material.
+
+**Copiar dossiê** usa a área de transferência do navegador; **Baixar dossiê (.md)** salva `OBS10-<código>-<sessão>.md`. O aplicativo não chama nenhuma IA, não envia dados e não interpreta: a redação acontece na ferramenta autorizada pela clínica, com a lei PRÉ colada antes. O dossiê reflete a versão atual dos registros; edite os blocos e gere de novo. Não contém vídeo, nome ou dados além dos digitados.
+
+### Compatibilidade e verificação v1.4
+
+Importação aceita 1.0 a 1.4. Nenhum campo novo no JSON: o dossiê é derivado do registro. Testes: `tests/unit/obs10-dossier.test.ts` (roteiro e dossiê de todas as 13 fichas, ausência de comportamento fabricado em registro vazio, separação de fontes, pendências, exportação) e `tests/e2e/obs10-dossier.mjs` (mapa de jornada, prontidão, impressão isolada do roteiro, download e cópia do dossiê iguais, prévia, desktop e celular sem violações axe). Ambos entram no workflow permanente. Rollback: reverter somente a PR desta versão; sem migração ou persistência nova.
