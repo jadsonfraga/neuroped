@@ -1,0 +1,135 @@
+name: OBS-10 international presentation verification
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/obs10-global/**'
+      - 'client/public/obs10-global/**'
+      - 'client/public/sw.js'
+      - 'vercel.json'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'tests/unit/obs10-global.test.mjs'
+      - 'tests/e2e/obs10-global.mjs'
+      - 'docs/features/obs10-global.md'
+      - '.github/workflows/obs10-global.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/obs10-global/**'
+      - 'client/public/obs10-global/**'
+      - 'client/public/sw.js'
+      - 'vercel.json'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'tests/unit/obs10-global.test.mjs'
+      - 'tests/e2e/obs10-global.mjs'
+      - '.github/workflows/obs10-global.yml'
+  workflow_run:
+    workflows: ['Deploy Cloudflare Pages', 'Deploy Vercel']
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: obs10-global-${{ github.event_name }}-${{ github.event.workflow_run.name || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract-and-browser:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Deterministic public sources and routing boundaries
+        run: |
+          node scripts/obs10-global/render.mjs --check
+          node tests/unit/obs10-global.test.mjs
+          node tests/unit/browser-audit-chromium-resolution.test.mjs
+          npm run check
+          npx eslint client/src/pages/pre-consulta-obs10.tsx --max-warnings=0
+          npm run audit:design
+      - name: Existing app build without access bypass
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Three-language static site, keyboard, downloads and accessibility
+        env:
+          OBS_GLOBAL_ARTIFACT_DIR: /tmp/obs10-global
+        run: node tests/e2e/obs10-global.mjs
+      - name: Preserve fictional demonstration evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-global-verification
+          path: /tmp/obs10-global
+          if-no-files-found: ignore
+          retention-days: 7
+  deployed-public-namespace:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Verify public language pages and downloads against deployed commit
+        env:
+          DEPLOY_WORKFLOW: ${{ github.event.workflow_run.name }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          PROOF_RUN: ${{ github.run_id }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+          import { LANGUAGES, COPY } from './scripts/obs10-global/content.mjs';
+          const origin = process.env.DEPLOY_WORKFLOW === 'Deploy Vercel' ? 'https://superneuroped.vercel.app' : 'https://neuroped.pages.dev';
+          const proof = { origin, expectedSHA: process.env.EXPECTED_SHA, passed: false, checked: [] };
+          mkdirSync('/tmp/obs10-global-live', { recursive: true });
+          async function get(path) {
+            const response = await fetch(`${origin}${path}?proof=${process.env.PROOF_RUN}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
+            assert.equal(response.status, 200, `${path}: HTTP status`);
+            assert.equal(new URL(response.url).origin, origin, 'no redirect to another host');
+            return { text: await response.text(), type: response.headers.get('content-type') || '' };
+          }
+          try {
+            const sentinel = JSON.parse((await get('/deploy-check.json')).text);
+            assert.ok([process.env.EXPECTED_SHA, process.env.EXPECTED_SHA.slice(0, 12)].includes(sentinel.commit), 'public host must serve the deployment SHA');
+            for (const lang of LANGUAGES) {
+              const html = await get(lang.path);
+              assert.match(html.type, /text\/html/);
+              assert.ok(html.text.includes(`<html lang="${lang.html}">`), `${lang.path}: correct language, not clinical shell`);
+              assert.ok(html.text.includes(`<title>${COPY[lang.id].title}</title>`), `${lang.path}: expected editorial title`);
+              assert.ok(html.text.includes('id="kit-download"') && html.text.includes('id="scenario"'), `${lang.path}: actual presentation`);
+              const path = `/obs10-global/partner-kit-${lang.id}.md`;
+              const kit = await get(path);
+              assert.equal(kit.text, readFileSync(`client/public${path}`, 'utf8'), `${path}: exact published download`);
+              proof.checked.push(lang.path, path);
+            }
+            for (const file of ['site.js', 'site.css', 'icon.svg']) {
+              const path = `/obs10-global/${file}`;
+              assert.equal((await get(path)).text, readFileSync(`client/public${path}`, 'utf8'), `${path}: expected asset, not app shell`);
+              proof.checked.push(path);
+            }
+            proof.passed = true;
+            console.log(`Verified ${proof.checked.length} public pages/assets on ${origin} at ${proof.expectedSHA}.`);
+          } finally { writeFileSync('/tmp/obs10-global-live/result.json', JSON.stringify(proof, null, 2)); }
+          NODE
+      - name: Preserve public hosting proof
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-global-public-${{ github.event.workflow_run.id }}
+          path: /tmp/obs10-global-live
+          if-no-files-found: ignore
+          retention-days: 7
