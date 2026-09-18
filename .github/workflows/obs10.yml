@@ -14,6 +14,7 @@ on:
       - 'tests/unit/obs10-evidence.test.ts'
       - 'tests/unit/obs10-media-regressions.test.ts'
       - 'tests/unit/obs10-dossier.test.ts'
+      - 'tests/unit/obs10-pilot-aggregate.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
@@ -36,6 +37,7 @@ on:
       - 'tests/unit/obs10-evidence.test.ts'
       - 'tests/unit/obs10-media-regressions.test.ts'
       - 'tests/unit/obs10-dossier.test.ts'
+      - 'tests/unit/obs10-pilot-aggregate.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
@@ -73,6 +75,7 @@ jobs:
           node --import tsx tests/unit/obs10-evidence.test.ts
           node --import tsx tests/unit/obs10-media-regressions.test.ts
           node --import tsx tests/unit/obs10-dossier.test.ts
+          node --import tsx tests/unit/obs10-pilot-aggregate.test.ts
           npm run test:sonda
           npm run audit:navigation
           npm run test:operations
@@ -101,7 +104,7 @@ jobs:
         env:
           OBS10_MEDIA_ARTIFACT_DIR: /tmp/obs10-media-regressions
         run: node tests/e2e/obs10-media-regressions.mjs
-      - name: Journey map, readiness, printed script and external-analysis dossier
+      - name: Journey map, readiness, printed script, dossier and local pilot consolidation
         env:
           OBS10_DOSSIER_ARTIFACT_DIR: /tmp/obs10-dossier
         run: node tests/e2e/obs10-dossier.mjs

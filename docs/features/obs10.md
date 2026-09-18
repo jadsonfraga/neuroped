@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — guia de aplicação prática
 
-**Versão da interface 1.4.0 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
+**Versão da interface 1.5.0 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
 Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
 
@@ -233,3 +233,23 @@ Após encerrar, **Dossiê para análise por IA** gera localmente um texto em Mar
 ### Compatibilidade e verificação v1.4
 
 Importação aceita 1.0 a 1.4. Nenhum campo novo no JSON: o dossiê é derivado do registro. Testes: `tests/unit/obs10-dossier.test.ts` (roteiro e dossiê de todas as 13 fichas, ausência de comportamento fabricado em registro vazio, separação de fontes, pendências, exportação) e `tests/e2e/obs10-dossier.mjs` (mapa de jornada, prontidão, impressão isolada do roteiro, download e cópia do dossiê iguais, prévia, desktop e celular sem violações axe). Ambos entram no workflow permanente. Rollback: reverter somente a PR desta versão; sem migração ou persistência nova.
+
+## v1.5 — consolidação local do piloto e correção das métricas
+
+Sem alteração do roteiro clínico. A v1.5 fecha a lacuna deixada pelo plano v1.3: as métricas de cada aplicação podiam ser exportadas, mas não havia como reuni-las.
+
+### Correções de consistência
+
+- `manualPausesOrInterruptions` contava qualquer encerramento não manual, inclusive «início da coleta» e «troca de etapa», que são transições deliberadas. Agora conta apenas «aba oculta» e «limite». Registros JSON antigos não mudam; o campo é recalculado a partir dos segmentos ao exportar.
+- As listas de opções de utilidade, repetição e dificuldade passam a existir uma única vez (`UTILITY_OPTIONS`, `REPEAT_OPTIONS`, `DIFFICULTY_OPTIONS` em `pilot.ts`) e alimentam schema, painel e consolidador.
+- O nome do arquivo de métricas não carrega mais carimbo de data: `OBS10-metricas-operacionais-<8 caracteres aleatórios>.json`, coerente com a política de exportação sem datas.
+
+### Consolidar métricas de várias aplicações
+
+Em **Medir o trabalho da equipe → Consolidar métricas de várias aplicações**, selecione vários arquivos `OBS10-metricas-operacionais-*.json`. Cada arquivo é validado por um espelho estrito da lista permitida de exportação: qualquer campo extra, texto livre, código, valor fora das opções ou registro clínico é recusado e listado com o motivo. Arquivos idênticos contam uma vez. O resumo mostra aplicações distintas, origem importada, contagens por versão e faixa (com aviso de grupo pequeno abaixo de 5), duração da coleta (mínimo, mediana, máximo, quantas atingiram os dez minutos), trabalho cronometrado por etapa (apenas onde medido; «não medido» nunca vira zero), interrupções, documentação e evidência, e opiniões declaradas tabuladas. Copiar, baixar `.md` ou `.json`. Tudo local; nada é enviado.
+
+Limites: indicadores de processo e opiniões, não desempenho da criança, acurácia, validação ou benefício. Exportações repetidas com diferenças não são detectadas como duplicadas. Contagens por faixa em grupos pequenos podem reidentificar; não publicar microdados. Disponível na preparação e após a coleta, nunca durante os dez minutos.
+
+### Verificação v1.5
+
+`tests/unit/obs10-pilot-aggregate.test.ts` (semântica de interrupção, exportador e consolidador em sincronia para as 13 faixas e todas as opções, recusa de campos extras e texto, duplicatas, medianas, grupos pequenos, ausência de texto clínico) e extensão de `tests/e2e/obs10-dossier.mjs` (exportação sem carimbo de data, consolidação de cinco arquivos com duplicata, registro clínico recusado, agregado baixado, axe limpo). Importação de registros aceita 1.0 a 1.5. Rollback: reverter somente a PR desta versão.
