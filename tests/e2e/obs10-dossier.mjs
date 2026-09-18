@@ -85,9 +85,39 @@ try {
   assert.equal(await page.getByTestId("obs10-dossier-text").textContent(), dossier);
   await screen("02-dossie-desktop");
   await page.setViewportSize({ width: 390, height: 844 }); await screen("03-dossie-celular");
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  // Pilot metrics: the exported whitelist file feeds the local consolidator; duplicates and clinical JSON are refused or counted once.
+  await page.getByTestId("obs13-pilot").locator("summary").first().click();
+  const metricsPromise = page.waitForEvent("download"); await button("Exportar métricas sem textos clínicos").click();
+  const metricsDownload = await metricsPromise; await metricsDownload.saveAs(`${dir}/metricas.json`);
+  assert.match(metricsDownload.suggestedFilename(), /^OBS10-metricas-operacionais-[0-9a-f]{8}\.json$/, "no timestamp in the metrics file name");
+  const metrics = JSON.parse(await readFile(`${dir}/metricas.json`, "utf8"));
+  assert.equal(metrics.manualPausesOrInterruptions, 0);
+  assert.ok(!JSON.stringify(metrics).includes("OBS14-SINTETICO") && !JSON.stringify(metrics).includes("Repetiu as tres"));
+  const other = { ...metrics, ageBand: "m12", collectionSeconds: 600, workSecondsRecorded: { ...metrics.workSecondsRecorded, "Preparação": 90 } };
+  const clinical = { ...metrics, code: "OBS14-SINTETICO" };
+  await page.getByLabel("Arquivos de métricas para consolidar", { exact: true }).setInputFiles([
+    { name: "a.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(metrics)) },
+    { name: "a-copia.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(metrics)) },
+    { name: "b.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(other)) },
+    { name: "clinico.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(clinical)) },
+    { name: "registro.json", mimeType: "application/json", buffer: Buffer.from(dossier) },
+  ]);
+  await page.getByTestId("obs13-consolidation-text").waitFor();
+  const summary = await page.getByTestId("obs13-consolidation-text").textContent();
+  assert.match(summary, /2 aplicação\(ões\) distintas em 3 arquivo\(s\) válido\(s\); 1 duplicado\(s\)/);
+  assert.match(summary, /Amostra pequena/); assert.match(summary, /grupo pequeno/); assert.match(summary, /Preparação: 1 medida\(s\)/);
+  assert.equal(await page.locator(".obs13-files li.is-ok").count(), 3);
+  assert.equal(await page.locator(".obs13-files li:not(.is-ok)").count(), 2);
+  assert.ok(!summary.includes("OBS14-SINTETICO"));
+  const aggPromise = page.waitForEvent("download"); await button("Baixar agregado (.json)").click();
+  const aggDownload = await aggPromise; await aggDownload.saveAs(`${dir}/consolidado.json`);
+  const agg = JSON.parse(await readFile(`${dir}/consolidado.json`, "utf8"));
+  assert.equal(agg.sessions, 2); assert.equal(agg.duplicatesIgnored, 1); assert.equal(agg.reachedLimit, 1);
+  await screen("04-consolidacao-desktop");
   assert.deepEqual(errors, []); assert.deepEqual(writes, []);
-  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["journey-map", "readiness-list", "printed-script-isolated", "dossier-download", "dossier-clipboard", "dossier-preview", "no-fabricated-finding"] }, null, 2));
-  console.log("OBS-10 v1.4: journey, readiness, printed script and dossier journey passed; no clinical API writes.");
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["journey-map", "readiness-list", "printed-script-isolated", "dossier-download", "dossier-clipboard", "dossier-preview", "no-fabricated-finding", "metrics-file-without-timestamp", "local-metrics-consolidation", "duplicate-counted-once", "clinical-json-refused"] }, null, 2));
+  console.log("OBS-10 v1.5: journey, readiness, printed script, dossier and local pilot consolidation passed; no clinical API writes.");
 } catch (error) {
   await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });
   await writeFile(`${dir}/failure.txt`, String(error.stack || error)); throw error;

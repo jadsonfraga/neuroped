@@ -9,7 +9,7 @@ export const MAX_RECORD_BYTES = 4 * 1024 * 1024;
 const text = (max: number) => z.string().max(max);
 const second = z.number().int().min(0).max(600);
 const schema = z.object({
-  version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0"]),
+  version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"]),
   sessionId: text(100).regex(/^[a-zA-Z0-9-]*$/).optional(),
   context: z.object({
     code: text(32), chronologicalMonths: z.number().int().min(0).max(215),
@@ -37,7 +37,7 @@ export function parseRecordJSON(raw: string): ImportResult {
   if (new TextEncoder().encode(raw).length > MAX_RECORD_BYTES) return { ok: false, error: "Arquivo maior que 4 MB. Escolha apenas o JSON de uma aplicação OBS-10." };
   try {
     const result = schema.safeParse(JSON.parse(raw.replace(/^\uFEFF/, "")));
-    if (!result.success) return { ok: false, error: "Arquivo incompatível ou incompleto. Aceitos registros OBS-10 1.0 a 1.4; nenhum dado atual foi alterado." };
+    if (!result.success) return { ok: false, error: "Arquivo incompatível ou incompleto. Aceitos registros OBS-10 1.0 a 1.5; nenhum dado atual foi alterado." };
     const data = result.data;
     const c = data.context;
     if ((c.correctedMonths !== null && (c.chronologicalMonths >= 24 || c.correctedMonths > c.chronologicalMonths))

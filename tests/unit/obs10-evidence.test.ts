@@ -40,6 +40,9 @@ for (const version of ["1.0.0","1.1.0","1.2.0"]) assert.equal(parseRecordJSON(JS
 const metrics=pilotMetrics(record); assert.equal(metrics.workSecondsRecorded["Preparação"],null);
 record.pilot.logs=[{phase:"Preparação",seconds:22,endedBy:"início da coleta"},{phase:"Revisão médica",seconds:31,endedBy:"manual"}];
 assert.equal(pilotMetrics(record).workSecondsRecorded["Preparação"],22);
+assert.equal(pilotMetrics(record).manualPausesOrInterruptions,0,"deliberate transitions are not interruptions");
+record.pilot.logs.push({phase:"Entrega",seconds:5,endedBy:"aba oculta"});
+assert.equal(pilotMetrics(record).manualPausesOrInterruptions,1);
 assert.equal(elapsedWork(1000,0),0);assert.equal(elapsedWork(0,100000000),7200);
 assert.equal(pilotSchema.safeParse({...emptyPilot(), logs:[{phase:"Other",seconds:2,endedBy:"manual"}]}).success,false);
 const mtext=JSON.stringify(pilotMetrics(record));

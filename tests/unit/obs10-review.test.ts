@@ -15,7 +15,7 @@ const base: SessionRecord = {
 };
 let assertions = 0;
 function rejected(record: unknown) { assertions++; assert.equal(parseRecordJSON(JSON.stringify(record)).ok, false); }
-for (const version of ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0"]) {
+for (const version of ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"]) {
   const imported = parseRecordJSON(JSON.stringify({ ...base, version }));
   assert.ok(imported.ok); if (!imported.ok) throw new Error("Unexpected failed import");
   assert.equal(imported.record.version, version);
