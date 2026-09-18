@@ -81,7 +81,7 @@ try {
   const downloadPromise = page.waitForEvent("download"); await b("Exportar JSON").click();
   const download = await downloadPromise; await download.saveAs(`${dir}/registro-sintetico.json`);
   const data = JSON.parse(await readFile(`${dir}/registro-sintetico.json`, "utf8"));
-  assert.equal(data.version, "1.5.0");
+  assert.equal(data.version, "1.6.0");
   assert.ok(data.sessionId && data.context.missingMaterials.includes("Carrinho grande"));
   assert.ok(data.observations.some((entry) => entry.outcome === "NA" && /Material ausente/.test(entry.assistance)));
   assert.ok(data.observations.some((entry) => entry.outcome === "M" && entry.response === ""), "category must not fabricate a clinical finding");

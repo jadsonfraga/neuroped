@@ -81,7 +81,7 @@ try {
   assert.equal(await declaration().isEnabled(), true);
   await declaration().check();
   const complete = await exportJSON("02-revisado.json");
-  assert.equal(complete.version, "1.5.0");
+  assert.equal(complete.version, "1.6.0");
   assert.equal(complete.observations[0].applicationSecond, timestamp);
   assert.equal(complete.observations[0].recordedAfterEnd, false);
   assert.equal(complete.observations[0].editedAfterEnd, true);

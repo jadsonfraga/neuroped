@@ -8,7 +8,7 @@ import { emptyObservation, type SessionRecord } from "../../client/src/features/
 let assertions = 0;
 const check = (value: unknown, message: string) => { assert.ok(value, message); assertions++; };
 const record = (bandId: string, months: number, extra: Partial<SessionRecord> = {}): SessionRecord => ({
-  version: "1.5.0", sessionId: "SINTETICO", context: { code: "NAO-EXPORTAR", chronologicalMonths: months, correctedMonths: null, bandId, schooling: "", language: "", adaptations: "", conditions: "", familyReport: "RELATO-NAO-EXPORTAR", proneAllowed: false },
+  version: "1.6.0", sessionId: "SINTETICO", context: { code: "NAO-EXPORTAR", chronologicalMonths: months, correctedMonths: null, bandId, schooling: "", language: "", adaptations: "", conditions: "", familyReport: "RELATO-NAO-EXPORTAR", proneAllowed: false },
   observations: [{ ...emptyObservation("manual-1", 2, 100), task: "TAREFA-NAO-EXPORTAR", response: "FATO-NAO-EXPORTAR", outcome: "E", quality: "Nítido" }],
   durationSeconds: 420, endReason: "Teste", encodingSecond: null, recallSecond: null, recording: "Teste", pilot: emptyPilot(), ...extra,
 });
@@ -50,7 +50,7 @@ check(agg.workSeconds["Preparação"]?.n === 2 && agg.workSeconds["Preparação"
 check(agg.interruptions === 1, "only the hidden-tab segment counts");
 check(agg.byAgeBand.length === 2 && agg.byAgeBand.every((row) => row.smallGroup) && agg.byAgeBand.find((row) => row.id === "y06")?.n === 2, "band counts with small-group flag");
 check(agg.usefulness["acrescentou informação útil"] === 1 && agg.usefulness["não avaliada"] === 2 && agg.difficulty["áudio ou imagem"] === 1, "declared opinions tallied, never scored");
-check(agg.byVersion["1.5.0"] === 3, "versions tallied");
+check(agg.byVersion["1.6.0"] === 3, "versions tallied");
 const text = aggregateText(agg);
 check(text.includes("3 aplicação(ões) distintas em 5 arquivo(s) válido(s)") && text.includes("2 duplicado(s)") && text.includes("Amostra pequena"), "summary states counts and caution");
 check(text.includes("Entrega: não medido em nenhuma aplicação") && text.includes("mediana 1min30s"), "summary distinguishes unmeasured from measured");

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Baby, Camera, Check, ChevronLeft, ChevronRight, ClipboardList, Download, Heart, ShieldCheck, Square, Timer } from "lucide-react";
+import { Baby, Camera, Check, ChevronLeft, ChevronRight, ClipboardList, Download, ShieldCheck, Square, Timer } from "lucide-react";
 import { AGE_BANDS, APPLICATION_RULES, MAX_SECONDS, OBS10_TITLE, OBS10_VERSION, OUTCOMES, PHASES, SOURCES, bandForMonths, clock, phaseForSeconds } from "@/features/obs10/protocol";
 import { emptyObservation, amendObservation, emptyHandoff, exportFilename, makeReport, parseAge, usableObservation, validCorrectedAge, type Observation, type SessionContext, type SessionRecord } from "@/features/obs10/session";
 import { useLocalRecorder } from "@/features/obs10/useLocalRecorder";
@@ -18,6 +18,7 @@ import { PilotPanel } from "@/features/obs10/PilotPanel";
 import { emptyPilot, type PilotRecord } from "@/features/obs10/pilot";
 import { useWorkClock } from "@/features/obs10/useWorkClock";
 import { DossierPanel, JourneyMap, Readiness, type ReadinessItem } from "@/features/obs10/Journey";
+import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, nextSteps } from "@/features/obs10/Orientation";
 import { makeDossier, makeScript } from "@/features/obs10/dossier";
 import "@/features/obs10/obs10.css";
 
@@ -68,6 +69,7 @@ export default function PreConsultaObs10Page() {
   const [encodingSecond, setEncodingSecond] = useState<number | null>(null);
   const [recallSecond, setRecallSecond] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [delivered, setDelivered] = useState({ txt: false, json: false, md: false });
   const video = useRef<HTMLVideoElement>(null);
   const started = useRef<number | null>(null);
   const ended = useRef(false);
@@ -172,7 +174,7 @@ export default function PreConsultaObs10Page() {
     monotonicStart.current = null; lastElapsed.current = 0; setSessionId(""); setHandoff(emptyHandoff()); setKits({}); setImportedRecord(null); setImportBusy(false);
     started.current = null; ended.current = false; sequence.current = 0;
     setStage("setup"); setElapsed(0); setStep(0); setObservations([]); setEndReason("");
-    setEncodingSecond(null); setRecallSecond(null); setUrgent(false); setMessage("");
+    setEncodingSecond(null); setRecallSecond(null); setUrgent(false); setMessage(""); setDelivered({ txt: false, json: false, md: false });
     setContext(MISSING_CONTEXT); setYears(""); setMonths(""); setCorrected(""); setUseCorrected(false);
     setChecks(CHECKS.map(() => false)); setPreviewBand(null); setCameraEnabled(false);
   }
@@ -217,6 +219,7 @@ export default function PreConsultaObs10Page() {
     { label: "Dispositivo de filmagem disponível", ok: kits[selectedBand?.id ?? ""]?.device === "ready", detail: "celular ou tablet institucional fixo" },
     { label: "Confirmações de segurança", ok: checks.every(Boolean), detail: `${checks.filter(Boolean).length}/${CHECKS.length}` },
   ];
+  const steps = finished ? nextSteps({ described: observations.length > 0 && incomplete === 0, exported: delivered.txt && delivered.json, video: Boolean(evidence.clips.length), dossier: delivered.md, declared: Boolean(handoff.declaredAt) }) : [];
   function printScript() {
     if (!selectedBand) return;
     const text = makeScript(selectedBand.id, { proneAllowed: context.proneAllowed, months: effective ?? undefined });
@@ -253,6 +256,7 @@ export default function PreConsultaObs10Page() {
       </header>
       <div className="obs10-notice obs10-no-print"><ShieldCheck size={19} aria-hidden="true" /><p><strong>Você aplica e registra. O médico interpreta.</strong> Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência.</p></div>
       <JourneyMap stage={stage} delivered={Boolean(handoff.declaredAt)} />
+      {stage === "setup" && <FirstTimeGuide />}
       {stage === "setup" && <PracticalMaterials actualBand={selectedBand} previewId={previewBand} onPreview={setPreviewBand}
         state={selectedBand ? kits[selectedBand.id] ?? {} : {}} locked={media.pending || starting.current || importBusy}
         onState={(value) => { if (selectedBand) setKits((current) => ({ ...current, [selectedBand.id]: value })); }}>
@@ -263,6 +267,7 @@ export default function PreConsultaObs10Page() {
             <label>Anos completos<input type="number" inputMode="numeric" min="0" max="17" value={years} onChange={(e) => { setYears(e.target.value); setPreviewBand(null); }} /></label>
             <label>Meses adicionais<input type="number" inputMode="numeric" min="0" max="11" value={months} onChange={(e) => { setMonths(e.target.value); setPreviewBand(null); }} /></label>
           </div>
+          <AgeFromBirthDate disabled={media.pending || starting.current || importBusy} onFill={(y, m) => { setYears(y); setMonths(m); setPreviewBand(null); }} />
           <label className="obs10-check"><input type="checkbox" checked={useCorrected} onChange={(e) => setUseCorrected(e.target.checked)} />Usar idade corrigida informada pelo médico (prematuros, antes de 24 meses)</label>
           {useCorrected && <label>Idade corrigida em meses completos<input type="number" min="0" max="23" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></label>}
           {!correctedValid && <p role="alert" className="obs10-error">Confirme a idade corrigida com o médico: deve ser não negativa, não maior que a cronológica e utilizada antes de 24 meses.</p>}
@@ -313,7 +318,7 @@ export default function PreConsultaObs10Page() {
           <Readiness items={readiness} />
           <button type="button" className="obs10-primary obs10-wide" disabled={!ready || media.pending} onClick={() => void start()}><Camera size={19} />{media.pending ? "Aguardando câmera e microfone…" : "Iniciar aplicação · 10 minutos"}</button>
           {media.pending && <button type="button" className="obs10-secondary obs10-wide" onClick={cancelCamera}>Cancelar solicitação de câmera</button>}
-          <div className="obs10-kind"><Heart size={18} /><p>“Vamos fazer algumas brincadeiras e movimentos para o médico conhecer seu jeito de fazer as coisas. Você pode pedir ajuda ou parar.”</p></div>
+          <OpeningScripts />
         </section>
       </div>}
 
@@ -332,6 +337,8 @@ export default function PreConsultaObs10Page() {
         {media.stream && <div className="obs10-camera"><video ref={video} autoPlay muted playsInline aria-label="Prévia local da câmera" /><p>Câmera e microfone ativos. Ajuste o enquadramento ao bloco; nenhuma transmissão externa.</p></div>}
         <nav className="obs10-stepper" aria-label="Blocos de observação">{PHASES.map((phase, index) => <button type="button" key={phase.title} className={step === index ? "is-active" : ""} aria-current={step === index ? "step" : undefined} onClick={() => setStep(index)}><span aria-hidden="true">{phase.icon}</span><strong>{index + 1}. {phase.title}</strong><small>{clock(phase.start)}–{clock(phase.end)}</small></button>)}</nav>
         {running && expectedStep !== step && <div className="obs10-time-hint" role="status">Janela sugerida pelo cronômetro: {PHASES[expectedStep].title}. Não prolongue uma tentativa.<button type="button" onClick={() => setStep(expectedStep)}>Abrir bloco sugerido</button></div>}
+        {running && <LiveHelp />}
+        {finished && <NextSteps steps={steps} />}
         <div className="obs10-live-grid">
           <section className="obs10-panel obs10-task">
             <div className="obs10-eyebrow">BLOCO {step + 1} DE 6 · {clock(PHASES[step].start)}–{clock(PHASES[step].end)}</div>
@@ -378,13 +385,13 @@ export default function PreConsultaObs10Page() {
           <h2>🌷 Revisar e entregar ao médico</h2><p>Confirme ficha, tarefas, ajuda, áudio e enquadramento. Não complete lacunas com “normal”. Os registros podem ser corrigidos nos blocos acima sem reiniciar a aplicação.</p>
           <p className="obs10-note-counter">{PRACTICAL_TASKS[band.id].filter((task) => !observations.some((entry) => entry.id === `guided-${task.id}`)).length} cartões sem marcação guiada. Confira também seus registros livres; ausência de marcação não é prova de ausência de habilidade.</p>
           {incomplete > 0 && <p role="status" className="obs10-caution">{incomplete} registro(s) incompleto(s). A exportação apontará explicitamente as informações que faltam.</p>}
-          <div className="obs10-actions"><button type="button" className="obs10-primary" onClick={() => { saveFile(exportFilename(context.code, "txt", sessionId), report, "text/plain;charset=utf-8"); setMessage("Download solicitado. Confirme o arquivo no armazenamento institucional antes de sair."); }}><Download size={17} />Exportar registro TXT</button><button type="button" onClick={() => { saveFile(exportFilename(context.code, "json", sessionId), JSON.stringify(record, null, 2), "application/json"); setMessage("Download JSON solicitado; nenhum envio ao servidor."); }}>Exportar JSON</button><button type="button" onClick={() => { if (!printPlainTextDocument({ title: "OBS-10 — registro para revisão", text: report })) setMessage("Impressão bloqueada pelo navegador. Permita a janela ou use a exportação TXT."); }}>Imprimir resumo</button></div>
+          <div className="obs10-actions"><button type="button" className="obs10-primary" onClick={() => { saveFile(exportFilename(context.code, "txt", sessionId), report, "text/plain;charset=utf-8"); setDelivered((d) => ({ ...d, txt: true })); setMessage("Download solicitado. Confirme o arquivo no armazenamento institucional antes de sair."); }}><Download size={17} />Exportar registro TXT</button><button type="button" onClick={() => { saveFile(exportFilename(context.code, "json", sessionId), JSON.stringify(record, null, 2), "application/json"); setDelivered((d) => ({ ...d, json: true })); setMessage("Download JSON solicitado; nenhum envio ao servidor."); }}>Exportar JSON</button><button type="button" onClick={() => { if (!printPlainTextDocument({ title: "OBS-10 — registro para revisão", text: report })) setMessage("Impressão bloqueada pelo navegador. Permita a janela ou use a exportação TXT."); }}>Imprimir resumo</button></div>
           {media.status === "finalizing" && <p role="status" className="obs10-caution">Finalizando o arquivo de vídeo. Não saia nem reinicie a sessão até aparecer o arquivo ou uma mensagem de falha.</p>}
           {media.url && <div className="obs10-video-result"><video controls playsInline src={media.url} aria-label="Revisão do vídeo local" /><a className="obs10-download" href={media.url} download={exportFilename(context.code, media.mime.includes("mp4") ? "mp4" : "webm", sessionId)}>Salvar vídeo no dispositivo institucional</a><p>Arquivo somente nesta sessão. Revise som, enquadramento e integridade. Não foi analisado por IA nem enviado ao prontuário.</p></div>}
           <p role="status">{message}</p><p className="obs10-caution"><strong>Antes de sair:</strong> exporte o registro e, se houver, salve o vídeo. Recarregar ou navegar para outra página elimina os dados desta sessão.</p>
           <button type="button" className="obs10-secondary" disabled={media.status === "finalizing"} onClick={resetSession}>Nova aplicação · limpar esta sessão</button>
         </section>}
-        {finished && <DossierPanel text={dossier} onDownload={() => { saveFile(exportFilename(context.code, "md", sessionId), dossier, "text/markdown;charset=utf-8"); setMessage("Download do dossiê solicitado; nenhum envio ao servidor."); }} />}
+        {finished && <DossierPanel text={dossier} onDownload={() => { saveFile(exportFilename(context.code, "md", sessionId), dossier, "text/markdown;charset=utf-8"); setDelivered((d) => ({ ...d, md: true })); setMessage("Download do dossiê solicitado; nenhum envio ao servidor."); }} />}
       </div>}
       {finished && <div className="obs10-no-print"><EvidencePanel key={`${sessionId}-${reviewEpoch}`} record={record} onChange={(value) => { setEvidence(value); setHandoff(emptyHandoff()); }} /></div>}
       {finished && <section className="obs10-summary"><h2>Resumo para revisão médica</h2><pre>{report}</pre></section>}
