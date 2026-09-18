@@ -6,7 +6,7 @@ import { completeKit, missingForTask } from "../../client/src/features/obs10/Pra
 import { sessionElapsed, leavesObsRoute } from "../../client/src/features/obs10/safety";
 import { makeReport, exportFilename, emptyObservation, type SessionRecord } from "../../client/src/features/obs10/session";
 
-assert.equal(OBS10_VERSION, "1.5.0");
+assert.equal(OBS10_VERSION, "1.6.0");
 assert.deepEqual(validatePracticalCoverage(), []);
 assert.equal(Object.keys(KITS).length, 13);
 assert.equal(Object.keys(MATERIALS).length, 17);

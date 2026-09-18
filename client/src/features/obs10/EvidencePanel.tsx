@@ -110,7 +110,7 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
   const sourceTask = currentObservation?.id.startsWith("guided-") ? PRACTICAL_TASKS[record.context.bandId]?.find((t) => `guided-${t.id}` === taskId) : undefined;
   return <section className="obs10-panel obs13-evidence" data-testid="obs13-evidence">
     <h2><Film size={22} />Do registro ao trecho de vídeo</h2>
-    <p>Associe o arquivo local a esta sessão, marque o trecho na reprodução e mantenha a revisão profissional separada. <strong>Nenhum vídeo é enviado ou interpretado automaticamente.</strong></p>
+    <p><strong>Opcional.</strong> Use só se o vídeo existir como arquivo neste dispositivo: associe o arquivo local a esta sessão, marque o trecho na reprodução e mantenha a revisão profissional separada. Sem arquivo, pule este painel; o registro já informa que o vídeo está fora. <strong>Nenhum vídeo é enviado ou interpretado automaticamente.</strong></p>
     <div className="obs13-flow" aria-label="Etapas de evidência"><span>1 · Confirmar arquivo</span><span>2 · Marcar trecho</span><span>3 · Revisar evidência</span></div>
     <div className="obs13-columns">
       <div>

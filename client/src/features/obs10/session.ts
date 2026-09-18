@@ -58,6 +58,15 @@ export function parseAge(years: string, months: string): number | null {
   const y = Number(years), m = Number(months);
   return y >= 0 && y <= 17 && m >= 0 && m <= 11 ? y * 12 + m : null;
 }
+/** Completed months between two ISO dates (yyyy-mm-dd); null when either date is invalid or the reference precedes the birth. The dates are never stored. */
+export function monthsBetween(birthISO: string, referenceISO: string): number | null {
+  const parse = (iso: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); if (!m) return null; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? d : null; };
+  const birth = parse(birthISO), ref = parse(referenceISO);
+  if (!birth || !ref || ref < birth) return null;
+  let months = (ref.getUTCFullYear() - birth.getUTCFullYear()) * 12 + ref.getUTCMonth() - birth.getUTCMonth();
+  if (ref.getUTCDate() < birth.getUTCDate()) months -= 1;
+  return months;
+}
 export function validCorrectedAge(chronological: number | null, corrected: string, enabled: boolean): boolean {
   if (!enabled) return true;
   return chronological !== null && chronological < 24 && /^\d+$/.test(corrected)

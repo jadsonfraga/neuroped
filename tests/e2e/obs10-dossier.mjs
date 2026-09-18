@@ -1,4 +1,4 @@
-/** Journey map, readiness list, printed script and external-analysis dossier on the real build; synthetic login only. */
+/** First-time orientation, journey map, readiness list, printed script and external-analysis dossier on the real build; synthetic login only. */
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
@@ -40,7 +40,19 @@ try {
   assert.equal(await okItems().count(), 0);
   assert.match(await page.getByTestId("obs10-readiness").textContent(), /pendente/);
   assert.equal(await button("Imprimir roteiro completo da ficha").isDisabled(), true);
-  await field("Anos completos").fill("7"); await field("Meses adicionais").fill("2");
+  // First-time guide is open before anything is filled and walks every stage; the age helper fills the fields and discards the dates.
+  const guide = page.getByTestId("obs10-first-time");
+  assert.equal(await guide.evaluate((el) => el.open), true, "first-time guide opens by default");
+  assert.equal(await guide.locator(".obs10-first-steps > li").count(), 6);
+  assert.match(await guide.textContent(), /Na tela/); assert.match(await guide.textContent(), /Na sala/); assert.match(await guide.textContent(), /Se algo der errado/);
+  assert.equal(await page.locator(".obs10-guide ol").evaluate((el) => getComputedStyle(el).listStyleType), "decimal", "rules are numbered");
+  await page.getByText("Calcular pela data de nascimento").click();
+  await field("Data de nascimento").fill("2019-07-10"); await field("Data da aplicação").fill("2026-09-18");
+  await button("Preencher anos e meses").click();
+  assert.equal(await field("Anos completos").inputValue(), "7"); assert.equal(await field("Meses adicionais").inputValue(), "2");
+  assert.equal(await field("Data de nascimento").inputValue(), "", "birth date cleared after filling");
+  assert.match(await page.getByTestId("obs10-age-helper").getByRole("status").textContent(), /7 ano\(s\) e 2 mês\(es\)/);
+  assert.match(await page.getByTestId("obs10-scripts").textContent(), /Diga ao responsável/); assert.match(await page.getByTestId("obs10-scripts").textContent(), /Diga à criança/);
   await field("Código institucional, sem nome").fill("OBS14-SINTETICO");
   await field("Escolaridade (sem nome da escola)").fill("2 ano ficticio");
   assert.equal(await okItems().count(), 2, "age and sheet ready; kit, device and checks pending");
@@ -62,11 +74,22 @@ try {
   await page.clock.install();
   await button("Iniciar aplicação · 10 minutos").click();
   assert.match(await page.getByTestId("obs10-journey").locator('[aria-current="step"]').textContent(), /Aplicar/);
+  assert.equal(await page.getByTestId("obs10-first-time").count(), 0, "guide leaves the timed screen");
+  await page.getByTestId("obs10-live-help").locator("summary").click();
+  assert.equal(await page.getByTestId("obs10-live-help").locator(".obs10-legend > div").count(), 7, "every response button explained");
+  assert.match(await page.getByTestId("obs10-live-help").textContent(), /Sair desta aba/);
+  await screen("00-coleta-ajuda-desktop");
   await page.clock.runFor(150000);
   await page.getByRole("button", { name: /3\. Linguagem e raciocínio/ }).click();
   await page.getByRole("group", { name: "Registro rápido desta tarefa", exact: true }).getByRole("button", { name: "Após repetição", exact: true }).click();
   await button("Encerrar antes").click();
   assert.match(await page.getByTestId("obs10-journey").locator('[aria-current="step"]').textContent(), /Revisar/);
+  assert.equal(await page.getByTestId("obs10-live-help").count(), 0);
+  const next = page.getByTestId("obs10-next-steps");
+  assert.equal(await next.locator(".obs10-next-list > li").count(), 6); assert.equal(await next.locator("li.is-done").count(), 0);
+  assert.match(await next.getByRole("status").textContent(), /6 passo\(s\)/);
+  await next.getByRole("button", { name: "Abrir" }).nth(2).click();
+  assert.ok(await page.locator(".obs10-delivery").evaluate((el) => el.getBoundingClientRect().top >= -2 && el.getBoundingClientRect().top < innerHeight), "Abrir scrolls to the delivery section");
   await page.getByRole("button", { name: /3\. Linguagem e raciocínio/ }).click();
   await page.getByLabel("O que fez ou falou? Descreva literalmente").first().fill("Repetiu as tres palavras na segunda apresentacao.");
   // Dossier: download and clipboard carry the same text, with the literal fact, the prose category and explicit gaps.
@@ -86,6 +109,17 @@ try {
   await screen("02-dossie-desktop");
   await page.setViewportSize({ width: 390, height: 844 }); await screen("03-dossie-celular");
   await page.setViewportSize({ width: 1440, height: 1080 });
+  // Next-steps flags follow what the screen can confirm; edits after the download are deliberate here, after the preview/clipboard equality checks.
+  assert.equal(await next.locator("li.is-done").count(), 1, "only the dossier download is confirmed; the record still lacks the quality check");
+  const txtPromise = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise;
+  assert.equal(await next.locator("li.is-done").count(), 1, "TXT alone does not complete the export step");
+  const jsonPromise = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise;
+  assert.equal(await next.locator("li.is-done").count(), 2);
+  await page.getByLabel("Qualidade do trecho, conferida por você").first().selectOption("Não avaliável");
+  assert.equal(await next.locator("li.is-done").count(), 2, "the repetition still has to be described");
+  await page.getByLabel("Ajuda, adaptação ou motivo de não aplicação").first().fill("Comando repetido uma vez.");
+  assert.equal(await next.locator("li.is-done").count(), 4, "resolving the last pendências completes the describe and check steps");
+  assert.match(await next.getByRole("status").textContent(), /2 passo\(s\)/);
   // Pilot metrics: the exported whitelist file feeds the local consolidator; duplicates and clinical JSON are refused or counted once.
   await page.getByTestId("obs13-pilot").locator("summary").first().click();
   const metricsPromise = page.waitForEvent("download"); await button("Exportar métricas sem textos clínicos").click();
@@ -116,8 +150,8 @@ try {
   assert.equal(agg.sessions, 2); assert.equal(agg.duplicatesIgnored, 1); assert.equal(agg.reachedLimit, 1);
   await screen("04-consolidacao-desktop");
   assert.deepEqual(errors, []); assert.deepEqual(writes, []);
-  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["journey-map", "readiness-list", "printed-script-isolated", "dossier-download", "dossier-clipboard", "dossier-preview", "no-fabricated-finding", "metrics-file-without-timestamp", "local-metrics-consolidation", "duplicate-counted-once", "clinical-json-refused"] }, null, 2));
-  console.log("OBS-10 v1.5: journey, readiness, printed script, dossier and local pilot consolidation passed; no clinical API writes.");
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, clinicalWrites: writes, coverage: ["first-time-guide", "age-from-birth-date", "opening-scripts", "live-help-legend", "next-steps-order", "journey-map", "readiness-list", "printed-script-isolated", "dossier-download", "dossier-clipboard", "dossier-preview", "no-fabricated-finding", "metrics-file-without-timestamp", "local-metrics-consolidation", "duplicate-counted-once", "clinical-json-refused"] }, null, 2));
+  console.log("OBS-10 v1.6: first-time orientation, journey, readiness, printed script, dossier and local pilot consolidation passed; no clinical API writes.");
 } catch (error) {
   await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });
   await writeFile(`${dir}/failure.txt`, String(error.stack || error)); throw error;

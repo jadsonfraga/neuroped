@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — guia de aplicação prática
 
-**Versão da interface 1.5.0 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
+**Versão da interface 1.6.0 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
 Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
 
@@ -253,3 +253,21 @@ Limites: indicadores de processo e opiniões, não desempenho da criança, acur�
 ### Verificação v1.5
 
 `tests/unit/obs10-pilot-aggregate.test.ts` (semântica de interrupção, exportador e consolidador em sincronia para as 13 faixas e todas as opções, recusa de campos extras e texto, duplicatas, medianas, grupos pequenos, ausência de texto clínico) e extensão de `tests/e2e/obs10-dossier.mjs` (exportação sem carimbo de data, consolidação de cinco arquivos com duplicata, registro clínico recusado, agregado baixado, axe limpo). Importação de registros aceita 1.0 a 1.5. Rollback: reverter somente a PR desta versão.
+
+## v1.6 — orientação para quem nunca aplicou, tela a tela
+
+Sem alteração do roteiro clínico, das fichas ou do JSON. A v1.6 responde a uma auditoria feita na perspectiva de um adulto que abre a página pela primeira vez e precisa aplicar do começo ao fim sem ninguém ao lado.
+
+### O que faltava e o que entrou
+
+- **Primeira vez aplicando? Leia isto antes de começar.** Bloco aberto por padrão no topo da preparação, com seis passos numerados que cobrem as quatro etapas do mapa (preparar, aplicar, revisar, entregar). Cada passo diz o que fazer **na tela** e **na sala**, nomeando os botões reais (Imprimir roteiro completo da ficha, Iniciar aplicação, Encerrar antes, Interromper e chamar médico, Nova aplicação). Fecha com «Se algo der errado»: choro ou recusa total, urgência, página recarregada, câmera sem espaço. Some da tela quando a coleta começa.
+- **Calcular pela data de nascimento.** Ajuda opcional no bloco 1: data de nascimento e data da aplicação preenchem anos e meses completos (`monthsBetween` em `session.ts`, meses completos, sem arredondar para cima). As datas não entram no registro nem na exportação e a data de nascimento é apagada da tela ao preencher.
+- **Duas falas prontas antes de iniciar.** Além da frase para a criança, o que dizer ao responsável: ficar perto sem dar dicas, poder parar a qualquer momento, não é prova nem nota. Uma única fonte (`Orientation.tsx`) alimenta as duas.
+- **Primeira vez nesta tela? O que cada coisa faz.** Durante a coleta, um bloco recolhido explica cronômetro sem pausa, encerramento automático aos dez minutos, aviso amarelo do bloco previsto, cartão da tarefa, Encerrar antes, botão de urgência e saída da aba. Inclui a legenda dos sete botões de resposta, derivada de `OUTCOMES`.
+- **O que fazer agora, nesta ordem.** Após o encerramento, seis passos com botão «Abrir» que rola até a seção correspondente: descrever cada tarefa marcada, conferir pendências, exportar TXT e JSON, salvar o vídeo separado, gerar o dossiê se autorizado, marcar conferências e declarar o encaminhamento. O passo só fica marcado com o que a tela consegue confirmar: registros sem pendência, os dois arquivos baixados, clipe associado, dossiê baixado, encaminhamento declarado. Nova aplicação zera as marcações.
+- **Painel de vídeo declarado opcional**, com instrução explícita de pular quando não há arquivo local.
+- **Listas numeradas voltaram a mostrar os números** (regras do guia rápido e passos do dossiê estavam sem marcador por causa do reset global de estilos).
+
+### Verificação v1.6
+
+`tests/unit/obs10-orientation.test.ts` (cálculo de idade em limites de dia, bissexto e datas inválidas; cobertura das quatro etapas; nomes reais dos controles; ausência de linguagem diagnóstica; flags dos passos finais; alvos de rolagem existentes; data de nascimento nunca persistida) e extensão de `tests/e2e/obs10-dossier.mjs` (guia aberto com seis passos, cálculo de 7 anos e 2 meses a partir de datas fixas com campo apagado, falas ao responsável e à criança, legenda com sete botões durante a coleta, lista de seis passos com rolagem e marcação progressiva após exportar e resolver pendências, axe limpo em todas as telas). Importação aceita 1.0 a 1.6. Rollback: reverter somente a PR desta versão.
