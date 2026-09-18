@@ -97,7 +97,7 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
   }
   function openMoment(m: EvidenceMoment) {
     setActiveMoment(m.id); setDecision(""); setTaskId(m.observationId); setWatched(false); setComment(""); setStart(null); setError("");
-    if (!matching || confirmedId !== m.clipId || !video.current) { setTargetClip(m.clipId); setError("Reanexe e confirme o arquivo deste clipe antes de abrir o trecho. O JSON não contém vídeo."); return; }
+    if (!matching || confirmedId !== m.clipId || !video.current) { clearLocal(); setTargetClip(m.clipId); setError("Reanexe e confirme o arquivo deste clipe antes de abrir o trecho. O JSON não contém vídeo."); return; }
     video.current.pause(); video.current.currentTime = m.startSecond; setPosition(m.startSecond); playEnd.current = m.endSecond;
   }
   function saveReview() {

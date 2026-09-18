@@ -74,13 +74,20 @@ export function useLocalRecorder() {
   }, [reset]);
   useEffect(() => {
     const hiddenPreview = () => {
-      if (document.hidden && phase.current === "preview") reset();
+      if (document.hidden && (phase.current === "preview" || phase.current === "requesting")) {
+        reset();
+        setError("Câmera cancelada ao sair da aba. Volte à avaliação e inicie novamente quando estiver pronta.");
+      }
     };
     document.addEventListener("visibilitychange", hiddenPreview);
     return () => document.removeEventListener("visibilitychange", hiddenPreview);
   }, [reset]);
 
   const prepare = useCallback(async (): Promise<boolean> => {
+    if (document.hidden) {
+      setError("Abra a aba da avaliação antes de autorizar a câmera.");
+      return false;
+    }
     if (phase.current === "preview" && tracks.current?.getTracks().every((track) => track.readyState === "live")) return true;
     if (pendingRequest.current || phase.current === "recording" || phase.current === "finalizing") return false;
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -95,6 +102,12 @@ export function useLocalRecorder() {
       const acquired = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
       if (!mounted.current || generation.current !== ticket) {
         acquired.getTracks().forEach((track) => track.stop());
+        return false;
+      }
+      if (document.hidden) {
+        acquired.getTracks().forEach((track) => track.stop());
+        reset();
+        setError("Câmera cancelada ao sair da aba. Nenhuma coleta foi iniciada.");
         return false;
       }
       if (!acquired.getAudioTracks().length || !acquired.getVideoTracks().length || acquired.getTracks().some((track) => track.readyState !== "live")) {
@@ -129,7 +142,10 @@ export function useLocalRecorder() {
     if (!(await prepare())) return false;
     const acquired = tracks.current;
     const ticket = generation.current;
-    if (!acquired || !mounted.current || phase.current !== "preview") return false;
+    if (!acquired || !mounted.current || phase.current !== "preview" || document.hidden) {
+      if (acquired && document.hidden) reset();
+      return false;
+    }
     try {
       const preferred = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"].find((candidate) => MediaRecorder.isTypeSupported(candidate));
       const media = new MediaRecorder(acquired, { ...(preferred ? { mimeType: preferred } : {}), videoBitsPerSecond: 1_500_000, audioBitsPerSecond: 64_000 });
@@ -152,6 +168,9 @@ export function useLocalRecorder() {
       };
       media.onstop = () => {
         if (!mounted.current || generation.current !== ticket) return;
+        if (!stopping.current && phase.current === "recording") {
+          setError("A gravação terminou antes do comando de encerramento. Coleta interrompida; preserve e confira o vídeo parcial.");
+        }
         if (finalizeGuard.current) clearTimeout(finalizeGuard.current);
         finalizeGuard.current = null;
         const type = media.mimeType || chunks[0]?.type || "video/webm";
@@ -177,7 +196,7 @@ export function useLocalRecorder() {
       }
       return false;
     }
-  }, [prepare, releaseTracks, stop, updateStatus]);
+  }, [prepare, releaseTracks, reset, stop, updateStatus]);
 
   return { stream, url, mime, status, pending: status === "requesting", error, prepare, start, stop, cancel: reset, reset };
 }

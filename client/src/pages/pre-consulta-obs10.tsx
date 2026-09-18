@@ -120,13 +120,25 @@ export default function PreConsultaObs10Page() {
   useEffect(() => {
     if (video.current) video.current.srcObject = media.stream;
   }, [media.stream, stage]);
-  useEffect(() => () => { startTicket.current += 1; }, []);
+  useEffect(() => {
+    const invalidateHiddenStart = () => {
+      if (document.hidden && starting.current) {
+        startTicket.current += 1;
+        starting.current = false;
+      }
+    };
+    document.addEventListener("visibilitychange", invalidateHiddenStart);
+    return () => {
+      startTicket.current += 1;
+      document.removeEventListener("visibilitychange", invalidateHiddenStart);
+    };
+  }, []);
   useEffect(() => {
     if (running && media.error) finishRef.current("Interrupção técnica da captação; vídeo pode estar incompleto.");
   }, [media.error, running]);
 
   async function start() {
-    if (!ready || !selectedBand || chrono === null || starting.current || media.status === "finalizing") return;
+    if (document.hidden || !ready || !selectedBand || chrono === null || starting.current || media.status === "finalizing") return;
     starting.current = true;
     const ticket = ++startTicket.current;
     if (!cameraEnabled) media.reset();
@@ -134,6 +146,7 @@ export default function PreConsultaObs10Page() {
     if (startTicket.current !== ticket) return;
     starting.current = false;
     if (!permitted) return;
+    if (document.hidden) { media.cancel(); return; }
     workClock.stop("início da coleta");
     setContext((current) => ({ ...current, chronologicalMonths: chrono, correctedMonths: useCorrected ? Number(corrected) : null, bandId: selectedBand.id,
       missingMaterials: KITS[selectedBand.id].filter((item) => (kits[selectedBand.id] ?? {})[item.id] === "missing").map((item) => MATERIALS[item.id].label) }));

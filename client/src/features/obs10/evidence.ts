@@ -66,7 +66,8 @@ export function reviewChanged(r: ProfessionalReview, e: EvidenceBundle, observat
 }
 export function mediaClock(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "—";
-  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${(seconds % 60).toFixed(1).padStart(4, "0")}`;
+  const ticks = Math.round(seconds * 10);
+  return `${String(Math.floor(ticks / 600)).padStart(2, "0")}:${((ticks % 600) / 10).toFixed(1).padStart(4, "0")}`;
 }
 export function evidenceText(record: SessionRecord): string {
   const e = record.evidence;
