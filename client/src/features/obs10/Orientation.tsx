@@ -82,7 +82,7 @@ export interface NextStep { label: string; detail: string; target: string; done?
 export interface VideoDeliveryState {
   integratedRecordingAvailable: boolean;
   integratedRecordingConfirmedSaved: boolean;
-  externalClipConfirmed: boolean;
+  externalClipConfirmedThisSession: boolean;
   externalRecordingConfirmedSaved: boolean;
   unavailableDocumented: boolean;
 }
@@ -90,10 +90,11 @@ export interface VideoDeliveryState {
  * A clip associated in the evidence panel must never stand in for saving a recording created by the integrated recorder.
  * When the integrated recorder produced a file, that exact file has precedence and requires an explicit storage confirmation.
  * External files may resolve the step only when there is no integrated recording to preserve.
+ * Imported clip references never count: the external file must have been reattached and byte-confirmed in this screen session.
  */
 export function videoDeliveryDone(state: VideoDeliveryState): boolean {
   if (state.integratedRecordingAvailable) return state.integratedRecordingConfirmedSaved;
-  return state.externalClipConfirmed || state.externalRecordingConfirmedSaved || state.unavailableDocumented;
+  return state.externalClipConfirmedThisSession || state.externalRecordingConfirmedSaved || state.unavailableDocumented;
 }
 /**
  * Each flag must be something the screen actually witnessed or the operator explicitly confirmed.
@@ -103,10 +104,10 @@ export function nextSteps(state: { described: boolean; reviewed: boolean; export
   return [
     { label: "Descreva o que a criança fez em cada tarefa marcada", detail: "Bloco a bloco, com as palavras e ações observadas. Não escreva “normal” nem complete por suposição.", target: ".obs10-records", done: state.described },
     { label: "Confira as pendências e os cartões sem marcação", detail: "Abra a revisão por bloco e declare lá que conferiu. Ausência de pendência automática não é a mesma coisa que ter revisado.", target: '[data-testid="obs10-review-board"]', done: state.reviewed },
-    { label: "Exporte ou reexporte o registro TXT e o JSON atuais", detail: "Guarde os dois no destino institucional. Depois de qualquer conferência ou declaração, reexporte para registrar a versão final.", target: ".obs10-delivery", done: state.exported },
+    { label: "Exporte ou reexporte o registro TXT e o JSON atuais", detail: "Guarde os dois no destino institucional e confirme os arquivos atuais. Depois de qualquer conferência ou declaração que mude o registro, reexporte e confirme de novo.", target: ".obs10-delivery", done: state.exported },
     { label: "Resolva o vídeo separado do registro", detail: "Gravação deste dispositivo: salve e confirme o arquivo no armazenamento institucional. Filmagem externa: confirme o fluxo institucional ou documente a indisponibilidade. O JSON não contém vídeo.", target: ".obs10-delivery", done: state.video },
     { label: "Gere o dossiê, se a clínica autorizar análise externa", detail: "Copie ou baixe e cole junto da lei PRÉ na ferramenta autorizada. Este aplicativo não envia nada.", target: '[data-testid="obs10-dossier"]', done: state.dossier },
-    { label: "Marque as conferências e declare o encaminhamento", detail: "A conclusão final só permanece registrada quando o TXT/JSON atual contém a declaração. Depois de declarar, reexporte se necessário.", target: '[data-testid="obs10-review-board"]', done: state.declared },
+    { label: "Declare o fechamento e confirme a entrega final", detail: "Declare o registro pronto para encaminhamento; depois reexporte TXT/JSON com essa declaração e confirme os arquivos finais no armazenamento institucional.", target: '[data-testid="obs10-review-board"]', done: state.declared },
   ];
 }
 export function NextSteps({ steps }: { steps: NextStep[] }) {
