@@ -80,7 +80,11 @@ try {
   await page.getByRole("checkbox", { name: /^Exportei e conferi os arquivos/ }).check();
   assert.equal(await declaration().isEnabled(), true);
   await declaration().check();
+  const finalStep = page.getByTestId("obs10-next-steps").locator(".obs10-next-list > li").nth(5);
+  assert.equal(await finalStep.evaluate((el) => el.classList.contains("is-done")), false, "declaring handoff invalidates the older export until the declaration itself is re-exported");
+  const finalTxtPromise = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await finalTxtPromise;
   const complete = await exportJSON("02-revisado.json");
+  assert.equal(await finalStep.evaluate((el) => el.classList.contains("is-done")), true, "final handoff is done only when current TXT/JSON contain the declaration");
   assert.equal(complete.version, "1.6.1");
   assert.equal(complete.observations[0].applicationSecond, timestamp);
   assert.equal(complete.observations[0].recordedAfterEnd, false);
