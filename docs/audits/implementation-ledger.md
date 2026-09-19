@@ -106,6 +106,54 @@ link manual); trial expira sem aviso prévio (job de dunning = rodada
 própria); operator não abre /configuracoes no client (RBAC de rota
 uniforme; perfil dele é editável via API).
 
+## Rodada 2026-09-14 — métricas de produto ausentes (base `main@efad2006`)
+
+Gatilho: relatório estratégico externo (14/09/2026), produzido SEM acesso ao
+código, marcando dezenas de itens como "não especificado" — DAU, MAU,
+retenção, funil de ativação entre eles. Conferido item a item contra o
+código antes de agir (skill de triagem de relatório de outro agente): a
+maior parte do relatório estava desatualizada em relação a este repositório
+(stack, billing, LGPD, testes e CI já existiam e estavam mal identificados
+pelo relatório por falta de acesso ao código). Um ponto, porém, se confirmou
+real.
+
+| Achado                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Correção                                                                                                                                                                                                                                        | Estado                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Não havia como responder "quantas contas/clínicas usam o produto, e com que frequência". Os primitivos já existiam espalhados — `users.last_login_at` (atualizado a cada login via `registerSuccessfulLogin`), `created_at`, `email_verified_at` (0024), `clinics.created_at`, `clinic_memberships` — mas nada os agregava. Cinco tabelas de auditoria distintas já existiam (`audit_logs`, `operations_audit_log`, `saas_audit_log`, `saas_audit_events`, `public_submission_audit_log`); nenhuma pensada para produto, nenhuma agregada em lugar algum | `GET /api/admin/analytics-summary`: DAU/WAU/MAU, novas contas/clínicas, funil de ativação (assinou → verificou e-mail → possui clínica) e proxy de retenção de 30 dias — tudo agregado das colunas já existentes, sem migração, sem tabela nova | 🟡 #879 pronto para revisão |
+
+### Por que não um sexto ledger
+
+Criar uma tabela de eventos paralela fragmentaria "onde eu olho para saber o
+que aconteceu" em dois lugares — o oposto da doutrina de fonte única já
+seguida no resto do produto (ex.: o coletor de exportação LGPD extraído para
+um módulo único em #782, em vez de duplicado). Os primitivos que já existem
+respondem a pergunta que o relatório levantou; faltava só agregá-los.
+
+### Decisões que não são óbvias
+
+- **`admin` e `reader` (sentinela E2E) excluídos por role, não por e-mail.** A
+  sentinela E2E loga em todo smoke test; se contasse, infuncionaria como
+  ativação sozinha. Excluir por `role` evita comparar e-mail contra variável
+  de ambiente dentro da métrica.
+- **Retenção é proxy declarado, não medição real.** `last_login_at` guarda só
+  o login mais recente, não histórico. "Ainda ativo 30 dias depois" aqui
+  significa "o último login registrado aconteceu 30+ dias após o cadastro" —
+  a métrica honesta que a coluna permite, documentada como tal na própria
+  resposta da rota (`retentionProxy.note`), não a métrica ideal que exigiria
+  um ledger de eventos.
+- **Coorte de retenção é fixa em 30–60 dias atrás.** Uma coorte mais recente
+  ainda não teve os 30 dias completos decorrer (right-censoring); incluí-la
+  subestimaria retenção por medir gente que ainda não teve chance de voltar.
+
+### O que este ciclo NÃO entrega
+
+Instrumentação de funil PRÉ-cadastro (landing → início do cadastro) exigiria
+um endpoint público novo de ingestão de eventos, com seu próprio threat
+model de rate limiting e anti-abuso — não emendado aqui. Também não cobre o
+app família (Portal Família / "Vou Falar"), que é produto e possivelmente
+repositório distinto do desta SaaS clínica; o relatório externo trata
+predominantemente daquele produto.
+
 ## Rodada 2026-09-06 — rotação da chave de PII operacional (base `main@7cc8841f`)
 
 Achado de auditoria da #575, encontrado lendo o código antes de alterar
