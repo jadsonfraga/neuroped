@@ -78,22 +78,35 @@ export function LiveHelp() {
 }
 
 export interface NextStep { label: string; detail: string; target: string; done?: boolean }
+
+export interface VideoDeliveryState {
+  integratedRecordingAvailable: boolean;
+  integratedRecordingConfirmedSaved: boolean;
+  externalClipConfirmed: boolean;
+  externalRecordingConfirmedSaved: boolean;
+  unavailableDocumented: boolean;
+}
 /**
- * Each flag must be something the screen actually witnessed, not inferred:
- * - `reviewed` is the aplicadora's own declaration on the review board, never guessed from a zero pendência count.
- * - `exported`/`dossier` compare the file just produced against the record right now; any later edit desyncs them,
- *   so a stale artifact never reads as done. See the page's `delivered` state, which stores the exported text itself.
- * - `video` requires either a confirmed local clip (bytes hashed) or an actual click on the save-video link;
- *   picking a sheet or a codename is never enough.
+ * A clip associated in the evidence panel must never stand in for saving a recording created by the integrated recorder.
+ * When the integrated recorder produced a file, that exact file has precedence and requires an explicit storage confirmation.
+ * External files may resolve the step only when there is no integrated recording to preserve.
+ */
+export function videoDeliveryDone(state: VideoDeliveryState): boolean {
+  if (state.integratedRecordingAvailable) return state.integratedRecordingConfirmedSaved;
+  return state.externalClipConfirmed || state.externalRecordingConfirmedSaved || state.unavailableDocumented;
+}
+/**
+ * Each flag must be something the screen actually witnessed or the operator explicitly confirmed.
+ * Artifact freshness is evaluated per artifact: a later change only invalidates outputs whose generated text changed.
  */
 export function nextSteps(state: { described: boolean; reviewed: boolean; exported: boolean; video: boolean; dossier: boolean; declared: boolean }): NextStep[] {
   return [
     { label: "Descreva o que a criança fez em cada tarefa marcada", detail: "Bloco a bloco, com as palavras e ações observadas. Não escreva “normal” nem complete por suposição.", target: ".obs10-records", done: state.described },
     { label: "Confira as pendências e os cartões sem marcação", detail: "Abra a revisão por bloco e declare lá que conferiu. Ausência de pendência automática não é a mesma coisa que ter revisado.", target: '[data-testid="obs10-review-board"]', done: state.reviewed },
-    { label: "Exporte o registro TXT e o JSON", detail: "Guarde os dois no destino institucional. Recarregar a página apaga tudo.", target: ".obs10-delivery", done: state.exported },
-    { label: "Salve o vídeo separado do registro", detail: "Deste dispositivo, pelo botão de salvar; de outro dispositivo, pelo fluxo institucional. O JSON não contém vídeo.", target: ".obs10-delivery", done: state.video },
+    { label: "Exporte ou reexporte o registro TXT e o JSON atuais", detail: "Guarde os dois no destino institucional. Depois de qualquer conferência ou declaração, reexporte para registrar a versão final.", target: ".obs10-delivery", done: state.exported },
+    { label: "Resolva o vídeo separado do registro", detail: "Gravação deste dispositivo: salve e confirme o arquivo no armazenamento institucional. Filmagem externa: confirme o fluxo institucional ou documente a indisponibilidade. O JSON não contém vídeo.", target: ".obs10-delivery", done: state.video },
     { label: "Gere o dossiê, se a clínica autorizar análise externa", detail: "Copie ou baixe e cole junto da lei PRÉ na ferramenta autorizada. Este aplicativo não envia nada.", target: '[data-testid="obs10-dossier"]', done: state.dossier },
-    { label: "Marque as conferências e declare o encaminhamento", detail: "Só depois disso use Nova aplicação. A declaração não substitui o fluxo institucional.", target: '[data-testid="obs10-review-board"]', done: state.declared },
+    { label: "Marque as conferências e declare o encaminhamento", detail: "A conclusão final só permanece registrada quando o TXT/JSON atual contém a declaração. Depois de declarar, reexporte se necessário.", target: '[data-testid="obs10-review-board"]', done: state.declared },
   ];
 }
 export function NextSteps({ steps }: { steps: NextStep[] }) {
