@@ -22,6 +22,7 @@
     "test:filter": "node --import tsx tests/clinical/test-filter-safety.mjs && node --import tsx tests/clinical/test-ipn-tea-filter.mjs && node --import tsx tests/unit/filter-preferences.test.ts && node --import tsx tests/clinical/test-filter-age-complaint.mjs && node --import tsx tests/unit/scale-time.test.ts && node --import tsx tests/unit/age-range-parse.test.ts && node --import tsx tests/unit/clinical-ranking-reason-integrity.test.ts",
     "audit:filter-fillable": "node --import tsx scripts/guards/audit-filter-fillable.mjs",
     "audit:instruments": "node --import tsx scripts/guards/audit-instruments.mjs",
+    "ingest:authorial-scale": "node --import tsx scripts/ingest-authorial-scale.mts",
     "test:podium": "node --import tsx tests/clinical/test-filter-podium.mjs",
     "test:ideal-choice": "node --import tsx tests/clinical/test-filter-ideal-choice.mjs",
     "test:practical-filter": "node --import tsx tests/clinical/test-filter-practical-100.mjs",

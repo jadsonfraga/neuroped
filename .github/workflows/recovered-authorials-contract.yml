@@ -12,6 +12,10 @@ on:
       - 'client/src/lib/preConsulta*.ts'
       - 'scripts/guards/safety-classification-recovered-20260912.json'
       - 'tests/unit/recovered-authorials.test.ts'
+      - 'tests/unit/authorial-intake-gate.test.ts'
+      - 'client/src/data/pendingAuthorialScaleIntake.ts'
+      - 'shared/authorialIntake.ts'
+      - 'scripts/ingest-authorial-scale.mts'
       - 'tests/unit/previsit-refinement.test.ts'
       - 'tests/e2e/recovered-authorials.mjs'
       - 'docs/PROVENIENCIA_CLINICA.md'
@@ -39,6 +43,7 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: node --import tsx tests/unit/recovered-authorials.test.ts
+      - run: node --import tsx tests/unit/authorial-intake-gate.test.ts
       - run: node --import tsx tests/unit/previsit-refinement.test.ts
       - run: node --import tsx tests/unit/regula20.test.ts
       - run: node --import tsx tests/unit/regula20-report.test.ts
