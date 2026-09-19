@@ -143,8 +143,8 @@ export function makeReport(record: SessionRecord): string {
   if (c.chronologicalMonths >= 72) lines.push(`Intervalo entre registro inicial e evocação marcado pela aplicadora: ${interval}. Interpretar somente se o registro inicial foi documentado.`, "");
   const h = record.handoff;
   lines.push("CONFERÊNCIA DECLARADA PELA APLICADORA — NÃO É RECIBO DE ENVIO",
-    `Registros/blocos revistos: ${h?.recordsReviewed ? "declarado" : "não declarado"}. Áudio/enquadramento ou indisponibilidade conferidos: ${h?.mediaReviewed ? "declarado" : "não declarado"}. Arquivos exportados e conferidos: ${h?.filesChecked ? "declarado" : "não declarado"}.`,
-    h?.declaredAt ? `Encaminhamento declarado em ${h.declaredAt} (horário do dispositivo, não autenticado). Não comprova recebimento, arquivamento ou revisão médica.` : "Encaminhamento não declarado nesta revisão.", "");
+    `Registros/blocos revistos: ${h?.recordsReviewed ? "declarado" : "não declarado"}. Áudio/enquadramento ou indisponibilidade conferidos: ${h?.mediaReviewed ? "declarado" : "não declarado"}. Destino e arquivos disponíveis antes do fechamento: ${h?.filesChecked ? "declarado" : "não declarado"}.`,
+    h?.declaredAt ? `Fechamento para encaminhamento declarado em ${h.declaredAt} (horário do dispositivo, não autenticado). Os arquivos finais são reexportados e confirmados fora deste JSON. Não comprova recebimento, arquivamento ou revisão médica.` : "Fechamento para encaminhamento não declarado nesta revisão.", "");
   lines.push("RELATO DO RESPONSÁVEL — NÃO É ACHADO OBSERVADO", textOrMissing(c.familyReport), "",
     "ALCANCE E LIMITES", "Observações transcritas dos registros da aplicadora; eventuais comentários profissionais são identificados em seção separada. Nenhuma análise automática de vídeo, inferência diagnóstica, escore, percentil ou idade cognitiva foi realizada.",
     "Força segmentar, tônus, reflexos, sensibilidade e exame neurológico completo não foram examinados por este roteiro. Ausência de alteração na amostra não exclui dificuldade clínica.",
