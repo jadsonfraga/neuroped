@@ -36,6 +36,7 @@ export interface CommercialMaterialView {
   title: string;
   summary: string;
   routes: string[];
+  surface: "institutional" | "public-intake";
   deliveryChannel: "app_screen";
   licensed: boolean;
   deniedReason: string | null;

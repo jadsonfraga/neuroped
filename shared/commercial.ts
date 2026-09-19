@@ -272,6 +272,21 @@ export function validateCommercialUsageMetadata(
  * promove nenhuma tela fora do SKU (prontuário, PANT, NeuroBoard, escalas
  * licenciadas) a material comercial.
  */
+/**
+ * Onde o material é preenchido.
+ *
+ * `institutional` é tela clínica: exige sessão, unidade e assento na licença,
+ * e por isso fica atrás do gate comercial.
+ *
+ * `public-intake` é tela que a família abre sem conta, antes da consulta.
+ * Exigir assento de licença de quem preenche seria exigir login de quem não
+ * tem — e a política de acesso do repositório proíbe wrapper condicional em
+ * rota pública. O entitlement continua existindo (a unidade o vê no catálogo
+ * e o ledger registra o que a equipe faz com o material dentro da unidade),
+ * mas não há bloqueio de UI na captação.
+ */
+export type CommercialMaterialSurface = "institutional" | "public-intake";
+
 export interface CommercialMaterial {
   code: CommercialFeatureCode;
   title: string;
@@ -279,6 +294,7 @@ export interface CommercialMaterial {
   summary: string;
   /** Telas reais do aplicativo que compõem o material. */
   routes: readonly string[];
+  surface: CommercialMaterialSurface;
   deliveryChannel: "app_screen";
 }
 
@@ -289,6 +305,7 @@ export const COMMERCIAL_MATERIALS: Readonly<Record<CommercialFeatureCode, Commer
       title: "Ficha de pré-consulta",
       summary: "Roteiro estruturado preenchido antes do atendimento e impresso ou copiado pela equipe.",
       routes: Object.freeze(["/pre-consulta"]),
+      surface: "public-intake",
       deliveryChannel: "app_screen",
     }),
     "form.change_log": Object.freeze({
@@ -296,6 +313,7 @@ export const COMMERCIAL_MATERIALS: Readonly<Record<CommercialFeatureCode, Commer
       title: "Registro de acompanhamento",
       summary: "Linha do tempo longitudinal para anotar o que mudou entre um atendimento e outro.",
       routes: Object.freeze(["/neuroacompanhamento"]),
+      surface: "institutional",
       deliveryChannel: "app_screen",
     }),
     "form.school_feedback": Object.freeze({
@@ -303,6 +321,7 @@ export const COMMERCIAL_MATERIALS: Readonly<Record<CommercialFeatureCode, Commer
       title: "Devolutiva escolar",
       summary: "Diário escolar para a equipe da escola registrar o dia e devolver à instituição.",
       routes: Object.freeze(["/diario-escola"]),
+      surface: "institutional",
       deliveryChannel: "app_screen",
     }),
     "form.approved_plan": Object.freeze({
@@ -310,6 +329,7 @@ export const COMMERCIAL_MATERIALS: Readonly<Record<CommercialFeatureCode, Commer
       title: "Plano aprovado",
       summary: "Plano terapêutico redigido, impresso e entregue à família depois da aprovação do responsável clínico.",
       routes: Object.freeze(["/plano-terapeutico"]),
+      surface: "institutional",
       deliveryChannel: "app_screen",
     }),
     "form.routine_log": Object.freeze({
@@ -317,6 +337,7 @@ export const COMMERCIAL_MATERIALS: Readonly<Record<CommercialFeatureCode, Commer
       title: "Registros de rotina",
       summary: "Diários de rotina diária preenchidos pela família entre os atendimentos.",
       routes: Object.freeze(["/diario-sono", "/diario-alimentar"]),
+      surface: "institutional",
       deliveryChannel: "app_screen",
     }),
   });

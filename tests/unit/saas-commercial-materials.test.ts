@@ -56,18 +56,41 @@ check(listCommercialMaterialsForOffer("inexistente").length === 0, "offer descon
 // ── As rotas existem e estão sob o gate ──────────────────────────────────────
 
 const app = readFileSync("client/src/App.tsx", "utf8");
+const publicRoutes = readFileSync("client/src/lib/publicRoutes.ts", "utf8");
 for (const code of commercialFeatureCodes) {
   const material = COMMERCIAL_MATERIALS[code];
   for (const route of material.routes) {
-    check(app.includes(`<Route path="${route}">`), `App declara a rota ${route}`);
-    const block = app.slice(app.indexOf(`<Route path="${route}">`));
-    const end = block.indexOf("</Route>");
-    check(
-      end > 0 && block.slice(0, end).includes(`<CommercialGate feature="${code}">`),
-      `${route} está sob o gate comercial de ${code}`,
-    );
+    const isAllowlistedPublic = publicRoutes.includes(`"${route}"`);
+    if (material.surface === "institutional") {
+      // Tela clínica: sessão, unidade e assento. O gate é obrigatório.
+      check(!isAllowlistedPublic, `${route} é material institucional e não pode ser rota pública`);
+      check(app.includes(`<Route path="${route}">`), `App declara a rota ${route}`);
+      const block = app.slice(app.indexOf(`<Route path="${route}">`));
+      const end = block.indexOf("</Route>");
+      check(
+        end > 0 && block.slice(0, end).includes(`<CommercialGate feature="${code}">`),
+        `${route} está sob o gate comercial de ${code}`,
+      );
+    } else {
+      // Captação pública: a família preenche sem conta. Exigir assento de quem
+      // preenche seria exigir login de quem não tem, e a política de acesso do
+      // repositório proíbe wrapper condicional em rota pública.
+      check(isAllowlistedPublic, `${route} é captação pública e precisa estar na allowlist`);
+      check(
+        app.includes(`<Route path="${route}" component=`),
+        `${route} monta o componente direto, sem wrapper`,
+      );
+      check(
+        !app.includes(`<CommercialGate feature="${code}">`),
+        `${route} não pode ficar atrás do gate comercial`,
+      );
+    }
   }
 }
+check(
+  Object.values(COMMERCIAL_MATERIALS).filter((material) => material.surface === "institutional").length === 4,
+  "quatro dos cinco materiais são institucionais e gateados",
+);
 check(app.includes('<Route path="/licenca">'), "a tela da licença está roteada");
 {
   const block = app.slice(app.indexOf('<Route path="/licenca">'));

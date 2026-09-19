@@ -447,11 +447,7 @@ function AppRouter() {
             ))}
 
             <Route path="/avaliacao-pre-consulta-faixa-etaria" component={PreConsultaObs10Page} />
-            <Route path="/pre-consulta">
-              <CommercialGate feature="form.preconsultation">
-                <PreConsultaPage />
-              </CommercialGate>
-            </Route>
+            <Route path="/pre-consulta" component={PreConsultaPage} />
             <Route path="/pre-retorno" component={PreRetornoPage} />
             <Route path="/efeitos-colaterais" component={PreRetornoPage} />
             <Route path="/recepcao">

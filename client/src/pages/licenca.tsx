@@ -294,6 +294,12 @@ export default function LicencaPage() {
                   {material.title}
                 </div>
                 <p className="text-muted-foreground">{material.summary}</p>
+                {material.surface === "public-intake" && (
+                  <p className="text-xs text-muted-foreground">
+                    Preenchido pela família sem conta, antes da consulta: esta tela não pede
+                    autorização de quem preenche.
+                  </p>
+                )}
                 {material.licensed && (
                   <div className="flex flex-wrap gap-3">
                     {material.routes.map((route) => (

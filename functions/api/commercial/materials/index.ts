@@ -60,6 +60,7 @@ export const onRequestGet: PagesFunction<CommercialMaterialsEnv> = async (contex
       title: material.title,
       summary: material.summary,
       routes: [...material.routes],
+      surface: material.surface,
       deliveryChannel: material.deliveryChannel,
       licensed: access.ok,
       deniedReason: access.ok ? null : access.reason,

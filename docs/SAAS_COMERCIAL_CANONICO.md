@@ -137,6 +137,15 @@ A licença incide sobre a **unidade institucional**: sessão remota autenticada 
 
 Dentro de uma unidade, a permissão vem do servidor duas vezes: o snapshot pinta a tela e a confirmação de abertura decide. Se a confirmação recusa, o material não é renderizado, mesmo que o snapshot anterior dissesse o contrário.
 
+Cada material declara sua `surface`:
+
+| `surface` | Materiais | Gate |
+|---|---|---|
+| `institutional` | acompanhamento, devolutiva escolar, plano aprovado, registros de rotina | tela clínica atrás do `CommercialGate` |
+| `public-intake` | ficha de pré-consulta | rota pública allowlisted, componente montado direto |
+
+A ficha de pré-consulta é preenchida pela família **sem conta**, antes da consulta. Exigir assento de licença de quem preenche seria exigir login de quem não tem, e a política de acesso do repositório proíbe wrapper condicional em rota pública. O entitlement continua existindo — a unidade o vê no catálogo e o ledger registra o que a equipe faz com o material dentro da unidade —, mas não há bloqueio de UI na captação. Promover um material de `public-intake` a `institutional`, ou o contrário, muda quem consegue preencher: exige PR próprio.
+
 ### 5.3 Ledger
 
 `material_open`, `material_export`, `authorized_user_added` e `authorized_user_revoked` são gravados pelas rotas acima. Abertura e entrega não devolvem sucesso sem terem sido registradas; concessão e revogação de assento só geram evento quando a escrita mudou exatamente uma linha (`WHERE changes() = 1`), para que uma corrida não deixe ledger sem assento correspondente.
