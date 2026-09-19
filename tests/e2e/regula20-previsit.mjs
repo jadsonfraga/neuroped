@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { resolve, extname, sep, join } from "node:path";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 // Executa somente em servidor efêmero local. Nenhuma credencial/pessoa real.
 const DIST = resolve("dist/public");
@@ -19,9 +20,7 @@ const server = createServer((req, res) => {
 });
 await new Promise((done) => server.listen(0, "127.0.0.1", done));
 const base = `http://127.0.0.1:${server.address().port}`;
-const windowsChrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || (existsSync(windowsChrome) ? windowsChrome : undefined);
-const browser = await chromium.launch({ executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 const page = await context.newPage();
 const apiWrites = [];

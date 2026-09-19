@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const DIST = "dist/public";
 const PERSISTENT_DB = "neuroped-persistent-secure-v1";
@@ -286,10 +287,7 @@ async function main() {
 
   const server = await startServer();
   const base = `http://127.0.0.1:${server.address().port}`;
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-  const browser = await chromium.launch(
-    executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
-  );
+  const browser = await chromium.launch(auditBrowserLaunchOptions());
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
 

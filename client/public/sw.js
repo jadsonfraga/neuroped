@@ -110,6 +110,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Apresentação pública independente: nunca substituir por shell clínico/offline.
+  if (url.pathname === "/obs10-global" || url.pathname.startsWith("/obs10-global/")) return;
+
   // A Nesplora é um microsite estático autônomo, publicado dentro deste mesmo
   // domínio. Ela não pode receber o shell offline, nem o cache de assets do
   // NeuroPed: uma versão anterior do SW podia devolver o index.html do app para

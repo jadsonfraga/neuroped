@@ -1,11 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const origins = ["https://neuroped.pages.dev", "https://superneuroped.vercel.app"];
 const routes = ["/#/", "/#/filtro", "/#/mchat", "/#/marcacao", "/#/missao-saude", "/#/prontuario"];
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 const output = { startedAt: new Date().toISOString(), environments: [] };
-const browser = await chromium.launch(executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined);
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 try {
   for (const origin of origins) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });

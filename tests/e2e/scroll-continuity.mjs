@@ -11,17 +11,13 @@ import {
   ACCEPTED_FIRST_VISIT_STORAGE,
   ensureClientBuild,
   startStaticServer,
+  auditBrowserLaunchOptions,
 } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const repoRoot = process.cwd();
 const dist = ensureClientBuild(repoRoot);
 const server = await startStaticServer(dist, 0);
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-const browser = await chromium.launch(
-  executablePath
-    ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-    : undefined,
-);
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 
 const VIEWPORT_HEIGHT = 900;
 const WIDTHS = [390, 767, 768, 834, 1280, 1366];

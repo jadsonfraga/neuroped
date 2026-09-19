@@ -12,7 +12,6 @@ import {
   ClipboardList,
   FileText,
   Filter,
-  Globe2,
   HeartPulse,
   HelpCircle,
   Home,
@@ -57,6 +56,14 @@ export interface NavigationMatch {
  * Atalhos por frequência de uso. A Sonda Dez abre o bloco clínico porque
  * substitui as superfícies antigas de teste direto com a criança.
  */
+const obs10Navigation: NavItem = {
+  href: "/avaliacao-pre-consulta-faixa-etaria",
+  label: "Avaliação de Pré-Consulta por Faixa Etária",
+  icon: Baby,
+  tone: "priority",
+  description: "OBS-10 · 13 faixas · guia da assistente",
+};
+
 export const featuredNavigation: NavItem[] = [
   {
     href: "/testes-diretos",
@@ -65,6 +72,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "priority",
     description: "Avaliação direta pré-consulta · 10 min",
   },
+  obs10Navigation,
   {
     href: "/especialidades",
     label: "Especialidades Premium",
@@ -119,6 +127,7 @@ export const featuredNavigation: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
+  { title: "PRÉ-CONSULTA GUIADA", items: [obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],
@@ -132,7 +141,6 @@ export const navSections: NavSection[] = [
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
   },
   {

@@ -1,0 +1,286 @@
+# NeuroPed OBS-10 — guia de aplicação prática
+
+**Versão da interface 1.6.1 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
+
+Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
+
+## 1. Antes da criança chegar: idade e kit
+
+Informe anos e meses completos. O primeiro painel seleciona a ficha e mostra materiais ilustrados, quantidades, segurança e substitutos. Consultar outra faixa não altera a idade aplicada. Idade corrigida só quando informada pelo médico, antes de 24 meses e nunca maior que a cronológica.
+
+Todas as faixas precisam de **celular/tablet institucional carregado e suporte fixo**. Em filmagem externa, use um segundo aparelho para ler o roteiro. Prepare o ambiente, autorização e materiais antes do cronômetro. Quantidades são de organização, não critérios clínicos.
+
+| Faixa | Kit, além do dispositivo de filmagem |
+|---|---|
+| 0–2 meses | 1 colchonete firme; 1 brinquedo grande para olhar e alcançar. |
+| 3–5 meses | 1 colchonete firme; 1 brinquedo grande para olhar e alcançar. |
+| 6–8 meses | 1 colchonete firme; 1 recipiente largo; 2 brinquedos grandes. |
+| 9–11 meses | 1 colchonete firme; 1 brinquedo grande; 1 pano para esconder somente o brinquedo; 2 blocos grandes. |
+| 12–17 meses | 1 colchonete firme; 1 copo plástico vazio; 1 boneco; 1 livro com cenas simples; 1 cadeira estável; 2 blocos grandes. |
+| 18–23 meses | 1 colchonete firme; 1 boneco; 1 colher grande de brinquedo; 1 carrinho grande; 6 blocos grandes; 2 gizes grossos; 3 folhas. |
+| 24–35 meses | 1 boneco; 1 copo plástico vazio; 1 colher de brinquedo; 1 livro; 1 bola grande e macia; 2 gizes grossos; 3 folhas; 1 recipiente largo; 6 blocos grandes. |
+| 3 anos | 1 boneco; 1 copo plástico vazio; 1 colher de brinquedo; 1 livro; 3 folhas; 2 gizes grossos; 6 blocos grandes; 1 bola grande e macia. |
+| 4 anos | 1 livro; 3 folhas; 1 lápis; 6 blocos grandes; 1 bola grande e macia. |
+| 5 anos | 3 folhas; 1 lápis; 5 blocos grandes; 1 cadeira estável; trajeto livre com duas marcas, cerca de 3 m se disponível. |
+| 6–8 anos | 3 folhas; 1 lápis; 1 cadeira estável; trajeto livre com duas marcas. Preparar a frase da ficha em papel separado. |
+| 9–11 anos | 3 folhas; 1 lápis; 1 cadeira estável; trajeto livre com duas marcas. Preparar as duas frases compatíveis com a escolarização. |
+| 12–17 anos | 3 folhas; 1 lápis; 1 cadeira estável; trajeto livre com duas marcas. |
+
+A fonte operacional é `MATERIALS` / `KITS` em `client/src/features/obs10/practical.ts`. Não usar peças pequenas, alimentos, vidro ou objetos com partes destacáveis. Higienizar entre crianças. Colchonete sempre no chão, nunca em mesa/cama/superfície elevada. Não cobrir rosto com o pano.
+
+Marque **Separado/substituído** ou **Ausente**. **Separei o kit completo** é uma declaração da aplicadora, não inspeção automática. Dispositivo ausente bloqueia o início. Outros itens ausentes sinalizam omissão das tarefas dependentes; não improvisar material inseguro. Registre o substituto utilizado em adaptações.
+
+**Imprimir kit e cenas** abre documento independente com lista ilustrada e três cenas simples alternativas ao livro. São estímulos autorais não padronizados. Mostre somente o desenho escolhido, sem legenda/resposta. Não usar essas figuras para ensinar respostas de memória.
+
+## 2. Conferir segurança e enquadramento
+
+Registre código institucional sem nome, escolaridade sem nome da escola, idioma/comunicação, apoios habituais, condições do dia e relato familiar separado. Confirme autorização institucional, participação/conforto, treinamento, médico disponível, piso/apoios seguros, materiais e captação.
+
+A câmera deve mostrar rosto, mãos e interlocutor na interação; corpo inteiro e pés nas tarefas motoras; as duas mãos, lápis e folha no grafismo. Celular fixo e horizontal, luz adequada e áudio compreensível, sem filtros. Gravar tentativas e ajuda, não somente o acerto.
+
+A opção **Testar câmera antes de iniciar** permite prévia de enquadramento sem gravar nem consumir os dez minutos. A prévia é silenciosa para evitar retorno de áudio: ela não confirma inteligibilidade das vozes. Confira a captação no dispositivo institucional antes do uso e a integridade do arquivo ao final.
+
+**Treinar o registro sem criança nem câmera** apresenta três exemplos fictícios de repetição, recusa e trecho não avaliável. Não certifica competência nem substitui aplicações supervisionadas.
+
+## 3. Aplicar uma tarefa por vez
+
+Os **145 cartões estão distribuídos entre as 13 fichas**, não são 145 tarefas por criança. Cada cartão tem ilustração, comando curto, até três passos, tempo operacional, orientação do que registrar e cuidados/omissões. São 17 tipos de material ilustrados e diagramas reutilizados quando apropriado; não são fotografias clínicas.
+
+As imagens servem à aplicadora. Manter a tela fora da visão da criança em memória/regras e nas tarefas em que o modelo não faz parte da proposta. Braços à frente usam representação lateral; salto com dois pés tem imagem própria, distinta do equilíbrio em um pé.
+
+| Janela | Bloco |
+|---|---|
+| 00:00–00:30 | Acolher e observar. |
+| 00:30–02:00 | Interagir e conversar. |
+| 02:00–04:00 | Linguagem e raciocínio. |
+| 04:00–06:30 | Movimentar com segurança. |
+| 06:30–08:30 | Mãos, desenho e escrita. |
+| 08:30–10:00 | Retomar e encerrar. |
+
+Dar comando, aguardar cerca de cinco segundos, repetir uma vez e demonstrar somente quando previsto. Registrar ajuda e seguir. Não treinar até acertar, pressionar, retirar apoios ou exigir olhar nos olhos. Pausas e transições após o início contam no limite. A janela é operacional, não norma de desempenho. Não prolongar para preencher todos os cartões.
+
+A indicação de prono depende de autorização médica, vigília, supervisão e tolerância. Desafios adicionais de dois passos e salto da ficha de 24–35 meses são omitidos antes de 30 meses. Dor, instabilidade, recusa ou falta de proteção/espaço seguro impedem a tarefa motora. Não realizar manobras médicas, força contra resistência, reflexos, estímulo doloroso, tração, mobilização passiva, olhos fechados, escadas, sustos ou hiperventilação.
+
+## 4. Registrar sem inventar achados
+
+Durante a coleta, marque uma categoria no cartão; detalhe o fato depois de encerrar. As categorias são **Na proposta inicial, Após repetição, Após gesto/modelo, Com apoio habitual, Não demonstrado, Recusou, Não aplicado**. Não há soma de pontos.
+
+“Na proposta inicial” substitui o rótulo antigo “Espontâneo”: algumas propostas incluem modelo. Copiar após modelo previsto não é produção espontânea. Descreva ajuda extra separadamente.
+
+**Categoria sozinha não gera descrição clínica.** Tarefa, resposta literal e categoria incompletas continuam sinalizadas. Não demonstrar aqui não prova incapacidade; recusa não equivale a alteração. Não preencher lacunas como “normal”. Relato familiar não é achado diretamente observado.
+
+A tarefa de memória tem marcação de registro inicial e evocação; apenas o intervalo efetivamente marcado é calculado. Sem aprendizagem inicial documentada não se interpreta retenção. Horário da anotação não é timestamp verificado do vídeo. Anotações posteriores ao encerramento são identificadas; não reaplicar tarefas para completá-las.
+
+## 5. Encerrar, revisar e entregar
+
+A coleta pode terminar antes e é encerrada aos dez minutos ou ao sair da aba. Não continuar tarefas depois. Revisão e entrega ocorrem fora do cronômetro.
+
+Abra os registros, complete fatos que possam ser sustentados, confira omissões e exporte TXT/JSON ou imprima o resumo em documento isolado. Na câmera integrada, aguarde finalização; confira som, enquadramento e integridade, então salve o vídeo. Nome do arquivo inclui identificador de sessão para reduzir colisões. A versão exportada é a do registro.
+
+**Tudo permanece em memória: exportar e conferir antes de sair, recarregar ou começar outra sessão.** Não há upload, gravação automática no prontuário, Drive, e-mail ou IA. A marcação de entrega é declaração da aplicadora, não recibo automático de transmissão.
+
+Permissão negada não inicia silenciosamente a sessão. Falha tardia de uma tentativa cancelada não pode fechar a nova câmera. Desconexão inesperada interrompe a coleta, encerra os recursos e sinaliza possível vídeo parcial. A finalização aguarda o último bloco de mídia, com falha explícita se não concluir. O botão de emergência após o encerramento preserva vídeo já finalizado.
+
+A navegação interna e o fechamento normal pedem confirmação quando há dados. Encerramento forçado, falha do aparelho ou sistema operacional podem impedir qualquer aviso; não presumir recuperação. Navegação de autenticação/expiração/consentimento não é bloqueada por essa proteção.
+
+## Intercorrências e confidencialidade
+
+Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, instabilidade nova, dor intensa ou risco imediato: interromper e chamar a equipe presencial; emergência, SAMU 192. Em crise, proteger de lesões, não conter e não colocar nada na boca. Não aguardar vídeo ou IA.
+
+Conteúdos sensíveis devem sair da gravação e seguir avaliação médica confidencial. Aparência tranquila não exclui sofrimento ou risco. O roteiro não substitui investigação de risco suicida pela equipe treinada.
+
+Rosto e voz identificam a criança; código não anonimiza vídeo. As confirmações na tela não substituem autorização/base legal, controle de acesso, armazenamento, retenção e eventual processamento externo definidos pela clínica.
+
+## Natureza, acesso e origem
+
+Proposta autoral **observacional não validada**, originada do manual OBS-10 e do guia operacional discutidos com o proprietário em 17/09/2026. As referências CDC/AAP, NIMH e LGPD estão no rodapé; não validam o conjunto como teste diagnóstico.
+
+Sem sensibilidade/especificidade próprias, escore, percentil, QI, idade cognitiva, ponto de corte ou diagnóstico. Não inferir força 5/5, tônus/reflexos/sensibilidade preservados nem exame neurológico completo normal pelo roteiro. **O resumo utiliza os registros da aplicadora: não há análise semiológica automática de vídeo por IA.** Interpretação e decisão permanecem médicas.
+
+Acesso remoto: admin/professional/operator; reader e anônimo bloqueados. Modo local mantém as exigências existentes. Não há alteração de autenticação/PIN, tenant, banco, dados de pacientes ou segredos. Testes com mídia sintética em Chromium não homologam todos os aparelhos: conferir o dispositivo real e fazer as primeiras aplicações supervisionadas.
+
+## Verificação e manutenção
+
+```sh
+npm ci
+npm run check
+npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
+node --import tsx tests/unit/obs10.test.ts
+node --import tsx tests/unit/obs10-practical.test.ts
+npm run test:sonda
+npm run audit:navigation
+npm run test:operations
+VITE_OPEN_ACCESS=false npm run build:client
+npx playwright install --with-deps chromium
+node tests/e2e/obs10.mjs
+node tests/e2e/obs10-practical.mjs
+```
+
+A suíte original permanece; a nova cobre materiais/omissões, cartões, ausência de achados fabricados, navegação cancelada, impressão isolada, prévia de câmera, resposta tardia de permissão, desconexão, retenção do vídeo, treino e percurso pelas treze faixas. Todas as 145 tarefas devem renderizar pela interface real. Mídia/autenticação de teste são sintéticas; não há dados de pacientes nem substituição de lógica clínica.
+
+Primeira execução integral desta rodada: run `35239850769`, artefato `10505021313`, dois resultados `passed: true`, onze capturas com zero violações detectadas pelo axe e nenhuma exceção JavaScript. A correção das duas figuras e a ampliação para todas as faixas têm verificação adicional. Resultados finais do HEAD e publicação devem ser consultados na PR #896.
+
+Workflow permanente `.github/workflows/obs10.yml` é somente leitura. Ferramentas temporárias de transferência/integração não fazem parte da entrega. Não remover assertivas, aumentar baseline ou usar saltos para aparentar aprovação.
+
+Publicação segue os gates existentes: Cloudflare Pages/Functions é canônico, Vercel é espelho. Branch/PR/build não equivalem a publicação; confirmar merge, deploy e SHA servido. **Rollback:** reverter exclusivamente a PR #896; nenhuma migração ou persistência nova a desfazer. Arquivos exportados permanecem sob a política da clínica.
+
+## Consolidação v1.2 — revisão e continuidade da documentação
+
+A v1.2 preserva os 13 kits ilustrados, os 145 cartões e os tempos da v1.1. Não altera expectativas clínicas nem acrescenta pontos de corte. O acréscimo é operacional: preparação → coleta de até dez minutos → revisão por bloco → exportação → conferência declarada.
+
+### Entrega à consulta
+
+Após encerrar, a assistente encontra seis cartões de revisão, com registros preenchidos, registros livres, itens a completar e os nomes dos cartões sem marcação guiada. Os números medem somente a documentação, nunca o desempenho da criança. Um registro livre não é equiparado automaticamente a um cartão. Cartão sem marcação permanece como tal: não se presume não aplicação ou habilidade ausente.
+
+A conferência sinaliza ausência de tarefa, fato, categoria, ajuda ou motivo quando requerido, qualidade audiovisual dos registros aplicados e formato de minuto/segundo com identificação do clipe. Também aponta divergência entre tarefa marcada como aplicada e restrições de idade, prono não autorizado ou material declarado ausente. Não julga o conteúdo clínico. Um trecho pode ser explicitamente não avaliável; nenhuma aparência de normalidade é inserida automaticamente.
+
+Exportação parcial permanece disponível, inclusive quando há pendências. O encaminhamento só pode ser declarado na interface após haver registros sem essas pendências e confirmação dos blocos, áudio/enquadramento ou indisponibilidade e arquivos exportados/conferidos. A declaração é da aplicadora, com horário não autenticado do dispositivo; não comprova envio, recebimento, arquivamento ou revisão pelo médico. Alterações em registros ou código desfazem as confirmações. Reexportar após confirmar registra a declaração no JSON e no texto.
+
+### Reabrir JSON institucional para revisão
+
+1. Na preparação, em **Reabrir um registro exportado**, selecionar o JSON OBS-10 local, não o vídeo.
+2. Conferir código, faixa, versão e tempo mostrados. Confirmar **Abrir somente para revisão**; cancelar preserva a preparação.
+3. O registro reabre encerrado. Não há gravação, reinício de cronômetro ou herança de aceite. Vídeo deve ser acessado separadamente no fluxo institucional. O texto original sobre captação fica rotulado como declaração de origem não verificada.
+4. Conferir e complementar a documentação já existente, preservando origem, sessão e instante inicial. Exportar o resultado. O JSON não autentica a origem ou a veracidade clínica de seus dados.
+
+Leitura estritamente local, até 4 MB e 200 registros; versões aceitas 1.0.0, 1.1.0 e 1.2.0. Esquema, tipos, limites, idade/faixa, IDs únicos, vínculo tarefa/faixa/bloco e tempos são validados. Propriedades inesperadas, JSON inválido ou incompatível são recusados sem substituir os dados atuais. Textos são renderizados como texto, nunca como HTML. Sem upload, armazenamento automático, banco ou restauração de mídia. Não há recuperação do que não foi previamente exportado.
+
+Referências de engenharia: o atributo `accept` do seletor de arquivos é uma indicação, não validação (MDN: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept); avisos `beforeunload` não são garantidos em dispositivos móveis (MDN: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event). Por isso, esquema e limite são conferidos localmente e exportação continua necessária; não se promete recuperação após encerramento pelo sistema.
+
+### Correções de rastreabilidade
+
+Completar a descrição depois da coleta não transforma a anotação original em anotação criada depois. `applicationSecond` e `recordedAfterEnd` originais permanecem; `editedAfterEnd` identifica a complementação posterior. Registros livres recebem IDs sem colisão ao reabrir arquivos. O código institucional pode ser corrigido na revisão, sem alterar retrospectivamente idade ou duração.
+
+### Verificações da v1.2
+
+Comandos adicionais obrigatórios no workflow OBS-10:
+
+```sh
+node --import tsx tests/unit/obs10-review.test.ts
+node tests/e2e/obs10-review.mjs
+```
+
+O contrato unitário cobre importação das três versões, todos os 145 IDs guiados, campos/idades/tempos inválidos, limites, duplicação, propriedades inesperadas, texto incompleto preservado, mídia não reaberta, aceite zerado, horário original e edição posterior separados. A jornada de navegador usa o componente real compilado e autenticação/arquivos sintéticos: revisão, exportação parcial, pendências, declaração invalidada por edição, exportação/importação, arquivo inválido, cancelamento, versão antiga, IDs livres e acessibilidade desktop/celular. As jornadas v1.0 e v1.1 continuam obrigatórias; apenas a expectativa de versão atual é atualizada para 1.2.0.
+
+Resultados de execução, SHA e publicação ficam registrados na PR vinculada à issue #897. Não tomar uma alteração de documentação como prova de CI ou implantação. Rollback: reverter somente a PR desta consolidação, sem migração ou persistência nova.
+
+
+## v1.3 — do registro à evidência revisável
+
+A mesma área oferece, após a coleta, **Do registro ao trecho de vídeo**. Não foi alterado o roteiro clínico: as 13 fichas e seus 145 cartões continuam observacionais e não validados. Esta versão acrescenta vínculo audiovisual local, comentário profissional separado e medição operacional voluntária. Não é “sucesso mundial” demonstrado nem software de diagnóstico automático.
+
+### Vídeo local, tarefa e revisão profissional
+
+1. Salve primeiro o vídeo da câmera integrada. Vídeos externos também podem ser usados. Abra o JSON correspondente no computador institucional quando necessário; o vídeo não acompanha o JSON.
+2. Selecione **Vídeo local para esta sessão**. Até 128 MiB por arquivo e oito clipes por sessão; somente um arquivo local permanece carregado por vez. MP4/WebM/MOV dependem dos codecs do navegador. Não converta o original sem preservar uma cópia e registrar sua origem.
+3. Confira o código e o conteúdo, então use **Conferi: este vídeo pertence a esta sessão**. O sistema calcula SHA-256 dos bytes para reconhecer o mesmo arquivo posteriormente. Isso não identifica a criança, não autentica a gravação nem substitui o consentimento. A identificação do código fica protegida após associação para evitar troca acidental.
+4. Escolha uma tarefa já registrada. O comando da ficha, a resposta da assistente e a ajuda aparecem ao lado do reprodutor. O relato familiar fica separado.
+5. Localize o início, clique **Marcar início do trecho**, localize o fim e clique **Marcar fim e vincular**. Os tempos vêm da posição do reprodutor, não da anotação da aplicação. É necessário um quadro carregado e intervalo crescente; o navegador pode não informar a duração total de certos WebM. O limite de posições é uma hora; não altera os dez minutos da coleta.
+6. **Abrir trecho** posiciona o vídeo no intervalo. Com o mesmo arquivo reanexado, seus bytes devem coincidir com o SHA-256 e o tamanho. Arquivo diferente é recusado sem substituir a referência antiga.
+7. Conta profissional/admin autenticada pode declarar que revisou o trecho, confrontar o registro e adicionar comentário. O perfil operador pode organizar trechos, mas não usar os controles de revisão médica. Esta restrição é da interface local: o JSON continua editável fora do app, portanto os comentários não são assinatura, prova de autoria nem prontuário autenticado.
+8. Novos comentários preservam os anteriores. Alterações no texto da assistente sinalizam comentários/trechos que precisam ser reconferidos. Tarefas com evidências vinculadas não podem ser apagadas silenciosamente; acrescente retificação. Ao importar JSON, comentários passam a ser explicitamente importados, com autoria não autenticada.
+9. Exporte novamente o JSON/TXT com as referências, cópias textuais e comentários. Não contém o vídeo nem seu nome original. Ao sair/recarregar, reanexe o arquivo local correto. Sem upload, persistência oculta ou análise de imagem/áudio por IA.
+
+### Teste de áudio sem criança
+
+O teste técnico opcional antes da coleta grava três segundos de fala de um adulto, permite ouvir e descartar. Não certifica automaticamente o som, não inicia o cronômetro e não entra no registro da criança. Cancelamento, troca de etapa e desmontagem liberam o microfone e invalidam respostas tardias. O teste deve ser feito sem criança e sem dados pessoais.
+
+### Medir o trabalho da equipe
+
+Abra **Medir o trabalho da equipe · piloto operacional**. Inicie explicitamente preparação, revisão da assistente, revisão médica ou entrega; pare ao concluir. Iniciar coleta interrompe preparação. Ocultar a aba interrompe medição; períodos em outro programa não contam. Os intervalos são voluntários, visíveis e limitados. “Não medido” não é zero. Não representam tempo total, trabalho de toda a equipe ou economia comparada ao atendimento habitual.
+
+Após a coleta, o profissional pode registrar utilidade percebida e necessidade de repetição, com opções iniciais **não avaliadas**. A assistente pode indicar dificuldade operacional. São opiniões e indicadores de processo, não medidas de acurácia, capacidade da criança, diagnóstico ou eficácia.
+
+**Exportar métricas sem textos clínicos** produz uma lista explícita de campos: versão, faixa, duração da coleta, períodos medidos, contagens documentais e opções fechadas. Exclui nome, código, identificador de sessão, datas clínicas, textos livres, arquivos e SHA-256. Não garante anonimato em grupos pequenos; é uma exportação local que exige governança. Exportações repetidas da mesma sessão não são aplicações independentes. Não há painel de resultados simulando dados reais.
+
+### Compatibilidade e verificação v1.3
+
+A importação aceita 1.0/1.1/1.2/1.3, com validação de referências, sessão, IDs, limites e tipos. Mantido teto do JSON de 4 MiB e de 200 observações. Os dados de evidência têm limites próprios; arquivo arbitrário não executa HTML nem URLs. Revisões importadas não são apresentadas como autoria autenticada.
+
+A suíte permanente mantém as três jornadas anteriores e inclui `tests/e2e/obs10-evidence.mjs`. Testes unitários adicionais: `tests/unit/obs10-evidence.test.ts`. Nenhuma validação clínica é inferida desses testes. Resultados e SHA final de publicação devem ser conferidos na PR vinculada à issue #899.
+
+Referências técnicas primárias: W3C Media Capture and Streams (`https://www.w3.org/TR/mediacapture-streams/`), Web Cryptography (`https://www.w3.org/TR/WebCryptoAPI/`) e WHATWG HTML media elements (`https://html.spec.whatwg.org/multipage/media.html`). SHA-256 confere bytes; seleção e revisão humanas continuam indispensáveis.
+
+Plano candidato a piloto em `docs/audits/obs10-v13-pilot.md`. Não inicia pesquisa com pacientes, não armazena dados clínicos e não faz upload sem autorização. Armazenamento institucional automatizado e IA semiológica continuam fora desta entrega, pois exigem implementação, governança e avaliação próprias.
+
+## v1.4 — jornada guiada, roteiro impresso e dossiê para análise externa
+
+Sem alteração do roteiro clínico: 13 fichas, 145 cartões, seis blocos e limite de dez minutos permanecem. A v1.4 organiza a execução e prepara a saída para redação clínica fora do aplicativo.
+
+### Mapa da jornada e prontidão explícita
+
+No alto da tela, quatro etapas (Preparar → Aplicar → Revisar → Entregar) mostram onde a aplicadora está. Na preparação, a lista **de prontidão** substitui a frase genérica de bloqueio: idade válida, idade corrigida (quando usada), ficha selecionada, kit conferido item a item, dispositivo de filmagem disponível e confirmações de segurança aparecem como itens individuais, cada um com seu estado. O botão de início continua bloqueado até todos estarem conferidos.
+
+### Roteiro completo da ficha, impresso
+
+**Imprimir roteiro completo da ficha** abre documento de texto isolado com o kit da faixa (quantidades e substitutos), as regras de aplicação, a referência e o cuidado da faixa, e, por bloco, cada proposta com comando, passos, o que registrar, materiais, tempo operacional e omissões previstas para a idade e autorização de prono informadas. Serve para ler ao lado da câmera sem mostrar a tela à criança. Só está disponível na preparação: abrir uma janela durante a coleta a encerraria.
+
+### Dossiê para análise por IA, fora do aplicativo
+
+Após encerrar, **Dossiê para análise por IA** gera localmente um texto em Markdown estruturado como a entrada «testagem direta com a criança na pré-consulta» da lei PRÉ (`00_LEI_ANALISE_PRE_CONSULTA_v1.md`, Drive, pasta `01.2.1. Modelos & Templates`):
+
+1. instruções de redação (prosa, ancoragem na idade e escolaridade, comportamento observável, fonte declarada, nada de roteiro, aplicativo, categorias ou contagens no texto final, sem diagnóstico);
+2. quem foi observado e em que condições;
+3. referência interna da faixa, para calibrar o grau, não para transcrever;
+4. bloco a bloco, cada proposta com o comando dado e, quando existe, o registro da aplicadora convertido em frase de comportamento («realizou após ouvir o comando novamente»), a descrição literal, ajuda, qualidade, referência de vídeo e marcações de tempo; proposta sem registro aparece como «sem observação registrada», nunca como achado;
+5. relato do responsável em seção própria, como fonte de anamnese;
+6. trechos de vídeo e comentários profissionais em seção própria, sem hashes;
+7. pendências: propostas sem observação por bloco, não demonstrado/recusado/não aplicado, registros incompletos, encerramento antecipado e domínios que o roteiro não examina;
+8. limites do material.
+
+**Copiar dossiê** usa a área de transferência do navegador; **Baixar dossiê (.md)** salva `OBS10-<código>-<sessão>.md`. O aplicativo não chama nenhuma IA, não envia dados e não interpreta: a redação acontece na ferramenta autorizada pela clínica, com a lei PRÉ colada antes. O dossiê reflete a versão atual dos registros; edite os blocos e gere de novo. Não contém vídeo, nome ou dados além dos digitados.
+
+### Compatibilidade e verificação v1.4
+
+Importação aceita 1.0 a 1.4. Nenhum campo novo no JSON: o dossiê é derivado do registro. Testes: `tests/unit/obs10-dossier.test.ts` (roteiro e dossiê de todas as 13 fichas, ausência de comportamento fabricado em registro vazio, separação de fontes, pendências, exportação) e `tests/e2e/obs10-dossier.mjs` (mapa de jornada, prontidão, impressão isolada do roteiro, download e cópia do dossiê iguais, prévia, desktop e celular sem violações axe). Ambos entram no workflow permanente. Rollback: reverter somente a PR desta versão; sem migração ou persistência nova.
+
+## v1.5 — consolidação local do piloto e correção das métricas
+
+Sem alteração do roteiro clínico. A v1.5 fecha a lacuna deixada pelo plano v1.3: as métricas de cada aplicação podiam ser exportadas, mas não havia como reuni-las.
+
+### Correções de consistência
+
+- `manualPausesOrInterruptions` contava qualquer encerramento não manual, inclusive «início da coleta» e «troca de etapa», que são transições deliberadas. Agora conta apenas «aba oculta» e «limite». Registros JSON antigos não mudam; o campo é recalculado a partir dos segmentos ao exportar.
+- As listas de opções de utilidade, repetição e dificuldade passam a existir uma única vez (`UTILITY_OPTIONS`, `REPEAT_OPTIONS`, `DIFFICULTY_OPTIONS` em `pilot.ts`) e alimentam schema, painel e consolidador.
+- O nome do arquivo de métricas não carrega mais carimbo de data: `OBS10-metricas-operacionais-<8 caracteres aleatórios>.json`, coerente com a política de exportação sem datas.
+
+### Consolidar métricas de várias aplicações
+
+Em **Medir o trabalho da equipe → Consolidar métricas de várias aplicações**, selecione vários arquivos `OBS10-metricas-operacionais-*.json`. Cada arquivo é validado por um espelho estrito da lista permitida de exportação: qualquer campo extra, texto livre, código, valor fora das opções ou registro clínico é recusado e listado com o motivo. Arquivos idênticos contam uma vez. O resumo mostra aplicações distintas, origem importada, contagens por versão e faixa (com aviso de grupo pequeno abaixo de 5), duração da coleta (mínimo, mediana, máximo, quantas atingiram os dez minutos), trabalho cronometrado por etapa (apenas onde medido; «não medido» nunca vira zero), interrupções, documentação e evidência, e opiniões declaradas tabuladas. Copiar, baixar `.md` ou `.json`. Tudo local; nada é enviado.
+
+Limites: indicadores de processo e opiniões, não desempenho da criança, acurácia, validação ou benefício. Exportações repetidas com diferenças não são detectadas como duplicadas. Contagens por faixa em grupos pequenos podem reidentificar; não publicar microdados. Disponível na preparação e após a coleta, nunca durante os dez minutos.
+
+### Verificação v1.5
+
+`tests/unit/obs10-pilot-aggregate.test.ts` (semântica de interrupção, exportador e consolidador em sincronia para as 13 faixas e todas as opções, recusa de campos extras e texto, duplicatas, medianas, grupos pequenos, ausência de texto clínico) e extensão de `tests/e2e/obs10-dossier.mjs` (exportação sem carimbo de data, consolidação de cinco arquivos com duplicata, registro clínico recusado, agregado baixado, axe limpo). Importação de registros aceita 1.0 a 1.5. Rollback: reverter somente a PR desta versão.
+
+## v1.6 — orientação para quem nunca aplicou, tela a tela
+
+Sem alteração do roteiro clínico, das fichas ou do JSON. A v1.6 responde a uma auditoria feita na perspectiva de um adulto que abre a página pela primeira vez e precisa aplicar do começo ao fim sem ninguém ao lado.
+
+### O que faltava e o que entrou
+
+- **Primeira vez aplicando? Leia isto antes de começar.** Bloco aberto por padrão no topo da preparação, com seis passos numerados que cobrem as quatro etapas do mapa (preparar, aplicar, revisar, entregar). Cada passo diz o que fazer **na tela** e **na sala**, nomeando os botões reais (Imprimir roteiro completo da ficha, Iniciar aplicação, Encerrar antes, Interromper e chamar médico, Nova aplicação). Fecha com «Se algo der errado»: choro ou recusa total, urgência, página recarregada, câmera sem espaço. Some da tela quando a coleta começa.
+- **Calcular pela data de nascimento.** Ajuda opcional no bloco 1: data de nascimento e data da aplicação preenchem anos e meses completos (`monthsBetween` em `session.ts`, meses completos, sem arredondar para cima). As datas não entram no registro nem na exportação e a data de nascimento é apagada da tela ao preencher.
+- **Duas falas prontas antes de iniciar.** Além da frase para a criança, o que dizer ao responsável: ficar perto sem dar dicas, poder parar a qualquer momento, não é prova nem nota. Uma única fonte (`Orientation.tsx`) alimenta as duas.
+- **Primeira vez nesta tela? O que cada coisa faz.** Durante a coleta, um bloco recolhido explica cronômetro sem pausa, encerramento automático aos dez minutos, aviso amarelo do bloco previsto, cartão da tarefa, Encerrar antes, botão de urgência e saída da aba. Inclui a legenda dos sete botões de resposta, derivada de `OUTCOMES`.
+- **O que fazer agora, nesta ordem.** Após o encerramento, seis passos com botão «Abrir» que rola até a seção correspondente: descrever cada tarefa marcada, conferir pendências, exportar TXT e JSON, salvar o vídeo separado, gerar o dossiê se autorizado, marcar conferências e declarar o encaminhamento. O passo só fica marcado com o que a tela consegue confirmar: registros sem pendência, os dois arquivos baixados, clipe associado, dossiê baixado, encaminhamento declarado. Nova aplicação zera as marcações.
+- **Painel de vídeo declarado opcional**, com instrução explícita de pular quando não há arquivo local.
+- **Listas numeradas voltaram a mostrar os números** (regras do guia rápido e passos do dossiê estavam sem marcador por causa do reset global de estilos).
+
+### Verificação v1.6
+
+`tests/unit/obs10-orientation.test.ts` (cálculo de idade em limites de dia, bissexto e datas inválidas; cobertura das quatro etapas; nomes reais dos controles; ausência de linguagem diagnóstica; flags dos passos finais; alvos de rolagem existentes; data de nascimento nunca persistida) e extensão de `tests/e2e/obs10-dossier.mjs` (guia aberto com seis passos, cálculo de 7 anos e 2 meses a partir de datas fixas com campo apagado, falas ao responsável e à criança, legenda com sete botões durante a coleta, lista de seis passos com rolagem e marcação progressiva após exportar e resolver pendências, axe limpo em todas as telas). Importação aceita 1.0 a 1.6. Rollback: reverter somente a PR desta versão.
+
+## v1.6.1 — correção de estados de conclusão falsa e do drift entre subsistemas
+
+Rodada de caça a defeitos por auditoria adversarial do commit `19f56f01` (v1.6), sem alteração do roteiro clínico. Achados confirmados e corrigidos:
+
+- **"Revisado" sem revisar.** O passo "Confira as pendências e os cartões sem marcação" de `O que fazer agora` marcava-se sozinho apenas por não haver registro incompleto, sem que a aplicadora tivesse aberto a revisão por bloco. Agora segue exclusivamente a declaração própria já existente ("Revisei os seis blocos..."), que se desfaz a qualquer edição.
+- **"Exportado"/"dossiê gerado" que sobrevivia à edição.** As marcações de TXT, JSON e dossiê eram booleanos definidos no clique e nunca desfeitos. Agora cada uma guarda o próprio texto exportado e só permanece marcada enquanto esse texto for idêntico ao registro atual; qualquer edição posterior (incluindo marcar a própria revisão, que passa a integrar o JSON) desmarca todas de uma vez, forçando reexportação.
+- **"Vídeo salvo" por associação de clipe.** Associar um clipe no painel de evidência (opcional) não comprova que o vídeo gravado neste dispositivo foi salvo. O passo agora também aceita o clique real no link "Salvar vídeo no dispositivo institucional"; um não substitui o outro.
+- **Referência de versão desconectada entre subsistemas.** A apresentação internacional (`client/public/obs10-global`) citava "referência do produto 1.4.0" enquanto a produção clínica já estava em 1.6.0, com o workflow de verificação internacional permanecendo verde por não comparar as duas versões. Causa raiz dupla: a constante `PRODUCT` nunca era interpolada no rodapé publicado (era um literal fixo por idioma) e nenhum teste comparava `PRODUCT` a `OBS10_VERSION`. Corrigido nas duas pontas: o rodapé das três línguas e dos três kits para parceiros agora interpola `PRODUCT`, e `tests/unit/obs10-global.test.mjs` falha fechado se `PRODUCT` divergir de `OBS10_VERSION`.
+
+### Verificação v1.6.1
+
+`tests/unit/obs10-orientation.test.ts` (estendido: "descrito" e "revisado" são independentes; cada expressão de invalidação por edição existe literalmente na página), extensão de `tests/e2e/obs10-dossier.mjs` (declarar a revisão desmarca a exportação por embutir a declaração no JSON; qualquer edição posterior zera as quatro marcações já obtidas; reexportar e rebaixar o dossiê as restaura), extensão de `tests/e2e/obs10.mjs` (gravar vídeo real não marca o passo sozinho; só o clique em salvar marca, com zero clipes associados) e extensão de `tests/unit/obs10-global.test.mjs` (invariante `PRODUCT === OBS10_VERSION`, lida como texto do `protocol.ts` para não exigir carregador de TypeScript). Versão 1.6.1; importação aceita 1.0 a 1.6.1. Rollback: reverter somente a PR desta versão.

@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { resolve, extname, sep, join } from "node:path";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 const DIST = resolve("dist/public"), OUT = resolve("artifacts/recovered-authorials");
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".ico": "image/x-icon" };
@@ -16,9 +17,7 @@ const server = createServer((req, res) => {
 });
 await new Promise((done) => server.listen(0, "127.0.0.1", done));
 const base = `http://127.0.0.1:${server.address().port}`;
-const windowsChrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || (existsSync(windowsChrome) ? windowsChrome : undefined);
-const browser = await chromium.launch({ executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+const browser = await chromium.launch(auditBrowserLaunchOptions());
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 const page = await context.newPage(); const errors = [], writes = [], passed = [];
 page.on("pageerror", (error) => errors.push(error.message));

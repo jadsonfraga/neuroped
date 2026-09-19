@@ -171,12 +171,12 @@ const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
-const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
 const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
+const PreConsultaObs10Page = lazy(() => import("@/pages/pre-consulta-obs10"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
 const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const EscutaClinicaPage = lazy(() => import("@/pages/escuta-clinica"));
@@ -427,6 +427,7 @@ function AppRouter() {
               </Route>
             ))}
 
+            <Route path="/avaliacao-pre-consulta-faixa-etaria" component={PreConsultaObs10Page} />
             <Route path="/pre-consulta" component={PreConsultaPage} />
             <Route path="/pre-retorno" component={PreRetornoPage} />
             <Route path="/efeitos-colaterais" component={PreRetornoPage} />
@@ -438,11 +439,6 @@ function AppRouter() {
             <Route path="/prontuario">
               <RouteGuard roles={["admin", "professional"]}>
                 <ProntuarioPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/manus">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ManusIntegracoesPage />
               </RouteGuard>
             </Route>
             <Route path="/escuta-clinica">

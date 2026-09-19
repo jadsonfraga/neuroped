@@ -55,6 +55,12 @@ export default [
       ".claude/**",
       "script/**",
       "**/*.d.ts",
+      // Saídas de harness e de auditoria: escuta-browser-qa.mjs empacota a
+      // página em .tmp/ e os gates visuais gravam capturas em artifacts/.
+      // Sem isto, rodar o harness deixava `npm run lint` reprovando num
+      // bundle gerado — e verify:release caía na primeira etapa.
+      ".tmp/**",
+      "artifacts/**",
     ],
   },
 

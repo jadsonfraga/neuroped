@@ -193,7 +193,10 @@ function ActionLink({
         <span className="block truncate text-[13.5px] font-semibold text-foreground">
           {label}
         </span>
-        <span className="block truncate text-[11.5px] text-muted-foreground">
+        {/* A dica quebra em até duas linhas como no PortalQuickAction: em 1440 px
+            "Laudo e receita a partir da ficha" e "Sessão efêmera, sem registro"
+            saíam cortadas com reticências dentro do próprio cockpit. */}
+        <span className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-muted-foreground">
           {hint}
         </span>
       </span>
