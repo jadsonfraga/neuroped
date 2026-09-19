@@ -12,7 +12,6 @@ import {
   ClipboardList,
   FileText,
   Filter,
-  Globe2,
   HeartPulse,
   HelpCircle,
   Home,
@@ -142,7 +141,6 @@ export const navSections: NavSection[] = [
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
   },
   {
