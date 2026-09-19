@@ -78,8 +78,8 @@ test("a Secretaria IA institucional tem uma única rota e autoridades consolidad
   assert.doesNotMatch(widget, /document\.createElement|customElements|<bc-widget-schedules/);
 
   // A Secretaria canônica permanece no NeuroPed; o antigo hub externo não pode voltar.
-  assert.doesNotMatch(app, /pages\\/manus-integracoes|path="\\/manus"|ManusIntegracoesPage/);
-  assert.doesNotMatch(navigation, /href: "\\/manus"|Integrações Manus/);
+  assert.doesNotMatch(app, /pages\/manus-integracoes|path="\/manus"|ManusIntegracoesPage/);
+  assert.doesNotMatch(navigation, /href: "\/manus"|Integrações Manus/);
 
   // O runbook consolidado deve manter preço e responsabilidades inequívocos.
   assert.match(runbook, /Rota institucional única:\*\* `#\/marcacao`/);
