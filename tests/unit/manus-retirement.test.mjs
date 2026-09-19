@@ -23,7 +23,7 @@ test("o app não reintroduz superfícies ou dependências do site Manus", async 
   for (const root of runtimeRoots) files.push(...await collectFiles(root));
 
   const forbidden = [
-    /https?:\/\/[^\s"'\`]*manus\.space/i,
+    /https?:\/\/[^\s"']*manus\.space/i,
     /VITE_MANUS_[A-Z0-9_]+/,
     /["']\/manus["']/,
     /pages\/manus-integracoes/i,
