@@ -30,11 +30,12 @@ export function Readiness({ items }: { items: ReadinessItem[] }) {
   </div>;
 }
 
-export function DossierPanel({ text, onDownload }: { text: string; onDownload: () => void }) {
+export function DossierPanel({ text, onCopy, onDownload }: { text: string; onCopy: () => void; onDownload: () => void }) {
   const [status, setStatus] = useState("");
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);
+      onCopy();
       setStatus("Dossiê copiado. Cole após a lei PRÉ na sua ferramenta de redação, fora deste aplicativo.");
     } catch {
       setStatus("Não foi possível copiar automaticamente neste navegador. Use o download ou selecione o texto abaixo.");

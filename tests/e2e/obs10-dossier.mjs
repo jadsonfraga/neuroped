@@ -92,18 +92,20 @@ try {
   assert.ok(await page.locator(".obs10-delivery").evaluate((el) => el.getBoundingClientRect().top >= -2 && el.getBoundingClientRect().top < innerHeight), "Abrir scrolls to the delivery section");
   await page.getByRole("button", { name: /3\. Linguagem e raciocínio/ }).click();
   await page.getByLabel("O que fez ou falou? Descreva literalmente").first().fill("Repetiu as tres palavras na segunda apresentacao.");
-  // Dossier: download and clipboard carry the same text, with the literal fact, the prose category and explicit gaps.
+  // Dossier: clipboard alone is a valid delivery path, and download must carry exactly the same current text.
+  await button("Copiar dossiê").click();
+  await page.getByTestId("obs10-dossier").getByRole("status").filter({ hasText: /copiado/ }).waitFor();
+  const dossierFromClipboard = await page.evaluate(() => navigator.clipboard.readText());
+  assert.equal(await next.locator(".obs10-next-list > li").nth(4).evaluate((el) => el.classList.contains("is-done")), true, "successful clipboard copy completes the dossier step without requiring a download");
   const downloadPromise = page.waitForEvent("download"); await button("Baixar dossiê (.md)").click();
   const download = await downloadPromise; await download.saveAs(`${dir}/dossie.md`);
   const dossier = await readFile(`${dir}/dossie.md`, "utf8");
+  assert.equal(dossierFromClipboard, dossier);
   assert.ok(download.suggestedFilename().startsWith("OBS10-OBS14-SINTETICO") && download.suggestedFilename().endsWith(".md"));
   assert.match(dossier, /lei PRÉ/); assert.match(dossier, /7 anos e 2 meses \(86 meses\)/); assert.match(dossier, /2 ano ficticio/);
   assert.match(dossier, /realizou após ouvir o comando novamente/); assert.match(dossier, /«Repetiu as tres palavras na segunda apresentacao\.»/);
   assert.match(dossier, /Sem observação registrada no bloco 1/); assert.match(dossier, /## 6\. Pendências/);
   assert.ok(!/Fachetária/.test(dossier));
-  await button("Copiar dossiê").click();
-  await page.getByTestId("obs10-dossier").getByRole("status").filter({ hasText: /copiado/ }).waitFor();
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), dossier);
   await page.getByText("Ver o dossiê completo").click();
   assert.equal(await page.getByTestId("obs10-dossier-text").textContent(), dossier);
   await screen("02-dossie-desktop");
@@ -115,7 +117,11 @@ try {
   const txtPromise = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise;
   assert.equal(await next.locator("li.is-done").count(), 1, "TXT alone does not complete the export step");
   const jsonPromise = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise;
-  assert.equal(await next.locator("li.is-done").count(), 2, "dossier and export, both matching the current record");
+  assert.equal(await next.locator("li.is-done").count(), 1, "download events alone do not prove the current TXT/JSON were stored and checked");
+  const finalFiles = page.getByLabel("Confirmei que os arquivos TXT e JSON atuais apareceram no armazenamento institucional e conferi ambos.", { exact: true });
+  assert.equal(await finalFiles.isEnabled(), true);
+  await finalFiles.check();
+  assert.equal(await next.locator("li.is-done").count(), 2, "dossier plus explicitly confirmed current TXT/JSON");
   // The review step follows only the aplicadora's own declaration, never a derived "no pendência left" count.
   await page.getByLabel(/Revisei os seis blocos/).check();
   assert.equal(await next.locator("li.is-done").count(), 2, "declaring review adds it, but baking the declaration into the JSON desyncs the earlier export");
@@ -130,6 +136,9 @@ try {
   await page.getByLabel(/Revisei os seis blocos/).check();
   const txtPromise2 = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise2;
   const jsonPromise2 = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise2;
+  assert.equal(await next.locator("li.is-done").count(), 2, "after a record change, re-download alone still leaves final files unconfirmed");
+  await finalFiles.check();
+  assert.equal(await next.locator("li.is-done").count(), 3, "current TXT/JSON confirmation restores the export step without mutating the record");
   const downloadPromise2 = page.waitForEvent("download"); await button("Baixar dossiê (.md)").click();
   const download2 = await downloadPromise2; await download2.saveAs(`${dir}/dossie-atualizado.md`);
   const dossierUpdated = await readFile(`${dir}/dossie-atualizado.md`, "utf8");

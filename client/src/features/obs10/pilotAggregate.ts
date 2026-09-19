@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AGE_BANDS } from "./protocol";
+import { AGE_BANDS, OBS10_VERSION } from "./protocol";
 import { DIFFICULTY_OPTIONS, METRICS_SCHEMA, REPEAT_OPTIONS, UTILITY_OPTIONS, WORK_PHASES, type PilotMetrics, type WorkPhase } from "./pilot";
 
 export const MAX_METRICS_FILES = 200;
@@ -11,9 +11,9 @@ const seconds = count(7200);
 /** Strict mirror of the export whitelist: any extra field, free text or unknown value is refused. */
 export const metricsSchema = z.object({
   schema: z.literal(METRICS_SCHEMA),
-  // Any released protocol version, patch included: a fixed ".0" here would reject the first patch release
-  // of any minor (found while shipping 1.6.1 — the same species of drift as the international presentation gap).
-  protocolVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+  // Accept patch/minor releases within the currently supported major only. A syntactically valid future
+  // major is not assumed compatible with this aggregate schema.
+  protocolVersion: z.string().regex(/^\d+\.\d+\.\d+$/).refine((version) => version.split(".")[0] === OBS10_VERSION.split(".")[0]),
   ageBand: z.string().max(10).refine((id) => AGE_BANDS.some((band) => band.id === id)),
   collectionSeconds: count(600),
   workSecondsRecorded: z.object(Object.fromEntries(WORK_PHASES.map((phase) => [phase, seconds.nullable()])) as Record<WorkPhase, z.ZodNullable<typeof seconds>>).strict(),

@@ -19,7 +19,8 @@ page.on("pageerror", (error) => errors.push(error.message));
 page.on("request", (request) => { if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method()) && /\/api\//.test(request.url()) && !/\/api\/auth\//.test(request.url())) writes.push(request.url()); });
 const button = (name) => page.getByRole("button", { name, exact: true });
 const field = (name) => page.getByLabel(name, { exact: true });
-const declaration = () => page.getByRole("checkbox", { name: "Conferi o arquivo exportado, identifiquei tarefas omitidas e encaminhei ao médico pelo fluxo institucional.", exact: true });
+const declaration = () => page.getByRole("checkbox", { name: "Conferi o conteúdo, identifiquei tarefas omitidas e declaro este registro pronto para encaminhamento ao médico.", exact: true });
+const finalFiles = () => page.getByRole("checkbox", { name: "Confirmei que os arquivos TXT e JSON atuais apareceram no armazenamento institucional e conferi ambos.", exact: true });
 async function prepare() {
   await field("Anos completos").fill("7"); await field("Meses adicionais").fill("0");
   await field("Código institucional, sem nome").fill("OBS12-SINTETICO");
@@ -77,10 +78,17 @@ try {
   assert.equal(await page.evaluate(() => window.injected), undefined);
   await page.getByRole("checkbox", { name: /^Revisei os seis blocos/ }).check();
   await page.getByRole("checkbox", { name: /^Conferi áudio, enquadramento/ }).check();
-  await page.getByRole("checkbox", { name: /^Exportei e conferi os arquivos/ }).check();
+  await page.getByRole("checkbox", { name: /^Conferi o destino institucional/ }).check();
   assert.equal(await declaration().isEnabled(), true);
   await declaration().check();
+  const finalStep = page.getByTestId("obs10-next-steps").locator(".obs10-next-list > li").nth(5);
+  assert.equal(await finalStep.evaluate((el) => el.classList.contains("is-done")), false, "declaring handoff invalidates the older export until the declaration itself is re-exported");
+  const finalTxtPromise = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await finalTxtPromise;
   const complete = await exportJSON("02-revisado.json");
+  assert.equal(await finalStep.evaluate((el) => el.classList.contains("is-done")), false, "re-export alone does not prove the final files reached institutional storage");
+  assert.equal(await finalFiles().isEnabled(), true, "final-file confirmation is enabled only for current TXT/JSON");
+  await finalFiles().check();
+  assert.equal(await finalStep.evaluate((el) => el.classList.contains("is-done")), true, "final handoff completes only after current TXT/JSON are explicitly confirmed");
   assert.equal(complete.version, "1.6.1");
   assert.equal(complete.observations[0].applicationSecond, timestamp);
   assert.equal(complete.observations[0].recordedAfterEnd, false);

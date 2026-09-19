@@ -18,7 +18,7 @@ import { PilotPanel } from "@/features/obs10/PilotPanel";
 import { emptyPilot, type PilotRecord } from "@/features/obs10/pilot";
 import { useWorkClock } from "@/features/obs10/useWorkClock";
 import { DossierPanel, JourneyMap, Readiness, type ReadinessItem } from "@/features/obs10/Journey";
-import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, nextSteps } from "@/features/obs10/Orientation";
+import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, nextSteps, videoDeliveryDone } from "@/features/obs10/Orientation";
 import { makeDossier, makeScript } from "@/features/obs10/dossier";
 import "@/features/obs10/obs10.css";
 
@@ -38,6 +38,24 @@ function saveFile(filename: string, content: string, type: string) {
   document.body.appendChild(link); link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+interface DeliveryState {
+  txt: string | null;
+  json: string | null;
+  md: string | null;
+  filesConfirmedTxt: string | null;
+  filesConfirmedJson: string | null;
+  videoDownloadRequested: boolean;
+  videoSavedConfirmed: boolean;
+  externalClipConfirmed: boolean;
+  externalVideoSavedConfirmed: boolean;
+  videoUnavailableDeclared: boolean;
+}
+const emptyDelivery = (): DeliveryState => ({
+  txt: null, json: null, md: null, filesConfirmedTxt: null, filesConfirmedJson: null,
+  videoDownloadRequested: false, videoSavedConfirmed: false, externalClipConfirmed: false,
+  externalVideoSavedConfirmed: false, videoUnavailableDeclared: false,
+});
 
 export default function PreConsultaObs10Page() {
   const [years, setYears] = useState("");
@@ -69,9 +87,9 @@ export default function PreConsultaObs10Page() {
   const [encodingSecond, setEncodingSecond] = useState<number | null>(null);
   const [recallSecond, setRecallSecond] = useState<number | null>(null);
   const [message, setMessage] = useState("");
-  // Each field stores the exact text handed to the user at export time, so a later edit that changes the
-  // record (and thus the report/JSON/dossier text) makes the comparison fail on its own; no separate reset needed.
-  const [delivered, setDelivered] = useState<{ txt: string | null; json: string | null; md: string | null; videoClicked: boolean }>({ txt: null, json: null, md: null, videoClicked: false });
+  // Text snapshots make TXT/JSON/dossier freshness content-addressed. Video uses explicit operator confirmations:
+  // a click only requests a browser download; it does not prove durable storage.
+  const [delivered, setDelivered] = useState<DeliveryState>(emptyDelivery);
   const video = useRef<HTMLVideoElement>(null);
   const started = useRef<number | null>(null);
   const ended = useRef(false);
@@ -176,7 +194,7 @@ export default function PreConsultaObs10Page() {
     monotonicStart.current = null; lastElapsed.current = 0; setSessionId(""); setHandoff(emptyHandoff()); setKits({}); setImportedRecord(null); setImportBusy(false);
     started.current = null; ended.current = false; sequence.current = 0;
     setStage("setup"); setElapsed(0); setStep(0); setObservations([]); setEndReason("");
-    setEncodingSecond(null); setRecallSecond(null); setUrgent(false); setMessage(""); setDelivered({ txt: null, json: null, md: null, videoClicked: false });
+    setEncodingSecond(null); setRecallSecond(null); setUrgent(false); setMessage(""); setDelivered(emptyDelivery());
     setContext(MISSING_CONTEXT); setYears(""); setMonths(""); setCorrected(""); setUseCorrected(false);
     setChecks(CHECKS.map(() => false)); setPreviewBand(null); setCameraEnabled(false);
   }
@@ -221,13 +239,26 @@ export default function PreConsultaObs10Page() {
     { label: "Dispositivo de filmagem disponível", ok: kits[selectedBand?.id ?? ""]?.device === "ready", detail: "celular ou tablet institucional fixo" },
     { label: "Confirmações de segurança", ok: checks.every(Boolean), detail: `${checks.filter(Boolean).length}/${CHECKS.length}` },
   ];
+  const currentJson = JSON.stringify(record, null, 2);
+  const exportedCurrent = delivered.txt === report && delivered.json === currentJson;
+  const filesConfirmedCurrent = exportedCurrent
+    && delivered.filesConfirmedTxt === report && delivered.filesConfirmedJson === currentJson;
+  const exportResolved = exportedCurrent && filesConfirmedCurrent;
+  const videoResolved = videoDeliveryDone({
+    integratedRecordingAvailable: Boolean(media.url),
+    integratedRecordingConfirmedSaved: delivered.videoSavedConfirmed,
+    externalClipConfirmedThisSession: delivered.externalClipConfirmed,
+    externalRecordingConfirmedSaved: delivered.externalVideoSavedConfirmed,
+    unavailableDocumented: delivered.videoUnavailableDeclared,
+  });
+  const dossierCurrent = delivered.md === dossier;
   const steps = finished ? nextSteps({
     described: observations.length > 0 && incomplete === 0,
     reviewed: handoff.recordsReviewed,
-    exported: delivered.txt === report && delivered.json === JSON.stringify(record, null, 2),
-    video: Boolean(evidence.clips.length) || delivered.videoClicked,
-    dossier: delivered.md === dossier,
-    declared: Boolean(handoff.declaredAt),
+    exported: exportResolved,
+    video: videoResolved,
+    dossier: dossierCurrent,
+    declared: Boolean(handoff.declaredAt) && exportResolved,
   }) : [];
   function printScript() {
     if (!selectedBand) return;
@@ -242,7 +273,7 @@ export default function PreConsultaObs10Page() {
     sequence.current = 0; workClock.reset(); setEvidence(value.evidence ?? emptyEvidence()); setPilot(value.pilot ?? emptyPilot()); setReviewEpoch((n) => n + 1);
     setContext(value.context); setObservations(value.observations); setImportedRecord(value); setSessionId(value.sessionId || crypto.randomUUID());
     setElapsed(value.durationSeconds); setEndReason(value.endReason); setEncodingSecond(value.encodingSecond); setRecallSecond(value.recallSecond);
-    setCameraEnabled(false); setHandoff(emptyHandoff()); setUrgent(false); setStep(0); setImportBusy(false);
+    setCameraEnabled(false); setHandoff(emptyHandoff()); setUrgent(false); setStep(0); setImportBusy(false); setDelivered(emptyDelivery());
     const kit = Object.fromEntries(KITS[value.context.bandId].filter((item) => value.context.missingMaterials?.includes(MATERIALS[item.id].label)).map((item) => [item.id, "missing"])) as KitState;
     setKits({ [value.context.bandId]: kit });
     setStage("finished"); setMessage("Registro reaberto apenas para revisão. Nenhum vídeo foi carregado; o cronômetro permanece encerrado.");
@@ -394,15 +425,18 @@ export default function PreConsultaObs10Page() {
           <h2>🌷 Revisar e entregar ao médico</h2><p>Confirme ficha, tarefas, ajuda, áudio e enquadramento. Não complete lacunas com “normal”. Os registros podem ser corrigidos nos blocos acima sem reiniciar a aplicação.</p>
           <p className="obs10-note-counter">{PRACTICAL_TASKS[band.id].filter((task) => !observations.some((entry) => entry.id === `guided-${task.id}`)).length} cartões sem marcação guiada. Confira também seus registros livres; ausência de marcação não é prova de ausência de habilidade.</p>
           {incomplete > 0 && <p role="status" className="obs10-caution">{incomplete} registro(s) incompleto(s). A exportação apontará explicitamente as informações que faltam.</p>}
-          <div className="obs10-actions"><button type="button" className="obs10-primary" onClick={() => { saveFile(exportFilename(context.code, "txt", sessionId), report, "text/plain;charset=utf-8"); setDelivered((d) => ({ ...d, txt: report })); setMessage("Download solicitado. Confirme o arquivo no armazenamento institucional antes de sair."); }}><Download size={17} />Exportar registro TXT</button><button type="button" onClick={() => { saveFile(exportFilename(context.code, "json", sessionId), JSON.stringify(record, null, 2), "application/json"); setDelivered((d) => ({ ...d, json: JSON.stringify(record, null, 2) })); setMessage("Download JSON solicitado; nenhum envio ao servidor."); }}>Exportar JSON</button><button type="button" onClick={() => { if (!printPlainTextDocument({ title: "OBS-10 — registro para revisão", text: report })) setMessage("Impressão bloqueada pelo navegador. Permita a janela ou use a exportação TXT."); }}>Imprimir resumo</button></div>
+          <div className="obs10-actions"><button type="button" className="obs10-primary" onClick={() => { saveFile(exportFilename(context.code, "txt", sessionId), report, "text/plain;charset=utf-8"); setDelivered((d) => ({ ...d, txt: report })); setMessage("Download solicitado. Confirme o arquivo no armazenamento institucional antes de sair."); }}><Download size={17} />Exportar registro TXT</button><button type="button" onClick={() => { saveFile(exportFilename(context.code, "json", sessionId), currentJson, "application/json"); setDelivered((d) => ({ ...d, json: currentJson })); setMessage("Download JSON solicitado; nenhum envio ao servidor."); }}>Exportar JSON</button><button type="button" onClick={() => { if (!printPlainTextDocument({ title: "OBS-10 — registro para revisão", text: report })) setMessage("Impressão bloqueada pelo navegador. Permita a janela ou use a exportação TXT."); }}>Imprimir resumo</button></div>
+          <label className="obs10-check"><input type="checkbox" checked={filesConfirmedCurrent} disabled={!exportedCurrent} onChange={(event) => setDelivered((d) => event.target.checked ? { ...d, filesConfirmedTxt: report, filesConfirmedJson: currentJson } : { ...d, filesConfirmedTxt: null, filesConfirmedJson: null })} />Confirmei que os arquivos TXT e JSON atuais apareceram no armazenamento institucional e conferi ambos.</label>
+          <p className="obs10-muted">Esta confirmação final fica somente nesta tela: gravá-la dentro do JSON alteraria o próprio arquivo depois da conferência.</p>
           {media.status === "finalizing" && <p role="status" className="obs10-caution">Finalizando o arquivo de vídeo. Não saia nem reinicie a sessão até aparecer o arquivo ou uma mensagem de falha.</p>}
-          {media.url && <div className="obs10-video-result"><video controls playsInline src={media.url} aria-label="Revisão do vídeo local" /><a className="obs10-download" href={media.url} download={exportFilename(context.code, media.mime.includes("mp4") ? "mp4" : "webm", sessionId)} onClick={() => setDelivered((d) => ({ ...d, videoClicked: true }))}>Salvar vídeo no dispositivo institucional</a><p>Arquivo somente nesta sessão. Revise som, enquadramento e integridade. Não foi analisado por IA nem enviado ao prontuário.</p></div>}
+          {media.url && <div className="obs10-video-result"><video controls playsInline src={media.url} aria-label="Revisão do vídeo local" /><a className="obs10-download" href={media.url} download={exportFilename(context.code, media.mime.includes("mp4") ? "mp4" : "webm", sessionId)} onClick={() => setDelivered((d) => ({ ...d, videoDownloadRequested: true, videoSavedConfirmed: false }))}>Salvar vídeo no dispositivo institucional</a><label className="obs10-check"><input type="checkbox" checked={delivered.videoSavedConfirmed} disabled={!delivered.videoDownloadRequested} onChange={(event) => setDelivered((d) => ({ ...d, videoSavedConfirmed: event.target.checked }))} />Confirmei que o arquivo de vídeo apareceu no armazenamento institucional.</label><p>O clique inicia o download, mas não prova que o navegador concluiu a gravação no destino. Confirme o arquivo antes de sair. Não foi analisado por IA nem enviado ao prontuário.</p></div>}
+          {!media.url && <div className="obs10-video-result"><p><strong>Filmagem externa ou vídeo indisponível.</strong> Escolha apenas a situação que realmente ocorreu.</p>{delivered.externalClipConfirmed && <p role="status" className="obs10-muted">Arquivo externo reanexado e conferido por bytes nesta sessão.</p>}<label className="obs10-check"><input type="checkbox" checked={delivered.externalVideoSavedConfirmed} onChange={(event) => setDelivered((d) => ({ ...d, externalVideoSavedConfirmed: event.target.checked, externalClipConfirmed: event.target.checked ? false : d.externalClipConfirmed, videoUnavailableDeclared: event.target.checked ? false : d.videoUnavailableDeclared }))} />Confirmei que a filmagem externa foi salva no fluxo institucional deste atendimento.</label><label className="obs10-check"><input type="checkbox" checked={delivered.videoUnavailableDeclared} onChange={(event) => setDelivered((d) => ({ ...d, videoUnavailableDeclared: event.target.checked, externalClipConfirmed: event.target.checked ? false : d.externalClipConfirmed, externalVideoSavedConfirmed: event.target.checked ? false : d.externalVideoSavedConfirmed }))} />Não há arquivo de vídeo utilizável; a indisponibilidade foi documentada para o médico.</label></div>}
           <p role="status">{message}</p><p className="obs10-caution"><strong>Antes de sair:</strong> exporte o registro e, se houver, salve o vídeo. Recarregar ou navegar para outra página elimina os dados desta sessão.</p>
           <button type="button" className="obs10-secondary" disabled={media.status === "finalizing"} onClick={resetSession}>Nova aplicação · limpar esta sessão</button>
         </section>}
-        {finished && <DossierPanel text={dossier} onDownload={() => { saveFile(exportFilename(context.code, "md", sessionId), dossier, "text/markdown;charset=utf-8"); setDelivered((d) => ({ ...d, md: dossier })); setMessage("Download do dossiê solicitado; nenhum envio ao servidor."); }} />}
+        {finished && <DossierPanel text={dossier} onCopy={() => setDelivered((d) => ({ ...d, md: dossier }))} onDownload={() => { saveFile(exportFilename(context.code, "md", sessionId), dossier, "text/markdown;charset=utf-8"); setDelivered((d) => ({ ...d, md: dossier })); setMessage("Download do dossiê solicitado; nenhum envio ao servidor."); }} />}
       </div>}
-      {finished && <div className="obs10-no-print"><EvidencePanel key={`${sessionId}-${reviewEpoch}`} record={record} onChange={(value) => { setEvidence(value); setHandoff(emptyHandoff()); }} /></div>}
+      {finished && <div className="obs10-no-print"><EvidencePanel key={`${sessionId}-${reviewEpoch}`} record={record} onChange={(value) => { setEvidence(value); setHandoff(emptyHandoff()); }} onLocalClipConfirmed={() => setDelivered((d) => ({ ...d, externalClipConfirmed: true, externalVideoSavedConfirmed: false, videoUnavailableDeclared: false }))} /></div>}
       {finished && <section className="obs10-summary"><h2>Resumo para revisão médica</h2><pre>{report}</pre></section>}
       {urgent && <section className="obs10-emergency obs10-no-print" role="alert" aria-labelledby="obs10-emergency-title"><h2 id="obs10-emergency-title">Pare a avaliação. Chame o médico agora.</h2><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, instabilidade nova, dor intensa ou risco imediato: acione o fluxo presencial da clínica. Em emergência, <a href="tel:192">SAMU 192</a>. Não espere vídeo ou IA.</p><p>Em crise: proteja de lesões, não contenha à força e não coloque nada na boca. Relato de autoagressão/abuso: pare a gravação sensível, acolha sem perguntas sugestivas e acione o médico; diante de risco imediato, não deixe sozinho.</p><button type="button" onClick={() => setUrgent(false)}>Entendido · manter aplicação encerrada</button></section>}
       <footer className="obs10-footer obs10-no-print">{!running && <p><a href="/obs10-global/" target="_blank" rel="noopener noreferrer">Apresentação internacional · Português / English / Español</a> · Explore fora da coleta.</p>}<details><summary>Fontes, versão e limites clínicos</summary><p>OBS-10 v{OBS10_VERSION} · Manual e fichas de 17/09/2026. Tempos, comandos e fluxo são propostas autorais; nenhuma fonte valida o conjunto como teste diagnóstico. Revisão médica e aplicações supervisionadas antecedem uso rotineiro.</p><p>Não inferir força 5/5, tônus/reflexos preservados, normalidade do exame, QI, idade mental, CID ou risco ausente. Investigação de saúde mental e risco suicida segue fluxo clínico confidencial, não interrogatório filmado pela secretária.</p>{SOURCES.map(([label, href]) => <p key={href}><a href={href} target="_blank" rel="noreferrer">{label}</a></p>)}</details><p>Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756</p></footer>

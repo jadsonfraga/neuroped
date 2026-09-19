@@ -39,6 +39,8 @@ try{
  await button("Iniciar aplicação · 10 minutos").click();assert.equal(await button("Parar medição desta etapa").count(),0);
  await button("+ Registrar uma tarefa deste bloco").click();await field("Qual tarefa?").fill("Interacao sintetica");await field("O que fez ou falou? Descreva literalmente").fill("Movimento observado na amostra ficticia.");await field("Como respondeu?").selectOption("E");await field("Qualidade do trecho, conferida por você").selectOption("Parcial");await button("Encerrar antes").click();
  await field("Vídeo local para esta sessão").setInputFiles(file);await button("Conferi: este vídeo pertence a esta sessão").waitFor();await button("Conferi: este vídeo pertence a esta sessão").click();
+ const videoStep=page.getByTestId("obs10-next-steps").locator(".obs10-next-list > li").nth(3);
+ assert.equal(await videoStep.evaluate(el=>el.classList.contains("is-done")),true,"a local external file counts only after byte-confirmation in this live screen session");
  assert.equal(await field("Código institucional do registro").isDisabled(),true);
  await seek(.2);await button("Marcar início do trecho").click();await seek(.9);await button("Marcar fim e vincular").click();
  assert.equal(await field("Confronto com o registro").inputValue(),"");
@@ -53,8 +55,11 @@ try{
  const latest=await exported("02-retificado.json");await button("Nova aplicação · limpar esta sessão").click();assert.equal(await page.getByTestId("obs13-evidence").count(),0);
  await field("Arquivo JSON para revisão").setInputFiles({name:"OBS13-SINTETICO.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(latest))});await button("Abrir somente para revisão").click();
  assert.equal(await page.locator(".obs13-evidence video").count(),0);assert.match(await page.getByTestId("obs13-evidence").textContent(),/importado; autoria não autenticada/);
+ assert.equal(await videoStep.evaluate(el=>el.classList.contains("is-done")),false,"imported clip references never masquerade as a locally confirmed video file");
  await button("Abrir trecho 1").click();await field("Vídeo local para esta sessão").setInputFiles({...file,buffer:Buffer.concat([file.buffer,Buffer.from([1])])});await page.getByText(/Este arquivo não corresponde ao clipe selecionado/).waitFor();assert.equal(await page.locator(".obs13-evidence video").count(),0);
- await field("Vídeo local para esta sessão").setInputFiles(file);await button("Conferi: este vídeo pertence a esta sessão").click();await button("Abrir trecho 1").click();await page.waitForFunction(()=>{const v=document.querySelector('.obs13-evidence video');return v&&!v.seeking;});assert.ok(Math.abs(await page.locator(".obs13-evidence video").evaluate(v=>v.currentTime)-.2)<.15);
+ await field("Vídeo local para esta sessão").setInputFiles(file);await button("Conferi: este vídeo pertence a esta sessão").click();
+ assert.equal(await videoStep.evaluate(el=>el.classList.contains("is-done")),true,"reattaching and byte-confirming the imported clip resolves the video step");
+ await button("Abrir trecho 1").click();await page.waitForFunction(()=>{const v=document.querySelector('.obs13-evidence video');return v&&!v.seeking;});assert.ok(Math.abs(await page.locator(".obs13-evidence video").evaluate(v=>v.currentTime)-.2)<.15);
  const reopened=await exported("03-reanexado.json");assert.equal(reopened.evidence.reviews[0].origin,"imported-unverified");assert.equal(reopened.evidence.moments.length,1);assert.equal(reopened.evidence.clips.length,1);
  await screen("03-reaberto-com-evidencia");
  // New independent session authenticated as operator: product role check must remain closed.

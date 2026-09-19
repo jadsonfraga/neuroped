@@ -148,15 +148,19 @@ try {
   await button("Encerrar antes").click();
   await page.getByRole("link", { name: "Salvar vídeo no dispositivo institucional" }).waitFor({ timeout: 15000 });
   assert.equal(await page.evaluate(() => window.__obsTracks.every((track) => track.readyState === "ended")), true);
-  // Adversarial audit of 19f56f01: recording a video must not, by itself, mark the "vídeo salvo" step; only an
-  // actual click on the save link (or an evidence clip hashed and confirmed) can, since no clip was associated here.
+  // A generated blob is not a persisted file. Even a browser download event only proves the request started:
+  // the operator must explicitly confirm that this exact integrated recording appeared in institutional storage.
   const videoStep = page.getByTestId("obs10-next-steps").locator(".obs10-next-list > li").nth(3);
   await videoStep.waitFor();
   assert.equal(await videoStep.evaluate((el) => el.classList.contains("is-done")), false, "recording alone never marks the video step");
   const videoDownloadPromise = page.waitForEvent("download");
   await page.getByRole("link", { name: "Salvar vídeo no dispositivo institucional" }).click();
   await videoDownloadPromise;
-  assert.equal(await videoStep.evaluate((el) => el.classList.contains("is-done")), true, "clicking the save link marks it, with zero evidence clips associated");
+  assert.equal(await videoStep.evaluate((el) => el.classList.contains("is-done")), false, "requesting a download still does not prove durable storage");
+  const savedConfirmation = page.getByLabel("Confirmei que o arquivo de vídeo apareceu no armazenamento institucional.");
+  assert.equal(await savedConfirmation.isEnabled(), true);
+  await savedConfirmation.check();
+  assert.equal(await videoStep.evaluate((el) => el.classList.contains("is-done")), true, "explicit confirmation of the integrated file completes the video step");
   assert.equal(await page.getByTestId("obs13-evidence").locator(".obs13-moments article").count(), 0);
   await screen("06-video-local");
   await newSession();
