@@ -35,6 +35,8 @@ import {
   type TenantEnv,
 } from "../../tenant/_core";
 import { clinicalCryptoReady } from "../../tenant/_crypto";
+import { purgeExportArtifacts } from "./_artifactPurge";
+import { resolvePrivateArtifactStore } from "./_artifactStore";
 import { executeTenantScopedPurge } from "./_purge";
 import {
   claimLgpdRequest,
@@ -185,6 +187,27 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     );
   }
 
+  // O ciphertext de uma exportação já executada precisa cair antes do purge de
+  // D1: o purge solta o `patient_id` das tabelas de governança, e depois disso
+  // não há mais como saber quais artefatos eram deste titular.
+  const artifactPurge = await purgeExportArtifacts({
+    db,
+    store: resolvePrivateArtifactStore(context.env),
+    scope: request.scope as LgpdScope,
+    clinicId,
+    patientId: request.patient_id,
+  });
+  if (!artifactPurge.ok) {
+    await failLgpdJob(db, claim, artifactPurge.failure);
+    return tenantError(
+      artifactPurge.failure === "EXPORT_ARTIFACT_STORE_REQUIRED"
+        ? "Há exportações desta clínica no storage privado e o bucket não está configurado; a eliminação não pode ser declarada cumprida."
+        : "Não foi possível eliminar os artefatos de exportação do storage privado.",
+      artifactPurge.failure,
+      artifactPurge.failure === "EXPORT_ARTIFACT_STORE_REQUIRED" ? 503 : 500,
+    );
+  }
+
   const failures: string[] = [];
   const outcome = await executeTenantScopedPurge({
     db,
@@ -237,6 +260,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
           (sum, n) => sum + n,
           0,
         ),
+        exportArtifactsDeleted: artifactPurge.outcome.keysDeleted,
       },
     }).run();
   } catch (error) {

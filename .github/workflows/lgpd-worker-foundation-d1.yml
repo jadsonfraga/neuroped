@@ -111,6 +111,18 @@ jobs:
             }
           done
 
+          # A presença da coluna `attempts` não basta. Sem NOT NULL + DEFAULT 0,
+          # uma tabela recriada por outra via aceitaria contador nulo e o backoff
+          # por tentativa deixaria de existir: o job seria reivindicado sem teto.
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT 'attempts_contract_ok' AS marker FROM pragma_table_info('live_lgpd_worker_jobs') WHERE name='attempts' AND \"notnull\"=1 AND dflt_value='0';" \
+            > /tmp/lgpd-worker-attempts.txt 2>&1
+          cat /tmp/lgpd-worker-attempts.txt
+          grep -q "attempts_contract_ok" /tmp/lgpd-worker-attempts.txt || {
+            echo "::error::live_lgpd_worker_jobs.attempts precisa ser NOT NULL DEFAULT 0"
+            exit 1
+          }
+
           npx wrangler@4 d1 execute neuroped-db --remote \
             --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_live_export_completed_requires_worker','trg_live_delete_completed_requires_worker','trg_lgpd_worker_export_completed_evidence','trg_lgpd_worker_delete_completed_evidence') ORDER BY name;" \
             > /tmp/lgpd-worker-triggers.txt 2>&1

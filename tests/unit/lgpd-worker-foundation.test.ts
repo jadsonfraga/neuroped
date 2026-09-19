@@ -38,6 +38,20 @@ const migration = readFileSync("db/migrations/0017_lgpd_operational_worker_found
 const workerCore = readFileSync("functions/api/live/governance/_worker-core.ts", "utf8");
 
 assert.match(migration, /UNIQUE\s*\(request_type,\s*request_id\)/i, "um request só pode ter um job lógico");
+// O contador de tentativas é o que limita reivindicação de um job. Coluna
+// presente mas anulável ou sem default deixaria `attempts + 1` virar NULL e o
+// teto de tentativas deixaria de existir silenciosamente.
+assert.match(
+  migration,
+  /attempts\s+INTEGER\s+NOT NULL\s+DEFAULT\s+0/i,
+  "attempts precisa nascer 0 e nunca ser nulo",
+);
+const workerReadiness = readFileSync(".github/workflows/lgpd-worker-foundation-d1.yml", "utf8");
+assert.match(
+  workerReadiness,
+  /name='attempts' AND \\"notnull\\"=1 AND dflt_value='0'/,
+  "a prontidão remota precisa conferir o contrato de attempts, não só a existência da coluna",
+);
 assert.match(migration, /idx_live_lgpd_worker_claim/, "ledger precisa de índice de claim/lease");
 assert.match(migration, /LGPD_EXPORT_PHYSICAL_PROOF_REQUIRED/, "D1 deve bloquear falso completed de export");
 assert.match(migration, /LGPD_DELETE_PHYSICAL_PROOF_REQUIRED/, "D1 deve bloquear falso completed de delete");
