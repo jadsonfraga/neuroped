@@ -102,12 +102,16 @@ export const featuredNavigation: NavItem[] = [
   },
   {
     href: "/testes-diretos",
-    label: "Sonda Dez",
+    label: "Sonda Dez · Avaliação Direta",
     icon: Sparkles,
     tone: "priority",
-    description: "Avaliação direta pré-consulta · 10 min",
+    description: "⭐ Destaque · avaliação direta pré-consulta · 10 min",
   },
-  obs10Navigation,
+  {
+    ...obs10Navigation,
+    label: "OBS-10 · Pré-Consulta",
+    description: "⭐ Destaque · observação guiada · 13 faixas etárias",
+  },
   {
     href: "/escuta-clinica",
     label: "Escuta Clínica",
@@ -181,10 +185,15 @@ export const navSections: NavSection[] = [
       { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter, tone: "priority" },
       {
         href: "/testes-diretos",
-        label: "Sonda Dez · Pré-consulta",
+        label: "⭐ Sonda Dez · Avaliação Direta",
         icon: Sparkles,
         tone: "priority",
-        description: "Aplicação guiada por idade em 10 minutos",
+        description: "Destaque clínico · aplicação guiada em 10 minutos",
+      },
+      {
+        ...obs10Navigation,
+        label: "⭐ OBS-10 · Pré-Consulta",
+        description: "Destaque clínico · observação guiada por 13 faixas etárias",
       },
       { href: "/bateria-jadson", label: "Bateria Jadson", icon: ClipboardCheck },
       { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
