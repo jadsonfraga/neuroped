@@ -262,3 +262,83 @@ export function validateCommercialUsageMetadata(
   }
   return { ok: true };
 }
+
+/*
+ * Materiais licenciados.
+ *
+ * Um feature code sem destino no produto é um entitlement que não entrega nada.
+ * Este registro é a ponte entre o que foi vendido e as telas que já existem no
+ * aplicativo: não cria material novo, não descreve conteúdo clínico e não
+ * promove nenhuma tela fora do SKU (prontuário, PANT, NeuroBoard, escalas
+ * licenciadas) a material comercial.
+ */
+export interface CommercialMaterial {
+  code: CommercialFeatureCode;
+  title: string;
+  /** O que a instituição recebe, em termos operacionais. Nunca conteúdo clínico. */
+  summary: string;
+  /** Telas reais do aplicativo que compõem o material. */
+  routes: readonly string[];
+  deliveryChannel: "app_screen";
+}
+
+export const COMMERCIAL_MATERIALS: Readonly<Record<CommercialFeatureCode, CommercialMaterial>> =
+  Object.freeze({
+    "form.preconsultation": Object.freeze({
+      code: "form.preconsultation",
+      title: "Ficha de pré-consulta",
+      summary: "Roteiro estruturado preenchido antes do atendimento e impresso ou copiado pela equipe.",
+      routes: Object.freeze(["/pre-consulta"]),
+      deliveryChannel: "app_screen",
+    }),
+    "form.change_log": Object.freeze({
+      code: "form.change_log",
+      title: "Registro de acompanhamento",
+      summary: "Linha do tempo longitudinal para anotar o que mudou entre um atendimento e outro.",
+      routes: Object.freeze(["/neuroacompanhamento"]),
+      deliveryChannel: "app_screen",
+    }),
+    "form.school_feedback": Object.freeze({
+      code: "form.school_feedback",
+      title: "Devolutiva escolar",
+      summary: "Diário escolar para a equipe da escola registrar o dia e devolver à instituição.",
+      routes: Object.freeze(["/diario-escola"]),
+      deliveryChannel: "app_screen",
+    }),
+    "form.approved_plan": Object.freeze({
+      code: "form.approved_plan",
+      title: "Plano aprovado",
+      summary: "Plano terapêutico redigido, impresso e entregue à família depois da aprovação do responsável clínico.",
+      routes: Object.freeze(["/plano-terapeutico"]),
+      deliveryChannel: "app_screen",
+    }),
+    "form.routine_log": Object.freeze({
+      code: "form.routine_log",
+      title: "Registros de rotina",
+      summary: "Diários de rotina diária preenchidos pela família entre os atendimentos.",
+      routes: Object.freeze(["/diario-sono", "/diario-alimentar"]),
+      deliveryChannel: "app_screen",
+    }),
+  });
+
+export function getCommercialMaterial(code: string): CommercialMaterial | null {
+  return Object.prototype.hasOwnProperty.call(COMMERCIAL_MATERIALS, code)
+    ? COMMERCIAL_MATERIALS[code as CommercialFeatureCode]
+    : null;
+}
+
+/** Toda rota coberta por algum material licenciado, sem duplicatas. */
+export function commercialMaterialRoutes(): string[] {
+  return [...new Set(Object.values(COMMERCIAL_MATERIALS).flatMap((material) => material.routes))];
+}
+
+/** O material que governa uma rota, ou null quando a rota está fora do SKU. */
+export function commercialMaterialForRoute(route: string): CommercialMaterial | null {
+  return Object.values(COMMERCIAL_MATERIALS).find((material) => material.routes.includes(route)) ?? null;
+}
+
+export function listCommercialMaterialsForOffer(offerCode: string): CommercialMaterial[] {
+  const offer = getCommercialOffer(offerCode);
+  if (!offer) return [];
+  return offer.features.map((feature) => COMMERCIAL_MATERIALS[feature]);
+}

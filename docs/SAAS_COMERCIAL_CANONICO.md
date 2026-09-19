@@ -117,6 +117,30 @@ Acesso a um material requer cumulativamente:
 
 `GET /api/commercial/me?clinicId=...` devolve o snapshot tenant-scoped e a autorização do usuário atual. O frontend não calcula permissões por preço, role, query string ou estado local.
 
+### 5.1 Onde a licença é exercida
+
+As seis condições acima vivem em `functions/api/commercial/_guard.ts`, num único `requireCommercialFeature()` que toda rota de material chama antes de qualquer efeito. O guard devolve o mesmo status para recusas de acesso, de modo que a resposta não diferencie “sua licença não cobre isto” de “esta clínica não é sua”; drift contratual é a exceção e responde 409.
+
+| Superfície | Papel |
+|---|---|
+| `GET /api/commercial/materials` | catálogo tenant-scoped com `licensed` por material |
+| `GET /api/commercial/materials/:code` | confirma o entitlement e registra `material_open` |
+| `POST /api/commercial/materials/:code` | registra `material_export` com o canal de entrega |
+| `GET/POST/DELETE /api/commercial/users` | assentos da licença, sob gestão da unidade |
+| `/licenca` | tela do gestor: aceite, assentos, vigência e suporte consumido |
+
+`COMMERCIAL_MATERIALS`, em `shared/commercial.ts`, liga cada feature code às telas reais do aplicativo. Um feature code sem destino é um entitlement que não entrega nada, e o teste de regressão recusa uma rota declarada que não exista no `App.tsx` ou que não esteja sob o gate.
+
+### 5.2 Fronteira do produto
+
+A licença incide sobre a **unidade institucional**: sessão remota autenticada com clínica selecionada. A instalação individual do aplicativo, sem backend remoto ou sem unidade ativa, não exerce licença nenhuma e os materiais seguem como sempre foram — não é brecha, é o limite do que foi vendido. O modo é determinado pelo build e pela capacidade do backend, não por escolha do usuário final numa instalação institucional.
+
+Dentro de uma unidade, a permissão vem do servidor duas vezes: o snapshot pinta a tela e a confirmação de abertura decide. Se a confirmação recusa, o material não é renderizado, mesmo que o snapshot anterior dissesse o contrário.
+
+### 5.3 Ledger
+
+`material_open`, `material_export`, `authorized_user_added` e `authorized_user_revoked` são gravados pelas rotas acima. Abertura e entrega não devolvem sucesso sem terem sido registradas; concessão e revogação de assento só geram evento quando a escrita mudou exatamente uma linha (`WHERE changes() = 1`), para que uma corrida não deixe ledger sem assento correspondente.
+
 ## 6. Lifecycle fail-closed
 
 O D1 impõe o lifecycle mesmo se uma rota futura esquecer um guard:

@@ -20,6 +20,7 @@ import { SkeletonShimmer } from "@/components/SkeletonShimmer";
 
 import { PrivateGate } from "@/components/PrivateGate";
 import { RouteGuard } from "@/components/RouteGuard";
+import { CommercialGate } from "@/components/CommercialGate";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { ServiceWorkerManager } from "@/components/ServiceWorkerManager";
 import { MobilePrimaryDock } from "@/components/MobilePrimaryDock";
@@ -44,6 +45,7 @@ const MotionPreferences = lazy(() =>
 // primeira tela e, no modo ACESSO ABERTO, quase nunca abrem.
 const LoginPage = lazy(() => import("@/pages/login"));
 const PlanosPage = lazy(() => import("@/pages/planos"));
+const LicencaPage = lazy(() => import("@/pages/licenca"));
 const CadastroPage = lazy(() => import("@/pages/cadastro"));
 const InvitePage = lazy(() => import("@/pages/invite"));
 const OnboardingPage = lazy(() => import("@/pages/onboarding"));
@@ -305,6 +307,11 @@ function AppRouter() {
             <Route path="/redefinir-senha" component={ResetPasswordPage} />
             <Route path="/verificar-email" component={VerifyEmailPage} />
             <Route path="/planos" component={PlanosPage} />
+            <Route path="/licenca">
+              <RouteGuard roles={["admin", "professional"]}>
+                <LicencaPage />
+              </RouteGuard>
+            </Route>
             <Route path="/cadastro" component={CadastroPage} />
             <Route path="/invite" component={InvitePage} />
             <Route path="/onboarding" component={OnboardingPage} />
@@ -337,7 +344,11 @@ function AppRouter() {
             <Route path="/cshq" component={CshqPage} />
             <Route path="/ygtss" component={YgtssPage} />
             <Route path="/epilepsia" component={EpilepsyDiaryPage} />
-            <Route path="/neuroacompanhamento" component={NeuropedAcompanhamentoPage} />
+            <Route path="/neuroacompanhamento">
+              <CommercialGate feature="form.change_log">
+                <NeuropedAcompanhamentoPage />
+              </CommercialGate>
+            </Route>
             <Route path="/cefaleia" component={HeadacheCalendarPage} />
             <Route path="/tea" component={TeaPage} />
             <Route path="/tea-comportamentos" component={TeaBehaviorsPage} />
@@ -361,8 +372,16 @@ function AppRouter() {
               component={EscalasNeuropsiquiatriaPage}
             />
             <Route path="/caa" component={CaaPage} />
-            <Route path="/diario-sono" component={DiarioSonoPage} />
-            <Route path="/diario-alimentar" component={DiarioAlimentarPage} />
+            <Route path="/diario-sono">
+              <CommercialGate feature="form.routine_log">
+                <DiarioSonoPage />
+              </CommercialGate>
+            </Route>
+            <Route path="/diario-alimentar">
+              <CommercialGate feature="form.routine_log">
+                <DiarioAlimentarPage />
+              </CommercialGate>
+            </Route>
             <Route path="/sobre" component={SobrePage} />
             <Route path="/servicos-clinica" component={ServicosClinicaPage} />
             <Route path="/eletroencefalograma" component={EletroencefalogramaPage} />
@@ -428,7 +447,11 @@ function AppRouter() {
             ))}
 
             <Route path="/avaliacao-pre-consulta-faixa-etaria" component={PreConsultaObs10Page} />
-            <Route path="/pre-consulta" component={PreConsultaPage} />
+            <Route path="/pre-consulta">
+              <CommercialGate feature="form.preconsultation">
+                <PreConsultaPage />
+              </CommercialGate>
+            </Route>
             <Route path="/pre-retorno" component={PreRetornoPage} />
             <Route path="/efeitos-colaterais" component={PreRetornoPage} />
             <Route path="/recepcao">
@@ -463,7 +486,9 @@ function AppRouter() {
             </Route>
             <Route path="/plano-terapeutico">
               <RouteGuard roles={["admin", "professional"]}>
-                <PlanoTerapeuticoPage />
+                <CommercialGate feature="form.approved_plan">
+                  <PlanoTerapeuticoPage />
+                </CommercialGate>
               </RouteGuard>
             </Route>
             <Route path="/plano-intervencao">
@@ -499,7 +524,9 @@ function AppRouter() {
             <Route path="/verificar" component={VerificarPage} />
             <Route path="/diario-escola">
               <RouteGuard roles={["admin", "professional"]}>
-                <DiarioEscolaPage />
+                <CommercialGate feature="form.school_feedback">
+                  <DiarioEscolaPage />
+                </CommercialGate>
               </RouteGuard>
             </Route>
             <Route path="/inventarios-escola">

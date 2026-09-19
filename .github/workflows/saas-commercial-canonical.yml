@@ -56,6 +56,9 @@ jobs:
       - name: Canonical terms binding
         run: node --import tsx tests/unit/saas-commercial-terms.test.ts
 
+      - name: Licensed materials, gate and seats
+        run: node --import tsx tests/unit/saas-commercial-materials.test.ts
+
       - name: Public plans contract
         run: node tests/unit/planos-page-contract.test.mjs
 
