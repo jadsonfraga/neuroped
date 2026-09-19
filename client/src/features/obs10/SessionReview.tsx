@@ -70,10 +70,10 @@ export function SessionReview({ record, finalizing, onOpenPhase, onChange }: {
     {([
       ["recordsReviewed", "Revisei os seis blocos, os fatos descritos e os cartões sem marcação; não completei lacunas por suposição."],
       ["mediaReviewed", "Conferi áudio, enquadramento e referência dos clipes, ou documentei a indisponibilidade do vídeo."],
-      ["filesChecked", "Exportei e conferi os arquivos no destino institucional; o vídeo é separado do JSON."],
+      ["filesChecked", "Conferi o destino institucional e os arquivos disponíveis até aqui; a versão final será reexportada e confirmada após o fechamento."],
     ] as const).map(([key, label]) => <label key={key} className="obs10-check"><input type="checkbox" checked={h[key]} disabled={finalizing} onChange={(event) => onChange({ ...h, [key]: event.target.checked, declaredAt: null })} />{label}</label>)}
-    <label className="obs10-check"><input type="checkbox" checked={Boolean(h.declaredAt)} disabled={!ready && !h.declaredAt} onChange={(event) => onChange({ ...h, declaredAt: event.target.checked ? new Date().toISOString() : null })} />Conferi o arquivo exportado, identifiquei tarefas omitidas e encaminhei ao médico pelo fluxo institucional.</label>
-    <p className="obs10-muted">{h.declaredAt ? "Encaminhamento declarado pela aplicadora. Reexporte o JSON para registrar esta declaração. Não é recibo de envio, recebimento ou arquivamento." : "Complete as conferências e resolva as pendências antes de declarar o encaminhamento. Você pode exportar um registro parcial a qualquer momento."}</p>
+    <label className="obs10-check"><input type="checkbox" checked={Boolean(h.declaredAt)} disabled={!ready && !h.declaredAt} onChange={(event) => onChange({ ...h, declaredAt: event.target.checked ? new Date().toISOString() : null })} />Conferi o conteúdo, identifiquei tarefas omitidas e declaro este registro pronto para encaminhamento ao médico.</label>
+    <p className="obs10-muted">{h.declaredAt ? "Fechamento declarado pela aplicadora. Reexporte TXT e JSON para incluir esta declaração e confirme os arquivos finais na seção de entrega. Não é recibo de envio, recebimento ou arquivamento." : "Complete as conferências e resolva as pendências antes de declarar o registro pronto para encaminhamento. Você pode exportar um registro parcial a qualquer momento."}</p>
     <p className="obs10-muted">Alterar um registro desfaz estas confirmações. A importação também exige nova conferência, sem herdar aceite anterior.</p>
   </section>;
 }
