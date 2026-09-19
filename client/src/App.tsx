@@ -171,7 +171,6 @@ const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
-const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
 const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
@@ -440,11 +439,6 @@ function AppRouter() {
             <Route path="/prontuario">
               <RouteGuard roles={["admin", "professional"]}>
                 <ProntuarioPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/manus">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ManusIntegracoesPage />
               </RouteGuard>
             </Route>
             <Route path="/escuta-clinica">
