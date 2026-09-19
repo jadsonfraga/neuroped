@@ -117,7 +117,11 @@ try {
   const txtPromise = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise;
   assert.equal(await next.locator("li.is-done").count(), 1, "TXT alone does not complete the export step");
   const jsonPromise = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise;
-  assert.equal(await next.locator("li.is-done").count(), 2, "dossier and export, both matching the current record");
+  assert.equal(await next.locator("li.is-done").count(), 1, "download events alone do not prove the current TXT/JSON were stored and checked");
+  const finalFiles = page.getByLabel("Confirmei que os arquivos TXT e JSON atuais apareceram no armazenamento institucional e conferi ambos.", { exact: true });
+  assert.equal(await finalFiles.isEnabled(), true);
+  await finalFiles.check();
+  assert.equal(await next.locator("li.is-done").count(), 2, "dossier plus explicitly confirmed current TXT/JSON");
   // The review step follows only the aplicadora's own declaration, never a derived "no pendência left" count.
   await page.getByLabel(/Revisei os seis blocos/).check();
   assert.equal(await next.locator("li.is-done").count(), 2, "declaring review adds it, but baking the declaration into the JSON desyncs the earlier export");
@@ -132,6 +136,9 @@ try {
   await page.getByLabel(/Revisei os seis blocos/).check();
   const txtPromise2 = page.waitForEvent("download"); await button("Exportar registro TXT").click(); await txtPromise2;
   const jsonPromise2 = page.waitForEvent("download"); await button("Exportar JSON").click(); await jsonPromise2;
+  assert.equal(await next.locator("li.is-done").count(), 2, "after a record change, re-download alone still leaves final files unconfirmed");
+  await finalFiles.check();
+  assert.equal(await next.locator("li.is-done").count(), 3, "current TXT/JSON confirmation restores the export step without mutating the record");
   const downloadPromise2 = page.waitForEvent("download"); await button("Baixar dossiê (.md)").click();
   const download2 = await downloadPromise2; await download2.saveAs(`${dir}/dossie-atualizado.md`);
   const dossierUpdated = await readFile(`${dir}/dossie-atualizado.md`, "utf8");
