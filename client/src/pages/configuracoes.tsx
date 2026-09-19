@@ -19,14 +19,16 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
 import { useToast } from "@/hooks/use-toast";
+import TenantMetricsPanel from "@/components/TenantMetricsPanel";
 
-type SectionId = "perfil" | "clinica" | "equipe" | "plano";
+type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade";
 
 const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2 }> = [
   { id: "perfil", label: "Perfil", icon: Stethoscope },
   { id: "clinica", label: "Clínica", icon: Building2 },
   { id: "equipe", label: "Equipe", icon: UsersRound },
   { id: "plano", label: "Plano", icon: CreditCard },
+  { id: "atividade", label: "Atividade", icon: ShieldCheck },
 ];
 
 /**
@@ -623,6 +625,7 @@ export default function ConfiguracoesPage() {
       {section === "clinica" && activeClinicId && <ClinicaSection clinicId={activeClinicId} />}
       {section === "equipe" && activeClinicId && <EquipeSection clinicId={activeClinicId} />}
       {section === "plano" && activeClinicId && <PlanoSection clinicId={activeClinicId} />}
+      {section === "atividade" && activeClinicId && <TenantMetricsPanel key={activeClinicId} />}
     </div>
   );
 }
