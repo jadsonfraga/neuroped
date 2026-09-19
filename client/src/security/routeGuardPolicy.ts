@@ -37,6 +37,9 @@ export const SENSITIVE_ROUTES = [
   "/recepcao",
   "/conecta",
   "/agenda",
+  // Administração da licença da unidade: contrato, vigência e quem ocupa assento.
+  // Não é rota de paciente, mas expõe o quadro de pessoal da instituição.
+  "/licenca",
 ] as const;
 
 /**
