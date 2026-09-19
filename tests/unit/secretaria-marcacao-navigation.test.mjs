@@ -15,7 +15,6 @@ test("a Secretaria IA institucional tem uma única rota e autoridades consolidad
     publicRoutes,
     page,
     widget,
-    integrations,
     runbook,
     todo,
     cloudflareHeaders,
@@ -26,7 +25,6 @@ test("a Secretaria IA institucional tem uma única rota e autoridades consolidad
     source("client/src/lib/publicRoutes.ts"),
     source("client/src/pages/marcacao.tsx"),
     source("client/src/components/BoaConsultaScheduleWidget.tsx"),
-    source("client/src/pages/manus-integracoes.tsx"),
     source("docs/SECRETARIA_IA_RECONSTRUCAO.md"),
     source("todo.md"),
     source("client/public/_headers"),
@@ -79,10 +77,9 @@ test("a Secretaria IA institucional tem uma única rota e autoridades consolidad
   assert.match(widget, /rel="noopener noreferrer"/);
   assert.doesNotMatch(widget, /document\.createElement|customElements|<bc-widget-schedules/);
 
-  // A antiga duplicação da Secretaria no hub Manus não pode voltar.
-  assert.doesNotMatch(integrations, /id:\s*"secretaria"/);
-  assert.doesNotMatch(integrations, /secretaria:\s*"\/#\/marcacao"/);
-  assert.match(integrations, /Secretária IA já possui rota pública própria/);
+  // A Secretaria canônica permanece no NeuroPed; o antigo hub externo não pode voltar.
+  assert.doesNotMatch(app, /pages\\/manus-integracoes|path="\\/manus"|ManusIntegracoesPage/);
+  assert.doesNotMatch(navigation, /href: "\\/manus"|Integrações Manus/);
 
   // O runbook consolidado deve manter preço e responsabilidades inequívocos.
   assert.match(runbook, /Rota institucional única:\*\* `#\/marcacao`/);
