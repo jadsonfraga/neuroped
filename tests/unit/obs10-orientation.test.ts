@@ -35,7 +35,7 @@ for (const outcome of OUTCOMES) check(orientation.includes("OUTCOMES.map"), `leg
 const none = nextSteps({ described: false, reviewed: false, exported: false, video: false, dossier: false, declared: false });
 const all = nextSteps({ described: true, reviewed: true, exported: true, video: true, dossier: true, declared: true });
 check(none.length === 6 && none.every((s) => !s.done) && all.every((s) => s.done), "six steps, flags respected");
-check(none[0].label.startsWith("Descreva") && none[2].label.includes("TXT") && none[5].label.includes("encaminhamento"), "order: describe, check, export, video, dossier, declare");
+check(none[0].label.startsWith("Descreva") && none[2].label.includes("TXT") && none[5].label.includes("entrega final"), "order: describe, check, export, video, dossier, declare");
 // Adversarial audit (commit 19f56f01): "described" and "reviewed" must be independent — a record with no missing
 // fields is not the same as the aplicadora having opened the review board and declared she read it.
 const describedOnly = nextSteps({ described: true, reviewed: false, exported: false, video: false, dossier: false, declared: false });
@@ -46,17 +46,20 @@ const sources = page + readFileSync("client/src/features/obs10/SessionReview.tsx
 for (const step of none) { const id = /data-testid="([^"]+)"/.exec(step.target)?.[1]; check(id ? sources.includes(`data-testid="${id}"`) : sources.includes(step.target.slice(1)), `target exists: ${step.target}`); }
 check(page.includes("reviewed: handoff.recordsReviewed"), "review step reads the self-declared checkbox, not a derived pendência count");
 check(page.includes("video: videoResolved"), "page delegates video completion to the explicit invariant helper");
-check(page.includes("declared: Boolean(handoff.declaredAt) && exportedCurrent"), "declared handoff cannot read as final while TXT/JSON are stale");
-check(page.includes("exported: exportedCurrent"), "export step compares snapshots to current TXT/JSON");
+check(page.includes("declared: Boolean(handoff.declaredAt) && exportResolved"), "declared closure cannot read as final until current TXT/JSON are explicitly confirmed");
+check(page.includes("exported: exportResolved"), "export step requires current TXT/JSON plus explicit confirmation of the final files");
+check(page.includes("filesConfirmedTxt === report && delivered.filesConfirmedJson === currentJson"), "final file confirmation is bound to the exact current TXT/JSON content");
+check(page.includes("Esta confirmação final fica somente nesta tela"), "final delivery attestation stays outside the JSON to avoid self-invalidating the confirmed artifact");
 check(page.includes("dossier: dossierCurrent"), "dossier step follows the current copied or downloaded text snapshot");
 check(page.includes("onCopy={() => setDelivered((d) => ({ ...d, md: dossier }))}"), "successful dossier copy counts as delivery");
-check(page.includes("videoDownloadRequested: false, videoSavedConfirmed: false, externalVideoSavedConfirmed: false, videoUnavailableDeclared: false"), "a new application resets every video-delivery confirmation");
+check(page.includes("videoDownloadRequested: false, videoSavedConfirmed: false, externalClipConfirmed: false"), "a new application resets every video-delivery confirmation");
 check(!/setDelivered\(\(d\) => \(\{ \.\.\.d, (?:txt|json|md): true \}\)\)/.test(page), "text artifacts are never represented by bare booleans");
-check(videoDeliveryDone({ integratedRecordingAvailable: true, integratedRecordingConfirmedSaved: false, externalClipConfirmed: true, externalRecordingConfirmedSaved: true, unavailableDocumented: true }) === false, "external evidence can never mask an unsaved integrated recording");
-check(videoDeliveryDone({ integratedRecordingAvailable: true, integratedRecordingConfirmedSaved: true, externalClipConfirmed: false, externalRecordingConfirmedSaved: false, unavailableDocumented: false }) === true, "integrated recording resolves only after explicit storage confirmation");
-check(videoDeliveryDone({ integratedRecordingAvailable: false, integratedRecordingConfirmedSaved: false, externalClipConfirmed: true, externalRecordingConfirmedSaved: false, unavailableDocumented: false }) === true, "confirmed external clip resolves the external-video path");
-check(videoDeliveryDone({ integratedRecordingAvailable: false, integratedRecordingConfirmedSaved: false, externalClipConfirmed: false, externalRecordingConfirmedSaved: true, unavailableDocumented: false }) === true, "explicit external institutional save resolves the external-video path");
-check(videoDeliveryDone({ integratedRecordingAvailable: false, integratedRecordingConfirmedSaved: false, externalClipConfirmed: false, externalRecordingConfirmedSaved: false, unavailableDocumented: true }) === true, "documented video unavailability resolves the step without fabricating a saved file");
+check(videoDeliveryDone({ integratedRecordingAvailable: true, integratedRecordingConfirmedSaved: false, externalClipConfirmedThisSession: true, externalRecordingConfirmedSaved: true, unavailableDocumented: true }) === false, "external evidence can never mask an unsaved integrated recording");
+check(videoDeliveryDone({ integratedRecordingAvailable: true, integratedRecordingConfirmedSaved: true, externalClipConfirmedThisSession: false, externalRecordingConfirmedSaved: false, unavailableDocumented: false }) === true, "integrated recording resolves only after explicit storage confirmation");
+check(videoDeliveryDone({ integratedRecordingAvailable: false, integratedRecordingConfirmedSaved: false, externalClipConfirmedThisSession: true, externalRecordingConfirmedSaved: false, unavailableDocumented: false }) === true, "a clip reattached and byte-confirmed in this screen session resolves the external-video path");
+check(videoDeliveryDone({ integratedRecordingAvailable: false, integratedRecordingConfirmedSaved: false, externalClipConfirmedThisSession: false, externalRecordingConfirmedSaved: true, unavailableDocumented: false }) === true, "explicit external institutional save resolves the external-video path");
+check(videoDeliveryDone({ integratedRecordingAvailable: false, integratedRecordingConfirmedSaved: false, externalClipConfirmedThisSession: false, externalRecordingConfirmedSaved: false, unavailableDocumented: true }) === true, "documented video unavailability resolves the step without fabricating a saved file");
+check(!page.includes("externalClipConfirmedThisSession: Boolean(evidence.clips.length)"), "imported clip references can never be promoted directly to a delivery confirmation");
 const evidence = readFileSync("client/src/features/obs10/EvidencePanel.tsx", "utf8");
 check(evidence.includes("<strong>Opcional.</strong>"), "evidence panel declared optional");
 const css = readFileSync("client/src/features/obs10/obs10.css", "utf8");
