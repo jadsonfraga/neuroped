@@ -16,7 +16,7 @@ import {
   ClipboardList, ShieldAlert, Moon, Pill, type LucideIcon,
 } from "lucide-react";
 import type { ScaleEntry } from "./scaleFilter";
-import type { ScaleConfig, ScaleItem } from "@/components/GenericScale";
+import { itemReversed, type ScaleConfig, type ScaleItem } from "@/components/GenericScale";
 import { j26Bloco1Items } from "./interactiveScaleItemsJ26Bloco1";
 import { j26Bloco2Items } from "./interactiveScaleItemsJ26Bloco2";
 import { j26Bloco3Items } from "./interactiveScaleItemsJ26Bloco3";
@@ -60,6 +60,16 @@ export interface InteractiveScaleDef {
   domains: InteractiveDomainDef[];
   /** Faixas de interpretação por % do escore máximo (maior = melhor). */
   bands: InteractiveBand[];
+  /**
+   * Identifica a versão do contrato de resposta desta escala nos registros
+   * salvos (`assessment.instrumentVersion`). Default "client-v1" (ver
+   * SaveToPatient.tsx) quando omitido. Declare um valor próprio sempre que
+   * `labels`/`optionPoints`/`scoreDirection` mudarem de um jeito que torna
+   * aplicações antigas e novas não diretamente comparáveis — sem isso, o
+   * mesmo `instrumentId` (derivado do título) mistura formatos diferentes
+   * na proveniência longitudinal do paciente.
+   */
+  instrumentVersion?: string;
 }
 
 // ------------------------------------------------------------
@@ -112,6 +122,7 @@ function pickBand(bands: InteractiveBand[], pct: number): InteractiveBand {
 export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDef): ScaleConfig {
   const labels = def.labels;
   const pts = def.optionPoints ?? labels.map((_, i) => i);
+  const reversedPts = [...pts].reverse();
   const maxPerItem = Math.max(...pts);
   const nItems = def.domains.reduce((s, d) => s + d.items.length, 0);
   const maxTotal = maxPerItem * nItems;
@@ -127,6 +138,7 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
     labels,
     infoBox: def.infoBox,
     scaleId: scale.id,
+    instrumentVersion: def.instrumentVersion,
     domains: def.domains.map((d) => ({
       name: d.name,
       color: d.color ?? "text-primary",
@@ -136,9 +148,11 @@ export function makeInteractiveConfig(scale: ScaleEntry, def: InteractiveScaleDe
       let total = 0;
       const domainResults = def.domains.map((d, di) => {
         let dscore = 0;
-        d.items.forEach((_, ii) => {
+        d.items.forEach((item, ii) => {
           const ans = answers[`${di}-${ii}`];
-          if (ans !== undefined) dscore += pts[ans] ?? 0;
+          if (ans !== undefined) {
+            dscore += (itemReversed(item) ? reversedPts : pts)[ans] ?? 0;
+          }
         });
         total += dscore;
         const dmax = maxPerItem * d.items.length || 1;
@@ -2260,12 +2274,24 @@ const interactiveScaleItemsCore: Record<string, InteractiveScaleDef> = {
 // ------------------------------------------------------------
 // ATEC — Autism Treatment Evaluation Checklist (Rimland & Edelson,
 // Autism Research Institute). Formato de MONITORAMENTO adaptado: cada item é
-// avaliado pelo GRAU DE PREOCUPAÇÃO/DIFICULDADE atual (0 = sem preocupação /
-// faz bem; 3 = intensa / sempre), de modo que MAIOR pontuação = MAIOR
-// preocupação em todos os domínios. Faixas por % do escore (triagem/
-// acompanhamento — não é diagnóstico nem o escore ponderado oficial).
+// respondido de forma direta e objetiva — Não / Às vezes / Sim —, de modo que
+// MAIOR pontuação = MAIOR preocupação em todos os domínios. Faixas por % do
+// escore (triagem/acompanhamento — não é diagnóstico nem o escore ponderado
+// oficial).
+//
+// Em 09/09/2026 a escala usava 4 rótulos de intensidade ("Sem preocupação /
+// faz bem", "Leve", "Moderada", "Intensa / sempre") pedindo à família um
+// "grau de preocupação" abstrato — inclusive para itens de habilidade
+// fraseados de forma positiva (ex.: "Sabe o próprio nome"), onde "Intensa /
+// sempre" soava como algo bom (faz sempre), não como o pior grau. Famílias
+// não conseguiam mapear a pergunta na resposta. Agora cada item é respondido
+// literalmente (a criança faz isso? Sim/Não/Às vezes) e os itens de
+// habilidade (domínios I e III) usam `reversed: true` para que "Sim" — a
+// resposta boa nesses casos — pontue 0 e apareça em verde, exatamente como
+// nos itens de dificuldade (domínios II e IV), onde "Sim" pontua 2 e aparece
+// em vermelho. Ver `itemReversed` em GenericScale.tsx.
 // ------------------------------------------------------------
-const ATEC_LABELS = ["Sem preocupação / faz bem", "Leve", "Moderada", "Intensa / sempre"];
+const ATEC_LABELS = ["Não", "Às vezes", "Sim"];
 const ATEC_BANDS: InteractiveBand[] = [
   { minPct: 40, classification: "Suspeita alta", color: "red", description: "Muitos sinais presentes com intensidade relevante. Priorize avaliação diagnóstica estruturada e suporte." },
   { minPct: 20, classification: "Suspeita moderada", color: "amber", description: "Sinais presentes em vários domínios. Aprofundar com instrumentos específicos e observação em múltiplos contextos." },
@@ -2273,29 +2299,34 @@ const ATEC_BANDS: InteractiveBand[] = [
 ];
 const atecItems: Record<string, InteractiveScaleDef> = {
   atec: {
-    instruction: "Para cada item, marque o GRAU DE PREOCUPAÇÃO ou DIFICULDADE que você observa na criança hoje. Considere diferentes contextos (casa, escola, comunidade). Maior pontuação indica maior preocupação.",
+    instruction: "Para cada item, responda o que você observa na criança hoje: Não, Às vezes, ou Sim. Considere diferentes contextos (casa, escola, comunidade).",
     infoBox: "Formato de monitoramento adaptado do ATEC (Autism Treatment Evaluation Checklist — Rimland & Edelson, Autism Research Institute). Instrumento de triagem e acompanhamento de resposta ao longo do tempo — não substitui avaliação diagnóstica nem reproduz o escore ponderado oficial.",
     labels: ATEC_LABELS,
-    optionPoints: [0, 1, 2, 3],
+    optionPoints: [0, 1, 2],
     scoreDirection: "higher_worse",
     totalLabel: "grau global de preocupação",
     bands: ATEC_BANDS,
+    // 09/09/2026: contrato de resposta mudou de 4 opções de intensidade para
+    // 3 respostas diretas (Não/Às vezes/Sim) — não comparável ao formato
+    // anterior. Versão própria para que `assessment.instrumentVersion` (ver
+    // SaveToPatient.tsx) distinga aplicações salvas antes e depois da troca.
+    instrumentVersion: "atec-direct-v2",
     domains: [
       { name: "I. Fala / Linguagem / Comunicação", color: "text-blue-600 dark:text-blue-400", items: [
-        { text: "Sabe o próprio nome", emoji: "🙋", example: "Ex.: Virar-se ou responder quando alguém chama pelo seu nome." },
-        { text: "Responde ao \"sim\" e ao \"não\"", emoji: "👌", example: "Ex.: Responder de forma coerente a perguntas de 'sim' e 'não'." },
-        { text: "Segue alguns comandos", emoji: "👂", example: "Ex.: Obedecer a pedidos simples, como 'pega a bola' ou 'senta aqui'." },
-        { text: "Usa uma palavra por vez (ex.: \"não\", \"comer\", \"água\")", emoji: "🗣️", example: "Ex.: Falar uma palavra de cada vez, como 'água', 'comer' ou 'não'." },
-        { text: "Usa duas palavras juntas (ex.: \"quero ir\")", emoji: "💬", example: "Ex.: Juntar duas palavras para se comunicar, como 'quero ir' ou 'mamãe água'." },
-        { text: "Usa três palavras juntas (ex.: \"não quero leite\")", emoji: "🔤", example: "Ex.: Formar frases de três palavras, como 'não quero leite'." },
-        { text: "Sabe 10 ou mais palavras", emoji: "📚", example: "Ex.: Ter um vocabulário de dez ou mais palavras diferentes que usa no dia a dia." },
-        { text: "Usa frases com 4 ou mais palavras", emoji: "📝", example: "Ex.: Montar frases com quatro ou mais palavras, como 'vovó vai no parque hoje'." },
-        { text: "Explica o que quer", emoji: "🙌", example: "Ex.: Explicar com palavras o que deseja, como 'quero o carrinho vermelho'." },
-        { text: "Faz perguntas com sentido", emoji: "❓", example: "Ex.: Fazer perguntas com sentido, como 'onde está o papai?' ou 'por que chove?'." },
-        { text: "Fala de forma significativa e relevante", emoji: "💡", example: "Ex.: Falar de maneira que faz sentido e combina com o assunto do momento." },
-        { text: "Usa frases sucessivas / encadeadas", emoji: "🔗", example: "Ex.: Encadear várias frases seguidas para contar algo, como narrar o dia na escola." },
-        { text: "Mantém uma boa conversa", emoji: "🗨️", example: "Ex.: Manter uma conversa de ida e volta, ouvindo e respondendo no tempo certo." },
-        { text: "Comunica-se normalmente para a idade", emoji: "👦", example: "Ex.: Comunicar-se de forma esperada para a idade, como as outras crianças da mesma faixa." },
+        { text: "Sabe o próprio nome", emoji: "🙋", example: "Ex.: Virar-se ou responder quando alguém chama pelo seu nome.", reversed: true },
+        { text: "Responde ao \"sim\" e ao \"não\"", emoji: "👌", example: "Ex.: Responder de forma coerente a perguntas de 'sim' e 'não'.", reversed: true },
+        { text: "Segue alguns comandos", emoji: "👂", example: "Ex.: Obedecer a pedidos simples, como 'pega a bola' ou 'senta aqui'.", reversed: true },
+        { text: "Usa uma palavra por vez (ex.: \"não\", \"comer\", \"água\")", emoji: "🗣️", example: "Ex.: Falar uma palavra de cada vez, como 'água', 'comer' ou 'não'.", reversed: true },
+        { text: "Usa duas palavras juntas (ex.: \"quero ir\")", emoji: "💬", example: "Ex.: Juntar duas palavras para se comunicar, como 'quero ir' ou 'mamãe água'.", reversed: true },
+        { text: "Usa três palavras juntas (ex.: \"não quero leite\")", emoji: "🔤", example: "Ex.: Formar frases de três palavras, como 'não quero leite'.", reversed: true },
+        { text: "Sabe 10 ou mais palavras", emoji: "📚", example: "Ex.: Ter um vocabulário de dez ou mais palavras diferentes que usa no dia a dia.", reversed: true },
+        { text: "Usa frases com 4 ou mais palavras", emoji: "📝", example: "Ex.: Montar frases com quatro ou mais palavras, como 'vovó vai no parque hoje'.", reversed: true },
+        { text: "Explica o que quer", emoji: "🙌", example: "Ex.: Explicar com palavras o que deseja, como 'quero o carrinho vermelho'.", reversed: true },
+        { text: "Faz perguntas com sentido", emoji: "❓", example: "Ex.: Fazer perguntas com sentido, como 'onde está o papai?' ou 'por que chove?'.", reversed: true },
+        { text: "Fala de forma significativa e relevante", emoji: "💡", example: "Ex.: Falar de maneira que faz sentido e combina com o assunto do momento.", reversed: true },
+        { text: "Usa frases sucessivas / encadeadas", emoji: "🔗", example: "Ex.: Encadear várias frases seguidas para contar algo, como narrar o dia na escola.", reversed: true },
+        { text: "Mantém uma boa conversa", emoji: "🗨️", example: "Ex.: Manter uma conversa de ida e volta, ouvindo e respondendo no tempo certo.", reversed: true },
+        { text: "Comunica-se normalmente para a idade", emoji: "👦", example: "Ex.: Comunicar-se de forma esperada para a idade, como as outras crianças da mesma faixa.", reversed: true },
       ] },
       { name: "II. Sociabilidade", color: "text-violet-600 dark:text-violet-400", items: [
         { text: "Parece fechado, difícil de alcançar", emoji: "🙁", example: "Ex.: Parecer fechado(a) e distante, difícil de envolver em brincadeiras ou conversa." },
@@ -2305,12 +2336,12 @@ const atecItems: Record<string, InteractiveScaleDef> = {
         { text: "Pouco ou nenhum contato visual", emoji: "👀", example: "Ex.: Ao conversar ou brincar, raramente olha nos seus olhos, desviando o olhar." },
         { text: "Prefere ficar sozinho", emoji: "🧍", example: "Ex.: Numa festa infantil, se afasta e brinca sozinha em vez de ficar perto das outras crianças." },
         { text: "Demonstra pouca afeição", emoji: "🫂", example: "Ex.: Quase não dá abraços, beijos ou colo espontâneo para os pais." },
-        { text: "Não cumprimenta os pais", emoji: "👋", example: "Ex.: Quando os pais chegam em casa, não vai receber nem demonstra alegria ao vê-los." },
+        { text: "Cumprimenta os pais quando chegam", emoji: "👋", example: "Ex.: Quando os pais chegam em casa, vai receber e demonstra alegria ao vê-los.", reversed: true },
         { text: "Evita contato com os outros", emoji: "🚷", example: "Ex.: Foge do toque e se afasta quando alguém tenta se aproximar dela." },
-        { text: "Não imita", emoji: "🪞", example: "Ex.: Não repete gestos simples, como bater palmas ou mandar beijo, quando você faz na frente dela." },
-        { text: "Não gosta de ser segurado / aconchegado", emoji: "🧸", example: "Ex.: Fica desconfortável, se retesa ou empurra quando alguém tenta pegá-la no colo e aconchegar." },
-        { text: "Não compartilha nem mostra coisas aos outros", emoji: "🎁", example: "Ex.: Não traz um brinquedo ou desenho para mostrar aos pais dizendo 'olha o que eu fiz'." },
-        { text: "Não acena \"tchau\"", emoji: "👋", example: "Ex.: Na despedida, não acena tchau com a mãozinha mesmo quando pedem." },
+        { text: "Imita gestos simples", emoji: "🪞", example: "Ex.: Repete gestos simples, como bater palmas ou mandar beijo, quando você faz na frente dela.", reversed: true },
+        { text: "Gosta de ser segurado / aconchegado", emoji: "🧸", example: "Ex.: Fica à vontade e se aconchega quando alguém tenta pegá-la no colo.", reversed: true },
+        { text: "Compartilha ou mostra coisas aos outros", emoji: "🎁", example: "Ex.: Traz um brinquedo ou desenho para mostrar aos pais dizendo 'olha o que eu fiz'.", reversed: true },
+        { text: "Acena \"tchau\"", emoji: "👋", example: "Ex.: Na despedida, acena tchau com a mãozinha quando pedem.", reversed: true },
         { text: "Desobediente / opositor", emoji: "😤", example: "Ex.: Diante de qualquer ordem simples, responde 'não' e faz o oposto do pedido." },
         { text: "Faz birras", emoji: "😡", example: "Ex.: Quando contrariada, joga-se no chão, grita e chora de forma intensa." },
         { text: "Falta de amigos / companheiros", emoji: "🧑‍🤝‍🧑", example: "Ex.: Não tem colegas com quem brincar regularmente na escola ou na vizinhança." },
@@ -2320,22 +2351,22 @@ const atecItems: Record<string, InteractiveScaleDef> = {
         { text: "Indiferente quando os pais saem", emoji: "🚪", example: "Ex.: Quando os pais saem de casa, não estranha nem demonstra reação." },
       ] },
       { name: "III. Consciência sensorial / cognitiva", color: "text-teal-600 dark:text-teal-400", items: [
-        { text: "Responde ao próprio nome", emoji: "📣", example: "Ex.: Ao ouvir o próprio nome, vira o rosto ou olha para quem chamou." },
-        { text: "Reage ao elogio", emoji: "👏", example: "Ex.: Quando você diz 'muito bem!', ela sorri ou fica contente com o elogio." },
-        { text: "Olha para pessoas e animais", emoji: "🐶", example: "Ex.: Observa uma pessoa passando ou um cachorro brincando por perto." },
-        { text: "Olha para fotos e TV", emoji: "📺", example: "Ex.: Presta atenção em figuras de um livro ou nos personagens da televisão." },
-        { text: "Desenha, pinta, usa cores", emoji: "🖍️", example: "Ex.: Pega giz de cera e faz rabiscos ou desenhos coloridos no papel." },
-        { text: "Brinca de forma apropriada com os brinquedos", emoji: "🚗", example: "Ex.: Empurra o carrinho fazendo de conta que anda, em vez de só girar as rodas." },
-        { text: "Tem expressões faciais apropriadas ao contexto", emoji: "😊", example: "Ex.: Faz cara de alegria quando ganha algo e cara triste quando algo dá errado." },
-        { text: "Compreende histórias na TV", emoji: "📺", example: "Ex.: Acompanha o enredo de um desenho e entende o que aconteceu com os personagens." },
-        { text: "Compreende explicações", emoji: "💬", example: "Ex.: Quando você explica por que não pode fazer algo, ela entende o motivo." },
-        { text: "Tem noção do ambiente ao redor", emoji: "🧭", example: "Ex.: Percebe mudanças no ambiente, como um móvel novo ou a porta aberta." },
-        { text: "Tem noção de perigo", emoji: "⚠️", example: "Ex.: Evita se aproximar do fogão quente ou da escada por perceber o risco." },
-        { text: "Demonstra imaginação", emoji: "🦄", example: "Ex.: Cria histórias com bonecos, faz de conta que a caixa é um barco." },
-        { text: "Inicia atividades por conta própria", emoji: "🎨", example: "Ex.: Começa a brincar ou desenhar sozinha, sem precisar de alguém sugerindo." },
-        { text: "Veste-se sozinho", emoji: "👕", example: "Ex.: Consegue vestir camiseta e calça sozinha, sem ajuda dos pais." },
-        { text: "É curioso e interessado", emoji: "🔍", example: "Ex.: Faz muitas perguntas e quer saber como as coisas funcionam." },
-        { text: "É aventureiro, explorador", emoji: "🧗", example: "Ex.: Gosta de explorar lugares novos, subir e descobrir o que há ao redor." },
+        { text: "Responde ao próprio nome", emoji: "📣", example: "Ex.: Ao ouvir o próprio nome, vira o rosto ou olha para quem chamou.", reversed: true },
+        { text: "Reage ao elogio", emoji: "👏", example: "Ex.: Quando você diz 'muito bem!', ela sorri ou fica contente com o elogio.", reversed: true },
+        { text: "Olha para pessoas e animais", emoji: "🐶", example: "Ex.: Observa uma pessoa passando ou um cachorro brincando por perto.", reversed: true },
+        { text: "Olha para fotos e TV", emoji: "📺", example: "Ex.: Presta atenção em figuras de um livro ou nos personagens da televisão.", reversed: true },
+        { text: "Desenha, pinta, usa cores", emoji: "🖍️", example: "Ex.: Pega giz de cera e faz rabiscos ou desenhos coloridos no papel.", reversed: true },
+        { text: "Brinca de forma apropriada com os brinquedos", emoji: "🚗", example: "Ex.: Empurra o carrinho fazendo de conta que anda, em vez de só girar as rodas.", reversed: true },
+        { text: "Tem expressões faciais apropriadas ao contexto", emoji: "😊", example: "Ex.: Faz cara de alegria quando ganha algo e cara triste quando algo dá errado.", reversed: true },
+        { text: "Compreende histórias na TV", emoji: "📺", example: "Ex.: Acompanha o enredo de um desenho e entende o que aconteceu com os personagens.", reversed: true },
+        { text: "Compreende explicações", emoji: "💬", example: "Ex.: Quando você explica por que não pode fazer algo, ela entende o motivo.", reversed: true },
+        { text: "Tem noção do ambiente ao redor", emoji: "🧭", example: "Ex.: Percebe mudanças no ambiente, como um móvel novo ou a porta aberta.", reversed: true },
+        { text: "Tem noção de perigo", emoji: "⚠️", example: "Ex.: Evita se aproximar do fogão quente ou da escada por perceber o risco.", reversed: true },
+        { text: "Demonstra imaginação", emoji: "🦄", example: "Ex.: Cria histórias com bonecos, faz de conta que a caixa é um barco.", reversed: true },
+        { text: "Inicia atividades por conta própria", emoji: "🎨", example: "Ex.: Começa a brincar ou desenhar sozinha, sem precisar de alguém sugerindo.", reversed: true },
+        { text: "Veste-se sozinho", emoji: "👕", example: "Ex.: Consegue vestir camiseta e calça sozinha, sem ajuda dos pais.", reversed: true },
+        { text: "É curioso e interessado", emoji: "🔍", example: "Ex.: Faz muitas perguntas e quer saber como as coisas funcionam.", reversed: true },
+        { text: "É aventureiro, explorador", emoji: "🧗", example: "Ex.: Gosta de explorar lugares novos, subir e descobrir o que há ao redor.", reversed: true },
         { text: "Vive num mundo à parte", emoji: "🌫️", example: "Ex.: Parece estar 'no mundo da lua', alheia ao que acontece por perto." },
       ] },
       { name: "IV. Saúde / Comportamento", color: "text-amber-600 dark:text-amber-400", items: [

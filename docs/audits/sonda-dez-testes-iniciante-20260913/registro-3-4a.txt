@@ -1,0 +1,193 @@
+SONDA DEZ — MODALIDADE DIGITAL GUIADA v2026-09-13.2
+Adaptação digital autoral da Sonda Dez / AFN-10; registro observacional piloto, requer validação clínica; sem normas, percentis, pontos de corte ou diagnóstico.
+Estado: registro preenchido com campos não avaliáveis. Missões registradas: 7/7.
+Código: CASO-SINTETICO. Idade: 36 meses. Trilha: 3–4 anos. Escolaridade: não informada.
+Aplicadora (código): não informado. Tempo ativo: 160s; referência operacional 600s.
+Interferentes: Aplicação sem som eletrônico.
+Alertas ao médico: nenhum assinalado.
+Familiarização com controles durante a aplicação: não acionada. Eventos do ensaio não entram nas respostas das missões.
+
+1. Interação espontânea
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Exploração livre. Instrução: Oi. Olha o que temos aqui.
+Apresentação: concluída.
+  Evento 30190ms: objeto-tocado — bola
+  Evento 30232ms: objeto-tocado — carro
+  Evento 30232ms: relação — bola para carro
+Reciprocidade: I.
+Surgiu após uma instrução direta.
+Comentário/pergunta: E.
+Surgiu espontaneamente, antes da instrução.
+Fala espontânea: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Espontaneidade é registrada antes de qualquer ajuda; não confunda silêncio inicial com incapacidade se houver ansiedade/recusa.
+
+2. Receptivo + conceitos
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Conceito 1. Instrução: Mostre a banana.
+Apresentação: concluída.
+  Evento 212ms: objeto-tocado — banana
+  Evento 258ms: objeto-tocado — bola-grande
+  Evento 258ms: relação — banana para bola-grande
+Etapa 2 — Conceito 2. Instrução: Mostre a bola grande.
+Apresentação: concluída.
+  Evento 136ms: objeto-tocado — banana
+  Evento 214ms: objeto-tocado — bola-grande
+  Evento 214ms: relação — banana para bola-grande
+Etapa 3 — Conceito 3. Instrução: Ponha o carro dentro da caixa.
+Apresentação: concluída.
+  Evento 157ms: objeto-tocado — banana
+  Evento 210ms: objeto-tocado — bola-grande
+  Evento 210ms: relação — banana para bola-grande
+Etapa 4 — Conceito 4. Instrução: Ponha o bebê em cima da caixa.
+Apresentação: concluída.
+  Evento 126ms: objeto-tocado — banana
+  Evento 167ms: objeto-tocado — bola-grande
+  Evento 167ms: relação — banana para bola-grande
+Nomeação receptiva: 0.
+Contagem bruta, sem comparação normativa.
+Conceitos: 0.
+Contagem bruta, sem comparação normativa.
+Precisou repetir: 0.
+Descrição da aplicadora: 0.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Registre o número de conceitos demonstrados e a repetição necessária sem classificar o resultado como normal ou alterado.
+
+3. Expressivo + amostra de fala
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Nomeação. Instrução: O que é isso?
+Apresentação: concluída.
+  Evento 121ms: objeto-tocado — bola
+Etapa 2 — Nomeação. Instrução: O que é isso?
+Apresentação: concluída.
+  Evento 131ms: objeto-tocado — carro
+Etapa 3 — Nomeação. Instrução: O que é isso?
+Apresentação: concluída.
+  Evento 151ms: objeto-tocado — banana
+Etapa 4 — Nomeação. Instrução: O que é isso?
+Apresentação: concluída.
+  Evento 138ms: objeto-tocado — copo
+Etapa 5 — Cena e relato. Instrução: O que está acontecendo?
+Apresentação: concluída.
+Nomeação: 0.
+Contagem bruta, sem comparação normativa.
+Frase espontânea: sim.
+Descrição da aplicadora: sim.
+Inteligibilidade: boa.
+Descrição da aplicadora: boa.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Descreva a amostra produzida; não extrapole a inteligibilidade desta tarefa para todos os contextos.
+
+4. Atenção conjunta + ajuda
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Referência lateral — duas oportunidades. Instrução: Olha!
+Apresentação: concluída.
+  Evento 133ms: objeto-tocado — bola
+  Evento 210ms: objeto-tocado — carro
+  Evento 210ms: relação — bola para carro
+Etapa 2 — Oportunidade de pedir ajuda. Instrução: Aguarde sem perguntar inicialmente.
+Apresentação: concluída.
+Etapa 3 — Convite e acesso. Instrução: Precisa de alguma coisa?
+Apresentação: concluída.
+  Evento 128ms: caixa-aberta — pela aplicadora
+Segue referência: I.
+Surgiu após uma instrução direta.
+Alterna olhar: E.
+Surgiu espontaneamente, antes da instrução.
+Pede ajuda: I.
+Surgiu após uma instrução direta.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Observe separadamente resposta à referência social e estratégia de pedir ajuda.
+
+5. Brincadeira simbólica
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Exploração do faz de conta. Instrução: Vamos brincar?
+Apresentação: concluída.
+  Evento 20144ms: objeto-tocado — bola
+  Evento 20180ms: objeto-tocado — carro
+  Evento 20180ms: relação — bola para carro
+Etapa 2 — Propor a situação. Instrução: O bebê está doente. O que a gente pode fazer?
+Apresentação: concluída.
+  Evento 132ms: objeto-tocado — bola
+  Evento 213ms: objeto-tocado — carro
+  Evento 213ms: relação — bola para carro
+Simbolismo: NA — Este campo descreve brincar/manipulação com objeto real; nesta modalidade registrar a interação digital nas notas e manter o campo presencial NA..
+Não avaliável nas condições registradas.
+Sequência: NA — Este campo descreve brincar/manipulação com objeto real; nesta modalidade registrar a interação digital nas notas e manter o campo presencial NA..
+Não avaliável nas condições registradas.
+Flexibilidade: NA — Este campo descreve brincar/manipulação com objeto real; nesta modalidade registrar a interação digital nas notas e manter o campo presencial NA..
+Não avaliável nas condições registradas.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Flexibilidade aqui descreve variedade/ajuste do brincar na cena proposta, não um traço diagnóstico.
+
+6. Atenção sustentada
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Entender a regra. Instrução: Quando aparecer um cachorro, toque no botão redondo. Se não for cachorro, espere.
+Apresentação: concluída.
+Etapa 2 — Apresentar a série. Instrução: Vamos começar.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 167ms: toque — 0
+  Evento 2500ms: apresentado — 1
+  Evento 5000ms: apresentado — 2
+  Evento 7500ms: apresentado — 3
+  Evento 10000ms: apresentado — 4
+  Evento 12500ms: apresentado — 5
+  Evento 15000ms: apresentado — 6
+  Evento 17500ms: apresentado — 7
+  Evento 20000ms: apresentado — 8
+  Evento 22500ms: apresentado — 9
+  Evento 25000ms: apresentado — 10
+  Evento 27500ms: apresentado — 11
+  Evento 30000ms: apresentado — 12
+  Evento 32500ms: apresentado — 13
+  Evento 35000ms: apresentado — 14
+  Evento 37500ms: serie-concluida — 15
+Acertos: 1.
+Contagem bruta, sem comparação normativa.
+Omissões: 4.
+Contagem bruta, sem comparação normativa.
+Comissões: 0.
+Contagem bruta, sem comparação normativa.
+Redirecionamentos: 0.
+Contagem bruta, sem comparação normativa.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Omissão = alvo apresentado sem resposta registrada; pode refletir atenção, compreensão, fadiga, engajamento ou outros fatores. Comissão = resposta quando o estímulo não era alvo; descreve falha de contenção da resposta nesta tarefa, sem confirmar TDAH.
+
+7. Inibição + troca de regra
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Apresentar a regra. Instrução: Quando aparecer SOL, bata uma palma. Quando aparecer LUA, fique parado.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 2500ms: apresentado — 1
+  Evento 5000ms: apresentado — 2
+  Evento 7500ms: apresentado — 3
+  Evento 10000ms: apresentado — 4
+  Evento 12500ms: apresentado — 5
+  Evento 15000ms: apresentado — 6
+  Evento 17500ms: apresentado — 7
+  Evento 20000ms: apresentado — 8
+  Evento 22500ms: apresentado — 9
+  Evento 25000ms: serie-concluida — 10
+Etapa 2 — Trocar a regra. Instrução: Agora mudou: LUA é uma palma; SOL é ficar parado.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 2500ms: apresentado — 1
+  Evento 5000ms: apresentado — 2
+  Evento 7500ms: apresentado — 3
+  Evento 10000ms: serie-concluida — 4
+Regra inicial: acertos: 0.
+Contagem bruta, sem comparação normativa.
+Comissões: 0.
+Contagem bruta, sem comparação normativa.
+Inversão: acertos: 0.
+Contagem bruta, sem comparação normativa.
+Perseverações: 0.
+Contagem bruta, sem comparação normativa.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Perseveração = manutenção da regra anterior após a mudança; descreva a adaptação observada sem classificá-la por norma.
+
+Entrega à família: “Registramos como participou destas atividades e quanta ajuda precisou. O médico vai reunir estas observações com a história e as outras avaliações.”
+Próxima ação: entregar o registro ao médico; informar interferentes e alertas antes da interpretação. Não comunicar diagnóstico ou normalidade pela Sonda.
+Não há gravação de áudio/vídeo nem salvamento automático de dados clínicos nesta tela.

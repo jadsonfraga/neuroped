@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 import {
   Activity,
   Baby,
@@ -11,7 +12,6 @@ import {
   ClipboardList,
   FileText,
   Filter,
-  Globe2,
   HeartPulse,
   HelpCircle,
   Home,
@@ -56,6 +56,14 @@ export interface NavigationMatch {
  * Atalhos por frequência de uso. A Sonda Dez abre o bloco clínico porque
  * substitui as superfícies antigas de teste direto com a criança.
  */
+const obs10Navigation: NavItem = {
+  href: "/avaliacao-pre-consulta-faixa-etaria",
+  label: "Avaliação de Pré-Consulta por Faixa Etária",
+  icon: Baby,
+  tone: "priority",
+  description: "OBS-10 · 13 faixas · guia da assistente",
+};
+
 export const featuredNavigation: NavItem[] = [
   {
     href: "/testes-diretos",
@@ -64,6 +72,7 @@ export const featuredNavigation: NavItem[] = [
     tone: "priority",
     description: "Avaliação direta pré-consulta · 10 min",
   },
+  obs10Navigation,
   {
     href: "/especialidades",
     label: "Especialidades Premium",
@@ -118,6 +127,7 @@ export const featuredNavigation: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
+  { title: "PRÉ-CONSULTA GUIADA", items: [obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],
@@ -131,7 +141,6 @@ export const navSections: NavSection[] = [
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
       { href: "/receita-c1", label: "Receita C1", icon: Pill },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
   },
   {
@@ -237,29 +246,20 @@ function matchesNavigationItem(pathname: string, href: string): boolean {
 const filterOwnedRoutes = new Set([
   "/mchat", "/cars", "/denver", "/asq3", "/snap", "/sdq", "/vanderbilt",
   "/scared", "/phqa", "/cssrs", "/conners", "/cbcl", "/brief2", "/abc",
-  "/vineland", "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
+  "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
   "/psc17", "/gad7", "/aq10", "/tea", "/tea-comportamentos", "/emdi", "/eaf",
   "/ecsm", "/ips", "/ecar-si", "/edi", "/eai", "/easi", "/ems", "/etare",
   "/eaah", "/tde2", "/pant",
 ]);
 
-/** Rotas antigas de teste direto continuam resolvendo para a Sonda Dez. */
-const sondaOwnedRoutes = new Set([
-  "/testes-reconhecimento",
-  "/testes-academicos",
-  "/cognitive-lab",
-  "/avaliacao-cognitiva-infantil",
-  "/academico-interativo",
-  "/escrita-desenho",
-  "/conhecimento-visual",
-  "/motricidade-teste",
-  "/conhecimentos-gerais",
-  "/funcoes-executivas",
-  "/atencao-concentracao",
-  "/linguagem-fonologia",
-  "/memoria-teste",
-  "/processamento-visuoauditivo",
-]);
+/**
+ * Rotas antigas de teste direto continuam resolvendo para a Sonda Dez —
+ * derivadas do mapa de redirects (fonte única; padrões :param ficam de fora
+ * porque a navegação compara caminhos literais normalizados).
+ */
+const sondaOwnedRoutes = new Set(
+  Object.keys(LEGACY_DIRECT_TEST_REDIRECTS).filter((route) => !route.includes(":")),
+);
 
 export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
   const matches = allNavigationSections.flatMap((section) =>
@@ -275,7 +275,10 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
     const item = featuredNavigation.find((candidate) => candidate.href === "/testes-diretos");
     if (item) return { section: featuredSection, item };
   }
-  if (filterOwnedRoutes.has(normalizedPath)) {
+  if (
+    filterOwnedRoutes.has(normalizedPath) ||
+    normalizedPath.startsWith("/generic-scale/")
+  ) {
     const item = featuredNavigation.find((candidate) => candidate.href === "/filtro");
     if (item) return { section: featuredSection, item };
   }

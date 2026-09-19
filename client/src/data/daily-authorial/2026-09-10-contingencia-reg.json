@@ -1,0 +1,305 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "NEUROPED-DIARIO-20260910-006",
+  "slug": "desregulacao-comportamental-seguranca-2026-09-10",
+  "version": "1.1.0",
+  "generatedOn": "2026-09-10",
+  "generatedAt": "2026-09-10T00:00:00.000Z",
+  "author": "NeuroPed SDG — Dr. Jadson Fraga",
+  "sourceType": "autoral_diario",
+  "validationStatus": "nao_validado_psicometricamente",
+  "status": "rascunho_revisao",
+  "title": "Registro Autoral de Desregulação Comportamental — Padrão, contexto, impacto e segurança",
+  "shortTitle": "RAD-REG-NeuroPed",
+  "topicId": "desregulacao_comportamental_seguranca",
+  "topic": "Desregulação comportamental, contexto funcional e segurança",
+  "category": "Comportamento",
+  "subcategory": "Regulação e segurança",
+  "rationale": "Um registro funcional específico ajuda a distinguir frequência, duração, antecedentes, consequências, recuperação e riscos associados a episódios de desregulação, sem inferir intenção, causalidade ou diagnóstico.",
+  "purpose": "Caracterizar episódios de desregulação comportamental de forma longitudinal e multicontexto, registrando padrão, antecedentes, impacto, estratégias de apoio, recuperação e sinais de segurança que exigem análise independente.",
+  "ageMinMonths": 24,
+  "ageMaxMonths": 251,
+  "respondent": "multiplo",
+  "contexts": [
+    "casa",
+    "escola",
+    "clinica",
+    "multicontexto"
+  ],
+  "assessmentUse": "registro_clinico",
+  "riskClass": "alto",
+  "timeframe": "Considerar os últimos sete dias e registrar separadamente ocorrências com características diferentes.",
+  "durationMinutes": 10,
+  "instructions": "Responder apenas com base no que foi diretamente observado ou relatado por fonte identificada. Registrar exemplos concretos, duração aproximada, contexto, antecedente imediato, consequência observável e estado após o episódio. Marcar desconhecido quando não houver informação suficiente. Este registro não substitui avaliação clínica.",
+  "responseOptions": [
+    {
+      "code": "N",
+      "label": "Não observado",
+      "value": 0
+    },
+    {
+      "code": "O",
+      "label": "Ocasional",
+      "value": 1
+    },
+    {
+      "code": "F",
+      "label": "Frequente",
+      "value": 2
+    },
+    {
+      "code": "Q",
+      "label": "Quase sempre",
+      "value": 3
+    },
+    {
+      "code": "D",
+      "label": "Desconhecido",
+      "value": null
+    }
+  ],
+  "domains": [
+    {
+      "id": "padrao",
+      "label": "Padrão do episódio",
+      "description": "Frequência, duração, escalada e recuperação em relação ao funcionamento habitual."
+    },
+    {
+      "id": "antecedentes",
+      "label": "Contexto e antecedentes",
+      "description": "Eventos, demandas, transições, comunicação e ambiente imediatamente associados."
+    },
+    {
+      "id": "impacto",
+      "label": "Impacto funcional",
+      "description": "Interrupção de atividades, participação e necessidade de apoio."
+    },
+    {
+      "id": "estrategias",
+      "label": "Estratégias e consequências observáveis",
+      "description": "Ações de apoio, condições que ajudam ou agravam e o que ocorre após o episódio."
+    },
+    {
+      "id": "seguranca",
+      "label": "Segurança",
+      "description": "Sinais críticos registrados separadamente de qualquer perfil qualitativo."
+    }
+  ],
+  "items": [
+    {
+      "id": "CT01",
+      "domainId": "padrao",
+      "text": "Ocorreram episódios de desregulação comportamental no período de referência.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Registrar número aproximado de episódios e distribuição ao longo dos dias."
+    },
+    {
+      "id": "CT02",
+      "domainId": "padrao",
+      "text": "Os episódios apresentaram escalada progressiva antes do pico de desregulação.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Descrever sinais precoces observáveis e o intervalo aproximado até o pico."
+    },
+    {
+      "id": "CT03",
+      "domainId": "padrao",
+      "text": "A duração dos episódios e o tempo até retorno ao funcionamento habitual puderam ser estimados.",
+      "responseMode": "descritivo",
+      "redFlag": false,
+      "clinicalNote": "Registrar duração do episódio e tempo de recuperação separadamente; usar cronômetro quando possível."
+    },
+    {
+      "id": "CT04",
+      "domainId": "antecedentes",
+      "text": "Foi possível identificar o que aconteceu imediatamente antes de cada episódio.",
+      "responseMode": "descritivo",
+      "redFlag": false,
+      "clinicalNote": "Registrar antecedente sem presumir causalidade; exemplos incluem interrupção de atividade, espera, mudança de rotina, frustração comunicativa ou desconforto."
+    },
+    {
+      "id": "CT05",
+      "domainId": "antecedentes",
+      "text": "Demandas, limites, espera ou transições estiveram temporalmente associados aos episódios.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Distinguir associação temporal de explicação definitiva."
+    },
+    {
+      "id": "CT06",
+      "domainId": "antecedentes",
+      "text": "Dor, sono insuficiente, fome, ruído, sobrecarga sensorial ou dificuldade de comunicação pareceram modificar a probabilidade ou intensidade dos episódios.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Registrar fatores presentes e ausentes em cada ocorrência quando possível."
+    },
+    {
+      "id": "CT07",
+      "domainId": "antecedentes",
+      "text": "Episódios semelhantes ocorreram em mais de um ambiente ou com mais de um cuidador ou profissional.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Comparar casa, escola, clínica e situações comunitárias sem assumir equivalência entre contextos."
+    },
+    {
+      "id": "CT08",
+      "domainId": "impacto",
+      "text": "Os episódios interromperam atividades, rotinas, aprendizagem, autocuidado ou participação social.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Registrar qual atividade foi interrompida e por quanto tempo."
+    },
+    {
+      "id": "CT09",
+      "domainId": "impacto",
+      "text": "Foi necessário apoio de adulto acima do habitual para manter segurança, reorganizar o ambiente ou permitir retorno à atividade.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Descrever o tipo de apoio utilizado, sem inferir intencionalidade do comportamento."
+    },
+    {
+      "id": "CT10",
+      "domainId": "impacto",
+      "text": "Após o episódio houve perda de oportunidade, afastamento, saída de sala, suspensão de atividade ou necessidade de recuperação prolongada.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Registrar a consequência funcional observada, diferenciando proteção necessária de consequência disciplinar."
+    },
+    {
+      "id": "CT11",
+      "domainId": "estrategias",
+      "text": "Antecipação, comunicação clara, redução de estímulos, pausa ou apoio visual estiveram associados a menor escalada ou recuperação mais rápida.",
+      "responseMode": "frequencia_0_3",
+      "redFlag": false,
+      "clinicalNote": "Registrar exatamente qual estratégia foi utilizada e a resposta subsequente."
+    },
+    {
+      "id": "CT12",
+      "domainId": "estrategias",
+      "text": "Foram identificadas estratégias ou respostas ambientais que parecem intensificar, prolongar ou repetir o episódio.",
+      "responseMode": "descritivo",
+      "redFlag": false,
+      "clinicalNote": "Descrever a sequência observável sem atribuir culpa, intenção moral ou causalidade definitiva."
+    },
+    {
+      "id": "CT13",
+      "domainId": "seguranca",
+      "text": "Houve risco imediato de autoagressão, agressão a terceiros ou lesão física relevante.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "Registrar mecanismo, gravidade, lesão ocorrida e necessidade de atendimento."
+    },
+    {
+      "id": "CT14",
+      "domainId": "seguranca",
+      "text": "Houve fuga, evasão ou deslocamento para situação com risco físico relevante.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "Registrar local, supervisão disponível e risco objetivo associado."
+    },
+    {
+      "id": "CT15",
+      "domainId": "seguranca",
+      "text": "Durante ou após o episódio houve perda de consciência ou redução importante da responsividade.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "Registrar duração, resposta a voz ou toque, fenômenos motores e recuperação; considerar evento médico ou neurológico no diferencial."
+    },
+    {
+      "id": "CT16",
+      "domainId": "seguranca",
+      "text": "Houve dificuldade respiratória, cianose, engasgo ou outro sinal de comprometimento respiratório.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "Sinal de emergência independente do perfil comportamental."
+    },
+    {
+      "id": "CT17",
+      "domainId": "seguranca",
+      "text": "O padrão é novo, surgiu abruptamente ou mudou de forma importante em relação ao funcionamento basal.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "Registrar data, contexto, doença intercorrente, mudança medicamentosa e demais fatores clínicos relevantes."
+    },
+    {
+      "id": "CT18",
+      "domainId": "seguranca",
+      "text": "Após o episódio não ocorreu retorno ao estado habitual de responsividade, mobilidade ou funcionamento.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "Situação que pode exigir avaliação urgente conforme responsividade, respiração, trauma e condição clínica geral."
+    }
+  ],
+  "scoring": {
+    "mode": "perfil_qualitativo_sem_total",
+    "totalScoreEnabled": false,
+    "instructions": "Não somar os itens. Para itens de frequência, comparar apenas o mesmo item ao longo do tempo. Itens descritivos devem preservar exemplos e sequência funcional. Red flags são sempre analisadas independentemente.",
+    "domainInterpretation": "Interpretar padrão, antecedentes, impacto, estratégias e segurança separadamente, considerando idade, desenvolvimento, contexto, mudança basal e convergência entre informantes.",
+    "redFlagRule": "Qualquer red flag exige análise independente e pode demandar ação imediata, mesmo quando os demais itens forem pouco frequentes."
+  },
+  "redFlags": [
+    {
+      "itemId": "CT13",
+      "action": "Interromper a exposição ao risco e priorizar proteção. Buscar atendimento de urgência diante de trauma importante, lesão relevante ou ameaça imediata à vida."
+    },
+    {
+      "itemId": "CT14",
+      "action": "Priorizar contenção ambiental segura e supervisão contínua. Se houver desaparecimento, trauma ou risco médico imediato, acionar os serviços de emergência apropriados."
+    },
+    {
+      "itemId": "CT15",
+      "action": "Perda de consciência ou redução importante e prolongada da responsividade exige avaliação médica urgente; acionar o SAMU 192 quando houver instabilidade, recuperação incompleta ou risco atual."
+    },
+    {
+      "itemId": "CT16",
+      "action": "Dificuldade respiratória, cianose ou engasgo com comprometimento exige resposta de emergência e acionamento do SAMU 192."
+    },
+    {
+      "itemId": "CT17",
+      "action": "Mudança abrupta ou primeira ocorrência relevante exige revisão clínica oportuna; buscar urgência quando houver instabilidade, trauma ou risco atual."
+    },
+    {
+      "itemId": "CT18",
+      "action": "Ausência de retorno ao estado habitual exige avaliação urgente conforme responsividade, respiração, trauma e condição clínica geral."
+    }
+  ],
+  "differentialConsiderations": [
+    "Dor, doença intercorrente, privação de sono, fome ou efeitos de medicamentos.",
+    "Sobrecarga sensorial, barreiras de comunicação, exigências ambientais e mudanças de rotina.",
+    "Transtornos emocionais ou comportamentais e diferenças do desenvolvimento.",
+    "Eventos neurológicos ou paroxísticos quando houver alteração de consciência, responsividade ou fenômenos motores.",
+    "Diferenças entre observadores, contextos e oportunidades de participação."
+  ],
+  "clinicalIntegration": [
+    "Comparar família, escola, profissionais e autorrelato quando apropriado para a idade.",
+    "Relacionar os registros à anamnese, exame clínico, funcionamento adaptativo e contexto ambiental.",
+    "Rever exemplos concretos e sequência antecedente-comportamento-consequência antes de qualquer conclusão.",
+    "Usar registros seriados para verificar mudança real ao longo do tempo, evitando interpretar variação isolada como resposta terapêutica.",
+    "Este instrumento tem escopo funcional e de segurança; não substitui instrumentos específicos de sintomas emocionais."
+  ],
+  "limitations": [
+    "Instrumento autoral sem validação psicométrica, normas populacionais ou pontos de corte.",
+    "Não produz diagnóstico, gravidade categórica ou escore total.",
+    "Associações temporais entre antecedente, comportamento e consequência não demonstram causalidade.",
+    "O escopo é funcional e de segurança e foi diferenciado do registro emocional previamente existente para reduzir duplicação de conteúdo.",
+    "Nenhum item isolado confirma ou exclui condição clínica."
+  ],
+  "safetyNote": "Este registro não substitui avaliação clínica, atendimento de urgência ou plano individual de segurança. Diante de risco atual, priorizar proteção e assistência apropriada.",
+  "tags": [
+    "desregulação",
+    "comportamento",
+    "análise funcional",
+    "segurança",
+    "monitoramento longitudinal"
+  ],
+  "duplicateCooldownDays": 30,
+  "contingency": false,
+  "needsUpgrade": false,
+  "generation": {
+    "model": "fallback-deterministic-v1",
+    "reasoningMode": "pro",
+    "reasoningEffort": "high",
+    "pipelineVersion": "1.2.0-review-candidate"
+  }
+}

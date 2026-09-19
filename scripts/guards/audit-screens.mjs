@@ -5,6 +5,7 @@ import { readFileSync, existsSync, statSync } from "node:fs";
 import { resolve, extname, basename, dirname, relative, isAbsolute } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../lib/browser-audit-runtime.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const DIST = resolve(ROOT, "dist/public");
@@ -92,15 +93,7 @@ const routes = discoveredRoutes.slice(0, routeLimit);
 // ---- visita cada rota ----
 let browser;
 try {
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-  browser = await chromium.launch(
-    executablePath
-      ? {
-          executablePath,
-          args: ["--no-sandbox", "--disable-dev-shm-usage"],
-        }
-      : undefined,
-  );
+  browser = await chromium.launch(auditBrowserLaunchOptions({ headless: true }));
 } catch (error) {
   server.close();
   console.error("[audit-screens] Chromium indisponível. Execute `npx playwright install chromium` ou informe PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH.");

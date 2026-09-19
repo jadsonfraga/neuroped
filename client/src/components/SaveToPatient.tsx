@@ -37,6 +37,15 @@ interface SaveToPatientProps {
   responses: ScaleResponseItem[];
   applicationDate?: string | Date;
   testName?: string;
+  /**
+   * Identifica a versão do CONTRATO de resposta do instrumento (não do motor
+   * cliente). Default "client-v1" para o acervo inteiro. Uma escala cujo
+   * formato de resposta muda de um jeito que não é diretamente comparável ao
+   * anterior (ex.: 4 opções de intensidade -> 3 respostas diretas) deve
+   * passar um valor próprio, para que registros antigos e novos fiquem
+   * distinguíveis em `assessment.instrumentVersion` (ver paciente-detalhe.tsx).
+   */
+  instrumentVersion?: string;
 }
 
 function validApplicationDate(value: string | Date | undefined, fallback: Date): Date {
@@ -47,6 +56,7 @@ function validApplicationDate(value: string | Date | undefined, fallback: Date):
 
 export function SaveToPatient(rawProps: SaveToPatientProps) {
   const scaleName = rawProps.scaleName ?? rawProps.testName ?? "Teste";
+  const instrumentVersion = rawProps.instrumentVersion ?? "client-v1";
   const patientAge = rawProps.patientAge;
   const { toast } = useToast();
   const { accessMode, isAuthenticated } = useAuth();
@@ -148,7 +158,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
             clinicId: activeClinicId,
             patientId,
             instrumentId,
-            instrumentVersion: "client-v1",
+            instrumentVersion,
             appliedAt: applicationDate.toISOString(),
             provenanceSource: "instrument",
             payload: {
@@ -175,7 +185,7 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
               title: `Resultado da escala — ${scaleName}`,
               assessmentId: assessment.id,
               instrumentId,
-              instrumentVersion: "client-v1",
+              instrumentVersion,
               patientAge: patientAge || null,
               appliedAt: applicationDate.toISOString(),
               responses: responseRows,

@@ -8,7 +8,9 @@ import { chromium } from "playwright";
 import {
   ACCEPTED_FIRST_VISIT_STORAGE,
   ensureClientBuild,
+  auditBrowserLaunchOptions,
   isMissingBrowserError,
+  resolveAuditChromiumPath,
   startStaticServer,
 } from "./lib/browser-audit-runtime.mjs";
 
@@ -44,18 +46,15 @@ function reportAndExit(violations, mode, details = {}) {
 }
 
 async function runAxe() {
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
   // Evita iniciar servidor/abrir porta quando o binário não foi instalado.
   // O lint estático abaixo é o fallback determinístico oficial desse ambiente.
-  if (!executablePath && !existsSync(chromium.executablePath())) return false;
+  // A resolução é a mesma de todos os gates de navegador: variável explícita,
+  // browser gerenciado do Playwright, Chromium já presente na imagem.
+  if (!resolveAuditChromiumPath()) return false;
   const server = await startStaticServer(ensureClientBuild(repoRoot));
   let browser;
   try {
-    browser = await chromium.launch(
-      executablePath
-        ? { headless: true, executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-        : { headless: true },
-    );
+    browser = await chromium.launch(auditBrowserLaunchOptions());
   } catch (error) {
     await server.close();
     if (isMissingBrowserError(error)) return false;

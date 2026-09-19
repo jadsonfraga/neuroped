@@ -1,0 +1,176 @@
+SONDA DEZ — MODALIDADE DIGITAL GUIADA v2026-09-13.2
+Adaptação digital autoral da Sonda Dez / AFN-10; registro observacional piloto, requer validação clínica; sem normas, percentis, pontos de corte ou diagnóstico.
+Estado: registro preenchido para revisão médica. Missões registradas: 7/7.
+Código: CASO-SINTETICO. Idade: 144 meses. Trilha: 12–17 anos. Escolaridade: não informada.
+Aplicadora (código): não informado. Tempo ativo: 124s; referência operacional 600s.
+Interferentes: Aplicação sem som eletrônico.
+Alertas ao médico: nenhum assinalado.
+Familiarização com controles durante a aplicação: não acionada. Eventos do ensaio não entram nas respostas das missões.
+
+1. Narrativa da rotina
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Conversar e escutar. Instrução: Me conta como está sendo sua rotina ultimamente.
+Apresentação: concluída.
+Organização: boa.
+Descrição da aplicadora: boa.
+Espontaneidade: boa.
+Descrição da aplicadora: boa.
+Reciprocidade: boa.
+Descrição da aplicadora: boa.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Descreva a forma do relato e considere vínculo, ansiedade e disposição para falar como possíveis interferentes.
+
+2. Cognição social + flexibilidade
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Interpretar a mensagem. Instrução: Uma mensagem foi visualizada e não teve resposta. Que explicações existem? Qual seria a pior reação? Qual seria uma resposta mais adequada?
+Apresentação: concluída.
+Hipóteses levantadas: 0.
+Contagem bruta, sem comparação normativa.
+Considera alternativas: sim.
+Descrição da aplicadora: sim.
+Resposta impulsiva/rígida: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Gerar múltiplas hipóteses descreve flexibilidade de explicações nesta situação social; uma resposta rígida isolada não fecha diagnóstico.
+
+3. Atenção seletiva
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Busca de símbolo e letra. Instrução: Marque somente a estrela acompanhada da letra A: ★A. Você pode desmarcar tocando de novo.
+Apresentação: concluída.
+  Evento 0ms: grade-apresentada — 24
+  Evento 138ms: marcação — {"position":0,"selected":true}
+  Evento 226ms: marcação — {"position":0,"selected":false}
+  Evento 277ms: marcação — {"position":1,"selected":true}
+  Evento 60000ms: grade-concluida — {"hits":0,"omissions":6,"commissions":1,"selected":[1]}
+Alvos: 0.
+Contagem bruta, sem comparação normativa.
+Omissões: 6.
+Contagem bruta, sem comparação normativa.
+Comissões: 1.
+Contagem bruta, sem comparação normativa.
+Estratégia: organizada.
+Descrição da aplicadora: organizada.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Omissões e comissões são descritas separadamente; estratégia organizada/aleatória é observacional e não normativa.
+
+4. Memória operacional verbal
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Três palavras. Instrução: Vou falar palavras. Repita na ordem inversa: CASA — SOL — MAR.
+Apresentação: concluída.
+Etapa 2 — Quatro palavras. Instrução: Repita na ordem inversa: GATO — FLOR — RUA — LUA.
+Apresentação: concluída.
+Etapa 3 — Cinco palavras. Instrução: Repita na ordem inversa: BOLA — CHAVE — PÃO — LIVRO — RIO.
+Apresentação: concluída.
+3 itens: corretos: 0.
+Contagem bruta, sem comparação normativa.
+4 itens: corretos: 0.
+Contagem bruta, sem comparação normativa.
+5 itens: corretos: 0.
+Contagem bruta, sem comparação normativa.
+Estratégia verbal espontânea: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Registre até onde a sequência foi manipulada nesta tarefa; não use o número como índice padronizado.
+
+5. Inibição
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Regra verbal. Instrução: Quando eu disser DIREITA, responda ESQUERDA. Quando eu disser ESQUERDA, responda DIREITA.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 133ms: resposta-verbal — {"item":1,"stimulus":"DIREITA","answer":"ESQUERDA"}
+  Evento 2500ms: apresentado — 1
+  Evento 2673ms: resposta-verbal — {"item":2,"stimulus":"ESQUERDA","answer":"DIREITA"}
+  Evento 5000ms: apresentado — 2
+  Evento 5207ms: resposta-verbal — {"item":3,"stimulus":"DIREITA","answer":"ESQUERDA"}
+  Evento 7500ms: apresentado — 3
+  Evento 7752ms: resposta-verbal — {"item":4,"stimulus":"DIREITA","answer":"ESQUERDA"}
+  Evento 10000ms: apresentado — 4
+  Evento 10297ms: resposta-verbal — {"item":5,"stimulus":"ESQUERDA","answer":"DIREITA"}
+  Evento 12500ms: apresentado — 5
+  Evento 12827ms: resposta-verbal — {"item":6,"stimulus":"ESQUERDA","answer":"DIREITA"}
+  Evento 15000ms: apresentado — 6
+  Evento 15375ms: resposta-verbal — {"item":7,"stimulus":"DIREITA","answer":"ESQUERDA"}
+  Evento 17500ms: apresentado — 7
+  Evento 17910ms: resposta-verbal — {"item":8,"stimulus":"ESQUERDA","answer":"DIREITA"}
+  Evento 20000ms: apresentado — 8
+  Evento 20457ms: resposta-verbal — {"item":9,"stimulus":"DIREITA","answer":"ESQUERDA"}
+  Evento 22500ms: apresentado — 9
+  Evento 23005ms: resposta-verbal — {"item":10,"stimulus":"ESQUERDA","answer":"DIREITA"}
+  Evento 25000ms: apresentado — 10
+  Evento 25551ms: resposta-verbal — {"item":11,"stimulus":"ESQUERDA","answer":"DIREITA"}
+  Evento 27500ms: apresentado — 11
+  Evento 28091ms: resposta-verbal — {"item":12,"stimulus":"DIREITA","answer":"ESQUERDA"}
+  Evento 30000ms: serie-concluida — 12
+Acertos: 12.
+Contagem bruta, sem comparação normativa.
+Erros: 0.
+Contagem bruta, sem comparação normativa.
+Autocorreções: 0.
+Contagem bruta, sem comparação normativa.
+Resposta impulsiva observável: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Resposta impulsiva observável é rótulo descritivo da forma de responder nesta tarefa; não equivale a diagnóstico de TDAH.
+
+6. Troca de regra
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Regra verbal. Instrução: Agora responda o mesmo lado: DIREITA é DIREITA e ESQUERDA é ESQUERDA.
+Apresentação: concluída.
+  Evento 0ms: apresentado — 0
+  Evento 145ms: resposta-verbal — {"item":1,"stimulus":"DIREITA","answer":"DIREITA"}
+  Evento 2500ms: apresentado — 1
+  Evento 2678ms: resposta-verbal — {"item":2,"stimulus":"ESQUERDA","answer":"ESQUERDA"}
+  Evento 5000ms: apresentado — 2
+  Evento 5212ms: resposta-verbal — {"item":3,"stimulus":"DIREITA","answer":"DIREITA"}
+  Evento 7500ms: apresentado — 3
+  Evento 7749ms: resposta-verbal — {"item":4,"stimulus":"DIREITA","answer":"DIREITA"}
+  Evento 10000ms: apresentado — 4
+  Evento 10304ms: resposta-verbal — {"item":5,"stimulus":"ESQUERDA","answer":"ESQUERDA"}
+  Evento 12500ms: apresentado — 5
+  Evento 12844ms: resposta-verbal — {"item":6,"stimulus":"ESQUERDA","answer":"ESQUERDA"}
+  Evento 15000ms: apresentado — 6
+  Evento 15379ms: resposta-verbal — {"item":7,"stimulus":"DIREITA","answer":"DIREITA"}
+  Evento 17500ms: apresentado — 7
+  Evento 17913ms: resposta-verbal — {"item":8,"stimulus":"ESQUERDA","answer":"ESQUERDA"}
+  Evento 20000ms: serie-concluida — 8
+Acertos: 8.
+Contagem bruta, sem comparação normativa.
+Perseverações: 0.
+Contagem bruta, sem comparação normativa.
+Adaptação: rápida.
+Descrição da aplicadora: rápida.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: Perseveração descreve manutenção da regra oposta anterior; adaptação é registrada sem corte normativo.
+
+7. Planejamento executivo
+Limite: A resposta na tela descreve esta interação digital. Não equivale à manipulação de objetos reais, ao brincar presencial nem à avaliação motora, auditiva ou visual. Integração pelo médico.
+Etapa 1 — Planejar a noite. Instrução: Organize a noite: prova amanhã, trabalho, banho, jantar e 30 minutos livres. Quanto tempo reserva para cada coisa?
+Apresentação: concluída.
+  Evento 144ms: plano-reiniciado — 
+  Evento 243ms: cartão-ordenado — 30 minutos livres
+  Evento 286ms: cartão-ordenado — Jantar
+  Evento 324ms: cartão-ordenado — Banho
+  Evento 371ms: cartão-ordenado — Fazer o trabalho
+  Evento 425ms: cartão-ordenado — Estudar para a prova
+  Evento 475ms: plano-final — ["30 minutos livres","Jantar","Banho","Fazer o trabalho","Estudar para a prova"]
+Etapa 2 — Uma hora a mais. Instrução: O trabalho vai levar uma hora a mais. O que muda?
+Apresentação: concluída.
+  Evento 206ms: plano-reiniciado — 
+  Evento 247ms: cartão-ordenado — 30 minutos livres
+  Evento 278ms: cartão-ordenado — Jantar
+  Evento 311ms: cartão-ordenado — Banho
+  Evento 345ms: cartão-ordenado — Fazer o trabalho
+  Evento 379ms: cartão-ordenado — Estudar para a prova
+  Evento 412ms: plano-final — ["30 minutos livres","Jantar","Banho","Fazer o trabalho","Estudar para a prova"]
+Prioriza: sim.
+Descrição da aplicadora: sim.
+Estima tempo: sim.
+Descrição da aplicadora: sim.
+Replaneja: sim.
+Descrição da aplicadora: sim.
+Observação direta e ajudas: Exemplo inteiramente sintético para verificar controles; sem interpretação clínica de paciente..
+Como ler: O foco é se e como o adolescente reorganiza o plano quando a restrição muda; não há classificação normativa automática.
+
+Entrega à família: “Registramos como participou destas atividades e quanta ajuda precisou. O médico vai reunir estas observações com a história e as outras avaliações.”
+Próxima ação: entregar o registro ao médico; informar interferentes e alertas antes da interpretação. Não comunicar diagnóstico ou normalidade pela Sonda.
+Não há gravação de áudio/vídeo nem salvamento automático de dados clínicos nesta tela.

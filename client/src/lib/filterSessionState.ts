@@ -13,6 +13,7 @@ export type FilterSessionAssessmentType = "diagnostic" | "monitoring";
 export interface FilterSessionState {
   search: string;
   selectedAge: string | null;
+  exactAge?: { years: string; months: string };
   selectedQueixas: string[];
   selectedRespondente: FilterSessionRespondent | null;
   selectedCommunication: FilterSessionCommunication | null;
@@ -116,7 +117,17 @@ export function parseFilterSessionState(raw: string | null): FilterSessionState 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return emptyFilterSessionState();
     }
+    const rawAge = parsed.exactAge;
+    const exactAge = rawAge && typeof rawAge === "object"
+      ? {
+          years: typeof (rawAge as Record<string, unknown>).years === "string"
+            ? String((rawAge as Record<string, unknown>).years).slice(0, 16) : "?",
+          months: typeof (rawAge as Record<string, unknown>).months === "string"
+            ? String((rawAge as Record<string, unknown>).months).slice(0, 16) : "?",
+        }
+      : rawAge === undefined ? undefined : { years: "?", months: "?" };
     return {
+      ...(exactAge && (exactAge.years || exactAge.months) ? { exactAge } : {}),
       search:
         typeof parsed.search === "string" ? parsed.search.slice(0, 300) : "",
       selectedAge: cleanId(parsed.selectedAge),
@@ -172,6 +183,9 @@ export function applyFilterSessionNavigationPrefill(
   const next = parseFilterSessionState(
     JSON.stringify({
       ...current,
+      // Um novo perfil não herda idade exata/idade digitada na busca anterior.
+      search: "",
+      exactAge: undefined,
       selectedAge: prefill.selectedAge,
       selectedQueixas: prefill.selectedQueixas,
       // Sinais são dependentes da queixa. Ao trocar a queixa pelo Fluxograma,

@@ -56,6 +56,6 @@ export function resolvePrivateArtifactStore(
   env: ArtifactStoreEnv,
 ): PrivateArtifactStore | null {
   const bucket = env.LGPD_EXPORT_BUCKET;
-  if (!bucket || typeof bucket.put !== "function") return null;
+  if (!bucket || typeof bucket.put !== "function" || typeof bucket.get !== "function" || typeof bucket.delete !== "function") return null;
   return new R2PrivateArtifactStore(bucket);
 }

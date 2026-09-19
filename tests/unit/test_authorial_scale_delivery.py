@@ -18,9 +18,33 @@ class DeliveryTest(unittest.TestCase):
         self.rows = json.loads((ROOT / "client/src/data/authorialMonitoring.json").read_text(encoding="utf-8"))
     def test_originals_are_already_sent(self):
         receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
-        originals = [r for r in self.rows if r["id"] in {"afi12-sdg", "sdrd12-sdg", "sarf12-sdg"}]
+        originals = json.loads((ROOT / "tests/fixtures/authorial-originals-20260905.json").read_text(encoding="utf-8"))
         self.assertEqual(len(originals), 3)
         self.assertEqual(delivery.select_pending(originals, receipts["receipts"]), [])
+    def test_reviewed_originals_require_updated_delivery(self):
+        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
+        originals = [r for r in self.rows if r["id"] in {"afi12-sdg", "sdrd12-sdg", "sarf12-sdg"}]
+        self.assertEqual(len(originals), 3)
+        self.assertTrue(all(r.get("clinicalReviewStatus") == "reviewed" for r in originals))
+        self.assertEqual(delivery.select_pending(originals, receipts["receipts"]), originals)
+    def test_reviewed_originals_require_their_own_receipts(self):
+        spec = importlib.util.spec_from_file_location("prepare", ROOT / "scripts/prepare_authorial_delivery_sources.py")
+        prepare = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(prepare)
+        originals = json.loads((ROOT / "tests/fixtures/authorial-originals-20260905.json").read_text(encoding="utf-8"))
+        path = ROOT / "client/src/data/authorialMonitoringReview20260908.json"
+        overlay = json.loads(path.read_text(encoding="utf-8"))
+        overlay["overrides"] = {r["id"]: overlay["overrides"][r["id"]] for r in originals}
+        reviewed = prepare.apply_overlays(copy.deepcopy(originals), [(path, overlay)])
+        receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))["receipts"]
+        self.assertEqual(delivery.select_pending(reviewed, receipts), reviewed)
+        for original, revised in zip(originals, reviewed):
+            self.assertEqual(revised["deliveryReview"]["predecessorFingerprint"], delivery.fingerprint(original))
+            self.assertNotEqual(delivery.fingerprint(original), delivery.fingerprint(revised))
+            key = delivery.fingerprint(revised)
+            with self.assertRaisesRegex(RuntimeError, "resultado incerto"):
+                delivery.select_pending([revised], {**receipts, key: {"status": "pending"}})
+            self.assertEqual(delivery.select_pending([revised], {**receipts, key: {"status": "smtp_accepted"}}), [])
     def test_future_model_remains_pending(self):
         row = copy.deepcopy(self.rows[0]); row["id"] = "fixture-novo-modelo"
         receipts = json.loads((ROOT / "config/authorial-mail-bootstrap.json").read_text(encoding="utf-8"))
@@ -30,6 +54,38 @@ class DeliveryTest(unittest.TestCase):
     def test_content_change_changes_fingerprint(self):
         changed = copy.deepcopy(self.rows[0]); changed["items"][0]["text"] += " Exemplo sintético."
         self.assertNotEqual(delivery.fingerprint(changed), delivery.fingerprint(self.rows[0]))
+    def test_editorial_review_reuses_predecessor_receipt_when_delivery_content_is_unchanged(self):
+        row = copy.deepcopy(self.rows[0])
+        predecessor = delivery.fingerprint(row)
+        predecessor_delivery = delivery.delivery_content_fingerprint(row)
+        row["reviewProvenance"] = "Synthetic editorial review."
+        row["deliveryReview"] = {
+            "predecessorFingerprint": predecessor,
+            "predecessorDeliveryFingerprint": predecessor_delivery,
+            "deliveryContentChanged": False,
+        }
+        receipts = {predecessor: {"status": "sent_via_gmail"}}
+        self.assertEqual(delivery.select_pending([row], receipts), [])
+
+    def test_rendered_review_status_is_delivery_content(self):
+        row = copy.deepcopy(self.rows[0])
+        before = delivery.delivery_content_fingerprint(row)
+        row["clinicalReviewStatus"] = "reviewed" if row.get("clinicalReviewStatus") != "reviewed" else "pending"
+        self.assertNotEqual(delivery.delivery_content_fingerprint(row), before)
+
+    def test_predecessor_receipt_never_hides_delivery_content_change(self):
+        row = copy.deepcopy(self.rows[0])
+        predecessor = delivery.fingerprint(row)
+        predecessor_delivery = delivery.delivery_content_fingerprint(row)
+        row["items"][0]["text"] += " Synthetic clinical change."
+        row["deliveryReview"] = {
+            "predecessorFingerprint": predecessor,
+            "predecessorDeliveryFingerprint": predecessor_delivery,
+            "deliveryContentChanged": False,
+        }
+        receipts = {predecessor: {"status": "sent_via_gmail"}}
+        self.assertEqual(delivery.select_pending([row], receipts), [row])
+
     def test_pending_never_retries(self):
         with self.assertRaisesRegex(RuntimeError, "resultado incerto"):
             delivery.select_pending(self.rows, {delivery.fingerprint(self.rows[0]): {"status": "pending"}})
@@ -50,7 +106,8 @@ class DeliveryTest(unittest.TestCase):
         with self.assertRaises(ValueError): delivery.validate(row)
     def test_qualitative_does_not_acquire_total(self):
         row = {"id": "fixture-diario", "version": "1.0", "sourceType": "autoral_diario", "validationStatus": "nao_validado_psicometricamente", "items": [{"id": "1", "text": "Item sintético."}], "scoring": {"totalScoreEnabled": True}}
-        with self.assertRaisesRegex(ValueError, "não pode ganhar total"): delivery.validate(row)
+        with self.assertRaisesRegex(ValueError, "não pode ganhar total"):
+            delivery.validate(row)
     def test_daily_canonical_id_is_accepted_without_normalization(self):
         row = {
             "id": "NEUROPED-DIARIO-20260905-006",

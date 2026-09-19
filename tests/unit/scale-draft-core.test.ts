@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { normalizeScaleDraftAnswers } from "../../client/src/hooks/useSecureScaleDraft";
+import {
+  normalizeScaleDraftAnswers,
+  resolveScaleDraftContract,
+} from "../../client/src/hooks/useSecureScaleDraft";
 import {
   clearScaleDraft,
   createScaleDraftEnvelope,
@@ -37,6 +40,17 @@ assert.deepEqual(normalizeScaleDraftAnswers([], validOptions), {});
 assert.deepEqual(
   normalizeScaleDraftAnswers({ "0": -1, "1": 1.5 }, validOptions),
   {},
+);
+
+assert.deepEqual(
+  resolveScaleDraftContract("generic:atec"),
+  { schemaVersion: 2, migrateLegacy: false },
+  "ATEC v2 deve invalidar rascunhos do contrato antigo em vez de reinterpretar índices",
+);
+assert.deepEqual(
+  resolveScaleDraftContract("generic:snap"),
+  { schemaVersion: 1, migrateLegacy: true },
+  "demais escalas devem preservar o contrato de rascunho existente",
 );
 
 const booleanKeys = indexedKeys(3);

@@ -122,7 +122,7 @@ export const testesPaisRecommendations: ParentTestRecommendation[] = [
   {
     id: "vineland",
     name: "Vineland-3",
-    route: "/vineland",
+    route: "/generic-scale/vineland",
     queixas: ["motor", "atraso", "cognicao"],
     ageMin: 24,
     ageMax: 168,

@@ -22,6 +22,7 @@ export const SAFE_EMPTY_MESSAGE =
 
 export interface FilterContext {
   queixas: string[];
+  ageInputInvalid?: boolean; // erro explícito: nunca ampliar o catálogo como fallback
   ageMonths: number | null; // representativo (midpoint da faixa) — usado em score e limiares de bloqueio
   ageBand?: { min: number; max: number } | null; // faixa selecionada em meses — usada para SOBREPOSIÇÃO de idade
   respondente?: Respondente | null;
@@ -43,12 +44,21 @@ export interface RefinedScaleMatch {
   applicationMode: ApplicationMode;
   licenseRestricted: boolean;
   signalSpecificityScore?: number;
+  semanticFocusScore?: number;
   /** true quando veio do fallback de triagem ampla (sem instrumento específico). */
   isBroadbandFallback?: boolean;
 }
 
 const POST_CONSULT_QUEIXAS = new Set(["efeitos", "evolucao"]);
 const ACUTE_RISK_QUEIXAS = new Set(["suicidio", "psicose"]);
+
+const QUEIXA_SEMANTIC_FOCUS: Record<string, string[]> = {
+  efeitos: ["efeitos adversos", "efeito adverso", "tolerabilidade", "seguranca medicamentosa", "reacao adversa"],
+  autonomia: ["autonomia", "autogestao", "responsabilidade", "pedido de ajuda", "vida diaria"],
+  funcionalidade: ["impacto funcional", "participacao", "habilidades adaptativas", "vida diaria"],
+  sono: ["sono", "sonolencia", "despertares", "latencia", "ronco"],
+  evolucao: ["monitorizacao", "seguimento", "basal", "evolucao", "longitudinal"],
+};
 
 /**
  * Contextos de risco agudo nunca recebem um rastreador de outro domínio só
@@ -470,9 +480,15 @@ export function clinicalHardBlock(
   ctx: FilterContext,
 ): string | null {
   const age = ctx.ageMonths;
+  if (ctx.ageInputInvalid ||
+      (age != null && (!Number.isFinite(age) || age < 0)) ||
+      (ctx.ageBand && (!Number.isFinite(ctx.ageBand.min) || !Number.isFinite(ctx.ageBand.max) ||
+        ctx.ageBand.min < 0 || ctx.ageBand.max < ctx.ageBand.min))) {
+    return "Idade informada inválida; confira os campos antes de recomendar";
+  }
 
   // Valida que a escala tem campos obrigatórios de idade
-  if (!Number.isFinite(scale.ageMin) || !Number.isFinite(scale.ageMax)) {
+  if (!Number.isFinite(scale.ageMin) || !Number.isFinite(scale.ageMax) || scale.ageMin < 0 || scale.ageMax < scale.ageMin) {
     return "Escala sem faixa etária definida";
   }
 
@@ -625,7 +641,7 @@ function tokensFromText(value: string): Set<string> {
   );
 }
 
-function selectedSignalText(ctx: FilterContext): string {
+function selectedSignalText(ctx: SignalMatchContext): string {
   const ids = new Set(ctx.selectedSignals || []);
   const labels: string[] = [];
   for (const queixa of ctx.queixas) {
@@ -645,8 +661,11 @@ function selectedSignalText(ctx: FilterContext): string {
 // Fonte ÚNICA de signalTags: une as tags inline da escala (scale.signalTags)
 // com o mapa central curado (SIGNAL_TAGS_BY_SCALE_ID), sem duplicatas. Assim os
 // dois acervos de tags são tratados igualmente em TODO o motor (texto clínico
-// e bônus de correspondência exata), sem tag "de segunda classe".
-function allSignalTags(scale: ScaleEntry): string[] {
+// e bônus de correspondência exata), sem tag "de segunda classe". Exportada
+// para o gate ideal-choice ler cobertura de sinal pelo MESMO catálogo de tags
+// que o motor — um oráculo sobre as tags inline flagraria "sinal ignorado"
+// em pódio que cobre o sinal via tag curada (fonte paralela de verdade).
+export function allSignalTags(scale: ScaleEntry): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const t of [
@@ -673,11 +692,37 @@ function scaleClinicalText(scale: ScaleEntry): string {
   ].join(" ");
 }
 
-function calculateSignalSpecificity(
+function calculateSemanticFocus(scale: ScaleEntry, ctx: FilterContext): number {
+  if (!ctx.queixas.length) return 0;
+  const text = normalizeClinicalText(scaleClinicalText(scale));
+  let hits = 0;
+  for (const queixa of ctx.queixas) {
+    for (const hint of QUEIXA_SEMANTIC_FOCUS[queixa] || []) {
+      if (text.includes(normalizeClinicalText(hint))) hits += 1;
+    }
+  }
+  return Math.min(12, hits * 2);
+}
+
+/**
+ * Correspondência CANÔNICA sinal marcado × escala (auditoria semanal, P1):
+ * a UI seleciona IDs como "tdah-dificuldade-focar", enquanto signalTags são
+ * termos clínicos ("desatencao"). Comparar ID com tag diretamente nunca casa —
+ * era exatamente o bug do pódio. Esta é a ÚNICA fonte de verdade: resolve o
+ * ID para rótulo+descrição e cruza por token, prefixo de queixa e tag exata.
+ * Score e pódio consomem a mesma função — nunca reimplementar a comparação.
+ */
+export interface SignalMatchContext {
+  queixas: string[];
+  selectedSignals?: string[];
+}
+
+function signalMatchComponents(
   scale: ScaleEntry,
-  ctx: FilterContext,
-): { score: number; rawScore: number; reason?: string } {
-  if (!ctx.selectedSignals?.length) return { score: 0, rawScore: 0 };
+  ctx: SignalMatchContext,
+): { matched: number; idPrefixHits: number; exactTagHits: number } {
+  if (!ctx.selectedSignals?.length)
+    return { matched: 0, idPrefixHits: 0, exactTagHits: 0 };
 
   const signalText = selectedSignalText(ctx);
   const selectedTokens = tokensFromText(signalText);
@@ -695,12 +740,84 @@ function calculateSignalSpecificity(
     normalizedSignalText.includes(normalizeClinicalText(tag)),
   ).length;
 
-  const rawScore = Math.round(
-    matched * 1.6 +
-      idPrefixHits * 2 +
-      exactTagHits * 3 +
-      Math.min(4, ctx.selectedSignals.length),
-  );
+  return { matched, idPrefixHits, exactTagHits };
+}
+
+/**
+ * Evidência GRADUADA "esta escala fala aos sinais marcados": alguma signalTag
+ * da escala aparece no texto resolvido dos sinais (ID → rótulo/descrição).
+ * Prefixo de queixa NÃO basta (achado Codex: compartilhar a queixa não prova
+ * cobertura do sintoma) e sobreposição de token solto também não — verbos
+ * genéricos fariam o M-CHAT "falar" impulsividade. Use para bônus/realce.
+ * Para GARANTIA de cobertura no pódio (contrato do gate ideal-choice), use
+ * scaleCoversSelectedSignalExactly.
+ */
+export function scaleMatchesSelectedSignals(
+  scale: ScaleEntry,
+  ctx: SignalMatchContext,
+): boolean {
+  const { exactTagHits } = signalMatchComponents(scale, ctx);
+  return exactTagHits > 0;
+}
+
+/**
+ * Cobertura EXATA por sinal — a semântica do resgate do pódio e do gate
+ * ideal-choice: alguma signalTag da escala é IGUAL (normalizada) a uma forma
+ * resolvida do sinal marcado — o valor cru (seleção em forma de tag) ou o
+ * rótulo do registro/sintoma popular (seleção em ID da UI). Correspondência
+ * parcial NÃO cobre: uma tag "comunicação verbal" não cobre o sinal
+ * "comunicação não verbal", e um slot marcado como "cobrindo" por engano
+ * suprime o resgate da candidata realmente específica.
+ */
+export function scaleCoversSelectedSignalExactly(
+  scale: ScaleEntry,
+  ctx: SignalMatchContext,
+): boolean {
+  if (!ctx.selectedSignals?.length) return false;
+  const forms = new Set<string>();
+  for (const raw of ctx.selectedSignals) forms.add(normalizeClinicalText(raw));
+  for (const queixa of ctx.queixas) {
+    for (const signal of getAllSignalsForQueixa(queixa)) {
+      if (ctx.selectedSignals.includes(signal.id)) {
+        forms.add(normalizeClinicalText(signal.label));
+      }
+    }
+  }
+  for (const id of ctx.selectedSignals) {
+    const popular = popularSymptomById[id];
+    if (popular) forms.add(normalizeClinicalText(popular.label));
+  }
+  return allSignalTags(scale).some((tag) => forms.has(normalizeClinicalText(tag)));
+}
+
+export function calculateEvidenceQuality(scale: ScaleEntry): number {
+  let points = 0;
+  const validation = (scale.validacaoBrasil ?? "").trim().toLowerCase();
+  if (validation.startsWith("sim")) points += 2;
+  else if (validation.startsWith("parcial")) points += 1;
+  if (scale.pubmedId?.trim()) points += 1;
+  return Math.min(3, points);
+}
+
+function calculateSignalSpecificity(
+  scale: ScaleEntry,
+  ctx: FilterContext,
+): { score: number; rawScore: number; reason?: string } {
+  if (!ctx.selectedSignals?.length) return { score: 0, rawScore: 0 };
+
+  const { matched, idPrefixHits, exactTagHits } = signalMatchComponents(scale, ctx);
+  // O termo base só entra quando HÁ correspondência real: antes ele era
+  // incondicional e toda escala ganhava "alguma correspondência" com qualquer
+  // sinal marcado — ruído que diluía exatamente o que o bônus deveria separar.
+  const anyHit = matched > 0 || idPrefixHits > 0 || exactTagHits > 0;
+  const rawScore = anyHit
+    ? Math.round(
+        matched * 1.6 +
+          idPrefixHits * 2 +
+          exactTagHits * 3 +
+          Math.min(4, ctx.selectedSignals.length),
+      )
+    : 0;
   const score = Math.min(18, rawScore);
 
   if (score >= 12)
@@ -808,6 +925,19 @@ export function calculateRefinedScore(
     if (signalSpecificity.reason) reasons.push(signalSpecificity.reason);
   }
 
+  // Qualidade da evidência como DESEMPATE limitado (auditoria semanal, P2):
+  // entre duas escalas igualmente aplicáveis, validação brasileira e fonte
+  // indexada valem um empurrão pequeno (teto 3) — nunca competem com bloqueio
+  // de segurança, idade ou respondente, que acontecem antes e fora do score.
+  const evidenceQuality = calculateEvidenceQuality(scale);
+  if (evidenceQuality > 0) score += evidenceQuality;
+
+  const semanticFocus = calculateSemanticFocus(scale, ctx);
+  if (semanticFocus > 0) {
+    score += Math.min(6, semanticFocus);
+    reasons.push("Foco semântico coerente com a queixa");
+  }
+
   // 3. Finalidade clínica (0–15).
   const use = getAssessmentUse(scale);
   if (!ctx.assessmentUse) {
@@ -905,7 +1035,11 @@ export function calculateRefinedScore(
     implementationLabel: getImplementationLabel(implementationStatus),
     applicationMode: mode,
     licenseRestricted,
-    signalSpecificityScore: signalSpecificity.rawScore,
+    // Auditoria semanal (P2): propagar o score CAPADO — o pódio multiplica
+    // este campo por 2.5, e o valor bruto sem teto dava a muitos sinais um
+    // peso desproporcional que o score principal tentava justamente limitar.
+    signalSpecificityScore: signalSpecificity.score,
+    semanticFocusScore: semanticFocus,
   };
 }
 
@@ -937,6 +1071,9 @@ export function filterScalesIntelligently(
     .sort((a, b) => {
       if (b.relevanceScore !== a.relevanceScore)
         return b.relevanceScore - a.relevanceScore;
+      if ((b.semanticFocusScore ?? 0) !== (a.semanticFocusScore ?? 0)) {
+        return (b.semanticFocusScore ?? 0) - (a.semanticFocusScore ?? 0);
+      }
       if (tierOrder[a.tier] !== tierOrder[b.tier])
         return tierOrder[a.tier] - tierOrder[b.tier];
       if ((b.signalSpecificityScore ?? 0) !== (a.signalSpecificityScore ?? 0)) {

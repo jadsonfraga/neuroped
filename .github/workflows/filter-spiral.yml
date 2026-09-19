@@ -38,6 +38,9 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           npm_config_ignore_scripts: false
 
+      - name: Prove exact-age and complaint-filter contracts
+        run: node --import tsx tests/clinical/test-filter-age-complaint.mjs
+
       - name: Install Chromium for real browser gates
         run: npx playwright install --with-deps chromium
 
@@ -67,6 +70,9 @@ jobs:
           NODE_ENV: production
           VITE_AUTH_MODE: local
           VITE_API_URL: ""
+
+      - name: Prove age and complaint filters in real desktop and mobile browsers
+        run: node tests/e2e/filter-age-complaint.mjs
 
       - name: Validate tablet shell breakpoints and print isolation
         run: node tests/e2e/responsive-shell-smoke.mjs

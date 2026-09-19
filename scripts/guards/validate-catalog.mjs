@@ -19,8 +19,6 @@
  *   como PENDÊNCIA RASTREADA: contabilizada e listada em
  *   docs/PROVENIENCIA_CLINICA.md, sem travar o pipeline. Instrumentos sem
  *   `fonte` são reportados como `pendente_validacao = sim`.
- *
- * Efeito colateral: (re)gera docs/PROVENIENCIA_CLINICA.md (E3).
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -59,6 +57,12 @@ if (!publicCatalogBytes.equals(dataCatalogBytes)) {
   );
 }
 
+const normalize = (value) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 for (const s of allScales) {
   // Campos obrigatórios
   for (const field of ["id", "name", "fullName", "ageMin", "ageMax"]) {
@@ -79,16 +83,22 @@ for (const s of allScales) {
     errors.push(`Faixa etária invertida em "${s.id}": ageMin(${s.ageMin}) > ageMax(${s.ageMax}).`);
   }
   // Proveniência (pendência rastreada)
-  // Dois eixos INDEPENDENTES, que antes eram somados num "pendente" só:
-  //   semFonte        → não sabemos de onde o instrumento veio (lacuna de proveniência)
-  //   aguardaValidacao→ sabemos a origem (quase sempre autoral), mas não há
-  //                     validação psicométrica publicada
-  // Um instrumento autoral do NeuroPed com fonte declarada caía no mesmo balde
-  // de um instrumento de literatura sem referência nenhuma, e o resumo dizia
-  // "Com fonte declarada: 165" quando 242 tinham fonte. Agora cada eixo é
-  // contado e exibido por si.
+  // Três eixos independentes:
+  //   semFonte               → lacuna de proveniência;
+  //   pendente revisão clínica→ `pendente_validacao_clinica` legado;
+  //   aguarda validação      → ausência de validação psicométrica publicada.
+  //
+  // Revisão clínica/editorial concluída NÃO transforma instrumento autoral em
+  // instrumento psicometricamente validado. Por isso `aguardaValidacao` usa a
+  // declaração científica explícita (`validacaoBrasil`/`tipo`) e conserva o
+  // fallback legado para registros ainda pendentes de revisão clínica.
   const temFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
-  const aguardaValidacao = s.pendente_validacao_clinica === true;
+  const validacaoDeclarada = normalize(s.validacaoBrasil);
+  const tipoDeclarado = normalize(s.tipo);
+  const aguardaValidacao =
+    validacaoDeclarada.includes("sem validacao psicometrica") ||
+    (s.licencaUso === "autoral" && tipoDeclarado.includes("nao validado")) ||
+    s.pendente_validacao_clinica === true;
   provRows.push({
     id: s.id ?? "?",
     name: s.name ?? "?",

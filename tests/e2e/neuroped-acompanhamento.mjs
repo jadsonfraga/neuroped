@@ -1,5 +1,6 @@
 import { createServer as createViteServer } from "vite";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "../../scripts/lib/browser-audit-runtime.mjs";
 
 /**
  * Este E2E valida explicitamente a instalação local, não o bundle LIVE.
@@ -34,10 +35,7 @@ async function main() {
   const local = external ? null : await startLocalViteServer();
   const server = local?.server ?? null;
   const base = external || local.base;
-  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-  const browser = await chromium.launch(
-    executablePath ? { executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] } : undefined,
-  );
+  const browser = await chromium.launch(auditBrowserLaunchOptions());
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
 

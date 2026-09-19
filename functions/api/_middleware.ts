@@ -3,7 +3,9 @@
  * Aplicado automaticamente pelo Cloudflare Pages a todas as rotas filhas.
  */
 
-interface Env {
+import { writeApiMetric, type ApiMetricsEnv } from "./_observability";
+
+interface Env extends ApiMetricsEnv {
   DB?: D1Database;
   RATE_LIMIT_KV?: KVNamespace;
   ENVIRONMENT?: string;
@@ -258,7 +260,7 @@ async function checkRateLimit(
   return { allowed, remaining, resetAt: entry.resetAt };
 }
 
-export const onRequest: PagesFunction<Env> = async (context) => {
+const executeRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const origin = request.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin, new URL(request.url).origin);
@@ -353,4 +355,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     statusText: response.statusText,
     headers: newHeaders,
   });
+};
+/** Preserve the exact API response/error while recording metadata-only performance. */
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const startedAt = performance.now();
+  try {
+    const response = await executeRequest(context);
+    writeApiMetric(context, startedAt, response.status, "response");
+    return response;
+  } catch (error) {
+    writeApiMetric(context, startedAt, 500, "exception");
+    throw error;
+  }
 };

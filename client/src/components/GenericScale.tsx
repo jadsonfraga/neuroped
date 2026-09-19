@@ -57,6 +57,16 @@ interface ScaleChoiceItem extends ScaleItemBase {
     positiveOptionIndexes: number[];
     label: string;
   };
+  /**
+   * Item com polaridade invertida em relação às demais da mesma escala: o
+   * texto descreve uma habilidade presente (ex.: "Sabe o próprio nome"), não
+   * uma dificuldade. `config.labels` é único para a escala inteira (ex.:
+   * "Não" / "Às vezes" / "Sim"), então sem essa marcação a última opção
+   * ("Sim") sempre pintaria de vermelho — errado aqui, pois "Sim" é a
+   * resposta boa. `reversed: true` espelha a cor (e o cálculo de pontos, em
+   * makeInteractiveConfig) para este item, mantendo os mesmos rótulos.
+   */
+  reversed?: boolean;
 }
 
 interface ScaleTextItem extends ScaleItemBase {
@@ -87,6 +97,11 @@ export function itemSentinel(
   return typeof item === "string" || item.responseType === "text"
     ? undefined
     : item.sentinel;
+}
+export function itemReversed(item: ScaleItem): boolean {
+  return typeof item === "string" || item.responseType === "text"
+    ? false
+    : (item.reversed ?? false);
 }
 export function itemPlaceholder(item: ScaleItem): string | undefined {
   return typeof item === "string" || item.responseType !== "text"
@@ -149,6 +164,14 @@ export interface ScaleConfig {
   domains: DomainConfig[];
   infoBox?: string;
   scaleId?: string;
+  /**
+   * Passado a `SaveToPatient` como `instrumentVersion`. Default "client-v1"
+   * quando omitido. Uma escala cujo contrato de resposta muda de forma não
+   * diretamente comparável à anterior (rótulos, pontos, direção) deve
+   * declarar um valor próprio aqui, para que registros salvos antes e depois
+   * da mudança fiquem distinguíveis (ver SaveToPatient.tsx).
+   */
+  instrumentVersion?: string;
   onCalculate: (answers: Record<string, number>) => {
     total?: number;
     totalLabel?: string;
@@ -677,6 +700,7 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
             scaleName={config.title}
             responses={qaItems}
             applicationDate={applicationDate ?? undefined}
+            instrumentVersion={config.instrumentVersion}
           />
         </Suspense>
 
@@ -962,7 +986,10 @@ export function GenericScale({ config }: { config: ScaleConfig }) {
                         >
                           {config.labels.map((label, j) => {
                             const maxIdx = config.labels.length - 1;
-                            const ratio = maxIdx > 0 ? j / maxIdx : 0;
+                            const rawRatio = maxIdx > 0 ? j / maxIdx : 0;
+                            const ratio = itemReversed(item)
+                              ? 1 - rawRatio
+                              : rawRatio;
                             const selectedColor =
                               ratio === 0
                                 ? "bg-emerald-500 text-white border-emerald-500"

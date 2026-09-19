@@ -61,6 +61,24 @@ function fail(scaleId, message) {
   errors.push(`${scaleId || "(sem id)"}: ${message}`);
 }
 
+/**
+ * Alguns instrumentos autorais permanecem deliberadamente acessíveis por
+ * nome/rota, mas são retirados da recomendação automática por queixa após
+ * revisão clínica. Nesses casos `queixas: []` é um estado explícito e não uma
+ * perda acidental de domínio. Exigimos uma justificativa editorial rastreável
+ * no próprio card para não transformar a exceção em fail-open genérico.
+ */
+function isIntentionalManualOrHistoricalEntry(scale) {
+  if (scale.assessmentUse !== "monitorizacao" || scale.prioridade !== "monitorizacao") return false;
+  const text = String(scale.description ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return (
+    text.includes("selecionar manualmente") ||
+    text.includes("selecao manual") ||
+    text.includes("registro historico rastreavel") ||
+    text.includes("nao recomendado para novas aplicacoes rotineiras")
+  );
+}
+
 if (allScales.length < MINIMUM_CATALOG_SIZE) {
   fail(
     "catálogo",
@@ -118,7 +136,9 @@ for (const scale of allScales) {
   }
 
   if (!Array.isArray(scale.queixas) || scale.queixas.length === 0) {
-    fail(scaleId, "nenhum domínio/queixa informado");
+    if (!isIntentionalManualOrHistoricalEntry(scale)) {
+      fail(scaleId, "nenhum domínio/queixa informado");
+    }
   } else {
     for (const complaint of scale.queixas) {
       if (!validComplaints.has(complaint)) fail(scaleId, `domínio desconhecido: ${complaint}`);

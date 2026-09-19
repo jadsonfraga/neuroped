@@ -389,23 +389,43 @@ export function normalizeScaleDraftAnswers(
   return normalized;
 }
 
+export interface ScaleDraftContract {
+  schemaVersion: number;
+  migrateLegacy: boolean;
+}
+
+/**
+ * A ATEC mudou em 10/09/2026 de quatro níveis de intensidade para três
+ * respostas diretas. Os mesmos índices 0–2 passaram a ter outra semântica;
+ * portanto, rascunhos v1 não podem ser reinterpretados no contrato novo.
+ */
+export function resolveScaleDraftContract(draftId: string): ScaleDraftContract {
+  if (draftId === "generic:atec") {
+    return { schemaVersion: 2, migrateLegacy: false };
+  }
+  return { schemaVersion: 1, migrateLegacy: true };
+}
+
 /** API compatível usada pelos runners numéricos existentes. */
 export function useSecureScaleDraft({
   draftId,
   validOptions,
   legacyKey,
 }: SecureScaleDraftOptions): SecureScaleDraftState {
+  const contract = resolveScaleDraftContract(draftId);
   const state = useSecureTypedScaleDraft<Record<string, number>>({
     draftId,
-    schemaVersion: 1,
+    schemaVersion: contract.schemaVersion,
     createEmpty: () => ({}),
     sanitize: (value) => normalizeScaleDraftAnswers(value, validOptions),
     hasContent: hasRecordEntries,
     legacyKey,
-    legacyPayload: (value) =>
-      value && typeof value === "object" && "answers" in value
-        ? (value as { answers: unknown }).answers
-        : null,
+    legacyPayload: contract.migrateLegacy
+      ? (value) =>
+          value && typeof value === "object" && "answers" in value
+            ? (value as { answers: unknown }).answers
+            : null
+      : () => null,
   });
   return {
     answers: state.value,

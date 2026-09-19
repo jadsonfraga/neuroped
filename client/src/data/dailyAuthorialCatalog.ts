@@ -1,3 +1,5 @@
+import { curateDailyInventory } from "@/lib/daily-inventory-curation";
+
 export type DailyInventoryStatus =
   | "rascunho_revisao"
   | "revisado_clinicamente"
@@ -20,7 +22,11 @@ export interface DailyInventoryItem {
   id: string;
   domainId: string;
   text: string;
-  responseMode: "frequencia_0_3" | "sim_nao" | "presente_ausente" | "descritivo";
+  responseMode:
+    | "frequencia_0_3"
+    | "sim_nao"
+    | "presente_ausente"
+    | "descritivo";
   redFlag: boolean;
   clinicalNote: string;
 }
@@ -74,6 +80,8 @@ export interface DailyAuthorialInventory {
   safetyNote: string;
   tags: string[];
   duplicateCooldownDays: 30;
+  contingency?: boolean;
+  needsUpgrade?: boolean;
   generation: {
     model: string;
     reasoningMode: "pro";
@@ -98,7 +106,9 @@ function isDailyInventory(value: unknown): value is DailyAuthorialInventory {
     Array.isArray(item.items) &&
     item.scoring?.mode === "perfil_qualitativo_sem_total" &&
     item.scoring?.totalScoreEnabled === false &&
-    Array.isArray(item.redFlags)
+    Array.isArray(item.redFlags) &&
+    (item.contingency === undefined || typeof item.contingency === "boolean") &&
+    (item.needsUpgrade === undefined || typeof item.needsUpgrade === "boolean")
   );
 }
 
@@ -107,7 +117,10 @@ const modules = import.meta.glob("./daily-authorial/*.json", {
   import: "default",
 });
 
-const loaded = Object.entries(modules).map(([path, value]) => ({ path, value }));
+const loaded = Object.entries(modules).map(([path, value]) => ({
+  path,
+  value,
+}));
 
 export const dailyAuthorialCatalogErrors = loaded
   .filter(({ value }) => !isDailyInventory(value))
@@ -119,18 +132,25 @@ export const dailyAuthorialCatalogErrors = loaded
  * operacional só por terem sido gerados automaticamente.
  */
 export const dailyAuthorialReviewCatalog = loaded
-  .filter(
-    (entry): entry is { path: string; value: DailyAuthorialInventory } =>
-      isDailyInventory(entry.value),
+  .filter((entry): entry is { path: string; value: DailyAuthorialInventory } =>
+    isDailyInventory(entry.value),
   )
   .map(({ value }) => value)
   .sort((a, b) => b.generatedOn.localeCompare(a.generatedOn));
 
 /**
  * Catálogo operacional exibido no app. Publicação clínica exige promoção
- * humana explícita para `revisado_clinicamente`; rascunhos de automação e itens
- * arquivados nunca atravessam esta fronteira.
+ * humana explícita para `revisado_clinicamente`. Itens de contingência ou
+ * ainda marcados para upgrade permanecem bloqueados mesmo se o status for
+ * alterado por engano.
  */
-export const dailyAuthorialCatalog = dailyAuthorialReviewCatalog.filter(
-  (record) => record.status === "revisado_clinicamente",
+export const dailyAuthorialCurationCatalog = dailyAuthorialReviewCatalog.map(
+  (record) => ({
+    record,
+    decision: curateDailyInventory(record),
+  }),
 );
+
+export const dailyAuthorialCatalog = dailyAuthorialCurationCatalog
+  .filter(({ decision }) => decision.operational)
+  .map(({ record }) => record);

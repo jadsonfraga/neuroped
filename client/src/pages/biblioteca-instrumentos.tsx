@@ -25,6 +25,11 @@ import {
   dailyInventoryMatchesQuery,
   parseReferenceAgeRange,
 } from "@/lib/instrument-library-filters";
+import {
+  DAILY_RESPONSE_MODE_LABEL,
+  dailyResponseModes,
+  dailyResponseOptionsForMode,
+} from "@/lib/daily-inventory-response-contract";
 
 const LOGIC_LABEL: Record<ScoreLogic, string> = {
   manual_dependent: "Depende do manual",
@@ -193,6 +198,7 @@ function DailyCard({ record }: { record: DailyAuthorialInventory }) {
       record.items.filter((item) => item.domainId === domain.id),
     ]),
   );
+  const responseModes = dailyResponseModes(record);
 
   return (
     <details className="group rounded-xl border border-violet-200 bg-card dark:border-violet-800/60">
@@ -269,17 +275,35 @@ function DailyCard({ record }: { record: DailyAuthorialInventory }) {
         </div>
 
         <div>
-          <p className="font-semibold text-foreground">Opções de resposta</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {record.responseOptions.map((option) => (
-              <Badge
-                key={option.code}
-                variant="outline"
-                className="text-[10px]"
-              >
-                {option.code}: {option.label}
-              </Badge>
-            ))}
+          <p className="font-semibold text-foreground">
+            Opções de resposta por tipo de item
+          </p>
+          <div className="mt-2 space-y-2">
+            {responseModes.map((mode) => {
+              const options = dailyResponseOptionsForMode(record, mode);
+              return (
+                <div key={mode} className="flex flex-wrap items-center gap-1.5">
+                  <span className="mr-1 text-[10px] font-medium text-foreground">
+                    {DAILY_RESPONSE_MODE_LABEL[mode]}:
+                  </span>
+                  {mode === "descritivo" ? (
+                    <Badge variant="outline" className="text-[10px]">
+                      Texto livre · sem valor numérico
+                    </Badge>
+                  ) : (
+                    options.map((option) => (
+                      <Badge
+                        key={`${mode}-${option.code}`}
+                        variant="outline"
+                        className="text-[10px]"
+                      >
+                        {option.code}: {option.label}
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

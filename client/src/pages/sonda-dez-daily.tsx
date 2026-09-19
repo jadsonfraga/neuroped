@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SondaDigitalGuided from "@/components/sonda-dez/SondaDigitalGuided";
 import {
   BrainCircuit,
   Check,
@@ -38,12 +39,26 @@ const PREFLIGHT = [
  * O atalho fica abaixo da Tela da criança (z-100), preservando o estímulo puro.
  */
 export default function SondaDezDailyPage() {
+  const [guided, setGuided] = useState(true);
   const [guideOpen, setGuideOpen] = useState(false);
   const [preflight, setPreflight] = useState<Record<string, boolean>>({});
   const ready = PREFLIGHT.every((item) => preflight[item]);
 
+  if (guided) return <SondaDigitalGuided onLegacy={() => setGuided(false)} />;
+
   return (
     <>
+      <Button
+        variant="outline"
+        className="mb-4"
+        onClick={() => {
+          if (window.confirm("Voltar ao modo digital apaga os dados desta aplicação presencial. Copie o registro antes de continuar. Deseja voltar?")) {
+            setGuided(true);
+          }
+        }}
+      >
+        Voltar à aplicação digital guiada
+      </Button>
       <SondaDezDailyCorePage />
 
       <Button

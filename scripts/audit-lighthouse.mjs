@@ -9,6 +9,7 @@ import {
   ACCEPTED_FIRST_VISIT_STORAGE,
   ensureClientBuild,
   isMissingBrowserError,
+  resolveAuditChromiumPath,
   startStaticServer,
 } from "./lib/browser-audit-runtime.mjs";
 
@@ -130,7 +131,7 @@ function evaluateRoute(result, route) {
 const server = await startStaticServer(ensureClientBuild(repoRoot));
 let chrome;
 try {
-  const browserPath = process.env.LIGHTHOUSE_CHROME_PATH || chromium.executablePath();
+  const browserPath = process.env.LIGHTHOUSE_CHROME_PATH || resolveAuditChromiumPath() || "";
   if (!existsSync(browserPath)) {
     fallback("Chromium indisponível no ambiente");
     process.exitCode = 0;

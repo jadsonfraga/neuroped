@@ -69,7 +69,13 @@ for (const source of [patientsPage, patientDetailPage, prontuarioPage, scaleSave
   assert.match(source, /\/api\/live\//);
 }
 assert.match(prontuarioPage, /provenanceKind: "documented"/);
-assert.match(scaleSaver, /instrumentVersion: "client-v1"/);
+// Contrato: toda escala usa "client-v1" por padrão; uma escala pode declarar
+// sua própria versão de contrato de resposta (ex.: ATEC em 09/2026, quando o
+// formato mudou de 4 opções para 3) via prop opcional — sem isso, aplicações
+// antigas e novas de uma escala reformulada ficariam indistinguíveis em
+// assessment.instrumentVersion.
+assert.match(scaleSaver, /instrumentVersion\?: string/);
+assert.match(scaleSaver, /const instrumentVersion = rawProps\.instrumentVersion \?\? "client-v1"/);
 assert.match(scaleSaver, /\/api\/live\/documents/);
 assert.match(invitations, /buildInvitationUrl/);
 assert.match(invitations, /ONBOARDING_BASE_URL_NOT_CONFIGURED/);
