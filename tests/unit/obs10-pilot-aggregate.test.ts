@@ -37,9 +37,9 @@ for (const bad of [
 ]) check(!parseMetricsJSON(JSON.stringify(bad)).ok, "extra field, free text or unknown value refused");
 check(!parseMetricsJSON("{").ok && !parseMetricsJSON(" ".repeat(MAX_METRICS_BYTES + 1)).ok, "invalid or oversized input refused");
 check(parseMetricsJSON("﻿" + JSON.stringify(base)).ok, "BOM tolerated");
-// Regression (found shipping 1.6.1): the version check must accept any patch release, not just a fixed ".0".
-for (const good of ["1.0.0", "1.5.0", "1.6.0", "1.6.1", "2.0.0", "1.12.34"]) check(parseMetricsJSON(JSON.stringify({ ...base, protocolVersion: good })).ok, `protocol version ${good} accepted`);
-for (const badVersion of ["1.6", "v1.6.1", "1.6.1-beta", ""]) check(!parseMetricsJSON(JSON.stringify({ ...base, protocolVersion: badVersion })).ok, `malformed protocol version ${JSON.stringify(badVersion)} refused`);
+// Regression: patch/minor releases in the supported major are accepted, but a future major is never assumed compatible.
+for (const good of ["1.0.0", "1.5.0", "1.6.0", "1.6.1", "1.12.34"]) check(parseMetricsJSON(JSON.stringify({ ...base, protocolVersion: good })).ok, `protocol version ${good} accepted`);
+for (const badVersion of ["2.0.0", "1.6", "v1.6.1", "1.6.1-beta", ""]) check(!parseMetricsJSON(JSON.stringify({ ...base, protocolVersion: badVersion })).ok, `unsupported or malformed protocol version ${JSON.stringify(badVersion)} refused`);
 
 // Aggregation: duplicates counted once, medians real, small groups flagged, imported files marked.
 const a = pilotMetrics(record("y06", 84, { durationSeconds: 600, pilot: { ...emptyPilot(), logs: [{ phase: "Preparação", seconds: 120, endedBy: "início da coleta" }], utility: "acrescentou informação útil" } }));
