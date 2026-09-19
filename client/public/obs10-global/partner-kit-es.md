@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — Kit de conversación con colaboradores
 
-Presentación editorial 1.0.0 · Referencia del producto 1.4.0. Sin registro, cookies de seguimiento, analytics ni envío automático en esta página.
+Presentación editorial 1.0.0 · Referencia del producto 1.6.1. Sin registro, cookies de seguimiento, analytics ni envío automático en esta página.
 
 ## Estado y finalidad
 

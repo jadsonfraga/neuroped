@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — guia de aplicação prática
 
-**Versão da interface 1.6.0 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
+**Versão da interface 1.6.1 · 18/09/2026.** Origem: issue #893 / PR #894. Segunda rodada: issue #895 / PR #896.
 
 Rota: `/#/avaliacao-pre-consulta-faixa-etaria`. Acesso nos destaques e em **PRÉ-CONSULTA GUIADA → Avaliação de Pré-Consulta por Faixa Etária**. A Sonda Dez permanece independente.
 
@@ -271,3 +271,16 @@ Sem alteração do roteiro clínico, das fichas ou do JSON. A v1.6 responde a um
 ### Verificação v1.6
 
 `tests/unit/obs10-orientation.test.ts` (cálculo de idade em limites de dia, bissexto e datas inválidas; cobertura das quatro etapas; nomes reais dos controles; ausência de linguagem diagnóstica; flags dos passos finais; alvos de rolagem existentes; data de nascimento nunca persistida) e extensão de `tests/e2e/obs10-dossier.mjs` (guia aberto com seis passos, cálculo de 7 anos e 2 meses a partir de datas fixas com campo apagado, falas ao responsável e à criança, legenda com sete botões durante a coleta, lista de seis passos com rolagem e marcação progressiva após exportar e resolver pendências, axe limpo em todas as telas). Importação aceita 1.0 a 1.6. Rollback: reverter somente a PR desta versão.
+
+## v1.6.1 — correção de estados de conclusão falsa e do drift entre subsistemas
+
+Rodada de caça a defeitos por auditoria adversarial do commit `19f56f01` (v1.6), sem alteração do roteiro clínico. Achados confirmados e corrigidos:
+
+- **"Revisado" sem revisar.** O passo "Confira as pendências e os cartões sem marcação" de `O que fazer agora` marcava-se sozinho apenas por não haver registro incompleto, sem que a aplicadora tivesse aberto a revisão por bloco. Agora segue exclusivamente a declaração própria já existente ("Revisei os seis blocos..."), que se desfaz a qualquer edição.
+- **"Exportado"/"dossiê gerado" que sobrevivia à edição.** As marcações de TXT, JSON e dossiê eram booleanos definidos no clique e nunca desfeitos. Agora cada uma guarda o próprio texto exportado e só permanece marcada enquanto esse texto for idêntico ao registro atual; qualquer edição posterior (incluindo marcar a própria revisão, que passa a integrar o JSON) desmarca todas de uma vez, forçando reexportação.
+- **"Vídeo salvo" por associação de clipe.** Associar um clipe no painel de evidência (opcional) não comprova que o vídeo gravado neste dispositivo foi salvo. O passo agora também aceita o clique real no link "Salvar vídeo no dispositivo institucional"; um não substitui o outro.
+- **Referência de versão desconectada entre subsistemas.** A apresentação internacional (`client/public/obs10-global`) citava "referência do produto 1.4.0" enquanto a produção clínica já estava em 1.6.0, com o workflow de verificação internacional permanecendo verde por não comparar as duas versões. Causa raiz dupla: a constante `PRODUCT` nunca era interpolada no rodapé publicado (era um literal fixo por idioma) e nenhum teste comparava `PRODUCT` a `OBS10_VERSION`. Corrigido nas duas pontas: o rodapé das três línguas e dos três kits para parceiros agora interpola `PRODUCT`, e `tests/unit/obs10-global.test.mjs` falha fechado se `PRODUCT` divergir de `OBS10_VERSION`.
+
+### Verificação v1.6.1
+
+`tests/unit/obs10-orientation.test.ts` (estendido: "descrito" e "revisado" são independentes; cada expressão de invalidação por edição existe literalmente na página), extensão de `tests/e2e/obs10-dossier.mjs` (declarar a revisão desmarca a exportação por embutir a declaração no JSON; qualquer edição posterior zera as quatro marcações já obtidas; reexportar e rebaixar o dossiê as restaura), extensão de `tests/e2e/obs10.mjs` (gravar vídeo real não marca o passo sozinho; só o clique em salvar marca, com zero clipes associados) e extensão de `tests/unit/obs10-global.test.mjs` (invariante `PRODUCT === OBS10_VERSION`, lida como texto do `protocol.ts` para não exigir carregador de TypeScript). Versão 1.6.1; importação aceita 1.0 a 1.6.1. Rollback: reverter somente a PR desta versão.

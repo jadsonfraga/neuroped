@@ -1,6 +1,6 @@
 # OBS-10 — apresentação internacional e kit para pilotos externos
 
-Apresentação editorial **1.0.0**, referência clínica **OBS-10 1.4.0**. Issue #907.
+Apresentação editorial **1.0.0**, referência clínica **OBS-10 1.6.1** (revisada em 2026-09-18: corrigido drift de 1.4.0). Issue #907.
 
 ## Escopo entregue
 

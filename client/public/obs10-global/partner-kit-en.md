@@ -1,6 +1,6 @@
 # NeuroPed OBS-10 — Partner discussion kit
 
-Editorial presentation 1.0.0 · Product reference 1.4.0. No registration, tracking cookies, analytics or automatic sending on this page.
+Editorial presentation 1.0.0 · Product reference 1.6.1. No registration, tracking cookies, analytics or automatic sending on this page.
 
 ## Status and purpose
 

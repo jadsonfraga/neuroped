@@ -2,12 +2,20 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import vm from 'node:vm';
-import { COPY, LANGUAGES, CONTACT } from '../../scripts/obs10-global/content.mjs';
+import { COPY, LANGUAGES, CONTACT, PRODUCT } from '../../scripts/obs10-global/content.mjs';
 let count=0;
 const check=(value,message)=>{assert.ok(value,message);count++;};
 const source=(p)=>readFileSync(p,'utf8');
 const keys=(obj)=>Object.keys(obj).sort();
 execFileSync(process.execPath,['scripts/obs10-global/render.mjs','--check']);
+// Cross-subsystem invariant (real gap found by adversarial audit of commit 19f56f01): production advanced to
+// OBS10_VERSION 1.6.0 across two merged PRs while this public presentation kept citing 1.4.0, green the whole time,
+// because nothing tied the two together. Reading the constant as text avoids needing a TypeScript loader here.
+{
+ const protocolVersion = /OBS10_VERSION\s*=\s*"([\d.]+)"/.exec(source('client/src/features/obs10/protocol.ts'))?.[1];
+ check(Boolean(protocolVersion), 'protocol.ts still declares OBS10_VERSION as a plain string literal');
+ check(PRODUCT === protocolVersion, `international presentation product reference (${PRODUCT}) must equal the clinical protocol version (${protocolVersion}); bump PRODUCT in content.mjs, review the three translations and partner kits, and re-render before merging a protocol version change`);
+}
 for(const l of LANGUAGES){
  const c=COPY[l.id], html=source(`client/public${l.path}index.html`), kit=source(`client/public/obs10-global/partner-kit-${l.id}.md`);
  assert.deepEqual(keys(c),keys(COPY.pt));count++;
