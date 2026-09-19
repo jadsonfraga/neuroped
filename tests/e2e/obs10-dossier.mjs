@@ -92,18 +92,20 @@ try {
   assert.ok(await page.locator(".obs10-delivery").evaluate((el) => el.getBoundingClientRect().top >= -2 && el.getBoundingClientRect().top < innerHeight), "Abrir scrolls to the delivery section");
   await page.getByRole("button", { name: /3\. Linguagem e raciocínio/ }).click();
   await page.getByLabel("O que fez ou falou? Descreva literalmente").first().fill("Repetiu as tres palavras na segunda apresentacao.");
-  // Dossier: download and clipboard carry the same text, with the literal fact, the prose category and explicit gaps.
+  // Dossier: clipboard alone is a valid delivery path, and download must carry exactly the same current text.
+  await button("Copiar dossiê").click();
+  await page.getByTestId("obs10-dossier").getByRole("status").filter({ hasText: /copiado/ }).waitFor();
+  const dossierFromClipboard = await page.evaluate(() => navigator.clipboard.readText());
+  assert.equal(await next.locator(".obs10-next-list > li").nth(4).evaluate((el) => el.classList.contains("is-done")), true, "successful clipboard copy completes the dossier step without requiring a download");
   const downloadPromise = page.waitForEvent("download"); await button("Baixar dossiê (.md)").click();
   const download = await downloadPromise; await download.saveAs(`${dir}/dossie.md`);
   const dossier = await readFile(`${dir}/dossie.md`, "utf8");
+  assert.equal(dossierFromClipboard, dossier);
   assert.ok(download.suggestedFilename().startsWith("OBS10-OBS14-SINTETICO") && download.suggestedFilename().endsWith(".md"));
   assert.match(dossier, /lei PRÉ/); assert.match(dossier, /7 anos e 2 meses \(86 meses\)/); assert.match(dossier, /2 ano ficticio/);
   assert.match(dossier, /realizou após ouvir o comando novamente/); assert.match(dossier, /«Repetiu as tres palavras na segunda apresentacao\.»/);
   assert.match(dossier, /Sem observação registrada no bloco 1/); assert.match(dossier, /## 6\. Pendências/);
   assert.ok(!/Fachetária/.test(dossier));
-  await button("Copiar dossiê").click();
-  await page.getByTestId("obs10-dossier").getByRole("status").filter({ hasText: /copiado/ }).waitFor();
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), dossier);
   await page.getByText("Ver o dossiê completo").click();
   assert.equal(await page.getByTestId("obs10-dossier-text").textContent(), dossier);
   await screen("02-dossie-desktop");
