@@ -7,7 +7,7 @@ import { canAddMedicalReview, DECISIONS, emptyEvidence, MAX_CLIPS, MAX_MOMENTS, 
 
 type LocalMedia = { url: string; sha256: string; bytes: number; mime: string; name: string; duration: number | null };
 const key = () => crypto.randomUUID();
-export function EvidencePanel({ record, onChange }: { record: SessionRecord; onChange: (e: EvidenceBundle) => void }) {
+export function EvidencePanel({ record, onChange, onLocalClipConfirmed }: { record: SessionRecord; onChange: (e: EvidenceBundle) => void; onLocalClipConfirmed?: (clipId: string) => void }) {
   const { accessMode, user } = useAuth();
   const canReview = canAddMedicalReview(accessMode, user?.role);
   const e = record.evidence ?? emptyEvidence();
@@ -72,11 +72,11 @@ export function EvidencePanel({ record, onChange }: { record: SessionRecord; onC
   function confirmAssociation() {
     if (!local || !playable || !record.sessionId) return;
     const existing = e.clips.find((c) => c.sha256 === local.sha256 && c.bytes === local.bytes);
-    if (existing) { setConfirmedId(existing.id); setTargetClip(existing.id); return; }
+    if (existing) { setConfirmedId(existing.id); setTargetClip(existing.id); onLocalClipConfirmed?.(existing.id); return; }
     if (e.clips.length >= MAX_CLIPS) { setError("Limite de oito clipes por sessão atingido. Preserve e revise as referências existentes."); return; }
     const id = key();
     onChange({ ...e, clips: [...e.clips, { id, sessionId: record.sessionId, label: `Clipe ${e.clips.length + 1}`, sha256: local.sha256, bytes: local.bytes, mime: local.mime, durationSeconds: local.duration, associatedAt: new Date().toISOString() }] });
-    setConfirmedId(id); setTargetClip(id);
+    setConfirmedId(id); setTargetClip(id); onLocalClipConfirmed?.(id);
   }
   function actualPosition(): number | null {
     const v = video.current;
