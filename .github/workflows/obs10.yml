@@ -7,6 +7,9 @@ on:
       - 'client/src/pages/pre-consulta-obs10.tsx'
       - 'client/src/App.tsx'
       - 'client/src/data/navigation.ts'
+      - 'client/src/components/Layout.tsx'
+      - 'tests/unit/featured-navigation.test.ts'
+      - 'tests/e2e/featured-navigation.mjs'
       - 'client/src/security/**'
       - 'tests/unit/obs10.test.ts'
       - 'tests/unit/obs10-practical.test.ts'
@@ -29,6 +32,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'client/src/data/navigation.ts'
+      - 'client/src/components/Layout.tsx'
+      - 'tests/unit/featured-navigation.test.ts'
+      - 'tests/e2e/featured-navigation.mjs'
       - 'client/src/features/obs10/**'
       - 'client/src/pages/pre-consulta-obs10.tsx'
       - 'client/src/security/**'
@@ -79,6 +86,7 @@ jobs:
           node --import tsx tests/unit/obs10-dossier.test.ts
           node --import tsx tests/unit/obs10-pilot-aggregate.test.ts
           node --import tsx tests/unit/obs10-orientation.test.ts
+          node --import tsx tests/unit/featured-navigation.test.ts
           npm run test:sonda
           npm run audit:navigation
           npm run test:operations
@@ -87,6 +95,10 @@ jobs:
           VITE_OPEN_ACCESS: 'false'
         run: npm run build:client
       - run: npx playwright install --with-deps chromium
+      - name: Featured navigation, connections and responsive sidebar
+        env:
+          NAVIGATION_ARTIFACT_DIR: /tmp/featured-navigation-proof
+        run: node tests/e2e/featured-navigation.mjs
       - name: Real route browser journey with synthetic credentials and media
         env:
           OBS10_ARTIFACT_DIR: /tmp/obs10-proof
@@ -117,6 +129,7 @@ jobs:
         with:
           name: obs10-verification
           path: |
+            /tmp/featured-navigation-proof
             /tmp/obs10-proof
             /tmp/obs10-practical
             /tmp/obs10-review

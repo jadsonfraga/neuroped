@@ -52,19 +52,27 @@ export interface NavigationMatch {
   item: NavItem;
 }
 
-/**
- * Atalhos por frequência de uso. A Sonda Dez abre o bloco clínico porque
- * substitui as superfícies antigas de teste direto com a criança.
- */
 const obs10Navigation: NavItem = {
   href: "/avaliacao-pre-consulta-faixa-etaria",
-  label: "Avaliação de Pré-Consulta por Faixa Etária",
+  label: "OBS-10 · Pré-Consulta",
   icon: Baby,
   tone: "priority",
-  description: "OBS-10 · 13 faixas · guia da assistente",
+  description: "Observação guiada · 13 faixas etárias · guia da assistente",
 };
 
+/**
+ * Sonda Dez e OBS-10 abrem o bloco clínico; a rotina de atendimento vem a
+ * seguir. Conexões usam um grupo compacto separado, independente da cor.
+ */
 export const featuredNavigation: NavItem[] = [
+  {
+    href: "/testes-diretos",
+    label: "Sonda Dez · Avaliação Direta",
+    icon: Sparkles,
+    tone: "priority",
+    description: "Avaliação direta pré-consulta · 10 min",
+  },
+  obs10Navigation,
   {
     href: "/pacientes",
     label: "Pacientes / Prontuário",
@@ -99,18 +107,6 @@ export const featuredNavigation: NavItem[] = [
     icon: Filter,
     tone: "priority",
     description: "Escolha por idade e queixa",
-  },
-  {
-    href: "/testes-diretos",
-    label: "Sonda Dez · Avaliação Direta",
-    icon: Sparkles,
-    tone: "priority",
-    description: "⭐ Destaque · avaliação direta pré-consulta · 10 min",
-  },
-  {
-    ...obs10Navigation,
-    label: "OBS-10 · Pré-Consulta",
-    description: "⭐ Destaque · observação guiada · 13 faixas etárias",
   },
   {
     href: "/escuta-clinica",
@@ -149,6 +145,13 @@ export const featuredNavigation: NavItem[] = [
     tone: "connection",
     description: "Exames e orientação clínica",
   },
+  {
+    href: "/nesplora/",
+    label: "Nesplora",
+    icon: Brain,
+    tone: "connection",
+    description: "Experiência imersiva em VR",
+  },
 ];
 
 export const navSections: NavSection[] = [
@@ -185,15 +188,10 @@ export const navSections: NavSection[] = [
       { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter, tone: "priority" },
       {
         href: "/testes-diretos",
-        label: "⭐ Sonda Dez · Avaliação Direta",
+        label: "Sonda Dez · Avaliação Direta",
         icon: Sparkles,
         tone: "priority",
-        description: "Destaque clínico · aplicação guiada em 10 minutos",
-      },
-      {
-        ...obs10Navigation,
-        label: "⭐ OBS-10 · Pré-Consulta",
-        description: "Destaque clínico · observação guiada por 13 faixas etárias",
+        description: "Aplicação guiada em 10 minutos",
       },
       { href: "/bateria-jadson", label: "Bateria Jadson", icon: ClipboardCheck },
       { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
@@ -297,7 +295,12 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
       .filter((item) => matchesNavigationItem(pathname, item.href))
       .map((item) => ({ section, item })),
   );
-  const directMatch = matches.sort((a, b) => b.item.href.length - a.item.href.length)[0];
+  // Destaques repetem destinos para acesso rápido; a seção real é quem deve
+  // abrir e receber o auto-scroll. Rotas mais específicas continuam vencendo.
+  const directMatch = matches.sort((a, b) =>
+    b.item.href.length - a.item.href.length ||
+    Number(a.section === featuredSection) - Number(b.section === featuredSection),
+  )[0];
   if (directMatch) return directMatch;
 
   const normalizedPath = normalizeNavigationPath(pathname);
