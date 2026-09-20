@@ -24,6 +24,7 @@ test("o app não reintroduz superfícies ou dependências do site Manus", async 
 
   const forbidden = [
     /https?:\/\/[^\s"']*manus\.space/i,
+    /https?:\/\/[^\s"']*manus-analytics\.com/i,
     /VITE_MANUS_[A-Z0-9_]+/,
     /["']\/manus["']/,
     /pages\/manus-integracoes/i,

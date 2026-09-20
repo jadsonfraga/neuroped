@@ -101,10 +101,10 @@ function FeaturedShortcuts({
     );
 
   const clinicalShortcuts = visibleFeaturedNavigation.filter(
-    (item) => (item.tone ?? "priority") !== "golden",
+    (item) => item.tone !== "connection",
   );
   const connections = visibleFeaturedNavigation.filter(
-    (item) => (item.tone ?? "priority") === "golden",
+    (item) => item.tone === "connection",
   );
   const heroes = clinicalShortcuts.slice(0, 1);
   const tiles = clinicalShortcuts.slice(1);
@@ -165,7 +165,7 @@ function FeaturedShortcuts({
   const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
-    const golden = (item.tone ?? "priority") === "golden";
+    const golden = item.tone === "golden" || item.tone === "connection";
     return withLink(
       item,
       <div
@@ -500,21 +500,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Auto-expande a seção que contém a rota atual e rola o item ativo para a vista
   // — o usuário sempre vê onde está e os instrumentos vizinhos, sem abrir nada.
   useEffect(() => {
+    if (isLoading || !navHydrated) return;
     const match = getNavigationMatch(location);
     const title = match?.section.title;
     if (title)
       setOpenSections((prev) =>
         prev[title] ? prev : { ...prev, [title]: true },
       );
-    const label = match?.item.label;
-    if (!label) return;
+    const href = match?.item.href;
+    if (!href) return;
     const t = setTimeout(() => {
-      document
-        .querySelector(`[data-testid="nav-${label}"]`)
+      sidebarRef.current
+        ?.querySelector(`[data-nav-href="${CSS.escape(href)}"]`)
         ?.scrollIntoView({ block: "nearest" });
     }, 80);
     return () => clearTimeout(t);
-  }, [location]);
+  }, [location, navHydrated, isLoading, isAuthenticated, user?.role]);
 
   const activeNavigation = getNavigationMatch(location);
   const showClinicalFlow =
@@ -860,11 +861,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ClinicSwitcher collapsed={collapsed} />
 
         {/* Atalhos em destaque */}
-        <FeaturedShortcuts
-          collapsed={collapsed}
-          activeHref={activeNavigation?.item.href}
-          canRenderNavItem={canRenderNavItem}
-        />
+        {/* A hierarquia depende da sessão resolvida. Mostrar só as conexões
+            públicas durante o bootstrap e inserir os cartões clínicos depois
+            deslocava o bloco já visível. */}
+        {!isLoading && (
+          <FeaturedShortcuts
+            collapsed={collapsed}
+            activeHref={activeNavigation?.item.href}
+            canRenderNavItem={canRenderNavItem}
+          />
+        )}
         <div className="np-side-divider mx-3 mt-3 border-t border-sidebar-border/60" />
 
         {/* Navigation */}
@@ -951,6 +957,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                     : undefined
                               }
                               data-testid={`nav-${item.label}`}
+                              data-nav-href={item.href}
                               data-tone={tone}
                               data-active={active || undefined}
                               onMouseEnter={() => softHover()}

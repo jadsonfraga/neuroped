@@ -36,6 +36,7 @@ let html = await readFile(path.join(nesploraBuild, "index.html"), "utf8");
 html = html
   .replace(/\s*<script id="manus-runtime">[\s\S]*?<\/script>/, "")
   .replace(/\s*<script src="\/__manus__\/debug-collector\.js" defer><\/script>/, "")
+  .replace(/\s*<script\b[^>]*\bsrc=["']https?:\/\/(?:[^/"']+\.)?manus-analytics\.com\/[^"']*["'][^>]*>\s*<\/script>/gi, "")
   .replaceAll('src="/assets/', 'src="./assets/')
   .replaceAll('href="/assets/', 'href="./assets/');
 await writeFile(path.join(destination, "index.html"), html, "utf8");

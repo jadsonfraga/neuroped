@@ -52,47 +52,61 @@ export interface NavigationMatch {
   item: NavItem;
 }
 
-/**
- * Atalhos por frequência de uso. A Sonda Dez abre o bloco clínico porque
- * substitui as superfícies antigas de teste direto com a criança.
- */
 const obs10Navigation: NavItem = {
   href: "/avaliacao-pre-consulta-faixa-etaria",
-  label: "Avaliação de Pré-Consulta por Faixa Etária",
+  label: "OBS-10 · Pré-Consulta",
   icon: Baby,
   tone: "priority",
-  description: "OBS-10 · 13 faixas · guia da assistente",
+  description: "Observação guiada · 13 faixas etárias · guia da assistente",
 };
 
+/**
+ * Sonda Dez e OBS-10 abrem o bloco clínico; a rotina de atendimento vem a
+ * seguir. Conexões usam um grupo compacto separado, independente da cor.
+ */
 export const featuredNavigation: NavItem[] = [
   {
     href: "/testes-diretos",
-    label: "Sonda Dez",
+    label: "Sonda Dez · Avaliação Direta",
     icon: Sparkles,
     tone: "priority",
     description: "Avaliação direta pré-consulta · 10 min",
   },
   obs10Navigation,
   {
-    href: "/especialidades",
-    label: "Especialidades Premium",
-    icon: Stethoscope,
-    tone: "golden",
-    description: "Vitrine institucional Dr. Jadson",
+    href: "/pacientes",
+    label: "Pacientes / Prontuário",
+    icon: Users,
+    tone: "priority",
+    description: "Abrir prontuário longitudinal",
+  },
+  {
+    href: "/agenda",
+    label: "Agenda & Gestão",
+    icon: Calendar,
+    tone: "priority",
+    description: "Consultas e organização do atendimento",
+  },
+  {
+    href: "/laudo-neuroped",
+    label: "Laudos",
+    icon: FileText,
+    tone: "priority",
+    description: "Documentação clínica",
+  },
+  {
+    href: "/receita-c1",
+    label: "Receita C1",
+    icon: Pill,
+    tone: "priority",
+    description: "Prescrição clínica",
   },
   {
     href: "/filtro",
     label: "Filtro de Escalas",
     icon: Filter,
     tone: "priority",
-    description: "Por idade e queixa",
-  },
-  {
-    href: "/marcacao",
-    label: "Secretaria IA",
-    icon: Calendar,
-    tone: "priority",
-    description: "Pré-agendamento pelo BoaConsulta",
+    description: "Escolha por idade e queixa",
   },
   {
     href: "/escuta-clinica",
@@ -102,11 +116,25 @@ export const featuredNavigation: NavItem[] = [
     description: "Áudio e anamnese estruturada",
   },
   {
-    href: "/servicos-clinica",
-    label: "Serviços da Clínica",
-    icon: Stethoscope,
+    href: "/medicamentos",
+    label: "Medicamentos",
+    icon: Pill,
     tone: "priority",
-    description: "Avaliações e serviços",
+    description: "Acompanhamento farmacológico",
+  },
+  {
+    href: "/calculadora-dose",
+    label: "Calculadora de dose",
+    icon: Calculator,
+    tone: "priority",
+    description: "Apoio ao cálculo clínico",
+  },
+  {
+    href: "/marcacao",
+    label: "Secretaria IA",
+    icon: Calendar,
+    tone: "connection",
+    description: "Pré-agendamento pelo BoaConsulta",
   },
   // prettier-ignore — formato preservado pelo guard de integração do Conecta.
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection", description: "Portais e conexões" },
@@ -114,14 +142,14 @@ export const featuredNavigation: NavItem[] = [
     href: "/eletroencefalograma",
     label: "EEG & Vídeo-EEG",
     icon: Waves,
-    tone: "golden",
+    tone: "connection",
     description: "Exames e orientação clínica",
   },
   {
     href: "/nesplora/",
     label: "Nesplora",
     icon: Brain,
-    tone: "golden",
+    tone: "connection",
     description: "Experiência imersiva em VR",
   },
 ];
@@ -135,12 +163,12 @@ export const navSections: NavSection[] = [
   {
     title: "ATENDIMENTO",
     items: [
-      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users, tone: "priority" },
-      { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
+      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
+      { href: "/receita-c1", label: "Receita C1", icon: Pill, tone: "priority" },
+      { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
-      { href: "/receita-c1", label: "Receita C1", icon: Pill },
     ],
   },
   {
@@ -157,16 +185,16 @@ export const navSections: NavSection[] = [
   {
     title: "TRIAGEM E FERRAMENTAS",
     items: [
+      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter, tone: "priority" },
       {
         href: "/testes-diretos",
-        label: "Sonda Dez · Pré-consulta",
+        label: "Sonda Dez · Avaliação Direta",
         icon: Sparkles,
         tone: "priority",
-        description: "Aplicação guiada por idade em 10 minutos",
+        description: "Aplicação guiada em 10 minutos",
       },
-      { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
-      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter },
       { href: "/bateria-jadson", label: "Bateria Jadson", icon: ClipboardCheck },
+      { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
       { href: "/pac", label: "PAC", icon: Brain },
       { href: "/inventarios-auto", label: "Autoavaliação", icon: ClipboardList },
       { href: "/ahsd-tea", label: "AH/SD × TEA", icon: Sparkles },
@@ -178,13 +206,13 @@ export const navSections: NavSection[] = [
     title: "ACOMPANHAMENTO CLÍNICO",
     items: [
       { href: "/medicamentos", label: "Medicamentos", icon: Pill, tone: "priority" },
-      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
-      { href: "/diario-sono", label: "Diário do sono", icon: Moon },
-      { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
+      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator, tone: "priority" },
       { href: "/epilepsia", label: "Diário de epilepsia", icon: Activity },
       { href: "/cefaleia", label: "Calendário de cefaleia", icon: Calendar },
-      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden" },
+      { href: "/diario-sono", label: "Diário do sono", icon: Moon },
+      { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
+      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
+      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection" },
     ],
   },
   {
@@ -267,7 +295,12 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
       .filter((item) => matchesNavigationItem(pathname, item.href))
       .map((item) => ({ section, item })),
   );
-  const directMatch = matches.sort((a, b) => b.item.href.length - a.item.href.length)[0];
+  // Destaques repetem destinos para acesso rápido; a seção real é quem deve
+  // abrir e receber o auto-scroll. Rotas mais específicas continuam vencendo.
+  const directMatch = matches.sort((a, b) =>
+    b.item.href.length - a.item.href.length ||
+    Number(a.section === featuredSection) - Number(b.section === featuredSection),
+  )[0];
   if (directMatch) return directMatch;
 
   const normalizedPath = normalizeNavigationPath(pathname);
