@@ -14,6 +14,11 @@ Rastreio: https://github.com/jadsonfraga/neuroped/pull/914
 - No empate de rota, a seção real vence o destaque; uma rota mais específica
   continua vencendo um prefixo. A rolagem usa `href`, restrito à sidebar, e
   espera hidratação e autorização.
+- Os destaques só montam após o carregamento da sessão: mostrar conexões
+  públicas antes de inserir cartões clínicos deslocava o bloco. O Lighthouse
+  registrou esse salto com CLS acionável 0,032; após a correção, a reprodução
+  local apresentou zero deslocamento acionável, sem mudar limites/exclusões
+  do gate. A performance integral continua sendo conferida no CI.
 - Nesplora mantém link HTML direto para o microsite local, fora das rotas SPA.
   A revisão encontrou um script residual de `manus-analytics.com`; o
   sincronizador agora o remove, o HTML foi regenerado com essa transformação

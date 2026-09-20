@@ -861,11 +861,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ClinicSwitcher collapsed={collapsed} />
 
         {/* Atalhos em destaque */}
-        <FeaturedShortcuts
-          collapsed={collapsed}
-          activeHref={activeNavigation?.item.href}
-          canRenderNavItem={canRenderNavItem}
-        />
+        {/* A hierarquia depende da sessão resolvida. Mostrar só as conexões
+            públicas durante o bootstrap e inserir os cartões clínicos depois
+            deslocava o bloco já visível. */}
+        {!isLoading && (
+          <FeaturedShortcuts
+            collapsed={collapsed}
+            activeHref={activeNavigation?.item.href}
+            canRenderNavItem={canRenderNavItem}
+          />
+        )}
         <div className="np-side-divider mx-3 mt-3 border-t border-sidebar-border/60" />
 
         {/* Navigation */}

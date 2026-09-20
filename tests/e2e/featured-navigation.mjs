@@ -108,6 +108,27 @@ try {
   await page.reload();
   await waitForObsAutoScroll();
 
+  // Exploring another group must preserve the user's scroll position, rather
+  // than running the active-route positioning effect again after every toggle.
+  const reference = sidebar.getByRole("button", { name: "REFERÊNCIA", exact: true });
+  assert.equal(await reference.getAttribute("aria-expanded"), "false");
+  await reference.scrollIntoViewIfNeeded();
+  const referenceBefore = await reference.boundingBox();
+  assert.ok(referenceBefore);
+  await reference.click();
+  assert.equal(await reference.getAttribute("aria-expanded"), "true");
+  // Let the group's 320 ms expansion finish before reading stable geometry.
+  await page.waitForTimeout(400);
+  const referenceAfter = await reference.boundingBox();
+  assert.ok(referenceAfter);
+  assert.ok(Math.abs(referenceAfter.y - referenceBefore.y) <= 2,
+    "abrir Referência mantém seu título no lugar, sem voltar ao item OBS ativo");
+  assert.equal(await reference.evaluate((heading) => {
+    const viewport = heading.closest(".np-sidebar-scroll").getBoundingClientRect();
+    const rect = heading.getBoundingClientRect();
+    return rect.top >= viewport.top - 1 && rect.bottom <= viewport.bottom + 1;
+  }), true, "o grupo escolhido continua visível após a expansão");
+
   await page.getByTestId("button-sidebar-toggle").click();
   const rail = sidebar.locator(".np-side-rail-icon:visible");
   assert.deepEqual((await hrefs(rail)).slice(0, 2), [
