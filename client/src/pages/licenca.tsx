@@ -74,8 +74,9 @@ function LicencaUnitPage() {
   }, [activeClinicId, isManager, snapshot]);
 
   useEffect(() => {
+    const requestCounter = detailsGeneration;
     void loadDetails();
-    return () => { detailsGeneration.current++; };
+    return () => { requestCounter.current++; };
   }, [loadDetails]);
   useEffect(() => {
     setSelected(new Set());

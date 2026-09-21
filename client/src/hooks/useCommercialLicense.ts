@@ -66,8 +66,10 @@ export function useCommercialLicense(): CommercialLicenseState {
   }, [scope]);
 
   useEffect(() => {
+    // Captura o contador, não o seu valor: cleanup invalida inclusive um reload.
+    const requestCounter = generation;
     void load();
-    return () => { generation.current++; };
+    return () => { requestCounter.current++; };
   }, [load]);
 
   // Comparação por identidade também invalida A -> contexto ausente -> A.
