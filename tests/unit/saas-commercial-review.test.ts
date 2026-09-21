@@ -75,10 +75,12 @@ function count(db: SQLiteD1, table: string) { return Number(db.raw.prepare(`SELE
 // Middleware REAL: catálogo anônimo, sem DB/JWT, sem abrir o namespace comercial.
 {
   const db = fixture();
+  // Material de teste efêmero, sem ler credenciais ou configurar serviço externo.
+  const ephemeralSigningKey = crypto.randomUUID() + crypto.randomUUID();
   for (const binding of [undefined, db.asD1()]) {
     let reached = false;
     const base = {
-      env: { DB: binding, ENVIRONMENT: "production", NEUROPED_JWT_SECRET: "s".repeat(40) }, data: {},
+      env: { DB: binding, ENVIRONMENT: "production", NEUROPED_JWT_SECRET: ephemeralSigningKey }, data: {},
       request: new Request("https://synthetic.invalid/api/commercial/catalog"),
       next: async () => { reached = true; return catalog({} as Parameters<typeof catalog>[0]); },
       waitUntil: () => undefined,
