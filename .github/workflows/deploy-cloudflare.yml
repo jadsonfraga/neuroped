@@ -316,6 +316,8 @@ jobs:
 
           npx wrangler@4 d1 execute neuroped-db --remote --yes \
             --file=./db/migrations/0026_saas_commercial_catalog.sql
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0027_saas_commercial_seat_integrity.sql
 
           npx wrangler@4 d1 execute neuroped-db --remote \
             --command "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'commercial_%' ORDER BY name;" \
@@ -351,15 +353,24 @@ jobs:
           }
 
           npx wrangler@4 d1 execute neuroped-db --remote \
-            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_commercial_license_must_start_pending','trg_commercial_license_offer_cap','trg_commercial_license_activation_contract','trg_commercial_material_usage_authorized_user') ORDER BY name;" \
+            --command "SELECT name FROM sqlite_master WHERE type='trigger' AND name IN ('trg_commercial_license_must_start_pending','trg_commercial_license_offer_cap','trg_commercial_license_activation_contract','trg_commercial_material_usage_authorized_user','trg_commercial_license_last_user_update','trg_commercial_license_last_user_delete','trg_commercial_license_user_identity_immutable') ORDER BY name;" \
             > /tmp/commercial-triggers.txt 2>&1
           cat /tmp/commercial-triggers.txt
-          for trigger in trg_commercial_license_must_start_pending trg_commercial_license_offer_cap trg_commercial_license_activation_contract trg_commercial_material_usage_authorized_user; do
+          for trigger in trg_commercial_license_must_start_pending trg_commercial_license_offer_cap trg_commercial_license_activation_contract trg_commercial_material_usage_authorized_user trg_commercial_license_last_user_update trg_commercial_license_last_user_delete trg_commercial_license_user_identity_immutable; do
             grep -q "\b$trigger\b" /tmp/commercial-triggers.txt || {
               echo "::error::trigger fail-closed comercial ausente: $trigger"
               exit 1
             }
           done
+          # Não corrigir silenciosamente estado histórico inválido: impedir release.
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT 'active_without_seats=' || COUNT(*) AS invariant FROM commercial_licenses cl WHERE cl.status='active' AND NOT EXISTS (SELECT 1 FROM commercial_license_users u WHERE u.license_id=cl.id AND u.status='active');" \
+            > /tmp/commercial-seat-invariant.txt 2>&1
+          cat /tmp/commercial-seat-invariant.txt
+          grep -Eq 'active_without_seats=0([^0-9]|$)' /tmp/commercial-seat-invariant.txt || {
+            echo "::error::licença ativa sem usuário autorizado; requer reconciliação auditada antes do release"
+            exit 1
+          }
           echo "✅ Catálogo/licença comercial migrados e verificados antes do deploy das Functions."
 
       - name: Configurar secrets/vars de auth no Pages
