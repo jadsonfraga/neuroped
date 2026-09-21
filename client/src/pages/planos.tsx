@@ -21,16 +21,9 @@ import {
 
 /**
  * Vitrine pública do SKU comercial institucional.
- *
- * Esta página NÃO usa `shared/billing.ts`: o billing genérico por assento é
- * infraestrutura legada do SaaS amplo e não define o produto que está sendo
- * oferecido na coorte comercial de 2026.
- *
- * O domínio comercial (`shared/commercial.ts`) é a única fonte de preço,
- * escopo, limites e saleMode. A vitrine nunca transforma um offer invite_only
- * ou gated em checkout público.
+ * O domínio comercial é a fonte de preço, limites e saleMode. A pré-consulta
+ * pública é um recurso complementar, não uma quinta superfície exclusiva.
  */
-
 const priceFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -38,7 +31,7 @@ const priceFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 const FEATURE_LABELS: Record<CommercialFeatureCode, string> = {
-  "form.preconsultation": "Preparação estruturada da consulta",
+  "form.preconsultation": "Pré-consulta pública — disponível sem licença",
   "form.change_log": "Registro organizado de mudanças",
   "form.school_feedback": "Devolutiva escolar estruturada",
   "form.approved_plan": "Plano aprovado em uma página",
@@ -59,17 +52,13 @@ export default function PlanosPage() {
   return (
     <div className="space-y-6 pb-12">
       <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-chart-2/10 to-transparent p-6">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          NeuroPed Institucional
-        </span>
-        <h1 className="mt-2 text-2xl font-bold text-foreground">
-          Uma licença pequena para organizar o fluxo antes de ampliar o sistema
-        </h1>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">NeuroPed Institucional</span>
+        <h1 className="mt-2 text-2xl font-bold text-foreground">Uma licença pequena para organizar o fluxo antes de ampliar o sistema</h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
           O produto comercial inicial do NeuroPed é deliberadamente restrito:
-          cinco materiais educativo-operacionais para uma unidade institucional,
-          com usuários autorizados e suporte limitado. O prontuário clínico, PANT,
-          NeuroBoard e funções de decisão clínica não fazem parte desta oferta.
+          quatro materiais licenciados para uma unidade institucional, com usuários
+          autorizados e suporte limitado, acompanhados de uma pré-consulta pública.
+          O prontuário clínico, PANT, NeuroBoard e funções de decisão clínica não fazem parte desta oferta.
         </p>
       </header>
 
@@ -79,17 +68,11 @@ export default function PlanosPage() {
             <div className="max-w-2xl">
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h2 className="text-lg font-bold text-foreground">
-                  {INSTITUTIONAL_PILOT_OFFER.name}
-                </h2>
+                <h2 className="text-lg font-bold text-foreground">{INSTITUTIONAL_PILOT_OFFER.name}</h2>
               </div>
               <p className="mt-2 flex flex-wrap items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground" data-testid="pilot-price">
-                  {PILOT_PRICE}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  por unidade / {INSTITUTIONAL_PILOT_OFFER.termDays} dias
-                </span>
+                <span className="text-3xl font-bold text-foreground" data-testid="pilot-price">{PILOT_PRICE}</span>
+                <span className="text-sm text-muted-foreground">por unidade / {INSTITUTIONAL_PILOT_OFFER.termDays} dias</span>
               </p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 Coorte fechada por convite, limitada a {INSTITUTIONAL_PILOT_OFFER.maxLicenses} instituições.
@@ -97,15 +80,10 @@ export default function PlanosPage() {
                 {INSTITUTIONAL_PILOT_OFFER.maxAuthorizedUsers} usuários autorizados.
               </p>
             </div>
-
             <div className="flex min-w-52 flex-col gap-2">
               <Button asChild size="lg">
-                <a
-                  href="mailto:drjadsonfraga@proton.me?subject=Interesse%20no%20NeuroPed%20Institucional%20Piloto%201.0"
-                  data-testid="pilot-interest-cta"
-                >
-                  Solicitar convite
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                <a href="mailto:drjadsonfraga@proton.me?subject=Interesse%20no%20NeuroPed%20Institucional%20Piloto%201.0" data-testid="pilot-interest-cta">
+                  Solicitar convite<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </a>
               </Button>
               <p className="text-center text-xs text-muted-foreground">
@@ -118,7 +96,7 @@ export default function PlanosPage() {
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
                 <FileCheck2 className="h-4 w-4 text-primary" aria-hidden="true" />
-                Cinco materiais incluídos
+                Cinco materiais no catálogo: quatro licenciados e um público
               </h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {INSTITUTIONAL_PILOT_OFFER.features.map((feature) => (
@@ -128,12 +106,15 @@ export default function PlanosPage() {
                   </li>
                 ))}
               </ul>
+              <p className="mt-3 text-xs text-muted-foreground" data-testid="public-intake-boundary">
+                A pré-consulta é pública, gratuita e não exclusiva da licença. Seu preenchimento
+                não é associado automaticamente à unidade licenciada. Ela permanece acessível
+                às famílias sem conta e sem contratação institucional.
+              </p>
             </div>
-
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
-                <LifeBuoy className="h-4 w-4 text-primary" aria-hidden="true" />
-                Operação incluída
+                <LifeBuoy className="h-4 w-4 text-primary" aria-hidden="true" />Operação incluída
               </h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
@@ -142,12 +123,11 @@ export default function PlanosPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Clock3 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  {INSTITUTIONAL_PILOT_OFFER.onboardingMinutes} min de onboarding +{" "}
-                  {INSTITUTIONAL_PILOT_OFFER.supportMinutes} min de suporte incluído.
+                  {INSTITUTIONAL_PILOT_OFFER.onboardingMinutes} min de onboarding +{" "}{INSTITUTIONAL_PILOT_OFFER.supportMinutes} min de suporte incluído.
                 </li>
                 <li className="flex items-start gap-2">
                   <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  Acesso concedido somente a usuário ativo e explicitamente autorizado na licença.
+                  Nos quatro materiais institucionais, acesso somente a usuário ativo e explicitamente autorizado na licença.
                 </li>
               </ul>
             </div>
@@ -159,55 +139,37 @@ export default function PlanosPage() {
         <CardContent className="p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Próxima etapa — ainda fechada
-              </span>
-              <h2 className="mt-1 text-base font-bold text-foreground">
-                {INSTITUTIONAL_ANNUAL_OFFER.name}
-              </h2>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Próxima etapa — ainda fechada</span>
+              <h2 className="mt-1 text-base font-bold text-foreground">{INSTITUTIONAL_ANNUAL_OFFER.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Preço de lista definido em <strong className="text-foreground">{ANNUAL_PRICE}</strong> por unidade/ano,
                 mas a oferta permanece bloqueada até o gate pós-piloto.
               </p>
             </div>
-            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
-              Não disponível para contratação
-            </span>
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">Não disponível para contratação</span>
           </div>
         </CardContent>
       </Card>
-
       <Card>
         <CardContent className="p-5">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-rose-600 dark:text-rose-400">
-            <XCircle className="h-4 w-4" aria-hidden="true" /> Limites clínicos e comerciais
+            <XCircle className="h-4 w-4" aria-hidden="true" />Limites clínicos e comerciais
           </h2>
-          <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-            {BOUNDARIES.map((item) => (
-              <li key={item}>• {item}</li>
-            ))}
-          </ul>
+          <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">{BOUNDARIES.map((item) => <li key={item}>• {item}</li>)}</ul>
         </CardContent>
       </Card>
-
       <Card>
         <CardContent className="p-5">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Como a licença é protegida
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />Como a licença é protegida
           </h2>
           <ul className="space-y-2 text-sm leading-relaxed text-muted-foreground">
             <li>• A licença começa pendente; não pode nascer ativa no banco.</li>
             <li>• Ativação exige conciliação comercial, aceite da versão contratual correta e ao menos um usuário autorizado.</li>
             <li>• Ser membro da clínica não basta: cada usuário precisa constar explicitamente na licença.</li>
-            <li>• O limite da coorte piloto e o teto de usuários são impostos no servidor e no banco.</li>
+            <li>• O limite da coorte piloto, o teto de usuários e a manutenção do último assento são impostos no servidor e no banco.</li>
           </ul>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Consulte também os{" "}
-            <Link href="/termos" className="underline">
-              Termos de uso
-            </Link>
-            .
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">Consulte também os <Link href="/termos" className="underline">Termos de uso</Link>.</p>
         </CardContent>
       </Card>
     </div>

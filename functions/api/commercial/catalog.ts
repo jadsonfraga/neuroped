@@ -1,7 +1,4 @@
-import {
-  COMMERCIAL_OFFERS,
-  type CommercialOffer,
-} from "../../../shared/commercial";
+import { COMMERCIAL_OFFERS, COMMERCIAL_MATERIALS, type CommercialOffer } from "../../../shared/commercial";
 import { tenantJson } from "../tenant/_core";
 
 function publicProjection(offer: CommercialOffer) {
@@ -18,31 +15,21 @@ function publicProjection(offer: CommercialOffer) {
     maxAuthorizedUsers: offer.maxAuthorizedUsers,
     onboardingMinutes: offer.onboardingMinutes,
     supportMinutes: offer.supportMinutes,
+    // Mantém os códigos históricos, sem equiparar inclusão a exclusividade.
     features: [...offer.features],
+    licensedMaterials: offer.features.filter((code) => COMMERCIAL_MATERIALS[code].surface === "institutional"),
+    publicCompanions: offer.features.filter((code) => COMMERCIAL_MATERIALS[code].surface === "public-intake"),
+    publicIntakeAutomaticallyLinkedToUnit: false,
     exclusions: {
-      patientData: true,
-      medicalService: true,
-      clinicalDecisionSupport: true,
-      psychometricScoring: true,
-      pant: true,
-      neuroBoard: true,
-      redistribution: true,
-      whiteLabel: true,
+      patientData: true, medicalService: true, clinicalDecisionSupport: true,
+      psychometricScoring: true, pant: true, neuroBoard: true,
+      redistribution: true, whiteLabel: true,
     },
   };
 }
 
-/**
- * GET /api/commercial/catalog
- *
- * Catálogo informativo. Não inicia checkout e não contorna `saleMode`.
- * `termsVersion` é o identificador exato que o tenant deve visualizar/aceitar.
- * `institutional-pilot-1-0` permanece por convite; o plano anual permanece
- * gated até decisão formal pós-piloto.
- */
-export const onRequestGet: PagesFunction = async () => {
-  return tenantJson({
-    version: "2026-09-08",
-    offers: Object.values(COMMERCIAL_OFFERS).map(publicProjection),
-  });
-};
+/** Catálogo informativo: não inicia checkout nem contorna saleMode. */
+export const onRequestGet: PagesFunction = async () => tenantJson({
+  version: "2026-09-21",
+  offers: Object.values(COMMERCIAL_OFFERS).map(publicProjection),
+});

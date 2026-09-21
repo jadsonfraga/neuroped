@@ -1,271 +1,138 @@
 # NeuroPed SaaS — Arquitetura Comercial Canônica
 
-**Data:** 08/09/2026  
-**Estado:** arquitetura implementada em PR; sem liberação pública automática  
-**Escopo:** produto B2B vendável derivado do NeuroPed, separado do prontuário clínico, PANT e NeuroBoard.
+**Revisão:** 21/09/2026. **Estado:** implementação em PR; sem liberação pública automática.
+**Escopo:** produto B2B separado de prontuário/Clinical Core, PANT e NeuroBoard.
 
 ## 1. Decisão de produto
 
-O SKU inicial não é “todo o NeuroPed”. A plataforma já possui autenticação, tenants, memberships, D1, billing e Clinical Core, mas capacidade técnica não equivale a entitlement comercial.
+O SKU inicial não é todo o NeuroPed. Autenticação, tenants, memberships, D1 e billing são infraestrutura, não entitlement comercial.
 
-```text
-CONTRATO COMERCIAL
-  commercial_offers
-  commercial_licenses
-  commercial_license_acceptances
-  commercial_license_users
-  commercial_usage_events
-          │
-          ▼ autoriza somente
-CINCO MATERIAIS EDUCATIVO-OPERACIONAIS
-  form.preconsultation
-  form.change_log
-  form.school_feedback
-  form.approved_plan
-  form.routine_log
+O catálogo preserva cinco códigos por compatibilidade, mas entrega **quatro materiais institucionalmente licenciados e um recurso público complementar**:
 
-FORA DO SKU INICIAL
-  prontuário / Clinical Core / dados de pacientes
-  PANT / laudos / assinatura médica
-  NeuroBoard / parecer de caso
-  scoring psicométrico
-  apoio à decisão / diagnóstico / prescrição
-  white-label / redistribuição
-```
+| Código | Superfície | Natureza |
+|---|---|---|
+| `form.change_log` | `/neuroacompanhamento` | material institucional licenciado |
+| `form.school_feedback` | `/diario-escola` | material institucional licenciado |
+| `form.approved_plan` | `/plano-terapeutico` | material institucional licenciado |
+| `form.routine_log` | `/diario-sono`, `/diario-alimentar` | um material institucional, duas telas |
+| `form.preconsultation` | `/pre-consulta` | recurso público, gratuito, não exclusivo |
+
+Não são cinco superfícies exclusivas. A pré-consulta não exige conta/licença da família e seu preenchimento público **não é associado automaticamente à unidade licenciada**. Os endpoints comerciais auditados continuam exigindo identidade e entitlement; não são o endpoint público da família. O recurso público não sustenta uma promessa de exclusividade do SKU.
+
+Prontuário, dados identificáveis de pacientes, PANT/laudos, NeuroBoard, pontuação psicométrica, decisão clínica, diagnóstico, prescrição, white-label e redistribuição continuam fora do produto.
 
 ## 2. Fontes de verdade
 
-Ordem de autoridade:
+1. `shared/commercial.ts`: ofertas, termos, preço, limites, guardrails e `surface` dos materiais.
+2. `0026_saas_commercial_catalog.sql`: schema e invariantes iniciais, preservado como histórico.
+3. `0027_saas_commercial_seat_integrity.sql`: proteção forward-only do último assento e identidade imutável.
+4. `functions/api/commercial/*`: autorização persistida e respostas HTTP.
+5. UI: representa respostas do servidor; não concede entitlement por papel, preço ou ausência de contexto.
+6. PSP/billing: cobrança/conciliação, nunca definição do produto.
 
-1. `shared/commercial.ts` — contrato de domínio, SKU, preço, gates e guardrails;
-2. `db/migrations/0026_saas_commercial_catalog.sql` — invariantes persistentes em D1;
-3. `functions/api/commercial/*` — enforcement server-side;
-4. UI — apenas representação das capabilities concedidas pelo backend;
-5. PSP/billing — cobrança e conciliação, nunca definição do produto.
+`shared/billing.ts` e seu billing genérico histórico por assento não mudam o SKU institucional.
 
-`shared/billing.ts` continua sendo infraestrutura preexistente de cobrança do SaaS. O histórico de R$ 99/assento/mês não é fonte de verdade para a licença institucional aqui definida.
+## 3. SKUs preservados
 
-## 3. SKUs
+| Campo | Piloto 1.0 | Anual 1.0 |
+|---|---|---|
+| Código | `institutional-pilot-1-0` | `institutional-annual-1-0` |
+| Preço | R$ 1.490,00 | R$ 2.490,00 |
+| Vigência | 365 dias | 365 dias |
+| Termos | `institutional-pilot-terms-v1` | `institutional-annual-terms-v1` |
+| Venda | somente por convite | `gated`, expansão fechada |
+| Unidades/licença | 1 | 1 |
+| Usuários autorizados | até 10 | até 10 |
+| Onboarding | 60 minutos | 60 minutos |
+| Suporte incluído | 120 minutos | 120 minutos |
+| Coorte histórica máxima | 3 licenças | sem teto de coorte |
 
-### NeuroPed Institucional — Piloto 1.0
-
-| Campo | Valor |
-|---|---:|
-| Código | `institutional-pilot-1-0` |
-| Preço | R$ 1.490,00 |
-| Vigência | 365 dias |
-| Venda | somente por convite |
-| Coorte histórica máxima | 3 licenças |
-| Unidades/licença | 1 |
-| Usuários autorizados | até 10 |
-| Onboarding | 60 min |
-| Suporte incluído | 120 min |
-
-O teto de três é **histórico**: cancelar ou expirar uma licença piloto não abre uma quarta vaga automaticamente.
-
-### NeuroPed Institucional — Anual 1.0
-
-| Campo | Valor |
-|---|---:|
-| Código | `institutional-annual-1-0` |
-| Preço | R$ 2.490,00 |
-| Vigência | 365 dias |
-| Venda | `gated` |
-| Unidades/licença | 1 |
-| Usuários autorizados | até 10 |
-| Onboarding | 60 min |
-| Suporte incluído | 120 min |
-
-`gated` = produto definido, mas provisionamento/checkout de expansão bloqueado até decisão formal pós-piloto.
+Cancelar/expirar licença piloto não abre uma quarta vaga. O preço, a versão dos termos e as condições de venda não foram alterados nesta correção. Qualquer revisão contratual material exige nova versão e aceite; não se reescrevem aceites existentes.
 
 ## 4. Fronteira clínica e regulatória
 
-Todos os offers iniciais têm, por contrato e teste:
+Os offers mantêm `acceptsPatientData`, `includesMedicalService`, `includesClinicalDecisionSupport`, `includesPsychometricScoring`, `includesPant`, `includesNeuroBoard`, `allowsRedistribution` e `allowsWhiteLabel` como `false`. Alterar uma negativa muda a classe do produto e exige revisão própria jurídica, regulatória e LGPD antes de produção.
 
-- `acceptsPatientData = false`;
-- `includesMedicalService = false`;
-- `includesClinicalDecisionSupport = false`;
-- `includesPsychometricScoring = false`;
-- `includesPant = false`;
-- `includesNeuroBoard = false`;
-- `allowsRedistribution = false`;
-- `allowsWhiteLabel = false`.
+## 5. Tenant, sessão e licença
 
-Remover qualquer uma dessas negativas é **mudança de classe de produto**. Exige PR/ADR específico e nova revisão jurídica, regulatória e LGPD antes de produção.
+Reutilizam-se `users`, `clinics`, `clinic_memberships` e `saas_audit_log`; não existe tenant comercial paralelo.
 
-## 5. Tenancy e autorização
+Cada material institucional exige identidade autenticada, membership ativa persistida, tenant ativo, licença ativa dentro da vigência, contrato canônico, assento ativo do usuário e feature habilitada. Membership não substitui licença; admin global não contorna membership.
 
-Não existe uma segunda identidade de tenant.
+`clinicId` é alvo solicitado, nunca autoridade. A autorização de tenant precede a leitura/divulgação de drift, impedindo revelar a terceiros a situação contratual de outra unidade.
 
-Reutilizam-se:
+### 5.1 Drift explícito
 
-- `clinics` — tenant/unidade institucional;
-- `clinic_memberships` — vínculo do usuário à unidade;
-- `users` — identidade nominal;
-- `saas_audit_log` — trilha administrativa.
+`getCommercialLicenseSnapshot()` retorna `null` somente quando nenhuma licença aplicável foi encontrada. Uma versão divergente (inclusive vazia) ou offer desconhecido conserva o snapshot persistido com `contractState: drift`.
 
-Acesso a um material requer cumulativamente:
+`/me`, catálogo tenant-scoped `/materials`, guard de abertura/exportação e gestão de assentos devolvem **409 / COMMERCIAL_OFFER_UNKNOWN** para esse estado. Não concedem capacidades nem realizam mutações. Ausência real continua com a semântica de licença ausente. O `/catalog` público descreve as ofertas canônicas; não lê a licença de uma unidade.
 
-1. membership ativa no tenant;
-2. licença comercial existente;
-3. licença `active` e dentro da vigência;
-4. usuário explicitamente `active` em `commercial_license_users`;
-5. feature habilitada no offer;
-6. offer conhecido pelo contrato canônico.
+### 5.2 Modo individual e transições
 
-**Membership não equivale a licença.** Um profissional pode pertencer à clínica e ainda assim receber todas as commercial capabilities como `false` se não estiver entre os usuários autorizados.
+`outside-scope` significa exclusivamente `accessMode: local` explicitamente resolvido. Bootstrap, sessão remota sem autenticação, falta de clínica, erro de carga e intervalo de troca de tenant nunca liberam conteúdo.
 
-`GET /api/commercial/me?clinicId=...` devolve o snapshot tenant-scoped e a autorização do usuário atual. O frontend não calcula permissões por preço, role, query string ou estado local.
+O hook mascara snapshots de outro contexto já no render e descarta respostas assíncronas antigas por geração. A confirmação de abertura pertence ao usuário, clínica, licença, feature e instância do snapshot. Uma resposta antiga não autoriza a próxima tela, mesmo quando o usuário volta à mesma clínica. A gestão de licença também descarta detalhes, seleções e consentimentos de contexto anterior.
 
-### 5.1 Onde a licença é exercida
+### 5.3 Endpoints
 
-As seis condições acima vivem em `functions/api/commercial/_guard.ts`, num único `requireCommercialFeature()` que toda rota de material chama antes de qualquer efeito. O guard devolve o mesmo status para recusas de acesso, de modo que a resposta não diferencie “sua licença não cobre isto” de “esta clínica não é sua”; drift contratual é a exceção e responde 409.
-
-| Superfície | Papel |
+| Superfície | Função |
 |---|---|
-| `GET /api/commercial/materials` | catálogo tenant-scoped com `licensed` por material |
-| `GET /api/commercial/materials/:code` | confirma o entitlement e registra `material_open` |
-| `POST /api/commercial/materials/:code` | registra `material_export` com o canal de entrega |
-| `GET/POST/DELETE /api/commercial/users` | assentos da licença, sob gestão da unidade |
-| `/licenca` | tela do gestor: aceite, assentos, vigência e suporte consumido |
+| `GET /api/commercial/catalog` | ofertas informativas, quatro `licensedMaterials` e um `publicCompanions`; sem checkout |
+| `GET /api/commercial/me` | licença/capabilities tenant-scoped; 409 em drift |
+| `GET /api/commercial/materials` | catálogo da unidade; público não é apresentado como licenciado ou recusado |
+| `GET /api/commercial/materials/:code` | autorização e registro de abertura pela equipe |
+| `POST /api/commercial/materials/:code` | autorização e registro operacional de exportação |
+| `GET/POST/DELETE /api/commercial/users` | gestão de assentos por owner/clinic_admin ativo |
+| `/licenca` | aceite, assentos, vigência, suporte e distinção entre público e institucional |
 
-`COMMERCIAL_MATERIALS`, em `shared/commercial.ts`, liga cada feature code às telas reais do aplicativo. Um feature code sem destino é um entitlement que não entrega nada, e o teste de regressão recusa uma rota declarada que não exista no `App.tsx` ou que não esteja sob o gate.
+## 6. Lifecycle e concorrência
 
-### 5.2 Fronteira do produto
+A licença nasce `pending`. O provisionamento é administrativo; a ativação exige referência de conciliação, aceite da versão exata por gestor ativo e ao menos um usuário autorizado com membership na unidade.
 
-A licença incide sobre a **unidade institucional**: sessão remota autenticada com clínica selecionada. A instalação individual do aplicativo, sem backend remoto ou sem unidade ativa, não exerce licença nenhuma e os materiais seguem como sempre foram — não é brecha, é o limite do que foi vendido. O modo é determinado pelo build e pela capacidade do backend, não por escolha do usuário final numa instalação institucional.
+O banco impede criação diretamente ativa, quarta licença piloto, ativação sem cobrança/aceite/assento, assento sem membership, 11º assento, uso de feature não habilitada, telemetria cross-tenant e uso por ator não autorizado.
 
-Dentro de uma unidade, a permissão vem do servidor duas vezes: o snapshot pinta a tela e a confirmação de abertura decide. Se a confirmação recusa, o material não é renderizado, mesmo que o snapshot anterior dissesse o contrário.
+A migração 0027 acrescenta:
 
-Cada material declara sua `surface`:
+- recusa de `active -> revoked` do último assento quando a licença está ativa;
+- mesma proteção para `DELETE`, inclusive operação coletiva;
+- imutabilidade de `license_id` e `user_id` no assento.
 
-| `surface` | Materiais | Gate |
-|---|---|---|
-| `institutional` | acompanhamento, devolutiva escolar, plano aprovado, registros de rotina | tela clínica atrás do `CommercialGate` |
-| `public-intake` | ficha de pré-consulta | rota pública allowlisted, componente montado direto |
+A decisão é tomada na escrita serializada, não no COUNT previamente lido pela API. Duas revogações que observam dois assentos disputam a mesma restrição: uma confirma e a outra recebe 409 / COMMERCIAL_LAST_AUTHORIZED_USER. Licença suspensa/cancelada pode encerrar assentos; sua reativação continua exigindo pelo menos um.
 
-A ficha de pré-consulta é preenchida pela família **sem conta**, antes da consulta. Exigir assento de licença de quem preenche seria exigir login de quem não tem, e a política de acesso do repositório proíbe wrapper condicional em rota pública. O entitlement continua existindo — a unidade o vê no catálogo e o ledger registra o que a equipe faz com o material dentro da unidade —, mas não há bloqueio de UI na captação. Promover um material de `public-intake` a `institutional`, ou o contrário, muda quem consegue preencher: exige PR próprio.
+Assento, evento e auditoria ficam no mesmo `db.batch`. Uma falha desfaz a transação inteira. `WHERE changes() = 1` evita eventos para usuário inexistente ou mutação sem efeito. A resposta de sucesso não antecede o efeito persistido.
 
-### 5.3 Ledger
+## 7. Privacidade e ledger
 
-`material_open`, `material_export`, `authorized_user_added` e `authorized_user_revoked` são gravados pelas rotas acima. Abertura e entrega não devolvem sucesso sem terem sido registradas; concessão e revogação de assento só geram evento quando a escrita mudou exatamente uma linha (`WHERE changes() = 1`), para que uma corrida não deixe ledger sem assento correspondente.
+`commercial_usage_events` é telemetria operacional, não prontuário. Metadados aceitos: `materialId`, `deliveryChannel`, `clientVersion`, `sourceVersion`, `supportCategory`. Chaves arbitrárias e blobs clínicos são recusados; o banco limita metadados a 2 KB. Somente fixtures sintéticas entram em testes/logs da PR.
 
-## 6. Lifecycle fail-closed
+## 8. Cobrança e operação
 
-O D1 impõe o lifecycle mesmo se uma rota futura esquecer um guard:
+O PSP é adaptador; somente referência opaca de conciliação vai ao D1, nunca cartão. O fluxo inicial é assistido: proposta, pagamento/faturamento externo, conciliação, provisionamento pending, aceite institucional, ativação. Um checkout futuro exige ponte explícita e idempotente; billing genérico não ativa licença por inferência.
 
-```text
-admin da plataforma
-  → /api/commercial/provision
-  → license = pending
-  → referência de conciliação comercial registrada
+Suporte é medido por eventos `support_minutes`, sem conteúdo clínico. A inclusão de 60 minutos de onboarding e 120 minutos de suporte permanece limitada.
 
-gestor owner/clinic_admin da unidade
-  → /api/commercial/accept
-  → aceita a MESMA contract_version
-  → aceita: sem dados de pacientes / sem ato médico / sem redistribuição
-  → escolhe usuários que já são memberships ativos
-  → acceptance + authorized users persistidos
-  → transição pending → active
-```
+## 9. Expansão e stop rules
 
-Triggers impedem:
+A expansão anual exige decisão formal e nova PR: uso regular por pelo menos 2/3 da coorte, adoção dos materiais institucionais efetivamente licenciados, suporte sustentável (referência de até 3 h/instituição no período), ausência de incidentes, disposição de renovação (referência de R$ 2.250/ano), valor independente de acesso pessoal ao médico e revisão jurídica/fiscal/licenciamento.
 
-- licença nascer diretamente `active`;
-- quarta licença do piloto;
-- licença ativa sem `billing_reference`;
-- ativação sem aceite da versão contratual exata por `owner`/`clinic_admin` ativo;
-- ativação sem usuário autorizado;
-- usuário autorizado que não pertença à mesma clínica;
-- 11º usuário ativo;
-- telemetria com `license_id` de outro tenant;
-- abertura/exportação de material por usuário não autorizado.
+Uso da pré-consulta pública, isoladamente, não comprova adoção paga. Suspender o piloto diante de incidente de dados, uso diagnóstico/prescritivo, certificação não autorizada, disputa de propriedade intelectual, enquadramento incompatível ou erro com risco clínico.
 
-## 7. Privacy by architecture
+## 10. Testes e release
 
-`commercial_usage_events` é telemetria operacional, não prontuário.
+O workflow comercial roda em toda PR para main e em todo push em main, sem filtros de paths. Isso inclui mudanças indiretas de auth, tenant, UI, configuração e novos arquivos.
 
-Metadados aceitos em aplicação usam allow-list:
+Suítes: `saas-commercial-canonical`, `saas-commercial-terms`, `saas-commercial-materials`, `saas-commercial-integrity`, `saas-commercial-scope`, `planos-page-contract` e TypeScript, além dos gates gerais do repositório.
 
-- `materialId`;
-- `deliveryChannel`;
-- `clientVersion`;
-- `sourceVersion`;
-- `supportCategory`.
+A suíte de integridade executa os handlers reais sobre SQLite com um adaptador transacional da interface D1. Cobre drift persistido/HTTP, isolamento, duas leituras COUNT=2 antes das revogações concorrentes, proteção por SQL direto, rollback do ledger e distinção público/licenciado. Ela não substitui validação pós-release do D1 remoto.
 
-Chaves arbitrárias como nome, CPF, diagnóstico, prontuário e texto clínico são recusadas. O banco limita `metadata_json` a 2 KB. Dados clínicos permanecem nas estruturas clínicas próprias e não devem ser copiados para tabelas comerciais.
+A publicação deve aplicar 0026 e depois 0027, verificar todos os triggers críticos e recusar licença ativa sem assentos antes de publicar Functions. Não aplicar migrações nem alterar dados de produção pela simples revisão da PR.
 
-## 8. Billing
+### Rollback
 
-O PSP é adaptador. Nenhum dado de cartão deve ser persistido em D1; somente referência opaca de conciliação.
+Antes do merge, basta manter a PR sem publicar. Após release autorizado, preferir correção forward-only. Não remover triggers para contornar conflito e não reescrever 0026. Uma reversão do aplicativo não exige apagar 0027: os triggers são compatíveis com os handlers anteriores, embora a mensagem de erro antiga seja menos específica. Registrar qualquer correção administrativa de contrato/assento com razão e auditoria; nunca normalizar silenciosamente o banco.
 
-A arquitetura atual permite operação comercial manual/assistida: proposta → pagamento/faturamento externo → referência de conciliação → provisionamento pending → aceite institucional → ativação.
+## 11. Limites de conclusão
 
-Um checkout automatizado futuro deve criar a ponte explícita `offerCode + payment + contractVersion + license`. O checkout genérico por assento já existente não pode ativar `commercial_license` por inferência.
+Merge não significa venda pública automática. A primeira venda ainda depende de aprovação final dos quatro materiais licenciados, apresentação correta do recurso público, termos revisados, emissão fiscal/recebimento, responsável de suporte e seleção das até três instituições-piloto.
 
-## 9. Suporte como COGS
-
-O produto inclui:
-
-- 60 min de onboarding;
-- 120 min de suporte/ano.
-
-Suporte é medido via `commercial_usage_events.kind = 'support_minutes'`. O ledger registra minutos e categoria operacional, nunca conteúdo clínico.
-
-## 10. Gate de expansão
-
-O plano anual continua fechado até decisão formal. Critérios recomendados:
-
-- pelo menos 2/3 instituições usando regularmente 3 ou mais dos 5 materiais;
-- suporte ≤ 3 h/instituição no período observado;
-- zero incidente de segurança ou uso clínico indevido;
-- disposição de renovação ≥ R$ 2.250/ano;
-- valor percebido sem depender de acesso pessoal ao médico;
-- revisão jurídica, fiscal e de licença concluída.
-
-Abrir o gate exige novo PR e teste correspondente. Não usar variável de frontend para contorná-lo.
-
-## 11. Stop rules
-
-Suspender o piloto/licença diante de:
-
-- incidente com dado pessoal decorrente da oferta;
-- uso como diagnóstico/prescrição;
-- anúncio de “certificação NeuroPed” não autorizada;
-- disputa relevante de propriedade intelectual;
-- enquadramento regulatório incompatível com o SKU;
-- erro material com potencial de risco clínico.
-
-## 12. Evolução
-
-### Implementado nesta linhagem
-
-- contrato comercial canônico;
-- catálogo e preços;
-- offers/features no D1;
-- licenças e acceptances;
-- usuários autorizados;
-- provisionamento administrativo;
-- aceite/ativação institucional;
-- snapshot de capabilities;
-- telemetria operacional mínima;
-- testes adversariais;
-- CI antirregressão.
-
-### Próxima camada após merge
-
-- UI/backoffice de provisionamento;
-- portal institucional dos cinco materiais usando `/api/commercial/me`;
-- termo/licença contratual versionado para aceite visual;
-- integração do PSP escolhido com idempotência;
-- dashboard agregado da coorte piloto.
-
-### Não entra por expansão silenciosa
-
-PANT como serviço, NeuroBoard, Clinical Decision Support, prontuário multi-instituição e escalas de terceiros exigem produtos e revisões próprias.
-
-## 13. Regra de release
-
-Merge desta arquitetura significa **fundação comercial tecnicamente consolidada**, não venda pública automática.
-
-A primeira venda ainda depende de aprovação final dos cinco materiais, versão contratual revisada, emissão fiscal/recebimento definidos, responsável de suporte/operação e seleção das até três instituições-piloto.
+Backoffice de provisionamento, integração PSP e dashboard agregado permanecem evoluções separadas. PANT, NeuroBoard, prontuário e escalas de terceiros não entram por expansão silenciosa.

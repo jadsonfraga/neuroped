@@ -1,25 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
-import {
-  CommercialRequestError,
-  fetchCommercialSnapshot,
-  type CommercialSnapshot,
-} from "@/lib/commercialClient";
+import { CommercialRequestError, fetchCommercialSnapshot, type CommercialSnapshot } from "@/lib/commercialClient";
+import { resolveCommercialScope, type CommercialScope } from "@/lib/commercialScope";
 import type { CommercialFeatureCode } from "@shared/commercial";
 
-/**
- * Estado de um material para a tela atual.
- *
- * `outside-scope` é a instalação individual, sem backend remoto ou sem unidade
- * selecionada: ali não existe licença institucional a exercer e o material
- * segue como sempre foi. `licensed` e `blocked` só existem dentro de uma
- * unidade, e ambos vêm do servidor — nunca de papel, preço ou estado local.
- */
+/** Somente o modo local explicitamente resolvido está fora do SKU institucional. */
 export type CommercialMaterialAccess = "outside-scope" | "loading" | "licensed" | "blocked";
 
 export interface CommercialLicenseState {
-  /** Há uma unidade institucional selecionada sobre a qual a licença incide. */
+  /** Inclui sessão remota cujo contexto ainda está incompleto: nunca é bypass. */
   isInstitutional: boolean;
   isLoading: boolean;
   snapshot: CommercialSnapshot | null;
@@ -29,52 +19,73 @@ export interface CommercialLicenseState {
   reload: () => Promise<void>;
 }
 
-export function useCommercialLicense(): CommercialLicenseState {
-  const { accessMode, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { activeClinicId } = useClinic();
-  const [snapshot, setSnapshot] = useState<CommercialSnapshot | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [errorCode, setErrorCode] = useState<string | null>(null);
+interface RequestState {
+  scope: CommercialScope | null;
+  loading: boolean;
+  error: string | null;
+  code: string | null;
+}
 
-  const isInstitutional =
-    accessMode === "remote" && isAuthenticated && !isAuthLoading && Boolean(activeClinicId);
+export function useCommercialLicense(): CommercialLicenseState {
+  const { accessMode, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
+  const { activeClinicId, isLoading: isClinicLoading, error: clinicError } = useClinic();
+  const scope = useMemo(() => resolveCommercialScope({
+    accessMode, isAuthenticated, isAuthLoading, userId: user?.id ?? null,
+    clinicId: activeClinicId, isClinicLoading, clinicError,
+  }), [accessMode, isAuthenticated, isAuthLoading, user?.id, activeClinicId, isClinicLoading, clinicError]);
+  const [loadedSnapshot, setSnapshot] = useState<CommercialSnapshot | null>(null);
+  const [requestState, setRequestState] = useState<RequestState>({ scope: null, loading: false, error: null, code: null });
+  const generation = useRef(0);
 
   const load = useCallback(async () => {
-    if (!isInstitutional || !activeClinicId) {
-      setSnapshot(null);
-      setError(null);
-      setErrorCode(null);
+    const requestGeneration = ++generation.current;
+    setSnapshot(null);
+    if (scope.kind !== "institutional") {
+      setRequestState({ scope, loading: false, error: null, code: null });
       return;
     }
-    setIsLoading(true);
-    setError(null);
-    setErrorCode(null);
+    setRequestState({ scope, loading: true, error: null, code: null });
     try {
-      setSnapshot(await fetchCommercialSnapshot(activeClinicId));
+      const next = await fetchCommercialSnapshot(scope.clinicId);
+      if (requestGeneration !== generation.current) return;
+      if (next?.clinic?.id !== scope.clinicId) {
+        throw new CommercialRequestError("Resposta de outra unidade recusada.", "COMMERCIAL_RESPONSE_INVALID", 502);
+      }
+      setSnapshot(next);
+      setRequestState({ scope, loading: false, error: null, code: null });
     } catch (cause) {
-      // Falha de carga nunca vira permissão: o snapshot fica nulo e `access`
-      // devolve `blocked` enquanto a unidade estiver selecionada.
+      if (requestGeneration !== generation.current) return;
       setSnapshot(null);
-      setError(cause instanceof Error ? cause.message : "Camada comercial indisponível.");
-      setErrorCode(cause instanceof CommercialRequestError ? cause.code : "COMMERCIAL_REQUEST_FAILED");
-    } finally {
-      setIsLoading(false);
+      setRequestState({
+        scope,
+        loading: false,
+        error: cause instanceof Error ? cause.message : "Camada comercial indisponível.",
+        code: cause instanceof CommercialRequestError ? cause.code : "COMMERCIAL_REQUEST_FAILED",
+      });
     }
-  }, [activeClinicId, isInstitutional]);
+  }, [scope]);
 
   useEffect(() => {
     void load();
+    return () => { generation.current++; };
   }, [load]);
 
-  const access = useCallback(
-    (feature: CommercialFeatureCode): CommercialMaterialAccess => {
-      if (!isInstitutional) return "outside-scope";
-      if (isLoading) return "loading";
-      return snapshot?.capabilities?.[feature] === true ? "licensed" : "blocked";
-    },
-    [isInstitutional, isLoading, snapshot],
-  );
+  // Comparação por identidade também invalida A -> contexto ausente -> A.
+  // A invalidação acontece no render, antes de qualquer efeito assíncrono.
+  const current = requestState.scope === scope;
+  const isLoading = scope.kind === "loading" ||
+    (scope.kind === "institutional" && (!current || requestState.loading));
+  const snapshot = scope.kind === "institutional" && current && !isLoading ? loadedSnapshot : null;
+  const error = scope.kind === "unavailable" ? scope.error : current ? requestState.error : null;
+  const errorCode = scope.kind === "unavailable" ? scope.code : current ? requestState.code : null;
+  const isInstitutional = scope.kind !== "individual";
+
+  const access = useCallback((feature: CommercialFeatureCode): CommercialMaterialAccess => {
+    if (scope.kind === "individual") return "outside-scope";
+    if (isLoading) return "loading";
+    if (scope.kind !== "institutional") return "blocked";
+    return snapshot?.capabilities?.[feature] === true ? "licensed" : "blocked";
+  }, [scope, isLoading, snapshot]);
 
   return useMemo(
     () => ({ isInstitutional, isLoading, snapshot, error, errorCode, access, reload: load }),

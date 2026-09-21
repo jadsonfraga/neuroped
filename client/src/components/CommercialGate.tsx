@@ -2,55 +2,51 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { Lock, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useCommercialLicense } from "@/hooks/useCommercialLicense";
-import { CommercialRequestError, openCommercialMaterial } from "@/lib/commercialClient";
+import { CommercialRequestError, openCommercialMaterial, type CommercialSnapshot } from "@/lib/commercialClient";
+import { commercialConfirmationState, type CommercialConfirmation } from "@/lib/commercialScope";
 import { getCommercialMaterial, type CommercialFeatureCode } from "@shared/commercial";
 
 /**
- * Barreira de um material licenciado.
- *
- * Fora de uma unidade institucional — instalação individual ou nenhuma clínica
- * selecionada — não há licença a exercer e o material aparece como sempre. É a
- * fronteira do produto: o SKU vendido é a licença institucional, não o uso
- * individual do aplicativo.
- *
- * Dentro de uma unidade, a permissão vem do servidor duas vezes: o snapshot
- * pinta a tela e a confirmação de abertura, que também registra o uso no ledger
- * comercial, decide. Se a confirmação recusa, o material não é renderizado,
- * mesmo que o snapshot anterior dissesse o contrário.
+ * Somente a instalação explicitamente local está fora do escopo institucional.
+ * Contexto remoto ausente, em troca ou com erro sempre falha fechado.
+ * O snapshot informa a permissão; a confirmação server-side registra a abertura
+ * e decide a renderização. Cada confirmação pertence a uma identidade/contexto.
  */
-export function CommercialGate({
-  feature,
-  children,
-}: {
+export function CommercialGate({ feature, children }: {
   feature: CommercialFeatureCode;
   children: ReactNode;
 }) {
+  const { user } = useAuth();
   const { activeClinicId } = useClinic();
-  const { access, snapshot, error } = useCommercialLicense();
+  const { access, snapshot, error, errorCode } = useCommercialLicense();
   const state = access(feature);
-  const [confirmation, setConfirmation] = useState<"pending" | "confirmed" | "denied">("pending");
-  const [denialCode, setDenialCode] = useState<string | null>(null);
+  const [result, setResult] = useState<CommercialConfirmation<CommercialSnapshot> | null>(null);
+  const key = JSON.stringify([user?.id, activeClinicId, snapshot?.license?.id, feature]);
+  const confirmation = commercialConfirmationState(result, key, snapshot);
   const material = getCommercialMaterial(feature);
 
   useEffect(() => {
-    if (state !== "licensed" || !activeClinicId) return;
+    if (state !== "licensed" || !activeClinicId || !snapshot) return;
     let cancelled = false;
-    setConfirmation("pending");
+    setResult(null);
     void openCommercialMaterial(activeClinicId, feature)
-      .then(() => {
-        if (!cancelled) setConfirmation("confirmed");
+      .then((response) => {
+        if (response?.material?.code !== feature) {
+          throw new CommercialRequestError("Confirmação de material inválida.", "COMMERCIAL_RESPONSE_INVALID", 502);
+        }
+        if (!cancelled) setResult({ key, snapshot, status: "confirmed", denialCode: null });
       })
       .catch((cause: unknown) => {
-        if (cancelled) return;
-        setDenialCode(cause instanceof CommercialRequestError ? cause.code : "COMMERCIAL_REQUEST_FAILED");
-        setConfirmation("denied");
+        if (!cancelled) setResult({
+          key, snapshot, status: "denied",
+          denialCode: cause instanceof CommercialRequestError ? cause.code : "COMMERCIAL_REQUEST_FAILED",
+        });
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [state, activeClinicId, feature]);
+    return () => { cancelled = true; };
+  }, [state, activeClinicId, feature, key, snapshot]);
 
   if (state === "outside-scope") return <>{children}</>;
 
@@ -69,16 +65,14 @@ export function CommercialGate({
       <>
         <div className="mx-auto mb-4 flex max-w-5xl items-center gap-2 px-4 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-          <span>
-            {material?.title ?? "Material"} licenciado para {snapshot?.clinic.name ?? "esta unidade"}.
-          </span>
+          <span>{material?.title ?? "Material"} licenciado para {snapshot?.clinic.name ?? "esta unidade"}.</span>
         </div>
         {children}
       </>
     );
   }
 
-  const code = confirmation === "denied" ? denialCode : null;
+  const code = confirmation === "denied" ? result?.denialCode ?? null : errorCode;
   return (
     <Card className="mx-auto my-8 max-w-xl">
       <CardContent className="space-y-3 p-6">
@@ -87,11 +81,7 @@ export function CommercialGate({
           {material?.title ?? "Material"} indisponível nesta unidade
         </div>
         <p className="text-sm text-muted-foreground">{blockedReason(code, error)}</p>
-        <p className="text-sm">
-          <Link href="/licenca" className="underline">
-            Ver a licença da unidade
-          </Link>
-        </p>
+        <p className="text-sm"><Link href="/licenca" className="underline">Ver a licença da unidade</Link></p>
       </CardContent>
     </Card>
   );

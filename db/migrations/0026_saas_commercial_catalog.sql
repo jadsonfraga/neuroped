@@ -7,7 +7,7 @@
 -- Fronteira do produto inicial:
 -- * uma unidade por licença;
 -- * até 10 usuários autorizados;
--- * cinco entradas: quatro materiais licenciados e uma pré-consulta pública;
+-- * cinco materiais educativo-operacionais;
 -- * nenhum dado identificável de paciente deve ser enviado ao produto;
 -- * sem ato médico, PANT, NeuroBoard, scoring psicométrico ou apoio à decisão.
 
@@ -321,37 +321,4 @@ BEGIN
        AND u.status = 'active'
        AND cl.status = 'active'
   ) THEN RAISE(ABORT, 'commercial material usage requires authorized active user') END;
-END;
-
--- O preflight da API não é uma trava: dois requests podem ler COUNT = 2.
--- Estes triggers rodam dentro da escrita serializada do D1. Falhar no batch
--- também desfaz os eventos de uso/auditoria daquela revogação.
-CREATE TRIGGER IF NOT EXISTS trg_commercial_license_last_user_update
-BEFORE UPDATE OF status ON commercial_license_users
-WHEN OLD.status = 'active' AND NEW.status <> 'active'
-  AND EXISTS (SELECT 1 FROM commercial_licenses WHERE id = OLD.license_id AND status = 'active')
-  AND (SELECT COUNT(*) FROM commercial_license_users
-       WHERE license_id = OLD.license_id AND status = 'active') <= 1
-BEGIN
-  SELECT RAISE(ABORT, 'COMMERCIAL_LAST_AUTHORIZED_USER');
-END;
-
--- DELETE direto/cascata não pode contornar a proteção de UPDATE.
-CREATE TRIGGER IF NOT EXISTS trg_commercial_license_last_user_delete
-BEFORE DELETE ON commercial_license_users
-WHEN OLD.status = 'active'
-  AND EXISTS (SELECT 1 FROM commercial_licenses WHERE id = OLD.license_id AND status = 'active')
-  AND (SELECT COUNT(*) FROM commercial_license_users
-       WHERE license_id = OLD.license_id AND status = 'active') <= 1
-BEGIN
-  SELECT RAISE(ABORT, 'COMMERCIAL_LAST_AUTHORIZED_USER');
-END;
-
--- Transferir a chave de um assento contornaria os triggers de limite/membership.
--- Trocas são sempre revogação + concessão, preservando o histórico.
-CREATE TRIGGER IF NOT EXISTS trg_commercial_license_user_identity_immutable
-BEFORE UPDATE OF license_id, user_id ON commercial_license_users
-WHEN NEW.license_id <> OLD.license_id OR NEW.user_id <> OLD.user_id
-BEGIN
-  SELECT RAISE(ABORT, 'COMMERCIAL_SEAT_IDENTITY_IMMUTABLE');
 END;
