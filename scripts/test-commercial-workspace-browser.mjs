@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createServer } from "vite";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "./lib/browser-audit-runtime.mjs";
 
 // Servidor isolado de fixtures: não usa conta, banco ou endpoint de produção.
 const server = await createServer({
@@ -23,7 +24,7 @@ try {
   const address = server.httpServer.address();
   assert.ok(address && typeof address !== "string");
   const base = `http://127.0.0.1:${address.port}`;
-  browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+  browser = await chromium.launch(auditBrowserLaunchOptions({ headless: true }));
   const page = await browser.newPage({ acceptDownloads: true });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -81,14 +82,12 @@ try {
   assert.ok((await page.evaluate(() => window.exportEffects.email)).startsWith("mailto:"));
   assert.deepEqual(requests.slice(-3), ["print", "copy", "email"]);
 
-  // Recusa no servidor: nenhuma impressão nem conteúdo na janela reservada.
   await page.goto(url("form.approved_plan"));
   mode = "deny";
   await page.getByTestId("commercial-export-print").click();
   await page.getByRole("status").filter({ hasText: "interrompida" }).waitFor();
   assert.deepEqual(await page.evaluate(() => [window.exportEffects.prints, window.exportEffects.written, window.exportEffects.closed]), [0, "", 1]);
 
-  // Uma confirmação atrasada da unidade A não pode copiar após trocar para B.
   await page.goto(url("form.approved_plan"));
   mode = "hold";
   const requestPromise = page.waitForRequest("**/api/commercial/materials/**");

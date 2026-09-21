@@ -1,14 +1,15 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { Lock, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CommercialMaterialWorkspace } from "@/components/CommercialMaterialWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useCommercialLicense } from "@/hooks/useCommercialLicense";
 import { CommercialRequestError, openCommercialMaterial, type CommercialSnapshot } from "@/lib/commercialClient";
 import { commercialConfirmationState, type CommercialConfirmation } from "@/lib/commercialScope";
 import { getCommercialMaterial, type CommercialFeatureCode } from "@shared/commercial";
+
+const CommercialMaterialWorkspace = lazy(() => import("@/components/CommercialMaterialWorkspace").then((module) => ({ default: module.CommercialMaterialWorkspace })));
 
 /**
  * Só o modo local explicitamente resolvido preserva as telas clínicas locais.
@@ -27,32 +28,24 @@ export function CommercialGate({ feature, children }: {
   const key = JSON.stringify([user?.id, activeClinicId, snapshot?.license?.id, feature]);
   const confirmation = commercialConfirmationState(result, key, snapshot);
   const material = getCommercialMaterial(feature);
-
   useEffect(() => {
     if (state !== "licensed" || !activeClinicId || !snapshot) return;
     let cancelled = false;
     setResult(null);
     void openCommercialMaterial(activeClinicId, feature)
       .then((response) => {
-        if (response?.material?.code !== feature) {
-          throw new CommercialRequestError("Confirmação de material inválida.", "COMMERCIAL_RESPONSE_INVALID", 502);
-        }
+        if (response?.material?.code !== feature) throw new CommercialRequestError("Confirmação de material inválida.", "COMMERCIAL_RESPONSE_INVALID", 502);
         if (!cancelled) setResult({ key, snapshot, status: "confirmed", denialCode: null });
       })
       .catch((cause: unknown) => {
-        if (!cancelled) setResult({
-          key, snapshot, status: "denied",
-          denialCode: cause instanceof CommercialRequestError ? cause.code : "COMMERCIAL_REQUEST_FAILED",
-        });
+        if (!cancelled) setResult({ key, snapshot, status: "denied", denialCode: cause instanceof CommercialRequestError ? cause.code : "COMMERCIAL_REQUEST_FAILED" });
       });
     return () => { cancelled = true; };
   }, [state, activeClinicId, feature, key, snapshot]);
 
   if (state === "outside-scope") return <>{children}</>;
   if (state === "loading" || (state === "licensed" && confirmation === "pending")) {
-    return <Card className="mx-auto my-8 max-w-xl"><CardContent className="p-6 text-sm text-muted-foreground" role="status">
-      Confirmando a licença desta unidade…
-    </CardContent></Card>;
+    return <Card className="mx-auto my-8 max-w-xl"><CardContent className="p-6 text-sm text-muted-foreground" role="status">Confirmando a licença desta unidade…</CardContent></Card>;
   }
   if (state === "licensed" && confirmation === "confirmed") {
     return <>
@@ -60,7 +53,9 @@ export function CommercialGate({ feature, children }: {
         <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
         <span>{material?.title ?? "Material"} licenciado para {snapshot?.clinic.name ?? "esta unidade"}.</span>
       </div>
-      <CommercialMaterialWorkspace key={key} feature={feature} />
+      <Suspense fallback={<p role="status">Carregando o modelo institucional…</p>}>
+        <CommercialMaterialWorkspace key={key} feature={feature} />
+      </Suspense>
     </>;
   }
   const code = confirmation === "denied" ? result?.denialCode ?? null : errorCode;
@@ -70,7 +65,6 @@ export function CommercialGate({ feature, children }: {
     <p className="text-sm"><Link href="/licenca" className="underline">Ver a licença da unidade</Link></p>
   </CardContent></Card>;
 }
-
 function blockedReason(code: string | null, error: string | null): string {
   switch (code) {
     case "COMMERCIAL_USER_NOT_AUTHORIZED": return "Você é membro desta unidade, mas não está entre os usuários autorizados da licença. A gestão da unidade concede o acesso.";
