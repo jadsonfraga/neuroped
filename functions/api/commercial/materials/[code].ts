@@ -10,13 +10,15 @@ function paramCode(params: Record<string, string | string[]>): string {
   return (value ?? "").trim().slice(0, 80);
 }
 
-/**
- * GET /api/commercial/materials/:code?clinicId=...
- *
- * Confirma o entitlement no servidor e registra a abertura no ledger comercial.
- * A tela do material vive no cliente; este endpoint é a autoridade que diz se
- * aquela abertura é legítima naquela unidade, para aquele usuário, hoje.
- */
+function usageFailure(error: unknown): Response {
+  const detail = error instanceof Error ? `${error.message} ${String(error.cause ?? "")}` : String(error);
+  if (detail.includes("COMMERCIAL_ACCESS_CHANGED")) {
+    return tenantError("O vínculo, a unidade ou a licença mudou durante a operação. Confirme novamente o acesso.", "COMMERCIAL_ACCESS_CHANGED", 403);
+  }
+  return tenantError("Não foi possível registrar a operação do material.", "COMMERCIAL_USAGE_NOT_RECORDED", 500);
+}
+
+/** Confirma entitlement e registra abertura; o INSERT revalida o vínculo atual. */
 export const onRequestGet: PagesFunction<CommercialGuardEnv> = async (context) => {
   const clinicId = readClinicId(context.request);
   const guard = await requireCommercialFeature(context, paramCode(context.params), clinicId);
@@ -32,39 +34,27 @@ export const onRequestGet: PagesFunction<CommercialGuardEnv> = async (context) =
       featureCode: material.code,
       metadata: { materialId: material.code, deliveryChannel: material.deliveryChannel },
     });
-  } catch {
-    // O ledger comercial é parte do que foi vendido. Não devolvemos sucesso de
-    // abertura sem tê-la registrado.
-    return tenantError(
-      "Não foi possível registrar a abertura do material.",
-      "COMMERCIAL_USAGE_NOT_RECORDED",
-      500,
-    );
+  } catch (error) {
+    return usageFailure(error);
   }
 
   return tenantJson({
     material: {
-      code: material.code,
-      title: material.title,
-      summary: material.summary,
-      routes: [...material.routes],
-      deliveryChannel: material.deliveryChannel,
+      code: material.code, title: material.title, summary: material.summary,
+      routes: [...material.routes], deliveryChannel: material.deliveryChannel,
     },
     license: {
-      id: snapshot.licenseId,
-      offerCode: snapshot.offerCode,
-      contractVersion: snapshot.contractVersion,
-      expiresAt: snapshot.expiresAt,
+      id: snapshot.licenseId, offerCode: snapshot.offerCode,
+      contractVersion: snapshot.contractVersion, expiresAt: snapshot.expiresAt,
     },
   });
 };
 
 /**
- * POST /api/commercial/materials/:code?clinicId=...
- *
- * Registra a entrega efetiva (impressão, e-mail, cópia ou download) do material
- * licenciado. Nada do conteúdo preenchido é enviado: o corpo aceita apenas o
- * canal, e a metadata passa pela allow-list compartilhada.
+ * Autoriza e registra o INÍCIO de uma exportação, antes da ação no navegador.
+ * Não comprova impressão concluída, entrega de e-mail nem salvamento em disco:
+ * esses resultados dependem do usuário/cliente externo e podem ser cancelados.
+ * Nenhum conteúdo do material é aceito; somente o canal operacional.
  */
 export const onRequestPost: PagesFunction<CommercialGuardEnv> = async (context) => {
   const clinicId = readClinicId(context.request);
@@ -81,33 +71,23 @@ export const onRequestPost: PagesFunction<CommercialGuardEnv> = async (context) 
   } catch {
     return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);
   }
+  if (Object.keys(body).some((key) => key !== "channel")) {
+    return tenantError("Envie somente o canal, nunca conteúdo do material.", "COMMERCIAL_EXPORT_BODY_INVALID", 400);
+  }
 
   const channel = typeof body.channel === "string" ? body.channel.trim() : "";
   if (!EXPORT_CHANNELS.has(channel)) {
-    return tenantError(
-      "channel deve ser print, email, copy ou download.",
-      "COMMERCIAL_EXPORT_CHANNEL_INVALID",
-      400,
-    );
+    return tenantError("channel deve ser print, email, copy ou download.", "COMMERCIAL_EXPORT_CHANNEL_INVALID", 400);
   }
-
   const { db, user, snapshot, material } = guard.context;
   try {
     await recordCommercialUsage(db, {
-      clinicId: snapshot.clinicId,
-      licenseId: snapshot.licenseId,
-      actorUserId: user.id,
-      kind: "material_export",
-      featureCode: material.code,
+      clinicId: snapshot.clinicId, licenseId: snapshot.licenseId, actorUserId: user.id,
+      kind: "material_export", featureCode: material.code,
       metadata: { materialId: material.code, deliveryChannel: channel },
     });
-  } catch {
-    return tenantError(
-      "Não foi possível registrar a entrega do material.",
-      "COMMERCIAL_USAGE_NOT_RECORDED",
-      500,
-    );
+  } catch (error) {
+    return usageFailure(error);
   }
-
-  return tenantJson({ recorded: true, code: material.code, channel });
+  return tenantJson({ recorded: true, stage: "authorized_initiation", code: material.code, channel });
 };

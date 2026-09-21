@@ -58,6 +58,8 @@ const PUBLIC_API_PATHS = new Set([
   "/api/health",
   "/api/version",
   "/api/cert",
+  // Somente o catálogo estático: não abre /me, /users nem /materials.
+  "/api/commercial/catalog",
   "/api/auth/login",
   "/api/auth/refresh",
   "/api/auth/logout",

@@ -1,7 +1,6 @@
 name: SaaS commercial canonical guard
 
-# Sem filtro de paths: mudanças indiretas de auth/tenant/rotas/configuração
-# também precisam executar o contrato comercial. Não há dependências invisíveis.
+# Sem filtro de paths: auth, tenant, rotas e dependências indiretas também contam.
 on:
   pull_request:
     branches: [main]
@@ -19,7 +18,7 @@ jobs:
   commercial-contract:
     name: Commercial SKU and boundary
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -43,6 +42,12 @@ jobs:
         run: node --import tsx tests/unit/saas-commercial-integrity.test.ts
       - name: Fail-closed client context and confirmation
         run: node --import tsx tests/unit/saas-commercial-scope.test.ts
+      - name: Adversarial review regressions
+        run: node --import tsx tests/unit/saas-commercial-review.test.ts
+      - name: Install Chromium for commercial journeys
+        run: npx playwright install --with-deps chromium
+      - name: Commercial export browser journeys
+        run: node scripts/test-commercial-workspace-browser.mjs
       - name: Public plans contract
         run: node tests/unit/planos-page-contract.test.mjs
       - name: TypeScript
