@@ -5,6 +5,11 @@ import {
   INSTITUTIONAL_PILOT_OFFER,
   offerAcceptsTermsVersion,
 } from "../../shared/commercial";
+import {
+  commercialContractHasDrift,
+  evaluateCommercialAccess,
+  type CommercialLicenseSnapshot,
+} from "../../functions/api/commercial/_core";
 
 assert.equal(INSTITUTIONAL_PILOT_OFFER.termsVersion, "institutional-pilot-terms-v1");
 assert.equal(INSTITUTIONAL_ANNUAL_OFFER.termsVersion, "institutional-annual-terms-v1");
@@ -30,11 +35,35 @@ assert.doesNotMatch(
   "requestedTermsVersion não pode ser persistida como contract_version",
 );
 
-// O snapshot real recusa licença cuja contract_version tenha drift em relação
-// ao SKU atual, e accept.ts exige o mesmo valor antes de ativar.
-const coreSource = readFileSync("functions/api/commercial/_core.ts", "utf8");
+// Verificar o comportamento, não a grafia ===/!== de uma implementação.
+// A leitura SQL real e as respostas HTTP estão em saas-commercial-integrity.
+const snapshot: CommercialLicenseSnapshot = {
+  licenseId: "synthetic-license", clinicId: "synthetic-clinic",
+  offerCode: INSTITUTIONAL_PILOT_OFFER.code, offerName: INSTITUTIONAL_PILOT_OFFER.name,
+  priceCents: INSTITUTIONAL_PILOT_OFFER.priceCents, currency: "BRL",
+  contractVersion: INSTITUTIONAL_PILOT_OFFER.termsVersion, contractState: "valid",
+  status: "active", unitLabel: "Synthetic", activatedAt: "2020-01-01T00:00:00Z",
+  expiresAt: "2099-01-01T00:00:00Z", maxAuthorizedUsers: 10, authorizedUsers: 1,
+  onboardingMinutes: 60, supportMinutes: 120, supportMinutesUsed: 0,
+  features: [...INSTITUTIONAL_PILOT_OFFER.features],
+};
+assert.equal(commercialContractHasDrift(snapshot), false);
+for (const drift of [
+  { ...snapshot, contractVersion: "another-v9" },
+  { ...snapshot, contractVersion: "" },
+  { ...snapshot, offerCode: "unknown" },
+  { ...snapshot, contractState: "drift" as const },
+]) {
+  assert.equal(commercialContractHasDrift(drift), true);
+  assert.deepEqual(evaluateCommercialAccess(drift, "form.change_log", true), {
+    ok: false, reason: "COMMERCIAL_OFFER_UNKNOWN",
+  });
+}
+assert.deepEqual(evaluateCommercialAccess(snapshot, "form.change_log", true), { ok: true });
+assert.deepEqual(evaluateCommercialAccess(null, "form.change_log", true), {
+  ok: false, reason: "COMMERCIAL_LICENSE_MISSING",
+});
 const acceptSource = readFileSync("functions/api/commercial/accept.ts", "utf8");
-assert.match(coreSource, /row\.contract_version\s*!==\s*canonicalOffer\.termsVersion/);
 assert.match(acceptSource, /license\.contract_version\s*!==\s*termsVersion/);
 assert.match(acceptSource, /COMMERCIAL_TERMS_VERSION_MISMATCH/);
 
