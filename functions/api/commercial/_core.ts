@@ -8,7 +8,7 @@ import {
   type CommercialLicenseStatus,
   type CommercialUsageKind,
 } from "../../../shared/commercial";
-import { prepareSaasAudit } from "../tenant/_core";
+import { prepareSaasAudit, tenantError } from "../tenant/_core";
 
 export interface CommercialLicenseSnapshot {
   licenseId: string;
@@ -19,6 +19,8 @@ export interface CommercialLicenseSnapshot {
   currency: string;
   /** Snapshots reais sempre carregam a versão; opcional só preserva fixtures legadas. */
   contractVersion?: string;
+  /** Sempre preenchido na leitura persistida; drift não equivale a licença ausente. */
+  contractState?: "valid" | "drift";
   status: CommercialLicenseStatus;
   unitLabel: string;
   activatedAt: string | null;
@@ -70,13 +72,12 @@ export async function getCommercialLicenseSnapshot(
     .bind(clinicId)
     .first<LicenseRow>();
 
+  // null significa exclusivamente que nenhuma licença foi encontrada.
   if (!row) return null;
   const canonicalOffer = getCommercialOffer(row.offer_code);
-  if (!canonicalOffer || row.contract_version !== canonicalOffer.termsVersion) {
-    // Drift contratual nunca é normalizado silenciosamente. A versão vive na
-    // licença e precisa coincidir com o offer canônico em código.
-    return null;
-  }
+  const contractState = canonicalOffer && row.contract_version === canonicalOffer.termsVersion
+    ? "valid" as const
+    : "drift" as const;
 
   const [usersRow, supportRow, featureRows] = await Promise.all([
     db
@@ -115,6 +116,7 @@ export async function getCommercialLicenseSnapshot(
     priceCents: Number(row.price_cents),
     currency: row.currency,
     contractVersion: row.contract_version,
+    contractState,
     status: row.license_status,
     unitLabel: row.unit_label,
     activatedAt: row.activated_at,
@@ -126,6 +128,24 @@ export async function getCommercialLicenseSnapshot(
     supportMinutesUsed: Number(supportRow?.total ?? 0),
     features: (featureRows.results ?? []).map((item) => item.feature_code),
   };
+}
+
+export function commercialContractHasDrift(snapshot: CommercialLicenseSnapshot | null): boolean {
+  if (!snapshot) return false;
+  const offer = getCommercialOffer(snapshot.offerCode);
+  return !offer || snapshot.contractState === "drift" ||
+    (snapshot.contractVersion !== undefined && snapshot.contractVersion !== offer.termsVersion);
+}
+
+/** Chamar somente depois da autorização de tenant, inclusive nas telas de gestão. */
+export function commercialContractError(snapshot: CommercialLicenseSnapshot | null): Response | null {
+  return commercialContractHasDrift(snapshot)
+    ? tenantError(
+        "A licença aponta para um contrato que não corresponde ao catálogo canônico.",
+        "COMMERCIAL_OFFER_UNKNOWN",
+        409,
+      )
+    : null;
 }
 
 export async function isCommercialUserAuthorized(
@@ -166,8 +186,7 @@ export function evaluateCommercialAccess(
   now: Date = new Date(),
 ): { ok: true } | { ok: false; reason: CommercialAccessDeniedReason } {
   if (!snapshot) return { ok: false, reason: "COMMERCIAL_LICENSE_MISSING" };
-  const offer = getCommercialOffer(snapshot.offerCode);
-  if (!offer || (snapshot.contractVersion && snapshot.contractVersion !== offer.termsVersion)) {
+  if (commercialContractHasDrift(snapshot)) {
     return { ok: false, reason: "COMMERCIAL_OFFER_UNKNOWN" };
   }
   if (
@@ -202,6 +221,9 @@ export async function evaluateCommercialUserAccess(
   now: Date = new Date(),
 ): Promise<{ ok: true } | { ok: false; reason: CommercialAccessDeniedReason }> {
   if (!snapshot) return { ok: false, reason: "COMMERCIAL_LICENSE_MISSING" };
+  if (commercialContractHasDrift(snapshot)) {
+    return { ok: false, reason: "COMMERCIAL_OFFER_UNKNOWN" };
+  }
   const authorized = await isCommercialUserAuthorized(db, snapshot.licenseId, userId);
   return evaluateCommercialAccess(snapshot, feature, authorized, now);
 }
