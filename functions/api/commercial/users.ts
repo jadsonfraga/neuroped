@@ -6,7 +6,7 @@ import {
   tenantError,
   tenantJson,
 } from "../tenant/_core";
-import { getCommercialLicenseSnapshot } from "./_core";
+import { commercialContractError, getCommercialLicenseSnapshot } from "./_core";
 
 interface CommercialUsersEnv {
   DB?: D1Database;
@@ -59,6 +59,8 @@ async function resolveManagerContext(
   }
 
   const snapshot = await getCommercialLicenseSnapshot(db, clinicId);
+  const contractError = commercialContractError(snapshot);
+  if (contractError) return { ok: false as const, response: contractError };
   if (!snapshot) {
     return {
       ok: false as const,
@@ -243,17 +245,8 @@ export const onRequestDelete: PagesFunction<CommercialUsersEnv> = async (context
 
   const { user, snapshot } = resolved;
 
-  // Uma licença ativa sem nenhum usuário autorizado seria um contrato vigente
-  // que ninguém pode exercer, e o banco recusa ativar nesse estado. Manter o
-  // último assento é a mesma regra, aplicada depois da ativação.
-  if (snapshot.status === "active" && snapshot.authorizedUsers <= 1) {
-    return tenantError(
-      "A licença precisa manter ao menos um usuário autorizado.",
-      "COMMERCIAL_LAST_AUTHORIZED_USER",
-      409,
-    );
-  }
-
+  // Não decidir pelo COUNT do snapshot: ele pode estar desatualizado.
+  // O trigger do último assento decide atomicamente dentro deste mesmo batch.
   try {
     const [revokeResult] = await db.batch([
       db
@@ -290,6 +283,14 @@ export const onRequestDelete: PagesFunction<CommercialUsersEnv> = async (context
       );
     }
   } catch (error) {
+    const detail = error instanceof Error ? `${error.message} ${String(error.cause ?? "")}` : String(error);
+    if (detail.includes("COMMERCIAL_LAST_AUTHORIZED_USER")) {
+      return tenantError(
+        "A licença precisa manter ao menos um usuário autorizado.",
+        "COMMERCIAL_LAST_AUTHORIZED_USER",
+        409,
+      );
+    }
     console.error("[commercial.users] revoke error", error);
     return tenantError("Não foi possível revogar o usuário.", "COMMERCIAL_REVOKE_FAILED", 409);
   }
