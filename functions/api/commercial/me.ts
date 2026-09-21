@@ -1,6 +1,7 @@
 import { getContextUser } from "../auth/_authorization";
 import { getClinicMembership, tenantError, tenantJson } from "../tenant/_core";
 import {
+  commercialContractError,
   evaluateCommercialAccess,
   getCommercialLicenseSnapshot,
   isCommercialUserAuthorized,
@@ -48,6 +49,9 @@ export const onRequestGet: PagesFunction<CommercialEnv> = async (context) => {
   }
 
   const snapshot = await getCommercialLicenseSnapshot(db, clinicId);
+  const contractError = commercialContractError(snapshot);
+  if (contractError) return contractError;
+
   const authorizedUser = snapshot
     ? await isCommercialUserAuthorized(db, snapshot.licenseId, user.id)
     : false;
