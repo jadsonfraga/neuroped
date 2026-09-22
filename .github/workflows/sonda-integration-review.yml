@@ -34,10 +34,12 @@ jobs:
           lines = subprocess.check_output(['git','show',revision+':'+path],text=True).splitlines()
           start = lines.index('      - name: Resolve reviewed conflicts and verify complete integrated outputs')
           start = lines.index('        run: |', start) + 1
+          indent = len(lines[start]) - len(lines[start].lstrip())
+          assert indent >= 10
           script = []
           for line in lines[start:]:
-              if line and not line.startswith('            '): break
-              script.append(line[12:] if line else '')
+              if line and not line.startswith(' ' * indent): break
+              script.append(line[indent:] if line else '')
           assert script and 'expected = ' in '\n'.join(script)
           exec(compile('\n'.join(script), 'reviewed-resolver-50e06403.py', 'exec'))
           assert not subprocess.check_output(['git','diff','--name-only','--diff-filter=U'])
