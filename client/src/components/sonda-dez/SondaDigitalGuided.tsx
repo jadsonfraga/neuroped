@@ -28,6 +28,7 @@ import {
   physicalFieldReason,
   type ActivitySpec,
   type DigitalMission,
+  digitalAgeContext,
 } from "@/data/sondaDezDigital";
 import { SONDA_DEZ_RESPONSE_LADDER } from "@/data/sondaDezCanonical";
 import {
@@ -39,6 +40,11 @@ import {
   recordProblems,
   sequenceMetrics,
   recordedGridMetrics,
+  derivedCounts,
+  synchronizeCounts,
+  observedResponses,
+  responseOptions,
+  recordObservedResponse,
   type DigitalRecord,
   type StepRun,
 } from "@/lib/sondaDezSession";
@@ -136,6 +142,7 @@ export default function SondaDigitalGuided({
     ? (records[mission.id] ?? initialRecord(mission))
     : emptyRecord();
   const currentStep = mission?.steps[stepIndex];
+  const stepResponses = currentStep ? observedResponses(currentStep.activity, current.runs[stepIndex]) : {};
   const trained =
     TRAINING_CASES.every((q, i) => quiz[i] === q.answer) &&
     PRACTICES.every((_, i) => practiced[i]);
@@ -144,6 +151,7 @@ export default function SondaDigitalGuided({
     PREPARATION.every((_, i) => checks[i]) &&
     sound !== "unchecked";
   const problems = mission ? recordProblems(mission, current) : [];
+  const counts = mission ? derivedCounts(mission, current) : {};
   const completedCount =
     band?.missions.filter((m) => recordProblems(m, records[m.id]).length === 0)
       .length ?? 0;
@@ -192,7 +200,7 @@ export default function SondaDigitalGuided({
     if (!mission) return;
     setRecords((old) => ({
       ...old,
-      [mission.id]: change(old[mission.id] ?? initialRecord(mission)),
+      [mission.id]: synchronizeCounts(mission, change(old[mission.id] ?? initialRecord(mission))),
     }));
     setCopied(false);
   }
@@ -443,6 +451,11 @@ export default function SondaDigitalGuided({
               </p>
             )}
             <div className="mt-5 space-y-4">
+              {digitalAgeContext(ageMonths) && (
+                <p className="rounded-xl border p-3 text-sm" role="note">
+                  {digitalAgeContext(ageMonths)}
+                </p>
+              )}
               <label className="block text-sm font-semibold">
                 Código anônimo da sessão (opcional)
                 <Input
@@ -828,6 +841,15 @@ export default function SondaDigitalGuided({
                       nos botões da tela da aplicadora; se perder uma resposta,
                       não adivinhe.
                     </p>
+                    {currentStep.activity.prompt !== "operator-only" && (
+                      <p className="mt-2">
+                        Com teclado, registre durante cada cartão: 1 = uma palma;
+                        2 = esperou sem bater palma; 3 = outra resposta; 4 = não observado.
+                        Apenas a aplicadora usa essas teclas; não há pista visual de acerto na tela da criança.
+                        Sem teclado, use anotação contemporânea por cartão e transcreva ao voltar;
+                        não tente reconstruir a série de memória.
+                      </p>
+                    )}
                   </div>
                 )}
                 {currentStep.waitSeconds && (
@@ -948,6 +970,37 @@ export default function SondaDigitalGuided({
                     acompanham a exportação.
                   </p>
                 )}
+                {currentStep.activity.responseRule && current.runs[stepIndex]?.status === "complete" && (
+                  <fieldset className="rounded-xl border p-4">
+                    <legend className="px-1 font-semibold">Respostas por cartão — conferência da aplicadora</legend>
+                    <p className="mb-3 text-sm">
+                      Registre somente o que observou. Nenhuma opção começa selecionada.
+                      “Esperar” significa que observou a criança sem bater palma; não significa falta de registro.
+                      Se perdeu uma resposta, escolha “Não observado” e use NA nos totais desta etapa com motivo.
+                      Contagens são calculadas dessas respostas, sem detectar voz ou movimento.
+                    </p>
+                    <div className="space-y-3">
+                      {currentStep.activity.items?.map((item, i) => (
+                        <label key={i} className="block text-sm">
+                          Resposta ao cartão {i + 1}: {item}
+                          <select
+                            aria-label={`Resposta ao cartão ${i + 1}: ${item}`}
+                            className="mt-1 block min-h-11 w-full rounded-lg border bg-background p-2"
+                            value={stepResponses[i] ?? ""}
+                            onChange={(e) => updateRecord((r) => ({
+                              ...r,
+                              reviewed: false,
+                              runs: { ...r.runs, [stepIndex]: recordObservedResponse(currentStep.activity, r.runs[stepIndex], i, e.target.value) },
+                            }))}
+                          >
+                            <option value="" disabled>Selecione o que foi observado</option>
+                            {responseOptions(currentStep.activity).map((answer) => <option key={answer} value={answer}>{answer}</option>)}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
                 {current.runs[stepIndex]?.events.length > 0 && (
                   <details className="text-sm">
                     <summary className="cursor-pointer font-semibold">
@@ -1055,6 +1108,12 @@ export default function SondaDigitalGuided({
                       <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
                         {physical ?? fieldGuidance(field)}
                       </p>
+                      {counts[field.id] && (
+                        <p className="mb-3 text-sm">
+                          Derivado de {counts[field.id].source} na etapa {counts[field.id].step + 1}.
+                          {counts[field.id].value === undefined ? " Evidência ainda incompleta; não preencha zero. Complete o registro ou use NA com motivo." : " Não editável manualmente. Para corrigir, revise as respostas por cartão; se não avaliável, use NA e explique."}
+                        </p>
+                      )}
                       {field.kind === "count" ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <label className="text-sm">
@@ -1064,7 +1123,7 @@ export default function SondaDigitalGuided({
                               min="0"
                               max={field.max}
                               step="1"
-                              disabled={!!physical || value === "NA"}
+                              disabled={!!physical || value === "NA" || !!counts[field.id]}
                               value={value === "NA" ? "" : value}
                               onChange={(e) =>
                                 updateRecord((r) => ({

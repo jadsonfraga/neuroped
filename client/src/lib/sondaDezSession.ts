@@ -3,6 +3,8 @@ import {
   DIGITAL_VERSION,
   fieldGuidance,
   physicalFieldReason,
+  digitalAgeContext,
+  type ActivitySpec,
   type DigitalBand,
   type DigitalMission,
 } from "../data/sondaDezDigital";
@@ -49,6 +51,107 @@ export const emptyRecord = (): DigitalRecord => ({
   runs: {},
   reviewed: false,
 });
+
+export function responseOptions(spec: ActivitySpec): string[] {
+  return [...new Set([
+    ...(spec.prompt === "operator-only" ? spec.items ?? [] : []),
+    ...Object.values(spec.responseRule ?? {}),
+    ...Object.values(spec.previousRule ?? {}),
+    "Outra resposta",
+    ...(spec.prompt === "operator-only" ? ["Sem resposta"] : []),
+    "Não observado",
+  ])];
+}
+
+/** Latest explicit observation wins; absent/unobserved is never an error or zero. */
+export function observedResponses(spec: ActivitySpec, run?: StepRun): Record<number, string> {
+  const answers: Record<number, string> = {};
+  for (const event of run?.events ?? []) {
+    if (!["resposta-verbal", "resposta-observada"].includes(event.type)) continue;
+    try {
+      const v = JSON.parse(event.value);
+      if (!Number.isInteger(v.item) || v.item < 1 || v.item > (spec.items?.length ?? 0) ||
+          v.stimulus !== spec.items?.[v.item - 1] || !responseOptions(spec).includes(v.answer)) return {};
+      answers[v.item - 1] = v.answer;
+    } catch { return {}; }
+  }
+  return answers;
+}
+
+export function recordObservedResponse(spec: ActivitySpec, run: StepRun, index: number, answer: string): StepRun {
+  if (run.status !== "complete" || !spec.responseRule || !Number.isInteger(index) ||
+      !spec.items?.[index] || !responseOptions(spec).includes(answer)) return run;
+  return {
+    ...run,
+    events: [...run.events, {
+      type: "resposta-observada",
+      value: JSON.stringify({ item: index + 1, stimulus: spec.items[index], answer, source: "conferência da aplicadora após apresentação" }),
+      elapsedMs: run.elapsedMs,
+    }],
+  };
+}
+
+function completeSequence(spec: ActivitySpec, run?: StepRun): boolean {
+  if (!run || run.status !== "complete" || !spec.items?.length) return false;
+  const interval = spec.intervalMs ?? 2500;
+  const shown = run.events.filter((e) => e.type === "apresentado");
+  return run.elapsedMs >= spec.items.length * interval &&
+    shown.length === spec.items.length &&
+    shown.every((e, i) => e.value === String(i) && e.elapsedMs >= i * interval && e.elapsedMs < (i + 1) * interval) &&
+    run.events.some((e) => e.type === "serie-concluida" && e.value === String(spec.items!.length) &&
+      e.elapsedMs >= spec.items!.length * interval && e.elapsedMs <= run.elapsedMs);
+}
+
+type DerivedCount = { value?: number; step: number; source: string };
+export function derivedCounts(mission: DigitalMission, record?: DigitalRecord): Record<string, DerivedCount> {
+  const result: Record<string, DerivedCount> = {};
+  mission.steps.forEach(({ activity: spec }, step) => {
+    if (!spec.countFields) return;
+    const run = record?.runs[step];
+    let metrics: Partial<Record<"hits" | "omissions" | "commissions" | "errors" | "perseverations", number>> | undefined;
+    const source = spec.responseRule ? "respostas registradas pela aplicadora" : "interações digitais registradas";
+    if (spec.kind === "grid" && run) metrics = recordedGridMetrics(spec.items ?? [], spec.target ?? "", run, (spec.durationSeconds ?? 60) * 1000);
+    if (spec.kind === "sequence" && run && completeSequence(spec, run)) {
+      if (spec.target) {
+        const validTouches = run.events.filter((e) => e.type === "toque").every((e) =>
+          /^\d+$/.test(e.value) && Number(e.value) < (spec.items?.length ?? 0) &&
+          e.elapsedMs >= Number(e.value) * (spec.intervalMs ?? 2500) &&
+          e.elapsedMs < (Number(e.value) + 1) * (spec.intervalMs ?? 2500));
+        if (validTouches) metrics = sequenceMetrics(spec.items!, spec.target, run.events);
+      } else if (spec.responseRule) {
+        const answers = observedResponses(spec, run);
+        if (spec.items!.every((_, i) => answers[i] && answers[i] !== "Não observado")) {
+          metrics = { hits: 0, omissions: 0, commissions: 0, errors: 0, perseverations: 0 };
+          spec.items!.forEach((item, i) => {
+            const answer = answers[i];
+            const expected = spec.responseRule![item];
+            if (answer === expected) metrics!.hits!++;
+            else {
+              metrics!.errors!++;
+              if (expected === "Uma palma" && answer === "Esperar") metrics!.omissions!++;
+              if (expected === "Esperar" && answer === "Uma palma") metrics!.commissions!++;
+              if (spec.previousRule?.[item] === answer) metrics!.perseverations!++;
+            }
+          });
+        }
+      }
+    }
+    for (const [metric, field] of Object.entries(spec.countFields))
+      result[field] = { step, source, value: metrics?.[metric as keyof typeof metrics] };
+  });
+  return result;
+}
+
+/** Recompute on every evidence change, including reopening/NA; no stale totals. */
+export function synchronizeCounts(mission: DigitalMission, record: DigitalRecord): DigitalRecord {
+  const values = { ...record.values };
+  for (const [field, count] of Object.entries(derivedCounts(mission, record))) {
+    if (values[field] === "NA") continue;
+    if (count.value === undefined) delete values[field];
+    else values[field] = String(count.value);
+  }
+  return { ...record, values };
+}
 export function fieldValid(
   field: FieldDef,
   value: string | undefined,
@@ -95,12 +198,7 @@ export function recordProblems(
     if (
       run?.status === "complete" &&
       activity.kind === "sequence" &&
-      (!run.events.some((e) => e.type === "serie-concluida") ||
-        new Set(
-          run.events
-            .filter((e) => e.type === "apresentado")
-            .map((e) => e.value),
-        ).size !== activity.items?.length)
+      !completeSequence(activity, run)
     )
       issues.push(`Etapa ${i + 1}: série sem prova de apresentação completa.`);
     if (
@@ -131,6 +229,14 @@ export function recordProblems(
     )
       issues.push(`${field.label}: campo presencial deve permanecer NA.`);
   });
+  for (const [field, count] of Object.entries(derivedCounts(mission, record))) {
+    const value = record.values[field];
+    if (value === "NA") continue; // reason is checked by fieldValid above
+    if (count.value === undefined)
+      issues.push(`${field}: evidência incompleta na etapa ${count.step + 1}; registre as respostas observadas ou NA com motivo.`);
+    else if (value !== String(count.value))
+      issues.push(`${field}: contagem divergente dos eventos (esperado ${count.value}).`);
+  }
   // No inferred success from a skipped or disrupted presentation.
   if (
     Object.values(record.runs).some((run) => run.status !== "complete") &&
@@ -230,9 +336,10 @@ export function recordedGridMetrics(
   items: string[],
   target: string,
   run: StepRun,
+  minimumMs = 60000,
 ) {
   const last = run.events.findLast((e) => e.type === "grade-concluida");
-  if (!last || run.status !== "complete") return undefined;
+  if (!last || run.status !== "complete" || run.elapsedMs < minimumMs || last.elapsedMs < minimumMs || last.elapsedMs > run.elapsedMs) return undefined;
   try {
     const value: unknown = JSON.parse(last.value);
     if (
@@ -240,7 +347,8 @@ export function recordedGridMetrics(
       typeof value === "object" &&
       "selected" in value &&
       Array.isArray(value.selected) &&
-      value.selected.every((i) => typeof i === "number")
+      value.selected.every((i) => Number.isInteger(i) && i >= 0 && i < items.length) &&
+      new Set(value.selected).size === value.selected.length
     )
       return gridMetrics(items, target, value.selected);
   } catch {
@@ -301,6 +409,7 @@ export function buildDigitalReport(
     DIGITAL_NATURE,
     `Estado: ${allComplete ? (hasNA ? "registro preenchido com campos não avaliáveis" : "registro preenchido para revisão médica") : "registro parcial; sem síntese interpretativa"}. Missões registradas: ${completed}/${band.missions.length}.`,
     `Código: ${context.code.trim() || "não informado"}. Idade: ${context.ageMonths} meses. Trilha: ${band.label}. Escolaridade: ${context.school.trim() || "não informada"}.`,
+    ...(digitalAgeContext(context.ageMonths) ? [digitalAgeContext(context.ageMonths)] : []),
     `Aplicadora (código): ${context.operator.trim() || "não informado"}. Tempo ativo: ${context.elapsedSeconds}s; referência operacional 600s${context.elapsedSeconds > 600 ? "; tempo ampliado" : ""}.`,
     `Interferentes: ${context.confounders.join("; ") || "nenhum assinalado; não equivale a investigação negativa"}.`,
     `Alertas ao médico: ${context.flags.join("; ") || "nenhum assinalado"}.`,
@@ -309,6 +418,7 @@ export function buildDigitalReport(
   ];
   band.missions.forEach((mission, index) => {
     const record = records[mission.id];
+    const counts = derivedCounts(mission, record);
     lines.push(
       `${index + 1}. ${mission.title}`,
       `Limite: ${mission.digitalLimit}`,
@@ -341,6 +451,14 @@ export function buildDigitalReport(
     });
     mission.fields.forEach((field) => {
       const value = record?.values[field.id];
+      const count = counts[field.id];
+      if (count) {
+        lines.push(`${field.label} — fonte: ${count.source}; etapa ${count.step + 1}; contagem verificável: ${count.value ?? "indisponível"}.`);
+        if (value !== undefined && value !== "" && value !== "NA" && value !== String(count.value)) {
+          lines.push(`${field.label}: DADO INCONSISTENTE — valor informado ${value} não confirmado pelos eventos; não interpretar.`);
+          return;
+        }
+      }
       lines.push(
         `${field.label}: ${value === undefined || value === "" ? "DADO AUSENTE" : value}${value === "NA" ? " — " + (record?.reasons[field.id] || "MOTIVO AUSENTE") : ""}.`,
       );
