@@ -1,26 +1,102 @@
-name: Sonda concurrent integration review
+name: Sonda concurrent integration verification
 on:
   push:
     branches: [fix/sonda-dez-quality-20260922]
     paths: ['.github/workflows/sonda-integration-review.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
-  review:
+  integrate:
+    if: github.repository == 'jadsonfraga/neuroped' && github.ref == 'refs/heads/fix/sonda-dez-quality-20260922'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - name: Export exact concurrent main patch, without modifying any branch
-        run: |
-          mkdir -p /tmp/sonda-integration
-          git diff --binary 74abe8efcb95735fc28b17a1bc968179fe6d38d2 20c14db0f8a123d64b9f3982cd3e80f6b1511b48 > /tmp/sonda-integration/concurrent-main.patch
-          git archive --format=tar 20c14db0f8a123d64b9f3982cd3e80f6b1511b48 .github/workflows/sonda-dez-digital.yml client/src/components/sonda-dez/SondaDigitalActivity.tsx client/src/components/sonda-dez/SondaDigitalGuided.tsx client/src/data/sondaDezDigital.ts client/src/lib/sondaDezSession.ts docs/audits/SONDA_EVENT_INTEGRITY_2026-09-22.md tests/e2e/sonda-dez-digital.mjs tests/unit/sonda-dez-digital.test.ts > /tmp/sonda-integration/concurrent-source.tar
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: sonda-concurrent-main
-          path: /tmp/sonda-integration/
-          retention-days: 1
+          node-version: '24'
+          cache: npm
+      - name: Merge exact concurrent main without discarding either change set
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config merge.conflictStyle diff3
+          git merge --no-commit --no-ff 20c14db0f8a123d64b9f3982cd3e80f6b1511b48 || test $? = 1
+      - name: Resolve reviewed conflicts and verify complete integrated outputs
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, subprocess
+          assert set(subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()) == {'.github/workflows/sonda-dez-digital.yml','client/src/lib/sondaDezSession.ts'}
+          p=Path('client/src/lib/sondaDezSession.ts');s=p.read_text()
+          blocks=list(re.finditer(r'^<<<<<<<.*?\n(.*?)^\|\|\|\|\|\|\|.*?\n.*?^=======\n(.*?)^>>>>>>>.*?\n',s,re.M|re.S));assert len(blocks)==2
+          for i,m in reversed(list(enumerate(blocks))):
+              replacement='      !completeSequence(activity, run)\n' if i==0 else m[1]+m[2]
+              s=s[:m.start()]+replacement+s[m.end():]
+          a=s.index('  if (!run || run.status !== "complete" || !spec.items?.length) return false;',s.index('function completeSequence'))
+          b=s.index('\n}',a)
+          s=s[:a]+'  return Boolean(run && validSequenceRun(spec.items ?? [], spec.intervalMs ?? 2500, run));'+s[b:]
+          a=s.index('export function buildDigitalHandoff')
+          first,tail=s[:a],s[a:]
+          tail=tail.replace('    `Aplicadora:', '    ...(digitalAgeContext(context.ageMonths) ? [digitalAgeContext(context.ageMonths)] : []),\n    `Aplicadora:',1)
+          tail=tail.replace('    const facts: string[]', '    const counts = derivedCounts(mission, record);\n    const facts: string[]',1)
+          tail=tail.replace('      const coded =', '''      const count = counts[field.id];
+                if (count && (count.value === undefined || value !== String(count.value))) {
+                  absent.push(`${field.label} (contagem não confirmada pelos eventos; não interpretar)`); continue;
+                }
+                const coded =''',1)
+          tail=tail.replace('${field.kind === "count" && field.max !== undefined ? `/${field.max} (contagem bruta)` : ""}`', '${field.kind === "count" && field.max !== undefined ? `/${field.max} (contagem bruta)` : ""}${count ? `; fonte: ${count.source}, etapa ${count.step + 1}` : ""}`',1)
+          p.write_text(first+tail)
+          p=Path('.github/workflows/sonda-dez-digital.yml');s=p.read_text();a=s.index('<<<<<<<');s=s[:a]+'''      - name: Preserve synthetic browser evidence
+                  if: always()
+                  uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+                  with:
+                    name: sonda-digital-browser-${{ github.sha }}
+                    path: /tmp/sonda-e2e/
+                    retention-days: 7
+                    if-no-files-found: warn
+          ''';p.write_text(s)
+          p=Path('tests/unit/sonda-dez-digital.test.ts');s=p.read_text().replace('  let record = emptyRecord();\n', '  let record = emptyRecord();\n  record.interaction = "operator";\n',1);p.write_text(s)
+          p=Path('tests/unit/sonda-dez-quality.test.ts');p.write_text(p.read_text()+'''
+          test("resumo factual preserva integridade das contagens derivadas da PR concorrente", () => {
+            const band = DIGITAL_BANDS[2];
+            const mission = band.missions.find((m) => m.id === "b-atencao-sustentada")!;
+            const record = emptyRecord();
+            record.values = { acertos: "5", omissoes: "0", comissoes: "0", redirecionamentos: "2" };
+            record.interaction = "operator";
+            const text = buildDigitalHandoff(band, { [mission.id]: record }, context);
+            assert.match(text, /contagem não confirmada pelos eventos; não interpretar/);
+            assert.doesNotMatch(text, /5\\/5 \\(contagem bruta\\)/);
+            assert.match(text, /não expectativas equivalentes nem normas/);
+          });
+          ''')
+          p=Path('client/src/data/sondaDezDigital.ts');p.write_text(p.read_text().replace('DIGITAL_VERSION = "2026-09-22.1"','DIGITAL_VERSION = "2026-09-22.2"',1))
+          p=Path('docs/audits/sonda-dez-quality-20260922.md');s=p.read_text().replace('Versão digital: `2026-09-22.1`','Versão digital: `2026-09-22.2`').replace('36 testes unitários (8 de consolidação, 16 digitais, 12 de qualidade)', '48 testes unitários (8 de consolidação, 27 digitais, 13 de qualidade)');s=s.replace('## Verificação e limites','## Integração concorrente\n\nA PR #922 foi incorporada ao main em `20c14db0f8a123d64b9f3982cd3e80f6b1511b48` durante esta revisão. A integração preserva as respostas por cartão, contagens derivadas, contexto etário, testes e auditoria daquela entrega. Os dois conflitos foram conciliados, sem escolher uma implementação em detrimento da outra: a validação de séries compartilha o verificador estrito; autoria e coerência de contagens são cumulativas. O resumo factual também rejeita contagens não confirmadas pelos eventos e informa sua fonte. Fixture sintética recebe a autoria agora obrigatória. Todas as assertivas anteriores são preservadas.\n\n## Verificação e limites');p.write_text(s)
+          expected = {'.github/workflows/sonda-dez-digital.yml':'0aba5d88f6e19e196689f295acf09336768eefb3','tests/unit/sonda-dez-digital.test.ts':'34fdf6283499f278695d0db21ba298eeb1d46067','tests/e2e/sonda-dez-digital.mjs':'444dcabcb0bf4b0d06f875c50f659bf2e3d7bf3b','client/src/lib/sondaDezSession.ts':'eed03fbefdffdfb62979f32ed413b414d8b2be3f','client/src/data/sondaDezDigital.ts':'77ed65d90d4b5969deb33c4e8929c9366141c73d','client/src/components/sonda-dez/SondaDigitalActivity.tsx':'9f8c063d70e80212b65f7e78b0323f169584a0ae','client/src/components/sonda-dez/SondaDigitalGuided.tsx':'bb8d665ae4b976c3bcadef7618599cc5f1a249c9','docs/audits/SONDA_EVENT_INTEGRITY_2026-09-22.md':'8414fb7c57b0a4d100d15e02f846576fd82bf4ce','tests/unit/sonda-dez-quality.test.ts':'e341217f5333f8c6047804b42b28e17ee0b08fa2','docs/audits/sonda-dez-quality-20260922.md':'044d64625f58d0fb83df8ca32cc207606dd23357'}
+          for path,sha in expected.items():
+              assert subprocess.check_output(['git','hash-object',path],text=True).strip() == sha, path
+          subprocess.run(['git','add','--',*expected],check=True)
+          assert not subprocess.check_output(['git','diff','--name-only','--diff-filter=U'])
+      - run: npm ci
+      - run: npm run test:sonda
+      - run: npm run check
+      - run: npm run lint
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+      - run: npm run test:e2e:sonda
+      - name: Commit tested merge only on feature branch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/fix/sonda-dez-quality-20260922
+          git diff --cached --check
+          git commit -m 'merge(sonda): preserve concurrent event integrity and reviewed clinical usability'
+          git push origin HEAD:refs/heads/fix/sonda-dez-quality-20260922
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sonda-integrated-${{ github.sha }}
+          path: /tmp/sonda-e2e/
+          retention-days: 7
+          if-no-files-found: warn
