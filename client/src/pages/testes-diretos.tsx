@@ -1,5 +1,7 @@
 import { SONDA_DEZ_PROTOCOL, type BandDef, type FieldDef, type FieldValue } from "@/data/sondaDezProtocol";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
+import { isSondaResponseCode, validSondaAge, validSondaField, legacyCoverage } from "@/lib/sondaDezQuality";
 import {
   AlertTriangle,
   Baby,
@@ -90,7 +92,9 @@ function bandForMonths(months: number): BandDef | undefined {
 
 function fieldValueText(field: FieldDef, value: FieldValue | undefined): string {
   if (value === undefined || value === "") return "não registrado";
-  if (field.options?.includes(String(value)) && CODES.includes(String(value) as ResponseCode)) {
+  if (!validSondaField(field, value)) return "registro inválido — revisar";
+  if (value === "NA") return "NA — Não avaliável";
+  if (isSondaResponseCode(field, value)) {
     return `${value} — ${CODE_LABELS[String(value) as ResponseCode]}`;
   }
   if (field.kind === "count" && field.max) return `${value}/${field.max}`;
@@ -99,7 +103,8 @@ function fieldValueText(field: FieldDef, value: FieldValue | undefined): string 
 
 function explainValue(field: FieldDef, value: FieldValue | undefined): string {
   if (value === undefined || value === "") return "Ainda não há resposta registrada para interpretar.";
-  if (CODES.includes(String(value) as ResponseCode)) return CODE_MEANINGS[String(value) as ResponseCode];
+  if (!validSondaField(field, value)) return "Valor inválido; revise antes da entrega.";
+  if (value === "NA" || isSondaResponseCode(field, value)) return CODE_MEANINGS[String(value) as ResponseCode];
   const normalized = String(value).toLowerCase();
   if (normalized === "sim") return `Foi observado “${field.label}” nesta oportunidade. Registre o contexto e evite generalizar para outros ambientes.`;
   if (normalized === "não") return `“${field.label}” não foi observado nesta oportunidade; isso não prova ausência da habilidade fora desta tarefa.`;
@@ -117,12 +122,13 @@ function buildAnalysis(band: BandDef, records: Record<string, MissionRecord>, in
     const parts = mission.fields
       .map((field) => {
         const value = record.values[field.id];
-        if (value === undefined || value === "") return null;
+        if (!validSondaField(field, value)) return null;
+        const coded = isSondaResponseCode(field, value);
         const valueText = fieldValueText(field, value);
-        if (String(value) === "E") return `demonstrou ${field.label.toLowerCase()} espontaneamente`;
-        if (String(value) === "I") return `demonstrou ${field.label.toLowerCase()} após instrução direta`;
-        if (String(value) === "P") return `demonstrou ${field.label.toLowerCase()} apenas após pista/repetição, com necessidade de mediação adicional`;
-        if (String(value) === "0") return `não demonstrou ${field.label.toLowerCase()} nesta oportunidade`;
+        if (coded && String(value) === "E") return `demonstrou ${field.label.toLowerCase()} espontaneamente`;
+        if (coded && String(value) === "I") return `demonstrou ${field.label.toLowerCase()} após instrução direta`;
+        if (coded && String(value) === "P") return `demonstrou ${field.label.toLowerCase()} apenas após pista/repetição, com necessidade de mediação adicional`;
+        if (coded && String(value) === "0") return `não demonstrou ${field.label.toLowerCase()} nesta oportunidade`;
         if (String(value) === "NA") return `${field.label.toLowerCase()} não foi avaliável`;
         return `${field.label.toLowerCase()} = ${valueText}`;
       })
@@ -160,21 +166,25 @@ function Seconds({ value }: { value: number }) {
 
 function FieldControl({ field, value, onChange }: { field: FieldDef; value: FieldValue | undefined; onChange: (value: FieldValue) => void }) {
   if (field.kind === "count") {
-    const current = typeof value === "number" ? value : 0;
+    const current = typeof value === "number" && Number.isFinite(value) ? value : 0;
     return (
       <div className="rounded-2xl border border-border/70 bg-background p-3">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-bold text-foreground">{field.label}</p>
-            {field.hint && <p className="mt-1 text-xs text-muted-foreground">{field.hint}</p>}
-          </div>
-          {field.max && <Badge variant="outline">máx. {field.max}</Badge>}
+        <label className="block text-sm font-bold">
+          {field.label}{field.max !== undefined ? ` (máximo ${field.max})` : ""}
+          <Input aria-label={`Quantidade de ${field.label}`} type="number" min={0} max={field.max} step={1}
+            className="mt-2 h-12" placeholder="Não registrado" disabled={value === "NA"}
+            value={value === "NA" ? "" : value ?? ""}
+            onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />
+        </label>
+        {field.hint && <p className="mt-1 text-xs text-muted-foreground">{field.hint}</p>}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button type="button" variant="outline" aria-label={`Diminuir ${field.label}`} disabled={value === "NA" || value === undefined || value === "" || current <= 0} onClick={() => onChange(Math.max(0, current - 1))}>−</Button>
+          <Button type="button" variant="outline" aria-label={`Aumentar ${field.label}`} disabled={value === "NA"} onClick={() => onChange(Math.min(field.max ?? Number.MAX_SAFE_INTEGER, current + 1))}>+</Button>
+          <Button type="button" variant="outline" onClick={() => onChange(0)}>Registrar zero observado</Button>
+          <Button type="button" variant={value === "NA" ? "default" : "outline"} aria-pressed={value === "NA"} onClick={() => onChange(value === "NA" ? "" : "NA")}>Não avaliável</Button>
+          <Button type="button" variant="ghost" onClick={() => onChange("")}>Limpar</Button>
         </div>
-        <div className="grid grid-cols-[52px_1fr_52px] items-center gap-2">
-          <Button type="button" variant="outline" className="h-12 rounded-xl text-xl" onClick={() => onChange(Math.max(0, current - 1))}>−</Button>
-          <div className="flex h-12 items-center justify-center rounded-xl bg-muted text-2xl font-black tabular-nums">{current}{field.max ? ` / ${field.max}` : ""}</div>
-          <Button type="button" variant="outline" className="h-12 rounded-xl text-xl" onClick={() => onChange(field.max ? Math.min(field.max, current + 1) : current + 1)}>+</Button>
-        </div>
+        {value === "NA" && <p className="mt-2 text-sm">Descreva o motivo nas observações desta missão.</p>}
       </div>
     );
   }
@@ -194,12 +204,12 @@ function FieldControl({ field, value, onChange }: { field: FieldDef; value: Fiel
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {(field.options ?? []).map((option) => {
           const selected = String(value ?? "") === option;
-          const code = CODES.includes(option as ResponseCode);
+          const code = isSondaResponseCode(field, option) || option === "NA";
           return (
             <button
               key={option}
               type="button"
-              onClick={() => onChange(option)}
+              onClick={() => onChange(selected ? "" : option)}
               aria-pressed={selected}
               className={`min-h-12 rounded-xl border px-3 py-2 text-left text-sm font-bold transition ${selected ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-background hover:bg-muted"}`}
             >
@@ -218,11 +228,11 @@ function FieldControl({ field, value, onChange }: { field: FieldDef; value: Fiel
   );
 }
 
-export default function SondaDezPage() {
+export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: string | undefined) => void } = {}) {
   const [phase, setPhase] = useState<Phase>("setup");
   const [caseCode, setCaseCode] = useState("");
-  const [years, setYears] = useState(3);
-  const [months, setMonths] = useState(0);
+  const [years, setYears] = useState("");
+  const [months, setMonths] = useState("0");
   const [schoolYear, setSchoolYear] = useState("");
   const [interferences, setInterferences] = useState<Interference[]>(["nenhum"]);
   const [materialsChecked, setMaterialsChecked] = useState<Record<string, boolean>>({});
@@ -235,23 +245,43 @@ export default function SondaDezPage() {
   const [childMode, setChildMode] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const totalMonths = years * 12 + months;
+  const [copyError, setCopyError] = useState("");
+  const missionTimes = useRef<Record<string, number>>({});
+  const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(caseCode || schoolYear);
+  useSondaExitGuard(dirty);
+  const totalMonths = validSondaAge(years, months) ?? NaN;
   const band = useMemo(() => bandForMonths(totalMonths), [totalMonths]);
   const mission = band?.missions[missionIndex];
   const allMaterialsReady = !!band && band.materials.every((item) => materialsChecked[item]);
+  const coverage = band ? legacyCoverage(band, records) : [];
+  const completeCount = coverage.filter((item) => item.complete).length;
+  useEffect(() => { onBandChange?.(band?.id); }, [band?.id, onBandChange]);
 
   useEffect(() => {
     if (!running || phase !== "run") return;
+    let previous = performance.now();
+    let remainder = 0;
     const timer = window.setInterval(() => {
-      setGlobalElapsed((value) => Math.min(600, value + 1));
-      setMissionElapsed((value) => value + 1);
-    }, 1000);
+      const now = performance.now();
+      remainder += now - previous;
+      previous = now;
+      const seconds = Math.floor(remainder / 1000);
+      if (seconds) {
+        setGlobalElapsed((value) => Math.min(600, value + seconds));
+        setMissionElapsed((value) => value + seconds);
+        remainder -= seconds * 1000;
+      }
+    }, 250);
     return () => window.clearInterval(timer);
   }, [running, phase]);
-
   useEffect(() => {
     if (globalElapsed >= 600) setRunning(false);
   }, [globalElapsed]);
+  useEffect(() => {
+    const hidden = () => { if (document.hidden) setRunning(false); };
+    document.addEventListener("visibilitychange", hidden);
+    return () => document.removeEventListener("visibilitychange", hidden);
+  }, []);
 
   const missionTargetSeconds = useMemo(() => {
     if (!mission) return 0;
@@ -266,7 +296,8 @@ export default function SondaDezPage() {
     setInterferences((current) => {
       if (item === "nenhum") return ["nenhum"];
       const clean = current.filter((value) => value !== "nenhum");
-      return clean.includes(item) ? clean.filter((value) => value !== item) : [...clean, item];
+      const next = clean.includes(item) ? clean.filter((value) => value !== item) : [...clean, item];
+      return next.length ? next : ["nenhum"];
     });
   }
 
@@ -275,6 +306,7 @@ export default function SondaDezPage() {
   }
 
   function setField(missionId: string, fieldId: string, value: FieldValue) {
+    setCopied(false);
     setRecords((current) => ({
       ...current,
       [missionId]: {
@@ -285,6 +317,7 @@ export default function SondaDezPage() {
   }
 
   function setNotes(missionId: string, notes: string) {
+    setCopied(false);
     setRecords((current) => ({
       ...current,
       [missionId]: { values: current[missionId]?.values ?? {}, notes },
@@ -301,8 +334,10 @@ export default function SondaDezPage() {
 
   function goMission(index: number) {
     if (!band) return;
-    setMissionIndex(Math.max(0, Math.min(band.missions.length - 1, index)));
-    setMissionElapsed(0);
+    if (mission) missionTimes.current[mission.id] = missionElapsed;
+    const target = Math.max(0, Math.min(band.missions.length - 1, index));
+    setMissionIndex(target);
+    setMissionElapsed(missionTimes.current[band.missions[target].id] ?? 0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -314,6 +349,8 @@ export default function SondaDezPage() {
   }
 
   function resetAll() {
+    if (dirty && !window.confirm("Nova aplicação apaga estes registros. Copie ou baixe antes de continuar. Deseja apagar?")) return;
+    setYears(""); setMonths("0"); setCopyError(""); missionTimes.current = {};
     setPhase("setup");
     setCaseCode("");
     setSchoolYear("");
@@ -329,14 +366,18 @@ export default function SondaDezPage() {
     setCopied(false);
   }
 
-  const analysis = band ? buildAnalysis(band, records, interferences, redFlags) : "";
+  const analysis = band ? completeCount === band.missions.length
+    ? buildAnalysis(band, records, interferences, redFlags)
+    : "Registro parcial, com campos ausentes, inválidos ou sem contexto de NA/ajuda. Sem síntese interpretativa; confira os registros brutos e as pendências."
+    : "";
   const auditFindings = auditAnalysis(analysis);
 
   const reportText = band
     ? [
-        `SONDA DEZ — AVALIAÇÃO DIRETA PRÉ-CONSULTA`,
+        `SONDA DEZ — MODALIDADE PRESENCIAL · REGISTRO v2026-09-22.1`,
+        `Estado documental: ${completeCount}/${band.missions.length} missões preenchidas com contexto. ${completeCount < band.missions.length ? "REGISTRO PARCIAL" : "Revisão médica necessária; NA não é habilidade avaliada"}. Tempo ativo: ${globalElapsed}s.`,
         `Código/iniciais: ${caseCode || "não informado"}. Idade: ${years}a ${months}m. Série: ${schoolYear || "não informada"}. Faixa: ${band.label}.`,
-        `Interferentes: ${interferences.join(", ")}.`,
+        `Interferentes assinalados: ${interferences.join(", ")}; não equivale a investigação negativa.`,
         "",
         "REGISTRO COMPLETO",
         ...band.missions.flatMap((item, index) => {
@@ -349,7 +390,7 @@ export default function SondaDezPage() {
           ];
         }),
         "",
-        "ANÁLISE AUTOMÁTICA DESCRITIVA",
+        "SÍNTESE DESCRITIVA DOS REGISTROS",
         analysis,
         "",
         `Alertas ao médico: ${redFlags.length ? redFlags.join(", ") : "nenhum marcado"}.`,
@@ -359,9 +400,18 @@ export default function SondaDezPage() {
 
   async function copyReport() {
     if (auditFindings.length) return;
-    await navigator.clipboard.writeText(reportText);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setCopied(true); setCopyError("");
+    } catch {
+      setCopied(false); setCopyError("Não foi possível copiar. Selecione o registro abaixo ou use Baixar registro.");
+    }
+  }
+  function downloadReport() {
+    if (auditFindings.length) return;
+    const url = URL.createObjectURL(new Blob([reportText], { type: "text/plain;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = "sonda-dez-presencial.txt";
+    link.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   if (childMode && mission?.childVisual) {
@@ -414,8 +464,8 @@ export default function SondaDezPage() {
               <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10"><Baby className="h-5 w-5 text-primary" /></div><div><h2 className="text-xl font-black">1. Quem vai fazer a Sonda?</h2><p className="text-sm text-muted-foreground">Use somente iniciais ou código interno.</p></div></div>
               <label className="block"><span className="text-sm font-bold">Iniciais/código <span className="font-normal text-muted-foreground">(opcional)</span></span><Input className="mt-2 h-12 rounded-xl" value={caseCode} onChange={(event) => setCaseCode(event.target.value.slice(0, 24))} placeholder="Ex.: A.L. ou CASO-07" /></label>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <label><span className="text-sm font-bold">Anos</span><Input type="number" min={0} max={17} className="mt-2 h-12 rounded-xl" value={years} onChange={(event) => setYears(Math.max(0, Math.min(17, Number(event.target.value))))} /></label>
-                <label><span className="text-sm font-bold">Meses</span><Input type="number" min={0} max={11} className="mt-2 h-12 rounded-xl" value={months} onChange={(event) => setMonths(Math.max(0, Math.min(11, Number(event.target.value))))} /></label>
+                <label><span className="text-sm font-bold">Anos</span><Input type="number" min={0} max={17} className="mt-2 h-12 rounded-xl" value={years} onChange={(event) => setYears(event.target.value)} /></label>
+                <label><span className="text-sm font-bold">Meses</span><Input type="number" min={0} max={11} className="mt-2 h-12 rounded-xl" value={months} onChange={(event) => setMonths(event.target.value)} /></label>
                 <label className="col-span-2 sm:col-span-1"><span className="text-sm font-bold">Série/ano escolar</span><Input className="mt-2 h-12 rounded-xl" value={schoolYear} onChange={(event) => setSchoolYear(event.target.value)} placeholder="Ex.: 3º ano" /></label>
               </div>
               {band ? (
@@ -464,6 +514,11 @@ export default function SondaDezPage() {
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-primary transition-all" style={{ width: `${Math.max(0, 100 - (globalElapsed / 600) * 100)}%` }} /></div>
           </div>
 
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border p-4">
+            <Button variant="outline" disabled={globalElapsed >= 600} onClick={() => setRunning((value) => !value)}>{running ? "Pausar" : "Retomar"}</Button>
+            <Button variant="outline" className="h-auto whitespace-normal py-3" onClick={finish}>Encerrar e revisar registro parcial</Button>
+            <p role="status" className="text-sm">{globalElapsed >= 600 ? "Tempo encerrado. Não force tarefas pendentes; revise e entregue o registro parcial." : !running ? "Aplicação pausada. Retome somente em condições adequadas." : `${completeCount}/${band.missions.length} missões preenchidas com contexto.`}</p>
+          </div>
           {redFlags.length > 0 && <div className="flex flex-col gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 text-red-950 dark:border-red-900 dark:bg-red-950/20 dark:text-red-100 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-2"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-black">Alerta sinalizado: {redFlags.join(", ")}</p><p className="text-xs">Não force a tarefa. Se o cenário exigir interrupção, encerre e leve o registro ao médico.</p></div></div><Button variant="destructive" onClick={finish}>Encerrar e avisar médico</Button></div>}
 
           <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -485,7 +540,7 @@ export default function SondaDezPage() {
 
               <Card className="rounded-[24px] border-amber-200/80 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/10"><CardContent className="p-5"><div className="mb-3 flex items-center gap-2"><Eye className="h-5 w-5 text-amber-700 dark:text-amber-300" /><h3 className="text-xs font-black uppercase tracking-[0.18em]">Observe</h3></div><div className="grid gap-2 sm:grid-cols-2">{mission.observe.map((item) => <div key={item} className="flex gap-2 rounded-xl bg-background/80 p-3 text-sm"><span aria-hidden="true">👀</span><span>{item}</span></div>)}</div></CardContent></Card>
 
-              <Card className="rounded-[26px] border-primary/20 bg-primary/[0.025]"><CardContent className="space-y-3 p-5 sm:p-6"><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" /><h3 className="text-xs font-black uppercase tracking-[0.18em]">Registre</h3></div>{mission.fields.map((field) => <FieldControl key={field.id} field={field} value={records[mission.id]?.values[field.id]} onChange={(value) => setField(mission.id, field.id, value)} />)}<label className="block rounded-2xl border border-border/70 bg-background p-3"><span className="text-sm font-bold">Observação livre <span className="font-normal text-muted-foreground">(opcional)</span></span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring" value={records[mission.id]?.notes ?? ""} onChange={(event) => setNotes(mission.id, event.target.value)} placeholder="Descreva algo que não cabe nos botões, sem interpretar diagnóstico." /></label></CardContent></Card>
+              <Card className="rounded-[26px] border-primary/20 bg-primary/[0.025]"><CardContent className="space-y-3 p-5 sm:p-6"><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" /><h3 className="text-xs font-black uppercase tracking-[0.18em]">Registre</h3></div>{mission.fields.map((field) => <FieldControl key={field.id} field={field} value={records[mission.id]?.values[field.id]} onChange={(value) => setField(mission.id, field.id, value)} />)}<label className="block rounded-2xl border border-border/70 bg-background p-3"><span className="text-sm font-bold">Observação livre <span className="font-normal text-muted-foreground">(obrigatória para motivo de NA ou ajuda P)</span></span><textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-input bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring" value={records[mission.id]?.notes ?? ""} onChange={(event) => setNotes(mission.id, event.target.value)} placeholder="Descreva algo que não cabe nos botões, sem interpretar diagnóstico." /></label></CardContent></Card>
 
               <Card className="rounded-[24px] border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/10"><CardContent className="p-5"><div className="mb-3 flex items-center gap-2"><Brain className="h-5 w-5 text-emerald-700 dark:text-emerald-300" /><h3 className="text-xs font-black uppercase tracking-[0.18em]">Como interpretar a reação?</h3></div><div className="space-y-2">{mission.interpretation.map((item) => <p key={item} className="text-sm leading-relaxed">{item}</p>)}</div><p className="mt-3 rounded-xl bg-background p-3 text-xs leading-relaxed text-muted-foreground"><strong className="text-foreground">Regra:</strong> a assistente descreve; o médico integra. Não transforme uma reação isolada em TEA, TDAH, atraso, deficiência ou qualquer diagnóstico.</p></CardContent></Card>
 
@@ -502,7 +557,7 @@ export default function SondaDezPage() {
 
       {phase === "report" && band && (
         <div className="space-y-5">
-          <Card className="rounded-[28px] border-primary/15"><CardContent className="p-5 sm:p-7"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Resultado da aplicação</p><h2 className="mt-1 text-2xl font-black">Registro completo + análise descritiva</h2><p className="mt-1 text-sm text-muted-foreground">{caseCode || "Sem código"} · {years}a {months}m · {band.label} · {schoolYear || "série não informada"}</p></div><Badge variant="outline">tempo registrado <Seconds value={globalElapsed} /></Badge></div></CardContent></Card>
+          <Card className="rounded-[28px] border-primary/15"><CardContent className="p-5 sm:p-7"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Resultado da aplicação</p><h2 className="mt-1 text-2xl font-black">Registro para revisão médica</h2><p className="mt-1 text-sm text-muted-foreground">{caseCode || "Sem código"} · {years}a {months}m · {band.label} · {schoolYear || "série não informada"}</p></div><Badge variant="outline">tempo registrado <Seconds value={globalElapsed} /></Badge></div></CardContent></Card>
 
           {redFlags.length > 0 && <div className="rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-950 dark:border-red-900 dark:bg-red-950/20 dark:text-red-100"><strong>Prioridade de revisão médica:</strong> {redFlags.join(", ")}.</div>}
 
@@ -510,13 +565,17 @@ export default function SondaDezPage() {
             <div className="space-y-4">
               <Card className="rounded-[26px]"><CardContent className="p-5 sm:p-6"><div className="mb-4 flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" /><h3 className="text-lg font-black">Registro completo</h3></div><div className="space-y-3">{band.missions.map((item, index) => { const record = records[item.id]; return <details key={item.id} className="group rounded-2xl border border-border/70 bg-background p-4" open={index === 0}><summary className="cursor-pointer list-none font-black">{index + 1}. {item.title} <span className="ml-2 text-xs font-medium text-muted-foreground">{item.start}–{item.end}</span></summary><div className="mt-4 space-y-3 text-sm"><div className="rounded-xl bg-slate-950 p-3 text-white"><p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">Fala/pergunta aplicada</p><p className="mt-1 font-semibold">{item.say.join(" / ")}</p></div>{item.fields.map((field) => <div key={field.id} className="flex flex-col justify-between gap-1 rounded-xl bg-muted/50 p-3 sm:flex-row"><span className="font-semibold">{field.label}</span><span className="font-black text-primary">{fieldValueText(field, record?.values[field.id])}</span></div>)}<div className="rounded-xl border border-dashed p-3 text-muted-foreground"><strong className="text-foreground">Observação livre:</strong> {record?.notes?.trim() || "não registrada"}</div></div></details>; })}</div></CardContent></Card>
 
-              <Card className="rounded-[26px] border-emerald-200 dark:border-emerald-900"><CardContent className="p-5 sm:p-6"><div className="flex items-center gap-2"><Brain className="h-5 w-5 text-emerald-700 dark:text-emerald-300" /><h3 className="text-lg font-black">Análise automática descritiva</h3></div><p className="mt-4 text-sm leading-7 text-foreground">{analysis}</p></CardContent></Card>
+              <Card className="rounded-[26px] border-emerald-200 dark:border-emerald-900"><CardContent className="p-5 sm:p-6"><div className="flex items-center gap-2"><Brain className="h-5 w-5 text-emerald-700 dark:text-emerald-300" /><h3 className="text-lg font-black">Síntese descritiva dos registros</h3></div><p className="mt-4 text-sm leading-7 text-foreground">{analysis}</p></CardContent></Card>
             </div>
 
             <aside className="space-y-4">
-              <Card className={`rounded-[26px] ${auditFindings.length ? "border-red-300" : "border-emerald-300"}`}><CardContent className="p-5"><div className="flex items-center gap-2">{auditFindings.length ? <AlertTriangle className="h-5 w-5 text-red-600" /> : <ShieldCheck className="h-5 w-5 text-emerald-600" />}<h3 className="font-black">Portão de conferência</h3></div>{auditFindings.length ? <div className="mt-3 rounded-xl bg-red-50 p-3 text-xs text-red-900 dark:bg-red-950/20 dark:text-red-100">Bloqueado: a análise contém expressão normativa/diagnóstica proibida. Revise antes de copiar.</div> : <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"><strong>LIBERADO.</strong> A análise não contém termos de normatização ou salto diagnóstico previstos na trava.</div>}<div className="mt-3 space-y-2 text-xs text-muted-foreground"><p>✓ sem percentil ou classificação normativa na análise</p><p>✓ sem ponto de corte</p><p>✓ sem confirmação diagnóstica automática</p><p>✓ dados não registrados permanecem “não registrado”</p></div></CardContent></Card>
+              <Card className={`rounded-[26px] ${auditFindings.length ? "border-red-300" : "border-emerald-300"}`}><CardContent className="p-5"><div className="flex items-center gap-2">{auditFindings.length ? <AlertTriangle className="h-5 w-5 text-red-600" /> : <ShieldCheck className="h-5 w-5 text-emerald-600" />}<h3 className="font-black">Portão de conferência</h3></div>{auditFindings.length ? <div className="mt-3 rounded-xl bg-red-50 p-3 text-xs text-red-900 dark:bg-red-950/20 dark:text-red-100">Bloqueado: a análise contém expressão normativa/diagnóstica proibida. Revise antes de copiar.</div> : <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-100"><strong>Conferência lexical concluída.</strong> Não substitui revisão clínica nem comprova completude do registro.</div>}<div className="mt-3 space-y-2 text-xs text-muted-foreground"><p>✓ sem percentil ou classificação normativa na análise</p><p>✓ sem ponto de corte</p><p>✓ sem confirmação diagnóstica automática</p><p>✓ dados não registrados permanecem “não registrado”</p></div></CardContent></Card>
               <Card className="rounded-[26px] border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/10"><CardContent className="p-5"><p className="text-sm font-black">Aviso obrigatório</p><p className="mt-2 text-xs leading-relaxed text-muted-foreground">Prova observacional clínica piloto. Não gera diagnóstico, percentil ou escore total. Interpretação integrada pelo médico.</p></CardContent></Card>
               <Button size="lg" className="h-13 w-full rounded-2xl" disabled={auditFindings.length > 0} onClick={copyReport}>{copied ? <CheckCircle2 className="mr-2 h-5 w-5" /> : <Copy className="mr-2 h-5 w-5" />}{copied ? "Copiado" : "Copiar resultado completo"}</Button>
+              <Button variant="outline" className="h-12 w-full rounded-2xl" disabled={auditFindings.length > 0} onClick={downloadReport}>Baixar registro presencial</Button>
+              {copyError && <p role="status" className="text-sm">{copyError}</p>}
+              <label className="block text-sm font-bold">Registro presencial para copiar manualmente<textarea readOnly value={reportText} className="mt-2 min-h-64 w-full rounded-xl border bg-background p-3 text-sm font-normal" /></label>
+              <div className="space-y-2"><p className="font-bold">Revisar pendências</p>{band.missions.map((item, i) => <Button key={item.id} variant="outline" className="h-auto w-full justify-start whitespace-normal text-left" onClick={() => { goMission(i); setPhase("run"); setRunning(false); }}>{item.title}: {coverage[i].complete ? "preenchida" : `${coverage[i].missing} campo(s) pendente(s)${coverage[i].needsContext ? "; falta contexto de NA/ajuda" : ""}`}</Button>)}</div>
               <Button variant="outline" className="h-12 w-full rounded-2xl" onClick={resetAll}><RotateCcw className="mr-2 h-4 w-4" /> Nova aplicação</Button>
             </aside>
           </div>

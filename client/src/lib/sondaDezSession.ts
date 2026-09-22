@@ -41,6 +41,7 @@ export type DigitalRecord = {
   notes: string;
   runs: Record<number, StepRun>;
   reviewed: boolean;
+  interaction?: "child" | "operator" | "mixed" | "no-touch";
 };
 export const emptyRecord = (): DigitalRecord => ({
   values: {},
@@ -81,6 +82,9 @@ export function recordProblems(
       issues.push(
         `Etapa ${i + 1}: não concluída; registre o motivo para não avaliar.`,
       );
+    if (run && (!Number.isFinite(run.elapsedMs) || run.elapsedMs < 0 ||
+      run.events.some((e) => !Number.isFinite(e.elapsedMs) || e.elapsedMs < 0 || e.elapsedMs > run.elapsedMs)))
+      issues.push(`Etapa ${i + 1}: registro temporal inválido.`);
     if (run?.status === "skipped" && !run.reason?.trim())
       issues.push(`Etapa ${i + 1}: motivo ausente.`);
     const activity = mission.steps[i].activity;
@@ -95,19 +99,15 @@ export function recordProblems(
     if (
       run?.status === "complete" &&
       activity.kind === "sequence" &&
-      (!run.events.some((e) => e.type === "serie-concluida") ||
-        new Set(
-          run.events
-            .filter((e) => e.type === "apresentado")
-            .map((e) => e.value),
-        ).size !== activity.items?.length)
+      !validSequenceRun(activity.items ?? [], activity.intervalMs ?? 2500, run)
     )
       issues.push(`Etapa ${i + 1}: série sem prova de apresentação completa.`);
     if (
       run?.status === "complete" &&
       activity.kind === "grid" &&
-      (!run.events.some((e) => e.type === "grade-concluida") ||
-        run.elapsedMs < (activity.durationSeconds ?? 60) * 1000)
+      (recordedGridMetrics(activity.items ?? [], activity.target ?? "", run) === undefined ||
+        run.elapsedMs < (activity.durationSeconds ?? 60) * 1000 ||
+        (run.events.findLast((e) => e.type === "grade-concluida")?.elapsedMs ?? 0) < (activity.durationSeconds ?? 60) * 1000)
     )
       issues.push(`Etapa ${i + 1}: grade encerrada antes do tempo previsto.`);
   });
@@ -131,6 +131,10 @@ export function recordProblems(
     )
       issues.push(`${field.label}: campo presencial deve permanecer NA.`);
   });
+  if (Object.values(record.runs).some((run) => run.status === "complete") &&
+      !["child", "operator", "mixed", "no-touch"].includes(record.interaction ?? ""))
+    issues.push("Informe quem operou a tela nesta missão; toques não identificam automaticamente a criança.");
+  if (record.interaction === "mixed" && !record.notes.trim()) issues.push("Discrimine nas notas os toques da criança e os da aplicadora.");
   // No inferred success from a skipped or disrupted presentation.
   if (
     Object.values(record.runs).some((run) => run.status !== "complete") &&
@@ -166,13 +170,9 @@ export function markMissionUnavailable(
         i,
         record.runs[i]?.status === "complete"
           ? record.runs[i]
-          : {
-              ...record.runs[i],
-              status: "skipped",
-              events: record.runs[i]?.events ?? [],
-              elapsedMs: record.runs[i]?.elapsedMs ?? 0,
-              reason: reason.trim(),
-            },
+          : withRunHistory(record.runs[i], {
+              status: "skipped", events: record.runs[i]?.events ?? [], elapsedMs: record.runs[i]?.elapsedMs ?? 0, reason: reason.trim(),
+            }),
       ]),
     ),
   };
@@ -183,10 +183,10 @@ export function sequenceMetrics(
   events: SondaEvent[],
 ) {
   const presented = new Set(
-    events.filter((e) => e.type === "apresentado").map((e) => Number(e.value)),
+    events.filter((e) => e.type === "apresentado" && /^\d+$/.test(e.value)).map((e) => Number(e.value)),
   );
   const responses = new Set(
-    events.filter((e) => e.type === "toque").map((e) => Number(e.value)),
+    events.filter((e) => e.type === "toque" && /^\d+$/.test(e.value)).map((e) => Number(e.value)),
   );
   const indices = [...presented].filter(
     (i) => Number.isInteger(i) && i >= 0 && i < items.length,
@@ -240,13 +240,25 @@ export function recordedGridMetrics(
       typeof value === "object" &&
       "selected" in value &&
       Array.isArray(value.selected) &&
-      value.selected.every((i) => typeof i === "number")
+      value.selected.every((i) => Number.isInteger(i) && i >= 0 && i < items.length) &&
+      new Set(value.selected).size === value.selected.length
     )
       return gridMetrics(items, target, value.selected);
   } catch {
     /* An incomplete event never becomes a zero count. */
   }
   return undefined;
+}
+/** A cardinality match alone does not prove which stimuli were presented. */
+export function validSequenceRun(items: string[], intervalMs: number, run: StepRun): boolean {
+  if (run.status !== "complete" || !items.length || !Number.isFinite(intervalMs) || intervalMs <= 0 ||
+      !Number.isFinite(run.elapsedMs) || run.elapsedMs < items.length * intervalMs) return false;
+  const presented = run.events.filter((e) => e.type === "apresentado");
+  const done = run.events.findLast((e) => e.type === "serie-concluida");
+  return presented.length === items.length && presented.every((e, i) =>
+    e.value === String(i) && Number.isFinite(e.elapsedMs) && e.elapsedMs >= i * intervalMs &&
+    e.elapsedMs < (i + 1) * intervalMs) && Boolean(done && done.value === String(items.length) &&
+    done.elapsedMs >= items.length * intervalMs && done.elapsedMs <= run.elapsedMs);
 }
 export function timingAdvance(
   previous: number,
@@ -274,6 +286,12 @@ export function describeCode(value: string): string {
     )[value] ?? `Descrição da aplicadora: ${value}.`
   );
 }
+export const INTERACTION_LABELS = {
+  child: "Criança operou a tela",
+  operator: "Aplicadora operou a tela e registrou respostas observadas",
+  mixed: "Operação compartilhada; discriminar nas notas",
+  "no-touch": "Observação sem resposta por toque",
+} as const;
 export type ReportContext = {
   code: string;
   ageMonths: number;
@@ -283,6 +301,7 @@ export type ReportContext = {
   operator: string;
   elapsedSeconds: number;
   familiarizations?: string[];
+  startedAt?: string;
 };
 export function buildDigitalReport(
   band: DigitalBand,
@@ -299,6 +318,7 @@ export function buildDigitalReport(
   const lines = [
     `SONDA DEZ — MODALIDADE DIGITAL GUIADA v${DIGITAL_VERSION}`,
     DIGITAL_NATURE,
+    `Início da aplicação: ${context.startedAt || "não registrado"}.`,
     `Estado: ${allComplete ? (hasNA ? "registro preenchido com campos não avaliáveis" : "registro preenchido para revisão médica") : "registro parcial; sem síntese interpretativa"}. Missões registradas: ${completed}/${band.missions.length}.`,
     `Código: ${context.code.trim() || "não informado"}. Idade: ${context.ageMonths} meses. Trilha: ${band.label}. Escolaridade: ${context.school.trim() || "não informada"}.`,
     `Aplicadora (código): ${context.operator.trim() || "não informado"}. Tempo ativo: ${context.elapsedSeconds}s; referência operacional 600s${context.elapsedSeconds > 600 ? "; tempo ampliado" : ""}.`,
@@ -312,6 +332,7 @@ export function buildDigitalReport(
     lines.push(
       `${index + 1}. ${mission.title}`,
       `Limite: ${mission.digitalLimit}`,
+      `Operação da tela: ${record?.interaction ? INTERACTION_LABELS[record.interaction] : "não informada; não atribuir automaticamente toques à criança"}.`,
     );
     mission.steps.forEach((s, i) => {
       const run = record?.runs[i];
@@ -376,3 +397,50 @@ export function buildDigitalReport(
   return lines.join("\n");
 }
 export { fieldGuidance };
+
+/** Handoff of recorded facts, not a diagnostic interpretation or a second scoring engine. */
+export function buildDigitalHandoff(
+  band: DigitalBand,
+  records: Record<string, DigitalRecord>,
+  context: ReportContext,
+): string {
+  const complete = band.missions.filter((m) => !recordProblems(m, records[m.id]).length).length;
+  const lines = [
+    `SONDA DEZ — RESUMO FACTUAL PARA REVISÃO MÉDICA · v${DIGITAL_VERSION}`,
+    `Código: ${context.code.trim() || "não informado"}. Idade: ${context.ageMonths} meses. Trilha: ${band.label}. Escolaridade: ${context.school.trim() || "não informada"}.`,
+    `Aplicadora: ${context.operator.trim() || "não informada"}. Início: ${context.startedAt || "não registrado"}. Tempo ativo: ${context.elapsedSeconds}s${context.elapsedSeconds > 600 ? " (ampliado além da referência de 10 minutos)" : ""}.`,
+    `Cobertura documental: ${complete}/${band.missions.length} missões revisadas; isso não é escore nem quantidade de habilidades demonstradas. ${complete < band.missions.length ? "REGISTRO PARCIAL — há pendências." : "Campos NA continuam não avaliáveis."}`,
+    `ALERTAS: ${context.flags.join("; ") || "nenhum assinalado; não equivale a investigação negativa"}.`,
+    `Condições da aplicação: ${context.confounders.join("; ") || "nenhum interferente assinalado"}.`,
+    "",
+  ];
+  for (const mission of band.missions) {
+    const record = records[mission.id];
+    const facts: string[] = [], unavailable: string[] = [], absent: string[] = [];
+    for (const field of mission.fields) {
+      const value = record?.values[field.id];
+      if (!fieldValid(field, value, record?.reasons[field.id])) {
+        absent.push(field.label); continue;
+      }
+      if (value === "NA") {
+        unavailable.push(`${field.label} (${record?.reasons[field.id]})`); continue;
+      }
+      const coded = field.kind === "choice" && field.options?.some((o) => ["E", "I", "P"].includes(o));
+      const labels: Record<string, string> = { E: "espontâneo", I: "após instrução", P: "após ajuda/pista", "0": "não demonstrado nesta oportunidade" };
+      facts.push(`${field.label}: ${coded ? labels[value!] ?? value : value}${field.kind === "count" && field.max !== undefined ? `/${field.max} (contagem bruta)` : ""}`);
+    }
+    lines.push(mission.title.toUpperCase());
+    if (facts.length) lines.push(`Registros da aplicadora: ${facts.join("; ")}.`);
+    if (unavailable.length) lines.push(`Não avaliável: ${unavailable.join("; ")}.`);
+    if (absent.length) lines.push(`Ausente ou inválido: ${absent.join("; ")}. Não equivale a zero.`);
+    lines.push(`Operação da tela: ${record?.interaction ? INTERACTION_LABELS[record.interaction] : "não informada; toques sem autoria não comprovam resposta da criança"}.`);
+    if (record?.notes.trim()) lines.push(`Contexto e ajudas registrados pela aplicadora: ${record.notes.trim()}`);
+    if (Object.values(record?.runs ?? {}).some((r) => r.previousRuns?.length)) lines.push("Houve reapresentação: considerar familiaridade e ajudas; tentativas preservadas no registro completo.");
+    const issues = recordProblems(mission, record);
+    if (issues.length) lines.push(`Pendências de conferência: ${issues.join(" ")}`);
+    lines.push("");
+  }
+  if (context.familiarizations?.length) lines.push(`Familiarização durante a aplicação: ${context.familiarizations.join("; ")}.`);
+  lines.push("Próximo passo: conferir alertas, contexto, ajuda necessária e lacunas com a aplicadora; integrar estes fatos à história, ao exame e às demais fontes. Nenhuma hipótese, diagnóstico ou normalidade é concluída pela Sonda.", DIGITAL_NATURE);
+  return lines.join("\n");
+}

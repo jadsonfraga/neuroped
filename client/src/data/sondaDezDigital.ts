@@ -5,7 +5,7 @@ import {
   type MissionDef,
 } from "./sondaDezProtocol";
 
-export const DIGITAL_VERSION = "2026-09-13.2";
+export const DIGITAL_VERSION = "2026-09-22.1";
 export const DIGITAL_NATURE =
   "Adaptação digital autoral da Sonda Dez / AFN-10; registro observacional piloto, requer validação clínica; sem normas, percentis, pontos de corte ou diagnóstico.";
 export const DIGITAL_LIMIT =
