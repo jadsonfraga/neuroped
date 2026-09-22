@@ -53,11 +53,22 @@ software podem demonstrar.
 - `npm run check`: exit 0.
 - `npm run lint`: exit 0.
 - `npm run build:client`: exit 0; avisos preexistentes de chunks grandes/PostCSS.
+- `npm run test:cognitive`: exit 0 (Cognitive Lab e Sonda).
 - Casos unitários completos: 36, 47, 48, 59, 60, 96 e 144 meses.
 - Regressões negativas: valores contraditórios, dados ausentes, respostas verbais,
   palmas, inversão, NA, alterações por cartão, reapresentação, séries incompletas,
   eventos inválidos e exportação sem afirmações contraditórias.
-- Jornada de navegador: resultado será registrado após conclusão da execução.
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/tmp/sonda-chromium/chromium npm run test:e2e:sonda`:
+  exit 0; seis trilhas, 42 missões, 76 etapas e seis downloads conferidos byte a
+  byte contra o texto exibido. Cenário adicional aos 36 meses verifica 0/5/0
+  bloqueado para digitação, falta de observação, correção por cartão e retirada
+  de total antes calculado. Pausa, reapresentação, NA, clipboard indisponível,
+  vista móvel e tema escuro permanecem cobertos.
+- Acessibilidade: 16 varreduras axe com zero violações dentro do escopo Sonda,
+  além da verificação inicial de preparação; não é certificação do app inteiro.
+- O download convencional do Chromium estava truncado neste ambiente. O navegador
+  local foi obtido do pacote `@sparticuz/chromium`, isolado em `/tmp`, sem alterar
+  dependências do produto. CI conserva seu Chromium gerenciado por Playwright.
 
 O workflow específico preserva capturas, relatórios sintéticos exportados e
 resultados de acessibilidade como artefatos da execução, inclusive em falhas.
