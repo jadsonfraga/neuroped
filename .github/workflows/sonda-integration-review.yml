@@ -53,11 +53,11 @@ jobs:
                   if: always()
                   uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
                   with:
-                    name: sonda-digital-browser-${{ github.sha }}
+                    name: sonda-digital-browser-GIT_SHA_EXPRESSION
                     path: /tmp/sonda-e2e/
                     retention-days: 7
                     if-no-files-found: warn
-          ''';p.write_text(s)
+          ''';s=s.replace('GIT_SHA_EXPRESSION', '$' + '{{ github.sha }}');p.write_text(s)
           p=Path('tests/unit/sonda-dez-digital.test.ts');s=p.read_text().replace('  let record = emptyRecord();\n', '  let record = emptyRecord();\n  record.interaction = "operator";\n',1);p.write_text(s)
           p=Path('tests/unit/sonda-dez-quality.test.ts');p.write_text(p.read_text()+'''
           test("resumo factual preserva integridade das contagens derivadas da PR concorrente", () => {
