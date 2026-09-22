@@ -12,13 +12,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Prepare tracked source for isolated review
-        run: |
-          mkdir -p /tmp/sonda-review
-          git archive --format=tar HEAD > /tmp/sonda-review/source.tar
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:sonda
+      - name: Prepare locked dependencies for isolated review
+        run: tar -czf /tmp/sonda-dependencies.tar.gz node_modules
       - uses: actions/upload-artifact@v4
         with:
-          name: sonda-review-${{ github.sha }}
-          path: /tmp/sonda-review/source.tar
+          name: sonda-dependencies-${{ github.sha }}
+          path: /tmp/sonda-dependencies.tar.gz
           retention-days: 1
           if-no-files-found: error
