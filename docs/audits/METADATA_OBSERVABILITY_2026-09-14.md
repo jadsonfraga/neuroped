@@ -64,3 +64,10 @@ R2 e keyring clínico continuam bloqueios separados em #880; esta PR não os res
 passaram. A suíte quick-wins local parou em dr-rehearsal-safety por ENOENT de Bash
 no Windows, não em asserção da mudança; CI Linux continua obrigatório. Evidências
 finais de browser/build e commit exato são registradas na PR, não presumidas aqui.
+
+## Atualização 22/09/2026
+
+O binding API_METRICS foi comentado no wrangler.toml porque a conta Cloudflare
+não tem Analytics Engine habilitado e a publicação das Functions era recusada.
+Registro, risco assumido e verificação de fechamento em
+docs/audits/BLOCKED_EXTERNAL_CLOUDFLARE_ANALYTICS_ENGINE_2026-09-22.md.

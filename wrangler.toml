@@ -18,6 +18,10 @@ database_name = "neuroped-db"
 database_id = "9b0919e5-93af-4b4f-851b-fc77dc1e5bae"
 
 # Metadata-only API metrics; no clinical content, token, path or user identifier.
-[[analytics_engine_datasets]]
-binding = "API_METRICS"
-dataset = "neuroped_api_metrics"
+# Desativado em 22/09/2026: publicar Functions com este binding falha enquanto o
+# Analytics Engine não estiver habilitado na conta Cloudflare (ver
+# docs/audits/BLOCKED_EXTERNAL_CLOUDFLARE_ANALYTICS_ENGINE_2026-09-22.md).
+# Sem o binding, writeApiMetric é no-op e a API reporta binding ausente.
+# [[analytics_engine_datasets]]
+# binding = "API_METRICS"
+# dataset = "neuroped_api_metrics"
