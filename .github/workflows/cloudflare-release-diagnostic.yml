@@ -1,53 +1,41 @@
-name: Cloudflare release binding diagnostic
+name: Cloudflare release binding guard
 on:
+  pull_request:
+    paths:
+      - 'wrangler.toml'
+      - 'functions/api/_observability.ts'
+      - 'functions/api/_middleware.ts'
+      - 'functions/api/tenants/**/metrics.ts'
+      - 'tests/unit/metadata-observability.test.ts'
+      - 'tests/unit/cloudflare-release-bindings.test.py'
+      - '.github/workflows/cloudflare-release-diagnostic.yml'
   push:
-    branches: [fix/cloudflare-release-20260922]
-    paths: ['.github/workflows/cloudflare-release-diagnostic.yml']
+    branches: [main]
+    paths:
+      - 'wrangler.toml'
+      - 'tests/unit/cloudflare-release-bindings.test.py'
+      - '.github/workflows/cloudflare-release-diagnostic.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  topology:
+  binding-contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Read exact deployment failure and canonical metadata only
-        env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        shell: python
-        run: |
-          import json, os, re, urllib.request, urllib.error
-          token, account = os.environ['CF_TOKEN'], os.environ['CF_ACCOUNT']
-          assert token and account, 'Required deployment credentials are absent'
-          def read(path):
-              req = urllib.request.Request('https://api.cloudflare.com/client/v4/accounts/' + account + path, headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'})
-              try:
-                  with urllib.request.urlopen(req, timeout=30) as r: obj = json.load(r)
-              except urllib.error.HTTPError as e:
-                  print(json.dumps({'endpoint': path.split('?')[0], 'http_status': e.code})); return None
-              if not obj.get('success'):
-                  print(json.dumps({'endpoint': path.split('?')[0], 'error_codes': [e.get('code') for e in obj.get('errors', [])]})); return None
-              return obj.get('result')
-          project = read('/pages/projects/neuroped')
-          assert project and project.get('name') == 'neuroped', 'Cannot verify canonical project'
-          canonical = project.get('canonical_deployment') or {}
-          print('CANONICAL=' + json.dumps({'id': canonical.get('id'), 'commit': canonical.get('deployment_trigger', {}).get('metadata', {}).get('commit_hash'), 'stage': canonical.get('latest_stage'), 'url': canonical.get('url')}))
-          for deployment in ['54a6aafb-9b86-4a3c-8f0b-495adf05f816', 'c025a57e-8489-4fd7-8e9a-faf596c76f20']:
-              logs = read('/pages/projects/neuroped/deployments/' + deployment + '/history/logs') or {}
-              print('DEPLOYMENT_ERROR=' + json.dumps({'id': deployment, 'total_lines': logs.get('total'), 'errors': [line for line in logs.get('data', []) if re.search(r'durable|error|fail|analytics|10089', line.get('line', ''), re.I)]}, sort_keys=True))
-          database = read('/d1/database/9b0919e5-93af-4b4f-851b-fc77dc1e5bae')
-          if database:
-              print('DATABASE_METADATA=' + json.dumps({k: database.get(k) for k in ['uuid', 'name', 'version', 'created_at', 'file_size', 'running_in_region']}, sort_keys=True))
-          for path in ['/deploy-check.json', '/api/health']:
-              try:
-                  req = urllib.request.Request('https://neuroped.pages.dev' + path, headers={'Cache-Control': 'no-cache'})
-                  with urllib.request.urlopen(req, timeout=30) as r:
-                      body = r.read().decode('utf-8')
-                      try: obj = json.loads(body)
-                      except ValueError: obj = {}
-                      print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'http_status': r.status, 'json': bool(obj), 'commit': obj.get('commit'), 'database': obj.get('database'), 'status': obj.get('status')}))
-              except urllib.error.HTTPError as e:
-                  print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'http_status': e.code, 'cf_ray': e.headers.get('cf-ray')}))
-              except urllib.error.URLError:
-                  print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'network_error': True}))
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Validate actual TOML and fail-closed mutations
+        run: python3 tests/unit/cloudflare-release-bindings.test.py
+      - run: npm ci
+      - name: Verify real middleware, optional metrics and tenant audit behavior
+        run: node --import tsx --test tests/unit/metadata-observability.test.ts
+      - name: Preserve readiness and access contracts
+        run: node --import tsx --test tests/unit/runtime-readiness.test.ts
+      - name: Preserve workflow and production entrypoint safety
+        run: node tests/unit/workflow-governance.test.mjs && node tests/unit/deploy-entrypoints.test.mjs
