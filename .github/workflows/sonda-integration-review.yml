@@ -1,0 +1,26 @@
+name: Sonda concurrent integration review
+on:
+  push:
+    branches: [fix/sonda-dez-quality-20260922]
+    paths: ['.github/workflows/sonda-integration-review.yml']
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export exact concurrent main patch, without modifying any branch
+        run: |
+          mkdir -p /tmp/sonda-integration
+          git diff --binary 74abe8efcb95735fc28b17a1bc968179fe6d38d2 20c14db0f8a123d64b9f3982cd3e80f6b1511b48 > /tmp/sonda-integration/concurrent-main.patch
+          git archive --format=tar 20c14db0f8a123d64b9f3982cd3e80f6b1511b48 .github/workflows/sonda-dez-digital.yml client/src/components/sonda-dez/SondaDigitalActivity.tsx client/src/components/sonda-dez/SondaDigitalGuided.tsx client/src/data/sondaDezDigital.ts client/src/lib/sondaDezSession.ts docs/audits/SONDA_EVENT_INTEGRITY_2026-09-22.md tests/e2e/sonda-dez-digital.mjs tests/unit/sonda-dez-digital.test.ts > /tmp/sonda-integration/concurrent-source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonda-concurrent-main
+          path: /tmp/sonda-integration/
+          retention-days: 1
