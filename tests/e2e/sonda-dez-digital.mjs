@@ -689,6 +689,12 @@ try {
   await click("Ver materiais desta criança");
   for (const material of SONDA_DEZ_PROTOCOL[0].materials) await page.getByText(material, { exact: true }).click();
   await click("Iniciar 10 minutos");
+  // Every active segment is shorter than one tick: no fraction may disappear on pause.
+  for (let i = 0; i < 12; i++) {
+    await page.clock.runFor(90);
+    await click("Pausar");
+    await click("Retomar");
+  }
   await click("Próxima missão");
   await click("Próxima missão");
   const amount = page.getByLabel("Quantidade de Imitações", { exact: true });
@@ -701,6 +707,8 @@ try {
   await click("Encerrar e revisar registro parcial");
   const physical = await page.getByLabel("Registro presencial para copiar manualmente", { exact: true }).inputValue();
   assert.match(physical, /REGISTRO PARCIAL/);
+  assert.match(physical, /MODALIDADE PRESENCIAL · PROTOCOLO v2026-09-08/);
+  assert.ok(Number(physical.match(/Tempo ativo: (\d+)s/)?.[1]) >= 1, "Active fractions survive repeated pauses");
   assert.match(physical, /Imitações: 0\/4/);
   assert.doesNotMatch(physical, /não demonstrou imitações/);
   await click("Copiar resultado completo");

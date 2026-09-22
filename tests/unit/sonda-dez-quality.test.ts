@@ -3,7 +3,7 @@ import test from "node:test";
 import fs from "node:fs";
 import { SONDA_DEZ_PROTOCOL, type FieldDef } from "../../client/src/data/sondaDezProtocol";
 import { DIGITAL_BANDS } from "../../client/src/data/sondaDezDigital";
-import { isSondaResponseCode, validSondaAge, validSondaField, legacyCoverage, leavesSondaRoute } from "../../client/src/lib/sondaDezQuality";
+import { isSondaResponseCode, validSondaAge, validSondaField, legacyCoverage, leavesSondaRoute, advanceSondaActiveTime, type SondaActiveTime } from "../../client/src/lib/sondaDezQuality";
 import { buildDigitalHandoff, emptyRecord, markMissionUnavailable, recordProblems, recordedGridMetrics, validSequenceRun, type StepRun } from "../../client/src/lib/sondaDezSession";
 
 const context = { code: "SYNTHETIC-QUALITY", ageMonths: 36, school: "fictícia", operator: "OPERADOR-TESTE", elapsedSeconds: 700, flags: ["ALERTA SINTÉTICO"], confounders: ["Sono referido"], startedAt: "2026-09-22T12:00:00.000Z" };
@@ -114,4 +114,25 @@ test("banco não fornece respostas narrativas nem uma sequência inteira simulta
   assert.match(bank, /initialBand=\{band\}/);
   assert.match(bank, /values\[position\]/);
   assert.doesNotMatch(bank, /06:45 · acordar/);
+});
+
+test("relógio conserva frações por missão e o relatório usa a versão presencial canônica", () => {
+  const clock: SondaActiveTime = { totalMs: 0, missions: {} };
+  for (let i = 0; i < 10; i++) advanceSondaActiveTime(clock, "primeira", 90);
+  advanceSondaActiveTime(clock, "segunda", 200);
+  advanceSondaActiveTime(clock, "primeira", 100);
+  assert.equal(clock.totalMs, 1200);
+  assert.deepEqual(clock.missions, { primeira: 1000, segunda: 200 });
+  for (const invalid of [NaN, Infinity, -100]) advanceSondaActiveTime(clock, "primeira", invalid);
+  assert.equal(clock.totalMs, 1200);
+  advanceSondaActiveTime(clock, "segunda", 900000);
+  assert.equal(clock.totalMs, 600000);
+  assert.equal(clock.missions.primeira + clock.missions.segunda, 600000);
+  advanceSondaActiveTime(clock, "primeira", 500);
+  assert.equal(clock.totalMs, 600000);
+  const page = fs.readFileSync("client/src/pages/testes-diretos.tsx", "utf8");
+  assert.match(page, /SONDA_DEZ_VERSION.*from "@\/data\/sondaDezCanonical"/);
+  assert.match(page, /PROTOCOLO v\$\{SONDA_DEZ_VERSION\}/);
+  assert.match(page, /window.clearInterval\(timer\); tick\(\)/);
+  assert.match(page, /activeTime.current !== clock/);
 });

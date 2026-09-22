@@ -11,7 +11,8 @@ Versão digital: `2026-09-22.1`. Escopo: Sonda; OBS-10, navegação prioritária
 | Idade presencial | Default de três anos, clamp silencioso e idade preservada ao trocar de criança | Idade inteira explícita 12–215 meses, sem clamp; reset completo; fronteiras das seis faixas testadas |
 | Completude presencial | Relatório sem distinção segura entre preenchido e parcial; ausência de edição | Cobertura documental, contexto obrigatório para NA/P, revisão por missão sem reiniciar dados; síntese suspensa quando incompleto |
 | Saída | Digital cobria unload, não SPA; presencial não protegia saída | Hook isolado para clique, hash, histórico e unload; cancelamento preserva registro; redirects obrigatórios de autenticação não bloqueados |
-| Relógio presencial | Contagem dependia de ticks de um segundo; aba oculta continuava e retorno a missão zerava seu relógio | Delta monotônico, pausa ao ocultar, pausa/retomada explícita e tempos por missão; término da referência de dez minutos visível |
+| Proveniência presencial | Cabeçalho podia usar a versão da adaptação digital | Exportação deriva de SONDA_DEZ_VERSION, a mesma fonte canônica do guia presencial |
+| Relógio presencial | Contagem dependia de ticks de um segundo; aba oculta continuava e retorno a missão zerava seu relógio | Delta monotônico, frações em milissegundos preservadas em ref e contabilizadas no cleanup; pausa ao ocultar, pausa/retomada explícita e tempos por missão; término da referência de dez minutos visível |
 | Duração do estímulo digital | Tempo entre conclusão da série/grade e fechamento do modal entrava na duração da apresentação | Congelamento da duração no evento final; sair depois da conclusão não reclassifica série concluída como interrompida |
 | Prova de apresentação | Cardinalidade de índices não demonstrava quais estímulos foram apresentados; seleção final malformada era normalizada | Ordem, índices, janela temporal e evento final de sequência validados; índices inválidos/repetidos de grade rejeitados sem fabricar zero |
 | Autoria | Toque eletrônico não identificava quem tocou | Origem estruturada por missão; obrigatória para apresentações concluídas; operação compartilhada exige discriminação nas notas |
@@ -25,7 +26,7 @@ Versão digital: `2026-09-22.1`. Escopo: Sonda; OBS-10, navegação prioritária
 
 ## Verificação e limites
 
-`npm run test:sonda`: 35 testes unitários (8 de consolidação, 16 digitais, 11 de qualidade), incluindo múltiplos casos de borda em cada teste. `npm run check`, lint dos arquivos alterados e `npm run build:client`: aprovados na revisão local. O navegador local retornou `ERR_BLOCKED_BY_ADMINISTRATOR` para o servidor de teste; nenhuma política foi alterada. A evidência browser vem da execução do workflow Sonda Dez digital no GitHub Actions, com screenshots e relatórios exclusivamente sintéticos.
+`npm run test:sonda`: 36 testes unitários (8 de consolidação, 16 digitais, 12 de qualidade), incluindo múltiplos casos de borda em cada teste. `npm run check`, lint dos arquivos alterados e `npm run build:client`: aprovados na revisão local. O navegador local retornou `ERR_BLOCKED_BY_ADMINISTRATOR` para o servidor de teste; nenhuma política foi alterada. A evidência browser vem da execução do workflow Sonda Dez digital no GitHub Actions, com screenshots e relatórios exclusivamente sintéticos.
 
 A suíte browser mantém as seis trilhas, 42 missões e 76 etapas existentes e acrescenta autoria, resumo factual, recusa de saída SPA, treino reutilizado/troca de aplicadora e fluxo presencial de idade/zero/NA/revisão/exportação/reset. Não substitui componentes da Sonda por mocks. Não remove assertivas nem reduz travas para obter checks verdes.
 

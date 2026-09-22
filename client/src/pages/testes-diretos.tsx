@@ -1,7 +1,8 @@
+import { SONDA_DEZ_VERSION } from "@/data/sondaDezCanonical";
 import { SONDA_DEZ_PROTOCOL, type BandDef, type FieldDef, type FieldValue } from "@/data/sondaDezProtocol";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
-import { isSondaResponseCode, validSondaAge, validSondaField, legacyCoverage } from "@/lib/sondaDezQuality";
+import { isSondaResponseCode, validSondaAge, validSondaField, legacyCoverage, advanceSondaActiveTime, type SondaActiveTime } from "@/lib/sondaDezQuality";
 import {
   AlertTriangle,
   Baby,
@@ -246,7 +247,7 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
   const [copied, setCopied] = useState(false);
 
   const [copyError, setCopyError] = useState("");
-  const missionTimes = useRef<Record<string, number>>({});
+  const activeTime = useRef<SondaActiveTime>({ totalMs: 0, missions: {} });
   const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(caseCode || schoolYear);
   useSondaExitGuard(dirty);
   const totalMonths = validSondaAge(years, months) ?? NaN;
@@ -258,22 +259,23 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
   useEffect(() => { onBandChange?.(band?.id); }, [band?.id, onBandChange]);
 
   useEffect(() => {
-    if (!running || phase !== "run") return;
+    const clock = activeTime.current;
+    const missionId = mission?.id;
+    setGlobalElapsed(Math.floor(clock.totalMs / 1000));
+    setMissionElapsed(Math.floor((missionId ? clock.missions[missionId] ?? 0 : 0) / 1000));
+    if (!running || phase !== "run" || !missionId) return;
     let previous = performance.now();
-    let remainder = 0;
-    const timer = window.setInterval(() => {
+    const tick = () => {
+      if (activeTime.current !== clock) return; // A new child invalidates the old cleanup.
       const now = performance.now();
-      remainder += now - previous;
+      advanceSondaActiveTime(clock, missionId, now - previous);
       previous = now;
-      const seconds = Math.floor(remainder / 1000);
-      if (seconds) {
-        setGlobalElapsed((value) => Math.min(600, value + seconds));
-        setMissionElapsed((value) => value + seconds);
-        remainder -= seconds * 1000;
-      }
-    }, 250);
-    return () => window.clearInterval(timer);
-  }, [running, phase]);
+      setGlobalElapsed(Math.floor(clock.totalMs / 1000));
+      setMissionElapsed(Math.floor((clock.missions[missionId] ?? 0) / 1000));
+    };
+    const timer = window.setInterval(tick, 250);
+    return () => { window.clearInterval(timer); tick(); };
+  }, [running, phase, mission?.id]);
   useEffect(() => {
     if (globalElapsed >= 600) setRunning(false);
   }, [globalElapsed]);
@@ -325,6 +327,7 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
   }
 
   function beginRun() {
+    activeTime.current = { totalMs: 0, missions: {} };
     setPhase("run");
     setMissionIndex(0);
     setGlobalElapsed(0);
@@ -334,10 +337,8 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
 
   function goMission(index: number) {
     if (!band) return;
-    if (mission) missionTimes.current[mission.id] = missionElapsed;
     const target = Math.max(0, Math.min(band.missions.length - 1, index));
     setMissionIndex(target);
-    setMissionElapsed(missionTimes.current[band.missions[target].id] ?? 0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -350,7 +351,7 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
 
   function resetAll() {
     if (dirty && !window.confirm("Nova aplicação apaga estes registros. Copie ou baixe antes de continuar. Deseja apagar?")) return;
-    setYears(""); setMonths("0"); setCopyError(""); missionTimes.current = {};
+    setYears(""); setMonths("0"); setCopyError(""); activeTime.current = { totalMs: 0, missions: {} };
     setPhase("setup");
     setCaseCode("");
     setSchoolYear("");
@@ -374,7 +375,7 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
 
   const reportText = band
     ? [
-        `SONDA DEZ — MODALIDADE PRESENCIAL · REGISTRO v2026-09-22.1`,
+        `SONDA DEZ — MODALIDADE PRESENCIAL · PROTOCOLO v${SONDA_DEZ_VERSION}`,
         `Estado documental: ${completeCount}/${band.missions.length} missões preenchidas com contexto. ${completeCount < band.missions.length ? "REGISTRO PARCIAL" : "Revisão médica necessária; NA não é habilidade avaliada"}. Tempo ativo: ${globalElapsed}s.`,
         `Código/iniciais: ${caseCode || "não informado"}. Idade: ${years}a ${months}m. Série: ${schoolYear || "não informada"}. Faixa: ${band.label}.`,
         `Interferentes assinalados: ${interferences.join(", ")}; não equivale a investigação negativa.`,

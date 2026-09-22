@@ -41,3 +41,12 @@ export function leavesSondaRoute(href: string, currentHref: string): boolean {
     return target.origin !== current.origin || route(target) !== route(current);
   } catch { return false; }
 }
+
+/** Milliseconds remain exact across timer ticks, pauses, and mission changes. */
+export type SondaActiveTime = { totalMs: number; missions: Record<string, number> };
+export function advanceSondaActiveTime(clock: SondaActiveTime, missionId: string, deltaMs: number): void {
+  if (!Number.isFinite(deltaMs) || deltaMs <= 0) return;
+  const elapsed = Math.min(deltaMs, Math.max(0, 600000 - clock.totalMs));
+  clock.totalMs += elapsed;
+  clock.missions[missionId] = (clock.missions[missionId] ?? 0) + elapsed;
+}
