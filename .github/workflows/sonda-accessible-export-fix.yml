@@ -1,0 +1,54 @@
+name: Sonda accessible export correction
+on:
+  push:
+    branches: [fix/sonda-dez-quality-20260922]
+    paths: ['.github/workflows/sonda-accessible-export-fix.yml']
+permissions:
+  contents: write
+jobs:
+  verified-correction:
+    if: github.repository == 'jadsonfraga/neuroped' && github.ref == 'refs/heads/fix/sonda-dez-quality-20260922'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Apply exactly one accessible label correction
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          p = Path('client/src/pages/testes-diretos.tsx')
+          assert subprocess.check_output(['git', 'hash-object', str(p)], text=True).strip() == 'c9b37cc28c84468c4c74885e4f4fde5f1d18b863'
+          text = p.read_text()
+          old = '<textarea readOnly value={reportText} className="mt-2 min-h-64'
+          new = '<textarea aria-label="Registro presencial para copiar manualmente" readOnly value={reportText} className="mt-2 min-h-64'
+          assert text.count(old) == 1
+          p.write_text(text.replace(old, new))
+      - run: npm ci
+      - run: npm run test:sonda
+      - run: npm run check
+      - run: npx eslint client/src/pages/testes-diretos.tsx --max-warnings=0
+      - name: Commit only the verified correction to the feature branch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/fix/sonda-dez-quality-20260922
+          git add -- client/src/pages/testes-diretos.tsx
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(sonda): give physical export a stable accessible name'
+          git push origin HEAD:refs/heads/fix/sonda-dez-quality-20260922
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+      - run: npm run test:e2e:sonda
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sonda-accessible-export-${{ github.sha }}
+          path: /tmp/sonda-e2e/
+          retention-days: 7
+          if-no-files-found: warn
