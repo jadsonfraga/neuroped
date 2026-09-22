@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Read provider topology and current public release only
+      - name: Read exact deployment failure and canonical metadata only
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         shell: python
         run: |
-          import json, os, urllib.request, urllib.error
+          import json, os, re, urllib.request, urllib.error
           token, account = os.environ['CF_TOKEN'], os.environ['CF_ACCOUNT']
           assert token and account, 'Required deployment credentials are absent'
           def read(path):
@@ -29,27 +29,25 @@ jobs:
               if not obj.get('success'):
                   print(json.dumps({'endpoint': path.split('?')[0], 'error_codes': [e.get('code') for e in obj.get('errors', [])]})); return None
               return obj.get('result')
-          def topology(config):
-              fields = ['durable_object_namespaces', 'analytics_engine_datasets', 'd1_databases', 'kv_namespaces', 'r2_buckets', 'services', 'ai_bindings', 'browsers', 'queue_producers']
-              return {**{k: config.get(k) for k in fields}, 'usage_model': config.get('usage_model'), 'compatibility_date': config.get('compatibility_date'), 'compatibility_flags': config.get('compatibility_flags'), 'fail_open': config.get('fail_open')}
           project = read('/pages/projects/neuroped')
           assert project and project.get('name') == 'neuroped', 'Cannot verify canonical project'
-          print('PROJECT_TOPOLOGY=' + json.dumps({'name': project['name'], 'production_branch': project.get('production_branch'), 'configs': {env: topology(config) for env, config in project.get('deployment_configs', {}).items()}}, sort_keys=True))
-          deployments = read('/pages/projects/neuroped/deployments?per_page=5') or []
-          for d in deployments:
-              print('DEPLOYMENT=' + json.dumps({'id': d.get('id'), 'environment': d.get('environment'), 'commit': d.get('deployment_trigger', {}).get('metadata', {}).get('commit_hash'), 'stage': d.get('latest_stage'), 'topology': topology(d)}, sort_keys=True))
-          namespaces = read('/workers/durable_objects/namespaces?per_page=100')
-          if namespaces is not None:
-              print('DURABLE_OBJECT_NAMESPACES=' + json.dumps([{k: n.get(k) for k in ['id', 'class', 'name', 'script', 'use_sqlite']} for n in namespaces], sort_keys=True))
-          settings = read('/workers/account-settings')
-          if settings is not None:
-              print('ACCOUNT_USAGE=' + json.dumps({k: settings.get(k) for k in ['default_usage_model', 'default_environment']}))
+          canonical = project.get('canonical_deployment') or {}
+          print('CANONICAL=' + json.dumps({'id': canonical.get('id'), 'commit': canonical.get('deployment_trigger', {}).get('metadata', {}).get('commit_hash'), 'stage': canonical.get('latest_stage'), 'url': canonical.get('url')}))
+          for deployment in ['54a6aafb-9b86-4a3c-8f0b-495adf05f816', 'c025a57e-8489-4fd7-8e9a-faf596c76f20']:
+              logs = read('/pages/projects/neuroped/deployments/' + deployment + '/history/logs') or {}
+              print('DEPLOYMENT_ERROR=' + json.dumps({'id': deployment, 'total_lines': logs.get('total'), 'errors': [line for line in logs.get('data', []) if re.search(r'durable|error|fail|analytics|10089', line.get('line', ''), re.I)]}, sort_keys=True))
+          database = read('/d1/database/9b0919e5-93af-4b4f-851b-fc77dc1e5bae')
+          if database:
+              print('DATABASE_METADATA=' + json.dumps({k: database.get(k) for k in ['uuid', 'name', 'version', 'created_at', 'file_size', 'running_in_region']}, sort_keys=True))
           for path in ['/deploy-check.json', '/api/health']:
               try:
                   req = urllib.request.Request('https://neuroped.pages.dev' + path, headers={'Cache-Control': 'no-cache'})
                   with urllib.request.urlopen(req, timeout=30) as r:
-                      obj = json.load(r)
-                      allowed = ['app', 'provider', 'branch', 'commit', 'run_id', 'deployed_at_utc', 'ok', 'status', 'database', 'apiProvider', 'devMode']
-                      print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'http_status': r.status, 'metadata': {k: obj[k] for k in allowed if k in obj}}, sort_keys=True))
-              except (urllib.error.URLError, ValueError):
-                  print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'readable': False}))
+                      body = r.read().decode('utf-8')
+                      try: obj = json.loads(body)
+                      except ValueError: obj = {}
+                      print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'http_status': r.status, 'json': bool(obj), 'commit': obj.get('commit'), 'database': obj.get('database'), 'status': obj.get('status')}))
+              except urllib.error.HTTPError as e:
+                  print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'http_status': e.code, 'cf_ray': e.headers.get('cf-ray')}))
+              except urllib.error.URLError:
+                  print('PUBLIC_RELEASE=' + json.dumps({'path': path, 'network_error': True}))
