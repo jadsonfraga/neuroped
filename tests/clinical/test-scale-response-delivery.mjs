@@ -250,7 +250,17 @@ assert.match(
   /item\.fields\.map\(\(field\) => `• \$\{field\.label\}: \$\{fieldValueText\(field, record\?\.values\[field\.id\]\)\}`\)/,
   "cada campo observado deve aparecer no registro completo",
 );
-assert.match(directTestsSource, /"ANÁLISE AUTOMÁTICA DESCRITIVA"/);
+assert.match(directTestsSource, /"SÍNTESE DESCRITIVA DOS REGISTROS"/);
+assert.match(
+  directTestsSource,
+  /const analysis = band \? completeCount === band\.missions\.length\s*\? buildAnalysis/,
+  "síntese deve exigir todas as missões completas e contextualizadas",
+);
+assert.match(
+  directTestsSource,
+  /Registro parcial,[^"\n]*Sem síntese interpretativa/,
+  "registro parcial deve oferecer os dados brutos, sem síntese interpretativa",
+);
 assert.match(
   directTestsSource,
   /const auditFindings = auditAnalysis\(analysis\)/,

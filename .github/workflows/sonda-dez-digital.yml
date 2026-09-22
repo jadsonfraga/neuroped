@@ -7,6 +7,7 @@ on:
       - 'client/src/pages/testes-diretos.tsx'
       - 'client/src/data/sondaDez*.ts'
       - 'client/src/lib/sondaDez*.ts'
+      - 'client/src/hooks/useSondaExitGuard.ts'
       - 'tests/unit/sonda-dez*.ts'
       - 'tests/e2e/sonda-dez-digital.mjs'
       - 'package.json'
@@ -35,6 +36,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: sonda-digital-verification
-          path: /tmp/sonda-e2e
+          name: sonda-digital-browser-${{ github.sha }}
+          path: /tmp/sonda-e2e/
+          retention-days: 7
           if-no-files-found: warn

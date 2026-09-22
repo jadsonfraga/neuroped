@@ -268,6 +268,7 @@ test("registro com NA continua explícito, sem diagnóstico e sem transformar re
   assert.match(text, /registro preenchido com campos não avaliáveis/);
   assert.match(text, /NA — sem condição/);
   const m = band.missions.find((m) => m.id === "b-receptivo")!;
+  records[m.id].interaction = "operator";
   records[m.id].values.repetir = "0";
   records[m.id].notes = "Este campo foi observado antes da interrupção.";
   records[m.id].runs[0] = { status: "complete", events: [], elapsedMs: 5000 };
@@ -292,6 +293,7 @@ test("P exige descrição da ajuda e exploração exige o tempo previsto", () =>
   const mission = DIGITAL_BANDS[0].missions.find((m) => m.id === "a1-ajuda")!;
   const record = markMissionUnavailable(mission, emptyRecord(), "Parcial");
   record.reviewed = true;
+  record.interaction = "operator";
   record.runs[0] = { status: "complete", events: [], elapsedMs: 100 };
   record.values[mission.fields.find((field) => field.options?.includes("P"))!.id] = "P";
   const issues = recordProblems(mission, record);
@@ -420,6 +422,7 @@ function syntheticRun(spec: ActivitySpec): StepRun {
 }
 function syntheticRecord(mission: DigitalMission): DigitalRecord {
   let record = emptyRecord();
+  record.interaction = "operator";
   for (const [i, step] of mission.steps.entries()) {
     let run = syntheticRun(step.activity);
     if (step.activity.responseRule) step.activity.items!.forEach((item, j) => {

@@ -33,6 +33,8 @@ import {
 import { SONDA_DEZ_RESPONSE_LADDER } from "@/data/sondaDezCanonical";
 import {
   buildDigitalReport,
+  buildDigitalHandoff,
+  INTERACTION_LABELS,
   withRunHistory,
   emptyRecord,
   fieldGuidance,
@@ -50,6 +52,7 @@ import {
 } from "@/lib/sondaDezSession";
 import { playSondaTone } from "@/lib/sondaDezAudio";
 import SondaDigitalActivity from "./SondaDigitalActivity";
+import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 
 type Phase = "prepare" | "learn" | "run" | "report";
 const FLAGS = [
@@ -132,6 +135,7 @@ export default function SondaDigitalGuided({
   const [skipReason, setSkipReason] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [startedAt, setStartedAt] = useState("");
   const [familiarizations, setFamiliarizations] = useState<string[]>([]);
   const ageValid =
     /^\d+$/.test(years) && /^\d+$/.test(months) && Number(months) <= 11;
@@ -155,7 +159,8 @@ export default function SondaDigitalGuided({
   const completedCount =
     band?.missions.filter((m) => recordProblems(m, records[m.id]).length === 0)
       .length ?? 0;
-  const dirty = Object.keys(records).length > 0;
+  const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(code || operator || school);
+  useSondaExitGuard(dirty);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [phase]);
@@ -187,15 +192,6 @@ export default function SondaDigitalGuided({
     document.addEventListener("visibilitychange", hidden);
     return () => document.removeEventListener("visibilitychange", hidden);
   }, [phase]);
-  useEffect(() => {
-    if (!dirty) return;
-    const leave = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", leave);
-    return () => window.removeEventListener("beforeunload", leave);
-  }, [dirty]);
   function updateRecord(change: (record: DigitalRecord) => DigitalRecord) {
     if (!mission) return;
     setRecords((old) => ({
@@ -254,6 +250,8 @@ export default function SondaDigitalGuided({
   }
   function showStep() {
     if (!currentStep || paused) return;
+    if (current.runs[stepIndex]?.status === "complete" &&
+        !window.confirm("Esta etapa já foi apresentada. Repetir pode mudar a resposta por familiaridade; a tentativa anterior será preservada. Deseja reapresentar?")) return;
     let initialPlan: string[] | undefined;
     if (currentStep.activity.kind === "plan" && stepIndex > 0) {
       const event = current.runs[stepIndex - 1]?.events.findLast(
@@ -283,28 +281,24 @@ export default function SondaDigitalGuided({
     setRead(false);
     setSkipReason("");
     setMessage("");
+    setCopied(false);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
+  const reportContext = {
+    code, operator, ageMonths, school,
+    confounders: confounders.concat(sound === "visual" ? ["Aplicação sem som eletrônico"] : []),
+    flags, elapsedSeconds: elapsed, familiarizations, startedAt,
+  };
+  const handoff = phase === "report" && band ? buildDigitalHandoff(band, records, reportContext) : "";
   const report =
     phase === "report" && band
-      ? buildDigitalReport(band, records, {
-          code,
-          operator,
-          ageMonths,
-          school,
-          confounders: confounders.concat(
-            sound === "visual" ? ["Aplicação sem som eletrônico"] : [],
-          ),
-          flags,
-          elapsedSeconds: elapsed,
-          familiarizations,
-        })
+      ? buildDigitalReport(band, records, reportContext)
       : "";
-  async function copy() {
+  async function copy(text = report) {
     try {
-      await navigator.clipboard.writeText(report);
-      setCopied(true);
-      setMessage("Registro copiado.");
+      await navigator.clipboard.writeText(text);
+      setCopied(text === report);
+      setMessage(text === report ? "Registro copiado." : "Resumo factual copiado.");
     } catch {
       setCopied(false);
       setMessage(
@@ -322,11 +316,12 @@ export default function SondaDigitalGuided({
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  function newSession() {
+  function newSession(reuseTraining = false) {
+    const keepTraining = reuseTraining && trained && Boolean(operator.trim());
     setRecords({});
     setPhase("prepare");
     setCode("");
-    setOperator("");
+    if (!keepTraining) setOperator("");
     setSchool("");
     setYears("");
     setMonths("0");
@@ -335,8 +330,7 @@ export default function SondaDigitalGuided({
     setChecks({});
     setSound("unchecked");
     setSoundPlayed(false);
-    setQuiz({});
-    setPracticed({});
+    if (!keepTraining) { setQuiz({}); setPracticed({}); }
     setMissionIndex(0);
     setStepIndex(0);
     setElapsed(0);
@@ -344,9 +338,10 @@ export default function SondaDigitalGuided({
     setPaused(false);
     setSkipReason("");
     setCopied(false);
-    setMessage("");
+    setMessage(keepTraining ? "Nova criança: dados clínicos anteriores apagados. Ensaio mantido apenas para esta aplicadora nesta aba; confirme novamente idade, ambiente e som. Trocar o código da aplicadora exige novo ensaio." : "");
     setConfirmNew(false);
     setFamiliarizations([]);
+    setStartedAt("");
   }
   const panel = "rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7";
   return (
@@ -470,7 +465,7 @@ export default function SondaDigitalGuided({
                 <Input
                   value={operator}
                   maxLength={24}
-                  onChange={(e) => setOperator(e.target.value)}
+                  onChange={(e) => { setOperator(e.target.value); setQuiz({}); setPracticed({}); }}
                 />
               </label>
               <label className="block text-sm font-semibold">
@@ -596,7 +591,7 @@ export default function SondaDigitalGuided({
               Ir para o ensaio
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="ghost" className="mt-2 w-full" onClick={onLegacy}>
+            <Button variant="ghost" className="mt-2 w-full" onClick={() => { if (!dirty || window.confirm("Mudar para o presencial apaga esta preparação. Deseja continuar?")) onLegacy(); }}>
               Consultar o roteiro presencial original
             </Button>
           </section>
@@ -690,6 +685,7 @@ export default function SondaDigitalGuided({
                 disabled={!trained}
                 onClick={() => {
                   setPhase("run");
+                  setStartedAt(new Date().toISOString());
                   setPaused(false);
                   setMessage(
                     "Ensaio concluído. Agora começam os registros da aplicação.",
@@ -1035,13 +1031,9 @@ export default function SondaDigitalGuided({
                         reviewed: false,
                         runs: {
                           ...r.runs,
-                          [stepIndex]: {
-                            ...r.runs[stepIndex],
-                            status: "skipped",
-                            events: r.runs[stepIndex]?.events ?? [],
-                            elapsedMs: r.runs[stepIndex]?.elapsedMs ?? 0,
-                            reason: skipReason.trim(),
-                          },
+                          [stepIndex]: withRunHistory(r.runs[stepIndex], {
+                            status: "skipped", events: r.runs[stepIndex]?.events ?? [], elapsedMs: r.runs[stepIndex]?.elapsedMs ?? 0, reason: skipReason.trim(),
+                          }),
                         },
                       }))
                     }
@@ -1067,6 +1059,7 @@ export default function SondaDigitalGuided({
                     onClick={() => {
                       setStepIndex((i) => i - 1);
                       setRead(false);
+                      setSkipReason("");
                     }}
                   >
                     Etapa anterior
@@ -1096,6 +1089,19 @@ export default function SondaDigitalGuided({
                 ou zero. Campos presenciais não observáveis pela tela já vêm
                 identificados como NA.
               </p>
+              <fieldset className="mt-5 rounded-xl border p-4">
+                <legend className="px-1 font-semibold">Quem operou a tela nesta missão?</legend>
+                <p className="mb-3 text-sm text-muted-foreground">Identifique quem tocou nos controles. Isso não substitui descrever a resposta da criança. Na operação compartilhada, discrimine nas notas.</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {Object.entries(INTERACTION_LABELS).map(([value, label]) => (
+                    <label key={value} className="flex min-h-12 items-center gap-3 rounded-xl border p-3 text-sm">
+                      <input type="radio" name={`interaction-${mission.id}`} checked={current.interaction === value}
+                        onChange={() => updateRecord((r) => ({ ...r, interaction: value as DigitalRecord["interaction"], reviewed: false }))} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <div className="mt-5 space-y-5">
                 {mission.fields.map((field) => {
                   const physical = physicalFieldReason(mission.id, field.id);
@@ -1390,10 +1396,18 @@ export default function SondaDigitalGuided({
                   >
                     Manter esta aplicação
                   </Button>
-                  <Button onClick={newSession}>Apagar e começar outra</Button>
+                  <Button onClick={() => newSession()}>Apagar e começar outra</Button>
+                  {trained && operator.trim() && <Button variant="outline" onClick={() => newSession(true)}>Nova criança, mesma aplicadora</Button>}
                 </div>
               </div>
             )}
+          </section>
+          <section className={panel}>
+            <h2 className="text-xl font-bold">Resumo factual para a consulta</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Fatos registrados, ajudas, limites e pendências. A lista detalhada de eventos permanece no registro completo abaixo.</p>
+            <Button className="my-4" variant="outline" onClick={() => void copy(handoff)}>Copiar resumo para o médico</Button>
+            <textarea aria-label="Resumo factual para o médico" readOnly value={handoff}
+              className="min-h-80 w-full rounded-xl border bg-background p-4 text-sm leading-relaxed" />
           </section>
           <section className={panel}>
             <h2 className="mb-3 font-bold">

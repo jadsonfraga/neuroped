@@ -85,7 +85,7 @@
     "test:loose-ends": "node tests/unit/loose-ends-regression.test.mjs",
     "test:therapy-goals": "node --import tsx tests/unit/therapy-goals.test.ts",
     "test:saas-self-service": "node --import tsx tests/unit/saas-self-service.test.ts && node --import tsx tests/unit/saas-acceptance-journey.test.ts && node --import tsx tests/unit/cliente-zero-journey.test.ts",
-    "test:sonda": "node --import tsx tests/unit/sonda-dez-consolidation.test.ts && node --import tsx tests/unit/sonda-dez-digital.test.ts",
+    "test:sonda": "node --import tsx tests/unit/sonda-dez-consolidation.test.ts && node --import tsx tests/unit/sonda-dez-digital.test.ts && node --import tsx tests/unit/sonda-dez-quality.test.ts",
     "test:e2e:sonda": "node --import tsx tests/e2e/sonda-dez-digital.mjs"
   },
   "dependencies": {

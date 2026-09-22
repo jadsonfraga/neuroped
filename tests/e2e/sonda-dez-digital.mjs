@@ -16,6 +16,7 @@ import {
   createSyntheticClinicalApi,
   SYNTHETIC_CREDENTIALS,
 } from "../../scripts/lib/synthetic-clinical-api.mjs";
+import { SONDA_DEZ_PROTOCOL } from "../../client/src/data/sondaDezProtocol.ts";
 import {
   DIGITAL_BANDS,
   TRAINING_CASES,
@@ -47,6 +48,17 @@ const a11yResults = [];
 const btn = (name) => page.getByRole("button", { name, exact: true });
 async function click(name) {
   await btn(name).click();
+}
+async function resizeViewport(viewport) {
+  await page.setViewportSize(viewport);
+  // The controlled task clock can freeze CSS transitions midway through resize.
+  // Finish animations through Playwright, then verify usable width, not just overflow.
+  await page.screenshot({ animations: "disabled" });
+  const main = await page.locator("#main-content").boundingBox();
+  assert.ok(main && main.width >= viewport.width - (viewport.width < 1024 ? 2 : 258), "Main workspace must use the available viewport");
+  if (viewport.width < 1024) {
+    assert.equal(await page.locator(".np-app-sidebar").getAttribute("aria-hidden"), "true", "Mobile navigation starts closed");
+  }
 }
 async function noOverflow() {
   assert.equal(
@@ -176,6 +188,7 @@ async function finishActivity(spec, waitSeconds, { respondToTarget = true, obser
   await page.getByRole("dialog").waitFor({ state: "detached" });
 }
 async function prepare(band) {
+  await page.getByLabel("Código da aplicadora (opcional)", { exact: true }).fill("OPERADOR-SINTETICO");
   await page
     .getByLabel("Idade em anos", { exact: true })
     .fill(String(Math.floor(band.minMonths / 12)));
@@ -283,13 +296,13 @@ try {
   assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
   await page.getByLabel("Idade em anos", { exact: true }).fill("18");
   assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
-  await page.setViewportSize({ width: 320, height: 740 });
+  await resizeViewport({ width: 320, height: 740 });
   await auditScreen("preparation-320");
   await page.screenshot({
     path: `${artifactDir}/preparacao-mobile.png`,
     fullPage: true,
   });
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await resizeViewport({ width: 1440, height: 1000 });
   for (const [bandIndex, band] of DIGITAL_BANDS.entries()) {
     if (bandIndex > 0) {
       await click("Nova aplicação");
@@ -304,13 +317,13 @@ try {
       await finishActivity({ kind: "objects", items: ["sol", "lua", "caixa"] });
       assert.equal(await btn("Abrir estímulo desta etapa").isDisabled(), true);
       await click("Retomar");
-      await page.setViewportSize({ width: 390, height: 844 });
+      await resizeViewport({ width: 390, height: 844 });
       await auditScreen("application-mobile");
       await page.screenshot({
         path: `${artifactDir}/aplicacao-mobile.png`,
         fullPage: true,
       });
-      await page.setViewportSize({ width: 1440, height: 1000 });
+      await resizeViewport({ width: 1440, height: 1000 });
     }
     for (const [mi, mission] of band.missions.entries()) {
       const observedCounts = {};
@@ -336,14 +349,14 @@ try {
             : "Abrir estímulo desta etapa",
         );
         if (bandIndex === 0 && mi === 0 && si === 0) {
-          await page.setViewportSize({ width: 390, height: 844 });
+          await resizeViewport({ width: 390, height: 844 });
           await noOverflow();
           await page.screenshot({
             path: `${artifactDir}/objetos-mobile.png`,
             fullPage: false,
             animations: "disabled",
           });
-          await page.setViewportSize({ width: 1440, height: 1000 });
+          await resizeViewport({ width: 1440, height: 1000 });
           const a11y = await new AxeBuilder({ page })
             .include("dialog")
             .analyze();
@@ -373,6 +386,7 @@ try {
         stepsTested++;
         if (si < mission.steps.length - 1) await click("Próxima etapa");
       }
+      await page.getByLabel("Aplicadora operou a tela e registrou respostas observadas", { exact: true }).check();
       for (const field of mission.fields) {
         const group = page.getByRole("group").filter({
           has: page.locator("legend").filter({
@@ -432,6 +446,11 @@ try {
       .getByRole("textbox", { name: "Registro completo", exact: true })
       .inputValue();
     assert.match(report, /Missões registradas: 7\/7/);
+    const handoff = await page.getByRole("textbox", { name: "Resumo factual para o médico", exact: true }).inputValue();
+    assert.match(handoff, /Cobertura documental: 7\/7/);
+    assert.match(handoff, /Aplicadora operou a tela/);
+    assert.doesNotMatch(handoff, /Evento \d+ms/);
+    await writeFile(`${artifactDir}/resumo-${band.id}.txt`, handoff);
     assert.doesNotMatch(report, /DADO AUSENTE/);
     assert.match(report, /requer validação clínica/);
     if (bandIndex === 0)
@@ -457,7 +476,7 @@ try {
         fullPage: true,
       });
       await click("Nova aplicação");
-      await page.setViewportSize({ width: 320, height: 740 });
+      await resizeViewport({ width: 320, height: 740 });
       await noOverflow();
       await click("Manter esta aplicação");
       assert.equal(
@@ -466,7 +485,7 @@ try {
           .inputValue(),
         report,
       );
-      await page.setViewportSize({ width: 1440, height: 1000 });
+      await resizeViewport({ width: 1440, height: 1000 });
     }
     console.log(
       `PASS ${band.id}: ${band.missions.length} missões, exportação fiel`,
@@ -563,7 +582,7 @@ try {
   assert.match(partial, /Reapresentação: 1 tentativa/);
   assert.match(partial, /Evento anterior/);
   assert.doesNotMatch(partial, /Como ler:/);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await resizeViewport({ width: 390, height: 844 });
   await noOverflow();
   await page.screenshot({
     path: `${artifactDir}/revisao-mobile.png`,
@@ -625,6 +644,7 @@ try {
     .check();
   await click("Abrir estímulo desta etapa");
   await finishActivity(DIGITAL_BANDS[3].missions[2].steps[0].activity);
+  await page.getByLabel("Aplicadora operou a tela e registrou respostas observadas", { exact: true }).check();
   await cause.getByRole("button", { name: "P", exact: true }).click();
   await page
     .getByLabel("Observação direta, fala e ajudas oferecidas", { exact: true })
@@ -694,6 +714,80 @@ try {
     animations: "disabled",
   });
   await auditScreen("partial-report-dark");
+  // Cancel a real SPA departure: the guarded route and the in-memory report survive.
+  const heldReport = await page.getByLabel("Registro completo", { exact: true }).inputValue();
+  page.removeAllListeners("dialog");
+  page.on("dialog", (dialog) => dialog.dismiss());
+  await page.evaluate(() => { window.location.hash = "/pacientes"; });
+  await page.waitForFunction(() => window.location.hash === "#/testes-diretos");
+  assert.equal(await page.getByLabel("Registro completo", { exact: true }).inputValue(), heldReport);
+  page.removeAllListeners("dialog");
+  page.on("dialog", (dialog) => dialog.accept());
+
+  // Keep only verified operator training, never the previous child's clinical state.
+  await click("Nova aplicação");
+  await click("Nova criança, mesma aplicadora");
+  assert.equal(await page.getByLabel("Idade em anos", { exact: true }).inputValue(), "");
+  assert.equal(await page.getByLabel("Código anônimo da sessão (opcional)", { exact: true }).inputValue(), "");
+  assert.equal(await page.getByLabel("Código da aplicadora (opcional)", { exact: true }).inputValue(), "OPERADOR-SINTETICO");
+  assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
+  await page.getByLabel("Idade em anos", { exact: true }).fill("3");
+  const freshPrep = page.getByRole("heading", { name: "Conferir antes de começar", exact: true }).locator("..");
+  for (const checkbox of await freshPrep.getByRole("checkbox").all()) {
+    assert.equal(await checkbox.isChecked(), false);
+    await checkbox.check();
+  }
+  await click("Usar sem som eletrônico");
+  await click("Ir para o ensaio");
+  assert.equal(await btn("Iniciar aplicação").isEnabled(), true);
+  await click("Preparação");
+  await page.getByLabel("Código da aplicadora (opcional)", { exact: true }).fill("OUTRA-APLICADORA");
+  await click("Ir para o ensaio");
+  assert.equal(await btn("Iniciar aplicação").isDisabled(), true);
+  await click("Preparação");
+  await click("Consultar o roteiro presencial original");
+
+  // Legacy mode uses the shipped physical protocol and never displays a default zero.
+  await resizeViewport({ width: 1440, height: 1000 });
+  assert.equal(await page.getByLabel("Anos", { exact: true }).inputValue(), "");
+  await page.getByLabel("Anos", { exact: true }).fill("18");
+  assert.equal(await btn("Ver materiais desta criança").isDisabled(), true);
+  await page.getByLabel("Anos", { exact: true }).fill("1");
+  await click("Ver materiais desta criança");
+  for (const material of SONDA_DEZ_PROTOCOL[0].materials) await page.getByText(material, { exact: true }).click();
+  await click("Iniciar 10 minutos");
+  // Every active segment is shorter than one tick: no fraction may disappear on pause.
+  for (let i = 0; i < 12; i++) {
+    await page.clock.runFor(90);
+    await click("Pausar");
+    await click("Retomar");
+  }
+  await click("Próxima missão");
+  await click("Próxima missão");
+  const amount = page.getByLabel("Quantidade de Imitações", { exact: true });
+  assert.equal(await amount.inputValue(), "");
+  await click("Registrar zero observado");
+  assert.equal(await amount.inputValue(), "0");
+  await amount.locator("../..").getByRole("button", { name: "Não avaliável", exact: true }).click();
+  assert.equal(await amount.isDisabled(), true);
+  await click("Registrar zero observado");
+  await click("Encerrar e revisar registro parcial");
+  const physical = await page.getByLabel("Registro presencial para copiar manualmente", { exact: true }).inputValue();
+  assert.match(physical, /REGISTRO PARCIAL/);
+  assert.match(physical, /MODALIDADE PRESENCIAL · PROTOCOLO v2026-09-08/);
+  assert.ok(Number(physical.match(/Tempo ativo: (\d+)s/)?.[1]) >= 1, "Active fractions survive repeated pauses");
+  assert.match(physical, /Imitações: 0\/4/);
+  assert.doesNotMatch(physical, /não demonstrou imitações/);
+  await click("Copiar resultado completo");
+  assert.ok(await page.getByText("Não foi possível copiar.", { exact: false }).count());
+  const physicalDownload = page.waitForEvent("download");
+  await click("Baixar registro presencial");
+  assert.equal(await readFile(await (await physicalDownload).path(), "utf8"), physical);
+  await resizeViewport({ width: 390, height: 844 });
+  await noOverflow();
+  await page.screenshot({ path: `${artifactDir}/presencial-revisao-mobile.png`, fullPage: true });
+  await click("Nova aplicação");
+  assert.equal(await page.getByLabel("Anos", { exact: true }).inputValue(), "");
   assert.deepEqual(errors, []);
   assert.equal(stepsTested, 76);
   await writeFile(
