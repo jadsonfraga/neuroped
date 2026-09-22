@@ -1,0 +1,146 @@
+name: Sonda final review verification
+on:
+  push:
+    branches: [fix/sonda-dez-quality-20260922]
+    paths: ['.github/workflows/sonda-review-corrections.yml']
+permissions:
+  contents: write
+jobs:
+  review-corrections:
+    if: github.repository == 'jadsonfraga/neuroped' && github.ref == 'refs/heads/fix/sonda-dez-quality-20260922'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Apply reviewed corrections with exact base and output verification
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          expected = {
+            'client/src/pages/testes-diretos.tsx': 'b79a306b9e7e1f03a5852d12d4869132ceec2e96',
+            'client/src/lib/sondaDezQuality.ts': '1e06f7943c35e0c87c2a34eb08f668327d0f1e5f',
+            'tests/unit/sonda-dez-quality.test.ts': '09af3ff97a27d4d4bdd95980f4cb022593d1a4a9',
+            'docs/audits/sonda-dez-quality-20260922.md': 'dab242d5c584e63e5d2d24b96dff24d292d93afd',
+            'tests/e2e/sonda-dez-digital.mjs': 'e23b722d79a0bcc5c2ccdf25aab16f6d8685f2a6',
+          }
+          assert not subprocess.check_output(['git', 'diff', '9a40759c68bca4d87a43534a2ba72cace29e04ae', 'HEAD', '--', *expected])
+          p=Path('client/src/pages/testes-diretos.tsx')
+          s=p.read_text()
+          s=s.replace('import { SONDA_DEZ_PROTOCOL,', 'import { SONDA_DEZ_VERSION } from "@/data/sondaDezCanonical";\nimport { SONDA_DEZ_PROTOCOL,', 1)
+          s=s.replace('legacyCoverage } from "@/lib/sondaDezQuality";', 'legacyCoverage, advanceSondaActiveTime, type SondaActiveTime } from "@/lib/sondaDezQuality";',1)
+          s=s.replace('const missionTimes = useRef<Record<string, number>>({});', 'const activeTime = useRef<SondaActiveTime>({ totalMs: 0, missions: {} });',1)
+          a=s.index('  useEffect(() => {\n    if (!running || phase !== "run") return;')
+          b=s.index('  useEffect(() => {\n    if (globalElapsed >= 600)',a)
+          s=s[:a]+'''  useEffect(() => {
+              const clock = activeTime.current;
+              const missionId = mission?.id;
+              setGlobalElapsed(Math.floor(clock.totalMs / 1000));
+              setMissionElapsed(Math.floor((missionId ? clock.missions[missionId] ?? 0 : 0) / 1000));
+              if (!running || phase !== "run" || !missionId) return;
+              let previous = performance.now();
+              const tick = () => {
+                if (activeTime.current !== clock) return; // A new child invalidates the old cleanup.
+                const now = performance.now();
+                advanceSondaActiveTime(clock, missionId, now - previous);
+                previous = now;
+                setGlobalElapsed(Math.floor(clock.totalMs / 1000));
+                setMissionElapsed(Math.floor((clock.missions[missionId] ?? 0) / 1000));
+              };
+              const timer = window.setInterval(tick, 250);
+              return () => { window.clearInterval(timer); tick(); };
+            }, [running, phase, mission?.id]);
+          ''' +s[b:]
+          s=s.replace('function beginRun() {\n    setPhase', 'function beginRun() {\n    activeTime.current = { totalMs: 0, missions: {} };\n    setPhase',1)
+          s=s.replace('    if (mission) missionTimes.current[mission.id] = missionElapsed;\n','',1)
+          s=s.replace('    setMissionElapsed(missionTimes.current[band.missions[target].id] ?? 0);\n','',1)
+          s=s.replace('missionTimes.current = {};','activeTime.current = { totalMs: 0, missions: {} };',1)
+          s=s.replace('REGISTRO v2026-09-22.1`','PROTOCOLO v${SONDA_DEZ_VERSION}`',1)
+          p.write_text(s)
+          p=Path('client/src/lib/sondaDezQuality.ts')
+          p.write_text(p.read_text()+'''
+          /** Milliseconds remain exact across timer ticks, pauses, and mission changes. */
+          export type SondaActiveTime = { totalMs: number; missions: Record<string, number> };
+          export function advanceSondaActiveTime(clock: SondaActiveTime, missionId: string, deltaMs: number): void {
+            if (!Number.isFinite(deltaMs) || deltaMs <= 0) return;
+            const elapsed = Math.min(deltaMs, Math.max(0, 600000 - clock.totalMs));
+            clock.totalMs += elapsed;
+            clock.missions[missionId] = (clock.missions[missionId] ?? 0) + elapsed;
+          }
+          ''')
+          p=Path('tests/unit/sonda-dez-quality.test.ts')
+          s=p.read_text().replace('leavesSondaRoute } from','leavesSondaRoute, advanceSondaActiveTime, type SondaActiveTime } from',1)
+          s+='''
+          test("relógio conserva frações por missão e o relatório usa a versão presencial canônica", () => {
+            const clock: SondaActiveTime = { totalMs: 0, missions: {} };
+            for (let i = 0; i < 10; i++) advanceSondaActiveTime(clock, "primeira", 90);
+            advanceSondaActiveTime(clock, "segunda", 200);
+            advanceSondaActiveTime(clock, "primeira", 100);
+            assert.equal(clock.totalMs, 1200);
+            assert.deepEqual(clock.missions, { primeira: 1000, segunda: 200 });
+            for (const invalid of [NaN, Infinity, -100]) advanceSondaActiveTime(clock, "primeira", invalid);
+            assert.equal(clock.totalMs, 1200);
+            advanceSondaActiveTime(clock, "segunda", 900000);
+            assert.equal(clock.totalMs, 600000);
+            assert.equal(clock.missions.primeira + clock.missions.segunda, 600000);
+            advanceSondaActiveTime(clock, "primeira", 500);
+            assert.equal(clock.totalMs, 600000);
+            const page = fs.readFileSync("client/src/pages/testes-diretos.tsx", "utf8");
+            assert.match(page, /SONDA_DEZ_VERSION.*from "@\\/data\\/sondaDezCanonical"/);
+            assert.match(page, /PROTOCOLO v\\$\\{SONDA_DEZ_VERSION\\}/);
+            assert.match(page, /window.clearInterval\\(timer\\); tick\\(\\)/);
+            assert.match(page, /activeTime.current !== clock/);
+          });
+          '''
+          p.write_text(s)
+          p=Path('docs/audits/sonda-dez-quality-20260922.md')
+          s=p.read_text().replace('35 testes unitários (8 de consolidação, 16 digitais, 11 de qualidade)', '36 testes unitários (8 de consolidação, 16 digitais, 12 de qualidade)')
+          s=s.replace('| Relógio presencial |', '| Proveniência presencial | Cabeçalho podia usar a versão da adaptação digital | Exportação deriva de SONDA_DEZ_VERSION, a mesma fonte canônica do guia presencial |\n| Relógio presencial |',1)
+          s=s.replace('Delta monotônico, pausa ao ocultar, pausa/retomada explícita e tempos por missão;', 'Delta monotônico, frações em milissegundos preservadas em ref e contabilizadas no cleanup; pausa ao ocultar, pausa/retomada explícita e tempos por missão;',1)
+          p.write_text(s)
+          p=Path('tests/e2e/sonda-dez-digital.mjs')
+          s=p.read_text().replace('  await click("Iniciar 10 minutos");\n', '''  await click("Iniciar 10 minutos");
+            // Every active segment is shorter than one tick: no fraction may disappear on pause.
+            for (let i = 0; i < 12; i++) {
+              await page.clock.runFor(90);
+              await click("Pausar");
+              await click("Retomar");
+            }
+          ''',1)
+          s=s.replace('  assert.match(physical, /REGISTRO PARCIAL/);', '''  assert.match(physical, /REGISTRO PARCIAL/);
+            assert.match(physical, /MODALIDADE PRESENCIAL · PROTOCOLO v2026-09-08/);
+            assert.ok(Number(physical.match(/Tempo ativo: (\\d+)s/)?.[1]) >= 1, "Active fractions survive repeated pauses");''',1)
+          p.write_text(s)
+          for path, sha in expected.items():
+              assert subprocess.check_output(['git', 'hash-object', path], text=True).strip() == sha, path
+          Path('/tmp/sonda-review-paths').write_text('\n'.join(expected)+'\n')
+      - run: npm ci
+      - run: npm run test:sonda
+      - run: npm run check
+      - run: npx eslint client/src/pages/testes-diretos.tsx client/src/lib/sondaDezQuality.ts tests/unit/sonda-dez-quality.test.ts --max-warnings=0
+      - name: Commit only verified reviewed corrections on feature branch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/fix/sonda-dez-quality-20260922
+          while IFS= read -r path; do git add -- "$path"; done < /tmp/sonda-review-paths
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(sonda): preserve paused time fractions and canonical physical provenance'
+          git push origin HEAD:refs/heads/fix/sonda-dez-quality-20260922
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+      - run: npm run test:e2e:sonda
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sonda-reviewed-${{ github.sha }}
+          path: /tmp/sonda-e2e/
+          retention-days: 7
+          if-no-files-found: warn
