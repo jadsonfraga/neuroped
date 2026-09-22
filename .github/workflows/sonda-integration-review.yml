@@ -9,7 +9,7 @@ jobs:
   integrate:
     if: github.repository == 'jadsonfraga/neuroped' && github.ref == 'refs/heads/fix/sonda-dez-quality-20260922'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,12 +24,12 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git config merge.conflictStyle diff3
           git merge --no-commit --no-ff 20c14db0f8a123d64b9f3982cd3e80f6b1511b48 || test $? = 1
-      - name: Resolve reviewed conflicts and verify complete integrated outputs
+      - name: Resolve reviewed conflicts and verify the exact outputs already browser-tested in run 35751588910
         shell: python
         run: |
           from pathlib import Path
           import re, subprocess
-          assert set(subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()) == {'.github/workflows/sonda-dez-digital.yml','client/src/lib/sondaDezSession.ts'}
+          assert set(subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()) == {'client/src/lib/sondaDezSession.ts'}
           p=Path('client/src/lib/sondaDezSession.ts');s=p.read_text()
           blocks=list(re.finditer(r'^<<<<<<<.*?\n(.*?)^\|\|\|\|\|\|\|.*?\n.*?^=======\n(.*?)^>>>>>>>.*?\n',s,re.M|re.S));assert len(blocks)==2
           for i,m in reversed(list(enumerate(blocks))):
@@ -49,15 +49,6 @@ jobs:
                 const coded =''',1)
           tail=tail.replace('${field.kind === "count" && field.max !== undefined ? `/${field.max} (contagem bruta)` : ""}`', '${field.kind === "count" && field.max !== undefined ? `/${field.max} (contagem bruta)` : ""}${count ? `; fonte: ${count.source}, etapa ${count.step + 1}` : ""}`',1)
           p.write_text(first+tail)
-          p=Path('.github/workflows/sonda-dez-digital.yml');s=p.read_text();a=s.index('<<<<<<<');s=s[:a]+'''      - name: Preserve synthetic browser evidence
-                  if: always()
-                  uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-                  with:
-                    name: sonda-digital-browser-GIT_SHA_EXPRESSION
-                    path: /tmp/sonda-e2e/
-                    retention-days: 7
-                    if-no-files-found: warn
-          ''';s=s.replace('GIT_SHA_EXPRESSION', '$' + '{{ github.sha }}');p.write_text(s)
           p=Path('tests/unit/sonda-dez-digital.test.ts');s=p.read_text().replace('  let record = emptyRecord();\n', '  let record = emptyRecord();\n  record.interaction = "operator";\n',1);p.write_text(s)
           p=Path('tests/unit/sonda-dez-quality.test.ts');p.write_text(p.read_text()+'''
           test("resumo factual preserva integridade das contagens derivadas da PR concorrente", () => {
@@ -79,24 +70,16 @@ jobs:
               assert subprocess.check_output(['git','hash-object',path],text=True).strip() == sha, path
           subprocess.run(['git','add','--',*expected],check=True)
           assert not subprocess.check_output(['git','diff','--name-only','--diff-filter=U'])
+          assert not subprocess.check_output(['git','diff','--cached','--name-only','--','.github/workflows']), 'Workflow changes must use the authorized connector, not this bot'
       - run: npm ci
       - run: npm run test:sonda
       - run: npm run check
       - run: npm run lint
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build:client
-      - run: npm run test:e2e:sonda
-      - name: Commit tested merge only on feature branch
+      - name: Commit exact verified application integration, never workflows or main
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = refs/heads/fix/sonda-dez-quality-20260922
+          test -z "$(git diff --cached --name-only -- .github/workflows)"
           git diff --cached --check
           git commit -m 'merge(sonda): preserve concurrent event integrity and reviewed clinical usability'
           git push origin HEAD:refs/heads/fix/sonda-dez-quality-20260922
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: sonda-integrated-${{ github.sha }}
-          path: /tmp/sonda-e2e/
-          retention-days: 7
-          if-no-files-found: warn
