@@ -92,6 +92,19 @@ export default function SondaDigitalActivity({
     [push, spec.kind],
   );
   useEffect(() => {
+    if (!spec.responseRule || spec.prompt === "operator-only") return;
+    const keys: Record<string, string> = { "1": "Uma palma", "2": "Esperar", "3": "Outra resposta", "4": "Não observado" };
+    const observe = (event: KeyboardEvent) => {
+      const answer = keys[event.key];
+      const actual = Math.floor((performance.now() - started.current) / (spec.intervalMs ?? 2500));
+      if (!answer || event.repeat || event.ctrlKey || event.altKey || event.metaKey || closed.current || finished.current || actual !== currentIndex.current) return;
+      event.preventDefault();
+      push("resposta-observada", JSON.stringify({ item: actual + 1, stimulus: spec.items?.[actual], answer, source: "teclado da aplicadora durante apresentação" }));
+    };
+    document.addEventListener("keydown", observe);
+    return () => document.removeEventListener("keydown", observe);
+  }, [spec, push]);
+  useEffect(() => {
     dialog.current?.showModal();
     started.current = performance.now();
     if (spec.kind === "sequence") push("apresentado", "0");
