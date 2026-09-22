@@ -1,0 +1,33 @@
+name: Sonda public release evidence
+on:
+  push:
+    branches: [ops/sonda-release-public-proof-20260922]
+    paths: ['.github/workflows/sonda-release-public-proof.yml']
+permissions:
+  contents: read
+jobs:
+  public-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read public sentinel and health response metadata
+        shell: python
+        run: |
+          import json, subprocess, tempfile, pathlib, re
+          for path in ['/deploy-check.json', '/api/health']:
+              with tempfile.TemporaryDirectory() as directory:
+                  headers, body = pathlib.Path(directory)/'headers', pathlib.Path(directory)/'body'
+                  result = subprocess.run(['curl', '--silent', '--show-error', '--max-time', '30', '-D', str(headers), '-o', str(body), 'https://neuroped.pages.dev'+path], capture_output=True, text=True)
+                  data = body.read_text(errors='replace') if body.exists() else ''
+                  raw_headers = headers.read_text() if headers.exists() else ''
+                  permitted = ['http/', 'content-type:', 'server:', 'cf-mitigated:', 'cf-ray:', 'location:', 'x-service:']
+                  safe_headers = [line for line in raw_headers.splitlines() if any(line.lower().startswith(key) for key in permitted)]
+                  output = {'path': path, 'curl_exit': result.returncode, 'headers': safe_headers, 'bytes': len(data)}
+                  try:
+                      obj = json.loads(data)
+                      output['metadata'] = {k: obj.get(k) for k in ['commit', 'provider', 'database', 'status', 'error', 'code'] if k in obj}
+                  except ValueError:
+                      title = re.search(r'<title>(.*?)</title>', data, re.I|re.S)
+                      output['title'] = title.group(1).strip()[:200] if title else None
+                      output['cloudflare_error_codes'] = re.findall(r'Error (\d{4})', data)[:4]
+                  print(json.dumps(output, sort_keys=True))
