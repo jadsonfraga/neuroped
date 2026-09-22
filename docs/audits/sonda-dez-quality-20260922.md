@@ -1,7 +1,7 @@
 # Sonda Dez — auditoria de confiabilidade e uso clínico
 
 Issue: #921. Base auditada: `74abe8efcb95735fc28b17a1bc968179fe6d38d2`.
-Versão digital: `2026-09-22.1`. Escopo: Sonda; OBS-10, navegação prioritária, APIs, banco, permissões e contratos comerciais inalterados.
+Versão digital: `2026-09-22.2`. Escopo: Sonda; OBS-10, navegação prioritária, APIs, banco, permissões e contratos comerciais inalterados.
 
 ## Matriz de achados e correções
 
@@ -24,9 +24,13 @@ Versão digital: `2026-09-22.1`. Escopo: Sonda; OBS-10, navegação prioritária
 | Banco e faixa | Banco abria por default em faixa independente da criança | Inicialização acompanha a faixa presencial selecionada, mantendo seleção manual explícita do banco |
 | Acessibilidade | Contadores apenas +/− sem entrada/nome acessível | Inputs nomeados, campos de autoria com radio/fieldset/legend, feedback de estado e controles de retomada; suíte Axe e telas móveis existentes preservadas |
 
+## Integração concorrente
+
+A PR #922 foi incorporada ao main em `20c14db0f8a123d64b9f3982cd3e80f6b1511b48` durante esta revisão. A integração preserva as respostas por cartão, contagens derivadas, contexto etário, testes e auditoria daquela entrega. Os dois conflitos foram conciliados, sem escolher uma implementação em detrimento da outra: a validação de séries compartilha o verificador estrito; autoria e coerência de contagens são cumulativas. O resumo factual também rejeita contagens não confirmadas pelos eventos e informa sua fonte. Fixture sintética recebe a autoria agora obrigatória. Todas as assertivas anteriores são preservadas.
+
 ## Verificação e limites
 
-`npm run test:sonda`: 36 testes unitários (8 de consolidação, 16 digitais, 12 de qualidade), incluindo múltiplos casos de borda em cada teste. `npm run check`, lint dos arquivos alterados e `npm run build:client`: aprovados na revisão local. O navegador local retornou `ERR_BLOCKED_BY_ADMINISTRATOR` para o servidor de teste; nenhuma política foi alterada. A evidência browser vem da execução do workflow Sonda Dez digital no GitHub Actions, com screenshots e relatórios exclusivamente sintéticos.
+`npm run test:sonda`: 48 testes unitários (8 de consolidação, 27 digitais, 13 de qualidade), incluindo múltiplos casos de borda em cada teste. `npm run check`, lint dos arquivos alterados e `npm run build:client`: aprovados na revisão local. O navegador local retornou `ERR_BLOCKED_BY_ADMINISTRATOR` para o servidor de teste; nenhuma política foi alterada. A evidência browser vem da execução do workflow Sonda Dez digital no GitHub Actions, com screenshots e relatórios exclusivamente sintéticos.
 
 A suíte browser mantém as seis trilhas, 42 missões e 76 etapas existentes e acrescenta autoria, resumo factual, recusa de saída SPA, treino reutilizado/troca de aplicadora e fluxo presencial de idade/zero/NA/revisão/exportação/reset. Não substitui componentes da Sonda por mocks. Não remove assertivas nem reduz travas para obter checks verdes.
 

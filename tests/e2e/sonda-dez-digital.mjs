@@ -82,7 +82,7 @@ async function auditScreen(label, scope = '[data-testid="sonda-digital"]') {
   );
   a11yResults.push({ label, violations: 0, passes: result.passes.length });
 }
-async function finishActivity(spec, waitSeconds) {
+async function finishActivity(spec, waitSeconds, { respondToTarget = true, observeRule = true } = {}) {
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
   if (waitSeconds) {
@@ -133,15 +133,20 @@ async function finishActivity(spec, waitSeconds) {
     }
   } else if (spec.kind === "sequence") {
     // Real timer ticks, with at least one response when there is a response button.
-    if (spec.target)
+    if (spec.target && respondToTarget)
       await dialog
         .getByRole("button", { name: "Responder ao alvo", exact: true })
         .click();
-    if (spec.prompt === "operator-only") {
+    if (spec.prompt === "operator-only" && observeRule) {
       for (const item of spec.items) {
         await dialog
           .getByRole("button", { name: spec.responseRule[item], exact: true })
           .click();
+        await page.clock.runFor(spec.intervalMs ?? 2500);
+      }
+    } else if (spec.responseRule && observeRule) {
+      for (const item of spec.items) {
+        await page.keyboard.press(spec.responseRule[item] === "Uma palma" ? "1" : "2");
         await page.clock.runFor(spec.intervalMs ?? 2500);
       }
     } else
@@ -373,6 +378,11 @@ try {
           assert.ok(await page.getByText(`Alvos marcados: ${hits}. Omissões: ${omissions}. Distratores marcados: ${1 - hits}.`, {exact:true}).count());
         }
         if (step.activity.prompt === "operator-only") Object.assign(observedCounts, {acertos: step.activity.items.length, erros:0, perseveracoes:0});
+        if (step.activity.responseRule && step.activity.prompt !== "operator-only") {
+          if (mission.id === "b-inibicao" && si === 1) Object.assign(observedCounts, { inversao: step.activity.items.length, perseveracoes: 0 });
+          else Object.assign(observedCounts, { acertos: step.activity.items.length, comissoes: 0, omissoes: 0, perseveracoes: 0 });
+          assert.equal(await page.getByLabel(`Resposta ao cartão 1: ${step.activity.items[0]}`, { exact: true }).inputValue(), step.activity.responseRule[step.activity.items[0]]);
+        }
         stepsTested++;
         if (si < mission.steps.length - 1) await click("Próxima etapa");
       }
@@ -394,8 +404,14 @@ try {
           );
           continue;
         }
-        if (field.kind === "count")
-          await group.getByRole("spinbutton").fill(String(observedCounts[field.id] ?? 0));
+        if (field.kind === "count") {
+          const input = group.getByRole("spinbutton");
+          const derived = mission.steps.some((s) => Object.values(s.activity.countFields ?? {}).includes(field.id));
+          if (derived) {
+            assert.equal(await input.isDisabled(), true, `${mission.id}/${field.id}: derived total cannot be typed`);
+            assert.equal(await input.inputValue(), String(observedCounts[field.id]), `${mission.id}/${field.id}: events match total`);
+          } else await input.fill(String(observedCounts[field.id] ?? 0));
+        }
         else
           await group
             .getByRole("button", {
@@ -475,6 +491,57 @@ try {
       `PASS ${band.id}: ${band.missions.length} missões, exportação fiel`,
     );
   }
+  // Exact reproduction: 36 months, all 15 cards, no touch -> 0 / 5 / 0.
+  await click("Nova aplicação");
+  await click("Apagar e começar outra");
+  await prepare(DIGITAL_BANDS[2]);
+  await click("Revisar / encerrar");
+  await page.getByRole("button", { name: "6. Atenção sustentada", exact: true }).click();
+  await click("Retomar");
+  await page.getByLabel("Li a instrução e sei o que observar nesta etapa.", { exact: true }).check();
+  await click("Abrir estímulo desta etapa");
+  await finishActivity({ kind: "blank" });
+  await click("Próxima etapa");
+  await page.getByLabel("Li a instrução e sei o que observar nesta etapa.", { exact: true }).check();
+  await click("Abrir estímulo desta etapa");
+  await finishActivity(DIGITAL_BANDS[2].missions[5].steps[1].activity, undefined, { respondToTarget: false });
+  for (const [label, value] of [["Acertos", "0"], ["Omissões", "5"], ["Comissões", "0"]]) {
+    const input = page.getByLabel(`Quantidade de ${label}`, { exact: true });
+    assert.equal(await input.isDisabled(), true);
+    assert.equal(await input.inputValue(), value);
+  }
+  await click("Revisar / encerrar");
+  const noTouchReport = await page.getByRole("textbox", { name: "Registro completo", exact: true }).inputValue();
+  assert.match(noTouchReport, /Idade: 36 meses/);
+  assert.match(noTouchReport, /Omissões: 5\./);
+  assert.match(noTouchReport, /não expectativas equivalentes nem normas/);
+  await page.getByRole("button", { name: "7. Inibição + troca de regra", exact: true }).click();
+  await click("Retomar");
+  await page.getByLabel("Li a instrução e sei o que observar nesta etapa.", { exact: true }).check();
+  await click("Abrir estímulo desta etapa");
+  const ruleSpec = DIGITAL_BANDS[2].missions[6].steps[0].activity;
+  await finishActivity(ruleSpec, undefined, { observeRule: false });
+  const ruleTotal = page.getByLabel("Quantidade de Regra inicial: acertos", { exact: true });
+  assert.equal(await ruleTotal.inputValue(), "", "no observations is not zero");
+  assert.equal(await btn("Concluir e revisar registro").isDisabled(), true);
+  for (const [i, item] of ruleSpec.items.entries()) {
+    await page.getByLabel(`Resposta ao cartão ${i + 1}: ${item}`, { exact: true }).selectOption(ruleSpec.responseRule[item]);
+  }
+  assert.equal(await ruleTotal.inputValue(), "10");
+  const firstResponse = page.getByLabel(`Resposta ao cartão 1: ${ruleSpec.items[0]}`, { exact: true });
+  await firstResponse.selectOption("Esperar");
+  assert.equal(await ruleTotal.inputValue(), "9");
+  await firstResponse.selectOption("Não observado");
+  assert.equal(await ruleTotal.inputValue(), "");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await auditScreen("per-card-review-mobile");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await click("Revisar / encerrar");
+  const missingObservation = await page.getByRole("textbox", { name: "Registro completo", exact: true }).inputValue();
+  assert.match(missingObservation, /Regra inicial: acertos: DADO AUSENTE/);
+  assert.match(missingObservation, /resposta-observada/);
+  assert.match(missingObservation, /registro parcial/);
+  console.log("PASS 36 months negative paths: 0/5/0 locked; missing observation invalidates totals; corrections retained");
   // A suspended browser must not turn an interrupted series into a completed one.
   await click("Nova aplicação");
   await click("Apagar e começar outra");

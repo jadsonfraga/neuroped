@@ -136,3 +136,15 @@ test("relógio conserva frações por missão e o relatório usa a versão prese
   assert.match(page, /window.clearInterval\(timer\); tick\(\)/);
   assert.match(page, /activeTime.current !== clock/);
 });
+
+test("resumo factual preserva integridade das contagens derivadas da PR concorrente", () => {
+  const band = DIGITAL_BANDS[2];
+  const mission = band.missions.find((m) => m.id === "b-atencao-sustentada")!;
+  const record = emptyRecord();
+  record.values = { acertos: "5", omissoes: "0", comissoes: "0", redirecionamentos: "2" };
+  record.interaction = "operator";
+  const text = buildDigitalHandoff(band, { [mission.id]: record }, context);
+  assert.match(text, /contagem não confirmada pelos eventos; não interpretar/);
+  assert.doesNotMatch(text, /5\/5 \(contagem bruta\)/);
+  assert.match(text, /não expectativas equivalentes nem normas/);
+});
