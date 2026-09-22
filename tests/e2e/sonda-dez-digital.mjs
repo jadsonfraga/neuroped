@@ -49,6 +49,17 @@ const btn = (name) => page.getByRole("button", { name, exact: true });
 async function click(name) {
   await btn(name).click();
 }
+async function resizeViewport(viewport) {
+  await page.setViewportSize(viewport);
+  // The controlled task clock can freeze CSS transitions midway through resize.
+  // Finish animations through Playwright, then verify usable width, not just overflow.
+  await page.screenshot({ animations: "disabled" });
+  const main = await page.locator("#main-content").boundingBox();
+  assert.ok(main && main.width >= viewport.width - (viewport.width < 1024 ? 2 : 258), "Main workspace must use the available viewport");
+  if (viewport.width < 1024) {
+    assert.equal(await page.locator(".np-app-sidebar").getAttribute("aria-hidden"), "true", "Mobile navigation starts closed");
+  }
+}
 async function noOverflow() {
   assert.equal(
     await page.evaluate(
@@ -280,13 +291,13 @@ try {
   assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
   await page.getByLabel("Idade em anos", { exact: true }).fill("18");
   assert.equal(await btn("Ir para o ensaio").isDisabled(), true);
-  await page.setViewportSize({ width: 320, height: 740 });
+  await resizeViewport({ width: 320, height: 740 });
   await auditScreen("preparation-320");
   await page.screenshot({
     path: `${artifactDir}/preparacao-mobile.png`,
     fullPage: true,
   });
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await resizeViewport({ width: 1440, height: 1000 });
   for (const [bandIndex, band] of DIGITAL_BANDS.entries()) {
     if (bandIndex > 0) {
       await click("Nova aplicação");
@@ -301,13 +312,13 @@ try {
       await finishActivity({ kind: "objects", items: ["sol", "lua", "caixa"] });
       assert.equal(await btn("Abrir estímulo desta etapa").isDisabled(), true);
       await click("Retomar");
-      await page.setViewportSize({ width: 390, height: 844 });
+      await resizeViewport({ width: 390, height: 844 });
       await auditScreen("application-mobile");
       await page.screenshot({
         path: `${artifactDir}/aplicacao-mobile.png`,
         fullPage: true,
       });
-      await page.setViewportSize({ width: 1440, height: 1000 });
+      await resizeViewport({ width: 1440, height: 1000 });
     }
     for (const [mi, mission] of band.missions.entries()) {
       const observedCounts = {};
@@ -333,14 +344,14 @@ try {
             : "Abrir estímulo desta etapa",
         );
         if (bandIndex === 0 && mi === 0 && si === 0) {
-          await page.setViewportSize({ width: 390, height: 844 });
+          await resizeViewport({ width: 390, height: 844 });
           await noOverflow();
           await page.screenshot({
             path: `${artifactDir}/objetos-mobile.png`,
             fullPage: false,
             animations: "disabled",
           });
-          await page.setViewportSize({ width: 1440, height: 1000 });
+          await resizeViewport({ width: 1440, height: 1000 });
           const a11y = await new AxeBuilder({ page })
             .include("dialog")
             .analyze();
@@ -449,7 +460,7 @@ try {
         fullPage: true,
       });
       await click("Nova aplicação");
-      await page.setViewportSize({ width: 320, height: 740 });
+      await resizeViewport({ width: 320, height: 740 });
       await noOverflow();
       await click("Manter esta aplicação");
       assert.equal(
@@ -458,7 +469,7 @@ try {
           .inputValue(),
         report,
       );
-      await page.setViewportSize({ width: 1440, height: 1000 });
+      await resizeViewport({ width: 1440, height: 1000 });
     }
     console.log(
       `PASS ${band.id}: ${band.missions.length} missões, exportação fiel`,
@@ -504,7 +515,7 @@ try {
   assert.match(partial, /Reapresentação: 1 tentativa/);
   assert.match(partial, /Evento anterior/);
   assert.doesNotMatch(partial, /Como ler:/);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await resizeViewport({ width: 390, height: 844 });
   await noOverflow();
   await page.screenshot({
     path: `${artifactDir}/revisao-mobile.png`,
@@ -670,7 +681,7 @@ try {
   await click("Consultar o roteiro presencial original");
 
   // Legacy mode uses the shipped physical protocol and never displays a default zero.
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await resizeViewport({ width: 1440, height: 1000 });
   assert.equal(await page.getByLabel("Anos", { exact: true }).inputValue(), "");
   await page.getByLabel("Anos", { exact: true }).fill("18");
   assert.equal(await btn("Ver materiais desta criança").isDisabled(), true);
@@ -697,7 +708,7 @@ try {
   const physicalDownload = page.waitForEvent("download");
   await click("Baixar registro presencial");
   assert.equal(await readFile(await (await physicalDownload).path(), "utf8"), physical);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await resizeViewport({ width: 390, height: 844 });
   await noOverflow();
   await page.screenshot({ path: `${artifactDir}/presencial-revisao-mobile.png`, fullPage: true });
   await click("Nova aplicação");
