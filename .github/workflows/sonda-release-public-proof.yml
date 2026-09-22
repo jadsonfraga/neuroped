@@ -30,7 +30,8 @@ jobs:
               value = read_public(origin + '/deploy-check.json?ts=' + str(int(datetime.now(timezone.utc).timestamp())))
               commit = value.get('commit')
               print('PUBLIC_SENTINEL=' + json.dumps({'provider': provider, 'reported_commit': commit, 'artifact_provider': value.get('provider'), 'status': value.get('status')}, sort_keys=True), flush=True)
-              assert value.get('app') == 'NeuroPed' and value.get('provider') == provider
+              expected_provider = 'cloudflare-pages' if provider == 'cloudflare' else 'vercel'
+              assert value.get('app') == 'NeuroPed' and value.get('provider') == expected_provider
               # The existing Vercel build emits 12 characters. Preserve the reported
               # value and require the canonical deployed/provider contract too.
               if provider == 'vercel':
