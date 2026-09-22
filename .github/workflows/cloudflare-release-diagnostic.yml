@@ -3,16 +3,21 @@ on:
   pull_request:
     paths:
       - 'wrangler.toml'
+      - 'package.json'
       - 'functions/api/_observability.ts'
       - 'functions/api/_middleware.ts'
       - 'functions/api/tenants/**/metrics.ts'
       - 'tests/unit/metadata-observability.test.ts'
+      - 'tests/unit/runtime-readiness.test.ts'
+      - 'tests/unit/workflow-governance.test.mjs'
+      - 'tests/unit/deploy-entrypoints.test.mjs'
       - 'tests/unit/cloudflare-release-bindings.test.py'
       - '.github/workflows/cloudflare-release-diagnostic.yml'
   push:
     branches: [main]
     paths:
       - 'wrangler.toml'
+      - 'package.json'
       - 'tests/unit/cloudflare-release-bindings.test.py'
       - '.github/workflows/cloudflare-release-diagnostic.yml'
   workflow_dispatch:
@@ -30,12 +35,6 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Validate actual TOML and fail-closed mutations
-        run: python3 tests/unit/cloudflare-release-bindings.test.py
       - run: npm ci
-      - name: Verify real middleware, optional metrics and tenant audit behavior
-        run: node --import tsx --test tests/unit/metadata-observability.test.ts
-      - name: Preserve readiness and access contracts
-        run: node --import tsx --test tests/unit/runtime-readiness.test.ts
-      - name: Preserve workflow and production entrypoint safety
-        run: node tests/unit/workflow-governance.test.mjs && node tests/unit/deploy-entrypoints.test.mjs
+      - name: Validate bindings, optional metrics, readiness and workflow safety
+        run: npm run test:cloudflare-release
