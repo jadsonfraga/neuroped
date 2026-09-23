@@ -75,6 +75,13 @@ export const featuredNavigation: NavItem[] = [
   },
   obs10Navigation,
   {
+    href: "/testes-reconhecimento",
+    label: "Reconhecimento Visual",
+    icon: Images,
+    tone: "priority",
+    description: "Figuras por idade · reconhecer, nomear e parear",
+  },
+  {
     href: "/pacientes",
     label: "Pacientes / Prontuário",
     icon: Users,

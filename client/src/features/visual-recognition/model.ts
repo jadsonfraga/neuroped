@@ -77,7 +77,7 @@ export function makeTrial(targetId:string, mode:Mode, pool:Item[], choices:numbe
   const target=itemFor(targetId);
   let others=pool.filter(item=>item.id!==target.id && (target.pair ? item.pair===target.pair : item.art===target.art));
   if(!target.pair && target.category==="cores") others=others.filter(item=>item.category==="cores");
-  const need=target.pair?1:Math.min(choices-1,others.length);
+  const need=target.pair?Math.min(1,others.length):Math.min(choices-1,others.length);
   if((mode!=="nomeacao" || target.pair) && need<1) throw new Error("Selecione ao menos duas figuras compatíveis. Conceitos precisam dos dois estados do mesmo par.");
   const foils=shuffle(others,seed+index*37).slice(0,need).map(item=>item.id);
   const optionIds=mode==="nomeacao" && !target.pair ? [target.id] : foils;
