@@ -1,17 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-
 // Branch-scoped development migration. Every replacement asserts its input.
-function patch(path, before, after) {
-  const source=readFileSync(path,'utf8');
-  if(source.includes(after))return;
-  if(source.split(before).length!==2)throw new Error(`Unexpected source while reconciling ${path}: ${before.slice(0,80)}`);
-  writeFileSync(path,source.replace(before,after));
-}
+function patch(path,before,after){const source=readFileSync(path,'utf8');if(source.includes(after))return;if(source.split(before).length!==2)throw new Error(`Unexpected source while reconciling ${path}: ${before.slice(0,80)}`);writeFileSync(path,source.replace(before,after));}
 const vendor='scripts/vendor-visual-recognition.mjs';
 patch(vendor,".replace(/<(metadata|title|desc)\\b[^>]*>[\\s\\S]*?<\\/\\1>/gi,'').trim()", ".replace(/<(metadata|title|desc)\\b[^>]*>[\\s\\S]*?<\\/\\1>/gi,'').replace(/<text\\b[^>]*>[\\s\\S]*?<\\/text>/gi,'').trim()");
 patch(vendor,'Remoção de metadados, títulos e descrições XML; desenho preservado. Rótulos PT-BR são descritores locais, não normas.','Remoção de metadados, títulos, descrições XML e inscrições em texto nas figuras; demais formas preservadas. Rótulos PT-BR são descritores locais, não normas.');
 const model='client/src/features/visual-recognition/model.ts';
 patch(model,'guarda_chuva: ["sombrinha"]','"guarda-chuva": ["sombrinha"]');
+patch(model,'const need=target.pair?1:Math.min(choices-1,others.length);','const need=target.pair?Math.min(1,others.length):Math.min(choices-1,others.length);');
 patch(model,'if(interpretable && !applied) errors.push("A figura precisa ter sido apresentada.");','if((interpretable || draft.outcome==="sem_resposta") && !applied) errors.push("A figura precisa ter sido apresentada.");');
 patch(model,'const errors=problems(trial,draft,events);if(errors.length) throw new Error(errors.join(" "));','const errors=problems(trial,draft,events);if(errors.length) throw new Error(errors.join(" "));\n  if(!supersedes && activeObservations(ledger).some(record=>record.trial.id===trial.id)) throw new Error("Esta oportunidade já foi registrada; use correção com justificativa.");');
 patch(model,'if(!draft.familiarity) errors.push("Registre a familiaridade (pode ser incerta).");','if(!["conhecida","incerta","desconhecida"].includes(draft.familiarity)) errors.push("Registre a familiaridade (pode ser incerta).");\n  if(!(draft.help in SUPPORTS) || (draft.channel && !(draft.channel in CHANNELS))) errors.push("Modalidade de ajuda ou resposta inválida.");\n  if(!trial.optionIds.includes(trial.targetId) || new Set(trial.optionIds).size!==trial.optionIds.length || trial.optionIds.some(id=>!ITEM_MAP.has(id))) errors.push("Alternativas inconsistentes.");\n  if(events.some(event=>!Number.isFinite(Date.parse(event.at)) || (event.kind==="toque" && (!event.itemId || !trial.optionIds.includes(event.itemId))))) errors.push("Evento incompatível com as figuras apresentadas.");');
@@ -26,4 +21,6 @@ patch(workspace,'}catch(error){setMessage(readableError(error));}\n  };','}catch
 patch(workspace,'setEditing(null);setPhase("report");setMessage("");','if(editing)leaveEditing();setPhase("report");setMessage("");');
 patch(workspace,'setEditing(record);setDraft({...record.response});','pendingBeforeEdit.current={draft:{...draft},events:events.map(event=>({...event}))};setEditing(record);setDraft({...record.response});');
 patch(workspace,'CC BY-SA 4.0</a>, com títulos/metadados removidos; formas preservadas.','CC BY-SA 4.0</a>, com títulos, metadados e inscrições em texto removidos; demais formas preservadas.');
+const navigation='client/src/data/navigation.ts';
+patch(navigation,'  obs10Navigation,\n  {\n    href: "/pacientes",','  obs10Navigation,\n  {\n    href: "/testes-reconhecimento",\n    label: "Reconhecimento Visual",\n    icon: Images,\n    tone: "priority",\n    description: "Figuras por idade · reconhecer, nomear e parear",\n  },\n  {\n    href: "/pacientes",');
 console.log('Recognition source reconciliation applied with exact preconditions; no test assertion removed.');
