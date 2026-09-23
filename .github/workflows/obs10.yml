@@ -19,13 +19,16 @@ on:
       - 'tests/unit/obs10-dossier.test.ts'
       - 'tests/unit/obs10-pilot-aggregate.test.ts'
       - 'tests/unit/obs10-orientation.test.ts'
+      - 'tests/unit/obs10-agreement.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
       - 'tests/e2e/obs10-evidence.mjs'
       - 'tests/e2e/obs10-media-regressions.mjs'
       - 'tests/e2e/obs10-dossier.mjs'
+      - 'tests/e2e/obs10-agreement.mjs'
       - 'docs/features/obs10.md'
+      - 'docs/features/obs10-agreement.md'
       - 'docs/audits/obs10-v13-pilot.md'
       - 'docs/audits/obs10-media-regressions.md'
       - '.github/workflows/obs10.yml'
@@ -47,12 +50,14 @@ on:
       - 'tests/unit/obs10-dossier.test.ts'
       - 'tests/unit/obs10-pilot-aggregate.test.ts'
       - 'tests/unit/obs10-orientation.test.ts'
+      - 'tests/unit/obs10-agreement.test.ts'
       - 'tests/e2e/obs10.mjs'
       - 'tests/e2e/obs10-practical.mjs'
       - 'tests/e2e/obs10-review.mjs'
       - 'tests/e2e/obs10-evidence.mjs'
       - 'tests/e2e/obs10-media-regressions.mjs'
       - 'tests/e2e/obs10-dossier.mjs'
+      - 'tests/e2e/obs10-agreement.mjs'
       - '.github/workflows/obs10.yml'
 permissions:
   contents: read
@@ -86,6 +91,7 @@ jobs:
           node --import tsx tests/unit/obs10-dossier.test.ts
           node --import tsx tests/unit/obs10-pilot-aggregate.test.ts
           node --import tsx tests/unit/obs10-orientation.test.ts
+          node --import tsx tests/unit/obs10-agreement.test.ts
           node --import tsx tests/unit/featured-navigation.test.ts
           npm run test:sonda
           npm run audit:navigation
@@ -123,6 +129,10 @@ jobs:
         env:
           OBS10_DOSSIER_ARTIFACT_DIR: /tmp/obs10-dossier
         run: node tests/e2e/obs10-dossier.mjs
+      - name: Observer agreement, fail-closed pairing and metadata-only study export
+        env:
+          OBS10_AGREEMENT_ARTIFACT_DIR: /tmp/obs10-agreement
+        run: node tests/e2e/obs10-agreement.mjs
       - name: Preserve synthetic screenshots and results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -136,5 +146,6 @@ jobs:
             /tmp/obs10-evidence
             /tmp/obs10-media-regressions
             /tmp/obs10-dossier
+            /tmp/obs10-agreement
           if-no-files-found: ignore
           retention-days: 7
