@@ -19,17 +19,17 @@ function worldIndex(phase: WizardPhase): number {
   return Math.max(0, index);
 }
 
-function taskState(index: number, cursor: number, phase: WizardPhase, record: TabletRecord | null): { state: StationVisualState; status: string } {
-  const observation = record?.observations[index];
+function taskState(index: number, taskId: string, cursor: number, phase: WizardPhase, record: TabletRecord | null): { state: StationVisualState; status: string } {
+  const observation = record?.observations.find((entry) => entry.taskId === taskId);
   if (phase === "review" || phase === "delivery") {
     if (!observation) return { state: "unobserved", status: "não observada" };
     if (observation.outcome === "NA") return { state: "done", status: "não aplicada · motivo registrado" };
     if (observation.outcome === null) return { state: "partial", status: "registro parcial" };
     return { state: "done", status: "registrada" };
   }
-  if (index < cursor) return { state: "done", status: "registrada" };
+  if (index < cursor) return observation?.outcome === "NA" ? { state: "done", status: "não aplicada · motivo registrado" } : { state: "done", status: observation?.outcome === null ? "registro parcial" : "registrada" };
   if (index === cursor && ["cue", "child", "response"].includes(phase)) return { state: "current", status: phase === "response" ? "checkpoint de registro" : "estação atual" };
-  if (index === cursor + 1 && ["cue", "child", "response"].includes(phase)) return { state: "next", status: "próxima estação" };
+  if ((phase === "ready" && index === 0) || (index === cursor + 1 && ["cue", "child", "response"].includes(phase))) return { state: "next", status: phase === "ready" ? "primeira estação" : "próxima estação" };
   return { state: "idle", status: "a seguir" };
 }
 
@@ -60,7 +60,7 @@ export function StationJourney({ phase, cursor, plan, record }: {
       <div className="ot-mission-map-title"><strong>Rota de estações desta ficha</strong><span>{plan.tasks.length} estações · ordem fixa</span></div>
       <ol>
         {plan.tasks.map((task, index) => {
-          const status = taskState(index, cursor, phase, record);
+          const status = taskState(index, task.id, cursor, phase, record);
           return <li key={task.id} data-task-station={task.id} data-station-state={status.state} aria-current={status.state === "current" ? "step" : undefined}>
             <span className="ot-mission-node" aria-hidden="true">{index + 1}</span>
             <span className="ot-mission-copy"><strong>{task.title}</strong><small>{status.status}</small></span>
