@@ -64,10 +64,10 @@ export const TABLET_STYLE = `
 .ot-stations-head>div{display:grid;gap:2px}.ot-stations-head strong{font-size:1.2em}.ot-stations-head p{max-width:48ch;margin:0!important;color:hsl(var(--muted-foreground))}
 .ot-dialog .ot-root .ot-stations-kicker{font-size:.68em;letter-spacing:.12em;font-weight:850;color:hsl(var(--primary))}
 .ot-world-track{list-style:none;padding:0;margin:18px 0 0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-.ot-world-track li{position:relative;display:flex;align-items:center;gap:9px;min-width:0;padding:10px;border:1px solid hsl(var(--border));border-radius:14px;background:hsl(var(--card));min-height:76px}
-.ot-world-track li>span:last-child{display:grid;min-width:0}.ot-world-track li strong,.ot-world-track li small{overflow-wrap:anywhere}.ot-world-track li small{color:hsl(var(--muted-foreground));font-size:.72em}
+.ot-world-track li{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:4px;min-width:0;padding:9px 7px;border:1px solid hsl(var(--border));border-radius:14px;background:hsl(var(--card));min-height:92px}
+.ot-world-track li>span:last-child{display:grid;min-width:0}.ot-world-track li strong{font-size:.8em;line-height:1.15;overflow-wrap:normal;word-break:normal}.ot-world-track li small{color:hsl(var(--muted-foreground));font-size:.64em;line-height:1.2;overflow-wrap:normal;word-break:normal}
 .ot-world-node,.ot-mission-node{display:grid;place-items:center;flex:0 0 auto;border-radius:999px;border:2px solid hsl(var(--border));background:hsl(var(--muted));font-weight:850;font-variant-numeric:tabular-nums}
-.ot-world-node{width:36px;height:36px}.ot-mission-node{width:34px;height:34px}
+.ot-world-node{width:31px;height:31px;font-size:.78em}.ot-mission-node{width:34px;height:34px}
 .ot-world-track li[data-station-state=done],.ot-mission-map li[data-station-state=done]{border-color:hsl(var(--primary)/.38);background:hsl(var(--primary)/.06)}
 .ot-world-track li[data-station-state=done] :is(.ot-world-node),.ot-mission-map li[data-station-state=done] .ot-mission-node{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
 .ot-world-track li[data-station-state=current],.ot-mission-map li[data-station-state=current]{border:3px solid hsl(var(--primary));box-shadow:0 12px 30px -24px hsl(var(--primary)/.8)}
