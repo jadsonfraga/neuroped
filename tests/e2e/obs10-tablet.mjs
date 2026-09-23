@@ -50,8 +50,8 @@ async function saveAndClose(name) {
 }
 async function runTask(i, opts = {}) {
   await phase("cue");
-  assert.equal(await w.getByTestId("obs10-station-journey").count(), 1, "adult cue keeps the station map visible");
-  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="current"]').count(), 1, "exactly one task station is current");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 1, "adult cue keeps the world map visible");
+  assert.equal(await w.getByTestId("obs10-mission-map").count(), 0, "live collection uses a compact HUD instead of pushing the task below a full map");
   assert.match(await w.getByTestId("obs10-station-checkpoint").textContent(), new RegExp(`ESTAÇÃO\\s*${i + 1}`, "iu"), "checkpoint announces current station");
   const title = await w.locator("h1").textContent();
   if (opts.capture && title.includes("cena")) await screen("02-cena-orientacao");
