@@ -36,7 +36,8 @@ async function screen(name) {
   const audit = await new AxeBuilder({ page }).include(".ot-dialog").analyze();
   await writeFile(`${dir}/${name}-axe.json`, JSON.stringify(audit.violations, null, 2));
   assert.deepEqual(audit.violations.map((v) => ({ id: v.id, targets: v.nodes.map((n) => n.target) })), [], name);
-  await w.screenshot({ path: `${dir}/${name}.png` }); screens.push(name);
+  // A fixed modal is viewport-sized: full-height element capture can include unrelated background beyond it.
+  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: false }); screens.push(name);
 }
 async function saveAndClose(name) {
   await b("Continuar para guardar os arquivos").click(); await phase("delivery");
@@ -58,8 +59,10 @@ async function runTask(i, opts = {}) {
   if (await w.getByTestId("tablet-drawing").count()) {
     const draw = w.getByLabel("Área para desenhar com o dedo", { exact: true }); await draw.scrollIntoViewIfNeeded();
     const box = await draw.boundingBox(); await page.mouse.move(box.x + 30, box.y + 30); await page.mouse.down();
-    await page.mouse.move(box.x + box.width * .55, box.y + box.height * .5, { steps: 8 }); await page.mouse.up();
-    if (opts.capture) await screen("03-desenho-na-tela");
+    await page.mouse.move(box.x + box.width * .55, box.y + box.height * .5, { steps: 8 });
+    await draw.dispatchEvent("pointerup", { pointerId: 987, pointerType: "touch", isPrimary: false });
+    await page.mouse.move(box.x + box.width * .8, box.y + box.height * .6, { steps: 4 }); await page.mouse.up();
+    if (opts.capture) await screen(`03-desenho-na-tela-${i}`);
   }
   if (await w.getByRole("button", { name: "Escolher círculo", exact: true }).count()) { await b("Escolher círculo").click(); await b("Escolher círculo").click(); }
   if (await w.getByTestId("tablet-reading").count()) {
@@ -76,18 +79,22 @@ try {
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email); await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
   await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor();
   await open(); await screen("01-preparacao-tablet");
+  await b("Letras maiores").focus(); await page.keyboard.press("Tab");
+  assert.equal(await page.evaluate(() => Boolean(document.activeElement?.closest(".ot-dialog"))), true, "keyboard stays in the active dialog");
+  for (const control of await w.getByRole("button").all()) if (await control.isVisible()) assert.ok((await control.boundingBox()).height >= 59, "tablet touch targets remain at least 60 CSS pixels, allowing subpixel rounding");
   await b("Letras maiores").click(); await page.setViewportSize({ width: 390, height: 844 }); await screen("01b-preparacao-letras-maiores"); await b("Letras maiores").click(); await page.setViewportSize({ width: 1280, height: 960 });
   await setup(3, 6);
   for (let i = 0; i < 8; i++) await runTask(i, { capture: true });
   await phase("review"); await screen("05-revisao");
   const record = await saveAndClose("registro-completo");
   assert.equal(record.protocol, "obs10-tablet/1.0.0"); assert.equal(record.observations.length, 8);
-  assert.ok(record.events.some((e) => e.type === "stroke")); assert.equal(record.events.filter((e) => e.type === "select").length, 2);
+  const strokes = record.events.filter((e) => e.type === "stroke");
+  assert.ok(strokes.length > 0); assert.ok(strokes.every((e) => e.value.at(-1).x > .75), "secondary pointer cannot prematurely terminate the active trace");
+  assert.equal(record.events.filter((e) => e.type === "select").length, 2);
   assert.ok(record.observations.every((o) => o.note.includes("fictícia")));
   await open(); await setup(7);
   for (let i = 0; i < 8; i++) await runTask(i);
   await phase("review"); await saveAndClose("registro-escolar");
-  // Reopen only the tablet envelope, clear review declaration, never restore collection/media.
   await open(); await w.getByText("Reabrir um registro tablet já salvo", { exact: true }).click();
   await w.getByLabel("JSON do modo tablet", { exact: true }).setInputFiles({ name: "invalido.json", mimeType: "application/json", buffer: Buffer.from('{"version":"1.6.1"}') });
   await w.getByText(/Não foi possível abrir:/).waitFor(); await phase("setup");
@@ -101,7 +108,6 @@ try {
   await b("Continuar para guardar os arquivos").click();
   assert.equal(await b("Concluir e voltar ao OBS-10").isDisabled(), true, "editing invalidates the saved artifact");
   await b("Voltar e revisar").click(); await saveAndClose("registro-reaberto");
-  // Infant interaction never displays screen stimuli, and an unfinished note survives early termination.
   await open(); await setup(0, 6);
   await b("Iniciar esta interação").click(); await phase("child"); assert.equal(await w.locator(".ot-child svg").count(), 0);
   await b("Terminar tentativa · registrar").click(); await phase("response");
@@ -114,5 +120,5 @@ try {
   await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, scope: "Real built route, synthetic account and clinical data only. Browser checks are not human usability or clinical validation." }, null, 2));
   console.log("OBS-10 Tablet real browser journey passed.");
 } catch (error) {
-  await page.screenshot({ path: `${dir}/failure.png`, fullPage: true }); await writeFile(`${dir}/failure.txt`, String(error.stack || error)); throw error;
+  await page.screenshot({ path: `${dir}/failure.png`, fullPage: false }); await writeFile(`${dir}/failure.txt`, String(error.stack || error)); throw error;
 } finally { await context.close(); await browser.close(); await server.close(); }
