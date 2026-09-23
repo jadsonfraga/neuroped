@@ -83,7 +83,7 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
     // The opening must be traceable: an observation whose "shown" event was dropped by saturation would
     // produce a file this module's own validator rejects. Saturate without opening instead.
     const logged = log(r, s.elapsed, task.id, "shown");
-    if (logged.events.length === r.events.length) return { ...s, record: logged, error: "Limite de interações atingido. Não é possível abrir outra atividade; encerre e preserve o registro." };
+    if (logged.events.length === r.events.length) return { ...s, record: logged, error: "Limite de interações atingido. Não é possível abrir outra estação; encerre e preserve o registro." };
     r = revise(logged, { observations: [...r.observations, { taskId: task.id, attempted: true, openedAt: s.elapsed, outcome: null, note: "", editedAfterEnd: false }] });
     return { ...s, record: r, phase: "child", error: "" };
   }
@@ -107,8 +107,9 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
     }
     return { ...s, record: r, cursor: s.cursor + 1, phase: "cue", error: "" };
   }
-  if (a.type === "amend" && ["response", "review", "delivery"].includes(s.phase)) {
-    if (a.note.length > 2000 || !r.observations.some((o) => o.taskId === a.taskId) || (s.phase === "response" && a.taskId !== task.id)) return s;
+  if (a.type === "amend" && ["response", "cue", "review", "delivery"].includes(s.phase)) {
+    const previousTaskId = s.phase === "cue" && s.cursor > 0 ? plan.tasks[s.cursor - 1]?.id : null;
+    if (a.note.length > 2000 || !r.observations.some((o) => o.taskId === a.taskId) || (s.phase === "response" && a.taskId !== task.id) || (s.phase === "cue" && a.taskId !== previousTaskId)) return s;
     return { ...s, record: revise(r, { observations: r.observations.map((o) => o.taskId === a.taskId ? { ...o, note: a.note, editedAfterEnd: o.editedAfterEnd || !isCollecting(s.phase) } : o) }), error: "" };
   }
   if (a.type === "reviewed" && ["review", "delivery"].includes(s.phase)) return { ...s, record: { ...r, reviewed: a.value, revision: r.revision + 1 } };
@@ -163,7 +164,7 @@ export function tabletText(r: TabletRecord): string {
   }
   const pending = pendingDescriptions(r);
   lines.push("", "COBERTURA QUE ESTE MODO NÃO EXAMINA", ...plan.limitations, "",
-    pending.length ? `PENDÊNCIA: ${pending.length} atividade(s) com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : "Todas as atividades registradas possuem descrição escrita pela aplicadora.",
+    pending.length ? `PENDÊNCIA: ${pending.length} ${pending.length === 1 ? "estação" : "estações"} com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : "Todas as estações registradas possuem descrição escrita pela aplicadora.",
     `Conferência humana: ${r.reviewed ? "declarada pela aplicadora" : "não declarada"}. Não é assinatura médica nem recibo de envio.`, `Eventos operacionais: ${r.events.length}; ${r.eventLimitReached ? "LIMITE ATINGIDO, registros de interação podem estar incompletos" : "sem truncamento sinalizado"}. Não são escores ou tempos de reação calibrados.`, "O JSON contém registro e traçados, não o vídeo. Arquivos exigem armazenamento institucional autorizado.");
   return lines.join("\n");
 }
