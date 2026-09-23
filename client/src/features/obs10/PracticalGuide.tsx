@@ -3,6 +3,7 @@ import { AGE_BANDS, type AgeBand, type Outcome } from "./protocol";
 import { KITS, MATERIALS, type MaterialId, type PracticalTask } from "./practical";
 import { MaterialPicture, TaskPicture } from "./PracticalVisuals";
 import { PreparationResources } from "./FrameResources";
+import { TabletLauncher } from "./tablet/TabletLauncher";
 export { GuidedTaskCard as PracticalTaskGuide } from "./GuidedTaskCard";
 
 export type KitState = Partial<Record<MaterialId, "ready" | "missing">>;
@@ -47,6 +48,7 @@ export function PracticalMaterials({ actualBand, previewId, onPreview, state, on
   const [printError, setPrintError] = useState("");
   const items = KITS[band.id];
   return <section className="obs10-panel obs10-materials-first obs10-no-print" data-testid="obs10-materials-first">
+    <TabletLauncher locked={locked} />
     <div className="obs10-section-title"><div><div className="obs10-eyebrow">ANTES DA CRIANÇA CHEGAR</div><h2>1. Idade e materiais: separe este kit</h2></div><span className="obs10-chip">Preparação fora do cronômetro</span></div>
     {children}
     {actualBand && <PreparationResources key={actualBand.id} bandId={actualBand.id} locked={locked} />}
