@@ -119,6 +119,7 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/diario-escola",
   "/inventarios-escola",
   "/testes-diretos",
+  "/testes-reconhecimento",
   "/epilepsia",
   "/cefaleia",
   "/diario-sono",
@@ -194,7 +195,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : (path === "/recepcao" || path === "/testes-diretos" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
+        : (path === "/recepcao" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -245,7 +246,7 @@ assert.equal(
 
 // Consolidação Sonda Dez: as origens de redirect herdam a política do destino
 // (operator aplica; reader nunca foi papel da rota canônica /testes-diretos).
-for (const legacyOrigin of ["/atencao-concentracao", "/testes-reconhecimento", "/cognitive-lab", "/cognitive-lab/tarefa-x"]) {
+for (const legacyOrigin of ["/atencao-concentracao", "/cognitive-lab", "/cognitive-lab/tarefa-x"]) {
   assert.equal(
     decideRouteAccess({
       path: legacyOrigin,
@@ -269,6 +270,29 @@ for (const legacyOrigin of ["/atencao-concentracao", "/testes-reconhecimento", "
     `reader não herda a Sonda Dez pela origem legada ${legacyOrigin}`,
   );
 }
+
+assert.equal(
+  decideRouteAccess({
+    path: "/testes-reconhecimento",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "operator deve poder abrir o reconhecimento visual dedicado",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/testes-reconhecimento",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "reader",
+  }),
+  "forbidden",
+  "reader não deve receber acesso à aplicação direta",
+);
 
 assert.equal(isReaderClinicalRoute("/classificacao/exemplo"), true);
 assert.equal(isReaderClinicalRoute("/classificacao/exemplo/extra"), false);

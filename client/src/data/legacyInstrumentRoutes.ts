@@ -34,7 +34,8 @@ export const LEGACY_INSTRUMENT_REDIRECTS: Record<string, string> = {
 };
 
 /**
- * Redirects das rotas legadas de teste direto para a Sonda Dez.
+ * Redirects das rotas legadas restantes de teste direto para a Sonda Dez.
+ * /testes-reconhecimento voltou a ter superfície própria e não pertence mais a este mapa.
  *
  * Por que existe: a consolidação "os testes diretos convergem para a Sonda
  * Dez" (commit f2d7f48) esvaziou 15 páginas em shims de duas linhas que
@@ -45,7 +46,6 @@ export const LEGACY_INSTRUMENT_REDIRECTS: Record<string, string> = {
  * routeGuardPolicy.ts). Sanidade travada por audit-instruments.mjs.
  */
 export const LEGACY_DIRECT_TEST_REDIRECTS: Record<string, string> = {
-  "/testes-reconhecimento": "/testes-diretos",
   "/testes-academicos": "/testes-diretos",
   "/cognitive-lab": "/testes-diretos",
   "/cognitive-lab/:taskId": "/testes-diretos",

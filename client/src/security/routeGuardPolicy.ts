@@ -30,6 +30,7 @@ export const SENSITIVE_ROUTES = [
   "/neuroacompanhamento",
   "/inventarios-escola",
   "/testes-diretos",
+  "/testes-reconhecimento",
   "/epilepsia",
   "/cefaleia",
   "/diario-sono",
@@ -145,6 +146,7 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
 }> = [
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
   { route: "/testes-diretos", roles: DIRECT_TEST_ROLES },
+  { route: "/testes-reconhecimento", roles: DIRECT_TEST_ROLES },
   { route: "/avaliacao-pre-consulta-faixa-etaria", roles: DIRECT_TEST_ROLES },
   // As origens de redirect legado da Sonda Dez herdam a política do destino:
   // sem isso o guard decidiria a origem pelos papéis default (sem operator)
