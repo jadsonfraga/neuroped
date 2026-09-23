@@ -36,6 +36,9 @@ export const TABLET_STYLE = `
 .ot-dialog .ot-root .ot-danger{border-color:hsl(var(--destructive));color:hsl(var(--foreground))}
 .ot-command{background:hsl(var(--secondary));border-left:5px solid hsl(var(--primary));padding:20px;border-radius:10px;font-weight:750}
 .ot-badge{font-weight:800;letter-spacing:.05em}
+.ot-pacing{font-size:.85em;padding:10px 14px;border-radius:10px;border:1px dashed hsl(var(--border))}
+.ot-dialog .ot-root .ot-steps{margin:.6em 0;padding-left:1.4em;display:grid;gap:.6em}
+.ot-dialog .ot-root .ot-steps li{padding-left:.2em}
 .ot-outcomes{border:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
 .ot-outcomes legend{padding-bottom:12px;font-weight:800}
 .ot-outcomes button[aria-pressed=true]{border:3px solid hsl(var(--primary));background:hsl(var(--secondary))}

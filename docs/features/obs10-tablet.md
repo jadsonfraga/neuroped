@@ -8,6 +8,19 @@ Modo experimental na preparação da rota OBS-10 existente. **Abrir modo tablet 
 
 **Não é conversão equivalente das 145 tarefas presenciais.** Habilidades dependentes de objetos e exame físico são explicitamente não examinadas. O modo presencial permanece disponível. A escolha de modalidade é explícita, e o JSON tablet não pode ser tratado como um registro clássico.
 
+### Cobertura recuperada sem instrumento (24/09/2026)
+
+Parte do que faltava não dependia de kit, apenas da câmera e da sala. A partir de cinco anos entraram duas propostas do roteiro presencial, com as palavras do próprio roteiro:
+
+- **Quatro movimentos observados pela câmera**, numa única atividade: caminhar até um ponto e voltar, braços à frente, dedo ao nariz e apoio em um pé. O tablet sai da mão e fica apoiado de pé, mostrando o corpo inteiro. Nenhum objeto entra; nada aparece na tela da criança.
+- **A regra SOL/LUA, apenas falada.** Nenhuma palavra ou imagem dela chega à superfície infantil, o que o teste verifica lendo o DOM da tela da criança.
+
+Cada movimento carrega o caminho de omissão do presencial: sem marcha estável, dor, recusa ou espaço seguro, omita e registre o motivo. Continua fora: chute e recepção de bola, provas provocadas de postura, medidas formais de equilíbrio ou marcha, manipulação de objetos reais, preensão do lápis, força contra resistência, tônus, reflexos e sensibilidade. Observação descritiva pela câmera não é exame neurológico nem prova de normalidade, e a lista de limitações do registro diz exatamente isso em cada faixa, inclusive declarando quando a proposta motora não existe.
+
+### Ritmo por atividade
+
+Cada tarefa passou a declarar uma duração sugerida, tirada do roteiro presencial, exibida na orientação e somada na tela de prontidão. É orientação de ritmo, nunca prazo, escore ou tempo de reação: o limite absoluto de 600 segundos continua sendo do controlador, não dessa soma. Um teste garante que o total sugerido de cada faixa cabe no limite com folga para recusa, pausa e anotação.
+
 A atualização concorrente #933, commit `f62aeee5db5dc83e7d58a81626f1363ab320f873`, foi integrada por merge de dois pais, sem reescrever histórico. Foram preservados seus estímulos em tela inteira, transições, testes e refinamentos de materiais físicos. A pendência de papel da #930 foi resolvida nessa PR independente; não há nova tentativa sobre o objeto/branch que havia sido bloqueado.
 
 ## Arquitetura
@@ -24,7 +37,9 @@ A atualização concorrente #933, commit `f62aeee5db5dc83e7d58a81626f1363ab320f8
 
 Preparar atendimento → conferir câmera → ensaiar sem criança → confirmar prontidão → ler orientação → abrir atividade/interação → registrar resposta → próxima atividade → revisar → guardar arquivos.
 
-Não há avanço automático durante a tentativa nem exigência de resposta correta para continuar. Recusa e omissão são registradas. Notas digitadas ficam no estado antes de confirmar a categoria, para sobreviver a encerramento precoce. Categoria isolada não cria narrativa clínica. No modo presencial, a troca de tarefa passou a posicionar foco no commit de layout, removendo a corrida de temporização; a transição entre blocos da #933 foi preservada.
+Não há avanço automático durante a tentativa nem exigência de resposta correta para continuar. Recusa e omissão são registradas. Notas digitadas ficam no estado antes de confirmar a categoria, para sobreviver a encerramento precoce. Categoria isolada não cria narrativa clínica.
+
+Desde 24/09/2026, a categoria avança sozinha e a descrição pode ser completada na revisão, como manda o roteiro presencial ("marque a categoria; detalhe depois"). Isso tira a digitação de prosa de dentro dos dez minutos, com a criança esperando. As garantias compensatórias são explícitas: a categoria continua obrigatória; a descrição nunca é preenchida por suposição; `pendingDescriptions` conta as pendências; a revisão abre esses itens já expandidos e mostra o total; e o resumo entregue ao médico declara quantas atividades estão sem descrição. A omissão segue diferente, porque sem o motivo nada registra por que a proposta não aconteceu: continua exigindo texto. No modo presencial, a troca de tarefa passou a posicionar foco no commit de layout, removendo a corrida de temporização; a transição entre blocos da #933 foi preservada.
 
 A coleta tem limite absoluto de 600 segundos e inclui transições e anotações, sem pausa. Trocar de aba ou bloquear a tela encerra, não suspende. Preparação e revisão ficam fora do cronômetro. Encerramento não autoriza novas tarefas. A leitura e as cenas precedem a apresentação das palavras de memória; entre apresentação e evocação não se oferecem novamente seus alvos. Isso evita uma pista de interface, mas não cria uma tarefa de memória validada ou um intervalo normativo.
 

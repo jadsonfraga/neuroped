@@ -80,7 +80,11 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
   }
   if (a.type === "show" && s.phase === "cue" && task) {
     if (r.observations.some((o) => o.taskId === task.id)) return s;
-    r = revise(log(r, s.elapsed, task.id, "shown"), { observations: [...r.observations, { taskId: task.id, attempted: true, openedAt: s.elapsed, outcome: null, note: "", editedAfterEnd: false }] });
+    // The opening must be traceable: an observation whose "shown" event was dropped by saturation would
+    // produce a file this module's own validator rejects. Saturate without opening instead.
+    const logged = log(r, s.elapsed, task.id, "shown");
+    if (logged.events.length === r.events.length) return { ...s, record: logged, error: "Limite de interações atingido. Não é possível abrir outra atividade; encerre e preserve o registro." };
+    r = revise(logged, { observations: [...r.observations, { taskId: task.id, attempted: true, openedAt: s.elapsed, outcome: null, note: "", editedAfterEnd: false }] });
     return { ...s, record: r, phase: "child", error: "" };
   }
   if (a.type === "response" && s.phase === "child") return { ...s, phase: "response", error: "" };
@@ -91,7 +95,9 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
   }
   if ((a.type === "save" && s.phase === "response") || (a.type === "skip" && s.phase === "cue")) {
     const note = (a.type === "save" ? a.note : a.reason).trim();
-    if (!note || note.length > 2000 || (a.type === "save" && !OUTCOME_IDS.includes(a.outcome))) return { ...s, error: "Descreva o que aconteceu ou por que não aplicou. Não complete por suposição." };
+    // As in the in-person script, the category is marked during collection and the description is completed
+    // in review. An omission is different: without its reason nothing records why the proposal did not happen.
+    if (note.length > 2000 || (a.type === "save" ? !OUTCOME_IDS.includes(a.outcome) : !note)) return { ...s, error: a.type === "save" ? "Escolha como aconteceu. A descrição pode ser completada na revisão." : "Descreva por que não aplicou. Não complete por suposição." };
     const prev = r.observations.find((o) => o.taskId === task.id);
     const observation: TabletObservation = a.type === "save" && prev ? { ...prev, outcome: a.outcome, note } : { taskId: task.id, attempted: false, openedAt: null, outcome: "NA", note, editedAfterEnd: false };
     r = revise(log(r, s.elapsed, task.id, a.type === "save" ? "response" : "skip", a.type === "save" ? a.outcome : "NA"), { observations: [...r.observations.filter((o) => o.taskId !== task.id), observation] });
@@ -142,6 +148,10 @@ export function drawingStrokes(events: TabletEvent[], taskId: string): Point[][]
   for (const e of events) if (e.taskId === taskId) { if (e.type === "clear") strokes = []; if (e.type === "stroke" && Array.isArray(e.value)) strokes.push(e.value); }
   return strokes;
 }
+/** Observations whose category exists but whose factual description is still missing. Never auto-filled. */
+export function pendingDescriptions(r: TabletRecord): string[] {
+  return r.observations.filter((o) => !o.note.trim()).map((o) => o.taskId);
+}
 export function tabletText(r: TabletRecord): string {
   const plan = tabletPlan(r.context.months)!;
   const lines = ["NEUROPED · OBS-10 TABLET · REGISTRO EXPLORATÓRIO", TABLET_LIMITS, `Versão: ${r.protocol} | Sessão: ${r.sessionId} | Revisão: ${r.revision}`, `Código: ${r.context.code} | Idade: ${r.context.months} meses | Ficha: ${plan.bandLabel}`, `Escolaridade: ${r.context.schooling || "Não informada"}`, `Comunicação: ${r.context.communication || "Não informada"}`, `Condições relatadas: ${r.context.conditions || "Não informadas"}`, `Duração: ${r.durationSeconds.toFixed(1)} s | Encerramento: ${r.endReason}`, `Captação solicitada: ${r.camera}. Integridade e enquadramento não são verificados automaticamente.`, r.importedForReview ? "Arquivo importado somente para revisão; origem e veracidade não autenticadas. Nenhum vídeo recuperado." : "Registro local; não houve envio automático ao prontuário.", "", "OBSERVAÇÕES DECLARADAS PELA APLICADORA"];
@@ -151,6 +161,9 @@ export function tabletText(r: TabletRecord): string {
     if (t.kind === "drawing") lines.push("Traçado por toque, sem equivalência à escrita manual. Dados brutos no JSON. Uma interrupção pode deixar o último traço parcial.");
     if (t.memory === "recall") lines.push("Evocação só pode ser interpretada pelo médico com o registro inicial e as interferências. Intervalos de tela não são medidas normativas.");
   }
-  lines.push("", "COBERTURA QUE ESTE MODO NÃO EXAMINA", ...plan.limitations, "", `Conferência humana: ${r.reviewed ? "declarada pela aplicadora" : "não declarada"}. Não é assinatura médica nem recibo de envio.`, `Eventos operacionais: ${r.events.length}; ${r.eventLimitReached ? "LIMITE ATINGIDO, registros de interação podem estar incompletos" : "sem truncamento sinalizado"}. Não são escores ou tempos de reação calibrados.`, "O JSON contém registro e traçados, não o vídeo. Arquivos exigem armazenamento institucional autorizado.");
+  const pending = pendingDescriptions(r);
+  lines.push("", "COBERTURA QUE ESTE MODO NÃO EXAMINA", ...plan.limitations, "",
+    pending.length ? `PENDÊNCIA: ${pending.length} atividade(s) com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : "Todas as atividades registradas possuem descrição escrita pela aplicadora.",
+    `Conferência humana: ${r.reviewed ? "declarada pela aplicadora" : "não declarada"}. Não é assinatura médica nem recibo de envio.`, `Eventos operacionais: ${r.events.length}; ${r.eventLimitReached ? "LIMITE ATINGIDO, registros de interação podem estar incompletos" : "sem truncamento sinalizado"}. Não são escores ou tempos de reação calibrados.`, "O JSON contém registro e traçados, não o vídeo. Arquivos exigem armazenamento institucional autorizado.");
   return lines.join("\n");
 }
