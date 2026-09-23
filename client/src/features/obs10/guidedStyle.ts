@@ -44,6 +44,13 @@ export const GUIDED_STYLE = `
 .obs10 .obs10-guided-task :focus-visible{outline:3px solid var(--o-primary);outline-offset:4px;scroll-margin-block:160px 32px}
 .obs10 .obs10-guided-task h3{scroll-margin-top:180px}
 .obs10 .obs10-guided-task .obs10-response-saved{padding:14px;background:var(--o-mint);border-radius:12px;font-size:1em}
+.obs10 .obs10-next-up{margin-top:16px;padding:14px 16px;border:1px dashed var(--o-line);border-radius:12px;background:var(--o-mint)}
+.obs10 .obs10-next-up strong{display:block}
+.obs10 .obs10-next-up p{margin:6px 0 0}
+.obs10 .obs10-stimulus-stage{position:fixed;inset:0;z-index:2147483000;background:var(--o-paper);display:grid;grid-template-rows:auto 1fr;padding:12px;overflow:auto}
+.obs10 .obs10-stimulus-stage>button{justify-self:end;min-height:56px;font-size:1rem;padding:8px 18px}
+.obs10 .obs10-stimulus-stage svg{width:min(94vw,1100px);height:auto;max-height:80vh;margin:auto;display:block}
+.obs10 .obs10-stimulus-text{font-size:clamp(2rem,7vw,4.5rem);line-height:1.6;text-align:center;margin:auto;max-width:92vw;overflow-wrap:anywhere;white-space:pre-wrap;color:var(--o-ink)}
 .obs10 .obs10-live-grid:has(.obs10-guided-task){grid-template-columns:minmax(0,1fr)}
 @media(max-width:540px){.obs10 .obs10-frame-section{padding:14px}.obs10 .obs10-frame-command{padding:14px}.obs10 .obs10-guided-task .obs10-quick-responses{grid-template-columns:1fr}.obs10 .obs10-frame-materials{grid-template-columns:1fr}.obs10 .obs10-frame-navigation>button{flex-basis:100%}.obs10 .obs10-integrated-preparation{padding:14px}}
 @media(prefers-reduced-motion:reduce){.obs10 .obs10-guided-task *{scroll-behavior:auto!important;transition:none!important}}

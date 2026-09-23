@@ -1,11 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { OUTCOMES, PHASES, type AgeBand, type Outcome } from "./protocol";
 import { MATERIALS, PRACTICAL_TASKS, taskOmission, type MaterialId, type PracticalTask } from "./practical";
 import { TaskPicture } from "./PracticalVisuals";
 import { TaskResources } from "./FrameResources";
-import { framePlan } from "./framePlan";
+import { framePlan, taskHandoff } from "./framePlan";
 import { GUIDED_STYLE } from "./guidedStyle";
 import type { Observation } from "./session";
+
+// Survives the remount caused by the phase key, so "Próximo bloco" keeps the reading position.
+let focusAfterBlockChange = false;
 
 const LABELS: Record<Outcome, string> = { E: "Na proposta inicial", V: "Após repetição", M: "Após gesto/modelo", A: "Com apoio habitual", ND: "Não demonstrado", R: "Recusou", NA: "Não aplicado" };
 export interface GuidedTaskCardProps {
@@ -37,10 +40,17 @@ function GuidedBlock({ band, phase, months, proneAllowed, kit, observations, run
   const plan = framePlan(item, band.id);
   const active = running || finished;
   const absolutePosition = PRACTICAL_TASKS[band.id].findIndex((task) => task.id === item.id) + 1;
+  const handoff = taskHandoff(band.id, item.id);
   function move(next: number) {
     setIndex(Math.max(0, Math.min(tasks.length - 1, next)));
     window.setTimeout(() => { heading.current?.focus(); heading.current?.scrollIntoView({ block: "start", behavior: "auto" }); }, 0);
   }
+  useEffect(() => {
+    if (!focusAfterBlockChange) return;
+    focusAfterBlockChange = false;
+    heading.current?.focus();
+    heading.current?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, []);
   return <div className={`obs10-practical-task obs10-guided-task${largeText ? " is-large" : ""}`} data-testid="obs10-practical-task" data-guided-task-id={item.id}>
     <style>{GUIDED_STYLE}</style>
     <div className="obs10-task-position"><strong>Tarefa {index + 1} de {tasks.length}</strong><span>Até {item.seconds}s nesta tarefa · sem obrigação de preencher</span></div>
@@ -49,7 +59,7 @@ function GuidedBlock({ band, phase, months, proneAllowed, kit, observations, run
     <p className="obs10-frame-audience">{plan.adultOnly}</p>
     <TaskPicture scene={item.scene} label={`Guia visual: ${item.title}`} />
     {finished && <p className="obs10-caution"><strong>A criança já terminou.</strong> Revise apenas o que aconteceu. Não faça novas tentativas.</p>}
-    <TaskResources task={item} bandId={band.id} kit={kit} />
+    <TaskResources task={item} bandId={band.id} kit={kit} screenAllowed={running} />
     {omission ? <div className="obs10-caution" role="note"><strong>Não aplicar esta tarefa.</strong><p>{omission}</p><button type="button" className="obs10-primary" disabled={!active} onClick={() => onRecord(item, "NA", omission)}>Registrar omissão</button></div> : <>
       <section className="obs10-frame-section" aria-label="Comando e execução">
         <div className="obs10-frame-section-title"><span aria-hidden="true">2</span>Diga ou faça exatamente isto</div>
@@ -73,7 +83,13 @@ function GuidedBlock({ band, phase, months, proneAllowed, kit, observations, run
     <p className="obs10-muted">{finished ? "Registro posterior: só anote o que já ocorreu; não aplique novas tarefas." : "Durante a coleta, marque a categoria. Complete a descrição literal depois, sem inventar detalhes."} Categoria marcada não cria achado clínico automaticamente.</p>
     {current && <p className="obs10-response-saved" role="status">✓ {current.outcome ? LABELS[current.outcome] : "Registro aberto"} · salvo apenas nesta tela.{!current.response && " Falta detalhar o fato observado após a coleta."}</p>}
     {!current && <p>Sem marcação nesta tarefa. Você pode seguir; o sistema não vai presumir realização nem habilidade ausente.</p>}
-    <div className="obs10-frame-navigation"><button type="button" disabled={index === 0} onClick={() => move(index - 1)}>Tarefa anterior</button>{index + 1 < tasks.length ? <button type="button" className="obs10-primary" onClick={() => move(index + 1)}>Próxima tarefa</button> : <button type="button" className="obs10-primary" disabled={phase === PHASES.length - 1} onClick={onNextPhase}>Próximo bloco</button>}</div>
+    {handoff && !finished && <div className="obs10-next-up" data-testid="obs10-next-up">
+      <strong>A seguir{handoff.sameBlock ? "" : ", no próximo bloco"}: {handoff.nextTitle}</strong>
+      {handoff.pick.length || handoff.stow.length
+        ? <p>{handoff.pick.length > 0 && <>Pegue: {handoff.pick.join(", ")}. </>}{handoff.stow.length > 0 && <>Guarde: {handoff.stow.join(", ")}.</>}</p>
+        : <p>Os materiais continuam os mesmos.</p>}
+    </div>}
+    <div className="obs10-frame-navigation"><button type="button" disabled={index === 0} onClick={() => move(index - 1)}>Tarefa anterior</button>{index + 1 < tasks.length ? <button type="button" className="obs10-primary" onClick={() => move(index + 1)}>Próxima tarefa</button> : <button type="button" className="obs10-primary" disabled={phase === PHASES.length - 1} onClick={() => { focusAfterBlockChange = true; onNextPhase(); }}>Próximo bloco</button>}</div>
     {index + 1 === tasks.length && phase === PHASES.length - 1 && <p className="obs10-caution">Último cartão desta ficha. Use “Encerrar antes” no alto da tela para terminar; não repita tarefas para completar dez minutos.</p>}
     <details><summary>Ver todas as tarefas deste bloco</summary><p>Atalho opcional. Para seguir em ordem, use o botão “Próxima tarefa”.</p><div className="obs10-task-links">{tasks.map((task, n) => <button type="button" key={task.id} aria-pressed={index === n} onClick={() => move(n)}>{n + 1}. {task.title}</button>)}</div></details>
   </div>;
