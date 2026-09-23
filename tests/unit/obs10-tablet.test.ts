@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { AGE_BANDS } from "../../client/src/features/obs10/protocol";
 import { tabletPlan, plannedSeconds, TABLET_VERSION, TABLET_LIMITS } from "../../client/src/features/obs10/tablet/protocol";
-import { tabletReducer as reduce, initialTabletState, parseTabletRecord, drawingStrokes, tabletText, pendingDescriptions, type TabletState, type TabletRecord } from "../../client/src/features/obs10/tablet/engine";
+import { tabletReducer as reduce, initialTabletState, isCollecting, parseTabletRecord, drawingStrokes, tabletText, pendingDescriptions, type TabletState, type TabletRecord } from "../../client/src/features/obs10/tablet/engine";
 
 function ready(): TabletState { let s = initialTabletState(); for (let i = 0; i < 3; i++) s = reduce(s, { type: "next-setup" }); return s; }
 function started(months = 42): TabletState { return reduce(ready(), { type: "start", context: { code: "FICTICIO", months, schooling: "", communication: "", conditions: "" }, camera: "external", sessionId: "sessao-sintetica" }); }
@@ -115,8 +115,16 @@ assert.equal(skipped.record!.observations[0].attempted, false); assert.equal(ski
 // A record whose descriptions are pending must say so in the summary handed to the doctor.
 const partial = reduce(reduce(reduce(started(), { type: "show" }), { type: "response" }), { type: "save", outcome: "V", note: "" });
 assert.equal(pendingDescriptions(partial.record!).length, 1);
-assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 atividade/);
-assert.match(tabletText(all.record!), /Todas as atividades registradas possuem descrição/);
+assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 estação/);
+assert.match(tabletText(all.record!), /Todas as estações registradas possuem descrição/);
+assert.equal(isCollecting("cue"), true, "the between-stations screen stays inside the 600 s collection clock");
+let transitionEdit = reduce(reduce(reduce(started(), { type: "show" }), { type: "response" }), { type: "save", outcome: "E", note: "Descrição persistida da estação." });
+const closedTaskId = transitionEdit.record!.observations[0].taskId;
+transitionEdit = reduce(transitionEdit, { type: "amend", taskId: closedTaskId, note: "Descrição persistida da estação. Complemento factual." });
+assert.equal(transitionEdit.record!.observations[0].note, "Descrição persistida da estação. Complemento factual.", "between-stations edit updates the saved observation instead of a cleared draft");
+assert.equal(transitionEdit.record!.observations[0].editedAfterEnd, false, "between-stations completion still happens during collection");
+const currentTaskId = tabletPlan(42)!.tasks[transitionEdit.cursor].id;
+assert.equal(reduce(transitionEdit, { type: "amend", taskId: currentTaskId, note: "não permitido" }), transitionEdit, "cue can amend only the station that just closed");
 // Saturating the event log must never mint an observation whose opening cannot be traced: the module
 // would otherwise export a record its own validator rejects.
 const drawingAt = tabletPlan(60)!.tasks.findIndex((t) => t.kind === "drawing");
@@ -163,5 +171,7 @@ assert.ok(stations.includes("MAPA DA JORNADA") && stations.includes("CHECKPOINT 
 assert.ok(!/\b(?:score|stars?|lives?|leaderboard|xp)\b/iu.test(stations), "stations cannot introduce performance-game mechanics");
 assert.ok(!/<button|onClick=|dispatch\(/.test(stations), "station map remains presentation-only");
 assert.ok(workspace.includes("<StationJourney") && workspace.includes("<MissionBanner"), "actual tablet route uses stations and checkpoints");
+assert.ok(workspace.includes('data-testid="tablet-transition"') && workspace.includes("value={transitionObservation.note}"), "transition must read the persisted observation, never the cleared local draft");
+assert.ok(stations.includes("Percurso desta sessão"), "review map must describe only the route actually present in this session");
 assert.ok(stationStyle.includes("prefers-reduced-motion") && stationStyle.includes("ot-station-enter"), "station transitions must respect reduced motion");
 console.log("OBS-10 Tablet: 13 age bands, state transitions, timer, no-equivalence, raw events, bounded imports and no hidden upload passed.");
