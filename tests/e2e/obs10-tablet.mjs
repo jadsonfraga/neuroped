@@ -64,7 +64,7 @@ async function runTask(i, opts = {}) {
     if (opts.capture) await screen("06-movimento-pela-camera");
   }
   if (title.includes("regra simples")) assert.ok(await w.locator(".ot-steps li").count() >= 3);
-  const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir atividade para a criança)$/ });
+  const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir estação para a criança)$/ });
   await openActivity.click(); await phase("child");
   assert.equal(await w.getByTestId("tablet-cue").count(), 0, "adult instructions are unmounted from child screen");
   assert.equal(await w.getByTestId("obs10-station-journey").count(), 0, "child surface has no station map");
@@ -89,8 +89,17 @@ async function runTask(i, opts = {}) {
   }
   await b("Terminar tentativa · registrar").click(); await phase("response");
   await b("Na proposta inicial").click();
-  await w.getByLabel("O que você viu ou ouviu? Inclua ajuda e limitações.", { exact: true }).fill(`Tentativa fictícia ${i + 1}: registro específico da ação observada.`);
+  const noteText = `Tentativa fictícia ${i + 1}: registro específico da ação observada.`;
+  await w.getByLabel("O que você viu ou ouviu? Inclua ajuda e limitações.", { exact: true }).fill(noteText);
   await b("Salvar resposta e continuar").click();
+  if (!opts.last) {
+    const transition = w.getByTestId("tablet-transition"); await transition.waitFor();
+    const savedNote = transition.getByLabel("Completar descrição factual da estação encerrada", { exact: true });
+    assert.equal(await savedNote.inputValue(), noteText, "transition reads the description already persisted for the closed station");
+    assert.match(await w.locator(".ot-live-bar").textContent(), /Entre estações · próxima:/, "live bar identifies the pause and the next station");
+    if (i === 0) await savedNote.fill(`${noteText} Complemento factual na transição.`);
+    await b("Continuar para a próxima estação").click();
+  }
 }
 try {
   await page.goto(`${server.origin}/#/avaliacao-pre-consulta-faixa-etaria`);
@@ -104,20 +113,22 @@ try {
   for (const control of await w.getByRole("button").all()) if (await control.isVisible()) assert.ok((await control.boundingBox()).height >= 59, "tablet touch targets remain at least 60 CSS pixels, allowing subpixel rounding");
   await b("Letras maiores").click(); await page.setViewportSize({ width: 390, height: 844 }); await screen("01b-preparacao-letras-maiores"); await b("Letras maiores").click(); await page.setViewportSize({ width: 1280, height: 960 });
   await setup(3, 6);
-  for (let i = 0; i < 8; i++) await runTask(i, { capture: true });
+  for (let i = 0; i < 8; i++) await runTask(i, { capture: true, last: i === 7 });
   await phase("review"); await screen("05-revisao");
   assert.equal(await w.getByTestId("obs10-mission-map").locator("li").count(), 8);
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="done"]').count(), 8, "review map reports eight factual records, not pass/fail");
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="current"]').count(), 0);
+  assert.match(await w.getByTestId("obs10-mission-map").textContent(), /Percurso desta sessão/, "review never claims the whole route was completed");
   const record = await saveAndClose("registro-completo");
   assert.equal(record.protocol, "obs10-tablet/1.0.0"); assert.equal(record.observations.length, 8);
   const strokes = record.events.filter((e) => e.type === "stroke");
   assert.ok(strokes.length > 0); assert.ok(strokes.every((e) => e.value.at(-1).x > .75), "secondary pointer cannot prematurely terminate the active trace");
   assert.equal(record.events.filter((e) => e.type === "select").length, 2);
   assert.ok(record.observations.every((o) => o.note.includes("fictícia")));
+  assert.match(record.observations[0].note, /Complemento factual na transição/, "typing during the transition preserves and extends the saved description");
   await open(); await setup(7);
-  assert.match(await w.locator(".ot-live-bar").textContent(), /Atividade 1 de 10/, "school-age band gains the camera-observed movement and the oral rule");
-  for (let i = 0; i < 10; i++) await runTask(i, { capture: i === 6 });
+  assert.match(await w.locator(".ot-live-bar").textContent(), /Estação 1 de 10/, "school-age band gains the camera-observed movement and the oral rule");
+  for (let i = 0; i < 10; i++) await runTask(i, { capture: i === 6, last: i === 9 });
   await phase("review"); const escolar = await saveAndClose("registro-escolar");
   assert.equal(escolar.observations.length, 10);
   const ids = escolar.observations.map((o) => o.taskId);
@@ -151,7 +162,7 @@ try {
   await b("Após repetição").click();
   await b("Marcar categoria e continuar · detalhar depois").click(); await phase("cue");
   await b("Encerrar coleta").click(); await phase("review");
-  assert.match(await w.getByTestId("tablet-pending").textContent(), /1 atividade\(s\) com categoria marcada e descrição pendente/);
+  assert.match(await w.getByTestId("tablet-pending").textContent(), /1 estação com categoria marcada e descrição pendente/);
   assert.match(await w.locator(".ot-review-item summary").first().textContent(), /descrição pendente/);
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="partial"]').count(), 1, "station review surfaces a pending description without calling it failure");
   await screen("07-descricao-pendente");
