@@ -6,6 +6,7 @@ import { useLocalRecorder } from "../useLocalRecorder";
 import { initialTabletState, isCollecting, tabletReducer, parseTabletRecord, tabletText, drawingStrokes, type TabletAction, type TabletContext, type TabletOutcome } from "./engine";
 import { tabletPlan, TABLET_LIMITS, TABLET_VERSION } from "./protocol";
 import { HearTabletHelp, TabletStimulus } from "./Stimulus";
+import { DrawingPreview } from "./DrawingPreview";
 import { TABLET_STYLE } from "./style";
 
 const SAFETY = ["Autorização institucional para filmar e tratar os dados registrada; participação aceita.", "Aplicador treinado, médico disponível e uso experimental do modo tablet autorizado pela equipe.", "Criança confortável, sem mudança aguda; apoios habituais preservados e ambiente seguro."];
@@ -66,7 +67,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     heading.current?.focus();
     document.querySelector(".ot-dialog")?.scrollTo({ top: 0, behavior: "auto" });
-  }, [state.phase, state.cursor]);
+  }, [state.phase, state.cursor, urgent]);
   useEffect(() => {
     if (!collect) return;
     const tick = () => { const elapsed = second(); if (elapsed >= 600) end("Limite absoluto de dez minutos atingido"); else dispatch({ type: "tick", second: elapsed }); };
@@ -112,18 +113,15 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       media.reset(); dispatch({ type: "import", record }); setMessage("Reaberto apenas para revisão. Selecione o vídeo separadamente; a origem do JSON não é autenticada.");
     } catch { setMessage("Não foi possível abrir: use um JSON do modo tablet, até 4 MB. O registro atual foi preservado."); }
   }
+  if (urgent) return <div className="obs10 ot-root" data-testid="obs10-tablet" data-phase="urgent"><style>{TABLET_STYLE}</style><section role="alert" className="ot-emergency"><h1 ref={heading} tabIndex={-1}>Interrompa e chame a equipe presencial.</h1><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, dor intensa ou risco imediato: não espere vídeo ou IA. Em emergência, SAMU 192.</p><p>Na crise: proteja contra lesões, não contenha à força e não coloque nada na boca. Conteúdo sensível exige atendimento reservado.</p><button type="button" onClick={() => setUrgent(false)}>Entendi · manter coleta encerrada</button></section></div>;
   const label = state.phase === "setup" ? "1. Prepare este atendimento" : state.phase === "camera" ? "2. Confira a câmera" : state.phase === "rehearsal" ? "3. Experimente sem criança" : state.phase === "ready" ? "4. Tudo pronto para começar?" : state.phase === "cue" ? `Prepare: ${task?.title}` : state.phase === "child" ? "Atividade em andamento" : state.phase === "response" ? "Registre o que aconteceu" : state.phase === "review" ? "Confira antes de entregar" : "Guarde os arquivos desta sessão";
   return <div className={`obs10 ot-root ${large ? "ot-large" : ""}`} data-testid="obs10-tablet" data-phase={state.phase}>
     <style>{TABLET_STYLE}</style>
-    <header className="ot-header">
-      <div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>
-      {state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}
-    </header>
+    <header className="ot-header"><div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>{state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}</header>
     {state.phase !== "child" && <><p className="ot-mode">Modo sem kit físico · experimental · não equivalente ao presencial</p><nav aria-label="Etapas da aplicação" className="ot-progress">{["Preparar", "Aplicar", "Revisar", "Guardar"].map((title, i) => { const index = collect ? 1 : state.phase === "review" ? 2 : state.phase === "delivery" ? 3 : 0; return <span key={title} aria-current={i === index ? "step" : undefined}>{i + 1}. {title}</span>; })}</nav></>}
-    {collect && <div className="ot-live-bar"><span aria-label="Tempo da coleta">{clock(state.elapsed)} / 10:00</span><span>Atividade {state.cursor + 1} de {plan?.tasks.length}</span><button type="button" onClick={() => end("Aplicador encerrou antes do limite")}>Encerrar coleta</button><button type="button" className="ot-danger" onClick={() => { end("Interrupção por segurança"); setUrgent(true); }}>Chamar médico</button></div>}
+    {collect && <div className="ot-live-bar"><span aria-label="Tempo da coleta">{clock(state.elapsed)} / 10:00</span><span>Atividade {state.cursor + 1} de {plan?.tasks.length}</span><span>{media.status === "recording" ? "Câmera gravando" : "Filmagem externa declarada"}</span><button type="button" onClick={() => end("Aplicador encerrou antes do limite")}>Encerrar coleta</button><button type="button" className="ot-danger" onClick={() => { end("Interrupção por segurança"); setUrgent(true); }}>Chamar médico</button></div>}
     {state.phase === "setup" && <section className="ot-card">
-      <p>Sem papel, lápis, impressora ou brinquedos. Usaremos interação, recursos locais e câmera. Objetos e habilidades físicas ausentes não serão simulados como equivalentes.</p>
-      <HearTabletHelp />
+      <p>Sem papel, lápis, impressora ou brinquedos. Usaremos interação, recursos locais e câmera. Objetos e habilidades físicas ausentes não serão simulados como equivalentes.</p><HearTabletHelp />
       <label>Código institucional, sem nome<input value={context.code} maxLength={32} placeholder="Ex.: OBS-001" onChange={(e) => setContext({ ...context, code: e.target.value })} /></label>
       <div className="ot-fields"><label>Anos completos<input type="number" inputMode="numeric" min="0" max="17" value={years} onChange={(e) => setYears(e.target.value)} /></label><label>Meses adicionais<input type="number" inputMode="numeric" min="0" max="11" value={months} onChange={(e) => setMonths(e.target.value)} /></label></div>
       {plan ? <p className="ot-info">Ficha digital: {plan.bandLabel}. {age < 24 ? "O tablet fica com o adulto: não haverá estímulos de tela para o bebê." : "A criança pode apontar ou falar sem tocar; registre adaptações."}</p> : <p>Preencha a idade cronológica, sem arredondar. Para bebês, use zero em anos.</p>}
@@ -141,6 +139,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <label className="ot-check"><input type="radio" name="tablet-camera" checked={camera === "integrated"} disabled={media.pending} onChange={() => { media.reset(); setCamera("integrated"); setFraming(false); }} />Câmera frontal deste tablet</label>
       <label className="ot-check"><input type="radio" name="tablet-camera" checked={camera === "external"} disabled={media.pending} onChange={() => { media.reset(); setCamera("external"); setFraming(false); }} />Outra câmera institucional</label>
       {camera === "integrated" ? <><button type="button" disabled={media.pending} onClick={() => { void media.prepare(); }}>Testar câmera do tablet</button>{media.stream && <Preview stream={media.stream} />}{media.pending && <button type="button" onClick={() => { ticket.current++; media.cancel(); }}>Cancelar pedido de câmera</button>}</> : <label className="ot-check"><input type="checkbox" checked={externalReady} onChange={(e) => setExternalReady(e.target.checked)} />A outra câmera está pronta e será iniciada antes da coleta.</label>}
+      <p>A seleção frontal é solicitada ao navegador; confira a câmera realmente escolhida. Nenhuma prévia comprova que rosto e mãos ficarão visíveis durante toda a atividade.</p>
       <label className="ot-check"><input type="checkbox" checked={framing} onChange={(e) => setFraming(e.target.checked)} />Conferi enquadramento e captação de voz no equipamento. Tenho espaço para salvar.</label>
       <div className="ot-actions"><button type="button" disabled={media.pending} onClick={() => { media.cancel(); dispatch({ type: "back-setup" }); }}>Voltar</button><button type="button" className="ot-primary" disabled={!framing || media.pending || (camera === "external" ? !externalReady : !media.stream)} onClick={() => { media.cancel(); dispatch({ type: "next-setup" }); }}>Continuar para o ensaio</button></div>
     </section>}
@@ -152,8 +151,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     </section>}
     {state.phase === "ready" && <section className="ot-card">
       <p><strong>{plan?.bandLabel} · {plan?.tasks.length} atividades digitais ou de interação.</strong></p><p>Diga ao responsável: “Não é prova nem nota. Fique perto sem dar dicas. Podemos parar a qualquer momento.”</p>
-      <p>Preparação encerrada. A partir do próximo botão, transições e anotações contam no limite de dez minutos, sem pausa. Não sair do aplicativo nem bloquear a tela.</p>
-      <p>{camera === "integrated" ? "A câmera frontal será iniciada após sua autorização." : "Inicie agora a câmera externa e mantenha este tablet no roteiro."}</p>
+      <p>Preparação encerrada. A partir do próximo botão, transições e anotações contam no limite de dez minutos, sem pausa. Não sair do aplicativo nem bloquear a tela.</p><p>{camera === "integrated" ? "A câmera frontal será iniciada após sua autorização." : "Inicie agora a câmera externa e mantenha este tablet no roteiro."}</p>
       <div className="ot-actions"><button type="button" disabled={starting} onClick={() => dispatch({ type: "back-setup" })}>Voltar ao ensaio</button><button type="button" className="ot-primary" disabled={starting || media.pending} onClick={() => { void start(); }}>Iniciar observação de até 10 minutos</button></div>
       {(starting || media.pending) && <button type="button" onClick={() => { ticket.current++; setStarting(false); media.cancel(); }}>Cancelar início</button>}
     </section>}
@@ -163,21 +161,17 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <div className="ot-actions"><button type="button" className="ot-primary" onClick={() => apply({ type: "show" })}>{task.kind === "quiet" ? "Iniciar esta interação" : "Abrir atividade para a criança"}</button></div>
       <details><summary>Não posso aplicar esta atividade</summary><label>Motivo da não aplicação<textarea value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} /></label><button type="button" onClick={() => { apply({ type: "skip", reason: note }); if (note.trim()) { setNote(""); setOutcome(""); } }}>Registrar motivo e seguir</button></details>
     </section>}
-    {state.phase === "child" && task && <section className="ot-child" data-testid="tablet-child">
-      <TabletStimulus key={task.id} task={task} strokes={drawingStrokes(state.record?.events ?? [], task.id)} onInput={(event, value) => apply({ type: "input", event, value })} />
-      <button type="button" className="ot-primary" onClick={() => apply({ type: "response" })}>Terminar tentativa · registrar</button>
-    </section>}
+    {state.phase === "child" && task && <section className="ot-child" data-testid="tablet-child"><TabletStimulus key={task.id} task={task} strokes={drawingStrokes(state.record?.events ?? [], task.id)} onInput={(event, value) => apply({ type: "input", event, value })} /><button type="button" className="ot-primary" onClick={() => apply({ type: "response" })}>Terminar tentativa · registrar</button></section>}
     {state.phase === "response" && task && <section className="ot-card" data-testid="tablet-response">
       <h2>{task.title}</h2><p>A tentativa terminou. Não repita para melhorar a resposta.</p>
       <fieldset className="ot-outcomes"><legend>Como aconteceu?</legend>{OUTCOMES.map((o) => <button key={o.id} type="button" aria-pressed={outcome === o.id} onClick={() => setOutcome(o.id)}>{o.label}</button>)}</fieldset>
       {outcome && <p className="ot-info">{OUTCOMES.find((o) => o.id === outcome)?.description}</p>}
-      <label>O que você viu ou ouviu? Inclua ajuda e limitações.<textarea value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
-      <button type="button" className="ot-primary" disabled={!outcome || !note.trim()} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>Salvar resposta e continuar</button>
-      <button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
+      <label>O que você viu ou ouviu? Inclua ajuda e limitações.<textarea value={note} maxLength={2000} onChange={(e) => { setNote(e.target.value); apply({ type: "amend", taskId: task.id, note: e.target.value }); }} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
+      <button type="button" className="ot-primary" disabled={!outcome || !note.trim()} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>Salvar resposta e continuar</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
     </section>}
     {state.phase === "review" && state.record && <section className="ot-card">
       <p className="ot-info">Coleta encerrada: {state.record.endReason}. Não aplicar novas tarefas. Complete só o que já ocorreu.</p>
-      {plan?.tasks.map((t) => { const o = state.record!.observations.find((v) => v.taskId === t.id); return <details key={t.id} className="ot-review-item"><summary>{t.title} · {o ? o.outcome ? OUTCOMES.find((v) => v.id === o.outcome)?.label : "registro parcial" : "não observada"}</summary>{o ? <><p>{t.command}</p><label>Complemento factual de {t.title}<textarea value={o.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: t.id, note: e.target.value })} /></label>{t.kind === "drawing" && <TabletStimulus task={{ ...t, kind: "quiet" }} strokes={[]} onInput={() => undefined} />}</> : <p>Não houve registro desta atividade. Não concluir que a criança não sabe fazer.</p>}</details>; })}
+      {plan?.tasks.map((t) => { const o = state.record!.observations.find((v) => v.taskId === t.id); return <details key={t.id} className="ot-review-item"><summary>{t.title} · {o ? o.outcome ? OUTCOMES.find((v) => v.id === o.outcome)?.label : "registro parcial" : "não observada"}</summary>{o ? <><p>{t.command}</p><label>Complemento factual de {t.title}<textarea value={o.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: t.id, note: e.target.value })} /></label>{t.kind === "drawing" && <DrawingPreview strokes={drawingStrokes(state.record!.events, t.id)} />}</> : <p>Não houve registro desta atividade. Não concluir que a criança não sabe fazer.</p>}</details>; })}
       <details><summary>Limites e habilidades não examinadas</summary>{plan?.limitations.map((text) => <p key={text}>{text}</p>)}</details>
       <label className="ot-check"><input type="checkbox" checked={state.record.reviewed} onChange={(e) => dispatch({ type: "reviewed", value: e.target.checked })} />Conferi descrições, ajudas e tarefas não observadas. Esta é uma declaração minha, não uma assinatura médica.</label>
       <button type="button" className="ot-primary" onClick={() => dispatch({ type: "delivery" })}>Continuar para guardar os arquivos</button><p>É permitido exportar um registro parcial, com as pendências explícitas.</p>
@@ -186,15 +180,13 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <h2>1. Salve o registro atual</h2><p>O JSON contém descrições, eventos e traçados. Não contém vídeo. Não há upload ou salvamento automático no prontuário.</p>
       <button type="button" className="ot-primary" onClick={() => { download(`OBS10-TABLET-${state.record!.sessionId}.json`, payload, "application/json"); setSavedJson(payload); setConfirmedSnapshot(""); }}>Salvar registro JSON</button><p role="status">{jsonCurrent ? "Download do registro atual solicitado. Confira o arquivo no tablet." : "Registro atual ainda não exportado."}</p>
       <button type="button" onClick={() => { download(`OBS10-TABLET-${state.record!.sessionId}.txt`, summary, "text/plain;charset=utf-8"); setSavedText(summary); }}>Salvar resumo para o médico</button><p>{textCurrent ? "Resumo atual exportado." : "Resumo textual opcional."}</p>
-      <h2>2. Confira e salve o vídeo</h2>
-      {media.status === "finalizing" && <p role="status">Finalizando o vídeo. Não saia desta tela.</p>}
+      <h2>2. Confira e salve o vídeo</h2>{media.status === "finalizing" && <p role="status">Finalizando o vídeo. Não saia desta tela.</p>}
       {media.url ? <><video className="ot-video" controls playsInline src={media.url} aria-label="Conferir vídeo gravado" /><a className="ot-file" href={media.url} download={`OBS10-TABLET-${state.record.sessionId}.${media.mime.includes("mp4") ? "mp4" : "webm"}`} onClick={() => setVideoRequested(true)}>Salvar vídeo no tablet</a><label className="ot-check"><input type="checkbox" checked={videoConfirmed} disabled={!videoRequested} onChange={(e) => setVideoConfirmed(e.target.checked)} />O vídeo apareceu no destino institucional; conferi som e imagem.</label></> : <><p>Vídeo externo, importado ou indisponível: marque somente o que ocorreu.</p><label className="ot-check"><input type="radio" name="video-result" checked={externalVideo === "saved"} onChange={() => setExternalVideo("saved")} />Vídeo salvo e conferido no fluxo institucional.</label><label className="ot-check"><input type="radio" name="video-result" checked={externalVideo === "unavailable"} onChange={() => setExternalVideo("unavailable")} />Não há vídeo utilizável; informarei essa limitação ao médico.</label><label>Abrir vídeo local somente para conferir<input type="file" accept="video/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; if (f.size > 128 * 1024 * 1024) { setMessage("Vídeo maior que 128 MB. Confira no fluxo institucional."); return; } if (localVideoRef.current) URL.revokeObjectURL(localVideoRef.current); localVideoRef.current = URL.createObjectURL(f); setLocalVideo(localVideoRef.current); }} /></label>{localVideo && <video className="ot-video" src={localVideo} controls playsInline aria-label="Conferir vídeo selecionado localmente" />}</>}
       <h2>3. Confirme antes de sair</h2><label className="ot-check"><input type="checkbox" checked={confirmedSnapshot === payload && jsonCurrent && videoDone} disabled={!jsonCurrent || !videoDone || media.status === "finalizing"} onChange={(e) => setConfirmedSnapshot(e.target.checked ? payload : "")} />Conferi os arquivos atuais no armazenamento institucional. Entrega ao médico segue o fluxo da clínica.</label>
       <div className="ot-actions"><button type="button" onClick={() => dispatch({ type: "back-review" })}>Voltar e revisar</button><button type="button" className="ot-primary" disabled={confirmedSnapshot !== payload || !jsonCurrent || !videoDone || media.status === "finalizing"} onClick={exit}>Concluir e voltar ao OBS-10</button></div>
       <details><summary>Ver resumo completo</summary><pre>{summary}</pre></details>
     </section>}
     {media.error && <p role="alert" className="ot-error">{media.error}</p>}{state.error && <p role="alert" className="ot-error">{state.error}</p>}{message && <p role="status" className="ot-info">{message}</p>}
-    {urgent && <section role="alert" className="ot-emergency"><h2>Interrompa e chame a equipe presencial.</h2><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, dor intensa ou risco imediato: não espere vídeo ou IA. Em emergência, SAMU 192.</p><p>Na crise: proteja contra lesões, não contenha à força e não coloque nada na boca. Conteúdo sensível exige atendimento reservado.</p><button type="button" onClick={() => setUrgent(false)}>Entendi · manter coleta encerrada</button></section>}
     {state.phase !== "child" && <footer className="ot-footer">{TABLET_VERSION} · Recursos digitais autorais · Revisão médica indispensável · Dados temporários nesta tela até exportar.</footer>}
   </div>;
 }
