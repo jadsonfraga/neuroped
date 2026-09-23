@@ -33,6 +33,18 @@ A atualização concorrente #933, commit `f62aeee5db5dc83e7d58a81626f1363ab320f8
 - `tablet/TabletLauncher.tsx`: entrada pela rota autorizada, carregamento tardio e diálogo nativo. Fundo inerte, sem alteração de autorização, clínica, papéis ou banco.
 - `tablet/style.ts`: fonte ampliável, controles de 60 px ou mais, foco visível, adaptação de largura e respeito a movimento reduzido. Estilos locais, com os tokens existentes.
 
+### Estações em estilo videogame, sem gamificar desempenho
+
+A interface apresenta a jornada como um mapa de estações para reduzir carga de memória do aplicador e tornar a sequência visualmente previsível. Os sete marcos são **Base (preparo) → Radar (câmera) → Tutorial (ensaio) → Pronto (iniciar) → Missões (atividades) → Revisão → Saída (arquivos)**.
+
+Antes da coleta, o mapa mostra todas as atividades previstas para aquela faixa. Durante cada proposta, a interface troca para um HUD compacto com **Estação atual + próxima estação**, evitando empurrar o comando e a tarefa para fora da primeira tela. Na revisão, o mapa completo volta e mostra estados puramente factuais.
+
+A superfície infantil desmonta mapa, checkpoint, instruções e qualquer indicador do aplicador. A criança recebe somente o estímulo ou a interação daquela proposta.
+
+"Registrada" significa apenas que existe um registro daquela estação; não significa desempenho adequado. Na revisão, os estados possíveis são **registrada**, **não aplicada com motivo**, **descrição pendente**, **registro parcial** ou **não observada**. Não existem pontos, estrelas, vidas, XP, ranking, prêmio, acerto/erro, nível clínico ou recompensa dependente da resposta.
+
+A camada de estações não despacha ações, não altera reducer, catálogo, ritmo sugerido, regra SOL/LUA, propostas observadas pela câmera, limite de 600 segundos ou JSON. É apresentação derivada do estado existente. As transições visuais são curtas e são desativadas com `prefers-reduced-motion`.
+
 ### Transições
 
 Preparar atendimento → conferir câmera → ensaiar sem criança → confirmar prontidão → ler orientação → abrir atividade/interação → registrar resposta → próxima atividade → revisar → guardar arquivos.
