@@ -35,7 +35,9 @@ export type TabletAction =
   | { type: "import"; record: TabletRecord };
 function revise(r: TabletRecord, patch: Partial<TabletRecord>): TabletRecord { return { ...r, ...patch, reviewed: false, revision: r.revision + 1 }; }
 function log(r: TabletRecord, second: number, taskId: string | null, type: TabletEvent["type"], value?: TabletEvent["value"]): TabletRecord {
-  // Leave room for a terminal event and never hide that capture was truncated.
+  const points = r.events.reduce((n, e) => n + (Array.isArray(e.value) ? e.value.length : 0), 0);
+  if (Array.isArray(value) && points + value.length > 12000) return { ...r, eventLimitReached: true };
+  // Preserve room for the terminal event; saturation is explicit, never silently successful.
   if (r.events.length >= 1499 && type !== "end") return { ...r, eventLimitReached: true };
   if (r.events.length >= 1500) return { ...r, eventLimitReached: true };
   return { ...r, events: [...r.events, { seq: r.events.length + 1, second, taskId, type, ...(value === undefined ? {} : { value }) }] };
@@ -60,6 +62,7 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
     return { phase: "cue", record: log(record, 0, null, "start"), cursor: 0, elapsed: 0, error: "" };
   }
   if (a.type === "import") {
+    if (s.phase !== "setup" || s.record) return s;
     try { const record = parseTabletRecord(JSON.stringify(a.record)); return { phase: "review", record: { ...record, reviewed: false, importedForReview: true, revision: record.revision + 1 }, cursor: 0, elapsed: record.durationSeconds, error: "" }; }
     catch { return { ...s, error: "Arquivo incompatível. Nenhum registro atual foi substituído." }; }
   }
@@ -82,7 +85,7 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
   }
   if (a.type === "response" && s.phase === "child") return { ...s, phase: "response", error: "" };
   if (a.type === "input" && s.phase === "child" && task) {
-    const allowed = a.event === "select" ? ["choice", "count"].includes(task.kind) && typeof a.value === "string" && a.value.length <= 200 : task.kind === "drawing" && (a.event === "clear" || z.array(pointSchema).min(1).max(512).safeParse(a.value).success);
+    const allowed = a.event === "select" ? (task.kind === "choice" ? ["circle", "square"].includes(String(a.value)) : task.kind === "count" && ["0", "1", "2", "3", "4"].includes(String(a.value))) && typeof a.value === "string" : task.kind === "drawing" && (a.event === "clear" || z.array(pointSchema).min(1).max(512).safeParse(a.value).success);
     if (!allowed) return s;
     return { ...s, record: log(r, s.elapsed, task.id, a.event, a.value) };
   }
@@ -98,9 +101,9 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
     }
     return { ...s, record: r, cursor: s.cursor + 1, phase: "cue", error: "" };
   }
-  if (a.type === "amend" && ["review", "delivery"].includes(s.phase)) {
-    if (a.note.length > 2000 || !r.observations.some((o) => o.taskId === a.taskId)) return s;
-    return { ...s, record: revise(r, { observations: r.observations.map((o) => o.taskId === a.taskId ? { ...o, note: a.note, editedAfterEnd: true } : o) }), error: "" };
+  if (a.type === "amend" && ["response", "review", "delivery"].includes(s.phase)) {
+    if (a.note.length > 2000 || !r.observations.some((o) => o.taskId === a.taskId) || (s.phase === "response" && a.taskId !== task.id)) return s;
+    return { ...s, record: revise(r, { observations: r.observations.map((o) => o.taskId === a.taskId ? { ...o, note: a.note, editedAfterEnd: o.editedAfterEnd || !isCollecting(s.phase) } : o) }), error: "" };
   }
   if (a.type === "reviewed" && ["review", "delivery"].includes(s.phase)) return { ...s, record: { ...r, reviewed: a.value, revision: r.revision + 1 } };
   if (a.type === "delivery" && s.phase === "review") return { ...s, phase: "delivery", error: "" };
@@ -112,19 +115,24 @@ export function parseTabletRecord(text: string): TabletRecord {
   const r = recordSchema.parse(JSON.parse(text));
   const plan = tabletPlan(r.context.months);
   if (!plan || plan.bandId !== r.bandId) throw new Error("Idade e ficha incompatíveis.");
+  if (r.events[0]?.type !== "start" || r.events.at(-1)?.type !== "end") throw new Error("Somente coleta encerrada pode ser reaberta.");
   const ids = new Set(plan.tasks.map((t) => t.id));
   const seen = new Set<string>();
   for (const o of r.observations) {
     if (!ids.has(o.taskId) || seen.has(o.taskId) || (o.openedAt !== null && o.openedAt > r.durationSeconds) || (!o.attempted && (o.outcome !== "NA" || o.openedAt !== null)) || (o.attempted && o.openedAt === null)) throw new Error("Observação incompatível.");
+    const shown = r.events.filter((e) => e.type === "shown" && e.taskId === o.taskId);
+    if (o.attempted && (shown.length !== 1 || shown[0].second !== o.openedAt)) throw new Error("Abertura não rastreável.");
     seen.add(o.taskId);
   }
-  let last = 0;
+  let last = 0; let points = 0;
   for (const [i, e] of r.events.entries()) {
     if (e.seq !== i + 1 || e.second < last || e.second > r.durationSeconds || (e.taskId !== null && !ids.has(e.taskId))) throw new Error("Sequência de eventos inválida.");
     const t = plan.tasks.find((item) => item.id === e.taskId);
     if (e.type === "stroke" && (t?.kind !== "drawing" || !Array.isArray(e.value))) throw new Error("Traçado incompatível.");
     if (e.type === "clear" && t?.kind !== "drawing") throw new Error("Limpeza incompatível.");
     if (e.type === "select" && (!t || !["choice", "count"].includes(t.kind) || typeof e.value !== "string")) throw new Error("Toque incompatível.");
+    if (Array.isArray(e.value)) points += e.value.length;
+    if (points > 12000) throw new Error("Traçados excedem o limite operacional.");
     last = e.second;
   }
   return r;
@@ -140,7 +148,7 @@ export function tabletText(r: TabletRecord): string {
   for (const t of plan.tasks) {
     const o = r.observations.find((entry) => entry.taskId === t.id);
     lines.push(`\n${t.title} | Modalidade: ${t.kind}`, `Proposta: ${t.command}`, o ? `Resposta registrada: ${o.outcome ?? "Categoria não registrada"}. ${o.note || "Descrição ausente; não inferir achado."}${o.editedAfterEnd ? " [Descrição complementada após encerramento.]" : ""}` : "Não houve observação registrada desta tarefa. Não concluir ausência de habilidade.");
-    if (t.kind === "drawing") lines.push("Traçado por toque, sem equivalência à escrita manual. Dados brutos no JSON.");
+    if (t.kind === "drawing") lines.push("Traçado por toque, sem equivalência à escrita manual. Dados brutos no JSON. Uma interrupção pode deixar o último traço parcial.");
     if (t.memory === "recall") lines.push("Evocação só pode ser interpretada pelo médico com o registro inicial e as interferências. Intervalos de tela não são medidas normativas.");
   }
   lines.push("", "COBERTURA QUE ESTE MODO NÃO EXAMINA", ...plan.limitations, "", `Conferência humana: ${r.reviewed ? "declarada pela aplicadora" : "não declarada"}. Não é assinatura médica nem recibo de envio.`, `Eventos operacionais: ${r.events.length}; ${r.eventLimitReached ? "LIMITE ATINGIDO, registros de interação podem estar incompletos" : "sem truncamento sinalizado"}. Não são escores ou tempos de reação calibrados.`, "O JSON contém registro e traçados, não o vídeo. Arquivos exigem armazenamento institucional autorizado.");
