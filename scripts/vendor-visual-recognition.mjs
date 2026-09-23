@@ -10,32 +10,31 @@ const definitions = [
  ['coelho','animais','Coelho',24,['rabbit']], ['peixe','animais','Peixe',12,['fish']],
  ['passaro','animais','Pássaro',24,['bird']], ['vaca','animais','Vaca',24,['cow']],
  ['cavalo','animais','Cavalo',24,['horse']], ['galinha','animais','Galinha',24,['hen','chicken']],
- ['porco','animais','Porco',36,['pig']], ['ovelha','animais','Ovelha',36,['sheep']],
- ['cabra','animais','Cabra',48,['goat']], ['pato','animais','Pato',24,['duck']],
- ['borboleta','animais','Borboleta',36,['butterfly']], ['abelha','animais','Abelha',48,['bee']],
- ['tartaruga','animais','Tartaruga',36,['tortoise','turtle']], ['sapo','animais','Sapo',36,['frog']],
- ['elefante','animais','Elefante',48,['elephant']], ['leao','animais','Leão',48,['lion']],
- ['macaco','animais','Macaco',48,['monkey']], ['girafa','animais','Girafa',48,['giraffe']],
+ ['porco','animais','Porquinho',36,['piglet']], ['ovelha','animais','Ovelha',36,['sheep']],
+ ['pato','animais','Pato',24,['duck']], ['borboleta','animais','Borboleta',36,['butterfly']],
+ ['abelha','animais','Abelha',48,['bee_honey']], ['tartaruga','animais','Jabuti',36,['tortoise']],
+ ['sapo','animais','Sapo',36,['frog']], ['elefante','animais','Elefante',48,['elephant']],
+ ['leao','animais','Leão',48,['lion']], ['girafa','animais','Girafa',48,['giraffe']],
  ['banana','frutas','Banana',12,['banana']], ['maca','frutas','Maçã',24,['apple']],
  ['laranja','frutas','Laranja',24,['orange']], ['pera','frutas','Pera',36,['pear']],
  ['uva','frutas','Uva',24,['grapes']], ['morango','frutas','Morango',36,['strawberry']],
  ['abacaxi','frutas','Abacaxi',36,['pineapple']], ['melancia','frutas','Melancia',36,['watermelon']],
- ['limao','frutas','Limão',48,['lemon']], ['pessego','frutas','Pêssego',60,['peach']],
+ ['limao','frutas','Limão-siciliano',60,['lemon']], ['pessego','frutas','Pêssego',60,['peach']],
  ['manga','frutas','Manga',36,['mango']], ['coco','frutas','Coco',48,['coconut']],
  ['carro','transportes','Carro',12,['car']], ['onibus','transportes','Ônibus',24,['bus']],
  ['bicicleta','transportes','Bicicleta',24,['bicycle','bike']], ['moto','transportes','Motocicleta',36,['motorbike','motorcycle']],
  ['caminhao','transportes','Caminhão',36,['lorry','truck']], ['aviao','transportes','Avião',24,['aeroplane','airplane','plane']],
  ['barco','transportes','Barco',36,['boat','rowing_boat']], ['trem','transportes','Trem',48,['train']],
  ['helicoptero','transportes','Helicóptero',48,['helicopter']], ['ambulancia','transportes','Ambulância',60,['ambulance']],
- ['bola','objetos','Bola',12,['ball']], ['xícara','objetos','Xícara',24,['cup']],
+ ['bola','objetos','Bola',12,['ball']], ['caneca','objetos','Caneca',24,['mug']],
  ['colher','objetos','Colher',12,['spoon']], ['prato','objetos','Prato',24,['plate']],
- ['tigela','objetos','Tigela',36,['bowl']], ['garrafa','objetos','Garrafa',24,['bottle']],
+ ['tigela','objetos','Tigela',36,['bowl']], ['garrafa','objetos','Garrafa de leite',36,['milk_bottle']],
  ['cadeira','objetos','Cadeira',24,['chair']], ['mesa','objetos','Mesa',24,['table']],
- ['cama','objetos','Cama',24,['bed']], ['livro','objetos','Livro',24,['book']],
- ['lapis','objetos','Lápis',36,['pencil']], ['sapato','objetos','Sapato',24,['shoe']],
- ['meia','objetos','Meia',36,['sock','socks']], ['chapeu','objetos','Chapéu',36,['hat']],
+ ['cama','objetos','Cama',24,['single_bed']], ['tesoura','objetos','Tesoura',48,['scissors']],
+ ['lapis','objetos','Lápis',36,['pencil']], ['sapato','objetos','Sapato',24,['shoe_-_mans']],
+ ['meia','objetos','Meia',36,['sock','socks']], ['chapeu','objetos','Chapéu',48,['hat_-_mans']],
  ['escova','objetos','Escova de dentes',36,['toothbrush']], ['pente','objetos','Pente',36,['comb']],
- ['chave','objetos','Chave',48,['key']], ['guarda-chuva','objetos','Guarda-chuva',36,['umbrella']],
+ ['chave','objetos','Chave',48,['key_1']], ['guarda-chuva','objetos','Guarda-chuva',36,['umbrella']],
 ];
 const get = async (url) => {
  const response = await fetch(url, {signal: AbortSignal.timeout(30000), headers:{'User-Agent':'NeuroPed-visual-assets'}});
@@ -49,7 +48,7 @@ const sources = tree.tree.filter(entry => entry.type==='blob' && /^EN\/[^/]+\.sv
 const missing = [];
 const chosen = definitions.map(([id,category,label,minMonths,aliases]) => {
  const source = aliases.map(alias => sources.find(entry => normalize(entry.path)===`en/${alias}.svg`)).find(Boolean);
- if (!source) missing.push({id,aliases,similar:sources.filter(entry=>aliases.some(alias=>normalize(entry.path).includes(alias))).map(entry=>entry.path).slice(0,8)});
+ if (!source) missing.push({id,aliases,similar:sources.filter(entry=>aliases.some(alias=>normalize(entry.path).includes(alias))).map(entry=>entry.path).slice(0,12)});
  return {id:normalize(id),category,label,minMonths,source};
 });
 if(missing.length) throw new Error(`Missing exact sources: ${JSON.stringify(missing)}`);
