@@ -4,7 +4,8 @@ export type RecorderStatus = "idle" | "requesting" | "preview" | "recording" | "
 const MAX_MEDIA_BYTES = 128 * 1024 * 1024;
 const acquisitionError = "Não foi possível acessar câmera e microfone. Verifique as permissões ou use a filmagem em outro dispositivo institucional. Nenhuma sessão foi iniciada.";
 /** Local-only media. Every asynchronous callback owns its generation and its tracks. */
-export function useLocalRecorder() {
+export function useLocalRecorder(options: { facingMode?: "user" | "environment" } = {}) {
+  const facingMode = options.facingMode ?? "environment";
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [mime, setMime] = useState("");
@@ -99,7 +100,7 @@ export function useLocalRecorder() {
     pendingRequest.current = true;
     updateStatus("requesting");
     try {
-      const acquired = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
+      const acquired = await navigator.mediaDevices.getUserMedia({ audio: true, video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
       if (!mounted.current || generation.current !== ticket) {
         acquired.getTracks().forEach((track) => track.stop());
         return false;
@@ -127,7 +128,6 @@ export function useLocalRecorder() {
       updateStatus("preview");
       return true;
     } catch {
-      // A rejected old permission request must never close a newer camera session.
       if (!mounted.current || generation.current !== ticket) return false;
       pendingRequest.current = false;
       releaseTracks();
@@ -135,7 +135,7 @@ export function useLocalRecorder() {
       setError(acquisitionError);
       return false;
     }
-  }, [releaseTracks, reset, stop, updateStatus]);
+  }, [facingMode, releaseTracks, reset, stop, updateStatus]);
 
   const start = useCallback(async (): Promise<boolean> => {
     if (phase.current === "recording" || phase.current === "finalizing") return false;
