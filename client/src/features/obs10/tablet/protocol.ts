@@ -68,7 +68,8 @@ export function tabletPlan(months: number): TabletPlan | null {
     tasks = [arrival, talk, scene, count, draw, copy, manual, finish];
   } else {
     const reading = task("reading", "Leia o texto na tela", "reading", "Leia este texto e me conte o que entendeu.", "Registre texto utilizado, leitura e explicação literal. Só aplicar se compatível com o ensino recebido; não mede dislexia ou inteligência.", { text: months < 108 ? "O gato dorme na cadeira." : "O gato dorme na cadeira. Quando acorda, vai brincar com a bola." });
-    tasks = [arrival, talk, encode, months < 144 ? reading : { ...scene, command: "Descreva esta situação e diga o que poderia acontecer depois." }, draw, manual, recall, finish];
+    // Reading and picture content precede encoding, never repeat a memory target during retention.
+    tasks = [arrival, talk, months < 144 ? reading : { ...scene, command: "Descreva esta situação e diga o que poderia acontecer depois." }, encode, draw, manual, recall, finish];
   }
   return {
     bandId: band.id, bandLabel: band.label, months, childScreen: months >= 24,
