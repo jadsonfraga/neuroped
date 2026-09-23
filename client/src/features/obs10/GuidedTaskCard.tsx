@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { OUTCOMES, PHASES, type AgeBand, type Outcome } from "./protocol";
 import { MATERIALS, PRACTICAL_TASKS, taskOmission, type MaterialId, type PracticalTask } from "./practical";
 import { TaskPicture } from "./PracticalVisuals";
@@ -25,7 +25,6 @@ export interface GuidedTaskCardProps {
 }
 /** Same clinical tasks, one self-contained frame. No clock, media, record or persistence authority is added. */
 export function GuidedTaskCard(props: GuidedTaskCardProps) {
-  // Key resets the local card position when changing age/block, including callers without an outer key.
   return <GuidedBlock key={`${props.band.id}:${props.phase}`} {...props} />;
 }
 function GuidedBlock({ band, phase, months, proneAllowed, kit, observations, running, finished, onRecord, onNextPhase }: GuidedTaskCardProps) {
@@ -33,6 +32,13 @@ function GuidedBlock({ band, phase, months, proneAllowed, kit, observations, run
   const [index, setIndex] = useState(0);
   const [largeText, setLargeText] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const focusRequested = useRef(false);
+  useLayoutEffect(() => {
+    if (!focusRequested.current) return;
+    focusRequested.current = false;
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [index]);
   const item = tasks[index];
   const missing = item.materials.filter((id) => kit[id] === "missing").map((id) => MATERIALS[id].label);
   const omission = taskOmission(item, months, proneAllowed) ?? (missing.length ? `Material ausente, sem substituto seguro: ${missing.join(", ")}. Omitir esta tarefa.` : null);
@@ -42,8 +48,14 @@ function GuidedBlock({ band, phase, months, proneAllowed, kit, observations, run
   const absolutePosition = PRACTICAL_TASKS[band.id].findIndex((task) => task.id === item.id) + 1;
   const handoff = taskHandoff(band.id, item.id);
   function move(next: number) {
-    setIndex(Math.max(0, Math.min(tasks.length - 1, next)));
-    window.setTimeout(() => { heading.current?.focus(); heading.current?.scrollIntoView({ block: "start", behavior: "auto" }); }, 0);
+    const target = Math.max(0, Math.min(tasks.length - 1, next));
+    if (target === index) {
+      heading.current?.focus({ preventScroll: true });
+      heading.current?.scrollIntoView({ block: "start", behavior: "auto" });
+      return;
+    }
+    focusRequested.current = true;
+    setIndex(target);
   }
   useEffect(() => {
     if (!focusAfterBlockChange) return;
