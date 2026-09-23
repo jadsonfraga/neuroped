@@ -1,67 +1,69 @@
 # OBS-10 Tablet — execução guiada sem kit físico
 
-Revisão de engenharia: 23/09/2026. Família de registro: `obs10-tablet/1.0.0`. Relacionado à issue #931.
+Revisão de engenharia: 23/09/2026. Família de registro: `obs10-tablet/1.0.0`. Issue #931 / PR #934.
 
-## O que foi construído
+## Entrega e finalidade
 
-Modo experimental na preparação da rota OBS-10 existente. O botão **Abrir modo tablet · experimental** abre a jornada no mesmo aplicativo, com o fundo inerte. Não exige papel, impressora, lápis, bonecos, blocos ou bolas. Usa interação com o cuidador, cenas autorais locais, leitura em tela, escolhas, contagem visual e traçado com o dedo. Recursos dependem da idade e da acessibilidade individual. Abaixo de 24 meses, não apresenta estímulos de tela à criança: registra uma amostra reduzida da interação e dos movimentos espontâneos. As condições habituais de segurança, conforto e apoio continuam indispensáveis.
+Modo experimental na preparação da rota OBS-10 existente. **Abrir modo tablet · experimental** abre uma jornada no mesmo aplicativo, com o fundo inerte. Não exige papel, impressora, lápis, bonecos, blocos ou bolas. Usa interação com o cuidador, cenas autorais locais, leitura em tela, escolhas, contagem visual e traçado com o dedo. Recursos dependem da idade e da acessibilidade individual. Abaixo de 24 meses, não apresenta estímulos de tela à criança: registra uma amostra reduzida da interação e dos movimentos espontâneos. Segurança, conforto e apoios habituais continuam indispensáveis.
 
-**Não é a conversão equivalente das 145 tarefas presenciais.** Habilidades dependentes de objetos e exame físico são explicitamente não examinadas. O modo presencial permanece disponível e sem mudança de comandos, kit ou esquema de registro. O usuário escolhe conscientemente a modalidade; nenhum resultado digital entra no importador clássico como se tivesse sido obtido com instrumentos físicos.
+**Não é conversão equivalente das 145 tarefas presenciais.** Habilidades dependentes de objetos e exame físico são explicitamente não examinadas. O modo presencial permanece disponível. A escolha de modalidade é explícita, e o JSON tablet não pode ser tratado como um registro clássico.
+
+A atualização concorrente #933, commit `f62aeee5db5dc83e7d58a81626f1363ab320f873`, foi integrada por merge de dois pais, sem reescrever histórico. Foram preservados seus estímulos em tela inteira, transições, testes e refinamentos de materiais físicos. A pendência de papel da #930 foi resolvida nessa PR independente; não há nova tentativa sobre o objeto/branch que havia sido bloqueado.
 
 ## Arquitetura
 
-- `tablet/protocol.ts`: catálogo autoral digital versionado; faixas selecionadas pela idade cronológica; tarefas e limitações declaradas. Não contém escore, norma, ponto de corte, diagnóstico ou previsão de inteligência.
-- `tablet/engine.ts`: reducer único da modalidade; transições explícitas e fechadas; histórico de abertura/tentativa, categoria declarada, descrição factual, eventos brutos e notas complementadas. Limites de tempo, quantidade de eventos e pontos. Importação estrita com Zod e vínculos de idade/tarefa/cronologia.
-- `tablet/TabletWorkspace.tsx`: orquestra o estado, as confirmações, câmera, treinamento, coleta, revisão e entrega. Reutiliza `useLocalRecorder` e `useExitGuard`. Sem backend paralelo ou persistência clínica oculta.
-- `tablet/Stimulus.tsx`: única superfície infantil; recebe somente o recurso da tarefa atual. Instruções do adulto são desmontadas, não apenas escondidas visualmente. Cenas não trazem legenda/resposta. Memória é oral, sem pistas visuais.
-- `tablet/DrawingPreview.tsx`: traçados existentes em revisão, sem manipuladores de entrada. Não permite nova aplicação após encerrar.
-- `tablet/TabletLauncher.tsx`: entrada protegida pela rota original, carregamento tardio e diálogo nativo; não altera autenticação, clínica, papéis ou banco.
-- `tablet/style.ts`: estilos locais, fonte ampliável, botões de 60 px ou mais, foco e redução de movimento. Não substitui tokens globais.
+- `tablet/protocol.ts`: catálogo digital autoral versionado; seleção por idade cronológica; tarefas e limitações explícitas, sem escores, normas, QI ou diagnóstico.
+- `tablet/engine.ts`: reducer único da modalidade; transições fechadas; registro de apresentação, categoria declarada, descrição factual e eventos brutos. Limites de tempo, eventos e coordenadas; validação estrutural com Zod.
+- `tablet/TabletWorkspace.tsx`: coordenação de preparação, câmera, treino, coleta, revisão e entrega. Reutiliza `useLocalRecorder`, `sessionElapsed` e `useExitGuard`; não introduz um backend paralelo.
+- `tablet/Stimulus.tsx`: superfície infantil com somente o recurso atual. As instruções do adulto são desmontadas, não apenas escondidas por CSS. Cenas sem legenda/resposta; memória oral sem pistas visuais.
+- `tablet/DrawingPreview.tsx`: apresentação dos traçados registrados, sem entradas ou reaplicação. Entrada e revisão mantêm proporção 2:1; um segundo ponteiro não encerra o traço ativo. Não há análise clínica automática do desenho.
+- `tablet/TabletLauncher.tsx`: entrada pela rota autorizada, carregamento tardio e diálogo nativo. Fundo inerte, sem alteração de autorização, clínica, papéis ou banco.
+- `tablet/style.ts`: fonte ampliável, controles de 60 px ou mais, foco visível, adaptação de largura e respeito a movimento reduzido. Estilos locais, com os tokens existentes.
 
-### Jornada
+### Transições
 
 Preparar atendimento → conferir câmera → ensaiar sem criança → confirmar prontidão → ler orientação → abrir atividade/interação → registrar resposta → próxima atividade → revisar → guardar arquivos.
 
-Não avança atividade automaticamente enquanto há uma tentativa em curso. A criança não tem que produzir resposta correta para liberar a próxima etapa. Recusas e omissões têm lugar explícito. A nota é preservada no estado mesmo antes de confirmar a categoria, para não desaparecer em encerramento precoce. Categoria isolada não cria narrativa clínica.
+Não há avanço automático durante a tentativa nem exigência de resposta correta para continuar. Recusa e omissão são registradas. Notas digitadas ficam no estado antes de confirmar a categoria, para sobreviver a encerramento precoce. Categoria isolada não cria narrativa clínica. No modo presencial, a troca de tarefa passou a posicionar foco no commit de layout, removendo a corrida de temporização; a transição entre blocos da #933 foi preservada.
 
-Os dez minutos começam somente na coleta, incluem transições e anotações e têm limite absoluto sem pausa. Trocar de aba ou bloquear a tela encerra a coleta, não suspende o relógio. Não aplicar novas tarefas para completar um registro encerrado. Revisão e preparação não têm esse limite.
+A coleta tem limite absoluto de 600 segundos e inclui transições e anotações, sem pausa. Trocar de aba ou bloquear a tela encerra, não suspende. Preparação e revisão ficam fora do cronômetro. Encerramento não autoriza novas tarefas. A leitura e as cenas precedem a apresentação das palavras de memória; entre apresentação e evocação não se oferecem novamente seus alvos. Isso evita uma pista de interface, mas não cria uma tarefa de memória validada ou um intervalo normativo.
 
 ### Câmera e arquivos
 
-O gravador existente ganhou uma opção de orientação: presencial continua preferindo câmera traseira; tablet solicita câmera frontal. `ideal` é pedido ao navegador, não garantia de escolha; o aplicador confere a prévia. Câmera externa também é permitida e sua preparação/armazenamento são declarações humanas. A mesma câmera do tablet pode não captar rosto e mãos em todas as posições: isso exige teste do equipamento e documentação das limitações, não inferência de normalidade.
+O gravador compartilhado aceita orientação opcional: presencial continua preferindo câmera traseira; tablet solicita frontal. `ideal` é pedido ao navegador, não garantia: conferir a câmera escolhida. A câmera externa exige preparação e salvamento institucional declarados pelo aplicador. Um tablet pode não captar rosto e mãos em todas as posições; essa limitação requer teste do equipamento e registro, nunca presunção de normalidade.
 
-Vídeo, JSON e resumo TXT são arquivos separados. O JSON contém eventos e traçados vetoriais; o TXT descreve origem, modalidade e lacunas. Download solicitado não significa arquivo duravelmente salvo. Conferir os arquivos antes de sair. Reabrir JSON é somente revisão; não recupera câmera ou vídeo e não autentica o conteúdo. Edição após exportação invalida a indicação de arquivo atual. Não há envio ao prontuário, IA ou armazenamento automático.
+Vídeo, JSON e TXT são arquivos separados. JSON preserva descrições, eventos e traçados; TXT explicita modalidade e lacunas. Download solicitado não comprova armazenamento durável. Conferir arquivos antes de sair. Edição invalida a indicação de exportação atual. Reabrir JSON permite somente revisão; não recupera vídeo nem autentica origem, autoria ou conteúdo. A última parte de um traço pode ficar parcial se houver interrupção abrupta. Não há envio ao prontuário, IA ou salvamento automático.
 
 ## Fronteiras de confiança
 
-Dados temporários em memória; nenhum novo `localStorage`, `sessionStorage`, IndexedDB, endpoint, cookie ou upload clínico. Os recursos visuais estão no pacote local. A leitura opcional do tutorial usa somente voz marcada pelo navegador como local e texto estático, sem informação pessoal; indisponibilidade mantém instruções escritas. Não foi introduzido reconhecimento remoto de fala.
+Dados temporários em memória; nenhum novo `localStorage`, `sessionStorage`, IndexedDB, endpoint, cookie ou upload clínico. Imagens locais. A leitura opcional do tutorial aceita apenas voz declarada local pelo navegador e texto estático, sem informação pessoal. Se não houver voz disponível, as instruções escritas permanecem. Não foi introduzido reconhecimento remoto de fala.
 
-Importação limitada a 4 MiB, com campos estritos, família de registro explícita, IDs válidos, ausência de duplicatas, relógio não decrescente, coordenadas entre 0 e 1 e limites de eventos. Isso é validação estrutural, não prova de autoria, veracidade ou assinatura. Dados locais exportados continuam sensíveis; a clínica decide acesso, retenção, base legal e destino autorizado.
+Importação: até 4 MiB, campos estritos, versão própria, IDs válidos, observações únicas, abertura rastreável, eventos cronológicos, coordenadas entre 0 e 1, teto de 1500 eventos e 12000 pontos. Atingir limites é declarado; não há truncamento apresentado como captura completa. Validação estrutural não é assinatura nem prova clínica. A clínica permanece responsável pelo acesso, destino, retenção e governança dos arquivos.
 
-Nenhum conteúdo licenciado de CANTAB, Q-interactive ou NIH Toolbox foi copiado. Não há pontuação projetiva de desenhos, comparação automática com normas presenciais ou análise semiológica de vídeo.
+Nenhum item proprietário de CANTAB, Q-interactive ou NIH Toolbox foi copiado. Não há pontuação projetiva, comparação com normas presenciais ou análise semiológica de vídeo.
 
-## Referências de produto e escolhas de design
+## Inspirações de produto, não validação do protocolo
 
-As referências abaixo orientam arquitetura/usabilidade, não validam este protocolo:
+1. W3C WAI, Use Clear Step-by-step Instructions: instrução junto à ação, passos curtos, exemplos e prevenção de erros. https://www.w3.org/WAI/WCAG2/supplemental/patterns/o4p07-step-instructions/
+2. W3C WAI, Make Each Step Clear: etapa atual e orientação de sequência. https://www.w3.org/WAI/WCAG2/supplemental/patterns/o1p04-clear-steps/
+3. W3C WAI, Separate Each Instruction: diminuir demandas de memória operacional. https://www.w3.org/WAI/WCAG2/supplemental/patterns/o3p09-separated-instructions/
+4. Pearson Q-interactive: separar superfícies de profissional e examinando, integrando materiais. Vários subtestes ainda exigem manipulativos; não sustenta equivalência universal objeto/tela. https://www.pearsonassessments.com/store/usassessments/en/p/q-interactive-pearson-s-1-1-ipad-based-assessment-system/100000773
+5. Cambridge Cognition: entrega consistente de atividades em touchscreen. O OBS-10 não herda normas, evidência ou métricas de CANTAB. https://cambridgecognition.com/technology-study-delivery/
 
-1. W3C WAI, **Use Clear Step-by-step Instructions**: instruções junto da ação, passos curtos, exemplos e prevenção de erros. https://www.w3.org/WAI/WCAG2/supplemental/patterns/o4p07-step-instructions/
-2. W3C WAI, **Make Each Step Clear**: orientação de etapa atual, anteriores e seguintes. https://www.w3.org/WAI/WCAG2/supplemental/patterns/o1p04-clear-steps/
-3. W3C WAI, **Separate Each Instruction**: redução de demanda de memória operacional. https://www.w3.org/WAI/WCAG2/supplemental/patterns/o3p09-separated-instructions/
-4. Pearson, **Q-interactive**: separação de superfícies do profissional e do examinando e integração dos recursos. O produto ainda requer manipulativos em diversos subtestes; ele não sustenta equivalência universal entre objeto e tela. https://www.pearsonassessments.com/store/usassessments/en/p/q-interactive-pearson-s-1-1-ipad-based-assessment-system/100000773
-5. Cambridge Cognition, **Technology & study delivery**: entrega organizada de tarefas em touchscreen e instruções consistentes. O OBS-10 não herda as normas, evidência ou métricas de CANTAB. https://cambridgecognition.com/technology-study-delivery/
+## Verificações executáveis
 
-## Verificação e critérios de liberação
+`npm run check`; lint sem avisos; `node --import tsx tests/unit/obs10-tablet.test.ts`; build com `VITE_OPEN_ACCESS=false`; `node tests/e2e/obs10-tablet.mjs`; `node tests/e2e/obs10-tablet-media.mjs`. Workflow `.github/workflows/obs10-tablet.yml`, com artefatos sintéticos e falhas preservados. Suítes anteriores OBS-10 continuam obrigatórias.
 
-Executar `npm run check`, lint, `node --import tsx tests/unit/obs10-tablet.test.ts`, build sem bypass de autorização e `node tests/e2e/obs10-tablet.mjs`. O workflow `obs10-tablet.yml` mantém prova sintética e falhas. As suítes OBS-10 original e guiada continuam obrigatórias.
+Contrato unitário: faixas, sequência sem pistas, estados, tempo, tipos de entrada, notas parciais, importação, tamanho e ausência de persistência/upload. Navegador: rota real autenticada com conta sintética, preparação, treino, desenho, segundo ponteiro, leitura, revisão, reexportação, teclado, largura de celular, letras maiores e axe. Mídia: permissão negada, pedido frontal, liberação da prévia, interrupção de trilha, vídeo real sintético, aba oculta e limite de dez minutos.
 
-O teste de navegador percorre a rota real com conta e dados sintéticos: preparação, treino, apresentação, desenho, leitura, registro, revisão, exportação/importação, diferença de modalidades e invalidação por edição. Capturas e axe não constituem validação humana ou clínica. A publicação precisa ser comprovada separadamente pelo SHA no Cloudflare; Vercel continua espelho.
+Resultados, SHA exato e artefatos ficam na PR. Esta documentação não afirma que testes já concluíram nem que houve publicação. Publicação é verificada separadamente no Cloudflare; Vercel é espelho.
 
-## O que falta para demonstrar qualidade comercial, não apenas afirmá-la
+## Evidência humana e comercial ainda necessária
 
-Não declarar sucesso mundial, interesse empresarial, certificação, economia de tempo ou acurácia sem dados. A fase seguinte de evidência deve incluir aplicadores iniciantes (inclusive idosos, quando representativos), teste no tablet/câmera reais, avaliação do entendimento das omissões, perdas de arquivos e necessidade de ajuda. Métricas-alvo, não resultados obtidos: zero erro crítico de segurança; nenhuma troca de identidade/modalidade; tentativas e ajuda rastreáveis; exportações utilizáveis; tempo e esforço reportados por usuários reais.
+Não declarar sucesso mundial, interesse empresarial, certificação, economia de tempo ou acurácia sem dados. Avaliar aplicadores iniciantes, incluindo idosos quando representativos, em tablets/câmeras reais. Medir erros críticos, ajuda solicitada, perdas de arquivos, entendimento das omissões, conclusão e esforço. Metas não são resultados obtidos.
 
-Pesquisa de equivalência por domínio/faixa etária, concordância entre observadores, confiabilidade longitudinal e impacto clínico exigem desenho próprio, supervisão especializada e governança ética. Revisar enquadramento regulatório de acordo com a finalidade efetiva antes de fazer alegações diagnósticas ou comercialização como dispositivo. Não iniciou pesquisa com pacientes nem novas transmissões de dados.
+Concordância entre observadores, confiabilidade longitudinal, equivalência por domínio/faixa e impacto clínico exigem estudos próprios, supervisão e governança ética. Revisar enquadramento regulatório pela finalidade efetiva antes de alegações diagnósticas/comercialização como dispositivo. Nenhuma pesquisa com pacientes ou transmissão externa nova foi iniciada.
 
 ## Rollback
 
-Reverter exclusivamente a PR vinculada à issue #931, incluindo launcher, subpasta tablet, testes e opção de orientação do gravador. Sem migrações, novos segredos, dados persistidos ou alterações financeiras. Não reverter a PR #930. A pendência textual de quantidade de papel do modo presencial segue separada e não foi contornada nesta mudança.
+Reverter apenas a PR #934. Preservar #930 e #933. Sem migrações, segredos novos ou dados persistidos; nenhum pagamento foi alterado. A remoção do modo tablet deve manter o modo presencial e o padrão anterior de orientação da câmera.
