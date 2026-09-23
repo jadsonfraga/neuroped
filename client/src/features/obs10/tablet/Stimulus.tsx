@@ -14,8 +14,8 @@ export function TabletStimulus({ task, strokes, onInput }: { task: TabletTask; s
     const norm = (n: number) => Math.round(Math.max(0, Math.min(1, n)) * 10000) / 10000;
     return { x: norm((event.clientX - rect.left) / Math.max(1, rect.width)), y: norm((event.clientY - rect.top) / Math.max(1, rect.height)) };
   };
-  const end = () => {
-    if (pointer.current === null) return;
+  const end = (pointerId: number) => {
+    if (pointer.current !== pointerId) return;
     if (stroke.current.length) onInput("stroke", stroke.current);
     pointer.current = null; stroke.current = []; setActive([]);
   };
@@ -31,15 +31,20 @@ export function TabletStimulus({ task, strokes, onInput }: { task: TabletTask; s
   return <div className="ot-drawing" data-testid="tablet-drawing">
     {task.model && <svg className="ot-model" viewBox="0 0 160 120" role="img" aria-label="Modelo de círculo"><circle cx="80" cy="60" r="40" fill="none" stroke="currentColor" strokeWidth="3" /></svg>}
     <svg className="ot-draw-area" viewBox="0 0 800 400" preserveAspectRatio="none" role="img" aria-label="Área para desenhar com o dedo" onPointerDown={(e) => {
-      if (pointer.current !== null || (e.pointerType === "mouse" && e.button !== 0)) return;
-      pointer.current = e.pointerId; stroke.current = [location(e)]; setActive(stroke.current); e.currentTarget.setPointerCapture(e.pointerId);
+      if (pointer.current !== null || !e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
+      try { e.currentTarget.setPointerCapture(e.pointerId); }
+      catch { setMessage("Não foi possível iniciar o traço neste toque. Registre a limitação se persistir."); return; }
+      pointer.current = e.pointerId; stroke.current = [location(e)]; setActive(stroke.current);
     }} onPointerMove={(e) => {
       if (pointer.current !== e.pointerId) return;
       const p = location(e);
       stroke.current = [...stroke.current, p];
       if (stroke.current.length >= 128) { onInput("stroke", stroke.current); stroke.current = [p]; }
       setActive(stroke.current);
-    }} onPointerUp={end} onPointerCancel={() => { end(); setMessage("O traço foi interrompido pelo dispositivo; a parte já desenhada foi preservada."); }}>
+    }} onPointerUp={(e) => end(e.pointerId)} onLostPointerCapture={(e) => end(e.pointerId)} onPointerCancel={(e) => {
+      if (pointer.current !== e.pointerId) return;
+      end(e.pointerId); setMessage("O traço foi interrompido pelo dispositivo; a parte já registrada foi preservada.");
+    }}>
       {[...strokes, active].filter((points) => points.length > 0).map((points, i) => points.length === 1 ? <circle key={i} cx={points[0].x * 800} cy={points[0].y * 400} r="2" fill="currentColor" /> : <polyline key={i} points={points.map((p) => `${p.x * 800},${p.y * 400}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />)}
     </svg>
     <p>Use o dedo. Não precisa de lápis.</p><p role="status">{message}</p>
