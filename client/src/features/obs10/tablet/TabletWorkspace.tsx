@@ -7,6 +7,7 @@ import { initialTabletState, isCollecting, tabletReducer, parseTabletRecord, tab
 import { tabletPlan, plannedSeconds, TABLET_LIMITS, TABLET_VERSION } from "./protocol";
 import { HearTabletHelp, TabletStimulus } from "./Stimulus";
 import { DrawingPreview } from "./DrawingPreview";
+import { MissionBanner, StationJourney } from "./Stations";
 import { TABLET_STYLE } from "./style";
 
 const SAFETY = ["Autorização institucional para filmar e tratar os dados registrada; participação aceita.", "Aplicador treinado, médico disponível e uso experimental do modo tablet autorizado pela equipe.", "Criança confortável, sem mudança aguda; apoios habituais preservados e ambiente seguro."];
@@ -121,7 +122,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   return <div className={`obs10 ot-root ${large ? "ot-large" : ""}`} data-testid="obs10-tablet" data-phase={state.phase}>
     <style>{TABLET_STYLE}</style>
     <header className="ot-header"><div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>{state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}</header>
-    {state.phase !== "child" && <><p className="ot-mode">Modo sem kit físico · experimental · não equivalente ao presencial</p><nav aria-label="Etapas da aplicação" className="ot-progress">{["Preparar", "Aplicar", "Revisar", "Guardar"].map((title, i) => { const index = collect ? 1 : state.phase === "review" ? 2 : state.phase === "delivery" ? 3 : 0; return <span key={title} aria-current={i === index ? "step" : undefined}>{i + 1}. {title}</span>; })}</nav></>}
+    {state.phase !== "child" && <><p className="ot-mode">Modo sem kit físico · experimental · não equivalente ao presencial</p><nav aria-label="Etapas da aplicação" className="ot-progress">{["Preparar", "Aplicar", "Revisar", "Guardar"].map((title, i) => { const index = collect ? 1 : state.phase === "review" ? 2 : state.phase === "delivery" ? 3 : 0; return <span key={title} aria-current={i === index ? "step" : undefined}>{i + 1}. {title}</span>; })}</nav><StationJourney phase={state.phase} cursor={state.cursor} plan={plan} record={state.record} /></>}
     {collect && <div className="ot-live-bar"><span aria-label="Tempo da coleta">{clock(state.elapsed)} / 10:00</span><span>Atividade {state.cursor + 1} de {plan?.tasks.length}</span><span>{media.status === "recording" ? "Câmera gravando" : state.record?.camera === "external" ? "Filmagem externa declarada" : "Conferindo estado da gravação"}</span><button type="button" onClick={() => end("Aplicador encerrou antes do limite")}>Encerrar coleta</button><button type="button" className="ot-danger" onClick={() => { end("Interrupção por segurança"); setUrgent(true); }}>Chamar médico</button></div>}
     {state.phase === "setup" && <section className="ot-card">
       <p>Sem papel, lápis, impressora ou brinquedos. Usaremos interação, recursos locais e câmera. Objetos e habilidades físicas ausentes não serão simulados como equivalentes.</p><HearTabletHelp />
@@ -160,8 +161,8 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <div className="ot-actions"><button type="button" disabled={starting} onClick={() => dispatch({ type: "back-setup" })}>Voltar ao ensaio</button><button type="button" className="ot-primary" disabled={starting || media.pending} onClick={() => { void start(); }}>Iniciar observação de até 10 minutos</button></div>
       {(starting || media.pending) && <button type="button" onClick={() => { invalidateTicket(); setStarting(false); media.cancel(); }}>Cancelar início</button>}
     </section>}
-    {state.phase === "cue" && task && <section className="ot-card" data-testid="tablet-cue">
-      <p className="ot-badge">SOMENTE PARA O APLICADOR</p><p className="ot-pacing">Sugestão de ritmo: até {task.seconds}s nesta atividade. É orientação, não prazo: não interrompa uma tentativa em curso nem repita para preencher o tempo.</p>
+    {state.phase === "cue" && task && <section className="ot-card ot-station-card" data-testid="tablet-cue">
+      <MissionBanner phase={state.phase} cursor={state.cursor} plan={plan} /><p className="ot-badge">SOMENTE PARA O APLICADOR</p><p className="ot-pacing">Sugestão de ritmo: até {task.seconds}s nesta atividade. É orientação, não prazo: não interrompa uma tentativa em curso nem repita para preencher o tempo.</p>
       <h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p>
       {task.steps && <ol className="ot-steps">{task.steps.map((line) => <li key={line}>{line}</li>)}</ol>}
       <h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
@@ -170,8 +171,8 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <details><summary>Não posso aplicar esta atividade</summary><label>Motivo da não aplicação<textarea value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} /></label><button type="button" onClick={() => { apply({ type: "skip", reason: note }); if (note.trim()) { setNote(""); setOutcome(""); } }}>Registrar motivo e seguir</button></details>
     </section>}
     {state.phase === "child" && task && <section className="ot-child" data-testid="tablet-child"><TabletStimulus key={task.id} task={task} strokes={drawingStrokes(state.record?.events ?? [], task.id)} onInput={(event, value) => apply({ type: "input", event, value })} /><button type="button" className="ot-primary" onClick={() => apply({ type: "response" })}>Terminar tentativa · registrar</button></section>}
-    {state.phase === "response" && task && <section className="ot-card" data-testid="tablet-response">
-      <h2>{task.title}</h2><p>A tentativa terminou. Não repita para melhorar a resposta.</p>
+    {state.phase === "response" && task && <section className="ot-card ot-station-card" data-testid="tablet-response">
+      <MissionBanner phase={state.phase} cursor={state.cursor} plan={plan} /><h2>{task.title}</h2><p>A tentativa terminou. Não repita para melhorar a resposta.</p>
       <fieldset className="ot-outcomes"><legend>Como aconteceu?</legend>{OUTCOMES.map((o) => <button key={o.id} type="button" aria-pressed={outcome === o.id} onClick={() => setOutcome(o.id)}>{o.label}</button>)}</fieldset>
       {outcome && <p className="ot-info">{OUTCOMES.find((o) => o.id === outcome)?.description}</p>}
       <label>O que você viu ou ouviu? Inclua ajuda e limitações.<textarea value={note} maxLength={2000} onChange={(e) => { setNote(e.target.value); apply({ type: "amend", taskId: task.id, note: e.target.value }); }} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
