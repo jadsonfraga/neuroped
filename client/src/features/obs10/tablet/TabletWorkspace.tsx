@@ -40,9 +40,11 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   const [localVideo, setLocalVideo] = useState("");
   const localVideoRef = useRef("");
   const alive = useRef(true); const ticket = useRef(0);
+  const invalidateTicket = useCallback(() => { ticket.current += 1; }, []);
   const startWall = useRef<number | null>(null); const startMono = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const media = useLocalRecorder({ facingMode: "user" });
+  const stopRecording = media.stop;
   const collect = isCollecting(state.phase);
   const ageValid = /^\d+$/.test(years) && /^\d+$/.test(months) && Number(years) <= 17 && Number(months) <= 11;
   const age = ageValid ? Number(years) * 12 + Number(months) : -1;
@@ -58,12 +60,12 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   useExitGuard(Boolean(context.code || years || state.record));
   const end = useCallback((reason: string) => {
     if (!isCollecting(stateRef.current.phase)) return;
-    media.stop(); dispatch({ type: "end", reason, second: second() });
-  }, [media.stop, second]);
+    stopRecording(); dispatch({ type: "end", reason, second: second() });
+  }, [stopRecording, second]);
   useEffect(() => {
     alive.current = true;
-    return () => { alive.current = false; ticket.current++; if (localVideoRef.current) URL.revokeObjectURL(localVideoRef.current); };
-  }, []);
+    return () => { alive.current = false; invalidateTicket(); if (localVideoRef.current) URL.revokeObjectURL(localVideoRef.current); };
+  }, [invalidateTicket]);
   useEffect(() => {
     heading.current?.focus();
     document.querySelector(".ot-dialog")?.scrollTo({ top: 0, behavior: "auto" });
@@ -76,7 +78,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     return () => { clearInterval(timer); document.removeEventListener("visibilitychange", hidden); };
   }, [collect, end, second]);
   useEffect(() => { if (collect && media.error) end("Interrupção técnica da câmera ou microfone; confira o vídeo parcial"); }, [collect, media.error, end]);
-  useEffect(() => { if (state.phase === "review") media.stop(); }, [state.phase, media.stop]);
+  useEffect(() => { if (state.phase === "review") stopRecording(); }, [state.phase, stopRecording]);
   useEffect(() => { if (collect && state.record?.eventLimitReached) end("Limite de interações atingido; parte dos dados brutos pode estar incompleta"); }, [collect, state.record?.eventLimitReached, end]);
   function apply(a: TabletAction) {
     if (isCollecting(stateRef.current.phase)) {
@@ -119,7 +121,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     <style>{TABLET_STYLE}</style>
     <header className="ot-header"><div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>{state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}</header>
     {state.phase !== "child" && <><p className="ot-mode">Modo sem kit físico · experimental · não equivalente ao presencial</p><nav aria-label="Etapas da aplicação" className="ot-progress">{["Preparar", "Aplicar", "Revisar", "Guardar"].map((title, i) => { const index = collect ? 1 : state.phase === "review" ? 2 : state.phase === "delivery" ? 3 : 0; return <span key={title} aria-current={i === index ? "step" : undefined}>{i + 1}. {title}</span>; })}</nav></>}
-    {collect && <div className="ot-live-bar"><span aria-label="Tempo da coleta">{clock(state.elapsed)} / 10:00</span><span>Atividade {state.cursor + 1} de {plan?.tasks.length}</span><span>{media.status === "recording" ? "Câmera gravando" : "Filmagem externa declarada"}</span><button type="button" onClick={() => end("Aplicador encerrou antes do limite")}>Encerrar coleta</button><button type="button" className="ot-danger" onClick={() => { end("Interrupção por segurança"); setUrgent(true); }}>Chamar médico</button></div>}
+    {collect && <div className="ot-live-bar"><span aria-label="Tempo da coleta">{clock(state.elapsed)} / 10:00</span><span>Atividade {state.cursor + 1} de {plan?.tasks.length}</span><span>{media.status === "recording" ? "Câmera gravando" : state.record?.camera === "external" ? "Filmagem externa declarada" : "Conferindo estado da gravação"}</span><button type="button" onClick={() => end("Aplicador encerrou antes do limite")}>Encerrar coleta</button><button type="button" className="ot-danger" onClick={() => { end("Interrupção por segurança"); setUrgent(true); }}>Chamar médico</button></div>}
     {state.phase === "setup" && <section className="ot-card">
       <p>Sem papel, lápis, impressora ou brinquedos. Usaremos interação, recursos locais e câmera. Objetos e habilidades físicas ausentes não serão simulados como equivalentes.</p><HearTabletHelp />
       <label>Código institucional, sem nome<input value={context.code} maxLength={32} placeholder="Ex.: OBS-001" onChange={(e) => setContext({ ...context, code: e.target.value })} /></label>
@@ -138,7 +140,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <p>Confira rosto, mãos e voz. Ao entregar a tela à criança, a câmera não deve perder o enquadramento. Teste sem criança e não presuma áudio claro apenas pela prévia.</p>
       <label className="ot-check"><input type="radio" name="tablet-camera" checked={camera === "integrated"} disabled={media.pending} onChange={() => { media.reset(); setCamera("integrated"); setFraming(false); }} />Câmera frontal deste tablet</label>
       <label className="ot-check"><input type="radio" name="tablet-camera" checked={camera === "external"} disabled={media.pending} onChange={() => { media.reset(); setCamera("external"); setFraming(false); }} />Outra câmera institucional</label>
-      {camera === "integrated" ? <><button type="button" disabled={media.pending} onClick={() => { void media.prepare(); }}>Testar câmera do tablet</button>{media.stream && <Preview stream={media.stream} />}{media.pending && <button type="button" onClick={() => { ticket.current++; media.cancel(); }}>Cancelar pedido de câmera</button>}</> : <label className="ot-check"><input type="checkbox" checked={externalReady} onChange={(e) => setExternalReady(e.target.checked)} />A outra câmera está pronta e será iniciada antes da coleta.</label>}
+      {camera === "integrated" ? <><button type="button" disabled={media.pending} onClick={() => { void media.prepare(); }}>Testar câmera do tablet</button>{media.stream && <Preview stream={media.stream} />}{media.pending && <button type="button" onClick={() => { invalidateTicket(); media.cancel(); }}>Cancelar pedido de câmera</button>}</> : <label className="ot-check"><input type="checkbox" checked={externalReady} onChange={(e) => setExternalReady(e.target.checked)} />A outra câmera está pronta e será iniciada antes da coleta.</label>}
       <p>A seleção frontal é solicitada ao navegador; confira a câmera realmente escolhida. Nenhuma prévia comprova que rosto e mãos ficarão visíveis durante toda a atividade.</p>
       <label className="ot-check"><input type="checkbox" checked={framing} onChange={(e) => setFraming(e.target.checked)} />Conferi enquadramento e captação de voz no equipamento. Tenho espaço para salvar.</label>
       <div className="ot-actions"><button type="button" disabled={media.pending} onClick={() => { media.cancel(); dispatch({ type: "back-setup" }); }}>Voltar</button><button type="button" className="ot-primary" disabled={!framing || media.pending || (camera === "external" ? !externalReady : !media.stream)} onClick={() => { media.cancel(); dispatch({ type: "next-setup" }); }}>Continuar para o ensaio</button></div>
@@ -153,7 +155,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <p><strong>{plan?.bandLabel} · {plan?.tasks.length} atividades digitais ou de interação.</strong></p><p>Diga ao responsável: “Não é prova nem nota. Fique perto sem dar dicas. Podemos parar a qualquer momento.”</p>
       <p>Preparação encerrada. A partir do próximo botão, transições e anotações contam no limite de dez minutos, sem pausa. Não sair do aplicativo nem bloquear a tela.</p><p>{camera === "integrated" ? "A câmera frontal será iniciada após sua autorização." : "Inicie agora a câmera externa e mantenha este tablet no roteiro."}</p>
       <div className="ot-actions"><button type="button" disabled={starting} onClick={() => dispatch({ type: "back-setup" })}>Voltar ao ensaio</button><button type="button" className="ot-primary" disabled={starting || media.pending} onClick={() => { void start(); }}>Iniciar observação de até 10 minutos</button></div>
-      {(starting || media.pending) && <button type="button" onClick={() => { ticket.current++; setStarting(false); media.cancel(); }}>Cancelar início</button>}
+      {(starting || media.pending) && <button type="button" onClick={() => { invalidateTicket(); setStarting(false); media.cancel(); }}>Cancelar início</button>}
     </section>}
     {state.phase === "cue" && task && <section className="ot-card" data-testid="tablet-cue">
       <p className="ot-badge">SOMENTE PARA O APLICADOR</p><h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p><h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
