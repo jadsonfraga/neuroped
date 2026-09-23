@@ -8,11 +8,23 @@ import {
 } from "../../client/src/data/navigation";
 
 const OBS_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
+const VISUAL_ROUTE = "/testes-reconhecimento";
 
-test("Sonda e OBS precedem os atalhos da rotina clínica", () => {
-  assert.deepEqual(featuredNavigation.slice(0, 6).map((item) => item.href), [
-    "/testes-diretos", OBS_ROUTE, "/pacientes", "/agenda", "/laudo-neuroped", "/receita-c1",
+test("Sonda, OBS e reconhecimento visual precedem os atalhos da rotina clínica", () => {
+  assert.deepEqual(featuredNavigation.slice(0, 7).map((item) => item.href), [
+    "/testes-diretos", OBS_ROUTE, VISUAL_ROUTE, "/pacientes", "/agenda", "/laudo-neuroped", "/receita-c1",
   ]);
+});
+
+test("reconhecimento visual tem acesso prioritário e uma única entrada por superfície", () => {
+  const featured = featuredNavigation.filter((item) => item.href === VISUAL_ROUTE);
+  const sections = navSections.flatMap((section) => section.items).filter((item) => item.href === VISUAL_ROUTE);
+  assert.equal(featured.length, 1);
+  assert.equal(sections.length, 1);
+  assert.equal(featured[0].tone, "priority");
+  assert.equal(featured[0].label, "Reconhecimento Visual");
+  assert.equal(sections[0].label, "Teste de Reconhecimento Visual");
+  assert.equal(navigablePages.filter((item) => item.href === VISUAL_ROUTE).length, 1);
 });
 
 test("OBS tem um único item de seção e o mesmo nome no destaque", () => {
@@ -45,6 +57,8 @@ test("rotas duplicadas no destaque ativam a seção real, inclusive com query e 
     [OBS_ROUTE, "PRÉ-CONSULTA GUIADA"],
     [`#${OBS_ROUTE}/?origem=atalho`, "PRÉ-CONSULTA GUIADA"],
     ["/testes-diretos", "TRIAGEM E FERRAMENTAS"],
+    [VISUAL_ROUTE, "TRIAGEM E FERRAMENTAS"],
+    [`#${VISUAL_ROUTE}?origem=atalho`, "TRIAGEM E FERRAMENTAS"],
     ["/pacientes/registro-sintetico", "ATENDIMENTO"],
     ["/conecta", "ACOMPANHAMENTO CLÍNICO"],
   ]) {
