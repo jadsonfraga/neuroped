@@ -91,6 +91,18 @@ async function runTask(i, opts = {}) {
   await b("Na proposta inicial").click();
   await w.getByLabel("O que você viu ou ouviu? Inclua ajuda e limitações.", { exact: true }).fill(`Tentativa fictícia ${i + 1}: registro específico da ação observada.`);
   await b("Salvar resposta e continuar").click();
+  // Sequential stations: an explicit pause closes each one before the next briefing opens.
+  if (await w.getByTestId("tablet-transition").count()) {
+    // The description written while registering must survive into the pause, not show empty and be overwritten.
+    assert.match(await w.getByTestId("tablet-transition").locator("textarea").inputValue(), new RegExp(`Tentativa fictícia ${i + 1}`), "the pause shows the description already stored, not an empty draft");
+    const map = w.getByTestId("obs10-mission-map");
+    assert.equal(await map.count(), 1, "the pause is when the whole route becomes visible again");
+    assert.equal(await map.locator('[data-station-state="current"]').count(), 0, "between stations none is current");
+    assert.ok(!/Na proposta inicial|Recusou|Após repetição/.test(await map.textContent()), "the route never shows what the child did");
+    if (opts.capture) await screen("08-transicao-entre-estacoes");
+    await w.getByRole("button", { name: /^Ir para a estação \d+$/ }).click();
+    await phase("cue");
+  }
 }
 try {
   await page.goto(`${server.origin}/#/avaliacao-pre-consulta-faixa-etaria`);
@@ -149,7 +161,7 @@ try {
   await b("Iniciar esta interação").click(); await phase("child");
   await b("Terminar tentativa · registrar").click(); await phase("response");
   await b("Após repetição").click();
-  await b("Marcar categoria e continuar · detalhar depois").click(); await phase("cue");
+  await b("Marcar categoria e continuar · detalhar depois").click(); await phase("transition");
   await b("Encerrar coleta").click(); await phase("review");
   assert.match(await w.getByTestId("tablet-pending").textContent(), /1 atividade\(s\) com categoria marcada e descrição pendente/);
   assert.match(await w.locator(".ot-review-item summary").first().textContent(), /descrição pendente/);

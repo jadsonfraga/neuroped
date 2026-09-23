@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { AGE_BANDS } from "../../client/src/features/obs10/protocol";
 import { tabletPlan, plannedSeconds, TABLET_VERSION, TABLET_LIMITS } from "../../client/src/features/obs10/tablet/protocol";
-import { tabletReducer as reduce, initialTabletState, parseTabletRecord, drawingStrokes, tabletText, pendingDescriptions, type TabletState, type TabletRecord } from "../../client/src/features/obs10/tablet/engine";
+import { tabletReducer as reduce, initialTabletState, parseTabletRecord, drawingStrokes, tabletText, pendingDescriptions, isCollecting, type TabletState, type TabletRecord } from "../../client/src/features/obs10/tablet/engine";
 
 function ready(): TabletState { let s = initialTabletState(); for (let i = 0; i < 3; i++) s = reduce(s, { type: "next-setup" }); return s; }
 function started(months = 42): TabletState { return reduce(ready(), { type: "start", context: { code: "FICTICIO", months, schooling: "", communication: "", conditions: "" }, camera: "external", sessionId: "sessao-sintetica" }); }
@@ -103,6 +103,14 @@ for (const t of tabletPlan(42)!.tasks) {
   assert.ok(pendingDescriptions(onlyCategory.record!).includes(t.id), "the missing description stays counted");
   assert.equal(reduce(all, { type: "save", outcome: "X" as never, note: "" }).phase, "response", "a category is still required");
   all = reduce(all, { type: "save", outcome: "E", note: "Descrição fictícia da tentativa; não é dado de paciente." });
+  // Sequential stations: an explicit pause closes each one; only "advance" opens the next briefing.
+  if (all.phase === "transition") {
+    assert.equal(reduce(all, { type: "show" }), all, "the pause cannot skip straight into the next station");
+    const before = all.cursor;
+    all = reduce(all, { type: "advance" });
+    assert.equal(all.cursor, before + 1);
+    assert.equal(all.phase, "cue");
+  }
 }
 assert.equal(all.phase, "review"); assert.equal(all.record!.observations.length, 8); assert.deepEqual(parseTabletRecord(JSON.stringify(all.record)), all.record);
 assert.match(tabletText(all.record!), /sem equivalência/);
@@ -119,12 +127,25 @@ assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim 
 assert.match(tabletText(all.record!), /Todas as atividades registradas possuem descrição/);
 // Saturating the event log must never mint an observation whose opening cannot be traced: the module
 // would otherwise export a record its own validator rejects.
+// The pause between stations belongs to the collection: clock, absolute limit and end path still apply.
+let paused = reduce(reduce(reduce(started(60), { type: "show" }), { type: "response" }), { type: "save", outcome: "E", note: "" });
+assert.equal(paused.phase, "transition");
+assert.equal(isCollecting("transition"), true, "the pause is inside the ten minutes, never free time");
+assert.equal(reduce(paused, { type: "tick", second: 999 }).phase, "review", "the absolute limit still fires during a pause");
+assert.equal(reduce(paused, { type: "advance" }).cursor, 1);
+assert.equal(reduce(reduce(paused, { type: "advance" }), { type: "advance" }).phase, "cue", "advance only works from the pause");
+// The description may be completed in the pause, without being marked as edited after the end.
+const inPause = reduce(paused, { type: "amend", taskId: tabletPlan(60)!.tasks[0].id, note: "Fato observado, escrito na transição." });
+assert.equal(inPause.record!.observations[0].note, "Fato observado, escrito na transição.");
+assert.equal(inPause.record!.observations[0].editedAfterEnd, false);
+assert.equal(reduce(paused, { type: "amend", taskId: tabletPlan(60)!.tasks[3].id, note: "x" }), paused, "the pause only amends the station it just closed");
 const drawingAt = tabletPlan(60)!.tasks.findIndex((t) => t.kind === "drawing");
 let saturating = started(60);
 for (let i = 0; i < drawingAt; i++) {
   saturating = reduce(saturating, { type: "show" });
   saturating = reduce(saturating, { type: "response" });
   saturating = reduce(saturating, { type: "save", outcome: "E", note: "" });
+  saturating = reduce(saturating, { type: "advance" });
 }
 saturating = reduce(saturating, { type: "show" });
 assert.equal(saturating.phase, "child");
@@ -133,7 +154,9 @@ for (let i = 0; i < 1600 && !saturating.record!.eventLimitReached; i++) saturati
 assert.equal(saturating.record!.eventLimitReached, true, "the drill must actually reach saturation");
 saturating = reduce(saturating, { type: "response" });
 saturating = reduce(saturating, { type: "save", outcome: "E", note: "" });
-assert.equal(saturating.phase, "cue", "the applicator still reaches the next card");
+assert.equal(saturating.phase, "transition", "a saturated station still closes through the pause");
+saturating = reduce(saturating, { type: "advance" });
+assert.equal(saturating.phase, "cue", "the applicator still reaches the next briefing");
 const blocked = reduce(saturating, { type: "show" });
 assert.equal(blocked.record!.observations.length, saturating.record!.observations.length, "a dropped opening event cannot leave an untraceable observation behind");
 assert.equal(blocked.phase, "cue", "saturation does not hand the child an activity that will not be recorded");

@@ -47,6 +47,14 @@ A camada de estações não despacha ações, não altera reducer, catálogo, ri
 
 ### Transições
 
+Desde 24/09/2026 existe uma parada explícita entre estações: registrar → **transição** → próxima estação. A parada nomeia a estação que acabou, oferece completar ali mesmo a descrição enquanto está fresca, apresenta a próxima com o preparo e o ritmo sugerido, e traz de volta a rota completa da ficha, que durante uma estação aberta fica recolhida no HUD compacto. Só o botão de avançar abre a próxima orientação: nada pula do registro direto para a estação seguinte, e encerrar pela parada é um caminho próprio.
+
+A parada pertence à coleta. O cronômetro não pausa nela, o limite absoluto de 600 segundos continua disparando durante a transição, e completar a descrição ali não marca o registro como editado após o encerramento, porque ainda é durante a coleta. Só a estação recém-fechada pode ser corrigida na parada. Durante a parada nenhuma estação aparece como atual, porque a aplicadora está entre elas.
+
+O campo de descrição da parada lê a observação já armazenada, nunca o rascunho da tela de registro, que é limpo no salvamento: ligá-lo ao rascunho faria a parada mostrar vazio e sobrescrever o texto salvo.
+
+
+
 Preparar atendimento → conferir câmera → ensaiar sem criança → confirmar prontidão → ler orientação → abrir atividade/interação → registrar resposta → próxima atividade → revisar → guardar arquivos.
 
 Não há avanço automático durante a tentativa nem exigência de resposta correta para continuar. Recusa e omissão são registradas. Notas digitadas ficam no estado antes de confirmar a categoria, para sobreviver a encerramento precoce. Categoria isolada não cria narrativa clínica.

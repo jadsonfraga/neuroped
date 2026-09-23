@@ -51,6 +51,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   const age = ageValid ? Number(years) * 12 + Number(months) : -1;
   const plan = tabletPlan(state.record?.context.months ?? age);
   const task = plan?.tasks[state.cursor];
+  const nextTask = plan?.tasks[state.cursor + 1];
   const pending = state.record ? pendingDescriptions(state.record) : [];
   const payload = state.record ? JSON.stringify(state.record, null, 2) : "";
   const summary = state.record ? tabletText(state.record) : "";
@@ -118,7 +119,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     } catch { setMessage("Não foi possível abrir: use um JSON do modo tablet, até 4 MB. O registro atual foi preservado."); }
   }
   if (urgent) return <div className="obs10 ot-root" data-testid="obs10-tablet" data-phase="urgent"><style>{TABLET_STYLE}</style><section role="alert" className="ot-emergency"><h1 ref={heading} tabIndex={-1}>Interrompa e chame a equipe presencial.</h1><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, dor intensa ou risco imediato: não espere vídeo ou IA. Em emergência, SAMU 192.</p><p>Na crise: proteja contra lesões, não contenha à força e não coloque nada na boca. Conteúdo sensível exige atendimento reservado.</p><button type="button" onClick={() => setUrgent(false)}>Entendi · manter coleta encerrada</button></section></div>;
-  const label = state.phase === "setup" ? "1. Prepare este atendimento" : state.phase === "camera" ? "2. Confira a câmera" : state.phase === "rehearsal" ? "3. Experimente sem criança" : state.phase === "ready" ? "4. Tudo pronto para começar?" : state.phase === "cue" ? `Prepare: ${task?.title}` : state.phase === "child" ? "Atividade em andamento" : state.phase === "response" ? "Registre o que aconteceu" : state.phase === "review" ? "Confira antes de entregar" : "Guarde os arquivos desta sessão";
+  const label = state.phase === "setup" ? "1. Prepare este atendimento" : state.phase === "camera" ? "2. Confira a câmera" : state.phase === "rehearsal" ? "3. Experimente sem criança" : state.phase === "ready" ? "4. Tudo pronto para começar?" : state.phase === "cue" ? `Prepare: ${task?.title}` : state.phase === "child" ? "Atividade em andamento" : state.phase === "response" ? "Registre o que aconteceu" : state.phase === "transition" ? `Estação ${state.cursor + 1} concluída` : state.phase === "review" ? "Confira antes de entregar" : "Guarde os arquivos desta sessão";
   return <div className={`obs10 ot-root ${large ? "ot-large" : ""}`} data-testid="obs10-tablet" data-phase={state.phase}>
     <style>{TABLET_STYLE}</style>
     <header className="ot-header"><div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>{state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}</header>
@@ -162,7 +163,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       {(starting || media.pending) && <button type="button" onClick={() => { invalidateTicket(); setStarting(false); media.cancel(); }}>Cancelar início</button>}
     </section>}
     {state.phase === "cue" && task && <section className="ot-card ot-station-card" data-testid="tablet-cue">
-      <MissionBanner phase={state.phase} cursor={state.cursor} plan={plan} /><p className="ot-badge">SOMENTE PARA O APLICADOR</p><p className="ot-pacing">Sugestão de ritmo: até {task.seconds}s nesta atividade. É orientação, não prazo: não interrompa uma tentativa em curso nem repita para preencher o tempo.</p>
+      <MissionBanner phase={state.phase} cursor={state.cursor} plan={plan} /><p className="ot-badge">SOMENTE PARA O APLICADOR</p><p className="ot-pacing">Sugestão de ritmo: até {task.seconds}s nesta estação. É orientação, não prazo: não interrompa uma tentativa em curso nem repita para preencher o tempo.</p>
       <h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p>
       {task.steps && <ol className="ot-steps">{task.steps.map((line) => <li key={line}>{line}</li>)}</ol>}
       <h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
@@ -178,6 +179,15 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <label>O que você viu ou ouviu? Inclua ajuda e limitações.<textarea value={note} maxLength={2000} onChange={(e) => { setNote(e.target.value); apply({ type: "amend", taskId: task.id, note: e.target.value }); }} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
       <p className="ot-pacing">Marque a categoria agora e siga. A descrição pode ser completada na revisão, sem pressa e sem a criança esperando; ela nunca é preenchida por suposição.</p>
       <button type="button" className="ot-primary" disabled={!outcome} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>{note.trim() ? "Salvar resposta e continuar" : "Marcar categoria e continuar · detalhar depois"}</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
+    </section>}
+    {state.phase === "transition" && task && nextTask && <section className="ot-card" data-testid="tablet-transition">
+      <p className="ot-info"><strong>Estação {state.cursor + 1} concluída: {task.title}.</strong> O registro desta estação já está guardado nesta tela. Não repita a proposta para melhorar a resposta.</p>
+      {/* Bound to the stored observation, never to the response draft: that draft is cleared on save. */}
+      <label>Quer completar agora a descrição desta estação? Pode deixar para a revisão.<textarea value={state.record?.observations.find((o) => o.taskId === task.id)?.note ?? ""} maxLength={2000} onChange={(e) => apply({ type: "amend", taskId: task.id, note: e.target.value })} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
+      <h2>Próxima estação: {nextTask.title}</h2>
+      <p>{nextTask.prepare}</p>
+      <p className="ot-pacing">Sugestão de ritmo da próxima: até {nextTask.seconds}s. O cronômetro não pausa nesta transição; acolha a criança antes de seguir.</p>
+      <div className="ot-actions"><button type="button" className="ot-primary" onClick={() => { apply({ type: "advance" }); setNote(""); setOutcome(""); }}>Ir para a estação {state.cursor + 2}</button><button type="button" onClick={() => end("Aplicador encerrou entre estações")}>Encerrar aqui e revisar</button></div>
     </section>}
     {state.phase === "review" && state.record && <section className="ot-card">
       <p className="ot-info">Coleta encerrada: {state.record.endReason}. Não aplicar novas tarefas. Complete só o que já ocorreu.</p>
