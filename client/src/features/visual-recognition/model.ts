@@ -76,7 +76,14 @@ export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,s
   if((mode!=="nomeacao"||target.pair)&&need<1)throw new Error("Selecione ao menos duas figuras compatíveis. Conceitos precisam dos dois estados do mesmo par.");
   const foils=shuffle(others,seed+index*37).slice(0,need).map(item=>item.id);
   const optionIds=mode==="nomeacao"&&!target.pair?[target.id]:foils;
-  if(mode!=="nomeacao"||target.pair){const size=foils.length+1;const position=shuffle(Array.from({length:size},(_,i)=>i),seed)[index%size];optionIds.splice(position,0,target.id);}
+  if(mode!=="nomeacao"||target.pair){
+    const size=foils.length+1;
+    // Keep balanced positions, changing the permutation for each block so
+    // a fixed left-right alternation cannot substitute for recognition.
+    const blockSeed=seed+Math.floor(index/size)*7919;
+    const position=shuffle(Array.from({length:size},(_,i)=>i),blockSeed)[index%size];
+    optionIds.splice(position,0,target.id);
+  }
   const question=mode==="pareamento"?"Ache a figura igual ao modelo. O modelo continua visível.":mode==="nomeacao"?target.pair?"Compare as duas figuras. Como você descreveria a figura destacada?":target.category==="cores"?"Que cor é esta?":"O que é isto?":`Mostre: ${target.label.toLocaleLowerCase("pt-BR")}.`;
   return{id:`rv-${seed}-${index}`,targetId,optionIds,mode,question,context:target.context,assetVersion:VERSION};
 }
