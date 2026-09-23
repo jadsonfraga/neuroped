@@ -23,10 +23,11 @@ async function screen(name,child=false){
  assert.deepEqual(audit.violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})),[],name);
  await page.screenshot({path:`${dir}/${name}.png`,fullPage:!child});screens.push(name);
 }
-async function configure(mode="receptivo",count="6"){
+async function configure(mode="receptivo",count="6",choices="2"){
  await w.getByLabel("Anos completos",{exact:true}).fill("5");
  await w.getByLabel("Meses adicionais",{exact:true}).fill("0");
  await w.getByLabel("Modalidade",{exact:true}).selectOption(mode);
+ if(mode!=="nomeacao")await w.getByLabel("Alternativas por tela",{exact:true}).selectOption(choices);
  await w.getByLabel("Tamanho da sessão",{exact:true}).selectOption(count);
  await preflight();
  await button("Verificar banco e iniciar").click();
@@ -50,7 +51,18 @@ async function presentAndRespond(mode,{capture=false,offline=false}={}){
   await dialog.getByRole("button",{name:`Selecionar figura ${targetIndex+1}`,exact:true}).click();
   assert.equal(await dialog.getByRole("button",{name:`Selecionar figura ${targetIndex+1}`,exact:true}).getAttribute("aria-pressed"),"true");
  }
- if(capture){await screen(`child-${mode}`,true);await page.setViewportSize({width:390,height:844});await screen(`child-${mode}-phone`,true);await page.setViewportSize({width:1180,height:920});}
+ if(capture){
+  await screen(`child-${mode}`,true);
+  await page.setViewportSize({width:390,height:844});
+  if(mode==="receptivo"&&order.length===3){
+   const rects=await dialog.locator(".rv-picture").evaluateAll(elements=>elements.map(element=>{const r=element.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height};}));
+   assert.equal(rects.length,3,"three-choice proof requires exactly three child cards");
+   assert.ok(rects.every(rect=>rect.width>=340),"three choices on phone must remain large and equally legible");
+   assert.ok(rects[1].y>rects[0].y && rects[2].y>rects[1].y,"three choices on phone must form a neutral vertical stack");
+   assert.ok(Math.max(...rects.map(rect=>rect.height))-Math.min(...rects.map(rect=>rect.height))<5,"three choices on phone must have equal visual weight");
+  }
+  await screen(`child-${mode}-phone`,true);await page.setViewportSize({width:1180,height:920});
+ }
  assert.equal(await dialog.locator(".rv-picture").count(),order.length,"images do not disappear after answer");
  await dialog.getByRole("button",{name:"← Voltar ao aplicador",exact:true}).click();await dialog.waitFor({state:"detached"});
  await w.getByLabel("Situação observada",{exact:true}).selectOption("correspondente");
@@ -74,9 +86,17 @@ try{
  await w.locator(".rv-catalog").screenshot({path:`${dir}/02-all-89-stimuli.png`});screens.push("02-all-89-stimuli");
  await page.locator(".rv-catalog").evaluate(element=>{element.style.maxHeight="";element.style.overflow="";});
  await page.setViewportSize({width:768,height:1024});await screen("03-preparation-tablet");
- await page.setViewportSize({width:390,height:844});await screen("04-preparation-phone");await page.setViewportSize({width:1180,height:920});
+ await page.setViewportSize({width:390,height:844});await screen("04-preparation-phone");
+ const prepColumns=await w.locator(".rv-form-grid").first().evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length);
+ assert.equal(prepColumns,1,"phone preparation fields must stack in one column");
+ const phoneCards=await w.locator(".rv-catalog-card").evaluateAll(elements=>elements.slice(0,3).map(element=>{const r=element.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height};}));
+ assert.equal(phoneCards.length,3,"catalog must expose reviewable stimuli on phone");
+ assert.ok(phoneCards[0].width>=150 && phoneCards[1].width>=150,"phone catalog cards must remain visually recognizable");
+ assert.ok(Math.abs(phoneCards[0].y-phoneCards[1].y)<4 && phoneCards[2].y>phoneCards[0].y+20,"phone catalog must use two readable columns");
+ await w.locator(".rv-catalog").screenshot({path:`${dir}/04b-catalog-phone.png`});screens.push("04b-catalog-phone");
+ await page.setViewportSize({width:1180,height:920});
  await w.getByLabel(/Incluir quente\/frio/).uncheck();
- await configure("receptivo");
+ await configure("receptivo","6","3");
  for(let i=0;i<6;i++){
   await presentAndRespond("receptivo",{capture:i===0,offline:i===0});
   await button("Registrar e continuar").click();
