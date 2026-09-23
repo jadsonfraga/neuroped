@@ -42,7 +42,7 @@ export interface Item {
 const aliases: Record<string,string[]> = {
   cachorro: ["cão", "au-au"], gato: ["gatinho", "miau"], passaro: ["passarinho", "ave"], porco: ["porco"], tartaruga: ["tartaruga"],
   moto: ["moto"], aviao: ["aeroplano"], onibus: ["busão"], uva: ["uvas", "cacho de uvas"], caneca: ["xícara"], garrafa: ["garrafa", "leite"],
-  escova: ["escova"], limao: ["limão"], guarda_chuva: ["sombrinha"],
+  escova: ["escova"], limao: ["limão"], "guarda-chuva": ["sombrinha"],
 };
 export const ITEMS: Item[] = [
   ...sourceManifest.items.map((item): Item => ({
@@ -117,11 +117,14 @@ export interface Observation { id:string; trial:Trial; item:{label:string;catego
 export function problems(trial:Trial,draft:Draft,events:StageEvent[]):string[]{
   const errors:string[]=[];
   if(!draft.outcome || !(draft.outcome in OUTCOMES)) errors.push("Escolha a situação observada.");
-  if(!draft.familiarity) errors.push("Registre a familiaridade (pode ser incerta).");
+  if(!["conhecida","incerta","desconhecida"].includes(draft.familiarity)) errors.push("Registre a familiaridade (pode ser incerta).");
+  if(!(draft.help in SUPPORTS) || (draft.channel && !(draft.channel in CHANNELS))) errors.push("Modalidade de ajuda ou resposta inválida.");
+  if(!trial.optionIds.includes(trial.targetId) || new Set(trial.optionIds).size!==trial.optionIds.length || trial.optionIds.some(id=>!ITEM_MAP.has(id))) errors.push("Alternativas inconsistentes.");
+  if(events.some(event=>!Number.isFinite(Date.parse(event.at)) || (event.kind==="toque" && (!event.itemId || !trial.optionIds.includes(event.itemId))))) errors.push("Evento incompatível com as figuras apresentadas.");
   const applied=events.some(event=>event.kind==="apresentado");
   const technical=events.some(event=>event.kind==="erro-imagem");
   const interpretable=draft.outcome==="correspondente" || draft.outcome==="diferente";
-  if(interpretable && !applied) errors.push("A figura precisa ter sido apresentada.");
+  if((interpretable || draft.outcome==="sem_resposta") && !applied) errors.push("A figura precisa ter sido apresentada.");
   if(interpretable && technical) errors.push("Falha de imagem impede registrar desempenho; encerre como problema técnico e reapresente em nova tentativa.");
   if(interpretable && (!draft.channel || draft.channel==="nenhuma")) errors.push("Registre a via da resposta.");
   if(interpretable && trial.mode==="nomeacao" && !draft.literal.trim()) errors.push("Transcreva a resposta de nomeação, sem corrigir a fala.");
@@ -138,6 +141,7 @@ export function problems(trial:Trial,draft:Draft,events:StageEvent[]):string[]{
 export function activeObservations(ledger:Observation[]):Observation[]{const replaced=new Set(ledger.map(record=>record.supersedes).filter(Boolean));return ledger.filter(record=>!replaced.has(record.id));}
 export function observe(trial:Trial,draft:Draft,events:StageEvent[],ledger:Observation[],supersedes?:string,correctionReason?:string):Observation{
   const errors=problems(trial,draft,events);if(errors.length) throw new Error(errors.join(" "));
+  if(!supersedes && activeObservations(ledger).some(record=>record.trial.id===trial.id)) throw new Error("Esta oportunidade já foi registrada; use correção com justificativa.");
   if(supersedes && (!activeObservations(ledger).some(record=>record.id===supersedes) || !correctionReason?.trim())) throw new Error("Correção exige registro ativo e justificativa.");
   const item=itemFor(trial.targetId);
   const previousExposure=ledger.some(record=>record.id!==supersedes && record.trial.targetId===trial.targetId && (record.trial.mode==="receptivo" || record.response.help!=="independente"));
@@ -149,7 +153,7 @@ export function reportText(config:Config,plan:Trial[],ledger:Observation[]):stri
   const header=["RECONHECIMENTO VISUAL · REGISTRO DESCRITIVO",`Versão ${VERSION} | ${config.ageMonths} meses | Roteiro ${bandFor(config.ageMonths)?.label ?? "não identificado"}`,NATURE,"As faixas organizam a aplicação; não são normas ou idades-limite para adquirir habilidades.",`Cobertura: ${primary.size} de ${plan.length} oportunidades principais documentadas. ${plan.length-primary.size} ainda sem registro.`,"Pareamento demonstra correspondência perceptual, não necessariamente conhecimento do significado. Figuras familiares, linguagem, visão, motricidade e condições da sessão interferem.",`Condições declaradas: ${config.conditions.join("; ") || "nenhuma informada"}.`,""];
   for(const mode of Object.keys(MODES) as Mode[]){
     const group=records.filter(record=>record.trial.mode===mode);if(!group.length)continue;
-    header.push(`${MODES[mode]}: ${group.length} registros; ${group.filter(record=>record.response.outcome==="correspondente" && record.response.help==="independente").length} respostas correspondentes sem ajuda declarada. Contagem descritiva, não escore normativo.`);
+    header.push(`${MODES[mode]}: ${group.length} registros; ${group.filter(record=>record.response.outcome==="correspondente" && record.response.help==="independente" && !record.previousExposure).length} respostas correspondentes sem ajuda declarada e sem exposição prévia ao nome/ajuda registrada. Contagem descritiva, não escore normativo.`);
   }
   for(const record of records){
     const r=record.response;

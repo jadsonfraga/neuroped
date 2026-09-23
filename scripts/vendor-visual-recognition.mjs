@@ -18,7 +18,7 @@ for(const item of chosen){
  const original=await get(`https://raw.githubusercontent.com/${repository}/${revision}/${item.source.path}`);
  const blob=createHash('sha1').update(`blob ${Buffer.byteLength(original)}\0`).update(original).digest('hex');
  if(blob!==item.source.sha)throw new Error(`Upstream integrity failed: ${item.id}`);
- const svg=original.replace(/<\?xml[\s\S]*?\?>/gi,'').replace(/<!DOCTYPE[\s\S]*?>/gi,'').replace(/<!--[\s\S]*?-->/g,'').replace(/<(metadata|title|desc)\b[^>]*>[\s\S]*?<\/\1>/gi,'').trim();
+ const svg=original.replace(/<\?xml[\s\S]*?\?>/gi,'').replace(/<!DOCTYPE[\s\S]*?>/gi,'').replace(/<!--[\s\S]*?-->/g,'').replace(/<(metadata|title|desc)\b[^>]*>[\s\S]*?<\/\1>/gi,'').replace(/<text\b[^>]*>[\s\S]*?<\/text>/gi,'').trim();
  if(!/<svg\b/.test(svg)||/<(script|foreignObject|image|text)\b|\son\w+\s*=|(?:href\s*=\s*["']\s*(?:https?:|\/\/|data:|javascript:))|url\(\s*["']?https?:/i.test(svg))throw new Error(`Unsafe or answer-bearing SVG: ${item.id}`);
  await writeFile(`${output}/${item.id}.svg`,svg+'\n');
  manifest.push({id:item.id,category:item.category,label:item.label,minMonths:item.minMonths,sourcePath:item.source.path,sourceSha:item.source.sha,sha256:createHash('sha256').update(svg+'\n').digest('hex'),license:'CC-BY-SA-4.0',author:'Steve Lee',revision,review:'illustration-not-normed'});
@@ -26,5 +26,5 @@ for(const item of chosen){
 const license=await get(`https://raw.githubusercontent.com/${repository}/${revision}/LICENSE.txt`);
 if(!license.includes('https://creativecommons.org/licenses/by-sa/4.0/'))throw new Error('License changed');
 await writeFile(`${output}/LICENSE.txt`,license);
-await writeFile(`${output}/manifest.json`,JSON.stringify({version:'2026-09-23.2',source:repository,revision,adaptation:'Remoção de metadados, títulos e descrições XML; desenho preservado. Rótulos PT-BR são descritores locais, não normas.',items:manifest},null,2)+'\n');
+await writeFile(`${output}/manifest.json`,JSON.stringify({version:'2026-09-23.2',source:repository,revision,adaptation:'Remoção de metadados, títulos, descrições XML e inscrições em texto nas figuras; demais formas preservadas. Rótulos PT-BR são descritores locais, não normas.',items:manifest},null,2)+'\n');
 console.log(`VENDORED ${manifest.length} integrity-checked local illustrations.`);
