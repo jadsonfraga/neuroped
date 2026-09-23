@@ -24,6 +24,8 @@ for (const band of AGE_BANDS) {
       assert.match(plan.adultOnly, /Não mostre/);
     }
     if (plan.model) assert.equal(task.model, true);
+    const paper = plan.materials.find((item) => item.id === "paper");
+    if (paper && !plan.model) assert.doesNotMatch(paper.quantity + paper.detail, /modelo/i, "paper supply must not introduce a model to a non-copying task");
   }
 }
 const find = (band: string, title: string) => { const task = PRACTICAL_TASKS[band].find((item) => item.title === title); assert.ok(task, title); return task; };
@@ -44,6 +46,15 @@ assert.equal(framePlan(find("y05", "Letras conhecidas"), "y05").model, null, "no
 assert.match(framePlan(find("y04", "Separe objetos parecidos"), "y04").materials[0].quantity, /^4 /);
 assert.match(framePlan(find("y05", "Conte objetos"), "y05").materials[0].quantity, /^5 /);
 assert.match(framePlan(find("m12", "Empilhar dois blocos"), "m12").materials[0].quantity, /^2 /);
+const material = (band: string, title: string, id: string) => { const entry = framePlan(find(band, title), band).materials.find((item) => item.id === id); assert.ok(entry); return entry; };
+assert.match(material("y05", "Cópia de quadrado", "paper").quantity, /modelo/);
+assert.match(material("y06", "Amostra de leitura e escrita", "paper").quantity, /texto/);
+assert.match(material("y09", "Amostra de leitura e escrita", "paper").quantity, /texto/);
+for (const [band, title] of [["y04", "Desenho de pessoa"], ["y05", "Letras conhecidas"], ["y12", "Amostra de leitura e escrita"]]) assert.match(material(band, title, "paper").quantity, /^1 folha em branco/);
+assert.equal(material("m12", "Ofereça uma escolha", "blocks").quantity, "1 bloco grande");
+assert.equal(material("m12", "Observe o deslocamento habitual", "blocks").quantity, "1 bloco grande");
+assert.equal(material("m06", "Apresente o brinquedo devagar", "target").quantity, "1 brinquedo grande");
+assert.equal(material("m06", "Dois brinquedos, duas mãos", "target").quantity, "2 brinquedos grandes");
 assert.equal(preparationsForBand("m00").length, 0);
 assert.equal(preparationsForBand("not-a-band").length, 0);
 // A disabled print action must return before even accessing window or a DOM node.
