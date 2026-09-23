@@ -2,7 +2,7 @@
   "version": "2026-09-23.2",
   "source": "mulberrysymbols/mulberry-symbols",
   "revision": "9cbab9f400c5de44e2bc58839cca07294aadb086",
-  "adaptation": "Remoção de metadados, títulos, descrições XML e inscrições em texto nas figuras; demais formas preservadas. Rótulos PT-BR são descritores locais, não normas.",
+  "adaptation": "Remoção de metadados, títulos, descrições XML e inscrições em texto. Prato e garrafa recebem recorte para isolar o objeto principal; demais formas preservadas. Rótulos PT-BR são descritores locais, não normas.",
   "items": [
     {
       "id": "cachorro",
@@ -96,13 +96,13 @@
       "review": "illustration-not-normed"
     },
     {
-      "id": "galinha",
+      "id": "galo",
       "category": "animais",
-      "label": "Galinha",
+      "label": "Galo",
       "minMonths": 24,
-      "sourcePath": "EN/chicken.svg",
-      "sourceSha": "9f89fca806db9c19383e2c1ff873d8178721b947",
-      "sha256": "555674ee3104ab5d5aa8db70e76bfaffe3742cc89c1691e4d88f17d72cf30e79",
+      "sourcePath": "EN/cockerel.svg",
+      "sourceSha": "212ec13b0fef75c3bb3a4ae159101af6005e9ab4",
+      "sha256": "d4f2a3285b16873dc6bf439238ea01134c0bd9eba3340710aa23fc95e763f24b",
       "license": "CC-BY-SA-4.0",
       "author": "Steve Lee",
       "revision": "9cbab9f400c5de44e2bc58839cca07294aadb086",
@@ -570,11 +570,18 @@
       "minMonths": 24,
       "sourcePath": "EN/plate.svg",
       "sourceSha": "23e8bf2b9f5325aad5a4a68e391da66741c1dd38",
-      "sha256": "7e5bed8e541983855065e42d41c954c4b276b7a8b2a5525cb971c16a0824aef0",
+      "sha256": "4ddc983a0958da5fcf3c235c034af6c113d2857e06bada3d06c17256a8f20618",
       "license": "CC-BY-SA-4.0",
       "author": "Steve Lee",
       "revision": "9cbab9f400c5de44e2bc58839cca07294aadb086",
-      "review": "illustration-not-normed"
+      "review": "illustration-not-normed",
+      "adaptation": "Recorte de enquadramento para isolar o objeto principal.",
+      "crop": [
+        25,
+        325,
+        800,
+        485
+      ]
     },
     {
       "id": "tigela",
@@ -592,15 +599,22 @@
     {
       "id": "garrafa",
       "category": "objetos",
-      "label": "Garrafa de leite",
+      "label": "Garrafa",
       "minMonths": 36,
       "sourcePath": "EN/milk_bottle.svg",
       "sourceSha": "a52164a6c80bc7b1b314807ed2f164e1b80740b2",
-      "sha256": "d6f63aaa00b4fbe5a5417cf2fed7185dfe27363eef2584b67ac281366cfbd0ea",
+      "sha256": "3d7c7c4117a47e33396f23777a964b0fe7946b2057d7ad93174efc45424ae0b2",
       "license": "CC-BY-SA-4.0",
       "author": "Steve Lee",
       "revision": "9cbab9f400c5de44e2bc58839cca07294aadb086",
-      "review": "illustration-not-normed"
+      "review": "illustration-not-normed",
+      "adaptation": "Recorte de enquadramento para isolar o objeto principal.",
+      "crop": [
+        245,
+        40,
+        350,
+        770
+      ]
     },
     {
       "id": "cadeira",

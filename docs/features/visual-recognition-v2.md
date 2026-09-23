@@ -88,3 +88,7 @@ A inspeção visual das imagens e os resultados finais da CI precisam estar docu
 Preserva o SHA baseline e as alterações de OBS-10 existentes; só acrescenta a feature visual, ativos próprios, navegação e testes. Não altera API, D1, schema, autenticação ou o contrato dos protocolos adjacentes. Nenhuma migração de dados é necessária.
 
 Rollback: reverter o commit de merge da PR em nova PR, executar os gates e publicar o SHA revertido pelo fluxo canônico Cloudflare. Isso restaura a página informativa anterior; registros já exportados permanecem com o usuário. Não usar force-push, apagar histórico ou alterar proteções. Uma publicação só é confirmada com sucesso do workflow canônico e sentinela do SHA servido, não apenas com merge ou build verde.
+
+## Refinamentos após inspeção visual de todos os estímulos
+
+A ilustração de frango preparado foi rejeitada no pré-release e substituída por um galo vivo, com nome correto e origem EN/cockerel.svg. Prato e garrafa foram recortados para remover figuras secundárias (talheres/prato menor e uma vaca). Nenhum item preparado como alimento é apresentado como ave viva. O manifesto registra recorte e novo hash; a licença CC BY-SA 4.0 é preservada. Esses controles são inspeção técnica/visual, não estudo de reconhecibilidade com crianças.
