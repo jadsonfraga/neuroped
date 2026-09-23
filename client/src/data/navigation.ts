@@ -14,6 +14,7 @@ import {
   Filter,
   HeartPulse,
   HelpCircle,
+  Images,
   Home,
   KeyRound,
   LineChart,
@@ -186,6 +187,13 @@ export const navSections: NavSection[] = [
     title: "TRIAGEM E FERRAMENTAS",
     items: [
       { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter, tone: "priority" },
+      {
+        href: "/testes-reconhecimento",
+        label: "Teste de Reconhecimento Visual",
+        icon: Images,
+        tone: "priority",
+        description: "Figuras e conceitos organizados por faixa etária",
+      },
       {
         href: "/testes-diretos",
         label: "Sonda Dez · Avaliação Direta",
