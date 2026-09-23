@@ -26,6 +26,27 @@ Branch: `claude/testes-cognitivos-sidebar-t3jm51`
   relatório qualitativo; não produz escore, percentil, idade equivalente nem
   interpretação diagnóstica. Não há vínculo com instrumento licenciado.
 
+## Formato de jogo (segunda entrega)
+
+- A mesma bateria é apresentada como aventura: a criança escolhe um herói,
+  explora quatro mundos (Floresta dos Olhos, Ilha das Palavras, Castelo da
+  Escrita, Montanha dos Números) e joga as fases de cada um na ordem que quiser.
+- Estrelas contam respostas registradas (participação) e medalhas contam mundos
+  concluídos. O feedback após cada resposta é neutro e gira por posição da fase,
+  nunca pela resposta dada: a criança não vê certo/errado, e nenhum número da
+  tela é escore.
+- Escrita nas bandas 2–5 anos continua sendo lista de observação do adulto,
+  agora "missão do guia", com uma única estrela pela missão inteira.
+- O profissional recebe o mesmo relatório e o mesmo salvamento, numa área
+  recolhível abaixo do jogo, com o aviso explícito de que estrelas e medalhas
+  não são escores.
+- Animações via framer-motion e confete respeitam `prefers-reduced-motion`; sons
+  usam as preferências já existentes do app.
+- Smoke em navegador real (build estático + API sintética, login real): item da
+  sidebar ativo, mundo jogado até a medalha, área do profissional com 4 itens,
+  missão do guia na banda A, viewport 390 px sem rolagem horizontal, zero erros
+  de página.
+
 ## Verificação local
 
 Comandos concluídos com código de saída 0:

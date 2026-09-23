@@ -1,29 +1,34 @@
 /**
  * Testes Cognitivos por Faixa Etária — bateria autoral enxuta (reconhecimento
  * visual, leitura, escrita e aritmética) com bandas 2–19 anos e perfis exatos
- * 6–13. Restaurada a partir da antiga "Avaliação Cognitiva Infantil", que a
- * consolidação f2d7f48 esvaziou e b93a04b extinguiu. Superfície própria,
- * separada da Sonda Dez, com rota /testes-cognitivos.
+ * 6–13, apresentada como uma aventura em quatro mundos. Restaurada a partir da
+ * antiga "Avaliação Cognitiva Infantil", que a consolidação f2d7f48 esvaziou e
+ * b93a04b extinguiu. Superfície própria, separada da Sonda Dez, com rota
+ * /testes-cognitivos.
  *
  * Verdade clínica: registra pergunta a pergunta e não produz escore, percentil,
- * idade equivalente nem interpretação diagnóstica.
+ * idade equivalente nem interpretação diagnóstica. Estrelas e medalhas do jogo
+ * medem participação e conclusão, nunca acerto — a criança não vê certo/errado.
  */
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClinicalReport } from "@/components/ClinicalReport";
 import { SaveToPatient } from "@/components/SaveToPatient";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { celebrate } from "@/lib/confetti";
+import { softSuccess, softTap, softWhoosh } from "@/lib/softSounds";
 import {
-  Eye,
-  BookOpen,
-  PenTool,
-  Calculator,
-  RotateCcw,
+  ArrowLeft,
   Brain,
-  CheckCircle2,
   ChevronRight,
+  Flag,
+  Map as MapIcon,
+  Play,
+  RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 
 // ─────────────────────────────── types ───────────────────────────────
@@ -879,225 +884,6 @@ const ARITMETICA_BANK: Record<Band, MCQ[]> = {
     },
   ],
 };
-
-// ─────────────────────────────── ObsModule ───────────────────────────────
-function ObsModule({
-  block,
-  onComplete,
-}: {
-  block: ObsBlock;
-  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
-}) {
-  const [answers, setAnswers] = useState<boolean[]>(
-    Array(block.items.length).fill(false),
-  );
-  const [done, setDone] = useState(false);
-
-  function toggle(i: number) {
-    if (done) return;
-    setAnswers((prev) => {
-      const n = [...prev];
-      n[i] = !n[i];
-      return n;
-    });
-  }
-
-  function finish() {
-    const score = answers.filter(Boolean).length;
-    const records: AnswerRecord[] = block.items.map((it, i) => ({
-      prompt: it.label,
-      selected: answers[i] ? "Observado" : "Não observado",
-      isCorrect: Boolean(answers[i]),
-    }));
-    setDone(true);
-    onComplete(score, block.items.length, records);
-  }
-
-  const score = answers.filter(Boolean).length;
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">{block.intro}</p>
-      <div className="space-y-2">
-        {block.items.map((item, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => toggle(i)}
-            className={`w-full text-left flex items-center gap-3 rounded-xl border p-3 transition ${answers[i] ? "border-emerald-400 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30" : "border-border bg-background hover:border-primary/40"}`}
-            aria-pressed={answers[i]}
-          >
-            <span
-              className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-sm ${answers[i] ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}
-            >
-              {answers[i] ? "✓" : ""}
-            </span>
-            <span className="text-sm text-foreground">{item.label}</span>
-          </button>
-        ))}
-      </div>
-      {!done ? (
-        <Button onClick={finish} className="w-full mt-2">
-          Finalizar observação ({score}/{block.items.length} marcados)
-        </Button>
-      ) : (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="p-4 text-center">
-            <p className="text-sm font-bold">
-              Respostas de observação registradas
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────── QuizModule ───────────────────────────────
-function QuizModule({
-  questions,
-  onComplete,
-}: {
-  questions: MCQ[];
-  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
-}) {
-  const [idx, setIdx] = useState(0);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [score, setScore] = useState(0);
-  const [answers, setAnswers] = useState<AnswerRecord[]>([]);
-  const [phase, setPhase] = useState<"question" | "feedback" | "done">(
-    "question",
-  );
-
-  const q = questions[idx];
-  // Embaralha a ordem das alternativas por questão para que a resposta correta
-  // NÃO fique sempre na primeira posição. A ordem é estável durante a questão
-  // (não re-embaralha no feedback) e é sorteada de novo a cada nova questão /
-  // a cada nova tentativa (o módulo remonta ao "Refazer"). A pontuação continua
-  // comparando o texto escolhido com q.answer, então baralhar não afeta o placar.
-  const displayOptions = useMemo(() => {
-    const cur = questions[idx];
-    if (!cur) return [];
-    const a = [...cur.options];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }, [idx, questions]);
-
-  function pick(opt: string) {
-    if (phase !== "question") return;
-    setSelected(opt);
-    setPhase("feedback");
-    const ok = opt === q.answer;
-    if (ok) setScore((s) => s + 1);
-    setAnswers((a) => [
-      ...a,
-      { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok },
-    ]);
-  }
-
-  function handleComplete() {
-    onComplete(score, questions.length, answers);
-  }
-
-  if (phase === "done" || idx >= questions.length) {
-    return (
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="p-5 text-center space-y-2">
-          <p className="text-sm font-bold text-foreground">
-            Todas as respostas deste módulo foram registradas
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Badge variant="outline">
-          Questão {idx + 1} / {questions.length}
-        </Badge>
-        <Badge variant="outline">Resposta por resposta</Badge>
-      </div>
-
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-blue-500 transition-all duration-500 ease-out"
-          style={{ width: `${(idx / questions.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-muted/50 to-transparent p-4 sm:p-5 shadow-sm">
-        <p
-          className={`relative text-foreground leading-relaxed whitespace-pre-line ${q.big ? "text-xl font-bold text-center" : "text-sm font-semibold"}`}
-        >
-          {q.prompt}
-        </p>
-      </div>
-
-      <div className={`grid gap-2 ${q.big ? "grid-cols-2" : "grid-cols-1"}`}>
-        {displayOptions.map((opt) => {
-          let cls =
-            "rounded-2xl border p-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.97]";
-          if (phase === "feedback") {
-            if (opt === selected)
-              cls +=
-                " border-primary bg-primary/10 shadow-sm shadow-primary/10";
-            else cls += " border-border bg-background opacity-50";
-          } else {
-            cls +=
-              " border-border bg-background hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/5 hover:shadow-sm cursor-pointer";
-          }
-
-          return (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => pick(opt)}
-              disabled={phase === "feedback"}
-              className={`${cls} ${q.big ? "min-h-[64px] text-2xl text-center flex items-center justify-center" : "text-sm"}`}
-            >
-              {q.big ? (
-                <span>{opt}</span>
-              ) : (
-                <span className="font-medium">{opt}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {phase === "feedback" && (
-        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-          <span className="text-xs font-semibold text-foreground">
-            Resposta registrada
-          </span>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="ml-auto h-7 text-xs gap-1"
-            onClick={() => {
-              if (idx + 1 >= questions.length) {
-                setPhase("done");
-                handleComplete();
-              } else {
-                setIdx((i) => i + 1);
-                setSelected(null);
-                setPhase("question");
-              }
-            }}
-          >
-            Próxima <ChevronRight className="h-3 w-3" />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─────────────────────────────── PERFIS EXATOS 6–13 ───────────────────────────────
 const ageMcq = (prompt: string, options: string[], answer: string): MCQ => ({
@@ -1971,7 +1757,628 @@ function ageProfileLabel(age: number, band: Band): string {
   return BAND_LABEL[band];
 }
 
-// ─────────────────────────────── DOMAIN WRAPPER ───────────────────────────────
+// ─────────────────────────────── AVENTURA (UI de jogo) ───────────────────────────────
+//
+// A bateria vira um jogo de exploração em quatro mundos, um por domínio. A
+// filosofia clínica não muda com a roupagem:
+//   • cada resposta é registrada pergunta a pergunta, exatamente como antes;
+//   • a criança NUNCA vê certo/errado — o feedback é sempre neutro;
+//   • estrelas contam PARTICIPAÇÃO (respostas registradas) e medalhas contam
+//     CONCLUSÃO de mundo. Nenhuma das duas é escore, nota ou percentil;
+//   • o profissional recebe o mesmo relatório qualitativo e o mesmo salvamento.
+
+interface WorldMeta {
+  name: string;
+  emoji: string;
+  tagline: string;
+  badge: string;
+  surface: string;
+  accent: string;
+}
+
+const WORLDS: Record<Domain, WorldMeta> = {
+  visual: {
+    name: "Floresta dos Olhos",
+    emoji: "🌳",
+    tagline: "Encontre o que o guia pedir entre as figuras.",
+    badge: "Explorador da Floresta",
+    surface:
+      "from-emerald-300/40 via-lime-100/60 to-background dark:from-emerald-900/40 dark:via-emerald-950/30",
+    accent: "text-emerald-700 dark:text-emerald-300",
+  },
+  leitura: {
+    name: "Ilha das Palavras",
+    emoji: "🏝️",
+    tagline: "Letras, sons e histórias escondidas na areia.",
+    badge: "Navegante das Palavras",
+    surface:
+      "from-sky-300/40 via-cyan-100/60 to-background dark:from-sky-900/40 dark:via-sky-950/30",
+    accent: "text-sky-700 dark:text-sky-300",
+  },
+  escrita: {
+    name: "Castelo da Escrita",
+    emoji: "🏰",
+    tagline: "Traços, palavras e frases abrem as portas do castelo.",
+    badge: "Guardião do Castelo",
+    surface:
+      "from-amber-300/40 via-orange-100/60 to-background dark:from-amber-900/40 dark:via-amber-950/30",
+    accent: "text-amber-700 dark:text-amber-300",
+  },
+  aritmetica: {
+    name: "Montanha dos Números",
+    emoji: "⛰️",
+    tagline: "Cada conta é um degrau até o topo.",
+    badge: "Alpinista dos Números",
+    surface:
+      "from-violet-300/40 via-fuchsia-100/60 to-background dark:from-violet-900/40 dark:via-violet-950/30",
+    accent: "text-violet-700 dark:text-violet-300",
+  },
+};
+
+const WORLD_ORDER: Domain[] = ["visual", "leitura", "escrita", "aritmetica"];
+
+const HEROES = [
+  { id: "raposa", emoji: "🦊", name: "Raposa" },
+  { id: "panda", emoji: "🐼", name: "Panda" },
+  { id: "unicornio", emoji: "🦄", name: "Unicórnio" },
+  { id: "dragao", emoji: "🐉", name: "Dragão" },
+  { id: "foguete", emoji: "🚀", name: "Foguete" },
+  { id: "golfinho", emoji: "🐬", name: "Golfinho" },
+] as const;
+type Hero = (typeof HEROES)[number];
+
+// Frases neutras: giram por posição da fase, nunca pela resposta dada.
+const NEUTRAL_CHEERS = [
+  "Registrado!",
+  "Anotado, vamos em frente!",
+  "Boa, próxima fase!",
+  "Mais uma estrela!",
+];
+
+const OPTION_TINTS = [
+  "bg-rose-50 hover:bg-rose-100 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900 dark:hover:bg-rose-950/50",
+  "bg-sky-50 hover:bg-sky-100 border-sky-200 dark:bg-sky-950/30 dark:border-sky-900 dark:hover:bg-sky-950/50",
+  "bg-amber-50 hover:bg-amber-100 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 dark:hover:bg-amber-950/50",
+  "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900 dark:hover:bg-emerald-950/50",
+];
+
+// ─────────────────────────────── HUD ───────────────────────────────
+function AdventureHud({
+  hero,
+  stars,
+  badges,
+  onChangeHero,
+}: {
+  hero: Hero;
+  stars: number;
+  badges: Domain[];
+  onChangeHero: () => void;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-3 py-2 shadow-sm backdrop-blur sm:px-4">
+      <button
+        type="button"
+        onClick={onChangeHero}
+        className="flex items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`Herói atual: ${hero.name}. Trocar herói`}
+      >
+        <span className="text-3xl" aria-hidden="true">
+          {hero.emoji}
+        </span>
+        <span className="text-sm font-bold">{hero.name}</span>
+      </button>
+
+      <div
+        className="ml-auto flex items-center gap-1.5 rounded-xl bg-amber-100/70 px-3 py-1 dark:bg-amber-950/40"
+        aria-live="polite"
+        aria-label={`${stars} estrelas`}
+      >
+        <span className="text-xl" aria-hidden="true">
+          ⭐
+        </span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={stars}
+            initial={reduce ? false : { y: 8, opacity: 0, scale: 0.8 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={reduce ? undefined : { y: -8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="text-base font-black tabular-nums text-amber-900 dark:text-amber-100"
+          >
+            {stars}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+
+      <ul className="flex gap-1" aria-label="Medalhas dos mundos">
+        {WORLD_ORDER.map((domain) => {
+          const earned = badges.includes(domain);
+          return (
+            <li
+              key={domain}
+              title={`${WORLDS[domain].badge}${earned ? " · conquistada" : " · ainda não"}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border text-xl transition ${earned ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40" : "border-border/60 bg-muted/40 opacity-40 grayscale"}`}
+            >
+              <span aria-hidden="true">{WORLDS[domain].emoji}</span>
+              <span className="sr-only">
+                {WORLDS[domain].badge}: {earned ? "conquistada" : "ainda não"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// ─────────────────────────────── Escolha do herói ───────────────────────────────
+function HeroPicker({
+  current,
+  onPick,
+}: {
+  current: Hero | null;
+  onPick: (hero: Hero) => void;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <Card className="overflow-hidden rounded-3xl border-border/60">
+      <CardContent className="p-5 sm:p-7">
+        <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Antes de partir
+        </p>
+        <h2 className="mt-1 text-center text-2xl font-black tracking-tight sm:text-3xl">
+          Escolha seu herói
+        </h2>
+        <p className="mt-1 text-center text-sm text-muted-foreground">
+          Toque em quem vai viajar com você pelos quatro mundos.
+        </p>
+        <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {HEROES.map((hero, index) => (
+            <motion.button
+              key={hero.id}
+              type="button"
+              onClick={() => {
+                softTap();
+                onPick(hero);
+              }}
+              initial={reduce ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reduce ? 0 : index * 0.05 }}
+              whileHover={reduce ? undefined : { scale: 1.06 }}
+              whileTap={reduce ? undefined : { scale: 0.94 }}
+              aria-pressed={current?.id === hero.id}
+              className={`flex min-h-[104px] flex-col items-center justify-center gap-1 rounded-2xl border-2 p-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${current?.id === hero.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/50"}`}
+            >
+              <span className="text-4xl" aria-hidden="true">
+                {hero.emoji}
+              </span>
+              <span className="text-xs font-bold">{hero.name}</span>
+            </motion.button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─────────────────────────────── Mapa dos mundos ───────────────────────────────
+function WorldMap({
+  hero,
+  age,
+  band,
+  results,
+  onEnter,
+}: {
+  hero: Hero;
+  age: number;
+  band: Band;
+  results: Partial<Record<Domain, DomainResult>>;
+  onEnter: (domain: Domain) => void;
+}) {
+  const reduce = useReducedMotion();
+  const doneCount = WORLD_ORDER.filter((d) => results[d]?.max).length;
+  const allDone = doneCount === WORLD_ORDER.length;
+
+  return (
+    <div className="space-y-4">
+      <AnimatePresence initial={false}>
+        {allDone && (
+          <motion.div
+            key="finale"
+            initial={reduce ? false : { opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="rounded-3xl border border-amber-300 bg-gradient-to-br from-amber-100 via-yellow-50 to-background p-5 text-center shadow-sm dark:border-amber-700 dark:from-amber-950/50 dark:via-amber-950/20"
+            role="status"
+          >
+            <div className="text-5xl" aria-hidden="true">
+              🏆
+            </div>
+            <h2 className="mt-2 text-xl font-black tracking-tight sm:text-2xl">
+              Aventura completa!
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {hero.emoji} {hero.name} visitou os quatro mundos. As quatro medalhas
+              são suas.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-wrap items-end justify-between gap-2 px-1">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            Mapa da aventura
+          </p>
+          <h2 className="text-xl font-black tracking-tight sm:text-2xl">
+            {allDone ? "Quer visitar um mundo de novo?" : "Para onde vamos agora?"}
+          </h2>
+        </div>
+        <Badge variant="outline" className="text-[11px]">
+          {doneCount}/{WORLD_ORDER.length} mundos · {ageProfileLabel(age, band)}
+        </Badge>
+      </div>
+
+      <ol className="grid gap-3 sm:grid-cols-2">
+        {WORLD_ORDER.map((domain, index) => {
+          const world = WORLDS[domain];
+          const done = Boolean(results[domain]?.max);
+          const phases = getQuestionsForAge(domain, age, band);
+          const phaseCount =
+            domain === "escrita" && (band === "A" || band === "B")
+              ? (ESCRITA_BANK[band][0] as ObsBlock).items.length
+              : phases.length;
+          return (
+            <li key={domain}>
+              <motion.button
+                type="button"
+                onClick={() => {
+                  softWhoosh();
+                  onEnter(domain);
+                }}
+                initial={reduce ? false : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: reduce ? 0 : index * 0.07 }}
+                whileHover={reduce ? undefined : { y: -3 }}
+                whileTap={reduce ? undefined : { scale: 0.98 }}
+                className={`relative flex w-full items-center gap-4 overflow-hidden rounded-3xl border bg-gradient-to-br p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-5 ${world.surface} ${done ? "border-amber-300 dark:border-amber-700" : "border-border/60"}`}
+              >
+                <span
+                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-4xl shadow-inner dark:bg-black/20"
+                  aria-hidden="true"
+                >
+                  {world.emoji}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Mundo {index + 1}
+                  </span>
+                  <span className={`block text-lg font-black leading-tight ${world.accent}`}>
+                    {world.name}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {world.tagline}
+                  </span>
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-[11px] font-bold">
+                    {done ? (
+                      <>
+                        <span aria-hidden="true">🏅</span> {world.badge}
+                      </>
+                    ) : (
+                      <>
+                        <MapIcon className="h-3 w-3" aria-hidden="true" /> {phaseCount}{" "}
+                        {domain === "escrita" && (band === "A" || band === "B")
+                          ? "missões"
+                          : "fases"}
+                      </>
+                    )}
+                  </span>
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              </motion.button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+// ─────────────────────────────── Trilha de fases ───────────────────────────────
+function PhaseTrail({ total, current }: { total: number; current: number }) {
+  return (
+    <ol
+      className="flex flex-wrap items-center gap-1.5"
+      aria-label={`Fase ${Math.min(current + 1, total)} de ${total}`}
+    >
+      {Array.from({ length: total }, (_, i) => {
+        const state = i < current ? "done" : i === current ? "now" : "next";
+        return (
+          <li
+            key={i}
+            aria-hidden="true"
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition ${
+              state === "done"
+                ? "bg-amber-300 text-amber-950"
+                : state === "now"
+                  ? "bg-primary text-primary-foreground ring-4 ring-primary/25 motion-safe:animate-pulse"
+                  : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {state === "done" ? "★" : i + 1}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// ─────────────────────────────── Fases (perguntas) ───────────────────────────────
+function QuestStage({
+  questions,
+  world,
+  hero,
+  onComplete,
+  onStar,
+}: {
+  questions: MCQ[];
+  world: WorldMeta;
+  hero: Hero;
+  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
+  onStar: () => void;
+}) {
+  const reduce = useReducedMotion();
+  const [idx, setIdx] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState<AnswerRecord[]>([]);
+  const [phase, setPhase] = useState<"question" | "registered">("question");
+  const nextRef = useRef<HTMLButtonElement>(null);
+
+  const q = questions[idx];
+  // Embaralha a ordem das alternativas por fase para que a resposta correta
+  // NÃO fique sempre na primeira posição. A ordem é estável durante a fase e é
+  // sorteada de novo a cada nova fase / a cada nova partida (o mundo remonta
+  // ao "Jogar de novo"). O registro compara o texto escolhido com q.answer.
+  const displayOptions = useMemo(() => {
+    const cur = questions[idx];
+    if (!cur) return [];
+    const a = [...cur.options];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }, [idx, questions]);
+
+  useEffect(() => {
+    if (phase === "registered") nextRef.current?.focus();
+  }, [phase]);
+
+  if (!q) return null;
+  const isLast = idx + 1 >= questions.length;
+
+  function pick(opt: string) {
+    if (phase !== "question") return;
+    softTap();
+    setSelected(opt);
+    setPhase("registered");
+    const ok = opt === q.answer;
+    if (ok) setScore((s) => s + 1);
+    setAnswers((a) => [
+      ...a,
+      { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok },
+    ]);
+    onStar();
+  }
+
+  function advance() {
+    if (isLast) {
+      softSuccess();
+      onComplete(score, questions.length, answers);
+      return;
+    }
+    softWhoosh();
+    setIdx((i) => i + 1);
+    setSelected(null);
+    setPhase("question");
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <PhaseTrail total={questions.length} current={idx} />
+        <Badge variant="outline" className="text-[11px]">
+          Fase {idx + 1} de {questions.length}
+        </Badge>
+      </div>
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={idx}
+          initial={reduce ? false : { opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduce ? undefined : { opacity: 0, x: -40 }}
+          transition={{ duration: 0.25 }}
+          className="space-y-4"
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-background/80 p-5 shadow-sm sm:p-6">
+            <span
+              className="pointer-events-none absolute -right-3 -top-3 text-6xl opacity-15"
+              aria-hidden="true"
+            >
+              {world.emoji}
+            </span>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              {hero.emoji} {hero.name} pergunta
+            </p>
+            <p
+              className={`relative mt-1 whitespace-pre-line leading-relaxed text-foreground ${q.big ? "text-center text-2xl font-black sm:text-3xl" : "text-base font-semibold sm:text-lg"}`}
+            >
+              {q.prompt}
+            </p>
+          </div>
+
+          <div
+            className={`grid gap-3 ${q.big ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"}`}
+            role="group"
+            aria-label="Alternativas"
+          >
+            {displayOptions.map((opt, i) => {
+              const chosen = phase === "registered" && opt === selected;
+              const dimmed = phase === "registered" && !chosen;
+              return (
+                <motion.button
+                  key={opt}
+                  type="button"
+                  onClick={() => pick(opt)}
+                  disabled={phase === "registered"}
+                  whileHover={reduce || phase !== "question" ? undefined : { scale: 1.02 }}
+                  whileTap={reduce || phase !== "question" ? undefined : { scale: 0.96 }}
+                  aria-pressed={chosen}
+                  className={`relative rounded-3xl border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default ${OPTION_TINTS[i % OPTION_TINTS.length]} ${chosen ? "border-primary ring-4 ring-primary/20" : ""} ${dimmed ? "opacity-40" : ""} ${q.big ? "flex min-h-[96px] items-center justify-center text-5xl sm:min-h-[120px] sm:text-6xl" : "min-h-[64px] text-base font-semibold"}`}
+                >
+                  <span>{opt}</span>
+                  {chosen && (
+                    <span
+                      className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground"
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {phase === "registered" && (
+          <motion.div
+            key="registered"
+            initial={reduce ? false : { opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-3 dark:border-amber-700 dark:bg-amber-950/30"
+            role="status"
+          >
+            <motion.span
+              className="text-3xl"
+              aria-hidden="true"
+              initial={reduce ? false : { rotate: -15, scale: 0.6 }}
+              animate={{ rotate: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 12 }}
+            >
+              ⭐
+            </motion.span>
+            <span className="text-sm font-bold text-amber-950 dark:text-amber-100">
+              {NEUTRAL_CHEERS[idx % NEUTRAL_CHEERS.length]}
+            </span>
+            <Button
+              ref={nextRef}
+              size="lg"
+              className="ml-auto gap-1.5 rounded-2xl font-black"
+              onClick={advance}
+            >
+              {isLast ? (
+                <>
+                  Concluir mundo <Flag className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Próxima fase <ChevronRight className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─────────────────────────────── Missão de observação ───────────────────────────────
+// Escrita nas bandas A e B (2–5 anos) não tem alternativa para a criança tocar:
+// é uma lista do que o adulto observa. No jogo vira "missão do guia".
+function ObsQuest({
+  block,
+  world,
+  onComplete,
+  onStar,
+}: {
+  block: ObsBlock;
+  world: WorldMeta;
+  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
+  onStar: () => void;
+}) {
+  const [marks, setMarks] = useState<boolean[]>(Array(block.items.length).fill(false));
+
+  function toggle(i: number) {
+    softTap();
+    setMarks((prev) => {
+      const n = [...prev];
+      n[i] = !n[i];
+      return n;
+    });
+  }
+
+  function finish() {
+    const score = marks.filter(Boolean).length;
+    const records: AnswerRecord[] = block.items.map((it, i) => ({
+      prompt: it.label,
+      selected: marks[i] ? "Observado" : "Não observado",
+      isCorrect: Boolean(marks[i]),
+    }));
+    softSuccess();
+    // Uma estrela pela missão inteira: as estrelas medem participação, não
+    // quantos itens foram marcados.
+    onStar();
+    onComplete(score, block.items.length, records);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-border/70 bg-background/80 p-5 shadow-sm">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Missão do guia <span aria-hidden="true">🧭</span>
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-foreground">{block.intro}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          O adulto marca o que a criança mostrou durante a brincadeira no{" "}
+          {world.name}.
+        </p>
+      </div>
+      <ul className="space-y-2">
+        {block.items.map((item, i) => (
+          <li key={i}>
+            <button
+              type="button"
+              onClick={() => toggle(i)}
+              aria-pressed={marks[i]}
+              className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${marks[i] ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg ${marks[i] ? "bg-amber-300" : "bg-muted"}`}
+                aria-hidden="true"
+              >
+                {marks[i] ? "✨" : "·"}
+              </span>
+              <span className="text-sm font-medium text-foreground">{item.label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <Button size="lg" className="w-full gap-1.5 rounded-2xl font-black" onClick={finish}>
+        Concluir missão <Flag className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
+// ─────────────────────────────── Um mundo ───────────────────────────────
 const DOMAIN_LABELS: Record<Domain, string> = {
   visual: "Reconhecimento Visual",
   leitura: "Leitura",
@@ -1979,195 +2386,249 @@ const DOMAIN_LABELS: Record<Domain, string> = {
   aritmetica: "Aritmética",
 };
 
-function DomainModule({
+function WorldScreen({
   domain,
   age,
   band,
-  onComplete,
+  hero,
   result,
+  onComplete,
+  onStar,
+  onBackToMap,
 }: {
   domain: Domain;
   age: number;
   band: Band;
-  onComplete: (r: DomainResult) => void;
+  hero: Hero;
   result?: DomainResult;
+  onComplete: (r: DomainResult) => void;
+  onStar: () => void;
+  onBackToMap: () => void;
 }) {
-  const [started, setStarted] = useState(false);
-  const [reset, setReset] = useState(0);
-
+  const reduce = useReducedMotion();
+  const world = WORLDS[domain];
+  const [playing, setPlaying] = useState(false);
+  const [round, setRound] = useState(0);
+  const [leaving, setLeaving] = useState(false);
   const bank = getQuestionsForAge(domain, age, band);
+  const isObs = domain === "escrita" && (band === "A" || band === "B");
 
   const handleComplete = useCallback(
     (score: number, max: number, answers: AnswerRecord[]) => {
       onComplete({ domain, label: DOMAIN_LABELS[domain], score, max, answers });
+      setPlaying(false);
     },
     [domain, onComplete],
   );
 
-  if (result && !started) {
-    return (
-      <div className="space-y-3">
-        <Card className="border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" /> {result.label} — concluído
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Todas as perguntas e respostas deste módulo foram registradas.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1 text-xs"
-              onClick={() => {
-                setStarted(false);
-                setReset((r) => r + 1);
-                onComplete({
-                  domain,
-                  label: DOMAIN_LABELS[domain],
-                  score: 0,
-                  max: 0,
-                  answers: [],
-                });
-              }}
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Refazer
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!started) {
-    const descriptions: Record<Domain, string> = {
-      visual:
-        "Tarefas de reconhecimento de objetos, padrões, letras e raciocínio visual adaptadas à faixa etária.",
-      leitura:
-        "Avaliação de habilidades de leitura — consciência fonológica, decodificação e compreensão de texto.",
-      escrita:
-        band <= "B"
-          ? "Lista de observação das habilidades de pré-escrita. Marque o que a criança demonstra."
-          : "Tarefas de ortografia, gramática e estrutura textual adequadas à idade e à escolarização.",
-      aritmetica:
-        "Operações matemáticas, raciocínio numérico e resolução de problemas por nível de escolaridade.",
-    };
-    return (
-      <div className="space-y-3 text-center py-4">
-        <p className="text-sm text-muted-foreground">{descriptions[domain]}</p>
-        <Button onClick={() => setStarted(true)} className="gap-2">
-          Iniciar módulo <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  }
-
-  // escrita Band A or B → observation checklist
-  if (domain === "escrita" && (band === "A" || band === "B")) {
-    const block = ESCRITA_BANK[band][0] as ObsBlock;
-    return <ObsModule key={reset} block={block} onComplete={handleComplete} />;
+  function playAgain() {
+    onComplete({ domain, label: DOMAIN_LABELS[domain], score: 0, max: 0, answers: [] });
+    setRound((r) => r + 1);
+    setLeaving(false);
+    setPlaying(true);
   }
 
   return (
-    <QuizModule
-      key={reset}
-      questions={bank as MCQ[]}
-      onComplete={handleComplete}
-    />
+    <motion.section
+      initial={reduce ? false : { opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`rounded-3xl border border-border/60 bg-gradient-to-br p-4 shadow-sm sm:p-6 ${world.surface}`}
+      aria-labelledby={`world-${domain}-title`}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-4xl" aria-hidden="true">
+          {world.emoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            {DOMAIN_LABELS[domain]}
+          </p>
+          <h2 id={`world-${domain}-title`} className={`text-xl font-black leading-tight sm:text-2xl ${world.accent}`}>
+            {world.name}
+          </h2>
+        </div>
+        {playing ? (
+          leaving ? (
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-background/90 p-1.5" role="alertdialog" aria-label="Sair do mundo apaga as respostas desta partida">
+              <span className="px-1 text-xs text-muted-foreground">Sair apaga esta partida.</span>
+              <Button size="sm" variant="destructive" onClick={onBackToMap}>
+                Sair
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setLeaving(false)}>
+                Ficar
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="ghost" className="gap-1" onClick={() => setLeaving(true)}>
+              <ArrowLeft className="h-4 w-4" /> Mapa
+            </Button>
+          )
+        ) : (
+          <Button size="sm" variant="ghost" className="gap-1" onClick={onBackToMap}>
+            <ArrowLeft className="h-4 w-4" /> Mapa
+          </Button>
+        )}
+      </div>
+
+      <div className="mt-4">
+        {result && !playing ? (
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl border border-amber-300 bg-background/85 p-5 text-center dark:border-amber-700"
+            role="status"
+          >
+            <motion.div
+              className="text-6xl"
+              aria-hidden="true"
+              initial={reduce ? false : { scale: 0.4, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 14 }}
+            >
+              🏅
+            </motion.div>
+            <p className="mt-2 text-lg font-black">Medalha conquistada: {world.badge}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {hero.emoji} {hero.name} explorou o {world.name} inteiro. Todas as
+              respostas ficaram registradas para o profissional.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button className="gap-1.5 rounded-2xl font-black" onClick={onBackToMap}>
+                <MapIcon className="h-4 w-4" /> Voltar ao mapa
+              </Button>
+              <Button variant="outline" className="gap-1.5 rounded-2xl" onClick={playAgain}>
+                <RotateCcw className="h-4 w-4" /> Jogar de novo
+              </Button>
+            </div>
+          </motion.div>
+        ) : !playing ? (
+          <div className="rounded-3xl border border-border/70 bg-background/85 p-5 text-center">
+            <p className="text-base font-semibold">{world.tagline}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isObs
+                ? `${(ESCRITA_BANK[band][0] as ObsBlock).items.length} missões para o guia observar.`
+                : `${bank.length} fases. Toque na resposta e siga para a próxima.`}
+            </p>
+            <Button
+              size="lg"
+              className="mt-4 gap-1.5 rounded-2xl font-black"
+              onClick={() => {
+                softWhoosh();
+                setPlaying(true);
+              }}
+            >
+              <Play className="h-4 w-4" /> Começar
+            </Button>
+          </div>
+        ) : isObs ? (
+          <ObsQuest
+            key={round}
+            block={ESCRITA_BANK[band][0] as ObsBlock}
+            world={world}
+            onComplete={handleComplete}
+            onStar={onStar}
+          />
+        ) : (
+          <QuestStage
+            key={round}
+            questions={bank as MCQ[]}
+            world={world}
+            hero={hero}
+            onComplete={handleComplete}
+            onStar={onStar}
+          />
+        )}
+      </div>
+    </motion.section>
   );
 }
 
 // ─────────────────────────────── MAIN PAGE ───────────────────────────────
-const DOMAINS: {
-  id: Domain;
-  label: string;
-  icon: typeof Eye;
-  color: string;
-}[] = [
-  { id: "visual", label: "Visual", icon: Eye, color: "text-violet-600" },
-  { id: "leitura", label: "Leitura", icon: BookOpen, color: "text-blue-600" },
-  { id: "escrita", label: "Escrita", icon: PenTool, color: "text-amber-600" },
-  {
-    id: "aritmetica",
-    label: "Aritmética",
-    icon: Calculator,
-    color: "text-emerald-600",
-  },
-];
-
 export default function TestesCognitivosFaixaEtariaPage() {
   const [ageStr, setAgeStr] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [activeDomain, setActiveDomain] = useState<Domain>("visual");
-  const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>(
-    {},
-  );
+  const [hero, setHero] = useState<Hero | null>(null);
+  const [screen, setScreen] = useState<"hero" | "map" | "world">("hero");
+  const [activeWorld, setActiveWorld] = useState<Domain>("visual");
+  const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>({});
+  const [stars, setStars] = useState(0);
+  const [proOpen, setProOpen] = useState(false);
+  const celebratedRef = useRef(false);
 
   const age = parseInt(ageStr, 10);
   const validAge = !isNaN(age) && age >= 2 && age <= 19;
   const band: Band | null = validAge ? getBand(age) : null;
 
-  function handleResult(r: DomainResult) {
-    if (r.max === 0) {
-      setResults((prev) => {
-        const n = { ...prev };
-        delete n[r.domain];
-        return n;
-      });
-    } else {
-      setResults((prev) => ({ ...prev, [r.domain]: r }));
-    }
-  }
+  const handleResult = useCallback((r: DomainResult) => {
+    setResults((prev) => {
+      const n = { ...prev };
+      if (r.max === 0) delete n[r.domain];
+      else n[r.domain] = r;
+      return n;
+    });
+  }, []);
+  const addStar = useCallback(() => setStars((s) => s + 1), []);
 
-  const completedDomains = Object.values(results).filter((r) => r && r.max > 0);
+  const completedDomains = WORLD_ORDER.map((d) => results[d]).filter(
+    (r): r is DomainResult => Boolean(r && r.max > 0),
+  );
+  const badges = completedDomains.map((r) => r.domain);
+  const allDone = completedDomains.length === WORLD_ORDER.length;
+
+  useEffect(() => {
+    if (allDone && !celebratedRef.current) {
+      celebratedRef.current = true;
+      celebrate();
+    }
+    if (!allDone) celebratedRef.current = false;
+  }, [allDone]);
+
   const reportItems = completedDomains.flatMap((result) =>
-    result!.answers.map((answer) => ({
-      question: `[${result!.label}] ${answer.prompt}`,
+    result.answers.map((answer) => ({
+      question: `[${result.label}] ${answer.prompt}`,
       answer: answer.selected ?? "Não respondida",
     })),
   );
 
+  function resetAdventure() {
+    setConfirmed(false);
+    setResults({});
+    setStars(0);
+    setScreen("hero");
+  }
+
   return (
     <div className="space-y-5 pb-8">
-      {/* Header */}
-      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 sm:p-6 shadow-sm backdrop-blur">
+      {/* Header do profissional */}
+      <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 shadow-sm backdrop-blur sm:p-6">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-gradient-to-tr from-blue-400/20 to-transparent blur-3xl"
         />
         <div className="relative flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-600/25 ring-1 ring-white/20">
             <Brain className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <Badge className="mb-2 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300 hover:bg-violet-100">
+            <Badge className="mb-2 rounded-full bg-violet-100 text-violet-700 hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300">
               testes cognitivos por faixa etária · 2–19 anos
             </Badge>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Testes Cognitivos por Faixa Etária
             </h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Bateria enxuta adaptada por idade: 4 itens em cada área —
-              reconhecimento visual, leitura, escrita e aritmética — com
-              dificuldade progressiva e relatório qualitativo ao final. Triagem
-              educativa — não substitui avaliação psicométrica formal.
+              Aventura em quatro mundos — reconhecimento visual, leitura, escrita e
+              aritmética — com 4 fases por mundo, adaptadas à idade. A criança ganha
+              estrelas por participar e medalhas por concluir; nada na tela mostra
+              acerto ou erro. O profissional recebe o registro pergunta a pergunta.
+              Triagem educativa — não substitui avaliação psicométrica formal.
             </p>
           </div>
         </div>
 
-        {/* Age input */}
-        <div className="mt-4 flex items-end gap-3 flex-wrap">
+        <div className="relative mt-4 flex flex-wrap items-end gap-3">
           <div>
-            <label
-              htmlFor="idade-av"
-              className="text-xs font-semibold text-muted-foreground block mb-1"
-            >
+            <label htmlFor="idade-av" className="mb-1 block text-xs font-semibold text-muted-foreground">
               Idade da criança (anos)
             </label>
             <Input
@@ -2176,23 +2637,29 @@ export default function TestesCognitivosFaixaEtariaPage() {
               value={ageStr}
               onChange={(e) => {
                 setAgeStr(e.target.value.replace(/\D/g, "").slice(0, 2));
-                setConfirmed(false);
-                setResults({});
+                resetAdventure();
               }}
               placeholder="ex.: 7"
               className="h-9 w-24"
             />
           </div>
-          <Button
-            size="sm"
-            disabled={!validAge}
-            onClick={() => {
-              setConfirmed(true);
-              setActiveDomain("visual");
-            }}
-          >
-            Iniciar avaliação
-          </Button>
+          {!confirmed ? (
+            <Button
+              size="sm"
+              disabled={!validAge}
+              className="gap-1.5"
+              onClick={() => {
+                setConfirmed(true);
+                setScreen(hero ? "map" : "hero");
+              }}
+            >
+              <Play className="h-4 w-4" /> Iniciar aventura
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={resetAdventure}>
+              <RotateCcw className="h-4 w-4" /> Reiniciar aventura
+            </Button>
+          )}
           {band && confirmed && (
             <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
               {ageProfileLabel(age, band)}
@@ -2201,93 +2668,121 @@ export default function TestesCognitivosFaixaEtariaPage() {
         </div>
       </header>
 
-      {/* Assessment */}
+      {/* Jogo */}
       {confirmed && band && (
         <>
-          {/* Domain tabs */}
-          <nav
-            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-            aria-label="Módulos de avaliação"
-          >
-            {DOMAINS.map((d) => {
-              const Icon = d.icon;
-              const isActive = activeDomain === d.id;
-              const done = Boolean(results[d.id]?.max);
-              return (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setActiveDomain(d.id)}
-                  aria-pressed={isActive}
-                  className={`group flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl border p-3 text-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] ${isActive ? "border-primary bg-gradient-to-br from-primary/15 to-primary/[0.04] shadow-sm" : "border-border bg-background hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"}`}
-                >
-                  <Icon
-                    className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-primary" : d.color}`}
-                  />
-                  <span className="text-[12px] font-bold text-foreground">
-                    {d.label}
-                  </span>
-                  {done && (
-                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                      ✓ feito
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Active domain */}
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                {(() => {
-                  const d = DOMAINS.find((x) => x.id === activeDomain)!;
-                  const Icon = d.icon;
-                  return <Icon className={`h-5 w-5 ${d.color}`} />;
-                })()}
-                <h2 className="text-base font-bold text-foreground">
-                  {DOMAINS.find((x) => x.id === activeDomain)?.label}
-                </h2>
-                <Badge variant="outline" className="ml-auto text-[11px]">
-                  {ageProfileLabel(age, band)}
-                </Badge>
-              </div>
-              <DomainModule
-                key={`${activeDomain}-${age}-${band}`}
-                domain={activeDomain}
-                age={age}
-                band={band}
-                onComplete={handleResult}
-                result={results[activeDomain]}
-              />
-            </CardContent>
-          </Card>
-
-          {completedDomains.length > 0 && (
-            <div className="space-y-4">
-              <ClinicalReport
-                scaleName="Testes Cognitivos por Faixa Etária"
-                scaleFullName="Reconhecimento visual, leitura, escrita e aritmética"
-                items={reportItems}
-                patientAge={band ? ageProfileLabel(age, band) : undefined}
-              />
-              <SaveToPatient
-                scaleName="Testes Cognitivos por Faixa Etária"
-                responses={reportItems}
-                patientAge={band ? ageProfileLabel(age, band) : undefined}
-              />
-            </div>
+          {hero && screen !== "hero" && (
+            <AdventureHud
+              hero={hero}
+              stars={stars}
+              badges={badges}
+              onChangeHero={() => setScreen("hero")}
+            />
           )}
+
+          {screen === "hero" && (
+            <HeroPicker
+              current={hero}
+              onPick={(picked) => {
+                setHero(picked);
+                setScreen("map");
+              }}
+            />
+          )}
+
+          {screen === "map" && hero && (
+            <WorldMap
+              hero={hero}
+              age={age}
+              band={band}
+              results={results}
+              onEnter={(domain) => {
+                setActiveWorld(domain);
+                setScreen("world");
+              }}
+            />
+          )}
+
+          {screen === "world" && hero && (
+            <WorldScreen
+              key={`${activeWorld}-${age}-${band}`}
+              domain={activeWorld}
+              age={age}
+              band={band}
+              hero={hero}
+              result={results[activeWorld]}
+              onComplete={handleResult}
+              onStar={addStar}
+              onBackToMap={() => setScreen("map")}
+            />
+          )}
+
+          {/* Área do profissional */}
+          <section className="rounded-3xl border border-border/60 bg-card/70" aria-labelledby="pro-area-title">
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-5"
+              aria-expanded={proOpen}
+              aria-controls="pro-area"
+              onClick={() => setProOpen((o) => !o)}
+            >
+              <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <span id="pro-area-title" className="block text-sm font-bold">
+                  Área do profissional
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {completedDomains.length === 0
+                    ? "O registro aparece aqui assim que um mundo for concluído."
+                    : `${completedDomains.length} de ${WORLD_ORDER.length} mundos registrados · ${reportItems.length} itens`}
+                </span>
+              </span>
+              <ChevronRight
+                className={`h-4 w-4 text-muted-foreground transition-transform ${proOpen ? "rotate-90" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+            {proOpen && (
+              <div id="pro-area" className="space-y-4 border-t border-border/60 p-4 sm:p-5">
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Estrelas contam respostas registradas e medalhas contam mundos
+                  concluídos: são marcadores de participação, não escores. O registro
+                  abaixo traz cada pergunta e a resposta escolhida pela criança
+                  (ou o que o guia observou), sem pontuação, percentil ou
+                  interpretação diagnóstica.
+                </p>
+                {completedDomains.length > 0 ? (
+                  <>
+                    <ClinicalReport
+                      scaleName="Testes Cognitivos por Faixa Etária"
+                      scaleFullName="Reconhecimento visual, leitura, escrita e aritmética"
+                      items={reportItems}
+                      patientAge={ageProfileLabel(age, band)}
+                    />
+                    <SaveToPatient
+                      scaleName="Testes Cognitivos por Faixa Etária"
+                      responses={reportItems}
+                      patientAge={ageProfileLabel(age, band)}
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum mundo concluído ainda.</p>
+                )}
+              </div>
+            )}
+          </section>
         </>
       )}
 
       {!confirmed && (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
-          <Brain className="h-8 w-8 text-muted-foreground mx-auto" />
+        <div className="space-y-2 rounded-3xl border border-dashed border-border p-8 text-center">
+          <div className="text-4xl" aria-hidden="true">
+            🗺️
+          </div>
           <p className="text-sm text-muted-foreground">
-            Digite a idade da criança (2–19 anos) e clique em{" "}
-            <strong>Iniciar avaliação</strong> para ver a bateria adaptada.
+            Digite a idade da criança (2–19 anos) e toque em{" "}
+            <strong>Iniciar aventura</strong>. A criança escolhe um herói e explora os
+            quatro mundos na ordem que quiser.
           </p>
         </div>
       )}
