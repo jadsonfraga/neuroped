@@ -6,14 +6,14 @@ on:
       - 'client/src/features/obs10/**'
       - 'client/src/pages/pre-consulta-obs10.tsx'
       - 'tests/unit/obs10-tablet.test.ts'
-      - 'tests/e2e/obs10-tablet.mjs'
+      - 'tests/e2e/obs10-tablet*.mjs'
       - '.github/workflows/obs10-tablet.yml'
   push:
     branches: [main]
     paths:
       - 'client/src/features/obs10/**'
       - 'tests/unit/obs10-tablet.test.ts'
-      - 'tests/e2e/obs10-tablet.mjs'
+      - 'tests/e2e/obs10-tablet*.mjs'
       - '.github/workflows/obs10-tablet.yml'
 permissions:
   contents: read
@@ -45,6 +45,10 @@ jobs:
         env:
           OBS10_TABLET_ARTIFACT_DIR: /tmp/obs10-tablet
         run: node tests/e2e/obs10-tablet.mjs
+      - name: Tablet camera, real media, interruptions and absolute deadline
+        env:
+          OBS10_TABLET_ARTIFACT_DIR: /tmp/obs10-tablet
+        run: node tests/e2e/obs10-tablet-media.mjs
       - name: Preserve synthetic proof and failures
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
