@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { AGE_BANDS } from "../../client/src/features/obs10/protocol";
-import { tabletPlan, TABLET_VERSION, TABLET_LIMITS } from "../../client/src/features/obs10/tablet/protocol";
-import { tabletReducer as reduce, initialTabletState, parseTabletRecord, drawingStrokes, tabletText, type TabletState, type TabletRecord } from "../../client/src/features/obs10/tablet/engine";
+import { tabletPlan, plannedSeconds, TABLET_VERSION, TABLET_LIMITS } from "../../client/src/features/obs10/tablet/protocol";
+import { tabletReducer as reduce, initialTabletState, parseTabletRecord, drawingStrokes, tabletText, pendingDescriptions, type TabletState, type TabletRecord } from "../../client/src/features/obs10/tablet/engine";
 
 function ready(): TabletState { let s = initialTabletState(); for (let i = 0; i < 3; i++) s = reduce(s, { type: "next-setup" }); return s; }
 function started(months = 42): TabletState { return reduce(ready(), { type: "start", context: { code: "FICTICIO", months, schooling: "", communication: "", conditions: "" }, camera: "external", sessionId: "sessao-sintetica" }); }
@@ -11,12 +11,39 @@ for (const band of AGE_BANDS) {
   const p = tabletPlan(band.min)!; assert.equal(p.bandId, band.id);
   assert.equal(new Set(p.tasks.map((t) => t.id)).size, p.tasks.length);
   assert.ok(p.tasks.every((t) => t.command && t.prepare && t.observe && t.caution));
-  assert.ok(p.tasks.length >= 6 && p.tasks.length <= 8);
+  assert.ok(p.tasks.length >= 6 && p.tasks.length <= 10);
   if (band.min < 24) { assert.equal(p.childScreen, false); assert.ok(p.tasks.every((t) => t.kind === "quiet")); }
+  // Pacing is guidance that has to fit inside the hard limit; it never replaces the controller's 600 s.
+  assert.ok(p.tasks.every((t) => Number.isInteger(t.seconds) && t.seconds > 0 && t.seconds <= 120), band.id);
+  assert.ok(plannedSeconds(p) <= 600, `${band.id}: suggested pacing must fit the absolute limit`);
+  assert.ok(plannedSeconds(p) <= 585, `${band.id}: keep slack for refusal, pauses and note taking`);
   for (const t of p.tasks) {
     if (t.memory) { assert.equal(t.kind, "quiet"); assert.equal(t.text, undefined); assert.equal(t.scene, undefined); }
     if (t.model) assert.equal(t.kind, "drawing");
+    // Multi-step proposals stay operator-side: a child surface would leak the script.
+    if (t.steps) { assert.equal(t.kind, "quiet"); assert.ok(t.steps.length >= 3); }
   }
+  const movement = p.tasks.find((t) => t.id.endsWith(":movement"));
+  const rule = p.tasks.find((t) => t.id.endsWith(":rule"));
+  assert.equal(Boolean(movement), band.min >= 60, `${band.id}: camera-observed movement only from five years`);
+  assert.equal(Boolean(rule), band.min >= 60, `${band.id}: oral rule only from five years`);
+  if (movement) {
+    assert.equal(movement.kind, "quiet", "movement is observed by the camera, never a screen stimulus");
+    assert.match(movement.caution, /Omita/, "unsafe movement must have an explicit omission path");
+    assert.ok(movement.steps?.some((line) => /vire e volte/.test(line)) && movement.steps.some((line) => /um pé/.test(line)));
+    assert.ok(p.limitations.some((text) => text.includes("observados pela câmera")));
+    assert.ok(!p.limitations.some((text) => text.includes("não são propostos neste modo")));
+  } else {
+    assert.ok(p.limitations.some((text) => text.includes("não são propostos neste modo")), `${band.id}: absent movement must be declared`);
+  }
+  if (rule) {
+    assert.equal(rule.kind, "quiet", "the rule is spoken; no word of it may reach the child screen");
+    assert.equal(rule.text, undefined); assert.equal(rule.scene, undefined);
+    assert.match(rule.caution, /apenas oral/);
+  }
+  // Ball, real manipulation and pencil grip are never claimed, with or without the movement proposal.
+  assert.ok(p.limitations.some((text) => text.includes("Chute e recepção de bola")));
+  assert.ok(p.limitations.some((text) => text.includes("Manipulação de objetos reais")));
   const encoding = p.tasks.findIndex((t) => t.memory === "encoding");
   if (encoding >= 0) {
     const recall = p.tasks.findIndex((t) => t.memory === "recall");
@@ -24,7 +51,7 @@ for (const band of AGE_BANDS) {
     for (const t of p.tasks.slice(encoding + 1, recall)) {
       assert.equal(t.text, undefined, "no reading cue between encoding and recall");
       assert.equal(t.scene, undefined, "no supplied picture cue during the interval");
-      assert.ok(!/\b(casa|gato|pão)\b/iu.test(t.command), "intervening commands do not repeat targets");
+      assert.ok(!/\b(casa|gato|pão)\b/iu.test([t.command, ...(t.steps ?? [])].join(" ")), "intervening commands and steps do not repeat targets");
     }
   }
   assert.ok(p.limitations.some((text) => text.includes("Preensão")));
@@ -68,14 +95,51 @@ for (const t of tabletPlan(42)!.tasks) {
     assert.equal(all.record!.events.filter((e) => e.taskId === t.id && e.type === "select").length, 2, "retain repeated inputs rather than turn them into scores");
   }
   all = reduce(all, { type: "response" });
-  assert.equal(reduce(all, { type: "save", outcome: "E", note: "" }).phase, "response");
+  // Deliberate alignment with the in-person rule: the category advances, the description is completed in review.
+  // A category is still mandatory, and the pending description is tracked instead of being invented.
+  const onlyCategory = reduce(all, { type: "save", outcome: "E", note: "" });
+  assert.notEqual(onlyCategory.phase, "response", "marking the category must let the applicator move on");
+  assert.equal(onlyCategory.record!.observations.at(-1)!.note, "", "no description is fabricated on the way out");
+  assert.ok(pendingDescriptions(onlyCategory.record!).includes(t.id), "the missing description stays counted");
+  assert.equal(reduce(all, { type: "save", outcome: "X" as never, note: "" }).phase, "response", "a category is still required");
   all = reduce(all, { type: "save", outcome: "E", note: "Descrição fictícia da tentativa; não é dado de paciente." });
 }
 assert.equal(all.phase, "review"); assert.equal(all.record!.observations.length, 8); assert.deepEqual(parseTabletRecord(JSON.stringify(all.record)), all.record);
 assert.match(tabletText(all.record!), /sem equivalência/);
 assert.ok(!tabletText(all.record!).includes("Marcha normal"));
-let skipped = started(); skipped = reduce(skipped, { type: "skip", reason: "Não houve oportunidade nesta simulação." });
+let skipped = started();
+assert.equal(reduce(skipped, { type: "skip", reason: "   " }).phase, "cue", "an omission without its reason is never recorded");
+assert.match(reduce(skipped, { type: "skip", reason: "" }).error, /por que não aplicou/);
+skipped = reduce(skipped, { type: "skip", reason: "Não houve oportunidade nesta simulação." });
 assert.equal(skipped.record!.observations[0].attempted, false); assert.equal(skipped.record!.observations[0].outcome, "NA");
+// A record whose descriptions are pending must say so in the summary handed to the doctor.
+const partial = reduce(reduce(reduce(started(), { type: "show" }), { type: "response" }), { type: "save", outcome: "V", note: "" });
+assert.equal(pendingDescriptions(partial.record!).length, 1);
+assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 atividade/);
+assert.match(tabletText(all.record!), /Todas as atividades registradas possuem descrição/);
+// Saturating the event log must never mint an observation whose opening cannot be traced: the module
+// would otherwise export a record its own validator rejects.
+const drawingAt = tabletPlan(60)!.tasks.findIndex((t) => t.kind === "drawing");
+let saturating = started(60);
+for (let i = 0; i < drawingAt; i++) {
+  saturating = reduce(saturating, { type: "show" });
+  saturating = reduce(saturating, { type: "response" });
+  saturating = reduce(saturating, { type: "save", outcome: "E", note: "" });
+}
+saturating = reduce(saturating, { type: "show" });
+assert.equal(saturating.phase, "child");
+// One point per stroke keeps the coordinate ceiling far away, so the event ceiling is what saturates.
+for (let i = 0; i < 1600 && !saturating.record!.eventLimitReached; i++) saturating = reduce(saturating, { type: "input", event: "stroke", value: [{ x: .5, y: .5 }] });
+assert.equal(saturating.record!.eventLimitReached, true, "the drill must actually reach saturation");
+saturating = reduce(saturating, { type: "response" });
+saturating = reduce(saturating, { type: "save", outcome: "E", note: "" });
+assert.equal(saturating.phase, "cue", "the applicator still reaches the next card");
+const blocked = reduce(saturating, { type: "show" });
+assert.equal(blocked.record!.observations.length, saturating.record!.observations.length, "a dropped opening event cannot leave an untraceable observation behind");
+assert.equal(blocked.phase, "cue", "saturation does not hand the child an activity that will not be recorded");
+assert.match(blocked.error, /Limite de interações atingido/);
+const ended = reduce(blocked, { type: "end", second: 120, reason: "Saturação sintética" });
+assert.deepEqual(parseTabletRecord(JSON.stringify(ended.record)), ended.record, "a saturated record still re-imports");
 const invalid = (change: (r: TabletRecord) => void) => { const r = structuredClone(all.record!); change(r); assert.throws(() => parseTabletRecord(JSON.stringify(r))); };
 invalid((r) => { r.context.months = 6; });
 invalid((r) => { r.observations.push(r.observations[0]); });

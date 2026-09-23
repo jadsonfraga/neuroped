@@ -3,8 +3,8 @@ import { OUTCOMES, clock } from "../protocol";
 import { sessionElapsed } from "../safety";
 import { useExitGuard } from "../useExitGuard";
 import { useLocalRecorder } from "../useLocalRecorder";
-import { initialTabletState, isCollecting, tabletReducer, parseTabletRecord, tabletText, drawingStrokes, type TabletAction, type TabletContext, type TabletOutcome } from "./engine";
-import { tabletPlan, TABLET_LIMITS, TABLET_VERSION } from "./protocol";
+import { initialTabletState, isCollecting, tabletReducer, parseTabletRecord, tabletText, drawingStrokes, pendingDescriptions, type TabletAction, type TabletContext, type TabletOutcome } from "./engine";
+import { tabletPlan, plannedSeconds, TABLET_LIMITS, TABLET_VERSION } from "./protocol";
 import { HearTabletHelp, TabletStimulus } from "./Stimulus";
 import { DrawingPreview } from "./DrawingPreview";
 import { TABLET_STYLE } from "./style";
@@ -50,6 +50,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   const age = ageValid ? Number(years) * 12 + Number(months) : -1;
   const plan = tabletPlan(state.record?.context.months ?? age);
   const task = plan?.tasks[state.cursor];
+  const pending = state.record ? pendingDescriptions(state.record) : [];
   const payload = state.record ? JSON.stringify(state.record, null, 2) : "";
   const summary = state.record ? tabletText(state.record) : "";
   const jsonCurrent = Boolean(payload) && savedJson === payload;
@@ -153,12 +154,17 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     </section>}
     {state.phase === "ready" && <section className="ot-card">
       <p><strong>{plan?.bandLabel} · {plan?.tasks.length} atividades digitais ou de interação.</strong></p><p>Diga ao responsável: “Não é prova nem nota. Fique perto sem dar dicas. Podemos parar a qualquer momento.”</p>
+      {plan && <p className="ot-pacing">Ritmo sugerido do roteiro: cerca de {Math.round(plannedSeconds(plan) / 60)} min dentro do limite de 10. A folga existe para acolher recusa, pausa e anotação; não é meta a cumprir.</p>}
+      {plan?.tasks.some((t) => t.id.endsWith(":movement")) && <p>Uma das atividades pede espaço livre para caminhar e o tablet apoiado de pé, mostrando o corpo inteiro. Confira o espaço antes de começar.</p>}
       <p>Preparação encerrada. A partir do próximo botão, transições e anotações contam no limite de dez minutos, sem pausa. Não sair do aplicativo nem bloquear a tela.</p><p>{camera === "integrated" ? "A câmera frontal será iniciada após sua autorização." : "Inicie agora a câmera externa e mantenha este tablet no roteiro."}</p>
       <div className="ot-actions"><button type="button" disabled={starting} onClick={() => dispatch({ type: "back-setup" })}>Voltar ao ensaio</button><button type="button" className="ot-primary" disabled={starting || media.pending} onClick={() => { void start(); }}>Iniciar observação de até 10 minutos</button></div>
       {(starting || media.pending) && <button type="button" onClick={() => { invalidateTicket(); setStarting(false); media.cancel(); }}>Cancelar início</button>}
     </section>}
     {state.phase === "cue" && task && <section className="ot-card" data-testid="tablet-cue">
-      <p className="ot-badge">SOMENTE PARA O APLICADOR</p><h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p><h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
+      <p className="ot-badge">SOMENTE PARA O APLICADOR</p><p className="ot-pacing">Sugestão de ritmo: até {task.seconds}s nesta atividade. É orientação, não prazo: não interrompa uma tentativa em curso nem repita para preencher o tempo.</p>
+      <h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p>
+      {task.steps && <ol className="ot-steps">{task.steps.map((line) => <li key={line}>{line}</li>)}</ol>}
+      <h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
       <p>{task.kind === "quiet" ? "Sem objeto e sem estímulo visual. Ao iniciar, mantenha a interação natural." : "O próximo botão abre somente o recurso necessário, dentro desta mesma tela. Não há impressão ou troca de aplicativo."}</p>
       <div className="ot-actions"><button type="button" className="ot-primary" onClick={() => apply({ type: "show" })}>{task.kind === "quiet" ? "Iniciar esta interação" : "Abrir atividade para a criança"}</button></div>
       <details><summary>Não posso aplicar esta atividade</summary><label>Motivo da não aplicação<textarea value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} /></label><button type="button" onClick={() => { apply({ type: "skip", reason: note }); if (note.trim()) { setNote(""); setOutcome(""); } }}>Registrar motivo e seguir</button></details>
@@ -169,11 +175,13 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <fieldset className="ot-outcomes"><legend>Como aconteceu?</legend>{OUTCOMES.map((o) => <button key={o.id} type="button" aria-pressed={outcome === o.id} onClick={() => setOutcome(o.id)}>{o.label}</button>)}</fieldset>
       {outcome && <p className="ot-info">{OUTCOMES.find((o) => o.id === outcome)?.description}</p>}
       <label>O que você viu ou ouviu? Inclua ajuda e limitações.<textarea value={note} maxLength={2000} onChange={(e) => { setNote(e.target.value); apply({ type: "amend", taskId: task.id, note: e.target.value }); }} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
-      <button type="button" className="ot-primary" disabled={!outcome || !note.trim()} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>Salvar resposta e continuar</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
+      <p className="ot-pacing">Marque a categoria agora e siga. A descrição pode ser completada na revisão, sem pressa e sem a criança esperando; ela nunca é preenchida por suposição.</p>
+      <button type="button" className="ot-primary" disabled={!outcome} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>{note.trim() ? "Salvar resposta e continuar" : "Marcar categoria e continuar · detalhar depois"}</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
     </section>}
     {state.phase === "review" && state.record && <section className="ot-card">
       <p className="ot-info">Coleta encerrada: {state.record.endReason}. Não aplicar novas tarefas. Complete só o que já ocorreu.</p>
-      {plan?.tasks.map((t) => { const o = state.record!.observations.find((v) => v.taskId === t.id); return <details key={t.id} className="ot-review-item"><summary>{t.title} · {o ? o.outcome ? OUTCOMES.find((v) => v.id === o.outcome)?.label : "registro parcial" : "não observada"}</summary>{o ? <><p>{t.command}</p><label>Complemento factual de {t.title}<textarea value={o.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: t.id, note: e.target.value })} /></label>{t.kind === "drawing" && <DrawingPreview strokes={drawingStrokes(state.record!.events, t.id)} />}</> : <p>Não houve registro desta atividade. Não concluir que a criança não sabe fazer.</p>}</details>; })}
+      {pending.length > 0 && <p role="status" className="ot-pacing" data-testid="tablet-pending">{pending.length} atividade(s) com categoria marcada e descrição pendente. Complete abaixo com o fato observado; nada será preenchido por suposição e a exportação declara a pendência.</p>}
+      {plan?.tasks.map((t) => { const o = state.record!.observations.find((v) => v.taskId === t.id); return <details key={t.id} className="ot-review-item" open={Boolean(o && !o.note.trim())}><summary>{t.title} · {o ? o.outcome ? `${OUTCOMES.find((v) => v.id === o.outcome)?.label}${o.note.trim() ? "" : " · descrição pendente"}` : "registro parcial" : "não observada"}</summary>{o ? <><p>{t.command}</p><label>Complemento factual de {t.title}<textarea value={o.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: t.id, note: e.target.value })} /></label>{t.kind === "drawing" && <DrawingPreview strokes={drawingStrokes(state.record!.events, t.id)} />}</> : <p>Não houve registro desta atividade. Não concluir que a criança não sabe fazer.</p>}</details>; })}
       <details><summary>Limites e habilidades não examinadas</summary>{plan?.limitations.map((text) => <p key={text}>{text}</p>)}</details>
       <label className="ot-check"><input type="checkbox" checked={state.record.reviewed} onChange={(e) => dispatch({ type: "reviewed", value: e.target.checked })} />Conferi descrições, ajudas e tarefas não observadas. Esta é uma declaração minha, não uma assinatura médica.</label>
       <button type="button" className="ot-primary" onClick={() => dispatch({ type: "delivery" })}>Continuar para guardar os arquivos</button><p>É permitido exportar um registro parcial, com as pendências explícitas.</p>
