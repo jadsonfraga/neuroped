@@ -3,8 +3,12 @@ export const GUIDED_STYLE = `
 .obs10 .obs10-guided-task,.obs10 .obs10-integrated-preparation{font-size:1.125rem;line-height:1.6;min-width:0;overflow-wrap:anywhere}
 .obs10 .obs10-guided-task.is-large{font-size:1.4rem}
 .obs10 .obs10-guided-task :is(button,summary){font-size:1em;min-height:56px;white-space:normal}
+/* The legacy shell uses #main-content button:not([data-size=icon]) at 44px.
+   Match that ID specificity within OBS-10, without changing any other route. */
+#main-content .obs10-guided-task :is(button,summary),#main-content .obs10-integrated-preparation :is(button,summary){font-size:1em;min-height:56px;white-space:normal}
 .obs10 .obs10-guided-task :is(h3,h4){font-size:1.15em;line-height:1.35;font-weight:800;margin:0 0 .6em}
-.obs10 .obs10-guided-task p,.obs10 .obs10-guided-task .obs10-muted,.obs10 .obs10-guided-task .obs10-caution{font-size:1em}
+.obs10 .obs10-guided-task p,.obs10 .obs10-guided-task :is(.obs10-muted,.obs10-caution,.obs10-record-tip,.obs10-model-note){font-size:1em}
+.obs10 .obs10-guided-task .obs10-task-position{font-size:.9em}
 .obs10 .obs10-guided-task > svg{max-height:150px;margin:0 auto 12px;display:block;width:100%}
 .obs10 .obs10-frame-section{padding:18px;border:1px solid var(--o-line);border-radius:16px;background:var(--o-paper);margin:16px 0}
 .obs10 .obs10-frame-section-title{display:flex;align-items:center;gap:12px;font-weight:800;font-size:1.1em;margin-bottom:12px}
@@ -22,7 +26,7 @@ export const GUIDED_STYLE = `
 .obs10 .obs10-guided-task .obs10-microsteps li{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
 .obs10 .obs10-guided-task .obs10-microsteps li>span{flex-shrink:0;font-weight:800}
 .obs10 .obs10-guided-task .obs10-quick-responses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.obs10 .obs10-guided-task .obs10-quick-responses button{padding:14px 10px;min-height:64px}
+.obs10 .obs10-guided-task .obs10-quick-responses button,#main-content .obs10-guided-task .obs10-quick-responses button{padding:14px 10px;min-height:64px}
 .obs10 .obs10-guided-task .obs10-quick-responses button[aria-pressed=true]{border:3px solid var(--o-primary);background:var(--o-lilac);font-weight:800}
 .obs10 .obs10-frame-navigation{display:flex;flex-wrap:wrap;gap:12px;border-top:2px solid var(--o-line);padding-top:16px;margin-top:20px}
 .obs10 .obs10-frame-navigation>button{flex:1 1 190px}
