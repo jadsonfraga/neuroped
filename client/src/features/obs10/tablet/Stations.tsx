@@ -4,13 +4,13 @@ import type { TabletPlan } from "./protocol";
 type StationVisualState = "done" | "current" | "next" | "idle" | "partial" | "unobserved";
 
 const WORLDS: ReadonlyArray<{ phase: WizardPhase | "collect"; title: string; subtitle: string }> = [
-  { phase: "setup", title: "Base", subtitle: "Preparar" },
+  { phase: "setup", title: "Base", subtitle: "Preparo" },
   { phase: "camera", title: "Radar", subtitle: "Câmera" },
-  { phase: "rehearsal", title: "Tutorial", subtitle: "Ensaiar" },
-  { phase: "ready", title: "Checkpoint", subtitle: "Prontidão" },
-  { phase: "collect", title: "Estações", subtitle: "Aplicar" },
+  { phase: "rehearsal", title: "Tutorial", subtitle: "Ensaio" },
+  { phase: "ready", title: "Pronto", subtitle: "Iniciar" },
+  { phase: "collect", title: "Missões", subtitle: "Aplicar" },
   { phase: "review", title: "Revisão", subtitle: "Conferir" },
-  { phase: "delivery", title: "Saída", subtitle: "Guardar" },
+  { phase: "delivery", title: "Saída", subtitle: "Arquivos" },
 ];
 
 function worldIndex(phase: WizardPhase): number {
@@ -41,7 +41,7 @@ export function StationJourney({ phase, cursor, plan, record }: {
 }) {
   if (phase === "child") return null;
   const activeWorld = worldIndex(phase);
-  const showTasks = Boolean(plan) && ["ready", "cue", "response", "review", "delivery"].includes(phase);
+  const showTasks = Boolean(plan) && ["ready", "review", "delivery"].includes(phase);
   return <aside className="ot-stations" data-testid="obs10-station-journey" aria-label="Mapa de estações do OBS-10">
     <div className="ot-stations-head">
       <div><span className="ot-stations-kicker">MAPA DA JORNADA</span><strong>{WORLDS[activeWorld].title}</strong></div>
