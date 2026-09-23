@@ -1,0 +1,29 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+
+// Branch-scoped development migration. Every replacement asserts its input.
+function patch(path, before, after) {
+  const source=readFileSync(path,'utf8');
+  if(source.includes(after))return;
+  if(source.split(before).length!==2)throw new Error(`Unexpected source while reconciling ${path}: ${before.slice(0,80)}`);
+  writeFileSync(path,source.replace(before,after));
+}
+const vendor='scripts/vendor-visual-recognition.mjs';
+patch(vendor,".replace(/<(metadata|title|desc)\\b[^>]*>[\\s\\S]*?<\\/\\1>/gi,'').trim()", ".replace(/<(metadata|title|desc)\\b[^>]*>[\\s\\S]*?<\\/\\1>/gi,'').replace(/<text\\b[^>]*>[\\s\\S]*?<\\/text>/gi,'').trim()");
+patch(vendor,'Remoção de metadados, títulos e descrições XML; desenho preservado. Rótulos PT-BR são descritores locais, não normas.','Remoção de metadados, títulos, descrições XML e inscrições em texto nas figuras; demais formas preservadas. Rótulos PT-BR são descritores locais, não normas.');
+const model='client/src/features/visual-recognition/model.ts';
+patch(model,'guarda_chuva: ["sombrinha"]','"guarda-chuva": ["sombrinha"]');
+patch(model,'if(interpretable && !applied) errors.push("A figura precisa ter sido apresentada.");','if((interpretable || draft.outcome==="sem_resposta") && !applied) errors.push("A figura precisa ter sido apresentada.");');
+patch(model,'const errors=problems(trial,draft,events);if(errors.length) throw new Error(errors.join(" "));','const errors=problems(trial,draft,events);if(errors.length) throw new Error(errors.join(" "));\n  if(!supersedes && activeObservations(ledger).some(record=>record.trial.id===trial.id)) throw new Error("Esta oportunidade já foi registrada; use correção com justificativa.");');
+patch(model,'if(!draft.familiarity) errors.push("Registre a familiaridade (pode ser incerta).");','if(!["conhecida","incerta","desconhecida"].includes(draft.familiarity)) errors.push("Registre a familiaridade (pode ser incerta).");\n  if(!(draft.help in SUPPORTS) || (draft.channel && !(draft.channel in CHANNELS))) errors.push("Modalidade de ajuda ou resposta inválida.");\n  if(!trial.optionIds.includes(trial.targetId) || new Set(trial.optionIds).size!==trial.optionIds.length || trial.optionIds.some(id=>!ITEM_MAP.has(id))) errors.push("Alternativas inconsistentes.");\n  if(events.some(event=>!Number.isFinite(Date.parse(event.at)) || (event.kind==="toque" && (!event.itemId || !trial.optionIds.includes(event.itemId))))) errors.push("Evento incompatível com as figuras apresentadas.");');
+patch(model,'group.filter(record=>record.response.outcome==="correspondente" && record.response.help==="independente").length','group.filter(record=>record.response.outcome==="correspondente" && record.response.help==="independente" && !record.previousExposure).length');
+patch(model,'respostas correspondentes sem ajuda declarada. Contagem descritiva, não escore normativo.','respostas correspondentes sem ajuda declarada e sem exposição prévia ao nome/ajuda registrada. Contagem descritiva, não escore normativo.');
+const workspace='client/src/features/visual-recognition/Workspace.tsx';
+patch(workspace,'const abort=useRef<AbortController|null>(null),liveUrls=useRef<Record<string,string>>({});','const abort=useRef<AbortController|null>(null),liveUrls=useRef<Record<string,string>>({});\n  const pendingBeforeEdit=useRef<{draft:Draft;events:StageEvent[]}|null>(null);\n  const committing=useRef(false);\n  useEffect(()=>{committing.current=false;},[index,editing,phase]);\n  const leaveEditing=()=>{const pending=pendingBeforeEdit.current;if(pending){setDraft(pending.draft);setEvents(pending.events);}pendingBeforeEdit.current=null;setEditing(null);setCorrection("");};');
+patch(workspace,'if(!trial||!config)return;\n    try{','if(!trial||!config||committing.current)return;\n    committing.current=true;\n    try{');
+patch(workspace,'if(editing){setEditing(null);setCorrection("");setPhase("report");return;}','if(editing){leaveEditing();setPhase("report");return;}');
+patch(workspace,'if(index+1>=nextQueue.length)setPhase("report");else setIndex(index+1);','setIndex(index+1);\n      if(index+1>=nextQueue.length)setPhase("report");');
+patch(workspace,'}catch(error){setMessage(readableError(error));}\n  };','}catch(error){committing.current=false;setMessage(readableError(error));}\n  };');
+patch(workspace,'setEditing(null);setPhase("report");setMessage("");','if(editing)leaveEditing();setPhase("report");setMessage("");');
+patch(workspace,'setEditing(record);setDraft({...record.response});','pendingBeforeEdit.current={draft:{...draft},events:events.map(event=>({...event}))};setEditing(record);setDraft({...record.response});');
+patch(workspace,'CC BY-SA 4.0</a>, com títulos/metadados removidos; formas preservadas.','CC BY-SA 4.0</a>, com títulos, metadados e inscrições em texto removidos; demais formas preservadas.');
+console.log('Recognition source reconciliation applied with exact preconditions; no test assertion removed.');
