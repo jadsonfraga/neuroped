@@ -1,0 +1,35 @@
+name: Visual recognition pinned assets
+on:
+  push:
+    branches: [feat/visual-recognition-v2]
+    paths:
+      - scripts/vendor-visual-recognition.mjs
+      - .github/workflows/visual-recognition-assets.yml
+permissions:
+  contents: write
+concurrency:
+  group: recognition-assets-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch only pinned licensed illustrations and verify integrity
+        run: node scripts/vendor-visual-recognition.mjs
+      - name: Commit generated assets to this feature branch only
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/feat/visual-recognition-v2"
+          git config user.name 'NeuroPed asset vendor'
+          git config user.email 'noreply@neuroped.invalid'
+          git add client/public/recognition-v2
+          if ! git diff --cached --quiet; then
+            git commit -m 'assets: vendor pinned licensed visual recognition bank'
+            git pull --rebase origin feat/visual-recognition-v2
+            git push origin HEAD:feat/visual-recognition-v2
+          fi
