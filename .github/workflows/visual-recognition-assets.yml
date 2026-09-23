@@ -32,7 +32,7 @@ jobs:
           test "$GITHUB_REF" = "refs/heads/feat/visual-recognition-v2"
           git config user.name 'NeuroPed asset vendor'
           git config user.email 'noreply@neuroped.invalid'
-          git add client/public/recognition-v2 client/src/features/visual-recognition/model.ts client/src/features/visual-recognition/Workspace.tsx scripts/vendor-visual-recognition.mjs
+          git add client/public/recognition-v2 client/src/features/visual-recognition/model.ts client/src/features/visual-recognition/Workspace.tsx client/src/data/navigation.ts scripts/vendor-visual-recognition.mjs
           if ! git diff --cached --quiet; then
             git commit -m 'fix: reconcile visual records and vendor integrity-checked licensed stimuli'
             git pull --rebase origin feat/visual-recognition-v2
