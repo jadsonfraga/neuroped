@@ -50,11 +50,16 @@ async function saveAndClose(name) {
 }
 async function runTask(i, opts = {}) {
   await phase("cue");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 1, "adult cue keeps the station map visible");
+  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="current"]').count(), 1, "exactly one task station is current");
+  assert.match(await w.getByTestId("obs10-station-checkpoint").textContent(), new RegExp(`ESTAÇÃO\\s*${i + 1}`, "iu"), "checkpoint announces current station");
   const title = await w.locator("h1").textContent();
   if (opts.capture && title.includes("cena")) await screen("02-cena-orientacao");
   const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir atividade para a criança)$/ });
   await openActivity.click(); await phase("child");
   assert.equal(await w.getByTestId("tablet-cue").count(), 0, "adult instructions are unmounted from child screen");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 0, "station chrome is removed from the child surface");
+  assert.equal(await w.getByTestId("obs10-station-checkpoint").count(), 0, "child surface has no adult checkpoint or progress cue");
   if (title.includes("palavras")) assert.ok(!/casa, gato, pão/i.test(await w.textContent()), "no memory answers in child DOM");
   if (await w.getByTestId("tablet-drawing").count()) {
     const draw = w.getByLabel("Área para desenhar com o dedo", { exact: true }); await draw.scrollIntoViewIfNeeded();
@@ -79,6 +84,8 @@ try {
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email); await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
   await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor();
   await open(); await screen("01-preparacao-tablet");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 1);
+  assert.equal(await w.getByTestId("obs10-station-journey").locator('[data-station-state="current"]').first().getAttribute("aria-current"), "step");
   await b("Letras maiores").focus(); await page.keyboard.press("Tab");
   assert.equal(await page.evaluate(() => Boolean(document.activeElement?.closest(".ot-dialog"))), true, "keyboard stays in the active dialog");
   for (const control of await w.getByRole("button").all()) if (await control.isVisible()) assert.ok((await control.boundingBox()).height >= 59, "tablet touch targets remain at least 60 CSS pixels, allowing subpixel rounding");
@@ -86,6 +93,9 @@ try {
   await setup(3, 6);
   for (let i = 0; i < 8; i++) await runTask(i, { capture: true });
   await phase("review"); await screen("05-revisao");
+  assert.equal(await w.getByTestId("obs10-mission-map").locator("li").count(), 8);
+  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="done"]').count(), 8, "review map reports recorded stations, not pass/fail");
+  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="current"]').count(), 0);
   const record = await saveAndClose("registro-completo");
   assert.equal(record.protocol, "obs10-tablet/1.0.0"); assert.equal(record.observations.length, 8);
   const strokes = record.events.filter((e) => e.type === "stroke");
