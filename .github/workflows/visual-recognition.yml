@@ -5,7 +5,10 @@ on:
       - client/src/features/visual-recognition/**
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
-      - tests/unit/visual-recognition.test.ts
+      - scripts/guards/audit-access-policy.mjs
+      - scripts/guards/lib/verified-visual-digests.mjs
+      - tests/unit/visual-recognition*.test.ts
+      - tests/unit/verified-visual-digests.test.mjs
       - tests/e2e/visual-recognition.mjs
       - .github/workflows/visual-recognition.yml
   push:
@@ -14,7 +17,10 @@ on:
       - client/src/features/visual-recognition/**
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
-      - tests/unit/visual-recognition.test.ts
+      - scripts/guards/audit-access-policy.mjs
+      - scripts/guards/lib/verified-visual-digests.mjs
+      - tests/unit/visual-recognition*.test.ts
+      - tests/unit/verified-visual-digests.test.mjs
       - tests/e2e/visual-recognition.mjs
       - .github/workflows/visual-recognition.yml
 permissions:
@@ -34,7 +40,10 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Exact ages, manifests, recognition events and descriptive ledger
-        run: node --import tsx --test tests/unit/visual-recognition.test.ts
+        run: |
+          node --import tsx --test tests/unit/visual-recognition*.test.ts
+          node --test tests/unit/verified-visual-digests.test.mjs
+          npm run audit:access
       - name: TypeScript and lint without bypasses
         run: |
           npm run check
