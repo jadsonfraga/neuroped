@@ -59,7 +59,7 @@ function paperModel(task: PracticalTask): PaperModel | null {
 }
 function paperDetail(task: PracticalTask, bandId: string): string {
   if (paperModel(task)) return "Faça o modelo somente na folha da aplicadora. A criança recebe outra folha em branco. Sem nome completo.";
-  if (isReadingTask(task, bandId)) return "Prepare o texto indicado antes da coleta e mostre somente essa folha. Use outra folha em branco para a escrita, sem copiar uma resposta pronta.";
+  if (isReadingTask(task, bandId)) return "Prepare o texto antes da coleta em folha separada, ou mostre-o em tela inteira. Use folha em branco para a escrita, sem copiar uma resposta pronta.";
   return "Use papel em branco, sem letras, figuras, respostas ou nome completo. Siga apenas a proposta da tarefa; não forneça algo pronto para copiar.";
 }
 /** Only these picture/reading tasks can produce child-facing printouts. Memory, rules and story never can. */
@@ -67,11 +67,11 @@ export function framePlan(task: PracticalTask, bandId: string): FramePlan {
   let child: ChildResource | null = null;
   const scenes = SCENE_TASKS[task.id];
   if (scenes && task.materials.includes("book")) {
-    child = { kind: "scene", scenes, instruction: "Mostre uma cena impressa ou a página escolhida do livro. Somente a imagem, sem legenda e sem ensinar a resposta." };
+    child = { kind: "scene", scenes, instruction: "Mostre uma cena em tela inteira, impressa ou a página escolhida do livro. Somente a imagem, sem legenda e sem ensinar a resposta. Registre o meio utilizado." };
   } else if (isReadingTask(task, bandId)) {
     // The text is extracted from the actual task, not maintained as a second clinical authority.
     const text = task.steps[0]?.match(/[‘“]([^’”]+)[’”]/u)?.[1];
-    if (text) child = { kind: "reading", text, instruction: "Mostre somente este texto em papel, se compatível com o ensino recebido. Não mostre os comandos nem o roteiro." };
+    if (text) child = { kind: "reading", text, instruction: "Mostre somente este texto, em tela inteira ou em papel, se compatível com o ensino recebido. Não mostre os comandos nem o roteiro. Registre o meio utilizado." };
   }
   const oralOnly = task.scene === "words" || task.scene === "rule";
   return {
@@ -103,4 +103,21 @@ export function resourceIssues(): string[] {
     }
   }
   return issues;
+}
+/** Camera, mat, chair and walking path stay in place between tasks; listing them would be churn, not help. */
+const STATIONARY: readonly MaterialId[] = ["device", "mat", "chair", "path"];
+export interface TaskHandoff { nextTitle: string; sameBlock: boolean; pick: string[]; stow: string[] }
+export function taskHandoff(bandId: string, taskId: string): TaskHandoff | null {
+  const tasks = PRACTICAL_TASKS[bandId] ?? [];
+  const index = tasks.findIndex((task) => task.id === taskId);
+  if (index < 0 || index + 1 >= tasks.length) return null;
+  const current = tasks[index];
+  const next = tasks[index + 1];
+  const moveable = (ids: readonly MaterialId[]) => ids.filter((id) => !STATIONARY.includes(id));
+  return {
+    nextTitle: next.title,
+    sameBlock: next.phase === current.phase,
+    pick: moveable(next.materials).filter((id) => !current.materials.includes(id)).map((id) => MATERIALS[id].label),
+    stow: moveable(current.materials).filter((id) => !next.materials.includes(id)).map((id) => MATERIALS[id].label),
+  };
 }
