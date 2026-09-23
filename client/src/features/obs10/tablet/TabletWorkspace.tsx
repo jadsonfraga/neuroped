@@ -75,7 +75,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     heading.current?.focus();
     document.querySelector(".ot-dialog")?.scrollTo({ top: 0, behavior: "auto" });
-  }, [state.phase, state.cursor, urgent]);
+  }, [state.phase, state.cursor, transitionTaskId, urgent]);
   useEffect(() => {
     if (!collect) return;
     const tick = () => { const elapsed = second(); if (elapsed >= 600) end("Limite absoluto de dez minutos atingido"); else dispatch({ type: "tick", second: elapsed }); };
