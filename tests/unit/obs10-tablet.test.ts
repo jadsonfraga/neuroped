@@ -17,6 +17,16 @@ for (const band of AGE_BANDS) {
     if (t.memory) { assert.equal(t.kind, "quiet"); assert.equal(t.text, undefined); assert.equal(t.scene, undefined); }
     if (t.model) assert.equal(t.kind, "drawing");
   }
+  const encoding = p.tasks.findIndex((t) => t.memory === "encoding");
+  if (encoding >= 0) {
+    const recall = p.tasks.findIndex((t) => t.memory === "recall");
+    assert.ok(recall > encoding, "recall follows initial presentation");
+    for (const t of p.tasks.slice(encoding + 1, recall)) {
+      assert.equal(t.text, undefined, "no reading cue between encoding and recall");
+      assert.equal(t.scene, undefined, "no supplied picture cue during the interval");
+      assert.ok(!/\b(casa|gato|pão)\b/iu.test(t.command), "intervening commands do not repeat targets");
+    }
+  }
   assert.ok(p.limitations.some((text) => text.includes("Preensão")));
 }
 assert.ok(TABLET_LIMITS.includes("não equivalem"));
