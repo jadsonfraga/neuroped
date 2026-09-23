@@ -4,6 +4,7 @@ on:
     branches: [feat/visual-recognition-v2]
     paths:
       - scripts/vendor-visual-recognition.mjs
+      - scripts/recognition-development-reconcile.mjs
       - .github/workflows/visual-recognition-assets.yml
 permissions:
   contents: write
@@ -16,20 +17,24 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Apply exact branch-scoped source reconciliation
+        run: node scripts/recognition-development-reconcile.mjs
       - name: Fetch only pinned licensed illustrations and verify integrity
         run: node scripts/vendor-visual-recognition.mjs
-      - name: Commit generated assets to this feature branch only
+      - name: Commit scoped source and local assets to feature branch only
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/feat/visual-recognition-v2"
           git config user.name 'NeuroPed asset vendor'
           git config user.email 'noreply@neuroped.invalid'
-          git add client/public/recognition-v2
+          git add client/public/recognition-v2 client/src/features/visual-recognition/model.ts client/src/features/visual-recognition/Workspace.tsx scripts/vendor-visual-recognition.mjs
           if ! git diff --cached --quiet; then
-            git commit -m 'assets: vendor pinned licensed visual recognition bank'
+            git commit -m 'fix: reconcile visual records and vendor integrity-checked licensed stimuli'
             git pull --rebase origin feat/visual-recognition-v2
             git push origin HEAD:feat/visual-recognition-v2
           fi
