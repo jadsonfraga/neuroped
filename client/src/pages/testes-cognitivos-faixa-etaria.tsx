@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { celebrate } from "@/lib/confetti";
 import { softSuccess, softTap, softWhoosh } from "@/lib/softSounds";
+import { HeroGrid, NEUTRAL_CHEERS, type Hero } from "@/components/aventura";
 import {
   ArrowLeft,
   Brain,
@@ -1817,24 +1818,6 @@ const WORLDS: Record<Domain, WorldMeta> = {
 
 const WORLD_ORDER: Domain[] = ["visual", "leitura", "escrita", "aritmetica"];
 
-const HEROES = [
-  { id: "raposa", emoji: "🦊", name: "Raposa" },
-  { id: "panda", emoji: "🐼", name: "Panda" },
-  { id: "unicornio", emoji: "🦄", name: "Unicórnio" },
-  { id: "dragao", emoji: "🐉", name: "Dragão" },
-  { id: "foguete", emoji: "🚀", name: "Foguete" },
-  { id: "golfinho", emoji: "🐬", name: "Golfinho" },
-] as const;
-type Hero = (typeof HEROES)[number];
-
-// Frases neutras: giram por posição da fase, nunca pela resposta dada.
-const NEUTRAL_CHEERS = [
-  "Registrado!",
-  "Anotado, vamos em frente!",
-  "Boa, próxima fase!",
-  "Mais uma estrela!",
-];
-
 const OPTION_TINTS = [
   "bg-rose-50 hover:bg-rose-100 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900 dark:hover:bg-rose-950/50",
   "bg-sky-50 hover:bg-sky-100 border-sky-200 dark:bg-sky-950/30 dark:border-sky-900 dark:hover:bg-sky-950/50",
@@ -1920,7 +1903,6 @@ function HeroPicker({
   current: Hero | null;
   onPick: (hero: Hero) => void;
 }) {
-  const reduce = useReducedMotion();
   return (
     <Card className="overflow-hidden rounded-3xl border-border/60">
       <CardContent className="p-5 sm:p-7">
@@ -1933,29 +1915,8 @@ function HeroPicker({
         <p className="mt-1 text-center text-sm text-muted-foreground">
           Toque em quem vai viajar com você pelos quatro mundos.
         </p>
-        <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
-          {HEROES.map((hero, index) => (
-            <motion.button
-              key={hero.id}
-              type="button"
-              onClick={() => {
-                softTap();
-                onPick(hero);
-              }}
-              initial={reduce ? false : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduce ? 0 : index * 0.05 }}
-              whileHover={reduce ? undefined : { scale: 1.06 }}
-              whileTap={reduce ? undefined : { scale: 0.94 }}
-              aria-pressed={current?.id === hero.id}
-              className={`flex min-h-[104px] flex-col items-center justify-center gap-1 rounded-2xl border-2 p-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${current?.id === hero.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/50"}`}
-            >
-              <span className="text-4xl" aria-hidden="true">
-                {hero.emoji}
-              </span>
-              <span className="text-xs font-bold">{hero.name}</span>
-            </motion.button>
-          ))}
+        <div className="mt-6">
+          <HeroGrid current={current} onPick={onPick} />
         </div>
       </CardContent>
     </Card>

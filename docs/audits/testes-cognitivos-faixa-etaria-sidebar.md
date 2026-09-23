@@ -47,6 +47,25 @@ Branch: `claude/testes-cognitivos-sidebar-t3jm51`
   missão do guia na banda A, viewport 390 px sem rolagem horizontal, zero erros
   de página.
 
+## Sonda Dez com a mesma aventura (terceira entrega)
+
+- Primitivos compartilhados em `client/src/components/aventura/` (heróis,
+  trilha de missões, contador de estrelas). A página cognitiva passou a usá-los.
+- Na aplicação digital guiada da Sonda, a camada entra somente onde não há
+  estímulo: bloco "Aventura de {herói} · trilha {faixa}" no cabeçalho de
+  execução (herói trocável, trilha com uma estrela por missão fechada), banner
+  neutro ao concluir cada missão ("Missão N concluída! ... segue para a missão
+  N+1") e cartão de fechamento na revisão (troféu e medalha quando as missões
+  da trilha estão todas revisadas; "aventura em andamento" quando não).
+- Estrela = missão fechada (participação); nunca código E/I/P/0/NA, contagem
+  ou tempo. A tela da criança (dialog de estímulo) fica intocada. Registro,
+  resumo ao médico e handoff não recebem nada da camada.
+- Só animação CSS na Sonda e no módulo compartilhado: o e2e instala relógio
+  falso no navegador, que congela animações por JavaScript. Sem confete ali.
+- Teste estático novo `tests/unit/sonda-dez-aventura-static.test.mjs`, ligado
+  a `npm run test:sonda`, trava: estrelas derivadas de missões fechadas,
+  estímulo puro, relatório sem gamificação, animação só CSS.
+
 ## Verificação local
 
 Comandos concluídos com código de saída 0:
