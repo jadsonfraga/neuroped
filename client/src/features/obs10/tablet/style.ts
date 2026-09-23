@@ -49,7 +49,7 @@ export const TABLET_STYLE = `
 .ot-choices svg{width:100%;height:150px;fill:hsl(var(--primary))}
 .ot-choices button[aria-pressed=true],.ot-count button[aria-pressed=true]{border:4px solid hsl(var(--ring))}
 .ot-count{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:30px 0}.ot-count button{flex:0 1 120px}.ot-count svg{width:100%;fill:hsl(var(--primary))}
-.ot-draw-area{display:block;width:100%;height:clamp(230px,40vh,400px);background:hsl(var(--card));border:3px solid hsl(var(--input));border-radius:16px;touch-action:none;user-select:none;color:hsl(var(--foreground))}
+.ot-draw-area{display:block;width:100%;height:auto;aspect-ratio:2/1;background:hsl(var(--card));border:3px solid hsl(var(--input));border-radius:16px;touch-action:none;user-select:none;color:hsl(var(--foreground))}
 .ot-model{display:block;width:160px;height:120px;margin:0 auto 16px;background:hsl(var(--card));border-radius:14px}
 .ot-video{display:block;width:100%;max-width:720px;max-height:340px;object-fit:contain;background:hsl(var(--muted));margin:18px auto;border-radius:14px}
 .ot-review-item{border-bottom:1px solid hsl(var(--border));padding:10px 0}
