@@ -1,0 +1,55 @@
+name: OBS-10 tablet guided workflow
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'tests/unit/obs10-tablet.test.ts'
+      - 'tests/e2e/obs10-tablet.mjs'
+      - '.github/workflows/obs10-tablet.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'tests/unit/obs10-tablet.test.ts'
+      - 'tests/e2e/obs10-tablet.mjs'
+      - '.github/workflows/obs10-tablet.yml'
+permissions:
+  contents: read
+concurrency:
+  group: obs10-tablet-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  tablet-contract-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx eslint client/src/features/obs10/tablet/*.{ts,tsx} client/src/features/obs10/PracticalGuide.tsx client/src/features/obs10/useLocalRecorder.ts tests/unit/obs10-tablet.test.ts --max-warnings=0
+      - run: node --import tsx tests/unit/obs10-tablet.test.ts
+      - name: Build real client without authorization bypass
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Tablet journey on actual application with synthetic account and data
+        env:
+          OBS10_TABLET_ARTIFACT_DIR: /tmp/obs10-tablet
+        run: node tests/e2e/obs10-tablet.mjs
+      - name: Preserve synthetic proof and failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-tablet-proof
+          path: /tmp/obs10-tablet
+          if-no-files-found: ignore
+          retention-days: 7
