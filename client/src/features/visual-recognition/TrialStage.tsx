@@ -6,7 +6,7 @@ import { itemFor, type StageEvent, type Trial } from "./model";
 export default function TrialStage({trial,urls,onEvent,onFinish}:{trial:Trial;urls:Record<string,string>;onEvent:(event:StageEvent)=>void;onFinish:()=>void}){
   const ref=useRef<HTMLDialogElement>(null);
   const handlers=useRef({onEvent,onFinish});handlers.current={onEvent,onFinish};
-  const closed=useRef(false),failed=useRef(new Set<string>());
+  const closed=useRef(false),failed=useRef(new Set<string>()),presented=useRef<string|null>(null);
   const [selected,setSelected]=useState<string|null>(null),[broken,setBroken]=useState(false);
   const event=(kind:StageEvent["kind"],itemId?:string,detail?:string)=>handlers.current.onEvent({kind,at:new Date().toISOString(),itemId,detail});
   const finish=(interrupted=false)=>{
@@ -15,16 +15,20 @@ export default function TrialStage({trial,urls,onEvent,onFinish}:{trial:Trial;ur
     ref.current?.close();handlers.current.onFinish();
   };
   useEffect(()=>{
+    const dialog=ref.current;
     closed.current=false;failed.current.clear();
-    ref.current?.showModal();
-    handlers.current.onEvent({kind:"apresentado",at:new Date().toISOString()});
+    dialog?.showModal();
+    if(presented.current!==trial.id){
+      presented.current=trial.id;
+      handlers.current.onEvent({kind:"apresentado",at:new Date().toISOString()});
+    }
     const visibility=()=>{if(document.hidden){
       if(closed.current)return;closed.current=true;
       handlers.current.onEvent({kind:"interrompido",at:new Date().toISOString(),detail:"Apresentação interrompida: janela oculta."});
-      ref.current?.close();handlers.current.onFinish();
+      dialog?.close();handlers.current.onFinish();
     }};
     document.addEventListener("visibilitychange",visibility);
-    return()=>{document.removeEventListener("visibilitychange",visibility);ref.current?.close();};
+    return()=>{document.removeEventListener("visibilitychange",visibility);dialog?.close();};
   },[trial.id]);
   const error=(id:string)=>{if(failed.current.has(id))return;failed.current.add(id);setBroken(true);event("erro-imagem",id,"Falha no desenho: não interpretar como desempenho infantil.");};
   const target=itemFor(trial.targetId);
