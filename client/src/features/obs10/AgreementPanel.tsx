@@ -59,7 +59,7 @@ export function AgreementPanel() {
       setMessage(error instanceof AgreementRefused ? error.message : "Não foi possível comparar estes registros.");
     }
   }
-  return <section className="obs10-panel obs10-no-print" data-testid="obs10-agreement">
+  return <section className="obs10-no-print" data-testid="obs10-agreement">
     <h2>Concordância entre dois observadores</h2>
     <p>Para estudo de confiabilidade, fora do atendimento. Duas pessoas codificam a mesma sessão de forma independente e este painel compara as categorias declaradas. <strong>Mede a codificação, não a criança:</strong> não valida o roteiro, não produz escore e não autoriza diagnóstico.</p>
     <p className="obs10-muted">Nenhum arquivo é enviado. A exportação abaixo leva somente contagens, categorias e identificadores de tarefa: sem código institucional, identificador de sessão, descrições ou vídeo.</p>
