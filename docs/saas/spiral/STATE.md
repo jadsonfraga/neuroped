@@ -1,6 +1,6 @@
 # Estado da espiral SaaS
 
-Atualizado em 2026-09-24 (ciclo 2). Este arquivo registra fatos verificados,
+Atualizado em 2026-09-24 (ciclo 3). Este arquivo registra fatos verificados,
 não intenções. Revalide `origin/main` e a produção antes de confiar nele.
 
 ## Baseline verificada
@@ -46,6 +46,20 @@ S2: a recusa EMAIL_VERIFICATION_REQUIRED no onboarding passa a levar à
 página de reenvio (`#/verificar-email`), ancorada no código do backend.
 Teste de contrato novo em test:quick-wins, visto falhando antes.
 
+## Ciclo 2: integração
+PR #950 mergeada em `a9452cf`.
+
+## Ciclo 3 (este commit)
+S3: inventário dos domínios Acesso (12 funcionalidades) e Comercial (8),
+com evidência por import direto do handler real. A varredura achou UMA
+lacuna: GET /api/auth/me, o bootstrap de identidade do cliente, sem import
+em teste algum. Fechada no mesmo ciclo: contrato em
+e2e-refresh-session-guard-regression (token válido sem credencial no corpo;
+refresh≠access; família revogada nega; conta desativada nega), com a
+assertiva de família revogada verificada falhando com o defeito
+reintroduzido.
+
 ## Próximo passo executável
-Ver BACKLOG.md item S3. Retomada: `git fetch origin main && git log -1
+Ver BACKLOG.md item S5 (restauração demonstrada) ou expandir o inventário
+ao Núcleo clínico. Retomada: `git fetch origin main && git log -1
 origin/main` e reler este arquivo.

@@ -1,34 +1,30 @@
 {
   "atualizadoEm": "2026-09-24",
-  "nota": "Somente o examinado até aqui. Ausência de entrada = NAO_EXAMINADA; o denominador completo (§5) ainda não foi levantado.",
-  "funcionalidades": [
-    {
-      "id": "auth.email-verification",
-      "finalidade": "Prova de posse do e-mail antes de privilégio de owner",
-      "entradas": ["POST /api/auth/signup", "POST /api/auth/resend-verification", "POST /api/auth/verify-email", "#/verificar-email"],
-      "fonteVerdade": "users.email_verified_at (lida do banco, não do JWT)",
-      "estadosDeErro": "entrega falha => token apagado, sem falso sucesso; reenvio anti-enumeração (202 genérico)",
-      "teste": "tests/unit/email-verification.test.ts; saas-self-service",
-      "situacao": "VERIFICADA_LOCALMENTE",
-      "risco": "gap de UX: recusa EMAIL_VERIFICATION_REQUIRED sem link direto de reenvio (BACKLOG S2)"
-    },
-    {
-      "id": "billing.checkout-retorno",
-      "finalidade": "Retorno de checkout sem conceder entitlement por redirect",
-      "entradas": ["#/billing-retorno?status=..."],
-      "fonteVerdade": "webhook autenticado do provedor (cliente-zero-journey)",
-      "teste": "tests/unit/cliente-zero-journey.test.ts",
-      "situacao": "VERIFICADA_LOCALMENTE"
-    },
-    {
-      "id": "admin.go-live",
-      "finalidade": "Diagnóstico de prontidão comercial, restrito a admin, sem segredos",
-      "entradas": ["GET /api/admin/go-live"],
-      "fonteVerdade": "variáveis de ambiente do Pages",
-      "estadosDeErro": "401/403 sem revelar formato; ordemInvertida como perigo",
-      "teste": "tests/unit/go-live-readiness.test.ts",
-      "situacao": "VERIFICADA_LOCALMENTE",
-      "situacaoComercial": "atesta CONFIGURACAO_PRESENTE; degraus superiores em naoComprova"
-    }
-  ]
+  "nota": "Evidência = import direto do handler real em teste, não coincidência de nome. Ausência de entrada = NAO_EXAMINADA; outros domínios (clínico, instrumentos, documentos, acompanhamento, gestão, portais, plataforma) ainda sem denominador levantado.",
+  "dominios": {
+    "acesso": [
+      { "id": "auth.signup", "entradas": ["POST /api/auth/signup", "#/cadastro"], "teste": "email-verification; saas-self-service; saas-acceptance-journey; cliente-zero", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "auth.login", "entradas": ["POST /api/auth/login", "#/login"], "teste": "e2e-admin-identity-collision-regression; cloudflare-request-validation", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "auth.logout", "entradas": ["POST /api/auth/logout"], "teste": "cloudflare-request-validation; cloudflare-input-limits", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "auth.refresh", "entradas": ["POST /api/auth/refresh"], "teste": "e2e-refresh-session-guard-regression", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "auth.me", "entradas": ["GET /api/auth/me"], "teste": "e2e-refresh-session-guard-regression (bloco auth/me, ciclo 3)", "situacao": "VERIFICADA_LOCALMENTE", "historico": "única rota do domínio sem import direto até o ciclo 3; lacuna fechada com prova de família revogada" },
+      { "id": "auth.email-verification", "entradas": ["POST /api/auth/verify-email", "POST /api/auth/resend-verification", "#/verificar-email"], "teste": "email-verification; onboarding-verification-link (S2)", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "auth.password-recovery", "entradas": ["POST /api/auth/forgot-password", "POST /api/auth/reset-password"], "teste": "password-recovery; express-password-recovery-contract", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "auth.change-password", "entradas": ["POST /api/auth/change-password"], "teste": "e2e-change-password-reservation; cliente-zero (revogação de sessões)", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "tenants.create", "entradas": ["POST /api/tenants", "#/onboarding"], "fonteVerdade": "gate email_verified_at lido do banco", "teste": "email-verification; saas-acceptance-journey", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "tenants.members", "entradas": ["GET/DELETE /api/tenants/{id}/members", "#/configuracoes"], "teste": "saas-acceptance-journey; cliente-zero (papel, remoção)", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "billing.invitations-accept", "entradas": ["POST /api/billing/invitations", "POST /api/billing/accept"], "teste": "saas-self-service; saas-acceptance-journey (convite expirado/reutilizado; teto de assentos)", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "me.profile", "entradas": ["PUT /api/me/profile"], "teste": "saas-self-service; cliente-zero", "situacao": "VERIFICADA_LOCALMENTE" }
+    ],
+    "comercial": [
+      { "id": "planos.vitrine", "entradas": ["#/planos (pública)"], "fonteVerdade": "shared/billing.ts (R$99/assento, trial 14d)", "teste": "planos-page-contract (preço do domínio; rota pública)", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "billing.checkout", "entradas": ["POST /api/billing/checkout", "#/billing-retorno"], "estadosDeErro": "retorno de redirect nunca concede entitlement", "teste": "cliente-zero", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "billing.webhook", "entradas": ["POST /api/billing/webhook (token 32+ em tempo constante)"], "teste": "cliente-zero (duplicado, tardio, sem reabrir acesso)", "situacao": "VERIFICADA_LOCALMENTE", "situacaoComercial": "provedor interceptado nos testes; sandbox real = BLOCKED (BACKLOG S4)" },
+      { "id": "billing.me", "entradas": ["GET /api/billing/me"], "teste": "saas-self-service; cliente-zero", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "tenants.lifecycle", "entradas": ["/api/tenants/{id}/lifecycle (trial, carência 7d, encerramento com retenção)"], "teste": "saas-acceptance-journey; cliente-zero", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "tenants.export", "entradas": ["/api/tenants/{id}/export (digest)"], "teste": "cliente-zero", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "tenants.metrics", "entradas": ["/api/tenants/{id}/metrics (metadata-only)"], "teste": "metadata-observability", "situacao": "VERIFICADA_LOCALMENTE" },
+      { "id": "admin.go-live", "entradas": ["GET /api/admin/go-live"], "teste": "go-live-readiness", "situacao": "VERIFICADA_LOCALMENTE", "situacaoComercial": "atesta CONFIGURACAO_PRESENTE; degraus superiores em naoComprova (ciclo 1)" }
+    ]
+  }
 }
