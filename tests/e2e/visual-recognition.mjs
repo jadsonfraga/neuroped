@@ -54,7 +54,8 @@ async function presentAndRespond(mode,{capture=false,offline=false}={}){
  if(capture){
   await screen(`child-${mode}`,true);
   await page.setViewportSize({width:390,height:844});
-  if(mode==="receptivo"&&order.length===3){
+  if(mode==="receptivo"){
+   assert.equal(order.length,3,"the dedicated phone proof must exercise exactly three child choices");
    const rects=await dialog.locator(".rv-picture").evaluateAll(elements=>elements.map(element=>{const r=element.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height};}));
    assert.equal(rects.length,3,"three-choice proof requires exactly three child cards");
    assert.ok(rects.every(rect=>rect.width>=340),"three choices on phone must remain large and equally legible");
@@ -96,6 +97,9 @@ try{
  await w.locator(".rv-catalog").screenshot({path:`${dir}/04b-catalog-phone.png`});screens.push("04b-catalog-phone");
  await page.setViewportSize({width:1180,height:920});
  await w.getByLabel(/Incluir quente\/frio/).uncheck();
+ const conceptsButton=w.getByRole("button").filter({hasText:"Conceitos e opostos"}).first();
+ assert.equal(await conceptsButton.getAttribute("aria-pressed"),"true","concept category starts enabled");
+ await conceptsButton.click();
  await configure("receptivo","6","3");
  for(let i=0;i<6;i++){
   await presentAndRespond("receptivo",{capture:i===0,offline:i===0});
