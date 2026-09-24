@@ -17,7 +17,7 @@ Parte do que faltava não dependia de kit, apenas da câmera e da sala. A partir
 
 Cada movimento carrega o caminho de omissão do presencial: sem marcha estável, dor, recusa ou espaço seguro, omita e registre o motivo. Continua fora: chute e recepção de bola, provas provocadas de postura, medidas formais de equilíbrio ou marcha, manipulação de objetos reais, preensão do lápis, força contra resistência, tônus, reflexos e sensibilidade. Observação descritiva pela câmera não é exame neurológico nem prova de normalidade, e a lista de limitações do registro diz exatamente isso em cada faixa, inclusive declarando quando a proposta motora não existe.
 
-### Ritmo por atividade
+### Ritmo por estação
 
 Cada tarefa passou a declarar uma duração sugerida, tirada do roteiro presencial, exibida na orientação e somada na tela de prontidão. É orientação de ritmo, nunca prazo, escore ou tempo de reação: o limite absoluto de 600 segundos continua sendo do controlador, não dessa soma. Um teste garante que o total sugerido de cada faixa cabe no limite com folga para recusa, pausa e anotação.
 
@@ -37,7 +37,7 @@ A atualização concorrente #933, commit `f62aeee5db5dc83e7d58a81626f1363ab320f8
 
 A interface apresenta a jornada como um mapa de estações para reduzir carga de memória do aplicador e tornar a sequência visualmente previsível. Os sete marcos são **Base (preparo) → Radar (câmera) → Tutorial (ensaio) → Pronto (iniciar) → Missões (atividades) → Revisão → Saída (arquivos)**.
 
-Antes da coleta, o mapa mostra todas as atividades previstas para aquela faixa. Durante cada proposta, a interface troca para um HUD compacto com **Estação atual + próxima estação**, evitando empurrar o comando e a tarefa para fora da primeira tela. Na revisão, o mapa completo volta e mostra estados puramente factuais.
+Antes da coleta, o mapa mostra todas as estações previstas para aquela faixa. Durante cada proposta, a interface troca para um HUD compacto com **Estação atual + próxima estação**, evitando empurrar o comando e a tarefa para fora da primeira tela. Na revisão, o mapa completo volta e mostra estados puramente factuais.
 
 A superfície infantil desmonta mapa, checkpoint, instruções e qualquer indicador do aplicador. A criança recebe somente o estímulo ou a interação daquela proposta.
 
@@ -55,7 +55,7 @@ O campo de descrição da parada lê a observação já armazenada, nunca o rasc
 
 
 
-Preparar atendimento → conferir câmera → ensaiar sem criança → confirmar prontidão → ler orientação → abrir atividade/interação → registrar resposta → próxima atividade → revisar → guardar arquivos.
+Preparar atendimento → conferir câmera → ensaiar sem criança → confirmar prontidão → ler orientação → abrir estação/interação → registrar resposta → transição → próxima estação → revisar → guardar arquivos.
 
 Não há avanço automático durante a tentativa nem exigência de resposta correta para continuar. Recusa e omissão são registradas. Notas digitadas ficam no estado antes de confirmar a categoria, para sobreviver a encerramento precoce. Categoria isolada não cria narrativa clínica.
 
