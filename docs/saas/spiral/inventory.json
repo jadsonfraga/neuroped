@@ -1,0 +1,34 @@
+{
+  "atualizadoEm": "2026-09-24",
+  "nota": "Somente o examinado até aqui. Ausência de entrada = NAO_EXAMINADA; o denominador completo (§5) ainda não foi levantado.",
+  "funcionalidades": [
+    {
+      "id": "auth.email-verification",
+      "finalidade": "Prova de posse do e-mail antes de privilégio de owner",
+      "entradas": ["POST /api/auth/signup", "POST /api/auth/resend-verification", "POST /api/auth/verify-email", "#/verificar-email"],
+      "fonteVerdade": "users.email_verified_at (lida do banco, não do JWT)",
+      "estadosDeErro": "entrega falha => token apagado, sem falso sucesso; reenvio anti-enumeração (202 genérico)",
+      "teste": "tests/unit/email-verification.test.ts; saas-self-service",
+      "situacao": "VERIFICADA_LOCALMENTE",
+      "risco": "gap de UX: recusa EMAIL_VERIFICATION_REQUIRED sem link direto de reenvio (BACKLOG S2)"
+    },
+    {
+      "id": "billing.checkout-retorno",
+      "finalidade": "Retorno de checkout sem conceder entitlement por redirect",
+      "entradas": ["#/billing-retorno?status=..."],
+      "fonteVerdade": "webhook autenticado do provedor (cliente-zero-journey)",
+      "teste": "tests/unit/cliente-zero-journey.test.ts",
+      "situacao": "VERIFICADA_LOCALMENTE"
+    },
+    {
+      "id": "admin.go-live",
+      "finalidade": "Diagnóstico de prontidão comercial, restrito a admin, sem segredos",
+      "entradas": ["GET /api/admin/go-live"],
+      "fonteVerdade": "variáveis de ambiente do Pages",
+      "estadosDeErro": "401/403 sem revelar formato; ordemInvertida como perigo",
+      "teste": "tests/unit/go-live-readiness.test.ts",
+      "situacao": "VERIFICADA_LOCALMENTE",
+      "situacaoComercial": "atesta CONFIGURACAO_PRESENTE; degraus superiores em naoComprova"
+    }
+  ]
+}
