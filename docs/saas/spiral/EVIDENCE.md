@@ -16,3 +16,12 @@
   failed { status: 403 }` esperado: harness intercepta o provedor).
 - Deploy run 1416 (`e77bbf7`) success com verificação de SHA público,
   health autenticado, CORS e login e2e executados.
+
+## S3 (ciclo 3) — inventário Acesso+Comercial e contrato auth/me
+- Evidência de cobertura: grep de import direto `functions/api/<handler>`
+  em tests/unit, não coincidência de nome.
+- auth/me: bloco novo em e2e-refresh-session-guard-regression.test.ts
+  (roda em test:auth-bootstrap, dentro de test:quick-wins). Assertiva de
+  família revogada vista FALHANDO com a checagem removida do handler.
+- Comandos exit 0: suíte estendida isolada, npm run check, npm run lint,
+  npm run test:quick-wins.

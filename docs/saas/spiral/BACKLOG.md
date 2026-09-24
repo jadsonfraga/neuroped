@@ -13,10 +13,10 @@ Recusa EMAIL_VERIFICATION_REQUIRED no onboarding exibe "Reenviar link de
 verificação" levando a `#/verificar-email`. Contrato:
 tests/unit/onboarding-verification-link.test.mjs (em test:quick-wins).
 
-## S3 · P1 · aberto
-Inventário §5: registro por funcionalidade em inventory.json. Estado atual
-cobre só o examinado no ciclo 1; denominador real desconhecido. Aceite:
-domínios Acesso e Comercial com todas as jornadas listadas e classificadas.
+## S3 · P1 · FECHADO (ciclo 3)
+Acesso (12) e Comercial (8) inventariados com evidência por import direto;
+lacuna auth/me fechada com contrato próprio no mesmo ciclo. Próximo domínio
+a inventariar: Núcleo clínico.
 
 ## S4 · P1 · bloqueado externamente
 Integração sandbox Asaas real (degrau INTEGRACAO_SANDBOX_EXERCITADA).
