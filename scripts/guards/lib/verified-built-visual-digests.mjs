@@ -52,8 +52,14 @@ export function createBuiltVisualDigestInspector(root) {
       const ranges = [], seen = new Set();
       function literalProperty(node, name) {
         const matches = node.properties.filter(prop => ts.isPropertyAssignment(prop) &&
-          (ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name)) && prop.name.text === name);
-        if (matches.length !== 1 || !ts.isStringLiteral(matches[0].initializer)) return null;
+          (ts.isIdentifier(prop.name) || ts.isStringLiteralLike(prop.name)) && prop.name.text === name);
+        // ts.isStringLiteral rejects a NoSubstitutionTemplateLiteral (backtick,
+        // no interpolation) — exactly the form this build's minifier emits for
+        // these fields. isStringLiteralLike accepts both AST kinds; .text reads
+        // identically either way. Without this, every property lookup below
+        // silently returns null, no digest is ever recognized as verified, and
+        // every legitimate image sha256 leaks through as an unredacted match.
+        if (matches.length !== 1 || !ts.isStringLiteralLike(matches[0].initializer)) return null;
         return matches[0].initializer;
       }
       function visit(node) {

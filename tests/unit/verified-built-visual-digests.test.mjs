@@ -33,6 +33,13 @@ test("reproduces false PIN detection and exempts only verified image fields", ()
     assert.equal(pin.test(inspect(bundlePath, f.js)), false);
     const minified = `const bank=[{id:"bola",sourcePath:"EN/ball.svg",sha256:"${f.digest}"}];`;
     assert.equal(pin.test(inspect(bundlePath, minified)), false);
+    // Real-world regression: this repo's build rewrites plain string literals
+    // as no-substitution template literals (backticks) when minifying — a
+    // distinct AST node from an ordinary string literal. The inspector must
+    // recognize both, or every field lookup below silently fails and every
+    // legitimate digest leaks through unredacted.
+    const backtickMinified = `const bank=[{id:\`bola\`,sourcePath:\`EN/ball.svg\`,sha256:\`${f.digest}\`}];`;
+    assert.equal(pin.test(inspect(bundlePath, backtickMinified)), false, "template-literal-quoted fields must be recognized like ordinary string literals");
     const wrapped = `const bank=JSON.parse(${JSON.stringify(f.json)});`;
     assert.equal(pin.test(inspect(bundlePath, wrapped)), false, "large JSON serialized by Vite remains verifiable");
     const withCredential = JSON.stringify({ items: [f.item], PIN: f.digest });
