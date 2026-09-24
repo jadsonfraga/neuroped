@@ -186,7 +186,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     {betweenStations && transitionObservation && task && <section className="ot-card ot-station-card" data-testid="tablet-transition">
       <p className="ot-badge">ENTRE ESTAÇÕES</p><h2>{transitionTask?.title ?? "Estação anterior"} registrada</h2>
       <p>Próxima estação: <strong>{task.title}</strong>.</p>
-      <label>Completar descrição factual da estação encerrada<textarea value={transitionObservation.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: transitionObservation.taskId, note: e.target.value })} /></label>
+      <label>Completar descrição factual da estação encerrada<textarea aria-label="Completar descrição factual da estação encerrada" value={transitionObservation.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: transitionObservation.taskId, note: e.target.value })} /></label>
       <p className="ot-pacing">O campo mostra a descrição já salva desta estação. Complete apenas o fato observado.</p>
       <button type="button" className="ot-primary" onClick={() => setTransitionTaskId(null)}>Continuar para a próxima estação</button>
     </section>}
