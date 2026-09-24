@@ -34,8 +34,10 @@ export const LEGACY_INSTRUMENT_REDIRECTS: Record<string, string> = {
 };
 
 /**
- * Redirects das rotas legadas restantes de teste direto para a Sonda Dez.
+ * Redirects das rotas legadas restantes de teste direto.
  * /testes-reconhecimento voltou a ter superfície própria e não pertence mais a este mapa.
+ * /avaliacao-cognitiva-infantil também voltou a ter superfície própria
+ * (/testes-cognitivos); o bookmark antigo segue para ela, não para a Sonda Dez.
  *
  * Por que existe: a consolidação "os testes diretos convergem para a Sonda
  * Dez" (commit f2d7f48) esvaziou 15 páginas em shims de duas linhas que
@@ -49,7 +51,7 @@ export const LEGACY_DIRECT_TEST_REDIRECTS: Record<string, string> = {
   "/testes-academicos": "/testes-diretos",
   "/cognitive-lab": "/testes-diretos",
   "/cognitive-lab/:taskId": "/testes-diretos",
-  "/avaliacao-cognitiva-infantil": "/testes-diretos",
+  "/avaliacao-cognitiva-infantil": "/testes-cognitivos",
   "/academico-interativo": "/testes-diretos",
   "/escrita-desenho": "/testes-diretos",
   "/conhecimento-visual": "/testes-diretos",

@@ -3,7 +3,7 @@ import { TABLET_LIMIT, TABLET_LIMITS, TABLET_VERSION, tabletPlan } from "./proto
 
 export const OUTCOME_IDS = ["E", "V", "M", "A", "ND", "R", "NA"] as const;
 export type TabletOutcome = typeof OUTCOME_IDS[number];
-export type WizardPhase = "setup" | "camera" | "rehearsal" | "ready" | "cue" | "child" | "response" | "review" | "delivery";
+export type WizardPhase = "setup" | "camera" | "rehearsal" | "ready" | "cue" | "child" | "response" | "transition" | "review" | "delivery";
 export type Point = { x: number; y: number };
 const pointSchema = z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }).strict();
 const contextSchema = z.object({ code: z.string().min(1).max(32).regex(/^[A-Za-z0-9_-]+$/), months: z.number().int().min(0).max(215), schooling: z.string().max(120), communication: z.string().max(200), conditions: z.string().max(1000) }).strict();
@@ -16,7 +16,8 @@ export const recordSchema = z.object({ protocol: z.literal(TABLET_VERSION), moda
 export type TabletRecord = z.infer<typeof recordSchema>;
 export interface TabletState { phase: WizardPhase; record: TabletRecord | null; cursor: number; elapsed: number; error: string }
 export const initialTabletState = (): TabletState => ({ phase: "setup", record: null, cursor: 0, elapsed: 0, error: "" });
-export const isCollecting = (phase: WizardPhase): boolean => ["cue", "child", "response"].includes(phase);
+// The pause between stations belongs to the collection: the clock keeps running and the limit still fires.
+export const isCollecting = (phase: WizardPhase): boolean => ["cue", "child", "response", "transition"].includes(phase);
 export type TabletAction =
   | { type: "next-setup" }
   | { type: "back-setup" }
@@ -27,6 +28,7 @@ export type TabletAction =
   | { type: "input"; event: "select" | "stroke" | "clear"; value?: string | Point[] }
   | { type: "save"; outcome: TabletOutcome; note: string }
   | { type: "skip"; reason: string }
+  | { type: "advance" }
   | { type: "end"; reason: string; second: number }
   | { type: "amend"; taskId: string; note: string }
   | { type: "reviewed"; value: boolean }
@@ -105,10 +107,14 @@ export function tabletReducer(s: TabletState, a: TabletAction): TabletState {
       r = revise(log(r, s.elapsed, null, "end", "Roteiro encerrado"), { durationSeconds: s.elapsed, endReason: "Roteiro encerrado" });
       return { ...s, record: r, phase: "review", error: "" };
     }
-    return { ...s, record: r, cursor: s.cursor + 1, phase: "cue", error: "" };
+    // The cursor stays on the station just closed: the pause names what ended before naming what comes.
+    return { ...s, record: r, phase: "transition", error: "" };
   }
-  if (a.type === "amend" && ["response", "review", "delivery"].includes(s.phase)) {
-    if (a.note.length > 2000 || !r.observations.some((o) => o.taskId === a.taskId) || (s.phase === "response" && a.taskId !== task.id)) return s;
+  if (a.type === "advance" && s.phase === "transition" && s.cursor + 1 < plan.tasks.length) {
+    return { ...s, cursor: s.cursor + 1, phase: "cue", error: "" };
+  }
+  if (a.type === "amend" && ["response", "transition", "review", "delivery"].includes(s.phase)) {
+    if (a.note.length > 2000 || !r.observations.some((o) => o.taskId === a.taskId) || (["response", "transition"].includes(s.phase) && a.taskId !== task.id)) return s;
     return { ...s, record: revise(r, { observations: r.observations.map((o) => o.taskId === a.taskId ? { ...o, note: a.note, editedAfterEnd: o.editedAfterEnd || !isCollecting(s.phase) } : o) }), error: "" };
   }
   if (a.type === "reviewed" && ["review", "delivery"].includes(s.phase)) return { ...s, record: { ...r, reviewed: a.value, revision: r.revision + 1 } };
