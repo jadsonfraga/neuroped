@@ -26,8 +26,9 @@ check(TROUBLE.length >= 4 && TROUBLE.every(([p, a]) => p.length > 10 && a.length
 check(CAREGIVER_BRIEFING.includes("não dê dicas") && CAREGIVER_BRIEFING.includes("parar") && CAREGIVER_BRIEFING.includes("não é prova"), "caregiver briefing: no prompting, may stop, not a test");
 check(CHILD_PHRASE.includes("pedir ajuda ou parar"), "child phrase keeps the exit");
 check(!page.includes("Vamos fazer algumas brincadeiras") && page.includes("<OpeningScripts />"), "page renders both scripts from one source");
-check(page.includes('{stage === "setup" && <FirstTimeGuide />}') && page.includes("{running && <LiveHelp />}") && page.includes("{finished && <NextSteps steps={steps} />}") && page.includes("<AgeFromBirthDate"), "each stage carries its orientation");
+check(page.includes('{stage === "setup" && !direct && <FirstTimeGuide />}') && page.includes("{running && <LiveHelp />}") && page.includes("{finished && <NextSteps steps={steps} />}") && page.includes("<AgeFromBirthDate"), "each stage carries its orientation");
 check(orientation.includes("open>") && orientation.includes('data-testid="obs10-first-time"'), "first-time guide opens by default");
+check(page.includes('data-testid="obs10-track-tabs"') && page.includes('data-testid="obs10-direct-start"') && page.includes('aria-selected={direct}'), "setup offers the direct track beside the first-time guide; only the guided track shows the orientation");
 check(!/localStorage|sessionStorage|fetch\(|indexedDB/.test(orientation) && orientation.includes('setBirth("")'), "birth date never stored and cleared after filling");
 for (const outcome of OUTCOMES) check(orientation.includes("OUTCOMES.map"), `legend lists ${outcome.id}`);
 

@@ -7,6 +7,7 @@ import "./visual-recognition.css";
 
 const icons={animais:PawPrint,frutas:Apple,transportes:Bus,cores:Palette,opostos:Layers,objetos:Images};
 const PREPARATION=["Revisei as figuras e retirei as que não são adequadas ao repertório da criança.","Conferi conforto, iluminação, brilho e filtros de cor do tablet.","Vou registrar o que foi observado, sem inferir diagnóstico ou desempenho normativo."];
+export const DIRECT_TRACK_NOTE="Modo direto: guia de primeira aplicação e conferências de preparo dispensados pela aplicadora experiente";
 const CONDITIONS=["Visão/óculos a considerar","Audição a considerar","Comunicação não oral","Dificuldade motora para tocar","Idioma ou repertório cultural diferente","Cansaço ou distração"];
 const readableError=(error:unknown)=>error instanceof Error?error.message:"Não foi possível concluir esta operação.";
 function downloadFile(text:string,type:string,name:string){const url=URL.createObjectURL(new Blob([text],{type}));const anchor=document.createElement("a");anchor.href=url;anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -29,6 +30,7 @@ function useExitGuard(active:boolean){
 }
 export default function VisualRecognitionWorkspace(){
   const [phase,setPhase]=useState<"prepare"|"run"|"report">("prepare");
+  const [track,setTrack]=useState<"guided"|"direct">("guided");const direct=track==="direct";
   const [years,setYears]=useState(""),[months,setMonths]=useState("0"),[preview,setPreview]=useState("48-59");
   const [mode,setMode]=useState<Mode>("receptivo"),[choices,setChoices]=useState<2|3|4>(2),[count,setCount]=useState(12),[distractors,setDistractors]=useState<Config["distractors"]>("distantes");
   const [categories,setCategories]=useState<Category[]>(Object.keys(CATEGORIES) as Category[]),[excluded,setExcluded]=useState<string[]>([]),[search,setSearch]=useState("");
@@ -57,8 +59,9 @@ export default function VisualRecognitionWorkspace(){
   const start=async()=>{
     setMessage("");
     if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 17 anos e 11 meses. A prévia não define a idade.");return;}
-    if(!checks.every(Boolean)){setMessage("Conclua os três cuidados de preparação.");return;}
-    const next:Config={ageMonths:age,mode,choices,count,selectedIds:selected.map(item=>item.id),seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors,contextAcknowledged:contexts,conditions:[...conditions]};
+    if(!direct&&!checks.every(Boolean)){setMessage("Conclua os três cuidados de preparação.");return;}
+    if(selected.length===0){setMessage("Selecione ao menos uma figura para esta sessão.");return;}
+    const next:Config={ageMonths:age,mode,choices,count,selectedIds:selected.map(item=>item.id),seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors,contextAcknowledged:contexts,conditions:direct?[...conditions,DIRECT_TRACK_NOTE]:[...conditions]};
     try{
       const plan=buildPlan(next);setLoading(true);abort.current?.abort();const controller=new AbortController();abort.current=controller;
       const loaded=await preloadSymbols(next.selectedIds,controller.signal);if(controller.signal.aborted){Object.values(loaded).forEach(url=>URL.revokeObjectURL(url));return;}
@@ -96,9 +99,33 @@ export default function VisualRecognitionWorkspace(){
       <div className="rv-hero-pictures" aria-hidden="true"><div><Stimulus id="gato"/></div><div><Stimulus id="banana"/></div><div><Stimulus id="carro"/></div><div><Stimulus id="vermelho"/></div></div>
     </header>
     <div className="rv-notice rv-no-print"><ShieldCheck size={19}/><p><strong>Registro observacional · sem normas diagnósticas.</strong> A idade organiza o roteiro, não determina o que a criança é obrigada a saber. Avaliação e assinatura permanecem com o profissional.</p></div>
-    <nav className="rv-steps rv-no-print" aria-label="Etapas da aplicação"><span aria-current={phase==="prepare"?"step":undefined}>1 · Preparar</span><ChevronRight size={16}/><span aria-current={phase==="run"?"step":undefined}>2 · Apresentar e registrar</span><ChevronRight size={16}/><span aria-current={phase==="report"?"step":undefined}>3 · Revisar</span></nav>
+    {phase==="prepare"&&<div className="rv-tracks rv-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="rv-track-tabs">
+      <button type="button" role="tab" aria-selected={!direct} disabled={loading} onClick={()=>{setTrack("guided");setMessage("");}}><strong>Guia de primeira aplicação</strong><span>Preparar, apresentar e revisar, com conferências passo a passo.</span></button>
+      <button type="button" role="tab" aria-selected={direct} disabled={loading} onClick={()=>{setTrack("direct");setMessage("Modo direto: sem guia nem conferências de preparo. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado.");}}><strong>Direto ao teste</strong><span>Aplicadora experiente: idade, modalidade e início imediato.</span></button>
+    </div>}
+    <nav className="rv-steps rv-no-print" aria-label="Etapas da aplicação"><span aria-current={phase==="prepare"?"step":undefined}>{direct?"1 · Idade":"1 · Preparar"}</span><ChevronRight size={16}/><span aria-current={phase==="run"?"step":undefined}>2 · Apresentar e registrar</span><ChevronRight size={16}/><span aria-current={phase==="report"?"step":undefined}>3 · Revisar</span></nav>
     {message&&<div role="status" className="rv-message rv-no-print">{message}</div>}
-    {phase==="prepare"&&<>
+    {phase==="prepare"&&direct&&<section className="rv-panel" data-testid="rv-direct-start"><h2><SlidersHorizontal size={21}/> 1. Idade e início</h2><div className="rv-form-grid">
+        <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>{setYears(event.target.value);setChecks([false,false,false]);}} placeholder="Ex.: 4"/></label>
+        <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>{setMonths(event.target.value);setChecks([false,false,false]);}}/></label>
+        <label>Modalidade<select aria-label="Modalidade" value={mode} onChange={event=>{setMode(event.target.value as Mode);setExcluded([]);setChecks([false,false,false]);}}>{Object.entries(MODES).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
+        <label>Alternativas por tela<select aria-label="Alternativas por tela" value={choices} disabled={mode==="nomeacao"} onChange={event=>setChoices(Number(event.target.value) as 2|3|4)}><option value={2}>2 · campo reduzido</option><option value={3}>3 · campo intermediário</option><option value={4}>4 · campo ampliado</option></select></label>
+        <label>Tamanho da sessão<select aria-label="Tamanho da sessão" value={count} onChange={event=>setCount(Number(event.target.value))}><option value={6}>Até 6 oportunidades</option><option value={12}>Até 12 oportunidades</option><option value={20}>Até 20 oportunidades</option><option value={100}>Todo o conjunto selecionado</option></select></label>
+        <label>Outras figuras na tela<select aria-label="Outras figuras na tela" value={distractors} onChange={event=>setDistractors(event.target.value as Config["distractors"])}><option value="distantes">Categorias distintas quando possível</option><option value="categoria">Mesma categoria</option></select></label>
+      </div>
+      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para liberar o início":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>{age===null?"Anos completos e meses adicionais, entre 12 meses e 17 anos e 11 meses.":band?.note}</p></div>
+      <details className="rv-details"><summary>Ajustar categorias e figuras desta sessão ({selected.length} selecionadas)</summary>
+        <div className="rv-category-grid">{(Object.keys(CATEGORIES) as Category[]).map(category=>{const Icon=icons[category],n=available.filter(item=>item.category===category).length;return <button type="button" key={category} disabled={n===0} aria-pressed={categories.includes(category)&&n>0} onClick={()=>{setCategories(current=>current.includes(category)?current.filter(value=>value!==category):[...current,category]);}}><Icon size={25}/><strong>{CATEGORIES[category]}</strong><span>{n} estímulos neste roteiro</span></button>;})}</div>
+        {displayAge>=60&&mode!=="pareamento"&&<label className="rv-check rv-context-check"><input type="checkbox" checked={contexts} onChange={event=>setContexts(event.target.checked)}/><span>Incluir quente/frio e pesado/leve. Li que são inferências contextualizadas, dependentes de repertório; não medem temperatura, massa, força ou sensibilidade. Nunca apresentar calor real.</span></label>}
+        <div className="rv-catalog-tools"><label><Search size={18}/><input aria-label="Buscar figura" placeholder="Buscar no conjunto…" value={search} onChange={event=>setSearch(event.target.value)}/></label><span>{selected.length} selecionados</span><button type="button" onClick={()=>setExcluded([])}>Restaurar seleção</button></div>
+        <div className="rv-catalog" aria-label="Banco de figuras para revisão do profissional">{shown.map(item=><label className={`rv-catalog-card ${excluded.includes(item.id)?"rv-excluded":""}`} key={item.id}><div className="rv-thumb"><Stimulus id={item.id}/></div><span className="rv-catalog-label"><input type="checkbox" checked={!excluded.includes(item.id)} onChange={()=>toggleItem(item.id)} aria-label={`Usar ${item.label}`}/><strong>{item.label}</strong></span><span className="rv-category-label">{CATEGORIES[item.category]}</span>{item.context&&<span className="rv-context-badge">Contextualizado</span>}</label>)}</div>
+        {shown.length===0&&<p className="rv-empty">Nenhuma figura neste filtro. Ajuste categoria, busca ou roteiro.</p>}
+      </details>
+      <details className="rv-details"><summary>Condições a considerar (opcional)</summary><div className="rv-conditions">{CONDITIONS.map(condition=><label className="rv-check" key={condition}><input type="checkbox" checked={conditions.includes(condition)} onChange={()=>setConditions(current=>current.includes(condition)?current.filter(value=>value!==condition):[...current,condition])}/>{condition}</label>)}</div></details>
+      <p className="rv-small">Modo direto: a aplicadora experiente responde pela revisão das figuras, pelo conforto e pela tela. O registro declara que o preparo guiado foi dispensado. Sem nome, foto ou cadastro da criança; dados apenas em memória.</p>
+      <div className="rv-actions"><button type="button" className="rv-primary" disabled={loading||selected.length===0} onClick={()=>void start()}>{loading?"Verificando as figuras…":"Iniciar aplicação"}<ChevronRight size={19}/></button>{loading&&<button type="button" onClick={()=>abort.current?.abort()}>Cancelar carregamento</button>}</div>
+    </section>}
+    {phase==="prepare"&&!direct&&<>
       <section className="rv-panel"><h2><SlidersHorizontal size={21}/> 1. Escolha como observar</h2><div className="rv-form-grid">
         <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>{setYears(event.target.value);setChecks([false,false,false]);}} placeholder="Ex.: 4"/></label>
         <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>{setMonths(event.target.value);setChecks([false,false,false]);}}/></label>

@@ -14,6 +14,8 @@ export interface SessionContext {
   familyReport: string;
   proneAllowed: boolean;
   missingMaterials?: string[];
+  /** "direct": aplicadora experiente iniciou sem guia, kit item a item, checklist ou ensaio. Ausente = preparação guiada. */
+  preparation?: "direct";
 }
 export interface Observation {
   id: string;
@@ -100,6 +102,7 @@ export function exportFilename(code: string, extension: "txt" | "json" | "md" | 
   return `OBS10-${safe}${suffix ? `-${suffix}` : ""}.${extension}`;
 }
 const textOrMissing = (s: string) => s.trim() || "Não informado";
+export const PREPARATION_DIRECT_LINE = "Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente, que responde pelo preparo.";
 export function makeReport(record: SessionRecord): string {
   const { context: c, observations } = record;
   const band = AGE_BANDS.find((b) => b.id === c.bandId);
@@ -109,6 +112,7 @@ export function makeReport(record: SessionRecord): string {
     `Código: ${textOrMissing(c.code)}`,
     `Sessão: ${record.sessionId || "Não informada (registro anterior)"}`,
     `Materiais ausentes referidos: ${c.missingMaterials?.join(", ") || "Nenhum informado"}`,
+    ...(c.preparation === "direct" ? [PREPARATION_DIRECT_LINE] : []),
     `Idade cronológica: ${c.chronologicalMonths} meses | Corrigida: ${c.correctedMonths === null ? "não utilizada" : `${c.correctedMonths} meses, informada pela equipe`}`,
     `Ficha aplicada: ${band?.label ?? "Não informada"}`,
     `Escolaridade: ${textOrMissing(c.schooling)} | Idioma/comunicação: ${textOrMissing(c.language)}`,
