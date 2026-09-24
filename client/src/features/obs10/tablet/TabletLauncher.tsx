@@ -15,7 +15,7 @@ export function TabletLauncher({ locked }: { locked: boolean }) {
   function close() { dialog.current?.close(); setOpen(false); setMessage(""); requestAnimationFrame(() => trigger.current?.focus()); }
   return <>
     <section className="obs10-kind" data-testid="tablet-launcher">
-      <div><h2>Aplicar somente com tablet e câmera</h2><p>Jornada guiada sem papel, lápis ou brinquedos. Modo digital experimental, com cobertura diferente do presencial. Não transforma manipulação real em teste de tela.</p><button ref={trigger} type="button" disabled={locked} onClick={() => {
+      <div><h2>Aplicar somente com tablet e câmera</h2><p>Jornada em estações, como um percurso de videogame: Base → Radar → Tutorial → Pronto → Missões → Revisão → Saída. Sem papel, lápis ou brinquedos e sem pontos, ranking ou feedback de acerto/erro. Modo digital experimental, com cobertura diferente do presencial.</p><button ref={trigger} type="button" disabled={locked} onClick={() => {
         const preview = document.querySelector<HTMLVideoElement>(".obs10-camera-test video");
         if (typeof MediaStream !== "undefined" && preview?.srcObject instanceof MediaStream && preview.srcObject.getTracks().some((t) => t.readyState === "live")) { setMessage("Encerre a prévia da câmera do modo presencial antes de mudar para tablet."); return; }
         if (typeof HTMLDialogElement === "undefined" || !HTMLDialogElement.prototype.showModal) { setMessage("Este navegador não suporta o modo guiado em tela protegida. Use um navegador institucional atualizado; o modo presencial permanece disponível."); return; }
