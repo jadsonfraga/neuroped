@@ -143,19 +143,23 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="np-signature-login__links mt-5 flex w-full max-w-sm flex-col gap-3 text-center">
+      {/* Dois planos de leitura: ações da própria conta em destaque; descoberta
+          e saída para famílias em tom rebaixado, separadas por linha-fio —
+          quatro links iguais empilhados competiam entre si. */}
+      <div className="np-signature-login__links mt-5 flex w-full max-w-sm flex-col gap-1 text-center">
         <a href="#/esqueci-senha" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="forgot-password-link">
           <KeyRound className="h-4 w-4" aria-hidden="true" /> Esqueci minha senha
         </a>
         <a href="#/cadastro" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
           Criar conta profissional
         </a>
+        <div className="mx-auto my-2 h-px w-24 bg-border" aria-hidden="true" />
         {/* Quem chegou aqui sem conhecer o produto precisa de um caminho que
             não comece pedindo senha. */}
-        <a href="#/planos" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline" data-testid="pricing-link">
+        <a href="#/planos" className="inline-flex items-center justify-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:underline" data-testid="pricing-link">
           Conhecer o NeuroPed e os planos
         </a>
-        <a href={`#${PUBLIC_HOME}`} className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:underline">
+        <a href={`#${PUBLIC_HOME}`} className="inline-flex items-center justify-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Ir para o conteúdo das famílias
         </a>
         {MEDICAL_URL && (

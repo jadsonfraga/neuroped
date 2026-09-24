@@ -31,6 +31,8 @@ import "./styles/tablet-coarse-perf.css";
 import "./styles/brand-signature-v14.css";
 // Acabamento de produto: entrada, navegação e área de trabalho; sem regras clínicas.
 import "./styles/product-signature.css";
+// Movimento com propósito e coerência geométrica — última palavra do acabamento.
+import "./styles/motion-coherence-v15.css";
 
 // Instalada antes de qualquer rota clínica: após login remoto, namespaces de PHI
 // conhecidos falham fechados inclusive quando código legado usa Storage direto.

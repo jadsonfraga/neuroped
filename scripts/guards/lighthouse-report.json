@@ -1,14 +1,14 @@
 {
   "/": {
-    "performance": 98,
+    "performance": 97,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 282,
-      "lcpMs": 1118,
-      "speedIndexMs": 730,
-      "tbtMs": 9,
+      "fcpMs": 254,
+      "lcpMs": 1268,
+      "speedIndexMs": 602,
+      "tbtMs": 25,
       "cls": 0,
       "actionableCls": 0
     },
@@ -22,9 +22,28 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-BUTTON",
+          "lhId": "page-7-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,4,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-2-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -33,8 +52,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -44,9 +63,28 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-BUTTON",
+          "lhId": "page-7-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,4,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-2-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -55,8 +93,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -64,7 +102,7 @@
     "failedAudits": [
       {
         "id": "largest-contentful-paint",
-        "score": 0.92,
+        "score": 0.88,
         "title": "Largest Contentful Paint"
       },
       {
@@ -73,13 +111,8 @@
         "title": "Max Potential First Input Delay"
       },
       {
-        "id": "forced-reflow-insight",
-        "score": 0,
-        "title": "Forced reflow"
-      },
-      {
         "id": "image-delivery-insight",
-        "score": 0.5,
+        "score": 0,
         "title": "Improve image delivery"
       },
       {
@@ -101,17 +134,17 @@
     "attempts": 1
   },
   "/#/filtro": {
-    "performance": 100,
+    "performance": 99,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 278,
-      "lcpMs": 518,
-      "speedIndexMs": 438,
-      "tbtMs": 0,
-      "cls": 0,
-      "actionableCls": 0
+      "fcpMs": 272,
+      "lcpMs": 1012,
+      "speedIndexMs": 611,
+      "tbtMs": 7,
+      "cls": 0.01,
+      "actionableCls": 0.01
     },
     "requiredAudits": {
       "errors-in-console": true,
@@ -123,21 +156,40 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
-          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "lhId": "page-4-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,4,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > div.px-2 > div.space-y-1",
           "boundingRect": {
-            "top": 799,
-            "bottom": 940,
-            "left": 0,
-            "right": 255,
-            "width": 255,
-            "height": 141
+            "top": 519,
+            "bottom": 639,
+            "left": 8,
+            "right": 237,
+            "width": 229,
+            "height": 120
           },
-          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
-          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "Especialidades Premium\nEEG & Vídeo-EEG\nNesplora"
         },
-        "score": 0.000085208286923591
+        "score": 0.010334334179175573
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-2-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
       }
     ],
     "ignoredLayoutShifts": [],
@@ -145,24 +197,53 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
-          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "lhId": "page-4-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,4,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > div.px-2 > div.space-y-1",
           "boundingRect": {
-            "top": 799,
-            "bottom": 940,
-            "left": 0,
-            "right": 255,
-            "width": 255,
-            "height": 141
+            "top": 519,
+            "bottom": 639,
+            "left": 8,
+            "right": 237,
+            "width": 229,
+            "height": 120
           },
-          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
-          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "Especialidades Premium\nEEG & Vídeo-EEG\nNesplora"
         },
-        "score": 0.000085208286923591
+        "score": 0.010334334179175573
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-2-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
       }
     ],
     "failedAudits": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.94,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
       {
         "id": "forced-reflow-insight",
         "score": 0,
@@ -192,10 +273,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 272,
-      "lcpMs": 540,
-      "speedIndexMs": 479,
-      "tbtMs": 0,
+      "fcpMs": 279,
+      "lcpMs": 542,
+      "speedIndexMs": 400,
+      "tbtMs": 3,
       "cls": 0,
       "actionableCls": 0
     },
@@ -209,9 +290,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -220,8 +320,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -231,9 +331,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -242,8 +361,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -253,11 +372,6 @@
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -278,9 +392,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 271,
-      "lcpMs": 540,
-      "speedIndexMs": 396,
+      "fcpMs": 261,
+      "lcpMs": 561,
+      "speedIndexMs": 431,
       "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
@@ -295,9 +409,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -306,8 +439,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -317,9 +450,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -328,8 +480,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -339,11 +491,6 @@
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -359,15 +506,15 @@
     "attempts": 1
   },
   "/#/vineland": {
-    "performance": 100,
+    "performance": 98,
     "accessibility": 100,
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 277,
-      "lcpMs": 546,
-      "speedIndexMs": 404,
-      "tbtMs": 0,
+      "fcpMs": 272,
+      "lcpMs": 1060,
+      "speedIndexMs": 510,
+      "tbtMs": 12,
       "cls": 0,
       "actionableCls": 0
     },
@@ -381,9 +528,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -392,8 +558,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -403,9 +569,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -414,22 +599,32 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
     ],
     "failedAudits": [
       {
+        "id": "largest-contentful-paint",
+        "score": 0.93,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "valid-source-maps",
+        "score": 0,
+        "title": "Missing source maps for large first-party JavaScript"
+      },
+      {
+        "id": "forced-reflow-insight",
+        "score": 0,
+        "title": "Forced reflow"
+      },
+      {
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -450,9 +645,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 262,
-      "lcpMs": 532,
-      "speedIndexMs": 386,
+      "fcpMs": 261,
+      "lcpMs": 521,
+      "speedIndexMs": 413,
       "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
@@ -467,9 +662,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -478,8 +692,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -489,9 +703,28 @@
       {
         "node": {
           "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 308,
+            "bottom": 392,
+            "left": 126,
+            "right": 237,
+            "width": 112,
+            "height": 84
+          },
+          "snippet": "<a href=\"/servicos-clinica\">",
+          "nodeLabel": "Serviços da Clínica"
+        },
+        "score": 0.0001740957802287388
+      },
+      {
+        "node": {
+          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -500,8 +733,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -511,11 +744,6 @@
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -536,11 +764,11 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 276,
-      "lcpMs": 576,
-      "speedIndexMs": 518,
+      "fcpMs": 257,
+      "lcpMs": 537,
+      "speedIndexMs": 539,
       "tbtMs": 0,
-      "cls": 0.001,
+      "cls": 0.025,
       "actionableCls": 0
     },
     "requiredAudits": {
@@ -553,84 +781,83 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-2-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,1,DIV",
-          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
+          "lhId": "page-1-NAV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV",
+          "selector": "div.np-app-shell > aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav",
           "boundingRect": {
-            "top": 469,
-            "bottom": 593,
-            "left": 8,
-            "right": 247,
-            "width": 239,
-            "height": 124
+            "top": 315,
+            "bottom": 1303,
+            "left": 0,
+            "right": 245,
+            "width": 245,
+            "height": 988
           },
-          "snippet": "<div class=\"space-y-1\">",
-          "nodeLabel": "TRIAGEM E FERRAMENTAS\nTriar sem cadastrar\nCAA · Vou Falar"
+          "snippet": "<nav id=\"sidebar-nav\" class=\"py-2 px-2 space-y-1\" aria-label=\"Navegação principal em grupos recolhíveis\">",
+          "nodeLabel": "Início\nATENDIMENTO\nAgenda & Gestão\nPacientes / Prontuário\nMemória clínica\nLaudo…"
         },
-        "score": 0.0008156107364100426
+        "score": 0.024747640805183355
       },
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
-          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "lhId": "page-6-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,3,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 799,
-            "bottom": 940,
-            "left": 0,
-            "right": 255,
-            "width": 255,
-            "height": 141
+            "top": 755,
+            "bottom": 1187,
+            "left": 8,
+            "right": 237,
+            "width": 229,
+            "height": 432
           },
-          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
-          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "TRIAGEM E FERRAMENTAS\nSonda Dez · Pré-consulta\nFluxograma Clínico\nTriar sem cad…"
         },
-        "score": 0.000085208286923591
+        "score": 0.022506761208249005
       }
     ],
     "ignoredLayoutShifts": [
       {
         "node": {
           "type": "node",
-          "lhId": "page-2-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,1,DIV",
-          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
+          "lhId": "page-1-NAV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV",
+          "selector": "div.np-app-shell > aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav",
           "boundingRect": {
-            "top": 469,
-            "bottom": 593,
-            "left": 8,
-            "right": 247,
-            "width": 239,
-            "height": 124
+            "top": 315,
+            "bottom": 1303,
+            "left": 0,
+            "right": 245,
+            "width": 245,
+            "height": 988
           },
-          "snippet": "<div class=\"space-y-1\">",
-          "nodeLabel": "TRIAGEM E FERRAMENTAS\nTriar sem cadastrar\nCAA · Vou Falar"
+          "snippet": "<nav id=\"sidebar-nav\" class=\"py-2 px-2 space-y-1\" aria-label=\"Navegação principal em grupos recolhíveis\">",
+          "nodeLabel": "Início\nATENDIMENTO\nAgenda & Gestão\nPacientes / Prontuário\nMemória clínica\nLaudo…"
         },
-        "score": 0.0008156107364100426
-      }
-    ],
-    "actionableLayoutShifts": [
+        "score": 0.024747640805183355
+      },
       {
         "node": {
           "type": "node",
-          "lhId": "page-1-DIV",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,2,DIV",
-          "selector": "div#root > div.np-app-shell > aside.print:hidden > div.np-side-footer",
+          "lhId": "page-6-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,3,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 799,
-            "bottom": 940,
-            "left": 0,
-            "right": 255,
-            "width": 255,
-            "height": 141
+            "top": 755,
+            "bottom": 1187,
+            "left": 8,
+            "right": 237,
+            "width": 229,
+            "height": 432
           },
-          "snippet": "<div class=\"np-side-footer p-2 border-t border-sidebar-border space-y-1.5\">",
-          "nodeLabel": "Entrar\nSons\nEscuro\nRecolher"
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "TRIAGEM E FERRAMENTAS\nSonda Dez · Pré-consulta\nFluxograma Clínico\nTriar sem cad…"
         },
-        "score": 0.000085208286923591
+        "score": 0.022506761208249005
       }
     ],
+    "actionableLayoutShifts": [],
     "failedAudits": [
       {
         "id": "image-delivery-insight",
@@ -656,11 +883,11 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 284,
-      "lcpMs": 564,
-      "speedIndexMs": 452,
+      "fcpMs": 254,
+      "lcpMs": 534,
+      "speedIndexMs": 484,
       "tbtMs": 0,
-      "cls": 0,
+      "cls": 0.04,
       "actionableCls": 0
     },
     "requiredAudits": {
@@ -673,28 +900,47 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "lhId": "page-7-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,5,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 328,
-            "bottom": 412,
+            "top": 1315,
+            "bottom": 1747,
+            "left": 8,
+            "right": 237,
+            "width": 229,
+            "height": 432
+          },
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "REFERÊNCIA\nInstrumentos padronizados\nBiblioteca de instrumentos\nFluxogramas\nMar…"
+        },
+        "score": 0.03995123777745127
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
+          "boundingRect": {
+            "top": 59,
+            "bottom": 143,
             "left": 126,
             "right": 237,
             "width": 112,
             "height": 84
           },
-          "snippet": "<a href=\"#/servicos-clinica\">",
+          "snippet": "<a href=\"/servicos-clinica\">",
           "nodeLabel": "Serviços da Clínica"
         },
-        "score": 0.00014667058483384919
+        "score": 0.00017608646194243138
       },
       {
         "node": {
           "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -703,39 +949,59 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
     ],
-    "ignoredLayoutShifts": [],
+    "ignoredLayoutShifts": [
+      {
+        "node": {
+          "type": "node",
+          "lhId": "page-7-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,5,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
+          "boundingRect": {
+            "top": 1315,
+            "bottom": 1747,
+            "left": 8,
+            "right": 237,
+            "width": 229,
+            "height": 432
+          },
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "REFERÊNCIA\nInstrumentos padronizados\nBiblioteca de instrumentos\nFluxogramas\nMar…"
+        },
+        "score": 0.03995123777745127
+      }
+    ],
     "actionableLayoutShifts": [
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "lhId": "page-6-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
           "boundingRect": {
-            "top": 328,
-            "bottom": 412,
+            "top": 59,
+            "bottom": 143,
             "left": 126,
             "right": 237,
             "width": 112,
             "height": 84
           },
-          "snippet": "<a href=\"#/servicos-clinica\">",
+          "snippet": "<a href=\"/servicos-clinica\">",
           "nodeLabel": "Serviços da Clínica"
         },
-        "score": 0.00014667058483384919
+        "score": 0.00017608646194243138
       },
       {
         "node": {
           "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -744,13 +1010,18 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
     ],
     "failedAudits": [
+      {
+        "id": "cumulative-layout-shift",
+        "score": 0.99,
+        "title": "Cumulative Layout Shift"
+      },
       {
         "id": "image-delivery-insight",
         "score": 0.5,
@@ -775,9 +1046,9 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 272,
-      "lcpMs": 560,
-      "speedIndexMs": 450,
+      "fcpMs": 264,
+      "lcpMs": 524,
+      "speedIndexMs": 487,
       "tbtMs": 0,
       "cls": 0,
       "actionableCls": 0
@@ -792,28 +1063,28 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "lhId": "page-5-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
           "boundingRect": {
-            "top": 328,
-            "bottom": 412,
+            "top": 308,
+            "bottom": 392,
             "left": 126,
             "right": 237,
             "width": 112,
             "height": 84
           },
-          "snippet": "<a href=\"#/servicos-clinica\">",
+          "snippet": "<a href=\"/servicos-clinica\">",
           "nodeLabel": "Serviços da Clínica"
         },
-        "score": 0.00014667058483384919
+        "score": 0.0001740957802287388
       },
       {
         "node": {
           "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -822,8 +1093,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -833,28 +1104,28 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "lhId": "page-5-A",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,2,DIV,3,A",
+          "selector": "div.np-sidebar-scroll > div.px-2 > div.mt-1.5 > a",
           "boundingRect": {
-            "top": 328,
-            "bottom": 412,
+            "top": 308,
+            "bottom": 392,
             "left": 126,
             "right": 237,
             "width": 112,
             "height": 84
           },
-          "snippet": "<a href=\"#/servicos-clinica\">",
+          "snippet": "<a href=\"/servicos-clinica\">",
           "nodeLabel": "Serviços da Clínica"
         },
-        "score": 0.00014667058483384919
+        "score": 0.0001740957802287388
       },
       {
         "node": {
           "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -863,8 +1134,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -874,11 +1145,6 @@
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -899,11 +1165,11 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 281,
-      "lcpMs": 548,
-      "speedIndexMs": 401,
+      "fcpMs": 256,
+      "lcpMs": 536,
+      "speedIndexMs": 475,
       "tbtMs": 0,
-      "cls": 0,
+      "cls": 0.006,
       "actionableCls": 0
     },
     "requiredAudits": {
@@ -916,28 +1182,28 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "lhId": "page-2-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,3,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 328,
-            "bottom": 412,
-            "left": 126,
+            "top": 1063,
+            "bottom": 1495,
+            "left": 8,
             "right": 237,
-            "width": 112,
-            "height": 84
+            "width": 229,
+            "height": 432
           },
-          "snippet": "<a href=\"#/servicos-clinica\">",
-          "nodeLabel": "Serviços da Clínica"
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "TRIAGEM E FERRAMENTAS\nSonda Dez · Pré-consulta\nFluxograma Clínico\nTriar sem cad…"
         },
-        "score": 0.00014667058483384919
+        "score": 0.006460274050515919
       },
       {
         "node": {
           "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -946,39 +1212,40 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
     ],
-    "ignoredLayoutShifts": [],
-    "actionableLayoutShifts": [
+    "ignoredLayoutShifts": [
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
+          "lhId": "page-2-DIV",
+          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,3,NAV,3,DIV",
+          "selector": "aside.print:hidden > div.np-sidebar-scroll > nav#sidebar-nav > div.space-y-1",
           "boundingRect": {
-            "top": 328,
-            "bottom": 412,
-            "left": 126,
+            "top": 1063,
+            "bottom": 1495,
+            "left": 8,
             "right": 237,
-            "width": 112,
-            "height": 84
+            "width": 229,
+            "height": 432
           },
-          "snippet": "<a href=\"#/servicos-clinica\">",
-          "nodeLabel": "Serviços da Clínica"
+          "snippet": "<div class=\"space-y-1\">",
+          "nodeLabel": "TRIAGEM E FERRAMENTAS\nSonda Dez · Pré-consulta\nFluxograma Clínico\nTriar sem cad…"
         },
-        "score": 0.00014667058483384919
-      },
+        "score": 0.006460274050515919
+      }
+    ],
+    "actionableLayoutShifts": [
       {
         "node": {
           "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -987,8 +1254,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -998,11 +1265,6 @@
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -1023,10 +1285,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 272,
-      "lcpMs": 558,
-      "speedIndexMs": 434,
-      "tbtMs": 0,
+      "fcpMs": 263,
+      "lcpMs": 563,
+      "speedIndexMs": 448,
+      "tbtMs": 5,
       "cls": 0,
       "actionableCls": 0
     },
@@ -1040,28 +1302,9 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
-          "boundingRect": {
-            "top": 328,
-            "bottom": 412,
-            "left": 126,
-            "right": 237,
-            "width": 112,
-            "height": 84
-          },
-          "snippet": "<a href=\"#/servicos-clinica\">",
-          "nodeLabel": "Serviços da Clínica"
-        },
-        "score": 0.00014667058483384919
-      },
-      {
-        "node": {
-          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -1070,8 +1313,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -1081,28 +1324,9 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
-          "boundingRect": {
-            "top": 328,
-            "bottom": 412,
-            "left": 126,
-            "right": 237,
-            "width": 112,
-            "height": 84
-          },
-          "snippet": "<a href=\"#/servicos-clinica\">",
-          "nodeLabel": "Serviços da Clínica"
-        },
-        "score": 0.00014667058483384919
-      },
-      {
-        "node": {
-          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -1111,8 +1335,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -1122,11 +1346,6 @@
         "id": "image-delivery-insight",
         "score": 0.5,
         "title": "Improve image delivery"
-      },
-      {
-        "id": "lcp-discovery-insight",
-        "score": 0,
-        "title": "LCP request discovery"
       },
       {
         "id": "network-dependency-tree-insight",
@@ -1147,10 +1366,10 @@
     "best-practices": 100,
     "seo": 100,
     "metrics": {
-      "fcpMs": 272,
-      "lcpMs": 538,
-      "speedIndexMs": 425,
-      "tbtMs": 0,
+      "fcpMs": 262,
+      "lcpMs": 522,
+      "speedIndexMs": 437,
+      "tbtMs": 15,
       "cls": 0,
       "actionableCls": 0
     },
@@ -1164,28 +1383,9 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
-          "boundingRect": {
-            "top": 328,
-            "bottom": 412,
-            "left": 126,
-            "right": 237,
-            "width": 112,
-            "height": 84
-          },
-          "snippet": "<a href=\"#/servicos-clinica\">",
-          "nodeLabel": "Serviços da Clínica"
-        },
-        "score": 0.00014667058483384919
-      },
-      {
-        "node": {
-          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -1194,8 +1394,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }
@@ -1205,28 +1405,9 @@
       {
         "node": {
           "type": "node",
-          "lhId": "page-4-A",
-          "path": "1,HTML,1,BODY,0,DIV,3,DIV,3,ASIDE,1,DIV,1,DIV,3,DIV,1,A",
-          "selector": "div.np-sidebar-scroll > div.px-2 > div.grid > a",
-          "boundingRect": {
-            "top": 328,
-            "bottom": 412,
-            "left": 126,
-            "right": 237,
-            "width": 112,
-            "height": 84
-          },
-          "snippet": "<a href=\"#/servicos-clinica\">",
-          "nodeLabel": "Serviços da Clínica"
-        },
-        "score": 0.00014667058483384919
-      },
-      {
-        "node": {
-          "type": "node",
           "lhId": "page-1-BUTTON",
           "path": "1,HTML,1,BODY,0,DIV,4,BUTTON",
-          "selector": "body > div#root > button.fixed",
+          "selector": "body.np-mobile-dock-active > div#root > button.fixed",
           "boundingRect": {
             "top": 872,
             "bottom": 916,
@@ -1235,8 +1416,8 @@
             "width": 44,
             "height": 44
           },
-          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir ajuda do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
-          "nodeLabel": "Abrir ajuda do NeuroPed"
+          "snippet": "<button type=\"button\" class=\"fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rou…\" aria-label=\"Abrir a central de assistência do NeuroPed\" data-testid=\"button-floating-help\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+          "nodeLabel": "Abrir a central de assistência do NeuroPed"
         },
         "score": 0.00004683434210339221
       }

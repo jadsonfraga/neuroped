@@ -250,10 +250,14 @@
 .np-side-hero__desc {
   position: relative;
   z-index: 1;
-  display: block;
+  /* Duas linhas em vez de reticências: "Avaliação direta pré-consulta · 10 min"
+     não cabe numa linha de 10 px ao lado do ícone e do chevron. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   margin-top: 0.125rem;
   font-size: 10px;
   line-height: 1.25;
@@ -661,9 +665,14 @@
 }
 
 .np-side-session__name {
+  /* Nome de quem está logado é identidade, não decoração: cabe em duas linhas
+     antes de qualquer reticência. O atributo title guarda o nome completo. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.3;

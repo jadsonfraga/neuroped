@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { allScales, queixas, type ScaleEntry } from "@/data/scaleFilter";
+import {
+  allScales,
+  allScalesComFichas,
+  queixas,
+  type ScaleEntry,
+} from "@/data/scaleFilter";
 import { GenericScale } from "@/components/GenericScale";
 import {
   getInteractiveScale as getInteractiveItemScale,
@@ -28,6 +33,7 @@ import {
   isMasterPinUnlocked,
   verifyMasterPin,
 } from "@/lib/masterPin";
+import { formatScaleAgeRange } from "@/lib/scaleAgeRange";
 
 const APPLICATION_MODE_LABEL: Record<string, string> = {
   questionario_pais: "Questionário — pais/cuidador",
@@ -72,12 +78,6 @@ function queixaLabel(id: string): string {
     QUEIXA_LABEL[id] ??
     id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, " ")
   );
-}
-
-// Idade legível: meses até 24m, anos acima. Evita o "0-0a" das escalas neonatais.
-function ageLabel(min: number, max: number): string {
-  const fmt = (m: number) => (m < 24 ? `${m} m` : `${Math.round(m / 12)} a`);
-  return min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`;
 }
 
 // "Como usar" adaptado ao modo de aplicação (honesto: orienta o uso real do
@@ -272,15 +272,15 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
 
   if (!unlocked) {
     return (
-      <Card className="bg-slate-800/80 border-violet-700 mb-6">
-        <CardHeader className="border-b border-slate-700">
-          <CardTitle className="text-white flex items-center gap-2">
-            <Lock className="w-5 h-5 text-violet-300" />
+      <Card className="border-violet-500/40 mb-6">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Lock className="w-5 h-5 text-violet-600 dark:text-violet-300" />
             Uso interno da escala
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <p className="text-sm text-slate-300 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Esta escala pode ser registrada internamente após PIN master. O PIN
             não fica visível nem salvo em texto.
           </p>
@@ -293,7 +293,7 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="PIN master"
-              className="bg-slate-900/70 border-slate-600 text-white"
+              className=""
               autoComplete="off"
             />
             <Button
@@ -321,12 +321,12 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
           scaleName={scale.name}
           scaleFullName={scale.fullName}
           items={reportItems}
-          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+          patientAge={formatScaleAgeRange(scale.ageMin, scale.ageMax)}
         />
         <SaveToPatient
           scaleName={scale.name}
           responses={reportItems}
-          patientAge={ageLabel(scale.ageMin, scale.ageMax)}
+          patientAge={formatScaleAgeRange(scale.ageMin, scale.ageMax)}
         />
         <Button
           onClick={() => setShowResponses(false)}
@@ -340,16 +340,16 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
   }
 
   return (
-    <Card className="bg-slate-800/80 border-emerald-700 mb-6">
-      <CardHeader className="border-b border-slate-700">
-        <CardTitle className="text-white flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-300" />
+    <Card className="border-emerald-500/40 mb-6">
+      <CardHeader className="border-b border-border">
+        <CardTitle className="text-foreground flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-emerald-700 dark:text-emerald-300" />
           Uso interno desbloqueado
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6 space-y-5">
         {sensitiveLicense && (
-          <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-100">
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-100">
             Instrumento com licença restrita/comercial. Esta tela usa itens
             autorais de registro e não reproduz o instrumento oficial.
           </div>
@@ -358,7 +358,7 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
         <div className="grid md:grid-cols-2 gap-3">
           {adaptedItems.map((item) => (
             <label key={item} className="space-y-1">
-              <span className="text-xs font-semibold text-slate-300">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {item}
               </span>
               <select
@@ -370,7 +370,7 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
                     [item]: e.target.value,
                   }))
                 }
-                className="w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-white"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm text-foreground"
               >
                 <option value="">Selecionar resposta</option>
                 <option value="Não observado / não aplicável">
@@ -391,20 +391,20 @@ function InternalScaleApplication({ scale }: { scale: ScaleEntry }) {
         </div>
 
         <label className="space-y-1 block">
-          <span className="text-xs font-semibold text-slate-300">
+          <span className="text-xs font-semibold text-muted-foreground">
             Observações do aplicador (opcional)
           </span>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="bg-slate-900/70 border-slate-600 text-white min-h-28"
+            className=" min-h-28"
           />
         </label>
 
         <Button
           onClick={() => setShowResponses(true)}
           disabled={!allAnswered}
-          className="w-full bg-emerald-600 hover:bg-emerald-700"
+          className="w-full bg-emerald-700 hover:bg-emerald-800"
         >
           Ver todas as perguntas e respostas
         </Button>
@@ -418,7 +418,13 @@ export default function GenericScalePage() {
   const [_location, navigate] = useLocation();
   const scaleId = params?.id;
 
-  const scale = allScales.find((s) => s.id === scaleId);
+  // Resolve o catálogo COMPLETO (inclui fichas técnicas de instrumentos
+  // licenciados). Antes resolvia só `allScales` (aplicáveis de fato), e o
+  // próprio appRoute do catálogo (/generic-scale/wisc5, bayley, leiter3…)
+  // caía em "Escala não encontrada". A aplicação continua decidida SOMENTE
+  // pelos acervos interativos (runner/itens) — entrar no catálogo de fichas
+  // jamais torna um instrumento aplicável.
+  const scale = allScalesComFichas.find((s) => s.id === scaleId);
   const [copied, setCopied] = useState(false);
   const implStatus = scale ? getImplementationStatus(scale) : null;
 
@@ -436,16 +442,16 @@ export default function GenericScalePage() {
 
   if (!scale) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6 flex items-center justify-center">
-        <Card className="w-full max-w-md bg-red-950/50 border-red-700">
+      <div className="p-6 flex items-center justify-center">
+        <Card className="w-full max-w-md border-destructive/40 bg-destructive/10">
           <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold text-red-100 mb-4">
+            <h2 className="text-2xl font-bold text-destructive mb-4">
               Escala não encontrada
             </h2>
-            <p className="text-red-200 mb-6">ID: {scaleId}</p>
+            <p className="text-destructive/90 mb-6">ID: {scaleId}</p>
             <Button
               onClick={() => navigate("/filtro")}
-              className="bg-red-600 hover:bg-red-700"
+              
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao Filtro
@@ -494,14 +500,14 @@ export default function GenericScalePage() {
     .slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="p-4 sm:p-6" data-testid="scale-ficha-surface">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Button
             variant="ghost"
             onClick={() => navigate("/filtro")}
-            className="text-slate-300 hover:text-white mb-4"
+            className="text-muted-foreground hover:text-foreground mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao Filtro
@@ -510,8 +516,8 @@ export default function GenericScalePage() {
 
         {/* Banner honesto de status de implementação (req. clínico de honestidade) */}
         {implStatus && implStatus !== "complete" && (
-          <Card className="bg-amber-900/20 border-amber-700 mb-6">
-            <CardContent className="pt-6 text-amber-100 text-sm font-semibold">
+          <Card className="border-amber-500/40 bg-amber-500/10 mb-6">
+            <CardContent className="pt-6 text-amber-900 dark:text-amber-100 text-sm font-semibold">
               ⚠️ {getImplementationLabel(implStatus)} Esta página é uma{" "}
               <strong>ficha técnica/referência clínica</strong> — não é a
               aplicação completa do instrumento (sem itens nem cálculo de escore
@@ -521,44 +527,48 @@ export default function GenericScalePage() {
         )}
 
         {/* Escala Principal */}
-        <Card className="bg-slate-800/80 border-slate-700 mb-6">
-          <CardHeader className="border-b border-slate-700">
+        <Card className="border-card-border mb-6">
+          <CardHeader className="border-b border-border">
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-slate-400 mb-2">ID: {scale.id}</p>
-                <CardTitle className="text-3xl font-bold text-white mb-2">
+                <p className="text-sm text-muted-foreground mb-2">ID: {scale.id}</p>
+                {/* h2 real (CardTitle renderiza <div>): o shell tem o h1 e as
+                    seções abaixo usam h3 — sem este nível o axe/Lighthouse
+                    acusa heading-order (h1→h3) e o leitor de tela perde a
+                    âncora da página. */}
+                <h2 className="text-3xl font-bold leading-tight tracking-[-0.02em] text-foreground mb-2">
                   {scale.name}
-                </CardTitle>
-                <p className="text-lg text-slate-300">{scale.fullName}</p>
+                </h2>
+                <p className="text-lg text-muted-foreground">{scale.fullName}</p>
               </div>
 
               {/* Meta informações */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-700">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
                 <div>
-                  <p className="text-xs text-slate-400 uppercase">Tempo</p>
-                  <p className="text-sm font-semibold text-slate-200">
+                  <p className="text-xs text-muted-foreground uppercase">Tempo</p>
+                  <p className="text-sm font-semibold text-foreground/90">
                     {scale.tempo}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase">Prioridade</p>
-                  <p className="text-sm font-semibold text-slate-200 capitalize">
+                  <p className="text-xs text-muted-foreground uppercase">Prioridade</p>
+                  <p className="text-sm font-semibold text-foreground/90 capitalize">
                     {scale.prioridade}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase">
+                  <p className="text-xs text-muted-foreground uppercase">
                     Faixa Etária
                   </p>
-                  <p className="text-sm font-semibold text-slate-200">
-                    {ageLabel(scale.ageMin, scale.ageMax)}
+                  <p className="text-sm font-semibold text-foreground/90">
+                    {formatScaleAgeRange(scale.ageMin, scale.ageMax)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 uppercase">
+                  <p className="text-xs text-muted-foreground uppercase">
                     Respondente
                   </p>
-                  <p className="text-sm font-semibold text-slate-200">
+                  <p className="text-sm font-semibold text-foreground/90">
                     {scale.respondente.join(", ")}
                   </p>
                 </div>
@@ -570,29 +580,28 @@ export default function GenericScalePage() {
             {/* Descrição */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-white">Descrição</h3>
+                <h3 className="text-lg font-semibold text-foreground">Descrição</h3>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleCopyDescription}
-                  className="bg-slate-700 border-slate-600 hover:bg-slate-600"
                 >
                   <Copy className="w-4 h-4 mr-2" />
                   {copied ? "Copiado!" : "Copiar"}
                 </Button>
               </div>
-              <p className="text-slate-300 leading-relaxed bg-slate-700/30 p-4 rounded">
+              <p className="text-muted-foreground leading-relaxed bg-muted/40 p-4 rounded">
                 {scale.description}
               </p>
             </div>
 
             {/* Exemplo prático em linguagem de pais */}
             {scale.exemploPais && (
-              <div className="rounded-xl border border-emerald-700/60 bg-emerald-900/20 p-4">
-                <p className="mb-1 text-sm font-semibold text-emerald-300">
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
+                <p className="mb-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                   👨‍👩‍👧 Para quem vai responder
                 </p>
-                <p className="text-sm leading-relaxed text-emerald-100/90">
+                <p className="text-sm leading-relaxed text-foreground/90">
                   {scale.exemploPais}
                 </p>
               </div>
@@ -601,14 +610,14 @@ export default function GenericScalePage() {
             {/* Queixas */}
             {scale.queixas && scale.queixas.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   Queixas Abordadas
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {scale.queixas.map((q) => (
                     <span
                       key={q}
-                      className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-200 text-sm border border-blue-700"
+                      className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm border border-primary/30"
                     >
                       {queixaLabel(q)}
                     </span>
@@ -620,10 +629,10 @@ export default function GenericScalePage() {
             {/* Informações Clínicas */}
             {scale.scoringCutoff && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   Escore / Interpretação
                 </h3>
-                <div className="bg-slate-700/30 p-4 rounded text-slate-300">
+                <div className="bg-muted/40 p-4 rounded text-muted-foreground">
                   {scale.scoringCutoff}
                 </div>
               </div>
@@ -631,10 +640,10 @@ export default function GenericScalePage() {
 
             {scale.validacaoBrasil && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   Validação Brasil
                 </h3>
-                <div className="bg-green-900/20 p-4 rounded text-green-200 border border-green-700">
+                <div className="bg-emerald-500/10 p-4 rounded text-emerald-800 dark:text-emerald-200 border border-emerald-500/40">
                   {scale.validacaoBrasil}
                 </div>
               </div>
@@ -642,18 +651,18 @@ export default function GenericScalePage() {
 
             {scale.licencaUso && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   Licença de Uso
                 </h3>
                 <div
                   className={`p-4 rounded capitalize font-semibold ${
                     scale.licencaUso === "livre"
-                      ? "bg-emerald-900/20 text-emerald-200 border border-emerald-700"
+                      ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border border-emerald-500/40"
                       : scale.licencaUso === "comercial"
-                        ? "bg-yellow-900/20 text-yellow-200 border border-yellow-700"
+                        ? "bg-amber-500/10 text-amber-800 dark:text-amber-200 border border-amber-500/40"
                         : scale.licencaUso === "autoral"
-                          ? "bg-blue-900/20 text-blue-200 border border-blue-700"
-                          : "bg-red-900/20 text-red-200 border border-red-700"
+                          ? "bg-primary/10 text-primary border border-primary/30"
+                          : "bg-destructive/10 text-destructive/90 border border-destructive/40"
                   }`}
                 >
                   {scale.licencaUso}
@@ -663,9 +672,9 @@ export default function GenericScalePage() {
 
             {/* Fonte */}
             {scale.fonte && (
-              <div className="border-t border-slate-700 pt-6">
-                <h3 className="text-lg font-semibold text-white mb-3">Fonte</h3>
-                <p className="text-slate-400 italic">{scale.fonte}</p>
+              <div className="border-t border-border pt-6">
+                <h3 className="text-lg font-semibold text-foreground mb-3">Fonte</h3>
+                <p className="text-muted-foreground italic">{scale.fonte}</p>
               </div>
             )}
 
@@ -674,9 +683,9 @@ export default function GenericScalePage() {
             {(!scale.scoringCutoff ||
               !scale.validacaoBrasil ||
               !scale.fonte) && (
-              <div className="border-t border-slate-700 pt-6">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  <span className="font-semibold text-slate-300">
+              <div className="border-t border-border pt-6">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-muted-foreground">
                     Não documentado nesta base:
                   </span>{" "}
                   {[
@@ -695,37 +704,37 @@ export default function GenericScalePage() {
         </Card>
 
         {/* Aplicação — metadados clínicos (derivados quando não declarados) */}
-        <Card className="bg-slate-800/80 border-slate-700 mb-6">
-          <CardHeader className="border-b border-slate-700">
-            <CardTitle className="text-white">Aplicação</CardTitle>
+        <Card className="border-card-border mb-6">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-foreground">Aplicação</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-slate-400 uppercase">Modo</p>
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-muted-foreground uppercase">Modo</p>
+                <p className="text-sm font-semibold text-foreground/90">
                   {APPLICATION_MODE_LABEL[getApplicationMode(scale)] ??
                     getApplicationMode(scale)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase">Finalidade</p>
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-muted-foreground uppercase">Finalidade</p>
+                <p className="text-sm font-semibold text-foreground/90">
                   {ASSESSMENT_USE_LABEL[getAssessmentUse(scale)] ??
                     getAssessmentUse(scale)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase">Comunicação</p>
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-xs text-muted-foreground uppercase">Comunicação</p>
+                <p className="text-sm font-semibold text-foreground/90">
                   {VERBAL_LABEL[getVerbalRequirement(scale)]}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase">
+                <p className="text-xs text-muted-foreground uppercase">
                   Alfabetização
                 </p>
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-sm font-semibold text-foreground/90">
                   {LITERACY_LABEL[getLiteracyRequirement(scale)]}
                 </p>
               </div>
@@ -733,14 +742,21 @@ export default function GenericScalePage() {
           </CardContent>
         </Card>
 
-        <InternalScaleApplication scale={scale} />
+        {/* Registro autoral interno (PIN master). Suprimido quando o catálogo
+            declara external_only: instrumento licenciado cuja aplicação
+            acontece FORA do app — oferecer um registro pontuável sob o nome
+            do instrumento contradiria o banner acima e a política de nunca
+            simular instrumento proprietário (AGENTS.md). */}
+        {implStatus !== "external_only" && (
+          <InternalScaleApplication scale={scale} />
+        )}
 
         {/* Instruções de Uso */}
-        <Card className="bg-slate-800/80 border-slate-700 mb-6">
-          <CardHeader className="border-b border-slate-700">
-            <CardTitle className="text-white">Como Usar Esta Escala</CardTitle>
+        <Card className="border-card-border mb-6">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="text-foreground">Como Usar Esta Escala</CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-4 text-slate-300">
+          <CardContent className="pt-6 space-y-4 text-muted-foreground">
             <ol className="space-y-3 list-decimal list-inside">
               {(USAGE_BY_MODE[getApplicationMode(scale)] ?? USAGE_DEFAULT).map(
                 (step, i) => (
@@ -753,9 +769,9 @@ export default function GenericScalePage() {
 
         {/* Instrumentos relacionados — hub de navegação por queixa/idade afim */}
         {related.length > 0 && (
-          <Card className="bg-slate-800/80 border-slate-700 mb-6">
-            <CardHeader className="border-b border-slate-700">
-              <CardTitle className="text-white">
+          <Card className="border-card-border mb-6">
+            <CardHeader className="border-b border-border">
+              <CardTitle className="text-foreground">
                 Instrumentos relacionados
               </CardTitle>
             </CardHeader>
@@ -765,17 +781,17 @@ export default function GenericScalePage() {
                   <Link
                     key={o.id}
                     href={routeFor(o)}
-                    className="block rounded-lg border border-slate-700 bg-slate-700/30 p-3 transition hover:border-blue-500 hover:bg-slate-700/60"
+                    className="block rounded-lg border border-border bg-muted/40 p-3 transition hover:border-blue-500 hover:bg-muted/70"
                   >
-                    <p className="text-sm font-semibold text-slate-100">
+                    <p className="text-sm font-semibold text-foreground">
                       {o.name}
                     </p>
-                    <p className="text-xs text-slate-400 line-clamp-1">
+                    <p className="text-xs text-muted-foreground line-clamp-1">
                       {o.fullName}
                     </p>
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-[11px] text-muted-foreground">
                       {o.respondente.join(" · ")} ·{" "}
-                      {ageLabel(o.ageMin, o.ageMax)}
+                      {formatScaleAgeRange(o.ageMin, o.ageMax)}
                     </p>
                   </Link>
                 ))}
@@ -785,8 +801,8 @@ export default function GenericScalePage() {
         )}
 
         {/* Aviso Legal */}
-        <Card className="bg-amber-900/20 border-amber-700 mb-6">
-          <CardContent className="pt-6 text-amber-100">
+        <Card className="border-amber-500/40 bg-amber-500/10 mb-6">
+          <CardContent className="pt-6 text-amber-900 dark:text-amber-100">
             <p className="text-sm">
               ⚠️ Esta escala é fornecida para fins educacionais e clínicos.
               Consulte a licença de uso e as normativas vigentes antes de
@@ -803,7 +819,7 @@ export default function GenericScalePage() {
         <div className="flex gap-4">
           <Button
             onClick={() => navigate("/filtro")}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao Filtro
@@ -811,7 +827,6 @@ export default function GenericScalePage() {
           <Button
             onClick={() => window.print()}
             variant="outline"
-            className="bg-slate-700 border-slate-600 hover:bg-slate-600"
           >
             <Download className="w-4 h-4 mr-2" />
             Imprimir

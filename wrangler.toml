@@ -3,6 +3,11 @@ compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist/public"
 
+# Optional metrics sink is not enabled on this account. Do not block clinical
+# releases on it. The mandatory D1 audit ledger and all auth gates stay active.
+# Restore API_METRICS only after activation is verified; see release audit.
+analytics_engine_datasets = []
+
 [vars]
 ENVIRONMENT = "production"
 APP_NAME = "NeuroPed"

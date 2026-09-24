@@ -352,6 +352,56 @@ assert.doesNotMatch(
   "o deploy nunca deve sincronizar certificado ICP-Brasil ou senha para o provedor",
 );
 
+// Chave duplicada num mapeamento YAML é erro de parse no GitHub Actions
+// ("'workflow_dispatch' is already defined"): o workflow inteiro deixa de rodar,
+// inclusive os crons. PyYAML/js-yaml em modo padrão engolem a duplicata e
+// escondem exatamente isso — foi como uma segunda `workflow_dispatch:` chegou a
+// main em authorial-scale-delivery.yml. Aqui a verificação é sem dependência:
+// irmãs no mesmo bloco (mesma indentação, sob o mesmo pai) não podem repetir.
+function duplicateYamlKeys(source) {
+  const duplicates = [];
+  const stack = []; // [{ indent, keys: Set }]
+  const lines = source.split(/\r?\n/);
+  let scalarIndent = -1; // dentro de `chave: |` ou `chave: >`, o texto não é YAML
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index];
+    if (!raw.trim() || raw.trim().startsWith("#")) continue;
+    const leading = /^\s*/.exec(raw)[0].length;
+    if (scalarIndent >= 0) {
+      if (leading > scalarIndent) continue;
+      scalarIndent = -1;
+    }
+    const match = /^(\s*)(-\s+)?([A-Za-z_][\w.-]*|"[^"]*"|'[^']*')\s*:(\s|$)/.exec(raw);
+    if (!match) continue;
+    const indent = match[1].length + (match[2] ? match[2].length : 0);
+    if (/:\s*[|>][+-]?\d*\s*(#.*)?$/.test(raw)) scalarIndent = match[1].length;
+    while (stack.length && stack[stack.length - 1].indent > indent) stack.pop();
+    if (match[2] || !stack.length || stack[stack.length - 1].indent < indent) {
+      // item de lista abre um mapeamento novo; indentação maior abre um bloco novo
+      stack.push({ indent, keys: new Set() });
+    }
+    const block = stack[stack.length - 1];
+    const key = match[3];
+    if (block.keys.has(key)) duplicates.push(`${key} (linha ${index + 1})`);
+    block.keys.add(key);
+  }
+  return duplicates;
+}
+for (const file of readdirSync(workflowsDir).filter((name) => /\.ya?ml$/.test(name))) {
+  const found = duplicateYamlKeys(readFileSync(new URL(file, workflowsDir), "utf8"));
+  assert.deepEqual(found, [], `${file}: chave YAML duplicada — o Actions recusa o workflow inteiro: ${found.join(", ")}`);
+}
+assert.deepEqual(
+  duplicateYamlKeys("on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n  workflow_dispatch:\njobs:\n  a:\n    runs-on: x\n"),
+  ["workflow_dispatch (linha 5)"],
+  "o detector precisa enxergar a duplicata que derrubou a entrega autoral",
+);
+assert.deepEqual(
+  duplicateYamlKeys("jobs:\n  a:\n    steps:\n      - name: x\n        run: y\n      - name: x\n        run: y\n  b:\n    steps:\n      - name: x\n"),
+  [],
+  "passos com o mesmo name em itens de lista distintos não são duplicata",
+);
+
 console.log(
-  "✓ workflows falham fechado e não emitem sinais ou alertas duplicados",
+  "✓ workflows falham fechado, não emitem sinais ou alertas duplicados e não repetem chaves YAML",
 );

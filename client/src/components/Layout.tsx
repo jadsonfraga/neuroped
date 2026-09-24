@@ -1,5 +1,6 @@
 // Design: navegação clínica de alta clareza, com um sinal dourado Nesplora pontual e motion reduzido quando necessário.
 import { Link, useLocation } from "wouter";
+import { normalizePath } from "@/lib/publicRoutes";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -100,10 +101,10 @@ function FeaturedShortcuts({
     );
 
   const clinicalShortcuts = visibleFeaturedNavigation.filter(
-    (item) => (item.tone ?? "priority") !== "golden",
+    (item) => item.tone !== "connection",
   );
   const connections = visibleFeaturedNavigation.filter(
-    (item) => (item.tone ?? "priority") === "golden",
+    (item) => item.tone === "connection",
   );
   const heroes = clinicalShortcuts.slice(0, 1);
   const tiles = clinicalShortcuts.slice(1);
@@ -164,7 +165,7 @@ function FeaturedShortcuts({
   const iconRail = visibleFeaturedNavigation.map((item) => {
     const Icon = item.icon;
     const active = activeHref === item.href;
-    const golden = (item.tone ?? "priority") === "golden";
+    const golden = item.tone === "golden" || item.tone === "connection";
     return withLink(
       item,
       <div
@@ -219,7 +220,7 @@ function FeaturedShortcuts({
         </>
       )}
       {tiles.length > 0 && (
-        <div className="mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
+        <div className="np-side-tile-grid mt-1.5 grid grid-cols-2 gap-1.5">{tiles.map(renderTile)}</div>
       )}
       {connections.length > 0 && (
         <>
@@ -296,7 +297,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const sidebarRef = useRef<HTMLElement>(null);
   const mobileHeaderRef = useRef<HTMLElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
+  const routeContentRef = useRef<HTMLDivElement>(null);
   const mobileMenuWasOpen = useRef(false);
+  // Transição de rota sem remount: re-aplica a classe de entrada (fade +
+  // subida sutil, motion-coherence-v15) no bloco da página a cada navegação.
+  // O reflow forçado reinicia a animação; reduced-motion a anula via CSS.
+  useEffect(() => {
+    const el = routeContentRef.current;
+    if (!el) return;
+    el.classList.remove("np-route-in");
+    void el.offsetWidth;
+    el.classList.add("np-route-in");
+  }, [location]);
   // As seções essenciais começam abertas; o restante permanece recolhido para
   // que a sidebar preserve ritmo de aplicativo mesmo com muitos módulos. A
   // escolha do usuário é lembrada entre visitas — reabrir tudo a cada sessão
@@ -488,21 +500,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Auto-expande a seção que contém a rota atual e rola o item ativo para a vista
   // — o usuário sempre vê onde está e os instrumentos vizinhos, sem abrir nada.
   useEffect(() => {
+    if (isLoading || !navHydrated) return;
     const match = getNavigationMatch(location);
     const title = match?.section.title;
     if (title)
       setOpenSections((prev) =>
         prev[title] ? prev : { ...prev, [title]: true },
       );
-    const label = match?.item.label;
-    if (!label) return;
+    const href = match?.item.href;
+    if (!href) return;
     const t = setTimeout(() => {
-      document
-        .querySelector(`[data-testid="nav-${label}"]`)
+      sidebarRef.current
+        ?.querySelector(`[data-nav-href="${CSS.escape(href)}"]`)
         ?.scrollIntoView({ block: "nearest" });
     }, 80);
     return () => clearTimeout(t);
-  }, [location]);
+  }, [location, navHydrated, isLoading, isAuthenticated, user?.role]);
 
   const activeNavigation = getNavigationMatch(location);
   const showClinicalFlow =
@@ -848,11 +861,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ClinicSwitcher collapsed={collapsed} />
 
         {/* Atalhos em destaque */}
-        <FeaturedShortcuts
-          collapsed={collapsed}
-          activeHref={activeNavigation?.item.href}
-          canRenderNavItem={canRenderNavItem}
-        />
+        {/* A hierarquia depende da sessão resolvida. Mostrar só as conexões
+            públicas durante o bootstrap e inserir os cartões clínicos depois
+            deslocava o bloco já visível. */}
+        {!isLoading && (
+          <FeaturedShortcuts
+            collapsed={collapsed}
+            activeHref={activeNavigation?.item.href}
+            canRenderNavItem={canRenderNavItem}
+          />
+        )}
         <div className="np-side-divider mx-3 mt-3 border-t border-sidebar-border/60" />
 
         {/* Navigation */}
@@ -939,6 +957,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                     : undefined
                               }
                               data-testid={`nav-${item.label}`}
+                              data-nav-href={item.href}
                               data-tone={tone}
                               data-active={active || undefined}
                               onMouseEnter={() => softHover()}
@@ -1021,7 +1040,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span
                 className={`np-side-session__id ${collapsed ? "lg:hidden" : ""}`}
               >
-                <span className="np-side-session__name">{user.name}</span>
+                <span className="np-side-session__name" title={user.name}>{user.name}</span>
                 <span className="np-side-session__role">
                   {sessionRoleLabels[user.role] ?? user.role}
                 </span>
@@ -1052,7 +1071,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ) : accessMode === "remote" ? (
             // Sem sessão (ex.: tela de login) o rodapé convida a entrar —
             // mostrar "Sair" deslogado era um contrassenso.
-            <Link href="/login">
+            normalizePath(location) !== "/login" && <Link href="/login">
               <div
                 className={`np-side-login ${collapsed ? "np-side-session--rail" : ""}`}
                 onClick={() => {
@@ -1199,7 +1218,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="np-app-content p-3 md:p-5 max-w-[1600px] mx-auto">
-          <div className="min-h-[calc(100vh-4rem)]">{children}</div>
+          <div ref={routeContentRef} className="min-h-[calc(100vh-4rem)]">{children}</div>
           {/* Aviso educativo: síntese sempre visível; fundamentação completa sob demanda. */}
           <aside
             role="note"

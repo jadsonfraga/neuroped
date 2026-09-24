@@ -1,0 +1,42 @@
+name: Sonda Dez digital
+on:
+  pull_request:
+    paths:
+      - 'client/src/components/sonda-dez/**'
+      - 'client/src/pages/sonda-dez-daily.tsx'
+      - 'client/src/pages/testes-diretos.tsx'
+      - 'client/src/data/sondaDez*.ts'
+      - 'client/src/lib/sondaDez*.ts'
+      - 'client/src/hooks/useSondaExitGuard.ts'
+      - 'tests/unit/sonda-dez*.ts'
+      - 'tests/e2e/sonda-dez-digital.mjs'
+      - 'package.json'
+      - '.github/workflows/sonda-dez-digital.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guided-flow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - run: npm run test:sonda
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+      - run: npm run test:e2e:sonda
+      - name: Preserve synthetic browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sonda-digital-browser-${{ github.sha }}
+          path: /tmp/sonda-e2e/
+          retention-days: 7
+          if-no-files-found: warn

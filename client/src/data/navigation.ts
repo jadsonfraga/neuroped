@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 import {
   Activity,
   Baby,
@@ -11,9 +12,9 @@ import {
   ClipboardList,
   FileText,
   Filter,
-  Globe2,
   HeartPulse,
   HelpCircle,
+  Images,
   Home,
   KeyRound,
   LineChart,
@@ -52,38 +53,68 @@ export interface NavigationMatch {
   item: NavItem;
 }
 
+const obs10Navigation: NavItem = {
+  href: "/avaliacao-pre-consulta-faixa-etaria",
+  label: "OBS-10 · Pré-Consulta",
+  icon: Baby,
+  tone: "priority",
+  description: "Observação guiada · 13 faixas etárias · guia da assistente",
+};
+
 /**
- * Atalhos por frequência de uso. A Sonda Dez abre o bloco clínico porque
- * substitui as superfícies antigas de teste direto com a criança.
+ * Sonda Dez e OBS-10 abrem o bloco clínico; a rotina de atendimento vem a
+ * seguir. Conexões usam um grupo compacto separado, independente da cor.
  */
 export const featuredNavigation: NavItem[] = [
   {
     href: "/testes-diretos",
-    label: "Sonda Dez",
+    label: "Sonda Dez · Avaliação Direta",
     icon: Sparkles,
     tone: "priority",
     description: "Avaliação direta pré-consulta · 10 min",
   },
+  obs10Navigation,
   {
-    href: "/especialidades",
-    label: "Especialidades Premium",
-    icon: Stethoscope,
-    tone: "golden",
-    description: "Vitrine institucional Dr. Jadson",
+    href: "/testes-reconhecimento",
+    label: "Reconhecimento Visual",
+    icon: Images,
+    tone: "priority",
+    description: "Figuras por idade · reconhecer, nomear e parear",
+  },
+  {
+    href: "/pacientes",
+    label: "Pacientes / Prontuário",
+    icon: Users,
+    tone: "priority",
+    description: "Abrir prontuário longitudinal",
+  },
+  {
+    href: "/agenda",
+    label: "Agenda & Gestão",
+    icon: Calendar,
+    tone: "priority",
+    description: "Consultas e organização do atendimento",
+  },
+  {
+    href: "/laudo-neuroped",
+    label: "Laudos",
+    icon: FileText,
+    tone: "priority",
+    description: "Documentação clínica",
+  },
+  {
+    href: "/receita-c1",
+    label: "Receita C1",
+    icon: Pill,
+    tone: "priority",
+    description: "Prescrição clínica",
   },
   {
     href: "/filtro",
     label: "Filtro de Escalas",
     icon: Filter,
     tone: "priority",
-    description: "Por idade e queixa",
-  },
-  {
-    href: "/marcacao",
-    label: "Secretaria IA",
-    icon: Calendar,
-    tone: "priority",
-    description: "Pré-agendamento pelo BoaConsulta",
+    description: "Escolha por idade e queixa",
   },
   {
     href: "/escuta-clinica",
@@ -93,11 +124,25 @@ export const featuredNavigation: NavItem[] = [
     description: "Áudio e anamnese estruturada",
   },
   {
-    href: "/servicos-clinica",
-    label: "Serviços da Clínica",
-    icon: Stethoscope,
+    href: "/medicamentos",
+    label: "Medicamentos",
+    icon: Pill,
     tone: "priority",
-    description: "Avaliações e serviços",
+    description: "Acompanhamento farmacológico",
+  },
+  {
+    href: "/calculadora-dose",
+    label: "Calculadora de dose",
+    icon: Calculator,
+    tone: "priority",
+    description: "Apoio ao cálculo clínico",
+  },
+  {
+    href: "/marcacao",
+    label: "Secretaria IA",
+    icon: Calendar,
+    tone: "connection",
+    description: "Pré-agendamento pelo BoaConsulta",
   },
   // prettier-ignore — formato preservado pelo guard de integração do Conecta.
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection", description: "Portais e conexões" },
@@ -105,19 +150,20 @@ export const featuredNavigation: NavItem[] = [
     href: "/eletroencefalograma",
     label: "EEG & Vídeo-EEG",
     icon: Waves,
-    tone: "golden",
+    tone: "connection",
     description: "Exames e orientação clínica",
   },
   {
     href: "/nesplora/",
     label: "Nesplora",
     icon: Brain,
-    tone: "golden",
+    tone: "connection",
     description: "Experiência imersiva em VR",
   },
 ];
 
 export const navSections: NavSection[] = [
+  { title: "PRÉ-CONSULTA GUIADA", items: [obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],
@@ -125,13 +171,12 @@ export const navSections: NavSection[] = [
   {
     title: "ATENDIMENTO",
     items: [
-      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/pacientes", label: "Pacientes / Prontuário", icon: Users, tone: "priority" },
-      { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
+      { href: "/agenda", label: "Agenda & Gestão", icon: Calendar, tone: "priority" },
       { href: "/laudo-neuroped", label: "Laudos", icon: FileText, tone: "priority" },
+      { href: "/receita-c1", label: "Receita C1", icon: Pill, tone: "priority" },
+      { href: "/memoria-clinica", label: "Memória clínica", icon: BrainCog },
       { href: "/laudo-super", label: "Laudos SuperNeuroPed", icon: ShieldCheck },
-      { href: "/receita-c1", label: "Receita C1", icon: Pill },
-      { href: "/manus", label: "Integrações Manus", icon: Globe2 },
     ],
   },
   {
@@ -148,16 +193,30 @@ export const navSections: NavSection[] = [
   {
     title: "TRIAGEM E FERRAMENTAS",
     items: [
+      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter, tone: "priority" },
+      {
+        href: "/testes-reconhecimento",
+        label: "Teste de Reconhecimento Visual",
+        icon: Images,
+        tone: "priority",
+        description: "Figuras e conceitos organizados por faixa etária",
+      },
+      {
+        href: "/testes-cognitivos",
+        label: "Testes cognitivos por faixa etária",
+        icon: Brain,
+        tone: "priority",
+        description: "Visual, leitura, escrita e aritmética · 2–19 anos",
+      },
       {
         href: "/testes-diretos",
-        label: "Sonda Dez · Pré-consulta",
+        label: "Sonda Dez · Avaliação Direta",
         icon: Sparkles,
         tone: "priority",
-        description: "Aplicação guiada por idade em 10 minutos",
+        description: "Aplicação guiada em 10 minutos",
       },
-      { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
-      { href: "/filtro-escalas", label: "Triar sem cadastrar", icon: Filter },
       { href: "/bateria-jadson", label: "Bateria Jadson", icon: ClipboardCheck },
+      { href: "/fluxograma", label: "Fluxograma Clínico", icon: Target },
       { href: "/pac", label: "PAC", icon: Brain },
       { href: "/inventarios-auto", label: "Autoavaliação", icon: ClipboardList },
       { href: "/ahsd-tea", label: "AH/SD × TEA", icon: Sparkles },
@@ -169,13 +228,13 @@ export const navSections: NavSection[] = [
     title: "ACOMPANHAMENTO CLÍNICO",
     items: [
       { href: "/medicamentos", label: "Medicamentos", icon: Pill, tone: "priority" },
-      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
-      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator },
-      { href: "/diario-sono", label: "Diário do sono", icon: Moon },
-      { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
+      { href: "/calculadora-dose", label: "Calculadora de dose", icon: Calculator, tone: "priority" },
       { href: "/epilepsia", label: "Diário de epilepsia", icon: Activity },
       { href: "/cefaleia", label: "Calendário de cefaleia", icon: Calendar },
-      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "golden" },
+      { href: "/diario-sono", label: "Diário do sono", icon: Moon },
+      { href: "/diario-alimentar", label: "Diário alimentar", icon: ClipboardList },
+      { href: "/farmacologia", label: "Farmacologia", icon: Pill },
+      { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection" },
     ],
   },
   {
@@ -237,29 +296,24 @@ function matchesNavigationItem(pathname: string, href: string): boolean {
 const filterOwnedRoutes = new Set([
   "/mchat", "/cars", "/denver", "/asq3", "/snap", "/sdq", "/vanderbilt",
   "/scared", "/phqa", "/cssrs", "/conners", "/cbcl", "/brief2", "/abc",
-  "/vineland", "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
+  "/cdi2", "/gmfcs", "/cshq", "/ygtss", "/crafft", "/pedsql",
   "/psc17", "/gad7", "/aq10", "/tea", "/tea-comportamentos", "/emdi", "/eaf",
   "/ecsm", "/ips", "/ecar-si", "/edi", "/eai", "/easi", "/ems", "/etare",
   "/eaah", "/tde2", "/pant",
 ]);
 
-/** Rotas antigas de teste direto continuam resolvendo para a Sonda Dez. */
-const sondaOwnedRoutes = new Set([
-  "/testes-reconhecimento",
-  "/testes-academicos",
-  "/cognitive-lab",
-  "/avaliacao-cognitiva-infantil",
-  "/academico-interativo",
-  "/escrita-desenho",
-  "/conhecimento-visual",
-  "/motricidade-teste",
-  "/conhecimentos-gerais",
-  "/funcoes-executivas",
-  "/atencao-concentracao",
-  "/linguagem-fonologia",
-  "/memoria-teste",
-  "/processamento-visuoauditivo",
-]);
+/**
+ * Rotas antigas de teste direto continuam resolvendo para a Sonda Dez —
+ * derivadas do mapa de redirects (fonte única; padrões :param ficam de fora
+ * porque a navegação compara caminhos literais normalizados). Só entram as
+ * origens cujo destino é a própria Sonda Dez: /avaliacao-cognitiva-infantil
+ * hoje redireciona para /testes-cognitivos, que tem item próprio no menu.
+ */
+const sondaOwnedRoutes = new Set(
+  Object.entries(LEGACY_DIRECT_TEST_REDIRECTS)
+    .filter(([route, target]) => !route.includes(":") && target === "/testes-diretos")
+    .map(([route]) => route),
+);
 
 export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
   const matches = allNavigationSections.flatMap((section) =>
@@ -267,7 +321,12 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
       .filter((item) => matchesNavigationItem(pathname, item.href))
       .map((item) => ({ section, item })),
   );
-  const directMatch = matches.sort((a, b) => b.item.href.length - a.item.href.length)[0];
+  // Destaques repetem destinos para acesso rápido; a seção real é quem deve
+  // abrir e receber o auto-scroll. Rotas mais específicas continuam vencendo.
+  const directMatch = matches.sort((a, b) =>
+    b.item.href.length - a.item.href.length ||
+    Number(a.section === featuredSection) - Number(b.section === featuredSection),
+  )[0];
   if (directMatch) return directMatch;
 
   const normalizedPath = normalizeNavigationPath(pathname);
@@ -275,7 +334,10 @@ export function findNavigationMatch(pathname: string): NavigationMatch | undefin
     const item = featuredNavigation.find((candidate) => candidate.href === "/testes-diretos");
     if (item) return { section: featuredSection, item };
   }
-  if (filterOwnedRoutes.has(normalizedPath)) {
+  if (
+    filterOwnedRoutes.has(normalizedPath) ||
+    normalizedPath.startsWith("/generic-scale/")
+  ) {
     const item = featuredNavigation.find((candidate) => candidate.href === "/filtro");
     if (item) return { section: featuredSection, item };
   }

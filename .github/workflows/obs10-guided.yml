@@ -1,0 +1,56 @@
+name: OBS-10 guided execution
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'tests/unit/obs10-guided.test.ts'
+      - 'tests/e2e/obs10-guided.mjs'
+      - '.github/workflows/obs10-guided.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'tests/unit/obs10-guided.test.ts'
+      - 'tests/e2e/obs10-guided.mjs'
+      - '.github/workflows/obs10-guided.yml'
+permissions:
+  contents: read
+concurrency:
+  group: obs10-guided-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  resources-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx eslint client/src/features/obs10/*.{ts,tsx} tests/unit/obs10-guided.test.ts --max-warnings=0
+      - run: node --import tsx tests/unit/obs10-guided.test.ts
+      - name: Production client with existing authorization
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Real route, resources, isolated print and accessibility
+        env:
+          OBS10_GUIDED_ARTIFACT_DIR: /tmp/obs10-guided
+        run: node tests/e2e/obs10-guided.mjs
+      - name: Preserve synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-guided-proof
+          path: /tmp/obs10-guided
+          if-no-files-found: ignore
+          retention-days: 7
