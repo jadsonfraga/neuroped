@@ -1,34 +1,82 @@
 {
   "atualizadoEm": "2026-09-24",
-  "nota": "Somente o examinado até aqui. Ausência de entrada = NAO_EXAMINADA; o denominador completo (§5) ainda não foi levantado.",
+  "nota": "Inventário parcial herdado da PR #949. Ausência de entrada = NAO_EXAMINADA; total do produto desconhecido. Registros herdados não são nova execução independente.",
+  "coberturaRevisao": {
+    "registrosExistentes": 3,
+    "reexaminados": 1,
+    "idsReexaminados": [
+      "admin.go-live"
+    ],
+    "totalFuncionalidadesProduto": null,
+    "dominiosMinimos": 13,
+    "dominiosIntegralmenteAuditados": 0
+  },
   "funcionalidades": [
     {
       "id": "auth.email-verification",
       "finalidade": "Prova de posse do e-mail antes de privilégio de owner",
-      "entradas": ["POST /api/auth/signup", "POST /api/auth/resend-verification", "POST /api/auth/verify-email", "#/verificar-email"],
+      "entradas": [
+        "POST /api/auth/signup",
+        "POST /api/auth/resend-verification",
+        "POST /api/auth/verify-email",
+        "#/verificar-email"
+      ],
       "fonteVerdade": "users.email_verified_at (lida do banco, não do JWT)",
       "estadosDeErro": "entrega falha => token apagado, sem falso sucesso; reenvio anti-enumeração (202 genérico)",
       "teste": "tests/unit/email-verification.test.ts; saas-self-service",
       "situacao": "VERIFICADA_LOCALMENTE",
-      "risco": "gap de UX: recusa EMAIL_VERIFICATION_REQUIRED sem link direto de reenvio (BACKLOG S2)"
+      "risco": "gap de UX: recusa EMAIL_VERIFICATION_REQUIRED sem link direto de reenvio (BACKLOG S2)",
+      "proveniencia": "Registro herdado de 6d38d98; não reexecutado na revisão S1-R1."
     },
     {
       "id": "billing.checkout-retorno",
       "finalidade": "Retorno de checkout sem conceder entitlement por redirect",
-      "entradas": ["#/billing-retorno?status=..."],
+      "entradas": [
+        "#/billing-retorno?status=..."
+      ],
       "fonteVerdade": "webhook autenticado do provedor (cliente-zero-journey)",
       "teste": "tests/unit/cliente-zero-journey.test.ts",
-      "situacao": "VERIFICADA_LOCALMENTE"
+      "situacao": "VERIFICADA_LOCALMENTE",
+      "proveniencia": "Registro herdado de 6d38d98; não reexecutado na revisão S1-R1."
     },
     {
       "id": "admin.go-live",
-      "finalidade": "Diagnóstico de prontidão comercial, restrito a admin, sem segredos",
-      "entradas": ["GET /api/admin/go-live"],
-      "fonteVerdade": "variáveis de ambiente do Pages",
-      "estadosDeErro": "401/403 sem revelar formato; ordemInvertida como perigo",
-      "teste": "tests/unit/go-live-readiness.test.ts",
+      "finalidade": "Diagnóstico de configuração da instalação, sem atestar operação comercial",
+      "atores": [
+        "admin autenticado de plataforma"
+      ],
+      "entradas": [
+        "GET /api/admin/go-live"
+      ],
+      "componentes": [
+        "functions/api/admin/go-live.ts"
+      ],
+      "api": "GET /api/admin/go-live",
+      "servicos": [
+        "functions/api/auth/_authorization.ts"
+      ],
+      "tabelasArquivos": [],
+      "fronteiraTenant": "Diagnóstico de plataforma; nenhuma leitura/escrita clínica ou de tenant. Esta revisão não valida o isolamento do produto inteiro.",
+      "entitlement": "Papel admin no contexto interno autorizado; middleware de sessão não reexercitado nesta revisão.",
+      "dependencias": [
+        "Variáveis de configuração do Pages",
+        "Contexto de autenticação fornecido pelo middleware"
+      ],
+      "fonteVerdade": "Configuração recebida no env; não há consulta a DB ou provedor.",
+      "estadosDeErro": [
+        "401 sem identidade válida",
+        "403 para papel não-admin",
+        "CONFIGURACAO_INCOMPLETA quando qualquer requisito falta",
+        "ordemInvertida se cadastro aberto sem configuração de e-mail"
+      ],
+      "exportacao": "Resposta JSON sem segredos com Cache-Control: no-store; não exporta prontuário.",
+      "recuperacao": "GET repetível sem efeitos; operador corrige configuração e repete. Não é recuperação de dados.",
+      "teste": "tests/unit/go-live-readiness.test.ts, blocos 1 a 11",
+      "evidencia": "EVIDENCE.md, S1-R1; blobs exatos do handler e teste; CI do novo HEAD pendente.",
+      "risco": "Configuração presente não valida credenciais, sandbox, produção ou aceite humano; demais jornadas ainda exigem evidência.",
       "situacao": "VERIFICADA_LOCALMENTE",
-      "situacaoComercial": "atesta CONFIGURACAO_PRESENTE; degraus superiores em naoComprova"
+      "situacaoComercial": "Não é autorização de venda. Os cinco limites de naoComprova permanecem em sandbox e production.",
+      "publicacao": "Revisão não mesclada nem publicada."
     }
   ]
 }
