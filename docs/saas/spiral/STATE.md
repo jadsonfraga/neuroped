@@ -1,6 +1,6 @@
 # Estado da espiral SaaS
 
-Atualizado em 2026-09-24 (ciclo 1). Este arquivo registra fatos verificados,
+Atualizado em 2026-09-24 (ciclo 2). Este arquivo registra fatos verificados,
 não intenções. Revalide `origin/main` e a produção antes de confiar nele.
 
 ## Baseline verificada
@@ -37,6 +37,15 @@ não intenções. Revalide `origin/main` e a produção antes de confiar nele.
 - PR #855 (WAV silencioso): verde em `c76a779`, retida no gate manual de
   áudio do proprietário (microfone real). Check-in silencioso armado.
 
+## Ciclo 1: integração
+PR #949 mergeada em `6614fbf`; publicação em verificação no momento deste
+commit (o check-in do deploy atualiza aqui se falhar).
+
+## Ciclo 2 (este commit)
+S2: a recusa EMAIL_VERIFICATION_REQUIRED no onboarding passa a levar à
+página de reenvio (`#/verificar-email`), ancorada no código do backend.
+Teste de contrato novo em test:quick-wins, visto falhando antes.
+
 ## Próximo passo executável
-Ver BACKLOG.md item S2. Retomada: `git fetch origin main && git log -1
+Ver BACKLOG.md item S3. Retomada: `git fetch origin main && git log -1
 origin/main` e reler este arquivo.

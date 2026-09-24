@@ -8,12 +8,10 @@ P3 refinamento/expansão.
 go-live declara nível atestado e o que não comprova. Evidência em
 EVIDENCE.md#S1.
 
-## S2 · P2 · aberto
-Onboarding: quando `POST /api/tenants` recusa com
-`EMAIL_VERIFICATION_REQUIRED`, a mensagem aparece mas não há link direto
-para `#/verificar-email`. Aceite: erro com esse código exibe ação "Reenviar
-link de verificação" navegando à página; teste de contrato cobre.
-Dependência: nenhuma.
+## S2 · P2 · FECHADO (ciclo 2)
+Recusa EMAIL_VERIFICATION_REQUIRED no onboarding exibe "Reenviar link de
+verificação" levando a `#/verificar-email`. Contrato:
+tests/unit/onboarding-verification-link.test.mjs (em test:quick-wins).
 
 ## S3 · P1 · aberto
 Inventário §5: registro por funcionalidade em inventory.json. Estado atual
