@@ -1,0 +1,96 @@
+// Modo Fácil (joguinho): motor compartilhado EasyGame + integrações.
+// Invariantes: sequência fixa; três desfechos (Acertou/Não acertou/Pular);
+// resultado é contagem descritiva com aviso explícito; herói/estrelas são
+// participação; a tela da criança (SondaDigitalActivity, TrialStage) continua
+// sem gamificação; nenhum timer JS no motor (relógio falso dos e2e da Sonda).
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { EASY_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
+
+const read = (path: string) => readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+const engine = read("client/src/components/jogo-facil/EasyGame.tsx");
+const sonda = read("client/src/components/sonda-dez/SondaDigitalGuided.tsx");
+const sondaActivity = read("client/src/components/sonda-dez/SondaDigitalActivity.tsx");
+const obs10 = read("client/src/pages/pre-consulta-obs10.tsx");
+const visual = read("client/src/features/visual-recognition/Workspace.tsx");
+const trialStage = read("client/src/features/visual-recognition/TrialStage.tsx");
+const cognitive = read("client/src/pages/testes-cognitivos-faixa-etaria.tsx");
+
+const records: EasyRecord[] = [
+  { id: "a", group: "Missão 1", title: "Toque na bola", outcome: "acertou", auto: false },
+  { id: "b", group: "Missão 1", title: "Ache o gato", outcome: "acertou", auto: true },
+  { id: "c", group: "Missão 2", title: "Imite", outcome: "nao", auto: false },
+  { id: "d", group: "Missão 2", title: "Marcha", outcome: "pulou", auto: false },
+];
+
+test("contagem por desfecho e resultado descritivo com aviso, sem escore", () => {
+  assert.deepEqual(easyCounts(records), { total: 4, acertou: 2, nao: 1, pulou: 1 });
+  const report = buildEasyReport({ title: "Sonda Dez", ageLabel: "48 meses", nature: "Natureza.", records, totalSteps: 5, footer: "Limite.", date: "2026-09-24" });
+  assert.match(report, /^Sonda Dez · Modo Fácil \(joguinho\)/);
+  assert.match(report, /NÃO É ESCORE, PERCENTIL NEM DIAGNÓSTICO/);
+  assert.match(report, /Passos previstos: 5 · Registrados: 4 · Acertou: 2 · Não acertou: 1 · Pulou: 1/);
+  assert.match(report, /2\. \[Missão 1\] Ache o gato — Acertou \(toque da criança na tela\)/);
+  assert.match(report, /4\. \[Missão 2\] Marcha — Pulou/);
+  assert.ok(report.endsWith("Natureza.\nLimite."));
+  assert.doesNotMatch(report, /percentil: |ponto de corte: |\d+%/);
+  assert.deepEqual(Object.values(EASY_OUTCOME_LABEL), ["Acertou", "Não acertou", "Pulou"]);
+});
+
+test("motor: três botões gigantes, avanço automático, sem timers JS, herói como participação", () => {
+  for (const id of ["acertou", "nao", "pular", "show", "results", "progress"]) assert.ok(engine.includes(`data-testid={\`\${testid}-${id}\`}`), id);
+  assert.doesNotMatch(engine, /setTimeout\(\(\) => set|setInterval\(|requestAnimationFrame\(|framer-motion/);
+  assert.match(engine, /setIndex\(index \+ 1\)/);
+  assert.match(engine, /const stars = records\.filter\(\(r\) => r\.outcome !== "pulou"\)\.length/);
+  assert.match(engine, /Estrelas são participação, não nota/);
+  assert.match(engine, /if \(auto\) record\(auto, true\)/, "toque da criança decide e avança sozinho");
+});
+
+test("Sonda Dez: aba Modo Fácil usa a trilha da idade e a tela de estímulo original, que segue pura", () => {
+  assert.match(sonda, /id: "easy",\s*label: "🎮 Modo Fácil · joguinho"/);
+  assert.match(sonda, /"sonda-easy-tab"/);
+  assert.match(sonda, /band\.missions\.flatMap\(\(mission\) =>\s*mission\.steps\.map/);
+  assert.match(sonda, /s\.activity\.prompt === "operator-only" \|\| s\.activity\.kind === "blank"\s*\? undefined/);
+  assert.match(sonda, /<SondaDigitalActivity\s+spec=\{s\.activity\}/);
+  assert.match(sonda, /testid="sonda-easy"/);
+  assert.doesNotMatch(sondaActivity, /jogo-facil|EasyGame|Acertou/);
+});
+
+test("OBS-10: aba Modo Fácil usa as tarefas práticas da ficha, respeita omissões e não grava vídeo", () => {
+  assert.match(obs10, /data-testid="obs10-easy-tab"/);
+  assert.match(obs10, /PRACTICAL_TASKS\[selectedBand\.id\]/);
+  assert.match(obs10, /taskOmission\(task, easyMonths, context\.proneAllowed\) === null/);
+  assert.match(obs10, /<TaskPicture scene=\{task\.scene\}/);
+  assert.match(obs10, /testid="obs10-easy"/);
+  const easyBlock = obs10.slice(obs10.indexOf("if (easy) {"), obs10.indexOf('data-testid="obs10-workspace">', obs10.indexOf("if (easy) {")));
+  assert.doesNotMatch(easyBlock, /media\.start|getUserMedia|MediaRecorder/);
+});
+
+test("Reconhecimento Visual: aba Modo Fácil decide pelo toque da criança e a tela infantil só ganha o auto-fechar", () => {
+  assert.match(visual, /data-testid="rv-easy-tab"/);
+  assert.match(visual, /mode:"receptivo"/);
+  assert.match(visual, /autoFinishOnTap/);
+  assert.match(visual, /onDone\(tap\?\(tap===trial\.targetId\?"acertou":"nao"\):undefined\)/);
+  assert.match(visual, /Modo Fácil \(joguinho\): reconhecimento por toque na tela/);
+  assert.match(trialStage, /autoFinishOnTap=false/);
+  assert.doesNotMatch(trialStage, /jogo-facil|EasyGame|Acertou|estrela|her[oó]i/i);
+});
+
+test("Testes Cognitivos: Modo Fácil encadeia os quatro mundos e fecha com contagem descritiva", () => {
+  assert.match(cognitive, /data-testid="cognitive-easy-tab"/);
+  assert.match(cognitive, /if \(easy\) \{\s*setHero\(\(current\) => current \?\? DEFAULT_HERO\);\s*setActiveWorld\(WORLD_ORDER\[0\]\);\s*setScreen\("world"\);/);
+  assert.match(cognitive, /useState\(easy && !result\)/, "mundo começa a jogar sem tela de introdução");
+  assert.match(cognitive, /data-testid="cognitive-easy-next"/);
+  assert.match(cognitive, /else setScreen\("results"\)/);
+  assert.match(cognitive, /NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO/);
+  assert.match(cognitive, /data-testid="cognitive-easy-results"/);
+});
+
+test("Testes Cognitivos: toque duplo em Próxima fase não pula fase nem estoura o índice (bug corrigido)", () => {
+  assert.match(cognitive, /const advancing = useRef\(false\);/);
+  assert.match(cognitive, /if \(advancing\.current \|\| phase !== "registered"\) return;/);
+  assert.match(cognitive, /setIdx\(Math\.min\(idx \+ 1, questions\.length - 1\)\);/);
+  const registered = cognitive.slice(cognitive.indexOf('{phase === "registered" && ('), cognitive.indexOf("function ObsQuest("));
+  assert.doesNotMatch(registered, /AnimatePresence|motion\.div|exit=/, "painel de avanço sem animação de saída: nenhum nó fantasma recebe o toque seguinte");
+  assert.match(registered, /motion-safe:animate-in/);
+});

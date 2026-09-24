@@ -60,6 +60,11 @@ try {
   await popup.close();
   await screen("01-recursos-preparacao");
   await button("Iniciar aplicação · 10 minutos").click();
+  // Camada de aventura: barra de estrelas no console da aplicadora (a criança
+  // não olha esta tela). Começa em zero e nunca aparece para fora deste console.
+  const starHud = page.getByLabel(/blocos com registro/);
+  assert.equal(await starHud.count(), 1, "barra de estrelas presente no console da aplicadora");
+  assert.match(await starHud.getAttribute("aria-label"), /^0 /);
   assert.equal(await card().locator(".obs10-frame-section-title").count(), 4);
   assert.equal(await card().getByRole("button", { name: /Imprimir/ }).count(), 0, "printing cannot steal the timed collection tab");
   await page.locator(".obs10-stepper button").nth(4).click();

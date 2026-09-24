@@ -17,6 +17,7 @@ const schema = z.object({
     bandId: text(10).refine((value) => AGE_BANDS.some((band) => band.id === value)),
     schooling: text(120), language: text(120), adaptations: text(1500), conditions: text(1500), familyReport: text(2000),
     proneAllowed: z.boolean(), missingMaterials: z.array(text(100)).max(17).optional(),
+    preparation: z.literal("direct").optional(),
   }).strict(),
   observations: z.array(z.object({
     id: text(80).min(1).regex(/^[a-zA-Z0-9_-]+$/), phase: z.number().int().min(0).max(5),
