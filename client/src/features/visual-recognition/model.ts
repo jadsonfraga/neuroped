@@ -17,9 +17,9 @@ export const BANDS = [
   {id:"156-215",min:156,max:215,label:"13–17 anos",note:"Use apenas quando pertinente ao repertório e à questão clínica; desconhecimento de uma figura não define déficit."},
 ] as const;
 export const COLORS = [
-  ["vermelho","Vermelho","#d62935"],["azul","Azul","#175ac8"],["amarelo","Amarelo","#f4d522"],["verde","Verde","#168c46"],
-  ["laranja-cor","Laranja","#ef7a20"],["roxo","Roxo","#763eb0"],["rosa","Rosa","#ee82af"],["marrom","Marrom","#885333"],
-  ["preto","Preto","#202125"],["branco","Branco","#ffffff"],["cinza","Cinza","#92969d"],
+  ["vermelho","Vermelho","var(--rv-color-red)"],["azul","Azul","var(--rv-color-blue)"],["amarelo","Amarelo","var(--rv-color-yellow)"],["verde","Verde","var(--rv-color-green)"],
+  ["laranja-cor","Laranja","var(--rv-color-orange)"],["roxo","Roxo","var(--rv-color-purple)"],["rosa","Rosa","var(--rv-color-pink)"],["marrom","Marrom","var(--rv-color-brown)"],
+  ["preto","Preto","var(--rv-color-black)"],["branco","Branco","var(--rv-color-white)"],["cinza","Cinza","var(--rv-color-gray)"],
 ] as const;
 export const PAIRS = [
   {id:"tamanho",words:["Grande","Pequeno"],min:36,note:"Mesma bola, mesma escala: varia o tamanho."},

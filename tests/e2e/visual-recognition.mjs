@@ -84,6 +84,8 @@ try{
  await page.locator(".rv-catalog").evaluate(element=>{element.style.maxHeight="none";element.style.overflow="visible";});
  assert.equal(await w.locator(".rv-catalog-card").count(),89);
  for(const img of await w.locator(".rv-catalog img").all())assert.equal(await img.evaluate(element=>element.complete&&element.naturalWidth>0),true,"every catalog symbol loads");
+ const pigments=await w.locator('.rv-catalog svg rect[fill^="var(--rv-color-"]').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).fill));
+ assert.deepEqual(pigments,["rgb(214, 41, 53)","rgb(23, 90, 200)","rgb(244, 213, 34)","rgb(22, 140, 70)","rgb(239, 122, 32)","rgb(118, 62, 176)","rgb(238, 130, 175)","rgb(136, 83, 51)","rgb(32, 33, 37)","rgb(255, 255, 255)","rgb(146, 150, 157)"],"actual rendered stimulus pigments preserve the reviewed palette");
  await w.locator(".rv-catalog").screenshot({path:`${dir}/02-all-89-stimuli.png`});screens.push("02-all-89-stimuli");
  await page.locator(".rv-catalog").evaluate(element=>{element.style.maxHeight="";element.style.overflow="";});
  await page.setViewportSize({width:768,height:1024});await screen("03-preparation-tablet");
@@ -125,9 +127,10 @@ try{
  await button("Nova sessão").click();await configure("pareamento");await presentAndRespond("pareamento",{capture:true});await button("Registrar e continuar").click();
  await button("Não aplicar este item").click();await w.getByLabel("Familiaridade com o item",{exact:true}).selectOption("incerta");await w.getByLabel("Ajuda, interferentes ou motivo de não aplicação",{exact:true}).fill("Interrupção fictícia por cansaço; não interpretar como erro.");await button("Registrar e continuar").click();
  await button("Revisar registros").click();record=await exportRecord("09-matching-and-not-applied");assert.equal(record.ledger[1].response.outcome,"nao_aplicado");
- const tamperedContext=await browser.newContext({viewport:{width:1180,height:920}});
+ const tamperedContext=await browser.newContext({viewport:{width:1180,height:920},serviceWorkers:"block"});
  await tamperedContext.addInitScript(storage=>{for(const [key,value] of Object.entries(storage))localStorage.setItem(key,value);},ACCEPTED_FIRST_VISIT_STORAGE);
- await tamperedContext.route("**/recognition-v2/*.svg",route=>route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'}));
+ let corruptedResponses=0;
+ await tamperedContext.route("**/recognition-v2/*.svg",route=>(corruptedResponses++,route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'}))); 
  const tamperedPage=await tamperedContext.newPage(),tamperedErrors=[];
  tamperedPage.on("pageerror",error=>tamperedErrors.push(error.message));
  await tamperedPage.goto(`${server.origin}/#/testes-reconhecimento`);
@@ -140,9 +143,15 @@ try{
  await tamperedW.getByRole("button",{name:"Verificar banco e iniciar",exact:true}).click();
  await tamperedW.locator(".rv-message").filter({hasText:/divergente/}).waitFor({timeout:45000});
  assert.equal(await tamperedW.locator(".rv-run").count(),0,"integrity failure blocks a clean session before presentation");
+ assert.ok(corruptedResponses>0,"corrupted responses reached the clean browser");
+ await tamperedPage.screenshot({path:dir+"/10-corrupted-image-blocked.png",fullPage:true});
  assert.deepEqual(tamperedErrors,[]);
  await tamperedContext.close();
  assert.deepEqual(errors,[]);
  await writeFile(`${dir}/result.json`,JSON.stringify({status:"passed",screens,bank:89,syntheticOnly:true,modes:3,offlineDuringSession:true,historyVerified:true,phoneLayoutVerified:true,threeChoiceGeometryVerified:true,cleanContextIntegrityVerified:true},null,2));
  console.log('VISUAL_RECOGNITION_E2E_PASS: tablet, mobile, 89 stimuli, modes, offline, correction and integrity.');
+}catch(error){
+ await page.screenshot({path:dir+"/failure.png",fullPage:true});
+ await writeFile(dir+"/failure.txt",String(error.stack||error));
+ throw error;
 }finally{await browser.close();await server.close();}
