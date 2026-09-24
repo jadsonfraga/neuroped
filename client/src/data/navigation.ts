@@ -82,6 +82,13 @@ export const featuredNavigation: NavItem[] = [
     description: "Figuras por idade · reconhecer, nomear e parear",
   },
   {
+    href: "/testes-cognitivos",
+    label: "Testes cognitivos por faixa etária",
+    icon: Brain,
+    tone: "priority",
+    description: "Aventura em 4 mundos · visual, leitura, escrita e aritmética",
+  },
+  {
     href: "/pacientes",
     label: "Pacientes / Prontuário",
     icon: Users,

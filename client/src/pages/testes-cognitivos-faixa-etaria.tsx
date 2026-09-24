@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { celebrate } from "@/lib/confetti";
 import { softSuccess, softTap, softWhoosh } from "@/lib/softSounds";
-import { HeroGrid, NEUTRAL_CHEERS, type Hero } from "@/components/aventura";
+import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, type Hero } from "@/components/aventura";
 import {
   ArrowLeft,
   Brain,
@@ -2510,6 +2510,8 @@ export default function TestesCognitivosFaixaEtariaPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [hero, setHero] = useState<Hero | null>(null);
   const [screen, setScreen] = useState<"hero" | "map" | "world">("hero");
+  const [track, setTrack] = useState<"guided" | "direct">("guided");
+  const direct = track === "direct";
   const [activeWorld, setActiveWorld] = useState<Domain>("visual");
   const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>({});
   const [stars, setStars] = useState(0);
@@ -2604,6 +2606,34 @@ export default function TestesCognitivosFaixaEtariaPage() {
               className="h-9 w-24"
             />
           </div>
+          <div
+            role="tablist"
+            aria-label="Modo de aplicação"
+            data-testid="cognitive-track-tabs"
+            className="flex gap-1.5 rounded-2xl border border-border/60 bg-background/70 p-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!direct}
+              disabled={confirmed}
+              onClick={() => setTrack("guided")}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${!direct ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              Guiado · escolher herói
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={direct}
+              disabled={confirmed}
+              data-testid="cognitive-direct-tab"
+              onClick={() => setTrack("direct")}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${direct ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              Direto ao teste
+            </button>
+          </div>
           {!confirmed ? (
             <Button
               size="sm"
@@ -2611,7 +2641,12 @@ export default function TestesCognitivosFaixaEtariaPage() {
               className="gap-1.5"
               onClick={() => {
                 setConfirmed(true);
-                setScreen(hero ? "map" : "hero");
+                if (direct) {
+                  setHero((current) => current ?? DEFAULT_HERO);
+                  setScreen("map");
+                } else {
+                  setScreen(hero ? "map" : "hero");
+                }
               }}
             >
               <Play className="h-4 w-4" /> Iniciar aventura
@@ -2627,6 +2662,11 @@ export default function TestesCognitivosFaixaEtariaPage() {
             </Badge>
           )}
         </div>
+        {direct && (
+          <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">
+            Modo direto: pula a escolha de herói. Você entra direto no mapa e escolhe o mundo.
+          </p>
+        )}
       </header>
 
       {/* Jogo */}

@@ -11,3 +11,9 @@
 .rv-tracks button[aria-selected=true]{background:var(--rv-ui-tone-32);border-color:var(--rv-ui-tone-33)}
 .rv-tracks button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:600px){.rv-tracks{grid-template-columns:1fr}}
+.rv-workspace{--primary:184 74% 25%;--ring:184 74% 25%}
+.rv-hero-picker{margin:18px 0}
+.rv-hero-picker-body{margin-top:14px;display:grid;gap:12px}
+.rv-run-hero{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.rv-run-hero>span:first-child{font-size:20px}
+@media(max-width:600px){.rv-run-top{flex-wrap:wrap}.rv-run-hero{order:3;width:100%;justify-content:flex-start}}

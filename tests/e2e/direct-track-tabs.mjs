@@ -1,6 +1,9 @@
-// Aba "Direto ao teste" nas três aplicações diretas: com a idade informada, a aplicadora
-// experiente chega à aplicação sem guia, checklist, kit item a item ou ensaio, e o registro
-// declara o modo direto. O fluxo guiado continua sendo o padrão ao abrir cada página.
+// Aba "Direto ao teste" nas quatro aplicações diretas (Sonda Dez, OBS-10, Reconhecimento
+// Visual e Testes Cognitivos por Faixa Etária): com a idade informada, a aplicadora
+// experiente chega à aplicação sem guia, checklist, kit item a item, ensaio ou escolha de
+// herói, e o registro declara o modo direto. O fluxo guiado continua sendo o padrão ao
+// abrir cada página. Cobre também a camada de aventura (herói/estrelas) adicionada ao
+// Reconhecimento Visual: presente no console do aplicador, ausente na tela da criança.
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
@@ -71,6 +74,7 @@ try {
   await open("testes-reconhecimento", "rv-track-tabs");
   assert.equal(await tab("Guia de primeira aplicação").getAttribute("aria-selected"), "true", "Reconhecimento abre no modo guiado");
   await expectVisible("3. Prepare e comece");
+  assert.equal(await page.getByTestId("rv-hero-picker").count(), 1, "seletor de herói disponível também no modo guiado");
   await tab("Direto ao teste").click();
   await page.getByTestId("rv-direct-start").waitFor();
   assert.equal(await page.getByText("3. Prepare e comece").count(), 0, "conferências ocultas no modo direto");
@@ -79,12 +83,47 @@ try {
   await screen("rv-direct", ".rv-workspace");
   await button("Iniciar aplicação").click();
   await button("Mostrar somente as figuras à criança").waitFor();
+  // Camada de aventura: herói e estrelas aparecem no console do aplicador...
+  const rvHeroHud = page.locator(".rv-run-hero");
+  await rvHeroHud.waitFor();
+  assert.match(await rvHeroHud.getAttribute("aria-label"), /^Herói: /);
+  assert.match(await rvHeroHud.innerText(), /0/, "nenhuma oportunidade registrada ainda");
+  // ...e nunca na tela virada para a criança (estímulo puro).
+  await button("Mostrar somente as figuras à criança").click();
+  const rvChildDialog = page.locator(".rv-child-dialog");
+  await rvChildDialog.waitFor();
+  assert.doesNotMatch(await rvChildDialog.innerText(), /estrela|herói/i, "tela da criança permanece pura, sem gamificação");
+  await rvChildDialog.getByRole("button", { name: "← Voltar ao aplicador", exact: true }).click();
+  await rvChildDialog.waitFor({ state: "detached" });
+  await page.getByLabel("Situação observada", { exact: true }).selectOption("sem_resposta");
+  await page.getByLabel("Familiaridade com o item", { exact: true }).selectOption("incerta");
+  await button("Registrar e continuar").click();
+  assert.match(await rvHeroHud.innerText(), /1/, "uma oportunidade registrada acende a primeira estrela");
   await button("Revisar registros").click();
   const rvReport = await page.locator(".rv-report").textContent();
   assert.match(rvReport ?? "", /Condições declaradas: Modo direto: guia de primeira aplicação e conferências de preparo dispensados/, "registro do Reconhecimento declara o modo direto");
+  const rvSummary = await page.locator(".rv-panel").first().innerText();
+  assert.match(rvSummary, /acompanhou 1 oportunidade nesta aplicação/, "fechamento cita herói e estrelas, sem virar escore");
+
+  // Testes Cognitivos por Faixa Etária (avaliação cognitiva infantil)
+  await page.goto(`${server.origin}/#/testes-cognitivos`);
+  await page.getByRole("heading", { name: "Testes Cognitivos por Faixa Etária" }).waitFor({ timeout: 20000 });
+  assert.equal(await page.getByTestId("cognitive-track-tabs").count(), 1);
+  assert.equal(await tab("Guiado").getAttribute("aria-selected"), "true", "Testes cognitivos abrem no modo guiado");
+  await page.getByLabel("Idade da criança (anos)").fill("7");
+  await button("Iniciar aventura").click();
+  await page.getByText("Escolha seu herói").waitFor();
+  await button("Reiniciar aventura").click();
+  await tab("Direto ao teste").click();
+  assert.equal(await tab("Direto ao teste").getAttribute("aria-selected"), "true");
+  await page.getByLabel("Idade da criança (anos)").fill("7");
+  await button("Iniciar aventura").click();
+  await page.getByText("Para onde vamos agora?").waitFor();
+  assert.equal(await page.getByText("Escolha seu herói").count(), 0, "modo direto pula a escolha de herói");
+  assert.equal(await tab("Direto ao teste").isDisabled(), true, "aba travada depois de confirmar a idade");
 
   assert.deepEqual(errors, [], "sem erros de página");
-  console.log("Direto ao teste: três abas verificadas no navegador (guiado por padrão, direto sem guia/checklist/ensaio, registro declarado).");
+  console.log("Direto ao teste: quatro superfícies verificadas no navegador (guiado por padrão, direto sem guia/checklist/ensaio/herói, gamificação correta, registro declarado).");
 } finally {
   await browser.close();
   await server.close();

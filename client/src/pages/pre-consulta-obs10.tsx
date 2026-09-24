@@ -21,6 +21,7 @@ import { useWorkClock } from "@/features/obs10/useWorkClock";
 import { DossierPanel, JourneyMap, Readiness, type ReadinessItem } from "@/features/obs10/Journey";
 import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, nextSteps, videoDeliveryDone } from "@/features/obs10/Orientation";
 import { makeDossier, makeScript } from "@/features/obs10/dossier";
+import { StarCounter } from "@/components/aventura";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -271,6 +272,13 @@ export default function PreConsultaObs10Page() {
     if (!printPlainTextDocument({ title: `OBS-10 — roteiro ${selectedBand.label}`, text })) setMessage("Impressão bloqueada pelo navegador. Permita a janela ou use a exportação TXT.");
   }
   const stepObservations = observations.filter((o) => o.phase === step);
+  // Camada de aventura: contagem de blocos com algo registrado. Não é dado
+  // clínico, não entra no registro/dossiê e não mede desempenho — apenas
+  // participação (a criança não vê esta tela, então o herói fica de fora;
+  // só a barra de estrelas acompanha o profissional).
+  const blocksWithContent = new Set(
+    observations.filter(usableObservation).map((o) => o.phase),
+  ).size;
   const updateContext = (patch: Partial<SessionContext>) => { setHandoff(emptyHandoff()); setContext((current) => ({ ...current, ...patch })); };
   function restoreForReview(value: SessionRecord) {
     startTicket.current += 1; starting.current = false; media.reset();
@@ -408,6 +416,7 @@ export default function PreConsultaObs10Page() {
       {stage !== "setup" && band && <div className="obs10-no-print">
         <div className="obs10-toolbar">
           <div className={`obs10-clock ${elapsed >= 510 ? "is-ending" : ""}`}><Timer size={21} /><span aria-label="Tempo de aplicação" data-testid="obs10-clock">{clock(elapsed)}</span><small>/ 10:00</small></div>
+          <StarCounter stars={blocksWithContent} label="blocos com registro" />
           <div><strong>{band.icon} {band.label}</strong><span className="obs10-muted"> {finished ? "· encerrada; revise os registros" : "· observação em andamento"}</span></div>
           {running && <button type="button" className="obs10-secondary" onClick={() => finish("Encerramento antecipado pela aplicadora; conferir tarefas não realizadas.")}><Square size={16} />Encerrar antes</button>}
           <button type="button" className="obs10-danger" onClick={emergencyStop}>Interromper e chamar médico</button>
