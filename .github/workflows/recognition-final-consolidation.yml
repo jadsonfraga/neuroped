@@ -1,0 +1,109 @@
+name: Recognition final consolidation
+on:
+  push:
+    branches: [feat/visual-recognition-v2]
+    paths: [.github/workflows/recognition-final-consolidation.yml]
+permissions:
+  contents: write
+concurrency:
+  group: recognition-final-consolidation
+  cancel-in-progress: false
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Reconcile current main without replacing concurrent work
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/feat/visual-recognition-v2"
+          git config user.name 'NeuroPed recognition consolidation'
+          git config user.email 'noreply@neuroped.invalid'
+          git fetch origin main feat/visual-recognition-v2
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/feat/visual-recognition-v2)"
+          git merge --no-edit origin/main
+      - name: Centralize unchanged pigments and make corruption test independent from cache
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const folder='client/src/features/visual-recognition/';
+          const tokenPath='client/src/styles/tokens.css';
+          let tokenSource=readFileSync(tokenPath,'utf8');
+          assert.ok(!tokenSource.includes('RECOGNITION_FIXED_PALETTE_V2'),'palette already migrated; review instead of duplicating');
+          const names={
+            model:{'#d62935':'red','#175ac8':'blue','#f4d522':'yellow','#168c46':'green','#ef7a20':'orange','#763eb0':'purple','#ee82af':'pink','#885333':'brown','#202125':'black','#ffffff':'white','#92969d':'gray'},
+            ui:{'#203e4b':'ink','#536b75':'muted','#116a70':'brand','#dce7e8':'border','#f1f7f6':'surface-soft','#fff':'white','#1873b1':'focus','#e5f3ef':'hero-start','#f8f7ef':'hero-middle','#fceee3':'hero-end','#126c72':'action','#0e5359':'action-hover','#fff4df':'notice','#654915':'notice-ink','#294953':'child-ink','#637f8b':'selection','#456d80':'naming-focus','#7996a2':'model-outline'},
+            art:{'#3176bd':'ball','#243f59':'ball-outline','#e8f4ff':'ball-seam','#338bb3':'ribbon','#234753':'ribbon-outline','#f7fbfd':'glass','#45667b':'glass-outline','#6dc6e4':'water','#edf3f5':'doorway','#365367':'doorway-outline','#ba8454':'door','#654322':'wood-outline','#ffe498':'handle','#aa7749':'table','#815332':'table-legs','#3282b9':'position-ball','#27465f':'position-outline','#edf5fa':'box-interior','#516a7b':'box-outline','#327fba':'counter','#294b64':'counter-outline','#a7b6c0':'baseline','#63a49e':'column','#386c66':'column-outline','#eff5f6':'cup','#34576a':'cup-outline','#93c5d7':'water-surface','#5a7b8b':'steam','#d8f5ff':'ice','#528ba9':'ice-outline','#e6c8a0':'carton-top','#766042':'carton-outline','#f4dfc2':'carton-front','#d1ad7c':'carton-side','#7e8b92':'stone','#44545d':'stone-outline','#ffffff':'cotton','#bbc6ce':'cotton-outline','#56616a':'swatch-outline'}
+          };
+          const definitions=[];
+          for(const [file,group] of [['visual-recognition.css','ui'],['Stimulus.tsx','art'],['model.ts','model']]){
+            const original=readFileSync(folder+file,'utf8');
+            const pigments=[...new Set(original.match(/#[0-9a-fA-F]{3,8}\b/g)||[])];
+            assert.ok(pigments.length>0,`expected unmigrated colors in ${file}`);
+            const mapping=new Map(pigments.map((color,index)=>[color,`--rv-${group==='model'?'color':group}-${names[group][color]??`tone-${String(index+1).padStart(2,'0')}`}`]));
+            assert.equal(new Set(mapping.values()).size,mapping.size);
+            for(const [color,name] of mapping)definitions.push(`  ${name}: ${color};`);
+            const next=original.replace(/#[0-9a-fA-F]{3,8}\b/g,color=>`var(${mapping.get(color)})`);
+            const reversed=next.replace(/var\((--rv-(?:ui|art|color)-[a-z0-9-]+)\)/g,(full,name)=>{const entry=[...mapping].find(([,value])=>value===name);return entry?entry[0]:full;});
+            assert.equal(reversed,original,`palette migration must preserve every original byte after resolving tokens: ${file}`);
+            writeFileSync(folder+file,next);
+          }
+          tokenSource+='\n/* RECOGNITION_FIXED_PALETTE_V2\n * Stable, theme-independent stimulus pigments and matching operator surfaces.\n * Kept in the canonical token system, including the body-level child dialog.\n * Do not override stimulus colors in dark-mode or brand-theme selectors.\n */\n:root {\n'+definitions.join('\n')+'\n}\n';
+          writeFileSync(tokenPath,tokenSource);
+          const e2ePath='tests/e2e/visual-recognition.mjs';
+          let e2e=readFileSync(e2ePath,'utf8');
+          const before=` await button("Nova sessão").click();await preflight();\n await page.route("**/recognition-v2/*.svg",route=>route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'}));\n await button("Verificar banco e iniciar").click();await w.locator(".rv-message").filter({hasText:/divergente/}).waitFor();assert.equal(await w.locator(".rv-run").count(),0,"integrity failure blocks session");await page.unroute("**/recognition-v2/*.svg");`;
+          assert.equal(e2e.split(before).length,2,'expected complete final corruption test');
+          const after=` // A new browser context prevents the successful session's service-worker\n // and HTTP caches from swallowing the intentionally corrupted response.\n // Only this negative transport test blocks service workers; normal journeys\n // above still exercise the application's real cache and offline behavior.\n const badContext=await browser.newContext({viewport:{width:1180,height:920},serviceWorkers:"block"});\n try{\n   await badContext.addInitScript(storage=>{for(const [key,value] of Object.entries(storage))localStorage.setItem(key,value);},ACCEPTED_FIRST_VISIT_STORAGE);\n   const badPage=await badContext.newPage();badPage.on("pageerror",error=>errors.push(error.message));\n   await badPage.goto(server.origin+"/#/testes-reconhecimento");\n   await badPage.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);\n   await badPage.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);\n   await badPage.locator('[data-testid="login-form"] button[type="submit"]').click();\n   const badWorkspace=badPage.locator(".rv-workspace");await badWorkspace.waitFor();\n   await badWorkspace.getByLabel("Anos completos",{exact:true}).fill("5");\n   await badWorkspace.getByLabel("Meses adicionais",{exact:true}).fill("0");\n   for(const box of await badWorkspace.locator('.rv-preflight input[type="checkbox"]').all())await box.check();\n   let intercepted=0;\n   await badPage.route("**/recognition-v2/*.svg",route=>{intercepted++;return route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'});});\n   await badWorkspace.getByRole("button",{name:"Verificar banco e iniciar",exact:true}).click();\n   await badWorkspace.locator(".rv-message").filter({hasText:/divergente/}).waitFor();\n   assert.ok(intercepted>0,"the corrupted transport response was actually delivered");\n   assert.equal(await badWorkspace.locator(".rv-run").count(),0,"integrity failure blocks session");\n   await badPage.screenshot({path:dir+"/10-corrupted-image-blocked.png",fullPage:true});\n }finally{await badContext.close();}`;
+          e2e=e2e.replace(before,after);
+          // Always preserve a useful failure artifact without suppressing errors.
+          e2e=e2e.replace('}finally{await browser.close();await server.close();}',`}catch(error){\n await page.screenshot({path:dir+"/failure.png",fullPage:true});\n await writeFile(dir+"/failure.txt",String(error.stack||error));\n throw error;\n}finally{await browser.close();await server.close();}`);
+          writeFileSync(e2ePath,e2e);
+          const test=`import assert from "node:assert/strict";\nimport {test} from "node:test";\nimport {readFileSync} from "node:fs";\nimport {COLORS} from "../../client/src/features/visual-recognition/model.ts";\nconst tokens=readFileSync(new URL("../../client/src/styles/tokens.css",import.meta.url),"utf8");\ntest("recognition uses canonical tokens, with stable stimulus colors",()=>{\n const names=["red","blue","yellow","green","orange","purple","pink","brown","black","white","gray"];\n assert.equal(COLORS.length,names.length);\n for(const [index,,] of COLORS.entries()){assert.equal(COLORS[index][2],"var(--rv-color-"+names[index]+")");}\n for(const file of ["visual-recognition.css","Stimulus.tsx","model.ts"]){\n  const source=readFileSync(new URL("../../client/src/features/visual-recognition/"+file,import.meta.url),"utf8");\n  assert.doesNotMatch(source,/#[0-9a-fA-F]{3,8}\\b/);\n  for(const match of source.matchAll(/var\\((--rv-(?:ui|art|color)-[a-z0-9-]+)\\)/g)){assert.ok(tokens.includes(match[1]+":"),match[1]);}\n }\n assert.match(tokens,/RECOGNITION_FIXED_PALETTE_V2/);\n});\n`;
+          writeFileSync('tests/unit/visual-recognition-design.test.ts',test);
+          console.log(`Canonical palette contains ${definitions.length} unchanged pigment definitions. Gates and baseline are unchanged.`);
+          JS
+      - run: npm ci
+      - name: Verify source contracts and unchanged release thresholds
+        run: |
+          set -euo pipefail
+          node --import tsx --test tests/unit/visual-recognition*.test.ts
+          node --test tests/unit/verified-visual-digests.test.mjs
+          npm run audit:design
+          npm run audit:access
+          npm run check
+          npm run lint
+          node --import tsx tests/unit/featured-navigation.test.ts
+      - name: Commit scoped changes and remove temporary workflow
+        run: |
+          set -euo pipefail
+          git add client/src/features/visual-recognition/visual-recognition.css client/src/features/visual-recognition/Stimulus.tsx client/src/features/visual-recognition/model.ts client/src/styles/tokens.css tests/unit/visual-recognition-design.test.ts tests/e2e/visual-recognition.mjs
+          git rm .github/workflows/recognition-final-consolidation.yml
+          git commit -m 'fix: consolidate recognition design tokens and prove corrupted-asset rejection'
+          git push origin HEAD:feat/visual-recognition-v2
+          mkdir -p /tmp/recognition-final-source
+          git rev-parse HEAD > /tmp/recognition-final-source/source-sha.txt
+          git archive HEAD client/src/features/visual-recognition client/src/styles/tokens.css tests/e2e/visual-recognition.mjs tests/unit/visual-recognition-design.test.ts docs/features/visual-recognition-v2.md > /tmp/recognition-final-source/source.tar
+      - name: Build actual reconciled client
+        run: npm run build:client > /tmp/recognition-build.log 2>&1 || { tail -60 /tmp/recognition-build.log; exit 1; }
+      - run: npx playwright install --with-deps chromium > /tmp/recognition-browser-install.log 2>&1 || { tail -60 /tmp/recognition-browser-install.log; exit 1; }
+      - name: Run end-to-end application and security-negative journeys
+        run: node tests/e2e/visual-recognition.mjs
+      - name: Preserve synthetic evidence and reviewed source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recognition-final-consolidation
+          path: |
+            /tmp/recognition-final-source
+            /tmp/visual-recognition
+          if-no-files-found: error
+          retention-days: 7
