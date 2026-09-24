@@ -121,10 +121,24 @@ try{
  await button("Nova sessão").click();await configure("pareamento");await presentAndRespond("pareamento",{capture:true});await button("Registrar e continuar").click();
  await button("Não aplicar este item").click();await w.getByLabel("Familiaridade com o item",{exact:true}).selectOption("incerta");await w.getByLabel("Ajuda, interferentes ou motivo de não aplicação",{exact:true}).fill("Interrupção fictícia por cansaço; não interpretar como erro.");await button("Registrar e continuar").click();
  await button("Revisar registros").click();record=await exportRecord("09-matching-and-not-applied");assert.equal(record.ledger[1].response.outcome,"nao_aplicado");
- await button("Nova sessão").click();await preflight();
- await page.route("**/recognition-v2/*.svg",route=>route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'}));
- await button("Verificar banco e iniciar").click();await w.locator(".rv-message").filter({hasText:/divergente/}).waitFor();assert.equal(await w.locator(".rv-run").count(),0,"integrity failure blocks session");await page.unroute("**/recognition-v2/*.svg");
+ const tamperedContext=await browser.newContext({viewport:{width:1180,height:920}});
+ await tamperedContext.addInitScript(storage=>{for(const [key,value] of Object.entries(storage))localStorage.setItem(key,value);},ACCEPTED_FIRST_VISIT_STORAGE);
+ await tamperedContext.route("**/recognition-v2/*.svg",route=>route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'}));
+ const tamperedPage=await tamperedContext.newPage(),tamperedErrors=[];
+ tamperedPage.on("pageerror",error=>tamperedErrors.push(error.message));
+ await tamperedPage.goto(`${server.origin}/#/testes-reconhecimento`);
+ await tamperedPage.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);await tamperedPage.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+ await tamperedPage.locator('[data-testid="login-form"] button[type="submit"]').click();
+ const tamperedW=tamperedPage.locator(".rv-workspace");await tamperedW.waitFor();
+ await tamperedW.getByLabel("Anos completos",{exact:true}).fill("5");
+ await tamperedW.getByLabel("Meses adicionais",{exact:true}).fill("0");
+ for(const box of await tamperedW.locator('.rv-preflight input[type="checkbox"]').all())await box.check();
+ await tamperedW.getByRole("button",{name:"Verificar banco e iniciar",exact:true}).click();
+ await tamperedW.locator(".rv-message").filter({hasText:/divergente/}).waitFor({timeout:45000});
+ assert.equal(await tamperedW.locator(".rv-run").count(),0,"integrity failure blocks a clean session before presentation");
+ assert.deepEqual(tamperedErrors,[]);
+ await tamperedContext.close();
  assert.deepEqual(errors,[]);
- await writeFile(`${dir}/result.json`,JSON.stringify({status:"passed",screens,bank:89,syntheticOnly:true,modes:3,offlineDuringSession:true,historyVerified:true},null,2));
+ await writeFile(`${dir}/result.json`,JSON.stringify({status:"passed",screens,bank:89,syntheticOnly:true,modes:3,offlineDuringSession:true,historyVerified:true,phoneLayoutVerified:true,threeChoiceGeometryVerified:true,cleanContextIntegrityVerified:true},null,2));
  console.log('VISUAL_RECOGNITION_E2E_PASS: tablet, mobile, 89 stimuli, modes, offline, correction and integrity.');
 }finally{await browser.close();await server.close();}
