@@ -10,6 +10,7 @@ import { useExitGuard } from "@/features/obs10/useExitGuard";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import type { Outcome } from "@/features/obs10/protocol";
 import { ImportReview, SessionReview } from "@/features/obs10/SessionReview";
+import { AgreementPanel } from "@/features/obs10/AgreementPanel";
 import { reviewText } from "@/features/obs10/review";
 import { AudioPreflight } from "@/features/obs10/AudioPreflight";
 import { EvidencePanel } from "@/features/obs10/EvidencePanel";
@@ -363,6 +364,7 @@ export default function PreConsultaObs10Page() {
       </div>}
 
       {stage === "setup" && <AudioPreflight disabled={media.pending || Boolean(media.stream) || importBusy} />}
+      {stage === "setup" && <details className="obs10-panel obs10-no-print"><summary>Estudo de confiabilidade: comparar dois observadores</summary><AgreementPanel /></details>}
       {stage === "setup" && <ImportReview disabled={media.pending || Boolean(media.stream) || starting.current} onImport={restoreForReview} onBusy={setImportBusy} />}
       {stage !== "setup" && band && <div className="obs10-no-print">
         <div className="obs10-toolbar">

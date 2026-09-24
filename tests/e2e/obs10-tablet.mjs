@@ -50,12 +50,30 @@ async function saveAndClose(name) {
 }
 async function runTask(i, opts = {}) {
   await phase("cue");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 1, "adult cue keeps the station world map visible");
+  assert.equal(await w.getByTestId("obs10-mission-map").count(), 0, "live collection uses a compact station HUD instead of a full task map");
+  assert.match(await w.getByTestId("obs10-station-checkpoint").textContent(), new RegExp(`ESTAÇÃO\\s*${i + 1}`, "iu"), "checkpoint announces current station");
   const title = await w.locator("h1").textContent();
   if (opts.capture && title.includes("cena")) await screen("02-cena-orientacao");
+  assert.match(await w.locator(".ot-pacing").first().textContent(), /Sugestão de ritmo: até \d+s/, "every activity carries its pacing guidance");
+  if (title.includes("quatro movimentos")) {
+    // Movement is observed by the camera: four spoken steps for the adult, nothing on the child surface.
+    assert.equal(await w.locator(".ot-steps li").count(), 4);
+    assert.match(await w.getByTestId("tablet-cue").textContent(), /vire e volte/);
+    assert.match(await w.getByTestId("tablet-cue").textContent(), /Omita qualquer movimento inseguro/);
+    if (opts.capture) await screen("06-movimento-pela-camera");
+  }
+  if (title.includes("regra simples")) assert.ok(await w.locator(".ot-steps li").count() >= 3);
   const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir atividade para a criança)$/ });
   await openActivity.click(); await phase("child");
   assert.equal(await w.getByTestId("tablet-cue").count(), 0, "adult instructions are unmounted from child screen");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 0, "child surface has no station map");
+  assert.equal(await w.getByTestId("obs10-station-checkpoint").count(), 0, "child surface has no adult checkpoint");
   if (title.includes("palavras")) assert.ok(!/casa, gato, pão/i.test(await w.textContent()), "no memory answers in child DOM");
+  if (title.includes("regra simples") || title.includes("quatro movimentos")) {
+    assert.ok(!/SOL|LUA|vire e volte|nariz/.test(await w.textContent()), "spoken proposals never leak to the child screen");
+    assert.equal(await w.locator(".ot-child svg").count(), 0);
+  }
   if (await w.getByTestId("tablet-drawing").count()) {
     const draw = w.getByLabel("Área para desenhar com o dedo", { exact: true }); await draw.scrollIntoViewIfNeeded();
     const box = await draw.boundingBox(); await page.mouse.move(box.x + 30, box.y + 30); await page.mouse.down();
@@ -79,6 +97,8 @@ try {
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email); await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
   await page.locator('[data-testid="login-form"] button[type="submit"]').click(); await page.getByTestId("obs10-workspace").waitFor();
   await open(); await screen("01-preparacao-tablet");
+  assert.equal(await w.getByTestId("obs10-station-journey").count(), 1);
+  assert.equal(await w.getByTestId("obs10-station-journey").locator('[data-station-state="current"]').first().getAttribute("aria-current"), "step");
   await b("Letras maiores").focus(); await page.keyboard.press("Tab");
   assert.equal(await page.evaluate(() => Boolean(document.activeElement?.closest(".ot-dialog"))), true, "keyboard stays in the active dialog");
   for (const control of await w.getByRole("button").all()) if (await control.isVisible()) assert.ok((await control.boundingBox()).height >= 59, "tablet touch targets remain at least 60 CSS pixels, allowing subpixel rounding");
@@ -86,6 +106,9 @@ try {
   await setup(3, 6);
   for (let i = 0; i < 8; i++) await runTask(i, { capture: true });
   await phase("review"); await screen("05-revisao");
+  assert.equal(await w.getByTestId("obs10-mission-map").locator("li").count(), 8);
+  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="done"]').count(), 8, "review map reports eight factual records, not pass/fail");
+  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="current"]').count(), 0);
   const record = await saveAndClose("registro-completo");
   assert.equal(record.protocol, "obs10-tablet/1.0.0"); assert.equal(record.observations.length, 8);
   const strokes = record.events.filter((e) => e.type === "stroke");
@@ -93,8 +116,13 @@ try {
   assert.equal(record.events.filter((e) => e.type === "select").length, 2);
   assert.ok(record.observations.every((o) => o.note.includes("fictícia")));
   await open(); await setup(7);
-  for (let i = 0; i < 8; i++) await runTask(i);
-  await phase("review"); await saveAndClose("registro-escolar");
+  assert.match(await w.locator(".ot-live-bar").textContent(), /Atividade 1 de 10/, "school-age band gains the camera-observed movement and the oral rule");
+  for (let i = 0; i < 10; i++) await runTask(i, { capture: i === 6 });
+  await phase("review"); const escolar = await saveAndClose("registro-escolar");
+  assert.equal(escolar.observations.length, 10);
+  const ids = escolar.observations.map((o) => o.taskId);
+  assert.ok(ids.includes("y06:movement") && ids.includes("y06:rule"), "camera-observed movement and the oral rule are recorded");
+  assert.ok(ids.indexOf("y06:movement") > ids.indexOf("y06:encoding") && ids.indexOf("y06:movement") < ids.indexOf("y06:recall"), "movement fills the retention interval");
   await open(); await w.getByText("Reabrir um registro tablet já salvo", { exact: true }).click();
   await w.getByLabel("JSON do modo tablet", { exact: true }).setInputFiles({ name: "invalido.json", mimeType: "application/json", buffer: Buffer.from('{"version":"1.6.1"}') });
   await w.getByText(/Não foi possível abrir:/).waitFor(); await phase("setup");
@@ -116,6 +144,21 @@ try {
   const partial = await saveAndClose("registro-parcial");
   assert.equal(partial.observations[0].note, "Nota fictícia antes de interromper.", "typed facts cannot disappear on early end");
   assert.equal(partial.observations[0].outcome, null);
+  // Category during collection, description in review: the pending item is surfaced, never invented.
+  await open(); await setup(1, 6);
+  await b("Iniciar esta interação").click(); await phase("child");
+  await b("Terminar tentativa · registrar").click(); await phase("response");
+  await b("Após repetição").click();
+  await b("Marcar categoria e continuar · detalhar depois").click(); await phase("cue");
+  await b("Encerrar coleta").click(); await phase("review");
+  assert.match(await w.getByTestId("tablet-pending").textContent(), /1 atividade\(s\) com categoria marcada e descrição pendente/);
+  assert.match(await w.locator(".ot-review-item summary").first().textContent(), /descrição pendente/);
+  assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="partial"]').count(), 1, "station review surfaces a pending description without calling it failure");
+  await screen("07-descricao-pendente");
+  const deferred = await saveAndClose("registro-categoria-sem-descricao");
+  assert.equal(deferred.observations[0].outcome, "V");
+  assert.equal(deferred.observations[0].note, "", "no description is fabricated for the doctor");
+  assert.match(await readFile(`${dir}/registro-categoria-sem-descricao.json`, "utf8"), /"note": ""/);
   assert.deepEqual(errors, []);
   await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, errors, scope: "Real built route, synthetic account and clinical data only. Browser checks are not human usability or clinical validation." }, null, 2));
   console.log("OBS-10 Tablet real browser journey passed.");

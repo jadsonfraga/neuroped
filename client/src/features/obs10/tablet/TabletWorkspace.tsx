@@ -3,10 +3,11 @@ import { OUTCOMES, clock } from "../protocol";
 import { sessionElapsed } from "../safety";
 import { useExitGuard } from "../useExitGuard";
 import { useLocalRecorder } from "../useLocalRecorder";
-import { initialTabletState, isCollecting, tabletReducer, parseTabletRecord, tabletText, drawingStrokes, type TabletAction, type TabletContext, type TabletOutcome } from "./engine";
-import { tabletPlan, TABLET_LIMITS, TABLET_VERSION } from "./protocol";
+import { initialTabletState, isCollecting, tabletReducer, parseTabletRecord, tabletText, drawingStrokes, pendingDescriptions, type TabletAction, type TabletContext, type TabletOutcome } from "./engine";
+import { tabletPlan, plannedSeconds, TABLET_LIMITS, TABLET_VERSION } from "./protocol";
 import { HearTabletHelp, TabletStimulus } from "./Stimulus";
 import { DrawingPreview } from "./DrawingPreview";
+import { MissionBanner, StationJourney } from "./Stations";
 import { TABLET_STYLE } from "./style";
 
 const SAFETY = ["Autorização institucional para filmar e tratar os dados registrada; participação aceita.", "Aplicador treinado, médico disponível e uso experimental do modo tablet autorizado pela equipe.", "Criança confortável, sem mudança aguda; apoios habituais preservados e ambiente seguro."];
@@ -50,6 +51,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   const age = ageValid ? Number(years) * 12 + Number(months) : -1;
   const plan = tabletPlan(state.record?.context.months ?? age);
   const task = plan?.tasks[state.cursor];
+  const pending = state.record ? pendingDescriptions(state.record) : [];
   const payload = state.record ? JSON.stringify(state.record, null, 2) : "";
   const summary = state.record ? tabletText(state.record) : "";
   const jsonCurrent = Boolean(payload) && savedJson === payload;
@@ -120,7 +122,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   return <div className={`obs10 ot-root ${large ? "ot-large" : ""}`} data-testid="obs10-tablet" data-phase={state.phase}>
     <style>{TABLET_STYLE}</style>
     <header className="ot-header"><div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>{state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}</header>
-    {state.phase !== "child" && <><p className="ot-mode">Modo sem kit físico · experimental · não equivalente ao presencial</p><nav aria-label="Etapas da aplicação" className="ot-progress">{["Preparar", "Aplicar", "Revisar", "Guardar"].map((title, i) => { const index = collect ? 1 : state.phase === "review" ? 2 : state.phase === "delivery" ? 3 : 0; return <span key={title} aria-current={i === index ? "step" : undefined}>{i + 1}. {title}</span>; })}</nav></>}
+    {state.phase !== "child" && <><p className="ot-mode">Modo sem kit físico · experimental · não equivalente ao presencial</p><nav aria-label="Etapas da aplicação" className="ot-progress">{["Preparar", "Aplicar", "Revisar", "Guardar"].map((title, i) => { const index = collect ? 1 : state.phase === "review" ? 2 : state.phase === "delivery" ? 3 : 0; return <span key={title} aria-current={i === index ? "step" : undefined}>{i + 1}. {title}</span>; })}</nav><StationJourney phase={state.phase} cursor={state.cursor} plan={plan} record={state.record} /></>}
     {collect && <div className="ot-live-bar"><span aria-label="Tempo da coleta">{clock(state.elapsed)} / 10:00</span><span>Atividade {state.cursor + 1} de {plan?.tasks.length}</span><span>{media.status === "recording" ? "Câmera gravando" : state.record?.camera === "external" ? "Filmagem externa declarada" : "Conferindo estado da gravação"}</span><button type="button" onClick={() => end("Aplicador encerrou antes do limite")}>Encerrar coleta</button><button type="button" className="ot-danger" onClick={() => { end("Interrupção por segurança"); setUrgent(true); }}>Chamar médico</button></div>}
     {state.phase === "setup" && <section className="ot-card">
       <p>Sem papel, lápis, impressora ou brinquedos. Usaremos interação, recursos locais e câmera. Objetos e habilidades físicas ausentes não serão simulados como equivalentes.</p><HearTabletHelp />
@@ -153,27 +155,34 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     </section>}
     {state.phase === "ready" && <section className="ot-card">
       <p><strong>{plan?.bandLabel} · {plan?.tasks.length} atividades digitais ou de interação.</strong></p><p>Diga ao responsável: “Não é prova nem nota. Fique perto sem dar dicas. Podemos parar a qualquer momento.”</p>
+      {plan && <p className="ot-pacing">Ritmo sugerido do roteiro: cerca de {Math.round(plannedSeconds(plan) / 60)} min dentro do limite de 10. A folga existe para acolher recusa, pausa e anotação; não é meta a cumprir.</p>}
+      {plan?.tasks.some((t) => t.id.endsWith(":movement")) && <p>Uma das atividades pede espaço livre para caminhar e o tablet apoiado de pé, mostrando o corpo inteiro. Confira o espaço antes de começar.</p>}
       <p>Preparação encerrada. A partir do próximo botão, transições e anotações contam no limite de dez minutos, sem pausa. Não sair do aplicativo nem bloquear a tela.</p><p>{camera === "integrated" ? "A câmera frontal será iniciada após sua autorização." : "Inicie agora a câmera externa e mantenha este tablet no roteiro."}</p>
       <div className="ot-actions"><button type="button" disabled={starting} onClick={() => dispatch({ type: "back-setup" })}>Voltar ao ensaio</button><button type="button" className="ot-primary" disabled={starting || media.pending} onClick={() => { void start(); }}>Iniciar observação de até 10 minutos</button></div>
       {(starting || media.pending) && <button type="button" onClick={() => { invalidateTicket(); setStarting(false); media.cancel(); }}>Cancelar início</button>}
     </section>}
-    {state.phase === "cue" && task && <section className="ot-card" data-testid="tablet-cue">
-      <p className="ot-badge">SOMENTE PARA O APLICADOR</p><h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p><h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
+    {state.phase === "cue" && task && <section className="ot-card ot-station-card" data-testid="tablet-cue">
+      <MissionBanner phase={state.phase} cursor={state.cursor} plan={plan} /><p className="ot-badge">SOMENTE PARA O APLICADOR</p><p className="ot-pacing">Sugestão de ritmo: até {task.seconds}s nesta atividade. É orientação, não prazo: não interrompa uma tentativa em curso nem repita para preencher o tempo.</p>
+      <h2>1. Prepare</h2><p>{task.prepare}</p><h2>2. Diga ou faça</h2><p className="ot-command">{task.command}</p>
+      {task.steps && <ol className="ot-steps">{task.steps.map((line) => <li key={line}>{line}</li>)}</ol>}
+      <h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
       <p>{task.kind === "quiet" ? "Sem objeto e sem estímulo visual. Ao iniciar, mantenha a interação natural." : "O próximo botão abre somente o recurso necessário, dentro desta mesma tela. Não há impressão ou troca de aplicativo."}</p>
       <div className="ot-actions"><button type="button" className="ot-primary" onClick={() => apply({ type: "show" })}>{task.kind === "quiet" ? "Iniciar esta interação" : "Abrir atividade para a criança"}</button></div>
       <details><summary>Não posso aplicar esta atividade</summary><label>Motivo da não aplicação<textarea value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} /></label><button type="button" onClick={() => { apply({ type: "skip", reason: note }); if (note.trim()) { setNote(""); setOutcome(""); } }}>Registrar motivo e seguir</button></details>
     </section>}
     {state.phase === "child" && task && <section className="ot-child" data-testid="tablet-child"><TabletStimulus key={task.id} task={task} strokes={drawingStrokes(state.record?.events ?? [], task.id)} onInput={(event, value) => apply({ type: "input", event, value })} /><button type="button" className="ot-primary" onClick={() => apply({ type: "response" })}>Terminar tentativa · registrar</button></section>}
-    {state.phase === "response" && task && <section className="ot-card" data-testid="tablet-response">
-      <h2>{task.title}</h2><p>A tentativa terminou. Não repita para melhorar a resposta.</p>
+    {state.phase === "response" && task && <section className="ot-card ot-station-card" data-testid="tablet-response">
+      <MissionBanner phase={state.phase} cursor={state.cursor} plan={plan} /><h2>{task.title}</h2><p>A tentativa terminou. Não repita para melhorar a resposta.</p>
       <fieldset className="ot-outcomes"><legend>Como aconteceu?</legend>{OUTCOMES.map((o) => <button key={o.id} type="button" aria-pressed={outcome === o.id} onClick={() => setOutcome(o.id)}>{o.label}</button>)}</fieldset>
       {outcome && <p className="ot-info">{OUTCOMES.find((o) => o.id === outcome)?.description}</p>}
       <label>O que você viu ou ouviu? Inclua ajuda e limitações.<textarea value={note} maxLength={2000} onChange={(e) => { setNote(e.target.value); apply({ type: "amend", taskId: task.id, note: e.target.value }); }} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
-      <button type="button" className="ot-primary" disabled={!outcome || !note.trim()} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>Salvar resposta e continuar</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
+      <p className="ot-pacing">Marque a categoria agora e siga. A descrição pode ser completada na revisão, sem pressa e sem a criança esperando; ela nunca é preenchida por suposição.</p>
+      <button type="button" className="ot-primary" disabled={!outcome} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>{note.trim() ? "Salvar resposta e continuar" : "Marcar categoria e continuar · detalhar depois"}</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
     </section>}
     {state.phase === "review" && state.record && <section className="ot-card">
       <p className="ot-info">Coleta encerrada: {state.record.endReason}. Não aplicar novas tarefas. Complete só o que já ocorreu.</p>
-      {plan?.tasks.map((t) => { const o = state.record!.observations.find((v) => v.taskId === t.id); return <details key={t.id} className="ot-review-item"><summary>{t.title} · {o ? o.outcome ? OUTCOMES.find((v) => v.id === o.outcome)?.label : "registro parcial" : "não observada"}</summary>{o ? <><p>{t.command}</p><label>Complemento factual de {t.title}<textarea value={o.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: t.id, note: e.target.value })} /></label>{t.kind === "drawing" && <DrawingPreview strokes={drawingStrokes(state.record!.events, t.id)} />}</> : <p>Não houve registro desta atividade. Não concluir que a criança não sabe fazer.</p>}</details>; })}
+      {pending.length > 0 && <p role="status" className="ot-pacing" data-testid="tablet-pending">{pending.length} atividade(s) com categoria marcada e descrição pendente. Complete abaixo com o fato observado; nada será preenchido por suposição e a exportação declara a pendência.</p>}
+      {plan?.tasks.map((t) => { const o = state.record!.observations.find((v) => v.taskId === t.id); return <details key={t.id} className="ot-review-item" open={Boolean(o && !o.note.trim())}><summary>{t.title} · {o ? o.outcome ? `${OUTCOMES.find((v) => v.id === o.outcome)?.label}${o.note.trim() ? "" : " · descrição pendente"}` : "registro parcial" : "não observada"}</summary>{o ? <><p>{t.command}</p><label>Complemento factual de {t.title}<textarea value={o.note} maxLength={2000} onChange={(e) => dispatch({ type: "amend", taskId: t.id, note: e.target.value })} /></label>{t.kind === "drawing" && <DrawingPreview strokes={drawingStrokes(state.record!.events, t.id)} />}</> : <p>Não houve registro desta atividade. Não concluir que a criança não sabe fazer.</p>}</details>; })}
       <details><summary>Limites e habilidades não examinadas</summary>{plan?.limitations.map((text) => <p key={text}>{text}</p>)}</details>
       <label className="ot-check"><input type="checkbox" checked={state.record.reviewed} onChange={(e) => dispatch({ type: "reviewed", value: e.target.checked })} />Conferi descrições, ajudas e tarefas não observadas. Esta é uma declaração minha, não uma assinatura médica.</label>
       <button type="button" className="ot-primary" onClick={() => dispatch({ type: "delivery" })}>Continuar para guardar os arquivos</button><p>É permitido exportar um registro parcial, com as pendências explícitas.</p>
