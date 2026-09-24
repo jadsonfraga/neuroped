@@ -7,9 +7,10 @@ on:
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
       - scripts/guards/audit-access-policy.mjs
-      - scripts/guards/lib/verified-visual-digests.mjs
+      - scripts/guards/audit-built-pin-verifier.mjs
+      - scripts/guards/lib/verified*visual-digests.mjs
       - tests/unit/visual-recognition*.test.ts
-      - tests/unit/verified-visual-digests.test.mjs
+      - tests/unit/verified*visual-digests.test.mjs
       - tests/e2e/visual-recognition.mjs
       - .github/workflows/visual-recognition.yml
   push:
@@ -20,9 +21,10 @@ on:
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
       - scripts/guards/audit-access-policy.mjs
-      - scripts/guards/lib/verified-visual-digests.mjs
+      - scripts/guards/audit-built-pin-verifier.mjs
+      - scripts/guards/lib/verified*visual-digests.mjs
       - tests/unit/visual-recognition*.test.ts
-      - tests/unit/verified-visual-digests.test.mjs
+      - tests/unit/verified*visual-digests.test.mjs
       - tests/e2e/visual-recognition.mjs
       - .github/workflows/visual-recognition.yml
 permissions:
@@ -46,7 +48,7 @@ jobs:
       - name: Exact ages, manifests, recognition events and descriptive ledger
         run: |
           node --import tsx --test tests/unit/visual-recognition*.test.ts
-          node --test tests/unit/verified-visual-digests.test.mjs
+          node --test tests/unit/verified-visual-digests.test.mjs tests/unit/verified-built-visual-digests.test.mjs
           npm run audit:access
           npm run audit:design
       - name: TypeScript and lint without bypasses
@@ -60,6 +62,8 @@ jobs:
           node --import tsx tests/unit/featured-navigation.test.ts
       - name: Build real application without open-access bypass
         run: npm run build:client
+      - name: Verify the actual compiled inventory and credential protection
+        run: npm run audit:built-pin
       - run: npx playwright install --with-deps chromium
       - name: Synthetic journey through the production route
         run: node tests/e2e/visual-recognition.mjs
