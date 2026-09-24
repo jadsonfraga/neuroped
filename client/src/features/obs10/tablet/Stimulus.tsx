@@ -60,7 +60,7 @@ export function HearTabletHelp() {
     const voice = speechSynthesis.getVoices().find((v) => v.localService && v.lang.startsWith("pt"));
     if (!voice) { setMessage("Não há voz local em português disponível. Nenhum texto foi enviado a um serviço externo."); return; }
     speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance("Primeiro prepare o atendimento e confira a câmera. Depois leia uma instrução de cada vez. Mostre a atividade quando indicado. Registre somente o que aconteceu. Você pode encerrar a qualquer momento.");
+    const utterance = new SpeechSynthesisUtterance("Primeiro prepare o atendimento e confira a câmera. Depois leia uma instrução de cada vez. Abra a estação para a criança quando indicado. Registre somente o que aconteceu. Você pode encerrar a qualquer momento.");
     utterance.voice = voice; utterance.lang = "pt-BR"; utterance.rate = 0.9;
     utterance.onerror = () => setMessage("O dispositivo não concluiu a leitura. Continue pelas instruções visíveis.");
     speechSynthesis.speak(utterance); setMessage("Lendo a orientação com uma voz local do dispositivo.");

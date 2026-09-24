@@ -188,5 +188,9 @@ assert.ok(!/<button|onClick=|dispatch\(/.test(stations), "station map remains pr
 assert.ok(workspace.includes("<StationJourney") && workspace.includes("<MissionBanner"), "actual tablet route uses stations and checkpoints");
 assert.ok(workspace.includes('data-testid="tablet-transition"') && workspace.includes('aria-label="Completar descrição factual da estação encerrada"'), "transition reads and exposes the persisted station note");
 assert.ok(stations.includes("Percurso desta sessão"), "review/transition map names the actual session path, not planned completion");
+// This modality is organised in stations. Three separate PRs had to rename the same strings because nothing
+// stopped the old word from coming back; the guard covers the whole module, Stations.tsx included.
+const tabletSources = sources + "\n" + stations;
+assert.ok(!/atividade/i.test(tabletSources), "the tablet route is counted in estações: applicator text must not call a station an atividade");
 assert.ok(stationStyle.includes("prefers-reduced-motion") && stationStyle.includes("ot-station-enter"), "station transitions must respect reduced motion");
 console.log("OBS-10 Tablet: 13 age bands, state transitions, timer, no-equivalence, raw events, bounded imports and no hidden upload passed.");
