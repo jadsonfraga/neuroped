@@ -45,6 +45,7 @@ async function codeSession(code, categories, file) {
     await b(category).click();
     await w.getByLabel("O que você viu ou ouviu? Inclua ajuda e limitações.", { exact: true }).fill("Codificação sintética para o estudo de confiabilidade.");
     await b("Salvar resposta e continuar").click();
+    if (await w.getByTestId("tablet-transition").count()) await w.getByRole("button", { name: /^Ir para a estação \d+$/ }).click();
   }
   await b("Encerrar coleta").click(); await phase("review");
   await b("Continuar para guardar os arquivos").click(); await phase("delivery");

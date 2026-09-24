@@ -14,7 +14,7 @@ const WORLDS: ReadonlyArray<{ phase: WizardPhase | "collect"; title: string; sub
 ];
 
 function worldIndex(phase: WizardPhase): number {
-  if (["cue", "child", "response"].includes(phase)) return 4;
+  if (["cue", "child", "response", "transition"].includes(phase)) return 4;
   const index = WORLDS.findIndex((world) => world.phase === phase);
   return Math.max(0, index);
 }
@@ -29,13 +29,14 @@ function taskState(index: number, taskId: string, cursor: number, phase: WizardP
     if (incomplete) return { state: "partial", status: "descrição pendente" };
     return { state: "done", status: "registrada" };
   }
-  if (index < cursor) {
+  // During the pause the cursor still points at the station just closed, so it counts as closed too.
+  if (index < cursor || (phase === "transition" && index === cursor)) {
     if (observation?.outcome === "NA") return { state: "done", status: "não aplicada · motivo registrado" };
     if (incomplete) return { state: "partial", status: "categoria marcada · detalhar na revisão" };
     return { state: "done", status: observation?.outcome === null ? "registro parcial" : "registrada" };
   }
   if (index === cursor && ["cue", "child", "response"].includes(phase)) return { state: "current", status: phase === "response" ? "checkpoint de registro" : "estação atual" };
-  if ((phase === "ready" && index === 0) || (index === cursor + 1 && ["cue", "child", "response"].includes(phase))) return { state: "next", status: phase === "ready" ? "primeira estação" : "próxima estação" };
+  if ((phase === "ready" && index === 0) || (index === cursor + 1 && ["cue", "child", "response", "transition"].includes(phase))) return { state: "next", status: phase === "ready" ? "primeira estação" : "próxima estação" };
   return { state: "idle", status: "a seguir" };
 }
 
@@ -47,7 +48,8 @@ export function StationJourney({ phase, cursor, plan, record }: {
 }) {
   if (phase === "child") return null;
   const activeWorld = worldIndex(phase);
-  const showTasks = Boolean(plan) && ["ready", "review", "delivery"].includes(phase);
+  // The pause is the moment to look at the whole route; an open station keeps the compact HUD.
+  const showTasks = Boolean(plan) && ["ready", "transition", "review", "delivery"].includes(phase);
   return <aside className="ot-stations" data-testid="obs10-station-journey" aria-label="Mapa de estações do OBS-10">
     <div className="ot-stations-head">
       <div><span className="ot-stations-kicker">MAPA DA JORNADA</span><strong>{WORLDS[activeWorld].title}</strong></div>
