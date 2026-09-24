@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - client/src/features/visual-recognition/**
+      - client/src/styles/tokens.css
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
       - scripts/guards/audit-access-policy.mjs
@@ -15,6 +16,7 @@ on:
     branches: [main, feat/visual-recognition-v2]
     paths:
       - client/src/features/visual-recognition/**
+      - client/src/styles/tokens.css
       - client/src/pages/teste-reconhecimento-visual.tsx
       - client/public/recognition-v2/**
       - scripts/guards/audit-access-policy.mjs
@@ -34,6 +36,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -44,6 +48,7 @@ jobs:
           node --import tsx --test tests/unit/visual-recognition*.test.ts
           node --test tests/unit/verified-visual-digests.test.mjs
           npm run audit:access
+          npm run audit:design
       - name: TypeScript and lint without bypasses
         run: |
           npm run check
@@ -52,6 +57,7 @@ jobs:
         run: |
           npm run audit:navigation
           node --import tsx tests/unit/route-guard-policy.test.ts
+          node --import tsx tests/unit/featured-navigation.test.ts
       - name: Build real application without open-access bypass
         run: npm run build:client
       - run: npx playwright install --with-deps chromium
