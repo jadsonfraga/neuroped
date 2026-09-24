@@ -22,6 +22,9 @@ import { DossierPanel, JourneyMap, Readiness, type ReadinessItem } from "@/featu
 import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, nextSteps, videoDeliveryDone } from "@/features/obs10/Orientation";
 import { makeDossier, makeScript } from "@/features/obs10/dossier";
 import { StarCounter } from "@/components/aventura";
+import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import { TaskPicture } from "@/features/obs10/PracticalVisuals";
+import { taskOmission } from "@/features/obs10/practical";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -81,8 +84,10 @@ export default function PreConsultaObs10Page() {
   const monotonicStart = useRef<number | null>(null);
   const lastElapsed = useRef(0);
   const [stage, setStage] = useState<"setup" | "running" | "finished">("setup");
-  const [track, setTrack] = useState<"guided" | "direct">("guided");
+  const [track, setTrack] = useState<"easy" | "guided" | "direct">("guided");
   const direct = track === "direct";
+  const easy = track === "easy";
+  const [easyProgress, setEasyProgress] = useState(0);
   const [step, setStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [endReason, setEndReason] = useState("");
@@ -120,7 +125,7 @@ export default function PreConsultaObs10Page() {
     lastElapsed.current = current;
     return current;
   }, []);
-  useExitGuard(Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
+  useExitGuard(easyProgress > 0 || Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
 
   const finish = useCallback((reason: string) => {
     if (ended.current || started.current === null) return;
@@ -296,6 +301,68 @@ export default function PreConsultaObs10Page() {
     window.setTimeout(() => document.querySelector(".obs10-records")?.scrollIntoView({ block: "start", behavior: "auto" }), 0);
   }
 
+  const trackTabs = (
+    <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
+      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade, leia a fala de cada passo, faça com a criança e marque Acertou, Não acertou ou Pular. O jogo passa sozinho e mostra o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Um passo por vez, sem preparo. Marca e passa sozinho. Resultado no fim.</small></button>
+      <button type="button" role="tab" aria-selected={track === "guided"} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
+      <button type="button" role="tab" aria-selected={direct} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
+    </div>
+  );
+  if (easy) {
+    // Modo Fácil: as tarefas práticas da ficha viram passos de um jogo linear.
+    // Sem câmera, kit item a item ou checklist: o adulto faz, marca e passa.
+    // O resultado é contagem descritiva por passo; nada entra no registro
+    // filmado/dossiê do fluxo guiado.
+    const easyMonths = effective ?? 0;
+    const easySteps: EasyStep[] = selectedBand
+      ? (PRACTICAL_TASKS[selectedBand.id] ?? [])
+          .filter((task) => taskOmission(task, easyMonths, context.proneAllowed) === null)
+          .map((task) => ({
+            id: task.id,
+            group: `${PHASES[task.phase].icon} ${PHASES[task.phase].title}`,
+            title: task.title,
+            say: `“${task.say}”`,
+            hint: `${task.steps.join(" ")} Observe: ${task.record}`,
+            visual: <div className="obs10-easy-picture"><TaskPicture scene={task.scene} label={task.title} /></div>,
+          }))
+      : [];
+    return (
+      <div className="obs10" data-testid="obs10-workspace">
+        <header className="obs10-hero obs10-no-print">
+          <div className="obs10-mascot" aria-hidden="true">🧸<span>✦</span></div>
+          <div>
+            <div className="obs10-eyebrow">NEUROPED · OBS-10 · MODO FÁCIL</div>
+            <h1>{OBS10_TITLE}</h1>
+            <p>Leia a fala, faça com a criança, marque o que viu. O jogo passa sozinho.</p>
+          </div>
+        </header>
+        {trackTabs}
+        {message && <p role="status" className="obs10-notice">{message}</p>}
+        {easyProgress === 0 && <section className="obs10-panel obs10-direct obs10-no-print" data-testid="obs10-easy-start">
+          <h2><span className="obs10-number">1</span>Idade da criança</h2>
+          <fieldset className="obs10-age-fieldset">
+            <div className="obs10-fields">
+              <label>Anos completos<input type="number" inputMode="numeric" min="0" max="17" value={years} onChange={(e) => { setYears(e.target.value); setPreviewBand(null); }} /></label>
+              <label>Meses adicionais<input type="number" inputMode="numeric" min="0" max="11" value={months} onChange={(e) => { setMonths(e.target.value); setPreviewBand(null); }} /></label>
+            </div>
+            {(years !== "" || months !== "") && chrono === null && <p className="obs10-error">Informe anos de 0 a 17 e meses adicionais de 0 a 11.</p>}
+            <div className="obs10-band-selected" aria-live="polite">{selectedBand ? <><span aria-hidden="true">{selectedBand.icon}</span><div><strong>Ficha: {selectedBand.label}</strong><p>{easySteps.length} passos. Filme com outro aparelho se quiser; o jogo não grava.</p></div></> : <p>Preencha a idade para montar o jogo.</p>}</div>
+            {selectedBand && selectedBand.min < 9 && <label className="obs10-check"><input type="checkbox" checked={context.proneAllowed} onChange={(e) => updateContext({ proneAllowed: e.target.checked })} />Médico autorizou posição de bruços; somente acordado, supervisionado e se tolerado.</label>}
+          </fieldset>
+        </section>}
+        {selectedBand && <EasyGame
+          key={`${selectedBand.id}-${easySteps.length}`}
+          testid="obs10-easy"
+          title="OBS-10"
+          ageLabel={`${easyMonths} meses · ficha ${selectedBand.label}`}
+          nature="Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência. Modo Fácil: sem filmagem integrada nem kit conferido item a item."
+          steps={easySteps}
+          onProgress={setEasyProgress}
+        />}
+        <footer className="obs10-footer obs10-no-print">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756 · OBS-10 v{OBS10_VERSION}</footer>
+      </div>
+    );
+  }
   return (
     <div className="obs10" data-testid="obs10-workspace">
       <header className="obs10-hero obs10-no-print">
@@ -309,10 +376,7 @@ export default function PreConsultaObs10Page() {
       </header>
       <div className="obs10-notice obs10-no-print"><ShieldCheck size={19} aria-hidden="true" /><p><strong>Você aplica e registra. O médico interpreta.</strong> Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência.</p></div>
       <JourneyMap stage={stage} delivered={Boolean(handoff.declaredAt)} />
-      {stage === "setup" && <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
-        <button type="button" role="tab" aria-selected={!direct} disabled={media.pending || starting.current || importBusy} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
-        <button type="button" role="tab" aria-selected={direct} disabled={media.pending || starting.current || importBusy} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
-      </div>}
+      {stage === "setup" && trackTabs}
       {stage === "setup" && !direct && <FirstTimeGuide />}
       {stage === "setup" && direct && <section className="obs10-panel obs10-direct obs10-no-print" data-testid="obs10-direct-start">
         <h2><span className="obs10-number">1</span>Idade e início</h2>

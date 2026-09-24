@@ -2096,6 +2096,13 @@ function QuestStage({
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [phase, setPhase] = useState<"question" | "registered">("question");
   const nextRef = useRef<HTMLButtonElement>(null);
+  // Um toque duplo em "Próxima fase" (comum em criança) chegava ao painel que
+  // ainda estava saindo da tela e avançava duas fases de uma vez, podendo
+  // estourar o índice e deixar o mundo em branco. Trava por fase.
+  const advancing = useRef(false);
+  useEffect(() => {
+    advancing.current = false;
+  }, [idx]);
 
   const q = questions[idx];
   // Embaralha a ordem das alternativas por fase para que a resposta correta
@@ -2135,13 +2142,15 @@ function QuestStage({
   }
 
   function advance() {
+    if (advancing.current || phase !== "registered") return;
+    advancing.current = true;
     if (isLast) {
       softSuccess();
       onComplete(score, questions.length, answers);
       return;
     }
     softWhoosh();
-    setIdx((i) => i + 1);
+    setIdx(Math.min(idx + 1, questions.length - 1));
     setSelected(null);
     setPhase("question");
   }
@@ -2216,25 +2225,20 @@ function QuestStage({
         </motion.div>
       </AnimatePresence>
 
-      <AnimatePresence>
-        {phase === "registered" && (
-          <motion.div
-            key="registered"
-            initial={reduce ? false : { opacity: 0, y: 12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-3 dark:border-amber-700 dark:bg-amber-950/30"
+      {/* Sem animação de saída: um painel que "ainda está saindo" continuava
+          recebendo o toque seguinte e sumia no meio do gesto. Entrada só por CSS. */}
+      {phase === "registered" && (
+          <div
+            key={`registered-${idx}`}
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 dark:border-amber-700 dark:bg-amber-950/30"
             role="status"
           >
-            <motion.span
-              className="text-3xl"
+            <span
+              className="text-3xl motion-safe:animate-in motion-safe:zoom-in-50"
               aria-hidden="true"
-              initial={reduce ? false : { rotate: -15, scale: 0.6 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 12 }}
             >
               ⭐
-            </motion.span>
+            </span>
             <span className="text-sm font-bold text-amber-950 dark:text-amber-100">
               {NEUTRAL_CHEERS[idx % NEUTRAL_CHEERS.length]}
             </span>
@@ -2254,9 +2258,8 @@ function QuestStage({
                 </>
               )}
             </Button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -2356,6 +2359,9 @@ function WorldScreen({
   onComplete,
   onStar,
   onBackToMap,
+  easy = false,
+  onNext,
+  nextLabel = "Próximo mundo",
 }: {
   domain: Domain;
   age: number;
@@ -2365,10 +2371,14 @@ function WorldScreen({
   onComplete: (r: DomainResult) => void;
   onStar: () => void;
   onBackToMap: () => void;
+  /** Modo Fácil: começa a jogar sem tela de introdução e avança com um só botão. */
+  easy?: boolean;
+  onNext?: () => void;
+  nextLabel?: string;
 }) {
   const reduce = useReducedMotion();
   const world = WORLDS[domain];
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(easy && !result);
   const [round, setRound] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const bank = getQuestionsForAge(domain, age, band);
@@ -2408,7 +2418,7 @@ function WorldScreen({
             {world.name}
           </h2>
         </div>
-        {playing ? (
+        {easy ? null : playing ? (
           leaving ? (
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background/90 p-1.5" role="alertdialog" aria-label="Sair do mundo apaga as respostas desta partida">
               <span className="px-1 text-xs text-muted-foreground">Sair apaga esta partida.</span>
@@ -2454,12 +2464,20 @@ function WorldScreen({
               respostas ficaram registradas para o profissional.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <Button className="gap-1.5 rounded-2xl font-black" onClick={onBackToMap}>
-                <MapIcon className="h-4 w-4" /> Voltar ao mapa
-              </Button>
-              <Button variant="outline" className="gap-1.5 rounded-2xl" onClick={playAgain}>
-                <RotateCcw className="h-4 w-4" /> Jogar de novo
-              </Button>
+              {easy && onNext ? (
+                <Button size="lg" data-testid="cognitive-easy-next" className="min-h-16 w-full gap-1.5 rounded-2xl text-xl font-black" onClick={onNext}>
+                  {nextLabel} <ChevronRight className="h-5 w-5" />
+                </Button>
+              ) : (
+                <>
+                  <Button className="gap-1.5 rounded-2xl font-black" onClick={onBackToMap}>
+                    <MapIcon className="h-4 w-4" /> Voltar ao mapa
+                  </Button>
+                  <Button variant="outline" className="gap-1.5 rounded-2xl" onClick={playAgain}>
+                    <RotateCcw className="h-4 w-4" /> Jogar de novo
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         ) : !playing ? (
@@ -2504,14 +2522,99 @@ function WorldScreen({
   );
 }
 
+// ─────────────────────────────── Resultado do Modo Fácil ───────────────────────────────
+/**
+ * Contagem descritiva por mundo: quantas fases a criança respondeu e quantas
+ * respostas coincidiram com a esperada. Não é escore, percentil, idade
+ * equivalente nem diagnóstico; a leitura é do médico.
+ */
+export function buildEasyCognitiveReport(input: {
+  ageLabel: string;
+  results: Partial<Record<Domain, DomainResult>>;
+  date?: string;
+}): string {
+  const worlds = WORLD_ORDER.map((d) => input.results[d]).filter((r): r is DomainResult => Boolean(r && r.max > 0));
+  const answered = worlds.reduce((n, r) => n + r.answers.length, 0);
+  const matched = worlds.reduce((n, r) => n + r.answers.filter((a) => a.isCorrect).length, 0);
+  return [
+    "Testes Cognitivos por Faixa Etária · Modo Fácil (joguinho)",
+    `Idade: ${input.ageLabel} · Data: ${input.date ?? new Date().toISOString().slice(0, 10)}`,
+    "REGISTRO DESCRITIVO — NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO",
+    "Contagem do que a criança respondeu e do que coincidiu com a resposta esperada nesta interação. Leitura e conclusão pertencem ao médico.",
+    `Mundos concluídos: ${worlds.length} de ${WORLD_ORDER.length} · Fases respondidas: ${answered} · Respostas coincidentes: ${matched}`,
+    "",
+    ...worlds.flatMap((r) => [
+      `${r.label}: ${r.answers.filter((a) => a.isCorrect).length} de ${r.answers.length} coincidentes`,
+      ...r.answers.map((a, i) => `  ${i + 1}. ${a.prompt} — ${a.selected ?? "Não respondida"}${a.correct ? ` (esperada: ${a.correct})` : ""}`),
+    ]),
+    "",
+    "Triagem educativa autoral; não substitui avaliação psicométrica formal.",
+  ].join("\n");
+}
+
+function EasyCognitiveResults({
+  hero,
+  stars,
+  age,
+  band,
+  results,
+  onRestart,
+}: {
+  hero: Hero;
+  stars: number;
+  age: number;
+  band: Band;
+  results: Partial<Record<Domain, DomainResult>>;
+  onRestart: () => void;
+}) {
+  const [status, setStatus] = useState("");
+  const worlds = WORLD_ORDER.map((d) => results[d]).filter((r): r is DomainResult => Boolean(r && r.max > 0));
+  const report = buildEasyCognitiveReport({ ageLabel: ageProfileLabel(age, band), results });
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(report);
+      setStatus("Resultado copiado.");
+    } catch {
+      setStatus("Não foi possível copiar. Selecione o texto abaixo.");
+    }
+  }
+  return (
+    <section data-testid="cognitive-easy-results" className="rounded-3xl border border-amber-300 bg-gradient-to-br from-amber-50 via-background to-background p-5 shadow-sm dark:border-amber-700 dark:from-amber-950/30 sm:p-7" aria-labelledby="cognitive-easy-results-title">
+      <div className="text-center">
+        <div className="text-6xl" aria-hidden="true">🏆</div>
+        <h2 id="cognitive-easy-results-title" className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Aventura completa!</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{hero.emoji} {hero.name} ganhou {stars} estrelas por participar. Estrelas não são nota.</p>
+      </div>
+      <ul className="mt-5 grid gap-3 sm:grid-cols-2" aria-label="Resultado por mundo">
+        {worlds.map((r) => (
+          <li key={r.domain} className="rounded-2xl border bg-background/85 p-4">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{WORLDS[r.domain].emoji} {r.label}</p>
+            <p className="mt-1 text-2xl font-black tabular-nums" data-testid={`cognitive-easy-${r.domain}`}>{r.answers.filter((a) => a.isCorrect).length} <span className="text-base font-semibold text-muted-foreground">de {r.answers.length} coincidentes</span></p>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+        Contagem descritiva do que coincidiu com a resposta esperada nesta interação. Não é escore, percentil, idade equivalente nem diagnóstico. Quem lê e conclui é o médico.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button size="lg" className="rounded-2xl font-black" onClick={() => void copy()}>Copiar resultado</Button>
+        <Button size="lg" variant="outline" className="rounded-2xl" onClick={onRestart}><RotateCcw className="mr-2 h-4 w-4" /> Jogar de novo</Button>
+      </div>
+      {status && <p role="status" className="mt-2 text-sm">{status}</p>}
+      <textarea aria-label="Resultado do Modo Fácil" readOnly value={report} className="mt-4 min-h-56 w-full rounded-xl border bg-background p-3 font-mono text-xs leading-relaxed" />
+    </section>
+  );
+}
+
 // ─────────────────────────────── MAIN PAGE ───────────────────────────────
 export default function TestesCognitivosFaixaEtariaPage() {
   const [ageStr, setAgeStr] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [hero, setHero] = useState<Hero | null>(null);
-  const [screen, setScreen] = useState<"hero" | "map" | "world">("hero");
-  const [track, setTrack] = useState<"guided" | "direct">("guided");
+  const [screen, setScreen] = useState<"hero" | "map" | "world" | "results">("hero");
+  const [track, setTrack] = useState<"easy" | "guided" | "direct">("guided");
   const direct = track === "direct";
+  const easy = track === "easy";
   const [activeWorld, setActiveWorld] = useState<Domain>("visual");
   const [results, setResults] = useState<Partial<Record<Domain, DomainResult>>>({});
   const [stars, setStars] = useState(0);
@@ -2615,10 +2718,21 @@ export default function TestesCognitivosFaixaEtariaPage() {
             <button
               type="button"
               role="tab"
-              aria-selected={!direct}
+              aria-selected={easy}
+              disabled={confirmed}
+              data-testid="cognitive-easy-tab"
+              onClick={() => setTrack("easy")}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${easy ? "bg-emerald-600 text-white shadow-sm" : "text-emerald-800 hover:bg-emerald-50 dark:text-emerald-200"}`}
+            >
+              🎮 Modo Fácil
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={track === "guided"}
               disabled={confirmed}
               onClick={() => setTrack("guided")}
-              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${!direct ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${track === "guided" ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
             >
               Guiado · escolher herói
             </button>
@@ -2641,7 +2755,11 @@ export default function TestesCognitivosFaixaEtariaPage() {
               className="gap-1.5"
               onClick={() => {
                 setConfirmed(true);
-                if (direct) {
+                if (easy) {
+                  setHero((current) => current ?? DEFAULT_HERO);
+                  setActiveWorld(WORLD_ORDER[0]);
+                  setScreen("world");
+                } else if (direct) {
                   setHero((current) => current ?? DEFAULT_HERO);
                   setScreen("map");
                 } else {
@@ -2667,6 +2785,11 @@ export default function TestesCognitivosFaixaEtariaPage() {
             Modo direto: pula a escolha de herói. Você entra direto no mapa e escolhe o mundo.
           </p>
         )}
+        {easy && (
+          <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">
+            Modo Fácil: os quatro mundos em sequência, sem mapa nem escolha de herói. A criança toca na resposta e passa; no fim aparece o resultado.
+          </p>
+        )}
       </header>
 
       {/* Jogo */}
@@ -2686,7 +2809,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
               current={hero}
               onPick={(picked) => {
                 setHero(picked);
-                setScreen("map");
+                setScreen(easy ? "world" : "map");
               }}
             />
           )}
@@ -2715,6 +2838,24 @@ export default function TestesCognitivosFaixaEtariaPage() {
               onComplete={handleResult}
               onStar={addStar}
               onBackToMap={() => setScreen("map")}
+              easy={easy}
+              nextLabel={WORLD_ORDER.indexOf(activeWorld) + 1 < WORLD_ORDER.length ? "Próximo mundo" : "Ver resultado"}
+              onNext={() => {
+                const next = WORLD_ORDER[WORLD_ORDER.indexOf(activeWorld) + 1];
+                if (next) setActiveWorld(next);
+                else setScreen("results");
+              }}
+            />
+          )}
+
+          {screen === "results" && hero && (
+            <EasyCognitiveResults
+              hero={hero}
+              stars={stars}
+              age={age}
+              band={band}
+              results={results}
+              onRestart={resetAdventure}
             />
           )}
 

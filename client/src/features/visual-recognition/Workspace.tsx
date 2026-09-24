@@ -4,6 +4,7 @@ import { ITEMS, CATEGORIES, MODES, BANDS, VERSION, NATURE, OUTCOMES, SUPPORTS, C
 import { Stimulus, preloadSymbols } from "./Stimulus";
 import TrialStage from "./TrialStage";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
+import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
 import "./visual-recognition.css";
 
 const icons={animais:PawPrint,frutas:Apple,transportes:Bus,cores:Palette,opostos:Layers,objetos:Images};
@@ -31,7 +32,9 @@ function useExitGuard(active:boolean){
 }
 export default function VisualRecognitionWorkspace(){
   const [phase,setPhase]=useState<"prepare"|"run"|"report">("prepare");
-  const [track,setTrack]=useState<"guided"|"direct">("guided");const direct=track==="direct";
+  const [track,setTrack]=useState<"easy"|"guided"|"direct">("guided");const direct=track==="direct",easy=track==="easy";
+  const [easyPlan,setEasyPlan]=useState<Trial[]>([]),[easyProgress,setEasyProgress]=useState(0);
+  const easyTap=useRef<string|null>(null);
   // Camada de aventura: herói e mensagens neutras entre oportunidades. Não é
   // dado clínico, não entra no registro. Estrelas = oportunidades registradas
   // (participação), nunca a situação observada escolhida.
@@ -57,7 +60,7 @@ export default function VisualRecognitionWorkspace(){
   const shown=candidates.filter(item=>(item.label+" "+item.aliases.join(" ")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()));
   const trial=editing?.trial??queue[index],target=trial?itemFor(trial.targetId):null;
   const active=activeObservations(ledger),report=config?reportText(config,basePlan,ledger):"";
-  useExitGuard(config!==null);
+  useExitGuard(config!==null||easyProgress>0);
   useEffect(()=>()=>{abort.current?.abort();Object.values(liveUrls.current).forEach(url=>URL.revokeObjectURL(url));},[]);
   const patch=(value:Partial<Draft>)=>setDraft(current=>({...current,...value}));
   const toggleItem=(id:string)=>{const item=itemFor(id);const ids=item.pair?ITEMS.filter(candidate=>candidate.pair===item.pair).map(candidate=>candidate.id):[id];setExcluded(current=>current.includes(id)?current.filter(value=>!ids.includes(value)):[...new Set([...current,...ids])]);setChecks([false,false,false]);};
@@ -74,6 +77,22 @@ export default function VisualRecognitionWorkspace(){
       setConfig(next);setBasePlan(plan);setQueue(plan);setIndex(0);setLedger([]);setDraft(emptyDraft());setEvents([]);setPhase("run");
     }catch(error){setMessage(readableError(error));}finally{setLoading(false);}
   };
+  const startEasy=async()=>{
+    setMessage("");
+    if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 17 anos e 11 meses.");return;}
+    const ids=eligibleItems(age,"receptivo").filter(item=>!item.context).map(item=>item.id);
+    const next:Config={ageMonths:age,mode:"receptivo",choices:age>=48?3:2,count:12,selectedIds:ids,seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors:"distantes",contextAcknowledged:false,conditions:["Modo Fácil (joguinho): reconhecimento por toque na tela, sem conferências de preparo"]};
+    try{
+      const plan=buildPlan(next);setLoading(true);abort.current?.abort();const controller=new AbortController();abort.current=controller;
+      const loaded=await preloadSymbols(next.selectedIds,controller.signal);if(controller.signal.aborted){Object.values(loaded).forEach(url=>URL.revokeObjectURL(url));return;}
+      Object.values(liveUrls.current).forEach(url=>URL.revokeObjectURL(url));liveUrls.current=loaded;setUrls(loaded);
+      setEasyPlan(plan);
+    }catch(error){setMessage(readableError(error));}finally{setLoading(false);}
+  };
+  const easySteps:EasyStep[]=easyPlan.map(trial=>{const item=itemFor(trial.targetId);return{
+    id:trial.id,group:`${CATEGORIES[item.category]}`,title:item.label,say:`“${trial.question}”`,hint:"Leia em voz alta e toque em Mostrar. A criança toca na figura; se acertar ou errar, o jogo passa sozinho. Se ela apontar fora da tela ou não responder, marque você.",childLabel:"Mostrar as figuras",
+    child:({onDone})=><TrialStage trial={trial} urls={urls} autoFinishOnTap onEvent={event=>{if(event.kind==="apresentado")easyTap.current=null;if(event.kind==="toque"&&event.itemId)easyTap.current=event.itemId;}} onFinish={()=>{const tap=easyTap.current;easyTap.current=null;onDone(tap?(tap===trial.targetId?"acertou":"nao"):undefined);}}/>,
+  };});
   const save=(complement=false)=>{
     if(!trial||!config||committing.current)return;
     committing.current=true;
@@ -107,12 +126,23 @@ export default function VisualRecognitionWorkspace(){
     </header>
     <div className="rv-notice rv-no-print"><ShieldCheck size={19}/><p><strong>Registro observacional · sem normas diagnósticas.</strong> A idade organiza o roteiro, não determina o que a criança é obrigada a saber. Avaliação e assinatura permanecem com o profissional.</p></div>
     {phase==="prepare"&&<div className="rv-tracks rv-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="rv-track-tabs">
-      <button type="button" role="tab" aria-selected={!direct} disabled={loading} onClick={()=>{setTrack("guided");setMessage("");}}><strong>Guia de primeira aplicação</strong><span>Preparar, apresentar e revisar, com conferências passo a passo.</span></button>
-      <button type="button" role="tab" aria-selected={direct} disabled={loading} onClick={()=>{setTrack("direct");setMessage("Modo direto: sem guia nem conferências de preparo. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado.");}}><strong>Direto ao teste</strong><span>Aplicadora experiente: idade, modalidade e início imediato.</span></button>
+      <button type="button" role="tab" aria-selected={easy} className={easy?"":"rv-track-easy"} data-testid="rv-easy-tab" disabled={loading||easyProgress>0} onClick={()=>{setTrack("easy");setMessage("Modo Fácil: informe a idade e toque em Começar. Leia a pergunta, mostre as figuras e a criança toca. Acertou ou errou, o jogo passa sozinho.");}}><strong>🎮 Modo Fácil · joguinho</strong><span>A criança toca na figura e o jogo passa sozinho. Resultado no fim.</span></button>
+      <button type="button" role="tab" aria-selected={track==="guided"} disabled={loading||easyProgress>0} onClick={()=>{setTrack("guided");setMessage("");}}><strong>Guia de primeira aplicação</strong><span>Preparar, apresentar e revisar, com conferências passo a passo.</span></button>
+      <button type="button" role="tab" aria-selected={direct} disabled={loading||easyProgress>0} onClick={()=>{setTrack("direct");setMessage("Modo direto: sem guia nem conferências de preparo. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado.");}}><strong>Direto ao teste</strong><span>Aplicadora experiente: idade, modalidade e início imediato.</span></button>
     </div>}
-    <nav className="rv-steps rv-no-print" aria-label="Etapas da aplicação"><span aria-current={phase==="prepare"?"step":undefined}>{direct?"1 · Idade":"1 · Preparar"}</span><ChevronRight size={16}/><span aria-current={phase==="run"?"step":undefined}>2 · Apresentar e registrar</span><ChevronRight size={16}/><span aria-current={phase==="report"?"step":undefined}>3 · Revisar</span></nav>
-    {message&&<div role="status" className="rv-message rv-no-print">{message}</div>}
-    {phase==="prepare"&&direct&&<section className="rv-panel" data-testid="rv-direct-start"><h2><SlidersHorizontal size={21}/> 1. Idade e início</h2><div className="rv-form-grid">
+    {easy&&<>
+      {message&&<div role="status" className="rv-message rv-no-print">{message}</div>}
+      {easyPlan.length===0&&<section className="rv-panel" data-testid="rv-easy-start"><h2><SlidersHorizontal size={21}/> Idade da criança</h2><div className="rv-form-grid">
+        <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>setYears(event.target.value)} placeholder="Ex.: 4"/></label>
+        <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>setMonths(event.target.value)}/></label>
+      </div>
+      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para montar o jogo":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>Modo Fácil: até 12 figuras para reconhecer (“Mostre…”). A criança toca; o jogo passa sozinho.</p></div>
+      <div className="rv-actions"><button type="button" className="rv-primary" disabled={loading||age===null} onClick={()=>void startEasy()}>{loading?"Carregando as figuras…":"Começar o jogo"}<ChevronRight size={19}/></button></div></section>}
+      {easyPlan.length>0&&<EasyGame key={easyPlan[0]?.id} testid="rv-easy" title="Reconhecimento Visual" ageLabel={`${age} meses · ${band?.label??""}`} nature={NATURE} footer="Modo Fácil: reconhecimento por toque na tela (“Mostre…”), até 12 figuras; sem conferências de preparo, nomeação ou pareamento." steps={easySteps} onProgress={setEasyProgress} onRestart={()=>{setEasyPlan([]);}}/>}
+    </>}
+    {!easy&&<nav className="rv-steps rv-no-print" aria-label="Etapas da aplicação"><span aria-current={phase==="prepare"?"step":undefined}>{direct?"1 · Idade":"1 · Preparar"}</span><ChevronRight size={16}/><span aria-current={phase==="run"?"step":undefined}>2 · Apresentar e registrar</span><ChevronRight size={16}/><span aria-current={phase==="report"?"step":undefined}>3 · Revisar</span></nav>}
+    {!easy&&message&&<div role="status" className="rv-message rv-no-print">{message}</div>}
+    {!easy&&phase==="prepare"&&direct&&<section className="rv-panel" data-testid="rv-direct-start"><h2><SlidersHorizontal size={21}/> 1. Idade e início</h2><div className="rv-form-grid">
         <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>{setYears(event.target.value);setChecks([false,false,false]);}} placeholder="Ex.: 4"/></label>
         <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>{setMonths(event.target.value);setChecks([false,false,false]);}}/></label>
         <label>Modalidade<select aria-label="Modalidade" value={mode} onChange={event=>{setMode(event.target.value as Mode);setExcluded([]);setChecks([false,false,false]);}}>{Object.entries(MODES).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
@@ -132,7 +162,7 @@ export default function VisualRecognitionWorkspace(){
       <p className="rv-small">Modo direto: a aplicadora experiente responde pela revisão das figuras, pelo conforto e pela tela. O registro declara que o preparo guiado foi dispensado. Sem nome, foto ou cadastro da criança; dados apenas em memória.</p>
       <div className="rv-actions"><button type="button" className="rv-primary" disabled={loading||selected.length===0} onClick={()=>void start()}>{loading?"Verificando as figuras…":"Iniciar aplicação"}<ChevronRight size={19}/></button>{loading&&<button type="button" onClick={()=>abort.current?.abort()}>Cancelar carregamento</button>}</div>
     </section>}
-    {phase==="prepare"&&!direct&&<>
+    {!easy&&phase==="prepare"&&!direct&&<>
       <section className="rv-panel"><h2><SlidersHorizontal size={21}/> 1. Escolha como observar</h2><div className="rv-form-grid">
         <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>{setYears(event.target.value);setChecks([false,false,false]);}} placeholder="Ex.: 4"/></label>
         <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>{setMonths(event.target.value);setChecks([false,false,false]);}}/></label>
@@ -152,7 +182,7 @@ export default function VisualRecognitionWorkspace(){
       </section>
       <section className="rv-panel"><h2><ClipboardCheck size={21}/> 3. Prepare e comece</h2><div className="rv-conditions">{CONDITIONS.map(condition=><label className="rv-check" key={condition}><input type="checkbox" checked={conditions.includes(condition)} onChange={()=>setConditions(current=>current.includes(condition)?current.filter(value=>value!==condition):[...current,condition])}/>{condition}</label>)}</div><div className="rv-preflight">{PREPARATION.map((text,i)=><label className="rv-check" key={text}><input type="checkbox" checked={checks[i]} onChange={event=>setChecks(current=>current.map((value,j)=>j===i?event.target.checked:value))}/>{text}</label>)}</div><div className="rv-actions"><button type="button" className="rv-primary" disabled={loading||selected.length===0} onClick={()=>void start()}>{loading?"Verificando as figuras…":"Verificar banco e iniciar"}<ChevronRight size={19}/></button>{loading&&<button type="button" onClick={()=>abort.current?.abort()}>Cancelar carregamento</button>}<span className="rv-small">Sem nome, foto ou cadastro da criança. Dados da aplicação apenas em memória.</span></div></section>
     </>}
-    {phase==="prepare"&&<details className="rv-details rv-hero-picker rv-no-print" data-testid="rv-hero-picker">
+    {!easy&&phase==="prepare"&&<details className="rv-details rv-hero-picker rv-no-print" data-testid="rv-hero-picker">
       <summary>{hero.emoji} Herói desta aplicação: {hero.name} · opcional, para acompanhar a barra de estrelas</summary>
       <div className="rv-hero-picker-body">
         <HeroGrid current={hero} onPick={setHero} compact/>

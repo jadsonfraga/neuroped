@@ -41,7 +41,7 @@ test("Sonda Dez: modo direto pula preparar e ensaiar, exige só a idade e declar
   assert.ok(sonda.includes('{phase === "learn" && !direct && ('), "fase de ensaio nunca renderiza no modo direto");
   assert.ok(sonda.includes('{!direct && (phase === "prepare" || phase === "learn" || phase === "run") && ('), "guia da primeira aplicação oculto no modo direto");
   assert.ok(sonda.includes('{!direct && <section className={panel}>\n            <h2 className="text-xl font-bold">Conferir antes de começar</h2>'), "checklist e conferência de som só no modo guiado");
-  assert.ok(sonda.includes('disabled={phase !== "prepare"}'), "a aba só troca antes de iniciar a aplicação");
+  assert.ok(sonda.includes('disabled={phase !== "prepare" || easyProgress > 0}'), "a aba só troca antes de iniciar a aplicação (guiada, direta ou joguinho)");
   assert.ok(sonda.includes('.concat(direct ? [DIRECT_TRACK_NOTE] : [])'), "registro recebe a nota do modo direto");
   assert.ok(sonda.includes('soundEnabled={direct ? sound !== "visual" : sound === "heard"}'), "som segue a escolha explícita do modo direto");
   const directPanel = between(sonda, "{direct && (", "Consultar o roteiro presencial original");
@@ -87,8 +87,8 @@ test("Reconhecimento Visual: modo direto dispensa as conferências, exige idade 
   assert.ok(visual.includes('if(age===null){setMessage("Informe a idade exata'), "idade continua obrigatória");
   assert.ok(visual.includes('if(selected.length===0){setMessage("Selecione ao menos uma figura'), "sem figuras não inicia");
   assert.ok(visual.includes("conditions:direct?[...conditions,DIRECT_TRACK_NOTE]:[...conditions]"), "configuração recebe a nota do modo direto");
-  assert.ok(visual.includes('{phase==="prepare"&&!direct&&<>'), "preparo guiado só no modo guiado");
-  const directPanel = between(visual, 'data-testid="rv-direct-start"', '{phase==="prepare"&&!direct&&<>');
+  assert.ok(visual.includes('{!easy&&phase==="prepare"&&!direct&&<>'), "preparo guiado só no modo guiado");
+  const directPanel = between(visual, 'data-testid="rv-direct-start"', '{!easy&&phase==="prepare"&&!direct&&<>');
   assert.ok(directPanel.includes("Anos completos") && directPanel.includes("Iniciar aplicação") && !directPanel.includes("PREPARATION.map"), "painel direto: idade e início, sem os três cuidados");
   const note = "Modo direto: guia de primeira aplicação e conferências de preparo dispensados pela aplicadora experiente";
   assert.ok(visual.includes(`"${note}"`), "a nota exportada é a mesma usada no componente");

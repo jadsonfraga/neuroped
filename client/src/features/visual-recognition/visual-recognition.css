@@ -17,3 +17,6 @@
 .rv-run-hero{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
 .rv-run-hero>span:first-child{font-size:20px}
 @media(max-width:600px){.rv-run-top{flex-wrap:wrap}.rv-run-hero{order:3;width:100%;justify-content:flex-start}}
+.rv-tracks{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rv-tracks button.rv-track-easy{border-color:var(--rv-ui-tone-33);background:var(--rv-ui-tone-32)}
+@media(max-width:800px){.rv-tracks{grid-template-columns:1fr}}
