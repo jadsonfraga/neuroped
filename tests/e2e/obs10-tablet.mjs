@@ -64,7 +64,7 @@ async function runTask(i, opts = {}) {
     if (opts.capture) await screen("06-movimento-pela-camera");
   }
   if (title.includes("regra simples")) assert.ok(await w.locator(".ot-steps li").count() >= 3);
-  const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir atividade para a criança)$/ });
+  const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir estação para a criança)$/ });
   await openActivity.click(); await phase("child");
   assert.equal(await w.getByTestId("tablet-cue").count(), 0, "adult instructions are unmounted from child screen");
   assert.equal(await w.getByTestId("obs10-station-journey").count(), 0, "child surface has no station map");
@@ -94,7 +94,7 @@ async function runTask(i, opts = {}) {
   // Sequential stations: an explicit pause closes each one before the next briefing opens.
   if (await w.getByTestId("tablet-transition").count()) {
     // The description written while registering must survive into the pause, not show empty and be overwritten.
-    assert.match(await w.getByTestId("tablet-transition").locator("textarea").inputValue(), new RegExp(`Tentativa fictícia ${i + 1}`), "the pause shows the description already stored, not an empty draft");
+    assert.match(await w.getByLabel("Completar descrição factual da estação encerrada", { exact: true }).inputValue(), new RegExp(`Tentativa fictícia ${i + 1}`), "the pause shows the description already stored, not an empty draft");
     const map = w.getByTestId("obs10-mission-map");
     assert.equal(await map.count(), 1, "the pause is when the whole route becomes visible again");
     assert.equal(await map.locator('[data-station-state="current"]').count(), 0, "between stations none is current");
@@ -121,6 +121,7 @@ try {
   assert.equal(await w.getByTestId("obs10-mission-map").locator("li").count(), 8);
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="done"]').count(), 8, "review map reports eight factual records, not pass/fail");
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="current"]').count(), 0);
+  assert.match(await w.getByTestId("obs10-mission-map").textContent(), /Percurso desta sessão/, "review names the route actually present in this session");
   const record = await saveAndClose("registro-completo");
   assert.equal(record.protocol, "obs10-tablet/1.0.0"); assert.equal(record.observations.length, 8);
   const strokes = record.events.filter((e) => e.type === "stroke");
@@ -128,7 +129,7 @@ try {
   assert.equal(record.events.filter((e) => e.type === "select").length, 2);
   assert.ok(record.observations.every((o) => o.note.includes("fictícia")));
   await open(); await setup(7);
-  assert.match(await w.locator(".ot-live-bar").textContent(), /Atividade 1 de 10/, "school-age band gains the camera-observed movement and the oral rule");
+  assert.match(await w.locator(".ot-live-bar").textContent(), /Estação 1 de 10/, "school-age band gains the camera-observed movement and the oral rule");
   for (let i = 0; i < 10; i++) await runTask(i, { capture: i === 6 });
   await phase("review"); const escolar = await saveAndClose("registro-escolar");
   assert.equal(escolar.observations.length, 10);
@@ -163,7 +164,7 @@ try {
   await b("Após repetição").click();
   await b("Marcar categoria e continuar · detalhar depois").click(); await phase("transition");
   await b("Encerrar coleta").click(); await phase("review");
-  assert.match(await w.getByTestId("tablet-pending").textContent(), /1 atividade\(s\) com categoria marcada e descrição pendente/);
+  assert.match(await w.getByTestId("tablet-pending").textContent(), /1 estação com categoria marcada e descrição pendente/);
   assert.match(await w.locator(".ot-review-item summary").first().textContent(), /descrição pendente/);
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="partial"]').count(), 1, "station review surfaces a pending description without calling it failure");
   await screen("07-descricao-pendente");

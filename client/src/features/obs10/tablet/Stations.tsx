@@ -65,7 +65,7 @@ export function StationJourney({ phase, cursor, plan, record }: {
       })}
     </ol>
     {showTasks && plan && <div className="ot-mission-map" data-testid="obs10-mission-map">
-      <div className="ot-mission-map-title"><strong>Rota de estações desta ficha</strong><span>{plan.tasks.length} estações · ordem fixa</span></div>
+      <div className="ot-mission-map-title"><strong>{phase === "ready" ? "Rota de estações desta ficha" : "Percurso desta sessão"}</strong><span>{plan.tasks.length} estações · ordem fixa</span></div>
       <ol>
         {plan.tasks.map((task, index) => {
           const status = taskState(index, task.id, cursor, phase, record);
