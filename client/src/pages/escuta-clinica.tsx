@@ -73,8 +73,8 @@ export default function EscutaClinicaPage() {
     if(Array.from(transcribed.current.values()).every(t=>t.startsWith("[Trecho sem fala")))throw new Error("Nenhuma fala foi reconhecida. Anamnese não gerada.");
     await generate(text);
   }
+  // Sem portão aqui: a conferência auditiva é justamente como a aplicadora julga um áudio reprovado.
   function audioBlob(): Blob {
-    recorder.current?.ensureAudible();
     const chunks=Array.from(wavChunks(recorder.current?.parts || []));if(!chunks.length)throw new Error("Áudio ausente.");
     const header=chunks[0].slice(0,44);const size=chunks.reduce((n,c)=>n+c.length-44,0);const v=new DataView(header.buffer);v.setUint32(4,size+36,true);v.setUint32(40,size,true);
     return new Blob([header,...chunks.map(c=>c.subarray(44))] as BlobPart[],{type:"audio/wav"});
@@ -97,7 +97,7 @@ export default function EscutaClinicaPage() {
       <label className="escuta-upload">Ou abrir arquivo de áudio (até 25 MB)<input type="file" accept="audio/*" disabled={active||busy} onChange={e=>{const f=e.target.files?.[0];if(f)void task(async()=>{if((recorder.current?.parts.length||transcript||note)&&!window.confirm("Substituir o áudio e rascunho atuais?"))return;const parts=await decodeAudioFile(f);clearAudio();if(recorder.current){recorder.current.parts=parts;recorder.current.state="stopped";}setState("stopped");setSeconds(parts.reduce((n,p)=>n+p.length,0)/16000);setTranscript("");setPatientId("");setHistory([]);clearDraft();previewAudio();});e.target.value="";}}/></label>
       {audioUrl&&<audio aria-label="Conferir áudio capturado" controls src={audioUrl}/>}
       {seconds>60&&<p className="escuta-help">Áudio segmentado em blocos válidos de até 60 segundos para processamento. A reprodução permite conferir a gravação completa.</p>}
-      <div className="escuta-actions"><button disabled={active||busy||!ready||!ack||!seconds} onClick={()=>void task(processAudio)}>Transcrever e gerar anamnese</button><button disabled={busy||active||!seconds} onClick={()=>download(audioBlob(),"wav","audio/wav")}>Exportar áudio</button></div>
+      <div className="escuta-actions"><button disabled={active||busy||!ready||!ack||!seconds} onClick={()=>void task(processAudio)}>Transcrever e gerar anamnese</button><button disabled={busy||active||!seconds} onClick={()=>void task(async()=>{recorder.current?.ensureAudible();download(audioBlob(),"wav","audio/wav");})}>Exportar áudio</button></div>
     </section><section className="escuta-card no-print"><h2>2. Conferir a transcrição</h2><p className="escuta-help">Correções no texto invalidam a anamnese anterior. Texto colado é uma entrada alternativa, não teste do microfone.</p><textarea aria-label="Transcrição da consulta" disabled={busy||active} value={transcript} maxLength={60000} onChange={e=>{setTranscript(e.target.value);clearDraft();}} placeholder="A transcrição real aparecerá aqui. Também é possível colar uma conversa anonimizada."/>
       <div className="escuta-actions"><button disabled={busy||active||!ready||!ack||transcript.trim().length<15} onClick={()=>void task(()=>generate(transcript))}>Gerar a partir do texto</button><button disabled={busy||active} onClick={()=>{if((transcript||note||seconds)&&!window.confirm("Substituir o rascunho atual pelo exemplo fictício?"))return;clearAudio();setTranscript(FIXTURE);setPatientId("");setHistory([]);clearDraft();}}>Carregar exemplo fictício</button></div>
     </section></div>

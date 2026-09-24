@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { EscutaSignalHealth } from '../../client/src/lib/escutaSignalHealth.ts';
 import { EscutaRecorder } from '../../client/src/lib/escutaRecorder.ts';
 const voice = Int16Array.from({ length: 16000 }, (_, i) => Math.round(300 * Math.sin(i * 0.1)));
@@ -65,4 +66,16 @@ try {
 } finally {
   Date.now = realNow;
   for (const [name, descriptor] of saved) { if (descriptor) Object.defineProperty(globalThis, name, descriptor); else Reflect.deleteProperty(globalThis, name); }
+}
+
+// O portão pertence às ações de saída, nunca à construção do blob: a conferência auditiva é como a
+// aplicadora julga um áudio reprovado, e a própria mensagem de erro manda conferir o microfone.
+{
+  const page = readFileSync("client/src/pages/escuta-clinica.tsx", "utf8");
+  const blob = page.slice(page.indexOf("function audioBlob()"), page.indexOf("function previewAudio()"));
+  assert.ok(!blob.includes("ensureAudible"), "audioBlob alimenta o player de conferência; barrar ali impede ouvir a gravação reprovada");
+  const exportar = page.slice(page.indexOf("Exportar áudio") - 400, page.indexOf("Exportar áudio"));
+  assert.ok(exportar.includes("ensureAudible") && exportar.includes("task("), "exportar precisa do portão e de erro visível");
+  assert.ok(/ensureAudible\(\);/.test(page.slice(page.indexOf("async function processAudio()"), page.indexOf("function audioBlob()"))), "transcrever precisa do portão");
+  console.log("PASS gate sits on export and transcription, never on local playback");
 }
