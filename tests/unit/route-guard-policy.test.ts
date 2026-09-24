@@ -120,6 +120,7 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/inventarios-escola",
   "/testes-diretos",
   "/testes-reconhecimento",
+  "/testes-cognitivos",
   "/epilepsia",
   "/cefaleia",
   "/diario-sono",
@@ -195,7 +196,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : (path === "/recepcao" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
+        : (path === "/recepcao" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -293,6 +294,33 @@ assert.equal(
   "forbidden",
   "reader não deve receber acesso à aplicação direta",
 );
+
+// Testes cognitivos por faixa etária: superfície própria com a mesma política
+// dos testes diretos; o bookmark antigo herda a política do novo destino.
+for (const path of ["/testes-cognitivos", "/avaliacao-cognitiva-infantil"]) {
+  assert.equal(
+    decideRouteAccess({
+      path,
+      accessMode: "remote",
+      isAuthenticated: true,
+      isLoading: false,
+      userRole: "operator",
+    }),
+    "allow",
+    `operator deve poder abrir os testes cognitivos por ${path}`,
+  );
+  assert.equal(
+    decideRouteAccess({
+      path,
+      accessMode: "remote",
+      isAuthenticated: true,
+      isLoading: false,
+      userRole: "reader",
+    }),
+    "forbidden",
+    `reader não deve receber acesso à aplicação direta por ${path}`,
+  );
+}
 
 assert.equal(isReaderClinicalRoute("/classificacao/exemplo"), true);
 assert.equal(isReaderClinicalRoute("/classificacao/exemplo/extra"), false);

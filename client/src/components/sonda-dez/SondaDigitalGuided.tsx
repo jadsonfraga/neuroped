@@ -17,6 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  DEFAULT_HERO,
+  HeroGrid,
+  MissionTrail,
+  StarCounter,
+  type Hero,
+} from "@/components/aventura";
+import {
   DIGITAL_VERSION,
   DIGITAL_NATURE,
   DIGITAL_LIMIT,
@@ -137,6 +144,11 @@ export default function SondaDigitalGuided({
   const [confirmNew, setConfirmNew] = useState(false);
   const [startedAt, setStartedAt] = useState("");
   const [familiarizations, setFamiliarizations] = useState<string[]>([]);
+  // Camada de aventura: herói e celebração entre missões. Não é dado clínico,
+  // não entra no registro e não persiste. Estrelas = missões fechadas
+  // (participação), nunca código de resposta.
+  const [hero, setHero] = useState<Hero>(DEFAULT_HERO);
+  const [cheer, setCheer] = useState<{ mission: number } | null>(null);
   const ageValid =
     /^\d+$/.test(years) && /^\d+$/.test(months) && Number(months) <= 11;
   const ageMonths = ageValid ? Number(years) * 12 + Number(months) : NaN;
@@ -156,9 +168,9 @@ export default function SondaDigitalGuided({
     sound !== "unchecked";
   const problems = mission ? recordProblems(mission, current) : [];
   const counts = mission ? derivedCounts(mission, current) : {};
-  const completedCount =
-    band?.missions.filter((m) => recordProblems(m, records[m.id]).length === 0)
-      .length ?? 0;
+  const missionDone =
+    band?.missions.map((m) => recordProblems(m, records[m.id]).length === 0) ?? [];
+  const completedCount = missionDone.filter(Boolean).length;
   const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(code || operator || school);
   useSondaExitGuard(dirty);
   useEffect(() => {
@@ -274,6 +286,7 @@ export default function SondaDigitalGuided({
     setStepIndex((i) => Math.min(i + 1, mission.steps.length - 1));
     setRead(false);
     setSkipReason("");
+    setCheer(null);
   }
   function goMission(i: number) {
     setMissionIndex(i);
@@ -282,6 +295,7 @@ export default function SondaDigitalGuided({
     setSkipReason("");
     setMessage("");
     setCopied(false);
+    setCheer(null);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   const reportContext = {
@@ -342,6 +356,7 @@ export default function SondaDigitalGuided({
     setConfirmNew(false);
     setFamiliarizations([]);
     setStartedAt("");
+    setCheer(null);
   }
   const panel = "rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7";
   return (
@@ -755,6 +770,65 @@ export default function SondaDigitalGuided({
               para prosseguir.
             </p>
           )}
+          <section
+            className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/80 via-background to-cyan-50/60 p-4 dark:border-amber-900 dark:from-amber-950/20 dark:to-cyan-950/10"
+            aria-labelledby="sonda-aventura-title"
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-3xl" aria-hidden="true">
+                {hero.emoji}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="sonda-aventura-title" className="text-sm font-black">
+                  Aventura de {hero.name} · trilha {band.label}
+                </h2>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Cada missão fechada vira uma estrela na trilha. Estrela é
+                  participação, não desempenho: a criança nunca vê certo ou
+                  errado, e nada daqui entra no registro.
+                </p>
+              </div>
+              <StarCounter stars={completedCount} label="estrelas da trilha" />
+            </div>
+            <div className="mt-3">
+              <MissionTrail
+                hero={hero}
+                current={missionIndex}
+                done={missionDone}
+                labels={band.missions.map((m) => m.title)}
+              />
+            </div>
+            {cheer && (
+              <div
+                role="status"
+                className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50/90 p-3 text-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 dark:border-amber-700 dark:bg-amber-950/30"
+              >
+                <span className="text-2xl" aria-hidden="true">
+                  ⭐
+                </span>
+                <span className="font-bold">
+                  Missão {cheer.mission} concluída! {hero.emoji} {hero.name}{" "}
+                  segue para a missão {missionIndex + 1}.
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto"
+                  onClick={() => setCheer(null)}
+                >
+                  Seguir na trilha
+                </Button>
+              </div>
+            )}
+            <details className="mt-3 text-sm">
+              <summary className="cursor-pointer font-semibold">
+                Trocar herói
+              </summary>
+              <div className="mt-3">
+                <HeroGrid compact current={hero} onPick={setHero} />
+              </div>
+            </details>
+          </section>
           <details className={panel}>
             <summary className="cursor-pointer font-bold">
               Familiarizar com os controles
@@ -1270,9 +1344,12 @@ export default function SondaDigitalGuided({
                 className="mt-5 w-full"
                 disabled={problems.length > 0}
                 onClick={() => {
-                  if (missionIndex < band.missions.length - 1)
+                  if (missionIndex < band.missions.length - 1) {
                     goMission(missionIndex + 1);
-                  else {
+                    // Celebração neutra: a missão foi fechada, qualquer que
+                    // tenha sido o código registrado.
+                    setCheer({ mission: missionIndex + 1 });
+                  } else {
                     setPaused(true);
                     setPhase("report");
                   }
@@ -1315,6 +1392,36 @@ export default function SondaDigitalGuided({
       )}
       {phase === "report" && band && (
         <>
+          <section
+            className={`${panel} text-center motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95`}
+            aria-labelledby="sonda-final-title"
+          >
+            <div className="text-5xl" aria-hidden="true">
+              {completedCount === band.missions.length ? "🏆" : hero.emoji}
+            </div>
+            <h2 id="sonda-final-title" className="mt-2 text-xl font-black">
+              {completedCount === band.missions.length
+                ? `Trilha ${band.label} completa!`
+                : "Aventura em andamento"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {completedCount === band.missions.length
+                ? `${hero.emoji} ${hero.name} fechou as ${band.missions.length} missões. Medalha: Explorador da trilha ${band.label}.`
+                : `${hero.emoji} ${hero.name} fechou ${completedCount} de ${band.missions.length} missões. Dá para voltar e concluir as que faltam.`}
+            </p>
+            <div className="mt-3 flex justify-center">
+              <MissionTrail
+                hero={hero}
+                current={completedCount === band.missions.length ? -1 : missionIndex}
+                done={missionDone}
+                labels={band.missions.map((m) => m.title)}
+              />
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Estrelas e medalha registram participação e conclusão. Não entram
+              no registro clínico e não são escore.
+            </p>
+          </section>
           <section className={panel}>
             <div className="flex items-center gap-3">
               <ClipboardCheck className="h-6 w-6 text-primary" />

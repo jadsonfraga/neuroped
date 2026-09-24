@@ -58,6 +58,18 @@ for (const shim of [
 assert.match(nav, /LEGACY_DIRECT_TEST_REDIRECTS/);
 assert.match(nav, /startsWith\("\/cognitive-lab\/"\)/);
 
+// Os testes cognitivos por faixa etária voltaram como superfície própria
+// (/testes-cognitivos), separada da Sonda Dez: rota real no App, item na
+// seção de triagem e bookmark antigo redirecionando para ela — nunca um
+// shim do núcleo da Sonda.
+const legacyRoutes = read("client/src/data/legacyInstrumentRoutes.ts");
+assert.match(app, /@\/pages\/testes-cognitivos-faixa-etaria"/);
+assert.match(app, /<Route path="\/testes-cognitivos" component=\{TestesCognitivosPage\} \/>/);
+assert.match(legacyRoutes, /"\/avaliacao-cognitiva-infantil": "\/testes-cognitivos"/);
+const cognitivePage = read("client/src/pages/testes-cognitivos-faixa-etaria.tsx");
+assert.doesNotMatch(cognitivePage, /from "\.\/testes-diretos"/);
+assert.match(cognitivePage, /export default function TestesCognitivosFaixaEtariaPage/);
+
 // Seções da navegação clínica preservadas (asserções herdadas do teste
 // original que continuam verdadeiras).
 const clinicalStart = nav.indexOf('title: "CLÍNICA E ACOMPANHAMENTO"');
@@ -65,6 +77,12 @@ const referenceStart = nav.indexOf('title: "REFERÊNCIA"');
 assert.ok(clinicalStart >= 0 && referenceStart > clinicalStart);
 const clinicalSection = nav.slice(clinicalStart, referenceStart);
 const referenceSection = nav.slice(referenceStart);
+const triageStart = nav.indexOf('title: "TRIAGEM E FERRAMENTAS"');
+const followUpStart = nav.indexOf('title: "ACOMPANHAMENTO CLÍNICO"');
+assert.ok(triageStart >= 0 && followUpStart > triageStart);
+const triageSection = nav.slice(triageStart, followUpStart);
+assert.match(triageSection, /href: "\/testes-cognitivos"/);
+assert.match(triageSection, /label: "Testes cognitivos por faixa etária"/);
 assert.match(clinicalSection, /href: "\/medicamentos"/);
 assert.match(clinicalSection, /href: "\/farmacologia"/);
 assert.match(clinicalSection, /href: "\/calculadora-dose"/);

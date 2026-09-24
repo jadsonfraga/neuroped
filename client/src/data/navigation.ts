@@ -195,6 +195,13 @@ export const navSections: NavSection[] = [
         description: "Figuras e conceitos organizados por faixa etária",
       },
       {
+        href: "/testes-cognitivos",
+        label: "Testes cognitivos por faixa etária",
+        icon: Brain,
+        tone: "priority",
+        description: "Visual, leitura, escrita e aritmética · 2–19 anos",
+      },
+      {
         href: "/testes-diretos",
         label: "Sonda Dez · Avaliação Direta",
         icon: Sparkles,
@@ -291,10 +298,14 @@ const filterOwnedRoutes = new Set([
 /**
  * Rotas antigas de teste direto continuam resolvendo para a Sonda Dez —
  * derivadas do mapa de redirects (fonte única; padrões :param ficam de fora
- * porque a navegação compara caminhos literais normalizados).
+ * porque a navegação compara caminhos literais normalizados). Só entram as
+ * origens cujo destino é a própria Sonda Dez: /avaliacao-cognitiva-infantil
+ * hoje redireciona para /testes-cognitivos, que tem item próprio no menu.
  */
 const sondaOwnedRoutes = new Set(
-  Object.keys(LEGACY_DIRECT_TEST_REDIRECTS).filter((route) => !route.includes(":")),
+  Object.entries(LEGACY_DIRECT_TEST_REDIRECTS)
+    .filter(([route, target]) => !route.includes(":") && target === "/testes-diretos")
+    .map(([route]) => route),
 );
 
 export function findNavigationMatch(pathname: string): NavigationMatch | undefined {
