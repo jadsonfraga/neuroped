@@ -123,8 +123,8 @@ assert.equal(skipped.record!.observations[0].attempted, false); assert.equal(ski
 // A record whose descriptions are pending must say so in the summary handed to the doctor.
 const partial = reduce(reduce(reduce(started(), { type: "show" }), { type: "response" }), { type: "save", outcome: "V", note: "" });
 assert.equal(pendingDescriptions(partial.record!).length, 1);
-assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 atividade/);
-assert.match(tabletText(all.record!), /Todas as atividades registradas possuem descrição/);
+assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 estação/);
+assert.match(tabletText(all.record!), /Todas as estações registradas possuem descrição/);
 // Saturating the event log must never mint an observation whose opening cannot be traced: the module
 // would otherwise export a record its own validator rejects.
 // The pause between stations belongs to the collection: clock, absolute limit and end path still apply.
@@ -186,5 +186,7 @@ assert.ok(stations.includes("MAPA DA JORNADA") && stations.includes("CHECKPOINT 
 assert.ok(!/\b(?:score|stars?|lives?|leaderboard|xp)\b/iu.test(stations), "stations cannot introduce performance-game mechanics");
 assert.ok(!/<button|onClick=|dispatch\(/.test(stations), "station map remains presentation-only");
 assert.ok(workspace.includes("<StationJourney") && workspace.includes("<MissionBanner"), "actual tablet route uses stations and checkpoints");
+assert.ok(workspace.includes('data-testid="tablet-transition"') && workspace.includes('aria-label="Completar descrição factual da estação encerrada"'), "transition reads and exposes the persisted station note");
+assert.ok(stations.includes("Percurso desta sessão"), "review/transition map names the actual session path, not planned completion");
 assert.ok(stationStyle.includes("prefers-reduced-motion") && stationStyle.includes("ot-station-enter"), "station transitions must respect reduced motion");
 console.log("OBS-10 Tablet: 13 age bands, state transitions, timer, no-equivalence, raw events, bounded imports and no hidden upload passed.");
