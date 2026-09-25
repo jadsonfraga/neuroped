@@ -18,8 +18,8 @@ import { useState, type ReactNode } from "react";
 import { Check, ChevronRight, Copy, Download, Play, RotateCcw, SkipForward, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
-import { EASY_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyOutcome, type EasyRecord } from "./easyReport";
-export { EASY_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyOutcome, type EasyRecord } from "./easyReport";
+import { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyOutcome, type EasyRecord } from "./easyReport";
+export { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyOutcome, type EasyRecord } from "./easyReport";
 
 export interface EasyStep {
   id: string;
@@ -33,7 +33,7 @@ export interface EasyStep {
   /** Ilustração para o adulto (não é a tela da criança). */
   visual?: ReactNode;
   /** Tela para a criança; o motor abre ao tocar no botão e fecha em onDone. */
-  child?: (ctx: { onDone: (auto?: EasyOutcome) => void }) => ReactNode;
+  child?: (ctx: { onDone: (auto?: EasyOutcome, detail?: { chosen: string; correct: string }) => void }) => ReactNode;
   childLabel?: string;
 }
 export interface EasyGameProps {
@@ -46,6 +46,12 @@ export interface EasyGameProps {
   onRestart?: () => void;
   /** Texto extra anexado ao resultado (ex.: limites do instrumento). */
   footer?: string;
+  /**
+   * Modo objetivo: a tela da criança abre sozinha em cada item, o toque decide
+   * certo/errado e o adulto só pode pular. Um "Próximo" entre itens evita que o
+   * segundo toque de um toque duplo responda o item seguinte.
+   */
+  objective?: boolean;
 }
 
 function download(text: string, name: string) {
@@ -57,11 +63,13 @@ function download(text: string, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function EasyGame({ title, ageLabel, nature, steps, testid = "jogo-facil", onProgress, onRestart, footer }: EasyGameProps) {
+export default function EasyGame({ title, ageLabel, nature, steps, testid = "jogo-facil", onProgress, onRestart, footer, objective = false }: EasyGameProps) {
   const [index, setIndex] = useState(0);
   const [records, setRecords] = useState<EasyRecord[]>([]);
-  const [childOpen, setChildOpen] = useState(false);
+  const [childOpen, setChildOpen] = useState(objective);
+  const [awaitNext, setAwaitNext] = useState(false);
   const [shown, setShown] = useState(false);
+  const label = objective ? OBJECTIVE_OUTCOME_LABEL : EASY_OUTCOME_LABEL;
   // Camada de aventura: herói e frase neutra. Não é dado clínico.
   const [hero, setHero] = useState<Hero>(DEFAULT_HERO);
   const [message, setMessage] = useState("");
@@ -69,21 +77,24 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   const finished = index >= steps.length;
   const stars = records.filter((r) => r.outcome !== "pulou").length;
 
-  function record(outcome: EasyOutcome, auto = false) {
+  function record(outcome: EasyOutcome, auto = false, detail?: { chosen: string; correct: string }) {
     if (!step) return;
-    const next = [...records, { id: step.id, group: step.group, title: step.title, outcome, auto }];
+    const next = [...records, { id: step.id, group: step.group, title: step.title, outcome, auto, ...(detail ?? {}) }];
     setRecords(next);
-    setChildOpen(false);
+    setAwaitNext(objective && auto);
+    setChildOpen(objective && !auto);
     setShown(false);
     setIndex(index + 1);
     setMessage(outcome === "pulou" ? "Passo pulado. Vamos ao próximo." : NEUTRAL_CHEERS[next.length % NEUTRAL_CHEERS.length]);
     onProgress?.(next.length);
   }
   function undo() {
-    if (!records.length || childOpen) return;
+    if (!records.length || (childOpen && !objective)) return;
     const next = records.slice(0, -1);
     setRecords(next);
     setIndex(next.length);
+    setAwaitNext(false);
+    setChildOpen(objective);
     setShown(false);
     setMessage("Voltamos um passo. Marque de novo.");
     onProgress?.(next.length);
@@ -91,14 +102,15 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   function restart() {
     setRecords([]);
     setIndex(0);
-    setChildOpen(false);
+    setAwaitNext(false);
+    setChildOpen(objective);
     setShown(false);
     setMessage("");
     onProgress?.(0);
     onRestart?.();
   }
   const report = finished
-    ? buildEasyReport({ title, ageLabel, nature, records, totalSteps: steps.length, footer })
+    ? buildEasyReport({ title, ageLabel, nature, records, totalSteps: steps.length, footer, objective })
     : "";
   async function copy() {
     try {
@@ -147,15 +159,31 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           aria-labelledby={`${testid}-step-title`}
         >
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{step.group}</p>
-          <h2 id={`${testid}-step-title`} className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{step.title}</h2>
-          <p className="mt-4 rounded-2xl bg-primary/10 p-4 text-xl font-semibold leading-relaxed sm:text-2xl">
-            <span className="mr-2" aria-hidden="true">🗣️</span>
-            {step.say}
-          </p>
+          <h2 id={`${testid}-step-title`} className={objective && childOpen ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
+          {!(objective && childOpen) && (
+            <p className="mt-4 rounded-2xl bg-primary/10 p-4 text-xl font-semibold leading-relaxed sm:text-2xl">
+              <span className="mr-2" aria-hidden="true">🗣️</span>
+              {step.say}
+            </p>
+          )}
           {step.hint && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
           {step.visual && <div className="mt-4">{step.visual}</div>}
 
-          {step.child && !childOpen && (
+          {awaitNext && (
+            <Button
+              size="lg"
+              data-testid={`${testid}-next`}
+              className="mt-5 min-h-24 w-full rounded-3xl text-2xl font-black"
+              onClick={() => {
+                setAwaitNext(false);
+                setChildOpen(objective);
+              }}
+            >
+              Próximo
+              <ChevronRight className="ml-2 h-8 w-8" />
+            </Button>
+          )}
+          {step.child && !childOpen && !objective && (
             <Button
               size="lg"
               data-testid={`${testid}-show`}
@@ -169,16 +197,16 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           {step.child && childOpen && (
             <div data-testid={`${testid}-child`}>
               {step.child({
-                onDone: (auto) => {
+                onDone: (auto, detail) => {
                   setChildOpen(false);
                   setShown(true);
-                  if (auto) record(auto, true);
+                  if (auto) record(auto, true, detail);
                 },
               })}
             </div>
           )}
 
-          {!childOpen && (
+          {!childOpen && !objective && (
             <>
               <p className="mt-6 text-center text-sm font-semibold text-muted-foreground">
                 {step.child && !shown ? "Depois de mostrar, marque o que viu:" : "Marque o que viu:"}
@@ -199,8 +227,14 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
               </div>
             </>
           )}
+          {objective && !awaitNext && (
+            <button type="button" data-testid={`${testid}-pular`} onClick={() => record("pulou")} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-slate-50 text-base font-bold text-slate-700 hover:bg-slate-100 dark:bg-slate-900/60 dark:text-slate-100">
+              <SkipForward className="h-5 w-5" aria-hidden="true" />
+              Pular · a criança não respondeu
+            </button>
+          )}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-            <Button variant="ghost" size="sm" disabled={!records.length || childOpen} onClick={undo}>
+            <Button variant="ghost" size="sm" disabled={!records.length || (childOpen && !objective)} onClick={undo}>
               <Undo2 className="mr-1 h-4 w-4" /> Voltar um passo
             </Button>
             <details className="text-sm">
@@ -221,19 +255,24 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
             </p>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3" role="list" aria-label="Resumo do jogo">
-            <div role="listitem" className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-center dark:bg-emerald-950/40"><div className="text-3xl font-black tabular-nums" data-testid={`${testid}-count-acertou`}>{counts.acertou}</div><div className="text-sm font-semibold">Acertou</div></div>
-            <div role="listitem" className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-center dark:bg-rose-950/40"><div className="text-3xl font-black tabular-nums" data-testid={`${testid}-count-nao`}>{counts.nao}</div><div className="text-sm font-semibold">Não acertou</div></div>
-            <div role="listitem" className="rounded-2xl border border-slate-300 bg-slate-50 p-4 text-center dark:bg-slate-900/60"><div className="text-3xl font-black tabular-nums" data-testid={`${testid}-count-pulou`}>{counts.pulou}</div><div className="text-sm font-semibold">Pulou</div></div>
+            <div role="listitem" className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-center dark:bg-emerald-950/40"><div className="text-3xl font-black tabular-nums" data-testid={`${testid}-count-acertou`}>{counts.acertou}</div><div className="text-sm font-semibold">{label.acertou}</div></div>
+            <div role="listitem" className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-center dark:bg-rose-950/40"><div className="text-3xl font-black tabular-nums" data-testid={`${testid}-count-nao`}>{counts.nao}</div><div className="text-sm font-semibold">{label.nao}</div></div>
+            <div role="listitem" className="rounded-2xl border border-slate-300 bg-slate-50 p-4 text-center dark:bg-slate-900/60"><div className="text-3xl font-black tabular-nums" data-testid={`${testid}-count-pulou`}>{counts.pulou}</div><div className="text-sm font-semibold">{label.pulou}</div></div>
           </div>
           <p className="mt-4 rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
-            Resultado descritivo do que o adulto marcou em cada passo. Não é escore, percentil, ponto de corte nem diagnóstico. Quem lê e conclui é o médico.
+            {objective
+              ? "Certo e errado são o toque da criança comparado à resposta única de cada item. Não é escore, percentil, ponto de corte nem diagnóstico. Quem lê e conclui é o médico."
+              : "Resultado descritivo do que o adulto marcou em cada passo. Não é escore, percentil, ponto de corte nem diagnóstico. Quem lê e conclui é o médico."}
           </p>
           <ol className="mt-4 space-y-1 text-sm">
             {records.map((r, i) => (
               <li key={`${r.id}-${i}`} className="flex items-center gap-2 rounded-xl border px-3 py-2">
                 <span className="w-6 text-right tabular-nums text-muted-foreground">{i + 1}.</span>
-                <span className="min-w-0 flex-1"><span className="text-muted-foreground">{r.group} · </span>{r.title}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.outcome === "acertou" ? "bg-emerald-100 text-emerald-900" : r.outcome === "nao" ? "bg-rose-100 text-rose-900" : "bg-slate-200 text-slate-800"}`}>{EASY_OUTCOME_LABEL[r.outcome]}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="text-muted-foreground">{r.group} · </span>{r.title}
+                  {r.chosen !== undefined && <span className="ml-2 text-xs text-muted-foreground">tocou {r.chosen}{r.outcome === "nao" && r.correct !== undefined ? ` · certo: ${r.correct}` : ""}</span>}
+                </span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.outcome === "acertou" ? "bg-emerald-100 text-emerald-900" : r.outcome === "nao" ? "bg-rose-100 text-rose-900" : "bg-slate-200 text-slate-800"}`}>{label[r.outcome]}</span>
               </li>
             ))}
           </ol>
@@ -247,7 +286,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
       )}
       {!finished && (
         <p className="text-center text-xs text-muted-foreground">
-          Sequência fixa: marcou, passou. <ChevronRight className="inline h-3 w-3" aria-hidden="true" /> Nada é salvo automaticamente: copie ou baixe o resultado no fim.
+          {objective ? "Sequência fixa: tocou, passou." : "Sequência fixa: marcou, passou."} <ChevronRight className="inline h-3 w-3" aria-hidden="true" /> Nada é salvo automaticamente: copie ou baixe o resultado no fim.
         </p>
       )}
     </div>

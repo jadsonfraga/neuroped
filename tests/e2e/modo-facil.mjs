@@ -38,69 +38,90 @@ async function open(route, testId) {
   }
   await page.getByTestId(testId).waitFor({ timeout: 20000 });
 }
-/** Joga o motor até o fim alternando os três botões; retorna as contagens do resultado. */
-async function playEasy(prefix, { maxSteps = 60 } = {}) {
-  const outcomes = ["acertou", "nao", "pular"];
+/** Modo objetivo: toca na primeira opção e aperta Próximo; pula o 2º item pelo adulto. */
+async function playObjective(prefix, { maxSteps = 20 } = {}) {
   let i = 0;
   while (await page.getByTestId(`${prefix}-step`).count()) {
     assert.ok(i < maxSteps, "o jogo termina");
-    const show = page.getByTestId(`${prefix}-show`);
-    if (await show.count()) {
-      await show.click();
-      await page.getByTestId(`${prefix}-child`).waitFor({ state: "attached" });
-      // Tela da criança: fecha pelo botão de voltar do próprio estímulo.
-      const back = page.getByRole("button", { name: /Voltar ao aplicador|Concluir observação|Voltar ao registro|Concluir e voltar|Pausar e voltar/ }).first();
-      await back.click();
-      await page.getByTestId(`${prefix}-child`).waitFor({ state: "detached" });
+    if (i === 1) {
+      await page.getByTestId(`${prefix}-pular`).click();
+    } else {
+      const options = page.getByTestId(`${prefix}-option`);
+      assert.ok((await options.count()) >= 2, "ao menos duas opções na tela");
+      await options.first().click();
+      await page.locator(`[data-testid="${prefix}-next"], [data-testid="${prefix}-results"]`).first().waitFor();
+      const next = page.getByTestId(`${prefix}-next`);
+      if (await next.count()) {
+        assert.equal(await page.getByTestId(`${prefix}-option`).count(), 0, "toque duplo não responde o item seguinte");
+        await next.click();
+      }
     }
-    await page.getByTestId(`${prefix}-${outcomes[i % 3]}`).click();
     i += 1;
   }
   await page.getByTestId(`${prefix}-results`).waitFor();
   const n = async (k) => Number(await page.getByTestId(`${prefix}-count-${k}`).innerText());
-  return { steps: i, acertou: await n("acertou"), nao: await n("nao"), pulou: await n("pulou") };
+  return { steps: i, certo: await n("acertou"), errado: await n("nao"), pulou: await n("pulou") };
 }
 
 try {
-  // Sonda Dez
+  // Sonda 10: Modo Fácil objetivo, 3 anos (quatro opções por item)
   await open("testes-diretos", "sonda-track-tabs");
   assert.equal(await tab("^Guia de primeira aplicação").getAttribute("aria-selected"), "true", "guiado continua padrão");
   await page.getByTestId("sonda-easy-tab").click();
   await page.getByTestId("sonda-easy-start").waitFor();
-  assert.equal(await page.getByTestId("sonda-easy-step").count(), 0, "sem idade não há passo");
-  await page.getByLabel("Idade em anos").fill("4");
+  assert.equal(await page.getByTestId("sonda-easy-step").count(), 0, "sem idade não há item");
+  await page.getByLabel("Idade em anos").fill("3");
   await page.getByLabel("Meses adicionais").fill("0");
   await page.getByTestId("sonda-easy-step").waitFor();
-  assert.equal(await page.getByTestId("sonda-easy-tab").isDisabled(), false, "aba livre antes do primeiro passo");
+  assert.equal(await page.getByTestId("sonda-easy-tab").isDisabled(), false, "aba livre antes do primeiro item");
+  assert.equal(await page.getByTestId("sonda-easy-acertou").count(), 0, "sem julgamento manual: só a criança responde");
+  assert.equal(await page.getByTestId("sonda-easy-show").count(), 0, "a tela da criança já está aberta");
+  assert.equal(await page.getByTestId("sonda-easy-option").count(), 4, "3 anos: quatro opções");
   await screen("sonda-facil-passo", '[data-testid="sonda-digital"]');
-  await page.getByTestId("sonda-easy-acertou").click();
-  assert.equal(await page.getByTestId("sonda-easy-tab").isDisabled(), true, "aba trava depois do primeiro passo");
+  await page.getByTestId("sonda-easy-option").first().click();
+  await page.getByTestId("sonda-easy-next").waitFor();
+  assert.equal(await page.getByTestId("sonda-easy-option").count(), 0, "depois do toque, nenhuma opção fica na tela");
+  assert.equal(await page.getByTestId("sonda-easy-tab").isDisabled(), true, "aba trava depois do primeiro item");
+  await page.getByTestId("sonda-easy-next").click();
+  assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^2 \//);
   await page.getByRole("button", { name: "Voltar um passo" }).click();
-  assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^1 \//, "voltar um passo funciona");
-  const sonda = await playEasy("sonda-easy");
-  assert.ok(sonda.steps >= 10, `Sonda 3-4a tem passos suficientes (${sonda.steps})`);
-  assert.equal(sonda.acertou + sonda.nao + sonda.pulou, sonda.steps);
+  assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^1 \//, "voltar um item funciona");
+  assert.equal(await page.getByTestId("sonda-easy-option").count(), 4, "item reaberto para a criança");
+  const sonda = await playObjective("sonda-easy");
+  assert.equal(sonda.steps, 10, "Sonda 10 tem dez itens");
+  assert.equal(sonda.certo + sonda.errado + sonda.pulou, 10);
+  assert.equal(sonda.pulou, 1);
   const sondaReport = await page.getByLabel("Resultado do jogo").inputValue();
-  assert.match(sondaReport, /Sonda Dez · Modo Fácil/);
+  assert.match(sondaReport, /Sonda 10 · Modo Fácil/);
   assert.match(sondaReport, /NÃO É ESCORE, PERCENTIL NEM DIAGNÓSTICO/);
+  assert.match(sondaReport, /Certo: \d+ · Errado: \d+ · Pulou: 1/);
+  assert.match(sondaReport, /\(tocou: /, "o toque da criança fica declarado item a item");
   await screen("sonda-facil-resultado", '[data-testid="sonda-digital"]');
 
-  // OBS-10
+  // OBS-10: Modo Fácil objetivo. 1 ano tem duas opções; 12 anos joga com texto.
   await open("avaliacao-pre-consulta-faixa-etaria", "obs10-track-tabs");
   assert.equal(await tab("^Guia da assistente").getAttribute("aria-selected"), "true", "guiado continua padrão");
   await page.getByTestId("obs10-easy-tab").click();
   await page.getByTestId("obs10-easy-start").waitFor();
   assert.equal(await page.getByTestId("obs10-first-time").count(), 0, "sem guia de primeira vez");
   assert.equal(await page.locator(".obs10-checklist").count(), 0, "sem checklist");
-  await page.getByLabel("Anos completos", { exact: true }).fill("4");
-  await page.getByLabel("Meses adicionais", { exact: true }).fill("0");
+  assert.equal(await page.locator(".obs10-easy-picture").count(), 0, "sem tarefa com objeto");
+  await page.getByLabel("Anos completos", { exact: true }).fill("1");
   await page.getByTestId("obs10-easy-step").waitFor();
+  assert.equal(await page.getByTestId("obs10-easy-option").count(), 2, "1 ano: duas opções grandes");
+  await screen("obs10-facil-1ano", ".obs10");
+  await page.getByLabel("Anos completos", { exact: true }).fill("12");
+  await page.getByTestId("obs10-easy-step").waitFor();
+  assert.equal(await page.getByTestId("obs10-easy-option").count(), 4, "12 anos: quatro opções");
+  assert.equal(await page.getByTestId("obs10-easy-acertou").count(), 0, "sem julgamento manual");
   await screen("obs10-facil-passo", ".obs10");
-  const obs = await playEasy("obs10-easy");
-  assert.ok(obs.steps >= 6, `OBS-10 4 anos tem tarefas (${obs.steps})`);
+  const obs = await playObjective("obs10-easy");
+  assert.equal(obs.steps, 10, "OBS-10 tem dez itens");
+  assert.equal(obs.certo + obs.errado + obs.pulou, 10);
   const obsReport = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(obsReport, /OBS-10 · Modo Fácil/);
   assert.match(obsReport, /Modo Fácil: sem filmagem integrada/);
+  assert.match(obsReport, /Certo: \d+ · Errado: \d+ · Pulou: 1/);
   await screen("obs10-facil-resultado", ".obs10");
 
   // Reconhecimento Visual: a criança toca e o jogo passa sozinho
@@ -200,7 +221,7 @@ try {
   await screen("cognitivo-facil-resultado", "main");
 
   assert.deepEqual(errors, [], "sem erros de página");
-  console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda ${sonda.steps} passos, OBS-10 ${obs.steps} passos, Reconhecimento com toque automático, Cognitivo 4 mundos).`);
+  console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda 10 e OBS-10 objetivos com ${sonda.steps}+${obs.steps} itens julgados pelo toque, Reconhecimento com toque automático, Cognitivo 4 mundos).`);
 } finally {
   await browser.close();
   await server.close();

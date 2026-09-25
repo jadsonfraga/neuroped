@@ -29,7 +29,7 @@ test("contagem por desfecho e resultado descritivo com aviso, sem escore", () =>
   const report = buildEasyReport({ title: "Sonda Dez", ageLabel: "48 meses", nature: "Natureza.", records, totalSteps: 5, footer: "Limite.", date: "2026-09-24" });
   assert.match(report, /^Sonda Dez · Modo Fácil \(joguinho\)/);
   assert.match(report, /NÃO É ESCORE, PERCENTIL NEM DIAGNÓSTICO/);
-  assert.match(report, /Passos previstos: 5 · Registrados: 4 · Acertou: 2 · Não acertou: 1 · Pulou: 1/);
+  assert.match(report, /Itens previstos: 5 · Registrados: 4 · Acertou: 2 · Não acertou: 1 · Pulou: 1/);
   assert.match(report, /2\. \[Missão 1\] Ache o gato — Acertou \(toque da criança na tela\)/);
   assert.match(report, /4\. \[Missão 2\] Marcha — Pulou/);
   assert.ok(report.endsWith("Natureza.\nLimite."));
@@ -43,27 +43,38 @@ test("motor: três botões gigantes, avanço automático, sem timers JS, herói 
   assert.match(engine, /setIndex\(index \+ 1\)/);
   assert.match(engine, /const stars = records\.filter\(\(r\) => r\.outcome !== "pulou"\)\.length/);
   assert.match(engine, /Estrelas são participação, não nota/);
-  assert.match(engine, /if \(auto\) record\(auto, true\)/, "toque da criança decide e avança sozinho");
+  assert.match(engine, /if \(auto\) record\(auto, true, detail\)/, "toque da criança decide e avança sozinho");
+  assert.match(engine, /data-testid=\{`\$\{testid\}-next`\}/, "modo objetivo: Próximo entre itens contra toque duplo");
+  assert.match(engine, /\{!childOpen && !objective && \(/, "modo objetivo esconde Acertou/Não acertou");
 });
 
-test("Sonda Dez: aba Modo Fácil usa a trilha da idade e a tela de estímulo original, que segue pura", () => {
+test("Sonda 10: aba Modo Fácil usa o banco objetivo (1 a 19 anos), sem a trilha clínica nem objeto externo", () => {
   assert.match(sonda, /id: "easy",\s*label: "🎮 Modo Fácil · joguinho"/);
   assert.match(sonda, /"sonda-easy-tab"/);
-  assert.match(sonda, /band\.missions\.flatMap\(\(mission\) =>\s*mission\.steps\.map/);
-  assert.match(sonda, /s\.activity\.prompt === "operator-only" \|\| s\.activity\.kind === "blank"\s*\? undefined/);
-  assert.match(sonda, /<SondaDigitalActivity\s+spec=\{s\.activity\}/);
-  assert.match(sonda, /testid="sonda-easy"/);
+  assert.match(sonda, /buildObjectiveSteps\("sonda", easyYears, "sonda-easy"\)/);
+  assert.match(sonda, /objectiveBandForYears\(easyYears\)/);
+  assert.match(sonda, /testid="sonda-easy"[\s\S]*?objective\n/);
+  const easyBlock = sonda.slice(sonda.indexOf("if (easy) {"), sonda.indexOf("  return (\n    <div\n      className=\"mx-auto w-full max-w-6xl space-y-5 pb-16\"", sonda.indexOf("if (easy) {")));
+  assert.doesNotMatch(easyBlock, /band\.missions|SondaDigitalActivity|s\.activity/);
   assert.doesNotMatch(sondaActivity, /jogo-facil|EasyGame|Acertou/);
 });
 
-test("OBS-10: aba Modo Fácil usa as tarefas práticas da ficha, respeita omissões e não grava vídeo", () => {
+test("OBS-10: aba Modo Fácil usa o banco objetivo, sem tarefas práticas, kit, câmera ou prono", () => {
   assert.match(obs10, /data-testid="obs10-easy-tab"/);
-  assert.match(obs10, /PRACTICAL_TASKS\[selectedBand\.id\]/);
-  assert.match(obs10, /taskOmission\(task, easyMonths, context\.proneAllowed\) === null/);
-  assert.match(obs10, /<TaskPicture scene=\{task\.scene\}/);
-  assert.match(obs10, /testid="obs10-easy"/);
-  const easyBlock = obs10.slice(obs10.indexOf("if (easy) {"), obs10.indexOf('data-testid="obs10-workspace">', obs10.indexOf("if (easy) {")));
-  assert.doesNotMatch(easyBlock, /media\.start|getUserMedia|MediaRecorder/);
+  assert.match(obs10, /buildObjectiveSteps\("obs10", easyYears, "obs10-easy"\)/);
+  assert.match(obs10, /testid="obs10-easy"[\s\S]*?objective\n/);
+  const easyBlock = obs10.slice(obs10.indexOf("if (easy) {"), obs10.indexOf('data-testid="obs10-workspace">', obs10.indexOf("if (easy) {") + 200));
+  assert.doesNotMatch(easyBlock, /PRACTICAL_TASKS|taskOmission|TaskPicture|proneAllowed|media\.start|getUserMedia|MediaRecorder/);
+});
+
+test("tela de escolha objetiva: um toque por item, opções grandes, sem certo/errado para a criança", () => {
+  const choice = read("client/src/components/jogo-facil/ObjectiveStep.tsx");
+  assert.match(choice, /const answered = useRef\(false\);/);
+  assert.match(choice, /if \(answered\.current\) return;/);
+  assert.match(choice, /data-testid=\{`\$\{testid\}-option`\}/);
+  assert.match(choice, /onDone\(chosen === item\.answer \? "acertou" : "nao", \{ chosen, correct: item\.answer \}\)/);
+  assert.doesNotMatch(choice, /setTimeout|setInterval|requestAnimationFrame|framer-motion/);
+  assert.doesNotMatch(choice, /Certo|Errado|✅|❌/);
 });
 
 test("Reconhecimento Visual: aba Modo Fácil decide pelo toque da criança e a tela infantil só ganha o auto-fechar", () => {
