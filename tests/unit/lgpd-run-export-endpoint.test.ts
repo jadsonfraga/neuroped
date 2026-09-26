@@ -22,7 +22,12 @@
  * 10. falha de gravação no storage não conclui o job nem deixa artefato órfão;
  * 11. admin de plataforma exige reason declarada (400 sem ela, sem tocar o
  *     ledger) e exporta com ela, deixando trilha PRÉVIA da razão
- *     (AUTHZ-P1-08/LTB-19).
+ *     (AUTHZ-P1-08/LTB-19);
+ * 12. S12B — os oito domínios que antes faziam o export recusar por
+ *     incompleto (avaliações e respostas, documentos e versões, intake e
+ *     escala remota com convite e resposta) agora saem decifrados no
+ *     payload, `complete` permanece true, BLUE nunca aparece no export de
+ *     RED, e token_hash nunca é exportado (nem cifrado nem em claro).
  */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -503,36 +508,115 @@ function ledger(requestId: string) {
   );
 }
 
-// Uma lacuna conhecida não pode virar ledger completed nem artefato oficial.
-{
+// S12B (2026-09-26): documentos, avaliações, intake e escala remota deixaram
+// de ser uma lacuna do export. Prova RED/BLUE nos oito domínios de uma vez:
+// nenhum bloqueia mais o export por incompletude, o conteúdo decifrado sai
+// no payload de RED, nada de BLUE aparece, e token_hash nunca é exportado.
+async function semearDominiosS12b(clinicId: string, patientId: string, ownerId: string, marcador: string) {
+  const id = (dominio: string) => `${dominio}-${marcador}`;
+  sqlite.prepare(`INSERT INTO live_assessments
+    (id, clinic_id, patient_id, instrument_id, instrument_version, applied_by_user_id, applied_at, provenance_source, payload_encrypted)
+    VALUES (?, ?, ?, 'mchat', 'v1', ?, ?, 'clinician', ?)`)
+    .run(id("assess"), clinicId, patientId, ownerId, NOW,
+      await encryptClinicalJson(baseEnv as never, clinicId, `assessment:${id("assess")}`, { marcador }));
+  sqlite.prepare(`INSERT INTO live_assessment_responses
+    (id, clinic_id, patient_id, assessment_id, item_id, item_position, response_encrypted)
+    VALUES (?, ?, ?, ?, 'item-1', 1, ?)`)
+    .run(id("resp"), clinicId, patientId, id("assess"),
+      await encryptClinicalJson(baseEnv as never, clinicId, `assessment-response:${id("resp")}`, { marcador }));
   sqlite.prepare(`INSERT INTO live_documents
     (id, clinic_id, patient_id, author_user_id, document_type, origin)
-    VALUES ('doc-synthetic-uncovered', ?, ?, ?, 'report', 'system')`)
-    .run(RED, RED_PATIENT, RED_OWNER.id);
-  criarRequest("req-exp-incomplete", RED, "clinic", null, "approved", RED_OWNER.id);
-  const beforeObjects = bucket.objects.size;
-  const response = await runExport(contexto(RED_OWNER, { clinicId: RED, requestId: "req-exp-incomplete" }));
-  assert.equal(response.status, 409);
-  assert.equal(((await response.json()) as { code: string }).code, "TENANT_EXPORT_INCOMPLETE");
-  assert.equal(ledger("req-exp-incomplete")?.status, "failed");
-  assert.equal(ledger("req-exp-incomplete")?.artifact_key, null);
-  assert.equal(bucket.objects.size, beforeObjects, "sem escrita no bucket para export incompleto");
-  sqlite.prepare("DELETE FROM live_documents WHERE id = 'doc-synthetic-uncovered'").run();
+    VALUES (?, ?, ?, ?, 'report', 'system')`)
+    .run(id("doc"), clinicId, patientId, ownerId);
+  sqlite.prepare(`INSERT INTO live_document_versions
+    (id, clinic_id, document_id, patient_id, author_user_id, version, content_encrypted, encryption_version, origin, issued_at)
+    VALUES (?, ?, ?, ?, ?, 1, ?, 'k1', 'system', ?)`)
+    .run(id("docver"), clinicId, id("doc"), patientId, ownerId,
+      await encryptClinicalJson(baseEnv as never, clinicId, `document-version:${id("docver")}`, { marcador }), NOW);
+  sqlite.prepare(`INSERT INTO live_intake_invitations
+    (id, clinic_id, patient_id, created_by_user_id, respondent_kind, form_kind, form_id, token_hash, expires_at)
+    VALUES (?, ?, ?, ?, 'family', 'pre_consulta', 'form-1', ?, ?)`)
+    .run(id("intake-inv"), clinicId, patientId, ownerId, `hash-${marcador}`, "2099-01-01T00:00:00.000Z");
+  sqlite.prepare(`INSERT INTO live_intake_submissions
+    (id, invitation_id, clinic_id, patient_id, respondent_kind, form_kind, form_id, payload_encrypted, encryption_version, consent_notice_version, consented_at, submitted_at)
+    VALUES (?, ?, ?, ?, 'family', 'pre_consulta', 'form-1', ?, 'v1', 'consent-v1', ?, ?)`)
+    .run(id("intake-sub"), id("intake-inv"), clinicId, patientId,
+      await encryptClinicalJson(baseEnv as never, clinicId, `remote-intake-submission:${id("intake-sub")}`, { marcador }), NOW, NOW);
+  sqlite.prepare(`INSERT INTO live_scale_invitations
+    (id, clinic_id, patient_id, created_by_user_id, respondent_kind, scale_id, token_hash, expires_at)
+    VALUES (?, ?, ?, ?, 'family', 'mchat', ?, ?)`)
+    .run(id("scale-inv"), clinicId, patientId, ownerId, `hash-${marcador}`, "2099-01-01T00:00:00.000Z");
+  sqlite.prepare(`INSERT INTO live_scale_responses
+    (id, invitation_id, clinic_id, patient_id, respondent_kind, scale_id, answers_encrypted, encryption_version, consent_notice_version, consented_at, submitted_at)
+    VALUES (?, ?, ?, ?, 'family', 'mchat', ?, 'v1', 'consent-v1', ?, ?)`)
+    .run(id("scale-resp"), id("scale-inv"), clinicId, patientId,
+      await encryptClinicalJson(baseEnv as never, clinicId, `remote-scale-response:${id("scale-resp")}`, { marcador }), NOW, NOW);
+}
+
+{
+  await semearDominiosS12b(RED, RED_PATIENT, RED_OWNER.id, "vermelho-s12b");
+  await semearDominiosS12b(BLUE, BLUE_PATIENT, BLUE_OWNER.id, "azul-s12b");
+
+  criarRequest("req-exp-s12b", RED, "clinic", null, "approved", RED_OWNER.id);
+  const response = await runExport(contexto(RED_OWNER, { clinicId: RED, requestId: "req-exp-s12b" }));
+  const raw = await response.text();
+  assert.equal(response.status, 200, `os oito domínios não podem mais bloquear o export, veio ${raw}`);
+  assert.equal(ledger("req-exp-s12b")?.status, "completed");
+
+  const collected = await collectTenantExportPayload(db, baseEnv as never, RED, { enforceSyncLimits: false });
+  assert.ok(collected.ok);
+  if (!collected.ok) throw new Error("export deveria ter sucesso");
+  assert.equal(collected.complete, true, "S12B: nenhum domínio deveria ficar fora do manifesto");
+  assert.deepEqual(collected.uncoveredCounts, {});
+
+  const payloadText = JSON.stringify(collected.data);
+  assert.doesNotMatch(payloadText, /azul-s12b/, "nenhum dado de BLUE pode aparecer no export de RED");
+  assert.doesNotMatch(payloadText, /token_hash|hash-vermelho-s12b|hash-azul-s12b/, "token_hash nunca é exportado, nem cifrado nem em claro");
+
+  const assessments = collected.data.assessments as Array<{ id: string; payload: unknown }>;
+  assert.deepEqual(assessments.find((a) => a.id === "assess-vermelho-s12b")?.payload, { marcador: "vermelho-s12b" });
+  const assessmentResponses = collected.data.assessmentResponses as Array<{ id: string; response: unknown }>;
+  assert.deepEqual(assessmentResponses.find((r) => r.id === "resp-vermelho-s12b")?.response, { marcador: "vermelho-s12b" });
+  const documents = collected.data.documents as Array<{ id: string }>;
+  assert.ok(documents.some((d) => d.id === "doc-vermelho-s12b"));
+  const documentVersions = collected.data.documentVersions as Array<{ id: string; content: unknown }>;
+  assert.deepEqual(documentVersions.find((v) => v.id === "docver-vermelho-s12b")?.content, { marcador: "vermelho-s12b" });
+  const intakeInvitations = collected.data.intakeInvitations as Array<{ id: string }>;
+  assert.ok(intakeInvitations.some((i) => i.id === "intake-inv-vermelho-s12b"));
+  const intakeSubmissions = collected.data.intakeSubmissions as Array<{ id: string; payload: unknown }>;
+  assert.deepEqual(intakeSubmissions.find((s) => s.id === "intake-sub-vermelho-s12b")?.payload, { marcador: "vermelho-s12b" });
+  const scaleInvitations = collected.data.scaleInvitations as Array<{ id: string }>;
+  assert.ok(scaleInvitations.some((i) => i.id === "scale-inv-vermelho-s12b"));
+  const scaleResponses = collected.data.scaleResponses as Array<{ id: string; answers: unknown }>;
+  assert.deepEqual(scaleResponses.find((r) => r.id === "scale-resp-vermelho-s12b")?.answers, { marcador: "vermelho-s12b" });
+
+  for (const table of [
+    "live_scale_responses", "live_scale_invitations", "live_intake_submissions", "live_intake_invitations",
+    "live_document_versions", "live_documents", "live_assessment_responses", "live_assessments",
+  ]) {
+    sqlite.prepare(`DELETE FROM ${table} WHERE clinic_id IN (?, ?)`).run(RED, BLUE);
+  }
 }
 
 // Só ausência real de tabela é compatível com schema antigo. Falha de consulta
 // não significa ausência de dados e precisa chegar ao ledger como falha.
+// EXPORT_UNCOVERED_CLINIC_TABLES está vazia hoje (S12B cobriu os oito
+// domínios que a compunham) — a lista é passada explicitamente aqui só para
+// continuar provando as duas ramificações de erro da função genérica.
 {
   const bare = new Database(":memory:");
-  const absent = await countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED);
-  assert.ok(Object.values(absent).every((count) => count === 0));
+  const absent = await countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED, ["live_documents"]);
+  assert.deepEqual(absent, { live_documents: 0 });
   bare.exec("CREATE TABLE live_documents (id TEXT PRIMARY KEY)");
-  await assert.rejects(() => countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED), /no such column/);
+  await assert.rejects(
+    () => countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED, ["live_documents"]),
+    /no such column/,
+  );
   bare.close();
 
   const unavailableDb = {
     prepare(sql: string) {
-      if (sql.includes("SELECT COUNT(*) AS n FROM live_documents")) throw new Error("D1_ERROR: synthetic temporary failure");
+      if (sql.includes("FROM live_documents WHERE clinic_id = ?")) throw new Error("D1_ERROR: synthetic temporary failure");
       return db.prepare(sql);
     },
     batch: db.batch.bind(db),

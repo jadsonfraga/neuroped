@@ -30,25 +30,19 @@ export interface TenantExportCounts {
 
 /**
  * Tabelas clínicas do Clinical LIVE com `clinic_id` que
- * `collectTenantExportPayload` AINDA NÃO leva no payload (LTB-02,
- * docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md) — documentos versionados,
- * avaliações e respostas, convites/submissões de intake e de escala remota.
- * A mesma lista é usada por functions/api/live/governance/_purge.ts: o purge
- * de escopo 'clinic' recusa (EXPORT_MANIFEST_INCOMPLETE) se sobrar QUALQUER
- * linha da clínica nestas tabelas, para nunca apagar o que o export nunca
- * levou. Cada entrada some daqui só quando entrar de fato no payload
- * exportado (S12b no backlog da espiral).
+ * `collectTenantExportPayload` AINDA NÃO leva no payload. S12B (2026-09-26,
+ * docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md#LTB-02) cobriu as oito
+ * originais — documentos versionados, avaliações e respostas,
+ * convites/submissões de intake e de escala remota — então esta lista está
+ * vazia hoje. Ela continua existindo como o ponto de extensão: um domínio
+ * clínico NOVO com `clinic_id` deve entrar aqui primeiro (fail-closed no
+ * purge e `complete: false` no export) e só sair quando
+ * `collectTenantExportPayload` de fato o levar no payload. A mesma lista é
+ * usada por functions/api/live/governance/_purge.ts: o purge de escopo
+ * 'clinic' recusa (EXPORT_MANIFEST_INCOMPLETE) se sobrar qualquer linha da
+ * clínica em uma tabela ainda listada aqui.
  */
-export const EXPORT_UNCOVERED_CLINIC_TABLES: ReadonlyArray<string> = [
-  "live_documents",
-  "live_document_versions",
-  "live_assessments",
-  "live_assessment_responses",
-  "live_intake_invitations",
-  "live_intake_submissions",
-  "live_scale_invitations",
-  "live_scale_responses",
-];
+export const EXPORT_UNCOVERED_CLINIC_TABLES: ReadonlyArray<string> = [];
 
 /** Só a ausência da tabela consultada representa schema anterior à migração. */
 export function isMissingExportTable(error: unknown, table: string): boolean {
@@ -68,13 +62,18 @@ export function validExportRowCount(row: { n: number } | null): number {
  * Conta, por tabela, quantas linhas da clínica ficam FORA do payload
  * exportado hoje. Tabela ausente neste banco conta como zero — o objetivo é
  * nunca afirmar incompletude por um schema mais antigo, só pela lacuna real.
+ * `tables` tem `EXPORT_UNCOVERED_CLINIC_TABLES` (hoje vazia, ver acima) como
+ * padrão; o parâmetro existe para o teste exercitar as duas ramificações de
+ * erro (tabela ausente vs. coluna ausente) mesmo quando a lista real de
+ * produção não tem nenhum membro para isso.
  */
 export async function countExportUncoveredRows(
   db: D1Database,
   clinicId: string,
+  tables: ReadonlyArray<string> = EXPORT_UNCOVERED_CLINIC_TABLES,
 ): Promise<Record<string, number>> {
   const entries = await Promise.all(
-    EXPORT_UNCOVERED_CLINIC_TABLES.map(async (table) => {
+    tables.map(async (table) => {
       try {
         const row = await db
           .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
@@ -204,6 +203,128 @@ interface SubscriptionRow {
   updated_at: string;
 }
 
+interface AssessmentRow {
+  id: string;
+  patient_id: string;
+  instrument_id: string;
+  instrument_version: string;
+  applied_by_user_id: string;
+  applied_at: string;
+  provenance_source: string;
+  payload_encrypted: string;
+  encryption_version: string;
+  supersedes_assessment_id: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AssessmentResponseRow {
+  id: string;
+  patient_id: string;
+  assessment_id: string;
+  item_id: string;
+  item_position: number;
+  response_encrypted: string;
+  encryption_version: string;
+  created_at: string;
+}
+
+interface DocumentRow {
+  id: string;
+  patient_id: string;
+  author_user_id: string;
+  document_type: string;
+  origin: string;
+  status: string;
+  family_visibility: number;
+  current_version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DocumentVersionRow {
+  id: string;
+  document_id: string;
+  patient_id: string;
+  author_user_id: string;
+  version: number;
+  content_encrypted: string;
+  encryption_version: string;
+  origin: string;
+  issued_at: string;
+  status: string;
+  family_visibility: number;
+  superseded_at: string | null;
+  created_at: string;
+}
+
+/** token_hash é o único campo omitido de propósito: segredo de posse do
+ * convite, não dado do titular. */
+interface IntakeInvitationRow {
+  id: string;
+  patient_id: string;
+  created_by_user_id: string;
+  respondent_kind: string;
+  form_kind: string;
+  form_id: string;
+  status: string;
+  expires_at: string;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface IntakeSubmissionRow {
+  id: string;
+  invitation_id: string;
+  patient_id: string;
+  respondent_kind: string;
+  form_kind: string;
+  form_id: string;
+  payload_encrypted: string;
+  encryption_version: string;
+  consent_notice_version: string;
+  consented_at: string;
+  review_status: string;
+  reviewed_by_user_id: string | null;
+  reviewed_at: string | null;
+  clinical_event_id: string | null;
+  submitted_at: string;
+  created_at: string;
+}
+
+/** token_hash omitido pela mesma razão de IntakeInvitationRow. */
+interface ScaleInvitationRow {
+  id: string;
+  patient_id: string;
+  created_by_user_id: string;
+  respondent_kind: string;
+  scale_id: string;
+  status: string;
+  expires_at: string;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ScaleResponseRow {
+  id: string;
+  invitation_id: string;
+  patient_id: string;
+  respondent_kind: string;
+  scale_id: string;
+  answers_encrypted: string;
+  encryption_version: string;
+  consent_notice_version: string;
+  consented_at: string;
+  review_status: string;
+  reviewed_by_user_id: string | null;
+  reviewed_at: string | null;
+  submitted_at: string;
+  created_at: string;
+}
+
 export async function collectTenantExportPayload(
   db: D1Database,
   env: TenantEnv,
@@ -233,6 +354,22 @@ export async function collectTenantExportPayload(
     status: 413,
   });
 
+  // S12B (2026-09-26): `encrypted_bytes` precisa somar TODO conteúdo cifrado
+  // que o snapshot abaixo vai carregar e decifrar, não só patients/events —
+  // do contrário um tenant com poucos pacientes mas muitos documentos/
+  // avaliações grandes passaria pela pré-checagem e só falharia (ou
+  // travaria) depois de já ter carregado tudo em memória no caminho síncrono.
+  const ENCRYPTED_BYTES_SQL = `
+         COALESCE((SELECT SUM(length(profile_encrypted)) FROM live_patients WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_clinical_events WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_assessments WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(response_encrypted)) FROM live_assessment_responses WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(content_encrypted)) FROM live_document_versions WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_intake_submissions WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(answers_encrypted)) FROM live_scale_responses WHERE clinic_id = ?), 0)
+           AS encrypted_bytes`;
+  const ENCRYPTED_BYTES_BINDS = Array<string>(7).fill(clinicId);
+
   // Pré-checagem evita carregar um tenant já grande. Não é a autoridade do
   // manifesto: a contagem é relida e validada dentro do snapshot abaixo.
   if (options.enforceSyncLimits) {
@@ -243,11 +380,9 @@ export async function collectTenantExportPayload(
          (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
          (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
          (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
-         COALESCE((SELECT SUM(length(profile_encrypted)) FROM live_patients WHERE clinic_id = ?), 0)
-         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_clinical_events WHERE clinic_id = ?), 0)
-           AS encrypted_bytes`,
+         ${ENCRYPTED_BYTES_SQL}`,
         )
-        .bind(clinicId, clinicId, clinicId, clinicId, clinicId)
+        .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS)
         .first<CountRow>();
       if (!exportWithinSyncLimits(normalizeCounts(counts))) return tooLarge();
     } catch {
@@ -273,11 +408,9 @@ export async function collectTenantExportPayload(
          (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
          (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
          (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
-         COALESCE((SELECT SUM(length(profile_encrypted)) FROM live_patients WHERE clinic_id = ?), 0)
-         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_clinical_events WHERE clinic_id = ?), 0)
-           AS encrypted_bytes`,
+         ${ENCRYPTED_BYTES_SQL}`,
         )
-        .bind(clinicId, clinicId, clinicId, clinicId, clinicId),
+        .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS),
       db
         .prepare(
           `SELECT id, slug, name, legal_name, timezone, status, created_at, updated_at
@@ -323,14 +456,84 @@ export async function collectTenantExportPayload(
         )
         .bind(clinicId),
       db.prepare("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') AS snapshot_at"),
+      // S12B — os oito domínios que antes ficavam de fora do export
+      // (LTB-02): a mesma disciplina append-only/imutável dessas tabelas
+      // permite ler sem lock explícito, dentro do mesmo batch/transação.
+      db
+        .prepare(
+          `SELECT id, patient_id, instrument_id, instrument_version, applied_by_user_id,
+                  applied_at, provenance_source, payload_encrypted, encryption_version,
+                  supersedes_assessment_id, status, created_at, updated_at
+             FROM live_assessments WHERE clinic_id = ? ORDER BY applied_at ASC, created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, patient_id, assessment_id, item_id, item_position,
+                  response_encrypted, encryption_version, created_at
+             FROM live_assessment_responses WHERE clinic_id = ? ORDER BY assessment_id ASC, item_position ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, patient_id, author_user_id, document_type, origin, status,
+                  family_visibility, current_version, created_at, updated_at
+             FROM live_documents WHERE clinic_id = ? ORDER BY created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, document_id, patient_id, author_user_id, version, content_encrypted,
+                  encryption_version, origin, issued_at, status, family_visibility,
+                  superseded_at, created_at
+             FROM live_document_versions WHERE clinic_id = ? ORDER BY document_id ASC, version ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          // token_hash é omitido de propósito: segredo de posse do convite, não dado do titular.
+          `SELECT id, patient_id, created_by_user_id, respondent_kind, form_kind, form_id,
+                  status, expires_at, submitted_at, created_at, updated_at
+             FROM live_intake_invitations WHERE clinic_id = ? ORDER BY created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, invitation_id, patient_id, respondent_kind, form_kind, form_id,
+                  payload_encrypted, encryption_version, consent_notice_version, consented_at,
+                  review_status, reviewed_by_user_id, reviewed_at, clinical_event_id,
+                  submitted_at, created_at
+             FROM live_intake_submissions WHERE clinic_id = ? ORDER BY submitted_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          // token_hash é omitido de propósito: segredo de posse do convite, não dado do titular.
+          `SELECT id, patient_id, created_by_user_id, respondent_kind, scale_id,
+                  status, expires_at, submitted_at, created_at, updated_at
+             FROM live_scale_invitations WHERE clinic_id = ? ORDER BY created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, invitation_id, patient_id, respondent_kind, scale_id, answers_encrypted,
+                  encryption_version, consent_notice_version, consented_at, review_status,
+                  reviewed_by_user_id, reviewed_at, submitted_at, created_at
+             FROM live_scale_responses WHERE clinic_id = ? ORDER BY submitted_at ASC`,
+        )
+        .bind(clinicId),
       ...EXPORT_UNCOVERED_CLINIC_TABLES.map((table) =>
         db
           .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
           .bind(clinicId),
       ),
     ]);
+    // 9 consultas-base (lifecycle, contagens, clínica, memberships, pacientes,
+    // eventos, billing customer, subscriptions, snapshot_at) + 8 domínios
+    // cobertos por S12B + o que ainda sobrar em EXPORT_UNCOVERED_CLINIC_TABLES
+    // (hoje vazio; ponto de extensão para um futuro 9º domínio).
     if (
-      snapshot.length !== 9 + EXPORT_UNCOVERED_CLINIC_TABLES.length ||
+      snapshot.length !== 9 + 8 + EXPORT_UNCOVERED_CLINIC_TABLES.length ||
       snapshot.some(
         (result) => !result.success || !Array.isArray(result.results),
       )
@@ -362,10 +565,13 @@ export async function collectTenantExportPayload(
   let uncoveredCounts: Record<string, number>;
   try {
     safeCounts = normalizeCounts(rows<CountRow>(1)[0] ?? null);
+    // Slot 17 em diante: 9 consultas-base + 8 domínios cobertos por S12B
+    // (índices 9-16) vêm antes de qualquer tabela ainda em
+    // EXPORT_UNCOVERED_CLINIC_TABLES — ver o batch acima.
     uncoveredCounts = Object.fromEntries(
       EXPORT_UNCOVERED_CLINIC_TABLES.map((table, index) => [
         table,
-        validExportRowCount(rows<{ n: number }>(9 + index)[0] ?? null),
+        validExportRowCount(rows<{ n: number }>(17 + index)[0] ?? null),
       ]),
     );
   } catch {
@@ -392,6 +598,14 @@ export async function collectTenantExportPayload(
   const billingCustomer = rows<BillingCustomerRow>(6)[0];
   const subscriptions = rows<SubscriptionRow>(7);
   const snapshotAt = rows<{ snapshot_at: string }>(8)[0]?.snapshot_at;
+  const assessmentRows = rows<AssessmentRow>(9);
+  const assessmentResponseRows = rows<AssessmentResponseRow>(10);
+  const documentRows = rows<DocumentRow>(11);
+  const documentVersionRows = rows<DocumentVersionRow>(12);
+  const intakeInvitationRows = rows<IntakeInvitationRow>(13);
+  const intakeSubmissionRows = rows<IntakeSubmissionRow>(14);
+  const scaleInvitationRows = rows<ScaleInvitationRow>(15);
+  const scaleResponseRows = rows<ScaleResponseRow>(16);
   if (
     !snapshotAt ||
     !Number.isFinite(Date.parse(snapshotAt)) ||
@@ -412,6 +626,11 @@ export async function collectTenantExportPayload(
 
   let patients: unknown[];
   let events: unknown[];
+  let assessments: unknown[];
+  let assessmentResponses: unknown[];
+  let documentVersions: unknown[];
+  let intakeSubmissions: unknown[];
+  let scaleResponses: unknown[];
   try {
     patients = await Promise.all(
       patientRows.map(async (row) => ({
@@ -449,6 +668,118 @@ export async function collectTenantExportPayload(
         encryptionVersion: row.encryption_version,
         supersedesEventId: row.supersedes_event_id,
         status: row.status,
+        createdAt: row.created_at,
+      })),
+    );
+    // S12B — mesma disciplina de patients/events: falha em decriptar
+    // qualquer linha de qualquer domínio aborta o export inteiro (nunca um
+    // arquivo parcial legível).
+    assessments = await Promise.all(
+      assessmentRows.map(async (row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        instrumentId: row.instrument_id,
+        instrumentVersion: row.instrument_version,
+        appliedByUserId: row.applied_by_user_id,
+        appliedAt: row.applied_at,
+        provenanceSource: row.provenance_source,
+        payload: await decryptClinicalJson<unknown>(
+          env,
+          clinicId,
+          `assessment:${row.id}`,
+          row.payload_encrypted,
+        ),
+        encryptionVersion: row.encryption_version,
+        supersedesAssessmentId: row.supersedes_assessment_id,
+        status: row.status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })),
+    );
+    assessmentResponses = await Promise.all(
+      assessmentResponseRows.map(async (row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        assessmentId: row.assessment_id,
+        itemId: row.item_id,
+        itemPosition: row.item_position,
+        response: await decryptClinicalJson<unknown>(
+          env,
+          clinicId,
+          `assessment-response:${row.id}`,
+          row.response_encrypted,
+        ),
+        encryptionVersion: row.encryption_version,
+        createdAt: row.created_at,
+      })),
+    );
+    documentVersions = await Promise.all(
+      documentVersionRows.map(async (row) => ({
+        id: row.id,
+        documentId: row.document_id,
+        patientId: row.patient_id,
+        authorUserId: row.author_user_id,
+        version: row.version,
+        content: await decryptClinicalJson<unknown>(
+          env,
+          clinicId,
+          `document-version:${row.id}`,
+          row.content_encrypted,
+        ),
+        encryptionVersion: row.encryption_version,
+        origin: row.origin,
+        issuedAt: row.issued_at,
+        status: row.status,
+        familyVisibility: row.family_visibility === 1,
+        supersededAt: row.superseded_at,
+        createdAt: row.created_at,
+      })),
+    );
+    intakeSubmissions = await Promise.all(
+      intakeSubmissionRows.map(async (row) => ({
+        id: row.id,
+        invitationId: row.invitation_id,
+        patientId: row.patient_id,
+        respondentKind: row.respondent_kind,
+        formKind: row.form_kind,
+        formId: row.form_id,
+        payload: await decryptClinicalJson<unknown>(
+          env,
+          clinicId,
+          `remote-intake-submission:${row.id}`,
+          row.payload_encrypted,
+        ),
+        encryptionVersion: row.encryption_version,
+        consentNoticeVersion: row.consent_notice_version,
+        consentedAt: row.consented_at,
+        reviewStatus: row.review_status,
+        reviewedByUserId: row.reviewed_by_user_id,
+        reviewedAt: row.reviewed_at,
+        clinicalEventId: row.clinical_event_id,
+        submittedAt: row.submitted_at,
+        createdAt: row.created_at,
+      })),
+    );
+    scaleResponses = await Promise.all(
+      scaleResponseRows.map(async (row) => ({
+        id: row.id,
+        invitationId: row.invitation_id,
+        patientId: row.patient_id,
+        respondentKind: row.respondent_kind,
+        scaleId: row.scale_id,
+        answers: await decryptClinicalJson<unknown>(
+          env,
+          clinicId,
+          `remote-scale-response:${row.id}`,
+          row.answers_encrypted,
+        ),
+        encryptionVersion: row.encryption_version,
+        consentNoticeVersion: row.consent_notice_version,
+        consentedAt: row.consented_at,
+        reviewStatus: row.review_status,
+        reviewedByUserId: row.reviewed_by_user_id,
+        reviewedAt: row.reviewed_at,
+        submittedAt: row.submitted_at,
         createdAt: row.created_at,
       })),
     );
@@ -536,6 +867,52 @@ export async function collectTenantExportPayload(
       },
       patients,
       clinicalEvents: events,
+      // S12B (LTB-02): os oito domínios que faltavam para o export declarar
+      // `complete: true` honestamente e liberar o purge de encerramento.
+      assessments,
+      assessmentResponses,
+      documents: documentRows.map((row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        authorUserId: row.author_user_id,
+        documentType: row.document_type,
+        origin: row.origin,
+        status: row.status,
+        familyVisibility: row.family_visibility === 1,
+        currentVersion: row.current_version,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })),
+      documentVersions,
+      // token_hash nunca aparece aqui: é segredo de posse do convite, não
+      // dado do titular (ver IntakeInvitationRow/ScaleInvitationRow).
+      intakeInvitations: intakeInvitationRows.map((row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        createdByUserId: row.created_by_user_id,
+        respondentKind: row.respondent_kind,
+        formKind: row.form_kind,
+        formId: row.form_id,
+        status: row.status,
+        expiresAt: row.expires_at,
+        submittedAt: row.submitted_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })),
+      intakeSubmissions,
+      scaleInvitations: scaleInvitationRows.map((row) => ({
+        id: row.id,
+        patientId: row.patient_id,
+        createdByUserId: row.created_by_user_id,
+        respondentKind: row.respondent_kind,
+        scaleId: row.scale_id,
+        status: row.status,
+        expiresAt: row.expires_at,
+        submittedAt: row.submitted_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      })),
+      scaleResponses,
     },
   };
 }
