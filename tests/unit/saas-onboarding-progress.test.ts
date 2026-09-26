@@ -158,6 +158,30 @@ assert.equal(
   "2026-09-26T13:30:00.000Z",
 );
 
+// Regression: a later SQLite timestamp must not precede an earlier ISO instant.
+// This exercises the canonical handler and the full schema/migrations above.
+for (const event of auditEvents) {
+  const [id, action, targetType, targetId, metadata] = event;
+  sqlite.prepare(
+    `INSERT INTO saas_audit_log
+      (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
+     VALUES (?, 'clinic-a', 'owner-a', ?, ?, ?, ?, ?)`,
+  ).run(`${id}-later`, action, targetType, `${targetId}-later`, metadata, "2026-09-26 20:00:00");
+}
+const chronological = await readTenantOnboarding(
+  db, "clinic-a", "owner-a", {}, new Date("2026-09-26T21:00:00.000Z"),
+);
+assert.ok(chronological);
+for (const [key, expectedAt] of [
+  ["first_patient", "2026-09-26T13:20:00.000Z"],
+  ["first_consultation", "2026-09-26T13:30:00.000Z"],
+  ["first_document", "2026-09-26T13:40:00.000Z"],
+  ["first_assessment", "2026-09-26T13:50:00.000Z"],
+] as const) {
+  assert.equal(chronological.milestones.find((item) => item.key === key)?.completedAt, expectedAt,
+    `${key}: timestamps mistos devem ser ordenados pelo instante, não como texto`);
+}
+
 function context(userId: string, clinicId: string, role = "professional") {
   return {
     env: { DB: db },
