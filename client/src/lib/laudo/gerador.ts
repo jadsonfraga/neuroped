@@ -289,7 +289,7 @@ export function gerarLaudo(e: EntradaLaudo): Laudo {
     ),
   );
 
-  return { capa, corpo, localData: e.cidade ? `${e.cidade}, ____/____/______.` : "Petrolina/PE, ____/____/______." };
+  return { capa, corpo, localData: e.cidade ? `${e.cidade}, ____/____/______.` : "____/____/______." };
 }
 
 /** Gera, valida pela doutrina e retorna { laudo, qa }. */

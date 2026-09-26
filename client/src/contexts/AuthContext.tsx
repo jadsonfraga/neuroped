@@ -11,6 +11,7 @@ import {
   getRefreshToken,
   getAuthCapability,
 } from "@/lib/authClient";
+import { invalidateIssuerCache } from "@/lib/issuer";
 import { queryClient } from "@/lib/queryClient";
 import { secureClearAll } from "@/lib/secureStorage";
 import { clearInMemoryScaleDrafts } from "@/hooks/useSecureScaleDraft";
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
  * atual. Nunca podem sobreviver a expiração, logout ou troca de conta no mesmo SPA.
  */
 async function clearSessionScopedClientState(): Promise<void> {
+  invalidateIssuerCache();
   try {
     await queryClient.cancelQueries();
   } catch {

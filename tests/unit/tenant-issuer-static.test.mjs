@@ -21,6 +21,7 @@ const issuerFiles = [
   "client/src/lib/filterExport.ts",
   "client/src/lib/laudo/modeloSuper.ts",
   "client/src/lib/laudo/laudoPrompt.ts",
+  "client/src/lib/laudo/gerador.ts",
 ];
 
 const forbiddenIdentity = [
@@ -39,6 +40,8 @@ for (const path of issuerFiles) {
     );
   }
 }
+
+assert.doesNotMatch(read("client/src/lib/laudo/gerador.ts"), /Petrolina\/PE/, "cidade ausente não pode assumir o endereço do cliente zero");
 
 // Os emissores principais precisam continuar plugados na fonte única.
 for (const path of [
