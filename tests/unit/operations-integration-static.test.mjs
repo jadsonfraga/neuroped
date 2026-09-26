@@ -166,6 +166,11 @@ assert.doesNotMatch(migration, /patient_name\s+TEXT/i, "nome da criança não po
 
 assert.match(publicBooking, /privacyAccepted/);
 assert.match(publicBooking, /SLOT_CONFLICT/);
+assert.match(
+  core,
+  /Math\.max\(5, rule\.slot_minutes, service\.duration_minutes\)/,
+  "o motor público não pode oferecer inícios mais frequentes do que a duração da consulta",
+);
 assert.match(publicBooking, /findAppointmentByToken/);
 assert.match(publicBooking, /status !== "completed"/);
 assert.doesNotMatch(publicBooking, /diagn[oó]stico|medica[cç][aã]o.*body/i, "booking público não deve pedir dado clínico livre");
