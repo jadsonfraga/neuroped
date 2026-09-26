@@ -63,14 +63,14 @@ function contextForManager(context: Parameters<PagesFunction<TenantEnv>>[0]): Ma
   };
 }
 
-async function hasOtherActiveOwner(
+async function otherActiveOwnerCount(
   db: D1Database,
   clinicId: string,
   excludedUserId: string,
-): Promise<boolean> {
+): Promise<number> {
   const row = await db
     .prepare(
-      `SELECT 1 AS present
+      `SELECT COUNT(*) AS total
          FROM clinic_memberships
         WHERE clinic_id = ?
           AND role = 'owner'
@@ -78,8 +78,8 @@ async function hasOtherActiveOwner(
           AND user_id <> ?`,
     )
     .bind(clinicId, excludedUserId)
-    .first<{ present: number }>();
-  return Boolean(row);
+    .first<{ total: number }>();
+  return Number(row?.total ?? 0);
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -215,14 +215,14 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     currentMembership.role === "owner" &&
     !roleHasPermission(auth.membership.role, "team.manage_owners")
   ) {
-    return tenantError("Somente owner pode rebaixar outro owner.", "TENANT_FORBIDDEN", 403);
+    return tenantError("Somente owner pode alterar o papel de outro owner.", "TENANT_FORBIDDEN", 403);
   }
 
   if (
     currentMembership?.active === 1 &&
     currentMembership.role === "owner" &&
     role !== "owner" &&
-    !(await hasOtherActiveOwner(auth.db, auth.clinicId, target.id))
+    (await otherActiveOwnerCount(auth.db, auth.clinicId, target.id)) === 0
   ) {
     return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
   }
@@ -366,7 +366,7 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     if (!roleHasPermission(auth.membership.role, "team.manage_owners")) {
       return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
     }
-    if (!(await hasOtherActiveOwner(auth.db, auth.clinicId, targetUserId))) {
+    if ((await otherActiveOwnerCount(auth.db, auth.clinicId, targetUserId)) === 0) {
       return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
     }
   }

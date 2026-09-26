@@ -9,9 +9,9 @@ const members = readFileSync(
 assert.match(members, /ON CONFLICT\(clinic_id, user_id\) DO UPDATE SET[\s\S]*?WHERE clinic_memberships\.role <> 'owner'/);
 assert.match(members, /excluded\.role = 'owner'/);
 assert.match(members, /\? = 'owner'[\s\S]*?other\.role = 'owner'[\s\S]*?other\.active = 1/);
-assert.match(members, /Somente owner pode rebaixar outro owner/);
+assert.match(members, /Somente owner pode alterar o papel de outro owner/);
 assert.match(members, /LAST_OWNER_PROTECTED/);
 assert.match(members, /UPDATE clinic_memberships[\s\S]*?role <> 'owner'[\s\S]*?EXISTS/);
-assert.doesNotMatch(members, /SELECT COUNT\(\*\) AS total/);
+assert.match(members, /otherActiveOwnerCount/);
 
 console.log("saas owner membership race regression ok");

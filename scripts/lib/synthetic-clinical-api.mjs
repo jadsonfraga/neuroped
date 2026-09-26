@@ -211,6 +211,94 @@ function isoNow() {
   return "2026-09-01T12:00:00.000Z";
 }
 
+/**
+ * Marcos do checklist de onboarding (fonte: shared/onboarding.ts). Espelhados
+ * aqui pelo mesmo motivo de SYNTHETIC_PERMISSIONS_BY_ROLE: este módulo não
+ * importa código de produção, só o contrato de resposta.
+ */
+const SYNTHETIC_ONBOARDING_MILESTONES = [
+  { key: "account_created", label: "Conta criada", source: "users.created_at", completed: true },
+  { key: "email_verified", label: "E-mail verificado", source: "users.email_verified_at", completed: true },
+  { key: "clinic_created", label: "Clínica criada", source: "clinics.created_at", completed: true },
+  {
+    key: "plan_selected",
+    label: "Plano selecionado",
+    source: "billing_subscriptions.created_at",
+    completed: true,
+  },
+  {
+    key: "billing_configured",
+    label: "Billing confirmado",
+    source: "billing_invoice_events.charge_paid",
+    completed: false,
+  },
+  {
+    key: "first_member",
+    label: "Primeiro membro da equipe",
+    source: "clinic_memberships.created_at",
+    completed: true,
+  },
+  {
+    key: "first_patient",
+    label: "Primeiro paciente",
+    source: "saas_audit_log.live_patient_create",
+    completed: true,
+  },
+  {
+    key: "first_consultation",
+    label: "Primeira consulta",
+    source: "saas_audit_log.live_clinical_event_create.encounter",
+    completed: false,
+  },
+  {
+    key: "first_document",
+    label: "Primeiro documento",
+    source: "saas_audit_log.live_document_create",
+    completed: false,
+  },
+  {
+    key: "first_assessment",
+    label: "Primeira avaliação",
+    source: "saas_audit_log.live_assessment_create",
+    completed: false,
+  },
+];
+
+function syntheticOnboardingSnapshot(clinicId) {
+  const milestones = SYNTHETIC_ONBOARDING_MILESTONES.map((definition) => ({
+    key: definition.key,
+    label: definition.label,
+    source: definition.source,
+    status: definition.completed
+      ? "completed"
+      : definition.key === "billing_configured"
+        ? "pending"
+        : "pending",
+    completedAt: definition.completed ? isoNow() : null,
+  }));
+  const completed = milestones.filter((m) => m.status === "completed").length;
+  const total = milestones.length;
+  return {
+    clinicId,
+    generatedAt: isoNow(),
+    progress: {
+      completed,
+      total,
+      percent: Math.round((completed / total) * 100),
+    },
+    billingEvidence: {
+      status: "AWAITING_PROVIDER_EVENT",
+      provider: "asaas",
+      environment: "sandbox",
+      confirmedAt: null,
+      source: null,
+      limitation:
+        "Configuração detectada, mas nenhum evento de pagamento confirmado foi persistido pelo servidor.",
+    },
+    milestones,
+  };
+}
+
 function operationsDashboard() {
   const providerUserId = "usuario-sintetico-e2e";
   const serviceId = "servico-sintetico-1";
@@ -458,6 +546,18 @@ export function createSyntheticClinicalApi(scenario = {}) {
 
     if (pathname === "/api/tenants") {
       send(response, 200, { data: clinics });
+      return true;
+    }
+
+    const onboardingMatch = pathname.match(/^\/api\/tenants\/([^/]+)\/onboarding$/);
+    if (onboardingMatch) {
+      const id = decodeURIComponent(onboardingMatch[1]);
+      const clinic = clinics.find((candidate) => candidate.id === id);
+      if (!clinic) {
+        send(response, 404, { error: "Clínica não encontrada." });
+        return true;
+      }
+      send(response, 200, syntheticOnboardingSnapshot(id));
       return true;
     }
 
