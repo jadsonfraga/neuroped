@@ -31,8 +31,15 @@ reaplicados por cherry-pick e re-verificados antes do próximo push.
   entre Sonda, OBS-10, Reconhecimento Visual e Cognitivos (`:where()` no
   escopo `.obs10`/`.rv-workspace`/`.rv-child-dialog`); medido antes/depois no
   build real. `audit:design`, `audit:contrast`, `audit:tailwind-opacity` verdes.
+- CSS: `escuta-clinica.css` deixou de reimportar `tokens.css` (#984). O chunk
+  lazy da rota `/escuta-clinica` compilava com 106 propriedades `--np-*`
+  duplicadas e um `:root` inteiro a mais, mais tarde na ordem do documento —
+  medido nos bytes reais do build, num worktree isolado no `origin/main` não
+  modificado, antes/depois. Guard estático novo
+  (`tests/unit/css-import-scope.test.mjs`, encadeado em `test:quick-wins`)
+  trava qualquer CSS por rota que volte a reimportar `tokens.css`.
 
-## MERGEADO NESTA SESSÃO (ordem cronológica)
+## MERGEADO (ordem cronológica)
 
 1. #969 — Super NeuroPad Game integrado à main atual.
 2. #974 — motor compartilhado: trava de toque duplo, transição neutra.
@@ -41,8 +48,9 @@ reaplicados por cherry-pick e re-verificados antes do próximo push.
 5. #979 — Reconhecimento Visual: categoria sem par, distratores, contagem.
 6. #980 — Sonda: exit-guard reconhece sessão real, não rota fixa.
 7. #981 — CSS: escopo `:where()` no botão/h2 de página.
+8. #984 — CSS: `escuta-clinica.css` para de vazar tokens duplicados.
 
-Fila local esvaziada; nenhum commit pendente sem PR ao final desta espiral.
+Fila local esvaziada; nenhum commit pendente sem PR neste ponto da espiral.
 
 ## RISCOS CONHECIDOS (não corrigidos nesta espiral, por prudência de escopo)
 
@@ -53,8 +61,6 @@ Fila local esvaziada; nenhum commit pendente sem PR ao final desta espiral.
   44px reais). Corrigir exige tocar um seletor global fora do escopo das
   quatro aplicações auditadas; requer prova visual nos quatro viewports em
   toda a superfície do app antes de mudar.
-- `escuta-clinica.css` reimporta `tokens.css` por chunk lazy; visitar
-  `/escuta-clinica` muda o raio de foco de outras rotas na mesma sessão SPA.
 - `visual-reset.css`/`premium-polish-10.css` têm vários seletores globais com
   `!important` sobre `button`/`input`/`select`/`textarea`/`[role=tab]`; não
   auditados individualmente nesta espiral.
@@ -86,7 +92,7 @@ Fila local esvaziada; nenhum commit pendente sem PR ao final desta espiral.
 
 ## EM EXECUÇÃO
 
-Nenhuma frente aberta neste momento; espiral convergiu nas sete PRs acima e
+Nenhuma frente aberta neste momento; espiral convergiu nas oito PRs acima e
 na bateria final de checkpoints.
 
 ## PRÓXIMA FRONTEIRA
@@ -95,8 +101,6 @@ na bateria final de checkpoints.
   `visual-reset.css`/`premium-polish-10.css`, com prova visual completa (4
   viewports, luz/escuro) antes de qualquer remoção — maior risco de regressão
   visual ampla se feito sem essa prova.
-- `escuta-clinica.css` reimportando tokens por chunk lazy (achado de baixo
-  risco, correção pequena: remover o `@import` redundante).
 - Smoke de produção contra o deploy do commit `9b3a300` (ou posterior):
   **bloqueado nesta sessão** por política de rede do ambiente (proxy nega
   saída HTTPS para `neuroped.pages.dev`/`vercel.app`/`github.io`, 403 em
