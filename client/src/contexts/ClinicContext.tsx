@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { authFetch } from "@/lib/authClient";
+import { invalidateIssuerCache } from "@/lib/issuer";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -37,14 +38,17 @@ function readStoredClinicId(): string | null {
 
 function persistClinicId(clinicId: string | null): void {
   try {
+    const previous = readStoredClinicId();
     if (clinicId) sessionStorage.setItem(ACTIVE_CLINIC_KEY, clinicId);
     else sessionStorage.removeItem(ACTIVE_CLINIC_KEY);
+    if (previous !== clinicId) invalidateIssuerCache();
   } catch {
     // O identificador de contexto não é requisito de segurança; o servidor é a autoridade.
   }
 }
 
 async function clearClinicalClientCaches(): Promise<void> {
+  invalidateIssuerCache();
   try {
     await queryClient.cancelQueries();
   } finally {
