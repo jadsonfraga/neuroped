@@ -7,9 +7,12 @@ on:
     paths:
       - "db/migrations/0008_boaconsulta_import_bridge.sql"
       - "functions/api/integrations/boaconsulta/**"
+      - "functions/api/integrations/_middleware.ts"
+      - "functions/api/billing/_guard.ts"
       - "shared/boaconsulta-import.ts"
       - "client/public/integracoes/boaconsulta/**"
       - "tests/unit/boaconsulta-import-contract.test.ts"
+      - "tests/unit/integrations-tenant-gate.test.ts"
       - "wrangler.toml"
       - ".github/workflows/boaconsulta-import-release.yml"
 
@@ -55,6 +58,9 @@ jobs:
 
       - name: Testar contrato de importação
         run: node --import tsx tests/unit/boaconsulta-import-contract.test.ts
+
+      - name: Testar gate de tenant/billing do bridge (AUTHZ-P1-09)
+        run: node --import tsx tests/unit/integrations-tenant-gate.test.ts
 
       - name: Executar catraca geral antes de mexer em produção
         run: npm run verify

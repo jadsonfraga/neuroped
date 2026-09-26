@@ -369,3 +369,64 @@
 - Rollback: reverter os 3 arquivos de produção a `ee9ac06` restaura o
   comportamento anterior (mutação final volta a confiar só em
   `WHERE id = ?`); nenhuma migração envolvida.
+
+## S18 (ciclo 4, 2026-09-26) — gate de tenant/billing ausente em /api/integrations (AUTHZ-P1-09)
+- Escopo: 1 arquivo novo (`functions/api/integrations/_middleware.ts`),
+  cópia adaptada byte a byte do padrão já em produção em
+  `functions/api/patients/_middleware.ts` e
+  `functions/api/operations/_middleware.ts` (os dois são idênticos hoje).
+  Nenhuma linha de `functions/api/integrations/boaconsulta/import.ts` muda —
+  o roteamento de diretório do Cloudflare Pages Functions aplica o novo
+  `_middleware.ts` automaticamente a GET e POST por estar em
+  `functions/api/integrations/**`. Nenhuma mudança de schema.
+- Ambiente: container da sessão, Node do repo, HEAD `8695c7b` (S17) + S18.
+- Achado (produzido por um workflow paralelo desta sessão: 4 varreduras por
+  domínio da auditoria + síntese + verificação adversarial, e confirmado de
+  forma independente por um segundo agente de varredura só do audit —
+  ambos convergiram no mesmo achado como topo do ranking): qualquer conta
+  recém-criada (todo signup nasce `role: "professional"` global, sem
+  clínica) passa por `canWriteClinicalData(user)` — que é verdadeiro para
+  QUALQUER "professional" — e consegue enviar arquivos com PHI de terceiros
+  pelo bridge do BoaConsulta sem nunca ter pago nem provado clínica.
+- Prova concreta do buraco (antes da correção): script isolado chamando
+  `onRequestPost` de `import.ts` diretamente, sem middleware nenhum na
+  frente, com um usuário `role: "professional"` e ZERO linhas em
+  `clinic_memberships` — resultado: `status 201`, 1 linha nova em
+  `external_import_batches`. É exatamente o comportamento que o handler
+  ainda tem hoje; a proteção vem inteiramente do middleware novo, que o
+  Cloudflare aplica na frente dele.
+- Testes: novo `tests/unit/integrations-tenant-gate.test.ts` (schema real +
+  todas as migrações, incluindo `0008_boaconsulta_import_bridge.sql` e
+  `0015_saas_billing_trial_seats_hardening.sql`, cujo trigger
+  `trg_clinic_create_billing_trial` já cria `billing_customers`/
+  `billing_subscriptions` em trial válido ao inserir uma clínica — usado
+  como fixture em vez de inserir à mão, que colidiria com o `UNIQUE` de
+  `billing_customers.clinic_id`). Encadeia o `onRequest` do middleware novo
+  com os handlers reais de GET/POST via `context.next = () => handler(...)`,
+  com FormData/File reais (multipart de verdade, não mock). 4 cenários: (1)
+  POST de conta sem clínica → 409 `BILLING_CLINIC_CONTEXT_REQUIRED`, zero
+  lotes criados; (2) GET da mesma conta → mesmo 409; (3) controle —
+  clínica ativa com billing em dia → POST 201 com lote criado e GET lista
+  normalmente (nenhuma regressão); (4) billing suspenso (`past_due` sem
+  carência) → 402 `ENTITLEMENT_SUSPENDED`, mesma paridade de
+  patients/operations, zero lotes criados. Visto falhando pelo motivo certo
+  contra o código anterior via `git stash push -u -- functions/api/
+  integrations/_middleware.ts` (module not found — o arquivo simplesmente
+  não existia); verde com a correção.
+- Comandos exit 0: `node --import tsx tests/unit/integrations-tenant-gate.test.ts`,
+  `npm run check`, `npx eslint functions/api/integrations/_middleware.ts
+  tests/unit/integrations-tenant-gate.test.ts --max-warnings=0`,
+  `node --import tsx tests/unit/boaconsulta-import-contract.test.ts`,
+  `node --import tsx tests/unit/cloudflare-auth-middleware.test.ts`,
+  `npm run test:quick-wins` (suíte completa, com o teste novo já cadastrado
+  nela), `node tests/unit/workflow-governance.test.mjs`, validação de
+  sintaxe YAML dos dois workflows editados.
+- CI: `tests/unit/integrations-tenant-gate.test.ts` e
+  `functions/api/integrations/_middleware.ts` cadastrados como path
+  triggers e como passo de execução em `boaconsulta-import-pr.yml`
+  (validação de PR) e `boaconsulta-import-release.yml` (release em main),
+  ao lado do teste de contrato já existente.
+- Rollback: apagar `functions/api/integrations/_middleware.ts` restaura o
+  comportamento anterior (bridge volta a aceitar qualquer conta
+  "professional" sem clínica/billing); nenhuma migração envolvida, nenhum
+  outro arquivo de produção tocado.

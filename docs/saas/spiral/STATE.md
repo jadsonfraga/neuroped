@@ -136,13 +136,27 @@ mesmo arquivo provam que o dono legítimo continua operando normalmente
 — caminho que nenhum teste comportamental cobria antes. Evidência em
 EVIDENCE.md#S17.
 
+S18: o bridge de importação do BoaConsulta (`/api/integrations/boaconsulta/
+import`) não tinha nenhum `_middleware.ts` de clínica/billing — qualquer
+conta recém-criada (todo signup nasce role global "professional", sem
+clínica) conseguia importar PHI de terceiros sem nunca ter pago. Provado em
+runtime: o handler sozinho aceita e persiste o upload (201) de uma conta
+sem nenhuma `clinic_membership`. Corrigido com um `_middleware.ts` novo,
+cópia do padrão já usado em `patients/**` e `operations/**` — sem tocar o
+handler nem exigir migração. Achado de forma independente por dois agentes
+de varredura (um workflow de 4 domínios em paralelo + síntese + verificação
+adversarial, e um scan avulso), ambos convergindo no mesmo item como topo
+do ranking. Evidência em EVIDENCE.md#S18.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
-censo, os próximos itens executáveis sem depender de estado de produção
-desconhecido são S10 (papel duplo global×membership), S12B (expandir o
-export para cobrir documentos/avaliações/intake/escala) e S13 (link público
-de agendamento por clínica) — ver BACKLOG.md.
+censo, candidatos pequenos e seguros mapeados pela varredura de auditoria
+desta sessão (ver BACKLOG.md e o achado "S19" ainda não implementado,
+AUTHZ-P1-08/LTB-19 — bypass de admin de plataforma sem razão nem auditoria
+prévia em run-deletion/run-export) continuam abertos; S10 (papel duplo
+global×membership), S12B (expandir o export) e S13 (link público de
+agendamento por clínica) seguem deliberadamente grandes/abertos.
 Retomada: `git fetch origin main && git log -1 origin/main` e reler este
 arquivo.

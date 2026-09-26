@@ -162,6 +162,41 @@ arquivo) pelo motivo certo contra o código anterior: `conecta` e
 200; `memory/[id].ts` DELETE respondia 204 mesmo sem afetar linha alguma.
 Evidência em EVIDENCE.md#S17.
 
+## S18 · P1 · FECHADO (ciclo 4)
+O bridge de importação do BoaConsulta (`functions/api/integrations/
+boaconsulta/import.ts`, GET e POST) autorizava só por
+`canWriteClinicalData(user)` — verdadeiro para qualquer conta com papel
+GLOBAL "professional", que é o papel com que TODO signup nasce (sem
+clínica, sem billing, sem e-mail verificado). Diferente de `patients/**` e
+`operations/**`, a pasta `functions/api/integrations` não tinha nenhum
+`_middleware.ts` de clínica/billing. Provado em runtime: uma conta
+recém-criada, zero `clinic_memberships`, conseguia hoje enviar um CSV com
+PHI de terceiros e receber 201, com a linha persistida em
+`external_import_batches`. (AUTHZ-P1-09, achado duas vezes na auditoria
+também como OPS-09)
+
+Corrigido: novo `functions/api/integrations/_middleware.ts`, cópia do
+padrão já em produção duas vezes (`patients/_middleware.ts` e
+`operations/_middleware.ts`, byte a byte idênticos) — resolve a clínica via
+`resolveBillingClinicId` e exige `requireBillingEntitlement(...,
+"clinical")`; sem clínica ou billing suspenso, 409/402/423 antes do handler
+rodar, sem mudar nenhuma linha de `import.ts`. Sem migração (o backfill de
+`clinic_id` em `external_import_*` fica como melhoria de rastreabilidade
+separada, não é pré-requisito para fechar o buraco de autorização).
+
+Teste novo `tests/unit/integrations-tenant-gate.test.ts` (schema real +
+todas as migrações, handlers reais, FormData/File real de multipart)
+encadeia o middleware novo com o handler real: prova 409 + zero lotes
+criados para conta sem clínica (GET e POST), 402 para billing suspenso
+(mesma paridade de patients/operations), e um controle de não-regressão
+(clínica ativa com billing em dia continua importando e listando
+normalmente). Visto falhando pelo motivo certo contra o código anterior via
+`git stash push -u` do arquivo novo (module not found — o gate simplesmente
+não existia) e, adicionalmente, confirmado que o handler `import.ts`
+sozinho, sem o middleware na frente, aceita e persiste o upload de uma
+conta sem clínica (201, 1 lote criado) — a prova concreta do buraco.
+Evidência em EVIDENCE.md#S18.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/
