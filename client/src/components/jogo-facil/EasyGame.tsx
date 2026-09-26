@@ -365,7 +365,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           </ol>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button size="lg" className="rounded-2xl font-black" onClick={() => void copy()}><Copy className="mr-2 h-4 w-4" /> Copiar resultado</Button>
-            <Button size="lg" variant="outline" className="rounded-2xl" onClick={() => download(report, `${title.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-modo-facil.txt`)}><Download className="mr-2 h-4 w-4" /> Baixar resultado</Button>
+            <Button size="lg" variant="outline" className="rounded-2xl" onClick={() => download(report, `${title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-modo-facil.txt`)}><Download className="mr-2 h-4 w-4" /> Baixar resultado</Button>
             <Button size="lg" variant="outline" className="rounded-2xl" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" /> Jogar de novo</Button>
           </div>
           <textarea aria-label="Resultado do jogo" readOnly value={report} className="mt-4 min-h-64 w-full rounded-xl border bg-background p-3 font-mono text-xs leading-relaxed" />

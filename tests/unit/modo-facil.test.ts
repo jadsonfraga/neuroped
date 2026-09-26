@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { EASY_OUTCOME_LABEL, MANUAL_TAP_MIN_GAP_MS, acceptManualTap, buildEasyReport, easyCounts, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
+import { EASY_OUTCOME_LABEL, MANUAL_TAP_MIN_GAP_MS, acceptManualTap, buildEasyReport, easyCounts, localIsoDate, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
 
 const read = (path: string) => readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 const engine = read("client/src/components/jogo-facil/EasyGame.tsx");
@@ -149,4 +149,27 @@ test("motor: nada nasce sob o dedo da criança — transição após todo toque 
   assert.match(engine, /\{finished && !awaitNext && \(/, "resultado com contagem só depois que o adulto toca em Ver resultado");
   const handover = engine.slice(engine.indexOf("{finished && awaitNext && ("), engine.indexOf("{finished && !awaitNext && ("));
   assert.doesNotMatch(handover, /counts\.|records\.map|Acertou|Errado|Não acertou|label\[/, "tela de entrega sem contagem nem certo/errado");
+});
+
+test("registro: data local (não UTC) e nome de arquivo sem acentos mutilados", () => {
+  assert.equal(localIsoDate(new Date(2026, 8, 24, 23, 30)), "2026-09-24", "23h30 no fuso local continua sendo o mesmo dia, não o UTC do dia seguinte");
+  assert.equal(localIsoDate(new Date(2026, 0, 5, 0, 5)), "2026-01-05");
+  assert.match(buildEasyReport({ title: "T", ageLabel: "1", nature: "N", records: [], totalSteps: 1 }), new RegExp(`Data: ${localIsoDate()}`));
+  assert.doesNotMatch(read("client/src/components/jogo-facil/easyReport.ts"), /toISOString\(\)\.slice\(0, 10\)/, "data do registro nunca em UTC");
+  assert.match(engine, /title\.normalize\("NFD"\)\.replace\(\/\[\\u0300-\\u036f\]\/g, ""\)\.toLowerCase\(\)\.replace\(\/\[\^a-z0-9\]\+\/g, "-"\)/, "acentos removidos antes de trocar por hífen: 'Etária' vira 'etaria', não 'et-ria'");
+});
+
+test("Testes Cognitivos, modo guiado: a resposta esperada de itens de fala fica numa dobra do aplicador, não solta na tela compartilhada", () => {
+  assert.doesNotMatch(cognitive, /Esperado: <strong>\{q\.expected\}<\/strong>/);
+  assert.match(cognitive, /data-testid="cognitive-say-expected"/);
+  const fold = cognitive.slice(cognitive.indexOf('data-testid="cognitive-say-expected"'), cognitive.indexOf("</details>", cognitive.indexOf('data-testid="cognitive-say-expected"')));
+  assert.match(fold, /Resposta esperada \(só o aplicador lê\)/);
+  assert.match(fold, /<strong>\{q\.expected\}<\/strong>/);
+});
+
+test("Testes Cognitivos: Modo Fácil informa progresso e guarda a saída, o reinício e a troca de idade", () => {
+  assert.match(cognitive, /useSondaExitGuard\(easyProgress > 0, !isAuthenticated, EASY_EXIT_PROMPT\);/, "guarda reconhece sessão real, como a Sonda (#980), além do prompt próprio");
+  assert.match(cognitive, /if \(easyProgress > 0 && !window\.confirm\(EASY_EXIT_PROMPT\)\) return false;\s*setEasyProgress\(0\);\s*setConfirmed\(false\);/, "Reiniciar jogo confirma antes de apagar");
+  assert.match(cognitive, /onChange=\{\(e\) => \{\s*if \(!resetAdventure\(\)\) return;/, "trocar a idade confirma antes de apagar");
+  assert.match(cognitive, /steps=\{easySteps\}\s*onProgress=\{setEasyProgress\}/);
 });
