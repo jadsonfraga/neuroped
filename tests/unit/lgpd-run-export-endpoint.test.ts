@@ -19,7 +19,10 @@
  *  8. o storage recebe SÓ ciphertext — nem o nome do paciente de RED nem
  *     qualquer dado de BLUE aparecem no objeto;
  *  9. a trilha de auditoria não carrega conteúdo clínico;
- * 10. falha de gravação no storage não conclui o job nem deixa artefato órfão.
+ * 10. falha de gravação no storage não conclui o job nem deixa artefato órfão;
+ * 11. admin de plataforma exige reason declarada (400 sem ela, sem tocar o
+ *     ledger) e exporta com ela, deixando trilha PRÉVIA da razão
+ *     (AUTHZ-P1-08/LTB-19).
  */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -152,6 +155,7 @@ function criarUsuario(id: string, role: string): Ator {
 const RED_OWNER = criarUsuario("user-red-owner-exp", "professional");
 const RED_PROFESSIONAL = criarUsuario("user-red-prof-exp", "professional");
 const BLUE_OWNER = criarUsuario("user-blue-owner-exp", "professional");
+const PLATFORM_ADMIN = criarUsuario("user-platform-admin-exp", "admin");
 
 function criarClinica(clinicId: string, slug: string, ownerId: string) {
   sqlite
@@ -234,6 +238,7 @@ criarRequest(
   RED_OWNER.id,
 );
 criarRequest("req-exp-falha", RED, "clinic", null, "approved", RED_OWNER.id);
+criarRequest("req-exp-admin", RED, "clinic", null, "approved", RED_OWNER.id);
 
 function contexto(
   user: Ator | null,
@@ -439,7 +444,63 @@ function ledger(requestId: string) {
   );
 }
 
+// ── 11) Admin de plataforma exige reason declarada (AUTHZ-P1-08/LTB-19) ───
+{
+  // 11a) sem reason: recusado ANTES de sequer reivindicar o job.
+  const semRazao = await runExport(
+    contexto(PLATFORM_ADMIN, { clinicId: RED, requestId: "req-exp-admin" }),
+  );
+  assert.equal(
+    semRazao.status,
+    400,
+    "admin de plataforma sem reason precisa ser recusado",
+  );
+  assert.equal(
+    ((await semRazao.json()) as { code: string }).code,
+    "REASON_REQUIRED",
+  );
+  assert.equal(
+    ledger("req-exp-admin"),
+    undefined,
+    "sem reason, o job nem pode ser reivindicado",
+  );
+
+  // 11b) com reason: executa como o gestor comum, e a razão fica registrada
+  // ANTES da exportação física.
+  const response = await runExport(
+    contexto(PLATFORM_ADMIN, {
+      clinicId: RED,
+      requestId: "req-exp-admin",
+      reason: "Auditoria de plataforma solicitada pelo suporte, ticket 7734",
+    }),
+  );
+  const raw = await response.text();
+  assert.equal(
+    response.status,
+    200,
+    `admin de plataforma deveria conseguir, veio ${raw}`,
+  );
+  assert.equal(ledger("req-exp-admin")?.status, "completed");
+
+  const trilhaPrevia = sqlite
+    .prepare(
+      `SELECT clinic_id, actor_user_id, metadata_json FROM saas_audit_log
+        WHERE action = 'platform_admin_run_export_initiated' AND target_id = ?`,
+    )
+    .get("req-exp-admin") as
+    | { clinic_id: string; actor_user_id: string; metadata_json: string }
+    | undefined;
+  assert.ok(trilhaPrevia, "a razão do admin de plataforma precisa virar trilha");
+  assert.equal(trilhaPrevia?.clinic_id, RED);
+  assert.equal(trilhaPrevia?.actor_user_id, PLATFORM_ADMIN.id);
+  assert.match(
+    trilhaPrevia?.metadata_json ?? "",
+    /ticket 7734/,
+    "a metadata precisa carregar a razão declarada",
+  );
+}
+
 sqlite.close();
 console.log(
-  "✓ lgpd-run-export-endpoint: sem bucket recusa antes do claim, RBAC e fronteira de tenant, escopo não suportado recusado, falha de storage sem artefato órfão, artefato cifrado com digest conferido contra o objeto armazenado e trilha sem conteúdo clínico — RED exportado, BLUE ausente",
+  "✓ lgpd-run-export-endpoint: sem bucket recusa antes do claim, RBAC e fronteira de tenant, escopo não suportado recusado, falha de storage sem artefato órfão, artefato cifrado com digest conferido contra o objeto armazenado, trilha sem conteúdo clínico e admin de plataforma exigindo reason com trilha prévia (AUTHZ-P1-08/LTB-19) — RED exportado, BLUE ausente",
 );
