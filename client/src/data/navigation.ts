@@ -223,7 +223,7 @@ export const navSections: NavSection[] = [
         label: "Testes cognitivos por faixa etária",
         icon: Brain,
         tone: "priority",
-        description: "Visual, leitura, escrita e aritmética · 2–19 anos",
+        description: "Visual, fala/leitura, letras/escrita e números · 1–19 anos",
       },
       {
         href: "/testes-diretos",

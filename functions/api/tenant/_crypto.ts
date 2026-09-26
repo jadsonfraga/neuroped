@@ -80,13 +80,45 @@ function validateKeyring(env: TenantEnv): void {
   }
 }
 
-export function clinicalCryptoReady(env: TenantEnv): boolean {
+export type ClinicalCryptoStatusCode =
+  | "CLINICAL_CRYPTO_NOT_CONFIGURED"
+  | "CLINICAL_INDEX_KEY_NOT_CONFIGURED"
+  | "CLINICAL_KEY_ID_INVALID"
+  | "CLINICAL_KEY_ID_COLLISION"
+  | "CLINICAL_KEY_SEPARATION_REQUIRED"
+  | "CLINICAL_CRYPTO_INVALID";
+
+export type ClinicalCryptoStatus =
+  | { configured: true }
+  | { configured: false; code: ClinicalCryptoStatusCode };
+
+const SAFE_CLINICAL_CRYPTO_STATUS_CODES = new Set<ClinicalCryptoStatusCode>([
+  "CLINICAL_CRYPTO_NOT_CONFIGURED",
+  "CLINICAL_INDEX_KEY_NOT_CONFIGURED",
+  "CLINICAL_KEY_ID_INVALID",
+  "CLINICAL_KEY_ID_COLLISION",
+  "CLINICAL_KEY_SEPARATION_REQUIRED",
+]);
+
+/**
+ * Diagnóstico sem material criptográfico: devolve somente um código allowlisted.
+ * Nunca inclui valor, fragmento, comprimento exato ou identificador de chave.
+ */
+export function clinicalCryptoStatus(env: TenantEnv): ClinicalCryptoStatus {
   try {
     validateKeyring(env);
-    return true;
-  } catch {
-    return false;
+    return { configured: true };
+  } catch (error) {
+    const rawCode = error instanceof Error ? error.message : "";
+    const code = SAFE_CLINICAL_CRYPTO_STATUS_CODES.has(rawCode as ClinicalCryptoStatusCode)
+      ? rawCode as ClinicalCryptoStatusCode
+      : "CLINICAL_CRYPTO_INVALID";
+    return { configured: false, code };
   }
+}
+
+export function clinicalCryptoReady(env: TenantEnv): boolean {
+  return clinicalCryptoStatus(env).configured;
 }
 
 export function currentClinicalEncryptionVersion(env: TenantEnv): string {

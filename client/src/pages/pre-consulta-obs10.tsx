@@ -23,8 +23,8 @@ import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, 
 import { makeDossier, makeScript } from "@/features/obs10/dossier";
 import { StarCounter } from "@/components/aventura";
 import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
-import { TaskPicture } from "@/features/obs10/PracticalVisuals";
-import { taskOmission } from "@/features/obs10/practical";
+import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
+import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -303,29 +303,18 @@ export default function PreConsultaObs10Page() {
 
   const trackTabs = (
     <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
-      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade, leia a fala de cada passo, faça com a criança e marque Acertou, Não acertou ou Pular. O jogo passa sozinho e mostra o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Um passo por vez, sem preparo. Marca e passa sozinho. Resultado no fim.</small></button>
+      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo julga certo ou errado, passa sozinho e mostra o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo julga e passa. Certo/errado no fim.</small></button>
       <button type="button" role="tab" aria-selected={track === "guided"} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
       <button type="button" role="tab" aria-selected={direct} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
     </div>
   );
   if (easy) {
-    // Modo Fácil: as tarefas práticas da ficha viram passos de um jogo linear.
-    // Sem câmera, kit item a item ou checklist: o adulto faz, marca e passa.
-    // O resultado é contagem descritiva por passo; nada entra no registro
-    // filmado/dossiê do fluxo guiado.
-    const easyMonths = effective ?? 0;
-    const easySteps: EasyStep[] = selectedBand
-      ? (PRACTICAL_TASKS[selectedBand.id] ?? [])
-          .filter((task) => taskOmission(task, easyMonths, context.proneAllowed) === null)
-          .map((task) => ({
-            id: task.id,
-            group: `${PHASES[task.phase].icon} ${PHASES[task.phase].title}`,
-            title: task.title,
-            say: `“${task.say}”`,
-            hint: `${task.steps.join(" ")} Observe: ${task.record}`,
-            visual: <div className="obs10-easy-picture"><TaskPicture scene={task.scene} label={task.title} /></div>,
-          }))
-      : [];
+    // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
+    // tela. Sem câmera, kit, checklist ou tarefa com objeto: a criança toca,
+    // o aplicativo julga certo/errado e passa. Nada entra no dossiê guiado.
+    const easyYears = /^\d+$/.test(years) ? Number(years) : NaN;
+    const easyBand = objectiveBandForYears(easyYears);
+    const easySteps: EasyStep[] = easyBand ? buildObjectiveSteps("obs10", easyYears, "obs10-easy") : [];
     return (
       <div className="obs10" data-testid="obs10-workspace">
         <header className="obs10-hero obs10-no-print">
@@ -333,7 +322,7 @@ export default function PreConsultaObs10Page() {
           <div>
             <div className="obs10-eyebrow">NEUROPED · OBS-10 · MODO FÁCIL</div>
             <h1>{OBS10_TITLE}</h1>
-            <p>Leia a fala, faça com a criança, marque o que viu. O jogo passa sozinho.</p>
+            <p>Leia o enunciado, a criança toca na tela, o jogo julga e passa sozinho.</p>
           </div>
         </header>
         {trackTabs}
@@ -342,21 +331,21 @@ export default function PreConsultaObs10Page() {
           <h2><span className="obs10-number">1</span>Idade da criança</h2>
           <fieldset className="obs10-age-fieldset">
             <div className="obs10-fields">
-              <label>Anos completos<input type="number" inputMode="numeric" min="0" max="17" value={years} onChange={(e) => { setYears(e.target.value); setPreviewBand(null); }} /></label>
+              <label>Anos completos<input type="number" inputMode="numeric" min={OBJECTIVE_MIN_YEARS} max={OBJECTIVE_MAX_YEARS} value={years} onChange={(e) => { setYears(e.target.value); setPreviewBand(null); }} /></label>
               <label>Meses adicionais<input type="number" inputMode="numeric" min="0" max="11" value={months} onChange={(e) => { setMonths(e.target.value); setPreviewBand(null); }} /></label>
             </div>
-            {(years !== "" || months !== "") && chrono === null && <p className="obs10-error">Informe anos de 0 a 17 e meses adicionais de 0 a 11.</p>}
-            <div className="obs10-band-selected" aria-live="polite">{selectedBand ? <><span aria-hidden="true">{selectedBand.icon}</span><div><strong>Ficha: {selectedBand.label}</strong><p>{easySteps.length} passos. Filme com outro aparelho se quiser; o jogo não grava.</p></div></> : <p>Preencha a idade para montar o jogo.</p>}</div>
-            {selectedBand && selectedBand.min < 9 && <label className="obs10-check"><input type="checkbox" checked={context.proneAllowed} onChange={(e) => updateContext({ proneAllowed: e.target.checked })} />Médico autorizou posição de bruços; somente acordado, supervisionado e se tolerado.</label>}
+            {years !== "" && !easyBand && <p className="obs10-error">Informe a idade em anos completos, de {OBJECTIVE_MIN_YEARS} a {OBJECTIVE_MAX_YEARS}.</p>}
+            <div className="obs10-band-selected" aria-live="polite">{easyBand ? <><span aria-hidden="true">🎮</span><div><strong>Faixa: {easyBand.label}</strong><p>{easySteps.length} itens na tela. Nada para preparar; o jogo não grava.</p></div></> : <p>Preencha a idade para montar o jogo.</p>}</div>
           </fieldset>
         </section>}
-        {selectedBand && <EasyGame
-          key={`${selectedBand.id}-${easySteps.length}`}
+        {easyBand && <EasyGame
+          key={`${easyBand.id}-${easySteps.length}`}
           testid="obs10-easy"
           title="OBS-10"
-          ageLabel={`${easyMonths} meses · ficha ${selectedBand.label}`}
-          nature="Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência. Modo Fácil: sem filmagem integrada nem kit conferido item a item."
+          ageLabel={`${easyYears} anos · faixa ${easyBand.label}`}
+          nature={`${objectiveNature("obs10")} Modo Fácil: sem filmagem integrada nem kit conferido item a item.`}
           steps={easySteps}
+          objective
           onProgress={setEasyProgress}
         />}
         <footer className="obs10-footer obs10-no-print">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756 · OBS-10 v{OBS10_VERSION}</footer>

@@ -81,7 +81,7 @@
     "guard:clinical-artifacts": "node scripts/guards/check-generated-clinical-artifacts.mjs",
     "test:notes": "node --import tsx tests/unit/notes-engine.test.ts",
     "test:cognitive": "node --import tsx tests/unit/cognitive-lab.test.ts && npm run test:sonda && npm run test:direct-track",
-    "test:direct-track": "node --import tsx --test tests/unit/direct-track-tabs.test.ts && node --import tsx --test tests/unit/aventura-gamification-static.test.mjs && node --import tsx --test tests/unit/modo-facil.test.ts && node --import tsx --test tests/unit/cognitive-age-banks.test.ts && npm run test:super-neuropad",
+    "test:direct-track": "node --import tsx --test tests/unit/direct-track-tabs.test.ts && node --import tsx --test tests/unit/aventura-gamification-static.test.mjs && node --import tsx --test tests/unit/modo-facil.test.ts && node --import tsx --test tests/unit/cognitive-age-bank.test.ts && node --import tsx --test tests/unit/objective-bank.test.ts && npm run test:super-neuropad",
     "test:super-neuropad": "node --import tsx --test tests/unit/super-neuropad-game.test.ts",
     "test:e2e:modo-facil": "node tests/e2e/modo-facil.mjs",
     "test:e2e:direct-track": "node tests/e2e/direct-track-tabs.mjs",
