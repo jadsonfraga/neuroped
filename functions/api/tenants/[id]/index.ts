@@ -4,6 +4,7 @@ import { isValidTimeZone } from "../../../../shared/operations";
 import {
   getClinicMembership,
   membershipCanManage,
+  membershipPermissions,
   prepareSaasAudit,
   tenantError,
   tenantJson,
@@ -52,6 +53,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
     status: clinic.status,
     role: membership.role,
     canManage: membershipCanManage(membership),
+    permissions: membershipPermissions(membership),
     settings,
   });
 };

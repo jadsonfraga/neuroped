@@ -1,12 +1,10 @@
 import type { PublicUser } from "../auth/_shared";
+import { isClinicMembershipRole, type ClinicMembershipRole } from "../../../shared/tenant";
 import {
-  canAccessClinicFinance,
-  canManageClinic,
-  canReadClinicClinicalData,
-  canWriteClinicClinicalData,
-  isClinicMembershipRole,
-  type ClinicMembershipRole,
-} from "../../../shared/tenant";
+  permissionsForRole,
+  roleHasPermission,
+  type TenantPermission,
+} from "../../../shared/permissions";
 
 export interface TenantEnv {
   DB?: D1Database;
@@ -104,20 +102,33 @@ export async function getClinicMembership(
   };
 }
 
+/**
+ * Permissão efetiva de uma membership: exige clínica ATIVA. Rotas que precisam
+ * operar com a clínica suspensa/encerrada usam `roleHasPermission` direto.
+ */
+export function membershipHas(membership: ClinicMembership, permission: TenantPermission): boolean {
+  return membership.clinicStatus === "active" && roleHasPermission(membership.role, permission);
+}
+
+/** Permissões efetivas, para a UI decidir o que mostrar sem comparar papel. */
+export function membershipPermissions(membership: ClinicMembership): TenantPermission[] {
+  return membership.clinicStatus === "active" ? permissionsForRole(membership.role) : [];
+}
+
 export function membershipCanManage(membership: ClinicMembership): boolean {
-  return membership.clinicStatus === "active" && canManageClinic(membership.role);
+  return membershipHas(membership, "organization.manage");
 }
 
 export function membershipCanReadClinical(membership: ClinicMembership): boolean {
-  return membership.clinicStatus === "active" && canReadClinicClinicalData(membership.role);
+  return membershipHas(membership, "clinical.read");
 }
 
 export function membershipCanWriteClinical(membership: ClinicMembership): boolean {
-  return membership.clinicStatus === "active" && canWriteClinicClinicalData(membership.role);
+  return membershipHas(membership, "clinical.write");
 }
 
 export function membershipCanAccessFinance(membership: ClinicMembership): boolean {
-  return membership.clinicStatus === "active" && canAccessClinicFinance(membership.role);
+  return membershipHas(membership, "finance.read");
 }
 
 /**

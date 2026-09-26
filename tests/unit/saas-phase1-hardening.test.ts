@@ -18,7 +18,7 @@ const migrationWorkflow = read(".github/workflows/saas-phase1-d1-migration.yml")
 // com "poder demover owner". A mutação continua protegida fisicamente pelo D1.
 assert.match(
   membersApi,
-  /currentMembership\?\.active === 1[\s\S]{0,160}currentMembership\.role === "owner"[\s\S]{0,180}auth\.membership\.role !== "owner"/,
+  /currentMembership\?\.active === 1[\s\S]{0,160}currentMembership\.role === "owner"[\s\S]{0,180}!roleHasPermission\(auth\.membership\.role, "team\.manage_owners"\)/,
 );
 assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
 assert.match(membersApi, /otherActiveOwnerCount/);

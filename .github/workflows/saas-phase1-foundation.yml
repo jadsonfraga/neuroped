@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "shared/tenant.ts"
+      - "shared/permissions.ts"
       - "shared/clinical-core.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
@@ -12,11 +13,13 @@ on:
       - "db/migrations/0010_saas_phase1_hardening.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
+      - "tests/unit/tenant-permissions.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
     paths:
       - "shared/tenant.ts"
+      - "shared/permissions.ts"
       - "shared/clinical-core.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
@@ -25,6 +28,7 @@ on:
       - "db/migrations/0010_saas_phase1_hardening.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
+      - "tests/unit/tenant-permissions.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -49,6 +53,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Testar contrato tenant, criptografia e anti-cross-tenant
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
+      - name: Testar catálogo central de permissões (RBAC do tenant)
+        run: node --import tsx tests/unit/tenant-permissions.test.ts
       - name: Testar hardening de owner, provenance e supersessão
         run: node --import tsx tests/unit/saas-phase1-hardening.test.ts
       - name: Hard release gate
