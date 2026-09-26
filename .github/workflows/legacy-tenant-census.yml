@@ -1,0 +1,58 @@
+name: Legacy tenant census (aggregate only)
+
+on:
+  pull_request:
+    paths:
+      - "scripts/audits/legacy-tenant-census.mjs"
+      - "tests/unit/legacy-tenant-census.test.mjs"
+      - ".github/workflows/legacy-tenant-census.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/audits/legacy-tenant-census.mjs"
+      - "tests/unit/legacy-tenant-census.test.mjs"
+      - ".github/workflows/legacy-tenant-census.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: legacy-tenant-census-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - run: node --test tests/unit/legacy-tenant-census.test.mjs
+
+  production-aggregates:
+    needs: contract
+    if: github.ref == 'refs/heads/main' && github.repository == 'jadsonfraga/neuroped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Read canonical D1 aggregate counts, never clinical content
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CENSUS_BOOTSTRAP_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: node scripts/audits/legacy-tenant-census.mjs
+      - name: Preserve aggregate evidence or explicit blocker
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: legacy-tenant-census-${{ github.run_id }}
+          path: artifacts/legacy-tenant-census.json
+          retention-days: 7
+          if-no-files-found: error
