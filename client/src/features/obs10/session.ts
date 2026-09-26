@@ -1,6 +1,7 @@
 import type { EvidenceBundle } from "./evidence";
 import type { PilotRecord } from "./pilot";
 import { AGE_BANDS, OUTCOMES, PHASES, clock, type Outcome } from "./protocol";
+import { PRACTICAL_TASKS } from "./practical";
 
 export interface SessionContext {
   code: string;
@@ -103,6 +104,16 @@ export function exportFilename(code: string, extension: "txt" | "json" | "md" | 
 }
 const textOrMissing = (s: string) => s.trim() || "Não informado";
 export const PREPARATION_DIRECT_LINE = "Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente, que responde pelo preparo.";
+/**
+ * Nome da tarefa como vai para relatório e dossiê. Registros guiados (`guided-<id>`)
+ * nascem da ficha da faixa: o título canônico da ficha é a única fonte de verdade,
+ * mesmo que o texto gravado tenha sido editado ou venha de um JSON antigo. Registros
+ * manuais usam o texto digitado pela aplicadora.
+ */
+export function canonicalTaskTitle(record: Pick<SessionRecord, "context">, o: Pick<Observation, "id" | "task">): string {
+  if (!o.id.startsWith("guided-")) return o.task;
+  return PRACTICAL_TASKS[record.context.bandId]?.find((task) => `guided-${task.id}` === o.id)?.title ?? o.task;
+}
 export function makeReport(record: SessionRecord): string {
   const { context: c, observations } = record;
   const band = AGE_BANDS.find((b) => b.id === c.bandId);
@@ -130,7 +141,7 @@ export function makeReport(record: SessionRecord): string {
     const entries = observations.filter((o) => o.phase === index && (o.task.trim() || o.response.trim() || o.outcome));
     if (!entries.length) lines.push("Sem registro de aplicação; não concluir que a habilidade está ausente ou preservada.");
     entries.forEach((o) => {
-      lines.push(`Tarefa: ${textOrMissing(o.task)}`, `Fato/resposta literal: ${textOrMissing(o.response)}`,
+      lines.push(`Tarefa: ${textOrMissing(canonicalTaskTitle(record, o))}`, `Fato/resposta literal: ${textOrMissing(o.response)}`,
         `Resposta: ${OUTCOMES.find((x) => x.id === o.outcome)?.label ?? "Não classificada"}`,
         `Ajuda/adaptação/motivo da não aplicação: ${textOrMissing(o.assistance)}`,
         `Qualidade referida pela aplicadora: ${o.quality || "Não verificada"}`,

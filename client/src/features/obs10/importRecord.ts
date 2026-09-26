@@ -54,8 +54,10 @@ export function parseRecordJSON(raw: string): ImportResult {
       if (entry.id.startsWith("guided-")) {
         const task = PRACTICAL_TASKS[c.bandId].find((item) => `guided-${item.id}` === entry.id);
         if (!task || task.phase !== entry.phase) throw new Error("Task outside the selected sheet");
-        // A declared model cannot be downgraded by an imported document.
+        // A declared model cannot be downgraded by an imported document, and the
+        // guided task keeps the sheet's canonical title: report and dossier must agree.
         entry.modelInInstruction = Boolean(task.model);
+        entry.task = task.title;
       }
     }
     if (data.evidence && !evidenceReferencesValid(data.evidence, data.sessionId, data.observations as SessionRecord["observations"])) throw new Error("Invalid evidence references");

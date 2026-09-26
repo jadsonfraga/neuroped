@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { AGE_BANDS, MAX_SECONDS, MOTOR_CORE, OBS10_ROUTE, OUTCOMES, PHASES, bandForMonths, clock, elapsedSeconds, phaseForSeconds } from "../../client/src/features/obs10/protocol";
-import { emptyObservation, exportFilename, makeReport, parseAge, usableObservation, validCorrectedAge, type SessionRecord } from "../../client/src/features/obs10/session";
+import { canonicalTaskTitle, emptyObservation, exportFilename, makeReport, parseAge, usableObservation, validCorrectedAge, type SessionRecord } from "../../client/src/features/obs10/session";
+import { PRACTICAL_TASKS } from "../../client/src/features/obs10/practical";
 import { decideRouteAccess, isRouteSensitive } from "../../client/src/security/routeGuardPolicy";
 import { featuredNavigation, navigablePages } from "../../client/src/data/navigation";
 
@@ -70,4 +71,17 @@ check(!/\b(?:localStorage|sessionStorage|indexedDB)\s*\./.test(page + capture), 
 check(!/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/.test(page + capture), "no network upload");
 check(page.includes('document.addEventListener("visibilitychange"'), "background tab ends collection");
 check(capture.includes("getTracks().forEach") && capture.includes("URL.revokeObjectURL"), "camera and URL cleanup");
+// Fonte única do nome da tarefa guiada: o texto gravado pode ter sido editado ou vir de um
+// JSON antigo, mas relatório e dossiê imprimem o título canônico da ficha (bug corrigido:
+// os dois exports divergiam quando a aplicadora reescrevia "Qual tarefa?").
+const guidedTask = PRACTICAL_TASKS.y06[0];
+const edited = { ...emptyObservation(`guided-${guidedTask.id}`, guidedTask.phase, 90), task: "texto editado pela aplicadora", response: "Fato sintético.", outcome: "E" as const };
+check(canonicalTaskTitle(record, edited) === guidedTask.title, "guided entry resolves to the sheet title");
+check(canonicalTaskTitle(record, { id: "manual-1", task: "Conversa inicial" }) === "Conversa inicial", "manual entry keeps the typed text");
+const guidedReport = makeReport({ ...record, observations: [edited] });
+check(guidedReport.includes(`Tarefa: ${guidedTask.title}`), "report prints the canonical title");
+check(!guidedReport.includes("texto editado pela aplicadora"), "edited text never reaches the report for a guided entry");
+const obsPage = readFileSync("client/src/pages/pre-consulta-obs10.tsx", "utf8");
+check(/readOnly=\{entry\.id\.startsWith\("guided-"\)\}/.test(obsPage), "guided task name is read-only in the UI");
+check(/if \(!entry\.id\.startsWith\("guided-"\)\) updateObservation\(entry\.id, \{ task: e\.target\.value \}\)/.test(obsPage), "no handler rewrites a guided task name");
 console.log(`OBS-10: ${assertions} assertions passed.`);

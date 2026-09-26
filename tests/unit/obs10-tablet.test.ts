@@ -125,6 +125,13 @@ const partial = reduce(reduce(reduce(started(), { type: "show" }), { type: "resp
 assert.equal(pendingDescriptions(partial.record!).length, 1);
 assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 estação/);
 assert.match(tabletText(all.record!), /Todas as estações registradas possuem descrição/);
+// A station opened and ended before any category is a partial record, not a "categoria marcada" pending
+// description (bug corrigido: o export dizia PENDÊNCIA com categoria marcada para uma estação sem categoria).
+const openedOnly = reduce(reduce(started(), { type: "show" }), { type: "end", second: 20, reason: "Interrupção sintética" });
+assert.equal(openedOnly.record!.observations[0].outcome, null);
+assert.deepEqual(pendingDescriptions(openedOnly.record!), []);
+assert.doesNotMatch(tabletText(openedOnly.record!), /PENDÊNCIA/);
+assert.match(tabletText(openedOnly.record!), /Categoria não registrada/);
 // Saturating the event log must never mint an observation whose opening cannot be traced: the module
 // would otherwise export a record its own validator rejects.
 // The pause between stations belongs to the collection: clock, absolute limit and end path still apply.

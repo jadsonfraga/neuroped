@@ -154,9 +154,13 @@ export function drawingStrokes(events: TabletEvent[], taskId: string): Point[][]
   for (const e of events) if (e.taskId === taskId) { if (e.type === "clear") strokes = []; if (e.type === "stroke" && Array.isArray(e.value)) strokes.push(e.value); }
   return strokes;
 }
-/** Observations whose category exists but whose factual description is still missing. Never auto-filled. */
+/**
+ * Observations whose category exists but whose factual description is still missing. Never auto-filled.
+ * A station opened and closed before any category (outcome null) is a partial record, not a pending
+ * description: counting it here made the export claim "categoria marcada" for a station with none.
+ */
 export function pendingDescriptions(r: TabletRecord): string[] {
-  return r.observations.filter((o) => !o.note.trim()).map((o) => o.taskId);
+  return r.observations.filter((o) => o.outcome !== null && !o.note.trim()).map((o) => o.taskId);
 }
 export function tabletText(r: TabletRecord): string {
   const plan = tabletPlan(r.context.months)!;

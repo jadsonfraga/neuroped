@@ -85,6 +85,11 @@ assert.ok(reviewSession({ ...base, context: { ...base.context, chronologicalMont
 const model = PRACTICAL_TASKS.y06.find((task) => task.model)!;
 const pending = parseRecordJSON(JSON.stringify({ ...base, observations: [{ ...original, id: `guided-${model.id}`, phase: model.phase, response: "", quality: "" }] }));
 assert.ok(pending.ok, "partial records remain recoverable; import is not clinical approval");
+// Um JSON antigo (ou editado) com o nome da tarefa guiada divergente entra com o título canônico:
+// relatório e dossiê não podem discordar depois da importação.
+const renamed = parseRecordJSON(JSON.stringify({ ...base, observations: [{ ...original, id: `guided-${model.id}`, phase: model.phase, task: "nome antigo da tarefa" }] }));
+assert.ok(renamed.ok); if (renamed.ok) { assert.equal(renamed.record.observations[0].task, model.title); assert.match(makeReport(renamed.record), new RegExp(`Tarefa: ${model.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`)); }
+assertions += 3;
 assert.match(makeReport(base), /não autenticado/);
 assert.match(makeReport(base), /Não comprova recebimento/);
 console.log(`OBS-10 v1.2: ${assertions + 25} review/import checks; all 145 guided IDs roundtrip; no restored camera or inherited acceptance.`);
