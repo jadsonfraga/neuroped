@@ -1,0 +1,33 @@
+name: Value Clinical Intelligence Contracts
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'shared/clinical-core.ts'
+      - 'shared/clinical-intelligence.ts'
+      - 'functions/api/live/**'
+      - 'tests/unit/value-clinical-intelligence.test.mjs'
+      - '.github/workflows/value-clinical-intelligence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: value-clinical-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  clinical-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - name: Synthetic longitudinal and adversarial domain tests (not production E2E)
+        run: node --experimental-strip-types --test tests/unit/value-clinical-intelligence.test.mjs
+      - name: Existing clinical regression suite
+        run: npm run test:clinical
