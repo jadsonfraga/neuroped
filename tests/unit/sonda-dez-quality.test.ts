@@ -149,6 +149,7 @@ test("relógio conserva frações por missão e o relatório usa a versão prese
   const page = fs.readFileSync("client/src/pages/testes-diretos.tsx", "utf8");
   assert.match(page, /SONDA_DEZ_VERSION.*from "@\/data\/sondaDezCanonical"/);
   assert.match(page, /PROTOCOLO v\$\{SONDA_DEZ_VERSION\}/);
+  assert.match(page, /useLayoutEffect\(\(\) => \{\s*const clock = activeTime.current/);
   assert.match(page, /window.clearInterval\(timer\); tick\(\)/);
   assert.match(page, /activeTime.current !== clock/);
 });
