@@ -161,9 +161,11 @@ export function pendingDescriptions(r: TabletRecord): string[] {
 export function tabletText(r: TabletRecord): string {
   const plan = tabletPlan(r.context.months)!;
   const lines = ["NEUROPED · OBS-10 TABLET · REGISTRO EXPLORATÓRIO", TABLET_LIMITS, `Versão: ${r.protocol} | Sessão: ${r.sessionId} | Revisão: ${r.revision}`, `Código: ${r.context.code} | Idade: ${r.context.months} meses | Ficha: ${plan.bandLabel}`, `Escolaridade: ${r.context.schooling || "Não informada"}`, `Comunicação: ${r.context.communication || "Não informada"}`, `Condições relatadas: ${r.context.conditions || "Não informadas"}`, `Duração: ${r.durationSeconds.toFixed(1)} s | Encerramento: ${r.endReason}`, `Captação solicitada: ${r.camera}. Integridade e enquadramento não são verificados automaticamente.`, r.importedForReview ? "Arquivo importado somente para revisão; origem e veracidade não autenticadas. Nenhum vídeo recuperado." : "Registro local; não houve envio automático ao prontuário.", "", "OBSERVAÇÕES DECLARADAS PELA APLICADORA"];
-  for (const t of plan.tasks) {
+  // Rota planejada ≠ percurso real: estações depois da última proposta não foram alcançadas.
+  const reachedIndex = plan.tasks.reduce((last, t, i) => (r.observations.some((entry) => entry.taskId === t.id) ? i : last), -1);
+  for (const [i, t] of plan.tasks.entries()) {
     const o = r.observations.find((entry) => entry.taskId === t.id);
-    lines.push(`\n${t.title} | Modalidade: ${t.kind}`, `Proposta: ${t.command}`, o ? `Resposta registrada: ${o.outcome ?? "Categoria não registrada"}. ${o.note || "Descrição ausente; não inferir achado."}${o.editedAfterEnd ? " [Descrição complementada após encerramento.]" : ""}` : "Não houve observação registrada desta tarefa. Não concluir ausência de habilidade.");
+    lines.push(`\n${t.title} | Modalidade: ${t.kind}`, `Proposta: ${t.command}`, o ? `Resposta registrada: ${o.outcome ?? "Categoria não registrada"}. ${o.note || "Descrição ausente; não inferir achado."}${o.editedAfterEnd ? " [Descrição complementada após encerramento.]" : ""}` : i > reachedIndex ? "Estação não alcançada: a coleta foi encerrada antes de ela ser proposta. Não concluir ausência de habilidade." : "Não houve observação registrada desta estação. Não concluir ausência de habilidade.");
     if (t.kind === "drawing") lines.push("Traçado por toque, sem equivalência à escrita manual. Dados brutos no JSON. Uma interrupção pode deixar o último traço parcial.");
     if (t.memory === "recall") lines.push("Evocação só pode ser interpretada pelo médico com o registro inicial e as interferências. Intervalos de tela não são medidas normativas.");
   }
