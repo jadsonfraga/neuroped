@@ -28,6 +28,8 @@ assert.ok(counts.respondente.professor > 0, "TDAH 7 anos tem escala de professor
 assert.equal(withinTimeBudget({ tempo: "Não aferido" }, 5), true);
 assert.equal(withinTimeBudget({ tempo: "10–15 min" }, 5), false);
 assert.equal(withinTimeBudget({ tempo: "5 min" }, 5), true);
+assert.equal(withinTimeBudget({ tempo: "3–10 min" }, 5), false, "cabe só se a estimativa máxima couber");
+assert.equal(withinTimeBudget({ tempo: "3–10 min" }, 10), true);
 assert.equal(withinTimeBudget({ tempo: "20 min" }, null), true);
 assert.deepEqual(TIME_BUCKETS.map((b) => b.minutes), [5, 10, 20, 45]);
 

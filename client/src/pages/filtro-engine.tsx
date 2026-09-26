@@ -1217,26 +1217,33 @@ export default function FiltroPage() {
     clearFilterNavigationPrefill();
   }, [flashMode, navigationPrefill.present]);
 
-  // Aplica o deep-link uma única vez. Cada campo é validado no leitor
-  // (lib/filterUrlState); sinais são conferidos contra as queixas do link.
+  // Aplica o deep-link uma única vez. Um link é um estado COMPLETO: campos
+  // ausentes voltam ao padrão (não herdam a sessão da aba), senão
+  // `#/filtro?idade=2a&queixas=tea` poderia manter um respondente antigo e
+  // produzir um ranking diferente do que quem compartilhou viu. Cada campo é
+  // validado no leitor (lib/filterUrlState); sinais são conferidos contra as
+  // queixas do link.
   useEffect(() => {
     if (!applyUrlState) return;
-    if (urlState.search !== undefined) setSearch(urlState.search);
-    if (urlState.queixas) setSelectedQueixas(urlState.queixas);
+    setSearch(urlState.search ?? "");
+    setSelectedQueixas(urlState.queixas ?? []);
     if (urlState.exactAge) {
       setExactAge(urlState.exactAge);
       setSelectedAge(null);
-    } else if (urlState.ageBand) {
+    } else {
       setExactAge({ years: "", months: "" });
-      setSelectedAge(urlState.ageBand);
+      setSelectedAge(urlState.ageBand ?? null);
     }
-    if (urlState.respondente) setSelectedRespondente(urlState.respondente);
-    if (urlState.communication) setSelectedCommunication(urlState.communication);
-    if (urlState.literacy) setSelectedLiteracy(urlState.literacy);
-    if (urlState.assessmentType) setSelectedAssessmentType(urlState.assessmentType);
+    setSelectedRespondente(urlState.respondente ?? null);
+    setSelectedCommunication(urlState.communication ?? null);
+    setSelectedLiteracy(urlState.literacy ?? null);
+    setSelectedAssessmentType(urlState.assessmentType ?? null);
+    setTimeBudget(urlState.timeBudget ?? null);
     if (urlState.signals && urlState.queixas) {
       const valid = getValidFilterSignalIds(urlState.queixas);
       setSelectedSignalIds(urlState.signals.filter((id) => valid.has(id)));
+    } else {
+      setSelectedSignalIds([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- montagem única
   }, []);
@@ -1457,6 +1464,7 @@ export default function FiltroPage() {
     Boolean(selectedLiteracy) ||
     Boolean(selectedAssessmentType) ||
     selectedSignalIds.length > 0 ||
+    timeBudget !== null ||
     availabilityMode === "all";
 
   // === MOTOR CLÍNICO (advancedFilterLogic) — fonte ÚNICA de verdade ===

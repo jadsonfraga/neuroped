@@ -68,13 +68,23 @@ export function parseUrlExactAge(value: string | null): { years: string; months:
   return { years: hasYears ? String(years) : "", months: match[2] !== undefined ? String(months) : "" };
 }
 
+/**
+ * Só escreve idade VÁLIDA pelos mesmos limites do formulário
+ * (parseExactFilterAge: meses 0–11, total ≤ 18 anos). Uma entrada inválida na
+ * tela ("18" em meses) é erro visível ali e nunca vira `idade=18m` na URL —
+ * senão, ao recarregar, o leitor a normalizaria para 1a6m e o filtro passaria
+ * a recomendar sobre uma idade que a pessoa não confirmou.
+ */
 export function formatUrlExactAge(age: { years: string; months: string } | undefined): string | undefined {
   if (!age) return undefined;
   const years = age.years.trim();
   const months = age.months.trim();
   if (!years && !months) return undefined;
-  if (!/^\d{0,3}$/.test(years) || !/^\d{0,3}$/.test(months)) return undefined;
-  return `${years ? `${Number(years)}a` : ""}${months ? `${Number(months)}m` : ""}`;
+  if (!/^\d{1,3}$/.test(years || "0") || !/^\d{1,3}$/.test(months || "0")) return undefined;
+  const y = Number(years || 0);
+  const m = Number(months || 0);
+  if (m > 11 || y * 12 + m > 216) return undefined;
+  return `${years ? `${y}a` : ""}${months ? `${m}m` : ""}`;
 }
 
 export function parseFilterUrlParams(params: URLSearchParams, validators: FilterUrlValidators): FilterUrlState {
@@ -142,8 +152,11 @@ export function serializeFilterUrlParams(state: Omit<FilterUrlState, "present">)
   if (state.search?.trim()) params.set("q", state.search.trim().slice(0, MAX_SEARCH));
   if (state.queixas?.length) params.set("queixas", state.queixas.join(","));
   const idade = formatUrlExactAge(state.exactAge);
+  const exactFilled = Boolean(state.exactAge && (state.exactAge.years.trim() || state.exactAge.months.trim()));
   if (idade) params.set("idade", idade);
-  else if (state.ageBand) params.set("faixa", state.ageBand);
+  // Idade exata preenchida mas inválida: não escreve nada de idade (nem a faixa),
+  // espelhando a tela, que mostra o erro e não recomenda.
+  else if (state.ageBand && !exactFilled) params.set("faixa", state.ageBand);
   if (state.respondente) params.set("resp", state.respondente);
   if (state.communication) params.set("com", state.communication);
   if (state.literacy) params.set("alf", state.literacy);

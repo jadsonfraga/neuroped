@@ -38,6 +38,13 @@ assert.deepEqual(parseUrlExactAge("0a"), { years: "0", months: "" });
 assert.equal(parseUrlExactAge("abc"), undefined);
 assert.equal(formatUrlExactAge({ years: "5", months: "6" }), "5a6m");
 assert.equal(formatUrlExactAge({ years: "", months: "" }), undefined);
+// Mesmos limites do formulário: entrada inválida na tela nunca vira idade na URL.
+assert.equal(formatUrlExactAge({ years: "", months: "18" }), undefined, "18 meses no campo de meses é inválido, não 1a6m");
+assert.equal(formatUrlExactAge({ years: "5", months: "12" }), undefined);
+assert.equal(formatUrlExactAge({ years: "19", months: "0" }), undefined);
+assert.equal(formatUrlExactAge({ years: "18", months: "0" }), "18a0m");
+assert.equal(serializeFilterUrlParams({ exactAge: { years: "", months: "18" }, ageBand: "2-4a" }).get("idade"), null);
+assert.equal(serializeFilterUrlParams({ exactAge: { years: "", months: "18" }, ageBand: "2-4a" }).get("faixa"), null, "idade inválida não cai na faixa por engano");
 assert.equal(parse("").present, false);
 assert.equal(parse("q=" + "x".repeat(400)).search!.length, 300, "busca limitada a 300 caracteres");
 

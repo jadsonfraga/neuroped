@@ -40,11 +40,15 @@ export interface AgeBandOption {
   max: number;
 }
 
-/** Orçamento de tempo: instrumento sem tempo legível NÃO é excluído (fail-open visível). */
+/**
+ * Orçamento de tempo: cabe só se a estimativa MÁXIMA do instrumento couber
+ * ("3–10 min" não cabe em 5 min — pode exigir dez). Instrumento sem tempo
+ * legível NÃO é excluído (fail-open visível, sinalizado na UI).
+ */
 export function withinTimeBudget(scale: Pick<ScaleEntry, "tempo">, minutes: number | null | undefined): boolean {
   if (!minutes || minutes <= 0) return true;
   const parsed = parseScaleMinutes(scale.tempo);
-  return parsed === null || parsed.min <= minutes;
+  return parsed === null || parsed.max <= minutes;
 }
 
 export const TIME_BUCKETS: ReadonlyArray<{ id: string; label: string; minutes: number }> = [
