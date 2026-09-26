@@ -325,6 +325,31 @@ interface ScaleResponseRow {
   created_at: string;
 }
 
+/** clinic_id é PRIMARY KEY: 0 ou 1 linha por clínica. Sem campo cifrado —
+ * timbre institucional (nome/endereço/telefone/e-mail), não PHI. */
+interface ClinicSettingsRow {
+  display_name: string;
+  address_line1: string;
+  address_line2: string;
+  phone: string;
+  public_email: string;
+  company_line: string;
+  motto: string;
+  updated_by_user_id: string | null;
+  updated_at: string;
+}
+
+/** clinic_id é UNIQUE: 0 ou 1 linha por clínica. Configuração de retenção,
+ * não dado do titular — mas parte do que uma clínica configurou e espera
+ * ver no próprio export completo. */
+interface RetentionPolicyRow {
+  retention_days: number;
+  auto_delete_enabled: number;
+  configured_by_user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function collectTenantExportPayload(
   db: D1Database,
   env: TenantEnv,
@@ -522,6 +547,24 @@ export async function collectTenantExportPayload(
              FROM live_scale_responses WHERE clinic_id = ? ORDER BY submitted_at ASC`,
         )
         .bind(clinicId),
+      // clinic_settings/live_retention_policies: configuração da clínica, não
+      // dado do titular, e nunca bloqueiam purge (estão em
+      // PURGE_PRESERVED_TABLES em _purge.ts) — mas o backlog original de
+      // S12B pedia os dois no payload exportado, e uma clínica pedindo "todos
+      // os meus dados" espera ver a própria configuração/timbre também.
+      db
+        .prepare(
+          `SELECT display_name, address_line1, address_line2, phone, public_email,
+                  company_line, motto, updated_by_user_id, updated_at
+             FROM clinic_settings WHERE clinic_id = ? LIMIT 1`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT retention_days, auto_delete_enabled, configured_by_user_id, created_at, updated_at
+             FROM live_retention_policies WHERE clinic_id = ? LIMIT 1`,
+        )
+        .bind(clinicId),
       ...EXPORT_UNCOVERED_CLINIC_TABLES.map((table) =>
         db
           .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
@@ -530,10 +573,11 @@ export async function collectTenantExportPayload(
     ]);
     // 9 consultas-base (lifecycle, contagens, clínica, memberships, pacientes,
     // eventos, billing customer, subscriptions, snapshot_at) + 8 domínios
-    // cobertos por S12B + o que ainda sobrar em EXPORT_UNCOVERED_CLINIC_TABLES
-    // (hoje vazio; ponto de extensão para um futuro 9º domínio).
+    // cobertos por S12B + 2 (clinic_settings/retention_policy) + o que ainda
+    // sobrar em EXPORT_UNCOVERED_CLINIC_TABLES (hoje vazio; ponto de extensão
+    // para um futuro 9º domínio).
     if (
-      snapshot.length !== 9 + 8 + EXPORT_UNCOVERED_CLINIC_TABLES.length ||
+      snapshot.length !== 9 + 8 + 2 + EXPORT_UNCOVERED_CLINIC_TABLES.length ||
       snapshot.some(
         (result) => !result.success || !Array.isArray(result.results),
       )
@@ -565,13 +609,13 @@ export async function collectTenantExportPayload(
   let uncoveredCounts: Record<string, number>;
   try {
     safeCounts = normalizeCounts(rows<CountRow>(1)[0] ?? null);
-    // Slot 17 em diante: 9 consultas-base + 8 domínios cobertos por S12B
-    // (índices 9-16) vêm antes de qualquer tabela ainda em
-    // EXPORT_UNCOVERED_CLINIC_TABLES — ver o batch acima.
+    // Slot 19 em diante: 9 consultas-base + 8 domínios cobertos por S12B
+    // (índices 9-16) + clinic_settings/retention_policy (17-18) vêm antes de
+    // qualquer tabela ainda em EXPORT_UNCOVERED_CLINIC_TABLES — ver o batch acima.
     uncoveredCounts = Object.fromEntries(
       EXPORT_UNCOVERED_CLINIC_TABLES.map((table, index) => [
         table,
-        validExportRowCount(rows<{ n: number }>(17 + index)[0] ?? null),
+        validExportRowCount(rows<{ n: number }>(19 + index)[0] ?? null),
       ]),
     );
   } catch {
@@ -606,6 +650,8 @@ export async function collectTenantExportPayload(
   const intakeSubmissionRows = rows<IntakeSubmissionRow>(14);
   const scaleInvitationRows = rows<ScaleInvitationRow>(15);
   const scaleResponseRows = rows<ScaleResponseRow>(16);
+  const clinicSettings = rows<ClinicSettingsRow>(17)[0] ?? null;
+  const retentionPolicy = rows<RetentionPolicyRow>(18)[0] ?? null;
   if (
     !snapshotAt ||
     !Number.isFinite(Date.parse(snapshotAt)) ||
@@ -913,6 +959,34 @@ export async function collectTenantExportPayload(
         updatedAt: row.updated_at,
       })),
       scaleResponses,
+      // Correção de escopo (revisão da PR): o backlog original de S12B pedia
+      // clinic_settings e live_retention_policies no payload — nenhum dos
+      // dois é PHI nem bloqueia purge (PURGE_PRESERVED_TABLES em
+      // _purge.ts), mas ficaram fora da primeira entrega por engano. `null`
+      // quando a clínica nunca configurou (0 linhas é o estado normal para
+      // uma clínica nova).
+      clinicSettings: clinicSettings
+        ? {
+            displayName: clinicSettings.display_name,
+            addressLine1: clinicSettings.address_line1,
+            addressLine2: clinicSettings.address_line2,
+            phone: clinicSettings.phone,
+            publicEmail: clinicSettings.public_email,
+            companyLine: clinicSettings.company_line,
+            motto: clinicSettings.motto,
+            updatedByUserId: clinicSettings.updated_by_user_id,
+            updatedAt: clinicSettings.updated_at,
+          }
+        : null,
+      retentionPolicy: retentionPolicy
+        ? {
+            retentionDays: retentionPolicy.retention_days,
+            autoDeleteEnabled: retentionPolicy.auto_delete_enabled === 1,
+            configuredByUserId: retentionPolicy.configured_by_user_id,
+            createdAt: retentionPolicy.created_at,
+            updatedAt: retentionPolicy.updated_at,
+          }
+        : null,
     },
   };
 }
