@@ -87,21 +87,27 @@ test("Reconhecimento Visual: aba Modo Fácil decide pelo toque da criança e a t
   assert.doesNotMatch(trialStage, /jogo-facil|EasyGame|Acertou|estrela|her[oó]i/i);
 });
 
-test("Testes Cognitivos: Modo Fácil encadeia os quatro mundos e fecha com contagem descritiva", () => {
+test("Testes Cognitivos: Modo Fácil usa o motor compartilhado com os 16 itens da idade, e a tela da criança decide toque e montagem", () => {
   assert.match(cognitive, /data-testid="cognitive-easy-tab"/);
-  assert.match(cognitive, /if \(easy\) \{\s*setHero\(\(current\) => current \?\? DEFAULT_HERO\);\s*setActiveWorld\(WORLD_ORDER\[0\]\);\s*setScreen\("world"\);/);
-  assert.match(cognitive, /useState\(easy && !result\)/, "mundo começa a jogar sem tela de introdução");
-  assert.match(cognitive, /data-testid="cognitive-easy-next"/);
-  assert.match(cognitive, /else setScreen\("results"\)/);
+  assert.match(cognitive, /import EasyGame, \{ type EasyStep \} from "@\/components\/jogo-facil\/EasyGame"/);
+  assert.match(cognitive, /testid="cognitive-easy"/);
+  assert.match(cognitive, /WORLD_ORDER\.flatMap\(\(domain\) =>\s*itemsFor\(age, domain\)\.map/, "os quatro mundos viram passos lineares, na ordem");
+  assert.match(cognitive, /child: \(\{ onDone \}\) => <ChildScreen item=\{item\} onDone=\{onDone\} \/>/);
   assert.match(cognitive, /NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO/);
-  assert.match(cognitive, /data-testid="cognitive-easy-results"/);
+  assert.doesNotMatch(cognitive, /VISUAL_BANK|LEITURA_BANK|ESCRITA_BANK|ARITMETICA_BANK|COGNITIVE_AGE_BANKS|ObsBlock|l[áa]pis\/caneta/, "bancos antigos (com observação de lápis e papel) extintos");
+  const screens = read("client/src/features/cognitive-age/screens.tsx");
+  assert.match(screens, /onDone\(option === item\.answer \? "acertou" : "nao"\)/, "toque da criança decide sozinho");
+  assert.match(screens, /onDone\(buildMatches\(item, placed\) \? "acertou" : "nao"\)/, "montagem de letras decide sozinha");
+  assert.match(screens, /← Voltar ao aplicador/);
+  assert.doesNotMatch(screens, /setTimeout|setInterval|requestAnimationFrame|framer-motion/, "tela da criança sem timers JS");
+  assert.doesNotMatch(screens, /Acertou|acertou!|certo!|errado!|Errou/, "a criança não vê certo/errado");
 });
 
 test("Testes Cognitivos: toque duplo em Próxima fase não pula fase nem estoura o índice (bug corrigido)", () => {
   assert.match(cognitive, /const advancing = useRef\(false\);/);
   assert.match(cognitive, /if \(advancing\.current \|\| phase !== "registered"\) return;/);
   assert.match(cognitive, /setIdx\(Math\.min\(idx \+ 1, questions\.length - 1\)\);/);
-  const registered = cognitive.slice(cognitive.indexOf('{phase === "registered" && ('), cognitive.indexOf("function ObsQuest("));
+  const registered = cognitive.slice(cognitive.indexOf('{phase === "registered" && ('), cognitive.indexOf("function WorldScreen("));
   assert.doesNotMatch(registered, /AnimatePresence|motion\.div|exit=/, "painel de avanço sem animação de saída: nenhum nó fantasma recebe o toque seguinte");
   assert.match(registered, /motion-safe:animate-in/);
 });
