@@ -102,6 +102,18 @@ Corrigido: `invitationStateFailure` em ambos os handlers passa a recusar
 que `clinic.status <> 'active'` — cobre também `closure_requested`, que já
 marca `clinics.status='suspended'`. Evidência em EVIDENCE.md#S14.
 
+## S15 · P2 · FECHADO (ciclo 4)
+Com trial vencido ou billing suspenso, o owner não conseguia sequer LISTAR
+ou REMOVER membros e convites (escopo `admin` exigido em TODO método de
+`/members` e `/invitations`, inclusive GET/DELETE) — a clínica era
+obrigada a continuar pagando por assentos que nem conseguia enxergar para
+reduzir. (LTB-15)
+Corrigido: `functions/api/tenants/[id]/_middleware.ts` só aplica o gate de
+billing a POST em `/members`; `functions/api/billing/invitations.ts` separa
+`managerBase` (membership, sempre exigida) de `manager` (membership +
+billing, só para criar/reenviar). GET e DELETE passam a exigir apenas
+membership de gestor. Evidência em EVIDENCE.md#S15.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/

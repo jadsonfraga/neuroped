@@ -25,7 +25,11 @@ import { onRequestPost as signupPost } from "../../functions/api/auth/signup";
 import { onRequestPost as verifyEmailPost } from "../../functions/api/auth/verify-email";
 import { onRequestPost as changePasswordPost } from "../../functions/api/auth/change-password";
 import { onRequestPost as tenantsPost } from "../../functions/api/tenants/index";
-import { onRequestPost as invitationsPost } from "../../functions/api/billing/invitations";
+import {
+  onRequestGet as invitationsGet,
+  onRequestPost as invitationsPost,
+  onRequestDelete as invitationsDelete,
+} from "../../functions/api/billing/invitations";
 import { onRequestPost as acceptPost } from "../../functions/api/billing/accept";
 import { onRequestPost as membersPost } from "../../functions/api/tenants/[id]/members";
 import { onRequestPost as checkoutPost } from "../../functions/api/billing/checkout";
@@ -410,6 +414,67 @@ raw.prepare(
   assert.equal(semConta.status, conscricao.status);
   const corpoSemConta = (await semConta.json()) as { code: string };
   assert.equal(corpoSemConta.code, corpo.code);
+}
+
+// LTB-15 (ciclo 4, 2026-09-26): billing suspenso não pode impedir a clínica
+// de listar e revogar seus próprios convites — só CRIAR (POST) continua
+// exigindo billing em dia. AZUL já converteu para assinatura ativa mais
+// acima neste arquivo; simula inadimplência sem carência (o mesmo destino
+// de um trial vencido sob a ótica do gate: ENTITLEMENT_SUSPENDED).
+// functions/api/tenants/[id]/_middleware.ts (o gate de /members) tem prova
+// dedicada em tests/unit/tenant-members-billing-gate.test.ts, porque
+// _middleware.ts só roda de verdade por trás do roteamento do Pages, nunca
+// por trás de uma chamada direta ao handler como as deste arquivo.
+{
+  raw.prepare(
+    `UPDATE billing_customers SET status = 'past_due', grace_ends_at = NULL WHERE clinic_id = ?`,
+  ).run(CLINICA_AZUL);
+
+  const conviteParaListar = await invitationsPost(
+    ctx(
+      req("https://x.test/api/billing/invitations", "POST", {
+        clinicId: CLINICA_AZUL,
+        email: "sera-listado@azul.test",
+        role: "professional",
+        action: "create",
+      }),
+      azul,
+    ),
+  );
+  assert.equal(
+    conviteParaListar.status,
+    402,
+    "criar convite continua exigindo billing em dia, mesmo com assento livre",
+  );
+
+  raw.prepare(
+    `INSERT INTO clinic_invitations
+      (id, clinic_id, invited_by_user_id, email, role, token_hash, status, expires_at, created_at)
+     VALUES ('invite-trial-vencido', ?, ?, 'pendente@azul.test', 'professional', 'hash-sintetico', 'pending', ?, ?)`,
+  ).run(CLINICA_AZUL, azul.id, new Date(Date.now() + 86_400_000).toISOString(), new Date().toISOString());
+
+  const listaComTrialVencido = await invitationsGet(
+    ctx(new Request(`https://x.test/api/billing/invitations?clinicId=${CLINICA_AZUL}`), azul),
+  );
+  assert.equal(listaComTrialVencido.status, 200, "listar convites pendentes não pode depender de billing em dia");
+
+  const revogacaoComTrialVencido = await invitationsDelete(
+    ctx(
+      new Request(
+        `https://x.test/api/billing/invitations?clinicId=${CLINICA_AZUL}&invitationId=invite-trial-vencido`,
+        { method: "DELETE" },
+      ),
+      azul,
+    ),
+  );
+  assert.equal(revogacaoComTrialVencido.status, 200, "revogar convite não pode depender de billing em dia");
+
+  // Restaura o billing ativo (o mesmo estado que o webhook de pagamento já
+  // havia produzido mais acima) para não afetar as demais jornadas deste
+  // arquivo.
+  raw.prepare(
+    `UPDATE billing_customers SET status = 'active', grace_ends_at = NULL WHERE clinic_id = ?`,
+  ).run(CLINICA_AZUL);
 }
 
 // A dona da VERMELHA não convida, não promove e não lê a equipe da AZUL.

@@ -112,6 +112,12 @@ que a clínica sai de `active` (suspensa, em encerramento ou encerrada) —
 antes continuavam aceitando PHI de família mesmo sem billing/clínica
 ativos. Evidência em EVIDENCE.md#S14.
 
+S15: com billing suspenso ou trial vencido, a clínica volta a conseguir
+listar e remover membros/convites — só criar/reenviar convite continua
+exigindo billing em dia. Antes, GET e DELETE de `/members` e
+`/invitations` também eram bloqueados, deixando a clínica sem forma de
+reduzir a folha antes de assinar. Evidência em EVIDENCE.md#S15.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver

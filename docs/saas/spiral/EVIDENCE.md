@@ -234,3 +234,38 @@
 - Rollback: reverter `functions/api/public-intake.ts` e
   `functions/api/public-scale.ts` a `f254ffe` restaura o comportamento
   anterior; nenhuma migração envolvida.
+
+## S15 (ciclo 4, 2026-09-26) — gate de billing bloqueava GET/DELETE de equipe
+- Escopo: `functions/api/tenants/[id]/_middleware.ts` (o gate de
+  `/members` só roda para `context.request.method === "POST"`);
+  `functions/api/billing/invitations.ts` (`managerBase` extraído de
+  `manager`; GET e DELETE usam `managerBase` — só membership; POST continua
+  em `manager` — membership + `requireBillingEntitlement`). Nenhuma
+  mudança de schema.
+- Ambiente: container da sessão, Node do repo, HEAD `1f7597b` (S14) + S15.
+- Testes: `tests/unit/cliente-zero-journey.test.ts` ganha um bloco que põe
+  a clínica AZUL (já com assinatura ativa real, de mais cedo no arquivo) em
+  `past_due` sem carência e prova que criar convite continua 402, mas
+  listar e revogar convite pendente respondem 200 — restaura o billing
+  ativo ao final para não afetar o resto da jornada. Novo arquivo
+  `tests/unit/tenant-members-billing-gate.test.ts` exercita o `onRequest`
+  do middleware diretamente (com `next()` sintético, já que ele só roda de
+  verdade atrás do roteamento do Pages): GET e DELETE de `/members`
+  alcançam `next()` com billing suspenso; POST continua bloqueado (402).
+  Ambos vistos FALHANDO pelo motivo certo contra o código anterior via
+  `git stash` isolado (402 em vez de 200 nos dois); verdes com a correção.
+- Comandos exit 0: `node --import tsx tests/unit/cliente-zero-journey.test.ts`,
+  `node --import tsx tests/unit/tenant-members-billing-gate.test.ts`,
+  `node --import tsx tests/unit/saas-billing-adversarial.test.ts`,
+  `node --import tsx tests/unit/saas-billing-contract.test.ts`,
+  `node --import tsx tests/unit/saas-acceptance-journey.test.ts`,
+  `node --import tsx tests/unit/saas-self-service.test.ts`,
+  `node --import tsx tests/unit/saas-tenant-lifecycle.test.ts`,
+  `npm run check`, `npx eslint` nos arquivos tocados, `npm run test:quick-wins`
+  (suíte completa), `node tests/unit/workflow-governance.test.mjs`.
+- CI: `tests/unit/tenant-members-billing-gate.test.ts` cadastrado em
+  `saas-self-service-guard.yml`, que já observa `functions/api/tenants/**`
+  e `functions/api/billing/**` e já roda `cliente-zero-journey.test.ts`.
+- Rollback: reverter `functions/api/tenants/[id]/_middleware.ts` e
+  `functions/api/billing/invitations.ts` a `1f7597b` restaura o
+  comportamento anterior; nenhuma migração envolvida.
