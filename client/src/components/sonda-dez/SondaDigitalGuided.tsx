@@ -72,7 +72,7 @@ const TRACKS: { id: Track; label: string; hint: string }[] = [
   {
     id: "easy",
     label: "🎮 Modo Fácil · joguinho",
-    hint: "Tudo na tela, de 1 a 19 anos: a criança toca, o jogo julga e passa sozinho. Certo/errado no fim.",
+    hint: "Tudo na tela, de 1 a 19 anos: a criança toca, o jogo registra e Próximo libera o item seguinte. Certo/errado no fim.",
   },
   {
     id: "guided",
@@ -410,7 +410,7 @@ export default function SondaDigitalGuided({
               item.id === "direct"
                 ? "Modo direto: sem guia, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."
                 : item.id === "easy"
-                  ? "Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo julga certo ou errado, passa sozinho e mostra o resultado no fim."
+                  ? "Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo registra certo ou errado; toque em Próximo para liberar cada novo item e veja o resultado no fim."
                   : "",
             );
           }}
@@ -438,7 +438,7 @@ export default function SondaDigitalGuided({
             <Badge variant="outline">v{DIGITAL_VERSION}</Badge>
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            Leia, a criança toca, o jogo passa sozinho.
+            Leia, a criança toca; Próximo libera o item seguinte.
           </h1>
           {trackTabs}
         </header>
