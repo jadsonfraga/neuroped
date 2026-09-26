@@ -172,17 +172,28 @@ sem migração. Não era vazamento cross-tenant (nada existia para vazar) —
 era lacuna de funcionalidade da "plataforma autogerenciável". Evidência em
 EVIDENCE.md#S21.
 
+S22: `POST /api/public-booking` `action=manage` devolvia o DTO completo do
+painel PRIVADO (`providerUserId`, `patientId`, `amountCents`,
+`paymentMethod` incluídos) a quem só tem o token opaco da reserva — mais
+acesso financeiro do que a própria recepção autenticada da clínica recebe
+(que já tem `amountCents`/`paymentMethod` redigidos em `operations/index.ts`).
+Resposta agora lista explicitamente só o que a família precisa para o
+autoatendimento. Evidência em EVIDENCE.md#S22.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Todos os
-candidatos "small" mapeados pela varredura de auditoria desta sessão (S18,
-S19, S20 e S21) foram fechados. Não há mais candidato pequeno e seguro
-identificado sem revisitar a auditoria original (docs/audits/
-SAAS_TENANCY_AUDIT_2026-09-26.md) em busca de itens ainda não avaliados, ou
-sem abrir uma das frentes deliberadamente grandes: S10 (papel duplo
-global×membership, toca middleware de billing usado por toda rota clínica),
-S12B (expandir o export para cobrir documentos/avaliações/intake/escala,
-cripto-pesado) e S13 (link público de agendamento por clínica, redesenho de
-rota no frontend). Retomada: `git fetch origin main && git log -1
-origin/main` e reler este arquivo.
+candidatos "small" mapeados pela varredura de auditoria desta sessão (S18
+a S22) foram fechados. Não há mais candidato pequeno e seguro identificado
+sem revisitar a auditoria original (docs/audits/
+SAAS_TENANCY_AUDIT_2026-09-26.md) em busca de itens ainda não avaliados —
+por exemplo LEG-17 (LIKE sem escapar em memory/index.ts, baixa severidade,
+sem impacto de isolamento) e LTB-22(e) (SEAT_LIMIT_REACHED devolvendo 500
+em vez de 409 em members.ts) foram citados como "aquecimento" mas ainda não
+avaliados nesta sessão — ou sem abrir uma das frentes deliberadamente
+grandes: S10 (papel duplo global×membership, toca middleware de billing
+usado por toda rota clínica), S12B (expandir o export para cobrir
+documentos/avaliações/intake/escala, cripto-pesado) e S13 (link público de
+agendamento por clínica, redesenho de rota no frontend). Retomada:
+`git fetch origin main && git log -1 origin/main` e reler este arquivo.

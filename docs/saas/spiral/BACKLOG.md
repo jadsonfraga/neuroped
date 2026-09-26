@@ -301,6 +301,36 @@ paginação básica. Visto falhando pelo motivo certo contra o código anterior
 (o arquivo simplesmente não existia — `git stash push -u`, module not
 found). Evidência em EVIDENCE.md#S21.
 
+## S22 · P3 · FECHADO (ciclo 4)
+`POST /api/public-booking` `action=manage` (autoatendimento da família pelo
+token da reserva) devolvia o DTO completo de `appointmentToApi` — o mesmo
+usado no painel PRIVADO do profissional — incluindo `providerUserId`/
+`patientId` (identificadores internos sem uso legítimo para a família) e
+`amountCents`/`paymentMethod` (detalhe financeiro granular que nem a
+recepção delegada enxerga: `operations/index.ts` já redige exatamente esses
+dois campos, `amountCents: null` e `paymentMethod: null`, para quem não é
+`principal.canConfigure`). Um token de reserva (não autenticado) dava mais
+acesso a esses dados do que a própria secretária autenticada da clínica.
+(OPS-19)
+
+Corrigido em `functions/api/public-booking.ts`: a resposta de
+`action=manage` passou a listar explicitamente os campos que a família
+precisa (nome/telefone/e-mail do responsável, nome do paciente, horário,
+status, status de pagamento — mantido, pois é o autoatendimento que precisa
+saber se pagou —, serviço) e omite `providerUserId`, `patientId`,
+`amountCents` e `paymentMethod`. Confirmado que o frontend (`agendar.tsx`)
+nunca lia nenhum desses quatro campos — pura redução de superfície, sem
+regressão de UX.
+
+Teste novo `tests/unit/public-booking-manage-redaction.test.ts` (schema
+real + handler real) cria uma reserva sintética com `patient_id`,
+`amount_cents` e `payment_method` preenchidos e prova que a resposta de
+`action=manage` não tem mais essas quatro chaves nem o valor do
+`patient_id` em lugar nenhum do corpo, mantendo os campos de
+autoatendimento (incluindo `paymentStatus`). Visto falhando pelo motivo
+certo contra o código anterior via `git stash`. Evidência em
+EVIDENCE.md#S22.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/

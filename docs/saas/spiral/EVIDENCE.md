@@ -593,3 +593,45 @@
 - Rollback: apagar `functions/api/tenants/[id]/audit.ts` restaura o
   comportamento anterior (nenhuma rota expõe a auditoria da clínica);
   nenhuma migração envolvida, nenhum outro arquivo de produção tocado.
+
+## S22 (ciclo 4, 2026-09-26) — DTO público sobre-exposto em action=manage (OPS-19)
+- Escopo: 1 arquivo de produção (`functions/api/public-booking.ts`, só o
+  branch `action === "manage"`). Nenhuma mudança de schema, nenhuma mudança
+  em `appointmentToApi` (função compartilhada com o painel privado —
+  continua devolvendo o DTO completo lá, onde é apropriado).
+- Ambiente: container da sessão, Node do repo, HEAD `f7788d8` (S21) + S22.
+- Achado: confirmado por leitura direta — `public-booking.ts:181` (antes da
+  correção) devolvia `{ appointment: await appointmentToApi(env, appointment) }`
+  sem nenhuma redução, o MESMO objeto usado em `operations/index.ts:163`
+  para o painel do profissional. Comparação direta com o próprio código:
+  `operations/index.ts:165-172` já redige `amountCents`/`paymentMethod`
+  para a recepção delegada (`!principal.canConfigure`) — um empregado
+  AUTENTICADO da clínica. A rota pública, sem autenticação nenhuma, dava
+  MAIS acesso financeiro a quem só tem o token do que a própria recepção.
+  `providerUserId`/`patientId` são identificadores internos sem nenhum uso
+  no frontend (`client/src/pages/agendar.tsx` só lê `data.appointment.serviceId`).
+- Testes: novo `tests/unit/public-booking-manage-redaction.test.ts` (schema
+  real + todas as migrações + handler real de `POST /api/public-booking`).
+  Cria uma reserva sintética com `patient_id='live-patient-opaco-123'`,
+  `amount_cents=30000`, `payment_method='pix'` e chama `action=manage` com
+  o token correspondente; prova que a resposta NÃO tem as chaves
+  `providerUserId`/`patientId`/`amountCents`/`paymentMethod`
+  (`Object.prototype.hasOwnProperty`) nem o valor do `patient_id` em lugar
+  nenhum do JSON serializado, e que os campos de autoatendimento
+  (`guardianName`, `guardianPhone`, `patientName`, `status`,
+  `paymentStatus`, `serviceName`, `startsAtLocal`) continuam corretos.
+  Visto falhando pelo motivo certo contra o código anterior via `git stash
+  push -- functions/api/public-booking.ts` (`providerUserId` presente na
+  resposta).
+- Comandos exit 0: `node --import tsx tests/unit/public-booking-manage-redaction.test.ts`,
+  `npm run check`, `npx eslint functions/api/public-booking.ts
+  tests/unit/public-booking-manage-redaction.test.ts --max-warnings=0`,
+  `npm run test:operations` (suíte completa, com o teste novo já cadastrado
+  nela), `npm run test:quick-wins` (suíte completa),
+  `node tests/unit/workflow-governance.test.mjs`.
+- CI: `tests/unit/public-booking-manage-redaction.test.ts` cadastrado em
+  `test:operations`, já executado sem filtro de `paths` por
+  `.github/workflows/pr-check.yml` em todo PR para `main`.
+- Rollback: reverter `functions/api/public-booking.ts` ao commit anterior
+  restaura o comportamento anterior (DTO completo volta a ser exposto);
+  nenhuma migração envolvida.

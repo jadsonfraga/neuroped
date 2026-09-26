@@ -178,7 +178,38 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       const token = cleanText(body.token, 200);
       const appointment = token ? await findAppointmentByToken(env.DB, token) : null;
       if (!appointment) return errorResponse("Reserva não encontrada.", "NOT_FOUND", 404);
-      return jsonResponse({ appointment: await appointmentToApi(env, appointment) });
+      const full = await appointmentToApi(env, appointment);
+      // OPS-19 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+      // quem só tem o token da reserva não pode receber identificadores
+      // internos (providerUserId, patientId) nem detalhe financeiro granular
+      // (amountCents, paymentMethod) — a mesma disciplina que a recepção
+      // delegada já recebe em operations/index.ts (getDashboard). O status
+      // do pagamento (pago/pendente) continua, pois a família precisa dele
+      // para o autoatendimento.
+      return jsonResponse({
+        appointment: {
+          id: full.id,
+          serviceId: full.serviceId,
+          startsAtLocal: full.startsAtLocal,
+          endsAtLocal: full.endsAtLocal,
+          timezone: full.timezone,
+          status: full.status,
+          source: full.source,
+          guardianName: full.guardianName,
+          guardianEmail: full.guardianEmail,
+          guardianPhone: full.guardianPhone,
+          patientName: full.patientName,
+          paymentStatus: full.paymentStatus,
+          checkedInAt: full.checkedInAt,
+          completedAt: full.completedAt,
+          cancelledAt: full.cancelledAt,
+          cancelReason: full.cancelReason,
+          createdAt: full.createdAt,
+          updatedAt: full.updatedAt,
+          serviceName: full.serviceName,
+          serviceModality: full.serviceModality,
+        },
+      });
     }
 
     if (action === "book") {
