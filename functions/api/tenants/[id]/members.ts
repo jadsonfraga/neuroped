@@ -1,4 +1,5 @@
 import { getContextUser } from "../../auth/_authorization";
+import { roleHasPermission } from "../../../../shared/permissions";
 import {
   isClinicMembershipRole,
   type ClinicMembershipRole,
@@ -6,7 +7,7 @@ import {
 import {
   getClinicMembership,
   isReservedTechnicalEmail,
-  membershipCanManage,
+  membershipHas,
   prepareSaasAudit,
   tenantError,
   tenantJson,
@@ -48,7 +49,7 @@ async function managerContext(context: ManagerContextInput) {
   if (!user) return { error: tenantError("Não autenticado.", "UNAUTHENTICATED", 401) } as const;
   if (!clinicId) return { error: tenantError("Clínica inválida.", "VALIDATION_ERROR", 400) } as const;
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !membershipCanManage(membership)) {
+  if (!membership || !membershipHas(membership, "team.manage")) {
     return { error: tenantError("Apenas gestores da clínica podem administrar a equipe.", "TENANT_FORBIDDEN", 403) } as const;
   }
   return { db, user, clinicId, membership, env: context.env } as const;
@@ -149,7 +150,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const role: ClinicMembershipRole = roleRaw;
-  if (role === "owner" && auth.membership.role !== "owner") {
+  if (role === "owner" && !roleHasPermission(auth.membership.role, "team.manage_owners")) {
     return tenantError("Somente owner pode conceder papel owner.", "TENANT_FORBIDDEN", 403);
   }
 
@@ -162,10 +163,34 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     )
     .bind(email)
     .first<{ id: string; name: string; email: string; global_role: string }>();
-  if (!target) {
+
+  const currentMembership = target
+    ? await auth.db
+        .prepare(
+          `SELECT role, active
+             FROM clinic_memberships
+            WHERE clinic_id = ? AND user_id = ?
+            LIMIT 1`,
+        )
+        .bind(auth.clinicId, target.id)
+        .first<{ role: ClinicMembershipRole; active: number }>()
+    : null;
+
+  // LTB-03/AUTHZ-P1-05 (ciclo 4, 2026-09-26): esta rota NÃO é entrada de
+  // equipe — é só mudança de papel de quem JÁ é membro ativo. Antes, um
+  // e-mail existente e desconhecido do chamador virava membro ativo sem
+  // convite nem aceite (consumia assento, entrava numa clínica que não
+  // escolheu), e a rota era oráculo de enumeração: 404 para e-mail
+  // inexistente, 409 para papel global incompatível, 201 com o nome para
+  // e-mail alheio já cadastrado. A resposta agora é idêntica (mesmo status,
+  // mesmo código) para e-mail sem conta, conta sem membership nesta clínica
+  // ou membership desativada — nenhuma dessas informações é mais
+  // distinguível pelo chamador. Entrada de gente nova continua exclusiva do
+  // fluxo de convite (POST /api/billing/invitations + accept).
+  if (!target || currentMembership?.active !== 1) {
     return tenantError(
-      "Usuário ainda não possui conta NeuroPed. O fluxo de convite por e-mail será adicionado antes do piloto.",
-      "USER_NOT_REGISTERED",
+      "Este e-mail não é um membro ativo desta clínica. Para adicionar alguém à equipe, envie um convite.",
+      "MEMBER_NOT_FOUND",
       404,
     );
   }
@@ -185,20 +210,10 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     );
   }
 
-  const currentMembership = await auth.db
-    .prepare(
-      `SELECT role, active
-         FROM clinic_memberships
-        WHERE clinic_id = ? AND user_id = ?
-        LIMIT 1`,
-    )
-    .bind(auth.clinicId, target.id)
-    .first<{ role: ClinicMembershipRole; active: number }>();
-
   if (
     currentMembership?.active === 1 &&
     currentMembership.role === "owner" &&
-    auth.membership.role !== "owner"
+    !roleHasPermission(auth.membership.role, "team.manage_owners")
   ) {
     return tenantError("Somente owner pode alterar o papel de outro owner.", "TENANT_FORBIDDEN", 403);
   }
@@ -300,7 +315,7 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
   }
   if (targetMembership.role === "owner") {
-    if (auth.membership.role !== "owner") {
+    if (!roleHasPermission(auth.membership.role, "team.manage_owners")) {
       return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
     }
     if ((await otherActiveOwnerCount(auth.db, auth.clinicId, targetUserId)) === 0) {

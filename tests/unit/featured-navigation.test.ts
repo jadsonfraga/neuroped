@@ -9,11 +9,43 @@ import {
 
 const OBS_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
 const VISUAL_ROUTE = "/testes-reconhecimento";
+const COGNITIVE_ROUTE = "/testes-cognitivos";
+const GAME_ROUTE = "/super-neuropad-game";
 
-test("Sonda, OBS e reconhecimento visual precedem os atalhos da rotina clínica", () => {
-  assert.deepEqual(featuredNavigation.slice(0, 7).map((item) => item.href), [
-    "/testes-diretos", OBS_ROUTE, VISUAL_ROUTE, "/pacientes", "/agenda", "/laudo-neuroped", "/receita-c1",
+test("Super NeuroPad Game, Sonda, OBS, reconhecimento visual e testes cognitivos precedem os atalhos da rotina clínica", () => {
+  assert.deepEqual(featuredNavigation.slice(0, 9).map((item) => item.href), [
+    GAME_ROUTE, "/testes-diretos", OBS_ROUTE, VISUAL_ROUTE, COGNITIVE_ROUTE, "/pacientes", "/agenda", "/laudo-neuroped", "/receita-c1",
   ]);
+});
+
+test("Super NeuroPad Game abre a pré-consulta guiada e mantém as quatro abas de origem", () => {
+  const sections = navSections.filter((section) => section.items.some((item) => item.href === GAME_ROUTE));
+  assert.deepEqual(sections.map((section) => section.title), ["PRÉ-CONSULTA GUIADA"]);
+  assert.equal(sections[0].items[0].href, GAME_ROUTE, "primeiro item da pré-consulta guiada");
+  const featured = featuredNavigation.filter((item) => item.href === GAME_ROUTE);
+  assert.equal(featured.length, 1);
+  assert.equal(featured[0].tone, "priority");
+  assert.equal(featured[0].label, "Super NeuroPad Game");
+  assert.equal(navigablePages.filter((item) => item.href === GAME_ROUTE).length, 1);
+  for (const source of ["/testes-diretos", OBS_ROUTE, VISUAL_ROUTE, COGNITIVE_ROUTE]) {
+    assert.equal(featuredNavigation.some((item) => item.href === source), true, `${source} continua em destaque`);
+  }
+});
+
+test("testes cognitivos por faixa etária têm acesso prioritário e o mesmo nome no destaque", () => {
+  const sections = navSections.filter((section) =>
+    section.items.some((item) => item.href === COGNITIVE_ROUTE),
+  );
+  assert.deepEqual(sections.map((section) => section.title), ["TRIAGEM E FERRAMENTAS"]);
+  const sectionItems = navSections.flatMap((section) => section.items)
+    .filter((item) => item.href === COGNITIVE_ROUTE);
+  const featuredItems = featuredNavigation.filter((item) => item.href === COGNITIVE_ROUTE);
+  assert.equal(sectionItems.length, 1);
+  assert.equal(featuredItems.length, 1);
+  assert.equal(sectionItems[0].label, "Testes cognitivos por faixa etária");
+  assert.equal(featuredItems[0].label, sectionItems[0].label);
+  assert.equal(featuredItems[0].tone, "priority");
+  assert.equal(navigablePages.filter((item) => item.href === COGNITIVE_ROUTE).length, 1);
 });
 
 test("reconhecimento visual tem acesso prioritário e uma única entrada por superfície", () => {

@@ -1,4 +1,5 @@
 import { getContextUser } from "../../auth/_authorization";
+import { roleHasPermission } from "../../../../shared/permissions";
 import {
   getClinicMembership,
   tenantError,
@@ -35,7 +36,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (!clinicId)
     return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !["owner", "clinic_admin"].includes(membership.role)) {
+  if (!membership || !roleHasPermission(membership.role, "organization.export")) {
     return tenantError(
       "Apenas gestores podem exportar o tenant completo.",
       "TENANT_EXPORT_FORBIDDEN",
@@ -82,7 +83,13 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
         clinicalEvents: safeCounts.events,
         memberships: safeCounts.memberships,
       },
-      complete: true,
+      // LTB-02 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): antes fixo em
+      // `true` mesmo faltando documentos, avaliações, intake e respostas de
+      // escala remota do payload. Agora reflete de fato o que este export
+      // levou; `uncoveredNotExported` nomeia, por tabela, o que ainda falta
+      // (zero em todas quando `complete` é true).
+      complete: collected.complete,
+      uncoveredNotExported: collected.uncoveredCounts,
     },
     data,
   };

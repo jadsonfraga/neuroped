@@ -6,6 +6,7 @@ export type RouteUserRole = "admin" | "professional" | "reader" | "operator";
 export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
 export const SENSITIVE_ROUTES = [
+  "/super-neuropad-game",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/assinatura-digital",
@@ -145,7 +146,13 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   route: string;
   roles: readonly RouteUserRole[];
 }> = [
+  // Configurações da conta e da clínica usam as permissões da membership
+  // retornadas pelo backend. Abrir a tela não concede acesso ao prontuário.
+  { route: "/configuracoes", roles: ["admin", "professional", "reader", "operator"] },
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  // A secretária opera a agenda administrativa sem receber acesso ao prontuário.
+  { route: "/agenda", roles: ["admin", "professional", "operator"] },
+  { route: "/super-neuropad-game", roles: DIRECT_TEST_ROLES },
   { route: "/testes-diretos", roles: DIRECT_TEST_ROLES },
   { route: "/testes-reconhecimento", roles: DIRECT_TEST_ROLES },
   { route: "/testes-cognitivos", roles: DIRECT_TEST_ROLES },

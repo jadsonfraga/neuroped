@@ -17,6 +17,7 @@ const schema = z.object({
     bandId: text(10).refine((value) => AGE_BANDS.some((band) => band.id === value)),
     schooling: text(120), language: text(120), adaptations: text(1500), conditions: text(1500), familyReport: text(2000),
     proneAllowed: z.boolean(), missingMaterials: z.array(text(100)).max(17).optional(),
+    preparation: z.literal("direct").optional(),
   }).strict(),
   observations: z.array(z.object({
     id: text(80).min(1).regex(/^[a-zA-Z0-9_-]+$/), phase: z.number().int().min(0).max(5),
@@ -40,8 +41,11 @@ export function parseRecordJSON(raw: string): ImportResult {
     if (!result.success) return { ok: false, error: "Arquivo incompatível ou incompleto. Aceitos registros OBS-10 1.0 a 1.6.1; nenhum dado atual foi alterado." };
     const data = result.data;
     const c = data.context;
+    const band = bandForMonths(c.correctedMonths ?? c.chronologicalMonths);
     if ((c.correctedMonths !== null && (c.chronologicalMonths >= 24 || c.correctedMonths > c.chronologicalMonths))
-      || bandForMonths(c.correctedMonths ?? c.chronologicalMonths)?.id !== c.bandId) throw new Error("Age mismatch");
+      || band?.id !== c.bandId) throw new Error("Age mismatch");
+    // Autorização de prono só existe nas fichas < 9 meses; um documento não pode afirmá-la fora delas.
+    if (band.min >= 9) c.proneAllowed = false;
     if (data.encodingSecond !== null && data.encodingSecond > data.durationSeconds) throw new Error("Encoding after collection");
     if (data.recallSecond !== null && (data.encodingSecond === null || data.recallSecond < data.encodingSecond || data.recallSecond > data.durationSeconds)) throw new Error("Invalid recall interval");
     const ids = new Set<string>();
@@ -55,6 +59,8 @@ export function parseRecordJSON(raw: string): ImportResult {
         if (!task || task.phase !== entry.phase) throw new Error("Task outside the selected sheet");
         // A declared model cannot be downgraded by an imported document.
         entry.modelInInstruction = Boolean(task.model);
+        // Station names have one source of truth: an edited copy in the file is normalised back.
+        entry.task = task.title;
       }
     }
     if (data.evidence && !evidenceReferencesValid(data.evidence, data.sessionId, data.observations as SessionRecord["observations"])) throw new Error("Invalid evidence references");

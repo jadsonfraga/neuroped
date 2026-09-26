@@ -5,14 +5,15 @@ on:
     branches:
       - main
     paths:
-      - "client/src/styles/visual-reset.css"
-      - "client/src/styles/premium-polish-10.css"
-      - "client/src/styles/flow-os.css"
-      - "client/src/styles/premium-app-shell-v12.css"
-      - "client/src/styles/tablet-coarse-perf.css"
-      - "client/src/styles/brand-signature-v14.css"
-      # Fonte única de estilo da sidebar: mudava sem acionar o gate visual.
-      - "client/src/styles/sidebar-v13.css"
+      # Cover the complete CSS entry graph, not only selected generations.
+      - "client/src/**/*.css"
+      - "client/public/**/*.css"
+      - "client/index.html"
+      - "tailwind.config.ts"
+      - "postcss.config.js"
+      - "vite.config.ts"
+      - "package.json"
+      - "package-lock.json"
       - "client/src/main.tsx"
       - "client/src/components/Layout.tsx"
       - "client/src/components/MobilePrimaryDock.tsx"
@@ -43,6 +44,7 @@ on:
       - "scripts/audit-design.mjs"
       - "scripts/guards/audit-surface-contrast.mjs"
       - "scripts/guards/audit-tailwind-opacity-modifiers.mjs"
+      - "tests/unit/css-token-source-static.test.mjs"
       - "tests/unit/visual-reset-static.test.mjs"
       - "tests/unit/premium-polish-10-static.test.mjs"
       - "tests/unit/flow-os-navigation-static.test.mjs"
@@ -68,6 +70,8 @@ jobs:
         run: npm ci
       - name: Install real Chromium
         run: npx playwright install --with-deps chromium
+      - name: Canonical CSS token source contract
+        run: node tests/unit/css-token-source-static.test.mjs
       - name: Visual reset contract
         run: node tests/unit/visual-reset-static.test.mjs
       - name: Premium Polish 10 contract

@@ -1,10 +1,10 @@
 /**
- * GET /api/admin/go-live — prontidão comercial desta instalação.
+ * GET /api/admin/go-live — diagnóstico de configuração desta instalação.
  *
- * Por que existe: os gates que separam "software pronto" de "SaaS vendável"
- * não vivem no código — vivem em variáveis do Cloudflare Pages. Sem esta
- * rota, quem provisiona descobre se acertou tentando vender: cria conta,
- * espera um e-mail que não chega, e não sabe qual das três variáveis faltou.
+ * Inspeciona os pré-requisitos configurados no Cloudflare Pages, sem testar
+ * credenciais, entrega de e-mail, banco ou cobrança. Configuração presente
+ * não comprova operação externa nem autoriza venda. Os campos legados são
+ * preservados; nivelAtestado e naoComprova explicitam o alcance da resposta.
  *
  * INVARIANTE DE SEGREDO: esta rota responde apenas BOOLEANOS e códigos. Ela
  * nunca devolve, ecoa ou registra o valor de segredo algum — nem prefixo, nem
@@ -93,6 +93,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
    */
   const ordemInvertida = cadastroAberto && !entregaEmail;
 
+  /**
+   * O que esta rota ATESTA é só o primeiro degrau da escada comercial:
+   * configuração presente. Os degraus seguintes exigem efeitos que um GET de
+   * configuração não observa — chamada real ao provedor, e-mail recebido,
+   * webhook sandbox exercitado, produção verificada e um humano aceitando
+   * vender. A resposta distingue configuração incompleta de presente e
+   * explicita que nenhum desses efeitos externos foi comprovado aqui.
+   */
+  const ambienteCobranca = (() => {
+    const rotulo = (env.ASAAS_ENVIRONMENT ?? "").trim().toLowerCase();
+    // Só os dois códigos reconhecidos saem daqui: um valor arbitrário da
+    // variável nunca é ecoado, mantendo o invariante de resposta sem segredo.
+    return rotulo === "sandbox" || rotulo === "production" ? rotulo : null;
+  })();
+
   const pendencias: string[] = [];
   if (!gates.banco) pendencias.push("DB_BINDING_AUSENTE");
   if (!gates.sessao) pendencias.push("JWT_SECRET_AUSENTE_OU_CURTO");
@@ -103,12 +118,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   return json(
     {
       pronto: pendencias.length === 0,
+      nivelAtestado: pendencias.length === 0
+        ? "CONFIGURACAO_PRESENTE"
+        : "CONFIGURACAO_INCOMPLETA",
+      ambienteCobranca,
+      naoComprova: [
+        "CREDENCIAL_VALIDADA_NO_PROVEDOR",
+        "ENTREGA_EMAIL_COMPROVADA",
+        "INTEGRACAO_SANDBOX_EXERCITADA",
+        "PRODUCAO_VERIFICADA",
+        "ACEITE_COMERCIAL_HUMANO",
+      ],
       ordemInvertida,
       gates,
       pendencias,
       nota:
-        "Booleanos apenas. Esta rota nunca devolve valor de segredo. " +
-        "Provisione a entrega de e-mail ANTES de abrir o cadastro.",
+        "Booleanos e códigos apenas. Esta rota nunca devolve valor de segredo. " +
+        "Provisione a entrega de e-mail ANTES de abrir o cadastro. " +
+        "pronto=true atesta somente configuração presente e NÃO autoriza venda: " +
+        "os degraus em naoComprova exigem verificação própria e aceite humano.",
     },
     200,
   );

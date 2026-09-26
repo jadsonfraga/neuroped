@@ -22,6 +22,7 @@ import {
   tenantJson,
   type TenantEnv,
 } from "../../tenant/_core";
+import { isClinicFeatureEnabled } from "../../tenant/_features";
 import { decryptClinicalJson } from "../../tenant/_crypto";
 
 const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/;
@@ -216,6 +217,10 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
   const billingError = await requireBillingEntitlement(db, user.id, clinicId, "clinical");
   if (billingError) return billingError;
+  // Decisão da própria clínica (feature flag), dentro do que o plano concede.
+  if (!(await isClinicFeatureEnabled(db, clinicId, "remote_scales"))) {
+    return tenantError("Questionários remotos desativados nesta clínica.", "FEATURE_DISABLED", 403);
+  }
   if (!(await patientBelongsToClinic(db, clinicId, patientId))) {
     return tenantError("Paciente não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
   }

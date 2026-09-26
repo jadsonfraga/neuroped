@@ -336,6 +336,47 @@ jobs:
           put_optional NEUROPED_E2E_EMAIL "$e2e_mail"
           put_optional NEUROPED_E2E_NAME "$e2e_name"
 
+      - name: Provisionar bucket LGPD (R2) e binding (idempotente, condicional)
+        # O binding LGPD_EXPORT_BUCKET só entra no wrangler.toml desta execução
+        # quando o bucket comprovadamente existe (ou foi criado agora). Sem
+        # permissão R2 no token, o passo declara o bloqueio externo e o deploy
+        # segue sem o binding; o runtime continua fail-closed
+        # (LGPD_BUCKET_NOT_CONFIGURED) e nada é executado "de outro jeito".
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          bucket="neuroped-lgpd-exports"
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets"
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          body=$(mktemp)
+          code=$(curl -sS -o "$body" -w "%{http_code}" -H "$auth" "$api/$bucket" || echo "000")
+          available=0
+          case "$code" in
+            200) echo "bucket $bucket: já existe."; available=1 ;;
+            404)
+              create=$(curl -sS -o "$body" -w "%{http_code}" -H "$auth" -H "Content-Type: application/json" \
+                --data "{\"name\":\"$bucket\"}" "$api" || echo "000")
+              if [ "$create" = "200" ] && [ "$(jq -r '.success' "$body")" = "true" ]; then
+                echo "bucket $bucket: criado agora."; available=1
+              else
+                echo "::error::Falha ao criar o bucket $bucket (HTTP $create)."; exit 1
+              fi ;;
+            401|403)
+              echo "::warning::BLOCKED_EXTERNAL_R2_TOKEN_PERMISSION — o token CLOUDFLARE_API_TOKEN não tem permissão 'Workers R2 Storage: Edit' (HTTP $code). Sem isso o bucket $bucket não pode ser conferido nem criado; o deploy segue sem o binding e a exportação LGPD permanece fail-closed (docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md)." ;;
+            *) echo "::error::Consulta ao bucket $bucket falhou (HTTP $code)."; exit 1 ;;
+          esac
+          if [ "$available" = "1" ]; then
+            if ! grep -Fq 'binding = "LGPD_EXPORT_BUCKET"' wrangler.toml; then
+              printf '\n[[r2_buckets]]\nbinding = "LGPD_EXPORT_BUCKET"\nbucket_name = "%s"\n' "$bucket" >> wrangler.toml
+              echo "binding LGPD_EXPORT_BUCKET → $bucket adicionado ao wrangler.toml desta execução."
+            fi
+            echo "LGPD_BUCKET_BOUND=true" >> "$GITHUB_ENV"
+          else
+            echo "LGPD_BUCKET_BOUND=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Deploy para Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -365,6 +406,27 @@ jobs:
           if [ "$ok" -ne 1 ]; then
             echo "::error::O apex não serviu o commit esperado após ~3 min."
             exit 1
+          fi
+
+      - name: Verificar efeito do provisionamento LGPD no projeto publicado
+        # Fail-closed: se o binding foi aplicado nesta execução, os metadados do
+        # deploy de produção precisam mostrá-lo, e o binding D1 "DB" precisa
+        # continuar presente. Nunca declarar pronto sem efeito verificado.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          meta=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/neuroped")
+          db=$(printf '%s' "$meta" | jq -r '.result.deployment_configs.production.d1_databases.DB.id // empty')
+          [ -n "$db" ] || { echo "::error::binding D1 'DB' ausente no deploy de produção após o deploy."; exit 1; }
+          r2=$(printf '%s' "$meta" | jq -r '.result.deployment_configs.production.r2_buckets.LGPD_EXPORT_BUCKET.name // empty')
+          if [ "${LGPD_BUCKET_BOUND:-false}" = "true" ]; then
+            [ "$r2" = "neuroped-lgpd-exports" ] || { echo "::error::binding LGPD_EXPORT_BUCKET não apareceu no deploy de produção (efeito não verificado)."; exit 1; }
+            echo "✅ binding LGPD_EXPORT_BUCKET verificado no projeto publicado."
+          else
+            echo "binding LGPD_EXPORT_BUCKET não aplicado nesta execução (bloqueio externo declarado acima)."
           fi
 
       - name: Validar health autenticado do backend publicado

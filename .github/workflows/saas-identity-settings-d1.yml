@@ -24,10 +24,10 @@ on:
 permissions:
   contents: read
 
-# Grupo próprio: migrações D1 idempotentes não disputam a vaga única do grupo
-# compartilhado cloudflare-pages (que já cancelou deploys nesta main).
+# Main serializa a migração; cada PR valida seu próprio candidato sem disputar
+# a única vaga pendente com outro PR. O job de migração continua exclusivo de main.
 concurrency:
-  group: d1-identity-settings
+  group: d1-identity-settings-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

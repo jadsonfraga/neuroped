@@ -43,6 +43,22 @@ test("proteção de saída cobre SPA, histórico e links externos sem impedir au
   const source = fs.readFileSync("client/src/hooks/useSondaExitGuard.ts", "utf8");
   for (const event of ["beforeunload", "click", "hashchange", "popstate"]) assert.ok(source.includes(`removeEventListener("${event}"`));
 });
+test("Voltar do navegador para /login com sessão ainda válida não é a sessão forçando a saída (bug corrigido)", () => {
+  const here = "https://example.invalid/#/testes-diretos";
+  // Sessão inválida (padrão): /login, /sessão-expirada e /consentimento-lgpd continuam isentos.
+  for (const target of ["#/login", "#/sessao-expirada", "#/consentimento-lgpd"]) assert.equal(leavesSondaRoute(target, here, true), false);
+  // Sessão ainda válida: essas mesmas rotas passam a proteger o registro em curso,
+  // porque é a própria página de login que devolve o profissional autenticado sozinha.
+  for (const target of ["#/login", "#/sessao-expirada", "#/consentimento-lgpd"]) assert.equal(leavesSondaRoute(target, here, false), true);
+  assert.equal(leavesSondaRoute("#/testes-diretos", here, false), false, "a própria rota nunca é saída, com sessão válida ou não");
+  const guard = fs.readFileSync("client/src/hooks/useSondaExitGuard.ts", "utf8");
+  assert.match(guard, /const sessionInvalid = accessMode === "remote" && !isAuthenticated/);
+  assert.match(guard, /useLayoutEffect\(\(\) =>/, "limpeza síncrona precede Redirect de sessão expirada");
+  assert.match(guard, /leavesSondaRoute\(anchor\.href, heldUrl, invalid\)/);
+  assert.match(guard, /leavesSondaRoute\(window\.location\.href, heldUrl, invalid\)/);
+  const page = fs.readFileSync("client/src/components/sonda-dez/SondaDigitalGuided.tsx", "utf8");
+  assert.match(page, /useSondaExitGuard\(dirty\)/, "a guarda central resolve modo e sessão reais do app");
+});
 const sequence: StepRun = { status: "complete", elapsedMs: 5000, events: [
   { type: "apresentado", value: "0", elapsedMs: 0 },
   { type: "apresentado", value: "1", elapsedMs: 2500 },
@@ -133,6 +149,7 @@ test("relógio conserva frações por missão e o relatório usa a versão prese
   const page = fs.readFileSync("client/src/pages/testes-diretos.tsx", "utf8");
   assert.match(page, /SONDA_DEZ_VERSION.*from "@\/data\/sondaDezCanonical"/);
   assert.match(page, /PROTOCOLO v\$\{SONDA_DEZ_VERSION\}/);
+  assert.match(page, /useLayoutEffect\(\(\) => \{\s*const clock = activeTime.current/);
   assert.match(page, /window.clearInterval\(timer\); tick\(\)/);
   assert.match(page, /activeTime.current !== clock/);
 });

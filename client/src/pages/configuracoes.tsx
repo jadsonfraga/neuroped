@@ -5,7 +5,9 @@ import {
   CreditCard,
   Loader2,
   Mail,
+  ScrollText,
   ShieldCheck,
+  SlidersHorizontal,
   Stethoscope,
   Trash2,
   UsersRound,
@@ -14,22 +16,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
 import { useToast } from "@/hooks/use-toast";
 import TenantMetricsPanel from "@/components/TenantMetricsPanel";
+import type { TenantPermission } from "../../../shared/permissions";
+import type { ClinicFeatureState } from "../../../shared/clinicFeatures";
 
-type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade";
+type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade" | "auditoria" | "recursos";
 
-const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2 }> = [
+/**
+ * Cada seção declara a permissão do catálogo (`shared/permissions.ts`) que a
+ * torna visível. A lista efetiva vem do servidor em `GET /api/tenants/:id`
+ * (`permissions`), já com o status da clínica aplicado — a tela nunca compara
+ * nome de papel nem confia em um booleano derivado. Seção sem `requires` é
+ * visível a qualquer membro ativo.
+ */
+const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2; requires?: TenantPermission }> = [
   { id: "perfil", label: "Perfil", icon: Stethoscope },
   { id: "clinica", label: "Clínica", icon: Building2 },
-  { id: "equipe", label: "Equipe", icon: UsersRound },
-  { id: "plano", label: "Plano", icon: CreditCard },
-  { id: "atividade", label: "Atividade", icon: ShieldCheck },
+  { id: "equipe", label: "Equipe", icon: UsersRound, requires: "team.manage" },
+  { id: "plano", label: "Plano", icon: CreditCard, requires: "billing.manage" },
+  { id: "atividade", label: "Atividade", icon: ShieldCheck, requires: "organization.metrics.read" },
+  { id: "auditoria", label: "Auditoria", icon: ScrollText, requires: "audit.read" },
+  { id: "recursos", label: "Recursos", icon: SlidersHorizontal },
 ];
+
+function hasPermission(permissions: readonly TenantPermission[] | null, permission: TenantPermission): boolean {
+  return permissions !== null && permissions.includes(permission);
+}
 
 /**
  * Seção inicial a partir do link (`#/configuracoes?secao=plano`).
@@ -67,7 +85,8 @@ interface TenantDetail {
   timezone: string;
   status: string;
   role: string;
-  canManage: boolean;
+  /** Permissões efetivas calculadas no servidor (vazio com clínica inativa). */
+  permissions: TenantPermission[];
   settings: {
     displayName: string;
     addressLine1: string;
@@ -110,10 +129,85 @@ interface BillingSnapshot {
   seats: { contracted: number | null; activeMembers: number | null };
 }
 
+interface TenantAuditEntry {
+  id: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  actorUserId: string;
+  actorName: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+interface TenantAuditPage {
+  data: TenantAuditEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+const AUDIT_ACTION_LABEL: Record<string, string> = {
+  clinic_update: "Dados da clínica alterados",
+  clinic_feature_update: "Recurso da clínica alterado",
+  clinic_membership_upsert: "Membro adicionado ou papel alterado",
+  clinic_membership_deactivate: "Acesso de membro revogado",
+  remote_intake_invite_create: "Convite de pré-consulta remota criado",
+  remote_intake_invite_revoke: "Convite de pré-consulta remota revogado",
+  remote_intake_accept: "Pré-consulta remota aceita",
+  remote_intake_reject: "Pré-consulta remota rejeitada",
+  remote_scale_invite_create: "Convite de questionário remoto criado",
+  remote_scale_invite_revoke: "Convite de questionário remoto revogado",
+  remote_scale_response_review: "Questionário remoto revisado",
+  live_patient_create: "Paciente cadastrado",
+  live_patient_update: "Paciente atualizado",
+  live_patient_archive: "Paciente arquivado",
+  live_clinical_event_create: "Evento clínico registrado",
+  live_assessment_create: "Avaliação registrada",
+  live_retention_policy_upsert: "Política de retenção alterada",
+  lgpd_export_executed: "Exportação LGPD executada",
+  lgpd_deletion_executed: "Eliminação LGPD executada",
+};
+
 async function readJson<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as T & { error?: string };
   if (!response.ok) throw new Error(body.error || `Falha (${response.status})`);
   return body;
+}
+
+function normalizeTenantDetail(detail: TenantDetail): TenantDetail {
+  // Resposta antiga (sem `permissions`) ou malformada vira "sem permissão":
+  // a ausência da lista nunca pode ser lida como acesso.
+  return { ...detail, permissions: Array.isArray(detail.permissions) ? detail.permissions : [] };
+}
+
+function useTenantDetail(clinicId: string | null) {
+  const [detail, setDetail] = useState<TenantDetail | null>(null);
+  const [loading, setLoading] = useState(Boolean(clinicId));
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    if (!clinicId) {
+      setDetail(null);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    void authFetch(`/api/tenants/${clinicId}`)
+      .then((response) => readJson<TenantDetail>(response))
+      .then((body) => !cancelled && setDetail(normalizeTenantDetail(body)))
+      .catch((loadError: Error) => !cancelled && setError(loadError.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId]);
+  useEffect(load, [load]);
+
+  const apply = useCallback((next: TenantDetail) => setDetail(normalizeTenantDetail(next)), []);
+  return { detail, loading, error, reload: load, apply };
 }
 
 function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -212,22 +306,25 @@ function PerfilSection() {
   );
 }
 
-function ClinicaSection({ clinicId }: { clinicId: string }) {
+function ClinicaSection({
+  clinicId,
+  detail: loaded,
+  loading,
+  loadError,
+  onSaved,
+}: {
+  clinicId: string;
+  detail: TenantDetail | null;
+  loading: boolean;
+  loadError: string | null;
+  onSaved: (next: TenantDetail) => void;
+}) {
   const { toast } = useToast();
-  const [detail, setDetail] = useState<TenantDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState<TenantDetail | null>(loaded);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    void authFetch(`/api/tenants/${clinicId}`)
-      .then((response) => readJson<TenantDetail>(response))
-      .then(setDetail)
-      .catch((loadError: Error) => setError(loadError.message))
-      .finally(() => setLoading(false));
-  }, [clinicId]);
-  useEffect(load, [load]);
+  useEffect(() => setDraft(loaded), [loaded]);
+  const detail = draft;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -246,7 +343,9 @@ function ClinicaSection({ clinicId }: { clinicId: string }) {
           }),
         }),
       );
-      setDetail(updated);
+      // PATCH devolve o detalhe sem `permissions`; a lista efetiva continua a
+      // do GET, para a tela não perder ou ganhar abas ao salvar.
+      onSaved({ ...updated, permissions: loaded?.permissions ?? [] });
       invalidateIssuerCache();
       toast({ title: "Clínica atualizada ✓" });
     } catch (saveError) {
@@ -256,12 +355,12 @@ function ClinicaSection({ clinicId }: { clinicId: string }) {
     }
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground" role="status">Carregando clínica…</p>;
-  if (!detail) return <p role="alert" className="text-sm text-destructive">{error ?? "Clínica indisponível."}</p>;
+  if (loading && !detail) return <p className="text-sm text-muted-foreground" role="status">Carregando clínica…</p>;
+  if (!detail) return <p role="alert" className="text-sm text-destructive">{loadError ?? "Clínica indisponível."}</p>;
 
-  const readOnly = !detail.canManage;
-  const set = (patch: Partial<TenantDetail>) => setDetail({ ...detail, ...patch });
-  const setSettings = (patch: Partial<TenantDetail["settings"]>) => setDetail({ ...detail, settings: { ...detail.settings, ...patch } });
+  const readOnly = !hasPermission(detail.permissions, "organization.manage");
+  const set = (patch: Partial<TenantDetail>) => setDraft({ ...detail, ...patch });
+  const setSettings = (patch: Partial<TenantDetail["settings"]>) => setDraft({ ...detail, settings: { ...detail.settings, ...patch } });
 
   return (
     <SectionCard
@@ -576,15 +675,198 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
   );
 }
 
+// A tela decide edição por `permissions` (organization.manage); o booleano
+// que a API também devolve não é lido aqui de propósito.
+interface ClinicFeaturesPayload {
+  clinicId: string;
+  features: ClinicFeatureState[];
+}
+
+function RecursosSection({ clinicId, permissions }: { clinicId: string; permissions: TenantPermission[] | null }) {
+  const { toast } = useToast();
+  const [payload, setPayload] = useState<ClinicFeaturesPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const editable = hasPermission(permissions, "organization.manage");
+
+  useEffect(() => {
+    let cancelled = false;
+    void authFetch(`/api/tenants/${clinicId}/features`)
+      .then((response) => readJson<ClinicFeaturesPayload>(response))
+      .then((body) => !cancelled && setPayload(body))
+      .catch((loadError: Error) => !cancelled && setError(loadError.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId]);
+
+  async function toggle(feature: ClinicFeatureState, enabled: boolean) {
+    setBusyKey(feature.key);
+    setError(null);
+    try {
+      const updated = await readJson<ClinicFeaturesPayload>(
+        await authFetch(`/api/tenants/${clinicId}/features`, {
+          method: "PATCH",
+          body: JSON.stringify({ features: { [feature.key]: enabled } }),
+        }),
+      );
+      setPayload(updated);
+      toast({ title: enabled ? `${feature.label} ligado ✓` : `${feature.label} desligado`, description: "A mudança ficou registrada na auditoria da clínica." });
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : "Falha ao alterar o recurso.");
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  if (error && !payload) return <p role="alert" className="text-sm text-destructive">{error}</p>;
+  if (!payload) return <p className="text-sm text-muted-foreground" role="status">Carregando recursos…</p>;
+
+  return (
+    <SectionCard
+      title="Recursos da clínica"
+      description={editable
+        ? "O que esta clínica mantém ligado, dentro do que o plano concede. Desligar um recurso vale na hora para toda a equipe."
+        : "O que esta clínica mantém ligado. Somente proprietário(a) e administrador(a) alteram."}
+    >
+      <ul className="divide-y divide-border">
+        {payload.features.map((feature) => (
+          <li key={feature.key} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">{feature.label}</p>
+              <p className="text-xs leading-5 text-muted-foreground">{feature.description}</p>
+              {feature.source === "default" && <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">Padrão do produto</p>}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{feature.enabled ? "Ligado" : "Desligado"}</span>
+              <Switch
+                aria-label={`${feature.label}: ${feature.enabled ? "ligado" : "desligado"}`}
+                checked={feature.enabled}
+                disabled={!editable || busyKey !== null}
+                onCheckedChange={(next) => void toggle(feature, next)}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs text-destructive">{error}</p>}
+    </SectionCard>
+  );
+}
+
+function AuditoriaSection({ clinicId }: { clinicId: string }) {
+  const [page, setPage] = useState(1);
+  const [actionFilter, setActionFilter] = useState("");
+  const [appliedAction, setAppliedAction] = useState("");
+  const [result, setResult] = useState<TenantAuditPage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    setLoading(true);
+    const params = new URLSearchParams({ page: String(page), limit: "25" });
+    if (appliedAction) params.set("action", appliedAction);
+    void authFetch(`/api/tenants/${clinicId}/audit?${params.toString()}`)
+      .then((response) => readJson<TenantAuditPage>(response))
+      .then((body) => !cancelled && setResult(body))
+      .catch((loadError: Error) => !cancelled && setError(loadError.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId, page, appliedAction, retry]);
+
+  function applyFilter(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPage(1);
+    setAppliedAction(actionFilter.trim());
+  }
+
+  if (error) return (
+    <div className="space-y-3">
+      <p role="alert" className="text-sm text-destructive">{error}</p>
+      <Button variant="outline" onClick={() => setRetry((current) => current + 1)}>Tentar novamente</Button>
+    </div>
+  );
+  if (!result) return <p className="text-sm text-muted-foreground" role="status">Carregando auditoria…</p>;
+
+  const lastPage = Math.max(1, Math.ceil(result.total / result.limit));
+
+  return (
+    <SectionCard
+      title="Auditoria da clínica"
+      description="Quem fez o quê e quando nesta clínica. São metadados de operação — nunca conteúdo clínico — e a mesma trilha que o servidor grava a cada ação."
+    >
+      <form onSubmit={applyFilter} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="auditoria-acao">Filtrar por ação</Label>
+          <Input id="auditoria-acao" maxLength={160} placeholder="Ex.: membership, intake, lgpd" value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} />
+        </div>
+        <Button type="submit" variant="outline" disabled={loading}>Filtrar</Button>
+      </form>
+      {loading && <p role="status" className="text-sm text-muted-foreground">Atualizando auditoria…</p>}
+      {result.data.length === 0 && <p className="text-sm text-muted-foreground">Nenhum registro para este filtro.</p>}
+      <ul className="divide-y divide-border">
+        {result.data.map((entry) => (
+          <li key={entry.id} className="flex flex-wrap items-start justify-between gap-2 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">{AUDIT_ACTION_LABEL[entry.action] ?? entry.action}</p>
+              <p className="text-xs text-muted-foreground">
+                {entry.actorName ?? "Conta removida"} · {entry.targetType}
+                {entry.targetId ? ` · ${entry.targetId}` : ""}
+              </p>
+            </div>
+            <time dateTime={entry.createdAt} className="text-xs text-muted-foreground">
+              {new Date(entry.createdAt).toLocaleString("pt-BR")}
+            </time>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{result.total} registro(s) · página {result.page} de {lastPage}</span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" disabled={loading || page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Anterior</Button>
+          <Button size="sm" variant="ghost" disabled={loading || page >= lastPage} onClick={() => setPage((current) => current + 1)}>Próxima</Button>
+        </div>
+      </div>
+    </SectionCard>
+  );
+}
+
 export default function ConfiguracoesPage() {
+  const { activeClinicId } = useClinic();
+  // A troca de clínica descarta rascunhos, respostas e permissões do tenant anterior.
+  return <ConfiguracoesContent key={activeClinicId ?? "no-clinic"} />;
+}
+
+function ConfiguracoesContent() {
   const { user } = useAuth();
   const { activeClinicId, clinics } = useClinic();
   const [section, setSection] = useState<SectionId>(initialSectionFromLocation);
+  const tenant = useTenantDetail(activeClinicId);
 
   const activeClinic = useMemo(
     () => clinics.find((clinic) => clinic.id === activeClinicId) ?? null,
     [clinics, activeClinicId],
   );
+
+  // Enquanto a lista não chegou, só as seções sem exigência aparecem; uma
+  // seção restrita nunca é mostrada "por enquanto" à espera da resposta.
+  const permissions: TenantPermission[] | null = tenant.detail?.permissions ?? null;
+  const visibleSections = useMemo(
+    () => SECTIONS.filter((entry) => !entry.requires || hasPermission(permissions, entry.requires)),
+    [permissions],
+  );
+
+  // Link profundo (`?secao=plano`) para uma seção que este membro não tem
+  // permissão de ver cai em "Perfil" assim que a lista chega.
+  useEffect(() => {
+    if (tenant.loading) return;
+    if (!visibleSections.some((entry) => entry.id === section)) setSection("perfil");
+  }, [section, tenant.loading, visibleSections]);
 
   if (!user) return null;
 
@@ -599,7 +881,7 @@ export default function ConfiguracoesPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 rounded-2xl border bg-card p-2" role="tablist" aria-label="Seções de configurações">
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
+        {visibleSections.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
@@ -622,10 +904,20 @@ export default function ConfiguracoesPage() {
           </a>
         </SectionCard>
       )}
-      {section === "clinica" && activeClinicId && <ClinicaSection clinicId={activeClinicId} />}
-      {section === "equipe" && activeClinicId && <EquipeSection clinicId={activeClinicId} />}
-      {section === "plano" && activeClinicId && <PlanoSection clinicId={activeClinicId} />}
-      {section === "atividade" && activeClinicId && <TenantMetricsPanel key={activeClinicId} />}
+      {section === "clinica" && activeClinicId && (
+        <ClinicaSection
+          clinicId={activeClinicId}
+          detail={tenant.detail}
+          loading={tenant.loading}
+          loadError={tenant.error}
+          onSaved={tenant.apply}
+        />
+      )}
+      {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <EquipeSection clinicId={activeClinicId} />}
+      {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}
+      {section === "atividade" && activeClinicId && hasPermission(permissions, "organization.metrics.read") && <TenantMetricsPanel key={activeClinicId} />}
+      {section === "auditoria" && activeClinicId && hasPermission(permissions, "audit.read") && <AuditoriaSection key={activeClinicId} clinicId={activeClinicId} />}
+      {section === "recursos" && activeClinicId && <RecursosSection key={activeClinicId} clinicId={activeClinicId} permissions={permissions} />}
     </div>
   );
 }

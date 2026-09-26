@@ -4,6 +4,7 @@
  */
 
 import { writeApiMetric, type ApiMetricsEnv } from "./_observability";
+import { tenantManagementAuthorization } from "./tenant/_managementAuthorization";
 
 interface Env extends ApiMetricsEnv {
   DB?: D1Database;
@@ -75,6 +76,13 @@ const PUBLIC_API_PATHS = new Set([
   "/api/public-booking",
   "/api/public-intake",
   "/api/public-scale",
+  // O webhook do provedor de cobrança se autentica sozinho por
+  // `asaas-access-token` (comparação em tempo constante, ≥32 caracteres,
+  // functions/api/billing/_provider.ts validateAsaasWebhook) e falha fechado
+  // (503) se o segredo não estiver configurado. O provedor nunca envia
+  // `Authorization: Bearer`, então exigir sessão de usuário aqui bloqueava
+  // toda notificação de pagamento antes de chegar ao handler.
+  "/api/billing/webhook",
 ]);
 
 // Rotas onde a autenticação é opcional: sem Authorization a requisição segue
@@ -207,8 +215,11 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   }
 
   const user = publicUser(row);
+  const passwordFailure = passwordChangeFailure(request, user);
+  if (passwordFailure) return { failure: passwordFailure, user };
+  const tenantAuthorization = await tenantManagementAuthorization(env.DB, request, user);
   return {
-    failure: passwordChangeFailure(request, user) ?? roleFailure(request, user),
+    failure: tenantAuthorization.handled ? tenantAuthorization.failure : roleFailure(request, user),
     user,
   };
 }

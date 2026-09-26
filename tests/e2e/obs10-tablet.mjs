@@ -65,6 +65,11 @@ async function runTask(i, opts = {}) {
   }
   if (title.includes("regra simples")) assert.ok(await w.locator(".ot-steps li").count() >= 3);
   const openActivity = w.getByRole("button", { name: /^(Iniciar esta interação|Abrir estação para a criança)$/ });
+  if (opts.draftLeak) {
+    // A reason typed under "Não posso aplicar" and never sent must not become the applied station's description.
+    await w.getByText("Não posso aplicar esta estação", { exact: true }).click();
+    await w.getByLabel("Motivo da não aplicação", { exact: true }).fill("RASCUNHO de motivo de omissão não enviado");
+  }
   await openActivity.click(); await phase("child");
   assert.equal(await w.getByTestId("tablet-cue").count(), 0, "adult instructions are unmounted from child screen");
   assert.equal(await w.getByTestId("obs10-station-journey").count(), 0, "child surface has no station map");
@@ -88,6 +93,7 @@ async function runTask(i, opts = {}) {
     await page.setViewportSize({ width: 390, height: 844 }); await screen("04-leitura-celular"); await page.setViewportSize({ width: 1280, height: 960 });
   }
   await b("Terminar tentativa · registrar").click(); await phase("response");
+  if (opts.draftLeak) assert.equal(await w.getByLabel("O que você viu ou ouviu? Inclua ajuda e limitações.", { exact: true }).inputValue(), "", "an unsent omission draft never becomes the applied station's description");
   await b("Na proposta inicial").click();
   await w.getByLabel("O que você viu ou ouviu? Inclua ajuda e limitações.", { exact: true }).fill(`Tentativa fictícia ${i + 1}: registro específico da ação observada.`);
   await b("Salvar resposta e continuar").click();
@@ -116,7 +122,7 @@ try {
   for (const control of await w.getByRole("button").all()) if (await control.isVisible()) assert.ok((await control.boundingBox()).height >= 59, "tablet touch targets remain at least 60 CSS pixels, allowing subpixel rounding");
   await b("Letras maiores").click(); await page.setViewportSize({ width: 390, height: 844 }); await screen("01b-preparacao-letras-maiores"); await b("Letras maiores").click(); await page.setViewportSize({ width: 1280, height: 960 });
   await setup(3, 6);
-  for (let i = 0; i < 8; i++) await runTask(i, { capture: true });
+  for (let i = 0; i < 8; i++) await runTask(i, { capture: true, draftLeak: i === 1 });
   await phase("review"); await screen("05-revisao");
   assert.equal(await w.getByTestId("obs10-mission-map").locator("li").count(), 8);
   assert.equal(await w.getByTestId("obs10-mission-map").locator('[data-station-state="done"]').count(), 8, "review map reports eight factual records, not pass/fail");

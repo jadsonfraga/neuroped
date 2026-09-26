@@ -1,6 +1,6 @@
 import { getContextUser } from "../auth/_authorization";
 import { CANONICAL_PRICE_CENTS } from "../../../shared/billing";
-import { getClinicMembership, membershipCanManage, tenantError, tenantJson } from "../tenant/_core";
+import { getClinicMembership, membershipHas, tenantError, tenantJson } from "../tenant/_core";
 import {
   checkoutExternalReference,
   createAsaasRecurringCheckout,
@@ -39,7 +39,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !membershipCanManage(membership)) {
+  if (!membership || !membershipHas(membership, "billing.manage")) {
     return tenantError("Apenas gestores da clínica podem iniciar checkout.", "TENANT_FORBIDDEN", 403);
   }
 

@@ -155,21 +155,29 @@ export function drawingStrokes(events: TabletEvent[], taskId: string): Point[][]
   return strokes;
 }
 /** Observations whose category exists but whose factual description is still missing. Never auto-filled. */
+/**
+ * Estações com categoria marcada e descrição ainda não escrita. Uma estação aberta e
+ * encerrada antes de qualquer categoria (outcome === null) é registro parcial, não
+ * pendência: contá-la aqui fazia o export dizer "categoria marcada" de uma estação
+ * sem categoria nenhuma.
+ */
 export function pendingDescriptions(r: TabletRecord): string[] {
-  return r.observations.filter((o) => !o.note.trim()).map((o) => o.taskId);
+  return r.observations.filter((o) => o.outcome !== null && !o.note.trim()).map((o) => o.taskId);
 }
 export function tabletText(r: TabletRecord): string {
   const plan = tabletPlan(r.context.months)!;
   const lines = ["NEUROPED · OBS-10 TABLET · REGISTRO EXPLORATÓRIO", TABLET_LIMITS, `Versão: ${r.protocol} | Sessão: ${r.sessionId} | Revisão: ${r.revision}`, `Código: ${r.context.code} | Idade: ${r.context.months} meses | Ficha: ${plan.bandLabel}`, `Escolaridade: ${r.context.schooling || "Não informada"}`, `Comunicação: ${r.context.communication || "Não informada"}`, `Condições relatadas: ${r.context.conditions || "Não informadas"}`, `Duração: ${r.durationSeconds.toFixed(1)} s | Encerramento: ${r.endReason}`, `Captação solicitada: ${r.camera}. Integridade e enquadramento não são verificados automaticamente.`, r.importedForReview ? "Arquivo importado somente para revisão; origem e veracidade não autenticadas. Nenhum vídeo recuperado." : "Registro local; não houve envio automático ao prontuário.", "", "OBSERVAÇÕES DECLARADAS PELA APLICADORA"];
-  for (const t of plan.tasks) {
+  // Rota planejada ≠ percurso real: estações depois da última proposta não foram alcançadas.
+  const reachedIndex = plan.tasks.reduce((last, t, i) => (r.observations.some((entry) => entry.taskId === t.id) ? i : last), -1);
+  for (const [i, t] of plan.tasks.entries()) {
     const o = r.observations.find((entry) => entry.taskId === t.id);
-    lines.push(`\n${t.title} | Modalidade: ${t.kind}`, `Proposta: ${t.command}`, o ? `Resposta registrada: ${o.outcome ?? "Categoria não registrada"}. ${o.note || "Descrição ausente; não inferir achado."}${o.editedAfterEnd ? " [Descrição complementada após encerramento.]" : ""}` : "Não houve observação registrada desta tarefa. Não concluir ausência de habilidade.");
+    lines.push(`\n${t.title} | Modalidade: ${t.kind}`, `Proposta: ${t.command}`, o ? `Resposta registrada: ${o.outcome ?? "Categoria não registrada"}. ${o.note || "Descrição ausente; não inferir achado."}${o.editedAfterEnd ? " [Descrição complementada após encerramento.]" : ""}` : i > reachedIndex ? "Estação não alcançada: a coleta foi encerrada antes de ela ser proposta. Não concluir ausência de habilidade." : "Não houve observação registrada desta estação. Não concluir ausência de habilidade.");
     if (t.kind === "drawing") lines.push("Traçado por toque, sem equivalência à escrita manual. Dados brutos no JSON. Uma interrupção pode deixar o último traço parcial.");
     if (t.memory === "recall") lines.push("Evocação só pode ser interpretada pelo médico com o registro inicial e as interferências. Intervalos de tela não são medidas normativas.");
   }
   const pending = pendingDescriptions(r);
   lines.push("", "COBERTURA QUE ESTE MODO NÃO EXAMINA", ...plan.limitations, "",
-    pending.length ? `PENDÊNCIA: ${pending.length} ${pending.length === 1 ? "estação" : "estações"} com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : "Todas as estações registradas possuem descrição escrita pela aplicadora.",
+    pending.length ? `PENDÊNCIA: ${pending.length} ${pending.length === 1 ? "estação" : "estações"} com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : r.observations.some((o) => !o.note.trim()) ? "Há registros parciais sem categoria e sem descrição; conferir os registros individuais. Não inferir achado." : "Todas as estações registradas possuem descrição escrita pela aplicadora.",
     `Conferência humana: ${r.reviewed ? "declarada pela aplicadora" : "não declarada"}. Não é assinatura médica nem recibo de envio.`, `Eventos operacionais: ${r.events.length}; ${r.eventLimitReached ? "LIMITE ATINGIDO, registros de interação podem estar incompletos" : "sem truncamento sinalizado"}. Não são escores ou tempos de reação calibrados.`, "O JSON contém registro e traçados, não o vídeo. Arquivos exigem armazenamento institucional autorizado.");
   return lines.join("\n");
 }

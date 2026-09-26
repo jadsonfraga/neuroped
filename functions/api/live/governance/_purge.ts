@@ -26,6 +26,7 @@
 import type { LgpdWorkerClaim } from "./_worker-core";
 import type { DeletionEligibility, LgpdScope } from "./_worker-executor";
 import { evaluateDeletionEligibility } from "./_worker-executor";
+import { EXPORT_UNCOVERED_CLINIC_TABLES, isMissingExportTable, validExportRowCount } from "../../tenant/_exportPayload";
 
 /**
  * Tabelas clínicas do Clinical LIVE, em ordem de dependência (filhas antes das
@@ -93,6 +94,7 @@ export const PURGE_PRESERVED_TABLES: ReadonlyArray<string> = [
   "billing_entitlements",
   "clinic_memberships",
   "clinic_settings",
+  "clinic_feature_flags",
   "clinic_invitations",
 ];
 
@@ -218,6 +220,37 @@ export async function executeTenantScopedPurge(
     return null;
   }
 
+  // LTB-02 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+  // o export do tenant declarava `complete: true` sem levar documentos,
+  // avaliações, intake e respostas de escala — e o encerramento seguia
+  // export → purge, apagando exatamente o que nunca tinha sido exportado.
+  // EXPORT_UNCOVERED_CLINIC_TABLES (functions/api/tenant/_exportPayload.ts)
+  // é a MESMA lista usada para calcular `complete` no export: se sobrar
+  // qualquer linha da clínica nelas, o purge de escopo 'clinic' recusa em
+  // vez de destruir dado que ninguém levou para fora. Escopo 'patient' não
+  // entra aqui de propósito: a eliminação individual não depende de um
+  // export de tenant inteiro ter sido feito antes.
+  if (targets.scope === "clinic") {
+    for (const table of EXPORT_UNCOVERED_CLINIC_TABLES) {
+      let remaining: { n: number } | null;
+      try {
+        remaining = await db
+          .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
+          .bind(targets.clinicId)
+          .first<{ n: number }>();
+        validExportRowCount(remaining);
+      } catch (error) {
+        if (isMissingExportTable(error, table)) continue;
+        await params.fail(`PURGE_PREFLIGHT_FAILED:${table}`);
+        return null;
+      }
+      if (Number(remaining?.n ?? 0) > 0) {
+        await params.fail(`EXPORT_MANIFEST_INCOMPLETE:${table}`);
+        return null;
+      }
+    }
+  }
+
   // Antes de apagar: a eliminação vai de fato alcançar tudo do titular?
   // Uma linha remanescente em tabela fora do alcance torna a eliminação
   // incompleta, e reportar `completed` nesse caso seria mentir na trilha.
@@ -239,9 +272,11 @@ export async function executeTenantScopedPurge(
               )
               .bind(targets.clinicId)
               .first<{ n: number }>();
-    } catch {
-      // Tabela ausente neste banco não é motivo para bloquear a eliminação.
-      continue;
+      validExportRowCount(remaining);
+    } catch (error) {
+      if (isMissingExportTable(error, table)) continue;
+      await params.fail(`PURGE_PREFLIGHT_FAILED:${table}`);
+      return null;
     }
     if (Number(remaining?.n ?? 0) > 0) {
       await params.fail(`PURGE_UNREACHABLE_DATA:${table}`);
