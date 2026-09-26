@@ -2,14 +2,15 @@
  * Estado do Filtro Clínico na URL (deep-link compartilhável).
  *
  * Um colega recebe `#/filtro?idade=5a6m&queixas=tea,linguagem&resp=pais` e
- * abre exatamente a mesma busca. Regras:
+ * abre os mesmos filtros estruturados. O texto livre não é compartilhado. Regras:
  *  - Só chaves próprias (FILTER_URL_KEYS) são lidas/escritas; `autoral` (aba)
  *    e `mode=flash` ficam intactos.
  *  - Leitura aceita a query no hash (`#/filtro?...`) e na query real
  *    (`/?...#/filtro`), como readRouteParam.
  *  - Escrita usa replaceState (sem empilhar histórico nem disparar rota).
- *  - Nada de PHI: a URL carrega idade, queixa e preferências de busca, nunca
- *    nome ou identificador de paciente.
+ *  - Texto livre pode conter dados de paciente: `q` é somente de entrada,
+ *    por compatibilidade; nunca é serializado e é removido na próxima escrita.
+ *    A URL gerada contém apenas os filtros estruturados do aplicativo.
  *  - Valores inválidos são ignorados um a um (fail-closed por campo).
  */
 
@@ -139,7 +140,8 @@ export function parseFilterUrlParams(params: URLSearchParams, validators: Filter
 
 export function serializeFilterUrlParams(state: Omit<FilterUrlState, "present">): URLSearchParams {
   const params = new URLSearchParams();
-  if (state.search?.trim()) params.set("q", state.search.trim().slice(0, MAX_SEARCH));
+  // Não propagar texto livre para histórico, favoritos ou links copiados.
+  // `q` continua em FILTER_URL_KEYS para limpar links legados ao reescrever.
   if (state.queixas?.length) params.set("queixas", state.queixas.join(","));
   const idade = formatUrlExactAge(state.exactAge);
   if (idade) params.set("idade", idade);
