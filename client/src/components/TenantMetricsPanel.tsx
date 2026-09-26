@@ -4,6 +4,7 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { Button } from "@/components/ui/button";
 import { tenantMetricsSchema, type TenantMetrics } from "../../../shared/tenantMetrics";
+import { roleHasPermission } from "../../../shared/permissions";
 
 export function TenantMetricsSummary({ metrics }: { metrics: TenantMetrics }) {
   const stats = [
@@ -38,7 +39,7 @@ export default function TenantMetricsPanel() {
   const { user, isAuthenticated, isLoading, accessMode } = useAuth();
   const { activeClinicId, activeClinic } = useClinic();
   const permitted = !isLoading && accessMode === "remote" && isAuthenticated && !user?.mustChangePassword
-    && activeClinic?.status === "active" && (activeClinic.role === "owner" || activeClinic.role === "clinic_admin");
+    && activeClinic?.status === "active" && roleHasPermission(activeClinic.role, "organization.metrics.read");
   const query = useQuery({
     queryKey: ["tenant-activity-metrics", user?.id, activeClinicId],
     enabled: Boolean(permitted && activeClinicId),
