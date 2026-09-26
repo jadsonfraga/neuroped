@@ -64,7 +64,12 @@ validateTokenImport(indexCss);
 const baseImport = main.indexOf('import "./index.css"');
 const signatureImport = main.indexOf('import "./styles/visual-reset.css"');
 assert.ok(baseImport >= 0 && signatureImport > baseImport, "keep the established CSS import order");
-assert.ok(workflow.includes('"client/src/**/*.css"'), "the visual gate must cover all client CSS");
+function validateCssGate(source) {
+  for (const path of ["client/src/**/*.css", "client/public/**/*.css", "client/index.html"]) {
+    assert.ok(source.includes(`- "${path}"`), `${path} must trigger the visual gate`);
+  }
+}
+validateCssGate(workflow);
 for (const path of ["tailwind.config.ts", "postcss.config.js", "vite.config.ts", "package.json", "package-lock.json"]) {
   assert.ok(workflow.includes(`- "${path}"`), `${path} changes must trigger the visual gate`);
 }
@@ -78,4 +83,7 @@ for (const selector of [":root", ".dark"]) {
     /must not reintroduce/);
 }
 assert.throws(() => validateTokenImport(`@tailwind base;\n${indexCss}`), /must precede Tailwind/);
-console.log("PASS: 32 canonical palette tokens in both themes; valid imports; complete CSS gate coverage; 3 mutations rejected.");
+for (const path of ["client/public/**/*.css", "client/index.html"]) {
+  assert.throws(() => validateCssGate(workflow.replace(`- "${path}"`, "")), /must trigger/);
+}
+console.log("PASS: 32 canonical palette tokens in both themes; valid imports; source/public CSS and HTML gate coverage; 5 mutations rejected.");

@@ -6,6 +6,8 @@ export type RouteUserRole = "admin" | "professional" | "reader" | "operator";
 export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
 export const SENSITIVE_ROUTES = [
+  "/super-neuropad-game",
+  "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/assinatura-digital",
   "/documentos",
@@ -29,6 +31,8 @@ export const SENSITIVE_ROUTES = [
   "/neuroacompanhamento",
   "/inventarios-escola",
   "/testes-diretos",
+  "/testes-reconhecimento",
+  "/testes-cognitivos",
   "/epilepsia",
   "/cefaleia",
   "/diario-sono",
@@ -36,7 +40,6 @@ export const SENSITIVE_ROUTES = [
   "/recepcao",
   "/conecta",
   "/agenda",
-  "/manus",
 ] as const;
 
 /**
@@ -144,7 +147,13 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   roles: readonly RouteUserRole[];
 }> = [
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  // A secretária opera a agenda administrativa sem receber acesso ao prontuário.
+  { route: "/agenda", roles: ["admin", "professional", "operator"] },
+  { route: "/super-neuropad-game", roles: DIRECT_TEST_ROLES },
   { route: "/testes-diretos", roles: DIRECT_TEST_ROLES },
+  { route: "/testes-reconhecimento", roles: DIRECT_TEST_ROLES },
+  { route: "/testes-cognitivos", roles: DIRECT_TEST_ROLES },
+  { route: "/avaliacao-pre-consulta-faixa-etaria", roles: DIRECT_TEST_ROLES },
   // As origens de redirect legado da Sonda Dez herdam a política do destino:
   // sem isso o guard decidiria a origem pelos papéis default (sem operator)
   // e bloquearia o bookmark da assistente antes de o <Redirect> rodar. Antes

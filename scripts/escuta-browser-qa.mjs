@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { build } from "esbuild";
 import { chromium } from "playwright";
+import { auditBrowserLaunchOptions } from "./lib/browser-audit-runtime.mjs";
 // Teste de componente isolado. Auth/tenant/provedor são fixtures explícitos, não prova de produção.
 const root=process.cwd(), out=resolve("artifacts/escuta"), temp=resolve(".tmp/escuta-component");
 mkdirSync(out,{recursive:true});mkdirSync(temp,{recursive:true});
@@ -28,7 +29,7 @@ await new Promise(r=>server.listen(0,"127.0.0.1",r));const origin=`http://127.0.
 let browser;const report={scope:"isolated component contract with fixture services and virtual microphone; not production/auth/provider E2E",assertions,status:"running"};
 const passed=name=>{assertions.push(name);console.log(`PASS ${name}`);};
 try{
-  browser=await chromium.launch({headless:true,args:["--use-fake-device-for-media-stream","--use-fake-ui-for-media-stream","--autoplay-policy=no-user-gesture-required"]});
+  browser=await chromium.launch(auditBrowserLaunchOptions({args:["--use-fake-device-for-media-stream","--use-fake-ui-for-media-stream","--autoplay-policy=no-user-gesture-required"]}));
   const context=await browser.newContext({viewport:{width:1440,height:1100},permissions:["microphone"],acceptDownloads:true});
   await context.addInitScript(()=>{const original=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);window.qaTracks=[];navigator.mediaDevices.getUserMedia=async c=>{const stream=await original(c);window.qaTracks.push(...stream.getTracks());return stream;};});
   const page=await context.newPage();const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("dialog",d=>d.accept());

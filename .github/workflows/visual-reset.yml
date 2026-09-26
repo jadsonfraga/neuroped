@@ -7,6 +7,8 @@ on:
     paths:
       # Cover the complete CSS entry graph, not only selected generations.
       - "client/src/**/*.css"
+      - "client/public/**/*.css"
+      - "client/index.html"
       - "tailwind.config.ts"
       - "postcss.config.js"
       - "vite.config.ts"

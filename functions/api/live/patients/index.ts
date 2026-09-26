@@ -90,6 +90,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
   const url = new URL(context.request.url);
   const clinicId = cleanText(url.searchParams.get("clinicId"), 80);
+  const searchQuery = cleanText(url.searchParams.get("q"), 80).toLocaleLowerCase("pt-BR");
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
 
   const membership = await getClinicMembership(db, clinicId, user);
@@ -112,7 +113,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
     .all<LivePatientRow>();
 
   try {
-    const data = await Promise.all(
+    const decrypted = await Promise.all(
       (rows.results ?? []).map(async (row) => ({
         id: row.id,
         clinicId: row.clinic_id,
@@ -129,7 +130,14 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
         updatedAt: row.updated_at,
       })),
     );
-    return tenantJson({ data });
+    // O perfil está cifrado em repouso, portanto a busca nominal precisa ocorrer
+    // após a descriptografia no Worker. O navegador recebe somente os matches.
+    const data = decrypted
+      .filter((patient) =>
+        !searchQuery || patient.profile.name.toLocaleLowerCase("pt-BR").includes(searchQuery),
+      )
+      .slice(0, 50);
+    return tenantJson({ data, total: data.length, filtered: Boolean(searchQuery) });
   } catch (error) {
     console.error("[live.patients.GET] decrypt failure", error);
     return tenantError("Dados clínicos indisponíveis.", "CLINICAL_DECRYPT_FAILED", 500);

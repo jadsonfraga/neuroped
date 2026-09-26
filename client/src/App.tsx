@@ -123,7 +123,10 @@ const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
+const SuperNeuroPadGamePage = lazy(() => import("@/pages/super-neuropad-game"));
 const TestesDiretosPage = lazy(() => import("@/pages/sonda-dez-daily"));
+const TestesReconhecimentoPage = lazy(() => import("@/pages/teste-reconhecimento-visual"));
+const TestesCognitivosPage = lazy(() => import("@/pages/testes-cognitivos-faixa-etaria"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -171,12 +174,12 @@ const PacientesPage = lazy(() => import("@/pages/pacientes"));
 const PacienteDetalhePage = lazy(() => import("@/pages/paciente-detalhe"));
 const ConectaPage = lazy(() => import("@/pages/conecta"));
 const AgendaPage = lazy(() => import("@/pages/agenda"));
-const ManusIntegracoesPage = lazy(() => import("@/pages/manus-integracoes"));
 const MemoriaClinicaPage = lazy(() => import("@/pages/memoria-clinica"));
 const AgendarPage = lazy(() => import("@/pages/agendar"));
 const MarcacaoPage = lazy(() => import("@/pages/marcacao"));
 const RecepcaoPage = lazy(() => import("@/pages/recepcao"));
 const PreConsultaPage = lazy(() => import("@/pages/pre-consulta"));
+const PreConsultaObs10Page = lazy(() => import("@/pages/pre-consulta-obs10"));
 const PreRetornoPage = lazy(() => import("@/pages/pre-retorno"));
 const ProntuarioPage = lazy(() => import("@/pages/prontuario"));
 const EscutaClinicaPage = lazy(() => import("@/pages/escuta-clinica"));
@@ -371,7 +374,10 @@ function AppRouter() {
             <Route path="/pac" component={PacPage} />
             <Route path="/ahsd-tea" component={AhsdTeaPage} />
             <Route path="/tde2" component={Tde2Page} />
+            <Route path="/super-neuropad-game" component={SuperNeuroPadGamePage} />
             <Route path="/testes-diretos" component={TestesDiretosPage} />
+            <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
+            <Route path="/testes-cognitivos" component={TestesCognitivosPage} />
             <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
             <Route path="/inventarios-auto" component={InventariosAutoPage} />
             <Route path="/ajuda" component={AjudaPage} />
@@ -427,6 +433,7 @@ function AppRouter() {
               </Route>
             ))}
 
+            <Route path="/avaliacao-pre-consulta-faixa-etaria" component={PreConsultaObs10Page} />
             <Route path="/pre-consulta" component={PreConsultaPage} />
             <Route path="/pre-retorno" component={PreRetornoPage} />
             <Route path="/efeitos-colaterais" component={PreRetornoPage} />
@@ -438,11 +445,6 @@ function AppRouter() {
             <Route path="/prontuario">
               <RouteGuard roles={["admin", "professional"]}>
                 <ProntuarioPage />
-              </RouteGuard>
-            </Route>
-            <Route path="/manus">
-              <RouteGuard roles={["admin", "professional"]}>
-                <ManusIntegracoesPage />
               </RouteGuard>
             </Route>
             <Route path="/escuta-clinica">

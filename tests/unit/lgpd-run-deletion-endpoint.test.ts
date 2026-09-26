@@ -23,9 +23,13 @@
  *     com as contagens, e BLUE fica intacto;
  *  8. a trilha de auditoria não carrega patient_id;
  *  9. replay imediato não apaga de novo nem duplica evidência;
- * 10. admin de plataforma executa o escopo de clínica no tenant encerrado;
+ * 10. admin de plataforma exige reason declarada (400 sem ela, sem tocar o
+ *     ledger) e executa o escopo de clínica no tenant encerrado com ela,
+ *     deixando trilha PRÉVIA da razão (AUTHZ-P1-08/LTB-19);
  * 11. dado do titular fora do alcance do purge BLOQUEIA a eliminação em vez de
- *     reportar um `completed` incompleto (issue #783).
+ *     reportar um `completed` incompleto (issue #783);
+ * 12. reason presente mas o claim falha (lease de outro worker) — a trilha
+ *     prévia sobrevive mesmo com a execução não saindo do papel.
  */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -542,7 +546,9 @@ function ledger(requestId: string) {
 
 // ── 10) Admin de plataforma executa o escopo de clínica ───────────────────
 // Contraparte positiva do gate 5: com o tenant encerrado e a retenção vencida,
-// quem PODE executar é o admin de plataforma — e ele consegue.
+// quem PODE executar é o admin de plataforma — e ele consegue, mas só com
+// razão declarada (AUTHZ-P1-08/LTB-19), e a razão vira trilha ANTES da
+// execução física, não depois.
 {
   sqlite.prepare(`UPDATE clinics SET status = 'closed' WHERE id = ?`).run(RED);
   sqlite
@@ -559,9 +565,35 @@ function ledger(requestId: string) {
       RED,
     );
 
+  // 10a) sem reason: recusado ANTES de sequer reivindicar o job.
+  const semRazao = await runDeletion(
+    contexto(PLATFORM_ADMIN, { clinicId: RED, requestId: "req-red-clinica" }),
+  );
+  assert.equal(
+    semRazao.status,
+    400,
+    "admin de plataforma sem reason precisa ser recusado",
+  );
+  assert.equal(
+    (JSON.parse(await semRazao.text()) as { code?: string }).code,
+    "REASON_REQUIRED",
+  );
+  assert.equal(
+    ledger("req-red-clinica"),
+    undefined,
+    "sem reason, o job nem pode ser reivindicado",
+  );
+
+  // 10b) com reason: executa como antes, e a razão fica registrada ANTES da
+  // eliminação física (mesma trilha que o teste 8 já prova para o executor
+  // comum, aqui é a trilha PRÉVIA do bypass de admin).
   const antesBlue = contar(BLUE);
   const response = await runDeletion(
-    contexto(PLATFORM_ADMIN, { clinicId: RED, requestId: "req-red-clinica" }),
+    contexto(PLATFORM_ADMIN, {
+      clinicId: RED,
+      requestId: "req-red-clinica",
+      reason: "Encerramento de tenant solicitado pelo suporte, ticket 4821",
+    }),
   );
   const raw = await response.text();
   assert.equal(
@@ -582,9 +614,81 @@ function ledger(requestId: string) {
     "BLUE idêntico ao estado inicial, ao fim de tudo",
   );
   assert.equal(ledger("req-red-clinica")?.status, "completed");
+
+  const trilhaPrevia = sqlite
+    .prepare(
+      `SELECT clinic_id, actor_user_id, target_id, metadata_json
+         FROM saas_audit_log
+        WHERE action = 'platform_admin_run_deletion_initiated' AND target_id = ?`,
+    )
+    .get("req-red-clinica") as
+    | { clinic_id: string; actor_user_id: string; target_id: string; metadata_json: string }
+    | undefined;
+  assert.ok(trilhaPrevia, "a razão do admin de plataforma precisa virar trilha");
+  assert.equal(trilhaPrevia?.clinic_id, RED);
+  assert.equal(trilhaPrevia?.actor_user_id, PLATFORM_ADMIN.id);
+  assert.match(
+    trilhaPrevia?.metadata_json ?? "",
+    /ticket 4821/,
+    "a metadata precisa carregar a razão declarada",
+  );
+}
+
+// ── 12) reason presente mas o claim falha: a trilha sobrevive mesmo assim ──
+// O ponto central do achado: a auditoria prévia não pode virar "melhor
+// esforço depois do fato" — precisa existir mesmo quando a execução não sai
+// do papel (aqui, outro worker já segura o lease do job).
+{
+  const RED_PATIENT_CLAIM_RACE = "patient-red-claim-race";
+  criarPaciente(RED, RED_PATIENT_CLAIM_RACE, RED_OWNER.id);
+  criarRequest(
+    "req-red-claim-race",
+    RED,
+    "patient",
+    RED_PATIENT_CLAIM_RACE,
+    "approved",
+    RED_OWNER.id,
+  );
+  sqlite
+    .prepare(
+      `INSERT INTO live_lgpd_worker_jobs
+        (id, request_type, request_id, clinic_id, status, claimed_at, lease_until, worker_run_id, created_at, updated_at)
+       VALUES ('lgpd:delete:req-red-claim-race', 'delete', 'req-red-claim-race', ?, 'processing', ?, ?, 'outro-worker', ?, ?)`,
+    )
+    .run(RED, NOW, FUTURE, NOW, NOW);
+
+  const antesRed = contar(RED);
+  const response = await runDeletion(
+    contexto(PLATFORM_ADMIN, {
+      clinicId: RED,
+      requestId: "req-red-claim-race",
+      reason: "Verificação de corrida de claim, ticket 9911",
+    }),
+  );
+  assert.equal(
+    response.status,
+    409,
+    "com o lease de outro worker ainda válido, o claim precisa recusar",
+  );
+  assert.equal(
+    contar(RED),
+    antesRed,
+    "nada pode ser apagado quando o claim não é obtido",
+  );
+
+  const trilhaAntesDoFalho = sqlite
+    .prepare(
+      `SELECT target_id FROM saas_audit_log
+        WHERE action = 'platform_admin_run_deletion_initiated' AND target_id = 'req-red-claim-race'`,
+    )
+    .get();
+  assert.ok(
+    trilhaAntesDoFalho,
+    "a trilha da razão precisa existir mesmo com o claim falhando depois",
+  );
 }
 
 sqlite.close();
 console.log(
-  "✓ lgpd-run-deletion-endpoint: 401 sem sessão, 403 sem gestão, fronteira de tenant, 409 sem aprovação, escopo de clínica exige admin de plataforma, legal hold com código de política, eliminação concluída com ledger fechado, trilha sem patient_id, replay sem segundo apagamento e admin de plataforma eliminando o tenant encerrado — RED eliminado, BLUE intacto",
+  "✓ lgpd-run-deletion-endpoint: 401 sem sessão, 403 sem gestão, fronteira de tenant, 409 sem aprovação, escopo de clínica exige admin de plataforma, legal hold com código de política, eliminação concluída com ledger fechado, trilha sem patient_id, replay sem segundo apagamento, admin de plataforma sem reason recusado e com reason eliminando o tenant encerrado com trilha prévia, e trilha prévia sobrevivendo mesmo a um claim que falha depois (AUTHZ-P1-08/LTB-19) — RED eliminado, BLUE intacto",
 );

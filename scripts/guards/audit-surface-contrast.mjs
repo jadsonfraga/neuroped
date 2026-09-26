@@ -127,8 +127,13 @@ try {
   await server.close();
   await authServer.close();
   if (isMissingBrowserError(error)) {
-    console.log("[contraste] Chromium indisponível — gate ignorado nesta máquina.");
-    process.exit(0);
+    // Este gate mede contraste real de pixels em navegador. Ignorá-lo devolvia
+    // exit 0 — um verde de `verify:release` que não mediu superfície nenhuma,
+    // exatamente o "check verde via skip" que o AGENTS.md proíbe. Todos os
+    // workflows instalam `chromium`; sem browser o gate falha fechado.
+    console.error("[contraste] ✗ Chromium indisponível: o gate não pode ser medido e não passa por omissão.");
+    console.error("[contraste]   Instale com `npx playwright install chromium` ou aponte PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH.");
+    process.exit(1);
   }
   throw error;
 }

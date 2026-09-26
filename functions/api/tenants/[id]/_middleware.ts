@@ -14,6 +14,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const path = new URL(context.request.url).pathname.replace(/\/+$/, "");
   if (!path.endsWith("/members") || !context.env.DB) return context.next();
 
+  // LTB-15 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+  // ver a equipe (GET) e desligar alguém (DELETE) não custam assento nem
+  // cobrança — só ADICIONAR (POST) custa. Exigir entitlement de billing
+  // também em GET/DELETE deixava a clínica com trial vencido incapaz de
+  // sequer enxergar ou desligar um ex-funcionário, a operação básica que
+  // justamente reduziria a folha antes de assinar.
+  if (context.request.method !== "POST") return context.next();
+
   const user = getContextUser(context);
   if (!user) return context.next();
   const clinicId = clinicIdFrom(context.params as Record<string, string | string[]>);

@@ -65,8 +65,24 @@ assert.match(
   /const patientId = principal\.delegated \? null : cleanOptionalText\(body\.patientId, 100\)/,
   "recepção não pode associar agendamento diretamente a identificador clínico",
 );
-assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
+// AUTHZ-P1-06 (ciclo 4, 2026-09-26): e-mail inexistente, papel/estado
+// inválido e já vinculado a outro profissional não podem mais ser
+// distinguidos pelo código/status devolvido ao cliente — todos caem no
+// mesmo STAFF_NOT_AVAILABLE (404). O código interno STAFF_ALREADY_LINKED
+// continua existindo em _access.ts (não é o que vaza), mas não pode
+// aparecer como um branch de resposta HTTP separado em index.ts.
+assert.match(professional, /STAFF_NOT_AVAILABLE/, "conta indisponível para vínculo deve responder com um único código anti-enumeração");
+assert.doesNotMatch(
+  professional,
+  /STAFF_ALREADY_LINKED:\s*["']/,
+  "vínculo já pertencente a outro profissional não pode virar mensagem/código distinto exposto ao cliente",
+);
 assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
+assert.match(
+  professional,
+  /resolveBillingClinicId\([\s\S]{0,120}principal\.providerUserId/,
+  "operator deve herdar o tenant operacional do profissional sem ganhar membership clínico",
+);
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
@@ -166,11 +182,16 @@ assert.doesNotMatch(migration, /patient_name\s+TEXT/i, "nome da criança não po
 
 assert.match(publicBooking, /privacyAccepted/);
 assert.match(publicBooking, /SLOT_CONFLICT/);
+assert.match(
+  core,
+  /Math\.max\(5, rule\.slot_minutes, service\.duration_minutes\)/,
+  "o motor público não pode oferecer inícios mais frequentes do que a duração da consulta",
+);
 assert.match(publicBooking, /findAppointmentByToken/);
 assert.match(publicBooking, /status !== "completed"/);
 assert.doesNotMatch(publicBooking, /diagn[oó]stico|medica[cç][aã]o.*body/i, "booking público não deve pedir dado clínico livre");
 
-assert.match(routeGuard, /path !== "\/agenda"/);
+assert.match(routeGuard, /path !== "\/agenda"/, "RouteGuard deve manter a exceção operacional estrita da agenda");
 assert.match(routeGuard, /roles\.includes\("operator"\)/);
 assert.match(routeGuard, /\.\.\.roles, "operator"/);
 assert.match(agenda, /data\.access\.canConfigure/);
@@ -178,8 +199,8 @@ assert.match(agenda, /Recepção vinculada/);
 assert.match(agenda, /action: "staff_link"/);
 assert.match(agenda, /Trilha operacional/);
 assert.match(agenda, /WhatsApp, SMS e e-mail externos não são simulados/);
-assert.match(agenda, /\/api\/patients\?limit=50&page=1&q=/, "o seletor de paciente deve usar busca server-side parametrizada");
-assert.match(agenda, /Buscar por nome ou identificador/, "a agenda deve oferecer busca incremental de paciente");
+assert.match(agenda, /\/api\/live\/patients\?clinicId=\$\{encodeURIComponent\(clinicId\)\}&q=\$\{patientSearchParam\}/, "o seletor deve consultar pacientes LIVE com tenant e busca parametrizada");
+assert.match(agenda, /Buscar paciente por nome/, "a agenda deve oferecer busca incremental de paciente LIVE");
 assert.doesNotMatch(agenda, /\.slice\(0,\s*40\)/, "a lista de próximas consultas não pode truncar silenciosamente");
 assert.match(agenda, /pending_provider/);
 assert.doesNotMatch(agenda, /pagamento aprovado|pix gerado|teleconsulta ativa/i);

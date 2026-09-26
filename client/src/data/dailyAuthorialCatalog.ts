@@ -1,3 +1,5 @@
+import { curateDailyInventory } from "@/lib/daily-inventory-curation";
+
 export type DailyInventoryStatus =
   | "rascunho_revisao"
   | "revisado_clinicamente"
@@ -20,7 +22,11 @@ export interface DailyInventoryItem {
   id: string;
   domainId: string;
   text: string;
-  responseMode: "frequencia_0_3" | "sim_nao" | "presente_ausente" | "descritivo";
+  responseMode:
+    | "frequencia_0_3"
+    | "sim_nao"
+    | "presente_ausente"
+    | "descritivo";
   redFlag: boolean;
   clinicalNote: string;
 }
@@ -111,7 +117,10 @@ const modules = import.meta.glob("./daily-authorial/*.json", {
   import: "default",
 });
 
-const loaded = Object.entries(modules).map(([path, value]) => ({ path, value }));
+const loaded = Object.entries(modules).map(([path, value]) => ({
+  path,
+  value,
+}));
 
 export const dailyAuthorialCatalogErrors = loaded
   .filter(({ value }) => !isDailyInventory(value))
@@ -123,9 +132,8 @@ export const dailyAuthorialCatalogErrors = loaded
  * operacional só por terem sido gerados automaticamente.
  */
 export const dailyAuthorialReviewCatalog = loaded
-  .filter(
-    (entry): entry is { path: string; value: DailyAuthorialInventory } =>
-      isDailyInventory(entry.value),
+  .filter((entry): entry is { path: string; value: DailyAuthorialInventory } =>
+    isDailyInventory(entry.value),
   )
   .map(({ value }) => value)
   .sort((a, b) => b.generatedOn.localeCompare(a.generatedOn));
@@ -136,10 +144,13 @@ export const dailyAuthorialReviewCatalog = loaded
  * ainda marcados para upgrade permanecem bloqueados mesmo se o status for
  * alterado por engano.
  */
-export const dailyAuthorialCatalog = dailyAuthorialReviewCatalog.filter(
-  (record) => record.status === "revisado_clinicamente",
-).filter(
-  (record) =>
-    record.contingency !== true &&
-    record.needsUpgrade !== true,
+export const dailyAuthorialCurationCatalog = dailyAuthorialReviewCatalog.map(
+  (record) => ({
+    record,
+    decision: curateDailyInventory(record),
+  }),
 );
+
+export const dailyAuthorialCatalog = dailyAuthorialCurationCatalog
+  .filter(({ decision }) => decision.operational)
+  .map(({ record }) => record);

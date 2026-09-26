@@ -58,3 +58,12 @@ redundancy but does not require a database migration or data repair.
 
 Reducing `!important` is deliberately a separate, layer-by-layer change after this
 baseline is accepted. No aesthetic score increase is claimed by this cleanup.
+
+## Reconciliation — 2026-09-26
+
+Reconciled against main `448b74b1`, preserving its expanded browser gates. The
+review identified a missing trigger for public stylesheets: `client/public/**/*.css`
+and `client/index.html` now trigger the same visual checks. Two additional mutation
+checks reject removing either trigger. The local static suite passes; current-head
+browser/CI evidence remains required before merge. The current user authorized
+merge and deploy after validation, superseding the historical draft-only scope above.

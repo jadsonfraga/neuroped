@@ -98,6 +98,7 @@ assert.equal(
 );
 
 const REQUIRED_SENSITIVE_ROUTES = [
+  "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/assinatura-digital",
   "/documentos",
@@ -118,6 +119,8 @@ const REQUIRED_SENSITIVE_ROUTES = [
   "/diario-escola",
   "/inventarios-escola",
   "/testes-diretos",
+  "/testes-reconhecimento",
+  "/testes-cognitivos",
   "/epilepsia",
   "/cefaleia",
   "/diario-sono",
@@ -193,7 +196,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : (path === "/recepcao" || path === "/testes-diretos") && userRole === "operator"
+        : (path === "/recepcao" || path === "/agenda" || path === "/super-neuropad-game" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -244,7 +247,7 @@ assert.equal(
 
 // Consolidação Sonda Dez: as origens de redirect herdam a política do destino
 // (operator aplica; reader nunca foi papel da rota canônica /testes-diretos).
-for (const legacyOrigin of ["/atencao-concentracao", "/testes-reconhecimento", "/cognitive-lab", "/cognitive-lab/tarefa-x"]) {
+for (const legacyOrigin of ["/atencao-concentracao", "/cognitive-lab", "/cognitive-lab/tarefa-x"]) {
   assert.equal(
     decideRouteAccess({
       path: legacyOrigin,
@@ -266,6 +269,56 @@ for (const legacyOrigin of ["/atencao-concentracao", "/testes-reconhecimento", "
     }),
     "forbidden",
     `reader não herda a Sonda Dez pela origem legada ${legacyOrigin}`,
+  );
+}
+
+assert.equal(
+  decideRouteAccess({
+    path: "/testes-reconhecimento",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "operator deve poder abrir o reconhecimento visual dedicado",
+);
+assert.equal(
+  decideRouteAccess({
+    path: "/testes-reconhecimento",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "reader",
+  }),
+  "forbidden",
+  "reader não deve receber acesso à aplicação direta",
+);
+
+// Testes cognitivos por faixa etária: superfície própria com a mesma política
+// dos testes diretos; o bookmark antigo herda a política do novo destino.
+for (const path of ["/testes-cognitivos", "/avaliacao-cognitiva-infantil"]) {
+  assert.equal(
+    decideRouteAccess({
+      path,
+      accessMode: "remote",
+      isAuthenticated: true,
+      isLoading: false,
+      userRole: "operator",
+    }),
+    "allow",
+    `operator deve poder abrir os testes cognitivos por ${path}`,
+  );
+  assert.equal(
+    decideRouteAccess({
+      path,
+      accessMode: "remote",
+      isAuthenticated: true,
+      isLoading: false,
+      userRole: "reader",
+    }),
+    "forbidden",
+    `reader não deve receber acesso à aplicação direta por ${path}`,
   );
 }
 
@@ -363,6 +416,18 @@ assert.equal(
 );
 assert.equal(
   decideRouteAccess({
+    path: "/agenda",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "secretária/operator vinculada deve poder operar a agenda sem ampliar acesso clínico",
+);
+
+assert.equal(
+  decideRouteAccess({
     path: "/recepcao/interno",
     accessMode: "remote",
     isAuthenticated: true,
@@ -453,3 +518,8 @@ assert.equal(
 console.log(
   "✓ rotas remotas falham fechadas, preservam reader inventariado e aplicam RBAC defensivo",
 );
+
+// OBS-10 is an exact operator exception, never a public or descendant route.
+for (const path of ["/avaliacao-pre-consulta-faixa-etaria/interno", "/avaliacao-pre-consulta-faixa-etaria-extra"]) {
+  assert.equal(decideRouteAccess({ path, accessMode: "remote", isAuthenticated: true, isLoading: false, userRole: "operator" }), "forbidden");
+}

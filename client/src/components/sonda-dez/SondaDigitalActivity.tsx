@@ -42,6 +42,7 @@ export default function SondaDigitalActivity({
   callback.current = onComplete;
   const closed = useRef(false);
   const finished = useRef(false);
+  const finishedAt = useRef<number | null>(null);
   const currentIndex = useRef(0);
   const [index, setIndex] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -83,17 +84,36 @@ export default function SondaDigitalActivity({
       if (spec.kind === "plan")
         push("plano-final", JSON.stringify(orderRef.current));
       callback.current({
-        status,
-        reason,
+        status: finished.current ? "complete" : status,
+        reason: finished.current ? undefined : reason,
         events: [...events.current],
-        elapsedMs: Math.round(performance.now() - started.current),
+        elapsedMs: Math.round((finishedAt.current ?? performance.now()) - started.current),
       });
     },
     [push, spec.kind],
   );
   useEffect(() => {
+    if (!spec.responseRule || spec.prompt === "operator-only") return;
+    const keys: Record<string, string> = { "1": "Uma palma", "2": "Esperar", "3": "Outra resposta", "4": "Não observado" };
+    const observe = (event: KeyboardEvent) => {
+      const answer = keys[event.key];
+      const actual = Math.floor((performance.now() - started.current) / (spec.intervalMs ?? 2500));
+      if (!answer || event.repeat || event.ctrlKey || event.altKey || event.metaKey || closed.current || finished.current || actual !== currentIndex.current) return;
+      event.preventDefault();
+      push("resposta-observada", JSON.stringify({ item: actual + 1, stimulus: spec.items?.[actual], answer, source: "teclado da aplicadora durante apresentação" }));
+    };
+    document.addEventListener("keydown", observe);
+    return () => document.removeEventListener("keydown", observe);
+  }, [spec, push]);
+  useEffect(() => {
     dialog.current?.showModal();
     started.current = performance.now();
+    // React may replay effect setup in development; never duplicate presentation evidence.
+    events.current = [];
+    closed.current = false;
+    finished.current = false;
+    finishedAt.current = null;
+    currentIndex.current = 0;
     if (spec.kind === "sequence") push("apresentado", "0");
     if (spec.kind === "grid")
       push("grade-apresentada", String(spec.items?.length));
@@ -127,6 +147,7 @@ export default function SondaDigitalActivity({
         if (next.finished) {
           finished.current = true;
           push("serie-concluida", String(spec.items.length));
+          finishedAt.current = started.current + events.current[events.current.length - 1].elapsedMs;
           setEnded(true);
           return;
         }
@@ -150,6 +171,7 @@ export default function SondaDigitalActivity({
           "grade-concluida",
           JSON.stringify({ ...metrics, selected: marksRef.current }),
         );
+        finishedAt.current = started.current + events.current[events.current.length - 1].elapsedMs;
         setEnded(true);
       }
     }, 100);
@@ -273,7 +295,7 @@ export default function SondaDigitalActivity({
               close("interrupted", "Aplicadora interrompeu a apresentação.")
             }
           >
-            Pausar e voltar
+            {ended ? "Concluir e voltar" : "Pausar e voltar"}
           </Button>
         </header>
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-5 p-4 sm:p-8">

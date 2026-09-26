@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
 import { readRouteParam } from "@/lib/routeQuery";
+import { LiveDocumentsPanel } from "@/components/LiveDocumentsPanel";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -148,6 +149,10 @@ function patientIdFromQuery(): string {
   return readRouteParam("patientId");
 }
 
+function appointmentIdFromQuery(): string {
+  return readRouteParam("appointmentId");
+}
+
 function parseClinicalNote(note: unknown): Record<string, unknown> {
   if (typeof note !== "string" || !note.trim()) return {};
   try {
@@ -268,7 +273,11 @@ function Field({ label, children, span2 }: { label: string; children: ReactNode;
       })
     : children;
   return (
-    <div className={span2 ? "col-span-2" : ""}>
+    // `col-span-2` incondicional criava uma segunda coluna IMPLÍCITA no mobile,
+    // onde a grade é `grid-cols-1`: os campos seguintes passavam a dividir a
+    // largura do celular dois a dois. Era o que espremia a data de nascimento
+    // até o seletor nativo ficar cortado. O span só vale onde há duas colunas.
+    <div className={span2 ? "col-span-1 sm:col-span-2" : ""}>
       <Label className="text-xs font-semibold text-muted-foreground mb-1 block" aria-hidden="true">{label}</Label>
       {labelledControl}
     </div>
@@ -607,6 +616,7 @@ export default function ProntuarioPage() {
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const patientId = patientIdFromQuery();
+  const appointmentId = appointmentIdFromQuery();
 
   const [identificacao, setId] = useState<Identificacao>(defaultId);
   const [anamnese, setAnamnese] = useState<Anamnese>(defaultAnamnese);
@@ -836,6 +846,7 @@ export default function ProntuarioPage() {
         eventType: "encounter",
         data: {
           encounterType: "followup",
+          ...(appointmentId ? { appointmentId } : {}),
           reason: anamnese.queixaPrincipal.trim() || identificacao.hipoteseDiagnostica.trim() || "Consulta neuropediátrica",
           setting: "clinic",
           subjective: JSON.stringify({ identificacao }),
@@ -1025,36 +1036,42 @@ export default function ProntuarioPage() {
             <span className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Deslize →</span>
           </div>
           <TabsList className="np-prontuario-tabs flex h-auto w-full flex-nowrap justify-start gap-1.5 overflow-x-auto rounded-2xl bg-muted/80 p-1.5">
-            <TabsTrigger value="identificacao" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
+            <TabsTrigger value="identificacao" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
               <User className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="min-w-0 truncate">Identificação</span>
               {idCount > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{idCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="anamnese" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
+            <TabsTrigger value="anamnese" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
               <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="min-w-0 truncate">Anamnese</span>
               {anCount > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{anCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="marcos" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
+            <TabsTrigger value="marcos" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
               <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="min-w-0 truncate">Marcos</span>
               {mkCount > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{mkCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="medicacoes" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
+            <TabsTrigger value="medicacoes" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
               <Pill className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="min-w-0 truncate">Medicações</span>
               {medicacoes.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{medicacoes.length}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="terapias" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
+            <TabsTrigger value="terapias" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
               <Heart className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="min-w-0 truncate">Terapias</span>
               {terapias.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{terapias.length}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="exames" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:flex-1">
+            <TabsTrigger value="exames" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
               <FlaskConical className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="min-w-0 truncate">Exames</span>
               {exames.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{exames.length}</Badge>}
             </TabsTrigger>
+            {isRemoteClinical && activeClinicId && patientId && (
+              <TabsTrigger value="documentos" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
+                <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="min-w-0 truncate">Documentos</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* ══════════════════════════════════════════════
@@ -1703,6 +1720,12 @@ export default function ProntuarioPage() {
               </Card>
             ))}
           </TabsContent>
+
+          {isRemoteClinical && activeClinicId && patientId && (
+            <TabsContent value="documentos" className="space-y-4">
+              <LiveDocumentsPanel clinicId={activeClinicId} patientId={patientId} />
+            </TabsContent>
+          )}
 
           {/* ══════════════════════════════════════════════
               TAB 6: EXAMES

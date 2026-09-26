@@ -1,0 +1,275 @@
+name: Clinical and LGPD production readiness audit
+
+on:
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: "17 9 * * 1" # segunda 06h17 em Recife
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clinical-lgpd-readiness-audit
+  cancel-in-progress: true
+
+jobs:
+  metadata-only:
+    name: Clinical crypto and private LGPD storage
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Inspect Cloudflare metadata and public readiness without reading clinical content
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from "node:fs";
+
+          const account = process.env.CF_ACCOUNT?.trim();
+          const token = process.env.CF_TOKEN?.trim();
+          const report = {
+            scope: "metadata-only; no patient identifiers, clinical rows or secret values",
+            checkedAt: new Date().toISOString(),
+            pagesProject: false,
+            configuration: {},
+            r2: { bindingPresent: false, apiPermission: "unknown" },
+            runtime: null,
+            cryptoDiagnostic: null,
+            ready: false,
+            blockers: [],
+          };
+
+          function save() {
+            writeFileSync(
+              "artifacts/clinical-lgpd-readiness.json",
+              JSON.stringify(report, null, 2),
+            );
+          }
+
+          if (!account || !token) {
+            report.blockers.push("CLOUDFLARE_CREDENTIALS_NOT_AVAILABLE_TO_AUDIT");
+            save();
+            console.error("Cloudflare audit credentials are not available.");
+            process.exit(1);
+          }
+
+          const headers = {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          };
+
+          async function cf(path) {
+            const response = await fetch(
+              `https://api.cloudflare.com/client/v4/accounts/${account}${path}`,
+              { headers, signal: AbortSignal.timeout(30000) },
+            );
+            const data = await response.json().catch(() => null);
+            return { response, data };
+          }
+
+          const projectResult = await cf("/pages/projects/neuroped");
+          if (!projectResult.response.ok || !projectResult.data?.success) {
+            report.blockers.push(`PAGES_PROJECT_METADATA_HTTP_${projectResult.response.status}`);
+            save();
+            console.error("Could not read canonical Pages project metadata.");
+            process.exit(1);
+          }
+
+          report.pagesProject = true;
+          const production = projectResult.data.result?.deployment_configs?.production ?? {};
+          const envVars = production.env_vars ?? {};
+          const requiredSecretNames = [
+            "NEUROPED_JWT_SECRET",
+            "CLINICAL_DATA_KEY",
+            "CLINICAL_DATA_KEY_ID",
+            "CLINICAL_INDEX_KEY",
+          ];
+          for (const key of requiredSecretNames) {
+            report.configuration[key] = {
+              present: Object.hasOwn(envVars, key),
+              type: envVars[key]?.type ?? null,
+            };
+          }
+          report.configuration.CLINICAL_DATA_KEY_PREVIOUS = {
+            present: Object.hasOwn(envVars, "CLINICAL_DATA_KEY_PREVIOUS"),
+            type: envVars.CLINICAL_DATA_KEY_PREVIOUS?.type ?? null,
+            optional: true,
+          };
+          report.configuration.CLINICAL_LIVE_ENABLED = {
+            enabled: envVars.CLINICAL_LIVE_ENABLED?.value === "true",
+          };
+          report.configuration.ESCUTA_ENABLED = {
+            enabled: envVars.ESCUTA_ENABLED?.value === "true",
+          };
+
+          report.r2.bindingPresent = Boolean(
+            production.r2_buckets?.LGPD_EXPORT_BUCKET,
+          );
+
+          const r2Result = await cf("/r2/buckets?per_page=1");
+          if (r2Result.response.status === 403) {
+            report.r2.apiPermission = "denied";
+          } else if (r2Result.response.ok && r2Result.data?.success) {
+            report.r2.apiPermission = "read";
+          } else {
+            report.r2.apiPermission = `http_${r2Result.response.status}`;
+          }
+
+          const healthResponse = await fetch(
+            `https://neuroped.pages.dev/api/health?audit=${Date.now()}`,
+            { signal: AbortSignal.timeout(30000) },
+          );
+          const health = await healthResponse.json().catch(() => null);
+
+          const e2eMail = process.env.E2E_MAIL?.trim();
+          const e2ePassword = process.env.E2E_PW?.trim();
+          if (!e2eMail || !e2ePassword) {
+            report.cryptoDiagnostic = {
+              available: false,
+              reason: "E2E_CREDENTIALS_NOT_AVAILABLE",
+            };
+            report.blockers.push("CRYPTO_DIAGNOSTIC_NOT_AVAILABLE");
+          } else {
+            const loginResponse = await fetch(
+              "https://neuroped.pages.dev/api/auth/login",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: e2eMail, password: e2ePassword }),
+                signal: AbortSignal.timeout(30000),
+              },
+            );
+            const login = await loginResponse.json().catch(() => null);
+            const accessToken =
+              typeof login?.accessToken === "string" ? login.accessToken : "";
+            if (!loginResponse.ok || !accessToken) {
+              report.cryptoDiagnostic = {
+                available: false,
+                reason: `E2E_LOGIN_HTTP_${loginResponse.status}`,
+              };
+              report.blockers.push("CRYPTO_DIAGNOSTIC_NOT_AVAILABLE");
+            } else {
+              const diagnosticResponse = await fetch(
+                "https://neuroped.pages.dev/api/admin/clinical-crypto-readiness",
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                  signal: AbortSignal.timeout(30000),
+                },
+              );
+              const diagnostic = await diagnosticResponse.json().catch(() => null);
+              report.cryptoDiagnostic = diagnosticResponse.ok
+                ? {
+                    available: true,
+                    configured: diagnostic?.configured === true,
+                    code:
+                      typeof diagnostic?.code === "string"
+                        ? diagnostic.code
+                        : null,
+                  }
+                : {
+                    available: false,
+                    reason: `DIAGNOSTIC_HTTP_${diagnosticResponse.status}`,
+                  };
+              if (!diagnosticResponse.ok) {
+                report.blockers.push("CRYPTO_DIAGNOSTIC_NOT_AVAILABLE");
+              }
+            }
+          }
+          report.runtime = {
+            httpStatus: healthResponse.status,
+            status: health?.status ?? null,
+            database: health?.database ?? null,
+            authenticationConfigured: health?.authentication?.configured === true,
+            coreReady: health?.readiness?.coreReady === true,
+            clinicalCryptoConfigured:
+              health?.readiness?.clinicalCryptoConfigured === true,
+            lgpdSchemaReady: health?.readiness?.lgpdSchemaReady === true,
+            lgpdStorageBindingPresent:
+              health?.readiness?.lgpdExport?.storageBindingPresent === true,
+            lgpdExportConfigured:
+              health?.readiness?.lgpdExport?.configured === true,
+            executionVerified:
+              health?.readiness?.lgpdExport?.executionVerified === true,
+            blockers: Array.isArray(health?.readiness?.blockers)
+              ? health.readiness.blockers
+              : [],
+          };
+
+          for (const key of requiredSecretNames) {
+            if (!report.configuration[key]?.present) {
+              report.blockers.push(`${key}_NOT_PRESENT_IN_PAGES_METADATA`);
+            }
+          }
+          if (!report.configuration.CLINICAL_LIVE_ENABLED.enabled) {
+            report.blockers.push("CLINICAL_LIVE_DISABLED");
+          }
+          if (!report.runtime.coreReady) report.blockers.push("CORE_NOT_READY");
+          if (!report.runtime.clinicalCryptoConfigured) {
+            report.blockers.push("CLINICAL_CRYPTO_NOT_READY");
+          }
+          if (!report.runtime.lgpdSchemaReady) {
+            report.blockers.push("LGPD_SCHEMA_NOT_READY");
+          }
+          if (!report.r2.bindingPresent || !report.runtime.lgpdStorageBindingPresent) {
+            report.blockers.push("LGPD_BUCKET_NOT_CONFIGURED");
+          }
+          if (!report.runtime.lgpdExportConfigured) {
+            report.blockers.push("LGPD_EXPORT_NOT_CONFIGURED");
+          }
+
+          report.blockers = [...new Set(report.blockers)];
+          report.ready =
+            report.runtime.coreReady &&
+            report.runtime.clinicalCryptoConfigured &&
+            report.runtime.lgpdSchemaReady &&
+            report.r2.bindingPresent &&
+            report.runtime.lgpdStorageBindingPresent &&
+            report.runtime.lgpdExportConfigured;
+
+          save();
+
+          console.log(
+            JSON.stringify(
+              {
+                ready: report.ready,
+                pagesProject: report.pagesProject,
+                r2: report.r2,
+                runtime: report.runtime,
+                cryptoDiagnostic: report.cryptoDiagnostic,
+                blockers: report.blockers,
+              },
+              null,
+              2,
+            ),
+          );
+
+          if (!report.ready) {
+            console.error(
+              "Clinical/LGPD production readiness remains blocked; see artifact for metadata-only evidence.",
+            );
+            process.exit(1);
+          }
+          NODE
+
+      - name: Upload metadata-only evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clinical-lgpd-readiness-${{ github.run_id }}
+          path: artifacts/clinical-lgpd-readiness.json
+          if-no-files-found: error
+          retention-days: 30

@@ -15,6 +15,7 @@ import {
   profileToApi,
   randomAccessToken,
   releaseSlotLocksAfterSuccessfulMutationStatement,
+  resolveProviderSoleClinicId,
   serviceToApi,
   sha256,
   slotLockStatements,
@@ -40,23 +41,30 @@ function phoneValid(value: string): boolean {
 async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
   const provider = await getProviderBySlug(db, slug);
   if (!provider) return null;
+  // O perfil público ainda é encontrado por um slug global (redesenho de
+  // chave por clínica pendente — OPS-05 no backlog), mas os dados que ele
+  // expõe (serviços, avaliações) já são só os da clínica do profissional.
+  // Profissional sem exatamente uma clínica ativa não pode operar
+  // agendamento público: melhor recusar do que misturar ou adivinhar.
+  const clinicId = await resolveProviderSoleClinicId(db, provider.user_id);
+  if (!clinicId) return null;
   const services = await db
     .prepare(
       `SELECT * FROM booking_services
-        WHERE provider_user_id = ? AND active = 1 AND public_visible = 1
+        WHERE provider_user_id = ? AND clinic_id = ? AND active = 1 AND public_visible = 1
         ORDER BY name`,
     )
-    .bind(provider.user_id)
+    .bind(provider.user_id, clinicId)
     .all<ServiceRow>();
   const reviews = await db
     .prepare(
       `SELECT rating, comment_encrypted, created_at
          FROM appointment_reviews
-        WHERE provider_user_id = ? AND approved = 1
+        WHERE provider_user_id = ? AND clinic_id = ? AND approved = 1
         ORDER BY created_at DESC
         LIMIT 20`,
     )
-    .bind(provider.user_id)
+    .bind(provider.user_id, clinicId)
     .all<any>();
   return {
     ...profileToApi(provider),
@@ -71,6 +79,16 @@ async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
   };
 }
 
+// OPS-02 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md) permanece aberto: este
+// diretório ainda lista profissionais de TODAS as clínicas com agendamento
+// ativo — o redesenho para um link público por clínica
+// (`/agendar?clinic=<slug>`) é mudança de rota/frontend, fora do escopo desta
+// camada (isolamento de dados no backend autenticado). A mitigação aqui é
+// não incluir profissional cuja clínica seja ambígua (0 ou 2+ memberships
+// ativas), porque `booking_services` filtrado por clinic_id (ver
+// publicProfile) já não teria como saber qual clínica mostrar para ele —
+// hoje esse profissional simplesmente não aparece, em vez de misturar
+// serviços de mais de uma clínica.
 async function publicProviders(db: D1Database) {
   const result = await db
     .prepare(
@@ -84,6 +102,10 @@ async function publicProviders(db: D1Database) {
                AND s.active = 1
                AND s.public_visible = 1
           )
+          AND (
+            SELECT COUNT(*) FROM clinic_memberships cm
+             WHERE cm.user_id = p.user_id AND cm.active = 1
+          ) = 1
         ORDER BY p.display_name COLLATE NOCASE`,
     )
     .all<Pick<ProviderRow, "slug" | "display_name" | "specialty" | "location_label">>();
@@ -117,15 +139,17 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
       if (!provider.booking_enabled) {
         return jsonResponse({ slots: [], bookingEnabled: false });
       }
+      const clinicId = await resolveProviderSoleClinicId(env.DB, provider.user_id);
+      if (!clinicId) return jsonResponse({ slots: [], bookingEnabled: false });
       const serviceId = cleanText(url.searchParams.get("service"), 80);
       const date = cleanText(url.searchParams.get("date"), 10);
-      const service = await getService(env.DB, provider.user_id, serviceId, true);
+      const service = await getService(env.DB, provider.user_id, serviceId, true, clinicId);
       if (!service || !isValidLocalDate(date)) {
         return errorResponse("Serviço ou data inválidos.", "VALIDATION_ERROR", 400);
       }
       const currentLocal = nowInTimezone(provider.timezone);
       const slots = selectFutureSlots(
-        await listAvailableSlots(env.DB, provider.user_id, service, date),
+        await listAvailableSlots(env.DB, provider.user_id, service, date, clinicId),
         currentLocal,
         96,
       );
@@ -154,7 +178,38 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       const token = cleanText(body.token, 200);
       const appointment = token ? await findAppointmentByToken(env.DB, token) : null;
       if (!appointment) return errorResponse("Reserva não encontrada.", "NOT_FOUND", 404);
-      return jsonResponse({ appointment: await appointmentToApi(env, appointment) });
+      const full = await appointmentToApi(env, appointment);
+      // OPS-19 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+      // quem só tem o token da reserva não pode receber identificadores
+      // internos (providerUserId, patientId) nem detalhe financeiro granular
+      // (amountCents, paymentMethod) — a mesma disciplina que a recepção
+      // delegada já recebe em operations/index.ts (getDashboard). O status
+      // do pagamento (pago/pendente) continua, pois a família precisa dele
+      // para o autoatendimento.
+      return jsonResponse({
+        appointment: {
+          id: full.id,
+          serviceId: full.serviceId,
+          startsAtLocal: full.startsAtLocal,
+          endsAtLocal: full.endsAtLocal,
+          timezone: full.timezone,
+          status: full.status,
+          source: full.source,
+          guardianName: full.guardianName,
+          guardianEmail: full.guardianEmail,
+          guardianPhone: full.guardianPhone,
+          patientName: full.patientName,
+          paymentStatus: full.paymentStatus,
+          checkedInAt: full.checkedInAt,
+          completedAt: full.completedAt,
+          cancelledAt: full.cancelledAt,
+          cancelReason: full.cancelReason,
+          createdAt: full.createdAt,
+          updatedAt: full.updatedAt,
+          serviceName: full.serviceName,
+          serviceModality: full.serviceModality,
+        },
+      });
     }
 
     if (action === "book") {
@@ -166,11 +221,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if (!provider || !provider.booking_enabled) {
         return errorResponse("Agendamento online não está ativo.", "BOOKING_DISABLED", 409);
       }
+      const clinicId = await resolveProviderSoleClinicId(env.DB, provider.user_id);
+      if (!clinicId) return errorResponse("Agendamento online não está ativo.", "BOOKING_DISABLED", 409);
       const serviceId = cleanText(body.serviceId, 80);
-      const service = await getService(env.DB, provider.user_id, serviceId, true);
+      const service = await getService(env.DB, provider.user_id, serviceId, true, clinicId);
       const startsAtLocal = cleanText(body.startsAtLocal, 16);
       const date = startsAtLocal.slice(0, 10);
-      const slots = service ? await listAvailableSlots(env.DB, provider.user_id, service, date) : [];
+      const slots = service ? await listAvailableSlots(env.DB, provider.user_id, service, date, clinicId) : [];
       const chosen = slots.find((slot) => slot.startsAtLocal === startsAtLocal);
       if (!service || !chosen || startsAtLocal <= nowInTimezone(provider.timezone)) {
         return errorResponse("Horário não está mais disponível.", "SLOT_UNAVAILABLE", 409);
@@ -195,13 +252,14 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       try {
         const insertAppointment = env.DB.prepare(
           `INSERT INTO appointments
-            (id, provider_user_id, service_id, starts_at_local, ends_at_local, timezone,
+            (id, provider_user_id, clinic_id, service_id, starts_at_local, ends_at_local, timezone,
              status, source, booking_token_hash, guardian_name_encrypted, guardian_email_encrypted,
              guardian_phone_encrypted, patient_name_encrypted, amount_cents, payment_status, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'requested', 'public', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'requested', 'public', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
         ).bind(
           appointmentId,
           provider.user_id,
+          clinicId,
           service.id,
           chosen.startsAtLocal,
           chosen.endsAtLocal,
@@ -234,6 +292,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       await enqueueNotification(env.DB, env, {
         appointmentId,
         providerUserId: provider.user_id,
+        clinicId,
         template: "booking_requested",
         recipient,
         message: `Solicitação de consulta recebida para ${chosen.startsAtLocal}. A clínica ainda precisa confirmar o horário.`,
@@ -283,6 +342,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       await enqueueNotification(env.DB, env, {
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
+        clinicId: appointment.clinic_id,
         template: "booking_cancelled",
         recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, appointment.guardian_email_encrypted, "guardian_email"),
         message: `Reserva cancelada para ${appointment.starts_at_local}.`,
@@ -297,12 +357,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if (!["requested", "confirmed"].includes(appointment.status)) {
         return errorResponse("Esta reserva não pode mais ser remarcada por autoatendimento.", "INVALID_TRANSITION", 409);
       }
-      const service = await getService(env.DB, appointment.provider_user_id, appointment.service_id, true);
+      if (!appointment.clinic_id) return errorResponse("Configuração do agendamento indisponível.", "NOT_FOUND", 404);
+      const service = await getService(env.DB, appointment.provider_user_id, appointment.service_id, true, appointment.clinic_id);
       const startsAtLocal = cleanText(body.startsAtLocal, 16);
       const provider = await env.DB.prepare(`SELECT * FROM booking_provider_profiles WHERE user_id = ? LIMIT 1`)
         .bind(appointment.provider_user_id).first<any>();
       if (!service || !provider) return errorResponse("Configuração do agendamento indisponível.", "NOT_FOUND", 404);
-      const slots = await listAvailableSlots(env.DB, appointment.provider_user_id, service, startsAtLocal.slice(0, 10));
+      const slots = await listAvailableSlots(env.DB, appointment.provider_user_id, service, startsAtLocal.slice(0, 10), appointment.clinic_id);
       const chosen = slots.find((slot) => slot.startsAtLocal === startsAtLocal);
       if (!chosen || startsAtLocal <= nowInTimezone(provider.timezone)) {
         return errorResponse("Novo horário indisponível.", "SLOT_UNAVAILABLE", 409);
@@ -349,6 +410,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       await enqueueNotification(env.DB, env, {
         appointmentId: appointment.id,
         providerUserId: appointment.provider_user_id,
+        clinicId: appointment.clinic_id,
         template: "booking_rescheduled",
         recipient: await decryptText(env, appointment.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, appointment.guardian_email_encrypted, "guardian_email"),
         message: `Remarcação solicitada para ${chosen.startsAtLocal}. A clínica precisa reconfirmar.`,
@@ -364,7 +426,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if (!provider || !provider.booking_enabled) {
         return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
       }
-      const service = await getService(env.DB, provider.user_id, cleanText(body.serviceId, 80), true);
+      const clinicId = await resolveProviderSoleClinicId(env.DB, provider.user_id);
+      if (!clinicId) return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
+      const service = await getService(env.DB, provider.user_id, cleanText(body.serviceId, 80), true, clinicId);
       if (!service) return errorResponse("Serviço inválido.", "VALIDATION_ERROR", 400);
       const guardianName = cleanText(body.guardianName, 120);
       const guardianEmail = cleanText(body.guardianEmail, 180).toLocaleLowerCase("pt-BR");
@@ -387,12 +451,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       const id = `wait-${crypto.randomUUID()}`;
       await env.DB.prepare(
         `INSERT INTO waitlist_entries
-          (id, provider_user_id, service_id, preferred_date, status, access_token_hash,
+          (id, provider_user_id, clinic_id, service_id, preferred_date, status, access_token_hash,
            guardian_name_encrypted, guardian_email_encrypted, guardian_phone_encrypted, patient_name_encrypted, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         id,
         provider.user_id,
+        clinicId,
         service.id,
         preferredDate,
         await sha256(token),
@@ -421,12 +486,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       try {
         await env.DB.prepare(
           `INSERT INTO appointment_reviews
-            (id, appointment_id, provider_user_id, rating, comment_encrypted, approved, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
+            (id, appointment_id, provider_user_id, clinic_id, rating, comment_encrypted, approved, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
         ).bind(
           `rev-${crypto.randomUUID()}`,
           appointment.id,
           appointment.provider_user_id,
+          appointment.clinic_id,
           rating,
           await encryptText(env, comment, "comment"),
           now,

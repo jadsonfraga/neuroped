@@ -1,5 +1,8 @@
-@import './tokens.css';
-/* Reutiliza os tokens institucionais existentes; nenhuma nova paleta literal. */
+/* Reutiliza os tokens institucionais existentes (já globais via client/src/index.css);
+   nenhuma nova paleta literal. Não reimportar tokens.css aqui: este arquivo vira um
+   chunk lazy carregado só quando /escuta-clinica monta, e o @import duplicado inseria
+   os tokens de novo, mais tarde na ordem do documento — mudando raio de foco e outras
+   variáveis do resto da SPA na mesma sessão depois de visitar esta rota uma vez. */
 .escuta-page{max-width:1280px;margin:0 auto;padding:24px;color:var(--np-color-text);min-width:0}
 .escuta-header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:22px}
 .escuta-header small{letter-spacing:.12em;font-size:11px}
@@ -28,3 +31,32 @@
 .escuta-page audio{width:100%;margin-top:12px}.escuta-page p{overflow-wrap:anywhere}
 @media(max-width:760px){.escuta-page{padding:12px}.escuta-grid{grid-template-columns:1fr}.escuta-header{align-items:flex-start;flex-direction:column}.escuta-header h1{font-size:34px}.escuta-card{padding:18px}.escuta-actions button{flex:1}.escuta-status{font-size:12px}}
 @media print{body *{visibility:hidden}.escuta-document,.escuta-document *{visibility:visible}.escuta-document{position:absolute;left:0;top:0;width:100%;border:0;color:var(--np-gray-900);background:var(--np-gray-50)}.escuta-document .no-print,.escuta-document .no-print *{display:none!important}.escuta-document textarea{border:0;resize:none;overflow:visible;field-sizing:content;height:auto;min-height:0}.escuta-document article{break-inside:avoid}}
+
+/* ── Tema escuro ────────────────────────────────────────────────────────────
+   A página derivava só dos tokens claros: no tema escuro os cartões ficavam
+   brancos dentro de um aplicativo escuro, enquanto regras globais de `.dark`
+   pintavam textarea, select e input de arquivo com a cor de card escura. O
+   resultado era um bloco escuro dentro de um cartão branco e violações sérias
+   de contraste — medidas pela prova visual autenticada assim que a Escuta
+   entrou na matriz. As superfícies passam a derivar do mesmo tema do resto do
+   aplicativo; nenhuma cor literal nova é introduzida. */
+.dark .escuta-page {
+  --np-color-bg-card: hsl(var(--card));
+  --np-color-bg-subtle: hsl(var(--muted));
+  --np-color-border: hsl(var(--border));
+  --np-color-border-strong: hsl(var(--input));
+  --np-color-text: hsl(var(--foreground));
+  --np-color-primary: hsl(var(--primary));
+  --np-color-primary-bg: hsl(var(--secondary));
+  --np-color-warning-bg: hsl(var(--muted));
+  --np-color-warning-border: hsl(var(--border));
+  --np-color-success-bg: hsl(var(--secondary));
+  color: var(--np-color-text);
+}
+/* Os pares texto/fundo destes três blocos eram fixos em tons claros. */
+.dark .escuta-notice,
+.dark .escuta-status,
+.dark .escuta-message { color: hsl(var(--foreground)); }
+.dark .escuta-status.is-ready { color: hsl(var(--secondary-foreground)); }
+.dark .escuta-page button { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
+.dark .escuta-page input[type=file] { color: hsl(var(--foreground)); }

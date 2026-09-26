@@ -69,8 +69,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return error("patient_id inválido.", "VALIDATION_ERROR", 400);
   }
   const access = await getPatientAccess(env.DB, patientId, user);
-  if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-  if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
+  // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+  // inexistente e paciente de outro owner respondem exatamente igual.
+  if (!access.exists || !access.allowed) return error("Paciente não encontrado.", "NOT_FOUND", 404);
 
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   try {
@@ -120,8 +121,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return json({ error: "Registro inválido.", code: "VALIDATION_ERROR", details: parsed.error.issues }, 400);
   }
   const access = await getPatientAccess(env.DB, parsed.data.patientId, user);
-  if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-  if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
+  // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+  // inexistente e paciente de outro owner respondem exatamente igual.
+  if (!access.exists || !access.allowed) return error("Paciente não encontrado.", "NOT_FOUND", 404);
 
   const id = `conecta-${crypto.randomUUID()}`;
   const createdAt = new Date().toISOString();

@@ -21,6 +21,7 @@ import {
   getContextUser,
 } from "./auth/_authorization";
 import { json as jsonResponse } from "./_request";
+import { writeSaasAudit } from "./tenant/_core";
 
 function errorResponse(message: string, code: string, status: number): Response {
   return jsonResponse({ error: message, code }, status);
@@ -118,6 +119,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     binds.push(limit, (page - 1) * limit);
 
     const rows = await env.DB.prepare(sql).bind(...binds).all();
+
+    // AUTHZ-P1-08/LTB-19: a leitura cross-tenant do admin de plataforma
+    // também vira trilha — best-effort (não pode transformar uma leitura
+    // autorizada em falha), metadata só com os filtros usados, sem PHI.
+    // clinicId é null porque a leitura é sobre todas as clínicas por natureza.
+    context.waitUntil(
+      writeSaasAudit(env.DB, {
+        clinicId: null,
+        actorUserId: user.id,
+        action: "platform_audit_log_read",
+        targetType: "audit_logs",
+        metadata: { page, limit, resource: resource ?? null, action: action ?? null, from: from ?? null, to: to ?? null },
+      }).catch((error) => console.error("[audit-log.GET] auditoria da leitura falhou", error)),
+    );
 
     return jsonResponse({
       data: rows.results ?? [],

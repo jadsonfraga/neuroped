@@ -42,6 +42,7 @@ export interface ProviderRow {
 export interface ServiceRow {
   id: string;
   provider_user_id: string;
+  clinic_id: string | null;
   name: string;
   duration_minutes: number;
   price_cents: number | null;
@@ -55,6 +56,7 @@ export interface ServiceRow {
 export interface AppointmentRow {
   id: string;
   provider_user_id: string;
+  clinic_id: string | null;
   service_id: string;
   patient_id: string | null;
   starts_at_local: string;
@@ -95,6 +97,7 @@ const SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS booking_services (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     name TEXT NOT NULL,
     duration_minutes INTEGER NOT NULL CHECK (duration_minutes BETWEEN 10 AND 480),
     price_cents INTEGER CHECK (price_cents IS NULL OR price_cents BETWEEN 0 AND 100000000),
@@ -105,9 +108,11 @@ const SCHEMA_STATEMENTS = [
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE INDEX IF NOT EXISTS idx_booking_services_provider ON booking_services(provider_user_id, active, public_visible)`,
+  `CREATE INDEX IF NOT EXISTS idx_booking_services_clinic ON booking_services(clinic_id, active, public_visible)`,
   `CREATE TABLE IF NOT EXISTS booking_availability_rules (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     weekday INTEGER NOT NULL CHECK (weekday BETWEEN 0 AND 6),
     start_minute INTEGER NOT NULL CHECK (start_minute BETWEEN 0 AND 1439),
     end_minute INTEGER NOT NULL CHECK (end_minute BETWEEN 1 AND 1440),
@@ -117,9 +122,11 @@ const SCHEMA_STATEMENTS = [
     CHECK (end_minute > start_minute)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_booking_rules_provider_weekday ON booking_availability_rules(provider_user_id, weekday, active)`,
+  `CREATE INDEX IF NOT EXISTS idx_booking_rules_clinic ON booking_availability_rules(clinic_id, provider_user_id, weekday, active)`,
   `CREATE TABLE IF NOT EXISTS booking_blocks (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     starts_at_local TEXT NOT NULL,
     ends_at_local TEXT NOT NULL,
     reason TEXT,
@@ -127,9 +134,11 @@ const SCHEMA_STATEMENTS = [
     CHECK (ends_at_local > starts_at_local)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_booking_blocks_provider_time ON booking_blocks(provider_user_id, starts_at_local, ends_at_local)`,
+  `CREATE INDEX IF NOT EXISTS idx_booking_blocks_clinic ON booking_blocks(clinic_id, provider_user_id, starts_at_local, ends_at_local)`,
   `CREATE TABLE IF NOT EXISTS appointments (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     service_id TEXT NOT NULL REFERENCES booking_services(id) ON DELETE RESTRICT,
     patient_id TEXT,
     starts_at_local TEXT NOT NULL,
@@ -155,6 +164,7 @@ const SCHEMA_STATEMENTS = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_appointments_provider_time ON appointments(provider_user_id, starts_at_local)`,
   `CREATE INDEX IF NOT EXISTS idx_appointments_provider_status ON appointments(provider_user_id, status, starts_at_local)`,
+  `CREATE INDEX IF NOT EXISTS idx_appointments_clinic_time ON appointments(clinic_id, provider_user_id, starts_at_local)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS ux_appointments_occupied_slot ON appointments(provider_user_id, starts_at_local) WHERE status IN ('requested','confirmed','checked_in','in_care')`,
   `CREATE TABLE IF NOT EXISTS appointment_slot_locks (
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -166,6 +176,7 @@ const SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS waitlist_entries (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     service_id TEXT NOT NULL REFERENCES booking_services(id) ON DELETE CASCADE,
     preferred_date TEXT,
     status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting','offered','booked','closed')),
@@ -178,10 +189,12 @@ const SCHEMA_STATEMENTS = [
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE INDEX IF NOT EXISTS idx_waitlist_provider_status ON waitlist_entries(provider_user_id, status, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_waitlist_clinic_status ON waitlist_entries(clinic_id, provider_user_id, status, created_at)`,
   `CREATE TABLE IF NOT EXISTS appointment_reviews (
     id TEXT PRIMARY KEY,
     appointment_id TEXT NOT NULL UNIQUE REFERENCES appointments(id) ON DELETE CASCADE,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment_encrypted TEXT,
     approved INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0,1)),
@@ -189,10 +202,12 @@ const SCHEMA_STATEMENTS = [
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE INDEX IF NOT EXISTS idx_reviews_provider_approved ON appointment_reviews(provider_user_id, approved, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_reviews_clinic_approved ON appointment_reviews(clinic_id, provider_user_id, approved, created_at DESC)`,
   `CREATE TABLE IF NOT EXISTS notification_outbox (
     id TEXT PRIMARY KEY,
     appointment_id TEXT REFERENCES appointments(id) ON DELETE CASCADE,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     channel TEXT NOT NULL DEFAULT 'manual' CHECK (channel IN ('manual','email','whatsapp','sms')),
     template TEXT NOT NULL,
     recipient_encrypted TEXT,
@@ -203,6 +218,7 @@ const SCHEMA_STATEMENTS = [
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE INDEX IF NOT EXISTS idx_notification_outbox_provider_status ON notification_outbox(provider_user_id, status, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_notification_outbox_clinic_status ON notification_outbox(clinic_id, provider_user_id, status, created_at DESC)`,
 ] as const;
 
 export async function ensureOperationsSchema(db: D1Database): Promise<void> {
@@ -683,17 +699,22 @@ export async function listAvailableSlots(
   providerUserId: string,
   service: ServiceRow,
   date: string,
+  clinicId: string,
 ): Promise<PublicSlot[]> {
   if (!isValidLocalDate(date)) return [];
   const weekday = weekdayForLocalDate(date);
+  // Regras de disponibilidade e bloqueios são configuração DA CLÍNICA (um
+  // profissional pode atender em horários diferentes em cada clínica): só as
+  // da clínica pedida entram no cálculo, senão os horários de uma clínica
+  // vazariam para o agendamento público de outra (OPS-01/OPS-02).
   const rules = await db
     .prepare(
       `SELECT start_minute, end_minute, slot_minutes
          FROM booking_availability_rules
-        WHERE provider_user_id = ? AND weekday = ? AND active = 1
+        WHERE provider_user_id = ? AND clinic_id = ? AND weekday = ? AND active = 1
         ORDER BY start_minute`,
     )
-    .bind(providerUserId, weekday)
+    .bind(providerUserId, clinicId, weekday)
     .all<{ start_minute: number; end_minute: number; slot_minutes: number }>();
 
   const dayStart = `${date}T00:00`;
@@ -702,12 +723,17 @@ export async function listAvailableSlots(
     .prepare(
       `SELECT starts_at_local, ends_at_local
          FROM booking_blocks
-        WHERE provider_user_id = ?
+        WHERE provider_user_id = ? AND clinic_id = ?
           AND starts_at_local < ? AND ends_at_local > ?`,
     )
-    .bind(providerUserId, dayEnd, dayStart)
+    .bind(providerUserId, clinicId, dayEnd, dayStart)
     .all<{ starts_at_local: string; ends_at_local: string }>();
 
+  // A ocupação, ao contrário das regras acima, é física e do PROFISSIONAL,
+  // não da clínica: a mesma pessoa não pode estar em duas consultas ao mesmo
+  // tempo, mesmo em clínicas diferentes — por isso aqui não se filtra por
+  // clinic_id. Isto nunca expõe PHI: só participa de um cálculo booleano de
+  // sobreposição de horário, os dados da consulta em si não são lidos.
   const appointments = await db
     .prepare(
       `SELECT starts_at_local, ends_at_local
@@ -721,7 +747,10 @@ export async function listAvailableSlots(
 
   const slots: PublicSlot[] = [];
   for (const rule of rules.results ?? []) {
-    const step = Math.max(5, rule.slot_minutes);
+    // Nunca ofereça inícios mais frequentes do que a própria duração
+    // do atendimento. Assim uma consulta de 60 min gera uma vaga por hora,
+    // mesmo se uma regra legada tiver sido cadastrada com passo de 30 min.
+    const step = Math.max(5, rule.slot_minutes, service.duration_minutes);
     for (
       let minute = rule.start_minute;
       minute + service.duration_minutes <= rule.end_minute;
@@ -751,19 +780,48 @@ export async function getProviderBySlug(db: D1Database, slug: string): Promise<P
   );
 }
 
+/**
+ * A clínica de um profissional para fins de agenda, quando não há uma já
+ * resolvida por sessão (fluxo público, sem X-Tenant-Id): a ÚNICA membership
+ * ativa dele. Mesmo critério do backfill em
+ * db/migrations/0029_operations_clinic_scope.sql e de
+ * functions/api/billing/_guard.ts resolveBillingClinicId sem header — nunca
+ * escolhe entre duas clínicas às cegas. `null` com 0 ou 2+ memberships faz o
+ * chamador falhar fechado (agendamento indisponível), nunca misturar clínicas.
+ */
+export async function resolveProviderSoleClinicId(
+  db: D1Database,
+  providerUserId: string,
+): Promise<string | null> {
+  const rows = await db
+    .prepare(
+      `SELECT cm.clinic_id
+         FROM clinic_memberships cm
+         JOIN clinics c ON c.id = cm.clinic_id
+        WHERE cm.user_id = ? AND cm.active = 1 AND c.status = 'active'
+        ORDER BY cm.created_at ASC
+        LIMIT 2`,
+    )
+    .bind(providerUserId)
+    .all<{ clinic_id: string }>();
+  const memberships = rows.results ?? [];
+  return memberships.length === 1 ? memberships[0].clinic_id : null;
+}
+
 export async function getService(
   db: D1Database,
   providerUserId: string,
   serviceId: string,
-  publicOnly = false,
+  publicOnly: boolean,
+  clinicId: string,
 ): Promise<ServiceRow | null> {
   const row = await db
     .prepare(
       `SELECT * FROM booking_services
-        WHERE id = ? AND provider_user_id = ? ${publicOnly ? "AND active = 1 AND public_visible = 1" : ""}
+        WHERE id = ? AND provider_user_id = ? AND clinic_id = ? ${publicOnly ? "AND active = 1 AND public_visible = 1" : ""}
         LIMIT 1`,
     )
-    .bind(serviceId, providerUserId)
+    .bind(serviceId, providerUserId, clinicId)
     .first<ServiceRow>();
   return row ?? null;
 }
@@ -793,6 +851,7 @@ export async function enqueueNotification(
   options: {
     appointmentId?: string | null;
     providerUserId: string;
+    clinicId: string | null;
     template: string;
     recipient?: string | null;
     message: string;
@@ -803,14 +862,15 @@ export async function enqueueNotification(
     await db
       .prepare(
         `INSERT INTO notification_outbox
-          (id, appointment_id, provider_user_id, channel, template,
+          (id, appointment_id, provider_user_id, clinic_id, channel, template,
            recipient_encrypted, payload_encrypted, status, created_at, updated_at)
-         VALUES (?, ?, ?, 'manual', ?, ?, ?, 'pending_provider', ?, ?)`,
+         VALUES (?, ?, ?, ?, 'manual', ?, ?, ?, 'pending_provider', ?, ?)`,
       )
       .bind(
         `ntf-${crypto.randomUUID()}`,
         options.appointmentId ?? null,
         options.providerUserId,
+        options.clinicId,
         options.template,
         await encryptText(env, options.recipient ?? null, "recipient"),
         await encryptText(env, options.message, "payload"),

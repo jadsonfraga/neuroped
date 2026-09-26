@@ -1,0 +1,40 @@
+name: Cloudflare release binding guard
+on:
+  pull_request:
+    paths:
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'functions/api/_observability.ts'
+      - 'functions/api/_middleware.ts'
+      - 'functions/api/tenants/**/metrics.ts'
+      - 'tests/unit/metadata-observability.test.ts'
+      - 'tests/unit/runtime-readiness.test.ts'
+      - 'tests/unit/workflow-governance.test.mjs'
+      - 'tests/unit/deploy-entrypoints.test.mjs'
+      - 'tests/unit/cloudflare-release-bindings.test.py'
+      - '.github/workflows/cloudflare-release-diagnostic.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'tests/unit/cloudflare-release-bindings.test.py'
+      - '.github/workflows/cloudflare-release-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  binding-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Validate bindings, optional metrics, readiness and workflow safety
+        run: npm run test:cloudflare-release

@@ -25,11 +25,29 @@ jobs:
           python-version: '3.12'
       - name: Compilacao
         run: python -m compileall -q tools/pant_intake
+      - name: Autoridade única V12 — anti-legado
+        working-directory: tools/pant_intake
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          forbidden = (
+              "MOTOR_PANT_" + "HELENA_ESTHER.py",
+              "00_LEI_PANT_VIGENTE_" + "v5.md",
+              "CURRENT_DRIVE_" + "V5_SHA256",
+              "runtime_pant_" + "v5",
+          )
+          for name in ("pant_adapter.py", "README.md"):
+              text = Path(name).read_text(encoding="utf-8")
+              found = [marker for marker in forbidden if marker in text]
+              if found:
+                  raise SystemExit(f"{name}: autoridade legada detectada: {found}")
+          PY
       - name: Testes obrigatorios
         working-directory: tools/pant_intake
         run: |
           test -f tests/test_core.py
           test -f tests/test_gate_cli.py
+          test -f tests/test_pant_adapter.py
           python -m unittest discover -s tests -v
       - name: Pacote de codigo sem dados clinicos
         uses: actions/upload-artifact@v4

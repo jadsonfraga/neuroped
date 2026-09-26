@@ -11,6 +11,7 @@ on:
       - "functions/api/auth/forgot-password.ts"
       - "tests/unit/remote-scale-response.test.ts"
       - "tests/unit/saas-remote-intake-static.test.mjs"
+      - "tests/unit/remote-intake-clinic-status.test.ts"
       - "tests/unit/password-recovery.test.ts"
       - ".github/workflows/public-submission-audit-d1.yml"
   push:
@@ -23,6 +24,7 @@ on:
       - "functions/api/auth/forgot-password.ts"
       - "tests/unit/remote-scale-response.test.ts"
       - "tests/unit/saas-remote-intake-static.test.mjs"
+      - "tests/unit/remote-intake-clinic-status.test.ts"
       - "tests/unit/password-recovery.test.ts"
       - ".github/workflows/public-submission-audit-d1.yml"
   workflow_dispatch:
@@ -62,6 +64,9 @@ jobs:
 
       - name: Public intake submission audit regression
         run: node tests/unit/saas-remote-intake-static.test.mjs
+
+      - name: Public intake clinic status gate (LTB-14)
+        run: node --import tsx tests/unit/remote-intake-clinic-status.test.ts
 
       - name: Password reset rate limit regression
         run: node --import tsx tests/unit/password-recovery.test.ts

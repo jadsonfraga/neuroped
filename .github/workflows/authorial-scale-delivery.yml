@@ -28,6 +28,8 @@ on:
     workflows: ['Inventário autoral diário NeuroPed']
     types: [completed]
     branches: [main]
+  # Recuperação sob demanda: depois de cadastrar os secrets SMTP, reexecutar a
+  # entrega na hora, sem esperar o próximo cron nem um push em main.
   workflow_dispatch:
 permissions:
   contents: read
@@ -91,7 +93,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          # O restante do repositório (.env.example, README, server/lib/email.ts)
+          # chama esta credencial de SMTP_USER. Aceitar os dois nomes evita que um
+          # cadastro feito pelo nome canônico do app chegue vazio aqui; o guard
+          # do script continua exigindo valor e falhando fechado sem ele.
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME || secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
         run: .venv-scale-mail/bin/python scripts/authorial_scale_delivery.py --send --extra out/authorial-input

@@ -17,6 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  DEFAULT_HERO,
+  HeroGrid,
+  MissionTrail,
+  StarCounter,
+  type Hero,
+} from "@/components/aventura";
+import {
   DIGITAL_VERSION,
   DIGITAL_NATURE,
   DIGITAL_LIMIT,
@@ -28,10 +35,13 @@ import {
   physicalFieldReason,
   type ActivitySpec,
   type DigitalMission,
+  digitalAgeContext,
 } from "@/data/sondaDezDigital";
 import { SONDA_DEZ_RESPONSE_LADDER } from "@/data/sondaDezCanonical";
 import {
   buildDigitalReport,
+  buildDigitalHandoff,
+  INTERACTION_LABELS,
   withRunHistory,
   emptyRecord,
   fieldGuidance,
@@ -39,13 +49,43 @@ import {
   recordProblems,
   sequenceMetrics,
   recordedGridMetrics,
+  derivedCounts,
+  synchronizeCounts,
+  observedResponses,
+  responseOptions,
+  recordObservedResponse,
   type DigitalRecord,
   type StepRun,
 } from "@/lib/sondaDezSession";
 import { playSondaTone } from "@/lib/sondaDezAudio";
 import SondaDigitalActivity from "./SondaDigitalActivity";
+import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
+import { useAuth } from "@/contexts/AuthContext";
+import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
+import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
 
 type Phase = "prepare" | "learn" | "run" | "report";
+type Track = "easy" | "guided" | "direct";
+export const DIRECT_TRACK_NOTE =
+  "Modo direto: guia de primeira aplicação, conferência de preparo e ensaio dispensados pela aplicadora experiente";
+const TRACKS: { id: Track; label: string; hint: string }[] = [
+  {
+    id: "easy",
+    label: "🎮 Modo Fácil · joguinho",
+    hint: "Tudo na tela, de 1 a 19 anos: a criança toca, o jogo registra e Próximo libera o item seguinte. Certo/errado no fim.",
+  },
+  {
+    id: "guided",
+    label: "Guia de primeira aplicação",
+    hint: "Preparar, ensaiar, aplicar e revisar, do acolhimento à entrega.",
+  },
+  {
+    id: "direct",
+    label: "Direto ao teste",
+    hint: "Aplicadora experiente: informe a idade e inicie a aplicação.",
+  },
+];
 const FLAGS = [
   "Perda de habilidade referida pela família",
   "Evento paroxístico observado",
@@ -95,7 +135,12 @@ export default function SondaDigitalGuided({
 }: {
   onLegacy: () => void;
 }) {
+  const { isAuthenticated } = useAuth();
   const [phase, setPhase] = useState<Phase>("prepare");
+  const [track, setTrack] = useState<Track>("guided");
+  const direct = track === "direct";
+  const easy = track === "easy";
+  const [easyProgress, setEasyProgress] = useState(0);
   const [years, setYears] = useState("");
   const [months, setMonths] = useState("0");
   const [code, setCode] = useState("");
@@ -126,7 +171,13 @@ export default function SondaDigitalGuided({
   const [skipReason, setSkipReason] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [startedAt, setStartedAt] = useState("");
   const [familiarizations, setFamiliarizations] = useState<string[]>([]);
+  // Camada de aventura: herói e celebração entre missões. Não é dado clínico,
+  // não entra no registro e não persiste. Estrelas = missões fechadas
+  // (participação), nunca código de resposta.
+  const [hero, setHero] = useState<Hero>(DEFAULT_HERO);
+  const [cheer, setCheer] = useState<{ mission: number } | null>(null);
   const ageValid =
     /^\d+$/.test(years) && /^\d+$/.test(months) && Number(months) <= 11;
   const ageMonths = ageValid ? Number(years) * 12 + Number(months) : NaN;
@@ -136,18 +187,25 @@ export default function SondaDigitalGuided({
     ? (records[mission.id] ?? initialRecord(mission))
     : emptyRecord();
   const currentStep = mission?.steps[stepIndex];
+  const stepResponses = currentStep ? observedResponses(currentStep.activity, current.runs[stepIndex]) : {};
   const trained =
     TRAINING_CASES.every((q, i) => quiz[i] === q.answer) &&
     PRACTICES.every((_, i) => practiced[i]);
-  const ready =
-    Boolean(band) &&
-    PREPARATION.every((_, i) => checks[i]) &&
-    sound !== "unchecked";
+  const ready = direct
+    ? Boolean(band)
+    : Boolean(band) &&
+      PREPARATION.every((_, i) => checks[i]) &&
+      sound !== "unchecked";
   const problems = mission ? recordProblems(mission, current) : [];
-  const completedCount =
-    band?.missions.filter((m) => recordProblems(m, records[m.id]).length === 0)
-      .length ?? 0;
-  const dirty = Object.keys(records).length > 0;
+  const counts = mission ? derivedCounts(mission, current) : {};
+  const missionDone =
+    band?.missions.map((m) => recordProblems(m, records[m.id]).length === 0) ?? [];
+  const completedCount = missionDone.filter(Boolean).length;
+  const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(code || operator || school) || easyProgress > 0;
+  // Um Voltar do navegador que pouse em /login enquanto a sessão continua válida
+  // não é a sessão forçando a saída: aquela página devolve o profissional
+  // autenticado sozinha, e sem o prompt aqui o registro em curso se perde.
+  useSondaExitGuard(dirty, !isAuthenticated);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [phase]);
@@ -179,20 +237,11 @@ export default function SondaDigitalGuided({
     document.addEventListener("visibilitychange", hidden);
     return () => document.removeEventListener("visibilitychange", hidden);
   }, [phase]);
-  useEffect(() => {
-    if (!dirty) return;
-    const leave = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", leave);
-    return () => window.removeEventListener("beforeunload", leave);
-  }, [dirty]);
   function updateRecord(change: (record: DigitalRecord) => DigitalRecord) {
     if (!mission) return;
     setRecords((old) => ({
       ...old,
-      [mission.id]: change(old[mission.id] ?? initialRecord(mission)),
+      [mission.id]: synchronizeCounts(mission, change(old[mission.id] ?? initialRecord(mission))),
     }));
     setCopied(false);
   }
@@ -246,6 +295,8 @@ export default function SondaDigitalGuided({
   }
   function showStep() {
     if (!currentStep || paused) return;
+    if (current.runs[stepIndex]?.status === "complete" &&
+        !window.confirm("Esta etapa já foi apresentada. Repetir pode mudar a resposta por familiaridade; a tentativa anterior será preservada. Deseja reapresentar?")) return;
     let initialPlan: string[] | undefined;
     if (currentStep.activity.kind === "plan" && stepIndex > 0) {
       const event = current.runs[stepIndex - 1]?.events.findLast(
@@ -268,6 +319,7 @@ export default function SondaDigitalGuided({
     setStepIndex((i) => Math.min(i + 1, mission.steps.length - 1));
     setRead(false);
     setSkipReason("");
+    setCheer(null);
   }
   function goMission(i: number) {
     setMissionIndex(i);
@@ -275,28 +327,27 @@ export default function SondaDigitalGuided({
     setRead(false);
     setSkipReason("");
     setMessage("");
+    setCopied(false);
+    setCheer(null);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
+  const reportContext = {
+    code, operator, ageMonths, school,
+    confounders: confounders
+      .concat(sound === "visual" ? ["Aplicação sem som eletrônico"] : [])
+      .concat(direct ? [DIRECT_TRACK_NOTE] : []),
+    flags, elapsedSeconds: elapsed, familiarizations, startedAt,
+  };
+  const handoff = phase === "report" && band ? buildDigitalHandoff(band, records, reportContext) : "";
   const report =
     phase === "report" && band
-      ? buildDigitalReport(band, records, {
-          code,
-          operator,
-          ageMonths,
-          school,
-          confounders: confounders.concat(
-            sound === "visual" ? ["Aplicação sem som eletrônico"] : [],
-          ),
-          flags,
-          elapsedSeconds: elapsed,
-          familiarizations,
-        })
+      ? buildDigitalReport(band, records, reportContext)
       : "";
-  async function copy() {
+  async function copy(text = report) {
     try {
-      await navigator.clipboard.writeText(report);
-      setCopied(true);
-      setMessage("Registro copiado.");
+      await navigator.clipboard.writeText(text);
+      setCopied(text === report);
+      setMessage(text === report ? "Registro copiado." : "Resumo factual copiado.");
     } catch {
       setCopied(false);
       setMessage(
@@ -314,11 +365,12 @@ export default function SondaDigitalGuided({
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  function newSession() {
+  function newSession(reuseTraining = false) {
+    const keepTraining = reuseTraining && trained && Boolean(operator.trim());
     setRecords({});
     setPhase("prepare");
     setCode("");
-    setOperator("");
+    if (!keepTraining) setOperator("");
     setSchool("");
     setYears("");
     setMonths("0");
@@ -327,8 +379,7 @@ export default function SondaDigitalGuided({
     setChecks({});
     setSound("unchecked");
     setSoundPlayed(false);
-    setQuiz({});
-    setPracticed({});
+    if (!keepTraining) { setQuiz({}); setPracticed({}); }
     setMissionIndex(0);
     setStepIndex(0);
     setElapsed(0);
@@ -336,11 +387,108 @@ export default function SondaDigitalGuided({
     setPaused(false);
     setSkipReason("");
     setCopied(false);
-    setMessage("");
+    setMessage(keepTraining ? "Nova criança: dados clínicos anteriores apagados. Ensaio mantido apenas para esta aplicadora nesta aba; confirme novamente idade, ambiente e som. Trocar o código da aplicadora exige novo ensaio." : "");
     setConfirmNew(false);
     setFamiliarizations([]);
+    setStartedAt("");
+    setCheer(null);
   }
   const panel = "rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7";
+  const trackTabs = (
+    <div
+      role="tablist"
+      aria-label="Modo de aplicação"
+      data-testid="sonda-track-tabs"
+      className="mt-6 grid gap-2 sm:grid-cols-3"
+    >
+      {TRACKS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={track === item.id}
+          disabled={phase !== "prepare" || easyProgress > 0}
+          data-testid={item.id === "easy" ? "sonda-easy-tab" : undefined}
+          onClick={() => {
+            setTrack(item.id);
+            setMessage(
+              item.id === "direct"
+                ? "Modo direto: sem guia, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."
+                : item.id === "easy"
+                  ? "Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo registra certo ou errado; toque em Próximo para liberar cada novo item e veja o resultado no fim."
+                  : "",
+            );
+          }}
+          className={`rounded-xl border px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${track === item.id ? "border-primary bg-primary text-primary-foreground" : item.id === "easy" ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30" : "bg-background/80"}`}
+        >
+          <span className="block text-sm font-semibold">{item.label}</span>
+          <span className="mt-1 block text-xs opacity-90">{item.hint}</span>
+        </button>
+      ))}
+    </div>
+  );
+  if (easy) {
+    // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
+    // tela. A criança toca, o aplicativo julga certo/errado e o jogo avança.
+    // Nada da trilha clínica guiada entra aqui; nada pede objeto fora do app.
+    const easyYears = /^\d+$/.test(years) ? Number(years) : NaN;
+    const easyBand = objectiveBandForYears(easyYears);
+    const easySteps: EasyStep[] = easyBand ? buildObjectiveSteps("sonda", easyYears, "sonda-easy") : [];
+    return (
+      <div className="mx-auto w-full max-w-6xl space-y-5 pb-16" data-testid="sonda-digital">
+        <header className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-cyan-50 p-6 dark:to-cyan-950/20 sm:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>Sonda 10</Badge>
+            <Badge variant="outline">Modo Fácil · joguinho</Badge>
+            <Badge variant="outline">v{DIGITAL_VERSION}</Badge>
+          </div>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            Leia, a criança toca; Próximo libera o item seguinte.
+          </h1>
+          {trackTabs}
+        </header>
+        {message && (
+          <p role="status" className="rounded-xl border bg-muted p-4 text-sm">
+            {message}
+          </p>
+        )}
+        {easyProgress === 0 && (
+          <section className={panel} data-testid="sonda-easy-start">
+            <h2 className="text-xl font-bold">Idade da criança</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <label className="space-y-2 text-sm font-semibold">
+                Idade em anos
+                <Input type="number" min={OBJECTIVE_MIN_YEARS} max={OBJECTIVE_MAX_YEARS} value={years} onChange={(e) => setYears(e.target.value)} placeholder="Ex.: 4" />
+              </label>
+              <label className="space-y-2 text-sm font-semibold">
+                Meses adicionais
+                <Input type="number" min="0" max="11" value={months} onChange={(e) => setMonths(e.target.value)} />
+              </label>
+            </div>
+            <p className="mt-3 text-sm" role="status">
+              {easyBand ? `Faixa ${easyBand.label} · ${easySteps.length} itens na tela` : `Informe a idade em anos completos, de ${OBJECTIVE_MIN_YEARS} a ${OBJECTIVE_MAX_YEARS}.`}
+            </p>
+          </section>
+        )}
+        {easyBand && (
+          <EasyGame
+            key={`${easyBand.id}-${easySteps.length}`}
+            testid="sonda-easy"
+            title="Sonda 10"
+            ageLabel={`${easyYears} anos · faixa ${easyBand.label}`}
+            nature={objectiveNature("sonda")}
+            footer={DIGITAL_LIMIT}
+            steps={easySteps}
+            objective
+            onProgress={setEasyProgress}
+          />
+        )}
+        <footer className="rounded-2xl border p-4 text-xs leading-relaxed text-muted-foreground">
+          <p className="flex gap-2"><ShieldCheck className="h-4 w-4 shrink-0" />{DIGITAL_NATURE}</p>
+        </footer>
+      </div>
+    );
+  }
   return (
     <div
       className="mx-auto w-full max-w-6xl space-y-5 pb-16"
@@ -360,17 +508,30 @@ export default function SondaDigitalGuided({
           Objetos, cenas, cartões e som estão no aplicativo. A interação com a
           criança continua sendo conduzida por você.
         </p>
+        {trackTabs}
         <nav
           aria-label="Etapas da Sonda"
-          className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4"
+          className={`mt-4 grid grid-cols-2 gap-2 ${direct ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}
         >
-          {(["prepare", "learn", "run", "report"] as Phase[]).map((p, i) => (
+          {(direct
+            ? ([
+                ["prepare", "Idade"],
+                ["run", "Aplicar"],
+                ["report", "Revisar"],
+              ] as [Phase, string][])
+            : ([
+                ["prepare", "Preparar"],
+                ["learn", "Ensaiar"],
+                ["run", "Aplicar"],
+                ["report", "Revisar"],
+              ] as [Phase, string][])
+          ).map(([p, label], i) => (
             <div
               key={p}
               aria-current={phase === p ? "step" : undefined}
               className={`rounded-xl border px-3 py-3 text-sm font-semibold ${phase === p ? "border-primary bg-primary text-primary-foreground" : "bg-background/80"}`}
             >
-              {i + 1}. {["Preparar", "Ensaiar", "Aplicar", "Revisar"][i]}
+              {i + 1}. {label}
             </div>
           ))}
         </nav>
@@ -380,7 +541,7 @@ export default function SondaDigitalGuided({
           {message}
         </p>
       )}
-      {(phase === "prepare" || phase === "learn" || phase === "run") && (
+      {!direct && (phase === "prepare" || phase === "learn" || phase === "run") && (
         <details
           className={panel}
           open={phase === "prepare" ? true : undefined}
@@ -401,13 +562,15 @@ export default function SondaDigitalGuided({
         </details>
       )}
       {phase === "prepare" && (
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-          <section className={panel}>
-            <h2 className="text-xl font-bold">1. Preparar a aplicação</h2>
+        <div className={`grid gap-5 ${direct ? "" : "lg:grid-cols-[1.1fr_1fr]"}`}>
+          <section className={panel} data-testid={direct ? "sonda-direct-start" : undefined}>
+            <h2 className="text-xl font-bold">
+              {direct ? "1. Idade e início" : "1. Preparar a aplicação"}
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Idade cronológica escolhe a trilha. O roteiro é observacional e
-              sua referência de aplicação é de 10 minutos; preparação e treino
-              vêm antes.
+              {direct
+                ? "Idade cronológica escolhe a trilha. Sem checklist nem ensaio: a aplicadora experiente responde pelo preparo do ambiente, da tela e do som."
+                : "Idade cronológica escolhe a trilha. O roteiro é observacional e sua referência de aplicação é de 10 minutos; preparação e treino vêm antes."}
             </p>
             <div className="mt-5 grid grid-cols-2 gap-4">
               <label className="space-y-2 text-sm font-semibold">
@@ -443,6 +606,11 @@ export default function SondaDigitalGuided({
               </p>
             )}
             <div className="mt-5 space-y-4">
+              {digitalAgeContext(ageMonths) && (
+                <p className="rounded-xl border p-3 text-sm" role="note">
+                  {digitalAgeContext(ageMonths)}
+                </p>
+              )}
               <label className="block text-sm font-semibold">
                 Código anônimo da sessão (opcional)
                 <Input
@@ -457,7 +625,7 @@ export default function SondaDigitalGuided({
                 <Input
                   value={operator}
                   maxLength={24}
-                  onChange={(e) => setOperator(e.target.value)}
+                  onChange={(e) => { setOperator(e.target.value); setQuiz({}); setPracticed({}); }}
                 />
               </label>
               <label className="block text-sm font-semibold">
@@ -495,8 +663,55 @@ export default function SondaDigitalGuided({
                 ))}
               </div>
             </fieldset>
+            {direct && (
+              <>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Button
+                    variant={sound !== "visual" ? "default" : "outline"}
+                    aria-pressed={sound !== "visual"}
+                    onClick={() => setSound("heard")}
+                  >
+                    <Volume2 className="mr-2 h-4 w-4" />
+                    Com som eletrônico
+                  </Button>
+                  <Button
+                    variant={sound === "visual" ? "default" : "outline"}
+                    aria-pressed={sound === "visual"}
+                    onClick={() => setSound("visual")}
+                  >
+                    Sem som eletrônico
+                  </Button>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  {DIGITAL_LIMIT}
+                </p>
+                <Button
+                  className="mt-5 w-full"
+                  disabled={!ready}
+                  onClick={() => {
+                    setPhase("run");
+                    setStartedAt(new Date().toISOString());
+                    setPaused(false);
+                    setMessage(
+                      "Modo direto iniciado. Agora começam os registros da aplicação.",
+                    );
+                  }}
+                >
+                  Iniciar aplicação
+                  <Play className="ml-2 h-4 w-4" />
+                </Button>
+                {!ready && (
+                  <p className="mt-3 text-sm" role="status">
+                    Para iniciar: informe uma idade válida.
+                  </p>
+                )}
+                <Button variant="ghost" className="mt-2 w-full" onClick={() => { if (!dirty || window.confirm("Mudar para o presencial apaga esta preparação. Deseja continuar?")) onLegacy(); }}>
+                  Consultar o roteiro presencial original
+                </Button>
+              </>
+            )}
           </section>
-          <section className={panel}>
+          {!direct && <section className={panel}>
             <h2 className="text-xl font-bold">Conferir antes de começar</h2>
             <div className="mt-4 space-y-3">
               {PREPARATION.map((text, i) => (
@@ -583,13 +798,13 @@ export default function SondaDigitalGuided({
               Ir para o ensaio
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="ghost" className="mt-2 w-full" onClick={onLegacy}>
+            <Button variant="ghost" className="mt-2 w-full" onClick={() => { if (!dirty || window.confirm("Mudar para o presencial apaga esta preparação. Deseja continuar?")) onLegacy(); }}>
               Consultar o roteiro presencial original
             </Button>
-          </section>
+          </section>}
         </div>
       )}
-      {phase === "learn" && (
+      {phase === "learn" && !direct && (
         <>
           <section className={panel}>
             <div className="flex items-center gap-3">
@@ -677,6 +892,7 @@ export default function SondaDigitalGuided({
                 disabled={!trained}
                 onClick={() => {
                   setPhase("run");
+                  setStartedAt(new Date().toISOString());
                   setPaused(false);
                   setMessage(
                     "Ensaio concluído. Agora começam os registros da aplicação.",
@@ -746,6 +962,65 @@ export default function SondaDigitalGuided({
               para prosseguir.
             </p>
           )}
+          <section
+            className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/80 via-background to-cyan-50/60 p-4 dark:border-amber-900 dark:from-amber-950/20 dark:to-cyan-950/10"
+            aria-labelledby="sonda-aventura-title"
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-3xl" aria-hidden="true">
+                {hero.emoji}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="sonda-aventura-title" className="text-sm font-black">
+                  Aventura de {hero.name} · trilha {band.label}
+                </h2>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Cada missão fechada vira uma estrela na trilha. Estrela é
+                  participação, não desempenho: a criança nunca vê certo ou
+                  errado, e nada daqui entra no registro.
+                </p>
+              </div>
+              <StarCounter stars={completedCount} label="estrelas da trilha" />
+            </div>
+            <div className="mt-3">
+              <MissionTrail
+                hero={hero}
+                current={missionIndex}
+                done={missionDone}
+                labels={band.missions.map((m) => m.title)}
+              />
+            </div>
+            {cheer && (
+              <div
+                role="status"
+                className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50/90 p-3 text-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 dark:border-amber-700 dark:bg-amber-950/30"
+              >
+                <span className="text-2xl" aria-hidden="true">
+                  ⭐
+                </span>
+                <span className="font-bold">
+                  Missão {cheer.mission} concluída! {hero.emoji} {hero.name}{" "}
+                  segue para a missão {missionIndex + 1}.
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto"
+                  onClick={() => setCheer(null)}
+                >
+                  Seguir na trilha
+                </Button>
+              </div>
+            )}
+            <details className="mt-3 text-sm">
+              <summary className="cursor-pointer font-semibold">
+                Trocar herói
+              </summary>
+              <div className="mt-3">
+                <HeroGrid compact current={hero} onPick={setHero} />
+              </div>
+            </details>
+          </section>
           <details className={panel}>
             <summary className="cursor-pointer font-bold">
               Familiarizar com os controles
@@ -828,6 +1103,15 @@ export default function SondaDigitalGuided({
                       nos botões da tela da aplicadora; se perder uma resposta,
                       não adivinhe.
                     </p>
+                    {currentStep.activity.prompt !== "operator-only" && (
+                      <p className="mt-2">
+                        Com teclado, registre durante cada cartão: 1 = uma palma;
+                        2 = esperou sem bater palma; 3 = outra resposta; 4 = não observado.
+                        Apenas a aplicadora usa essas teclas; não há pista visual de acerto na tela da criança.
+                        Sem teclado, use anotação contemporânea por cartão e transcreva ao voltar;
+                        não tente reconstruir a série de memória.
+                      </p>
+                    )}
                   </div>
                 )}
                 {currentStep.waitSeconds && (
@@ -948,6 +1232,37 @@ export default function SondaDigitalGuided({
                     acompanham a exportação.
                   </p>
                 )}
+                {currentStep.activity.responseRule && current.runs[stepIndex]?.status === "complete" && (
+                  <fieldset className="rounded-xl border p-4">
+                    <legend className="px-1 font-semibold">Respostas por cartão — conferência da aplicadora</legend>
+                    <p className="mb-3 text-sm">
+                      Registre somente o que observou. Nenhuma opção começa selecionada.
+                      “Esperar” significa que observou a criança sem bater palma; não significa falta de registro.
+                      Se perdeu uma resposta, escolha “Não observado” e use NA nos totais desta etapa com motivo.
+                      Contagens são calculadas dessas respostas, sem detectar voz ou movimento.
+                    </p>
+                    <div className="space-y-3">
+                      {currentStep.activity.items?.map((item, i) => (
+                        <label key={i} className="block text-sm">
+                          Resposta ao cartão {i + 1}: {item}
+                          <select
+                            aria-label={`Resposta ao cartão ${i + 1}: ${item}`}
+                            className="mt-1 block min-h-11 w-full rounded-lg border bg-background p-2"
+                            value={stepResponses[i] ?? ""}
+                            onChange={(e) => updateRecord((r) => ({
+                              ...r,
+                              reviewed: false,
+                              runs: { ...r.runs, [stepIndex]: recordObservedResponse(currentStep.activity, r.runs[stepIndex], i, e.target.value) },
+                            }))}
+                          >
+                            <option value="" disabled>Selecione o que foi observado</option>
+                            {responseOptions(currentStep.activity).map((answer) => <option key={answer} value={answer}>{answer}</option>)}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
                 {current.runs[stepIndex]?.events.length > 0 && (
                   <details className="text-sm">
                     <summary className="cursor-pointer font-semibold">
@@ -982,13 +1297,9 @@ export default function SondaDigitalGuided({
                         reviewed: false,
                         runs: {
                           ...r.runs,
-                          [stepIndex]: {
-                            ...r.runs[stepIndex],
-                            status: "skipped",
-                            events: r.runs[stepIndex]?.events ?? [],
-                            elapsedMs: r.runs[stepIndex]?.elapsedMs ?? 0,
-                            reason: skipReason.trim(),
-                          },
+                          [stepIndex]: withRunHistory(r.runs[stepIndex], {
+                            status: "skipped", events: r.runs[stepIndex]?.events ?? [], elapsedMs: r.runs[stepIndex]?.elapsedMs ?? 0, reason: skipReason.trim(),
+                          }),
                         },
                       }))
                     }
@@ -1014,6 +1325,7 @@ export default function SondaDigitalGuided({
                     onClick={() => {
                       setStepIndex((i) => i - 1);
                       setRead(false);
+                      setSkipReason("");
                     }}
                   >
                     Etapa anterior
@@ -1043,6 +1355,19 @@ export default function SondaDigitalGuided({
                 ou zero. Campos presenciais não observáveis pela tela já vêm
                 identificados como NA.
               </p>
+              <fieldset className="mt-5 rounded-xl border p-4">
+                <legend className="px-1 font-semibold">Quem operou a tela nesta missão?</legend>
+                <p className="mb-3 text-sm text-muted-foreground">Identifique quem tocou nos controles. Isso não substitui descrever a resposta da criança. Na operação compartilhada, discrimine nas notas.</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {Object.entries(INTERACTION_LABELS).map(([value, label]) => (
+                    <label key={value} className="flex min-h-12 items-center gap-3 rounded-xl border p-3 text-sm">
+                      <input type="radio" name={`interaction-${mission.id}`} checked={current.interaction === value}
+                        onChange={() => updateRecord((r) => ({ ...r, interaction: value as DigitalRecord["interaction"], reviewed: false }))} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <div className="mt-5 space-y-5">
                 {mission.fields.map((field) => {
                   const physical = physicalFieldReason(mission.id, field.id);
@@ -1055,6 +1380,12 @@ export default function SondaDigitalGuided({
                       <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
                         {physical ?? fieldGuidance(field)}
                       </p>
+                      {counts[field.id] && (
+                        <p className="mb-3 text-sm">
+                          Derivado de {counts[field.id].source} na etapa {counts[field.id].step + 1}.
+                          {counts[field.id].value === undefined ? " Evidência ainda incompleta; não preencha zero. Complete o registro ou use NA com motivo." : " Não editável manualmente. Para corrigir, revise as respostas por cartão; se não avaliável, use NA e explique."}
+                        </p>
+                      )}
                       {field.kind === "count" ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <label className="text-sm">
@@ -1064,7 +1395,7 @@ export default function SondaDigitalGuided({
                               min="0"
                               max={field.max}
                               step="1"
-                              disabled={!!physical || value === "NA"}
+                              disabled={!!physical || value === "NA" || !!counts[field.id]}
                               value={value === "NA" ? "" : value}
                               onChange={(e) =>
                                 updateRecord((r) => ({
@@ -1205,9 +1536,12 @@ export default function SondaDigitalGuided({
                 className="mt-5 w-full"
                 disabled={problems.length > 0}
                 onClick={() => {
-                  if (missionIndex < band.missions.length - 1)
+                  if (missionIndex < band.missions.length - 1) {
                     goMission(missionIndex + 1);
-                  else {
+                    // Celebração neutra: a missão foi fechada, qualquer que
+                    // tenha sido o código registrado.
+                    setCheer({ mission: missionIndex + 1 });
+                  } else {
                     setPaused(true);
                     setPhase("report");
                   }
@@ -1250,6 +1584,36 @@ export default function SondaDigitalGuided({
       )}
       {phase === "report" && band && (
         <>
+          <section
+            className={`${panel} text-center motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95`}
+            aria-labelledby="sonda-final-title"
+          >
+            <div className="text-5xl" aria-hidden="true">
+              {completedCount === band.missions.length ? "🏆" : hero.emoji}
+            </div>
+            <h2 id="sonda-final-title" className="mt-2 text-xl font-black">
+              {completedCount === band.missions.length
+                ? `Trilha ${band.label} completa!`
+                : "Aventura em andamento"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {completedCount === band.missions.length
+                ? `${hero.emoji} ${hero.name} fechou as ${band.missions.length} missões. Medalha: Explorador da trilha ${band.label}.`
+                : `${hero.emoji} ${hero.name} fechou ${completedCount} de ${band.missions.length} missões. Dá para voltar e concluir as que faltam.`}
+            </p>
+            <div className="mt-3 flex justify-center">
+              <MissionTrail
+                hero={hero}
+                current={completedCount === band.missions.length ? -1 : missionIndex}
+                done={missionDone}
+                labels={band.missions.map((m) => m.title)}
+              />
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Estrelas e medalha registram participação e conclusão. Não entram
+              no registro clínico e não são escore.
+            </p>
+          </section>
           <section className={panel}>
             <div className="flex items-center gap-3">
               <ClipboardCheck className="h-6 w-6 text-primary" />
@@ -1331,10 +1695,18 @@ export default function SondaDigitalGuided({
                   >
                     Manter esta aplicação
                   </Button>
-                  <Button onClick={newSession}>Apagar e começar outra</Button>
+                  <Button onClick={() => newSession()}>Apagar e começar outra</Button>
+                  {trained && operator.trim() && <Button variant="outline" onClick={() => newSession(true)}>Nova criança, mesma aplicadora</Button>}
                 </div>
               </div>
             )}
+          </section>
+          <section className={panel}>
+            <h2 className="text-xl font-bold">Resumo factual para a consulta</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Fatos registrados, ajudas, limites e pendências. A lista detalhada de eventos permanece no registro completo abaixo.</p>
+            <Button className="my-4" variant="outline" onClick={() => void copy(handoff)}>Copiar resumo para o médico</Button>
+            <textarea aria-label="Resumo factual para o médico" readOnly value={handoff}
+              className="min-h-80 w-full rounded-xl border bg-background p-4 text-sm leading-relaxed" />
           </section>
           <section className={panel}>
             <h2 className="mb-3 font-bold">
@@ -1365,7 +1737,7 @@ export default function SondaDigitalGuided({
           spec={active.spec}
           initialPlan={active.initialPlan}
           practice={active.practiceIndex !== undefined}
-          soundEnabled={sound === "heard"}
+          soundEnabled={direct ? sound !== "visual" : sound === "heard"}
           waitSeconds={
             active.practiceIndex === undefined
               ? currentStep?.waitSeconds

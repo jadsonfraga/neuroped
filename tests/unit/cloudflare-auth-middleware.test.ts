@@ -513,4 +513,32 @@ assert.equal(
   "sem NEUROPED_E2E_EMAIL configurado, a guarda extra não se aplica a nenhum usuário",
 );
 
+// S6 (ciclo 4 da espiral SaaS, 2026-09-26): o webhook do Asaas se autentica
+// sozinho por `asaas-access-token` (comparação em tempo constante, exigida
+// pelo próprio handler) e nunca envia `Authorization: Bearer`. O middleware
+// global não pode exigir sessão de usuário nessa rota, sob pena de nenhuma
+// notificação de pagamento jamais chegar ao handler.
+const webhookNext = async () => new Response(JSON.stringify({ handled: true }), {
+  status: 200,
+  headers: { "Content-Type": "application/json" },
+});
+const webhookResponse = await onRequest({
+  request: new Request("https://neuroped.test/api/billing/webhook", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "asaas-access-token": "x".repeat(32),
+    },
+    body: JSON.stringify({ event: "PAYMENT_CONFIRMED" }),
+  }),
+  env: { DB: {}, NEUROPED_JWT_SECRET: secret },
+  next: webhookNext,
+  data: {},
+} as never);
+assert.equal(
+  webhookResponse.status,
+  200,
+  "o webhook Asaas se autentica com o próprio token e não pode ser bloqueado pelo Bearer global",
+);
+
 console.log("✓ Functions clínicas exigem JWT quando D1 está ativo e documentos demo falham fechado");
