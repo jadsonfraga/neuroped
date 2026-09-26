@@ -56,7 +56,8 @@ function displayLocal(value: string): string {
 
 export default function AgendarPage() {
   const { toast } = useToast();
-  const providerSlug = queryParam("provider");
+  const [providerSlug, setProviderSlug] = useState(() => queryParam("provider"));
+  const [providerOptions, setProviderOptions] = useState<Array<{ slug: string; displayName: string; specialty: string; locationLabel: string | null }>>([]);
   const [profile, setProfile] = useState<PublicProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -76,12 +77,25 @@ export default function AgendarPage() {
   useEffect(() => {
     let active = true;
     async function load() {
-      if (!providerSlug) {
-        setError("Este link de agendamento não informa o profissional.");
-        setLoading(false);
-        return;
-      }
       try {
+        if (!providerSlug) {
+          const providersResponse = await apiRequest("GET", "/api/public-booking?action=providers");
+          const providersPayload = await providersResponse.json() as { providers?: Array<{ slug: string; displayName: string; specialty: string; locationLabel: string | null }> };
+          const providers = providersPayload.providers ?? [];
+          if (!active) return;
+          if (providers.length === 1) {
+            setProviderSlug(providers[0].slug);
+            return;
+          }
+          if (providers.length > 1) {
+            setProviderOptions(providers);
+            setLoading(false);
+            return;
+          }
+          setError("Nenhum profissional está com o agendamento online ativo.");
+          setLoading(false);
+          return;
+        }
         const response = await apiRequest("GET", `/api/public-booking?action=profile&provider=${encodeURIComponent(providerSlug)}`);
         const data = await response.json() as PublicProviderProfile;
         if (!active) return;
@@ -233,6 +247,26 @@ export default function AgendarPage() {
   }
 
   if (loading) return <div className="mx-auto max-w-3xl p-8 text-sm text-muted-foreground">Carregando agendamento…</div>;
+  if (!profile && providerOptions.length > 1) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-8">
+        <h1 className="text-2xl font-black">Escolha o profissional</h1>
+        <div className="grid gap-3">
+          {providerOptions.map((provider) => (
+            <button
+              key={provider.slug}
+              type="button"
+              className="rounded-2xl border bg-card p-4 text-left hover:border-primary/40"
+              onClick={() => { setLoading(true); setProviderOptions([]); setProviderSlug(provider.slug); }}
+            >
+              <strong>{provider.displayName}</strong>
+              <span className="mt-1 block text-sm text-muted-foreground">{provider.specialty}{provider.locationLabel ? ` · ${provider.locationLabel}` : ""}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (error || !profile) return <div className="mx-auto max-w-2xl rounded-3xl border p-8 text-center"><h1 className="text-xl font-bold">Agendamento indisponível</h1><p className="mt-2 text-sm text-muted-foreground">{error || "Perfil não encontrado."}</p></div>;
 
   return (
