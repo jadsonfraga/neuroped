@@ -149,6 +149,10 @@ function patientIdFromQuery(): string {
   return readRouteParam("patientId");
 }
 
+function appointmentIdFromQuery(): string {
+  return readRouteParam("appointmentId");
+}
+
 function parseClinicalNote(note: unknown): Record<string, unknown> {
   if (typeof note !== "string" || !note.trim()) return {};
   try {
@@ -612,6 +616,7 @@ export default function ProntuarioPage() {
   const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const liveContextReady = isRemoteClinical && Boolean(activeClinicId);
   const patientId = patientIdFromQuery();
+  const appointmentId = appointmentIdFromQuery();
 
   const [identificacao, setId] = useState<Identificacao>(defaultId);
   const [anamnese, setAnamnese] = useState<Anamnese>(defaultAnamnese);
@@ -841,6 +846,7 @@ export default function ProntuarioPage() {
         eventType: "encounter",
         data: {
           encounterType: "followup",
+          ...(appointmentId ? { appointmentId } : {}),
           reason: anamnese.queixaPrincipal.trim() || identificacao.hipoteseDiagnostica.trim() || "Consulta neuropediátrica",
           setting: "clinic",
           subjective: JSON.stringify({ identificacao }),
