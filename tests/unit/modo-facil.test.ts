@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { EASY_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
+import { EASY_OUTCOME_LABEL, buildEasyReport, easyCounts, localIsoDate, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
 
 const read = (path: string) => readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 const engine = read("client/src/components/jogo-facil/EasyGame.tsx");
@@ -45,8 +45,50 @@ test("motor: três botões gigantes, avanço automático, sem timers JS, herói 
   assert.match(engine, /const stars = records\.filter\(\(r\) => r\.outcome !== "pulou"\)\.length/);
   assert.match(engine, /Estrelas são participação, não nota/);
   assert.match(engine, /if \(auto\) record\(auto, true, detail\)/, "toque da criança decide e avança sozinho");
-  assert.match(engine, /data-testid=\{`\$\{testid\}-next`\}/, "modo objetivo: Próximo entre itens contra toque duplo");
-  assert.match(engine, /\{!childOpen && !objective && \(/, "modo objetivo esconde Acertou/Não acertou");
+  assert.match(engine, /data-testid=\{`\$\{testid\}-next`\}/, "Próximo entre itens contra toque duplo");
+  assert.match(engine, /\{!childOpen && !objective && !awaitNext && \(/, "Acertou/Não acertou somem no modo objetivo e enquanto o portão está armado");
+});
+
+test("motor: portão Próximo depois de qualquer decisão da tela da criança, em todos os modos, e antes do resultado", () => {
+  // Bug corrigido: no Reconhecimento Visual e nos Cognitivos (sem `objective`) o toque da
+  // criança avançava e o item seguinte já exibia Mostrar/Acertou/Não acertou/Pular sob o dedo.
+  assert.match(engine, /setAwaitNext\(auto \|\| objective\);/, "decisão automática arma o portão em qualquer modo; modo objetivo arma também no Pular");
+  assert.match(engine, /setChildOpen\(false\);\s*setShown\(false\);\s*setIndex\(index \+ 1\)/, "a tela da criança fecha ao registrar; só Próximo reabre");
+  assert.match(engine, /step\.child && !childOpen && !objective && !awaitNext && \(/, "Mostrar some enquanto o portão está armado");
+  // O último toque da criança não abre Certo/Errado na mão dela: tela neutra de devolução.
+  assert.match(engine, /const handoff = index >= steps\.length && awaitNext;/);
+  assert.match(engine, /const finished = index >= steps\.length && !awaitNext;/);
+  assert.match(engine, /data-testid=\{`\$\{testid\}-handoff`\}/);
+  const handoff = engine.slice(engine.indexOf("{handoff && ("), engine.indexOf("{finished && ("));
+  assert.match(handoff, /Devolva o aparelho ao adulto/);
+  assert.doesNotMatch(handoff, /counts\.|label\[|Certo|Errado|acertou|nao\b/, "tela de devolução sem contagem nem certo/errado");
+  assert.match(handoff, /data-testid=\{`\$\{testid\}-next`\}/, "o adulto avança para o resultado com o mesmo Próximo");
+});
+
+test("motor: com a tela da criança aberta ou o portão armado, título, fala, dica (com a resposta esperada) e ilustração do adulto ficam ocultos", () => {
+  assert.match(engine, /const adultHidden = childOpen \|\| awaitNext;/);
+  assert.match(engine, /className=\{adultHidden \? "sr-only" : /, "título só para leitor de tela enquanto a criança pode estar com o aparelho");
+  assert.match(engine, /\{!adultHidden && \(\s*<p className="mt-4 rounded-2xl bg-primary\/10/, "fala do adulto oculta");
+  assert.match(engine, /\{step\.hint && !adultHidden && /, "dica com 'Esperado:' oculta");
+  assert.match(engine, /\{step\.visual && !adultHidden && /, "ilustração do adulto oculta");
+});
+
+test("motor: último passo pode ser desfeito no resultado; Jogar de novo pede confirmação; nome do arquivo sem acentos; data local", () => {
+  const results = engine.slice(engine.indexOf("{finished && ("), engine.indexOf("{!finished && !handoff && ("));
+  assert.match(results, /data-testid=\{`\$\{testid\}-undo`\}[^\n]*onClick=\{undo\}/, "Voltar um passo no resultado");
+  assert.match(engine, /if \(records\.length && !window\.confirm\("Jogar de novo descarta o resultado atual/);
+  assert.match(engine, /title\.normalize\("NFD"\)\.replace\(\/\[\\u0300-\\u036f\]\/g, ""\)\.toLowerCase\(\)\.replace\(\/\[\^a-z0-9\]\+\/g, "-"\)/, "acentos removidos antes de trocar por hífen: 'Etária' vira 'etaria', não 'et-ria'");
+  assert.equal(localIsoDate(new Date(2026, 8, 24, 23, 30)), "2026-09-24", "23h30 local continua sendo o mesmo dia");
+  assert.equal(localIsoDate(new Date(2026, 0, 5, 0, 5)), "2026-01-05");
+  assert.match(buildEasyReport({ title: "T", ageLabel: "1", nature: "N", records: [], totalSteps: 1 }), new RegExp(`Data: ${localIsoDate()}`));
+  assert.doesNotMatch(read("client/src/components/jogo-facil/easyReport.ts"), /toISOString\(\)\.slice\(0, 10\)/, "data do registro nunca em UTC");
+});
+
+test("Testes Cognitivos: Modo Fácil informa progresso e guarda a saída, o reinício e a troca de idade", () => {
+  assert.match(cognitive, /useSondaExitGuard\(easyProgress > 0, EASY_EXIT_PROMPT\);/);
+  assert.match(cognitive, /if \(easyProgress > 0 && !window\.confirm\(EASY_EXIT_PROMPT\)\) return;\s*setEasyProgress\(0\);\s*setConfirmed\(false\);/, "Reiniciar jogo confirma antes de apagar");
+  assert.match(cognitive, /onChange=\{\(e\) => \{\s*if \(easyProgress > 0 && !window\.confirm\(EASY_EXIT_PROMPT\)\) return;/, "trocar a idade confirma antes de apagar");
+  assert.match(cognitive, /steps=\{easySteps\}\s*onProgress=\{setEasyProgress\}/);
 });
 
 test("Sonda 10: aba Modo Fácil usa o banco objetivo (1 a 19 anos), sem a trilha clínica nem objeto externo", () => {

@@ -1,0 +1,61 @@
+name: Modo Fácil (motor compartilhado)
+# O EasyGame é consumido por Sonda 10, OBS-10, Reconhecimento Visual e Testes
+# Cognitivos. Qualquer mudança nele, na camada de aventura ou nos consumidores
+# roda o contrato unitário e o E2E das quatro aplicações (test:e2e:modo-facil e
+# test:e2e:direct-track), que antes não eram executados por nenhum workflow.
+on:
+  pull_request:
+    paths:
+      - 'client/src/components/jogo-facil/**'
+      - 'client/src/components/aventura/**'
+      - 'client/src/features/cognitive-age/**'
+      - 'client/src/features/visual-recognition/Workspace.tsx'
+      - 'client/src/features/visual-recognition/TrialStage.tsx'
+      - 'client/src/components/sonda-dez/SondaDigitalGuided.tsx'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'client/src/pages/testes-cognitivos-faixa-etaria.tsx'
+      - 'client/src/pages/testes-diretos.tsx'
+      - 'client/src/hooks/useSondaExitGuard.ts'
+      - 'tests/unit/modo-facil.test.ts'
+      - 'tests/unit/direct-track-tabs.test.ts'
+      - 'tests/unit/aventura-gamification-static.test.mjs'
+      - 'tests/unit/objective-bank.test.ts'
+      - 'tests/unit/cognitive-age-bank.test.ts'
+      - 'tests/e2e/modo-facil.mjs'
+      - 'tests/e2e/direct-track-tabs.mjs'
+      - 'package.json'
+      - '.github/workflows/modo-facil.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: modo-facil-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  four-apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - run: npm run test:direct-track
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+      - run: npm run test:e2e:modo-facil
+        env:
+          MODO_FACIL_ARTIFACT_DIR: /tmp/modo-facil
+      - run: npm run test:e2e:direct-track
+      - name: Preserve synthetic browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: modo-facil-browser-${{ github.sha }}
+          path: /tmp/modo-facil/
+          retention-days: 7
+          if-no-files-found: warn

@@ -11,6 +11,15 @@
  * participação (passos concluídos), nunca desempenho, e não entram no
  * texto exportado além da contagem de passos.
  *
+ * Portão "Próximo": sempre que a tela da criança decidiu um item (toque) e, no
+ * modo objetivo, também depois de Pular, o motor só mostra o botão Próximo até
+ * o adulto retomar o aparelho. Assim o segundo toque de um toque duplo não
+ * responde o item seguinte nem cai em Acertou/Não acertou/Pular, e o último
+ * toque da criança não abre a tela de resultado (Certo/Errado) na mão dela.
+ * Enquanto a tela da criança está aberta ou o portão está armado, título, fala,
+ * dica e ilustração do adulto ficam ocultos: a dica traz a resposta esperada e
+ * o aparelho pode ainda estar na mão da criança.
+ *
  * Só animação CSS (motion-safe:animate-in): sem setTimeout/requestAnimationFrame,
  * para conviver com o relógio falso dos e2e da Sonda.
  */
@@ -74,15 +83,21 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   const [hero, setHero] = useState<Hero>(DEFAULT_HERO);
   const [message, setMessage] = useState("");
   const step = steps[index];
-  const finished = index >= steps.length;
+  // Fim do jogo só depois do portão: o último toque da criança não revela Certo/Errado.
+  const handoff = index >= steps.length && awaitNext;
+  const finished = index >= steps.length && !awaitNext;
+  // Conteúdo do adulto (inclui "Esperado: …") nunca na tela enquanto a criança pode estar com o aparelho.
+  const adultHidden = childOpen || awaitNext;
   const stars = records.filter((r) => r.outcome !== "pulou").length;
 
   function record(outcome: EasyOutcome, auto = false, detail?: EasyAnswerDetail) {
     if (!step) return;
     const next = [...records, { id: step.id, group: step.group, title: step.title, outcome, auto, ...(detail ?? {}) }];
     setRecords(next);
-    setAwaitNext(objective && auto);
-    setChildOpen(objective && !auto);
+    // Decisão pela tela da criança (qualquer modo) ou qualquer registro no modo
+    // objetivo: o aparelho está na mão dela, então só Próximo fica disponível.
+    setAwaitNext(auto || objective);
+    setChildOpen(false);
     setShown(false);
     setIndex(index + 1);
     setMessage(outcome === "pulou" ? "Passo pulado. Vamos ao próximo." : NEUTRAL_CHEERS[next.length % NEUTRAL_CHEERS.length]);
@@ -100,6 +115,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
     onProgress?.(next.length);
   }
   function restart() {
+    if (records.length && !window.confirm("Jogar de novo descarta o resultado atual. Já copiou ou baixou o resultado?")) return;
     setRecords([]);
     setIndex(0);
     setAwaitNext(false);
@@ -159,16 +175,17 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           aria-labelledby={`${testid}-step-title`}
         >
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{step.group}</p>
-          <h2 id={`${testid}-step-title`} className={objective && childOpen ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
-          {!(objective && childOpen) && (
+          <h2 id={`${testid}-step-title`} className={adultHidden ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
+          {!adultHidden && (
             <p className="mt-4 rounded-2xl bg-primary/10 p-4 text-xl font-semibold leading-relaxed sm:text-2xl">
               <span className="mr-2" aria-hidden="true">🗣️</span>
               {step.say}
             </p>
           )}
-          {step.hint && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
-          {step.visual && <div className="mt-4">{step.visual}</div>}
+          {step.hint && !adultHidden && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
+          {step.visual && !adultHidden && <div className="mt-4">{step.visual}</div>}
 
+          {awaitNext && <p className="mt-4 text-center text-base text-muted-foreground">Item registrado. Toque em Próximo quando o adulto estiver com o aparelho.</p>}
           {awaitNext && (
             <Button
               size="lg"
@@ -183,7 +200,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
               <ChevronRight className="ml-2 h-8 w-8" />
             </Button>
           )}
-          {step.child && !childOpen && !objective && (
+          {step.child && !childOpen && !objective && !awaitNext && (
             <Button
               size="lg"
               data-testid={`${testid}-show`}
@@ -206,7 +223,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
             </div>
           )}
 
-          {!childOpen && !objective && (
+          {!childOpen && !objective && !awaitNext && (
             <>
               <p className="mt-6 text-center text-sm font-semibold text-muted-foreground">
                 {step.child && !shown ? "Depois de mostrar, marque o que viu:" : "Marque o que viu:"}
@@ -234,7 +251,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
             </button>
           )}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-            <Button variant="ghost" size="sm" disabled={!records.length || (childOpen && !objective)} onClick={undo}>
+            <Button variant="ghost" size="sm" data-testid={`${testid}-undo`} disabled={!records.length || (childOpen && !objective)} onClick={undo}>
               <Undo2 className="mr-1 h-4 w-4" /> Voltar um passo
             </Button>
             <details className="text-sm">
@@ -242,6 +259,23 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
               <div className="mt-2"><HeroGrid compact current={hero} onPick={setHero} /></div>
             </details>
           </div>
+        </section>
+      )}
+
+      {handoff && (
+        <section data-testid={`${testid}-handoff`} className="rounded-3xl border bg-card p-5 text-center shadow-sm motion-safe:animate-in motion-safe:fade-in sm:p-7" aria-labelledby={`${testid}-handoff-title`}>
+          <div className="text-6xl" aria-hidden="true">{hero.emoji}</div>
+          <h2 id={`${testid}-handoff-title`} className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Jogo concluído!</h2>
+          <p className="mt-1 text-base text-muted-foreground">Devolva o aparelho ao adulto.</p>
+          <Button
+            size="lg"
+            data-testid={`${testid}-next`}
+            className="mt-5 min-h-24 w-full rounded-3xl text-2xl font-black"
+            onClick={() => setAwaitNext(false)}
+          >
+            Ver resultado
+            <ChevronRight className="ml-2 h-8 w-8" />
+          </Button>
         </section>
       )}
 
@@ -278,13 +312,14 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           </ol>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button size="lg" className="rounded-2xl font-black" onClick={() => void copy()}><Copy className="mr-2 h-4 w-4" /> Copiar resultado</Button>
-            <Button size="lg" variant="outline" className="rounded-2xl" onClick={() => download(report, `${title.toLowerCase().replace(/[^a-z0-9]+/gi, "-")}-modo-facil.txt`)}><Download className="mr-2 h-4 w-4" /> Baixar resultado</Button>
+            <Button size="lg" variant="outline" className="rounded-2xl" onClick={() => download(report, `${title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-modo-facil.txt`)}><Download className="mr-2 h-4 w-4" /> Baixar resultado</Button>
             <Button size="lg" variant="outline" className="rounded-2xl" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" /> Jogar de novo</Button>
+            <Button size="lg" variant="ghost" className="rounded-2xl" data-testid={`${testid}-undo`} onClick={undo}><Undo2 className="mr-2 h-4 w-4" /> Voltar um passo</Button>
           </div>
           <textarea aria-label="Resultado do jogo" readOnly value={report} className="mt-4 min-h-64 w-full rounded-xl border bg-background p-3 font-mono text-xs leading-relaxed" />
         </section>
       )}
-      {!finished && (
+      {!finished && !handoff && (
         <p className="text-center text-xs text-muted-foreground">
           {objective ? "Sequência fixa: tocou, passou." : "Sequência fixa: marcou, passou."} <ChevronRight className="inline h-3 w-3" aria-hidden="true" /> Nada é salvo automaticamente: copie ou baixe o resultado no fim.
         </p>

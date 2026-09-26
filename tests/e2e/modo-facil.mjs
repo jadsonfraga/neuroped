@@ -38,12 +38,40 @@ async function open(route, testId) {
   }
   await page.getByTestId(testId).waitFor({ timeout: 20000 });
 }
+/**
+ * Portão Próximo: depois de uma decisão da tela da criança, o motor só oferece
+ * Próximo (ou a tela de devolução, no último item). Prova que nenhum botão de
+ * resposta ficou sob o dedo e avança.
+ */
+async function passGate(prefix) {
+  await page.locator(`[data-testid="${prefix}-next"]`).waitFor();
+  for (const id of ["show", "acertou", "nao", "pular", "option", "results"]) assert.equal(await page.getByTestId(`${prefix}-${id}`).count(), 0, `${id} não fica sob o dedo depois do toque da criança`);
+  await page.getByTestId(`${prefix}-next`).click();
+}
+/**
+ * Toque duplo real: repete o clique nas mesmas coordenadas logo após o toque da
+ * criança. Com o portão, o segundo toque não pode registrar item nenhum.
+ */
+async function doubleTapAt(locator, prefix, itemNumber) {
+  await locator.scrollIntoViewIfNeeded();
+  const box = await locator.boundingBox();
+  assert.ok(box, "alvo visível para o toque duplo");
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  await page.mouse.click(x, y);
+  await page.mouse.click(x, y);
+  await page.locator(`[data-testid="${prefix}-next"]`).waitFor();
+  assert.equal(await page.getByTestId(`${prefix}-option`).count(), 0, "segundo toque não abriu opções");
+  const progress = await page.getByTestId(`${prefix}-progress`).innerText();
+  // O contador mostra o item corrente: depois de registrar o item N, exibe N+1.
+  assert.match(progress, new RegExp(`^${itemNumber + 1} /`), `toque duplo registrou um único item (${progress})`);
+}
 /** Joga o motor até o fim alternando os três botões; retorna as contagens do resultado. */
 async function playEasy(prefix, { maxSteps = 60 } = {}) {
   const outcomes = ["acertou", "nao", "pular"];
   let i = 0;
   while (await page.getByTestId(`${prefix}-step`).count()) {
     assert.ok(i < maxSteps, "o jogo termina");
+    if (await page.getByTestId(`${prefix}-next`).count()) { await passGate(prefix); continue; }
     const show = page.getByTestId(`${prefix}-show`);
     if (await show.count()) {
       await show.click();
@@ -56,28 +84,31 @@ async function playEasy(prefix, { maxSteps = 60 } = {}) {
     await page.getByTestId(`${prefix}-${outcomes[i % 3]}`).click();
     i += 1;
   }
+  if (await page.getByTestId(`${prefix}-handoff`).count()) await passGate(prefix);
   await page.getByTestId(`${prefix}-results`).waitFor();
   const n = async (k) => Number(await page.getByTestId(`${prefix}-count-${k}`).innerText());
   return { steps: i, acertou: await n("acertou"), nao: await n("nao"), pulou: await n("pulou") };
 }
 
-/** Modo objetivo: toca na primeira opção e aperta Próximo; pula o 2º item pelo adulto. */
+/** Modo objetivo: toca na primeira opção e aperta Próximo; pula o 2º item pelo adulto (também com Próximo). */
 async function playObjective(prefix, { maxSteps = 20 } = {}) {
   let i = 0;
   while (await page.getByTestId(`${prefix}-step`).count()) {
     assert.ok(i < maxSteps, "o jogo termina");
     if (i === 1) {
       await page.getByTestId(`${prefix}-pular`).click();
+      // Pular também arma o portão: um toque duplo em Pular não pula dois itens.
+      await passGate(prefix);
+    } else if (i === 2) {
+      const options = page.getByTestId(`${prefix}-option`);
+      assert.ok((await options.count()) >= 2, "ao menos duas opções na tela");
+      await doubleTapAt(options.first(), prefix, i + 1);
+      await passGate(prefix);
     } else {
       const options = page.getByTestId(`${prefix}-option`);
       assert.ok((await options.count()) >= 2, "ao menos duas opções na tela");
       await options.first().click();
-      await page.locator(`[data-testid="${prefix}-next"], [data-testid="${prefix}-results"]`).first().waitFor();
-      const next = page.getByTestId(`${prefix}-next`);
-      if (await next.count()) {
-        assert.equal(await page.getByTestId(`${prefix}-option`).count(), 0, "toque duplo não responde o item seguinte");
-        await next.click();
-      }
+      await passGate(prefix);
     }
     i += 1;
   }
@@ -167,9 +198,14 @@ try {
   assert.ok(previewSvg >= 0);
   const choices = await dialog.getByRole("button", { name: /Selecionar figura/ }).all();
   assert.ok(choices.length >= 2);
+  const firstChoice = await choices[0].boundingBox();
   await choices[0].click();
   await dialog.waitFor({ state: "detached", timeout: 5000 });
   assert.match(await page.getByTestId("rv-easy-progress").innerText(), /^2 \//, "toque da criança avançou sozinho");
+  // Segundo toque do toque duplo, no mesmo lugar da figura: nada sob o dedo responde o item 2.
+  await page.mouse.click(firstChoice.x + firstChoice.width / 2, firstChoice.y + firstChoice.height / 2);
+  assert.match(await page.getByTestId("rv-easy-progress").innerText(), /^2 \//, "toque duplo não registrou o item seguinte");
+  await passGate("rv-easy");
   // Passo 2: mostrar e voltar sem toque → o adulto marca.
   await page.getByTestId("rv-easy-show").click();
   await dialog.waitFor();
@@ -183,7 +219,9 @@ try {
     await dialog.waitFor();
     await dialog.getByRole("button", { name: /Selecionar figura/ }).first().click();
     await dialog.waitFor({ state: "detached", timeout: 5000 });
+    await passGate("rv-easy");
   }
+  // passGate já provou, no último item, que o resultado só abre depois de Próximo.
   await page.getByTestId("rv-easy-results").waitFor();
   const rvReport = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(rvReport, /Reconhecimento Visual · Modo Fácil/);
@@ -215,9 +253,14 @@ try {
   const child = page.getByTestId("cognitive-easy-child");
   await child.waitFor();
   assert.doesNotMatch(await child.innerText(), /Acertou|Esperado|estrela|herói/i, "tela da criança pura");
-  await child.getByRole("button", { name: expected1, exact: true }).click();
+  assert.doesNotMatch(await page.getByTestId("cognitive-easy-step").innerText(), /Esperado:/, "com a tela da criança aberta, a dica com a resposta some do aparelho");
+  const answerTile = child.getByRole("button", { name: expected1, exact: true });
+  await doubleTapAt(answerTile, "cognitive-easy", 1);
   await child.waitFor({ state: "detached" });
   assert.match(await page.getByTestId("cognitive-easy-progress").innerText(), /^2 \//, "toque da criança avançou sozinho");
+  assert.doesNotMatch(await page.getByTestId("cognitive-easy-step").innerText(), /Esperado:|🗣️/, "com o portão armado, o aparelho ainda pode estar com a criança: nada do adulto na tela");
+  await passGate("cognitive-easy");
+  assert.match(await page.getByTestId("cognitive-easy-step").innerText(), /Esperado:/, "depois de Próximo, a dica do adulto volta");
   // Restante: mostra, volta e alterna os três botões (cobre fala, montagem e toque sem resposta).
   const cog = await playEasy("cognitive-easy");
   assert.equal(cog.steps, 15, `15 passos restantes de 16 (${cog.steps})`);
@@ -241,6 +284,7 @@ try {
   await child.waitFor();
   for (const letter of "ESCOLA") await child.getByRole("button", { name: `Letra ${letter}`, exact: true }).first().click();
   await child.waitFor({ state: "detached" });
+  await passGate("cognitive-easy");
   await playEasy("cognitive-easy");
   const report8 = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(report8, /Escreva a palavra ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");

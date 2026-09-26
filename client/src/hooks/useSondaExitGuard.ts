@@ -1,14 +1,15 @@
 import { useEffect } from "react";
 import { leavesSondaRoute } from "@/lib/sondaDezQuality";
 
+export const SONDA_EXIT_PROMPT = "Sair apaga os registros desta Sonda. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?";
+
 /** Only this memory-only workspace is guarded; the shared router and auth stay untouched. */
-export function useSondaExitGuard(dirty: boolean) {
+export function useSondaExitGuard(dirty: boolean, prompt: string = SONDA_EXIT_PROMPT) {
   useEffect(() => {
     if (!dirty) return;
     const heldUrl = window.location.href;
     const heldState = window.history.state;
     let leaving = false;
-    const prompt = "Sair apaga os registros desta Sonda. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?";
     const warn = (event: BeforeUnloadEvent) => {
       if (leaving) return;
       event.preventDefault(); event.returnValue = "";
@@ -37,5 +38,5 @@ export function useSondaExitGuard(dirty: boolean) {
       window.removeEventListener("popstate", change, true);
       window.removeEventListener("beforeunload", warn);
     };
-  }, [dirty]);
+  }, [dirty, prompt]);
 }
