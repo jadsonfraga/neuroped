@@ -20,8 +20,8 @@ assert.match(
   membersApi,
   /currentMembership\?\.active === 1[\s\S]{0,160}currentMembership\.role === "owner"[\s\S]{0,180}!roleHasPermission\(auth\.membership\.role, "team\.manage_owners"\)/,
 );
-assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
-assert.match(membersApi, /otherActiveOwnerCount/);
+assert.match(membersApi, /Somente owner pode rebaixar outro owner/);
+assert.match(membersApi, /async function hasOtherActiveOwner\(/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
 assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
 assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
