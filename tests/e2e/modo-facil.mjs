@@ -45,6 +45,9 @@ async function playObjective(prefix, { maxSteps = 20 } = {}) {
     assert.ok(i < maxSteps, "o jogo termina");
     if (i === 1) {
       await page.getByTestId(`${prefix}-pular`).click();
+      await page.locator(`[data-testid="${prefix}-next"], [data-testid="${prefix}-results"]`).first().waitFor();
+      const next = page.getByTestId(`${prefix}-next`);
+      if (await next.count()) await next.click();
     } else {
       const options = page.getByTestId(`${prefix}-option`);
       assert.ok((await options.count()) >= 2, "ao menos duas opções na tela");
@@ -81,6 +84,9 @@ try {
   await page.getByTestId("sonda-easy-option").first().click();
   await page.getByTestId("sonda-easy-next").waitFor();
   assert.equal(await page.getByTestId("sonda-easy-option").count(), 0, "depois do toque, nenhuma opção fica na tela");
+  assert.match(await page.getByTestId("sonda-easy-step").innerText(), /Resposta registrada/, "interstício neutro visível");
+  assert.doesNotMatch(await page.getByTestId("sonda-easy-step").innerText(), /Toque no círculo\./, "item seguinte não aparece antes de Próximo");
+  assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^1 \//, "progresso não antecipa o próximo item");
   assert.equal(await page.getByTestId("sonda-easy-tab").isDisabled(), true, "aba trava depois do primeiro item");
   await page.getByTestId("sonda-easy-next").click();
   assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^2 \//);
