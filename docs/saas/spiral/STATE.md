@@ -59,7 +59,34 @@ refresh≠access; família revogada nega; conta desativada nega), com a
 assertiva de família revogada verificada falhando com o defeito
 reintroduzido.
 
+## Ciclo 4 (2026-09-26) — auditoria de tenancy + S6/S7 fechados
+Auditoria completa de tenancy SaaS (8 auditores paralelos, 4 concluídos
+antes do teto de sessão): 79 lacunas em auth/authz, domínio clínico legado,
+agenda/operações e LIVE/tenants/billing. Relatório integral com evidência
+arquivo:linha em `docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md`. Backlog
+priorizado em `BACKLOG.md` (S6 em diante).
+
+S6: `/api/billing/webhook` estava bloqueado pelo middleware global de Bearer
+antes de o handler (que já se autentica sozinho) rodar — nenhuma
+reconciliação automática de cobrança jamais funcionava em produção. Fechado
+nesta sessão; evidência em EVIDENCE.md#S6.
+
+S7: `CHECKOUT_EXPIRED`/`CHECKOUT_CANCELED`/`PAYMENT_DELETED` cancelavam de
+forma terminal customer/subscription mesmo em trial ou ativo — um checkout
+abandonado bastava para derrubar uma clínica pagante, sem rota de
+reativação. Fechado nesta sessão: apenas `SUBSCRIPTION_DELETED`/
+`SUBSCRIPTION_INACTIVATED` (a própria assinatura no provedor) cancela.
+Evidência em EVIDENCE.md#S7.
+
+Comandos exit 0 depois de S6+S7: `npm run check`, `npm run test:quick-wins`
+(suíte completa), mais os testes de billing/tenant/cliente-zero listados em
+EVIDENCE.md#S7.
+
 ## Próximo passo executável
-Ver BACKLOG.md item S5 (restauração demonstrada) ou expandir o inventário
-ao Núcleo clínico. Retomada: `git fetch origin main && git log -1
-origin/main` e reler este arquivo.
+S8 (agenda multi-tenant: `clinic_id` em `booking_*`/`appointments`) é o
+próximo item aberto de maior severidade que não depende de censo de
+produção — ver BACKLOG.md. S9 (bypass do admin global no legado) está
+bloqueado por censo de produção (ver
+`docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`).
+Retomada: `git fetch origin main && git log -1 origin/main` e reler este
+arquivo.

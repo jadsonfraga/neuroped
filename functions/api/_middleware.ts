@@ -75,6 +75,13 @@ const PUBLIC_API_PATHS = new Set([
   "/api/public-booking",
   "/api/public-intake",
   "/api/public-scale",
+  // O webhook do provedor de cobrança se autentica sozinho por
+  // `asaas-access-token` (comparação em tempo constante, ≥32 caracteres,
+  // functions/api/billing/_provider.ts validateAsaasWebhook) e falha fechado
+  // (503) se o segredo não estiver configurado. O provedor nunca envia
+  // `Authorization: Bearer`, então exigir sessão de usuário aqui bloqueava
+  // toda notificação de pagamento antes de chegar ao handler.
+  "/api/billing/webhook",
 ]);
 
 // Rotas onde a autenticação é opcional: sem Authorization a requisição segue

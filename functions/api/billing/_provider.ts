@@ -30,6 +30,13 @@ export interface AsaasWebhookEvent {
     value?: number;
     subscription?: string;
   };
+  // Presente nos eventos SUBSCRIPTION_* (sem checkout/payment associado). É a
+  // única origem confiável de cancelamento terminal via webhook — ver
+  // functions/api/billing/webhook.ts classify().
+  subscription?: {
+    id?: string;
+    status?: string;
+  };
 }
 
 function requireSecret(value: string | undefined, name: string, minLength = 16): string {
