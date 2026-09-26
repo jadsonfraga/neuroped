@@ -269,3 +269,47 @@
 - Rollback: reverter `functions/api/tenants/[id]/_middleware.ts` e
   `functions/api/billing/invitations.ts` a `1f7597b` restaura o
   comportamento anterior; nenhuma migração envolvida.
+
+## S16 (ciclo 4, 2026-09-26) — anti-enumeração no acesso legado a paciente
+- Escopo: 10 arquivos (`functions/api/{patients/[id],patients/[id]/results,
+  results,results/[id],scales/results,consultations/index,clinical-core/
+  index,conecta/index,conecta/[id],memory/index}.ts`), ~17 pares de
+  checagem `!access.exists`/`!access.allowed` fundidos em uma condição só
+  (`!access.exists || !access.allowed`), sempre 404 com a mesma mensagem/
+  código ("Paciente não encontrado."/"NOT_FOUND"). Nenhuma mudança de
+  autorização (quem pode acessar continua igual); só a FORMA da recusa.
+  `memory/[id].ts` deliberadamente fora do escopo (já não distingue
+  exists/allowed, mas tem um problema mais profundo — LEG-09, próxima
+  camada).
+- Ambiente: container da sessão, Node do repo, HEAD `9e1a5f4` (S15) + S16.
+- Testes: novo guard estático
+  `tests/unit/patient-access-anti-enumeration-static.test.mjs` varre os 10
+  arquivos e falha se a checagem separada reaparecer em qualquer um —
+  cobertura ampla e barata. Novo `tests/unit/patient-access-anti-enumeration.test.ts`
+  prova em runtime, contra `db/schema.d1.sql` real e o handler real de
+  `GET /api/patients/:id`, que paciente inexistente e paciente de outro
+  owner devolvem status E CORPO idênticos. Ambos vistos FALHANDO pelo
+  motivo certo contra o código anterior via `git stash` isolado (o
+  estático detecta a regex do padrão antigo; o dinâmico via 403 em vez de
+  404); verdes com a correção. Ajuste de contrato em
+  `tests/unit/cloudflare-patients-contract.test.ts`: a asserção de DELETE
+  cross-owner que esperava 403 passa a esperar 404.
+- Comandos exit 0: `node tests/unit/patient-access-anti-enumeration-static.test.mjs`,
+  `node --import tsx tests/unit/patient-access-anti-enumeration.test.ts`,
+  `node --import tsx tests/unit/cloudflare-patients-contract.test.ts`,
+  `node --import tsx tests/unit/cloudflare-auth-middleware.test.ts`,
+  `node --import tsx tests/unit/cloudflare-input-limits.test.ts`,
+  `node --import tsx tests/unit/cloudflare-request-validation.test.ts`,
+  `node --import tsx tests/unit/no-fake-clinical-write.test.ts`,
+  `node --import tsx tests/unit/{notes-engine,conecta-engine,
+  clinical-core-contract}.test.ts`,
+  `node tests/unit/{conecta-integration-static,
+  clinical-core-integration-static,clinical-core-supersession-regression,
+  memory-search-ownership,patient-ui-safety-static}.test.*`,
+  `node --import tsx tests/unit/patient-results-pagination.test.ts`,
+  `npm run check`, `npx eslint` nos 10 arquivos tocados, `npm run
+  test:quick-wins` (suíte completa, com os dois testes novos já
+  cadastrados nela).
+- Rollback: reverter os 10 arquivos de produção a `9e1a5f4` restaura o
+  comportamento anterior (403 volta a distinguir paciente de outro owner);
+  nenhuma migração envolvida.

@@ -34,8 +34,9 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (context) => {
     if (!row) return error("Registro não encontrado.", "NOT_FOUND", 404);
 
     const access = await getPatientAccess(env.DB, row.patient_id, user);
-    if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-    if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) return error("Paciente não encontrado.", "NOT_FOUND", 404);
 
     const deletion = await env.DB.prepare("DELETE FROM conecta_events_demo WHERE id = ?").bind(id).run();
     if ((deletion.meta?.changes ?? 0) !== 1) {

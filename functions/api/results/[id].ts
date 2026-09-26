@@ -48,9 +48,10 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
     if (!result) return json({ error: "Resultado não encontrado.", code: "NOT_FOUND" }, 404);
 
     const access = await getPatientAccess(env.DB, result.patient_id, user);
-    if (!access.exists) return json({ error: "Paciente não encontrado.", code: "NOT_FOUND" }, 404);
-    if (!access.allowed) {
-      return json({ error: "Sem permissão para este paciente.", code: "FORBIDDEN" }, 403);
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) {
+      return json({ error: "Paciente não encontrado.", code: "NOT_FOUND" }, 404);
     }
 
     const deletion = await env.DB

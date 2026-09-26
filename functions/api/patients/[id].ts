@@ -125,15 +125,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   try {
     const access = await getPatientAccess(env.DB, id, user);
-    if (!access.exists) {
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) {
       return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-    }
-    if (!access.allowed) {
-      return authorizationError(
-        "Você não tem acesso a este paciente.",
-        "FORBIDDEN",
-        403,
-      );
     }
 
     const patient = await env.DB.prepare(
@@ -212,15 +207,10 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
   if (env.DB && user) {
     try {
       const access = await getPatientAccess(env.DB, id, user);
-      if (!access.exists) {
+      // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+      // inexistente e paciente de outro owner respondem exatamente igual.
+      if (!access.exists || !access.allowed) {
         return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-      }
-      if (!access.allowed) {
-        return authorizationError(
-          "Você não tem acesso a este paciente.",
-          "FORBIDDEN",
-          403,
-        );
       }
     } catch (error) {
       console.error("[patients/:id.PATCH] ownership error:", error);
@@ -339,15 +329,10 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
 
   try {
     const access = await getPatientAccess(env.DB, id, user);
-    if (!access.exists) {
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) {
       return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-    }
-    if (!access.allowed) {
-      return authorizationError(
-        "Você não tem acesso a este paciente.",
-        "FORBIDDEN",
-        403,
-      );
     }
 
     const ownerClause = isAdmin(user) ? "" : "AND owner_user_id = ?";

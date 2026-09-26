@@ -114,6 +114,25 @@ billing a POST em `/members`; `functions/api/billing/invitations.ts` separa
 billing, só para criar/reenviar). GET e DELETE passam a exigir apenas
 membership de gestor. Evidência em EVIDENCE.md#S15.
 
+## S16 · P2 · FECHADO (ciclo 4)
+As rotas clínicas legadas (patients/[id], patients/[id]/results, results,
+results/[id], scales/results, consultations, clinical-core, conecta,
+conecta/[id], memory) respondiam 404 para paciente inexistente e 403 para
+paciente de outro owner — um oráculo de enumeração cross-tenant: o status
+diferente revela que o id pertence a alguém, só não a quem perguntou.
+(AUTHZ-P2-11, LEG-10)
+Corrigido nos 10 arquivos: as duas checagens (`!access.exists`/
+`!access.allowed`) viram uma condição combinada, sempre 404 com a mesma
+mensagem/código. Guard estático novo
+(`tests/unit/patient-access-anti-enumeration-static.test.mjs`) falha o CI
+se a checagem separada voltar em qualquer um dos 10 arquivos. Prova
+comportamental em `tests/unit/patient-access-anti-enumeration.test.ts`
+contra o schema real. Evidência em EVIDENCE.md#S16.
+Fora do escopo desta camada, de propósito: `memory/[id].ts` já unifica
+implicitamente (só checa `.allowed`), mas tem um problema mais profundo
+(mutação final sem repetir owner/tenant no predicado, sem verificar
+`changes()`) — isso é LEG-09/AUTHZ-P2-12, candidato a próxima camada.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/

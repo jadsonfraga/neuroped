@@ -118,12 +118,20 @@ exigindo billing em dia. Antes, GET e DELETE de `/members` e
 `/invitations` também eram bloqueados, deixando a clínica sem forma de
 reduzir a folha antes de assinar. Evidência em EVIDENCE.md#S15.
 
+S16: as 10 rotas clínicas legadas que resolvem paciente por id não
+distinguem mais "não existe" (404) de "existe, mas é de outro owner"
+(403) — as duas respondem 404 idênticas. Guard estático fecha a regressão
+para sempre. Evidência em EVIDENCE.md#S16.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
 censo, os próximos itens executáveis sem depender de estado de produção
 desconhecido são S10 (papel duplo global×membership), S12B (expandir o
-export para cobrir documentos/avaliações/intake/escala) e S13 (link público
-de agendamento por clínica) — ver BACKLOG.md para os três. Retomada: `git
-fetch origin main && git log -1 origin/main` e reler este arquivo.
+export para cobrir documentos/avaliações/intake/escala), S13 (link público
+de agendamento por clínica) e o novo LEG-09/AUTHZ-P2-12 (mutações legadas
+sem owner/tenant repetido no predicado final nem verificação de
+`changes()`, achado em `memory/[id].ts` ao fechar S16) — ver BACKLOG.md.
+Retomada: `git fetch origin main && git log -1 origin/main` e reler este
+arquivo.
