@@ -31,7 +31,7 @@ import {
 } from "../../client/src/features/super-neuropad/model";
 import { buildGameDocSpec } from "../../client/src/features/super-neuropad/pdf";
 import { pdfSafe } from "../../client/src/lib/documentPdf";
-import { isRouteSensitive } from "../../client/src/security/routeGuardPolicy";
+import { decideRouteAccess, isRouteSensitive } from "../../client/src/security/routeGuardPolicy";
 
 test("faixas etárias cobrem 2 a 17 anos, em anos inteiros, sem lacuna nem sobreposição", () => {
   for (let years = MIN_AGE_YEARS; years <= MAX_AGE_YEARS; years++) {
@@ -257,6 +257,11 @@ test("página: rota real, sensível, sem persistência local, sem rede e sem câ
     assert.ok(app.includes(`path="${route}"`), `${route} continua existindo`);
   }
   assert.equal(isRouteSensitive(SUPER_NEUROPAD_ROUTE), true);
+  const accessBase = { path: SUPER_NEUROPAD_ROUTE, accessMode: "remote" as const, isAuthenticated: true, isLoading: false };
+  for (const role of ["admin", "professional", "operator"] as const) {
+    assert.equal(decideRouteAccess({ ...accessBase, userRole: role }), "allow", `papel ${role} pode aplicar o jogo`);
+  }
+  assert.equal(decideRouteAccess({ ...accessBase, userRole: "reader" }), "forbidden", "reader não aplica o jogo");
   const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
   const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
   const feature = ["model.ts", "music.ts", "pdf.ts"].map((file) => strip(readFileSync(`client/src/features/super-neuropad/${file}`, "utf8"))).join("\n");
