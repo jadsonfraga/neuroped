@@ -9,9 +9,9 @@ import {
 import { prepareSaasAudit } from "./_core";
 
 /**
- * Feature flags por clínica (migração 0026). O bootstrap de runtime espelha
+ * Feature flags por clínica (migração 0030). O bootstrap de runtime espelha
  * a migração (IF NOT EXISTS), mesma política de `_settings.ts` (0019): as
- * rotas de gestão funcionam antes de a 0026 rodar em produção.
+ * rotas de gestão funcionam antes de a 0030 rodar em produção.
  */
 const FEATURE_SCHEMA = `CREATE TABLE IF NOT EXISTS clinic_feature_flags (
   clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
@@ -38,7 +38,7 @@ function isMissingTableError(error: unknown): boolean {
 }
 
 /**
- * Linhas gravadas para a clínica. Tabela ainda inexistente (0026 não
+ * Linhas gravadas para a clínica. Tabela ainda inexistente (0030 não
  * aplicada) equivale a "nenhuma decisão gravada": todas as flags existentes
  * são opt-out com padrão ligado, então ausência de armazenamento preserva o
  * comportamento anterior à migração. Qualquer outro erro propaga.
@@ -79,16 +79,24 @@ export async function isClinicFeatureEnabled(
 }
 
 /**
- * Grava a decisão da clínica e a auditoria no MESMO batch; a auditoria só
- * entra se o upsert alterou exatamente uma linha.
+ * Grava todas as decisões e suas auditorias no MESMO batch: falha em qualquer
+ * recurso ou auditoria reverte o pedido inteiro. Cada auditoria só entra se
+ * o upsert imediatamente anterior alterou exatamente uma linha.
  */
-export async function setClinicFeature(
+export async function setClinicFeatures(
   db: D1Database,
-  params: { clinicId: string; actorUserId: string; key: ClinicFeatureKey; enabled: boolean },
+  params: {
+    clinicId: string;
+    actorUserId: string;
+    changes: Array<{ key: ClinicFeatureKey; enabled: boolean }>;
+  },
 ): Promise<void> {
-  if (!isClinicFeatureKey(params.key)) throw new Error("CLINIC_FEATURE_UNKNOWN");
+  for (const change of params.changes) {
+    if (!isClinicFeatureKey(change.key)) throw new Error("CLINIC_FEATURE_UNKNOWN");
+  }
+  if (params.changes.length === 0) return;
   const now = new Date().toISOString();
-  await db.batch([
+  await db.batch(params.changes.flatMap((change) => [
     db
       .prepare(
         `INSERT INTO clinic_feature_flags (clinic_id, flag_key, enabled, updated_by_user_id, updated_at)
@@ -98,7 +106,7 @@ export async function setClinicFeature(
            updated_by_user_id = excluded.updated_by_user_id,
            updated_at = excluded.updated_at`,
       )
-      .bind(params.clinicId, params.key, params.enabled ? 1 : 0, params.actorUserId, now),
+      .bind(params.clinicId, change.key, change.enabled ? 1 : 0, params.actorUserId, now),
     prepareSaasAudit(
       db,
       {
@@ -106,10 +114,10 @@ export async function setClinicFeature(
         actorUserId: params.actorUserId,
         action: "clinic_feature_update",
         targetType: "clinic_feature",
-        targetId: params.key,
-        metadata: { key: params.key, enabled: params.enabled },
+        targetId: change.key,
+        metadata: { key: change.key, enabled: change.enabled },
       },
       true,
     ),
-  ]);
+  ]));
 }

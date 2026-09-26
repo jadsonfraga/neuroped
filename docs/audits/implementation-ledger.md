@@ -146,12 +146,12 @@ workflow `saas-phase1-foundation`) e rollback por reversão do commit.
 | Camada | Entrega | Evidência | Rollback |
 | ------ | ------- | --------- | -------- |
 | 2. Tela por permissão | `configuracoes.tsx` lê `GET /api/tenants/:id` uma vez e a lista `permissions` decide as abas (Equipe = `team.manage`, Plano = `billing.manage`, Atividade = `organization.metrics.read`) e a edição da clínica (`organization.manage`). Resposta sem lista = sem permissão; link profundo para aba invisível cai em Perfil. | Trava estática em `tenant-permissions.test.ts`: sem `canManage`, sem comparação de papel, toda permissão declarada existe no catálogo | reverter; sem migração |
-| 3. Auditoria da clínica | Permissão nova `audit.read` (owner, clinic_admin). `GET /api/tenants/:id/audit` lê `saas_audit_log` com `clinic_id = ?` na contagem e na página, nunca lista linha sem clínica, 403 uniforme para papel sem permissão, clínica alheia, inexistente ou inativa; filtros do parser da trilha de plataforma com curinga de LIKE escapado. Aba Auditoria na tela. | `tenant-audit-log.test.ts` com D1 sintético: isolamento, 403 uniforme, filtros, paginação, metadata malformado | reverter; sem migração (tabela e índice desde a 0009) |
-| 4. Feature flags por clínica | Catálogo `shared/clinicFeatures.ts` (`remote_intake`, `remote_scales`; padrão LIGADO porque são recursos que já operavam; chave desconhecida = off). Migração 0026 `clinic_feature_flags` + bootstrap de runtime (política da 0019) + preservada no purge LGPD. `GET/PATCH /api/tenants/:id/features` (leitura por membro, escrita por `organization.manage`, tudo-ou-nada, auditoria `clinic_feature_update` no mesmo batch). Portas: criação de convite remoto → 403 `FEATURE_DISABLED`; superfície pública → 410, só depois do token válido. Aba Recursos na tela. Workflow `clinic-feature-flags-d1` aplica a 0026 em main com preflight idempotente. | `clinic-feature-flags.test.ts` ponta a ponta contra o SQL real das 0021/0023/0026: catálogo, rota, auditoria, porta na criação e na superfície pública, vizinha intacta, tabela ausente = padrões | reverter; `DROP TABLE clinic_feature_flags` devolve os padrões (tudo ligado) |
+| 3. Auditoria da clínica | Permissão nova `audit.read` (owner, clinic_admin). `GET /api/tenants/:id/audit` lê `saas_audit_log` com `clinic_id = ?` na contagem e na página, nunca lista linha sem clínica, 404 uniforme para papel sem permissão, clínica alheia, inexistente ou inativa; filtros do parser da trilha de plataforma com curinga de LIKE escapado. Aba Auditoria na tela. | `tenant-audit-log.test.ts` com D1 sintético: isolamento, 404 uniforme, filtros, paginação, metadata malformado | reverter; sem migração (tabela e índice desde a 0009) |
+| 4. Feature flags por clínica | Catálogo `shared/clinicFeatures.ts` (`remote_intake`, `remote_scales`; padrão LIGADO porque são recursos que já operavam; chave desconhecida = off). Migração 0030 `clinic_feature_flags` + bootstrap de runtime (política da 0019) + preservada no purge LGPD. `GET/PATCH /api/tenants/:id/features` (leitura por membro, escrita por `organization.manage`, tudo-ou-nada, auditoria `clinic_feature_update` no mesmo batch). Portas: criação de convite remoto → 403 `FEATURE_DISABLED`; superfície pública → 410, só depois do token válido. Aba Recursos na tela. Workflow `clinic-feature-flags-d1` aplica a 0030 em main com preflight idempotente. | `clinic-feature-flags.test.ts` ponta a ponta contra o SQL real das 0021/0023/0030: catálogo, rota, auditoria, porta na criação e na superfície pública, vizinha intacta, tabela ausente = padrões | reverter o código, preservando a tabela aditiva e as decisões auditadas |
 
 Decisões que não são óbvias:
 
-- **Flag opt-out, padrão ligado, tabela ausente = padrões.** Cada flag existente representa um recurso que já operava; a única semântica que preserva produção entre o deploy do código e a aplicação da 0026 é "ninguém desligou nada ainda". Só o erro `no such table` cai nesse caminho; qualquer outro erro propaga. Flag nova que nasça desligada precisa de decisão explícita no catálogo e na matriz do teste.
+- **Flag opt-out, padrão ligado, tabela ausente = padrões.** Cada flag existente representa um recurso que já operava; a única semântica que preserva produção entre o deploy do código e a aplicação da 0030 é "ninguém desligou nada ainda". Só o erro `no such table` cai nesse caminho; qualquer outro erro propaga. Flag nova que nasça desligada precisa de decisão explícita no catálogo e na matriz do teste.
 - **Superfície pública consulta a flag depois do token válido.** Antes, um 410 por flag responderia diferente de um 404 por token inválido e viraria oráculo de existência de convite. O teste trava a ordem.
 - **Recusa de PATCH é inteira.** Uma chave fora do catálogo ou um valor não booleano derruba o pedido todo; não se grava metade.
 - **`audit.read` é metadado, não conteúdo.** A trilha devolve ator, ação, alvo e metadados já gravados; nunca lê tabela clínica. Nome do ator vem de `users.name` (equipe), não de titular.
@@ -303,3 +303,22 @@ defeito reintroduzido — não apenas passando.
 | --------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Merge de #745/#746/#704                       | RESOLVIDO em 2026-09-01                                              | Dono aprovou e mesclou: #746 (156d00fc), #745 (3eab25db), #704 via #749 (39327b00); Chromium instalado nas catracas de CI (#748/#750). Deploys de main disparados pelos merges. |
 | Automação de monitoramento de PR nesta sessão | Classificador de permissões negou subscribe_pr_activity e send_later | Reexecutar verificação manualmente ou conceder permissão.                                                                                                                       |
+
+## Consolidação SaaS — 2026-09-26
+
+- Base reconciliada: `427b010f` (inclui os controles da PR #988). A auditoria
+  mantém a resposta 404 uniforme, o isolamento SQL e agora oferece filtros e
+  paginação estável; as duas suítes de auditoria existentes são preservadas.
+- A migração desta PR ainda não aplicada foi renumerada de 0026 para **0030**,
+  após as migrações já integradas. Nenhuma migração histórica foi editada.
+- Reproduzida uma gravação parcial ao falhar o segundo recurso. O PATCH agora
+  usa um único batch para todas as flags e auditorias. Triggers SQLite reais
+  demonstram rollback integral tanto por falha no segundo upsert quanto na
+  segunda auditoria. Pedido bem-sucedido audita ambas; a clínica vizinha fica intacta.
+- A tela descarta estado ao mudar de clínica e permite repetir a leitura de
+  auditoria após indisponibilidade. Novas permissões não removem os controles
+  de convite consentido, billing, clínica ativa ou purge introduzidos na main.
+- Validação local: permissões, ambas as trilhas de auditoria, flags e prefixos
+  de migração passaram. CI e prova de navegador do HEAD são pré-requisitos de merge.
+- Rollback: PR de revert do código, mantendo a tabela aditiva e as decisões
+  auditadas. Não executar DROP TABLE como rotina de rollback.

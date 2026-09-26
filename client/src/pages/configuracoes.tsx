@@ -149,6 +149,7 @@ interface TenantAuditPage {
 
 const AUDIT_ACTION_LABEL: Record<string, string> = {
   clinic_update: "Dados da clínica alterados",
+  clinic_feature_update: "Recurso da clínica alterado",
   clinic_membership_upsert: "Membro adicionado ou papel alterado",
   clinic_membership_deactivate: "Acesso de membro revogado",
   remote_intake_invite_create: "Convite de pré-consulta remota criado",
@@ -759,19 +760,24 @@ function AuditoriaSection({ clinicId }: { clinicId: string }) {
   const [appliedAction, setAppliedAction] = useState("");
   const [result, setResult] = useState<TenantAuditPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setError(null);
+    setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "25" });
     if (appliedAction) params.set("action", appliedAction);
     void authFetch(`/api/tenants/${clinicId}/audit?${params.toString()}`)
       .then((response) => readJson<TenantAuditPage>(response))
       .then((body) => !cancelled && setResult(body))
-      .catch((loadError: Error) => !cancelled && setError(loadError.message));
+      .catch((loadError: Error) => !cancelled && setError(loadError.message))
+      .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [clinicId, page, appliedAction]);
+  }, [clinicId, page, appliedAction, retry]);
 
   function applyFilter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -779,7 +785,12 @@ function AuditoriaSection({ clinicId }: { clinicId: string }) {
     setAppliedAction(actionFilter.trim());
   }
 
-  if (error) return <p role="alert" className="text-sm text-destructive">{error}</p>;
+  if (error) return (
+    <div className="space-y-3">
+      <p role="alert" className="text-sm text-destructive">{error}</p>
+      <Button variant="outline" onClick={() => setRetry((current) => current + 1)}>Tentar novamente</Button>
+    </div>
+  );
   if (!result) return <p className="text-sm text-muted-foreground" role="status">Carregando auditoria…</p>;
 
   const lastPage = Math.max(1, Math.ceil(result.total / result.limit));
@@ -794,8 +805,9 @@ function AuditoriaSection({ clinicId }: { clinicId: string }) {
           <Label htmlFor="auditoria-acao">Filtrar por ação</Label>
           <Input id="auditoria-acao" maxLength={160} placeholder="Ex.: membership, intake, lgpd" value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} />
         </div>
-        <Button type="submit" variant="outline">Filtrar</Button>
+        <Button type="submit" variant="outline" disabled={loading}>Filtrar</Button>
       </form>
+      {loading && <p role="status" className="text-sm text-muted-foreground">Atualizando auditoria…</p>}
       {result.data.length === 0 && <p className="text-sm text-muted-foreground">Nenhum registro para este filtro.</p>}
       <ul className="divide-y divide-border">
         {result.data.map((entry) => (
@@ -816,8 +828,8 @@ function AuditoriaSection({ clinicId }: { clinicId: string }) {
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{result.total} registro(s) · página {result.page} de {lastPage}</span>
         <div className="flex gap-2">
-          <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Anterior</Button>
-          <Button size="sm" variant="ghost" disabled={page >= lastPage} onClick={() => setPage((current) => current + 1)}>Próxima</Button>
+          <Button size="sm" variant="ghost" disabled={loading || page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Anterior</Button>
+          <Button size="sm" variant="ghost" disabled={loading || page >= lastPage} onClick={() => setPage((current) => current + 1)}>Próxima</Button>
         </div>
       </div>
     </SectionCard>
@@ -825,6 +837,12 @@ function AuditoriaSection({ clinicId }: { clinicId: string }) {
 }
 
 export default function ConfiguracoesPage() {
+  const { activeClinicId } = useClinic();
+  // A troca de clínica descarta rascunhos, respostas e permissões do tenant anterior.
+  return <ConfiguracoesContent key={activeClinicId ?? "no-clinic"} />;
+}
+
+function ConfiguracoesContent() {
   const { user } = useAuth();
   const { activeClinicId, clinics } = useClinic();
   const [section, setSection] = useState<SectionId>(initialSectionFromLocation);

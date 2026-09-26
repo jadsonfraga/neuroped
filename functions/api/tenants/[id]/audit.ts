@@ -1,5 +1,4 @@
 import { getContextUser } from "../../auth/_authorization";
-import { boundedText } from "../../_request";
 import { nextAuditIsoDay, parseAuditLogQuery } from "../../audit-log";
 import {
   getClinicMembership,
@@ -18,7 +17,7 @@ import {
  * si mesmo: quem convidou, quem alterou papel, quem criou convite remoto —
  * metadados apenas. O predicado `clinic_id = ?` está no SQL final (contagem
  * e página), não só na autorização; linhas sem clínica (`clinic_id IS NULL`)
- * nunca aparecem, e clínica alheia ou inexistente responde o mesmo 403.
+ * nunca aparecem, e clínica alheia ou inexistente responde o mesmo 404.
  *
  * Parâmetros (mesmo parser da trilha de plataforma):
  *  ?page=1&limit=50&resource=<target_type>&action=<trecho>&from=AAAA-MM-DD&to=AAAA-MM-DD
@@ -63,43 +62,44 @@ export function parseAuditMetadata(raw: string | null): Record<string, unknown> 
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
-  const db = context.env.DB;
   const user = getContextUser(context);
-  const clinicId = boundedText(context.params.id, 80);
-  if (!db) return tenantError("Banco SaaS não configurado.", "SAAS_DB_NOT_CONFIGURED", 503);
   if (!user) return tenantError("Não autenticado.", "UNAUTHENTICATED", 401);
-  if (!clinicId) return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
-
-  const query = parseAuditLogQuery(new URL(context.request.url));
-  if (!query.ok) return tenantError(query.message, "VALIDATION_ERROR", 400);
-
-  const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !membershipHas(membership, "audit.read")) {
-    return tenantError("Acesso negado para esta clínica.", "TENANT_FORBIDDEN", 403);
+  const clinicId = context.params.id;
+  if (typeof clinicId !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(clinicId)) {
+    return tenantError("Recurso indisponível.", "NOT_FOUND", 404);
   }
-
-  let where = " WHERE a.clinic_id = ?";
-  const binds: unknown[] = [clinicId];
-  if (query.resource) {
-    where += " AND a.target_type = ?";
-    binds.push(query.resource);
-  }
-  if (query.action) {
-    where += " AND a.action LIKE ? ESCAPE '\\'";
-    binds.push(`%${escapeLike(query.action)}%`);
-  }
-  if (query.from) {
-    where += " AND a.created_at >= ?";
-    binds.push(query.from);
-  }
-  if (query.to) {
-    const toExclusive = nextAuditIsoDay(query.to);
-    if (!toExclusive) return tenantError("Data final inválida.", "VALIDATION_ERROR", 400);
-    where += " AND a.created_at < ?";
-    binds.push(toExclusive);
-  }
+  const db = context.env.DB;
+  if (!db) return tenantError("Auditoria indisponível sem banco persistente.", "DB_REQUIRED", 503);
 
   try {
+    const membership = await getClinicMembership(db, clinicId, user);
+    if (!membership || !membershipHas(membership, "audit.read")) {
+      return tenantError("Recurso indisponível.", "NOT_FOUND", 404);
+    }
+    const query = parseAuditLogQuery(new URL(context.request.url));
+    if (!query.ok) return tenantError(query.message, "VALIDATION_ERROR", 400);
+
+    let where = " WHERE a.clinic_id = ?";
+    const binds: unknown[] = [clinicId];
+    if (query.resource) {
+      where += " AND a.target_type = ?";
+      binds.push(query.resource);
+    }
+    if (query.action) {
+      where += " AND a.action LIKE ? ESCAPE '\\'";
+      binds.push(`%${escapeLike(query.action)}%`);
+    }
+    if (query.from) {
+      where += " AND a.created_at >= ?";
+      binds.push(query.from);
+    }
+    if (query.to) {
+      const toExclusive = nextAuditIsoDay(query.to);
+      if (!toExclusive) return tenantError("Data final inválida.", "VALIDATION_ERROR", 400);
+      where += " AND a.created_at < ?";
+      binds.push(toExclusive);
+    }
+
     const count = await db
       .prepare(`SELECT COUNT(*) AS total FROM saas_audit_log a${where}`)
       .bind(...binds)
@@ -122,7 +122,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
       targetType: row.target_type,
       targetId: row.target_id,
       actorUserId: row.actor_user_id,
-      actorName: row.actor_name,
+      actorName: row.actor_name ?? "Usuário",
       metadata: parseAuditMetadata(row.metadata_json),
       createdAt: row.created_at,
     }));

@@ -17,7 +17,7 @@ on:
       - "tests/unit/tenant-audit-log.test.ts"
       - "tests/unit/clinic-feature-flags.test.ts"
       - "shared/clinicFeatures.ts"
-      - "db/migrations/0026_clinic_feature_flags.sql"
+      - "db/migrations/0030_clinic_feature_flags.sql"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
@@ -36,7 +36,7 @@ on:
       - "tests/unit/tenant-audit-log.test.ts"
       - "tests/unit/clinic-feature-flags.test.ts"
       - "shared/clinicFeatures.ts"
-      - "db/migrations/0026_clinic_feature_flags.sql"
+      - "db/migrations/0030_clinic_feature_flags.sql"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:

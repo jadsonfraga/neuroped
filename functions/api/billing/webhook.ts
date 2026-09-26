@@ -32,11 +32,23 @@ function plusDaysIso(base: Date, days: number): string {
   return new Date(base.getTime() + days * 86_400_000).toISOString();
 }
 
-function classify(eventName: string): "paid" | "past_due" | "refund" | "cancel" | "ignore" {
+// S7 (ciclo 4 da espiral SaaS, 2026-09-26 — achado LTB-01): um checkout é um
+// link de pagamento de 60 minutos, recriado a cada clique em "Assinar"/
+// "Gerenciar assentos"; ele NÃO é a assinatura. CHECKOUT_CANCELED e
+// CHECKOUT_EXPIRED descrevem apenas aquele link — nunca podem cancelar de
+// forma terminal um customer/subscription que já esteja em trial ou pago por
+// outro checkout. PAYMENT_DELETED (correção de uma cobrança específica no
+// provedor) também não encerra a assinatura por si só. O único evento que
+// cancela de verdade é o de cancelamento da PRÓPRIA assinatura no provedor
+// (SUBSCRIPTION_DELETED/SUBSCRIPTION_INACTIVATED, resolvido por
+// subscription.id em resolveContext) — até existir uma rota própria de
+// cancelamento no produto.
+function classify(eventName: string): "paid" | "past_due" | "refund" | "cancel" | "checkout_terminal" | "ignore" {
   if (["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "CHECKOUT_PAID"].includes(eventName)) return "paid";
   if (["PAYMENT_OVERDUE", "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED", "PAYMENT_REPROVED_BY_RISK_ANALYSIS"].includes(eventName)) return "past_due";
   if (["PAYMENT_REFUNDED", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_CHARGEBACK_REQUESTED"].includes(eventName)) return "refund";
-  if (["CHECKOUT_CANCELED", "CHECKOUT_EXPIRED", "PAYMENT_DELETED"].includes(eventName)) return "cancel";
+  if (["SUBSCRIPTION_DELETED", "SUBSCRIPTION_INACTIVATED"].includes(eventName)) return "cancel";
+  if (["CHECKOUT_CANCELED", "CHECKOUT_EXPIRED"].includes(eventName)) return "checkout_terminal";
   return "ignore";
 }
 
@@ -45,6 +57,10 @@ function invoiceKind(kind: ReturnType<typeof classify>): string {
   if (kind === "past_due") return "charge_failed";
   if (kind === "refund") return "charge_refunded";
   if (kind === "cancel") return "subscription_canceled";
+  // 'checkout_terminal' não é um kind próprio em billing_invoice_events (CHECK
+  // de db/migrations/0012_saas_billing_onboarding.sql); registra-se como
+  // webhook_received, igual a qualquer evento que não altera o estado da
+  // assinatura — só o registro em billing_provider_checkouts é próprio dele.
   return "webhook_received";
 }
 
@@ -90,6 +106,17 @@ async function resolveContext(db: D1Database, event: AsaasWebhookEvent): Promise
         WHERE provider_checkout_id = ? LIMIT 1`,
     ).bind(checkoutId).first<{ billing_customer_id: string }>();
     if (row) return activeSubscriptionContext(db, row.billing_customer_id);
+  }
+
+  // Eventos SUBSCRIPTION_* não trazem checkout nem payment: a própria
+  // assinatura no provedor é a única chave disponível.
+  const subscriptionId = event.subscription?.id?.trim();
+  if (subscriptionId) {
+    const row = await db.prepare(
+      `SELECT customer_id FROM billing_subscriptions
+        WHERE provider_subscription_id = ? LIMIT 1`,
+    ).bind(subscriptionId).first<{ customer_id: string }>();
+    if (row) return activeSubscriptionContext(db, row.customer_id);
   }
   return null;
 }
@@ -210,7 +237,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const providerObjectId = webhookProviderObjectId(event);
   const checkoutStatus = kind === "paid"
     ? "paid"
-    : kind === "cancel"
+    : kind === "checkout_terminal"
       ? (name === "CHECKOUT_EXPIRED" ? "expired" : "canceled")
       : null;
   const rawStatus = (event.payment?.status ?? event.checkout?.status ?? name) || null;

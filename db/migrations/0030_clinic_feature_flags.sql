@@ -1,4 +1,4 @@
--- 0026 — Feature flags por clínica.
+-- 0030 — Feature flags por clínica.
 --
 -- Até aqui a única decisão de "o que está ligado" era por plano
 -- (shared/entitlements.ts). A clínica não tinha como desligar, para si, um
@@ -14,8 +14,8 @@
 -- A tabela é configuração da clínica (sem coluna de titular): entra na lista
 -- de preservadas do purge LGPD, ao lado de clinic_settings.
 --
--- Rollback: DROP TABLE clinic_feature_flags; o código volta aos padrões do
--- catálogo (tudo ligado), que é o comportamento anterior a esta migração.
+-- Rollback: reverter o código, preservando a tabela aditiva e as decisões
+-- auditadas. Não apagar configurações persistidas como rotina de rollback.
 
 CREATE TABLE IF NOT EXISTS clinic_feature_flags (
   clinic_id TEXT NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,

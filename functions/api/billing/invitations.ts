@@ -67,7 +67,16 @@ async function revokeUndeliveredInvitation(
   }
 }
 
-async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {
+/**
+ * LTB-15 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+ * ler e revogar convite não custam assento nem cobrança — só CRIAR um custa.
+ * Exigir entitlement de billing também em GET/DELETE deixava a clínica com
+ * trial vencido incapaz de sequer ver ou cancelar seus próprios convites
+ * pendentes, mesmo sem nenhuma ação nova sendo tomada. `managerBase` cobre
+ * a autorização por membership (sempre exigida); `manager` acrescenta o
+ * gate de billing, só para a criação/reenvio (POST).
+ */
+async function managerBase(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {
   const db = context.env.DB;
   const user = getContextUser(context);
   if (!db) return { error: tenantError("Billing indisponível.", "DB_REQUIRED", 503) } as const;
@@ -76,9 +85,15 @@ async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: str
   if (!membership || !membershipHas(membership, "team.manage")) {
     return { error: tenantError("Apenas gestores podem administrar convites.", "TENANT_FORBIDDEN", 403) } as const;
   }
-  const denial = await requireBillingEntitlement(db, user.id, clinicId, "admin");
-  if (denial) return { error: denial } as const;
   return { db, user, membership } as const;
+}
+
+async function manager(context: Parameters<PagesFunction<Env>>[0], clinicId: string) {
+  const base = await managerBase(context, clinicId);
+  if ("error" in base) return base;
+  const denial = await requireBillingEntitlement(base.db, base.user.id, clinicId, "admin");
+  if (denial) return { error: denial } as const;
+  return base;
 }
 
 async function assertSeatAvailable(db: D1Database, clinicId: string): Promise<boolean> {
@@ -111,7 +126,7 @@ async function assertSeatAvailable(db: D1Database, clinicId: string): Promise<bo
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const clinicId = clean(new URL(context.request.url).searchParams.get("clinicId"), 80);
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
-  const auth = await manager(context, clinicId);
+  const auth = await managerBase(context, clinicId);
   if ("error" in auth) return auth.error;
 
   const rows = await auth.db.prepare(
@@ -300,7 +315,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   if (!clinicId || !invitationId) {
     return tenantError("clinicId e invitationId são obrigatórios.", "VALIDATION_ERROR", 400);
   }
-  const auth = await manager(context, clinicId);
+  const auth = await managerBase(context, clinicId);
   if ("error" in auth) return auth.error;
   const result = await auth.db.prepare(
     `UPDATE clinic_invitations SET status = 'revoked'

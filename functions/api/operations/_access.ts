@@ -32,6 +32,7 @@ const HARDENING_SCHEMA = [
   `CREATE TABLE IF NOT EXISTS operations_audit_log (
     id TEXT PRIMARY KEY,
     provider_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id TEXT,
     actor_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     action TEXT NOT NULL,
     target_type TEXT NOT NULL,
@@ -43,6 +44,8 @@ const HARDENING_SCHEMA = [
      ON operations_audit_log(provider_user_id, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_operations_audit_actor_time
      ON operations_audit_log(actor_user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_operations_audit_clinic_time
+     ON operations_audit_log(clinic_id, created_at DESC)`,
   `CREATE TRIGGER IF NOT EXISTS trg_appointments_respect_blocks_insert
    BEFORE INSERT ON appointments
    WHEN NEW.status IN ('requested','confirmed','checked_in','in_care')
@@ -339,6 +342,7 @@ function safeAuditMetadata(value: Record<string, unknown> | undefined): string |
 export async function logOperationsAudit(
   db: D1Database,
   principal: OperationsPrincipal,
+  clinicId: string,
   input: {
     action: string;
     targetType: string;
@@ -349,12 +353,13 @@ export async function logOperationsAudit(
   await db
     .prepare(
       `INSERT INTO operations_audit_log
-        (id, provider_user_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, provider_user_id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       `ops-audit-${crypto.randomUUID()}`,
       principal.providerUserId,
+      clinicId,
       principal.actorUserId,
       input.action.slice(0, 80),
       input.targetType.slice(0, 60),
@@ -368,6 +373,7 @@ export async function logOperationsAudit(
 export async function listOperationsAudit(
   db: D1Database,
   providerUserId: string,
+  clinicId: string,
   limit = 40,
 ) {
   const safeLimit = Math.min(100, Math.max(1, Math.round(limit)));
@@ -377,11 +383,11 @@ export async function listOperationsAudit(
               a.target_type, a.target_id, a.metadata_json, a.created_at
          FROM operations_audit_log a
          LEFT JOIN users u ON u.id = a.actor_user_id
-        WHERE a.provider_user_id = ?
+        WHERE a.provider_user_id = ? AND a.clinic_id = ?
         ORDER BY a.created_at DESC
         LIMIT ?`,
     )
-    .bind(providerUserId, safeLimit)
+    .bind(providerUserId, clinicId, safeLimit)
     .all<any>();
 
   return (result.results ?? []).map((row) => ({

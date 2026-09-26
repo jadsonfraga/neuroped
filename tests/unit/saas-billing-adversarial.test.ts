@@ -220,13 +220,37 @@ const paidEvent = {
   assert.equal(state().subscription.status, "past_due");
 }
 
-// Cancelamento é terminal: pagamento posterior não reabre customer/subscription.
+// LTB-01 (ciclo 4, 2026-09-26): um checkout expirado/cancelado é só o link
+// de pagamento de 60 minutos, nunca a assinatura. Não pode cancelar de forma
+// terminal um customer que já existe (aqui, em past_due) — só o registro do
+// próprio checkout muda.
+{
+  const expired = await send({
+    id: "evt-checkout-expired",
+    event: "CHECKOUT_EXPIRED",
+    dateCreated: "2026-08-24T18:00:00Z",
+    checkout: { id: "checkout-red", externalReference: "neuroped:bc-red:checkout-red" },
+  });
+  assert.equal(expired.status, 200);
+  assert.equal(state().customer.status, "past_due", "checkout expirado não pode cancelar a assinatura");
+  assert.equal(state().subscription.status, "past_due");
+  assert.equal(
+    db.prepare(
+      "SELECT status FROM billing_provider_checkouts WHERE provider_checkout_id='checkout-red'",
+    ).get().status,
+    "expired",
+    "o checkout expirado registra o próprio estado, isolado do customer/subscription",
+  );
+}
+
+// Cancelamento é terminal só quando é a PRÓPRIA assinatura que é cancelada no
+// provedor (SUBSCRIPTION_DELETED); pagamento posterior não reabre.
 {
   const canceled = await send({
     id: "evt-cancel",
-    event: "CHECKOUT_CANCELED",
+    event: "SUBSCRIPTION_DELETED",
     dateCreated: "2026-08-25T12:00:00Z",
-    checkout: { id: "checkout-red", externalReference: "neuroped:bc-red:checkout-red" },
+    subscription: { id: "asaas-sub-red" },
   });
   assert.equal(canceled.status, 200);
   assert.equal(state().customer.status, "canceled");

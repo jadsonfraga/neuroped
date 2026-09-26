@@ -6,7 +6,7 @@ import { rolesWithPermission } from "../../shared/permissions";
 
 /**
  * Trilha de auditoria restrita à clínica: quem detém `audit.read` lê só as
- * linhas de `saas_audit_log` da própria clínica; qualquer outro caso é 403
+ * linhas de `saas_audit_log` da própria clínica; qualquer outro caso é 404
  * indistinguível (clínica alheia, inexistente, papel sem permissão, clínica
  * inativa). Todos os dados são sintéticos.
  */
@@ -146,7 +146,7 @@ assert.equal((await readTenantAudit(ctx(null, RED))).status, 401);
 }
 assert.equal((await readTenantAudit(ctx(ADMIN_RED, RED))).status, 200, "clinic_admin lê");
 
-// 403 indistinguível: papel sem permissão, clínica alheia, inexistente, inativa.
+// 404 indistinguível: papel sem permissão, clínica alheia, inexistente, inativa.
 for (const [userId, clinicId, label] of [
   [PRO_RED, RED, "profissional"],
   [ASSISTANT_RED, RED, "assistente"],
@@ -156,9 +156,9 @@ for (const [userId, clinicId, label] of [
   [OWNER_GREY, GREY, "clínica suspensa"],
 ] as const) {
   const response = await readTenantAudit(ctx(userId, clinicId));
-  assert.equal(response.status, 403, label);
+  assert.equal(response.status, 404, label);
   const body = await json(response);
-  assert.equal(body.code, "TENANT_FORBIDDEN", label);
+  assert.equal(body.code, "NOT_FOUND", label);
   assert.equal("data" in body, false, `${label}: negação não pode carregar dados`);
 }
 
@@ -192,4 +192,4 @@ assert.match(source, /membershipHas\(membership, "audit\.read"\)/);
 assert.match(source, /WHERE a\.clinic_id = \?/);
 assert.doesNotMatch(source, /membership\.role\s*[!=]==/);
 
-console.log("tenant-audit-log: trilha da clínica isolada por tenant, 403 uniforme, filtros e paginação OK");
+console.log("tenant-audit-log: trilha da clínica isolada por tenant, 404 uniforme, filtros e paginação OK");

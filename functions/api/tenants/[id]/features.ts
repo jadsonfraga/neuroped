@@ -8,7 +8,7 @@ import {
   tenantJson,
   type TenantEnv,
 } from "../../tenant/_core";
-import { ensureClinicFeatureSchema, getClinicFeatures, setClinicFeature } from "../../tenant/_features";
+import { ensureClinicFeatureSchema, getClinicFeatures, setClinicFeatures } from "../../tenant/_features";
 
 /**
  * GET/PATCH /api/tenants/:id/features — feature flags da clínica.
@@ -81,9 +81,7 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
 
   try {
     await ensureClinicFeatureSchema(db);
-    for (const change of changes) {
-      await setClinicFeature(db, { clinicId, actorUserId: user.id, key: change.key, enabled: change.enabled });
-    }
+    await setClinicFeatures(db, { clinicId, actorUserId: user.id, changes });
     return tenantJson({
       clinicId,
       canManage: true,

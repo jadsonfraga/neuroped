@@ -113,8 +113,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (!user) return errorResponse("Não autenticado.", "UNAUTHENTICATED", 401);
     if (patientId) {
       const access = await getPatientAccess(env.DB, patientId, user);
-      if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-      if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
+      // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+      // inexistente e paciente de outro owner respondem exatamente igual —
+      // 403 revelaria que o id pertence a alguém, só não a quem perguntou.
+      if (!access.exists || !access.allowed) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
     }
 
     let sql =
@@ -244,8 +246,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
     const access = await getPatientAccess(env.DB, patient_id, user);
-    if (!access.exists) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-    if (!access.allowed) return errorResponse("Sem permissão para este paciente.", "FORBIDDEN", 403);
+    if (!access.exists || !access.allowed) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
 
     await env.DB.prepare(
       `INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at)

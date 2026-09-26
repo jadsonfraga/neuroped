@@ -19,7 +19,7 @@ import { onRequestGet as publicGetScale } from "../../functions/api/public-scale
 
 /**
  * Feature flags por clínica, de ponta a ponta com dados sintéticos:
- * catálogo fail-closed → migração 0026 → rota de gestão (permissão +
+ * catálogo fail-closed → migração 0030 → rota de gestão (permissão +
  * auditoria) → porta na criação do convite remoto → porta na superfície
  * pública. A clínica vizinha nunca é afetada.
  */
@@ -84,7 +84,7 @@ for (const unknown of ["", "REMOTE_INTAKE", "ai_drafting", null, undefined, 1, {
 }
 assert.ok(PURGE_PRESERVED_TABLES.includes("clinic_feature_flags"), "configuração da clínica é preservada no purge LGPD");
 
-// ── 2) Schema sintético + migrações reais 0021/0023/0026 ─────────────────
+// ── 2) Schema sintético + migrações reais 0021/0023/0030 ─────────────────
 const sqlite = new Database(":memory:");
 sqlite.pragma("foreign_keys = ON");
 sqlite.exec(`
@@ -105,8 +105,8 @@ sqlite.exec(`
 `);
 sqlite.exec(readFileSync("db/migrations/0021_remote_scale_response.sql", "utf8"));
 sqlite.exec(readFileSync("db/migrations/0023_public_submission_audit.sql", "utf8"));
-sqlite.exec(readFileSync("db/migrations/0026_clinic_feature_flags.sql", "utf8"));
-sqlite.exec(readFileSync("db/migrations/0026_clinic_feature_flags.sql", "utf8")); // idempotente
+sqlite.exec(readFileSync("db/migrations/0030_clinic_feature_flags.sql", "utf8"));
+sqlite.exec(readFileSync("db/migrations/0030_clinic_feature_flags.sql", "utf8")); // idempotente
 {
   const columns = sqlite.prepare("SELECT name FROM pragma_table_info('clinic_feature_flags')").all() as Array<{ name: string }>;
   assert.deepEqual(columns.map((column) => column.name), ["clinic_id", "flag_key", "enabled", "updated_by_user_id", "updated_at"]);
@@ -286,7 +286,41 @@ assert.equal(await isClinicFeatureEnabled(env.DB, BLUE, "remote_scales"), true, 
   assert.equal((await publicGetScale(publicContext(redToken))).status, 200);
 }
 
-// ── 8) Tabela ausente (0026 ainda não aplicada) = padrões, nunca erro ─────
+// A falha no segundo recurso ou na sua auditoria desfaz o pedido inteiro.
+// Os triggers executam SQL real; nenhuma implementação de produção é substituída.
+{
+  const snapshot = () => ({
+    flags: sqlite.prepare("SELECT * FROM clinic_feature_flags ORDER BY clinic_id, flag_key").all(),
+    audit: sqlite.prepare("SELECT * FROM saas_audit_log ORDER BY id").all(),
+  });
+  for (const trigger of [
+    "BEFORE UPDATE ON clinic_feature_flags WHEN NEW.flag_key = 'remote_scales'",
+    "BEFORE INSERT ON saas_audit_log WHEN NEW.target_id = 'remote_scales' AND NEW.action = 'clinic_feature_update'",
+  ]) {
+    const before = snapshot();
+    sqlite.exec(`CREATE TRIGGER synthetic_feature_failure ${trigger} BEGIN SELECT RAISE(ABORT, 'synthetic batch failure'); END`);
+    try {
+      const response = await patchFeatures(tenantContext("PATCH", OWNER_RED, RED, {
+        features: { remote_intake: false, remote_scales: false },
+      }));
+      assert.equal(response.status, 500, "falha no banco nunca responde sucesso");
+      assert.equal((await json(response)).code, "DB_ERROR");
+      assert.deepEqual(snapshot(), before, "todas as flags e auditorias devem ser revertidas");
+    } finally {
+      sqlite.exec("DROP TRIGGER synthetic_feature_failure");
+    }
+  }
+  const before = snapshot();
+  const response = await patchFeatures(tenantContext("PATCH", OWNER_RED, RED, {
+    features: { remote_intake: false, remote_scales: false },
+  }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(featureMap(await json(response)), { remote_intake: [false, "clinic"], remote_scales: [false, "clinic"] });
+  assert.equal(snapshot().audit.length, before.audit.length + 2, "sucesso audita ambos os recursos");
+  assert.equal(await isClinicFeatureEnabled(env.DB, BLUE, "remote_scales"), true, "rollback e sucesso preservam a vizinha");
+}
+
+// ── 8) Tabela ausente (0030 ainda não aplicada) = padrões, nunca erro ─────
 {
   const bare = new Database(":memory:");
   bare.exec("CREATE TABLE clinics (id TEXT PRIMARY KEY)");
@@ -315,4 +349,4 @@ for (const file of ["functions/api/public-intake.ts", "functions/api/public-scal
 }
 
 sqlite.close();
-console.log("clinic-feature-flags: catálogo fail-closed, 0026, rota com permissão e auditoria, portas de criação e públicas, vizinha intacta OK");
+console.log("clinic-feature-flags: catálogo fail-closed, 0030, rota com permissão e auditoria, portas de criação e públicas, vizinha intacta OK");
