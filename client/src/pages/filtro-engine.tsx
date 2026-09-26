@@ -9,6 +9,7 @@ import {
   Brain,
   ClipboardCheck,
   Clock,
+  History,
   FileDown,
   Filter,
   GraduationCap,
@@ -45,6 +46,9 @@ import {
 } from "@/lib/scaleSearch";
 import { computeFilterFacetCounts, diagnoseEmptyResult, withinTimeBudget, TIME_BUCKETS } from "@/lib/filterDiagnostics";
 import { readFilterUrlState, writeFilterUrlState } from "@/lib/filterUrlState";
+import { buildAutocomplete, moveActiveIndex, type AutocompleteItem } from "@/lib/filterAutocomplete";
+import { clearFilterRecents, loadFilterRecents, recordFilterRecent, type FilterRecentItem } from "@/lib/filterRecents";
+import { formatScaleAgeRange } from "@/lib/scaleAgeRange";
 import { parseScaleMinutes } from "@/lib/scaleTime";
 import { classifyRecommendationAgeFit, formatRecommendationAgeRange } from "@/data/recommendationAgeFit";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
@@ -1186,6 +1190,16 @@ export default function FiltroPage() {
   const [timeBudget, setTimeBudget] = useState<number | null>(applyUrlState ? (urlState.timeBudget ?? null) : null);
   const [sortMode, setSortMode] = useState<SortMode>("relevancia");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // Autocompletar (combobox APG): aberto só com foco + ≥ 2 caracteres.
+  const [acOpen, setAcOpen] = useState(false);
+  const [acIndex, setAcIndex] = useState(-1);
+  const acBlurTimer = useRef<number | null>(null);
+  // Recentes: só ids/nomes/rotas de instrumentos; nunca em modo efêmero.
+  const [recents, setRecents] = useState<FilterRecentItem[]>(() => (flashMode ? [] : loadFilterRecents()));
+  const rememberOpened = (scale: Pick<ScaleEntry, "id" | "name">, route: string) => {
+    if (flashMode) return;
+    setRecents(recordFilterRecent({ id: scale.id, name: scale.name, route }));
+  };
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -1517,6 +1531,34 @@ export default function FiltroPage() {
     }
     return items;
   }, [queryIntent, selectedRespondente, timeBudget, selectedAssessmentType, selectedCommunication, selectedLiteracy]);
+
+  // Candidatos seguros SEM a busca livre: base do autocompletar (o que a
+  // pessoa pode encontrar sem sair do perfil clínico atual).
+  const safeCandidates = useMemo(
+    () => filterScalesWithClinicalRescue(unique(catalog), filterContext).filter((m) => !m.isBroadbandFallback).map((m) => m.scale),
+    [catalog, filterContext],
+  );
+  const autocompleteItems = useMemo<AutocompleteItem<ScaleEntry>[]>(
+    () =>
+      buildAutocomplete(search, safeCandidates, catalog, queixas.map((q) => ({ id: q.id, label: q.label, terms: q.parentHint ? [q.parentHint] : [] })), {
+        limit: 8,
+        formatAge: (scale) => formatScaleAgeRange(scale.ageMin, scale.ageMax),
+      }),
+    [search, safeCandidates, catalog],
+  );
+  const acVisible = acOpen && autocompleteItems.length > 0 && search.trim().length >= 2;
+  const selectAutocomplete = (item: AutocompleteItem<ScaleEntry>) => {
+    softTick();
+    setAcOpen(false);
+    setAcIndex(-1);
+    if (item.kind === "queixa" && item.complaintId) {
+      const id = item.complaintId;
+      setSelectedQueixas((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setSearch("");
+      return;
+    }
+    setSearch(item.label);
+  };
 
   // "Você quis dizer": só quando a busca não reconheceu o termo.
   const searchSuggestions = useMemo(() => {
@@ -1996,13 +2038,47 @@ export default function FiltroPage() {
               <Input
                 ref={searchInputRef}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setAcOpen(true);
+                  setAcIndex(-1);
+                }}
+                onFocus={() => setAcOpen(true)}
+                onBlur={() => {
+                  // Espera o clique numa opção (mousedown já selecionou) antes de fechar.
+                  if (acBlurTimer.current) window.clearTimeout(acBlurTimer.current);
+                  acBlurTimer.current = window.setTimeout(() => setAcOpen(false), 120);
+                }}
                 onKeyDown={(e) => {
-                  if (e.key === "Escape" && search) {
+                  if (acVisible && (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Home" || e.key === "End")) {
                     e.preventDefault();
-                    setSearch("");
+                    setAcIndex((current) => moveActiveIndex(current, autocompleteItems.length, e.key as "ArrowDown" | "ArrowUp" | "Home" | "End"));
+                    return;
+                  }
+                  if (e.key === "Enter" && acVisible && acIndex >= 0 && autocompleteItems[acIndex]) {
+                    e.preventDefault();
+                    selectAutocomplete(autocompleteItems[acIndex]);
+                    return;
+                  }
+                  if (e.key === "Escape") {
+                    if (acVisible) {
+                      e.preventDefault();
+                      setAcOpen(false);
+                      setAcIndex(-1);
+                      return;
+                    }
+                    if (search) {
+                      e.preventDefault();
+                      setSearch("");
+                    }
                   }
                 }}
+                role="combobox"
+                aria-expanded={acVisible}
+                aria-controls="filter-autocomplete-listbox"
+                aria-autocomplete="list"
+                aria-activedescendant={acVisible && acIndex >= 0 ? `filter-ac-option-${acIndex}` : undefined}
+                autoComplete="off"
                 aria-label={
                   flashMode
                     ? "Idade e queixa para triagem sem cadastro"
@@ -2025,6 +2101,49 @@ export default function FiltroPage() {
                 >
                   <X className="h-4 w-4" />
                 </button>
+              )}
+              {acVisible && (
+                <ul
+                  id="filter-autocomplete-listbox"
+                  role="listbox"
+                  aria-label="Sugestões de busca"
+                  data-testid="filter-autocomplete"
+                  className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-y-auto rounded-2xl border border-border bg-popover p-1 shadow-lg"
+                >
+                  {autocompleteItems.map((item, index) => {
+                    const active = index === acIndex;
+                    const tone =
+                      item.kind === "queixa"
+                        ? "text-primary"
+                        : item.kind === "fora_do_perfil"
+                          ? "text-muted-foreground"
+                          : item.kind === "correcao"
+                            ? "text-amber-700 dark:text-amber-300"
+                            : "text-foreground";
+                    return (
+                      <li
+                        key={item.id}
+                        id={`filter-ac-option-${index}`}
+                        role="option"
+                        aria-selected={active}
+                        data-testid="filter-autocomplete-option"
+                        data-kind={item.kind}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          selectAutocomplete(item);
+                        }}
+                        onMouseEnter={() => setAcIndex(index)}
+                        className={`cursor-pointer rounded-xl px-3 py-2 text-left ${active ? "bg-primary/10" : "hover:bg-muted/60"}`}
+                      >
+                        <p className={`text-sm font-bold ${tone}`}>
+                          {item.kind === "queixa" ? "Marcar queixa: " : item.kind === "correcao" ? "Você quis dizer: " : ""}
+                          <HighlightedText text={item.label} terms={item.highlight} />
+                        </p>
+                        {item.detail && <p className="text-[11px] text-muted-foreground line-clamp-1">{item.detail}</p>}
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
 
@@ -3089,6 +3208,7 @@ export default function FiltroPage() {
                           {item.hasScale ? (
                             <Link
                               href={item.route}
+                              onClick={() => item.scale && rememberOpened(item.scale, item.route)}
                               className="inline-flex min-h-6 items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                             >
                               <span>{ctaLabel}</span>
@@ -3250,6 +3370,41 @@ export default function FiltroPage() {
 
         {!hasSearch && (
           <section className="lg:col-span-2 space-y-5">
+            {!flashMode && recents.length > 0 && (
+              <div
+                className="rounded-2xl border border-border/70 bg-card/70 p-3"
+                data-testid="filter-recents"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    <History className="h-3.5 w-3.5" aria-hidden="true" />
+                    Abertos recentemente
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearFilterRecents();
+                      setRecents([]);
+                    }}
+                    className="text-[11px] font-bold text-muted-foreground underline-offset-2 hover:underline"
+                    aria-label="Limpar instrumentos recentes"
+                  >
+                    limpar
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {recents.map((recent) => (
+                    <Link
+                      key={recent.id}
+                      href={recent.route}
+                      className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-foreground transition hover:border-primary/50"
+                    >
+                      {recent.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid gap-3 md:grid-cols-3">
               <Card className="border-dashed">
                 <CardContent className="space-y-2 p-4">
@@ -3451,6 +3606,7 @@ export default function FiltroPage() {
               <Link
                 key={s.id}
                 href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`}
+                onClick={() => rememberOpened(s, resolveAppRoute(s) ?? `/generic-scale/${s.id}`)}
                 className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:bg-background hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
               >
                 <div className="filter-260-card-content compact">

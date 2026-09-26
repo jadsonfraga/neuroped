@@ -100,7 +100,30 @@ orçamento de tempo só remove candidatos (subconjunto), nunca acrescenta.
 Reverter o commit desta rodada. Não há migração, nem mudança de dados clínicos, nem de contrato de API. Os
 módulos novos são puros e a página volta ao `searchBoost` anterior com o revert.
 
+## Rodada 2 (mesma data, após reconciliação com `origin/main` b838574)
+
+Merge limpo, sem conflito nem mudança de dependência; toda a verificação acima repetida sobre a base
+reconciliada (exit 0).
+
+11. **Autocompletar** (`client/src/lib/filterAutocomplete.ts`, puro): ao digitar ≥ 2 caracteres, uma lista
+    de até 8 sugestões, no padrão W3C APG combobox + listbox (`role="combobox"`, `aria-expanded`,
+    `aria-activedescendant`, setas, Home/End, Enter, Esc). Ordem: instrumentos **seguros para o perfil
+    atual** (mesmo motor clínico, sem a busca) → "Marcar queixa" (≤ 2) → instrumentos que casam mas
+    estão **fora do perfil** (marcados, nunca escondidos nem confundidos com recomendação) → correção de
+    grafia no topo quando nada casa. Enter em instrumento preenche a busca com o nome; em queixa, marca a
+    queixa e limpa a busca. Esc fecha a lista; segundo Esc limpa. Lista fecha ao sair do campo e não
+    intercepta cliques em outros controles.
+12. **Abertos recentemente** (`client/src/lib/filterRecents.ts`, padrão MDCalc "Recent"): até 8
+    instrumentos abertos a partir do pódio ou da prévia, só id/nome/rota (sem idade, queixa ou paciente),
+    em `localStorage` fora dos namespaces clínicos; entrada inválida cai uma a uma. Modo efêmero não grava
+    nem exibe. Botão "limpar".
+
+Testes: `tests/unit/filter-autocomplete.test.ts` (ordem seguro > queixa > fora do perfil > correção,
+teclado, recentes sem PHI) e contrato estático ampliado; smoke Playwright em 390 px e 1280 px (abrir,
+teclado, Esc duplo, queixa por sugestão, blur, recentes após abrir/voltar, modo efêmero, sem overflow).
+
 ## Fora de escopo (próximas rodadas, se desejado)
 
-Autocomplete com listbox (padrão APG combobox) sobre o mesmo motor; favoritos/recentes por usuário (tenant);
-baterias salvas; vocabulário de apelidos alimentado por consultas sem resultado (contador anônimo, sem PHI).
+Favoritos por usuário (tenant, servidor); baterias salvas com entrega por link; vocabulário de apelidos
+alimentado por consultas sem resultado (contador anônimo, sem PHI); rubrica de recomendação por
+instrumento × finalidade (estilo RehabMeasures) como dado curado.
