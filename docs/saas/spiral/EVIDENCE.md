@@ -202,3 +202,35 @@
   tabelas já vazias).
 - Rollback: reverter os quatro arquivos de produção a `9d4c67d` restaura o
   comportamento anterior; nenhuma migração de banco envolvida.
+
+## S14 (ciclo 4, 2026-09-26) — links públicos ignoravam status da clínica
+- Escopo: `functions/api/public-intake.ts` e `functions/api/public-scale.ts`
+  (`PublicInvitationRow`/`PublicScaleInvitationRow` ganham `clinic_status`
+  via `clinic.status AS clinic_status` no JOIN já existente;
+  `invitationStateFailure` recusa com 410 quando `clinic_status !== "active"`,
+  antes de checar revogado/enviado/expirado). Nenhuma mudança de schema.
+- Ambiente: container da sessão, Node do repo, HEAD `f254ffe` (S12) + S14.
+- Testes: `tests/unit/remote-scale-response.test.ts` ganha o cenário 15
+  (convite pendente e válido some assim que a clínica vira `suspended`; GET
+  e POST recusam com 410, nenhuma linha em `live_scale_responses`). Novo
+  arquivo `tests/unit/remote-intake-clinic-status.test.ts` (schema mínimo +
+  migração real 0018, handlers reais de `live/intake` e `public-intake`)
+  prova o mesmo para pré-consulta, incluindo `closed`. Ambos vistos
+  FALHANDO pelo motivo certo contra o código anterior via `git stash`
+  isolado (200 em vez de 410); verdes com a correção.
+- Comandos exit 0: `node --import tsx tests/unit/remote-scale-response.test.ts`,
+  `node --import tsx tests/unit/remote-intake-clinic-status.test.ts`,
+  `node tests/unit/saas-remote-intake-static.test.mjs`,
+  `node tests/unit/saas-remote-scale-static.test.mjs`,
+  `node --import tsx tests/unit/metadata-observability.test.ts`,
+  `npm run check`, `npx eslint` nos arquivos tocados, `npm run test:quick-wins`
+  (suíte completa), `node tests/unit/workflow-governance.test.mjs`.
+- CI: o novo teste de intake foi cadastrado nos workflows que já observam
+  `functions/api/public-intake.ts` (`saas-remote-intake-d1.yml` e
+  `public-submission-audit-d1.yml`); `remote-scale-response.test.ts` já
+  estava cadastrado em `remote-scale-response-d1.yml` e
+  `public-submission-audit-d1.yml`, então o cenário novo entra sem mudança
+  de workflow para escala.
+- Rollback: reverter `functions/api/public-intake.ts` e
+  `functions/api/public-scale.ts` a `f254ffe` restaura o comportamento
+  anterior; nenhuma migração envolvida.

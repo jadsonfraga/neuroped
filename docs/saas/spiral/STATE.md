@@ -107,6 +107,11 @@ sempre; agora é computado. Efeito colateral deliberado: nenhuma clínica com
 esses dados consegue concluir o purge físico hoje, até S12B (expandir o
 export) ser feito. Evidência em EVIDENCE.md#S12.
 
+S14: links públicos de pré-consulta e de escala remota recusam (410) assim
+que a clínica sai de `active` (suspensa, em encerramento ou encerrada) —
+antes continuavam aceitando PHI de família mesmo sem billing/clínica
+ativos. Evidência em EVIDENCE.md#S14.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver

@@ -92,6 +92,16 @@ substituindo o slug global de `booking_provider_profiles` (PK `user_id`,
 (`client/src/pages/agendar.tsx`, `marcacao.tsx`, `navigation.ts`), fora do
 escopo de S8 (isolamento de dados no backend autenticado).
 
+## S14 · P2 · FECHADO (ciclo 4)
+Links públicos de intake (pré-consulta) e de escala remota ignoravam o
+status da clínica: uma família continuava enviando PHI para uma clínica
+suspensa ou encerrada, porque `resolveInvitation` em `public-intake.ts`/
+`public-scale.ts` nunca olhava `clinics.status`. (LTB-14)
+Corrigido: `invitationStateFailure` em ambos os handlers passa a recusar
+(410, código `INTAKE_UNAVAILABLE`/`SCALE_INVITATION_UNAVAILABLE`) sempre
+que `clinic.status <> 'active'` — cobre também `closure_requested`, que já
+marca `clinics.status='suspended'`. Evidência em EVIDENCE.md#S14.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/
