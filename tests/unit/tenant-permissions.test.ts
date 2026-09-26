@@ -37,6 +37,7 @@ const EXPECTED: Record<ClinicMembershipRole, TenantPermission[]> = {
     "organization.lifecycle.manage",
     "organization.export",
     "organization.metrics.read",
+    "audit.read",
     "team.manage",
     "team.manage_owners",
     "billing.manage",
@@ -49,6 +50,7 @@ const EXPECTED: Record<ClinicMembershipRole, TenantPermission[]> = {
     "organization.lifecycle.read",
     "organization.export",
     "organization.metrics.read",
+    "audit.read",
     "team.manage",
     "billing.manage",
     "finance.read",
@@ -83,6 +85,7 @@ assert.deepEqual(rolesWithPermission("organization.metrics.read"), [
   "owner",
   "clinic_admin",
 ]);
+assert.deepEqual(rolesWithPermission("audit.read"), ["owner", "clinic_admin"]);
 
 // Mínimo necessário: assistente e financeiro nunca tocam conteúdo clínico.
 for (const role of ["assistant", "financial"] as const) {

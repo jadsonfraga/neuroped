@@ -14,6 +14,7 @@ on:
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
       - "tests/unit/tenant-permissions.test.ts"
+      - "tests/unit/tenant-audit-log.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
@@ -29,6 +30,7 @@ on:
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
       - "tests/unit/tenant-permissions.test.ts"
+      - "tests/unit/tenant-audit-log.test.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -55,6 +57,8 @@ jobs:
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
       - name: Testar catálogo central de permissões (RBAC do tenant)
         run: node --import tsx tests/unit/tenant-permissions.test.ts
+      - name: Testar trilha de auditoria restrita à clínica
+        run: node --import tsx tests/unit/tenant-audit-log.test.ts
       - name: Testar hardening de owner, provenance e supersessão
         run: node --import tsx tests/unit/saas-phase1-hardening.test.ts
       - name: Hard release gate

@@ -26,6 +26,7 @@ export const tenantPermissions = [
   "organization.lifecycle.manage",
   "organization.export",
   "organization.metrics.read",
+  "audit.read",
   "team.manage",
   "team.manage_owners",
   "billing.manage",
@@ -51,6 +52,9 @@ const GRANTS: Readonly<
   "organization.lifecycle.manage": ["owner"],
   "organization.export": MANAGERS,
   "organization.metrics.read": MANAGERS,
+  // Trilha da própria clínica (saas_audit_log filtrada por clinic_id):
+  // metadados de quem fez o quê, nunca conteúdo clínico.
+  "audit.read": MANAGERS,
   "team.manage": MANAGERS,
   "team.manage_owners": ["owner"],
   "billing.manage": MANAGERS,

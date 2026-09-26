@@ -5,6 +5,7 @@ import {
   CreditCard,
   Loader2,
   Mail,
+  ScrollText,
   ShieldCheck,
   Stethoscope,
   Trash2,
@@ -22,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import TenantMetricsPanel from "@/components/TenantMetricsPanel";
 import type { TenantPermission } from "../../../shared/permissions";
 
-type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade";
+type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade" | "auditoria";
 
 /**
  * Cada seção declara a permissão do catálogo (`shared/permissions.ts`) que a
@@ -37,6 +38,7 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2; re
   { id: "equipe", label: "Equipe", icon: UsersRound, requires: "team.manage" },
   { id: "plano", label: "Plano", icon: CreditCard, requires: "billing.manage" },
   { id: "atividade", label: "Atividade", icon: ShieldCheck, requires: "organization.metrics.read" },
+  { id: "auditoria", label: "Auditoria", icon: ScrollText, requires: "audit.read" },
 ];
 
 function hasPermission(permissions: readonly TenantPermission[] | null, permission: TenantPermission): boolean {
@@ -122,6 +124,45 @@ interface BillingSnapshot {
   };
   seats: { contracted: number | null; activeMembers: number | null };
 }
+
+interface TenantAuditEntry {
+  id: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  actorUserId: string;
+  actorName: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+interface TenantAuditPage {
+  data: TenantAuditEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+const AUDIT_ACTION_LABEL: Record<string, string> = {
+  clinic_update: "Dados da clínica alterados",
+  clinic_membership_upsert: "Membro adicionado ou papel alterado",
+  clinic_membership_deactivate: "Acesso de membro revogado",
+  remote_intake_invite_create: "Convite de pré-consulta remota criado",
+  remote_intake_invite_revoke: "Convite de pré-consulta remota revogado",
+  remote_intake_accept: "Pré-consulta remota aceita",
+  remote_intake_reject: "Pré-consulta remota rejeitada",
+  remote_scale_invite_create: "Convite de questionário remoto criado",
+  remote_scale_invite_revoke: "Convite de questionário remoto revogado",
+  remote_scale_response_review: "Questionário remoto revisado",
+  live_patient_create: "Paciente cadastrado",
+  live_patient_update: "Paciente atualizado",
+  live_patient_archive: "Paciente arquivado",
+  live_clinical_event_create: "Evento clínico registrado",
+  live_assessment_create: "Avaliação registrada",
+  live_retention_policy_upsert: "Política de retenção alterada",
+  lgpd_export_executed: "Exportação LGPD executada",
+  lgpd_deletion_executed: "Eliminação LGPD executada",
+};
 
 async function readJson<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as T & { error?: string };
@@ -629,6 +670,77 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
   );
 }
 
+function AuditoriaSection({ clinicId }: { clinicId: string }) {
+  const [page, setPage] = useState(1);
+  const [actionFilter, setActionFilter] = useState("");
+  const [appliedAction, setAppliedAction] = useState("");
+  const [result, setResult] = useState<TenantAuditPage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams({ page: String(page), limit: "25" });
+    if (appliedAction) params.set("action", appliedAction);
+    void authFetch(`/api/tenants/${clinicId}/audit?${params.toString()}`)
+      .then((response) => readJson<TenantAuditPage>(response))
+      .then((body) => !cancelled && setResult(body))
+      .catch((loadError: Error) => !cancelled && setError(loadError.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId, page, appliedAction]);
+
+  function applyFilter(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPage(1);
+    setAppliedAction(actionFilter.trim());
+  }
+
+  if (error) return <p role="alert" className="text-sm text-destructive">{error}</p>;
+  if (!result) return <p className="text-sm text-muted-foreground" role="status">Carregando auditoria…</p>;
+
+  const lastPage = Math.max(1, Math.ceil(result.total / result.limit));
+
+  return (
+    <SectionCard
+      title="Auditoria da clínica"
+      description="Quem fez o quê e quando nesta clínica. São metadados de operação — nunca conteúdo clínico — e a mesma trilha que o servidor grava a cada ação."
+    >
+      <form onSubmit={applyFilter} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="auditoria-acao">Filtrar por ação</Label>
+          <Input id="auditoria-acao" maxLength={160} placeholder="Ex.: membership, intake, lgpd" value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} />
+        </div>
+        <Button type="submit" variant="outline">Filtrar</Button>
+      </form>
+      {result.data.length === 0 && <p className="text-sm text-muted-foreground">Nenhum registro para este filtro.</p>}
+      <ul className="divide-y divide-border">
+        {result.data.map((entry) => (
+          <li key={entry.id} className="flex flex-wrap items-start justify-between gap-2 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">{AUDIT_ACTION_LABEL[entry.action] ?? entry.action}</p>
+              <p className="text-xs text-muted-foreground">
+                {entry.actorName ?? "Conta removida"} · {entry.targetType}
+                {entry.targetId ? ` · ${entry.targetId}` : ""}
+              </p>
+            </div>
+            <time dateTime={entry.createdAt} className="text-xs text-muted-foreground">
+              {new Date(entry.createdAt).toLocaleString("pt-BR")}
+            </time>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{result.total} registro(s) · página {result.page} de {lastPage}</span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>Anterior</Button>
+          <Button size="sm" variant="ghost" disabled={page >= lastPage} onClick={() => setPage((current) => current + 1)}>Próxima</Button>
+        </div>
+      </div>
+    </SectionCard>
+  );
+}
+
 export default function ConfiguracoesPage() {
   const { user } = useAuth();
   const { activeClinicId, clinics } = useClinic();
@@ -703,6 +815,7 @@ export default function ConfiguracoesPage() {
       {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <EquipeSection clinicId={activeClinicId} />}
       {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}
       {section === "atividade" && activeClinicId && hasPermission(permissions, "organization.metrics.read") && <TenantMetricsPanel key={activeClinicId} />}
+      {section === "auditoria" && activeClinicId && hasPermission(permissions, "audit.read") && <AuditoriaSection key={activeClinicId} clinicId={activeClinicId} />}
     </div>
   );
 }
