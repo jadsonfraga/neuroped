@@ -50,18 +50,33 @@ try {
   await button("Começar a aventura").click();
 
   let registered = 0;
+  let undone = false;
+  let pausedOnce = false;
   for (let phase = 1; phase <= 5; phase++) {
     await waitScreen("intro");
     await page.getByText(`Fase ${phase} de 5`).waitFor();
-    if (phase === 1) await screen("02-intro");
+    if (phase === 1) {
+      await screen("02-intro");
+      assert.equal(await button("Desfazer último").isDisabled(), true, "nada a desfazer antes do primeiro registro");
+    }
     await page.getByRole("button", { name: /Entrar na fase/ }).click();
     for (let item = 1; item <= 4; item++) {
       await waitScreen("play");
       await page.getByText(`Desafio ${item} de 4`).waitFor();
       if (phase === 1 && item === 1) await screen("03-play-toque");
+      if (phase === 2 && item === 1 && !pausedOnce) {
+        // Pausa congela o desafio: nenhuma opção fica disponível até continuar.
+        await button("Pausa").click();
+        await page.getByText("O tempo do desafio parou", { exact: false }).waitFor();
+        assert.equal(await page.getByRole("group", { name: "Opções" }).count(), 0, "opções escondidas na pausa");
+        await screen("03b-pausa");
+        await page.getByRole("button", { name: "Continuar", exact: true }).first().click();
+        pausedOnce = true;
+      }
       if (await page.getByRole("button", { name: "Já olhou · esconder", exact: true }).count()) {
         await button("Já olhou · esconder").click();
       }
+      if (phase === 1 && item === 2) await button("Repeti o comando").click(); // fica no registro como "comando repetido 1x"
       const options = page.getByRole("group", { name: "Opções" }).getByRole("button");
       if (await options.count()) {
         // Alterna acerto/erro de forma determinística pelo índice: o jogo confere sozinho.
@@ -71,6 +86,15 @@ try {
         await button(registered % 3 === 2 ? "Errou" : "Acertou").click();
       }
       registered += 1;
+      if (phase === 1 && item === 3 && !undone) {
+        // Toque errado da aplicadora: desfazer volta exatamente ao mesmo desafio e apaga o registro.
+        await page.getByText("Desafio 4 de 4").waitFor();
+        await button("Desfazer último").click();
+        await page.getByText("Desafio 3 de 4").waitFor();
+        registered -= 1;
+        undone = true;
+        item -= 1;
+      }
     }
     if (phase < 5) {
       await waitScreen("phase-done");
@@ -86,6 +110,13 @@ try {
   assert.equal(cards, 5, "cinco fases detalhadas");
   const badges = await root.locator("details li").count();
   assert.equal(badges, 20, "cada desafio listado com resultado");
+  const reading = page.getByTestId("super-neuropad-reading");
+  await reading.getByText("Leitura para a consulta").waitFor();
+  assert.ok((await reading.locator("ul li").count()) >= 2, "leitura traz frases descritivas para a consulta");
+  await reading.getByText(/Mediana \d+(\.\d)? s por item/).waitFor();
+  await root.getByText("comando repetido 1x").first().waitFor();
+  await root.getByText(/Itens para checar na consulta · \d+/).waitFor();
+  await button("Copiar resumo para o prontuário").waitFor();
   await screen("06-results");
 
   const [download] = await Promise.all([

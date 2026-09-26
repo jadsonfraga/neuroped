@@ -15,8 +15,10 @@ import {
   PHASES,
   SUPER_NEUROPAD_ROUTE,
   bandForYears,
+  buildGameBrief,
   buildGameReport,
   describeArt,
+  interpret,
   pdfLossless,
   itemsFor,
   overallLevel,
@@ -25,6 +27,7 @@ import {
   recordTouch,
   shuffle,
   summarize,
+  undoLastAnswer,
   type AnswerRecord,
   type GameSession,
   type TouchItem,
@@ -209,8 +212,10 @@ test("relatório e PDF trazem cada pergunta, resposta esperada, registrada, cert
 
   const spec = buildGameDocSpec(session, { doctorName: "Profissional Sintético", specialty: "Neuropediatria", credentials: "CRM 00000", clinicName: "Clínica Sintética", motto: "" }, "25/09/2026 09:00");
   assert.match(spec.title, /Super NeuroPad Game/);
-  assert.equal(spec.sections.length, 2 + 5 + 2);
-  assert.deepEqual(spec.sections.slice(0, 2).map((section) => section.heading), ["Identificação da aplicação", "Resultado objetivo"]);
+  assert.equal(spec.sections.length, 3 + 5 + 2);
+  assert.deepEqual(spec.sections.slice(0, 3).map((section) => section.heading), ["Identificação da aplicação", "Resultado objetivo", "Leitura para a consulta"]);
+  assert.match(spec.sections[2].body, /Itens para checar na consulta \(2\)/);
+  assert.match(spec.sections[2].body, /nenhuma norma, percentil, idade equivalente ou diagnóstico/);
   assert.match(spec.sections[1].body, /TOTAL: 18 acertos em 20 itens/);
   const bodies = spec.sections.map((section) => section.body).join("\n");
   for (const answer of session.answers) {
@@ -249,6 +254,112 @@ test("todo enunciado, critério e rótulo do banco sobrevivem inteiros ao PDF vi
   assert.equal(describeArt("Qual figura é IGUAL a esta? ♞"), "Qual figura é IGUAL a esta? [cavalo preto]");
 });
 
+test("desfazer último registro devolve fase e índice exatos do desafio a refazer", () => {
+  assert.equal(undoLastAnswer([]), null);
+  const session = play("6-7", () => "acerto");
+  const inPhase3 = session.answers.slice(0, 10); // 4 + 4 + 2 itens
+  const undone = undoLastAnswer(inPhase3)!;
+  assert.equal(undone.answers.length, 9);
+  assert.equal(undone.phaseId, "numeros");
+  assert.equal(undone.itemIndex, 1, "volta para o segundo desafio da terceira fase");
+  const phaseEnd = undoLastAnswer(session.answers.slice(0, 8))!;
+  assert.equal(phaseEnd.phaseId, "palavras");
+  assert.equal(phaseEnd.itemIndex, 3, "fim de fase volta para o último desafio da fase");
+  assert.equal(inPhase3.length, 10, "entrada não é mutada");
+});
+
+test("comando repetido entra no registro só quando marcado e aparece em relatório e PDF", () => {
+  const item = itemsFor("4-5", "olhos")[0] as TouchItem;
+  const right = item.options.find((option) => option.label === item.answer)!;
+  assert.equal("repeated" in recordTouch(item, "olhos", right, 1), false);
+  assert.equal(recordTouch(item, "olhos", right, 1, true).repeated, true);
+  const judged = itemsFor("4-5", "corpo")[0];
+  if (judged.kind !== "toque") assert.equal(recordJudged(judged, "corpo", "erro", 2, true).repeated, true);
+  const session = play("4-5", () => "acerto");
+  session.answers[2] = { ...session.answers[2], repeated: true };
+  const reading = interpret(session);
+  assert.equal(reading.repeated, 1);
+  assert.ok(reading.notes.some((note) => /Comando repetido em 1 item/.test(note)));
+  assert.match(buildGameReport(session), /comando repetido 1x/);
+  const spec = buildGameDocSpec(session, { doctorName: "P", specialty: "", credentials: "", clinicName: "", motto: "" }, "26/09/2026 09:00");
+  assert.match(spec.sections.map((section) => section.body).join("\n"), /comando repetido 1x/);
+});
+
+test("leitura para a consulta: prioridades, padrão de resposta, ritmo interno, toque × aplicadora e abas para aprofundar", () => {
+  const perfect = interpret(play("8-9", () => "acerto"));
+  assert.equal(perfect.complete, true);
+  assert.deepEqual(perfect.priorities, []);
+  assert.deepEqual(perfect.missed, []);
+  assert.equal(perfect.pattern, "nenhum");
+  assert.deepEqual(perfect.slow, []);
+  assert.ok(perfect.notes.some((note) => /dentro do esperado/.test(note) && /não exclui dificuldades sutis/.test(note)));
+  assert.equal(perfect.notes.some((note) => /Aprofundar/.test(note)), false);
+
+  // Fase 4 (memória) toda sem resposta, fase 2 (palavras) com dois erros: prioridade ordena alerta antes de observar.
+  const mixed = interpret(play("6-7", (index) => (index >= 12 && index < 16 ? "sem_resposta" : index === 4 || index === 5 ? "erro" : "acerto")));
+  assert.deepEqual(mixed.priorities.map((phase) => [phase.phase.id, phase.level]), [["memoria", "alerta"], ["palavras", "observar"]]);
+  assert.equal(mixed.missed.length, 6);
+  assert.equal(mixed.errors, 2);
+  assert.equal(mixed.noResponse, 4);
+  assert.equal(mixed.pattern, "nao_resposta");
+  assert.ok(mixed.notes.some((note) => /Predomínio de não resposta \(4 de 6/.test(note) && /recusa, timidez, cansaço/.test(note)));
+  assert.ok(mixed.notes.some((note) => /Prioridade para a consulta: Caverna da Memória 0\/4 \(alerta\); Ilha das Palavras 2\/4 \(observar\)/.test(note)));
+  assert.deepEqual(mixed.deepen, [
+    "Sonda 10 (memória operacional e regra) · OBS-10 (regra SOL/LUA)",
+    "Sonda 10 (linguagem) · Testes Cognitivos (leitura e escrita)",
+  ]);
+  assert.ok(mixed.notes.some((note) => /Aprofundar com as abas de origem: Sonda 10 \(memória operacional e regra\)/.test(note)));
+
+  // Ritmo: comparação interna. Mediana 3-5 s; um item de 40 s fica marcado; nada normativo.
+  const slowSession = play("10-12", () => "acerto");
+  slowSession.answers[7] = { ...slowSession.answers[7], seconds: 40 };
+  const slow = interpret(slowSession);
+  assert.equal(slow.slow.length, 1);
+  assert.equal(slow.slow[0].seconds, 40);
+  assert.ok(slow.notes.some((note) => /Ritmo: mediana de \d+(\.\d)? s por item; 1 item\(ns\) bem acima do ritmo da própria criança \(40 s\)\. Comparação interna à partida, não normativa\./.test(note)));
+
+  // Toque × aplicadora: todo item julgado errado, todo toque certo.
+  const judgedFail = interpret(play("6-7", () => "acerto"));
+  const byKind = play("6-7", () => "acerto");
+  byKind.answers = byKind.answers.map((answer) => (answer.kind === "toque" ? answer : { ...answer, status: "erro", given: "Não cumpriu o critério" }));
+  const kind = interpret(byKind);
+  assert.equal(kind.touch.hits, kind.touch.total);
+  assert.equal(kind.judged.hits, 0);
+  assert.ok(kind.judged.total > 0);
+  assert.ok(kind.pattern === "erro_ativo");
+  assert.ok(kind.notes.some((note) => /Melhor nos itens conferidos pelo jogo/.test(note) && /rigor do critério aplicado/.test(note)));
+  assert.equal(judgedFail.notes.some((note) => /Melhor nos itens/.test(note)), false);
+
+  // Partida incompleta: fases não aplicadas não viram alerta nem prioridade.
+  const partial = play("2-3", () => "acerto");
+  partial.answers = partial.answers.slice(0, 9);
+  const summary = summarize(partial);
+  assert.deepEqual(summary.phases.map((phase) => phase.applied), [true, true, true, false, false]);
+  assert.equal(summary.phases[0].seconds, 12);
+  const incomplete = interpret(partial);
+  assert.equal(incomplete.complete, false);
+  assert.deepEqual(incomplete.priorities.map((phase) => phase.phase.id), ["numeros"], "fase parcial com 1/4 é prioridade; fases não aplicadas não são");
+  assert.deepEqual(incomplete.notApplied.map((phase) => phase.phase.id), ["memoria", "corpo"]);
+  assert.ok(incomplete.notes.some((note) => /Partida incompleta: 9 de 20 itens registrados\. Fase\(s\) não aplicada\(s\): Caverna da Memória, Torre do Corpo\./.test(note)));
+  assert.match(incomplete.headline, /^Partida incompleta/);
+
+  const text = [...perfect.notes, ...mixed.notes, ...slow.notes, ...kind.notes, ...incomplete.notes].join("\n");
+  assert.doesNotMatch(text, /percentil|idade equivalente|QI|diagnóstico de|escore/i, "leitura descritiva, sem norma nem diagnóstico");
+  for (const note of text.split("\n")) assert.equal(pdfSafe(note), note.replace(/[–—]/g, "-").replace(/×/g, "x"), `nota perde conteúdo no PDF: ${note}`);
+});
+
+test("resumo para o prontuário é prosa curta com faixa, contagem, fases, itens perdidos e ressalva autoral", () => {
+  const session = play("6-7", (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto"));
+  const brief = buildGameBrief(session, new Date("2026-09-26T12:00:00Z"));
+  assert.match(brief, /^Triagem lúdica de pré-consulta \(Super NeuroPad Game, faixa 6 a 7 anos\) aplicada pela recepção em 26\/09\/2026: 18 de 20 acertos, dentro do esperado para a faixa\./);
+  assert.match(brief, /Por fase: Floresta dos Olhos 3\/4, Ilha das Palavras 4\/4, Montanha dos Números 4\/4, Caverna da Memória 3\/4, Torre do Corpo 4\/4\./);
+  assert.match(brief, /Itens perdidos: .*\(errou\); .*\(não respondeu\)\./);
+  assert.match(brief, /Contagem autoral, não normativa; a leitura e a conclusão são do médico\.$/);
+  assert.doesNotMatch(brief, /\n/, "uma única prosa corrida");
+  assert.doesNotMatch(brief, /Aprofundar com/, "sem instrução operacional no texto do prontuário");
+  assert.equal(brief.length < 1200, true);
+});
+
 test("página: rota real, sensível, sem persistência local, sem rede e sem câmera; abas de origem preservadas", () => {
   const app = readFileSync("client/src/App.tsx", "utf8");
   assert.match(app, /import\("@\/pages\/super-neuropad-game"\)/);
@@ -270,6 +381,12 @@ test("página: rota real, sensível, sem persistência local, sem rede e sem câ
   assert.doesNotMatch(page + feature, /getUserMedia|MediaRecorder|<video/, "sem câmera");
   assert.match(page, /buildDocumentPdf\(buildGameDocSpec\(/, "PDF pelo construtor clínico compartilhado");
   assert.match(page, /createChiptune\(\)/, "trilha chiptune sintetizada");
+  assert.match(page, /undoLastAnswer\(answers\)/, "desfazer último registro na interface");
+  assert.match(page, /interpret\(session\)/, "leitura para a consulta na tela de resultado");
+  assert.match(page, /buildGameBrief\(session\)/, "resumo para o prontuário");
+  assert.match(page, /import "@\/styles\/super-neuropad-arcade\.css"/, "acabamento arcade isolado em folha própria");
+  const css = readFileSync("client/src/styles/super-neuropad-arcade.css", "utf8");
+  assert.match(css, /prefers-reduced-motion: no-preference/, "animações só com movimento permitido");
   assert.match(page, /isSoundEnabled\(\)/.test(feature) ? /Música/ : /Música/, "controle de música na interface");
   assert.match(feature, /isSoundEnabled\(\)/, "música respeita a preferência global de som");
   assert.doesNotMatch(page, /Acertou!|Errou!|Resposta certa|Resposta errada/, "a criança não recebe certo/errado como feedback de jogo");

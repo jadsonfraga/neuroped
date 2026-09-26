@@ -17,7 +17,7 @@
  *     PDF detalhado gerado localmente.
  */
 
-export const SUPER_NEUROPAD_VERSION = "2026-09-25.1";
+export const SUPER_NEUROPAD_VERSION = "2026-09-26.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
 export const SUPER_NEUROPAD_NATURE =
@@ -481,6 +481,8 @@ export interface AnswerRecord {
   given: string;
   status: AnswerStatus;
   seconds: number;
+  /** A aplicadora precisou repetir o comando uma vez (permitido uma única repetição). */
+  repeated?: boolean;
 }
 
 export interface GameSession {
@@ -498,18 +500,32 @@ export function itemExpected(item: Item): string {
 }
 
 /** Registro a partir de um toque da criança: o jogo confere sozinho. */
-export function recordTouch(item: TouchItem, phaseId: PhaseId, chosen: Option | null, seconds: number): AnswerRecord {
+export function recordTouch(item: TouchItem, phaseId: PhaseId, chosen: Option | null, seconds: number, repeated = false): AnswerRecord {
   const status: AnswerStatus = chosen === null ? "sem_resposta" : chosen.label === item.answer ? "acerto" : "erro";
-  return { phaseId, itemId: item.id, kind: "toque", prompt: item.prompt, expected: item.answer, given: chosen ? chosen.label : "—", status, seconds: round1(seconds) };
+  const record: AnswerRecord = { phaseId, itemId: item.id, kind: "toque", prompt: item.prompt, expected: item.answer, given: chosen ? chosen.label : "—", status, seconds: round1(seconds) };
+  return repeated ? { ...record, repeated: true } : record;
 }
 
 /** Registro a partir da conferência da aplicadora contra o critério explícito. */
-export function recordJudged(item: SpeakItem | DoItem, phaseId: PhaseId, status: AnswerStatus, seconds: number): AnswerRecord {
+export function recordJudged(item: SpeakItem | DoItem, phaseId: PhaseId, status: AnswerStatus, seconds: number, repeated = false): AnswerRecord {
   const given = status === "acerto" ? "Cumpriu o critério" : status === "erro" ? "Não cumpriu o critério" : "—";
   // Estímulo textual (frase lida, sequência ditada) entra no registro; ícones ilustrativos não.
   const textual = item.stimulus && !/\p{Extended_Pictographic}/u.test(item.stimulus);
   const prompt = textual ? `${item.prompt} (estímulo: ${item.stimulus})` : item.prompt;
-  return { phaseId, itemId: item.id, kind: item.kind, prompt, expected: item.expected, given, status, seconds: round1(seconds) };
+  const record: AnswerRecord = { phaseId, itemId: item.id, kind: item.kind, prompt, expected: item.expected, given, status, seconds: round1(seconds) };
+  return repeated ? { ...record, repeated: true } : record;
+}
+
+/**
+ * Desfaz o último registro (toque errado da aplicadora, criança que mudou de
+ * ideia antes do próximo item). Devolve a lista sem o último item e a posição
+ * exata (fase e índice) para o jogo reapresentar o mesmo desafio.
+ */
+export function undoLastAnswer(answers: readonly AnswerRecord[]): { answers: AnswerRecord[]; phaseId: PhaseId; itemIndex: number } | null {
+  if (answers.length === 0) return null;
+  const last = answers[answers.length - 1];
+  const rest = answers.slice(0, -1);
+  return { answers: rest, phaseId: last.phaseId, itemIndex: rest.filter((answer) => answer.phaseId === last.phaseId).length };
 }
 
 function round1(value: number): number {
@@ -552,6 +568,10 @@ export interface PhaseSummary {
   noResponse: number;
   total: number;
   level: Level;
+  /** Falso quando nenhum item da fase foi registrado (partida interrompida). */
+  applied: boolean;
+  /** Tempo somado dos itens registrados na fase, em segundos. */
+  seconds: number;
   answers: AnswerRecord[];
 }
 
@@ -576,7 +596,8 @@ export function summarize(session: GameSession): GameSummary {
     const hits = answers.filter((answer) => answer.status === "acerto").length;
     const errors = answers.filter((answer) => answer.status === "erro").length;
     const noResponse = answers.filter((answer) => answer.status === "sem_resposta").length;
-    return { phase, hits, errors, noResponse, total, level: phaseLevel(hits, total), answers };
+    const seconds = Math.round(answers.reduce((sum, answer) => sum + answer.seconds, 0));
+    return { phase, hits, errors, noResponse, total, level: phaseLevel(hits, total), applied: answers.length > 0, seconds, answers };
   });
   const hits = phases.reduce((sum, phase) => sum + phase.hits, 0);
   const total = phases.reduce((sum, phase) => sum + phase.total, 0);
@@ -592,9 +613,162 @@ export function formatDuration(seconds: number): string {
   return minutes > 0 ? `${minutes} min ${rest.toString().padStart(2, "0")} s` : `${rest} s`;
 }
 
+
+// ─────────────────────────────── leitura para a consulta ───────────────────────────────
+/**
+ * Leitura AUTORAL e descritiva do registro, pensada para o médico bater o
+ * olho antes da consulta: o que priorizar, que padrão de resposta apareceu
+ * (erro ativo × não resposta), lentidão relativa ao ritmo da própria criança,
+ * dependência do julgamento da aplicadora e qual aba de origem aprofunda cada
+ * fase. Toda comparação é interna à partida. Nada aqui é norma, percentil,
+ * idade equivalente ou diagnóstico.
+ */
+export type ResponsePattern = "nenhum" | "erro_ativo" | "nao_resposta" | "misto";
+
+export const RESPONSE_PATTERN_LABELS: Record<ResponsePattern, string> = {
+  nenhum: "Sem itens perdidos",
+  erro_ativo: "Predomínio de erro ativo",
+  nao_resposta: "Predomínio de não resposta",
+  misto: "Erros e não respostas em proporção parecida",
+};
+
+export interface KindProfile {
+  hits: number;
+  total: number;
+}
+
+export interface GameReading {
+  headline: string;
+  complete: boolean;
+  /** Fases aplicadas fora do esperado, da mais crítica para a menos. */
+  priorities: PhaseSummary[];
+  /** Fases sem nenhum item registrado. */
+  notApplied: PhaseSummary[];
+  /** Itens perdidos (erro ou não resposta), na ordem da partida. */
+  missed: AnswerRecord[];
+  errors: number;
+  noResponse: number;
+  pattern: ResponsePattern;
+  medianSeconds: number;
+  /** Itens com tempo >= 2x a mediana da própria partida (mínimo 12 s). */
+  slow: AnswerRecord[];
+  touch: KindProfile;
+  judged: KindProfile;
+  repeated: number;
+  /** Abas de origem que aprofundam as fases priorizadas. */
+  deepen: string[];
+  /** Frases descritivas prontas para leitura rápida. */
+  notes: string[];
+}
+
+export const SLOW_MIN_SECONDS = 12;
+export const SLOW_FACTOR = 2;
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+}
+
+const LEVEL_RANK: Record<Level, number> = { alerta: 0, observar: 1, esperado: 2 };
+
+function shortPhase(phase: PhaseSummary): string {
+  return `${phase.phase.name} ${phase.hits}/${phase.total}`;
+}
+
+export function interpret(session: GameSession): GameReading {
+  const summary = summarize(session);
+  const applied = summary.phases.filter((phase) => phase.applied);
+  const notApplied = summary.phases.filter((phase) => !phase.applied);
+  const priorities = applied
+    .filter((phase) => phase.level !== "esperado")
+    .sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level] || a.hits - b.hits || a.phase.order - b.phase.order);
+  const missed = session.answers.filter((answer) => answer.status !== "acerto");
+  const errors = missed.filter((answer) => answer.status === "erro").length;
+  const noResponse = missed.filter((answer) => answer.status === "sem_resposta").length;
+  const pattern: ResponsePattern = missed.length === 0
+    ? "nenhum"
+    : errors >= noResponse * 2 ? "erro_ativo" : noResponse >= errors * 2 ? "nao_resposta" : "misto";
+  const timed = session.answers.filter((answer) => answer.seconds > 0);
+  const medianSeconds = Math.round(median(timed.map((answer) => answer.seconds)) * 10) / 10;
+  const slowCut = Math.max(SLOW_MIN_SECONDS, medianSeconds * SLOW_FACTOR);
+  const slow = medianSeconds > 0 ? timed.filter((answer) => answer.seconds >= slowCut) : [];
+  const profile = (kinds: Item["kind"][]): KindProfile => {
+    const subset = session.answers.filter((answer) => kinds.includes(answer.kind));
+    return { hits: subset.filter((answer) => answer.status === "acerto").length, total: subset.length };
+  };
+  const touch = profile(["toque"]);
+  const judged = profile(["fala", "fazer"]);
+  const repeated = session.answers.filter((answer) => answer.repeated).length;
+  const deepen = [...new Set(priorities.map((phase) => phase.phase.source))];
+
+  const notes: string[] = [];
+  if (!summary.complete) {
+    notes.push(`Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. ${notApplied.length > 0 ? `Fase(s) não aplicada(s): ${notApplied.map((phase) => phase.phase.name).join(", ")}. ` : ""}A contagem total só vale para comparação quando a partida é completa.`);
+  }
+  if (applied.length > 0 && priorities.length === 0) {
+    notes.push("Todas as fases aplicadas ficaram dentro do esperado para a faixa nesta triagem de déficits grosseiros. Isso não exclui dificuldades sutis; a consulta segue o roteiro habitual.");
+  }
+  if (priorities.length > 0) {
+    notes.push(`Prioridade para a consulta: ${priorities.map((phase) => `${shortPhase(phase)} (${phase.level})`).join("; ")}.`);
+  }
+  if (pattern === "nao_resposta") {
+    notes.push(`Predomínio de não resposta (${noResponse} de ${missed.length} itens perdidos). Antes de ler como déficit, considerar recusa, timidez, cansaço ou não compreensão do comando; vale reapresentar esses itens na consulta.`);
+  } else if (pattern === "erro_ativo") {
+    notes.push(`Predomínio de erro ativo (${errors} de ${missed.length} itens perdidos): a criança respondeu, mas fora do critério. Aponta mais para lacuna no domínio do que para recusa.`);
+  } else if (pattern === "misto") {
+    notes.push(`Erros (${errors}) e não respostas (${noResponse}) em proporção parecida: separar na consulta o que foi lacuna do que foi recusa ou desatenção.`);
+  }
+  if (touch.total > 0 && judged.total > 0) {
+    const touchRatio = touch.hits / touch.total;
+    const judgedRatio = judged.hits / judged.total;
+    if (touchRatio - judgedRatio >= 0.4) {
+      notes.push(`Melhor nos itens conferidos pelo jogo (toque ${touch.hits}/${touch.total}) do que nos conferidos pela aplicadora (fala e ação ${judged.hits}/${judged.total}). Conferir na consulta os itens de fala e de ação e o rigor do critério aplicado.`);
+    } else if (judgedRatio - touchRatio >= 0.4) {
+      notes.push(`Melhor nos itens de fala e ação (${judged.hits}/${judged.total}) do que nos de toque na tela (${touch.hits}/${touch.total}). Observar atenção visual, impulsividade no toque e compreensão da pergunta lida.`);
+    }
+  }
+  if (slow.length > 0) {
+    notes.push(`Ritmo: mediana de ${medianSeconds} s por item; ${slow.length} item(ns) bem acima do ritmo da própria criança (${slow.map((answer) => `${answer.seconds} s`).join(", ")}). Comparação interna à partida, não normativa.`);
+  } else if (medianSeconds > 0) {
+    notes.push(`Ritmo regular: mediana de ${medianSeconds} s por item, sem item muito acima do ritmo da própria criança.`);
+  }
+  if (repeated > 0) {
+    notes.push(`Comando repetido em ${repeated} item(ns): considerar atenção auditiva e compreensão de instrução.`);
+  }
+  if (deepen.length > 0) {
+    notes.push(`Aprofundar com as abas de origem: ${deepen.join(" · ")}.`);
+  }
+
+  const headline = summary.complete
+    ? `${LEVEL_LABELS[summary.level]} · ${summary.hits} de ${summary.total} acertos`
+    : `Partida incompleta · ${summary.hits} acertos em ${session.answers.length} itens registrados`;
+
+  return { headline, complete: summary.complete, priorities, notApplied, missed, errors, noResponse, pattern, medianSeconds, slow, touch, judged, repeated, deepen, notes };
+}
+
+/** Resumo curto, em prosa, para colar na evolução ou no prontuário. */
+export function buildGameBrief(session: GameSession, date = new Date()): string {
+  const summary = summarize(session);
+  const reading = interpret(session);
+  const day = date.toISOString().slice(0, 10).split("-").reverse().join("/");
+  const parts: string[] = [
+    `Triagem lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, faixa ${summary.band.label}) aplicada pela recepção em ${day}: ${summary.complete ? `${summary.hits} de ${summary.total} acertos, ${LEVEL_LABELS[summary.level].toLowerCase()}` : `partida incompleta, ${summary.hits} acertos em ${session.answers.length} itens registrados`}.`,
+    `Por fase: ${summary.phases.map((phase) => `${phase.phase.name} ${phase.applied ? `${phase.hits}/${phase.total}` : "não aplicada"}`).join(", ")}.`,
+  ];
+  if (reading.missed.length > 0) {
+    parts.push(`Itens perdidos: ${reading.missed.map((answer) => `${answer.prompt} (${STATUS_LABELS[answer.status].toLowerCase()})`).join("; ")}.`);
+  }
+  parts.push(...reading.notes.filter((note) => !note.startsWith("Aprofundar")));
+  parts.push("Contagem autoral, não normativa; a leitura e a conclusão são do médico.");
+  return parts.join(" ");
+}
+
 // ─────────────────────────────── relatório em texto ───────────────────────────────
 export function buildGameReport(session: GameSession, date = new Date()): string {
   const summary = summarize(session);
+  const reading = interpret(session);
   const lines: string[] = [
     `${SUPER_NEUROPAD_TITLE} · versão ${SUPER_NEUROPAD_VERSION}`,
     `Idade informada: ${session.ageYears} anos · Faixa: ${summary.band.label} · Personagem: ${summary.character.emoji} ${summary.character.name} ${summary.character.role}`,
@@ -602,7 +776,10 @@ export function buildGameReport(session: GameSession, date = new Date()): string
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
     `Total: ${summary.hits} de ${summary.total} acertos · ${LEVEL_LABELS[summary.level]}`,
-    ...summary.phases.map((phase) => `Fase ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta · ${LEVEL_LABELS[phase.level]}`),
+    ...summary.phases.map((phase) => `Fase ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.applied ? `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}` : "não aplicada"}`),
+    "",
+    "LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)",
+    ...reading.notes.map((note) => `- ${note}`),
     "",
     "DETALHAMENTO ITEM A ITEM",
   ];
@@ -611,7 +788,7 @@ export function buildGameReport(session: GameSession, date = new Date()): string
     if (phase.answers.length === 0) lines.push("  (fase não aplicada)");
     phase.answers.forEach((answer, index) => {
       lines.push(`  ${index + 1}. [${KIND_LABELS[answer.kind]}] ${answer.prompt}`);
-      lines.push(`     Esperado: ${answer.expected} · Registrado: ${answer.given} · ${STATUS_LABELS[answer.status]} · ${answer.seconds}s`);
+      lines.push(`     Esperado: ${answer.expected} · Registrado: ${answer.given} · ${STATUS_LABELS[answer.status]} · ${answer.seconds}s${answer.repeated ? " · comando repetido 1x" : ""}`);
     });
   }
   lines.push("", SUPER_NEUROPAD_NATURE);

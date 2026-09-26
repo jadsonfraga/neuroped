@@ -1,0 +1,84 @@
+/* Super NeuroPad Game: acabamento arcade anos 90 (bordas grossas, sombra dura,
+   barra de XP em blocos, brilho de scanline) sobre os tokens do NeuroPed.
+   Só estilo: nenhuma regra clínica vive aqui. */
+.snp {
+  --snp-ink: #1b1340;
+  --snp-paper: #fffaf0;
+  --snp-paper-2: #fff1c9;
+  --snp-sun: #ffd23f;
+  --snp-sky: #5fd3f3;
+  --snp-grass: #7ee081;
+  --snp-berry: #ff7fae;
+  --snp-lilac: #c9b6ff;
+  --snp-slate: #d9d4f2;
+  --snp-shadow: #1b1340;
+  --snp-text: #1b1340;
+  --snp-muted: #4b4570;
+}
+.dark .snp {
+  --snp-ink: #efe9ff;
+  --snp-paper: #211c45;
+  --snp-paper-2: #2b2458;
+  --snp-slate: #3a3268;
+  --snp-shadow: #0a0820;
+  --snp-text: #f4f0ff;
+  --snp-muted: #c7bfe6;
+}
+.snp { color: var(--snp-text); }
+.snp-pixel { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 900; }
+.snp-panel { position: relative; border: 4px solid var(--snp-ink); border-radius: 18px; background: var(--snp-paper); box-shadow: 6px 6px 0 var(--snp-shadow); }
+.snp-panel--soft { background: var(--snp-paper-2); }
+.snp-panel--sun { background: var(--snp-sun); color: #1b1340; }
+.snp-panel--sky { background: var(--snp-sky); color: #1b1340; }
+.snp-panel--grass { background: var(--snp-grass); color: #1b1340; }
+.snp-panel--berry { background: var(--snp-berry); color: #1b1340; }
+.snp-panel--lilac { background: var(--snp-lilac); color: #1b1340; }
+.snp-scanlines::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: repeating-linear-gradient(0deg, rgba(27, 19, 64, 0.06) 0 2px, transparent 2px 4px); }
+.snp-title { text-shadow: 3px 3px 0 var(--snp-sun), 6px 6px 0 var(--snp-ink); }
+.dark .snp-title { text-shadow: 3px 3px 0 #7c5cff, 6px 6px 0 #0a0820; }
+.snp-btn { position: relative; border: 4px solid #1b1340; border-radius: 14px; color: #1b1340; font-family: var(--font-mono); font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; box-shadow: 0 6px 0 #1b1340; transition: transform 70ms ease-out, box-shadow 70ms ease-out, filter 120ms; }
+.snp-btn:hover { filter: brightness(1.04); }
+.snp-btn:active, .snp-btn[aria-pressed="true"] { transform: translateY(5px); box-shadow: 0 1px 0 #1b1340; }
+.snp-btn:disabled { opacity: 0.55; filter: grayscale(0.4); box-shadow: 0 6px 0 #1b1340; transform: none; cursor: not-allowed; }
+.snp-btn:focus-visible { outline: 4px solid #5fd3f3; outline-offset: 3px; }
+.snp-btn--sun { background: var(--snp-sun); }
+.snp-btn--sky { background: var(--snp-sky); }
+.snp-btn--grass { background: var(--snp-grass); }
+.snp-btn--berry { background: var(--snp-berry); }
+.snp-btn--lilac { background: var(--snp-lilac); }
+.snp-btn--paper { background: #fffaf0; }
+.snp-btn--slate { background: #d9d4f2; }
+.snp-chip { display: inline-flex; align-items: center; gap: 0.35rem; border: 3px solid var(--snp-ink); border-radius: 999px; padding: 0.15rem 0.7rem; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; background: var(--snp-paper); color: var(--snp-text); }
+.snp-xp { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; border: 3px solid var(--snp-ink); border-radius: 8px; background: var(--snp-ink); }
+.snp-xp > i { display: block; height: 12px; border-radius: 2px; background: var(--snp-slate); }
+.snp-xp > i.on { background: linear-gradient(180deg, #fff3a8 0 45%, #ffd23f 45%); }
+.snp-xp > i.hot { background: linear-gradient(180deg, #d5ffd8 0 45%, #7ee081 45%); }
+.snp-meter { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; padding: 3px; border: 3px solid #1b1340; border-radius: 8px; background: #1b1340; }
+.snp-meter > i { display: block; height: 14px; border-radius: 2px; background: #6a6390; }
+.snp-meter > i.hit { background: linear-gradient(180deg, #d5ffd8 0 45%, #4fc76a 45%); }
+.snp-meter > i.err { background: linear-gradient(180deg, #ffd0dd 0 45%, #ff5c8a 45%); }
+.snp-meter > i.none { background: repeating-linear-gradient(45deg, #b9b3d8 0 3px, #8f88b8 3px 6px); }
+.snp-hearts { display: inline-flex; gap: 0.25rem; font-size: 1rem; line-height: 1; }
+.snp-sprite { display: inline-block; filter: drop-shadow(3px 3px 0 rgba(27, 19, 64, 0.35)); }
+.snp-sky-bg { background: linear-gradient(180deg, #a5e6ff 0 62%, #7ee081 62% 70%, #b07a4a 70% 74%, #7ee081 74%); }
+.dark .snp-sky-bg { background: linear-gradient(180deg, #24306b 0 62%, #2f7a45 62% 70%, #5a3f2b 70% 74%, #2f7a45 74%); }
+.snp-cloud { position: absolute; border-radius: 999px; background: rgba(255, 255, 255, 0.85); }
+.dark .snp-cloud { background: rgba(255, 255, 255, 0.25); }
+.snp-option { border: 4px solid #1b1340; border-radius: 22px; box-shadow: 0 8px 0 #1b1340; transition: transform 70ms ease-out, box-shadow 70ms ease-out; color: #1b1340; }
+.snp-option:active { transform: translateY(6px); box-shadow: 0 2px 0 #1b1340; }
+.snp-option:focus-visible { outline: 4px solid #5fd3f3; outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  .snp-blink { animation: snp-blink 1s steps(2, start) infinite; }
+  .snp-bounce { animation: snp-bounce 0.9s steps(4) infinite; }
+  .snp-float { animation: snp-float 3s ease-in-out infinite; }
+  .snp-pop { animation: snp-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+  .snp-cloud { animation: snp-drift 18s linear infinite; }
+}
+@keyframes snp-blink { 50% { opacity: 0; } }
+@keyframes snp-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes snp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes snp-pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes snp-drift { from { transform: translateX(0); } to { transform: translateX(40px); } }
+@media (max-width: 640px) {
+  .snp-panel { box-shadow: 4px 4px 0 var(--snp-shadow); }
+}
