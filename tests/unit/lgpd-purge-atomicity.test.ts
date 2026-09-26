@@ -100,11 +100,12 @@ function fixture(scope: "patient" | "clinic") {
   if (scope === "clinic") {
     sqlite.prepare("UPDATE clinics SET status = 'suspended' WHERE id = ?").run(RED);
     sqlite.prepare(`UPDATE tenant_lifecycle SET status = 'closure_requested', requested_at = ?,
-      retention_until = ? WHERE clinic_id = ?`).run(NOW, PAST, RED);
+      retention_until = ?, reason_code = 'other' WHERE clinic_id = ?`).run(NOW, PAST, RED);
   }
   sqlite.prepare(`INSERT INTO live_deletion_requests
     (id, clinic_id, patient_id, requested_by_user_id, scope, status)
-    VALUES ('atomicity-request', ?, ?, ?, ?, 'processing')`).run(RED, RED_PATIENT, ACTOR, scope);
+    VALUES ('atomicity-request', ?, ?, ?, ?, 'processing')`)
+    .run(RED, scope === "patient" ? RED_PATIENT : null, ACTOR, scope);
   sqlite.prepare(`INSERT INTO live_lgpd_worker_jobs (id, request_type, request_id, clinic_id, status)
     VALUES ('lgpd:delete:atomicity-request', 'delete', 'atomicity-request', ?, 'processing')`).run(RED);
   const adapter = new D1Adapter(sqlite);
@@ -141,8 +142,8 @@ const races: Array<{ name: string; scope: "patient" | "clinic"; mutate: (db: Dat
   { name: "clínica reativada antes do batch", scope: "clinic", mutate: (db) => {
     db.prepare("UPDATE clinics SET status = 'active' WHERE id = ?").run(RED);
   } },
-  { name: "retenção removida antes do batch", scope: "clinic", mutate: (db) => {
-    db.prepare("UPDATE tenant_lifecycle SET retention_until = NULL WHERE clinic_id = ?").run(RED);
+  { name: "retenção da clínica estendida antes do batch", scope: "clinic", mutate: (db) => {
+    db.prepare("UPDATE tenant_lifecycle SET retention_until = ? WHERE clinic_id = ?").run(FUTURE, RED);
   } },
   { name: "lifecycle removido antes do batch", scope: "clinic", mutate: (db) => {
     db.prepare("DELETE FROM tenant_lifecycle WHERE clinic_id = ?").run(RED);
@@ -186,9 +187,9 @@ for (const scope of ["patient", "clinic"] as const) {
       assert.equal(first.completions.length, 1);
       assert.equal(first.result?.deletedCounts.live_patients, 1);
       assert.equal(first.result?.deletedCounts.live_clinical_events, 1);
-      assert.equal(f.sqlite.prepare("SELECT COUNT(*) AS n FROM live_patients WHERE clinic_id = ?")
-        .get(RED) && (f.sqlite.prepare("SELECT COUNT(*) AS n FROM live_patients WHERE clinic_id = ?")
-        .get(RED) as { n: number }).n, 0);
+      const remaining = f.sqlite.prepare("SELECT COUNT(*) AS n FROM live_patients WHERE clinic_id = ?")
+        .get(RED) as { n: number };
+      assert.equal(remaining.n, 0);
       assert.deepEqual(f.snapshot(BLUE), blue);
       const request = f.sqlite.prepare("SELECT patient_id FROM live_deletion_requests WHERE id = 'atomicity-request'")
         .get() as { patient_id: string | null };
