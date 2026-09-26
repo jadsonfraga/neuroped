@@ -62,6 +62,14 @@ function cleanId(value: unknown): string {
   return OPAQUE_ID.test(text) ? text : "";
 }
 
+// AUTHZ-P1-08/LTB-19 (ciclo 4, 2026-09-26 —
+// docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): mesma disciplina de
+// run-deletion.ts — o bypass de admin de plataforma exige razão declarada.
+function cleanReason(value: unknown): string {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text.length >= 10 && text.length <= 500 ? text : "";
+}
+
 export const onRequestPost: PagesFunction<
   TenantEnv & ArtifactStoreEnv
 > = async (context) => {
@@ -108,6 +116,7 @@ export const onRequestPost: PagesFunction<
   }
 
   const platformAdmin = isAdmin(user);
+  let adminReason = "";
   if (!platformAdmin) {
     const membership = await getClinicMembership(db, clinicId, user);
     if (!membership || !membershipCanManage(membership)) {
@@ -124,6 +133,17 @@ export const onRequestPost: PagesFunction<
       "clinical",
     );
     if (billingFailure) return billingFailure;
+  } else {
+    // AUTHZ-P1-08/LTB-19: o bypass de admin de plataforma nunca é implícito —
+    // exige razão declarada antes de sequer olhar o storage/ledger.
+    adminReason = cleanReason(body.reason);
+    if (!adminReason) {
+      return tenantError(
+        "Ação de administrador de plataforma exige razão declarada (reason).",
+        "REASON_REQUIRED",
+        400,
+      );
+    }
   }
 
   // Antes de qualquer coisa que toque o ledger: existe destino privado?
@@ -166,6 +186,31 @@ export const onRequestPost: PagesFunction<
       "EXPORT_SCOPE_UNSUPPORTED",
       409,
     );
+  }
+
+  if (platformAdmin) {
+    // AUTHZ-P1-08/LTB-19: trilha ANTES da execução física, não depois — se a
+    // gravação falhar, a exportação não é sequer reivindicada.
+    try {
+      await prepareSaasAudit(db, {
+        clinicId,
+        actorUserId: user.id,
+        action: "platform_admin_run_export_initiated",
+        targetType: "export_request",
+        targetId: requestId,
+        metadata: { reason: adminReason, scope: request.scope },
+      }).run();
+    } catch (error) {
+      console.error(
+        "[governance/run-export] auditoria prévia de admin de plataforma falhou",
+        error,
+      );
+      return tenantError(
+        "Não foi possível registrar a auditoria prévia da ação administrativa.",
+        "AUDIT_WRITE_FAILED",
+        500,
+      );
+    }
   }
 
   const workerRunId = crypto.randomUUID();

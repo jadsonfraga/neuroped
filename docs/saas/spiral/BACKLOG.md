@@ -197,6 +197,49 @@ sozinho, sem o middleware na frente, aceita e persiste o upload de uma
 conta sem clínica (201, 1 lote criado) — a prova concreta do buraco.
 Evidência em EVIDENCE.md#S18.
 
+## S19 · P1 · FECHADO (ciclo 4)
+`run-deletion.ts` e `run-export.ts` (execução de eliminação/exportação LGPD)
+pulavam INTEIRAMENTE membership e billing quando `isAdmin(user)` era
+verdadeiro, para o `clinicId` vindo do BODY da requisição — sem exigir
+nenhuma razão declarada. A trilha de sucesso só era gravada DEPOIS da
+eliminação/exportação física, em `try/catch` que só fazia `console.error`
+na falha: a ação já tinha acontecido independente de a trilha existir.
+`audit-log.ts` (leitura global de `audit_logs` por qualquer admin) também
+não gerava trilha nenhuma da própria leitura. Viola diretamente o AGENTS.md:
+"Admin global não é fallback de rota clínica comum; ações de plataforma
+exigem escopo, razão e auditoria." Comprovado comportamentalmente pelo próprio
+teste existente: `PLATFORM_ADMIN` sem nenhuma membership em RED executava a
+eliminação de escopo `clinic` com sucesso, sem `reason` e sem trilha
+prévia. (AUTHZ-P1-08, LTB-19 — mesmo par de arquivos achado por dois
+agentes de varredura independentes desta sessão)
+
+Corrigido nos três arquivos: quando `platformAdmin` é verdadeiro, uma
+`reason` (10-500 caracteres) passa a ser obrigatória — 400
+`REASON_REQUIRED` ANTES de sequer olhar o ledger da requisição, sem tocar
+`live_deletion_requests`/`live_export_requests`/`live_lgpd_worker_jobs`. Com
+`reason` válida, uma trilha em `saas_audit_log`
+(`platform_admin_run_deletion_initiated`/`platform_admin_run_export_initiated`,
+metadata com a razão e o escopo) é gravada de forma SÍNCRONA e FAIL-CLOSED
+logo depois dos guards de escopo/status e ANTES de `claimLgpdRequest` — se a
+gravação falhar, a ação não é sequer reivindicada (500
+`AUDIT_WRITE_FAILED`). Em `audit-log.ts`, cada leitura bem-sucedida agora
+grava (best-effort, via `context.waitUntil`, para não transformar uma
+leitura autorizada em falha) uma trilha `platform_audit_log_read` com
+`clinic_id: null` (cross-tenant por natureza) e metadata só com os filtros
+usados (sem PID/IP de terceiros).
+
+Testes: `tests/unit/lgpd-run-deletion-endpoint.test.ts` e
+`tests/unit/lgpd-run-export-endpoint.test.ts` (schema real + handler real)
+ganham cenários provando (a) 400 sem `reason`, ledger intocado; (b) 200 com
+`reason`, com a trilha prévia gravada com a razão exata; (c) em
+run-deletion, um caso extra de corrida de claim (lease de outro worker já
+válido) provando que a trilha prévia SOBREVIVE mesmo quando a execução
+falha depois — o ponto central do achado. `tests/unit/audit-log-contract.test.ts`
+ganha um cenário (schema real) provando que uma leitura de admin gera a
+trilha própria, cross-tenant, sem PHI. Todas as quatro asserções novas
+vistas falhando pelo motivo certo contra o código anterior via `git stash`
+isolado por arquivo. Evidência em EVIDENCE.md#S19.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/

@@ -430,3 +430,66 @@
   comportamento anterior (bridge volta a aceitar qualquer conta
   "professional" sem clínica/billing); nenhuma migração envolvida, nenhum
   outro arquivo de produção tocado.
+
+## S19 (ciclo 4, 2026-09-26) — razão + auditoria prévia no bypass de admin de plataforma (AUTHZ-P1-08/LTB-19)
+- Escopo: 3 arquivos existentes (`functions/api/live/governance/
+  run-deletion.ts`, `functions/api/live/governance/run-export.ts`,
+  `functions/api/audit-log.ts`). Nenhuma mudança de schema — `saas_audit_log`
+  (migração 0009) já aceita `clinic_id NULL` e `action` livre.
+- Ambiente: container da sessão, Node do repo, HEAD `1e983cf` (S18) + S19.
+- Achado: `run-deletion.ts`/`run-export.ts` tinham o padrão `const
+  platformAdmin = isAdmin(user); if (!platformAdmin) { membership +
+  billing } ` — quando `platformAdmin` era true, o bloco inteiro era
+  pulado para o `clinicId` do BODY, sem nenhum campo `reason`. A trilha de
+  sucesso (`prepareSaasAudit(...).run()`) só rodava DEPOIS da execução
+  física, num `try/catch` que só logava a falha — a ação já tinha
+  acontecido. `audit-log.ts` não auditava a própria leitura global.
+  Confirmado por leitura direta do código atual (não só do texto da
+  auditoria) e pelo teste já existente `lgpd-run-deletion-endpoint.test.ts`
+  cenário 10, que ANTES da correção provava exatamente o oposto do que
+  deveria: `PLATFORM_ADMIN` sem membership em RED executando a eliminação
+  do tenant encerrado com sucesso (200), sem `reason`.
+- Testes: `tests/unit/lgpd-run-deletion-endpoint.test.ts` cenário 10
+  dividido em 10a (sem `reason` → 400 `REASON_REQUIRED`, `ledger()` continua
+  `undefined`) e 10b (com `reason` → 200 como antes, mais leitura direta de
+  `saas_audit_log` confirmando `action='platform_admin_run_deletion_initiated'`,
+  `clinic_id=RED`, `actor_user_id=PLATFORM_ADMIN.id` e a razão exata na
+  metadata). Novo cenário 12: uma `live_lgpd_worker_jobs` pré-existente com
+  `status='processing'` e `lease_until` no futuro simula outro worker
+  segurando o lease — `run-deletion` responde 409, RED permanece intocado,
+  mas a trilha PRÉVIA (`platform_admin_run_deletion_initiated`) já existe
+  para esse `requestId`, provando que a gravação acontece ANTES da tentativa
+  de claim, não depois do sucesso. `tests/unit/lgpd-run-export-endpoint.test.ts`
+  ganha um `PLATFORM_ADMIN` novo (não existia neste arquivo) e um cenário 11
+  simétrico (400 sem razão / 200 com razão + trilha prévia com a razão
+  exata). `tests/unit/audit-log-contract.test.ts` ganha um cenário com
+  schema real provando que uma leitura de admin bem-sucedida grava
+  `platform_audit_log_read` com `clinic_id NULL` e metadata só com os
+  filtros (`resource`, `action`) usados na consulta, sem PID/IP. Todas as
+  quatro peças vistas falhando pelo motivo certo contra o código anterior
+  via `git stash push -- <arquivo>` isolado (200 em vez de 400 nos dois
+  orquestradores; `assert.ok(trilha)` falhando com `undefined` no
+  audit-log).
+- Comandos exit 0: `node --import tsx tests/unit/lgpd-run-deletion-endpoint.test.ts`,
+  `node --import tsx tests/unit/lgpd-run-export-endpoint.test.ts`,
+  `node --import tsx tests/unit/audit-log-contract.test.ts`,
+  `npm run check`, `npx eslint functions/api/audit-log.ts
+  functions/api/live/governance/run-deletion.ts
+  functions/api/live/governance/run-export.ts
+  tests/unit/audit-log-contract.test.ts
+  tests/unit/lgpd-run-deletion-endpoint.test.ts
+  tests/unit/lgpd-run-export-endpoint.test.ts --max-warnings=0`,
+  `node --import tsx tests/unit/lgpd-purge-executor.test.ts`,
+  `node --import tsx tests/unit/saas-tenant-lifecycle.test.ts`,
+  `npm run test:quick-wins` (suíte completa),
+  `node tests/unit/workflow-governance.test.mjs`.
+- CI: `run-deletion.ts`/`run-export.ts` e seus dois testes já eram cobertos
+  por `lgpd-worker-executor-core.yml` (path triggers já existentes) e por
+  `runtime-readiness.yml`; `audit-log.ts`/`audit-log-contract.test.ts` são
+  cobertos pelo job genérico `test-and-build.yml` (sem filtro de `paths`,
+  roda `npm run test:quick-wins` em todo push/PR). Nenhum arquivo de
+  workflow precisou de edição — só os testes já existentes foram
+  estendidos, não criados.
+- Rollback: reverter os 3 arquivos de produção a `1e983cf` restaura o
+  comportamento anterior (bypass de admin sem razão nem trilha prévia);
+  nenhuma migração envolvida.

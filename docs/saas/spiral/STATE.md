@@ -148,14 +148,26 @@ de varredura (um workflow de 4 domínios em paralelo + síntese + verificação
 adversarial, e um scan avulso), ambos convergindo no mesmo item como topo
 do ranking. Evidência em EVIDENCE.md#S18.
 
+S19: `run-deletion.ts`/`run-export.ts` pulavam membership E billing inteiros
+quando o ator era admin de plataforma, sem exigir razão nenhuma, e a trilha
+de sucesso só era gravada DEPOIS da eliminação/exportação física
+(best-effort); `audit-log.ts` não auditava a própria leitura global. Agora
+o bypass de admin exige `reason` (400 antes de tocar o ledger sem ela) e
+grava trilha PRÉVIA fail-closed antes de reivindicar a execução — provado
+inclusive sob corrida de claim (a trilha sobrevive mesmo quando a execução
+falha depois). `audit-log.ts` audita a própria leitura (best-effort,
+cross-tenant). Evidência em EVIDENCE.md#S19.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
-censo, candidatos pequenos e seguros mapeados pela varredura de auditoria
-desta sessão (ver BACKLOG.md e o achado "S19" ainda não implementado,
-AUTHZ-P1-08/LTB-19 — bypass de admin de plataforma sem razão nem auditoria
-prévia em run-deletion/run-export) continuam abertos; S10 (papel duplo
+censo, os achados pequenos e seguros mapeados pela varredura de auditoria
+desta sessão (S18 e S19) já foram fechados; os candidatos "small" restantes
+do mesmo mapeamento — AUTHZ-P1-06 residual (vínculo de secretária sem
+checar mesma clínica, oráculo de enumeração em `operations/_access.ts`) e
+AUTHZ-P1-10 (falta rota para a clínica ler a própria `saas_audit_log`) —
+seguem abertos e ainda não numerados; ver BACKLOG.md. S10 (papel duplo
 global×membership), S12B (expandir o export) e S13 (link público de
 agendamento por clínica) seguem deliberadamente grandes/abertos.
 Retomada: `git fetch origin main && git log -1 origin/main` e reler este
