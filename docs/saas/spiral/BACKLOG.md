@@ -111,11 +111,16 @@ não), enquanto os handlers SaaS decidem pela membership da clínica. Um
 `professional` global com paciente legado próprio escreve mesmo sendo só
 `financial` na clínica. (AUTHZ-P1-07, LTB-05, LEG-13, OPS-04)
 
-## S11 · P1 · aberto
-`POST /api/tenants/:id/members` insere direto qualquer conta existente da
-plataforma como membro, pelo e-mail, sem convite nem aceite — e é oráculo de
-enumeração (404 e-mail inexistente vs 409 papel incompatível vs 201 com
+## S11 · P1 · FECHADO (ciclo 4)
+`POST /api/tenants/:id/members` inseria direto qualquer conta existente da
+plataforma como membro, pelo e-mail, sem convite nem aceite — e era oráculo
+de enumeração (404 e-mail inexistente vs 409 papel incompatível vs 201 com
 nome). (LTB-03, AUTHZ-P1-05)
+Corrigido: a rota exige agora que o alvo já seja membro ATIVO da clínica; a
+resposta é idêntica (404 `MEMBER_NOT_FOUND`) para e-mail sem conta, conta
+sem membership aqui, ou membership desativada. Entrada de gente nova
+continua exclusiva de `POST /api/billing/invitations` + `accept`. Evidência
+em EVIDENCE.md#S11.
 
 ## S12 · P1 · aberto
 Export/purge de tenant se declaram completos mas cobrem só `clinics`,

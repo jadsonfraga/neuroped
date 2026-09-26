@@ -118,3 +118,36 @@
   public-booking.ts}` a `f8037bd` restaura o código anterior; a coluna
   `clinic_id` (migração 0026) é aditiva e pode permanecer no banco sem
   quebrar o código antigo (ele simplesmente a ignora).
+
+## S11 (ciclo 4, 2026-09-26) — conscrição direta de membro sem convite
+- Escopo: `functions/api/tenants/[id]/members.ts` (POST): a busca de
+  `currentMembership` passa a acontecer antes de qualquer decisão, e um
+  único gate (`!target || currentMembership?.active !== 1`) devolve 404
+  `MEMBER_NOT_FOUND` — mesmo status e código para e-mail sem conta, conta
+  sem membership nesta clínica ou membership desativada. Nenhuma mudança de
+  schema; a query de upsert (INSERT...ON CONFLICT DO UPDATE) é a mesma,
+  agora só alcançável quando o alvo já é membro ativo.
+- Ambiente: container da sessão, Node do repo, HEAD `18799d7` (S8) + S11.
+- Teste em `tests/unit/cliente-zero-journey.test.ts`: o owner da CLINICA_AZUL
+  (gestor legítimo) tenta inscrever a dona real da CLINICA_VERMELHA
+  (`rui@vermelha.test`, conta de verdade, nunca membro de AZUL) via POST
+  members com assento disponível (ampliado por SQL só para isolar esta
+  prova do teto de assentos, que é contrato à parte). Visto FALHANDO contra
+  o código anterior via `git stash` isolado (201 — a conscrição funcionava
+  de verdade, sem convite); verde com a correção (404, nenhuma linha criada
+  em `clinic_memberships`). Segunda asserção no mesmo bloco: e-mail sem
+  conta alguma recebe status e código idênticos ao de conta real não
+  membro — fecha o oráculo de enumeração. O cenário pré-existente "owner
+  promove a convidada" (papel de quem já é membro) continua verde,
+  provando que a mudança de papel de membro ativo não foi afetada.
+- Comandos exit 0: `node --import tsx tests/unit/cliente-zero-journey.test.ts`,
+  `node --import tsx tests/unit/saas-acceptance-journey.test.ts`,
+  `node --import tsx tests/unit/saas-self-service.test.ts`,
+  `node --import tsx tests/unit/saas-tenant-lifecycle.test.ts`,
+  `node --import tsx tests/unit/saas-phase1-foundation.test.ts`,
+  `node --import tsx tests/unit/saas-phase1-hardening.test.ts`,
+  `node --import tsx tests/unit/admin-bootstrap-regression.test.ts`,
+  `npm run check`, `npx eslint` nos arquivos tocados, `npm run test:quick-wins`
+  (suíte completa).
+- Rollback: reverter `functions/api/tenants/[id]/members.ts` a `18799d7`
+  restaura o comportamento anterior; nenhuma migração envolvida.

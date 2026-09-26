@@ -94,12 +94,17 @@ Comandos exit 0 depois de S8: os mesmos de S6+S7 mais
 `tests/unit/operations-tenant-isolation.test.ts`, `npm run test:operations`,
 `npm run lint` completo e `npm run test:quick-wins` completo novamente.
 
+S11: `POST /api/tenants/:id/members` não conscreve mais conta alheia sem
+convite — exige membership ativa prévia, com resposta uniforme (404
+MEMBER_NOT_FOUND) que fecha o oráculo de enumeração por e-mail/papel
+global. Evidência em EVIDENCE.md#S11.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
 censo, os próximos itens executáveis sem depender de estado de produção
-desconhecido são S10 (papel duplo global×membership), S11 (convite direto
-por e-mail sem aceite) e S13 (link público de agendamento por clínica) —
-ver BACKLOG.md para os três. Retomada: `git fetch origin main && git log -1
+desconhecido são S10 (papel duplo global×membership), S12 (export/purge de
+tenant incompleto) e S13 (link público de agendamento por clínica) — ver
+BACKLOG.md para os três. Retomada: `git fetch origin main && git log -1
 origin/main` e reler este arquivo.

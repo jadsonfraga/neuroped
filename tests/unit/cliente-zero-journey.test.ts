@@ -359,6 +359,59 @@ const convidada = await (async () => {
   assert.equal(papel.role, "clinic_admin");
 }
 
+// LTB-03/AUTHZ-P1-05 (ciclo 4, 2026-09-26): POST /members não é entrada de
+// equipe. O owner da AZUL, gestor legítimo de AZUL, NÃO pode conscrever
+// diretamente uma conta alheia real (a dona da VERMELHA) como membro de
+// AZUL sem convite nem aceite dela — mesmo sendo o próprio gestor a agir.
+// (Assento ampliado só para isolar esta prova do teto de assentos do
+// trial, que é um contrato à parte e já teria bloqueado a inserção por
+// outro motivo — sem isso, o defeito antigo aparecia como SEAT_LIMIT_REACHED
+// em vez de expor a ausência de convite.)
+raw.prepare(
+  `UPDATE billing_subscriptions SET seats = 5
+     WHERE customer_id IN (SELECT id FROM billing_customers WHERE clinic_id = ?)`,
+).run(CLINICA_AZUL);
+{
+  const conscricao = await membersPost(
+    ctx(
+      req(`https://x.test/api/tenants/${CLINICA_AZUL}/members`, "POST", {
+        email: "rui@vermelha.test",
+        role: "professional",
+      }),
+      azul,
+      { id: CLINICA_AZUL },
+    ),
+  );
+  assert.equal(
+    conscricao.status,
+    404,
+    "e-mail de conta real alheia, sem membership prévia em AZUL, não pode virar membro por POST direto",
+  );
+  const corpo = (await conscricao.json()) as { code: string };
+  assert.equal(corpo.code, "MEMBER_NOT_FOUND");
+  const membershipCriada = raw
+    .prepare("SELECT 1 FROM clinic_memberships WHERE clinic_id = ? AND user_id = ?")
+    .get(CLINICA_AZUL, vermelha.id);
+  assert.equal(membershipCriada, undefined, "nenhuma membership pode ter sido criada");
+
+  // A mesma resposta (status e código) para um e-mail que nunca teve conta:
+  // o chamador não pode distinguir "sem conta" de "conta existe, mas não é
+  // membro daqui" — ambos eram oráculos de enumeração antes desta correção.
+  const semConta = await membersPost(
+    ctx(
+      req(`https://x.test/api/tenants/${CLINICA_AZUL}/members`, "POST", {
+        email: "ninguem-cadastrado@example.test",
+        role: "professional",
+      }),
+      azul,
+      { id: CLINICA_AZUL },
+    ),
+  );
+  assert.equal(semConta.status, conscricao.status);
+  const corpoSemConta = (await semConta.json()) as { code: string };
+  assert.equal(corpoSemConta.code, corpo.code);
+}
+
 // A dona da VERMELHA não convida, não promove e não lê a equipe da AZUL.
 {
   const convite = await invitationsPost(
