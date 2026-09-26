@@ -9,6 +9,8 @@ import {
   OBJECTIVE_BANDS,
   OBJECTIVE_MAX_YEARS,
   OBJECTIVE_MIN_YEARS,
+  OBJECTIVE_ITEMS_PER_BAND,
+  OBJECTIVE_ITEMS_PER_TOOL,
   objectiveBandForYears,
   objectiveItems,
   type ObjectiveDomain,
@@ -29,16 +31,22 @@ test("toda idade de 1 a 19 cai em exatamente uma faixa; fora disso, nenhuma", ()
 
 test("20 itens por faixa: 10 para a Sonda 10 e 10 para o OBS-10, sem repetição", () => {
   for (const band of OBJECTIVE_BANDS) {
-    assert.equal(band.items.length, 20, band.id);
+    assert.equal(band.items.length, OBJECTIVE_ITEMS_PER_BAND, band.id);
     const sonda = objectiveItems("sonda", band.minYears);
     const obs = objectiveItems("obs10", band.minYears);
-    assert.equal(sonda.length, 10, band.id);
-    assert.equal(obs.length, 10, band.id);
+    assert.equal(sonda.length, OBJECTIVE_ITEMS_PER_TOOL, band.id);
+    assert.equal(obs.length, OBJECTIVE_ITEMS_PER_TOOL, band.id);
     const says = new Set([...sonda, ...obs].map((i) => `${i.say}|${i.options.join(",")}`));
     assert.equal(says.size, 20, `itens repetidos em ${band.id}`);
     // Cada aplicação cobre os mesmos domínios da faixa.
     const domains = (list: { domain: ObjectiveDomain }[]) => [...new Set(list.map((i) => i.domain))].sort().join(",");
     assert.equal(domains(sonda), domains(obs), `cobertura diferente em ${band.id}`);
+    const distribution = (list: { domain: ObjectiveDomain }[]) =>
+      list.reduce<Record<string, number>>((acc, item) => ({ ...acc, [item.domain]: (acc[item.domain] ?? 0) + 1 }), {});
+    assert.deepEqual(distribution(sonda), distribution(obs), `distribuição de domínios diferente em ${band.id}`);
+    for (let i = 0; i < band.items.length; i += 2) {
+      assert.equal(band.items[i]?.domain, band.items[i + 1]?.domain, `par desalinhado em ${band.id}, índices ${i}/${i + 1}`);
+    }
   }
 });
 

@@ -1,20 +1,17 @@
 /**
  * Jogo Fácil — motor compartilhado do "Modo Fácil" das aplicações diretas
- * (Sonda Dez, OBS-10, Reconhecimento Visual). Um passo por vez, em sequência
- * fixa: o adulto lê a fala, mostra à criança quando houver tela, e toca em um
- * de três botões gigantes: Acertou, Não acertou ou Pular. O jogo avança
- * sozinho e, no fim, mostra e exporta o resultado.
+ * (Sonda Dez, OBS-10, Reconhecimento Visual). Suporta dois contratos:
+ * observacional (o adulto marca Acertou/Não acertou/Pular) e objetivo
+ * (o toque da criança decide certo/errado, seguido de transição neutra).
  *
- * Verdade clínica: "Acertou" é o que o adulto marcou ter visto nesta
- * interação; o resultado é contagem descritiva por passo, sem escore,
- * percentil, ponto de corte ou diagnóstico. Herói e estrelas são
- * participação (passos concluídos), nunca desempenho, e não entram no
- * texto exportado além da contagem de passos.
+ * Verdade clínica: o resultado é sempre descritivo, sem escore, percentil,
+ * ponto de corte ou diagnóstico. Herói e estrelas representam participação,
+ * nunca desempenho.
  *
  * Só animação CSS (motion-safe:animate-in): sem setTimeout/requestAnimationFrame,
  * para conviver com o relógio falso dos e2e da Sonda.
  */
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronRight, Copy, Download, Play, RotateCcw, SkipForward, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
@@ -68,6 +65,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   const [records, setRecords] = useState<EasyRecord[]>([]);
   const [childOpen, setChildOpen] = useState(objective);
   const [awaitNext, setAwaitNext] = useState(false);
+  const transitionLock = useRef(false);
   const [shown, setShown] = useState(false);
   const label = objective ? OBJECTIVE_OUTCOME_LABEL : EASY_OUTCOME_LABEL;
   // Camada de aventura: herói e frase neutra. Não é dado clínico.
@@ -78,19 +76,29 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   const stars = records.filter((r) => r.outcome !== "pulou").length;
 
   function record(outcome: EasyOutcome, auto = false, detail?: EasyAnswerDetail) {
-    if (!step) return;
+    if (!step || transitionLock.current) return;
+    transitionLock.current = true;
     const next = [...records, { id: step.id, group: step.group, title: step.title, outcome, auto, ...(detail ?? {}) }];
     setRecords(next);
-    setAwaitNext(objective && auto);
-    setChildOpen(objective && !auto);
+    // No modo objetivo, todo desfecho passa por uma tela neutra de transição.
+    // Isso evita click-through, dupla marcação e exposição antecipada do item seguinte.
+    setAwaitNext(objective);
+    setChildOpen(false);
     setShown(false);
     setIndex(index + 1);
-    setMessage(outcome === "pulou" ? "Passo pulado. Vamos ao próximo." : NEUTRAL_CHEERS[next.length % NEUTRAL_CHEERS.length]);
+    setMessage(outcome === "pulou" ? "Item sem resposta registrado." : NEUTRAL_CHEERS[next.length % NEUTRAL_CHEERS.length]);
     onProgress?.(next.length);
   }
+
+  useEffect(() => {
+    // Fluxos não objetivos avançam direto; o lock só precisa sobreviver ao mesmo
+    // evento/tap. No objetivo, ele permanece até o botão Próximo liberar o item.
+    if (!objective) transitionLock.current = false;
+  }, [index, objective]);
   function undo() {
     if (!records.length || (childOpen && !objective)) return;
     const next = records.slice(0, -1);
+    transitionLock.current = false;
     setRecords(next);
     setIndex(next.length);
     setAwaitNext(false);
@@ -100,6 +108,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
     onProgress?.(next.length);
   }
   function restart() {
+    transitionLock.current = false;
     setRecords([]);
     setIndex(0);
     setAwaitNext(false);
@@ -131,6 +140,12 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
 
   const big = "flex min-h-24 w-full flex-col items-center justify-center gap-1 rounded-3xl border-4 text-2xl font-black shadow-md transition motion-safe:active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring";
   const counts = easyCounts(records);
+  const objectiveIntermission = objective && awaitNext;
+  const currentPosition = finished
+    ? steps.length
+    : objectiveIntermission
+      ? records.length
+      : Math.min(index + 1, steps.length);
 
   return (
     <div data-testid={testid} className="space-y-4">
@@ -138,9 +153,9 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
         <span className="text-3xl" aria-hidden="true">{hero.emoji}</span>
         <span className="text-sm font-bold">{hero.name}</span>
         <div className="ml-auto flex items-center gap-2">
-          <StarCounter stars={stars} label="passos concluídos" />
+          <StarCounter stars={stars} label={objective ? "respostas" : "passos concluídos"} />
           <span className="rounded-xl bg-muted px-3 py-1 text-sm font-bold tabular-nums" data-testid={`${testid}-progress`}>
-            {Math.min(index + 1, steps.length)} / {steps.length}
+            {currentPosition} / {steps.length}
           </span>
         </div>
       </div>
@@ -158,16 +173,28 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           className="rounded-3xl border bg-card p-5 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 sm:p-7"
           aria-labelledby={`${testid}-step-title`}
         >
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{step.group}</p>
-          <h2 id={`${testid}-step-title`} className={objective && childOpen ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
-          {!(objective && childOpen) && (
-            <p className="mt-4 rounded-2xl bg-primary/10 p-4 text-xl font-semibold leading-relaxed sm:text-2xl">
-              <span className="mr-2" aria-hidden="true">🗣️</span>
-              {step.say}
-            </p>
+          {objectiveIntermission ? (
+            <>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Transição segura</p>
+              <h2 id={`${testid}-step-title`} className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Resposta registrada</h2>
+              <p className="mt-4 rounded-2xl bg-muted p-4 text-center text-base font-semibold leading-relaxed text-muted-foreground">
+                O próximo item ainda está oculto. Toque em Próximo quando a criança estiver pronta.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{step.group}</p>
+              <h2 id={`${testid}-step-title`} className={objective && childOpen ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
+              {!(objective && childOpen) && (
+                <p className="mt-4 rounded-2xl bg-primary/10 p-4 text-xl font-semibold leading-relaxed sm:text-2xl">
+                  <span className="mr-2" aria-hidden="true">🗣️</span>
+                  {step.say}
+                </p>
+              )}
+              {step.hint && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
+              {step.visual && <div className="mt-4">{step.visual}</div>}
+            </>
           )}
-          {step.hint && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
-          {step.visual && <div className="mt-4">{step.visual}</div>}
 
           {awaitNext && (
             <Button
@@ -175,6 +202,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
               data-testid={`${testid}-next`}
               className="mt-5 min-h-24 w-full rounded-3xl text-2xl font-black"
               onClick={() => {
+                transitionLock.current = false;
                 setAwaitNext(false);
                 setChildOpen(objective);
               }}
@@ -251,7 +279,9 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
             <div className="text-6xl" aria-hidden="true">🏆</div>
             <h2 id={`${testid}-results-title`} className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Jogo concluído!</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {hero.emoji} {hero.name} completou {stars} de {steps.length} passos. Estrelas são participação, não nota.
+              {objective
+                ? `${hero.emoji} ${hero.name}: ${stars} respostas registradas em ${steps.length} itens; ${counts.pulou} sem resposta. Não é nota.`
+                : `${hero.emoji} ${hero.name} completou ${stars} de ${steps.length} passos. Estrelas são participação, não nota.`}
             </p>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3" role="list" aria-label="Resumo do jogo">
