@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { ITEMS, COLORS, PAIRS, CATEGORIES, VERSION, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, problems, activeObservations, reportText, type Config, type Draft, type StageEvent } from "../../client/src/features/visual-recognition/model.ts";
+import { ITEMS, COLORS, PAIRS, CATEGORIES, VERSION, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, problems, activeObservations, reportText, itemFor, easyPlanSettings, easyPlanSelection, easyPlanCount, type Config, type Draft, type StageEvent } from "../../client/src/features/visual-recognition/model.ts";
 const events:StageEvent[]=[{kind:"apresentado",at:"2026-09-23T12:00:00Z"},{kind:"encerrado",at:"2026-09-23T12:00:01Z"}];
 const base:Config={ageMonths:60,mode:"receptivo",choices:2,count:12,selectedIds:ITEMS.filter(item=>item.minMonths<=60).map(item=>item.id),seed:17756,distractors:"distantes",contextAcknowledged:true,conditions:[]};
 const answered=():Draft=>({...emptyDraft(),outcome:"correspondente",channel:"apontar",familiarity:"conhecida"});
@@ -115,4 +115,30 @@ test("tela infantil sem mecanismo de memória, resposta falada automática ou te
  const workspace=readFileSync(new URL("../../client/src/features/visual-recognition/Workspace.tsx",import.meta.url),"utf8");
  assert.doesNotMatch(workspace,/localStorage|sessionStorage|SaveToPatient/);
  assert.match(workspace,/preloadSymbols/);assert.match(workspace,/Correção|correção/);
+});
+test("categoria sem par não trava o roteiro, 'distantes' prefere outra categoria e a contagem prometida existe (bugs corrigidos)",()=>{
+ // 12–23 meses com "Mesma categoria": frutas e transportes têm uma figura só; o roteiro cai para categoria distinta.
+ for(const months of [12,18,23])for(const mode of ["receptivo","pareamento"] as const){
+  const cfg:Config={...base,ageMonths:months,mode,distractors:"categoria",selectedIds:eligibleItems(months,mode).map(item=>item.id)};
+  const plan=buildPlan(cfg);assert.ok(plan.length>=1,`${months}/${mode}`);
+  for(const trial of plan)assert.ok(trial.optionIds.length>=2,`${months}/${mode}/${trial.targetId}`);
+ }
+ assert.throws(()=>makeTrial("gato","receptivo",[itemFor("gato")],2,1,0),/Selecione ao menos duas figuras compatíveis para montar as alternativas/);
+ // "Alternativas bem diferentes": havendo figuras de outra categoria no pool, nenhum distrator vem da categoria do alvo.
+ for(let seed=0;seed<12;seed++)for(const months of [12,30,60,100]){
+  const settings=easyPlanSettings(months);
+  const cfg:Config={...base,ageMonths:months,mode:"receptivo",choices:settings.choices,count:settings.count,distractors:settings.distractors,selectedIds:easyPlanSelection(months),seed};
+  for(const trial of buildPlan(cfg)){
+   const target=itemFor(trial.targetId);if(target.pair||target.category==="cores")continue;
+   const foils=trial.optionIds.filter(id=>id!==target.id).map(itemFor);
+   const elsewhere=cfg.selectedIds.map(itemFor).filter(item=>item.id!==target.id&&item.art===target.art&&item.category!==target.category).length;
+   if(settings.distractors==="distantes"&&elsewhere>=foils.length)assert.ok(foils.every(item=>item.category!==target.category),`${months}/${seed}/${target.id}: ${foils.map(item=>item.id).join(",")}`);
+   if(settings.distractors==="categoria"&&cfg.selectedIds.map(itemFor).filter(item=>item.id!==target.id&&item.category===target.category).length>=foils.length)assert.ok(foils.every(item=>item.category===target.category),`${months}/${seed}/${target.id}`);
+  }
+ }
+ // Nota do Modo Fácil promete o que o jogo tem: 12–23 meses = 7 figuras elegíveis, não 8.
+ for(const months of [12,17,23]){assert.equal(easyPlanCount(months),7);assert.equal(easyPlanSelection(months).length,7);}
+ for(const months of [24,48,84,200])assert.equal(easyPlanCount(months),Math.min(easyPlanSettings(months).count,easyPlanSelection(months).length));
+ const workspace=readFileSync(new URL("../../client/src/features/visual-recognition/Workspace.tsx",import.meta.url),"utf8");
+ assert.ok(workspace.includes("${easyPlanCount(age)} figuras para reconhecer")&&workspace.includes("const ids=easyPlanSelection(age);"),"nota e seleção do Modo Fácil usam a mesma fonte");
 });

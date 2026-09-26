@@ -76,6 +76,13 @@ export function easyPlanSettings(age:number):{choices:2|3|4;count:number;distrac
   if(age<84)return{choices:3,count:12,distractors:"distantes",categories:Object.keys(CATEGORIES) as Category[]};
   return{choices:4,count:12,distractors:"categoria",categories:Object.keys(CATEGORIES) as Category[]};
 }
+/** Figuras do Modo Fácil: receptivas, sem contexto e nas categorias da faixa. */
+export function easyPlanSelection(age:number):string[]{
+  const settings=easyPlanSettings(age);
+  return eligibleItems(age,"receptivo").filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
+}
+/** Quantidade prometida ao adulto = quantidade que o jogo realmente tem (12–23 meses: 7, não 8). */
+export function easyPlanCount(age:number):number{return Math.min(easyPlanSettings(age).count,easyPlanSelection(age).length);}
 export interface Config{ageMonths:number;mode:Mode;choices:2|3|4;count:number;selectedIds:string[];seed:number;distractors:"distantes"|"categoria";contextAcknowledged:boolean;conditions:string[];}
 export interface Trial{id:string;targetId:string;optionIds:string[];mode:Mode;question:string;context?:string;assetVersion:string;adaptedFrom?:string;}
 export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,seed:number,index:number):Trial{
@@ -84,8 +91,12 @@ export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,s
   let others=pool.filter(item=>item.id!==target.id&&(target.pair?item.pair===target.pair:item.art===target.art));
   if(!target.pair&&target.category==="cores")others=others.filter(item=>item.category==="cores");
   const need=target.pair?Math.min(1,others.length):Math.min(choices-1,others.length);
-  if((mode!=="nomeacao"||target.pair)&&need<1)throw new Error("Selecione ao menos duas figuras compatíveis. Conceitos precisam dos dois estados do mesmo par.");
-  const foils=shuffle(others,seed+index*37).slice(0,need).map(item=>item.id);
+  if((mode!=="nomeacao"||target.pair)&&need<1)throw new Error(target.pair?"Conceitos precisam dos dois estados do mesmo par: selecione as duas figuras.":"Selecione ao menos duas figuras compatíveis para montar as alternativas.");
+  // "Alternativas bem diferentes": quando o pool mistura categorias, as de outra
+  // categoria vêm antes (ordenação estável sobre o embaralhamento determinístico).
+  const ranked=shuffle(others,seed+index*37);
+  if(!target.pair&&target.category!=="cores")ranked.sort((a,b)=>Number(a.category===target.category)-Number(b.category===target.category));
+  const foils=ranked.slice(0,need).map(item=>item.id);
   const optionIds=mode==="nomeacao"&&!target.pair?[target.id]:foils;
   if(mode!=="nomeacao"||target.pair){
     const size=foils.length+1;
@@ -108,7 +119,13 @@ export function buildPlan(config:Config):Trial[]{
   const groups=shuffle(Object.keys(CATEGORIES) as Category[],config.seed).map(category=>shuffle(selected.filter(item=>item.category===category),config.seed+category.length));
   const targets:Item[]=[];
   while(groups.some(group=>group.length)){for(const group of groups){const item=group.shift();if(item)targets.push(item);}}
-  return targets.slice(0,config.count).map((target,index)=>{const pool=selected.filter(item=>target.pair?item.pair===target.pair:target.category==="cores"||config.distractors==="categoria"?item.category===target.category:item.art===target.art);return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index);});
+  return targets.slice(0,config.count).map((target,index)=>{
+    const byCategory=selected.filter(item=>target.pair?item.pair===target.pair:target.category==="cores"||config.distractors==="categoria"?item.category===target.category:item.art===target.art);
+    // "Mesma categoria" sem outra figura da categoria (ex.: só uma fruta aos 12–23 meses)
+    // cai para categoria distinta em vez de travar o roteiro com mensagem sobre pares.
+    const pool=!target.pair&&target.category!=="cores"&&!byCategory.some(item=>item.id!==target.id)?selected.filter(item=>item.art===target.art):byCategory;
+    return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index);
+  });
 }
 export const OUTCOMES={correspondente:"Resposta correspondente",diferente:"Resposta diferente",sem_resposta:"Não respondeu",recusa:"Recusou",nao_aplicado:"Não aplicado",ambiguo:"Figura ambígua / não reconhecível",tecnico:"Problema técnico"} as const;
 export type Outcome=keyof typeof OUTCOMES;
