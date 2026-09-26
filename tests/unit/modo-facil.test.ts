@@ -45,6 +45,11 @@ test("motor: três botões gigantes, avanço automático, sem timers JS, herói 
   assert.match(engine, /Estrelas são participação, não nota/);
   assert.match(engine, /if \(auto\) record\(auto, true, detail\)/, "toque da criança decide e avança sozinho");
   assert.match(engine, /data-testid=\{`\$\{testid\}-next`\}/, "modo objetivo: Próximo entre itens contra toque duplo");
+  assert.match(engine, /const transitionLock = useRef\(false\)/, "motor bloqueia corrida entre resposta e pulo");
+  assert.match(engine, /if \(!step \|\| transitionLock\.current\) return;/, "uma única transição por item");
+  assert.match(engine, /setAwaitNext\(objective\)/, "acerto, erro e pulo usam a mesma transição segura");
+  assert.match(engine, /Resposta registrada/, "interstício neutro não antecipa o próximo estímulo");
+  assert.match(engine, /O próximo item ainda está oculto/, "próximo item não vaza durante a transição");
   assert.match(engine, /\{!childOpen && !objective && \(/, "modo objetivo esconde Acertou/Não acertou");
 });
 
