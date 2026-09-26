@@ -1,0 +1,77 @@
+name: Visual recognition contracts and tablet proof
+on:
+  pull_request:
+    paths:
+      - client/src/features/visual-recognition/**
+      - client/src/styles/tokens.css
+      - client/src/pages/teste-reconhecimento-visual.tsx
+      - client/public/recognition-v2/**
+      - scripts/guards/audit-access-policy.mjs
+      - scripts/guards/audit-built-pin-verifier.mjs
+      - scripts/guards/lib/verified*visual-digests.mjs
+      - tests/unit/visual-recognition*.test.ts
+      - tests/unit/verified*visual-digests.test.mjs
+      - tests/e2e/visual-recognition.mjs
+      - .github/workflows/visual-recognition.yml
+  push:
+    branches: [main, feat/visual-recognition-v2]
+    paths:
+      - client/src/features/visual-recognition/**
+      - client/src/styles/tokens.css
+      - client/src/pages/teste-reconhecimento-visual.tsx
+      - client/public/recognition-v2/**
+      - scripts/guards/audit-access-policy.mjs
+      - scripts/guards/audit-built-pin-verifier.mjs
+      - scripts/guards/lib/verified*visual-digests.mjs
+      - tests/unit/visual-recognition*.test.ts
+      - tests/unit/verified*visual-digests.test.mjs
+      - tests/e2e/visual-recognition.mjs
+      - .github/workflows/visual-recognition.yml
+permissions:
+  contents: read
+concurrency:
+  group: recognition-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  recognition-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Exact ages, manifests, recognition events and descriptive ledger
+        run: |
+          node --import tsx --test tests/unit/visual-recognition*.test.ts
+          node --test tests/unit/verified-visual-digests.test.mjs tests/unit/verified-built-visual-digests.test.mjs
+          npm run audit:access
+          npm run audit:design
+      - name: TypeScript and lint without bypasses
+        run: |
+          npm run check
+          npm run lint
+      - name: Preserve navigation and clinical access policy
+        run: |
+          npm run audit:navigation
+          node --import tsx tests/unit/route-guard-policy.test.ts
+          node --import tsx tests/unit/featured-navigation.test.ts
+      - name: Build real application without open-access bypass
+        run: npm run build:client
+      - name: Verify the actual compiled inventory and credential protection
+        run: npm run audit:built-pin
+      - run: npx playwright install --with-deps chromium
+      - name: Synthetic journey through the production route
+        run: node tests/e2e/visual-recognition.mjs
+      - name: Preserve only synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-recognition-proof
+          path: /tmp/visual-recognition
+          if-no-files-found: ignore
+          retention-days: 7

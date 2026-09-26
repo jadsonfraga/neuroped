@@ -10,6 +10,7 @@ import { useExitGuard } from "@/features/obs10/useExitGuard";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import type { Outcome } from "@/features/obs10/protocol";
 import { ImportReview, SessionReview } from "@/features/obs10/SessionReview";
+import { AgreementPanel } from "@/features/obs10/AgreementPanel";
 import { reviewText } from "@/features/obs10/review";
 import { AudioPreflight } from "@/features/obs10/AudioPreflight";
 import { EvidencePanel } from "@/features/obs10/EvidencePanel";
@@ -20,6 +21,10 @@ import { useWorkClock } from "@/features/obs10/useWorkClock";
 import { DossierPanel, JourneyMap, Readiness, type ReadinessItem } from "@/features/obs10/Journey";
 import { AgeFromBirthDate, FirstTimeGuide, LiveHelp, NextSteps, OpeningScripts, nextSteps, videoDeliveryDone } from "@/features/obs10/Orientation";
 import { makeDossier, makeScript } from "@/features/obs10/dossier";
+import { StarCounter } from "@/components/aventura";
+import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
+import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
 import "@/features/obs10/obs10.css";
 
 const CHECKS = [
@@ -79,6 +84,10 @@ export default function PreConsultaObs10Page() {
   const monotonicStart = useRef<number | null>(null);
   const lastElapsed = useRef(0);
   const [stage, setStage] = useState<"setup" | "running" | "finished">("setup");
+  const [track, setTrack] = useState<"easy" | "guided" | "direct">("guided");
+  const direct = track === "direct";
+  const easy = track === "easy";
+  const [easyProgress, setEasyProgress] = useState(0);
   const [step, setStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [endReason, setEndReason] = useState("");
@@ -105,7 +114,8 @@ export default function PreConsultaObs10Page() {
   const band = stage === "setup" ? selectedBand : AGE_BANDS.find((item) => item.id === context.bandId);
 
   const activeKit = kits[band?.id ?? ""] ?? {};
-  const ready = Boolean(!importBusy && selectedBand && checks.every(Boolean) && correctedValid && completeKit(selectedBand.id, kits[selectedBand.id] ?? {}) && kits[selectedBand.id]?.device === "ready");
+  const guidedReady = Boolean(!importBusy && selectedBand && checks.every(Boolean) && correctedValid && completeKit(selectedBand.id, kits[selectedBand.id] ?? {}) && kits[selectedBand.id]?.device === "ready");
+  const ready = direct ? Boolean(!importBusy && selectedBand && correctedValid) : guidedReady;
   const running = stage === "running";
   const finished = stage === "finished";
   const expectedStep = phaseForSeconds(elapsed);
@@ -115,7 +125,7 @@ export default function PreConsultaObs10Page() {
     lastElapsed.current = current;
     return current;
   }, []);
-  useExitGuard(Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
+  useExitGuard(easyProgress > 0 || Boolean(workClock.phase) || pilot.logs.length > 0 || stage !== "setup" || media.pending || Boolean(years || months || context.code || context.schooling || context.language || context.adaptations || context.conditions || context.familyReport));
 
   const finish = useCallback((reason: string) => {
     if (ended.current || started.current === null) return;
@@ -172,7 +182,8 @@ export default function PreConsultaObs10Page() {
     if (document.hidden) { media.cancel(); return; }
     workClock.stop("início da coleta");
     setContext((current) => ({ ...current, chronologicalMonths: chrono, correctedMonths: useCorrected ? Number(corrected) : null, bandId: selectedBand.id,
-      missingMaterials: KITS[selectedBand.id].filter((item) => (kits[selectedBand.id] ?? {})[item.id] === "missing").map((item) => MATERIALS[item.id].label) }));
+      missingMaterials: KITS[selectedBand.id].filter((item) => (kits[selectedBand.id] ?? {})[item.id] === "missing").map((item) => MATERIALS[item.id].label),
+      ...(direct ? { preparation: "direct" as const } : {}) }));
     const suffix = typeof crypto.randomUUID === "function" ? crypto.randomUUID().slice(0, 8) : String(Math.floor(performance.now()));
     setSessionId(`${new Date().toISOString().replace(/[:.]/g, "-")}-${suffix}`);
     started.current = Date.now(); monotonicStart.current = performance.now(); lastElapsed.current = 0;
@@ -266,6 +277,13 @@ export default function PreConsultaObs10Page() {
     if (!printPlainTextDocument({ title: `OBS-10 — roteiro ${selectedBand.label}`, text })) setMessage("Impressão bloqueada pelo navegador. Permita a janela ou use a exportação TXT.");
   }
   const stepObservations = observations.filter((o) => o.phase === step);
+  // Camada de aventura: contagem de blocos com algo registrado. Não é dado
+  // clínico, não entra no registro/dossiê e não mede desempenho — apenas
+  // participação (a criança não vê esta tela, então o herói fica de fora;
+  // só a barra de estrelas acompanha o profissional).
+  const blocksWithContent = new Set(
+    observations.filter(usableObservation).map((o) => o.phase),
+  ).size;
   const updateContext = (patch: Partial<SessionContext>) => { setHandoff(emptyHandoff()); setContext((current) => ({ ...current, ...patch })); };
   function restoreForReview(value: SessionRecord) {
     startTicket.current += 1; starting.current = false; media.reset();
@@ -283,6 +301,57 @@ export default function PreConsultaObs10Page() {
     window.setTimeout(() => document.querySelector(".obs10-records")?.scrollIntoView({ block: "start", behavior: "auto" }), 0);
   }
 
+  const trackTabs = (
+    <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
+      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo julga certo ou errado, passa sozinho e mostra o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo julga e passa. Certo/errado no fim.</small></button>
+      <button type="button" role="tab" aria-selected={track === "guided"} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
+      <button type="button" role="tab" aria-selected={direct} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
+    </div>
+  );
+  if (easy) {
+    // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
+    // tela. Sem câmera, kit, checklist ou tarefa com objeto: a criança toca,
+    // o aplicativo julga certo/errado e passa. Nada entra no dossiê guiado.
+    const easyYears = /^\d+$/.test(years) ? Number(years) : NaN;
+    const easyBand = objectiveBandForYears(easyYears);
+    const easySteps: EasyStep[] = easyBand ? buildObjectiveSteps("obs10", easyYears, "obs10-easy") : [];
+    return (
+      <div className="obs10" data-testid="obs10-workspace">
+        <header className="obs10-hero obs10-no-print">
+          <div className="obs10-mascot" aria-hidden="true">🧸<span>✦</span></div>
+          <div>
+            <div className="obs10-eyebrow">NEUROPED · OBS-10 · MODO FÁCIL</div>
+            <h1>{OBS10_TITLE}</h1>
+            <p>Leia o enunciado, a criança toca na tela, o jogo julga e passa sozinho.</p>
+          </div>
+        </header>
+        {trackTabs}
+        {message && <p role="status" className="obs10-notice">{message}</p>}
+        {easyProgress === 0 && <section className="obs10-panel obs10-direct obs10-no-print" data-testid="obs10-easy-start">
+          <h2><span className="obs10-number">1</span>Idade da criança</h2>
+          <fieldset className="obs10-age-fieldset">
+            <div className="obs10-fields">
+              <label>Anos completos<input type="number" inputMode="numeric" min={OBJECTIVE_MIN_YEARS} max={OBJECTIVE_MAX_YEARS} value={years} onChange={(e) => { setYears(e.target.value); setPreviewBand(null); }} /></label>
+              <label>Meses adicionais<input type="number" inputMode="numeric" min="0" max="11" value={months} onChange={(e) => { setMonths(e.target.value); setPreviewBand(null); }} /></label>
+            </div>
+            {years !== "" && !easyBand && <p className="obs10-error">Informe a idade em anos completos, de {OBJECTIVE_MIN_YEARS} a {OBJECTIVE_MAX_YEARS}.</p>}
+            <div className="obs10-band-selected" aria-live="polite">{easyBand ? <><span aria-hidden="true">🎮</span><div><strong>Faixa: {easyBand.label}</strong><p>{easySteps.length} itens na tela. Nada para preparar; o jogo não grava.</p></div></> : <p>Preencha a idade para montar o jogo.</p>}</div>
+          </fieldset>
+        </section>}
+        {easyBand && <EasyGame
+          key={`${easyBand.id}-${easySteps.length}`}
+          testid="obs10-easy"
+          title="OBS-10"
+          ageLabel={`${easyYears} anos · faixa ${easyBand.label}`}
+          nature={`${objectiveNature("obs10")} Modo Fácil: sem filmagem integrada nem kit conferido item a item.`}
+          steps={easySteps}
+          objective
+          onProgress={setEasyProgress}
+        />}
+        <footer className="obs10-footer obs10-no-print">Dr. Jadson Fraga · Neuropediatra · CRM-PE 25227 · RQE 17756 · OBS-10 v{OBS10_VERSION}</footer>
+      </div>
+    );
+  }
   return (
     <div className="obs10" data-testid="obs10-workspace">
       <header className="obs10-hero obs10-no-print">
@@ -296,8 +365,40 @@ export default function PreConsultaObs10Page() {
       </header>
       <div className="obs10-notice obs10-no-print"><ShieldCheck size={19} aria-hidden="true" /><p><strong>Você aplica e registra. O médico interpreta.</strong> Roteiro autoral não validado; não é exame completo, escala ou diagnóstico. Sem notas, percentis ou classificação de inteligência.</p></div>
       <JourneyMap stage={stage} delivered={Boolean(handoff.declaredAt)} />
-      {stage === "setup" && <FirstTimeGuide />}
-      {stage === "setup" && <PracticalMaterials actualBand={selectedBand} previewId={previewBand} onPreview={setPreviewBand}
+      {stage === "setup" && trackTabs}
+      {stage === "setup" && !direct && <FirstTimeGuide />}
+      {stage === "setup" && direct && <section className="obs10-panel obs10-direct obs10-no-print" data-testid="obs10-direct-start">
+        <h2><span className="obs10-number">1</span>Idade e início</h2>
+        <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-age-fieldset">
+          <p className="obs10-muted">Informe anos e meses completos. Para bebês, use zero no campo de anos.</p>
+          <div className="obs10-fields">
+            <label>Anos completos<input type="number" inputMode="numeric" min="0" max="17" value={years} onChange={(e) => { setYears(e.target.value); setPreviewBand(null); }} /></label>
+            <label>Meses adicionais<input type="number" inputMode="numeric" min="0" max="11" value={months} onChange={(e) => { setMonths(e.target.value); setPreviewBand(null); }} /></label>
+          </div>
+          <label className="obs10-check"><input type="checkbox" checked={useCorrected} onChange={(e) => setUseCorrected(e.target.checked)} />Usar idade corrigida informada pelo médico (prematuros, antes de 24 meses)</label>
+          {useCorrected && <label>Idade corrigida em meses completos<input type="number" min="0" max="23" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></label>}
+          {!correctedValid && <p role="alert" className="obs10-error">Confirme a idade corrigida com o médico: deve ser não negativa, não maior que a cronológica e utilizada antes de 24 meses.</p>}
+          {(years !== "" || months !== "") && chrono === null && <p className="obs10-error">Informe anos de 0 a 17 e meses adicionais de 0 a 11.</p>}
+          <div className="obs10-band-selected" aria-live="polite">{selectedBand ? <><span aria-hidden="true">{selectedBand.icon}</span><div><strong>Ficha da aplicação: {selectedBand.label}</strong><p>{useCorrected ? "Selecionada pela idade corrigida informada." : `${chrono} meses de idade cronológica.`}</p></div></> : <p>Preencha a idade para selecionar a ficha e liberar o início.</p>}</div>
+          {selectedBand && selectedBand.min < 9 && <label className="obs10-check"><input type="checkbox" checked={context.proneAllowed} onChange={(e) => updateContext({ proneAllowed: e.target.checked })} />Médico autorizou posição de bruços; somente acordado, supervisionado e se tolerado.</label>}
+        </fieldset>
+        <details>
+          <summary>Código, escolaridade, apoios e relato familiar (opcional)</summary>
+          <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-context-fieldset">
+            <label>Código institucional, sem nome<input value={context.code} maxLength={32} placeholder="Ex.: OBS-001" onChange={(e) => updateContext({ code: e.target.value })} /></label>
+            <div className="obs10-fields"><label>Escolaridade (sem nome da escola)<input value={context.schooling} maxLength={120} onChange={(e) => updateContext({ schooling: e.target.value })} /></label><label>Idioma / comunicação utilizada<input value={context.language} maxLength={120} onChange={(e) => updateContext({ language: e.target.value })} /></label></div>
+            <label>Óculos, aparelho auditivo, comunicação e apoios habituais<textarea value={context.adaptations} maxLength={1500} onChange={(e) => updateContext({ adaptations: e.target.value })} /></label>
+            <label>Condições do dia: sono, fome, dor, doença, medicação e horário informados<textarea value={context.conditions} maxLength={1500} onChange={(e) => updateContext({ conditions: e.target.value })} /></label>
+            <label>Relato familiar relevante (separado do que você observa)<textarea value={context.familyReport} maxLength={2000} onChange={(e) => updateContext({ familyReport: e.target.value })} /></label>
+          </fieldset>
+        </details>
+        <label className="obs10-check"><input type="checkbox" checked={cameraEnabled} disabled={media.pending || importBusy} onChange={(e) => { if (!e.target.checked) cancelCamera(); setCameraEnabled(e.target.checked); }} /><span><strong>Usar câmera e microfone deste dispositivo</strong><br />Opcional. Sem esta opção, filme em outro dispositivo institucional.</span></label>
+        {media.error && <p role="alert" className="obs10-error">{media.error}</p>}
+        <p className="obs10-muted">Modo direto: a aplicadora experiente responde pelo kit, pela segurança e pela autorização de filmagem. O registro e o dossiê declaram que o preparo guiado foi dispensado.</p>
+        <button type="button" className="obs10-primary obs10-wide" disabled={!ready || media.pending} onClick={() => void start()}><Camera size={19} />{media.pending ? "Aguardando câmera e microfone…" : "Iniciar aplicação · 10 minutos"}</button>
+        {media.pending && <button type="button" className="obs10-secondary obs10-wide" onClick={cancelCamera}>Cancelar solicitação de câmera</button>}
+      </section>}
+      {stage === "setup" && !direct && <PracticalMaterials actualBand={selectedBand} previewId={previewBand} onPreview={setPreviewBand}
         state={selectedBand ? kits[selectedBand.id] ?? {} : {}} locked={media.pending || starting.current || importBusy}
         onState={(value) => { if (selectedBand) setKits((current) => ({ ...current, [selectedBand.id]: value })); }}>
         <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-age-fieldset">
@@ -315,7 +416,7 @@ export default function PreConsultaObs10Page() {
           <div className="obs10-band-selected" aria-live="polite">{selectedBand ? <><span aria-hidden="true">{selectedBand.icon}</span><div><strong>Ficha da aplicação: {selectedBand.label}</strong><p>{useCorrected ? "Selecionada pela idade corrigida informada." : `${chrono} meses de idade cronológica.`}</p></div></> : <p>Preencha a idade para selecionar a ficha e liberar a preparação.</p>}</div>
         </fieldset>
       </PracticalMaterials>}
-      <details className="obs10-guide obs10-no-print">
+      {!(stage === "setup" && direct) && <details className="obs10-guide obs10-no-print">
         <summary>🌷 Guia rápido: o que fazer, filmar e registrar</summary>
         <div className="obs10-guide-grid">
           <section><h2>A cada tarefa</h2><ol>{APPLICATION_RULES.map((rule) => <li key={rule}>{rule}</li>)}</ol><p>Uma repetição verbal; uma demonstração somente quando prevista. Adaptações habituais são permitidas e precisam ser registradas.</p></section>
@@ -323,10 +424,10 @@ export default function PreConsultaObs10Page() {
           <section><h2>Registre, não diagnostique</h2><p>Em vez de “não tem atenção”, escreva “iniciou após repetição do comando”. Em vez de “fraqueza”, descreva o apoio usado para levantar.</p><p><strong>Não demonstrado ≠ incapaz. Recusa ≠ alteração.</strong> Sem dado, deixe explícito “não avaliável”. Humor referido é diferente de expressão observada.</p></section>
           <section><h2>Nunca faça</h2><p>Reflexos, força contra resistência, estímulo doloroso, tração pelos braços, movimentos passivos, equilíbrio de olhos fechados, escadas, hiperventilação ou sustos. Não retire apoio nem objeto regulador; não force contato ocular.</p><p>Recusa persistente, dor, tontura ou cansaço: pare a tarefa. Não provoque frustração para avaliar reação.</p></section>
         </div>
-      </details>
-      <PilotPanel record={record} stage={stage} activePhase={workClock.phase} seconds={workClock.seconds} onStart={workClock.start} onStop={() => workClock.stop()} onChange={(p) => { setPilot(p); setHandoff(emptyHandoff()); }} />
+      </details>}
+      {!(stage === "setup" && direct) && <PilotPanel record={record} stage={stage} activePhase={workClock.phase} seconds={workClock.seconds} onStart={workClock.start} onStop={() => workClock.stop()} onChange={(p) => { setPilot(p); setHandoff(emptyHandoff()); }} />}
 
-      {stage === "setup" && <div className="obs10-setup obs10-no-print">
+      {stage === "setup" && !direct && <div className="obs10-setup obs10-no-print">
         <section className="obs10-panel">
           <h2><span className="obs10-number">2</span>Identifique e adapte a aplicação</h2>
           <fieldset disabled={media.pending || starting.current || importBusy} className="obs10-context-fieldset">
@@ -362,11 +463,13 @@ export default function PreConsultaObs10Page() {
         </section>
       </div>}
 
-      {stage === "setup" && <AudioPreflight disabled={media.pending || Boolean(media.stream) || importBusy} />}
-      {stage === "setup" && <ImportReview disabled={media.pending || Boolean(media.stream) || starting.current} onImport={restoreForReview} onBusy={setImportBusy} />}
+      {stage === "setup" && !direct && <AudioPreflight disabled={media.pending || Boolean(media.stream) || importBusy} />}
+      {stage === "setup" && !direct && <details className="obs10-panel obs10-no-print"><summary>Estudo de confiabilidade: comparar dois observadores</summary><AgreementPanel /></details>}
+      {stage === "setup" && !direct && <ImportReview disabled={media.pending || Boolean(media.stream) || starting.current} onImport={restoreForReview} onBusy={setImportBusy} />}
       {stage !== "setup" && band && <div className="obs10-no-print">
         <div className="obs10-toolbar">
           <div className={`obs10-clock ${elapsed >= 510 ? "is-ending" : ""}`}><Timer size={21} /><span aria-label="Tempo de aplicação" data-testid="obs10-clock">{clock(elapsed)}</span><small>/ 10:00</small></div>
+          <StarCounter stars={blocksWithContent} label="blocos com registro" />
           <div><strong>{band.icon} {band.label}</strong><span className="obs10-muted"> {finished ? "· encerrada; revise os registros" : "· observação em andamento"}</span></div>
           {running && <button type="button" className="obs10-secondary" onClick={() => finish("Encerramento antecipado pela aplicadora; conferir tarefas não realizadas.")}><Square size={16} />Encerrar antes</button>}
           <button type="button" className="obs10-danger" onClick={emergencyStop}>Interromper e chamar médico</button>

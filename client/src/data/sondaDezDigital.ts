@@ -5,7 +5,7 @@ import {
   type MissionDef,
 } from "./sondaDezProtocol";
 
-export const DIGITAL_VERSION = "2026-09-13.2";
+export const DIGITAL_VERSION = "2026-09-22.2";
 export const DIGITAL_NATURE =
   "Adaptação digital autoral da Sonda Dez / AFN-10; registro observacional piloto, requer validação clínica; sem normas, percentis, pontos de corte ou diagnóstico.";
 export const DIGITAL_LIMIT =
@@ -32,6 +32,8 @@ export type ActivitySpec = {
   // Hide naming labels; the image itself remains accessible to the operator.
   naming?: boolean;
   responseRule?: Record<string, string>;
+  previousRule?: Record<string, string>;
+  countFields?: Partial<Record<"hits" | "omissions" | "commissions" | "errors" | "perseverations", string>>;
 };
 export type DigitalStep = {
   title: string;
@@ -300,7 +302,7 @@ const inhibition = (items: string[], reverse = false) => [
     reverse
       ? "Agora mudou: LUA é uma palma; SOL é ficar parado."
       : "Quando aparecer SOL, bata uma palma. Quando aparecer LUA, fique parado.",
-    "A aplicadora lê a regra antes de virar a tela. Verifique a compreensão verbal, sem fornecer respostas durante a sequência. Registre palmas observadas depois.",
+    "A aplicadora lê a regra antes de virar a tela. Verifique a compreensão verbal, sem fornecer respostas durante a sequência. Ao voltar, registre a resposta observada em cada cartão. Se não lembrar ou não observar uma oportunidade, use Não observado e NA; não adivinhe. Só inverta se a regra anterior foi compreendida; caso contrário, registre NA com motivo.",
     "O botão de resposta não é usado aqui. Uma palma é observação da aplicadora, não detecção automática do microfone.",
     {
       ...serial(items),
@@ -661,6 +663,28 @@ const screenOnlyFields: Record<string, string[]> = {
   "a2-simbolica": ["funcional", "simbolico", "sequencia"],
   "b-simbolica": ["simbolismo", "sequencia", "flexibilidade"],
 };
+// Explicit, versioned bindings: a field never borrows events from another step.
+const countedActivities: Record<string, Record<number, Pick<ActivitySpec, "countFields" | "previousRule">>> = {
+  "b-atencao-sustentada": { 1: { countFields: { hits: "acertos", omissions: "omissoes", commissions: "comissoes" } } },
+  "c-atencao": { 1: { countFields: { hits: "acertos", omissions: "omissoes", commissions: "comissoes" } } },
+  "b-inibicao": {
+    0: { countFields: { hits: "acertos", commissions: "comissoes" } },
+    1: { countFields: { hits: "inversao", perseverations: "perseveracoes" }, previousRule: { sol: "Uma palma", lua: "Esperar" } },
+  },
+  "c-inibitorio": { 0: { countFields: { hits: "acertos", omissions: "omissoes", commissions: "comissoes" } } },
+  "c-flexibilidade": { 0: { countFields: { hits: "acertos", perseverations: "perseveracoes" }, previousRule: { sol: "Uma palma", lua: "Esperar" } } },
+  "d-atencao": { 0: { countFields: { hits: "alvos", omissions: "omissoes", commissions: "falsos" } } },
+  "e-atencao": { 0: { countFields: { hits: "alvos", omissions: "omissoes", commissions: "comissoes" } } },
+  "d-inibicao": { 0: { countFields: { hits: "acertos", errors: "erros" } } },
+  "e-inibicao": { 0: { countFields: { hits: "acertos", errors: "erros" } } },
+  "d-flexibilidade": { 0: { countFields: { hits: "acertos", perseverations: "perseveracoes" }, previousRule: { DIA: "NOITE", NOITE: "DIA" } } },
+  "e-troca": { 0: { countFields: { hits: "acertos", perseverations: "perseveracoes" }, previousRule: { DIREITA: "ESQUERDA", ESQUERDA: "DIREITA" } } },
+};
+
+export function digitalAgeContext(months: number): string {
+  if (months < 36 || months > 59 || !Number.isInteger(months)) return "";
+  return `Idade exata: ${Math.floor(months / 12)} anos e ${months % 12} meses (${months} meses). A trilha 36–59 meses organiza oportunidades, não expectativas equivalentes nem normas para 3 e 4 anos. Confira compreensão e conforto em cada tarefa; registre ajuda, recusa ou NA. A troca de regra só é proposta se a regra inicial foi compreendida. Não reduzir a idade nem interpretar ausência de resposta como atraso.`;
+}
 export function physicalFieldReason(
   missionId: string,
   fieldId: string,
@@ -682,14 +706,20 @@ export const DIGITAL_BANDS: DigitalBand[] = SONDA_DEZ_PROTOCOL.map((band) => ({
       throw new Error(`Roteiro digital ausente: ${mission.id}`);
     return {
       ...mission,
-      steps: steps.map((s) => ({
+      steps: steps.map((s, index) => ({
         ...s,
+        activity: { ...s.activity, ...countedActivities[mission.id]?.[index] },
         silent: /^(Aguarde|Chame o nome)/.test(s.say),
       })),
       digitalLimit: DIGITAL_LIMIT,
-      reading: mission.interpretation,
+      reading: mission.id === "d-inibicao"
+        ? ["Respostas diferentes da regra são contagens brutas, incluindo ausência de resposta explicitamente observada. Não permitem inferir impulsividade, desatenção ou diagnóstico."]
+        : mission.interpretation,
       fields: mission.fields.map((field) => ({
         ...field,
+        ...(mission.id === "d-inibicao" && field.id === "erros"
+          ? { label: "Respostas diferentes da regra" }
+          : {}),
         ...(mission.id === "b-atencao-sustentada" && field.id === "omissoes"
           ? { max: 5 }
           : {}),

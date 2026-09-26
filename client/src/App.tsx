@@ -124,6 +124,8 @@ const PacPage = lazy(() => import("@/pages/pac"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
 const TestesDiretosPage = lazy(() => import("@/pages/sonda-dez-daily"));
+const TestesReconhecimentoPage = lazy(() => import("@/pages/teste-reconhecimento-visual"));
+const TestesCognitivosPage = lazy(() => import("@/pages/testes-cognitivos-faixa-etaria"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -372,6 +374,8 @@ function AppRouter() {
             <Route path="/ahsd-tea" component={AhsdTeaPage} />
             <Route path="/tde2" component={Tde2Page} />
             <Route path="/testes-diretos" component={TestesDiretosPage} />
+            <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
+            <Route path="/testes-cognitivos" component={TestesCognitivosPage} />
             <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
             <Route path="/inventarios-auto" component={InventariosAutoPage} />
             <Route path="/ajuda" component={AjudaPage} />
