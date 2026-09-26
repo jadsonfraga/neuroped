@@ -147,6 +147,8 @@ const CLINICAL_ROLE_OVERRIDES: ReadonlyArray<{
   roles: readonly RouteUserRole[];
 }> = [
   { route: "/recepcao", roles: ["admin", "professional", "operator"] },
+  // A secretária opera a agenda administrativa sem receber acesso ao prontuário.
+  { route: "/agenda", roles: ["admin", "professional", "operator"] },
   { route: "/testes-diretos", roles: DIRECT_TEST_ROLES },
   { route: "/testes-reconhecimento", roles: DIRECT_TEST_ROLES },
   { route: "/testes-cognitivos", roles: DIRECT_TEST_ROLES },

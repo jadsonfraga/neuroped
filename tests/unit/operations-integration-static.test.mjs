@@ -67,6 +67,11 @@ assert.match(
 );
 assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
 assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
+assert.match(
+  professional,
+  /resolveBillingClinicId\([\s\S]{0,120}principal\.providerUserId/,
+  "operator deve herdar o tenant operacional do profissional sem ganhar membership clínico",
+);
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
@@ -166,11 +171,16 @@ assert.doesNotMatch(migration, /patient_name\s+TEXT/i, "nome da criança não po
 
 assert.match(publicBooking, /privacyAccepted/);
 assert.match(publicBooking, /SLOT_CONFLICT/);
+assert.match(
+  core,
+  /Math\.max\(5, rule\.slot_minutes, service\.duration_minutes\)/,
+  "o motor público não pode oferecer inícios mais frequentes do que a duração da consulta",
+);
 assert.match(publicBooking, /findAppointmentByToken/);
 assert.match(publicBooking, /status !== "completed"/);
 assert.doesNotMatch(publicBooking, /diagn[oó]stico|medica[cç][aã]o.*body/i, "booking público não deve pedir dado clínico livre");
 
-assert.match(routeGuard, /path !== "\/agenda"/);
+assert.match(routeGuard, /path !== "\/agenda"/, "RouteGuard deve manter a exceção operacional estrita da agenda");
 assert.match(routeGuard, /roles\.includes\("operator"\)/);
 assert.match(routeGuard, /\.\.\.roles, "operator"/);
 assert.match(agenda, /data\.access\.canConfigure/);
@@ -178,8 +188,8 @@ assert.match(agenda, /Recepção vinculada/);
 assert.match(agenda, /action: "staff_link"/);
 assert.match(agenda, /Trilha operacional/);
 assert.match(agenda, /WhatsApp, SMS e e-mail externos não são simulados/);
-assert.match(agenda, /\/api\/patients\?limit=50&page=1&q=/, "o seletor de paciente deve usar busca server-side parametrizada");
-assert.match(agenda, /Buscar por nome ou identificador/, "a agenda deve oferecer busca incremental de paciente");
+assert.match(agenda, /\/api\/live\/patients\?clinicId=\$\{encodeURIComponent\(clinicId\)\}&q=\$\{patientSearchParam\}/, "o seletor deve consultar pacientes LIVE com tenant e busca parametrizada");
+assert.match(agenda, /Buscar paciente por nome/, "a agenda deve oferecer busca incremental de paciente LIVE");
 assert.doesNotMatch(agenda, /\.slice\(0,\s*40\)/, "a lista de próximas consultas não pode truncar silenciosamente");
 assert.match(agenda, /pending_provider/);
 assert.doesNotMatch(agenda, /pagamento aprovado|pix gerado|teleconsulta ativa/i);

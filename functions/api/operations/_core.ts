@@ -721,7 +721,10 @@ export async function listAvailableSlots(
 
   const slots: PublicSlot[] = [];
   for (const rule of rules.results ?? []) {
-    const step = Math.max(5, rule.slot_minutes);
+    // Nunca ofereça inícios mais frequentes do que a própria duração
+    // do atendimento. Assim uma consulta de 60 min gera uma vaga por hora,
+    // mesmo se uma regra legada tiver sido cadastrada com passo de 30 min.
+    const step = Math.max(5, rule.slot_minutes, service.duration_minutes);
     for (
       let minute = rule.start_minute;
       minute + service.duration_minutes <= rule.end_minute;
