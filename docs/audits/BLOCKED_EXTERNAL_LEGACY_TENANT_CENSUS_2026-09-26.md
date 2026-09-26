@@ -1,5 +1,19 @@
 # BLOCKED_EXTERNAL — censo de produção do domínio clínico legado
 
+## Atualização observada — 2026-09-26, 21:07 UTC
+
+O acesso ao censo foi resolvido pela PR #994 e pelo workflow
+[36271735655](https://github.com/jadsonfraga/neuroped/actions/runs/36271735655),
+concluído com sucesso. Resultado preservado em
+`LEGACY_TENANT_CENSUS_OBSERVED_2026-09-26.md`: quatro pacientes legados,
+três sem owner e um com owner sem clínica ativa; nenhum mapeamento de tenant
+inequívoco. O bloqueio remanescente é estabelecer a destinação autorizada
+dos registros e comprovar a associação do cliente zero, além de provar
+restauração e migração sem perda. O censo não autoriza backfill.
+
+O texto abaixo registra o bloqueio original e seus riscos; a afirmação de
+que o censo ainda não foi executado está superada por esta evidência.
+
 Data: 2026-09-26 · Ciclo 4 da espiral SaaS · Achados de origem: AUTHZ-P0-01,
 AUTHZ-P0-02, LEG-01, LEG-02, LEG-03, LEG-04 (`docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md`).
 
