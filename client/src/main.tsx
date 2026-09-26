@@ -12,6 +12,7 @@ const UnauthorizedCopyScreen = lazy(() =>
 );
 import { installChunkRecovery } from "./lib/chunkRecovery";
 import { purgeLegacyCertificateCache } from "./lib/certificateSession";
+import { completeSncrCallbackIfPresent } from "./lib/sncrClient";
 import {
   installClinicalBrowserPersistenceBoundary,
   isClinicalBrowserPersistenceDenied,
@@ -39,6 +40,11 @@ import "./styles/motion-coherence-v15.css";
 installClinicalBrowserPersistenceBoundary();
 installChunkRecovery();
 void purgeLegacyCertificateCache();
+// Callback Gov.br do SNCR: troca session_id por token em memória de sessão e
+// restaura a rota clínica de origem. Falhas não derrubam o restante do app.
+void completeSncrCallbackIfPresent().catch((error) => {
+  console.error("[sncr.callback]", error);
+});
 // Falha fechado no startup: versões antigas persistiam narrativa clínica do
 // filtro. Em LIVE autenticado nem a limpeza toca a chave proibida; o conteúdo
 // preexistente fica preservado até logout/limpeza de segurança. Nos modos

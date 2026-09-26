@@ -196,7 +196,7 @@ for (const path of clinicalRouteSamples) {
     const expected =
       userRole === "reader" && isReaderClinicalRoute(path)
         ? "allow"
-        : (path === "/recepcao" || path === "/super-neuropad-game" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
+        : (path === "/recepcao" || path === "/agenda" || path === "/super-neuropad-game" || path === "/testes-diretos" || path === "/testes-reconhecimento" || path === "/testes-cognitivos" || path === "/avaliacao-pre-consulta-faixa-etaria") && userRole === "operator"
           ? "allow"
           : "forbidden";
     assert.equal(
@@ -414,6 +414,18 @@ assert.equal(
   "allow",
   "assistente/operator deve poder abrir a Sonda Dez sem ampliar acesso às demais rotas clínicas",
 );
+assert.equal(
+  decideRouteAccess({
+    path: "/agenda",
+    accessMode: "remote",
+    isAuthenticated: true,
+    isLoading: false,
+    userRole: "operator",
+  }),
+  "allow",
+  "secretária/operator vinculada deve poder operar a agenda sem ampliar acesso clínico",
+);
+
 assert.equal(
   decideRouteAccess({
     path: "/recepcao/interno",

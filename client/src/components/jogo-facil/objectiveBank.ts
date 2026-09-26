@@ -375,6 +375,8 @@ export const OBJECTIVE_BANDS: readonly ObjectiveBand[] = [
 
 export const OBJECTIVE_MIN_YEARS = 1;
 export const OBJECTIVE_MAX_YEARS = 19;
+export const OBJECTIVE_ITEMS_PER_BAND = 20;
+export const OBJECTIVE_ITEMS_PER_TOOL = OBJECTIVE_ITEMS_PER_BAND / 2;
 
 export function objectiveBandForYears(years: number): ObjectiveBand | undefined {
   if (!Number.isInteger(years)) return undefined;
