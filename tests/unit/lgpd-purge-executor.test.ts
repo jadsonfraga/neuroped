@@ -531,11 +531,14 @@ async function rodarPurge(
   );
 }
 
-// LTB-02 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
-// o export do tenant não cobre documentos, avaliações, intake nem respostas
-// de escala. O purge por CLÍNICA precisa recusar enquanto sobrar linha de
-// RED nessas tabelas — nunca apagar o que o export nunca levou.
-const EXPORT_UNCOVERED_TABLES_TESTE = [
+// LTB-02/S12B (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): o export do
+// tenant agora cobre documentos, avaliações, intake e respostas de escala
+// (functions/api/tenant/_exportPayload.ts) — EXPORT_UNCOVERED_CLINIC_TABLES
+// está vazia. O mecanismo de recusa (`PURGE_PREFLIGHT_FAILED`/
+// `EXPORT_MANIFEST_INCOMPLETE`) continua no executor para um FUTURO domínio
+// que ainda não tenha cobertura; com a lista vazia hoje, o purge por clínica
+// precisa suceder e zerar também essas oito tabelas — não mais recusar.
+const PREVIOUSLY_UNCOVERED_TABLES_TESTE = [
   "live_documents",
   "live_document_versions",
   "live_assessments",
@@ -546,10 +549,11 @@ const EXPORT_UNCOVERED_TABLES_TESTE = [
   "live_scale_responses",
 ];
 
-// ── 8a) Purge por clínica recusa com dado fora do alcance do export ───────
+// ── 8a) Purge por clínica: falha de leitura ainda impede exclusão ─────────
 // RED_PATIENT e RED_PATIENT_2 já foram apagados individualmente pelas
-// corridas 6/7/10 acima — um paciente novo garante dado fresco nas tabelas
-// fora do export no momento desta prova.
+// corridas 6/7/10 acima — um paciente novo garante dado fresco em todas as
+// tabelas no momento desta prova (inclusive nos oito domínios de S12B,
+// hoje cobertos pelo export).
 criarPaciente(RED, RED_PATIENT_3);
 {
   sqlite.prepare(`UPDATE clinics SET status = 'closed' WHERE id = ?`).run(RED);
@@ -563,49 +567,32 @@ criarPaciente(RED, RED_PATIENT_3);
 
   const antesRed = contarClinica(RED);
   const beforeBlue = contarClinica(BLUE);
+  const temDadoNosDominiosS12b = PREVIOUSLY_UNCOVERED_TABLES_TESTE.some(
+    (table) => antesRed[table] > 0,
+  );
+  assert.ok(
+    temDadoNosDominiosS12b,
+    "premissa: RED tem dado nos oito domínios que S12B passou a cobrir",
+  );
+
+  // Uma falha real de leitura (não uma lacuna de export) ainda precisa
+  // impedir a exclusão — o preflight continua obrigatório mesmo sem nenhuma
+  // tabela pendente em EXPORT_UNCOVERED_CLINIC_TABLES.
   const unavailableDb = {
     prepare(sql: string) {
-      if (sql.includes("SELECT COUNT(*) AS n") && EXPORT_UNCOVERED_TABLES_TESTE.some((table) => sql.includes(`FROM ${table} WHERE clinic_id = ?`))) {
-        throw new Error("D1_ERROR: synthetic temporary database failure");
-      }
+      if (sql.includes("SELECT COUNT(*) AS n FROM appointments")) throw new Error("D1_ERROR: synthetic temporary database failure");
       return db.prepare(sql);
     },
     batch: db.batch.bind(db),
   } as D1Database;
   const unavailable = await rodarPurge("req-clinica", "clinic", null, { dbOverride: unavailableDb });
-  assert.deepEqual(unavailable.falhas, ["PURGE_PREFLIGHT_FAILED:live_documents"]);
+  assert.deepEqual(unavailable.falhas, ["PURGE_PREFLIGHT_FAILED:appointments"]);
   assert.equal(unavailable.conclusoes.length, 0);
   assert.deepEqual(contarClinica(RED), antesRed, "falha de contagem não pode liberar exclusão");
   assert.deepEqual(contarClinica(BLUE), beforeBlue);
-  const temDadoForaDoExport = EXPORT_UNCOVERED_TABLES_TESTE.some(
-    (table) => antesRed[table] > 0,
-  );
-  assert.ok(
-    temDadoForaDoExport,
-    "premissa: RED tem dado em ao menos uma tabela fora do export",
-  );
-
-  const corrida = await rodarPurge("req-clinica", "clinic", null);
-  assert.equal(corrida.falhas.length, 1);
-  assert.match(
-    corrida.falhas[0],
-    /^EXPORT_MANIFEST_INCOMPLETE:/,
-    "purge por clínica com dado não exportado precisa recusar nomeando a tabela",
-  );
-  assert.deepEqual(
-    contarClinica(RED),
-    antesRed,
-    "recusa não pode apagar nada, nem parcialmente",
-  );
 }
 
-// Simula o dado tendo sido coberto pelo export (S12b, backlog): limpa só as
-// tabelas fora do alcance de hoje, deixando o resto intocado.
-for (const table of EXPORT_UNCOVERED_TABLES_TESTE) {
-  sqlite.prepare(`DELETE FROM ${table} WHERE clinic_id = ?`).run(RED);
-}
-
-// ── 8b) Purge por clínica: RED zerado, BLUE intocado ──────────────────────
+// ── 8b) Purge por clínica: RED zerado (inclusive os oito domínios de S12B), BLUE intocado ──
 {
   const antesBlue = contarClinica(BLUE);
   const corrida = await rodarPurge("req-clinica", "clinic", null);
