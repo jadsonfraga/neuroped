@@ -52,11 +52,12 @@ test("Voltar do navegador para /login com sessão ainda válida não é a sessã
   for (const target of ["#/login", "#/sessao-expirada", "#/consentimento-lgpd"]) assert.equal(leavesSondaRoute(target, here, false), true);
   assert.equal(leavesSondaRoute("#/testes-diretos", here, false), false, "a própria rota nunca é saída, com sessão válida ou não");
   const guard = fs.readFileSync("client/src/hooks/useSondaExitGuard.ts", "utf8");
-  assert.match(guard, /export function useSondaExitGuard\(dirty: boolean, sessionInvalid = true\)/);
+  assert.match(guard, /const sessionInvalid = accessMode === "remote" && !isAuthenticated/);
+  assert.match(guard, /useLayoutEffect\(\(\) =>/, "limpeza síncrona precede Redirect de sessão expirada");
   assert.match(guard, /leavesSondaRoute\(anchor\.href, heldUrl, invalid\)/);
   assert.match(guard, /leavesSondaRoute\(window\.location\.href, heldUrl, invalid\)/);
   const page = fs.readFileSync("client/src/components/sonda-dez/SondaDigitalGuided.tsx", "utf8");
-  assert.match(page, /useSondaExitGuard\(dirty, !isAuthenticated\)/, "a sessão real do app decide a isenção, não uma rota fixa");
+  assert.match(page, /useSondaExitGuard\(dirty\)/, "a guarda central resolve modo e sessão reais do app");
 });
 const sequence: StepRun = { status: "complete", elapsedMs: 5000, events: [
   { type: "apresentado", value: "0", elapsedMs: 0 },
@@ -148,6 +149,7 @@ test("relógio conserva frações por missão e o relatório usa a versão prese
   const page = fs.readFileSync("client/src/pages/testes-diretos.tsx", "utf8");
   assert.match(page, /SONDA_DEZ_VERSION.*from "@\/data\/sondaDezCanonical"/);
   assert.match(page, /PROTOCOLO v\$\{SONDA_DEZ_VERSION\}/);
+  assert.match(page, /useLayoutEffect\(\(\) => \{\s*const clock = activeTime.current/);
   assert.match(page, /window.clearInterval\(timer\); tick\(\)/);
   assert.match(page, /activeTime.current !== clock/);
 });

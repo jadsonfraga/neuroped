@@ -50,6 +50,20 @@ export const EXPORT_UNCOVERED_CLINIC_TABLES: ReadonlyArray<string> = [
   "live_scale_responses",
 ];
 
+/** Só a ausência da tabela consultada representa schema anterior à migração. */
+export function isMissingExportTable(error: unknown, table: string): boolean {
+  if (!/^[a-z_]+$/.test(table)) return false;
+  const message = error instanceof Error ? error.message : String(error);
+  return new RegExp(`\\bno such table: ${table}\\b`, "i").test(message);
+}
+
+export function validExportRowCount(row: { n: number } | null): number {
+  if (!row || !Number.isSafeInteger(row.n) || row.n < 0) {
+    throw new Error("EXPORT_COUNT_INVALID");
+  }
+  return row.n;
+}
+
 /**
  * Conta, por tabela, quantas linhas da clínica ficam FORA do payload
  * exportado hoje. Tabela ausente neste banco conta como zero — o objetivo é
@@ -66,9 +80,10 @@ export async function countExportUncoveredRows(
           .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
           .bind(clinicId)
           .first<{ n: number }>();
-        return [table, Number(row?.n ?? 0)] as const;
-      } catch {
-        return [table, 0] as const;
+        return [table, validExportRowCount(row)] as const;
+      } catch (error) {
+        if (isMissingExportTable(error, table)) return [table, 0] as const;
+        throw error;
       }
     }),
   );
@@ -81,7 +96,8 @@ export type TenantExportFailureCode =
   | "TENANT_EXPORT_TOO_LARGE"
   | "CLINICAL_CRYPTO_NOT_CONFIGURED"
   | "TENANT_NOT_FOUND"
-  | "TENANT_EXPORT_DECRYPT_FAILED";
+  | "TENANT_EXPORT_DECRYPT_FAILED"
+  | "TENANT_EXPORT_COVERAGE_FAILED";
 
 export type TenantExportPayloadResult =
   | {
@@ -143,31 +159,197 @@ interface EventRow {
   created_at: string;
 }
 
+interface ClinicRow {
+  id: string;
+  slug: string;
+  name: string;
+  legal_name: string | null;
+  timezone: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface MembershipRow {
+  user_id: string;
+  role: string;
+  active: number;
+  invited_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BillingCustomerRow {
+  provider: string;
+  status: string;
+  billing_email: string | null;
+  trial_ends_at: string | null;
+  last_failed_at: string | null;
+  canceled_at: string | null;
+  grace_ends_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SubscriptionRow {
+  plan_id: string;
+  seats: number | null;
+  status: string;
+  anchored_at: string;
+  current_period_starts_at: string;
+  current_period_ends_at: string | null;
+  canceled_at: string | null;
+  cancel_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function collectTenantExportPayload(
   db: D1Database,
   env: TenantEnv,
   clinicId: string,
   options: { enforceSyncLimits: boolean },
 ): Promise<TenantExportPayloadResult> {
-  let lifecycle: LifecycleRow | null;
+  const coverageFailure = (): TenantExportPayloadResult => ({
+    ok: false,
+    code: "TENANT_EXPORT_COVERAGE_FAILED",
+    message:
+      "Não foi possível obter um snapshot consistente da exportação; nenhum arquivo foi entregue.",
+    status: 503,
+  });
+  const normalizeCounts = (counts: CountRow | null): TenantExportCounts => ({
+    patients: validExportRowCount(counts ? { n: counts.patients } : null),
+    events: validExportRowCount(counts ? { n: counts.events } : null),
+    memberships: validExportRowCount(counts ? { n: counts.memberships } : null),
+    encryptedBytes: validExportRowCount(
+      counts ? { n: counts.encrypted_bytes } : null,
+    ),
+  });
+  const tooLarge = (): TenantExportPayloadResult => ({
+    ok: false,
+    code: "TENANT_EXPORT_TOO_LARGE",
+    message:
+      "O tenant excede o limite seguro para exportação síncrona; nenhum arquivo parcial foi gerado.",
+    status: 413,
+  });
+
+  // Pré-checagem evita carregar um tenant já grande. Não é a autoridade do
+  // manifesto: a contagem é relida e validada dentro do snapshot abaixo.
+  if (options.enforceSyncLimits) {
+    try {
+      const counts = await db
+        .prepare(
+          `SELECT
+         (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
+         (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
+         (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
+         COALESCE((SELECT SUM(length(profile_encrypted)) FROM live_patients WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_clinical_events WHERE clinic_id = ?), 0)
+           AS encrypted_bytes`,
+        )
+        .bind(clinicId, clinicId, clinicId, clinicId, clinicId)
+        .first<CountRow>();
+      if (!exportWithinSyncLimits(normalizeCounts(counts))) return tooLarge();
+    } catch {
+      return coverageFailure();
+    }
+  }
+
+  let snapshot: D1Result[];
   try {
-    lifecycle = await db
-      .prepare(
-        `SELECT status, reason_code, requested_at, retention_until, canceled_at,
+    // D1 batch executa sequencialmente na mesma transação: nenhuma escrita
+    // concorrente separa dados, lifecycle, contagens ou lacunas de cobertura.
+    snapshot = await db.batch([
+      db
+        .prepare(
+          `SELECT status, reason_code, requested_at, retention_until, canceled_at,
                 finalized_at, legal_hold
            FROM tenant_lifecycle WHERE clinic_id = ? LIMIT 1`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT
+         (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
+         (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
+         (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
+         COALESCE((SELECT SUM(length(profile_encrypted)) FROM live_patients WHERE clinic_id = ?), 0)
+         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_clinical_events WHERE clinic_id = ?), 0)
+           AS encrypted_bytes`,
+        )
+        .bind(clinicId, clinicId, clinicId, clinicId, clinicId),
+      db
+        .prepare(
+          `SELECT id, slug, name, legal_name, timezone, status, created_at, updated_at
+             FROM clinics WHERE id = ? LIMIT 1`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT user_id, role, active, invited_by_user_id, created_at, updated_at
+             FROM clinic_memberships WHERE clinic_id = ? ORDER BY created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, primary_professional_user_id, profile_encrypted, encryption_version,
+                  status, merged_into_patient_id, created_at, updated_at
+             FROM live_patients WHERE clinic_id = ? ORDER BY created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
+                  provenance_kind, provenance_source, payload_encrypted, encryption_version,
+                  supersedes_event_id, status, created_at
+             FROM live_clinical_events WHERE clinic_id = ? ORDER BY occurred_at ASC, created_at ASC`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT provider, status, billing_email, trial_ends_at, last_failed_at,
+                  canceled_at, grace_ends_at, created_at, updated_at
+             FROM billing_customers WHERE clinic_id = ? LIMIT 1`,
+        )
+        .bind(clinicId),
+      db
+        .prepare(
+          `SELECT bs.plan_id, bs.seats, bs.status, bs.anchored_at,
+                  bs.current_period_starts_at, bs.current_period_ends_at, bs.canceled_at,
+                  bs.cancel_reason, bs.created_at, bs.updated_at
+             FROM billing_subscriptions bs
+             JOIN billing_customers bc ON bc.id = bs.customer_id
+            WHERE bc.clinic_id = ? ORDER BY bs.created_at ASC`,
+        )
+        .bind(clinicId),
+      db.prepare("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') AS snapshot_at"),
+      ...EXPORT_UNCOVERED_CLINIC_TABLES.map((table) =>
+        db
+          .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
+          .bind(clinicId),
+      ),
+    ]);
+    if (
+      snapshot.length !== 9 + EXPORT_UNCOVERED_CLINIC_TABLES.length ||
+      snapshot.some(
+        (result) => !result.success || !Array.isArray(result.results),
       )
-      .bind(clinicId)
-      .first<LifecycleRow>();
+    ) {
+      return coverageFailure();
+    }
   } catch (error) {
-    console.error("[tenant.export] lifecycle schema", error);
-    return {
-      ok: false,
-      code: "TENANT_LIFECYCLE_NOT_CONFIGURED",
-      message: "Lifecycle do tenant ainda não migrado.",
-      status: 503,
-    };
+    if (isMissingExportTable(error, "tenant_lifecycle")) {
+      return {
+        ok: false,
+        code: "TENANT_LIFECYCLE_NOT_CONFIGURED",
+        message: "Lifecycle do tenant ainda não migrado.",
+        status: 503,
+      };
+    }
+    return coverageFailure();
   }
+  const rows = <T>(index: number): T[] => snapshot[index].results as T[];
+  const lifecycle = rows<LifecycleRow>(0)[0];
   if (!lifecycle) {
     return {
       ok: false,
@@ -176,37 +358,21 @@ export async function collectTenantExportPayload(
       status: 409,
     };
   }
-
-  const counts = await db
-    .prepare(
-      `SELECT
-         (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
-         (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
-         (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
-         COALESCE((SELECT SUM(length(profile_encrypted)) FROM live_patients WHERE clinic_id = ?), 0)
-         + COALESCE((SELECT SUM(length(payload_encrypted)) FROM live_clinical_events WHERE clinic_id = ?), 0)
-           AS encrypted_bytes`,
-    )
-    .bind(clinicId, clinicId, clinicId, clinicId, clinicId)
-    .first<CountRow>();
-
-  const safeCounts: TenantExportCounts = {
-    patients: Number(counts?.patients ?? 0),
-    events: Number(counts?.events ?? 0),
-    memberships: Number(counts?.memberships ?? 0),
-    encryptedBytes: Number(counts?.encrypted_bytes ?? 0),
-  };
-
-  if (options.enforceSyncLimits && !exportWithinSyncLimits(safeCounts)) {
-    return {
-      ok: false,
-      code: "TENANT_EXPORT_TOO_LARGE",
-      message:
-        "O tenant excede o limite seguro para exportação síncrona; nenhum arquivo parcial foi gerado.",
-      status: 413,
-    };
+  let safeCounts: TenantExportCounts;
+  let uncoveredCounts: Record<string, number>;
+  try {
+    safeCounts = normalizeCounts(rows<CountRow>(1)[0] ?? null);
+    uncoveredCounts = Object.fromEntries(
+      EXPORT_UNCOVERED_CLINIC_TABLES.map((table, index) => [
+        table,
+        validExportRowCount(rows<{ n: number }>(9 + index)[0] ?? null),
+      ]),
+    );
+  } catch {
+    return coverageFailure();
   }
-
+  if (options.enforceSyncLimits && !exportWithinSyncLimits(safeCounts))
+    return tooLarge();
   if (
     (safeCounts.patients > 0 || safeCounts.events > 0) &&
     !clinicalCryptoReady(env)
@@ -219,103 +385,21 @@ export async function collectTenantExportPayload(
       status: 503,
     };
   }
-
-  const [
-    clinic,
-    membershipRows,
-    patientRows,
-    eventRows,
-    billingCustomer,
-    subscriptions,
-  ] = await Promise.all([
-    db
-      .prepare(
-        `SELECT id, slug, name, legal_name, timezone, status, created_at, updated_at
-             FROM clinics WHERE id = ? LIMIT 1`,
-      )
-      .bind(clinicId)
-      .first<{
-        id: string;
-        slug: string;
-        name: string;
-        legal_name: string | null;
-        timezone: string;
-        status: string;
-        created_at: string;
-        updated_at: string;
-      }>(),
-    db
-      .prepare(
-        `SELECT user_id, role, active, invited_by_user_id, created_at, updated_at
-             FROM clinic_memberships WHERE clinic_id = ? ORDER BY created_at ASC`,
-      )
-      .bind(clinicId)
-      .all<{
-        user_id: string;
-        role: string;
-        active: number;
-        invited_by_user_id: string | null;
-        created_at: string;
-        updated_at: string;
-      }>(),
-    db
-      .prepare(
-        `SELECT id, primary_professional_user_id, profile_encrypted, encryption_version,
-                  status, merged_into_patient_id, created_at, updated_at
-             FROM live_patients WHERE clinic_id = ? ORDER BY created_at ASC`,
-      )
-      .bind(clinicId)
-      .all<PatientRow>(),
-    db
-      .prepare(
-        `SELECT id, patient_id, author_user_id, event_type, occurred_at, encounter_id,
-                  provenance_kind, provenance_source, payload_encrypted, encryption_version,
-                  supersedes_event_id, status, created_at
-             FROM live_clinical_events WHERE clinic_id = ? ORDER BY occurred_at ASC, created_at ASC`,
-      )
-      .bind(clinicId)
-      .all<EventRow>(),
-    db
-      .prepare(
-        `SELECT provider, status, billing_email, trial_ends_at, last_failed_at,
-                  canceled_at, grace_ends_at, created_at, updated_at
-             FROM billing_customers WHERE clinic_id = ? LIMIT 1`,
-      )
-      .bind(clinicId)
-      .first<{
-        provider: string;
-        status: string;
-        billing_email: string | null;
-        trial_ends_at: string | null;
-        last_failed_at: string | null;
-        canceled_at: string | null;
-        grace_ends_at: string | null;
-        created_at: string;
-        updated_at: string;
-      }>(),
-    db
-      .prepare(
-        `SELECT bs.plan_id, bs.seats, bs.status, bs.anchored_at,
-                  bs.current_period_starts_at, bs.current_period_ends_at, bs.canceled_at,
-                  bs.cancel_reason, bs.created_at, bs.updated_at
-             FROM billing_subscriptions bs
-             JOIN billing_customers bc ON bc.id = bs.customer_id
-            WHERE bc.clinic_id = ? ORDER BY bs.created_at ASC`,
-      )
-      .bind(clinicId)
-      .all<{
-        plan_id: string;
-        seats: number | null;
-        status: string;
-        anchored_at: string;
-        current_period_starts_at: string;
-        current_period_ends_at: string | null;
-        canceled_at: string | null;
-        cancel_reason: string | null;
-        created_at: string;
-        updated_at: string;
-      }>(),
-  ]);
+  const clinic = rows<ClinicRow>(2)[0];
+  const membershipRows = rows<MembershipRow>(3);
+  const patientRows = rows<PatientRow>(4);
+  const eventRows = rows<EventRow>(5);
+  const billingCustomer = rows<BillingCustomerRow>(6)[0];
+  const subscriptions = rows<SubscriptionRow>(7);
+  const snapshotAt = rows<{ snapshot_at: string }>(8)[0]?.snapshot_at;
+  if (
+    !snapshotAt ||
+    !Number.isFinite(Date.parse(snapshotAt)) ||
+    safeCounts.patients !== patientRows.length ||
+    safeCounts.events !== eventRows.length ||
+    safeCounts.memberships !== membershipRows.length
+  )
+    return coverageFailure();
 
   if (!clinic) {
     return {
@@ -330,7 +414,7 @@ export async function collectTenantExportPayload(
   let events: unknown[];
   try {
     patients = await Promise.all(
-      (patientRows.results ?? []).map(async (row) => ({
+      patientRows.map(async (row) => ({
         id: row.id,
         primaryProfessionalUserId: row.primary_professional_user_id,
         profile: await decryptClinicalJson<unknown>(
@@ -347,7 +431,7 @@ export async function collectTenantExportPayload(
       })),
     );
     events = await Promise.all(
-      (eventRows.results ?? []).map(async (row) => ({
+      eventRows.map(async (row) => ({
         id: row.id,
         patientId: row.patient_id,
         authorUserId: row.author_user_id,
@@ -386,7 +470,6 @@ export async function collectTenantExportPayload(
     legalHold: lifecycle.legal_hold === 1,
   });
 
-  const uncoveredCounts = await countExportUncoveredRows(db, clinicId);
   const complete = Object.values(uncoveredCounts).every((count) => count === 0);
 
   return {
@@ -395,6 +478,7 @@ export async function collectTenantExportPayload(
     complete,
     uncoveredCounts,
     data: {
+      snapshotAt,
       clinic: {
         id: clinic.id,
         slug: clinic.slug,
@@ -415,7 +499,7 @@ export async function collectTenantExportPayload(
         finalizedAt: lifecycle.finalized_at,
         legalHold: lifecycle.legal_hold === 1,
       },
-      memberships: (membershipRows.results ?? []).map((row) => ({
+      memberships: membershipRows.map((row) => ({
         userId: row.user_id,
         role: row.role,
         active: row.active === 1,
@@ -437,7 +521,7 @@ export async function collectTenantExportPayload(
               updatedAt: billingCustomer.updated_at,
             }
           : null,
-        subscriptions: (subscriptions.results ?? []).map((row) => ({
+        subscriptions: subscriptions.map((row) => ({
           planId: row.plan_id,
           seats: row.seats,
           status: row.status,

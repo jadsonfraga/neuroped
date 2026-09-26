@@ -197,3 +197,12 @@ usado por toda rota clínica), S12B (expandir o export para cobrir
 documentos/avaliações/intake/escala, cripto-pesado) e S13 (link público de
 agendamento por clínica, redesenho de rota no frontend). Retomada:
 `git fetch origin main && git log -1 origin/main` e reler este arquivo.
+
+
+## S1-R1 — reconciliação de 26/09/2026 (PR #951)
+Preservados os ciclos S2–S22 do main. O diagnóstico `admin/go-live` agora
+retorna `CONFIGURACAO_INCOMPLETA` quando falta qualquer requisito, mantendo
+`CONFIGURACAO_PRESENTE` somente sem pendências. Nenhuma chamada a banco ou
+provedor é feita pelo diagnóstico; os cinco limites de `naoComprova` permanecem.
+Reconciliação de código e documentação concluída; testes e CI do candidato
+reconciliado exigidos antes de merge. Não equivale a autorização de venda.

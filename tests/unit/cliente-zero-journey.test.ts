@@ -69,6 +69,11 @@ function makeDb(database: DatabaseSync): D1Database {
       async first<T>() {
         return (database.prepare(sql).get(...(args as never[])) as T | undefined) ?? null;
       },
+      async executeBatch() {
+        const statement = database.prepare(sql);
+        if (statement.columns().length) return { success: true, results: statement.all(...(args as never[])), meta: {} };
+        return this.run();
+      },
       async run() {
         const info = database.prepare(sql).run(...(args as never[]));
         return { meta: { changes: Number(info.changes) } };
@@ -81,11 +86,11 @@ function makeDb(database: DatabaseSync): D1Database {
   };
   return {
     prepare,
-    async batch(statements: Array<{ run(): Promise<unknown> }>) {
+    async batch(statements: Array<{ executeBatch(): Promise<unknown> }>) {
       database.exec("BEGIN");
       try {
         const results = [];
-        for (const statement of statements) results.push(await statement.run());
+        for (const statement of statements) results.push(await statement.executeBatch());
         database.exec("COMMIT");
         return results;
       } catch (error) {

@@ -352,11 +352,11 @@ async function rodarPurge(
   requestId: string,
   scope: "patient" | "clinic",
   patientId: string | null,
-  options: { clinicIdAlvo?: string; completeRetorna?: boolean } = {},
+  options: { clinicIdAlvo?: string; completeRetorna?: boolean; dbOverride?: D1Database } = {},
 ): Promise<Corrida> {
   const corrida: Corrida = { falhas: [], conclusoes: [] };
   await executeTenantScopedPurge({
-    db,
+    db: options.dbOverride ?? db,
     claim: claimPara(requestId, RED),
     targets: { scope, clinicId: options.clinicIdAlvo ?? RED, patientId },
     now: NOW,
@@ -425,6 +425,23 @@ async function rodarPurge(
 }
 
 // ── 6) Purge por paciente: RED limpo, BLUE intocado ───────────────────────
+{
+  const beforeRed = contarClinica(RED);
+  const beforeBlue = contarClinica(BLUE);
+  const unavailableDb = {
+    prepare(sql: string) {
+      if (sql.includes("SELECT COUNT(*) AS n FROM appointments")) throw new Error("D1_ERROR: synthetic temporary failure");
+      return db.prepare(sql);
+    },
+    batch: db.batch.bind(db),
+  } as D1Database;
+  const result = await rodarPurge("req-paciente", "patient", RED_PATIENT, { dbOverride: unavailableDb });
+  assert.deepEqual(result.falhas, ["PURGE_PREFLIGHT_FAILED:appointments"]);
+  assert.equal(result.conclusoes.length, 0);
+  assert.deepEqual(contarClinica(RED), beforeRed);
+  assert.deepEqual(contarClinica(BLUE), beforeBlue);
+}
+
 {
   const antesBlue = contarClinica(BLUE);
   const antesOutroPaciente = contarPaciente(RED, RED_PATIENT_2);
@@ -545,6 +562,21 @@ criarPaciente(RED, RED_PATIENT_3);
     .run(PAST, PAST, PAST, RED);
 
   const antesRed = contarClinica(RED);
+  const beforeBlue = contarClinica(BLUE);
+  const unavailableDb = {
+    prepare(sql: string) {
+      if (sql.includes("SELECT COUNT(*) AS n") && EXPORT_UNCOVERED_TABLES_TESTE.some((table) => sql.includes(`FROM ${table} WHERE clinic_id = ?`))) {
+        throw new Error("D1_ERROR: synthetic temporary database failure");
+      }
+      return db.prepare(sql);
+    },
+    batch: db.batch.bind(db),
+  } as D1Database;
+  const unavailable = await rodarPurge("req-clinica", "clinic", null, { dbOverride: unavailableDb });
+  assert.deepEqual(unavailable.falhas, ["PURGE_PREFLIGHT_FAILED:live_documents"]);
+  assert.equal(unavailable.conclusoes.length, 0);
+  assert.deepEqual(contarClinica(RED), antesRed, "falha de contagem não pode liberar exclusão");
+  assert.deepEqual(contarClinica(BLUE), beforeBlue);
   const temDadoForaDoExport = EXPORT_UNCOVERED_TABLES_TESTE.some(
     (table) => antesRed[table] > 0,
   );
