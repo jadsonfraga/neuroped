@@ -39,8 +39,12 @@ page.on("request", (request) => {
   }
 });
 const sidebar = page.locator(".np-app-sidebar");
-const sonda = () => sidebar.locator(".np-side-hero:visible");
-const obs = () => sidebar.locator(".np-side-tile:visible").first();
+// Herói = jogo; os cartões (tiles) seguem a ordem do destaque: Sonda, OBS.
+// Localizar por classe evita contar o mesmo destino quando ele também aparece
+// como item de seção (ex.: /testes-diretos em "Avaliação direta").
+const game = () => sidebar.locator(".np-side-hero:visible");
+const sonda = () => sidebar.locator(".np-side-tile:visible").nth(0);
+const obs = () => sidebar.locator(".np-side-tile:visible").nth(1);
 const preSection = () => sidebar.getByRole("button", { name: "PRÉ-CONSULTA GUIADA", exact: true });
 const hrefs = (locator) => locator.evaluateAll((nodes) =>
   nodes.map((node) => node.closest("a")?.getAttribute("href")));
@@ -53,9 +57,11 @@ async function screenshot(name) {
 }
 
 async function assertExpandedNavigation() {
-  assert.deepEqual(await hrefs(sonda()), ["/testes-diretos"], "Sonda é o único cartão-herói");
-  assert.deepEqual(await hrefs(obs()), ["/avaliacao-pre-consulta-faixa-etaria"], "OBS é o primeiro tile");
-  assert.equal(await obs().textContent(), "OBS-10 · Pré-Consulta");
+  assert.deepEqual(await hrefs(game()), ["/super-neuropad-game"], "Super NeuroPad Game é o único cartão-herói");
+  assert.deepEqual(await hrefs(sonda()), ["/testes-diretos"], "Sonda é o primeiro tile, logo após o jogo");
+  assert.deepEqual(await hrefs(obs()), ["/avaliacao-pre-consulta-faixa-etaria"], "OBS é o segundo tile");
+  assert.equal((await sonda().textContent())?.includes("Sonda Dez · Avaliação Direta"), true);
+  assert.equal((await obs().textContent())?.includes("OBS-10 · Pré-Consulta"), true);
   assert.deepEqual(await hrefs(sidebar.locator(".np-side-connection:visible")), [
     "/marcacao", "/conecta", "/eletroencefalograma", "/nesplora/",
   ], "os quatro destinos aparecem exclusivamente no bloco Conexões");
@@ -131,15 +137,17 @@ try {
 
   await page.getByTestId("button-sidebar-toggle").click();
   const rail = sidebar.locator(".np-side-rail-icon:visible");
-  assert.deepEqual((await hrefs(rail)).slice(0, 2), [
-    "/testes-diretos", "/avaliacao-pre-consulta-faixa-etaria",
-  ], "menu recolhido preserva Sonda e OBS no topo");
+  assert.deepEqual((await hrefs(rail)).slice(0, 3), [
+    "/super-neuropad-game", "/testes-diretos", "/avaliacao-pre-consulta-faixa-etaria",
+  ], "menu recolhido preserva Super NeuroPad Game, Sonda e OBS no topo");
   assert.equal((await hrefs(rail)).at(-1), "/nesplora/", "Nesplora mantém link real no menu recolhido");
   await rail.first().scrollIntoViewIfNeeded();
   await screenshot("04-desktop-recolhido");
   await rail.first().click();
-  await page.getByTestId("sonda-digital").waitFor({ timeout: 20000 });
+  await page.getByText("1 · Idade da criança (anos)", { exact: true }).waitFor({ timeout: 20000 });
   await rail.nth(1).click();
+  await page.getByTestId("sonda-digital").waitFor({ timeout: 20000 });
+  await rail.nth(2).click();
   await page.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
   await page.getByTestId("button-sidebar-toggle").click();
   await sonda().click();
@@ -170,7 +178,7 @@ try {
     passed: true, screens, exceptions: errors, clinicalWrites,
     scope: "Built React UI, synthetic authenticated login, desktop/mobile/collapsed links and OBS section auto-scroll.",
   }, null, 2));
-  console.log("✓ navegação: hierarquia Sonda/OBS, Conexões, Nesplora, desktop/celular/recolhido e auto-scroll OBS");
+  console.log("✓ navegação: hierarquia Super NeuroPad/Sonda/OBS, Conexões, Nesplora, desktop/celular/recolhido e auto-scroll OBS");
 } catch (error) {
   await page.screenshot({ path: `${artifactDir}/failure.png`, fullPage: true });
   await writeFile(`${artifactDir}/failure.txt`, String(error.stack || error));
