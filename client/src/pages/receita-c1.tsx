@@ -493,18 +493,27 @@ export default function ReceitaC1Page() {
       setF((prev) => ({ ...prev, [k]: target.value }));
   }
 
-  const handlePrint = () => {
+  const missingRequiredFields = () => [
+    ["paciente", f.pac], ["idade do paciente", f.idadePaciente], ["doses por dia", f.dosesPorDia],
+    ["endereço", f.end], ["medicamento/substância", f.med],
+    ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
+  ].filter(([, value]) => !value?.trim()).map(([label]) => label);
+
+  const assertRecipeReady = () => {
     if (!patientId) {
-      window.alert("Abra a Receita C1 a partir de um paciente cadastrado para manter o documento vinculado ao prontuário persistente.");
-      return;
+      throw new Error("Abra a Receita C1 a partir de um paciente cadastrado para manter o documento vinculado ao prontuário persistente.");
     }
-    const missing = [
-      ["paciente", f.pac], ["idade do paciente", f.idadePaciente], ["doses por dia", f.dosesPorDia],
-      ["endereço", f.end], ["medicamento/substância", f.med],
-      ["quantidade", f.qtd], ["quantidade por extenso", f.qtde], ["posologia", f.poso], ["data", f.data],
-    ].filter(([, value]) => !value?.trim()).map(([label]) => label);
+    const missing = missingRequiredFields();
     if (missing.length) {
-      window.alert(`Preencha os campos obrigatórios antes de imprimir: ${missing.join(", ")}.`);
+      throw new Error(`Preencha os campos obrigatórios antes de gerar ou assinar: ${missing.join(", ")}.`);
+    }
+  };
+
+  const handlePrint = () => {
+    try {
+      assertRecipeReady();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : String(error));
       return;
     }
     const win = window.open("", "_blank");
@@ -589,7 +598,10 @@ export default function ReceitaC1Page() {
               },
             });
           }}
-          buildPdf={async () => buildReceitaC1SignedPdfBytes(f, issuer)}
+          buildPdf={async () => {
+            assertRecipeReady();
+            return buildReceitaC1SignedPdfBytes(f, issuer);
+          }}
         />
       </section>
 
