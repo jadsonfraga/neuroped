@@ -14,6 +14,8 @@ const must = [
   "diagnoseEmptyResult(catalog, filterContext",
   "withinTimeBudget(m.scale, timeBudget)",
   "readFilterUrlState({",
+  "const applyUrlState = urlState.present && !useNavigationPrefill && !urlMirrorsSession;",
+  "setSelectedRespondente(urlState.respondente ?? null);",
   "writeFilterUrlState({",
   'data-testid="filter-query-intents"',
   'data-testid="filter-search-suggestions"',

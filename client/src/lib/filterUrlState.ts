@@ -166,6 +166,16 @@ export function serializeFilterUrlParams(state: Omit<FilterUrlState, "present">)
   return params;
 }
 
+/**
+ * Dois estados são o MESMO link quando serializam igual. Serve para saber se a
+ * URL atual é apenas o espelho que esta própria aba escreveu (aí a sessão da
+ * aba prevalece — ela guarda até a idade inválida digitada, que a URL nunca
+ * carrega) ou um link diferente colado nela (aí o link é estado completo).
+ */
+export function sameFilterUrlState(a: Omit<FilterUrlState, "present">, b: Omit<FilterUrlState, "present">): boolean {
+  return serializeFilterUrlParams(a).toString() === serializeFilterUrlParams(b).toString();
+}
+
 /** Query do hash (`#/filtro?...`) mesclada com a query real; o hash prevalece. */
 export function currentFilterUrlParams(href: string): URLSearchParams {
   let url: URL;

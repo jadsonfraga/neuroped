@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  sameFilterUrlState,
   buildFilterUrl,
   currentFilterUrlParams,
   parseFilterUrlParams,
@@ -68,4 +69,10 @@ assert.equal(hashQuery.get("tempo"), null, "tempo vazio não fica na URL");
 assert.equal(new URL(buildFilterUrl("https://app.test/#/filtro-escalas?mode=flash", { search: "x" })).hash.split("?")[0], "#/filtro-escalas", "rota preservada");
 assert.equal(buildFilterUrl("https://app.test/#/filtro?q=a", {}), "https://app.test/#/filtro", "estado vazio limpa a URL");
 assert.ok(FILTER_URL_KEYS.includes("q") && FILTER_URL_KEYS.includes("tempo"));
+
+// Espelho da própria aba × link diferente: a idade inválida (que a URL não
+// carrega) não distingue os dois; um respondente diferente distingue.
+assert.equal(sameFilterUrlState({ queixas: ["tea"], exactAge: { years: "5", months: "12" } }, { present: true, queixas: ["tea"] } as never), true, "URL sem idade espelha sessão com idade inválida");
+assert.equal(sameFilterUrlState({ queixas: ["tea"], respondente: "professor" }, { queixas: ["tea"] }), false, "link sem respondente difere da sessão com respondente");
+assert.equal(sameFilterUrlState({ queixas: ["tea", "sono"], signals: ["a"] }, { queixas: ["tea", "sono"], signals: ["a"] }), true);
 console.log("✓ deep-link do filtro: ida e volta, validação campo a campo, preservação de parâmetros alheios");

@@ -45,7 +45,7 @@ import {
   type ScaleSearchHit,
 } from "@/lib/scaleSearch";
 import { computeFilterFacetCounts, diagnoseEmptyResult, withinTimeBudget, TIME_BUCKETS } from "@/lib/filterDiagnostics";
-import { readFilterUrlState, writeFilterUrlState } from "@/lib/filterUrlState";
+import { readFilterUrlState, sameFilterUrlState, writeFilterUrlState } from "@/lib/filterUrlState";
 import { buildAutocomplete, moveActiveIndex, type AutocompleteItem } from "@/lib/filterAutocomplete";
 import { clearFilterRecents, loadFilterRecents, recordFilterRecent, type FilterRecentItem } from "@/lib/filterRecents";
 import { loadFilterFavorites, toggleFilterFavorite } from "@/lib/filterFavorites";
@@ -1187,7 +1187,30 @@ export default function FiltroPage() {
       ageBandIds: new Set(faixasEtarias.map((item) => item.id)),
     }),
   );
-  const applyUrlState = urlState.present && !useNavigationPrefill;
+  // A URL é só o espelho que esta aba escreveu? Então a sessão prevalece
+  // (ela preserva até a idade inválida digitada, que a URL não carrega). Um
+  // link DIFERENTE colado na aba é estado completo e substitui a sessão.
+  const urlMirrorsSession =
+    !flashMode &&
+    sessionFilters !== null &&
+    sameFilterUrlState(
+      {
+        search: sessionFilters.search,
+        queixas: sessionQueixas,
+        ageBand: sessionAge ?? undefined,
+        exactAge: sessionFilters.exactAge,
+        respondente:
+          sessionFilters.selectedRespondente && sessionFilters.selectedRespondente !== "crianca"
+            ? sessionFilters.selectedRespondente
+            : undefined,
+        communication: sessionFilters.selectedCommunication ?? undefined,
+        literacy: sessionFilters.selectedLiteracy ?? undefined,
+        assessmentType: sessionFilters.selectedAssessmentType ?? undefined,
+        signals: sessionSignalIds,
+      },
+      urlState,
+    );
+  const applyUrlState = urlState.present && !useNavigationPrefill && !urlMirrorsSession;
   const [timeBudget, setTimeBudget] = useState<number | null>(applyUrlState ? (urlState.timeBudget ?? null) : null);
   const [sortMode, setSortMode] = useState<SortMode>("relevancia");
   const searchInputRef = useRef<HTMLInputElement>(null);
