@@ -123,15 +123,26 @@ distinguem mais "não existe" (404) de "existe, mas é de outro owner"
 (403) — as duas respondem 404 idênticas. Guard estático fecha a regressão
 para sempre. Evidência em EVIDENCE.md#S16.
 
+S17: `conecta/[id].ts` DELETE, `memory/[id].ts` PATCH/DELETE e
+`results/[id].ts` DELETE autorizavam via `getPatientAccess` mas mutavam só
+por `WHERE id = ?`, sem repetir o owner no predicado final nem (em dois
+casos) verificar `changes()` — uma corrida entre a checagem e a escrita
+bastava para uma mutação cross-owner silenciosa. As quatro mutações agora
+repetem `AND patient_id IN (SELECT id FROM patients_demo WHERE
+owner_user_id = ?)` e só declaram sucesso com `changes() === 1`. Teste novo
+injeta a corrida de propósito (reatribui o dono exatamente entre a
+checagem e a mutação) e prova 404 sem efeito nas quatro; controles no
+mesmo arquivo provam que o dono legítimo continua operando normalmente
+— caminho que nenhum teste comportamental cobria antes. Evidência em
+EVIDENCE.md#S17.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
 censo, os próximos itens executáveis sem depender de estado de produção
 desconhecido são S10 (papel duplo global×membership), S12B (expandir o
-export para cobrir documentos/avaliações/intake/escala), S13 (link público
-de agendamento por clínica) e o novo LEG-09/AUTHZ-P2-12 (mutações legadas
-sem owner/tenant repetido no predicado final nem verificação de
-`changes()`, achado em `memory/[id].ts` ao fechar S16) — ver BACKLOG.md.
+export para cobrir documentos/avaliações/intake/escala) e S13 (link público
+de agendamento por clínica) — ver BACKLOG.md.
 Retomada: `git fetch origin main && git log -1 origin/main` e reler este
 arquivo.

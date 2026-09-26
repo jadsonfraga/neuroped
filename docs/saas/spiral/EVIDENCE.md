@@ -313,3 +313,59 @@
 - Rollback: reverter os 10 arquivos de produção a `9e1a5f4` restaura o
   comportamento anterior (403 volta a distinguir paciente de outro owner);
   nenhuma migração envolvida.
+
+## S17 (ciclo 4, 2026-09-26) — mutação legada sem owner repetido no predicado final (LEG-09/AUTHZ-P2-12)
+- Escopo: 3 arquivos — `functions/api/conecta/[id].ts` (DELETE),
+  `functions/api/memory/[id].ts` (PATCH e DELETE), `functions/api/results/[id].ts`
+  (DELETE). Em todos, a mutação final passa a incluir, quando o usuário não é
+  admin, `AND patient_id IN (SELECT id FROM patients_demo WHERE
+  owner_user_id = ?)` no `UPDATE`/`DELETE`, e a checar `changes()` antes de
+  responder sucesso: `memory/[id].ts` DELETE não checava `changes()` nenhuma
+  (sempre 204); `results/[id].ts` DELETE reportava
+  `{deleted:Boolean(changes), id}` com status 200 mesmo quando `changes=0`,
+  em vez de 404. Nenhuma mudança de schema; nenhuma mudança em quem já podia
+  acessar o quê no caminho autorizado normal — só a mutação final deixa de
+  confiar cegamente em `WHERE id = ?` sozinho.
+- Ambiente: container da sessão, Node do repo, HEAD `ee9ac06` (S16) + S17.
+- Testes: novo `tests/unit/legacy-mutation-owner-predicate.test.ts`, schema
+  real (`db/schema.d1.sql` + todas as migrações) e os 4 handlers reais (sem
+  mock de SQL, só um wrapper de D1 de teste). O wrapper intercepta a
+  N-ésima vez que a consulta de acesso do paciente
+  (`getPatientAccess`/`SELECT owner_user_id FROM patients_demo`) lê o dono
+  de um paciente-alvo e, nesse exato instante — depois que a autorização já
+  leu e aprovou, antes de a mutação final rodar —, reatribui o paciente a
+  outro owner via SQL direto no banco de teste. Isso simula uma escrita
+  concorrente na janela entre "autorizar" e "mutar" que a regra do
+  AGENTS.md exige que o predicado final também cubra. 4 cenários de corrida
+  (uma por mutação) provam 404, zero linhas afetadas e nenhuma alteração de
+  dado; 4 controles (mesmos handlers, sem corrida) provam que o dono
+  legítimo continua conseguindo apagar/editar normalmente — nenhum desses
+  4 caminhos de sucesso tinha cobertura comportamental antes (só checagens
+  estáticas de texto ou testes do caminho "sem D1"). As 4 falhas foram
+  vistas isoladamente, uma por arquivo, via `git stash push -- <arquivo>` +
+  rodar + `git stash pop`, contra o código anterior: `conecta/[id].ts`
+  DELETE e `results/[id].ts` DELETE respondiam 200 (e o segundo declarava
+  `deleted:false`, mas com status 200 em vez de 404); `memory/[id].ts` PATCH
+  respondia 200 e de fato alterava o título; `memory/[id].ts` DELETE
+  respondia 204 e de fato apagava a nota, mesmo com o paciente já
+  pertencendo a outro owner no momento do DELETE. Verdes com a correção.
+- Comandos exit 0: `node --import tsx tests/unit/legacy-mutation-owner-predicate.test.ts`,
+  `npm run check`, `npx eslint "functions/api/conecta/[id].ts"
+  "functions/api/memory/[id].ts" "functions/api/results/[id].ts"
+  tests/unit/legacy-mutation-owner-predicate.test.ts --max-warnings=0`,
+  `node --import tsx tests/unit/no-fake-clinical-write.test.ts`,
+  `node tests/unit/conecta-integration-static.test.mjs`,
+  `node --import tsx tests/unit/memory-search-ownership.test.ts`,
+  `node --import tsx tests/unit/cloudflare-input-limits.test.ts`,
+  `node --import tsx tests/unit/cloudflare-patients-contract.test.ts`,
+  `node tests/unit/patient-access-anti-enumeration-static.test.mjs`,
+  `node --import tsx tests/unit/patient-access-anti-enumeration.test.ts`,
+  `npm run test:quick-wins` (suíte completa, com o teste novo já cadastrado
+  nela), `node tests/unit/workflow-governance.test.mjs`.
+- CI: nenhum workflow dedicado por path — os três arquivos e o teste novo
+  são cobertos pelo job genérico `Test, Lint & Build`
+  (`.github/workflows/test-and-build.yml`, sem filtro de `paths:`, roda em
+  todo push/PR para `main`/`develop` e executa `npm run test:quick-wins`).
+- Rollback: reverter os 3 arquivos de produção a `ee9ac06` restaura o
+  comportamento anterior (mutação final volta a confiar só em
+  `WHERE id = ?`); nenhuma migração envolvida.

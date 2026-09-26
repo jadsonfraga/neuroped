@@ -133,6 +133,35 @@ implicitamente (só checa `.allowed`), mas tem um problema mais profundo
 (mutação final sem repetir owner/tenant no predicado, sem verificar
 `changes()`) — isso é LEG-09/AUTHZ-P2-12, candidato a próxima camada.
 
+## S17 · P1 · FECHADO (ciclo 4)
+Três mutações clínicas legadas (`conecta/[id].ts` DELETE, `memory/[id].ts`
+PATCH e DELETE, `results/[id].ts` DELETE) autorizavam via `getPatientAccess`
+antes da escrita, mas a escrita final não repetia o owner no predicado SQL
+— só `WHERE id = ?` (`memory/[id].ts` DELETE também não verificava
+`changes()`, e `results/[id].ts` DELETE reportava `deleted:false` com
+status 200 em vez de 404 quando nada era afetado). Uma corrida entre a
+checagem de acesso e a mutação (o paciente muda de dono nesse intervalo)
+bastava para uma escrita/remoção cross-owner silenciosa. (LEG-09/AUTHZ-P2-12,
+identificado ao fechar S16)
+
+Corrigido nos três arquivos: a mutação final passou a incluir
+`AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ?)`
+quando o usuário não é admin (mesma exceção de admin já existente antes),
+e `changes()` é verificado sempre — 404 "não encontrado" quando o efeito
+não for exatamente 1 linha, nunca sucesso presumido.
+
+Teste novo `tests/unit/legacy-mutation-owner-predicate.test.ts` (schema real
++ todas as migrações + handlers reais), incluído em `test:quick-wins`: um
+wrapper de D1 injeta a reatribuição de dono exatamente na janela entre a
+checagem de acesso e a mutação final (simulando a corrida), provando que as
+quatro mutações agora recusam com 404 e não afetam nenhuma linha — mais um
+controle por handler provando que o caminho normal do dono legítimo não
+regrediu. As quatro falhas foram vistas isoladamente (um `git stash` por
+arquivo) pelo motivo certo contra o código anterior: `conecta` e
+`results/[id].ts` DELETE respondiam 200; `memory/[id].ts` PATCH respondia
+200; `memory/[id].ts` DELETE respondia 204 mesmo sem afetar linha alguma.
+Evidência em EVIDENCE.md#S17.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/
