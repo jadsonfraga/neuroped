@@ -289,7 +289,14 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   await ensureOperationsHardeningSchema(context.env.DB);
   const principal = await resolveOperationsPrincipal(context.env.DB, user);
   if (!principal) return null;
-  const clinicId = await resolveBillingClinicId(context.env.DB, user.id, context.request);
+  // A recepção/operator é delegada ao profissional e não recebe membership
+  // clínico só para operar a agenda. A fronteira tenant da agenda, portanto,
+  // é a clínica do provider responsável — nunca uma elevação clínica da secretária.
+  const clinicId = await resolveBillingClinicId(
+    context.env.DB,
+    principal.providerUserId,
+    context.request,
+  );
   if (!clinicId) return null;
   return {
     authUser: user,
