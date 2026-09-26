@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { issuerCredentials, useIssuer, type DocumentIssuer } from "@/lib/issuer";
 import { readRouteParam } from "@/lib/routeQuery";
+import { LiveDocumentsPanel } from "@/components/LiveDocumentsPanel";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -1059,6 +1060,12 @@ export default function ProntuarioPage() {
               <span className="min-w-0 truncate">Exames</span>
               {exames.length > 0 && <Badge className="ml-1 shrink-0 bg-violet-600 text-white text-[10px] h-4 px-1">{exames.length}</Badge>}
             </TabsTrigger>
+            {isRemoteClinical && activeClinicId && patientId && (
+              <TabsTrigger value="documentos" className="flex min-h-11 min-w-[8.25rem] shrink-0 items-center justify-center gap-1.5 text-xs sm:min-w-0 sm:grow sm:basis-auto">
+                <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="min-w-0 truncate">Documentos</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* ══════════════════════════════════════════════
@@ -1707,6 +1714,12 @@ export default function ProntuarioPage() {
               </Card>
             ))}
           </TabsContent>
+
+          {isRemoteClinical && activeClinicId && patientId && (
+            <TabsContent value="documentos" className="space-y-4">
+              <LiveDocumentsPanel clinicId={activeClinicId} patientId={patientId} />
+            </TabsContent>
+          )}
 
           {/* ══════════════════════════════════════════════
               TAB 6: EXAMES
