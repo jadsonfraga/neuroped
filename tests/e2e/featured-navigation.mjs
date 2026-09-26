@@ -142,7 +142,7 @@ try {
   await rail.first().scrollIntoViewIfNeeded();
   await screenshot("04-desktop-recolhido");
   await rail.first().click();
-  await page.getByText("Escolha sua faixa etária", { exact: false }).first().waitFor({ timeout: 20000 });
+  await page.getByText("1 · Idade da criança (anos)", { exact: true }).waitFor({ timeout: 20000 });
   await rail.nth(1).click();
   await page.getByTestId("sonda-digital").waitFor({ timeout: 20000 });
   await rail.nth(2).click();
