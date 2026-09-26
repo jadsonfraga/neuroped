@@ -1,10 +1,10 @@
 name: Clinical and LGPD production readiness audit
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
     branches: [main]
-    paths:
-      - ".github/workflows/clinical-lgpd-readiness-audit.yml"
   schedule:
     - cron: "17 9 * * 1" # segunda 06h17 em Recife
   workflow_dispatch:
@@ -19,6 +19,7 @@ concurrency:
 jobs:
   metadata-only:
     name: Clinical crypto and private LGPD storage
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -30,6 +31,8 @@ jobs:
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          E2E_MAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PW: ${{ secrets.NEUROPED_E2E_PASSWORD }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
@@ -45,6 +48,7 @@ jobs:
             configuration: {},
             r2: { bindingPresent: false, apiPermission: "unknown" },
             runtime: null,
+            cryptoDiagnostic: null,
             ready: false,
             blockers: [],
           };
@@ -130,6 +134,61 @@ jobs:
             { signal: AbortSignal.timeout(30000) },
           );
           const health = await healthResponse.json().catch(() => null);
+
+          const e2eMail = process.env.E2E_MAIL?.trim();
+          const e2ePassword = process.env.E2E_PW?.trim();
+          if (!e2eMail || !e2ePassword) {
+            report.cryptoDiagnostic = {
+              available: false,
+              reason: "E2E_CREDENTIALS_NOT_AVAILABLE",
+            };
+            report.blockers.push("CRYPTO_DIAGNOSTIC_NOT_AVAILABLE");
+          } else {
+            const loginResponse = await fetch(
+              "https://neuroped.pages.dev/api/auth/login",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: e2eMail, password: e2ePassword }),
+                signal: AbortSignal.timeout(30000),
+              },
+            );
+            const login = await loginResponse.json().catch(() => null);
+            const accessToken =
+              typeof login?.accessToken === "string" ? login.accessToken : "";
+            if (!loginResponse.ok || !accessToken) {
+              report.cryptoDiagnostic = {
+                available: false,
+                reason: `E2E_LOGIN_HTTP_${loginResponse.status}`,
+              };
+              report.blockers.push("CRYPTO_DIAGNOSTIC_NOT_AVAILABLE");
+            } else {
+              const diagnosticResponse = await fetch(
+                "https://neuroped.pages.dev/api/admin/clinical-crypto-readiness",
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                  signal: AbortSignal.timeout(30000),
+                },
+              );
+              const diagnostic = await diagnosticResponse.json().catch(() => null);
+              report.cryptoDiagnostic = diagnosticResponse.ok
+                ? {
+                    available: true,
+                    configured: diagnostic?.configured === true,
+                    code:
+                      typeof diagnostic?.code === "string"
+                        ? diagnostic.code
+                        : null,
+                  }
+                : {
+                    available: false,
+                    reason: `DIAGNOSTIC_HTTP_${diagnosticResponse.status}`,
+                  };
+              if (!diagnosticResponse.ok) {
+                report.blockers.push("CRYPTO_DIAGNOSTIC_NOT_AVAILABLE");
+              }
+            }
+          }
           report.runtime = {
             httpStatus: healthResponse.status,
             status: health?.status ?? null,
@@ -190,6 +249,7 @@ jobs:
                 pagesProject: report.pagesProject,
                 r2: report.r2,
                 runtime: report.runtime,
+                cryptoDiagnostic: report.cryptoDiagnostic,
                 blockers: report.blockers,
               },
               null,
