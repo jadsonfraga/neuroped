@@ -81,6 +81,30 @@ Prova encadeando middleware global, sessão e handler real reproduziu 403 para
 reader-owner (esperado 200). A escrita final das flags agora repete membership,
 papel gestor e clínica ativa dentro do batch; revogação entre checagem e escrita
 foi reproduzida como 200 e passou a retornar 403 sem flag nem auditoria enganosa.
-Os 13 casos passam, incluindo as 11 provas originais, sem elevar papel global.
+Os 14 casos passam, incluindo as 11 provas originais e o gate de senha, sem elevar papel global.
 A migração de flags permanece 0030. Preservados todos os testes e caminhos de UI
 das PRs #877, #986 e #993. Merge de #986 depende de #877 e #993 já integradas.
+
+## Refinamento da prova visual
+
+A primeira execução remota em `043fb60` passou, mas a inspeção das capturas
+mostrou a fixture de detalhe sem `canManage`: só provava abertura em leitura.
+A fixture foi alinhada ao contrato real de detalhe e o E2E agora exige campo
+habilitado, PATCH, confirmação e valor preservado após reload em 390/1440 px
+para reader/operator com ownership sintético. Esse estado persiste só na memória
+do servidor de teste; a prova D1 continua sendo o teste de handlers e SQL reais.
+Não usar a primeira captura como prova de edição.
+
+## Contrato de troca obrigatória de senha
+
+O gate de CI ainda exigia a expressão anterior `passwordChangeFailure ?? roleFailure`.
+O middleware atual retorna o erro de senha antes de consultar permissões. O contrato
+foi atualizado para exigir esse retorno antecipado e o fallback de RBAC preservado.
+Uma prova real adicional renomeia a tabela de memberships após marcar a conta como
+pendente de troca: cadastro, membros, checkout e API clínica continuam respondendo
+PASSWORD_CHANGE_REQUIRED (403), sem depender da autorização ou realizar mutações.
+A assertiva antiga falhou antes da atualização; os 12 casos do handler passam.
+
+A validação D1 passa a usar grupo de concorrência por ref: PRs diferentes não
+cancelam a única vaga pendente umas das outras. Main mantém a serialização e o
+job de migração continua inacessível a PRs. Achado observado no run 36269468745.

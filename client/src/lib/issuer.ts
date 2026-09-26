@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { authFetch, getAccessToken } from "@/lib/authClient";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { authFetch, getAccessToken, getAuthSessionEpoch } from "@/lib/authClient";
 
 /**
  * Emissor de documentos clínicos — fonte única de identidade.
@@ -90,9 +90,21 @@ interface TenantResponse {
   };
 }
 
-let cachedIssuer: DocumentIssuer | null = null;
-let cacheKey = "";
-let inflight: Promise<DocumentIssuer> | null = null;
+let cachedIssuer: { scope: string; issuer: DocumentIssuer } | null = null;
+let inflight: { scope: string; promise: Promise<DocumentIssuer> } | null = null;
+let cacheGeneration = 0;
+const listeners = new Set<() => void>();
+
+// Session epoch changes on login/logout, but not on ordinary token refresh.
+// This is a cache boundary only; API authorization remains server-side.
+function issuerScope(): string {
+  return JSON.stringify([getAuthSessionEpoch(), activeClinicId(), Boolean(getAccessToken()), cacheGeneration]);
+}
+
+function subscribeIssuer(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
 
 function activeClinicId(): string {
   try {
@@ -109,15 +121,19 @@ export async function loadIssuer(): Promise<DocumentIssuer> {
   if (!getAccessToken()) return { ...EMPTY_ISSUER };
 
   const key = activeClinicId();
-  if (cachedIssuer && cacheKey === key) return cachedIssuer;
-  if (inflight) return inflight;
+  const scope = issuerScope();
+  const isCurrent = () => issuerScope() === scope;
+  if (cachedIssuer?.scope === scope) return cachedIssuer.issuer;
+  if (inflight?.scope === scope) return inflight.promise;
 
-  inflight = (async () => {
+  const promise = (async () => {
     let issuer = { ...EMPTY_ISSUER };
     try {
       const profileResponse = await authFetch("/api/me/profile");
+      if (!isCurrent()) return { ...EMPTY_ISSUER };
       if (profileResponse.ok) {
         const profile = (await profileResponse.json()) as ProfileResponse;
+        if (!isCurrent()) return { ...EMPTY_ISSUER };
         issuer = {
           ...issuer,
           doctorName: profile.displayName || profile.fallbackDisplayName,
@@ -130,11 +146,14 @@ export async function loadIssuer(): Promise<DocumentIssuer> {
     } catch {
       // Sem backend (mirror local): o emissor fica vazio e o template declara.
     }
+    if (!isCurrent()) return { ...EMPTY_ISSUER };
     if (key) {
       try {
         const tenantResponse = await authFetch(`/api/tenants/${key}`);
+        if (!isCurrent()) return { ...EMPTY_ISSUER };
         if (tenantResponse.ok) {
           const tenant = (await tenantResponse.json()) as TenantResponse;
+          if (!isCurrent()) return { ...EMPTY_ISSUER };
           issuer = {
             ...issuer,
             clinicName: tenant.settings?.displayName || tenant.name || "",
@@ -150,37 +169,38 @@ export async function loadIssuer(): Promise<DocumentIssuer> {
         // Papel timbrado ausente não impede a emissão: segue só a identidade.
       }
     }
-    cachedIssuer = issuer;
-    cacheKey = key;
+    if (!isCurrent()) return { ...EMPTY_ISSUER };
+    cachedIssuer = { scope, issuer };
     return issuer;
   })().finally(() => {
-    inflight = null;
+    // An obsolete request must not clear the newer session's in-flight promise.
+    if (inflight?.promise === promise) inflight = null;
   });
-  return inflight;
+  inflight = { scope, promise };
+  return promise;
 }
 
-/** Invalida o cache (após salvar Perfil/Clínica em Configurações). */
+/** Invalidate after identity edits and at every account/clinic boundary. */
 export function invalidateIssuerCache(): void {
+  cacheGeneration += 1;
   cachedIssuer = null;
-  cacheKey = "";
+  inflight = null;
+  for (const listener of listeners) listener();
 }
 
 export function useIssuer(): { issuer: DocumentIssuer; loading: boolean } {
-  const [issuer, setIssuer] = useState<DocumentIssuer>(cachedIssuer ?? EMPTY_ISSUER);
-  const [loading, setLoading] = useState(!cachedIssuer || cacheKey !== activeClinicId());
+  const scope = useSyncExternalStore(subscribeIssuer, issuerScope, issuerScope);
+  const [loaded, setLoaded] = useState<{ scope: string; issuer: DocumentIssuer } | null>(null);
+  const current = loaded?.scope === scope ? loaded : cachedIssuer?.scope === scope ? cachedIssuer : null;
 
   useEffect(() => {
     let cancelled = false;
-    void loadIssuer().then((loaded) => {
-      if (!cancelled) {
-        setIssuer(loaded);
-        setLoading(false);
-      }
+    void loadIssuer().then((issuer) => {
+      if (!cancelled && issuerScope() === scope) setLoaded({ scope, issuer });
     });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [scope]);
 
-  return { issuer, loading };
+  // Never render the old identity, even before the replacement effect runs.
+  return { issuer: current?.issuer ?? EMPTY_ISSUER, loading: !current && Boolean(getAccessToken()) };
 }
