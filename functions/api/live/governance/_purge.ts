@@ -93,6 +93,7 @@ export const PURGE_PRESERVED_TABLES: ReadonlyArray<string> = [
   "billing_entitlements",
   "clinic_memberships",
   "clinic_settings",
+  "clinic_feature_flags",
   "clinic_invitations",
 ];
 

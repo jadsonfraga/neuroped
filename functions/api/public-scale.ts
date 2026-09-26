@@ -8,6 +8,7 @@ import {
   verifyRemoteScaleSecret,
 } from "./scale/_shared";
 import { tenantError, tenantJson, type TenantEnv } from "./tenant/_core";
+import { isClinicFeatureEnabled } from "./tenant/_features";
 import { currentClinicalEncryptionVersion, encryptClinicalJson } from "./tenant/_crypto";
 
 interface PublicScaleInvitationRow {
@@ -88,6 +89,9 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   }
   const stateFailure = invitationStateFailure(resolved.row);
   if (stateFailure) return stateFailure;
+  if (!(await isClinicFeatureEnabled(db, resolved.row.clinic_id, "remote_scales"))) {
+    return tenantError("Questionários remotos desativados nesta clínica.", "FEATURE_DISABLED", 410);
+  }
 
   const descriptor = getRemoteScaleDescriptor(resolved.row.scale_id);
   if (!descriptor) {
@@ -128,6 +132,9 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
   const stateFailure = invitationStateFailure(resolved.row);
   if (stateFailure) return stateFailure;
+  if (!(await isClinicFeatureEnabled(db, resolved.row.clinic_id, "remote_scales"))) {
+    return tenantError("Questionários remotos desativados nesta clínica.", "FEATURE_DISABLED", 410);
+  }
 
   const descriptor = getRemoteScaleDescriptor(resolved.row.scale_id);
   if (!descriptor) {

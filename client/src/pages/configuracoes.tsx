@@ -7,6 +7,7 @@ import {
   Mail,
   ScrollText,
   ShieldCheck,
+  SlidersHorizontal,
   Stethoscope,
   Trash2,
   UsersRound,
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
@@ -22,8 +24,9 @@ import { invalidateIssuerCache } from "@/lib/issuer";
 import { useToast } from "@/hooks/use-toast";
 import TenantMetricsPanel from "@/components/TenantMetricsPanel";
 import type { TenantPermission } from "../../../shared/permissions";
+import type { ClinicFeatureState } from "../../../shared/clinicFeatures";
 
-type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade" | "auditoria";
+type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade" | "auditoria" | "recursos";
 
 /**
  * Cada seção declara a permissão do catálogo (`shared/permissions.ts`) que a
@@ -39,6 +42,7 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2; re
   { id: "plano", label: "Plano", icon: CreditCard, requires: "billing.manage" },
   { id: "atividade", label: "Atividade", icon: ShieldCheck, requires: "organization.metrics.read" },
   { id: "auditoria", label: "Auditoria", icon: ScrollText, requires: "audit.read" },
+  { id: "recursos", label: "Recursos", icon: SlidersHorizontal },
 ];
 
 function hasPermission(permissions: readonly TenantPermission[] | null, permission: TenantPermission): boolean {
@@ -670,6 +674,85 @@ function PlanoSection({ clinicId }: { clinicId: string }) {
   );
 }
 
+// A tela decide edição por `permissions` (organization.manage); o booleano
+// que a API também devolve não é lido aqui de propósito.
+interface ClinicFeaturesPayload {
+  clinicId: string;
+  features: ClinicFeatureState[];
+}
+
+function RecursosSection({ clinicId, permissions }: { clinicId: string; permissions: TenantPermission[] | null }) {
+  const { toast } = useToast();
+  const [payload, setPayload] = useState<ClinicFeaturesPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const editable = hasPermission(permissions, "organization.manage");
+
+  useEffect(() => {
+    let cancelled = false;
+    void authFetch(`/api/tenants/${clinicId}/features`)
+      .then((response) => readJson<ClinicFeaturesPayload>(response))
+      .then((body) => !cancelled && setPayload(body))
+      .catch((loadError: Error) => !cancelled && setError(loadError.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId]);
+
+  async function toggle(feature: ClinicFeatureState, enabled: boolean) {
+    setBusyKey(feature.key);
+    setError(null);
+    try {
+      const updated = await readJson<ClinicFeaturesPayload>(
+        await authFetch(`/api/tenants/${clinicId}/features`, {
+          method: "PATCH",
+          body: JSON.stringify({ features: { [feature.key]: enabled } }),
+        }),
+      );
+      setPayload(updated);
+      toast({ title: enabled ? `${feature.label} ligado ✓` : `${feature.label} desligado`, description: "A mudança ficou registrada na auditoria da clínica." });
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : "Falha ao alterar o recurso.");
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  if (error && !payload) return <p role="alert" className="text-sm text-destructive">{error}</p>;
+  if (!payload) return <p className="text-sm text-muted-foreground" role="status">Carregando recursos…</p>;
+
+  return (
+    <SectionCard
+      title="Recursos da clínica"
+      description={editable
+        ? "O que esta clínica mantém ligado, dentro do que o plano concede. Desligar um recurso vale na hora para toda a equipe."
+        : "O que esta clínica mantém ligado. Somente proprietário(a) e administrador(a) alteram."}
+    >
+      <ul className="divide-y divide-border">
+        {payload.features.map((feature) => (
+          <li key={feature.key} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">{feature.label}</p>
+              <p className="text-xs leading-5 text-muted-foreground">{feature.description}</p>
+              {feature.source === "default" && <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">Padrão do produto</p>}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{feature.enabled ? "Ligado" : "Desligado"}</span>
+              <Switch
+                aria-label={`${feature.label}: ${feature.enabled ? "ligado" : "desligado"}`}
+                checked={feature.enabled}
+                disabled={!editable || busyKey !== null}
+                onCheckedChange={(next) => void toggle(feature, next)}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs text-destructive">{error}</p>}
+    </SectionCard>
+  );
+}
+
 function AuditoriaSection({ clinicId }: { clinicId: string }) {
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState("");
@@ -816,6 +899,7 @@ export default function ConfiguracoesPage() {
       {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}
       {section === "atividade" && activeClinicId && hasPermission(permissions, "organization.metrics.read") && <TenantMetricsPanel key={activeClinicId} />}
       {section === "auditoria" && activeClinicId && hasPermission(permissions, "audit.read") && <AuditoriaSection key={activeClinicId} clinicId={activeClinicId} />}
+      {section === "recursos" && activeClinicId && <RecursosSection key={activeClinicId} clinicId={activeClinicId} permissions={permissions} />}
     </div>
   );
 }
