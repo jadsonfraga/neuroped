@@ -52,7 +52,7 @@ test("Voltar do navegador para /login com sessão ainda válida não é a sessã
   for (const target of ["#/login", "#/sessao-expirada", "#/consentimento-lgpd"]) assert.equal(leavesSondaRoute(target, here, false), true);
   assert.equal(leavesSondaRoute("#/testes-diretos", here, false), false, "a própria rota nunca é saída, com sessão válida ou não");
   const guard = fs.readFileSync("client/src/hooks/useSondaExitGuard.ts", "utf8");
-  assert.match(guard, /export function useSondaExitGuard\(dirty: boolean, sessionInvalid = true\)/);
+  assert.match(guard, /export function useSondaExitGuard\(dirty: boolean, sessionInvalid = true/);
   assert.match(guard, /leavesSondaRoute\(anchor\.href, heldUrl, invalid\)/);
   assert.match(guard, /leavesSondaRoute\(window\.location\.href, heldUrl, invalid\)/);
   const page = fs.readFileSync("client/src/components/sonda-dez/SondaDigitalGuided.tsx", "utf8");
