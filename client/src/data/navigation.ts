@@ -3,6 +3,7 @@ import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 import {
   Activity,
   Baby,
+  Gamepad2,
   BookOpen,
   Brain,
   BrainCog,
@@ -53,6 +54,14 @@ export interface NavigationMatch {
   item: NavItem;
 }
 
+const superNeuroPadNavigation: NavItem = {
+  href: "/super-neuropad-game",
+  label: "Super NeuroPad Game",
+  icon: Gamepad2,
+  tone: "priority",
+  description: "Aventura em 5 fases · secretária na pré-consulta · resultado em PDF",
+};
+
 const obs10Navigation: NavItem = {
   href: "/avaliacao-pre-consulta-faixa-etaria",
   label: "OBS-10 · Pré-Consulta",
@@ -66,6 +75,7 @@ const obs10Navigation: NavItem = {
  * seguir. Conexões usam um grupo compacto separado, independente da cor.
  */
 export const featuredNavigation: NavItem[] = [
+  superNeuroPadNavigation,
   {
     href: "/testes-diretos",
     label: "Sonda Dez · Avaliação Direta",
@@ -170,7 +180,7 @@ export const featuredNavigation: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
-  { title: "PRÉ-CONSULTA GUIADA", items: [obs10Navigation] },
+  { title: "PRÉ-CONSULTA GUIADA", items: [superNeuroPadNavigation, obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],

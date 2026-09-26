@@ -6,6 +6,7 @@ export type RouteUserRole = "admin" | "professional" | "reader" | "operator";
 export type RouteAccessDecision = "allow" | "checking" | "login" | "forbidden";
 
 export const SENSITIVE_ROUTES = [
+  "/super-neuropad-game",
   "/avaliacao-pre-consulta-faixa-etaria",
   "/pant",
   "/assinatura-digital",
