@@ -5,7 +5,6 @@ import { authFetch } from "@/lib/authClient";
 import { Button } from "@/components/ui/button";
 import { tenantMetricsSchema, type TenantMetrics } from "../../../shared/tenantMetrics";
 import { isTenantPermission, type TenantPermission } from "../../../shared/permissions";
-import TenantOnboardingPanel from "./TenantOnboardingPanel";
 
 export function TenantMetricsSummary({ metrics }: { metrics: TenantMetrics }) {
   const stats = [
@@ -70,9 +69,7 @@ export default function TenantMetricsPanel() {
   if (eligible && access.isPending) return <p role="status">Consultando permissões da clínica…</p>;
   if (eligible && access.isError) return <p role="alert">Permissões indisponíveis. Nenhum acesso foi presumido.</p>;
   if (!permitted) return <p className="text-sm text-muted-foreground">Atividade disponível somente para proprietário(a) ou administrador(a) da clínica ativa.</p>;
-  return <>
-    {activeClinicId && user?.id && <TenantOnboardingPanel clinicId={activeClinicId} actorId={user.id} />}
-    <section className="rounded-3xl border border-primary/15 bg-card p-5 shadow-sm sm:p-6" aria-labelledby="tenant-metrics-title">
+  return <section className="rounded-3xl border border-primary/15 bg-card p-5 shadow-sm sm:p-6" aria-labelledby="tenant-metrics-title">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h2 id="tenant-metrics-title" className="text-base font-bold">Atividade auditada da clínica</h2>
       <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>Atualizar métricas</Button>
@@ -80,5 +77,5 @@ export default function TenantMetricsPanel() {
     {query.isPending ? <p role="status" className="text-sm text-muted-foreground">Carregando atividade auditada…</p>
       : query.isError ? <p role="alert" className="text-sm text-destructive">Métricas indisponíveis neste momento. Nenhum valor foi estimado.</p>
       : <TenantMetricsSummary metrics={query.data} />}
-  </section></>;
+  </section>;
 }

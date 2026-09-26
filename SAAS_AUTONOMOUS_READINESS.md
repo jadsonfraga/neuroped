@@ -1,39 +1,128 @@
-# Autonomous SaaS — readiness
+# NeuroPed Autonomous SaaS — readiness verificável
 
-Baseline: `0b4f74fb49214d00944fc2a366d3b4454363601a`. Overall acceptance: **PARTIAL**. A customer-zero journey has **not** been proven by this PR.
+Data da validação local: 2026-09-26  
+Branch de trabalho: `value/autonomous-saas`  
+Base observada antes das alterações: `0b4f74fb49214d00944fc2a366d3b4454363601a`
 
-## Reuse and actual increment
-Retained the existing tenant/membership model, central `shared/permissions.ts`, Asaas provider abstraction, billing webhook, server entitlements, encrypted LIVE storage and lifecycle/export implementation.
+## Escopo da evidência
 
-Added `GET /api/tenants/:id/onboarding`, a single-statement authorized read over persisted timestamps. Every tenant subquery is bound to the authorized clinic, and permission roles come from the central backend catalog. No client completion flag, redirect or payment amount is accepted. Unknown/malformed data yields an error, not a fabricated zero. SQL orders timestamp instants, not mixed-format strings.
+Este documento separa explicitamente código, teste local, integração externa e
+operação publicada. Os testes abaixo executam handlers reais contra o schema D1
+e todas as migrations em SQLite isolado. Resend e Asaas são interceptados no
+boundary HTTP do teste `cliente-zero`; portanto eles comprovam o contrato local,
+autorização, persistência, idempotência e reação ao webhook, mas **não** comprovam
+envio externo, cobrança, receita, deploy ou operação em produção.
 
-The existing settings Activity panel now consumes permissions served by `GET /api/tenants/:id`; it no longer derives its own authorization from a role name. `TenantOnboardingPanel` displays observed timestamps, visible zero progress, pending steps and the unverified external billing step. No database migration, new audit ledger, entitlement override or billing-provider replacement was introduced.
+Classificações:
 
-## Acceptance matrix
-| Customer-zero item | Status | Evidence / boundary |
-|---|---|---|
-| 1. Signup | PARTIAL | Existing signup interface and auth implementation retained; brand-new account browser journey not executed here. |
-| 2. Verification | PARTIAL | Persisted email_verified_at is displayed; email possession is not professional identity/credential validation. Delivery/token E2E not executed here. |
-| 3. Clinic creation | PARTIAL | Existing clinic API retained; created_at observed, creation journey not re-proven. |
-| 4. Onboarding | PARTIAL | New read model and UI integration implemented. Five actual pure-module tests passed locally; browser UI not executed here. Retained records are not an immutable completion ledger. |
-| 5. Plan | PARTIAL | Recorded provider-checkout creation represents checkout intent, not paid subscription or automatic-trial plan selection. |
-| 6. Membership | PARTIAL | Existing membership API retained; first retained membership includes owner, not necessarily a successfully invited teammate. |
-| 7. Patient | PARTIAL | LIVE creation timestamp observed; persisted record is not proof of a human customer. |
-| 8. Consultation | PARTIAL | LIVE encounter registration observed; not proof of completed clinical care. |
-| 9. Document | PARTIAL | Saved draft counts as a saved document, explicitly labelled; it is not a professionally reviewed final document. |
-| 10. Billing | BLOCKED_EXTERNAL | Provider-mode attestation, real checkout/payment/webhook/reconciliation/cancel/reactivation journey were not executed. Availability of production credentials was not established. The panel does not assert a payment. |
-| 11. Audit | PARTIAL | Existing audit implementation retained. Seven actual SQLite tests prove isolation for this read model only, not every endpoint. |
-| 12. Cancel/export | PARTIAL | Existing tenant lifecycle and export retained; provider cancellation and complete physical export/closure acceptance not newly verified. |
+- `VERIFIED`: comportamento exercitado localmente por teste automatizado com
+  handler e persistência reais do repositório;
+- `PARTIAL`: existe prova automatizada de parte do fluxo, mas há uma limitação
+  funcional material;
+- `BLOCKED_EXTERNAL`: falta evidência que depende de provedor, credencial ou
+  ambiente externo;
+- `FAILED`: uma prova executada falhou;
+- `MISSING`: não existe implementação suficiente para executar a prova.
 
-## Executed tests
-`node --experimental-strip-types --test tests/unit/value-onboarding.test.mjs`: 5 passed, exit 0.
-`python3 tests/integration/value-onboarding-sql.test.py`: 7 passed, exit 0, real SQLite execution of the production query using synthetic projections of the required schema.
+## Cliente-zero — matriz de aceite
 
-The SQL test first reproduced a defect in the new query: mixed SQLite/ISO timestamp strings selected a later instant. Replacing lexical MIN with chronological ordering fixed it; the same test passed. Foreign/missing/injected tenant IDs, revoked memberships, non-permitted roles, suspended clinic and platform admin without membership all return no authorized row.
+| # | Requisito | Estado | Evidência local | Limitação explícita |
+|---|---|---|---|---|
+| 1 | Cadastro | `VERIFIED` | `functions/api/auth/signup.ts`; `tests/unit/cliente-zero-journey.test.ts` cria duas contas novas | Não comprova disponibilidade do endpoint publicado |
+| 2 | Verificação de e-mail | `PARTIAL` | `functions/api/auth/verify-email.ts`; token emitido e consumido no cliente-zero | Entrega pelo Resend é `BLOCKED_EXTERNAL`; o teste intercepta HTTP |
+| 3 | Criação de clínica | `VERIFIED` | `functions/api/tenants/index.ts`; criação de Azul e Vermelha sobre schema+migrations reais | Validação local, não produção |
+| 4 | Onboarding | `VERIFIED` | `GET /api/tenants/:id/onboarding`; `tests/unit/saas-onboarding-progress.test.ts`; projeção server-side de 10 marcos | O marco externo de billing só conclui após evento persistido; sem configuração aparece `BLOCKED_EXTERNAL` |
+| 5 | Plano | `VERIFIED` | subscription/trial criados pelas regras canônicas; checkout usa `CANONICAL_PRICE_CENTS` e seats persistidos | Nenhuma venda externa comprovada |
+| 6 | Membership | `VERIFIED` | convite, aceite, mudança de papel e isolamento no cliente-zero; teste comportamental injeta a corrida entre precheck e batch e o predicado SQL final preserva o último owner sem auditoria falsa | E-mail externo do convite é interceptado |
+| 7 | Paciente | `VERIFIED` | paciente sintético criado por handler LIVE, cifrado e isolado de Vermelha | Nenhum paciente real e nenhum resultado clínico alegado |
+| 8 | Consulta | `VERIFIED` | evento `encounter` sintético criado por `functions/api/live/events/index.ts` com provenance | Teste funcional local, não atendimento clínico real |
+| 9 | Documento | `VERIFIED` | documento clínico sintético criado como `draft`; teste confirma que não é finalizado automaticamente | Não comprova emissão de documento em produção |
+| 10 | Billing | `BLOCKED_EXTERNAL` | checkout, webhook autenticado, idempotência, entitlement e `billing_invoice_events.charge_paid` são exercitados | Asaas é `MOCKED_EXTERNAL`; nenhuma cobrança, pagamento, fatura, MRR ou receita foi comprovada |
+| 11 | Auditoria | `VERIFIED` | endpoint self-service `/audit` lê somente Azul; Vermelha recebe 404; conteúdo clínico não aparece nos metadados | Validação local, sem observação de logs publicados |
+| 12 | Cancelamento / exportação | `PARTIAL` | encerramento com confirmação, retenção, cancelamento no boundary e export JSON com digest são exercitados | Cancelamento Asaas é mockado; export marca `complete: false` porque documentos/avaliações ainda não entram no payload |
 
-These tests are **not** `cliente-zero-e2e`, a full migration test, a D1 integration or production isolation proof. No such journey is claimed. The dedicated workflow executes typecheck, lint and these tests, but workflow creation alone does not mean CI passed.
+Resultado: a jornada local está automatizada de ponta a ponta, mas a
+transformação **não pode ser classificada como operacionalmente concluída** até
+que billing/e-mail externos e o ambiente publicado sejam validados e a lacuna de
+exportação seja fechada.
 
-## Limitations and release
-A successful 10/10 completion, autonomous commercial onboarding, real MRR, churn, revenue, payment-method setup and provider cancellation remain unverified. Current progress deliberately cannot reach commercial-readiness verification. Historical data removed under retention/deletion is not reconstructed as an invented milestone. Progress is accessible under Settings → Activity, not yet a complete signup-to-first-value wizard.
+## Contrato de onboarding zero-to-value
 
-Rollback: revert this PR; it has no migration or persisted mutation. Required CI and authenticated browser/E2E checks must pass before release. Keep this report PARTIAL until the complete customer-zero journey, including permitted external provider steps, is evidenced.
+O backend calcula o checklist; a UI não pode promovê-lo por redirect,
+`localStorage` ou estado otimista.
+
+| Marco | Fonte persistida canônica |
+|---|---|
+| Conta criada | `users.created_at` |
+| E-mail verificado | `users.email_verified_at` |
+| Clínica criada | `clinics.created_at` |
+| Plano selecionado | `billing_subscriptions.created_at` |
+| Billing configurado | somente `billing_invoice_events.kind = 'charge_paid' AND status = 'done'` |
+| Primeiro membro | `clinic_memberships.created_at` |
+| Primeiro paciente | `saas_audit_log.live_patient_create` |
+| Primeira consulta | `saas_audit_log.live_clinical_event_create` com `eventType=encounter` |
+| Primeiro documento | `saas_audit_log.live_document_create` |
+| Primeira avaliação | `saas_audit_log.live_assessment_create` |
+
+Estados de billing retornados pelo servidor:
+
+- `SERVER_CONFIRMED`: há evento `charge_paid` persistido pelo backend;
+- `AWAITING_PROVIDER_EVENT`: configuração existe, mas o evento confirmado ainda
+  não existe;
+- `BLOCKED_EXTERNAL`: configuração externa necessária está ausente.
+
+O redirect de checkout não é fonte de verdade.
+
+## Testes e gates
+
+Comandos executados localmente neste worktree:
+
+```text
+node tests/unit/saas-membership-owner-regression.test.mjs
+node --import tsx tests/unit/saas-onboarding-progress.test.ts
+node --import tsx --test tests/unit/onboarding-progress-ui.test.tsx
+node --import tsx --test tests/unit/tenant-management-authorization.test.ts
+node --import tsx tests/unit/cliente-zero-journey.test.ts
+npm run test:saas-self-service
+npm run check
+npm run lint
+npm run build
+```
+
+Os dois primeiros testes foram incorporados ao script
+`test:saas-self-service` e ao workflow
+`.github/workflows/saas-self-service-guard.yml`. O teste cliente-zero declara a
+evidência externa como `MOCKED_EXTERNAL` em seu próprio output.
+
+## Bloqueios externos
+
+1. **Asaas:** falta executar checkout e cobrança em ambiente autorizado,
+   receber webhook originado pelo provedor e reconciliar a transação.
+2. **Resend:** falta confirmar entrega real de verificação e convite em ambiente
+   autorizado.
+3. **Deploy:** nenhuma alteração deste worktree foi publicada; não há SHA de
+   deploy nem smoke pós-deploy destas mudanças.
+4. **Receita:** não há evidência de cliente pagante, MRR, ARPA, churn ou receita;
+   qualquer painel correto deve mostrar zero na ausência de fatos persistidos.
+
+## Riscos e trabalho remanescente
+
+- O export do tenant inclui pacientes e eventos, mas ainda exclui documentos,
+  versões, avaliações/respostas, intake e escala remota. O manifesto é
+  fail-honest (`complete: false`) e o purge permanece bloqueado; fechar a
+  cobertura é necessário para exportação LGPD integral.
+- O cliente-zero é um teste funcional de handlers, não um browser E2E em
+  aplicação publicada. Um smoke autenticado no ambiente alvo continua
+  necessário.
+- A corrida de último owner é reproduzida localmente entre autorização e batch,
+  com recusa `409`, owner preservado e nenhuma auditoria de sucesso. Carga
+  concorrente sobre D1 remoto continua sem evidência neste worktree.
+- Métricas comerciais não foram semeadas nem inventadas. A instrumentação e os
+  agregados existentes devem continuar derivados exclusivamente de fatos
+  persistidos; nenhuma receita é inferida de checkout iniciado.
+
+## Evidência negativa
+
+Não houve commit, PR, merge, push ou deploy durante esta implementação. Não há
+alegação de cobrança real, receita, cliente, uso clínico, conformidade LGPD ou
+operação em produção.
