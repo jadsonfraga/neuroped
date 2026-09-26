@@ -1,7 +1,7 @@
-// Modo Fácil (joguinho) nas quatro aplicações diretas: informar a idade, tocar em
-// Começar, marcar Acertou / Não acertou / Pular e chegar ao resultado, sem nenhuma
-// outra decisão. No Reconhecimento Visual a criança toca na figura e o jogo passa
-// sozinho. Cada tela também prova que o modo guiado continua sendo o padrão.
+// Modo Fácil (joguinho) nas quatro aplicações diretas. Sonda 10 e OBS-10 usam
+// itens objetivos: a criança toca e Próximo libera o estímulo seguinte; Reconhecimento
+// Visual mantém o fluxo por toque e os demais modos preservam seus contratos.
+// Cada tela também prova que o modo guiado continua sendo o padrão.
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
