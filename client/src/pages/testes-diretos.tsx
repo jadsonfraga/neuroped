@@ -1,6 +1,6 @@
 import { SONDA_DEZ_VERSION } from "@/data/sondaDezCanonical";
 import { SONDA_DEZ_PROTOCOL, type BandDef, type FieldDef, type FieldValue } from "@/data/sondaDezProtocol";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import { isSondaResponseCode, validSondaAge, validSondaField, legacyCoverage, advanceSondaActiveTime, type SondaActiveTime } from "@/lib/sondaDezQuality";
 import {
@@ -258,7 +258,8 @@ export default function SondaDezPage({ onBandChange }: { onBandChange?: (id: str
   const completeCount = coverage.filter((item) => item.complete).length;
   useEffect(() => { onBandChange?.(band?.id); }, [band?.id, onBandChange]);
 
-  useEffect(() => {
+  // Flush the last active fraction before the report can be painted or copied.
+  useLayoutEffect(() => {
     const clock = activeTime.current;
     const missionId = mission?.id;
     setGlobalElapsed(Math.floor(clock.totalMs / 1000));

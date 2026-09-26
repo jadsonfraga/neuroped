@@ -23,6 +23,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
+import { awaitsPsychometricValidation } from "./lib/catalog-validation.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
@@ -57,12 +58,6 @@ if (!publicCatalogBytes.equals(dataCatalogBytes)) {
   );
 }
 
-const normalize = (value) =>
-  String(value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
 for (const s of allScales) {
   // Campos obrigatórios
   for (const field of ["id", "name", "fullName", "ageMin", "ageMax"]) {
@@ -93,12 +88,7 @@ for (const s of allScales) {
   // declaração científica explícita (`validacaoBrasil`/`tipo`) e conserva o
   // fallback legado para registros ainda pendentes de revisão clínica.
   const temFonte = typeof s.fonte === "string" && s.fonte.trim().length > 0;
-  const validacaoDeclarada = normalize(s.validacaoBrasil);
-  const tipoDeclarado = normalize(s.tipo);
-  const aguardaValidacao =
-    validacaoDeclarada.includes("sem validacao psicometrica") ||
-    (s.licencaUso === "autoral" && tipoDeclarado.includes("nao validado")) ||
-    s.pendente_validacao_clinica === true;
+  const aguardaValidacao = awaitsPsychometricValidation(s);
   provRows.push({
     id: s.id ?? "?",
     name: s.name ?? "?",
