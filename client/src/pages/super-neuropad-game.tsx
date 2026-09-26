@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import { celebrate } from "@/lib/confetti";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { issuerCredentials, useIssuer } from "@/lib/issuer";
@@ -404,6 +405,7 @@ export default function SuperNeuroPadGamePage() {
   const item = items[itemIndex];
   const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
   const dirty = answers.length > 0;
+  useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
   const ready = Boolean(band && character);
 
   const session: GameSession | null = ageYears !== null && band && character ? {
@@ -424,13 +426,6 @@ export default function SuperNeuroPadGamePage() {
   }, []);
 
   useEffect(() => () => { music.current?.stop(); if (cheerTimer.current) window.clearTimeout(cheerTimer.current); }, []);
-
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
 
   useEffect(() => {
     if (screen === "play") { itemStart.current = performance.now(); activeItemMs.current = 0; }
@@ -566,7 +561,9 @@ export default function SuperNeuroPadGamePage() {
       anchor.click();
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast({ title: "PDF detalhado gerado", description: "Resultado objetivo, leitura para a consulta e cada item com resposta esperada, registrada e tempo." });
+      toast({ title: "PDF detalhado gerado", description: summarize(session).complete
+        ? "Resultado objetivo, leitura para a consulta e cada item com resposta esperada, registrada e tempo."
+        : "Observações registradas e situação da partida incompleta, sem classificação ou interpretação." });
     } catch (error) {
       toast({ title: "Falha ao gerar PDF", description: error instanceof Error ? error.message : "Tente novamente.", variant: "destructive" });
     } finally {
