@@ -1,5 +1,8 @@
-@import './tokens.css';
-/* Reutiliza os tokens institucionais existentes; nenhuma nova paleta literal. */
+/* Reutiliza os tokens institucionais existentes (já globais via client/src/index.css);
+   nenhuma nova paleta literal. Não reimportar tokens.css aqui: este arquivo vira um
+   chunk lazy carregado só quando /escuta-clinica monta, e o @import duplicado inseria
+   os tokens de novo, mais tarde na ordem do documento — mudando raio de foco e outras
+   variáveis do resto da SPA na mesma sessão depois de visitar esta rota uma vez. */
 .escuta-page{max-width:1280px;margin:0 auto;padding:24px;color:var(--np-color-text);min-width:0}
 .escuta-header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:22px}
 .escuta-header small{letter-spacing:.12em;font-size:11px}

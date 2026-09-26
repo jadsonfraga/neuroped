@@ -63,9 +63,31 @@ Fila local esvaziada; nenhum commit pendente sem PR ao final desta espiral.
 - Cadência: o motor ignora um segundo toque em < 300 ms (`event.timeStamp`);
   qualquer novo E2E que toque em sequência imediata precisa espaçar toques.
 
+## BATERIA FINAL DE CONVERGÊNCIA (verificada nesta sessão, HEAD `9b3a300`)
+
+- `npm run check`, `npm run lint`, `npm run test:patient-safety`,
+  `npm run test:auth-bootstrap`, `npm run test:clinical` (356 casos, 97358
+  assertivas), `npm run test:direct-track` (6 suítes), `npm run test:cognitive`,
+  `npm run test:sonda`, `npm run audit:design`, `npm run audit:contrast`,
+  `npm run audit:a11y` (0 violações serious/critical em 7 rotas),
+  `npm run build:client` — todos exit 0, executados individualmente.
+- `npm run verify:release` (bateria composta completa: lint, check,
+  segurança, ownership, operações, metas terapêuticas, inventário diário,
+  escalas clínicas, catálogo, ranking, fluxogramas, acesso, identidade,
+  navegação, cores, filtro, podium, e2e autenticado visual,
+  `test:e2e:missao-saude`, `test:e2e:neuroped-acompanhamento`,
+  `audit:lighthouse`, `build:client`, `test:e2e:modo-facil`,
+  `audit:built-pin`, `audit:offline-shell`, `check-baseline`) — **exit 0**,
+  sem regressão de baseline (`[baseline] ✓ sem regressão`).
+- Artefatos auto-gerados pela própria bateria (`client/public/sw-build.js`,
+  `functions/api/_buildInfo.ts`, `scripts/guards/a11y-report.json`,
+  `scripts/guards/lighthouse-report.json`) descartados após a execução —
+  não representam mudança funcional.
+
 ## EM EXECUÇÃO
 
-Nenhuma frente aberta neste momento; espiral convergiu nas seis PRs acima.
+Nenhuma frente aberta neste momento; espiral convergiu nas sete PRs acima e
+na bateria final de checkpoints.
 
 ## PRÓXIMA FRONTEIRA
 
@@ -75,11 +97,10 @@ Nenhuma frente aberta neste momento; espiral convergiu nas seis PRs acima.
   visual ampla se feito sem essa prova.
 - `escuta-clinica.css` reimportando tokens por chunk lazy (achado de baixo
   risco, correção pequena: remover o `@import` redundante).
-- Bateria final de convergência (checkpoint maior): `npm run check`,
-  `npm run lint`, `npm run test:patient-safety`, `npm run test:auth-bootstrap`,
-  `npm run test:clinical`, `npm run test:direct-track`, `npm run test:cognitive`,
-  `npm run test:sonda`, `npm run audit:a11y`, `npm run audit:design`,
-  `npm run audit:contrast`, `npm run build:client`, `npm run verify:release`.
-- Smoke de produção após o deploy do commit `96e4b6b` (ou posterior):
-  `deploy-check.json`, `/api/health`, páginas principais, login sintético,
-  as quatro aplicações — antes de declarar a espiral concluída em produção.
+- Smoke de produção contra o deploy do commit `9b3a300` (ou posterior):
+  **bloqueado nesta sessão** por política de rede do ambiente (proxy nega
+  saída HTTPS para `neuroped.pages.dev`/`vercel.app`/`github.io`, 403 em
+  todo host externo testado — ver
+  `docs/audits/BLOCKED_EXTERNAL_smoke-producao.md`). Pendência real: rodar
+  `npm run test:e2e:published-health` com `EXPECTED_COMMIT=9b3a300` fora
+  deste ambiente antes de declarar a espiral concluída em produção.

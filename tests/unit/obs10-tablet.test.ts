@@ -132,6 +132,8 @@ assert.equal(openedOnly.record!.observations[0].outcome, null);
 assert.deepEqual(pendingDescriptions(openedOnly.record!), []);
 assert.doesNotMatch(tabletText(openedOnly.record!), /PENDÊNCIA/);
 assert.match(tabletText(openedOnly.record!), /Categoria não registrada/);
+assert.match(tabletText(openedOnly.record!), /Há registros parciais sem categoria e sem descrição/);
+assert.doesNotMatch(tabletText(openedOnly.record!), /Todas as estações registradas possuem descrição/);
 assert.match(tabletText(all.record!), /Todas as estações registradas possuem descrição/);
 // Saturating the event log must never mint an observation whose opening cannot be traced: the module
 // would otherwise export a record its own validator rejects.

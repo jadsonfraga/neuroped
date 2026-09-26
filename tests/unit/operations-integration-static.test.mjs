@@ -65,7 +65,18 @@ assert.match(
   /const patientId = principal\.delegated \? null : cleanOptionalText\(body\.patientId, 100\)/,
   "recepção não pode associar agendamento diretamente a identificador clínico",
 );
-assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
+// AUTHZ-P1-06 (ciclo 4, 2026-09-26): e-mail inexistente, papel/estado
+// inválido e já vinculado a outro profissional não podem mais ser
+// distinguidos pelo código/status devolvido ao cliente — todos caem no
+// mesmo STAFF_NOT_AVAILABLE (404). O código interno STAFF_ALREADY_LINKED
+// continua existindo em _access.ts (não é o que vaza), mas não pode
+// aparecer como um branch de resposta HTTP separado em index.ts.
+assert.match(professional, /STAFF_NOT_AVAILABLE/, "conta indisponível para vínculo deve responder com um único código anti-enumeração");
+assert.doesNotMatch(
+  professional,
+  /STAFF_ALREADY_LINKED:\s*["']/,
+  "vínculo já pertencente a outro profissional não pode virar mensagem/código distinto exposto ao cliente",
+);
 assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
 assert.match(
   professional,

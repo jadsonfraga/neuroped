@@ -28,6 +28,53 @@ export interface TenantExportCounts {
   encryptedBytes: number;
 }
 
+/**
+ * Tabelas clínicas do Clinical LIVE com `clinic_id` que
+ * `collectTenantExportPayload` AINDA NÃO leva no payload (LTB-02,
+ * docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md) — documentos versionados,
+ * avaliações e respostas, convites/submissões de intake e de escala remota.
+ * A mesma lista é usada por functions/api/live/governance/_purge.ts: o purge
+ * de escopo 'clinic' recusa (EXPORT_MANIFEST_INCOMPLETE) se sobrar QUALQUER
+ * linha da clínica nestas tabelas, para nunca apagar o que o export nunca
+ * levou. Cada entrada some daqui só quando entrar de fato no payload
+ * exportado (S12b no backlog da espiral).
+ */
+export const EXPORT_UNCOVERED_CLINIC_TABLES: ReadonlyArray<string> = [
+  "live_documents",
+  "live_document_versions",
+  "live_assessments",
+  "live_assessment_responses",
+  "live_intake_invitations",
+  "live_intake_submissions",
+  "live_scale_invitations",
+  "live_scale_responses",
+];
+
+/**
+ * Conta, por tabela, quantas linhas da clínica ficam FORA do payload
+ * exportado hoje. Tabela ausente neste banco conta como zero — o objetivo é
+ * nunca afirmar incompletude por um schema mais antigo, só pela lacuna real.
+ */
+export async function countExportUncoveredRows(
+  db: D1Database,
+  clinicId: string,
+): Promise<Record<string, number>> {
+  const entries = await Promise.all(
+    EXPORT_UNCOVERED_CLINIC_TABLES.map(async (table) => {
+      try {
+        const row = await db
+          .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
+          .bind(clinicId)
+          .first<{ n: number }>();
+        return [table, Number(row?.n ?? 0)] as const;
+      } catch {
+        return [table, 0] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
 export type TenantExportFailureCode =
   | "TENANT_LIFECYCLE_NOT_CONFIGURED"
   | "TENANT_LIFECYCLE_NOT_FOUND"
@@ -37,7 +84,14 @@ export type TenantExportFailureCode =
   | "TENANT_EXPORT_DECRYPT_FAILED";
 
 export type TenantExportPayloadResult =
-  | { ok: true; data: Record<string, unknown>; counts: TenantExportCounts }
+  | {
+      ok: true;
+      data: Record<string, unknown>;
+      counts: TenantExportCounts;
+      /** Falso quando alguma tabela de EXPORT_UNCOVERED_CLINIC_TABLES tem linha da clínica. */
+      complete: boolean;
+      uncoveredCounts: Record<string, number>;
+    }
   | {
       ok: false;
       code: TenantExportFailureCode;
@@ -332,9 +386,14 @@ export async function collectTenantExportPayload(
     legalHold: lifecycle.legal_hold === 1,
   });
 
+  const uncoveredCounts = await countExportUncoveredRows(db, clinicId);
+  const complete = Object.values(uncoveredCounts).every((count) => count === 0);
+
   return {
     ok: true,
     counts: safeCounts,
+    complete,
+    uncoveredCounts,
     data: {
       clinic: {
         id: clinic.id,
