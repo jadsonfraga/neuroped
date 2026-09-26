@@ -73,3 +73,48 @@
   comportamento antigo; nenhuma migração de schema envolvida (nenhum valor
   novo de `kind` foi introduzido em `billing_invoice_events`, justamente
   para não exigir migração — ver comentário no código).
+
+## S8 (ciclo 4, 2026-09-26) — agenda/operações sem clinic_id (OPS-01/OPS-02)
+- Escopo: `db/migrations/0026_operations_clinic_scope.sql` (aditiva,
+  `clinic_id` nullable + backfill determinístico + índices em 8 tabelas);
+  `functions/api/operations/_core.ts` (SCHEMA_STATEMENTS com clinic_id,
+  `resolveProviderSoleClinicId`, `getService`/`listAvailableSlots`/
+  `enqueueNotification` exigem clinicId explícito); `_access.ts`
+  (`operations_audit_log.clinic_id`, `logOperationsAudit`/
+  `listOperationsAudit` com clinicId); `index.ts` (todo SELECT/INSERT/UPDATE/
+  DELETE do dashboard e das 16 ações do POST repete `clinic_id` no
+  predicado); `public-booking.ts` (perfil, horários, reserva, lista de
+  espera e avaliação pública resolvem/stampam clinic_id; diretório exclui
+  profissional com clínica ambígua).
+- Ambiente: container da sessão, Node do repo, HEAD `f8037bd` (S6+S7) + S8.
+- Teste novo `tests/unit/operations-tenant-isolation.test.ts` (schema real +
+  todas as migrações + handlers reais de operations/public-booking, duas
+  clínicas sintéticas, um profissional membro de ambas): serviço, regra,
+  bloqueio e consulta (com PHI decifrada) criados na clínica A ficam
+  invisíveis e imutáveis a partir da clínica B; auditoria isolada por
+  clínica; diretório e reserva pública recusam profissional com clínica
+  ambígua. Visto FALHANDO pelo motivo certo contra o código anterior via
+  `git stash` isolado dos 4 arquivos de produção (serviço de A aparecia no
+  dashboard de B); verde com a correção.
+- Comandos exit 0: `node --import tsx tests/unit/operations-tenant-isolation.test.ts`,
+  `npm run test:operations` (inclui o teste novo),
+  `node --import tsx tests/unit/operations-contract.test.ts`,
+  `node tests/unit/operations-integration-static.test.mjs`,
+  `node tests/unit/secretaria-marcacao-navigation.test.mjs`,
+  `node --import tsx tests/unit/cliente-zero-journey.test.ts`,
+  `node --import tsx tests/unit/saas-acceptance-journey.test.ts`,
+  `node --import tsx tests/unit/saas-self-service.test.ts`,
+  `node --import tsx tests/unit/saas-tenant-lifecycle.test.ts`,
+  `node tests/unit/schema-bootstrap-contract.test.mjs`,
+  `node tests/unit/migration-prefix-guard.test.mjs`,
+  `node tests/unit/workflow-governance.test.mjs`, `npm run check`,
+  `npm run lint`, `npm run test:quick-wins` (suíte completa).
+- Escopo intencionalmente FORA desta camada (documentado, não escondido):
+  `appointment_slot_locks` e os triggers de conflito físico continuam sem
+  `clinic_id` (o profissional é o recurso físico, não a clínica); diretório
+  público ainda por slug global, não por clínica (S13); `booking_staff_links`
+  segue por profissional (OPS-03, não tocado).
+- Rollback: reverter os 4 arquivos de `functions/api/{operations/**,
+  public-booking.ts}` a `f8037bd` restaura o código anterior; a coluna
+  `clinic_id` (migração 0026) é aditiva e pode permanecer no banco sem
+  quebrar o código antigo (ele simplesmente a ignora).

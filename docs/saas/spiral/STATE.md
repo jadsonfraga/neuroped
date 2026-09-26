@@ -82,11 +82,24 @@ Comandos exit 0 depois de S6+S7: `npm run check`, `npm run test:quick-wins`
 (suíte completa), mais os testes de billing/tenant/cliente-zero listados em
 EVIDENCE.md#S7.
 
+S8: agenda/operações ganhou `clinic_id` (migração 0026, aditiva) em 8
+tabelas, com backfill determinístico e todo filtro autenticado repetindo a
+clínica no predicado — fecha o vazamento de PHI entre clínicas de um
+profissional compartilhado (OPS-01). O diretório público e a reserva
+pública já recusam clínica ambígua (mitigação de OPS-02), mas o link
+público continua por slug global — redesenho de rota registrado como S13,
+em aberto. Evidência em EVIDENCE.md#S8.
+
+Comandos exit 0 depois de S8: os mesmos de S6+S7 mais
+`tests/unit/operations-tenant-isolation.test.ts`, `npm run test:operations`,
+`npm run lint` completo e `npm run test:quick-wins` completo novamente.
+
 ## Próximo passo executável
-S8 (agenda multi-tenant: `clinic_id` em `booking_*`/`appointments`) é o
-próximo item aberto de maior severidade que não depende de censo de
-produção — ver BACKLOG.md. S9 (bypass do admin global no legado) está
-bloqueado por censo de produção (ver
-`docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`).
-Retomada: `git fetch origin main && git log -1 origin/main` e reler este
-arquivo.
+S9 (bypass do admin global no legado clínico, o achado mais severo restante)
+está bloqueado por censo de produção — ver
+`docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
+censo, os próximos itens executáveis sem depender de estado de produção
+desconhecido são S10 (papel duplo global×membership), S11 (convite direto
+por e-mail sem aceite) e S13 (link público de agendamento por clínica) —
+ver BACKLOG.md para os três. Retomada: `git fetch origin main && git log -1
+origin/main` e reler este arquivo.

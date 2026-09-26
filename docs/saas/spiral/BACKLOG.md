@@ -52,19 +52,45 @@ checkout novo e o cliente não concluísse bastava para derrubar
 permanentemente uma clínica pagante. (LTB-01)
 Evidência: EVIDENCE.md#S7.
 
-## S8 · P0 · aberto
+## S8 · P0 · FECHADO (ciclo 4) — OPS-01; OPS-02 parcialmente mitigado
 Agenda/operações (`booking_*`, `appointments`, `waitlist_entries`,
 `appointment_reviews`, `notification_outbox`, `operations_audit_log`) não
-têm `clinic_id`: o escopo é só `provider_user_id`. Um profissional membro de
-duas clínicas vê, no contexto B, a agenda inteira (com PHI decifrada) da
-clínica A — inclusive a secretária vinculada a ele em B. O diretório público
-de agendamento (`action=providers`) lista profissionais de TODAS as
-clínicas e autoescolhe globalmente. (OPS-01, OPS-02)
-Este é o item mais representativo da missão "multi-tenant sem perda":
-requer migração aditiva (`clinic_id` em 8 tabelas) + backfill determinístico
-pela membership única do provider + reescrita dos filtros em
-`functions/api/operations/**` e `public-booking.ts`. Maior escopo que S6/S7;
-tratado como camada própria.
+tinham `clinic_id`: o escopo era só `provider_user_id`. Um profissional
+membro de duas clínicas via, no contexto B, a agenda inteira (com PHI
+decifrada) da clínica A — inclusive a secretária vinculada a ele em B.
+(OPS-01 — FECHADO.)
+
+Migração aditiva `0026_operations_clinic_scope.sql`: `clinic_id` (nullable)
+em 8 tabelas, backfill determinístico pela única membership ativa do
+provider (0/2+ memberships fica NULL, nunca adivinhado). Todo filtro
+autenticado em `functions/api/operations/{index,_core,_access}.ts` passou a
+exigir `clinic_id` no predicado; regras/bloqueios de agenda também
+(configuração é por clínica). Ocupação de horário (`appointments` no
+cálculo de vagas) e triggers de conflito físico continuam SEM filtro de
+clínica de propósito — o profissional é uma pessoa só, não pode ser
+escalado em duas clínicas ao mesmo tempo.
+
+OPS-02 (diretório público cross-clínica) permanece PARCIALMENTE aberto: o
+perfil/horários/reserva pública já recusam (fail-closed, 409/404) um
+profissional com clínica ambígua (0 ou 2+ memberships), e o diretório
+(`action=providers`) já exclui esses casos — mas o link público ainda é por
+slug global, não por clínica (`/agendar?clinic=<slug>`), redesenho de rota
+que fica para uma camada própria (ver S13).
+
+Teste de isolamento novo: `tests/unit/operations-tenant-isolation.test.ts`
+(harness real: schema.d1.sql + todas as migrações + handlers reais),
+incluído em `npm run test:operations`. Visto falhando pelo motivo certo
+contra o código anterior (serviço da clínica A aparecia no dashboard de B).
+Evidência em EVIDENCE.md#S8.
+
+## S13 · P1 · aberto
+Redesenho do link público de agendamento por clínica
+(`/agendar?clinic=<slug>&provider=<slug>` ou `/c/:clinicSlug/agendar`),
+substituindo o slug global de `booking_provider_profiles` (PK `user_id`,
+`slug UNIQUE` global — OPS-05) e o diretório cross-clínica de
+`action=providers`. Depende de mudança de rota no frontend
+(`client/src/pages/agendar.tsx`, `marcacao.tsx`, `navigation.ts`), fora do
+escopo de S8 (isolamento de dados no backend autenticado).
 
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
