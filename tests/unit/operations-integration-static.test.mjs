@@ -67,6 +67,11 @@ assert.match(
 );
 assert.match(professional, /STAFF_ALREADY_LINKED/, "API deve expor erro explícito de vínculo já pertencente a outro profissional");
 assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
+assert.match(
+  professional,
+  /resolveBillingClinicId\([\s\S]{0,120}principal\.providerUserId/,
+  "operator deve herdar o tenant operacional do profissional sem ganhar membership clínico",
+);
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
