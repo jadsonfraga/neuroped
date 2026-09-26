@@ -33,6 +33,11 @@ interface RefreshFlight {
 let refreshInFlight: RefreshFlight | null = null;
 let authEpoch = 0;
 
+/** In-memory session generation for client cache isolation; never an authorization claim. */
+export function getAuthSessionEpoch(): number {
+  return authEpoch;
+}
+
 export interface AuthUser {
   id: string;
   email: string;

@@ -773,6 +773,8 @@ try {
   await click("Registrar zero observado");
   await click("Encerrar e revisar registro parcial");
   const physical = await page.getByLabel("Registro presencial para copiar manualmente", { exact: true }).inputValue();
+  await page.clock.runFor(1500);
+  assert.equal(await page.getByLabel("Registro presencial para copiar manualmente", { exact: true }).inputValue(), physical, "Encerramento congela o relatório antes da primeira leitura");
   assert.match(physical, /REGISTRO PARCIAL/);
   assert.match(physical, /MODALIDADE PRESENCIAL · PROTOCOLO v2026-09-08/);
   assert.ok(Number(physical.match(/Tempo ativo: (\d+)s/)?.[1]) >= 1, "Active fractions survive repeated pauses");
