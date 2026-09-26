@@ -31,6 +31,10 @@ export function acceptManualTap(lastAt: number, at: number, minGap = MANUAL_TAP_
   if (!Number.isFinite(at)) return true;
   return !(at - lastAt < minGap);
 }
+/** Data local (AAAA-MM-DD): o registro nasce no fuso da consulta, não em UTC. */
+export function localIsoDate(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 export function easyCounts(records: EasyRecord[]) {
   return {
     total: records.length,
@@ -55,7 +59,7 @@ export function buildEasyReport(input: {
   const label = input.objective ? OBJECTIVE_OUTCOME_LABEL : EASY_OUTCOME_LABEL;
   const lines = [
     `${input.title} · Modo Fácil (joguinho)`,
-    `Idade: ${input.ageLabel} · Data: ${input.date ?? new Date().toISOString().slice(0, 10)}`,
+    `Idade: ${input.ageLabel} · Data: ${input.date ?? localIsoDate()}`,
     "REGISTRO OBSERVACIONAL DESCRITIVO — NÃO É ESCORE, PERCENTIL NEM DIAGNÓSTICO",
     input.objective
       ? "\"Certo\" e \"Errado\" são o toque da criança na tela comparado à resposta única de cada item; \"Pulou\" é item sem resposta. Leitura e conclusão pertencem ao médico."

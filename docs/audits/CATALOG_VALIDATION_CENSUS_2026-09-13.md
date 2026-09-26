@@ -34,3 +34,13 @@ Reexecutados os quatro testes adversariais (incluindo falha com 111), o catálog
 real (274 instrumentos; 110 pendências) e a catraca real (exit 0). A correção
 não altera instrumento, norma, classificação ou licença. O teto 110 continua
 sem margem adicional. A CI da revisão reconciliada deve passar antes de merge.
+
+
+### Terceiro consumidor — revisão de 26/09/2026
+
+O placar (`scorecard.mjs`) ainda usava apenas o indicador editorial. Agora importa
+o mesmo predicado canônico do relatório e do gate. A fixture executa os três
+CLIs reais: 110 instrumentos revisados mas sem validação explícita são contados
+como 110 em todos; 111 reprova tanto o gate quanto o placar. O Markdown do placar
+também é conferido. `npm run scorecard` regenerou o artefato versionado com 110/110.
+Os quatro testes ampliados passaram; nenhuma escala foi promovida a validada.

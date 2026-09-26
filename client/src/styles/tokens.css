@@ -503,3 +503,66 @@
   --rv-color-white: #ffffff;
   --rv-color-gray: #92969d;
 }
+
+/* ====================================================
+   SUPER NEUROPAD GAME — paleta arcade (anos 90)
+   Só cor: o comportamento e a regra clínica vivem no modelo.
+   "-fixed" não muda no escuro: é tinta/papel sobre painel colorido.
+   ==================================================== */
+:root {
+  --snp-ink: #1b1340;
+  --snp-ink-fixed: #1b1340;
+  --snp-ink-30: rgba(27, 19, 64, 0.3);
+  --snp-ink-40: rgba(27, 19, 64, 0.4);
+  --snp-paper: #fffaf0;
+  --snp-paper-fixed: #fffaf0;
+  --snp-paper-2: #fff1c9;
+  --snp-paper-2-fixed: #fff1c9;
+  --snp-text: #1b1340;
+  --snp-muted: #4b4570;
+  --snp-shadow: #1b1340;
+  --snp-sun: #ffd23f;
+  --snp-sun-soft: #fff3a8;
+  --snp-sun-tint: #fff1a8;
+  --snp-sky: #5fd3f3;
+  --snp-sky-tint: #cdefff;
+  --snp-grass: #7ee081;
+  --snp-grass-deep: #4fc76a;
+  --snp-grass-tint: #d5ffd8;
+  --snp-berry: #ff7fae;
+  --snp-berry-deep: #ff5c8a;
+  --snp-berry-tint: #ffd0dd;
+  --snp-lilac: #c9b6ff;
+  --snp-slate: #d9d4f2;
+  --snp-slate-fixed: #d9d4f2;
+  --snp-slate-deep: #6a6390;
+  --snp-slate-stripe-a: #b9b3d8;
+  --snp-slate-stripe-b: #8f88b8;
+  --snp-title-shadow-1: #ffd23f;
+  --snp-title-shadow-2: #1b1340;
+  --snp-sky-bg-top: #a5e6ff;
+  --snp-sky-bg-grass: #7ee081;
+  --snp-sky-bg-soil: #b07a4a;
+  --snp-cloud: rgba(255, 255, 255, 0.85);
+  --snp-scanline: rgba(27, 19, 64, 0.06);
+  --snp-sprite-shadow: rgba(27, 19, 64, 0.35);
+  --snp-stage: rgba(255, 250, 240, 0.8);
+  --snp-stage-text: #1b1340;
+}
+.dark {
+  --snp-ink: #efe9ff;
+  --snp-paper: #211c45;
+  --snp-paper-2: #2b2458;
+  --snp-text: #f4f0ff;
+  --snp-muted: #c7bfe6;
+  --snp-shadow: #0a0820;
+  --snp-slate: #3a3268;
+  --snp-title-shadow-1: #7c5cff;
+  --snp-title-shadow-2: #0a0820;
+  --snp-sky-bg-top: #24306b;
+  --snp-sky-bg-grass: #2f7a45;
+  --snp-sky-bg-soil: #5a3f2b;
+  --snp-cloud: rgba(255, 255, 255, 0.25);
+  --snp-stage: rgba(33, 28, 69, 0.85);
+  --snp-stage-text: #f4f0ff;
+}

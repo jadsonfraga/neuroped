@@ -23,7 +23,7 @@ test("clinical review cannot remove explicit psychometric debt", () => {
 function runFixture(count) {
   const dir = mkdtempSync(join(tmpdir(), "neuroped-validation-census-"));
   try {
-    for (const file of ["scripts/guards/check-baseline.mjs", "scripts/guards/validate-catalog.mjs", "scripts/guards/lib/catalog-validation.mjs"]) {
+    for (const file of ["scripts/guards/check-baseline.mjs", "scripts/guards/validate-catalog.mjs", "scripts/guards/scorecard.mjs", "scripts/guards/lib/catalog-validation.mjs"]) {
       mkdirSync(dirname(join(dir, file)), { recursive: true });
       copyFileSync(join(root, file), join(dir, file));
     }
@@ -39,29 +39,40 @@ function runFixture(count) {
     mkdirSync(join(dir, "client/src/data"), { recursive: true });
     writeFileSync(join(dir, "client/src/data/scaleFilter.ts"),
       `export const allScales = ${JSON.stringify(scales)};\nexport const allScalesComFichas = allScales;\n`);
+    // Other axes are valid controls: this fixture isolates the debt ceiling.
     const baseline = { catalogRunnablePendingPsychometricValidationMax: 110,
-      catalogRunnablePendingProvenanceMax: 0, catalogDocumentedPendingProvenanceMax: 0 };
+      catalogRunnablePendingProvenanceMax: 0, catalogDocumentedPendingProvenanceMax: 0,
+      catalogRunnableInstruments: 0, catalogRunnableWithFonte: 0,
+      catalogRunnableReviewedWithFonte: 0, catalogDocumentedInstruments: 0,
+      catalogDocumentedWithFonte: 0, typescriptErrors: 0, clinicalCasesMin: 0 };
     writeFileSync(join(dir, "scripts/guards/baseline.json"), JSON.stringify(baseline));
+    mkdirSync(join(dir, "docs"));
     const run = (file) => spawnSync(process.execPath, ["--import", loader, join(dir, "scripts/guards", file)],
       { cwd: dir, encoding: "utf8", timeout: 30000, windowsHide: true });
-    return { report: run("validate-catalog.mjs"), gate: run("check-baseline.mjs") };
+    const scorecard = run("scorecard.mjs");
+    return { report: run("validate-catalog.mjs"), gate: run("check-baseline.mjs"), scorecard,
+      markdown: readFileSync(join(dir, "docs/PLACAR_9.0.md"), "utf8") };
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
-test("real report and release CLI count 110 reviewed-but-unvalidated instruments identically", () => {
-  const { report, gate } = runFixture(110);
+test("real report, scorecard and release CLI count 110 reviewed-but-unvalidated instruments identically", () => {
+  const { report, gate, scorecard, markdown } = runFixture(110);
   assert.equal(report.status, 0, report.stderr);
   assert.equal(gate.status, 0, gate.stderr);
   assert.match(report.stdout, /110 aguardando valida/);
   assert.match(gate.stdout, /psicom.trica pendente=110/);
+  assert.equal(scorecard.status, 0, scorecard.stderr);
+  assert.match(markdown, /Aguardando validação psicométrica publicada \| 110 \| máx\. 110 \| OK/);
 });
 test("actual release CLI rejects 111, despite completed clinical review", () => {
-  const { report, gate } = runFixture(111);
+  const { report, gate, scorecard, markdown } = runFixture(111);
   assert.equal(report.status, 0, report.stderr);
   assert.equal(gate.status, 1, gate.stdout + gate.stderr);
   assert.match(gate.stderr, /catalogRunnablePendingPsychometricValidation: atual 111 > teto 110/);
+  assert.equal(scorecard.status, 1, scorecard.stdout + scorecard.stderr);
+  assert.match(markdown, /Aguardando validação psicométrica publicada \| 111 \| máx\. 110 \| REGRESSÃO/);
 });
-test("both consumers import one canonical predicate", () => {
-  for (const file of ["check-baseline.mjs", "validate-catalog.mjs"]) {
+test("all three consumers import one canonical predicate", () => {
+  for (const file of ["check-baseline.mjs", "validate-catalog.mjs", "scorecard.mjs"]) {
     const source = readFileSync(join(root, "scripts/guards", file), "utf8");
     assert.ok(source.includes('import { awaitsPsychometricValidation } from "./lib/catalog-validation.mjs"'));
   }
