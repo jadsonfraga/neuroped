@@ -90,15 +90,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   try {
     const access = await getPatientAccess(env.DB, patientId, user);
-    if (!access.exists) {
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) {
       return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
-    }
-    if (!access.allowed) {
-      return authorizationError(
-        "Você não tem acesso a este paciente.",
-        "FORBIDDEN",
-        403,
-      );
     }
 
     let total: number | null = null;

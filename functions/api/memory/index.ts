@@ -39,8 +39,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const query = (url.searchParams.get("q") ?? "").trim();
   if (patientId) {
     const access = await getPatientAccess(context.env.DB, patientId, user);
-    if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-    if (!access.allowed) return error("Sem permissão.", "FORBIDDEN", 403);
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) return error("Paciente não encontrado.", "NOT_FOUND", 404);
   } else if (!isAdmin(user)) {
     return error("Selecione um paciente para consultar a memória.", "PATIENT_REQUIRED", 400);
   }
@@ -66,8 +67,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (!patientId && !isAdmin(user)) return error("Selecione um paciente.", "PATIENT_REQUIRED", 400);
   if (patientId) {
     const access = await getPatientAccess(context.env.DB, patientId, user);
-    if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-    if (!access.allowed) return error("Sem permissão.", "FORBIDDEN", 403);
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) return error("Paciente não encontrado.", "NOT_FOUND", 404);
   }
   await ensureSchema(context.env.DB);
   const id = `memory-${crypto.randomUUID()}`; const now = new Date().toISOString();

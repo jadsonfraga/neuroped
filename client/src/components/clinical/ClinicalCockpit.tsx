@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { differenceInYears, parseISO } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { Mascote } from "@/components/Mascote";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useRecents } from "@/hooks/useFavorites";
 import { ErrorState } from "@/components/ui/VisualStates";
@@ -192,7 +193,10 @@ function ActionLink({
         <span className="block truncate text-[13.5px] font-semibold text-foreground">
           {label}
         </span>
-        <span className="block truncate text-[11.5px] text-muted-foreground">
+        {/* A dica quebra em até duas linhas como no PortalQuickAction: em 1440 px
+            "Laudo e receita a partir da ficha" e "Sessão efêmera, sem registro"
+            saíam cortadas com reticências dentro do próprio cockpit. */}
+        <span className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-muted-foreground">
           {hint}
         </span>
       </span>
@@ -270,7 +274,7 @@ export function ClinicalCockpit() {
           <SafeAssetImage src={brandAssets.photography.retratoInstitucional} alt="" className="np-workspace-welcome__photo" />
         </div>
       </section>
-      <nav className="np-workspace-actions" aria-label="Atalhos de atendimento">
+      <nav className="np-workspace-actions np-stagger" aria-label="Atalhos de atendimento">
         {portalQuickActions.map((item) => <PortalQuickAction key={item.href} item={item} />)}
       </nav>
 
@@ -375,27 +379,33 @@ export function ClinicalCockpit() {
               </>
             ) : (
               <div
-                className="rounded-2xl border border-dashed border-border/70 p-4"
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-dashed border-border/70 p-4"
                 data-testid="cockpit-empty"
               >
-                <p className="text-[14px] font-semibold text-foreground">
-                  Nenhum paciente nesta clínica ainda
-                </p>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
-                  Cadastre o primeiro paciente para abrir prontuário, aplicar
-                  escalas e emitir documentos vinculados.
-                </p>
-                <Link
-                  href="/pacientes"
-                  data-testid="cockpit-action-primeiro-paciente"
-                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3.5 text-[13px] font-semibold text-foreground hover:bg-primary/15"
-                >
-                  <UserPlus
-                    className="h-4 w-4 text-primary"
-                    aria-hidden="true"
-                  />
-                  Cadastrar paciente
-                </Link>
+                <div className="min-w-[14rem] flex-1">
+                  <p className="text-[14px] font-semibold text-foreground">
+                    Nenhum paciente nesta clínica ainda
+                  </p>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                    Cadastre o primeiro paciente para abrir prontuário, aplicar
+                    escalas e emitir documentos vinculados.
+                  </p>
+                  <Link
+                    href="/pacientes"
+                    data-testid="cockpit-action-primeiro-paciente"
+                    className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3.5 text-[13px] font-semibold text-foreground hover:bg-primary/15"
+                  >
+                    <UserPlus
+                      className="h-4 w-4 text-primary"
+                      aria-hidden="true"
+                    />
+                    Cadastrar paciente
+                  </Link>
+                </div>
+                {/* O guia acolhe o vazio — o espaço morto do painel vira convite. */}
+                <div className="hidden sm:block" aria-hidden="true">
+                  <Mascote contexto="vazio" size="sm" fala="" className="opacity-90" />
+                </div>
               </div>
             )}
           </div>

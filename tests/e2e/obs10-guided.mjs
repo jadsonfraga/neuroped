@@ -1,0 +1,177 @@
+import assert from "node:assert/strict";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chromium } from "playwright";
+import AxeBuilder from "@axe-core/playwright";
+import { startStaticServer, auditBrowserLaunchOptions, ACCEPTED_FIRST_VISIT_STORAGE } from "../../scripts/lib/browser-audit-runtime.mjs";
+import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
+
+const dir = process.env.OBS10_GUIDED_ARTIFACT_DIR || "/tmp/obs10-guided";
+await mkdir(dir, { recursive: true });
+const server = await startStaticServer("dist/public", { port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }) });
+const browser = await chromium.launch(auditBrowserLaunchOptions());
+const context = await browser.newContext({ viewport: { width: 1440, height: 1080 }, acceptDownloads: true });
+await context.addInitScript((storage) => { for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value); }, ACCEPTED_FIRST_VISIT_STORAGE);
+const page = await context.newPage();
+const errors = [], screens = [];
+page.on("pageerror", (error) => errors.push(error.message));
+page.on("dialog", (dialog) => dialog.accept());
+const button = (name) => page.getByRole("button", { name, exact: true });
+const card = () => page.getByTestId("obs10-practical-task");
+async function prepare(years, months = 0) {
+  await page.getByLabel("Anos completos", { exact: true }).fill(String(years));
+  await page.getByLabel("Meses adicionais", { exact: true }).fill(String(months));
+  await page.getByLabel("Código institucional, sem nome", { exact: true }).fill("OBS-GUIA-FICTICIO");
+  for (const box of await page.locator(".obs10-checklist input").all()) await box.check();
+  await button("Separei o kit completo").click();
+}
+async function screen(name) {
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `overflow: ${name}`);
+  const axe = await new AxeBuilder({ page }).include(".obs10").analyze();
+  await writeFile(`${dir}/${name}-axe.json`, JSON.stringify(axe.violations, null, 2));
+  assert.deepEqual(axe.violations.map((violation) => ({ id: violation.id, targets: violation.nodes.map((node) => node.target) })), [], name);
+  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
+  screens.push(name);
+}
+async function restart() { await button("Encerrar antes").click(); await button("Nova aplicação · limpar esta sessão").click(); }
+// The guide moves focus in a queued microtask after navigation; poll instead of racing it.
+async function focusedHeading(pattern) {
+  await page.waitForFunction((source) => {
+    const el = document.activeElement;
+    return el?.tagName === "H3" && new RegExp(source).test(el.textContent || "");
+  }, pattern.source, { timeout: 5000 });
+}
+try {
+  await page.goto(`${server.origin}/#/avaliacao-pre-consulta-faixa-etaria`);
+  await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
+  await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+  await page.locator('[data-testid="login-form"] button[type="submit"]').click();
+  await page.getByTestId("obs10-workspace").waitFor({ timeout: 20000 });
+  await prepare(6);
+  const prep = page.getByTestId("obs10-integrated-preparation");
+  assert.match(await prep.textContent(), /Já está no aplicativo/);
+  await prep.getByText("Preparar recurso: Amostra de leitura e escrita", { exact: true }).click();
+  assert.equal(await prep.getByTestId("obs10-child-resource").textContent(), "O gato dorme na cadeira");
+  const popupPromise = page.waitForEvent("popup");
+  await button("Imprimir somente o texto de leitura").click();
+  const popup = await popupPromise;
+  await popup.locator("body p").waitFor();
+  assert.equal((await popup.locator("body").innerText()).trim(), "O gato dorme na cadeira");
+  assert.equal(await popup.locator("button, nav, input, textarea").count(), 0);
+  await popup.close();
+  await screen("01-recursos-preparacao");
+  await button("Iniciar aplicação · 10 minutos").click();
+  // Camada de aventura: barra de estrelas no console da aplicadora (a criança
+  // não olha esta tela). Começa em zero e nunca aparece para fora deste console.
+  const starHud = page.getByLabel(/blocos com registro/);
+  assert.equal(await starHud.count(), 1, "barra de estrelas presente no console da aplicadora");
+  assert.match(await starHud.getAttribute("aria-label"), /^0 /);
+  assert.equal(await card().locator(".obs10-frame-section-title").count(), 4);
+  assert.equal(await card().getByRole("button", { name: /Imprimir/ }).count(), 0, "printing cannot steal the timed collection tab");
+  await page.locator(".obs10-stepper button").nth(4).click();
+  assert.match(await card().textContent(), /Folhas em branco/);
+  assert.match(await card().textContent(), /Lápis/);
+  assert.equal(await card().getByTestId("obs10-child-resource").textContent(), "O gato dorme na cadeira");
+  const stage = page.getByTestId("obs10-stimulus-stage");
+  await button("Mostrar o texto em tela inteira").click();
+  assert.equal(await stage.getByTestId("obs10-stimulus-text").textContent(), "O gato dorme na cadeira");
+  assert.doesNotMatch(await stage.innerText(), /DIGA|FAÇA|roteiro|comando|escreva|registre/i, "the child surface carries only the stimulus");
+  assert.equal(await stage.locator("button").count(), 1, "only the applicator's close control");
+  await screen("02-estimulo-tela-inteira");
+  await page.keyboard.press("Escape");
+  assert.equal(await stage.count(), 0);
+  await button("Letras maiores").click();
+  const originalFont = await card().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  assert.ok(originalFont >= 22);
+  for (const control of await card().getByRole("button").all()) {
+    if (await control.isVisible()) assert.ok((await control.boundingBox()).height >= 55, "large tap target");
+  }
+  await card().getByRole("group", { name: "Registro rápido desta tarefa", exact: true }).getByRole("button", { name: "Após repetição", exact: true }).click();
+  assert.match(await card().locator(".obs10-response-saved").textContent(), /Falta detalhar/);
+  const nextUp = card().getByTestId("obs10-next-up");
+  assert.match(await nextUp.textContent(), /A seguir: Observe os movimentos das mãos/);
+  assert.match(await nextUp.textContent(), /Guarde: Folhas em branco, Lápis/);
+  await screen("03-tarefa-leitura-desktop");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await screen("04-tarefa-leitura-celular");
+  // 200% text, without replacing UI logic or disabling controls.
+  await page.addStyleTag({ content: "html{font-size:200%!important}" });
+  await screen("05-texto-200-porcento");
+  await page.evaluate(() => { for (const style of document.querySelectorAll("style")) if (style.textContent === "html{font-size:200%!important}") style.remove(); });
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await button("Próxima tarefa").focus();
+  await page.keyboard.press("Enter");
+  assert.match(await card().locator("h3").textContent(), /movimentos das mãos/);
+  await focusedHeading(/movimentos das mãos/);
+  assert.match(await card().getByTestId("obs10-next-up").textContent(), /A seguir, no próximo bloco: Peça as palavras sem pistas/);
+  assert.match(await card().getByTestId("obs10-next-up").textContent(), /Os materiais continuam os mesmos/);
+  await card().getByRole("button", { name: "Próximo bloco", exact: true }).click();
+  assert.match(await card().locator("h3").textContent(), /palavras sem pistas/);
+  await focusedHeading(/palavras sem pistas/);
+  await page.locator(".obs10-stepper button").nth(2).click();
+  assert.match(await card().textContent(), /Não mostre palavras/);
+  assert.equal(await card().getByTestId("obs10-child-printout").count(), 0);
+  await button("Encerrar antes").click();
+  await page.locator(".obs10-stepper button").nth(4).click();
+  await card().getByText("Ver o recurso desta tarefa para a criança", { exact: true }).click();
+  assert.equal(await card().getByRole("button", { name: /tela inteira/ }).count(), 0, "no new attempts after the collection ends");
+  const downloadPromise = page.waitForEvent("download");
+  await button("Exportar JSON").click();
+  const download = await downloadPromise;
+  await download.saveAs(`${dir}/registro-ficticio.json`);
+  const data = JSON.parse(await readFile(`${dir}/registro-ficticio.json`, "utf8"));
+  assert.ok(data.observations.some((entry) => entry.outcome === "V" && entry.response === ""), "no fabricated response");
+  await button("Nova aplicação · limpar esta sessão").click();
+  await prepare(2);
+  await page.getByTestId("obs10-integrated-preparation").getByText("Preparar recurso: Peça partes do corpo e figura", { exact: true }).click();
+  assert.equal(await page.getByTestId("obs10-integrated-preparation").locator("[data-resource-scene]").count(), 1);
+  const scenePopupPromise = page.waitForEvent("popup");
+  await button("Imprimir somente a cena C").click();
+  const scenePopup = await scenePopupPromise;
+  await scenePopup.locator("body svg").waitFor();
+  assert.equal(await scenePopup.locator("body button, body p, body h3").count(), 0);
+  assert.doesNotMatch(await scenePopup.locator("body").textContent(), /gato|nariz|resposta/i);
+  await scenePopup.close();
+  await button("Mostrar a cena C em tela inteira").click();
+  const sceneStage = page.getByTestId("obs10-stimulus-stage");
+  await sceneStage.locator("svg").waitFor();
+  assert.doesNotMatch(await sceneStage.textContent(), /gato|nariz|resposta|DIGA|comando/i, "the scene surface teaches no answer");
+  assert.equal(await sceneStage.locator("button").count(), 1);
+  await screen("06-cena-tela-inteira");
+  await button("Encerrar exibição").click();
+  assert.equal(await sceneStage.count(), 0);
+  await button("Iniciar aplicação · 10 minutos").click();
+  await page.locator(".obs10-stepper button").nth(2).click();
+  await button("Próxima tarefa").click();
+  assert.match(await card().textContent(), /Não aplicar antes de 30 meses/);
+  await button("Registrar omissão").click();
+  await screen("07-omissao-por-idade");
+  await restart();
+  await prepare(1);
+  await button("Iniciar aplicação · 10 minutos").click();
+  await page.locator(".obs10-stepper button").nth(4).click();
+  await button("Próxima tarefa").click();
+  assert.match(await card().textContent(), /Livro físico obrigatório/);
+  assert.equal(await card().getByTestId("obs10-child-printout").count(), 0);
+  await restart();
+  await prepare(5);
+  await button("Iniciar aplicação · 10 minutos").click();
+  await page.locator(".obs10-stepper button").nth(4).click();
+  assert.equal(await card().getByTestId("obs10-model-on-paper").count(), 0, "spontaneous letters must not receive a model");
+  await button("Próxima tarefa").click();
+  assert.match(await card().getByTestId("obs10-model-on-paper").textContent(), /círculo/);
+  await button("Próxima tarefa").click();
+  assert.match(await card().getByTestId("obs10-model-on-paper").textContent(), /quadrado/);
+  await screen("08-modelo-papel");
+  await page.locator(".obs10-stepper button").nth(5).click();
+  assert.equal(await card().getByTestId("obs10-child-printout").count(), 0);
+  assert.match(await card().textContent(), /proposta é oral/);
+  await button("Encerrar antes").click();
+  assert.match(await card().textContent(), /A criança já terminou/);
+  assert.deepEqual(errors, []);
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, screens, exceptions: errors, scope: "Real built OBS-10 route, synthetic authentication/data only; no claim of clinical validation or usability tested with older adults." }, null, 2));
+  console.log("OBS-10 guided execution, integrated resources, printing, keyboard, mobile, enlarged text and clinical boundaries passed.");
+} catch (error) {
+  await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });
+  await writeFile(`${dir}/failure.txt`, String(error.stack || error));
+  throw error;
+} finally { await context.close(); await browser.close(); await server.close(); }

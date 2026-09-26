@@ -1,6 +1,6 @@
 # Portão de entrada PANT — Python
 
-Ferramenta local de validação estrutural e documental. Issue #791. Não altera o aplicativo publicado, a API Cloudflare/D1 ou o motor PANT. Usa apenas a biblioteca padrão do Python 3.10 ou superior no núcleo; o adaptador final usa o runtime PANT externo já homologado.
+Ferramenta local de validação estrutural e documental. Issue #791. Não altera o aplicativo publicado, a API Cloudflare/D1 nem a autoridade PANT. O núcleo usa apenas a biblioteca padrão do Python 3.10 ou superior.
 
 ## Executar
 
@@ -23,21 +23,13 @@ Saída 0: validação não bloqueante. Saída 2: bloqueio de entrada. Saída 1: 
 
 `draft_documents()` compila somente conteúdo fornecido e mantém pendências fora do texto. `approve_text()` exige declaração expressa de aprovação e vincula texto/dados por hash. A identificação digitada do médico é declaração local, não autenticação, certificado ou assinatura digital. Qualquer alteração invalida a aprovação. `handoff()` produz `neuroped.pant_handoff.v1`, ainda com `final_pdf_emitted=false`.
 
-## Adaptador PANT v5 externo
+## Autoridade PANT V12
 
-`pant_adapter.py` consome o handoff aprovado e só chama o motor depois de conferir novamente caso, rascunho, aprovação, Lei, selo, motor, QA, fontes e brasões. O repositório público não contém fontes nem brasões.
+A autoridade vigente é exclusivamente **PANT V12**. O intake/desktop deste diretório prepara e valida dados e rascunhos; **não é um renderizador clínico V12** e não deve emitir PDF final.
 
-```sh
-python pant_adapter.py inspect --runtime /caminho/para/runtime_pant_v5
-python pant_adapter.py emit --runtime /caminho/para/runtime_pant_v5 \
-  --handoff handoff.json --output documento.pdf --qa-output emissao.json
-```
+O antigo `pant_adapter.py` permanece apenas como **tombstone fail-closed** para compatibilidade de imports. Qualquer chamada a `inspect_runtime()`, `emit_pant()` ou ao CLI termina com `PANT_LEGACY_ADAPTER_RETIRED_USE_V12`. Não existe fallback para arquitetura anterior.
 
-O runtime precisa conter `00_LEI_PANT_VIGENTE_v5.md`, `01_MOTOR_PANT_HELENA_ESTHER.py`, `00_TRAVA_ANTIRREGRESSAO.py`, `01_QA_PANT_HELENA_ESTHER.py`, `marca_capa.png`, `marca_miolo.png` e as fontes declaradas pelo motor. A Lei v5 verificada no Drive em 05/09/2026 fica presa ao SHA-256 `5c699519ed0e33dcead0ad20cd398c6c116de35f4f3d6336487fe45079b8672e` e ao selo `900cb06d69bb6da7`. Divergência bloqueia até revisão explícita; uma Lei futura exige atualizar conscientemente essa âncora, nunca aceitar um arquivo só por ser mais recente.
-
-A saída é criada de forma exclusiva: arquivo existente nunca é substituído. O motor trabalha primeiro em diretório temporário; somente QA com `passa=true` e zero bloqueios permite gravar o PDF no destino. Falha de QA não deixa PDF final. A assinatura digital permanece etapa separada.
-
-O adaptador não redige conteúdo clínico novo. Ele transforma em blocos de apresentação o material já aprovado na Fase 1, preserva a origem dos parágrafos e deriva marcações do ponto crítico de frases já existentes. Hipóteses e pares CID vêm do caso aprovado; ausência desses dados bloqueia em vez de completar automaticamente.
+Um executor final só pode ser considerado apto quando demonstrar, por execução real, todos os gates da autoridade V12: leitura viva BUS→CURRENT, verificação dos assets/hash, aprovação médica explícita ligada aos bytes exatos, QA de fonte e PDF com zero bloqueios, inspeção visual e readback do provedor. Ausência do runtime V12 ou falha de qualquer gate significa **STOP**, nunca retorno a runtime antigo ou renderização Windows.
 
 ## Limites importantes
 
@@ -45,14 +37,18 @@ Não recomenda medicamentos nem doses. mg/kg/dia é aritmética sobre dados info
 
 Exemplos e testes são sintéticos. Use pseudônimos; o software não detecta nem anonimiza universalmente informações identificáveis. Não versionar entradas, transcrições, resultados clínicos ou segredos. Este módulo não implementa armazenamento clínico criptografado, controle de acesso multiusuário, prescrição eletrônica ou assinatura digital.
 
+## Desktop Windows
+
+A interface Desktop portátil continua limitada a intake/rascunhos. O smoke test exige `final_pdfs_emitted == 0`. O executável Windows não deve ser tratado como renderizador PANT e não autoriza emissão clínica final.
+
 ## Testes e integração
 
-105 testes do núcleo/CLI/desktop/adaptador passaram localmente nesta revisão. A CI precisa repetir a mesma suíte no SHA atual. O adaptador também foi confrontado nesta sessão com o runtime v5 recuperado do Drive: uma prova sintética independente do código do PR foi emitida pelo motor canônico e obteve QA 10,00, zero bloqueios; esse ensaio não substitui a homologação no PCDRJADSON.
+A suíte contém uma catraca antirregressão específica para impedir a ressurreição do runtime legado no `pant_adapter.py`. A CI também verifica marcadores proibidos no módulo e nesta documentação.
 
-A interface Desktop portátil continua sem dependências pesadas do motor incorporadas. A instalação do runtime canônico e sua ligação à interface serão feitas no PCDRJADSON após inventário do ambiente; até lá o adaptador funciona como módulo/CLI em ambiente Python compatível.
+A integração de um executor V12 real deve ocorrer em trabalho separado, depois de homologação do runtime e dos gates do `pant_v12_guard.py`. Até lá, este repositório não possui via autorizada de renderização final PANT.
 
 ## Rollback
 
-Antes de merge, fechar o PR sem alterar main. Depois de eventual merge aprovado, reverter pelo fluxo normal. Nenhuma migração D1 ou alteração de dados foi realizada. Proteções de main e workflow oficial de deploy permanecem intactos.
+Reverter este tombstone só é aceitável mediante nova decisão explícita que substitua a autoridade V12. Rollback técnico comum não deve reativar runtime legado, fallback ou emissão Windows.
 
-Pendências externas e critérios de verificação: `docs/audits/BLOCKED_EXTERNAL_PANT_INPUT_2026-09-05.md` e checkpoint persistente no Google Drive.
+Pendências externas e critérios de verificação históricos permanecem documentados em `docs/audits/BLOCKED_EXTERNAL_PANT_INPUT_2026-09-05.md`.

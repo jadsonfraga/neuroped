@@ -93,6 +93,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
    */
   const ordemInvertida = cadastroAberto && !entregaEmail;
 
+  /**
+   * O que esta rota ATESTA é só o primeiro degrau da escada comercial:
+   * configuração presente. Os degraus seguintes exigem efeitos que um GET de
+   * configuração não observa — chamada real ao provedor, e-mail recebido,
+   * webhook sandbox exercitado, produção verificada e um humano aceitando
+   * vender. Nomeá-los aqui impede que pronto=true seja lido como o degrau
+   * errado, e três sessões independentes já quase fizeram essa leitura.
+   */
+  const ambienteCobranca = (() => {
+    const rotulo = (env.ASAAS_ENVIRONMENT ?? "").trim().toLowerCase();
+    // Só os dois códigos reconhecidos saem daqui: um valor arbitrário da
+    // variável nunca é ecoado, mantendo o invariante de resposta sem segredo.
+    return rotulo === "sandbox" || rotulo === "production" ? rotulo : null;
+  })();
+
   const pendencias: string[] = [];
   if (!gates.banco) pendencias.push("DB_BINDING_AUSENTE");
   if (!gates.sessao) pendencias.push("JWT_SECRET_AUSENTE_OU_CURTO");
@@ -103,12 +118,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   return json(
     {
       pronto: pendencias.length === 0,
+      nivelAtestado: "CONFIGURACAO_PRESENTE",
+      ambienteCobranca,
+      naoComprova: [
+        "CREDENCIAL_VALIDADA_NO_PROVEDOR",
+        "ENTREGA_EMAIL_COMPROVADA",
+        "INTEGRACAO_SANDBOX_EXERCITADA",
+        "PRODUCAO_VERIFICADA",
+        "ACEITE_COMERCIAL_HUMANO",
+      ],
       ordemInvertida,
       gates,
       pendencias,
       nota:
-        "Booleanos apenas. Esta rota nunca devolve valor de segredo. " +
-        "Provisione a entrega de e-mail ANTES de abrir o cadastro.",
+        "Booleanos e códigos apenas. Esta rota nunca devolve valor de segredo. " +
+        "Provisione a entrega de e-mail ANTES de abrir o cadastro. " +
+        "pronto=true atesta somente configuração presente e NÃO autoriza venda: " +
+        "os degraus em naoComprova exigem verificação própria e aceite humano.",
     },
     200,
   );

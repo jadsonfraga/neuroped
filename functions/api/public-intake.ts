@@ -31,6 +31,7 @@ interface PublicInvitationRow {
   status: "pending" | "submitted" | "revoked";
   expires_at: string;
   clinic_name: string;
+  clinic_status: "active" | "suspended" | "closed";
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -59,7 +60,7 @@ async function resolveInvitation(
       `SELECT invitation.id, invitation.clinic_id, invitation.patient_id,
               invitation.respondent_kind, invitation.form_kind, invitation.form_id,
               invitation.token_hash, invitation.status, invitation.expires_at,
-              clinic.name AS clinic_name
+              clinic.name AS clinic_name, clinic.status AS clinic_status
          FROM live_intake_invitations invitation
          JOIN clinics clinic ON clinic.id = invitation.clinic_id
         WHERE invitation.id = ?
@@ -74,6 +75,13 @@ async function resolveInvitation(
 }
 
 function invitationStateFailure(row: PublicInvitationRow): Response | null {
+  // LTB-14 (ciclo 4, 2026-09-26): o link público ignorava o estado da
+  // clínica — uma família continuava enviando PHI de pré-consulta para uma
+  // clínica suspensa ou encerrada. Resposta genérica (mesmo código dos
+  // demais estados terminais), sem revelar qual é o motivo comercial.
+  if (row.clinic_status !== "active") {
+    return tenantError("Este formulário não está mais disponível.", "INTAKE_UNAVAILABLE", 410);
+  }
   if (row.status === "revoked") {
     return tenantError("Este convite foi revogado.", "INTAKE_REVOKED", 410);
   }

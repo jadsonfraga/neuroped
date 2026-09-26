@@ -26,3 +26,11 @@ A regressão entra no início de `test:quick-wins`, portanto também no `verify:
 ## Risco e rollback
 
 Escopo restrito a governança de release. O risco principal era equiparar revisão editorial a validação científica. As 110 pendências continuam reais; esta correção não as resolve cientificamente. Rollback por PR revertendo o commit, com reexecução dos gates; isso reintroduziria a subcontagem e não é recomendado. Aceite de merge depende dos checks do HEAD e revisão, não deste registro local isoladamente.
+
+## Reconciliação em 26/09/2026
+
+Main atual incorporado sem substituir seus novos testes ou alterações de domínio.
+Reexecutados os quatro testes adversariais (incluindo falha com 111), o catálogo
+real (274 instrumentos; 110 pendências) e a catraca real (exit 0). A correção
+não altera instrumento, norma, classificação ou licença. O teto 110 continua
+sem margem adicional. A CI da revisão reconciliada deve passar antes de merge.

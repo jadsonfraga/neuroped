@@ -95,3 +95,6 @@ drizzle/
 # Gemini CLI local state / telemetry / GitHub App temp credentials
 .gemini/
 gha-creds-*.json
+
+# Saídas de harness (escuta-browser-qa.mjs) e de testes que usam .tmp/
+.tmp/

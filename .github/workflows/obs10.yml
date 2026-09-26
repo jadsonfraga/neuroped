@@ -1,0 +1,151 @@
+name: OBS-10 clinical observation workflow
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'client/src/App.tsx'
+      - 'client/src/data/navigation.ts'
+      - 'client/src/components/Layout.tsx'
+      - 'tests/unit/featured-navigation.test.ts'
+      - 'tests/e2e/featured-navigation.mjs'
+      - 'client/src/security/**'
+      - 'tests/unit/obs10.test.ts'
+      - 'tests/unit/obs10-practical.test.ts'
+      - 'tests/unit/obs10-review.test.ts'
+      - 'tests/unit/obs10-evidence.test.ts'
+      - 'tests/unit/obs10-media-regressions.test.ts'
+      - 'tests/unit/obs10-dossier.test.ts'
+      - 'tests/unit/obs10-pilot-aggregate.test.ts'
+      - 'tests/unit/obs10-orientation.test.ts'
+      - 'tests/unit/obs10-agreement.test.ts'
+      - 'tests/e2e/obs10.mjs'
+      - 'tests/e2e/obs10-practical.mjs'
+      - 'tests/e2e/obs10-review.mjs'
+      - 'tests/e2e/obs10-evidence.mjs'
+      - 'tests/e2e/obs10-media-regressions.mjs'
+      - 'tests/e2e/obs10-dossier.mjs'
+      - 'tests/e2e/obs10-agreement.mjs'
+      - 'docs/features/obs10.md'
+      - 'docs/features/obs10-agreement.md'
+      - 'docs/audits/obs10-v13-pilot.md'
+      - 'docs/audits/obs10-media-regressions.md'
+      - '.github/workflows/obs10.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/data/navigation.ts'
+      - 'client/src/components/Layout.tsx'
+      - 'tests/unit/featured-navigation.test.ts'
+      - 'tests/e2e/featured-navigation.mjs'
+      - 'client/src/features/obs10/**'
+      - 'client/src/pages/pre-consulta-obs10.tsx'
+      - 'client/src/security/**'
+      - 'tests/unit/obs10.test.ts'
+      - 'tests/unit/obs10-practical.test.ts'
+      - 'tests/unit/obs10-review.test.ts'
+      - 'tests/unit/obs10-evidence.test.ts'
+      - 'tests/unit/obs10-media-regressions.test.ts'
+      - 'tests/unit/obs10-dossier.test.ts'
+      - 'tests/unit/obs10-pilot-aggregate.test.ts'
+      - 'tests/unit/obs10-orientation.test.ts'
+      - 'tests/unit/obs10-agreement.test.ts'
+      - 'tests/e2e/obs10.mjs'
+      - 'tests/e2e/obs10-practical.mjs'
+      - 'tests/e2e/obs10-review.mjs'
+      - 'tests/e2e/obs10-evidence.mjs'
+      - 'tests/e2e/obs10-media-regressions.mjs'
+      - 'tests/e2e/obs10-dossier.mjs'
+      - 'tests/e2e/obs10-agreement.mjs'
+      - '.github/workflows/obs10.yml'
+permissions:
+  contents: read
+concurrency:
+  group: obs10-contract-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: TypeScript and lint
+        run: |
+          npm run check
+          npx eslint client/src/features/obs10/*.{ts,tsx} client/src/pages/pre-consulta-obs10.tsx tests/unit/obs10*.test.ts --max-warnings=0
+      - name: Age, clock, factual reporting, authorization and existing regressions
+        run: |
+          node --import tsx tests/unit/obs10.test.ts
+          node --import tsx tests/unit/obs10-practical.test.ts
+          node --import tsx tests/unit/obs10-review.test.ts
+          node --import tsx tests/unit/obs10-evidence.test.ts
+          node --import tsx tests/unit/obs10-media-regressions.test.ts
+          node --import tsx tests/unit/obs10-dossier.test.ts
+          node --import tsx tests/unit/obs10-pilot-aggregate.test.ts
+          node --import tsx tests/unit/obs10-orientation.test.ts
+          node --import tsx tests/unit/obs10-agreement.test.ts
+          node --import tsx tests/unit/featured-navigation.test.ts
+          npm run test:sonda
+          npm run audit:navigation
+          npm run test:operations
+      - name: Production build (no open-access bypass)
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Featured navigation, connections and responsive sidebar
+        env:
+          NAVIGATION_ARTIFACT_DIR: /tmp/featured-navigation-proof
+        run: node tests/e2e/featured-navigation.mjs
+      - name: Real route browser journey with synthetic credentials and media
+        env:
+          OBS10_ARTIFACT_DIR: /tmp/obs10-proof
+        run: node tests/e2e/obs10.mjs
+      - name: Practical assistant journey and lifecycle regressions
+        env:
+          OBS10_PRACTICAL_ARTIFACT_DIR: /tmp/obs10-practical
+        run: node tests/e2e/obs10-practical.mjs
+      - name: Review, local JSON continuity and declared handoff
+        env:
+          OBS10_REVIEW_ARTIFACT_DIR: /tmp/obs10-review
+        run: node tests/e2e/obs10-review.mjs
+      - name: Local evidence, professional review and operational metrics
+        env:
+          OBS10_EVIDENCE_ARTIFACT_DIR: /tmp/obs10-evidence
+        run: node tests/e2e/obs10-evidence.mjs
+      - name: Hidden permissions, unsolicited stop and cross-clip regressions
+        env:
+          OBS10_MEDIA_ARTIFACT_DIR: /tmp/obs10-media-regressions
+        run: node tests/e2e/obs10-media-regressions.mjs
+      - name: Journey map, readiness, printed script, dossier and local pilot consolidation
+        env:
+          OBS10_DOSSIER_ARTIFACT_DIR: /tmp/obs10-dossier
+        run: node tests/e2e/obs10-dossier.mjs
+      - name: Observer agreement, fail-closed pairing and metadata-only study export
+        env:
+          OBS10_AGREEMENT_ARTIFACT_DIR: /tmp/obs10-agreement
+        run: node tests/e2e/obs10-agreement.mjs
+      - name: Preserve synthetic screenshots and results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs10-verification
+          path: |
+            /tmp/featured-navigation-proof
+            /tmp/obs10-proof
+            /tmp/obs10-practical
+            /tmp/obs10-review
+            /tmp/obs10-evidence
+            /tmp/obs10-media-regressions
+            /tmp/obs10-dossier
+            /tmp/obs10-agreement
+          if-no-files-found: ignore
+          retention-days: 7

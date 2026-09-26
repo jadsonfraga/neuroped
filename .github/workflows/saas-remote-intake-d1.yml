@@ -9,6 +9,7 @@ on:
       - "functions/api/public-intake.ts"
       - "functions/api/live/intake/index.ts"
       - "functions/api/intake/_shared.ts"
+      - "tests/unit/remote-intake-clinic-status.test.ts"
       - ".github/workflows/saas-remote-intake-d1.yml"
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - "functions/api/public-intake.ts"
       - "functions/api/live/intake/index.ts"
       - "functions/api/intake/_shared.ts"
+      - "tests/unit/remote-intake-clinic-status.test.ts"
       - ".github/workflows/saas-remote-intake-d1.yml"
   workflow_dispatch:
 
@@ -54,6 +56,9 @@ jobs:
 
       - name: Security boundary regression
         run: node tests/unit/saas-remote-intake-static.test.mjs
+
+      - name: Clinic status gate (LTB-14)
+        run: node --import tsx tests/unit/remote-intake-clinic-status.test.ts
 
       - name: TypeScript
         run: npm run check

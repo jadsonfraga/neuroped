@@ -2,6 +2,7 @@ import {
   canWriteClinicalData,
   getContextUser,
   getPatientAccess,
+  isAdmin,
 } from "../auth/_authorization";
 import { ensureConectaDemoSchema } from "./_schema";
 import { json } from "../_request";
@@ -34,10 +35,21 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (context) => {
     if (!row) return error("Registro não encontrado.", "NOT_FOUND", 404);
 
     const access = await getPatientAccess(env.DB, row.patient_id, user);
-    if (!access.exists) return error("Paciente não encontrado.", "NOT_FOUND", 404);
-    if (!access.allowed) return error("Sem permissão para este paciente.", "FORBIDDEN", 403);
+    // Anti-enumeração (AUTHZ-P2-11/LEG-10, ciclo 4, 2026-09-26): paciente
+    // inexistente e paciente de outro owner respondem exatamente igual.
+    if (!access.exists || !access.allowed) return error("Paciente não encontrado.", "NOT_FOUND", 404);
 
-    const deletion = await env.DB.prepare("DELETE FROM conecta_events_demo WHERE id = ?").bind(id).run();
+    // LEG-09/AUTHZ-P2-12 (ciclo 4, 2026-09-26 —
+    // docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): a mutação final repete o
+    // owner (via o paciente do evento) no predicado — não basta autorizar
+    // antes e apagar por `WHERE id = ?` sozinho.
+    const ownershipClause = isAdmin(user)
+      ? ""
+      : "AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ?)";
+    const deletion = await env.DB
+      .prepare(`DELETE FROM conecta_events_demo WHERE id = ? ${ownershipClause}`)
+      .bind(...(isAdmin(user) ? [id] : [id, user.id]))
+      .run();
     if ((deletion.meta?.changes ?? 0) !== 1) {
       return error("Registro não encontrado.", "NOT_FOUND", 404);
     }

@@ -148,6 +148,7 @@ export interface OperationsMetrics {
 }
 
 export interface OperationsAccessContext {
+  clinicId: string;
   actorUserId: string;
   actorRole: string;
   providerUserId: string;

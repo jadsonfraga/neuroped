@@ -1,0 +1,103 @@
+name: NeuroPed Operations Clinic Scope D1 migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/migrations/0029_operations_clinic_scope.sql"
+      - "functions/api/operations/**"
+      - "functions/api/public-booking.ts"
+      - "tests/unit/operations-tenant-isolation.test.ts"
+      - ".github/workflows/operations-clinic-scope-d1-migration.yml"
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-operations-clinic-scope-d1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de produção
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Migração de escopo de clínica na agenda permitida somente a partir de main."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+      - name: Validar isolamento de tenant da agenda antes da migração
+        run: node --import tsx tests/unit/operations-tenant-isolation.test.ts
+
+      - name: Validar credenciais Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      - name: Aplicar migração 0029 (clinic_id na agenda/operações)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0029_operations_clinic_scope.sql
+
+      - name: Verificar coluna clinic_id e reportar backfill pendente
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          for table in \
+            booking_services booking_availability_rules booking_blocks appointments \
+            waitlist_entries appointment_reviews notification_outbox operations_audit_log; do
+            npx wrangler@4 d1 execute neuroped-db --remote \
+              --command "SELECT name FROM pragma_table_info('$table');" > /tmp/cols-$table.txt 2>&1
+            cat /tmp/cols-$table.txt
+            grep -q "clinic_id" /tmp/cols-$table.txt || {
+              echo "::error::Coluna clinic_id ausente em $table após a migração 0029"
+              exit 1
+            }
+          done
+
+          # Visível no log, não bloqueia o deploy: linhas com clinic_id NULL
+          # precisam de atribuição manual auditada (owner com 0 ou 2+
+          # memberships ativas no momento do backfill) — nunca heurística
+          # automática. Ver docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md (OPS-01).
+          echo "### Linhas ainda sem clinic_id (atribuição manual auditada pendente)" >> "$GITHUB_STEP_SUMMARY"
+          for table in \
+            booking_services booking_availability_rules booking_blocks appointments \
+            waitlist_entries appointment_reviews notification_outbox operations_audit_log; do
+            npx wrangler@4 d1 execute neuroped-db --remote \
+              --command "SELECT '$table' AS tabela, COUNT(*) AS sem_clinica FROM $table WHERE clinic_id IS NULL;" \
+              >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          done
+
+          echo "✅ Operations Clinic Scope D1: clinic_id presente nas 8 tabelas da agenda; backfill reportado no resumo do job."

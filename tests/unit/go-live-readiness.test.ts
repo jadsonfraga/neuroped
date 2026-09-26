@@ -132,6 +132,41 @@ const AMBIENTE_COMPLETO = {
   assert.ok(corpo.pendencias.includes("COBRANCA_NAO_CONFIGURADA"));
 }
 
+// 7) "pronto" atesta configuração presente — e diz isso. A escada comercial
+//    (credencial validada, entrega comprovada, sandbox exercitado, produção
+//    verificada, aceite humano) NÃO é atestada por esta rota, e a resposta
+//    precisa nomear cada degrau que falta, para que pronto=true nunca seja
+//    lido como autorização de venda.
+{
+  const resposta = await chamar(AMBIENTE_COMPLETO, ADMIN);
+  const corpo = await resposta.json() as {
+    pronto: boolean;
+    nivelAtestado: string;
+    ambienteCobranca: string | null;
+    naoComprova: string[];
+    nota: string;
+  };
+  assert.equal(corpo.pronto, true, "compatibilidade: pronto não muda de semântica");
+  assert.equal(corpo.nivelAtestado, "CONFIGURACAO_PRESENTE");
+  assert.equal(corpo.ambienteCobranca, "sandbox", "o rótulo do ambiente é código operacional, não segredo");
+  for (const degrau of [
+    "CREDENCIAL_VALIDADA_NO_PROVEDOR",
+    "ENTREGA_EMAIL_COMPROVADA",
+    "INTEGRACAO_SANDBOX_EXERCITADA",
+    "PRODUCAO_VERIFICADA",
+    "ACEITE_COMERCIAL_HUMANO",
+  ]) {
+    assert.ok(corpo.naoComprova.includes(degrau), `naoComprova precisa listar ${degrau}`);
+  }
+  assert.match(corpo.nota, /não autoriza venda/i, "a nota precisa negar a leitura comercial de pronto=true");
+
+  // Ambiente de cobrança inválido nunca é ecoado: só os dois códigos ou null.
+  const invalido = await chamar({ ...AMBIENTE_COMPLETO, ASAAS_ENVIRONMENT: "outra-coisa" }, ADMIN);
+  const corpoInvalido = await invalido.json() as { ambienteCobranca: string | null; pendencias: string[] };
+  assert.equal(corpoInvalido.ambienteCobranca, null, "valor não reconhecido não pode ser ecoado");
+  assert.ok(corpoInvalido.pendencias.includes("COBRANCA_NAO_CONFIGURADA"));
+}
+
 console.log(
-  "✅ go-live: restrito a admin, nenhum segredo (nem prefixo) na resposta, pendências nomeadas e ordem invertida sinalizada como perigo.",
+  "✅ go-live: restrito a admin, nenhum segredo (nem prefixo) na resposta, pendências nomeadas, ordem invertida sinalizada como perigo e nível atestado explícito — pronto=true não é autorização de venda.",
 );

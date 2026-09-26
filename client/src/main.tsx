@@ -12,6 +12,7 @@ const UnauthorizedCopyScreen = lazy(() =>
 );
 import { installChunkRecovery } from "./lib/chunkRecovery";
 import { purgeLegacyCertificateCache } from "./lib/certificateSession";
+import { completeSncrCallbackIfPresent } from "./lib/sncrClient";
 import {
   installClinicalBrowserPersistenceBoundary,
   isClinicalBrowserPersistenceDenied,
@@ -31,12 +32,19 @@ import "./styles/tablet-coarse-perf.css";
 import "./styles/brand-signature-v14.css";
 // Acabamento de produto: entrada, navegação e área de trabalho; sem regras clínicas.
 import "./styles/product-signature.css";
+// Movimento com propósito e coerência geométrica — última palavra do acabamento.
+import "./styles/motion-coherence-v15.css";
 
 // Instalada antes de qualquer rota clínica: após login remoto, namespaces de PHI
 // conhecidos falham fechados inclusive quando código legado usa Storage direto.
 installClinicalBrowserPersistenceBoundary();
 installChunkRecovery();
 void purgeLegacyCertificateCache();
+// Callback Gov.br do SNCR: troca session_id por token em memória de sessão e
+// restaura a rota clínica de origem. Falhas não derrubam o restante do app.
+void completeSncrCallbackIfPresent().catch((error) => {
+  console.error("[sncr.callback]", error);
+});
 // Falha fechado no startup: versões antigas persistiam narrativa clínica do
 // filtro. Em LIVE autenticado nem a limpeza toca a chave proibida; o conteúdo
 // preexistente fica preservado até logout/limpeza de segurança. Nos modos

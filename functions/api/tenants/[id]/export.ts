@@ -82,7 +82,13 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
         clinicalEvents: safeCounts.events,
         memberships: safeCounts.memberships,
       },
-      complete: true,
+      // LTB-02 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): antes fixo em
+      // `true` mesmo faltando documentos, avaliações, intake e respostas de
+      // escala remota do payload. Agora reflete de fato o que este export
+      // levou; `uncoveredNotExported` nomeia, por tabela, o que ainda falta
+      // (zero em todas quando `complete` é true).
+      complete: collected.complete,
+      uncoveredNotExported: collected.uncoveredCounts,
     },
     data,
   };

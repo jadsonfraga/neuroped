@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, Images, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SondaDezBasePage from "@/pages/testes-diretos";
+import { SondaScene } from "./SondaDigitalArt";
 
 type BandId = "12-23m" | "24-35m" | "3-4a" | "5-7a" | "8-11a" | "12-17a";
 type StimulusKind =
@@ -9,6 +10,7 @@ type StimulusKind =
   | "objectsBaby"
   | "concepts"
   | "story"
+  | "rain"
   | "social"
   | "dogs15"
   | "dogs20"
@@ -107,7 +109,7 @@ const STIMULI: Stimulus[] = [
     title: "Narrativa e inferência",
     subtitle: "Chuva inesperada",
     instruction: "Pergunte: “O que aconteceu?”, “Por quê?” e “O que acontece depois?”.",
-    kind: "story",
+    kind: "rain",
   },
   {
     id: "c-atencao",
@@ -366,7 +368,14 @@ const DOGS20 = ["DOG", "CAT", "FOX", "DOG", "BEAR", "RAB", "DOG", "PANDA", "TIG"
 const ANIMAL_GLYPH: Record<string, string> = { DOG: "🐶", CAT: "🐱", RAB: "🐰", FOX: "🦊", BEAR: "🐻", PANDA: "🐼", TIG: "🐯", FROG: "🐸", MONK: "🐵", LION: "🦁", COW: "🐮", PIG: "🐷", HEN: "🐔", PENG: "🐧", DUCK: "🦆" };
 
 function SequenceGrid({ values }: { values: string[] }) {
-  return <div className="grid w-full max-w-5xl grid-cols-5 gap-3">{values.map((v, i) => <div key={`${v}-${i}`} className="flex aspect-square items-center justify-center rounded-2xl border-4 border-slate-200 bg-white text-5xl shadow-sm">{ANIMAL_GLYPH[v] ?? v}</div>)}</div>;
+  const [position, setPosition] = useState(-1);
+  return <div className="flex w-full max-w-3xl flex-col items-center gap-5">
+    <div className="flex min-h-64 w-full items-center justify-center rounded-3xl border-4 border-slate-200 bg-white p-8 text-center text-6xl text-slate-950" aria-live="off">
+      {position < 0 || position >= values.length ? "•" : ANIMAL_GLYPH[values[position]] ?? values[position]}
+    </div>
+    <Button variant="secondary" disabled={position >= values.length} onClick={() => setPosition((i) => i + 1)}>{position < 0 ? "Apresentar primeiro cartão" : position < values.length - 1 ? "Próximo cartão" : position === values.length - 1 ? "Encerrar cartões" : "Sequência encerrada"}</Button>
+    <p className="text-sm text-white/80">Cartões manuais. Tempo e respostas devem ser registrados pela aplicadora; não equivalem à série digital cronometrada.</p>
+  </div>;
 }
 
 function DotGrid() {
@@ -387,16 +396,16 @@ function SymbolGrid() {
 
 function SunMoon() {
   const items = ["☀️", "🌙", "☀️", "☀️", "🌙", "☀️", "🌙", "🌙", "☀️", "🌙", "☀️", "🌙", "☀️", "🌙", "🌙", "☀️"];
-  return <div className="grid w-full max-w-5xl grid-cols-4 gap-4">{items.map((item, i) => <div key={i} className="flex aspect-[4/3] items-center justify-center rounded-3xl border-4 border-slate-200 bg-white text-6xl">{item}</div>)}</div>;
+  return <SequenceGrid values={items} />;
 }
 
 function DayNight() {
   const items = ["DIA", "NOITE", "DIA", "DIA", "NOITE", "NOITE", "DIA", "NOITE", "DIA", "NOITE", "NOITE", "DIA"];
-  return <div className="grid w-full max-w-5xl grid-cols-3 gap-4">{items.map((item, i) => <div key={i} className="rounded-3xl border-4 border-slate-200 bg-white px-5 py-8 text-center text-4xl font-black text-slate-950">{item}</div>)}</div>;
+  return <SequenceGrid values={items} />;
 }
 
 function Routine() {
-  const cards = ["06:45 · acordar", "06:55 · higiene", "07:05 · café", "07:15 · mochila/material", "07:22 · calçar", "07:30 · sair"];
+  const cards = ["calçar", "café", "mochila/material", "acordar", "sair às 7h30", "higiene"];
   return <div className="grid w-full max-w-4xl gap-3 sm:grid-cols-2">{cards.map((item) => <div key={item} className="rounded-2xl border-4 border-slate-200 bg-white p-5 text-xl font-black text-slate-950">{item}</div>)}</div>;
 }
 
@@ -413,7 +422,7 @@ function MessageSeen() {
 
 function LeftRight() {
   const items = ["DIREITA", "ESQUERDA", "DIREITA", "DIREITA", "ESQUERDA", "ESQUERDA", "DIREITA", "ESQUERDA", "DIREITA", "ESQUERDA", "ESQUERDA", "DIREITA"];
-  return <div className="grid w-full max-w-5xl grid-cols-3 gap-4">{items.map((item, i) => <div key={i} className="rounded-3xl border-4 border-slate-200 bg-white px-5 py-8 text-center text-3xl font-black text-slate-950">{item}</div>)}</div>;
+  return <SequenceGrid values={items} />;
 }
 
 function RapidNaming() {
@@ -439,11 +448,13 @@ function ReadingCard() {
 }
 
 function EveningPlan() {
+  const [changed, setChanged] = useState(false);
   const cards = ["prova amanhã", "trabalho para entregar", "banho", "jantar", "30 min livres"];
-  return <div className="grid w-full max-w-4xl gap-4 sm:grid-cols-2">{cards.map((item, i) => <div key={item} className={`rounded-3xl border-4 bg-white p-6 text-center text-2xl font-black text-slate-950 ${i < 2 ? "border-amber-300" : "border-slate-200"}`}>{item}</div>)}<div className="rounded-3xl border-4 border-rose-300 bg-rose-50 p-6 text-center text-2xl font-black text-rose-950 sm:col-span-2">IMPREVISTO: o trabalho vai levar +1 hora</div></div>;
+  return <div className="grid w-full max-w-4xl gap-4 sm:grid-cols-2">{cards.map((item, i) => <div key={item} className={`rounded-3xl border-4 bg-white p-6 text-center text-2xl font-black text-slate-950 ${i < 2 ? "border-amber-300" : "border-slate-200"}`}>{item}</div>)}{changed ? <div className="rounded-3xl border-4 border-rose-300 bg-rose-50 p-6 text-center text-2xl font-black text-rose-950 sm:col-span-2">IMPREVISTO: o trabalho vai levar +1 hora</div> : <Button variant="secondary" onClick={() => setChanged(true)}>Apresentar segunda condição</Button>}</div>;
 }
 
 function StimulusContent({ kind }: { kind: StimulusKind }) {
+  if (kind === "rain") return <SondaScene kind="rain" />;
   if (["objects", "objectsBaby", "concepts", "story", "social", "blocks"].includes(kind)) return <VectorScene kind={kind} />;
   if (kind === "dogs15") return <SequenceGrid values={DOGS15} />;
   if (kind === "dogs20") return <SequenceGrid values={DOGS20} />;
@@ -461,8 +472,8 @@ function StimulusContent({ kind }: { kind: StimulusKind }) {
   return null;
 }
 
-function StimulusLibrary({ onClose }: { onClose: () => void }) {
-  const [band, setBand] = useState<BandId>("3-4a");
+function StimulusLibrary({ onClose, initialBand }: { onClose: () => void; initialBand?: string }) {
+  const [band, setBand] = useState<BandId>((initialBand && initialBand in BAND_LABELS ? initialBand : "12-23m") as BandId);
   const [active, setActive] = useState<Stimulus | null>(null);
   const items = useMemo(() => STIMULI.filter((item) => item.band === band), [band]);
 
@@ -471,11 +482,11 @@ function StimulusLibrary({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-[120] flex min-h-dvh flex-col bg-slate-950 text-white">
         <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
           <Button variant="secondary" onClick={() => setActive(null)}><ChevronLeft className="mr-1 h-4 w-4" /> Voltar</Button>
-          <div className="min-w-0 text-center"><p className="truncate text-sm font-black">{active.title}</p><p className="truncate text-xs text-white/60">{BAND_LABELS[active.band]}</p></div>
+          <p className="min-w-0 text-center text-sm font-semibold">Tela de apresentação</p>
           <Button variant="secondary" onClick={onClose}><X className="mr-1 h-4 w-4" /> Fechar</Button>
         </div>
         <main className="flex flex-1 flex-col items-center justify-center overflow-auto p-5 sm:p-8">
-          <div className="mb-5 max-w-3xl text-center"><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Tela da criança</p><h1 className="mt-2 text-2xl font-black sm:text-4xl">{active.subtitle}</h1></div>
+          <h1 className="sr-only">Estímulo visual</h1>
           <StimulusContent kind={active.kind} />
         </main>
       </div>
@@ -499,14 +510,15 @@ function StimulusLibrary({ onClose }: { onClose: () => void }) {
 
 export default function SondaDezDailyPage() {
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [band, setBand] = useState<string | undefined>(undefined);
   return (
     <>
       <div className="mx-auto mb-4 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-cyan-950 shadow-sm dark:border-cyan-900 dark:bg-cyan-950/20 dark:text-cyan-100">
         <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 dark:bg-cyan-900/40"><Images className="h-5 w-5" /></div><div><p className="text-sm font-black">Estímulos visuais incorporados</p><p className="text-xs opacity-75">Cenas, grades e cartões funcionam offline dentro da Sonda.</p></div></div>
         <Button onClick={() => setLibraryOpen(true)} className="rounded-xl">Abrir banco visual</Button>
       </div>
-      <SondaDezBasePage />
-      {libraryOpen && <StimulusLibrary onClose={() => setLibraryOpen(false)} />}
+      <SondaDezBasePage onBandChange={setBand} />
+      {libraryOpen && <StimulusLibrary initialBand={band} onClose={() => setLibraryOpen(false)} />}
     </>
   );
 }

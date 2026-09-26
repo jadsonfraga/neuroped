@@ -240,12 +240,16 @@ export default function MchatPage() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Badge
-                    variant="outline"
-                    className="mt-0.5 flex-shrink-0 text-xs font-mono"
+                  <span
+                    aria-hidden="true"
+                    className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                      answers[i] !== undefined && answers[i] !== null
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground ring-1 ring-inset ring-border/70"
+                    }`}
                   >
                     {i + 1}
-                  </Badge>
+                  </span>
                   <div className="flex-1 space-y-3">
                     <p className="text-sm text-foreground leading-relaxed">
                       {q}
@@ -264,7 +268,11 @@ export default function MchatPage() {
                         variant={answers[i] === true ? "default" : "outline"}
                         aria-pressed={answers[i] === true}
                         onClick={() => setAnswers({ ...answers, [i]: true })}
-                        className="min-w-[64px]"
+                        className={`h-10 min-w-[5.5rem] rounded-full font-semibold transition-all ${
+                          answers[i] === true
+                            ? "shadow-[0_10px_22px_-14px_hsl(var(--primary)/0.8)]"
+                            : "text-foreground/80"
+                        }`}
                         data-testid={`button-yes-${i}`}
                       >
                         Sim
@@ -274,7 +282,11 @@ export default function MchatPage() {
                         variant={answers[i] === false ? "default" : "outline"}
                         aria-pressed={answers[i] === false}
                         onClick={() => setAnswers({ ...answers, [i]: false })}
-                        className="min-w-[64px]"
+                        className={`h-10 min-w-[5.5rem] rounded-full font-semibold transition-all ${
+                          answers[i] === false
+                            ? "shadow-[0_10px_22px_-14px_hsl(var(--primary)/0.8)]"
+                            : "text-foreground/80"
+                        }`}
                         data-testid={`button-no-${i}`}
                       >
                         Não
