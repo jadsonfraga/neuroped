@@ -32,6 +32,9 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   const [framing, setFraming] = useState(false); const [externalReady, setExternalReady] = useState(false);
   const [rehearsal, setRehearsal] = useState(false); const [rehearsalSeen, setRehearsalSeen] = useState(false);
   const [note, setNote] = useState(""); const [outcome, setOutcome] = useState<TabletOutcome | "">("");
+  // Rascunho do motivo de omissão é separado da descrição da resposta: um motivo
+  // digitado e não enviado nunca pode virar a descrição factual de uma estação aplicada.
+  const [skipReason, setSkipReason] = useState("");
   const [large, setLarge] = useState(false); const [message, setMessage] = useState("");
   const [starting, setStarting] = useState(false); const [urgent, setUrgent] = useState(false);
   const [savedJson, setSavedJson] = useState(""); const [savedText, setSavedText] = useState("");
@@ -53,6 +56,9 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
   const task = plan?.tasks[state.cursor];
   const nextTask = plan?.tasks[state.cursor + 1];
   const pending = state.record ? pendingDescriptions(state.record) : [];
+  const currentObservation = task ? state.record?.observations.find((o) => o.taskId === task.id) : undefined;
+  // Percurso real: uma estação omitida (NA) não é anunciada como concluída.
+  const stationStatus = currentObservation?.outcome === "NA" ? "não aplicada" : "concluída";
   const payload = state.record ? JSON.stringify(state.record, null, 2) : "";
   const summary = state.record ? tabletText(state.record) : "";
   const jsonCurrent = Boolean(payload) && savedJson === payload;
@@ -119,7 +125,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
     } catch { setMessage("Não foi possível abrir: use um JSON do modo tablet, até 4 MB. O registro atual foi preservado."); }
   }
   if (urgent) return <div className="obs10 ot-root" data-testid="obs10-tablet" data-phase="urgent"><style>{TABLET_STYLE}</style><section role="alert" className="ot-emergency"><h1 ref={heading} tabIndex={-1}>Interrompa e chame a equipe presencial.</h1><p>Alteração de consciência, crise, dificuldade respiratória, fraqueza súbita, dor intensa ou risco imediato: não espere vídeo ou IA. Em emergência, SAMU 192.</p><p>Na crise: proteja contra lesões, não contenha à força e não coloque nada na boca. Conteúdo sensível exige atendimento reservado.</p><button type="button" onClick={() => setUrgent(false)}>Entendi · manter coleta encerrada</button></section></div>;
-  const label = state.phase === "setup" ? "1. Prepare este atendimento" : state.phase === "camera" ? "2. Confira a câmera" : state.phase === "rehearsal" ? "3. Experimente sem criança" : state.phase === "ready" ? "4. Tudo pronto para começar?" : state.phase === "cue" ? `Prepare: ${task?.title}` : state.phase === "child" ? "Estação em andamento" : state.phase === "response" ? "Registre o que aconteceu" : state.phase === "transition" ? `Estação ${state.cursor + 1} concluída` : state.phase === "review" ? "Confira antes de entregar" : "Guarde os arquivos desta sessão";
+  const label = state.phase === "setup" ? "1. Prepare este atendimento" : state.phase === "camera" ? "2. Confira a câmera" : state.phase === "rehearsal" ? "3. Experimente sem criança" : state.phase === "ready" ? "4. Tudo pronto para começar?" : state.phase === "cue" ? `Prepare: ${task?.title}` : state.phase === "child" ? "Estação em andamento" : state.phase === "response" ? "Registre o que aconteceu" : state.phase === "transition" ? `Estação ${state.cursor + 1} ${stationStatus}` : state.phase === "review" ? "Confira antes de entregar" : "Guarde os arquivos desta sessão";
   return <div className={`obs10 ot-root ${large ? "ot-large" : ""}`} data-testid="obs10-tablet" data-phase={state.phase}>
     <style>{TABLET_STYLE}</style>
     <header className="ot-header"><div><p className="ot-eyebrow">NEUROPED · OBS-10 TABLET</p><h1 id="ot-title" ref={heading} tabIndex={-1}>{label}</h1></div>{state.phase !== "child" && <button type="button" aria-pressed={large} onClick={() => setLarge((v) => !v)}>Letras maiores</button>}</header>
@@ -168,8 +174,8 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       {task.steps && <ol className="ot-steps">{task.steps.map((line) => <li key={line}>{line}</li>)}</ol>}
       <h2>3. Observe</h2><p>{task.observe}</p><p className="ot-info">{task.caution}</p>
       <p>{task.kind === "quiet" ? "Sem objeto e sem estímulo visual. Ao iniciar, mantenha a interação natural." : "O próximo botão abre somente o recurso necessário, dentro desta mesma tela. Não há impressão ou troca de aplicativo."}</p>
-      <div className="ot-actions"><button type="button" className="ot-primary" onClick={() => apply({ type: "show" })}>{task.kind === "quiet" ? "Iniciar esta interação" : "Abrir estação para a criança"}</button></div>
-      <details><summary>Não posso aplicar esta estação</summary><label>Motivo da não aplicação<textarea value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} /></label><button type="button" onClick={() => { apply({ type: "skip", reason: note }); if (note.trim()) { setNote(""); setOutcome(""); } }}>Registrar motivo e seguir</button></details>
+      <div className="ot-actions"><button type="button" className="ot-primary" onClick={() => { setNote(""); setOutcome(""); apply({ type: "show" }); }}>{task.kind === "quiet" ? "Iniciar esta interação" : "Abrir estação para a criança"}</button></div>
+      <details><summary>Não posso aplicar esta estação</summary><label>Motivo da não aplicação<textarea value={skipReason} maxLength={2000} onChange={(e) => setSkipReason(e.target.value)} /></label><button type="button" onClick={() => { apply({ type: "skip", reason: skipReason }); if (skipReason.trim()) { setSkipReason(""); setNote(""); setOutcome(""); } }}>Registrar motivo e seguir</button></details>
     </section>}
     {state.phase === "child" && task && <section className="ot-child" data-testid="tablet-child"><TabletStimulus key={task.id} task={task} strokes={drawingStrokes(state.record?.events ?? [], task.id)} onInput={(event, value) => apply({ type: "input", event, value })} /><button type="button" className="ot-primary" onClick={() => apply({ type: "response" })}>Terminar tentativa · registrar</button></section>}
     {state.phase === "response" && task && <section className="ot-card ot-station-card" data-testid="tablet-response">
@@ -181,7 +187,7 @@ export default function TabletWorkspace({ onClose }: { onClose: () => void }) {
       <button type="button" className="ot-primary" disabled={!outcome} onClick={() => { if (outcome) { apply({ type: "save", outcome, note }); setNote(""); setOutcome(""); } }}>{note.trim() ? "Salvar resposta e continuar" : "Marcar categoria e continuar · detalhar depois"}</button><button type="button" onClick={() => end("Encerramento com descrição ainda pendente")}>Encerrar e completar depois</button>
     </section>}
     {state.phase === "transition" && task && nextTask && <section className="ot-card" data-testid="tablet-transition">
-      <p className="ot-info"><strong>Estação {state.cursor + 1} concluída: {task.title}.</strong> O registro desta estação já está guardado nesta tela. Não repita a proposta para melhorar a resposta.</p>
+      <p className="ot-info"><strong>Estação {state.cursor + 1} {stationStatus}: {task.title}.</strong> {stationStatus === "não aplicada" ? "O motivo da não aplicação já está guardado nesta tela; a estação não conta como aplicada." : "O registro desta estação já está guardado nesta tela. Não repita a proposta para melhorar a resposta."}</p>
       {/* Bound to the stored observation, never to the response draft: that draft is cleared on save. */}
       <label>Quer completar agora a descrição desta estação? Pode deixar para a revisão.<textarea aria-label="Completar descrição factual da estação encerrada" value={state.record?.observations.find((o) => o.taskId === task.id)?.note ?? ""} maxLength={2000} onChange={(e) => apply({ type: "amend", taskId: task.id, note: e.target.value })} placeholder="Escreva apenas o fato observado. Não use nomes." /></label>
       <h2>Próxima estação: {nextTask.title}</h2>
