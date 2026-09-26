@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { ITEMS, COLORS, PAIRS, CATEGORIES, VERSION, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, problems, activeObservations, reportText, type Config, type Draft, type StageEvent } from "../../client/src/features/visual-recognition/model.ts";
+import { ITEMS, COLORS, PAIRS, CATEGORIES, VERSION, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, easyPlanFor, itemFor, distractorPool, emptyDraft, observe, problems, activeObservations, reportText, type Config, type Draft, type StageEvent } from "../../client/src/features/visual-recognition/model.ts";
 const events:StageEvent[]=[{kind:"apresentado",at:"2026-09-23T12:00:00Z"},{kind:"encerrado",at:"2026-09-23T12:00:01Z"}];
 const base:Config={ageMonths:60,mode:"receptivo",choices:2,count:12,selectedIds:ITEMS.filter(item=>item.minMonths<=60).map(item=>item.id),seed:17756,distractors:"distantes",contextAcknowledged:true,conditions:[]};
 const answered=():Draft=>({...emptyDraft(),outcome:"correspondente",channel:"apontar",familiarity:"conhecida"});
@@ -115,4 +115,53 @@ test("tela infantil sem mecanismo de memória, resposta falada automática ou te
  const workspace=readFileSync(new URL("../../client/src/features/visual-recognition/Workspace.tsx",import.meta.url),"utf8");
  assert.doesNotMatch(workspace,/localStorage|sessionStorage|SaveToPatient/);
  assert.match(workspace,/preloadSymbols/);assert.match(workspace,/Correção|correção/);
+});
+
+test("\"Categorias distintas quando possível\" de fato evita a mesma categoria; recua para o mesmo tipo de arte só quando falta figura",()=>{
+ // Bug corrigido: o pool filtrava só por tipo de arte, então a etiqueta prometia distância e entregava vizinhos da mesma categoria.
+ let checked=0;
+ for(const age of [12,23,24,47,48,83,84,119,120,155,156,215,216,239])for(const choices of [2,3,4] as const){
+  const selectedIds=eligibleItems(age,"receptivo").map(item=>item.id);
+  for(const trial of buildPlan({...base,ageMonths:age,choices,count:100,selectedIds})){
+   const target=itemFor(trial.targetId);if(target.pair||target.category==="cores")continue;
+   checked++;
+   assert.equal(trial.optionIds.length,choices,`${age}m/${choices}: tela cheia`);
+   for(const id of trial.optionIds)if(id!==target.id)assert.notEqual(itemFor(id).category,target.category,`${age}m/${choices}: ${id} é da categoria de ${target.id}`);
+  }
+ }
+ assert.ok(checked>1000,`amostra suficiente (${checked})`);
+ // Quando não há figuras distantes suficientes, completa com a mesma arte em vez de falhar.
+ const few=buildPlan({...base,choices:4,selectedIds:["gato","cachorro","peixe","banana"],count:4});
+ const gato=few.find(trial=>trial.targetId==="gato");assert.ok(gato);assert.equal(gato.optionIds.length,4);
+ const banana=few.find(trial=>trial.targetId==="banana");assert.ok(banana);
+ assert.ok(banana.optionIds.filter(id=>id!=="banana").every(id=>itemFor(id).category==="animais"));
+ // Cores continuam só entre cores; opostos só no par.
+ assert.ok(distractorPool(itemFor("vermelho"),ITEMS,4,"distantes").every(item=>item.category==="cores"));
+ assert.ok(distractorPool(itemFor("massa-0"),ITEMS,4,"distantes").every(item=>item.pair==="massa"));
+});
+test("\"Mesma categoria\" falha fechado nomeando a categoria quando ela tem uma só figura elegível",()=>{
+ // Antes: erro genérico sobre conceitos/pares, no meio da montagem do plano, para qualquer criança de 12 a 23 meses.
+ const selectedIds=eligibleItems(12,"receptivo").map(item=>item.id);
+ assert.throws(()=>buildPlan({...base,ageMonths:12,selectedIds,distractors:"categoria"}),/Em "Mesma categoria", (Frutas tem só Banana|Transportes tem só Carro) elegível/);
+ assert.throws(()=>buildPlan({...base,ageMonths:60,selectedIds:["gato","banana","carro"],distractors:"categoria"}),/Mesma categoria/);
+ // Com duas ou mais figuras por categoria, a mesma categoria é respeitada em todas as telas.
+ for(const trial of buildPlan({...base,ageMonths:60,choices:3,count:100,distractors:"categoria"})){
+  const target=itemFor(trial.targetId);
+  for(const id of trial.optionIds)if(!target.pair)assert.equal(itemFor(id).category,target.category);
+ }
+});
+test("Modo Fácil: quantidade prometida é a quantidade entregue (12–23 meses tem 7 figuras, não 8)",()=>{
+ const young=easyPlanFor(12);assert.equal(young.ids.length,7);assert.equal(young.count,7);
+ for(const age of [12,23,24,47,48,83,84,239]){
+  const plan=easyPlanFor(age);
+  assert.ok(plan.count<=plan.ids.length&&plan.count>=1);
+  const trials=buildPlan({ageMonths:age,mode:"receptivo",choices:plan.choices,count:plan.count,selectedIds:plan.ids,seed:3,distractors:plan.distractors,contextAcknowledged:false,conditions:[]});
+  assert.equal(trials.length,plan.count,`${age}m: plano com ${trials.length} telas para ${plan.count} prometidas`);
+  for(const trial of trials)if(!itemFor(trial.targetId).pair)assert.equal(trial.optionIds.length,plan.choices,`${age}m: tela cheia (opostos são sempre o par)`);
+ }
+ assert.equal(easyPlanFor(60).count,12);
+ const workspace=readFileSync(new URL("../../client/src/features/visual-recognition/Workspace.tsx",import.meta.url),"utf8");
+ assert.match(workspace,/const settings=easyPlanFor\(age\);/,"o início do jogo usa o plano resolvido");
+ assert.match(workspace,/\$\{easyPlanFor\(age\)\.count\} figuras para reconhecer/,"a tela promete o número real");
+ assert.doesNotMatch(workspace,/easyPlanSettings/,"nenhum consumidor lê a configuração bruta");
 });

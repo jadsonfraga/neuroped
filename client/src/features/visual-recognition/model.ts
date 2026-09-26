@@ -76,7 +76,32 @@ export function easyPlanSettings(age:number):{choices:2|3|4;count:number;distrac
   if(age<84)return{choices:3,count:12,distractors:"distantes",categories:Object.keys(CATEGORIES) as Category[]};
   return{choices:4,count:12,distractors:"categoria",categories:Object.keys(CATEGORIES) as Category[]};
 }
+/** Plano do Modo Fácil já resolvido para a idade: figuras elegíveis e quantidade real (nunca promete mais do que o banco tem). */
+export function easyPlanFor(age:number):ReturnType<typeof easyPlanSettings>&{ids:string[]}{
+  const settings=easyPlanSettings(age);
+  const ids=eligibleItems(age,"receptivo").filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
+  return{...settings,ids,count:Math.min(settings.count,ids.length)};
+}
 export interface Config{ageMonths:number;mode:Mode;choices:2|3|4;count:number;selectedIds:string[];seed:number;distractors:"distantes"|"categoria";contextAcknowledged:boolean;conditions:string[];}
+/**
+ * Outras figuras na tela para um alvo. Opostos ficam no par; cores só com cores.
+ * "distantes" (Categorias distintas quando possível): figuras de outra categoria
+ * sempre que houver o suficiente para preencher a tela; senão, qualquer figura do
+ * mesmo tipo de arte. "categoria" (Mesma categoria): só a mesma categoria, e
+ * falha fechado, com a categoria nomeada, quando ela não tem outra figura elegível.
+ */
+export function distractorPool(target:Item,selected:readonly Item[],choices:number,distractors:Config["distractors"]):Item[]{
+  if(target.pair)return selected.filter(item=>item.pair===target.pair);
+  if(target.category==="cores")return selected.filter(item=>item.category==="cores");
+  const sameArt=selected.filter(item=>item.art===target.art&&item.id!==target.id);
+  if(distractors==="categoria"){
+    const same=sameArt.filter(item=>item.category===target.category);
+    if(!same.length)throw new Error(`Em "Mesma categoria", ${CATEGORIES[target.category]} tem só ${target.label} elegível nesta seleção. Escolha "Categorias distintas quando possível" ou acrescente figuras da categoria.`);
+    return[target,...same];
+  }
+  const distant=sameArt.filter(item=>item.category!==target.category);
+  return[target,...(distant.length>=choices-1?distant:sameArt)];
+}
 export interface Trial{id:string;targetId:string;optionIds:string[];mode:Mode;question:string;context?:string;assetVersion:string;adaptedFrom?:string;}
 export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,seed:number,index:number):Trial{
   const target=itemFor(targetId);
@@ -108,7 +133,7 @@ export function buildPlan(config:Config):Trial[]{
   const groups=shuffle(Object.keys(CATEGORIES) as Category[],config.seed).map(category=>shuffle(selected.filter(item=>item.category===category),config.seed+category.length));
   const targets:Item[]=[];
   while(groups.some(group=>group.length)){for(const group of groups){const item=group.shift();if(item)targets.push(item);}}
-  return targets.slice(0,config.count).map((target,index)=>{const pool=selected.filter(item=>target.pair?item.pair===target.pair:target.category==="cores"||config.distractors==="categoria"?item.category===target.category:item.art===target.art);return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index);});
+  return targets.slice(0,config.count).map((target,index)=>makeTrial(target.id,config.mode,distractorPool(target,selected,config.choices,config.distractors),config.choices,config.seed,index));
 }
 export const OUTCOMES={correspondente:"Resposta correspondente",diferente:"Resposta diferente",sem_resposta:"Não respondeu",recusa:"Recusou",nao_aplicado:"Não aplicado",ambiguo:"Figura ambígua / não reconhecível",tecnico:"Problema técnico"} as const;
 export type Outcome=keyof typeof OUTCOMES;
