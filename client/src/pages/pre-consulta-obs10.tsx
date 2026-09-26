@@ -303,7 +303,7 @@ export default function PreConsultaObs10Page() {
 
   const trackTabs = (
     <div className="obs10-tracks obs10-no-print" role="tablist" aria-label="Modo de aplicação" data-testid="obs10-track-tabs">
-      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo julga certo ou errado, passa sozinho e mostra o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo julga e passa. Certo/errado no fim.</small></button>
+      <button type="button" role="tab" aria-selected={easy} className={easy ? "" : "obs10-track-easy"} data-testid="obs10-easy-tab" disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("easy"); setMessage("Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo registra certo ou errado; toque em Próximo para liberar cada novo item e veja o resultado no fim."); }}><strong>🎮 Modo Fácil · joguinho</strong><small>Tudo na tela, de 1 a 19 anos. A criança toca, o jogo registra e Próximo libera o item seguinte. Certo/errado no fim.</small></button>
       <button type="button" role="tab" aria-selected={track === "guided"} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("guided"); setMessage(""); }}><strong>Guia da assistente</strong><small>Primeira aplicação: preparar, ensaiar, aplicar, revisar e entregar, do acolhimento à entrega.</small></button>
       <button type="button" role="tab" aria-selected={direct} disabled={media.pending || starting.current || importBusy || easyProgress > 0} onClick={() => { setTrack("direct"); setMessage("Modo direto: sem guia, kit item a item, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."); }}><strong>Direto ao teste</strong><small>Aplicadora experiente: idade, câmera opcional e início imediato.</small></button>
     </div>
@@ -322,7 +322,7 @@ export default function PreConsultaObs10Page() {
           <div>
             <div className="obs10-eyebrow">NEUROPED · OBS-10 · MODO FÁCIL</div>
             <h1>{OBS10_TITLE}</h1>
-            <p>Leia o enunciado, a criança toca na tela, o jogo julga e passa sozinho.</p>
+            <p>Leia o enunciado, a criança toca na tela e Próximo libera o item seguinte.</p>
           </div>
         </header>
         {trackTabs}
