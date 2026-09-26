@@ -46,7 +46,7 @@ async function fixture() {
   const db = {
     prepare,
     async batch(statements: Array<{ run(): Promise<unknown>; sql: string }>) {
-      if (statements.some((statement) => /UPDATE clinics|INSERT INTO clinic_feature_flags/.test(statement.sql))) beforeBatch?.();
+      beforeBatch?.();
       raw.exec("BEGIN");
       try {
         const results = [];
@@ -171,6 +171,46 @@ test("tenant owner can manage existing team and revoke invitations after trial e
     const removed = await f.call("reader-owner", `/api/tenants/${ALFA}/members?userId=staff-a`, "DELETE");
     assert.equal(removed.status, 200);
     assert.equal(f.raw.prepare("SELECT active FROM clinic_memberships WHERE clinic_id = ? AND user_id = 'staff-a'").get(ALFA)?.active, 0);
+  } finally { f.raw.close(); }
+});
+
+test("last-owner race is rejected by the final membership SQL predicate", async () => {
+  const f = await fixture();
+  try {
+    const auditBefore = Number(
+      f.raw.prepare("SELECT COUNT(*) AS n FROM saas_audit_log WHERE clinic_id = ?").get(ALFA)?.n ?? 0,
+    );
+
+    // reader-owner tenta rebaixar a si próprio. O precheck vê owner-a como o
+    // segundo owner; logo antes do batch, simulamos a remoção concorrente
+    // desse segundo owner. Só o predicado do UPDATE final pode impedir que a
+    // clínica termine sem owner.
+    f.setBeforeBatch(() => {
+      f.raw
+        .prepare("UPDATE clinic_memberships SET active = 0 WHERE clinic_id = ? AND user_id = 'owner-a'")
+        .run(ALFA);
+    });
+    const response = await f.call(
+      "reader-owner",
+      `/api/tenants/${ALFA}/members`,
+      "POST",
+      { email: "reader-owner@example.test", role: "financial" },
+    );
+
+    assert.equal(response.status, 409);
+    assert.equal((await response.json() as { code: string }).code, "MEMBERSHIP_STALE");
+    assert.equal(
+      f.raw
+        .prepare("SELECT role FROM clinic_memberships WHERE clinic_id = ? AND user_id = 'reader-owner'")
+        .get(ALFA)?.role,
+      "owner",
+      "o único owner restante não pode ser rebaixado pela decisão pré-corrida",
+    );
+    assert.equal(
+      f.raw.prepare("SELECT COUNT(*) AS n FROM saas_audit_log WHERE clinic_id = ?").get(ALFA)?.n,
+      auditBefore,
+      "nenhuma auditoria de sucesso pode ser gravada quando o predicado final recusa a mutação",
+    );
   } finally { f.raw.close(); }
 });
 

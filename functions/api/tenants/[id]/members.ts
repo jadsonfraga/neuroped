@@ -63,14 +63,14 @@ function contextForManager(context: Parameters<PagesFunction<TenantEnv>>[0]): Ma
   };
 }
 
-async function otherActiveOwnerCount(
+async function hasOtherActiveOwner(
   db: D1Database,
   clinicId: string,
   excludedUserId: string,
-): Promise<number> {
+): Promise<boolean> {
   const row = await db
     .prepare(
-      `SELECT COUNT(*) AS total
+      `SELECT 1 AS present
          FROM clinic_memberships
         WHERE clinic_id = ?
           AND role = 'owner'
@@ -78,8 +78,8 @@ async function otherActiveOwnerCount(
           AND user_id <> ?`,
     )
     .bind(clinicId, excludedUserId)
-    .first<{ total: number }>();
-  return Number(row?.total ?? 0);
+    .first<{ present: number }>();
+  return Boolean(row);
 }
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
@@ -215,14 +215,14 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     currentMembership.role === "owner" &&
     !roleHasPermission(auth.membership.role, "team.manage_owners")
   ) {
-    return tenantError("Somente owner pode alterar o papel de outro owner.", "TENANT_FORBIDDEN", 403);
+    return tenantError("Somente owner pode rebaixar outro owner.", "TENANT_FORBIDDEN", 403);
   }
 
   if (
     currentMembership?.active === 1 &&
     currentMembership.role === "owner" &&
     role !== "owner" &&
-    (await otherActiveOwnerCount(auth.db, auth.clinicId, target.id)) === 0
+    !(await hasOtherActiveOwner(auth.db, auth.clinicId, target.id))
   ) {
     return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
   }
@@ -236,7 +236,16 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
           `INSERT INTO clinic_memberships
             (clinic_id, user_id, role, active, invited_by_user_id, created_at, updated_at)
            SELECT ?, ?, ?, 1, ?, ?, ?
-            WHERE NOT EXISTS (
+            WHERE EXISTS (
+              SELECT 1 FROM clinic_memberships target
+               WHERE target.clinic_id = ? AND target.user_id = ? AND target.active = 1
+            )
+              AND EXISTS (
+                SELECT 1 FROM clinic_memberships actor
+                 WHERE actor.clinic_id = ? AND actor.user_id = ? AND actor.active = 1
+                   AND actor.role IN ('owner', 'clinic_admin')
+              )
+              AND NOT EXISTS (
               SELECT 1 FROM users u
                WHERE u.id = ? AND lower(u.email) = ?
             )
@@ -244,7 +253,38 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
              role = excluded.role,
              active = 1,
              invited_by_user_id = excluded.invited_by_user_id,
-             updated_at = excluded.updated_at`,
+             updated_at = excluded.updated_at
+           WHERE clinic_memberships.role <> 'owner'
+             AND (
+               excluded.role <> 'owner'
+               OR (
+                 excluded.role = 'owner'
+                 AND ? = 'owner'
+                 AND EXISTS (
+                   SELECT 1 FROM clinic_memberships actor
+                    WHERE actor.clinic_id = clinic_memberships.clinic_id
+                      AND actor.user_id = ? AND actor.role = 'owner' AND actor.active = 1
+                 )
+               )
+             )
+             OR (
+               clinic_memberships.role = 'owner'
+               AND ? = 'owner'
+               AND EXISTS (
+                 SELECT 1 FROM clinic_memberships actor
+                  WHERE actor.clinic_id = clinic_memberships.clinic_id
+                    AND actor.user_id = ? AND actor.role = 'owner' AND actor.active = 1
+               )
+               AND (
+                 excluded.role = 'owner'
+                 OR EXISTS (
+                   SELECT 1 FROM clinic_memberships other
+                    WHERE other.clinic_id = clinic_memberships.clinic_id
+                      AND other.user_id <> clinic_memberships.user_id
+                      AND other.role = 'owner' AND other.active = 1
+                 )
+               )
+             )`,
         )
         .bind(
           auth.clinicId,
@@ -253,8 +293,16 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
           auth.user.id,
           now,
           now,
+          auth.clinicId,
+          target.id,
+          auth.clinicId,
+          auth.user.id,
           target.id,
           reservedEmail,
+          auth.membership.role,
+          auth.user.id,
+          auth.membership.role,
+          auth.user.id,
         ),
       prepareSaasAudit(
         auth.db,
@@ -318,7 +366,7 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     if (!roleHasPermission(auth.membership.role, "team.manage_owners")) {
       return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
     }
-    if ((await otherActiveOwnerCount(auth.db, auth.clinicId, targetUserId)) === 0) {
+    if (!(await hasOtherActiveOwner(auth.db, auth.clinicId, targetUserId))) {
       return tenantError("A clínica deve manter pelo menos um owner ativo.", "LAST_OWNER_PROTECTED", 409);
     }
   }
@@ -330,9 +378,40 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
         .prepare(
           `UPDATE clinic_memberships
               SET active = 0, updated_at = ?
-            WHERE clinic_id = ? AND user_id = ? AND active = 1`,
+            WHERE clinic_id = ? AND user_id = ? AND active = 1
+              AND EXISTS (
+                SELECT 1 FROM clinic_memberships actor
+                 WHERE actor.clinic_id = ? AND actor.user_id = ? AND actor.active = 1
+                   AND actor.role IN ('owner', 'clinic_admin')
+              )
+              AND (
+                role <> 'owner'
+                OR (
+                  ? = 'owner'
+                  AND EXISTS (
+                    SELECT 1 FROM clinic_memberships actor
+                     WHERE actor.clinic_id = ? AND actor.user_id = ?
+                       AND actor.role = 'owner' AND actor.active = 1
+                  )
+                  AND EXISTS (
+                    SELECT 1 FROM clinic_memberships other
+                     WHERE other.clinic_id = clinic_memberships.clinic_id
+                       AND other.user_id <> clinic_memberships.user_id
+                       AND other.role = 'owner' AND other.active = 1
+                  )
+                )
+              )`,
         )
-        .bind(now, auth.clinicId, targetUserId),
+        .bind(
+          now,
+          auth.clinicId,
+          targetUserId,
+          auth.clinicId,
+          auth.user.id,
+          auth.membership.role,
+          auth.clinicId,
+          auth.user.id,
+        ),
       prepareSaasAudit(
         auth.db,
         {
