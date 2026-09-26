@@ -1,15 +1,12 @@
 /**
  * Jogo Fácil — motor compartilhado do "Modo Fácil" das aplicações diretas
- * (Sonda Dez, OBS-10, Reconhecimento Visual). Um passo por vez, em sequência
- * fixa: o adulto lê a fala, mostra à criança quando houver tela, e toca em um
- * de três botões gigantes: Acertou, Não acertou ou Pular. O jogo avança
- * sozinho e, no fim, mostra e exporta o resultado.
+ * (Sonda Dez, OBS-10, Reconhecimento Visual). Suporta dois contratos:
+ * observacional (o adulto marca Acertou/Não acertou/Pular) e objetivo
+ * (o toque da criança decide certo/errado, seguido de transição neutra).
  *
- * Verdade clínica: "Acertou" é o que o adulto marcou ter visto nesta
- * interação; o resultado é contagem descritiva por passo, sem escore,
- * percentil, ponto de corte ou diagnóstico. Herói e estrelas são
- * participação (passos concluídos), nunca desempenho, e não entram no
- * texto exportado além da contagem de passos.
+ * Verdade clínica: o resultado é sempre descritivo, sem escore, percentil,
+ * ponto de corte ou diagnóstico. Herói e estrelas representam participação,
+ * nunca desempenho.
  *
  * Só animação CSS (motion-safe:animate-in): sem setTimeout/requestAnimationFrame,
  * para conviver com o relógio falso dos e2e da Sonda.
@@ -156,7 +153,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
         <span className="text-3xl" aria-hidden="true">{hero.emoji}</span>
         <span className="text-sm font-bold">{hero.name}</span>
         <div className="ml-auto flex items-center gap-2">
-          <StarCounter stars={stars} label="passos concluídos" />
+          <StarCounter stars={stars} label={objective ? "respostas" : "passos concluídos"} />
           <span className="rounded-xl bg-muted px-3 py-1 text-sm font-bold tabular-nums" data-testid={`${testid}-progress`}>
             {currentPosition} / {steps.length}
           </span>
