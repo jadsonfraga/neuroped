@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Apple, Bus, Check, ChevronRight, ClipboardCheck, Download, Eye, Images, Layers, Palette, PawPrint, Search, ShieldCheck, SlidersHorizontal } from "lucide-react";
-import { ITEMS, CATEGORIES, MODES, BANDS, VERSION, NATURE, OUTCOMES, SUPPORTS, CHANNELS, itemFor, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, activeObservations, reportText, type Category, type Mode, type Config, type Trial, type StageEvent, type Draft, type Observation } from "./model";
+import { ITEMS, CATEGORIES, MODES, BANDS, VERSION, NATURE, OUTCOMES, SUPPORTS, CHANNELS, itemFor, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, activeObservations, reportText, easyPlanSettings, type Category, type Mode, type Config, type Trial, type StageEvent, type Draft, type Observation } from "./model";
 import { Stimulus, preloadSymbols } from "./Stimulus";
 import TrialStage from "./TrialStage";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
@@ -66,7 +66,7 @@ export default function VisualRecognitionWorkspace(){
   const toggleItem=(id:string)=>{const item=itemFor(id);const ids=item.pair?ITEMS.filter(candidate=>candidate.pair===item.pair).map(candidate=>candidate.id):[id];setExcluded(current=>current.includes(id)?current.filter(value=>!ids.includes(value)):[...new Set([...current,...ids])]);setChecks([false,false,false]);};
   const start=async()=>{
     setMessage("");
-    if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 17 anos e 11 meses. A prévia não define a idade.");return;}
+    if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 19 anos e 11 meses. A prévia não define a idade.");return;}
     if(!direct&&!checks.every(Boolean)){setMessage("Conclua os três cuidados de preparação.");return;}
     if(selected.length===0){setMessage("Selecione ao menos uma figura para esta sessão.");return;}
     const next:Config={ageMonths:age,mode,choices,count,selectedIds:selected.map(item=>item.id),seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors,contextAcknowledged:contexts,conditions:direct?[...conditions,DIRECT_TRACK_NOTE]:[...conditions]};
@@ -79,9 +79,10 @@ export default function VisualRecognitionWorkspace(){
   };
   const startEasy=async()=>{
     setMessage("");
-    if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 17 anos e 11 meses.");return;}
-    const ids=eligibleItems(age,"receptivo").filter(item=>!item.context).map(item=>item.id);
-    const next:Config={ageMonths:age,mode:"receptivo",choices:age>=48?3:2,count:12,selectedIds:ids,seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors:"distantes",contextAcknowledged:false,conditions:["Modo Fácil (joguinho): reconhecimento por toque na tela, sem conferências de preparo"]};
+    if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 19 anos e 11 meses.");return;}
+    const settings=easyPlanSettings(age);
+    const ids=eligibleItems(age,"receptivo").filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
+    const next:Config={ageMonths:age,mode:"receptivo",choices:settings.choices,count:settings.count,selectedIds:ids,seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors:settings.distractors,contextAcknowledged:false,conditions:[`Modo Fácil (joguinho): reconhecimento por toque na tela, ${settings.choices} alternativas, sem conferências de preparo`]};
     try{
       const plan=buildPlan(next);setLoading(true);abort.current?.abort();const controller=new AbortController();abort.current=controller;
       const loaded=await preloadSymbols(next.selectedIds,controller.signal);if(controller.signal.aborted){Object.values(loaded).forEach(url=>URL.revokeObjectURL(url));return;}
@@ -90,8 +91,8 @@ export default function VisualRecognitionWorkspace(){
     }catch(error){setMessage(readableError(error));}finally{setLoading(false);}
   };
   const easySteps:EasyStep[]=easyPlan.map(trial=>{const item=itemFor(trial.targetId);return{
-    id:trial.id,group:`${CATEGORIES[item.category]}`,title:item.label,say:`“${trial.question}”`,hint:"Leia em voz alta e toque em Mostrar. A criança toca na figura; se acertar ou errar, o jogo passa sozinho. Se ela apontar fora da tela ou não responder, marque você.",childLabel:"Mostrar as figuras",
-    child:({onDone})=><TrialStage trial={trial} urls={urls} autoFinishOnTap onEvent={event=>{if(event.kind==="apresentado")easyTap.current=null;if(event.kind==="toque"&&event.itemId)easyTap.current=event.itemId;}} onFinish={()=>{const tap=easyTap.current;easyTap.current=null;onDone(tap?(tap===trial.targetId?"acertou":"nao"):undefined);}}/>,
+    id:trial.id,group:`${CATEGORIES[item.category]}`,title:item.label,say:`“${trial.question}”`,hint:`Leia em voz alta e toque em Mostrar. A criança toca na figura; se acertar ou errar, o jogo passa sozinho. Se ela apontar fora da tela ou não responder, marque você. Esperado: ${item.label.toLocaleLowerCase("pt-BR")}`,childLabel:"Mostrar as figuras",
+    child:({onDone})=><TrialStage trial={trial} urls={urls} autoFinishOnTap onEvent={event=>{if(event.kind==="apresentado")easyTap.current=null;if(event.kind==="toque"&&event.itemId)easyTap.current=event.itemId;}} onFinish={()=>{const tap=easyTap.current;easyTap.current=null;onDone(tap?(tap===trial.targetId?"acertou":"nao"):undefined,tap?{chosen:itemFor(tap).label,correct:item.label}:undefined);}}/>,
   };});
   const save=(complement=false)=>{
     if(!trial||!config||committing.current)return;
@@ -136,7 +137,7 @@ export default function VisualRecognitionWorkspace(){
         <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>setYears(event.target.value)} placeholder="Ex.: 4"/></label>
         <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>setMonths(event.target.value)}/></label>
       </div>
-      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para montar o jogo":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>Modo Fácil: até 12 figuras para reconhecer (“Mostre…”). A criança toca; o jogo passa sozinho.</p></div>
+      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para montar o jogo":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>{age===null?"Modo Fácil: a idade define quantas figuras e quantas alternativas. A criança toca; o jogo passa sozinho.":`Modo Fácil: ${easyPlanSettings(age).count} figuras para reconhecer (“Mostre…”), ${easyPlanSettings(age).choices} alternativas por vez. A criança toca; o jogo passa sozinho.`}</p></div>
       <div className="rv-actions"><button type="button" className="rv-primary" disabled={loading||age===null} onClick={()=>void startEasy()}>{loading?"Carregando as figuras…":"Começar o jogo"}<ChevronRight size={19}/></button></div></section>}
       {easyPlan.length>0&&<EasyGame key={easyPlan[0]?.id} testid="rv-easy" title="Reconhecimento Visual" ageLabel={`${age} meses · ${band?.label??""}`} nature={NATURE} footer="Modo Fácil: reconhecimento por toque na tela (“Mostre…”), até 12 figuras; sem conferências de preparo, nomeação ou pareamento." steps={easySteps} onProgress={setEasyProgress} onRestart={()=>{setEasyPlan([]);}}/>}
     </>}
@@ -150,7 +151,7 @@ export default function VisualRecognitionWorkspace(){
         <label>Tamanho da sessão<select aria-label="Tamanho da sessão" value={count} onChange={event=>setCount(Number(event.target.value))}><option value={6}>Até 6 oportunidades</option><option value={12}>Até 12 oportunidades</option><option value={20}>Até 20 oportunidades</option><option value={100}>Todo o conjunto selecionado</option></select></label>
         <label>Outras figuras na tela<select aria-label="Outras figuras na tela" value={distractors} onChange={event=>setDistractors(event.target.value as Config["distractors"])}><option value="distantes">Categorias distintas quando possível</option><option value="categoria">Mesma categoria</option></select></label>
       </div>
-      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para liberar o início":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>{age===null?"Anos completos e meses adicionais, entre 12 meses e 17 anos e 11 meses.":band?.note}</p></div>
+      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para liberar o início":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>{age===null?"Anos completos e meses adicionais, entre 12 meses e 19 anos e 11 meses.":band?.note}</p></div>
       <details className="rv-details"><summary>Ajustar categorias e figuras desta sessão ({selected.length} selecionadas)</summary>
         <div className="rv-category-grid">{(Object.keys(CATEGORIES) as Category[]).map(category=>{const Icon=icons[category],n=available.filter(item=>item.category===category).length;return <button type="button" key={category} disabled={n===0} aria-pressed={categories.includes(category)&&n>0} onClick={()=>{setCategories(current=>current.includes(category)?current.filter(value=>value!==category):[...current,category]);}}><Icon size={25}/><strong>{CATEGORIES[category]}</strong><span>{n} estímulos neste roteiro</span></button>;})}</div>
         {displayAge>=60&&mode!=="pareamento"&&<label className="rv-check rv-context-check"><input type="checkbox" checked={contexts} onChange={event=>setContexts(event.target.checked)}/><span>Incluir quente/frio e pesado/leve. Li que são inferências contextualizadas, dependentes de repertório; não medem temperatura, massa, força ou sensibilidade. Nunca apresentar calor real.</span></label>}

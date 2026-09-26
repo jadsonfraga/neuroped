@@ -18,8 +18,8 @@ import { useState, type ReactNode } from "react";
 import { Check, ChevronRight, Copy, Download, Play, RotateCcw, SkipForward, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
-import { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyOutcome, type EasyRecord } from "./easyReport";
-export { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyOutcome, type EasyRecord } from "./easyReport";
+import { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyAnswerDetail, type EasyOutcome, type EasyRecord } from "./easyReport";
+export { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyAnswerDetail, type EasyOutcome, type EasyRecord } from "./easyReport";
 
 export interface EasyStep {
   id: string;
@@ -33,7 +33,7 @@ export interface EasyStep {
   /** Ilustração para o adulto (não é a tela da criança). */
   visual?: ReactNode;
   /** Tela para a criança; o motor abre ao tocar no botão e fecha em onDone. */
-  child?: (ctx: { onDone: (auto?: EasyOutcome, detail?: { chosen: string; correct: string }) => void }) => ReactNode;
+  child?: (ctx: { onDone: (auto?: EasyOutcome, detail?: EasyAnswerDetail) => void }) => ReactNode;
   childLabel?: string;
 }
 export interface EasyGameProps {
@@ -77,7 +77,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   const finished = index >= steps.length;
   const stars = records.filter((r) => r.outcome !== "pulou").length;
 
-  function record(outcome: EasyOutcome, auto = false, detail?: { chosen: string; correct: string }) {
+  function record(outcome: EasyOutcome, auto = false, detail?: EasyAnswerDetail) {
     if (!step) return;
     const next = [...records, { id: step.id, group: step.group, title: step.title, outcome, auto, ...(detail ?? {}) }];
     setRecords(next);
@@ -262,7 +262,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           <p className="mt-4 rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
             {objective
               ? "Certo e errado são o toque da criança comparado à resposta única de cada item. Não é escore, percentil, ponto de corte nem diagnóstico. Quem lê e conclui é o médico."
-              : "Resultado descritivo do que o adulto marcou em cada passo. Não é escore, percentil, ponto de corte nem diagnóstico. Quem lê e conclui é o médico."}
+              : "Resultado descritivo do que foi registrado em cada item; alguns itens podem ser concluídos automaticamente pela interação da criança na tela. Não é escore, percentil, ponto de corte nem diagnóstico. Quem lê e conclui é o médico."}
           </p>
           <ol className="mt-4 space-y-1 text-sm">
             {records.map((r, i) => (

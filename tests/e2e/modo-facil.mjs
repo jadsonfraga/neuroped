@@ -38,6 +38,29 @@ async function open(route, testId) {
   }
   await page.getByTestId(testId).waitFor({ timeout: 20000 });
 }
+/** Joga o motor até o fim alternando os três botões; retorna as contagens do resultado. */
+async function playEasy(prefix, { maxSteps = 60 } = {}) {
+  const outcomes = ["acertou", "nao", "pular"];
+  let i = 0;
+  while (await page.getByTestId(`${prefix}-step`).count()) {
+    assert.ok(i < maxSteps, "o jogo termina");
+    const show = page.getByTestId(`${prefix}-show`);
+    if (await show.count()) {
+      await show.click();
+      await page.getByTestId(`${prefix}-child`).waitFor({ state: "attached" });
+      // Tela da criança: fecha pelo botão de voltar do próprio estímulo.
+      const back = page.getByRole("button", { name: /Voltar ao aplicador|Concluir observação|Voltar ao registro|Concluir e voltar|Pausar e voltar/ }).first();
+      await back.click();
+      await page.getByTestId(`${prefix}-child`).waitFor({ state: "detached" });
+    }
+    await page.getByTestId(`${prefix}-${outcomes[i % 3]}`).click();
+    i += 1;
+  }
+  await page.getByTestId(`${prefix}-results`).waitFor();
+  const n = async (k) => Number(await page.getByTestId(`${prefix}-count-${k}`).innerText());
+  return { steps: i, acertou: await n("acertou"), nao: await n("nao"), pulou: await n("pulou") };
+}
+
 /** Modo objetivo: toca na primeira opção e aperta Próximo; pula o 2º item pelo adulto. */
 async function playObjective(prefix, { maxSteps = 20 } = {}) {
   let i = 0;
@@ -164,64 +187,66 @@ try {
   await page.getByTestId("rv-easy-results").waitFor();
   const rvReport = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(rvReport, /Reconhecimento Visual · Modo Fácil/);
-  assert.match(rvReport, /\(toque da criança na tela\)/, "desfecho automático fica declarado no resultado");
+  assert.match(rvReport, /\(tocou: /, "reconhecimento preserva a escolha automática no resultado");
   assert.match(rvReport, /Pulou: 1/);
   await screen("rv-facil-resultado", ".rv-workspace");
 
-  // Testes Cognitivos: quatro mundos em sequência e resultado
+  // Testes Cognitivos: 16 passos lineares no motor compartilhado; toque e
+  // montagem de letras decidem sozinhos, fala é marcada pelo adulto.
   await page.goto(`${server.origin}/#/testes-cognitivos`);
   await page.getByRole("heading", { name: "Testes Cognitivos por Faixa Etária" }).waitFor({ timeout: 20000 });
   assert.equal(await tab("^Guiado").getAttribute("aria-selected"), "true", "guiado continua padrão");
   await page.getByTestId("cognitive-easy-tab").click();
-  await page.getByLabel("Idade da criança (anos)").fill("7");
-  await button("Iniciar aventura").click();
+  for (const age of ["1", "19"]) {
+    await page.getByLabel("Idade da criança (anos)").fill(age);
+    assert.equal(await button("Começar o jogo").isDisabled(), false, `idade ${age} aceita`);
+  }
+  await page.getByLabel("Idade da criança (anos)").fill("6");
+  await button("Começar o jogo").click();
+  await page.getByTestId("cognitive-easy-step").waitFor();
   assert.equal(await page.getByText("Escolha seu herói").count(), 0, "sem escolha de herói");
   assert.equal(await page.getByText("Para onde vamos agora?").count(), 0, "sem mapa");
-  await screen("cognitivo-facil-mundo", "main");
-  for (let world = 0; world < 4; world += 1) {
-    const next = page.getByTestId("cognitive-easy-next");
-    let guard = 0;
-    while (!(await next.count())) {
-      assert.ok(guard++ < 80, "mundo termina");
-      const answer = page.locator('section[aria-labelledby^="world-"] button[aria-pressed]:not([disabled])').first();
-      const finishObs = page.locator('section[aria-labelledby^="world-"]').getByRole("button", { name: "Concluir missão" });
-      if (await finishObs.count()) {
-        await finishObs.click();
-        continue;
-      }
-      if (await answer.count()) await answer.click();
-      const advance = page.locator('section[aria-labelledby^="world-"]').getByRole("button", { name: /Próxima fase|Concluir mundo/ });
-      if (await advance.count()) {
-        const before = (await page.locator('section[aria-labelledby^="world-"]').getByText(/^Fase \d+ de \d+$/).allInnerTexts()).join();
-        await advance.click();
-        // Espera a fase mudar ou o mundo fechar: o painel antigo sai com pointer-events:none.
-        const settled = () => page.evaluate(([prev]) => {
-          const sec = document.querySelector('section[aria-labelledby^="world-"]');
-          const badge = [...(sec?.querySelectorAll("*") ?? [])].map((el) => el.textContent?.trim()).filter((t) => /^Fase \d+ de \d+$/.test(t ?? "")).join();
-          return { badge, prev, next: Boolean(document.querySelector('[data-testid="cognitive-easy-next"]')), active: `${document.activeElement?.tagName}:${(document.activeElement?.textContent ?? "").trim().slice(0, 24)}`, sectionText: (sec?.textContent ?? "").slice(0, 160) };
-        }, [before]);
-        try {
-          await page.waitForFunction(([prev]) => {
-            const sec = document.querySelector('section[aria-labelledby^="world-"]');
-            const badge = [...(sec?.querySelectorAll("*") ?? [])].map((el) => el.textContent?.trim()).filter((t) => /^Fase \d+ de \d+$/.test(t ?? "")).join();
-            return badge !== prev || Boolean(document.querySelector('[data-testid="cognitive-easy-next"]'));
-          }, [before], { timeout: 10000 });
-        } catch (error) {
-          console.log("MODO_FACIL_DEBUG", JSON.stringify({ world, guard, ...(await settled()) }));
-          throw error;
-        }
-      }
-    }
-    await next.click();
-  }
-  await page.getByTestId("cognitive-easy-results").waitFor();
-  const cogReport = await page.getByLabel("Resultado do Modo Fácil").inputValue();
-  assert.match(cogReport, /Mundos concluídos: 4 de 4/);
+  assert.equal(await page.getByTestId("cognitive-easy-tab").isDisabled(), true, "aba trava ao começar");
+  await screen("cognitivo-facil-passo", "main");
+  // Passo 1 (toque): a criança toca na alternativa esperada → "Acertou" sem botão do adulto.
+  const expected1 = (await page.getByTestId("cognitive-easy-step").innerText()).match(/Esperado: (\S+)/)?.[1];
+  assert.ok(expected1, "dica do adulto traz a resposta esperada");
+  await page.getByTestId("cognitive-easy-show").click();
+  const child = page.getByTestId("cognitive-easy-child");
+  await child.waitFor();
+  assert.doesNotMatch(await child.innerText(), /Acertou|Esperado|estrela|herói/i, "tela da criança pura");
+  await child.getByRole("button", { name: expected1, exact: true }).click();
+  await child.waitFor({ state: "detached" });
+  assert.match(await page.getByTestId("cognitive-easy-progress").innerText(), /^2 \//, "toque da criança avançou sozinho");
+  // Restante: mostra, volta e alterna os três botões (cobre fala, montagem e toque sem resposta).
+  const cog = await playEasy("cognitive-easy");
+  assert.equal(cog.steps, 15, `15 passos restantes de 16 (${cog.steps})`);
+  assert.equal(cog.acertou, 1 + Math.ceil(15 / 3), "1 acerto automático + os marcados");
+  const cogReport = await page.getByLabel("Resultado do jogo").inputValue();
+  assert.match(cogReport, /Testes Cognitivos por Faixa Etária · Modo Fácil/);
+  assert.match(cogReport, /Itens previstos: 16 · Registrados: 16/);
   assert.match(cogReport, /NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO/);
+  assert.match(cogReport, /\(tocou: /, "cognitivo preserva a resposta automática no resultado");
+  assert.match(cogReport, /Castelo da Escrita/);
   await screen("cognitivo-facil-resultado", "main");
 
+  // Montagem de letras no motor: 8 anos, ditado ESCOLA, a última peça decide.
+  await button("Jogar de novo").click();
+  await page.getByTestId("cognitive-easy-step").waitFor();
+  await button("Reiniciar jogo").click();
+  await page.getByLabel("Idade da criança (anos)").fill("8");
+  await button("Começar o jogo").click();
+  while (!/Escreva a palavra ESCOLA/.test(await page.getByTestId("cognitive-easy-step").innerText())) await page.getByTestId("cognitive-easy-pular").click();
+  await page.getByTestId("cognitive-easy-show").click();
+  await child.waitFor();
+  for (const letter of "ESCOLA") await child.getByRole("button", { name: `Letra ${letter}`, exact: true }).first().click();
+  await child.waitFor({ state: "detached" });
+  await playEasy("cognitive-easy");
+  const report8 = await page.getByLabel("Resultado do jogo").inputValue();
+  assert.match(report8, /Escreva a palavra ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");
+
   assert.deepEqual(errors, [], "sem erros de página");
-  console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda 10 e OBS-10 objetivos com ${sonda.steps}+${obs.steps} itens julgados pelo toque, Reconhecimento com toque automático, Cognitivo 4 mundos).`);
+  console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda ${sonda.steps} passos, OBS-10 ${obs.steps} passos, Reconhecimento com toque automático, Cognitivo 16 passos com toque e montagem automáticos).`);
 } finally {
   await browser.close();
   await server.close();

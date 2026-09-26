@@ -1,16 +1,19 @@
 /**
  * Testes Cognitivos por Faixa Etária — bateria autoral enxuta (reconhecimento
- * visual, leitura, escrita e aritmética) com bandas 2–19 anos e perfis exatos
- * 6–13, apresentada como uma aventura em quatro mundos. Restaurada a partir da
- * antiga "Avaliação Cognitiva Infantil", que a consolidação f2d7f48 esvaziou e
- * b93a04b extinguiu. Superfície própria, separada da Sonda Dez, com rota
- * /testes-cognitivos.
+ * visual, fala/leitura, letras/escrita e números/aritmética), um perfil por
+ * idade de 1 a 19 anos, apresentada como uma aventura em quatro mundos.
+ * Superfície própria, separada da Sonda Dez, com rota /testes-cognitivos.
+ *
+ * O banco de itens vive em features/cognitive-age/bank.ts: tudo o que o item
+ * precisa está na tela (nenhum passo pede lápis, papel ou objeto de fora) e
+ * cada item tem uma única resposta certa, conferida pela tela (toque, montagem
+ * de letras) ou comparada pelo adulto com a resposta esperada (fala).
  *
  * Verdade clínica: registra pergunta a pergunta e não produz escore, percentil,
  * idade equivalente nem interpretação diagnóstica. Estrelas e medalhas do jogo
  * medem participação e conclusão, nunca acerto — a criança não vê certo/errado.
  */
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,44 +22,41 @@ import { SaveToPatient } from "@/components/SaveToPatient";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { celebrate } from "@/lib/confetti";
-import { softSuccess, softTap, softWhoosh } from "@/lib/softSounds";
+import { softSuccess, softWhoosh } from "@/lib/softSounds";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, type Hero } from "@/components/aventura";
+import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import {
+  COGNITIVE_MAX_AGE,
+  COGNITIVE_MIN_AGE,
+  ageProfileLabel,
+  buildMatches,
+  domainLabel,
+  isCognitiveAge,
+  itemsFor,
+  type CognitiveDomain,
+  type CognitiveItem,
+} from "@/features/cognitive-age/bank";
+import { BuildBody, ChildScreen, SayBody, TapBody, adultHint, expectedText } from "@/features/cognitive-age/screens";
 import {
   ArrowLeft,
   Brain,
+  Check,
   ChevronRight,
   Flag,
   Map as MapIcon,
   Play,
   RotateCcw,
   ShieldCheck,
+  X,
 } from "lucide-react";
 
 // ─────────────────────────────── types ───────────────────────────────
-type Band = "A" | "B" | "C" | "D" | "E" | "F" | "G";
-type Domain = "visual" | "leitura" | "escrita" | "aritmetica";
-
-interface MCQ {
-  kind: "mcq";
-  prompt: string;
-  options: string[];
-  answer: string;
-  big?: boolean; // large emoji buttons for toddlers
-}
-interface ObsItem {
-  label: string;
-}
-interface ObsBlock {
-  kind: "obs";
-  intro: string;
-  items: ObsItem[];
-}
-type Question = MCQ | ObsBlock;
+type Domain = CognitiveDomain;
 
 interface AnswerRecord {
-  prompt: string; // enunciado da pergunta ou habilidade observada
-  correct?: string; // resposta correta (apenas MCQ)
-  selected: string | null; // o que a criança escolheu / "Observado" no bloco de observação
+  prompt: string; // enunciado da pergunta
+  correct: string; // resposta esperada
+  selected: string | null; // o que a criança tocou / montou, ou o que o adulto marcou na fala
   isCorrect: boolean;
 }
 interface DomainResult {
@@ -67,1259 +67,8 @@ interface DomainResult {
   answers: AnswerRecord[]; // registro item-a-item de todas as perguntas e respostas
 }
 
-// ─────────────────────────────── helpers ───────────────────────────────
-function getBand(age: number): Band {
-  if (age <= 3) return "A";
-  if (age <= 5) return "B";
-  if (age <= 7) return "C";
-  if (age <= 9) return "D";
-  if (age <= 12) return "E";
-  if (age <= 15) return "F";
-  return "G";
-}
-
-const BAND_LABEL: Record<Band, string> = {
-  A: "2–3 anos (Pré-escolar inicial)",
-  B: "4–5 anos (Pré-escolar tardio)",
-  C: "6–7 anos (Alfabetização)",
-  D: "8–9 anos (EF Anos Iniciais)",
-  E: "10–12 anos (EF Anos Finais)",
-  F: "13–15 anos (EF II / Início EM)",
-  G: "16–19 anos (Ensino Médio)",
-};
-
-// ─────────────────────────────── CONTENT BANKS ───────────────────────────────
-
-// NOTA: por questão só há UMA resposta certa e, de propósito, a posição da
-// alternativa correta VARIA de item para item (não fica sempre na 1ª opção),
-// para não criar um gabarito previsível. Além disso, o QuizModule ainda
-// embaralha as alternativas em tempo de execução. São 4 itens por área/faixa,
-// escolhidos por serem os mais discriminativos.
-const VISUAL_BANK: Record<Band, MCQ[]> = {
-  A: [
-    {
-      kind: "mcq",
-      prompt: "Toque no CACHORRO",
-      big: true,
-      options: ["🐱", "🐶", "🐰", "🐸"],
-      answer: "🐶",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é a cor VERMELHA?",
-      big: true,
-      options: ["🔵", "🟡", "🔴", "🟢"],
-      answer: "🔴",
-    },
-    {
-      kind: "mcq",
-      prompt: "Toque no CÍRCULO",
-      big: true,
-      options: ["🔺", "🔷", "⭐", "⚫"],
-      answer: "⚫",
-    },
-    {
-      kind: "mcq",
-      prompt: "Toque na BANANA",
-      big: true,
-      options: ["🍌", "🍎", "🍇", "🍊"],
-      answer: "🍌",
-    },
-  ],
-  B: [
-    {
-      kind: "mcq",
-      prompt: "Qual dessas é a LETRA A?",
-      options: ["4", "A", "🐱", "★"],
-      answer: "A",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual NÃO é uma fruta?",
-      big: true,
-      options: ["🍎", "🍌", "🍊", "🐶"],
-      answer: "🐶",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual letra é IGUAL a esta? → M",
-      options: ["M", "N", "W", "H"],
-      answer: "M",
-    },
-    {
-      kind: "mcq",
-      prompt: "Quantas estrelas há aqui? ★★★★",
-      options: ["3", "5", "4", "2"],
-      answer: "4",
-    },
-  ],
-  C: [
-    {
-      kind: "mcq",
-      prompt: "Qual letra está FALTANDO? GA_O",
-      options: ["D", "P", "T", "L"],
-      answer: "T",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois? 2 4 6 8 __",
-      options: ["10", "9", "12", "7"],
-      answer: "10",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual das palavras está escrita CORRETAMENTE?",
-      options: ["BBOLA", "ABOLA", "BOLAA", "BOLA"],
-      answer: "BOLA",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual figura completa a série? △○△○__",
-      options: ["○", "△", "□", "★"],
-      answer: "△",
-    },
-  ],
-  D: [
-    {
-      kind: "mcq",
-      prompt: "Qual completa o padrão? 🔴🔵🔴🔵🔴__",
-      options: ["🔴", "🔵", "🟡", "🟢"],
-      answer: "🔵",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual NÃO pertence ao grupo? 🍎 🍌 🍇 🐶",
-      options: ["🐶", "🍎", "🍌", "🍇"],
-      answer: "🐶",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois? 5 10 15 20 __",
-      options: ["21", "30", "25", "24"],
-      answer: "25",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra tem MAIS letras?",
-      options: ["GATO", "SOL", "BOLA", "ELEFANTE"],
-      answer: "ELEFANTE",
-    },
-  ],
-  E: [
-    {
-      kind: "mcq",
-      prompt: "Qual NÃO pertence ao grupo?",
-      options: ["cachorro", "cadeira", "gato", "cavalo"],
-      answer: "cadeira",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois? 10 20 30 40 __",
-      options: ["45", "60", "50", "55"],
-      answer: "50",
-    },
-    {
-      kind: "mcq",
-      prompt: "Se hoje é TERÇA, amanhã é:",
-      options: ["quarta", "segunda", "quinta", "domingo"],
-      answer: "quarta",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o OPOSTO de CHEIO?",
-      options: ["grande", "pesado", "novo", "vazio"],
-      answer: "vazio",
-    },
-  ],
-  F: [
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois? 3 6 9 12 __",
-      options: ["14", "15", "18", "16"],
-      answer: "15",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual NÃO pertence ao grupo?",
-      options: ["maçã", "banana", "cenoura", "uva"],
-      answer: "cenoura",
-    },
-    {
-      kind: "mcq",
-      prompt:
-        "Todos os pássaros voam. O canário é um pássaro. Então o canário:",
-      options: ["voa", "nada", "corre", "late"],
-      answer: "voa",
-    },
-    {
-      kind: "mcq",
-      prompt: "DIA está para NOITE assim como SOL está para:",
-      options: ["céu", "estrela", "nuvem", "lua"],
-      answer: "lua",
-    },
-  ],
-  G: [
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois? 100 90 80 70 __",
-      options: ["65", "60", "50", "75"],
-      answer: "60",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois? 2 4 8 16 __",
-      options: ["32", "24", "20", "18"],
-      answer: "32",
-    },
-    {
-      kind: "mcq",
-      prompt: "MÃO está para LUVA assim como PÉ está para:",
-      options: ["perna", "dedo", "sapato", "chão"],
-      answer: "sapato",
-    },
-    {
-      kind: "mcq",
-      prompt: "Se A é maior que B, e B é maior que C, então A é ___ que C:",
-      options: ["menor", "igual", "não dá para saber", "maior"],
-      answer: "maior",
-    },
-  ],
-};
-
-const LEITURA_BANK: Record<Band, MCQ[]> = {
-  A: [
-    {
-      kind: "mcq",
-      prompt: "Qual desses você usa para ESCREVER palavras?",
-      big: true,
-      options: ["🐱", "A", "★", "🚗"],
-      answer: "A",
-    },
-    {
-      kind: "mcq",
-      prompt: "Em que direção lemos em português? →",
-      options: [
-        "Da direita para esquerda",
-        "De cima para baixo",
-        "Da esquerda para direita",
-        "Tanto faz",
-      ],
-      answer: "Da esquerda para direita",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual desses é um LIVRO?",
-      big: true,
-      options: ["📚", "🎵", "🚗", "🍎"],
-      answer: "📚",
-    },
-    {
-      kind: "mcq",
-      prompt: "O que fica no COMEÇO de uma frase?",
-      options: ["Ponto final", "Vírgula", "Nada", "Letra maiúscula"],
-      answer: "Letra maiúscula",
-    },
-  ],
-  B: [
-    {
-      kind: "mcq",
-      prompt: "Qual palavra RIMA com PÃO?",
-      options: ["CASA", "MÃO", "PEIXE", "BOLA"],
-      answer: "MÃO",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra começa com o mesmo som de SAPO?",
-      options: ["FACA", "RATO", "SINO", "DEDO"],
-      answer: "SINO",
-    },
-    {
-      kind: "mcq",
-      prompt: "Quantas SÍLABAS tem a palavra MA-CA-CO?",
-      options: ["3", "2", "4", "1"],
-      answer: "3",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o PRIMEIRO som da palavra FADA?",
-      options: ["A", "D", "G", "F"],
-      answer: "F",
-    },
-  ],
-  C: [
-    {
-      kind: "mcq",
-      prompt:
-        "📖 'O gato Miau dorme no tapete cinza. Ele acorda ao ouvir um barulho.'\n\nComo se chama o gato?",
-      options: ["Cinza", "Miau", "Tapete", "Barulho"],
-      answer: "Miau",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nQual era a cor do gato?",
-      options: ["Preta", "Branca", "Cinza", "Amarela"],
-      answer: "Cinza",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nPor que o gato acordou?",
-      options: [
-        "Ouviu um barulho",
-        "Estava com fome",
-        "Viu um rato",
-        "Alguém chamou",
-      ],
-      answer: "Ouviu um barulho",
-    },
-    {
-      kind: "mcq",
-      prompt: "Que palavra está escrita? D-A-D-O",
-      options: ["LADO", "BADO", "DADA", "DADO"],
-      answer: "DADO",
-    },
-  ],
-  D: [
-    {
-      kind: "mcq",
-      prompt:
-        "📖 'Ana foi à biblioteca buscar um livro de astronomia. Ela leu sobre planetas e estrelas. Depois fez um resumo para a professora.'\n\nO que Ana foi buscar?",
-      options: ["Uma revista", "Um livro", "Um notebook", "Um mapa"],
-      answer: "Um livro",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nSobre o que era o livro?",
-      options: ["Animais", "Plantas", "Astronomia", "História"],
-      answer: "Astronomia",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nO que ela fez depois de ler?",
-      options: ["Um resumo", "Uma prova", "Uma redação", "Uma apresentação"],
-      answer: "Um resumo",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o plural de LEÃO?",
-      options: ["LEÃOS", "LEONES", "LEAOS", "LEÕES"],
-      answer: "LEÕES",
-    },
-  ],
-  E: [
-    {
-      kind: "mcq",
-      prompt:
-        "📖 'O João tem um cachorro chamado Rex. Todo dia, depois da escola, ele leva o Rex para passear no parque.'\n\nComo se chama o cachorro?",
-      options: ["João", "Rex", "Parque", "Bola"],
-      answer: "Rex",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nQuando o João passeia com o Rex?",
-      options: [
-        "De manhã cedo",
-        "À noite",
-        "Depois da escola",
-        "No fim de semana",
-      ],
-      answer: "Depois da escola",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra é SINÔNIMO de ALEGRE?",
-      options: ["Feliz", "Triste", "Cansado", "Bravo"],
-      answer: "Feliz",
-    },
-    {
-      kind: "mcq",
-      prompt: "Complete: 'Não fui à escola ___ estava doente.'",
-      options: ["mas", "então", "ou", "porque"],
-      answer: "porque",
-    },
-  ],
-  F: [
-    {
-      kind: "mcq",
-      prompt:
-        "📖 'Maria estudou muito para a prova. Quando recebeu a nota, sorriu e comemorou com os amigos.'\n\nComo Maria ficou com a nota?",
-      options: ["Triste", "Feliz", "Com raiva", "Com medo"],
-      answer: "Feliz",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nO que mostra que ela foi bem?",
-      options: ["Chorou", "Ficou quieta", "Sorriu e comemorou", "Foi embora"],
-      answer: "Sorriu e comemorou",
-    },
-    {
-      kind: "mcq",
-      prompt: "'Ele tem um coração de ouro.' Isso quer dizer que ele é:",
-      options: ["Muito bom", "Muito rico", "Muito forte", "Muito alto"],
-      answer: "Muito bom",
-    },
-    {
-      kind: "mcq",
-      prompt: "O que significa 'quebrar a cabeça'?",
-      options: ["Se machucar", "Dormir", "Correr", "Pensar muito"],
-      answer: "Pensar muito",
-    },
-  ],
-  G: [
-    {
-      kind: "mcq",
-      prompt:
-        "📖 'Usar o celular antes de dormir pode atrapalhar o sono, porque a luz da tela deixa o cérebro mais alerta.'\n\nSegundo o texto, o celular à noite pode:",
-      options: [
-        "Melhorar o sono",
-        "Atrapalhar o sono",
-        "Cansar os olhos apenas",
-        "Não mudar nada",
-      ],
-      answer: "Atrapalhar o sono",
-    },
-    {
-      kind: "mcq",
-      prompt: "📖 (mesmo texto)\n\nPor que o celular atrapalha o sono?",
-      options: [
-        "Ele é pesado",
-        "Faz muito barulho",
-        "A luz deixa o cérebro alerta",
-        "Fica sem bateria",
-      ],
-      answer: "A luz deixa o cérebro alerta",
-    },
-    {
-      kind: "mcq",
-      prompt: "'Ele ficou de olho na situação.' Significa que ele:",
-      options: ["Prestou atenção", "Foi embora", "Dormiu", "Ficou perdido"],
-      answer: "Prestou atenção",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual frase está no sentido FIGURADO?",
-      options: [
-        "O anel é de ouro.",
-        "Comprei ouro na loja.",
-        "O ouro é um metal.",
-        "Ela tem um coração de ouro.",
-      ],
-      answer: "Ela tem um coração de ouro.",
-    },
-  ],
-};
-
-const ESCRITA_BANK: Record<Band, Question[]> = {
-  A: [
-    {
-      kind: "obs",
-      intro:
-        "Observe a criança tentando fazer as atividades abaixo (com lápis/caneta). Marque o que ela consegue realizar:",
-      items: [
-        {
-          label:
-            "Segura o lápis/caneta com a mão (mesmo que de forma irregular)",
-        },
-        { label: "Faz marcas intencionais no papel (rabiscos)" },
-        { label: "Imita traços simples (linhas) quando demonstrado" },
-        { label: "Diferencia texto de desenho (sabe que letras são símbolos)" },
-      ],
-    },
-  ],
-  B: [
-    {
-      kind: "obs",
-      intro:
-        "Observe e marque as habilidades de pré-escrita que a criança demonstra:",
-      items: [
-        { label: "Escreve (ou tenta escrever) o próprio nome" },
-        { label: "Reconhece o próprio nome escrito entre outros nomes" },
-        { label: "Copia letras simples isoladas (A, O, L, I)" },
-        { label: "Diferencia letras de números ao olhar" },
-      ],
-    },
-  ],
-  C: [
-    {
-      kind: "mcq",
-      prompt: "Como se escreve o som 'bê-o-lê-a'?",
-      options: ["BÔLA", "BOLA", "VOLA", "BOLLA"],
-      answer: "BOLA",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é a grafia CORRETA?",
-      options: ["GATTO", "GATU", "GATO", "GÁTO"],
-      answer: "GATO",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra está ESCRITA ERRADA?",
-      options: ["DATO", "CASA", "PAÇOCA", "BOLA"],
-      answer: "DATO",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o plural correto de FLOR?",
-      options: ["FLORS", "FLORÊS", "FLORE", "FLORES"],
-      answer: "FLORES",
-    },
-  ],
-  D: [
-    {
-      kind: "mcq",
-      prompt: "Qual palavra está escrita CORRETAMENTE?",
-      options: ["kaza", "casa", "caza", "cassa"],
-      answer: "casa",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra usa ACENTO corretamente?",
-      options: ["cafe", "cafê", "café", "cáfe"],
-      answer: "café",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra está ESCRITA ERRADA?",
-      options: ["caza", "escola", "amigo", "bola"],
-      answer: "caza",
-    },
-    {
-      kind: "mcq",
-      prompt: "Complete: 'Ontem eu ___ à escola.'",
-      options: ["vou", "vai", "irei", "fui"],
-      answer: "fui",
-    },
-  ],
-  E: [
-    {
-      kind: "mcq",
-      prompt: "Qual frase está CORRETA?",
-      options: [
-        "Os meninos brincou no parque.",
-        "Os meninos brincaram no parque.",
-        "Os menino brincou no parque.",
-        "O meninos brincaram.",
-      ],
-      answer: "Os meninos brincaram no parque.",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o plural de 'animal'?",
-      options: ["animals", "animales", "animais", "animauis"],
-      answer: "animais",
-    },
-    {
-      kind: "mcq",
-      prompt: "Complete: 'Nós ___ felizes.'",
-      options: ["estamos", "está", "estou", "estão"],
-      answer: "estamos",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual frase usa a letra maiúscula corretamente?",
-      options: [
-        "meu nome é ana.",
-        "Meu Nome É Ana.",
-        "meu nome É ana.",
-        "Meu nome é Ana.",
-      ],
-      answer: "Meu nome é Ana.",
-    },
-  ],
-  F: [
-    {
-      kind: "mcq",
-      prompt: "Qual frase está CORRETA?",
-      options: [
-        "Ela foram bem na prova.",
-        "Ela foi bem na prova.",
-        "Ela fui bem na prova.",
-        "Ela vai bem na prova ontem.",
-      ],
-      answer: "Ela foi bem na prova.",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o OPOSTO de 'começar'?",
-      options: ["Iniciar", "Abrir", "Terminar", "Andar"],
-      answer: "Terminar",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra está escrita CERTA?",
-      options: ["exercício", "exercicio", "ezercício", "exersício"],
-      answer: "exercício",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual frase está no PASSADO?",
-      options: [
-        "Amanhã eu estudo.",
-        "Eu estudo agora.",
-        "Eu vou estudar.",
-        "Ontem eu estudei.",
-      ],
-      answer: "Ontem eu estudei.",
-    },
-  ],
-  G: [
-    {
-      kind: "mcq",
-      prompt: "Qual frase está mais bem escrita?",
-      options: [
-        "Precisa economizar nós água.",
-        "Precisamos economizar água.",
-        "Nós precisa economizar água.",
-        "Água economizar precisamos.",
-      ],
-      answer: "Precisamos economizar água.",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é o OPOSTO de 'vantagem'?",
-      options: ["Benefício", "Lucro", "Desvantagem", "Ganho"],
-      answer: "Desvantagem",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual palavra está escrita CORRETA?",
-      options: ["através", "atravez", "atravéz", "atraveiz"],
-      answer: "através",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual frase é uma OPINIÃO (não um fato)?",
-      options: [
-        "O filme dura duas horas.",
-        "O filme é colorido.",
-        "O filme foi lançado ontem.",
-        "Este é o melhor filme do ano.",
-      ],
-      answer: "Este é o melhor filme do ano.",
-    },
-  ],
-};
-
-const ARITMETICA_BANK: Record<Band, MCQ[]> = {
-  A: [
-    {
-      kind: "mcq",
-      prompt: "Qual grupo tem MAIS?",
-      big: true,
-      options: ["🍎🍎 (2)", "🍎🍎🍎 (3)", "🍎 (1)", "São iguais"],
-      answer: "🍎🍎🍎 (3)",
-    },
-    {
-      kind: "mcq",
-      prompt: "Quantos há aqui? 🐶🐶",
-      options: ["1", "3", "2", "4"],
-      answer: "2",
-    },
-    {
-      kind: "mcq",
-      prompt: "Quantos dedos tem UMA mão?",
-      options: ["5", "4", "6", "3"],
-      answer: "5",
-    },
-    {
-      kind: "mcq",
-      prompt: "1 + 1 = ?",
-      options: ["3", "1", "4", "2"],
-      answer: "2",
-    },
-  ],
-  B: [
-    {
-      kind: "mcq",
-      prompt: "Qual número vem depois de 9?",
-      options: ["8", "10", "11", "7"],
-      answer: "10",
-    },
-    {
-      kind: "mcq",
-      prompt: "2 + 3 = ?",
-      options: ["4", "6", "5", "3"],
-      answer: "5",
-    },
-    {
-      kind: "mcq",
-      prompt: "Tenho 5 balas e como 2. Quantas restam?",
-      options: ["3", "2", "4", "7"],
-      answer: "3",
-    },
-    {
-      kind: "mcq",
-      prompt: "4 + 4 = ?",
-      options: ["6", "9", "7", "8"],
-      answer: "8",
-    },
-  ],
-  C: [
-    {
-      kind: "mcq",
-      prompt: "8 + 7 = ?",
-      options: ["14", "15", "16", "13"],
-      answer: "15",
-    },
-    {
-      kind: "mcq",
-      prompt: "20 − 6 = ?",
-      options: ["15", "13", "14", "12"],
-      answer: "14",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é a metade de 10?",
-      options: ["5", "4", "6", "3"],
-      answer: "5",
-    },
-    {
-      kind: "mcq",
-      prompt: "Tenho 3 grupos de 4 maçãs. Quantas maçãs no total?",
-      options: ["7", "10", "9", "12"],
-      answer: "12",
-    },
-  ],
-  D: [
-    {
-      kind: "mcq",
-      prompt: "6 + 7 = ?",
-      options: ["12", "13", "14", "15"],
-      answer: "13",
-    },
-    {
-      kind: "mcq",
-      prompt: "15 − 8 = ?",
-      options: ["8", "6", "7", "9"],
-      answer: "7",
-    },
-    {
-      kind: "mcq",
-      prompt: "3 × 4 = ?",
-      options: ["12", "7", "9", "14"],
-      answer: "12",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual número é MAIOR: 34 ou 43?",
-      options: ["34", "São iguais", "Não sei", "43"],
-      answer: "43",
-    },
-  ],
-  E: [
-    {
-      kind: "mcq",
-      prompt: "25 + 48 = ?",
-      options: ["63", "73", "83", "72"],
-      answer: "73",
-    },
-    {
-      kind: "mcq",
-      prompt: "9 × 6 = ?",
-      options: ["56", "45", "54", "63"],
-      answer: "54",
-    },
-    {
-      kind: "mcq",
-      prompt: "50% de 40 = ?",
-      options: ["20", "10", "40", "30"],
-      answer: "20",
-    },
-    {
-      kind: "mcq",
-      prompt: "Tenho 24 figurinhas em 3 pacotes iguais. Cada pacote tem:",
-      options: ["6", "9", "12", "8"],
-      answer: "8",
-    },
-  ],
-  F: [
-    {
-      kind: "mcq",
-      prompt: "100 − 37 = ?",
-      options: ["67", "63", "73", "57"],
-      answer: "63",
-    },
-    {
-      kind: "mcq",
-      prompt: "12 × 5 = ?",
-      options: ["50", "55", "60", "65"],
-      answer: "60",
-    },
-    {
-      kind: "mcq",
-      prompt: "10% de 200 = ?",
-      options: ["20", "10", "200", "2"],
-      answer: "20",
-    },
-    {
-      kind: "mcq",
-      prompt: "Um lápis custa R$ 2. Quanto custam 6 lápis?",
-      options: ["R$ 8", "R$ 10", "R$ 14", "R$ 12"],
-      answer: "R$ 12",
-    },
-  ],
-  G: [
-    {
-      kind: "mcq",
-      prompt: "Um produto custa R$ 80 e tem 25% de desconto. Preço final:",
-      options: ["R$ 55", "R$ 60", "R$ 20", "R$ 75"],
-      answer: "R$ 60",
-    },
-    {
-      kind: "mcq",
-      prompt: "Qual é a MÉDIA de 4, 6 e 8?",
-      options: ["5", "7", "6", "9"],
-      answer: "6",
-    },
-    {
-      kind: "mcq",
-      prompt: "Se 3 canetas custam R$ 9, uma caneta custa:",
-      options: ["R$ 3", "R$ 6", "R$ 9", "R$ 2"],
-      answer: "R$ 3",
-    },
-    {
-      kind: "mcq",
-      prompt: "Quanto é 15% de 100?",
-      options: ["10", "20", "150", "15"],
-      answer: "15",
-    },
-  ],
-};
-
-// ─────────────────────────────── PERFIS EXATOS 6–13 ───────────────────────────────
-const ageMcq = (prompt: string, options: string[], answer: string): MCQ => ({
-  kind: "mcq",
-  prompt,
-  options,
-  answer,
-});
-
-// Perfis 6–13: cada item mostra o estímulo inteiro na própria pergunta (a
-// sequência, o texto, a conta). Nada depende de item anterior nem de regra
-// implícita. Uma única resposta certa, conferível de relance por quem aplica.
-const COGNITIVE_AGE_BANKS: Partial<Record<number, Record<Domain, MCQ[]>>> = {
-  6: {
-    visual: [
-      ageMcq("Qual figura é igual a esta? ⭐", ["⭐", "🔺", "🔵", "🟩"], "⭐"),
-      ageMcq("O que vem depois? 🔴 🔵 🔴 🔵 🔴 __", ["🟡", "🔵", "🔴", "🟢"], "🔵"),
-      ageMcq("Qual destes é comida?", ["🍎", "🚗", "👟", "✏️"], "🍎"),
-      ageMcq("Qual é o menor animal?", ["🐘", "🐶", "🐭", "🦒"], "🐭"),
-    ],
-    leitura: [
-      ageMcq("Qual palavra começa com a letra M?", ["mesa", "sapo", "foca", "rato"], "mesa"),
-      ageMcq("Leia: 'A bola é azul.'\nDe que cor é a bola?", ["Verde", "Azul", "Amarela", "Vermelha"], "Azul"),
-      ageMcq("Qual palavra rima com GATO?", ["pato", "mesa", "bola", "casa"], "pato"),
-      ageMcq("Junte as letras: B-O-L-A. Que palavra é?", ["BALA", "BOLA", "BELA", "COLA"], "BOLA"),
-    ],
-    escrita: [
-      ageMcq("Qual frase começa com letra maiúscula?", ["ana brinca.", "Ana brinca.", "ana Brinca.", "ana brinca"], "Ana brinca."),
-      ageMcq("Qual palavra está escrita certa?", ["caza", "casa", "kasa", "cassa"], "casa"),
-      ageMcq("Complete: 'Eu ___ uma história.'", ["leio", "leem", "ler", "leu"], "leio"),
-      ageMcq("Qual sinal vai no fim de uma pergunta?", [".", ",", "?", "!"], "?"),
-    ],
-    aritmetica: [
-      ageMcq("Qual número vem depois? 7, 8, 9, __", ["10", "11", "6", "12"], "10"),
-      ageMcq("3 + 2 = ?", ["4", "5", "6", "3"], "5"),
-      ageMcq("5 − 2 = ?", ["2", "3", "4", "1"], "3"),
-      ageMcq("Qual número é maior?", ["8", "3", "5", "2"], "8"),
-    ],
-  },
-  7: {
-    visual: [
-      ageMcq("O que vem depois? 🔺 🔵 🔺 🔵 __", ["🔵", "🔺", "🟢", "⭐"], "🔺"),
-      ageMcq("Qual figura é igual a esta? 🔷", ["🔷", "🔶", "🔺", "⭐"], "🔷"),
-      ageMcq("Qual NÃO é uma forma?", ["triângulo", "quadrado", "círculo", "banana"], "banana"),
-      ageMcq("Qual figura está diferente? 🔴 🔴 🔴 🔵", ["1ª", "2ª", "3ª", "4ª"], "4ª"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'Lia levou o guarda-chuva porque ia chover.'\nPor que Lia levou o guarda-chuva?",
-        ["Porque estava calor", "Porque ia chover", "Porque ia dormir", "Porque perdeu a mochila"],
-        "Porque ia chover",
-      ),
-      ageMcq("Quantas sílabas tem JA-NE-LA?", ["2", "3", "4", "5"], "3"),
-      ageMcq(
-        "Qual frase está na ordem certa?",
-        ["Parque foi ao João", "João ao parque foi", "João foi ao parque", "Foi parque João ao"],
-        "João foi ao parque",
-      ),
-      ageMcq(
-        "Leia: 'O coelho correu rápido.'\nRápido quer dizer:",
-        ["Devagar", "Depressa", "Com medo", "Em silêncio"],
-        "Depressa",
-      ),
-    ],
-    escrita: [
-      ageMcq(
-        "Qual frase termina com ponto final?",
-        ["Hoje fomos ao parque.", "Hoje fomos ao parque", "Hoje fomos ao parque?", "Hoje fomos ao parque!"],
-        "Hoje fomos ao parque.",
-      ),
-      ageMcq("Qual é o plural de FLOR?", ["flors", "flore", "flores", "floris"], "flores"),
-      ageMcq("Complete: 'As meninas ___ no pátio.'", ["brinca", "brincam", "brinco", "brincou"], "brincam"),
-      ageMcq("Qual palavra está escrita certa?", ["girafa", "jirafa", "girrafa", "girafá"], "girafa"),
-    ],
-    aritmetica: [
-      ageMcq("10 + 5 = ?", ["14", "15", "16", "12"], "15"),
-      ageMcq("12 − 4 = ?", ["6", "8", "9", "7"], "8"),
-      ageMcq("Há 2 caixas com 3 lápis em cada uma. Quantos lápis?", ["5", "6", "4", "8"], "6"),
-      ageMcq("Qual número vem depois? 10, 20, 30, __", ["35", "40", "50", "31"], "40"),
-    ],
-  },
-  8: {
-    visual: [
-      ageMcq("O que vem depois? 🔴 🔵 🟢 🔴 🔵 __", ["🟢", "🔴", "🔵", "🟡"], "🟢"),
-      ageMcq("O que vem depois? ⭐ ⭐ 🔵 ⭐ ⭐ __", ["🔵", "⭐", "🟢", "🔺"], "🔵"),
-      ageMcq("Qual NÃO pertence ao grupo? 🐶 🐱 🐭 🚗", ["🚗", "🐶", "🐱", "🐭"], "🚗"),
-      ageMcq("MÃO usa LUVA. PÉ usa:", ["meia", "chapéu", "camisa", "cinto"], "meia"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'A horta da escola usa regadores pequenos para não gastar muita água.'\nO que a horta usa?",
-        ["Regadores pequenos", "Mangueiras grandes", "Baldes", "Garrafas"],
-        "Regadores pequenos",
-      ),
-      ageMcq(
-        "Leia: 'A horta da escola usa regadores pequenos para não gastar muita água.'\nPor que usa regadores pequenos?",
-        ["Para não gastar muita água", "Para enfeitar", "Para as plantas crescerem rápido", "Para fazer barulho"],
-        "Para não gastar muita água",
-      ),
-      ageMcq(
-        "Leia: 'A horta da escola usa regadores pequenos para não gastar muita água.'\n'Gastar' aqui quer dizer:",
-        ["usar", "guardar", "esconder", "esquecer"],
-        "usar",
-      ),
-      ageMcq(
-        "Leia: 'A horta da escola usa regadores pequenos para não gastar muita água.'\nQual título combina com o texto?",
-        ["Uma horta cuidadosa", "O passeio de bicicleta", "A chuva forte", "O brinquedo novo"],
-        "Uma horta cuidadosa",
-      ),
-    ],
-    escrita: [
-      ageMcq(
-        "Qual frase está certa?",
-        ["As criança brinca.", "As crianças brincam.", "A crianças brincam.", "As crianças brincou."],
-        "As crianças brincam.",
-      ),
-      ageMcq("Qual palavra precisa de acento?", ["cafe", "mesa", "bola", "gato"], "cafe"),
-      ageMcq("Complete: 'Estava chovendo, ___ levei guarda-chuva.'", ["por isso", "mas", "ou", "nem"], "por isso"),
-      ageMcq("Qual palavra está escrita certa?", ["escola", "iscola", "escóla", "esqola"], "escola"),
-    ],
-    aritmetica: [
-      ageMcq("5 × 2 = ?", ["7", "10", "12", "8"], "10"),
-      ageMcq("18 ÷ 2 = ?", ["8", "9", "10", "6"], "9"),
-      ageMcq("Metade de 8 é:", ["2", "4", "6", "3"], "4"),
-      ageMcq("Uma caixa tem 5 lápis. Quantos lápis há em 3 caixas?", ["8", "10", "15", "12"], "15"),
-    ],
-  },
-  9: {
-    visual: [
-      ageMcq("O que vem depois? 2, 4, 6, 8, __", ["9", "10", "12", "11"], "10"),
-      ageMcq("Qual NÃO pertence ao grupo? 🍎 🍌 🍇 🥕", ["🥕", "🍎", "🍌", "🍇"], "🥕"),
-      ageMcq("O que vem depois? 🟩🟩🔵 / 🟩🔵🔵 / __", ["🔵🔵🔵", "🟩🟩🟩", "🔵🟩🟩", "🟩🔵🟩"], "🔵🔵🔵"),
-      ageMcq("Qual é esta figura virada de cabeça para baixo? 🔺", ["🔻", "🔺", "🔵", "⬛"], "🔻"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'As árvores fazem sombra e deixam a cidade mais fresca.'\nO que as árvores fazem?",
-        ["Sombra", "Barulho", "Chuva", "Vento"],
-        "Sombra",
-      ),
-      ageMcq(
-        "Leia: 'As árvores fazem sombra e deixam a cidade mais fresca.'\nPor causa das árvores, a cidade fica:",
-        ["mais fresca", "mais quente", "mais escura", "mais vazia"],
-        "mais fresca",
-      ),
-      ageMcq(
-        "Leia: 'As árvores fazem sombra e deixam a cidade mais fresca.'\n'Fresca' aqui quer dizer:",
-        ["menos quente", "mais nova", "mais limpa", "mais alta"],
-        "menos quente",
-      ),
-      ageMcq(
-        "Leia: 'As árvores fazem sombra e deixam a cidade mais fresca.'\nQual título combina com o texto?",
-        ["Árvores deixam a cidade mais fresca", "O carro novo", "A festa da escola", "O rio seco"],
-        "Árvores deixam a cidade mais fresca",
-      ),
-    ],
-    escrita: [
-      ageMcq("Complete: 'Estudei bastante, ___ fui bem na prova.'", ["por isso", "mas", "ou", "nem"], "por isso"),
-      ageMcq(
-        "Qual frase está certa?",
-        ["Nós foi ao cinema.", "Nós fomos ao cinema.", "Nós foram ao cinema.", "Nós vai ao cinema."],
-        "Nós fomos ao cinema.",
-      ),
-      ageMcq("Qual palavra está escrita certa?", ["cabeça", "cabesa", "cabessa", "kabeça"], "cabeça"),
-      ageMcq(
-        "Qual frase está na ordem certa?",
-        [
-          "Com o binóculo, o menino viu o cachorro.",
-          "Viu o cachorro menino binóculo.",
-          "O cachorro com menino viu.",
-          "Binóculo o viu menino cachorro.",
-        ],
-        "Com o binóculo, o menino viu o cachorro.",
-      ),
-    ],
-    aritmetica: [
-      ageMcq("Qual fração é a metade?", ["1/2", "1/3", "1/4", "2/3"], "1/2"),
-      ageMcq("25 + 15 = ?", ["30", "40", "45", "35"], "40"),
-      ageMcq("Ana tinha 20 figurinhas e ganhou 15. Com quantas ficou?", ["25", "30", "35", "5"], "35"),
-      ageMcq("6 × 5 = ?", ["25", "30", "35", "11"], "30"),
-    ],
-  },
-  10: {
-    visual: [
-      ageMcq("LIVRO é para LER. GARFO é para:", ["comer", "dormir", "correr", "cantar"], "comer"),
-      ageMcq("O que vem depois? 1, 3, 5, 7, __", ["8", "9", "10", "11"], "9"),
-      ageMcq("O triângulo ficou pintado: △ → ▲. Faça o mesmo com o círculo: ○ →", ["●", "□", "◇", "☆"], "●"),
-      ageMcq("Qual NÃO pertence ao grupo?", ["quadrado", "círculo", "triângulo", "maçã"], "maçã"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'A água precisa ser tratada antes de chegar às casas, para ficar boa para beber.'\nO que acontece com a água antes de chegar às casas?",
-        ["Ela é tratada", "Ela é congelada", "Ela é vendida", "Ela é pintada"],
-        "Ela é tratada",
-      ),
-      ageMcq(
-        "Leia: 'A água precisa ser tratada antes de chegar às casas, para ficar boa para beber.'\nPor que a água é tratada?",
-        ["Para ficar boa para beber", "Para mudar de cor", "Para ficar salgada", "Para fazer barulho"],
-        "Para ficar boa para beber",
-      ),
-      ageMcq(
-        "Leia: 'A água precisa ser tratada antes de chegar às casas, para ficar boa para beber.'\nAonde a água chega depois de tratada?",
-        ["Às casas", "Ao mar", "Às nuvens", "Ao deserto"],
-        "Às casas",
-      ),
-      ageMcq(
-        "Leia: 'A água precisa ser tratada antes de chegar às casas, para ficar boa para beber.'\nQual título combina com o texto?",
-        ["Água tratada para beber", "O jogo de futebol", "A viagem de avião", "O bolo de chocolate"],
-        "Água tratada para beber",
-      ),
-    ],
-    escrita: [
-      ageMcq(
-        "Qual frase tem a vírgula no lugar certo?",
-        [
-          "Quando chegou, Maria abriu o livro.",
-          "Quando, chegou Maria abriu o livro.",
-          "Quando chegou Maria abriu, o livro.",
-          "Quando chegou Maria abriu o, livro.",
-        ],
-        "Quando chegou, Maria abriu o livro.",
-      ),
-      ageMcq("Complete: 'Ele estudou, ___ ainda ficou com dúvida.'", ["mas", "porque", "então", "ou"], "mas"),
-      ageMcq(
-        "Qual frase está certa?",
-        ["Os aluno fizeram a tarefa.", "Os alunos fizeram a tarefa.", "O alunos fez a tarefa.", "Os alunos fez a tarefa."],
-        "Os alunos fizeram a tarefa.",
-      ),
-      ageMcq("Qual palavra está escrita certa?", ["amanhã", "amanhan", "amanha", "amanhâ"], "amanhã"),
-    ],
-    aritmetica: [
-      ageMcq("Metade de 50 é:", ["20", "25", "30", "15"], "25"),
-      ageMcq("10% de 100 = ?", ["1", "10", "100", "50"], "10"),
-      ageMcq("Uma receita para 2 pessoas usa 1 xícara. Para 4 pessoas, usa:", ["1", "2", "3", "4"], "2"),
-      ageMcq("48 + 27 = ?", ["65", "75", "85", "74"], "75"),
-    ],
-  },
-  11: {
-    visual: [
-      ageMcq("O que vem depois? 🔺 🔵 🔺 🔵 🔺 __", ["🔵", "🔺", "🟢", "⭐"], "🔵"),
-      ageMcq("O que vem depois? 🔴 🔵 🟢 🔴 🔵 🟢 🔴 __", ["🔵", "🟢", "🔴", "🟡"], "🔵"),
-      ageMcq("Qual seta aponta para o lado contrário de ➡️?", ["⬅️", "⬆️", "⬇️", "↗️"], "⬅️"),
-      ageMcq("TERMÔMETRO serve para MEDIR. LÁPIS serve para:", ["escrever", "dormir", "comer", "correr"], "escrever"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'A turma fez uma horta na escola e anotava quanta água usava, para não desperdiçar.'\nO que a turma fez?",
-        ["Uma horta", "Um bolo", "Uma pintura", "Um passeio"],
-        "Uma horta",
-      ),
-      ageMcq(
-        "Leia: 'A turma fez uma horta na escola e anotava quanta água usava, para não desperdiçar.'\nPor que a turma anotava a água usada?",
-        ["Para não desperdiçar", "Para escolher sementes", "Para medir a horta", "Para faltar à aula"],
-        "Para não desperdiçar",
-      ),
-      ageMcq(
-        "Leia: 'A turma fez uma horta na escola e anotava quanta água usava, para não desperdiçar.'\n'Desperdiçar' quer dizer:",
-        ["gastar sem necessidade", "guardar bem", "beber", "plantar"],
-        "gastar sem necessidade",
-      ),
-      ageMcq(
-        "Leia: 'A turma fez uma horta na escola e anotava quanta água usava, para não desperdiçar.'\nQual título combina com o texto?",
-        ["A horta e o cuidado com a água", "O jogo de vôlei", "A viagem de trem", "O dia de chuva"],
-        "A horta e o cuidado com a água",
-      ),
-    ],
-    escrita: [
-      ageMcq(
-        "Qual frase tem a vírgula no lugar certo?",
-        [
-          "Quando terminou a aula, Pedro guardou o material.",
-          "Quando, terminou a aula Pedro guardou o material.",
-          "Quando terminou a aula Pedro guardou, o material.",
-          "Quando terminou a aula Pedro guardou o, material.",
-        ],
-        "Quando terminou a aula, Pedro guardou o material.",
-      ),
-      ageMcq("Complete: 'Os resultados ___ anotados no caderno.'", ["foi", "foram", "era", "será"], "foram"),
-      ageMcq(
-        "Qual frase está na ordem certa?",
-        [
-          "Lia revisou o texto e corrigiu duas palavras.",
-          "Duas palavras corrigiu Lia texto o revisou.",
-          "Corrigiu Lia texto revisou palavras.",
-          "O texto duas Lia palavras revisou corrigiu.",
-        ],
-        "Lia revisou o texto e corrigiu duas palavras.",
-      ),
-      ageMcq("Qual palavra está escrita certa?", ["também", "tambem", "tanbém", "tambén"], "também"),
-    ],
-    aritmetica: [
-      ageMcq("1/2 de 20 = ?", ["5", "10", "15", "40"], "10"),
-      ageMcq("2,5 + 1,5 = ?", ["3", "4", "3,5", "4,5"], "4"),
-      ageMcq("Um retângulo tem lados de 8 cm, 3 cm, 8 cm e 3 cm. Somando os quatro lados, dá:", ["11 cm", "22 cm", "24 cm", "16 cm"], "22 cm"),
-      ageMcq("Uma receita usa 3 xícaras para 6 pessoas. Para 12 pessoas, usa:", ["4", "5", "6", "9"], "6"),
-    ],
-  },
-  12: {
-    visual: [
-      ageMcq("O que vem depois? ↗️🔴 ↘️🔵 ↗️🔴 ↘️🔵 ↗️🔴 __", ["↗️🔴", "↘️🔵", "↗️🔵", "↘️🔴"], "↘️🔵"),
-      ageMcq("MAPA serve para achar o CAMINHO. RECEITA serve para fazer:", ["o prato", "a janela", "a estante", "o esporte"], "o prato"),
-      ageMcq("Qual seta aponta para o lado contrário de ↗️?", ["↙️", "↘️", "↖️", "⬆️"], "↙️"),
-      ageMcq("Qual figura é azul E redonda?", ["🔵", "🟦", "🔴", "🟩"], "🔵"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'Ler todos os dias ajuda a conhecer palavras novas e a entender melhor os textos.'\nSegundo o texto, ler todos os dias ajuda a:",
-        ["conhecer palavras novas", "correr mais rápido", "dormir cedo", "desenhar melhor"],
-        "conhecer palavras novas",
-      ),
-      ageMcq(
-        "Leia: 'Ler todos os dias ajuda a conhecer palavras novas e a entender melhor os textos.'\nQuem escreveu o texto é a favor de:",
-        ["ler com frequência", "não ler", "ler só imagens", "ler uma vez por ano"],
-        "ler com frequência",
-      ),
-      ageMcq(
-        "Leia: 'Ler todos os dias ajuda a conhecer palavras novas e a entender melhor os textos.'\n'Todos os dias' é o mesmo que:",
-        ["com frequência", "uma vez só", "nunca", "devagar"],
-        "com frequência",
-      ),
-      ageMcq(
-        "Leia: 'Ler todos os dias ajuda a conhecer palavras novas e a entender melhor os textos.'\nQual resumo combina com o texto?",
-        [
-          "Ler todo dia ajuda no vocabulário e na compreensão.",
-          "Ler é só decorar palavras.",
-          "Textos não precisam ter sentido.",
-          "Todo leitor aprende igual.",
-        ],
-        "Ler todo dia ajuda no vocabulário e na compreensão.",
-      ),
-    ],
-    escrita: [
-      ageMcq(
-        "Qual frase dá uma opinião?",
-        [
-          "A biblioteca tem duas salas.",
-          "A leitura diária deveria fazer parte da rotina da escola.",
-          "Ontem fui à biblioteca.",
-          "O livro tem 80 páginas.",
-        ],
-        "A leitura diária deveria fazer parte da rotina da escola.",
-      ),
-      ageMcq("Complete: 'Estudei muito, ___ ainda errei uma questão.'", ["portanto", "além disso", "porém", "porque"], "porém"),
-      ageMcq(
-        "Qual frase é a mais formal, para uma carta à direção da escola?",
-        ["A gente acha que é muito legal.", "Consideramos a proposta boa.", "Tá tudo bem com a proposta.", "A proposta é tipo boa."],
-        "Consideramos a proposta boa.",
-      ),
-      ageMcq("Qual palavra está escrita certa?", ["exceção", "escessão", "excessão", "eceção"], "exceção"),
-    ],
-    aritmetica: [
-      ageMcq("Se 3 cadernos custam R$ 27, quanto custa 1 caderno?", ["R$ 7", "R$ 9", "R$ 8", "R$ 10"], "R$ 9"),
-      ageMcq("10% de 150 = ?", ["10", "15", "25", "50"], "15"),
-      ageMcq("Resolva: x + 6 = 16", ["x = 8", "x = 10", "x = 12", "x = 22"], "x = 10"),
-      ageMcq("A média de 6 e 10 é:", ["7", "8", "9", "16"], "8"),
-    ],
-  },
-  13: {
-    visual: [
-      ageMcq("O que vem depois? 2, 4, 8, 16, __", ["18", "24", "32", "20"], "32"),
-      ageMcq("O que vem depois? 🔺 🔻 🔺 🔻 🔺 __", ["🔺", "🔻", "🔵", "⬛"], "🔻"),
-      ageMcq("Qual grupo NÃO segue a regra 'dobrar o número'?", ["2, 4, 8", "3, 6, 12", "5, 10, 20", "4, 8, 14"], "4, 8, 14"),
-      ageMcq("PERGUNTA leva a RESPOSTA. SEMENTE leva a:", ["planta", "estojo", "parede", "chão"], "planta"),
-    ],
-    leitura: [
-      ageMcq(
-        "Leia: 'Muitos alunos chegam atrasados. Por isso, a escola vai abrir o portão dez minutos mais cedo.'\nQual é o problema apontado no texto?",
-        ["Alunos chegam atrasados", "Alunos faltam à prova", "A escola não tem portão", "O portão está quebrado"],
-        "Alunos chegam atrasados",
-      ),
-      ageMcq(
-        "Leia: 'Muitos alunos chegam atrasados. Por isso, a escola vai abrir o portão dez minutos mais cedo.'\nO que a escola vai fazer?",
-        ["Abrir o portão mais cedo", "Fechar a escola", "Mudar de endereço", "Cancelar as aulas"],
-        "Abrir o portão mais cedo",
-      ),
-      ageMcq(
-        "Leia: 'Muitos alunos chegam atrasados. Por isso, a escola vai abrir o portão dez minutos mais cedo.'\n'Por isso' liga o problema a:",
-        ["uma solução", "uma pergunta", "um nome", "um lugar"],
-        "uma solução",
-      ),
-      ageMcq(
-        "Leia: 'Muitos alunos chegam atrasados. Por isso, a escola vai abrir o portão dez minutos mais cedo.'\nQual resumo é o melhor?",
-        [
-          "Por causa dos atrasos, a escola abrirá o portão mais cedo.",
-          "A escola tem um portão.",
-          "Os alunos gostam de chegar cedo.",
-          "O texto fala de provas.",
-        ],
-        "Por causa dos atrasos, a escola abrirá o portão mais cedo.",
-      ),
-    ],
-    escrita: [
-      ageMcq(
-        "Qual frase junta as duas ideias sem repetir palavras?\n'A escola criou uma horta. A escola usa a horta nas aulas.'",
-        ["A escola criou uma horta e a usa nas aulas.", "A escola criou horta escola aulas.", "A horta escola usa a escola.", "A escola. Aulas. Horta."],
-        "A escola criou uma horta e a usa nas aulas.",
-      ),
-      ageMcq(
-        "Qual frase mostra causa e consequência?",
-        ["Como choveu, o jogo foi adiado.", "Choveu e jogo.", "O jogo, chuva, foi.", "Jogo ou chuva talvez."],
-        "Como choveu, o jogo foi adiado.",
-      ),
-      ageMcq("Complete: 'Ela treinou bastante, ___ venceu a corrida.'", ["por isso", "porém", "embora", "ou"], "por isso"),
-      ageMcq("Qual palavra está escrita certa?", ["através", "atravez", "atravéz", "atraveiz"], "através"),
-    ],
-    aritmetica: [
-      ageMcq("Resolva: 2x = 14", ["x = 5", "x = 6", "x = 7", "x = 12"], "x = 7"),
-      ageMcq("Uma receita usa 2 ovos para cada 3 pessoas. Para 9 pessoas, usa:", ["4", "6", "9", "12"], "6"),
-      ageMcq("Um produto de R$ 200 tem desconto de 10%. O preço final é:", ["R$ 180", "R$ 190", "R$ 210", "R$ 20"], "R$ 180"),
-      ageMcq("Uma viagem tem 90 km. Depois de andar 60 km, faltam:", ["20 km", "30 km", "40 km", "150 km"], "30 km"),
-    ],
-  },
-};
-
-function getQuestionsForAge(
-  domain: Domain,
-  age: number,
-  band: Band,
-): Question[] {
-  return (
-    COGNITIVE_AGE_BANKS[age]?.[domain] ??
-    (domain === "visual"
-      ? VISUAL_BANK[band]
-      : domain === "leitura"
-        ? LEITURA_BANK[band]
-        : domain === "escrita"
-          ? ESCRITA_BANK[band]
-          : ARITMETICA_BANK[band])
-  );
-}
-
-function ageProfileLabel(age: number, band: Band): string {
-  if (age >= 6 && age <= 13) return `${age} anos · perfil graduado`;
-  return BAND_LABEL[band];
-}
+const NATURE =
+  "REGISTRO DESCRITIVO — NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO. Questionário interno autoral; não substitui avaliação psicométrica formal. Leitura e conclusão pertencem ao médico.";
 
 // ─────────────────────────────── AVENTURA (UI de jogo) ───────────────────────────────
 //
@@ -1380,13 +129,6 @@ const WORLDS: Record<Domain, WorldMeta> = {
 };
 
 const WORLD_ORDER: Domain[] = ["visual", "leitura", "escrita", "aritmetica"];
-
-const OPTION_TINTS = [
-  "bg-rose-50 hover:bg-rose-100 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900 dark:hover:bg-rose-950/50",
-  "bg-sky-50 hover:bg-sky-100 border-sky-200 dark:bg-sky-950/30 dark:border-sky-900 dark:hover:bg-sky-950/50",
-  "bg-amber-50 hover:bg-amber-100 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 dark:hover:bg-amber-950/50",
-  "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900 dark:hover:bg-emerald-950/50",
-];
 
 // ─────────────────────────────── HUD ───────────────────────────────
 function AdventureHud({
@@ -1490,13 +232,11 @@ function HeroPicker({
 function WorldMap({
   hero,
   age,
-  band,
   results,
   onEnter,
 }: {
   hero: Hero;
   age: number;
-  band: Band;
   results: Partial<Record<Domain, DomainResult>>;
   onEnter: (domain: Domain) => void;
 }) {
@@ -1540,7 +280,7 @@ function WorldMap({
           </h2>
         </div>
         <Badge variant="outline" className="text-[11px]">
-          {doneCount}/{WORLD_ORDER.length} mundos · {ageProfileLabel(age, band)}
+          {doneCount}/{WORLD_ORDER.length} mundos · {ageProfileLabel(age)}
         </Badge>
       </div>
 
@@ -1548,11 +288,7 @@ function WorldMap({
         {WORLD_ORDER.map((domain, index) => {
           const world = WORLDS[domain];
           const done = Boolean(results[domain]?.max);
-          const phases = getQuestionsForAge(domain, age, band);
-          const phaseCount =
-            domain === "escrita" && (band === "A" || band === "B")
-              ? (ESCRITA_BANK[band][0] as ObsBlock).items.length
-              : phases.length;
+          const phaseCount = itemsFor(age, domain).length;
           return (
             <li key={domain}>
               <motion.button
@@ -1582,7 +318,7 @@ function WorldMap({
                     {world.name}
                   </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {world.tagline}
+                    {domainLabel(domain, age)} · {world.tagline}
                   </span>
                   <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-[11px] font-bold">
                     {done ? (
@@ -1591,10 +327,7 @@ function WorldMap({
                       </>
                     ) : (
                       <>
-                        <MapIcon className="h-3 w-3" aria-hidden="true" /> {phaseCount}{" "}
-                        {domain === "escrita" && (band === "A" || band === "B")
-                          ? "missões"
-                          : "fases"}
+                        <MapIcon className="h-3 w-3" aria-hidden="true" /> {phaseCount} fases
                       </>
                     )}
                   </span>
@@ -1638,6 +371,7 @@ function PhaseTrail({ total, current }: { total: number; current: number }) {
   );
 }
 
+
 // ─────────────────────────────── Fases (perguntas) ───────────────────────────────
 function QuestStage({
   questions,
@@ -1646,7 +380,7 @@ function QuestStage({
   onComplete,
   onStar,
 }: {
-  questions: MCQ[];
+  questions: CognitiveItem[];
   world: WorldMeta;
   hero: Hero;
   onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
@@ -1668,20 +402,6 @@ function QuestStage({
   }, [idx]);
 
   const q = questions[idx];
-  // Embaralha a ordem das alternativas por fase para que a resposta correta
-  // NÃO fique sempre na primeira posição. A ordem é estável durante a fase e é
-  // sorteada de novo a cada nova fase / a cada nova partida (o mundo remonta
-  // ao "Jogar de novo"). O registro compara o texto escolhido com q.answer.
-  const displayOptions = useMemo(() => {
-    const cur = questions[idx];
-    if (!cur) return [];
-    const a = [...cur.options];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }, [idx, questions]);
 
   useEffect(() => {
     if (phase === "registered") nextRef.current?.focus();
@@ -1690,17 +410,12 @@ function QuestStage({
   if (!q) return null;
   const isLast = idx + 1 >= questions.length;
 
-  function pick(opt: string) {
-    if (phase !== "question") return;
-    softTap();
-    setSelected(opt);
+  function register(chosen: string, ok: boolean) {
+    if (phase !== "question" || !q) return;
+    setSelected(chosen);
     setPhase("registered");
-    const ok = opt === q.answer;
     if (ok) setScore((s) => s + 1);
-    setAnswers((a) => [
-      ...a,
-      { prompt: q.prompt, correct: q.answer, selected: opt, isCorrect: ok },
-    ]);
+    setAnswers((a) => [...a, { prompt: q.prompt, correct: expectedText(q), selected: chosen, isCorrect: ok }]);
     onStar();
   }
 
@@ -1737,226 +452,113 @@ function QuestStage({
           className="space-y-4"
         >
           <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-background/80 p-5 shadow-sm sm:p-6">
-            <span
-              className="pointer-events-none absolute -right-3 -top-3 text-6xl opacity-15"
-              aria-hidden="true"
-            >
+            <span className="pointer-events-none absolute -right-3 -top-3 text-6xl opacity-15" aria-hidden="true">
               {world.emoji}
             </span>
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              {hero.emoji} {hero.name} pergunta
+              {hero.emoji} {hero.name} pergunta · {q.kind === "say" ? "a criança responde falando" : q.kind === "build" ? "a criança monta com as letras" : "a criança toca na resposta"}
             </p>
-            <p
-              className={`relative mt-1 whitespace-pre-line leading-relaxed text-foreground ${q.big ? "text-center text-2xl font-black sm:text-3xl" : "text-base font-semibold sm:text-lg"}`}
-            >
-              {q.prompt}
-            </p>
+            <p className="relative mt-1 whitespace-pre-line text-base font-semibold leading-relaxed text-foreground sm:text-lg">{q.say}</p>
           </div>
 
-          <div
-            className={`grid gap-3 ${q.big ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"}`}
-            role="group"
-            aria-label="Alternativas"
-          >
-            {displayOptions.map((opt, i) => {
-              const chosen = phase === "registered" && opt === selected;
-              const dimmed = phase === "registered" && !chosen;
-              return (
-                <motion.button
-                  key={opt}
+          {q.kind === "tap" && <TapBody item={q} selected={selected} onPick={(option) => register(option, option === q.answer)} />}
+          {q.kind === "build" && <BuildBody key={q.id} item={q} onDone={(placed) => register(placed.join(""), buildMatches(q, placed))} />}
+          {q.kind === "say" && (
+            <div className="space-y-3">
+              <SayBody item={q} />
+              <p className="text-center text-sm text-muted-foreground">
+                Esperado: <strong>{q.expected}</strong>
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Registro da resposta falada">
+                <button
                   type="button"
-                  onClick={() => pick(opt)}
                   disabled={phase === "registered"}
-                  whileHover={reduce || phase !== "question" ? undefined : { scale: 1.02 }}
-                  whileTap={reduce || phase !== "question" ? undefined : { scale: 0.96 }}
-                  aria-pressed={chosen}
-                  className={`relative rounded-3xl border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default ${OPTION_TINTS[i % OPTION_TINTS.length]} ${chosen ? "border-primary ring-4 ring-primary/20" : ""} ${dimmed ? "opacity-40" : ""} ${q.big ? "flex min-h-[96px] items-center justify-center text-5xl sm:min-h-[120px] sm:text-6xl" : "min-h-[64px] text-base font-semibold"}`}
+                  aria-pressed={selected === "Respondeu certo"}
+                  onClick={() => register("Respondeu certo", true)}
+                  className="flex min-h-16 items-center justify-center gap-2 rounded-3xl border-4 border-emerald-400 bg-emerald-50 text-lg font-black text-emerald-900 disabled:opacity-60 dark:bg-emerald-950/40 dark:text-emerald-100"
                 >
-                  <span>{opt}</span>
-                  {chosen && (
-                    <span
-                      className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground"
-                      aria-hidden="true"
-                    >
-                      ✓
-                    </span>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
+                  <Check className="h-6 w-6" aria-hidden="true" /> Respondeu certo
+                </button>
+                <button
+                  type="button"
+                  disabled={phase === "registered"}
+                  aria-pressed={selected === "Respondeu errado"}
+                  onClick={() => register("Respondeu errado", false)}
+                  className="flex min-h-16 items-center justify-center gap-2 rounded-3xl border-4 border-rose-300 bg-rose-50 text-lg font-black text-rose-900 disabled:opacity-60 dark:bg-rose-950/40 dark:text-rose-100"
+                >
+                  <X className="h-6 w-6" aria-hidden="true" /> Respondeu errado
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
       {/* Sem animação de saída: um painel que "ainda está saindo" continuava
           recebendo o toque seguinte e sumia no meio do gesto. Entrada só por CSS. */}
       {phase === "registered" && (
-          <div
-            key={`registered-${idx}`}
-            className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 dark:border-amber-700 dark:bg-amber-950/30"
-            role="status"
-          >
-            <span
-              className="text-3xl motion-safe:animate-in motion-safe:zoom-in-50"
-              aria-hidden="true"
-            >
-              ⭐
-            </span>
-            <span className="text-sm font-bold text-amber-950 dark:text-amber-100">
-              {NEUTRAL_CHEERS[idx % NEUTRAL_CHEERS.length]}
-            </span>
-            <Button
-              ref={nextRef}
-              size="lg"
-              className="ml-auto gap-1.5 rounded-2xl font-black"
-              onClick={advance}
-            >
-              {isLast ? (
-                <>
-                  Concluir mundo <Flag className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Próxima fase <ChevronRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-    </div>
-  );
-}
-
-// ─────────────────────────────── Missão de observação ───────────────────────────────
-// Escrita nas bandas A e B (2–5 anos) não tem alternativa para a criança tocar:
-// é uma lista do que o adulto observa. No jogo vira "missão do guia".
-function ObsQuest({
-  block,
-  world,
-  onComplete,
-  onStar,
-}: {
-  block: ObsBlock;
-  world: WorldMeta;
-  onComplete: (score: number, max: number, answers: AnswerRecord[]) => void;
-  onStar: () => void;
-}) {
-  const [marks, setMarks] = useState<boolean[]>(Array(block.items.length).fill(false));
-
-  function toggle(i: number) {
-    softTap();
-    setMarks((prev) => {
-      const n = [...prev];
-      n[i] = !n[i];
-      return n;
-    });
-  }
-
-  function finish() {
-    const score = marks.filter(Boolean).length;
-    const records: AnswerRecord[] = block.items.map((it, i) => ({
-      prompt: it.label,
-      selected: marks[i] ? "Observado" : "Não observado",
-      isCorrect: Boolean(marks[i]),
-    }));
-    softSuccess();
-    // Uma estrela pela missão inteira: as estrelas medem participação, não
-    // quantos itens foram marcados.
-    onStar();
-    onComplete(score, block.items.length, records);
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-3xl border border-border/70 bg-background/80 p-5 shadow-sm">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Missão do guia <span aria-hidden="true">🧭</span>
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-foreground">{block.intro}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          O adulto marca o que a criança mostrou durante a brincadeira no{" "}
-          {world.name}.
-        </p>
-      </div>
-      <ul className="space-y-2">
-        {block.items.map((item, i) => (
-          <li key={i}>
-            <button
-              type="button"
-              onClick={() => toggle(i)}
-              aria-pressed={marks[i]}
-              className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${marks[i] ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30" : "border-border bg-background hover:border-primary/40"}`}
-            >
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg ${marks[i] ? "bg-amber-300" : "bg-muted"}`}
-                aria-hidden="true"
-              >
-                {marks[i] ? "✨" : "·"}
-              </span>
-              <span className="text-sm font-medium text-foreground">{item.label}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <Button size="lg" className="w-full gap-1.5 rounded-2xl font-black" onClick={finish}>
-        Concluir missão <Flag className="h-4 w-4" />
-      </Button>
+        <div
+          key={`registered-${idx}`}
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/80 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 dark:border-amber-700 dark:bg-amber-950/30"
+          role="status"
+        >
+          <span className="text-3xl motion-safe:animate-in motion-safe:zoom-in-50" aria-hidden="true">
+            ⭐
+          </span>
+          <span className="text-sm font-bold text-amber-950 dark:text-amber-100">{NEUTRAL_CHEERS[idx % NEUTRAL_CHEERS.length]}</span>
+          <Button ref={nextRef} size="lg" className="ml-auto gap-1.5 rounded-2xl font-black" onClick={advance}>
+            {isLast ? (
+              <>
+                Concluir mundo <Flag className="h-4 w-4" />
+              </>
+            ) : (
+              <>
+                Próxima fase <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─────────────────────────────── Um mundo ───────────────────────────────
-const DOMAIN_LABELS: Record<Domain, string> = {
-  visual: "Reconhecimento Visual",
-  leitura: "Leitura",
-  escrita: "Escrita / Ortografia",
-  aritmetica: "Aritmética",
-};
-
 function WorldScreen({
   domain,
   age,
-  band,
   hero,
   result,
   onComplete,
   onStar,
   onBackToMap,
-  easy = false,
-  onNext,
-  nextLabel = "Próximo mundo",
 }: {
   domain: Domain;
   age: number;
-  band: Band;
   hero: Hero;
   result?: DomainResult;
   onComplete: (r: DomainResult) => void;
   onStar: () => void;
   onBackToMap: () => void;
-  /** Modo Fácil: começa a jogar sem tela de introdução e avança com um só botão. */
-  easy?: boolean;
-  onNext?: () => void;
-  nextLabel?: string;
 }) {
   const reduce = useReducedMotion();
   const world = WORLDS[domain];
-  const [playing, setPlaying] = useState(easy && !result);
+  const [playing, setPlaying] = useState(false);
   const [round, setRound] = useState(0);
   const [leaving, setLeaving] = useState(false);
-  const bank = getQuestionsForAge(domain, age, band);
-  const isObs = domain === "escrita" && (band === "A" || band === "B");
+  const bank = itemsFor(age, domain);
+  const label = domainLabel(domain, age);
 
   const handleComplete = useCallback(
     (score: number, max: number, answers: AnswerRecord[]) => {
-      onComplete({ domain, label: DOMAIN_LABELS[domain], score, max, answers });
+      onComplete({ domain, label, score, max, answers });
       setPlaying(false);
     },
-    [domain, onComplete],
+    [domain, label, onComplete],
   );
 
   function playAgain() {
-    onComplete({ domain, label: DOMAIN_LABELS[domain], score: 0, max: 0, answers: [] });
+    onComplete({ domain, label, score: 0, max: 0, answers: [] });
     setRound((r) => r + 1);
     setLeaving(false);
     setPlaying(true);
@@ -1974,14 +576,12 @@ function WorldScreen({
           {world.emoji}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            {DOMAIN_LABELS[domain]}
-          </p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
           <h2 id={`world-${domain}-title`} className={`text-xl font-black leading-tight sm:text-2xl ${world.accent}`}>
             {world.name}
           </h2>
         </div>
-        {easy ? null : playing ? (
+        {playing ? (
           leaving ? (
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background/90 p-1.5" role="alertdialog" aria-label="Sair do mundo apaga as respostas desta partida">
               <span className="px-1 text-xs text-muted-foreground">Sair apaga esta partida.</span>
@@ -2023,34 +623,21 @@ function WorldScreen({
             </motion.div>
             <p className="mt-2 text-lg font-black">Medalha conquistada: {world.badge}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {hero.emoji} {hero.name} explorou o {world.name} inteiro. Todas as
-              respostas ficaram registradas para o profissional.
+              {hero.emoji} {hero.name} explorou o {world.name} inteiro. Todas as respostas ficaram registradas para o profissional.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {easy && onNext ? (
-                <Button size="lg" data-testid="cognitive-easy-next" className="min-h-16 w-full gap-1.5 rounded-2xl text-xl font-black" onClick={onNext}>
-                  {nextLabel} <ChevronRight className="h-5 w-5" />
-                </Button>
-              ) : (
-                <>
-                  <Button className="gap-1.5 rounded-2xl font-black" onClick={onBackToMap}>
-                    <MapIcon className="h-4 w-4" /> Voltar ao mapa
-                  </Button>
-                  <Button variant="outline" className="gap-1.5 rounded-2xl" onClick={playAgain}>
-                    <RotateCcw className="h-4 w-4" /> Jogar de novo
-                  </Button>
-                </>
-              )}
+              <Button className="gap-1.5 rounded-2xl font-black" onClick={onBackToMap}>
+                <MapIcon className="h-4 w-4" /> Voltar ao mapa
+              </Button>
+              <Button variant="outline" className="gap-1.5 rounded-2xl" onClick={playAgain}>
+                <RotateCcw className="h-4 w-4" /> Jogar de novo
+              </Button>
             </div>
           </motion.div>
         ) : !playing ? (
           <div className="rounded-3xl border border-border/70 bg-background/85 p-5 text-center">
             <p className="text-base font-semibold">{world.tagline}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {isObs
-                ? `${(ESCRITA_BANK[band][0] as ObsBlock).items.length} missões para o guia observar.`
-                : `${bank.length} fases. Toque na resposta e siga para a próxima.`}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{bank.length} fases. A criança toca, monta ou fala; a tela ou o adulto registra e segue para a próxima.</p>
             <Button
               size="lg"
               className="mt-4 gap-1.5 rounded-2xl font-black"
@@ -2062,110 +649,37 @@ function WorldScreen({
               <Play className="h-4 w-4" /> Começar
             </Button>
           </div>
-        ) : isObs ? (
-          <ObsQuest
-            key={round}
-            block={ESCRITA_BANK[band][0] as ObsBlock}
-            world={world}
-            onComplete={handleComplete}
-            onStar={onStar}
-          />
         ) : (
-          <QuestStage
-            key={round}
-            questions={bank as MCQ[]}
-            world={world}
-            hero={hero}
-            onComplete={handleComplete}
-            onStar={onStar}
-          />
+          <QuestStage key={round} questions={bank} world={world} hero={hero} onComplete={handleComplete} onStar={onStar} />
         )}
       </div>
     </motion.section>
   );
 }
 
-// ─────────────────────────────── Resultado do Modo Fácil ───────────────────────────────
-/**
- * Contagem descritiva por mundo: quantas fases a criança respondeu e quantas
- * respostas coincidiram com a esperada. Não é escore, percentil, idade
- * equivalente nem diagnóstico; a leitura é do médico.
- */
-export function buildEasyCognitiveReport(input: {
-  ageLabel: string;
-  results: Partial<Record<Domain, DomainResult>>;
-  date?: string;
-}): string {
-  const worlds = WORLD_ORDER.map((d) => input.results[d]).filter((r): r is DomainResult => Boolean(r && r.max > 0));
-  const answered = worlds.reduce((n, r) => n + r.answers.length, 0);
-  const matched = worlds.reduce((n, r) => n + r.answers.filter((a) => a.isCorrect).length, 0);
-  return [
-    "Testes Cognitivos por Faixa Etária · Modo Fácil (joguinho)",
-    `Idade: ${input.ageLabel} · Data: ${input.date ?? new Date().toISOString().slice(0, 10)}`,
-    "REGISTRO DESCRITIVO — NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO",
-    "Contagem do que a criança respondeu e do que coincidiu com a resposta esperada nesta interação. Leitura e conclusão pertencem ao médico.",
-    `Mundos concluídos: ${worlds.length} de ${WORLD_ORDER.length} · Fases respondidas: ${answered} · Respostas coincidentes: ${matched}`,
-    "",
-    ...worlds.flatMap((r) => [
-      `${r.label}: ${r.answers.filter((a) => a.isCorrect).length} de ${r.answers.length} coincidentes`,
-      ...r.answers.map((a, i) => `  ${i + 1}. ${a.prompt} — ${a.selected ?? "Não respondida"}${a.correct ? ` (esperada: ${a.correct})` : ""}`),
-    ]),
-    "",
-    "Triagem educativa autoral; não substitui avaliação psicométrica formal.",
-  ].join("\n");
-}
-
-function EasyCognitiveResults({
-  hero,
-  stars,
-  age,
-  band,
-  results,
-  onRestart,
-}: {
-  hero: Hero;
-  stars: number;
-  age: number;
-  band: Band;
-  results: Partial<Record<Domain, DomainResult>>;
-  onRestart: () => void;
-}) {
-  const [status, setStatus] = useState("");
-  const worlds = WORLD_ORDER.map((d) => results[d]).filter((r): r is DomainResult => Boolean(r && r.max > 0));
-  const report = buildEasyCognitiveReport({ ageLabel: ageProfileLabel(age, band), results });
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(report);
-      setStatus("Resultado copiado.");
-    } catch {
-      setStatus("Não foi possível copiar. Selecione o texto abaixo.");
-    }
-  }
-  return (
-    <section data-testid="cognitive-easy-results" className="rounded-3xl border border-amber-300 bg-gradient-to-br from-amber-50 via-background to-background p-5 shadow-sm dark:border-amber-700 dark:from-amber-950/30 sm:p-7" aria-labelledby="cognitive-easy-results-title">
-      <div className="text-center">
-        <div className="text-6xl" aria-hidden="true">🏆</div>
-        <h2 id="cognitive-easy-results-title" className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Aventura completa!</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{hero.emoji} {hero.name} ganhou {stars} estrelas por participar. Estrelas não são nota.</p>
-      </div>
-      <ul className="mt-5 grid gap-3 sm:grid-cols-2" aria-label="Resultado por mundo">
-        {worlds.map((r) => (
-          <li key={r.domain} className="rounded-2xl border bg-background/85 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{WORLDS[r.domain].emoji} {r.label}</p>
-            <p className="mt-1 text-2xl font-black tabular-nums" data-testid={`cognitive-easy-${r.domain}`}>{r.answers.filter((a) => a.isCorrect).length} <span className="text-base font-semibold text-muted-foreground">de {r.answers.length} coincidentes</span></p>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-4 rounded-xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
-        Contagem descritiva do que coincidiu com a resposta esperada nesta interação. Não é escore, percentil, idade equivalente nem diagnóstico. Quem lê e conclui é o médico.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="lg" className="rounded-2xl font-black" onClick={() => void copy()}>Copiar resultado</Button>
-        <Button size="lg" variant="outline" className="rounded-2xl" onClick={onRestart}><RotateCcw className="mr-2 h-4 w-4" /> Jogar de novo</Button>
-      </div>
-      {status && <p role="status" className="mt-2 text-sm">{status}</p>}
-      <textarea aria-label="Resultado do Modo Fácil" readOnly value={report} className="mt-4 min-h-56 w-full rounded-xl border bg-background p-3 font-mono text-xs leading-relaxed" />
-    </section>
+// ─────────────────────────────── Modo Fácil ───────────────────────────────
+/** Os 16 itens da idade viram passos lineares do motor compartilhado (EasyGame). */
+function easyStepsFor(age: number): EasyStep[] {
+  return WORLD_ORDER.flatMap((domain) =>
+    itemsFor(age, domain).map((item): EasyStep => ({
+      id: item.id,
+      group: `${WORLDS[domain].emoji} ${WORLDS[domain].name} · ${domainLabel(domain, age)}`,
+      title: item.prompt,
+      say: item.say,
+      hint: adultHint(item),
+      visual:
+        item.stimulus && item.kind !== "build" ? (
+          <p className="whitespace-pre-line rounded-xl bg-muted px-3 py-2 text-sm leading-relaxed text-muted-foreground">
+            <span className="font-bold">Na tela da criança:</span> {item.stimulus}
+          </p>
+        ) : item.kind === "build" && item.show ? (
+          <p className="rounded-xl bg-muted px-3 py-2 text-sm leading-relaxed text-muted-foreground">
+            <span className="font-bold">Na tela da criança:</span> a palavra {item.stimulus} e as letras embaralhadas
+          </p>
+        ) : undefined,
+      childLabel: item.kind === "say" ? "Mostrar para a criança" : item.kind === "build" ? "Mostrar as letras" : "Mostrar as opções",
+      child: ({ onDone }) => <ChildScreen item={item} onDone={onDone} />,
+    })),
   );
 }
 
@@ -2174,7 +688,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
   const [ageStr, setAgeStr] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [hero, setHero] = useState<Hero | null>(null);
-  const [screen, setScreen] = useState<"hero" | "map" | "world" | "results">("hero");
+  const [screen, setScreen] = useState<"hero" | "map" | "world">("hero");
   const [track, setTrack] = useState<"easy" | "guided" | "direct">("guided");
   const direct = track === "direct";
   const easy = track === "easy";
@@ -2185,8 +699,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
   const celebratedRef = useRef(false);
 
   const age = parseInt(ageStr, 10);
-  const validAge = !isNaN(age) && age >= 2 && age <= 19;
-  const band: Band | null = validAge ? getBand(age) : null;
+  const validAge = isCognitiveAge(age);
 
   const handleResult = useCallback((r: DomainResult) => {
     setResults((prev) => {
@@ -2198,9 +711,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
   }, []);
   const addStar = useCallback(() => setStars((s) => s + 1), []);
 
-  const completedDomains = WORLD_ORDER.map((d) => results[d]).filter(
-    (r): r is DomainResult => Boolean(r && r.max > 0),
-  );
+  const completedDomains = WORLD_ORDER.map((d) => results[d]).filter((r): r is DomainResult => Boolean(r && r.max > 0));
   const badges = completedDomains.map((r) => r.domain);
   const allDone = completedDomains.length === WORLD_ORDER.length;
 
@@ -2215,7 +726,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
   const reportItems = completedDomains.flatMap((result) =>
     result.answers.map((answer) => ({
       question: `[${result.label}] ${answer.prompt}`,
-      answer: answer.selected ?? "Não respondida",
+      answer: `${answer.selected ?? "Não respondida"} (esperado: ${answer.correct})`,
     })),
   );
 
@@ -2226,31 +737,24 @@ export default function TestesCognitivosFaixaEtariaPage() {
     setScreen("hero");
   }
 
+  const easySteps = easy && confirmed && validAge ? easyStepsFor(age) : [];
+
   return (
     <div className="space-y-5 pb-8">
       {/* Header do profissional */}
       <header className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-violet-500/[0.08] via-card/70 to-blue-500/[0.07] p-5 shadow-sm backdrop-blur sm:p-6">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl"
-        />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-gradient-to-br from-violet-400/25 to-fuchsia-400/10 blur-3xl" />
         <div className="relative flex items-start gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-600/25 ring-1 ring-white/20">
             <Brain className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <Badge className="mb-2 rounded-full bg-violet-100 text-violet-700 hover:bg-violet-100 dark:bg-violet-950 dark:text-violet-300">
-              testes cognitivos por faixa etária · 2–19 anos
+              testes cognitivos por faixa etária · {COGNITIVE_MIN_AGE}–{COGNITIVE_MAX_AGE} anos
             </Badge>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Testes Cognitivos por Faixa Etária
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Testes Cognitivos por Faixa Etária</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Aventura em quatro mundos — reconhecimento visual, leitura, escrita e
-              aritmética — com 4 fases por mundo, adaptadas à idade. A criança ganha
-              estrelas por participar e medalhas por concluir; nada na tela mostra
-              acerto ou erro. O profissional recebe o registro pergunta a pergunta.
-              Triagem educativa — não substitui avaliação psicométrica formal.
+              Aventura em quatro mundos — reconhecimento visual, fala/leitura, letras/escrita e números/aritmética — com 4 fases por mundo e um perfil para cada idade de 1 a 19 anos. Tudo o que a fase precisa está na tela: a criança toca na resposta, monta a palavra com as letras ou fala, e o adulto compara com a resposta esperada. Estrelas por participar, medalhas por concluir; nada na tela mostra acerto ou erro à criança. O profissional recebe o registro pergunta a pergunta. Triagem educativa — não substitui avaliação psicométrica formal.
             </p>
           </div>
         </div>
@@ -2272,12 +776,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
               className="h-9 w-24"
             />
           </div>
-          <div
-            role="tablist"
-            aria-label="Modo de aplicação"
-            data-testid="cognitive-track-tabs"
-            className="flex gap-1.5 rounded-2xl border border-border/60 bg-background/70 p-1"
-          >
+          <div role="tablist" aria-label="Modo de aplicação" data-testid="cognitive-track-tabs" className="flex gap-1.5 rounded-2xl border border-border/60 bg-background/70 p-1">
             <button
               type="button"
               role="tab"
@@ -2320,8 +819,6 @@ export default function TestesCognitivosFaixaEtariaPage() {
                 setConfirmed(true);
                 if (easy) {
                   setHero((current) => current ?? DEFAULT_HERO);
-                  setActiveWorld(WORLD_ORDER[0]);
-                  setScreen("world");
                 } else if (direct) {
                   setHero((current) => current ?? DEFAULT_HERO);
                   setScreen("map");
@@ -2330,49 +827,47 @@ export default function TestesCognitivosFaixaEtariaPage() {
                 }
               }}
             >
-              <Play className="h-4 w-4" /> Iniciar aventura
+              <Play className="h-4 w-4" /> {easy ? "Começar o jogo" : "Iniciar aventura"}
             </Button>
           ) : (
             <Button size="sm" variant="outline" className="gap-1.5" onClick={resetAdventure}>
-              <RotateCcw className="h-4 w-4" /> Reiniciar aventura
+              <RotateCcw className="h-4 w-4" /> {easy ? "Reiniciar jogo" : "Reiniciar aventura"}
             </Button>
           )}
-          {band && confirmed && (
-            <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-              {ageProfileLabel(age, band)}
-            </Badge>
-          )}
+          {validAge && confirmed && <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">{ageProfileLabel(age)}</Badge>}
         </div>
-        {direct && (
-          <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">
-            Modo direto: pula a escolha de herói. Você entra direto no mapa e escolhe o mundo.
-          </p>
-        )}
+        {direct && <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">Modo direto: pula a escolha de herói. Você entra direto no mapa e escolhe o mundo.</p>}
         {easy && (
           <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">
-            Modo Fácil: os quatro mundos em sequência, sem mapa nem escolha de herói. A criança toca na resposta e passa; no fim aparece o resultado.
+            Modo Fácil: informe a idade e toque em Começar. Um passo por vez, nos quatro mundos em sequência: leia a fala, toque em Mostrar, a criança toca, monta ou fala. Toque e montagem conferem sozinhos; na fala, você marca Acertou ou Não acertou. Resultado no fim.
           </p>
         )}
       </header>
 
-      {/* Jogo */}
-      {confirmed && band && (
+      {/* Modo Fácil: motor compartilhado com Sonda Dez, OBS-10 e Reconhecimento Visual */}
+      {confirmed && validAge && easy && (
+        <EasyGame
+          key={`easy-${age}`}
+          testid="cognitive-easy"
+          title="Testes Cognitivos por Faixa Etária"
+          ageLabel={ageProfileLabel(age)}
+          nature={NATURE}
+          footer="Modo Fácil: toque e montagem de letras conferidos pela tela; fala comparada pelo adulto com a resposta esperada. Sem mapa, herói escolhido ou medalhas por mundo."
+          steps={easySteps}
+        />
+      )}
+
+      {/* Aventura (guiado e direto) */}
+      {confirmed && validAge && !easy && (
         <>
-          {hero && screen !== "hero" && (
-            <AdventureHud
-              hero={hero}
-              stars={stars}
-              badges={badges}
-              onChangeHero={() => setScreen("hero")}
-            />
-          )}
+          {hero && screen !== "hero" && <AdventureHud hero={hero} stars={stars} badges={badges} onChangeHero={() => setScreen("hero")} />}
 
           {screen === "hero" && (
             <HeroPicker
               current={hero}
               onPick={(picked) => {
                 setHero(picked);
-                setScreen(easy ? "world" : "map");
+                setScreen("map");
               }}
             />
           )}
@@ -2381,7 +876,6 @@ export default function TestesCognitivosFaixaEtariaPage() {
             <WorldMap
               hero={hero}
               age={age}
-              band={band}
               results={results}
               onEnter={(domain) => {
                 setActiveWorld(domain);
@@ -2392,33 +886,14 @@ export default function TestesCognitivosFaixaEtariaPage() {
 
           {screen === "world" && hero && (
             <WorldScreen
-              key={`${activeWorld}-${age}-${band}`}
+              key={`${activeWorld}-${age}`}
               domain={activeWorld}
               age={age}
-              band={band}
               hero={hero}
               result={results[activeWorld]}
               onComplete={handleResult}
               onStar={addStar}
               onBackToMap={() => setScreen("map")}
-              easy={easy}
-              nextLabel={WORLD_ORDER.indexOf(activeWorld) + 1 < WORLD_ORDER.length ? "Próximo mundo" : "Ver resultado"}
-              onNext={() => {
-                const next = WORLD_ORDER[WORLD_ORDER.indexOf(activeWorld) + 1];
-                if (next) setActiveWorld(next);
-                else setScreen("results");
-              }}
-            />
-          )}
-
-          {screen === "results" && hero && (
-            <EasyCognitiveResults
-              hero={hero}
-              stars={stars}
-              age={age}
-              band={band}
-              results={results}
-              onRestart={resetAdventure}
             />
           )}
 
@@ -2442,33 +917,22 @@ export default function TestesCognitivosFaixaEtariaPage() {
                     : `${completedDomains.length} de ${WORLD_ORDER.length} mundos registrados · ${reportItems.length} itens`}
                 </span>
               </span>
-              <ChevronRight
-                className={`h-4 w-4 text-muted-foreground transition-transform ${proOpen ? "rotate-90" : ""}`}
-                aria-hidden="true"
-              />
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${proOpen ? "rotate-90" : ""}`} aria-hidden="true" />
             </button>
             {proOpen && (
               <div id="pro-area" className="space-y-4 border-t border-border/60 p-4 sm:p-5">
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Estrelas contam respostas registradas e medalhas contam mundos
-                  concluídos: são marcadores de participação, não escores. O registro
-                  abaixo traz cada pergunta e a resposta escolhida pela criança
-                  (ou o que o guia observou), sem pontuação, percentil ou
-                  interpretação diagnóstica.
+                  Estrelas contam respostas registradas e medalhas contam mundos concluídos: são marcadores de participação, não escores. O registro abaixo traz cada pergunta, o que a criança tocou, montou ou falou e a resposta esperada, sem pontuação, percentil ou interpretação diagnóstica.
                 </p>
                 {completedDomains.length > 0 ? (
                   <>
                     <ClinicalReport
                       scaleName="Testes Cognitivos por Faixa Etária"
-                      scaleFullName="Reconhecimento visual, leitura, escrita e aritmética"
+                      scaleFullName="Reconhecimento visual, fala/leitura, letras/escrita e números/aritmética"
                       items={reportItems}
-                      patientAge={ageProfileLabel(age, band)}
+                      patientAge={ageProfileLabel(age)}
                     />
-                    <SaveToPatient
-                      scaleName="Testes Cognitivos por Faixa Etária"
-                      responses={reportItems}
-                      patientAge={ageProfileLabel(age, band)}
-                    />
+                    <SaveToPatient scaleName="Testes Cognitivos por Faixa Etária" responses={reportItems} patientAge={ageProfileLabel(age)} />
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">Nenhum mundo concluído ainda.</p>
@@ -2485,9 +949,8 @@ export default function TestesCognitivosFaixaEtariaPage() {
             🗺️
           </div>
           <p className="text-sm text-muted-foreground">
-            Digite a idade da criança (2–19 anos) e toque em{" "}
-            <strong>Iniciar aventura</strong>. A criança escolhe um herói e explora os
-            quatro mundos na ordem que quiser.
+            Digite a idade ({COGNITIVE_MIN_AGE}–{COGNITIVE_MAX_AGE} anos) e toque em <strong>{easy ? "Começar o jogo" : "Iniciar aventura"}</strong>.{" "}
+            {easy ? "O jogo passa pelos quatro mundos, um passo por vez." : "A criança escolhe um herói e explora os quatro mundos na ordem que quiser."}
           </p>
         </div>
       )}
