@@ -181,6 +181,14 @@ Resposta agora lista explicitamente só o que a família precisa para o
 autoatendimento. Evidência em EVIDENCE.md#S22.
 
 ## Próximo passo executável
+Atualização em 26/09/2026 às 21:07 UTC: o censo S9 foi executado com sucesso
+após a PR #994. Foram observados três pacientes sem owner e um com owner
+sem clínica ativa, sem vínculo inequívoco para backfill. A próxima ação
+depende de estabelecer a destinação autorizada desses registros e comprovar
+o cliente zero; não depende mais de obter acesso ao censo. Evidência:
+`docs/audits/LEGACY_TENANT_CENSUS_OBSERVED_2026-09-26.md`.
+
+Contexto histórico anterior ao censo:
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Todos os
