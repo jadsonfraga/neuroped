@@ -38,8 +38,8 @@ import {
 
 const DASHBOARD_KEY = "/api/operations?resource=dashboard";
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const scheduleRows = Array.from({ length: 27 }, (_, index) => {
-  const total = 7 * 60 + index * 30;
+const scheduleRows = Array.from({ length: 14 }, (_, index) => {
+  const total = 7 * 60 + index * 60;
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 });
 
@@ -116,13 +116,22 @@ export default function AgendaPage() {
   const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
   const data = dashboard.data;
   const [patientSearch, setPatientSearch] = useState("");
-  const patientSearchParam = encodeURIComponent(patientSearch.trim());
-  const patientsQuery = useQuery<{ data: Array<{ id: string; name: string; birthDate?: string | null }>; total?: number }>({
-    queryKey: [`/api/patients?limit=50&page=1&q=${patientSearchParam}`],
-    enabled: Boolean(data?.access.canConfigure),
+  const clinicId = data?.access.clinicId ?? "";
+  const patientsQuery = useQuery<{ data: Array<{ id: string; profile?: { name?: string; birthDate?: string | null } }> }>({
+    queryKey: [`/api/live/patients?clinicId=${encodeURIComponent(clinicId)}`],
+    enabled: Boolean(data?.access.canConfigure && clinicId),
     staleTime: 30_000,
   });
-  const patientOptions = patientsQuery.data?.data ?? [];
+  const patientOptions = useMemo(() => {
+    const normalized = patientSearch.trim().toLocaleLowerCase("pt-BR");
+    return (patientsQuery.data?.data ?? [])
+      .map((patient) => ({
+        id: patient.id,
+        name: patient.profile?.name?.trim() || "Paciente",
+        birthDate: patient.profile?.birthDate ?? null,
+      }))
+      .filter((patient) => !normalized || patient.name.toLocaleLowerCase("pt-BR").includes(normalized));
+  }, [patientSearch, patientsQuery.data?.data]);
   const [busy, setBusy] = useState(false);
   const [staffEmail, setStaffEmail] = useState("");
   const [agendaDate, setAgendaDate] = useState(localDateInput);
@@ -146,7 +155,7 @@ export default function AgendaPage() {
   }, [data?.profile]);
 
   const [service, setService] = useState({ name: "", duration: "60", price: "", modality: "in_person" });
-  const [rule, setRule] = useState({ weekday: "1", start: "08:00", end: "12:00", slot: "30" });
+  const [rule, setRule] = useState({ weekday: "1", start: "08:00", end: "12:00", slot: "60" });
   const [block, setBlock] = useState({ start: "", end: "", reason: "" });
   const [manual, setManual] = useState({ serviceId: "", startsAtLocal: "", patientId: "", guardianName: "", patientName: "", phone: "", email: "" });
 
@@ -287,7 +296,7 @@ export default function AgendaPage() {
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <Field label="Serviço"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.serviceId} onChange={(e) => setManual((p) => ({ ...p, serviceId: e.target.value }))}><option value="">Selecione</option>{data.services.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
               <Field label="Data e horário"><Input type="datetime-local" value={manual.startsAtLocal} onChange={(e) => setManual((p) => ({ ...p, startsAtLocal: e.target.value }))} /></Field>
-              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar por nome ou identificador" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientsQuery.data?.total ?? patientOptions.length} resultado(s) encontrado(s).</p></div></Field>}
+              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar por nome ou identificador" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientOptions.length} paciente(s) LIVE encontrado(s) nesta clínica.</p></div></Field>}
               <Field label="Criança"><Input value={manual.patientName} onChange={(e) => setManual((p) => ({ ...p, patientName: e.target.value }))} placeholder="Nome" /></Field>
               <Field label="Responsável"><Input value={manual.guardianName} onChange={(e) => setManual((p) => ({ ...p, guardianName: e.target.value }))} /></Field>
               <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
@@ -375,6 +384,26 @@ export default function AgendaPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {apt.patientId && <Button size="sm" variant="outline" asChild><Link href={`/prontuario?patientId=${encodeURIComponent(apt.patientId)}`}><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Prontuário</Link></Button>}
+                      {canConfigure && !apt.patientId && (
+                        <select
+                          aria-label={`Vincular ${apt.patientName || "paciente"} ao prontuário LIVE`}
+                          className="min-h-9 max-w-56 rounded-lg border bg-background px-2 text-xs"
+                          defaultValue=""
+                          disabled={busy || patientsQuery.isFetching}
+                          onChange={async (event) => {
+                            const patientId = event.target.value;
+                            if (!patientId) return;
+                            const linked = await mutate(
+                              { action: "appointment_link_patient", id: apt.id, patientId },
+                              "Consulta vinculada ao prontuário LIVE.",
+                            );
+                            if (!linked) event.currentTarget.value = "";
+                          }}
+                        >
+                          <option value="">Vincular prontuário…</option>
+                          {patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}
+                        </select>
+                      )}
 
                       {(nextStatuses[apt.status] ?? []).map((status) => <Button key={status} size="sm" variant={status === "cancelled" || status === "no_show" ? "outline" : "default"} disabled={busy} onClick={() => mutate({ action: "appointment_status", id: apt.id, status }, `Consulta: ${statusLabel[status]}.`)}>{statusLabel[status]}</Button>)}
                     </div>
@@ -431,7 +460,7 @@ export default function AgendaPage() {
                   <Field label="Dia"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={rule.weekday} onChange={(e) => setRule((p) => ({ ...p, weekday: e.target.value }))}>{weekdays.map((label, index) => <option key={label} value={index}>{label}</option>)}</select></Field>
                   <Field label="Início"><Input type="time" value={rule.start} onChange={(e) => setRule((p) => ({ ...p, start: e.target.value }))} /></Field>
                   <Field label="Fim"><Input type="time" value={rule.end} onChange={(e) => setRule((p) => ({ ...p, end: e.target.value }))} /></Field>
-                  <Field label="Passo (min)"><Input type="number" min="5" value={rule.slot} onChange={(e) => setRule((p) => ({ ...p, slot: e.target.value }))} /></Field>
+                  <Field label="Intervalo entre pacientes (min)"><Input type="number" min="5" value={rule.slot} onChange={(e) => setRule((p) => ({ ...p, slot: e.target.value }))} /></Field>
                   <div className="self-end"><Button className="w-full" disabled={busy} onClick={() => mutate({ action: "create_rule", weekday: Number(rule.weekday), startMinute: toMinute(rule.start), endMinute: toMinute(rule.end), slotMinutes: Number(rule.slot) }, "Disponibilidade adicionada.")}>Adicionar</Button></div>
                 </div>
                 <div className="flex flex-wrap gap-2">{data.rules.map((item) => <Badge key={item.id} variant="secondary" className="gap-2 py-2">{weekdays[item.weekday]} {minutesToClock(item.startMinute)}–{item.endMinute === 1440 ? "24:00" : minutesToClock(item.endMinute)} <button type="button" onClick={() => mutate({ action: "delete_rule", id: item.id }, "Regra removida.")} aria-label="Remover regra"><Trash2 className="h-3.5 w-3.5" /></button></Badge>)}</div>
