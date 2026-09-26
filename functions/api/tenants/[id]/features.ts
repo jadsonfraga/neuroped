@@ -81,7 +81,8 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
 
   try {
     await ensureClinicFeatureSchema(db);
-    await setClinicFeatures(db, { clinicId, actorUserId: user.id, changes });
+    const applied = await setClinicFeatures(db, { clinicId, actorUserId: user.id, changes });
+    if (!applied) return tenantError("Gestão não autorizada para esta clínica.", "TENANT_FORBIDDEN", 403);
     return tenantJson({
       clinicId,
       canManage: true,

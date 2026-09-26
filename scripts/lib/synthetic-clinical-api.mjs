@@ -314,6 +314,7 @@ function operationsDashboard() {
  * @property {Set<string>|string[]} [failing] Prefixos de rota que devolvem 500 (erro recuperável).
  * @property {Set<string>|string[]} [hanging] Prefixos de rota que nunca respondem (estado de carregamento).
  * @property {boolean} [expiredSession] Faz `/api/auth/me` e as rotas clínicas responderem 401.
+ * @property {"admin"|"professional"|"reader"|"operator"} [userRole] Papel global sintético, independente da membership.
  */
 
 /**
@@ -341,7 +342,7 @@ export function createSyntheticClinicalApi(scenario = {}) {
     id: "usuario-sintetico-e2e",
     email: SYNTHETIC_EMAIL,
     name: "Profissional Sintético E2E",
-    role: "admin",
+    role: scenario.userRole ?? "admin",
     mustChangePassword: false,
   };
 

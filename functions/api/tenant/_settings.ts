@@ -190,19 +190,20 @@ export function parseClinicSettingsInput(body: Record<string, unknown>): ClinicS
   };
 }
 
-export async function upsertClinicSettings(
+/** Must follow the authorized clinic UPDATE in the same transactional batch. */
+export function prepareClinicSettingsUpsert(
   db: D1Database,
   clinicId: string,
   actorUserId: string,
   input: ClinicSettingsInput,
-): Promise<void> {
+): D1PreparedStatement {
   const now = new Date().toISOString();
-  await db
+  return db
     .prepare(
       `INSERT INTO clinic_settings
          (clinic_id, display_name, address_line1, address_line2, phone, public_email,
           company_line, motto, updated_by_user_id, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE changes() = 1
        ON CONFLICT(clinic_id) DO UPDATE SET
          display_name = excluded.display_name,
          address_line1 = excluded.address_line1,
@@ -225,6 +226,5 @@ export async function upsertClinicSettings(
       input.motto,
       actorUserId,
       now,
-    )
-    .run();
+    );
 }

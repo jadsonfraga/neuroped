@@ -1,3 +1,4 @@
+import { rolesWithPermission } from "../../../shared/permissions";
 import {
   clinicFeatureDefault,
   isClinicFeatureKey,
@@ -90,23 +91,28 @@ export async function setClinicFeatures(
     actorUserId: string;
     changes: Array<{ key: ClinicFeatureKey; enabled: boolean }>;
   },
-): Promise<void> {
+): Promise<boolean> {
   for (const change of params.changes) {
     if (!isClinicFeatureKey(change.key)) throw new Error("CLINIC_FEATURE_UNKNOWN");
   }
-  if (params.changes.length === 0) return;
+  if (params.changes.length === 0) return false;
   const now = new Date().toISOString();
-  await db.batch(params.changes.flatMap((change) => [
+  const manageRoles = rolesWithPermission("organization.manage");
+  const results = await db.batch(params.changes.flatMap((change) => [
     db
       .prepare(
         `INSERT INTO clinic_feature_flags (clinic_id, flag_key, enabled, updated_by_user_id, updated_at)
-         VALUES (?, ?, ?, ?, ?)
+         SELECT ?, ?, ?, ?, ? WHERE EXISTS (
+           SELECT 1 FROM clinic_memberships m JOIN clinics c ON c.id = m.clinic_id
+            WHERE m.clinic_id = ? AND m.user_id = ? AND m.active = 1
+              AND m.role IN (${manageRoles.map(() => "?").join(", ")}) AND c.status = 'active'
+         )
          ON CONFLICT(clinic_id, flag_key) DO UPDATE SET
            enabled = excluded.enabled,
            updated_by_user_id = excluded.updated_by_user_id,
            updated_at = excluded.updated_at`,
       )
-      .bind(params.clinicId, change.key, change.enabled ? 1 : 0, params.actorUserId, now),
+      .bind(params.clinicId, change.key, change.enabled ? 1 : 0, params.actorUserId, now, params.clinicId, params.actorUserId, ...manageRoles),
     prepareSaasAudit(
       db,
       {
@@ -120,4 +126,6 @@ export async function setClinicFeatures(
       true,
     ),
   ]));
+  return results.length === params.changes.length * 2 &&
+    results.every((result) => result.meta.changes === 1);
 }

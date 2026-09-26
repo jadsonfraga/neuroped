@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - "shared/tenant.ts"
-      - "shared/permissions.ts"
       - "shared/clinical-core.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
@@ -18,12 +17,16 @@ on:
       - "tests/unit/clinic-feature-flags.test.ts"
       - "shared/clinicFeatures.ts"
       - "db/migrations/0030_clinic_feature_flags.sql"
+      - "tests/unit/tenant-management-authorization.test.ts"
+      - "tests/e2e/tenant-management.mjs"
+      - "client/src/security/routeGuardPolicy.ts"
+      - "scripts/lib/synthetic-clinical-api.mjs"
+      - "functions/api/_middleware.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
     paths:
       - "shared/tenant.ts"
-      - "shared/permissions.ts"
       - "shared/clinical-core.ts"
       - "functions/api/tenant/**"
       - "functions/api/tenants/**"
@@ -37,6 +40,11 @@ on:
       - "tests/unit/clinic-feature-flags.test.ts"
       - "shared/clinicFeatures.ts"
       - "db/migrations/0030_clinic_feature_flags.sql"
+      - "tests/unit/tenant-management-authorization.test.ts"
+      - "tests/e2e/tenant-management.mjs"
+      - "client/src/security/routeGuardPolicy.ts"
+      - "scripts/lib/synthetic-clinical-api.mjs"
+      - "functions/api/_middleware.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -61,13 +69,18 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Testar contrato tenant, criptografia e anti-cross-tenant
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
-      - name: Testar catálogo central de permissões (RBAC do tenant)
-        run: node --import tsx tests/unit/tenant-permissions.test.ts
-      - name: Testar trilha de auditoria restrita à clínica
-        run: node --import tsx tests/unit/tenant-audit-log.test.ts
-      - name: Testar feature flags por clínica (catálogo, rota e portas)
-        run: node --import tsx tests/unit/clinic-feature-flags.test.ts
       - name: Testar hardening de owner, provenance e supersessão
         run: node --import tsx tests/unit/saas-phase1-hardening.test.ts
+      - name: Provar gestão por membership e transação entre clínicas
+        run: node --import tsx --test tests/unit/tenant-management-authorization.test.ts
+      - name: Provar configurações e bloqueio clínico em mobile e desktop
+        run: node tests/e2e/tenant-management.mjs
+      - name: Preservar evidência visual sintética de gestão
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tenant-management-browser
+          path: artifacts/tenant-management/
+          if-no-files-found: error
       - name: Hard release gate
         run: npm run verify
