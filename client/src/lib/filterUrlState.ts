@@ -41,6 +41,7 @@ export interface FilterUrlValidators {
 }
 
 const MAX_SEARCH = 300;
+const INVALID_FILTER_URL_AGE = "invalid";
 const SAFE_ID = /^[a-z0-9][a-z0-9_-]{0,80}$/;
 
 function listParam(value: string | null, validate: (id: string) => boolean): string[] | undefined {
@@ -105,7 +106,9 @@ export function parseFilterUrlParams(params: URLSearchParams, validators: Filter
     state.ageBand = faixa;
     state.present = true;
   }
-  const exactAge = parseUrlExactAge(params.get("idade"));
+  const exactAge = params.get("idade") === INVALID_FILTER_URL_AGE
+    ? { years: "?", months: "?" }
+    : parseUrlExactAge(params.get("idade"));
   if (exactAge) {
     state.exactAge = exactAge;
     // Idade exata tem prioridade sobre faixa (mesma regra de resolveFilterAge).
@@ -156,9 +159,10 @@ export function serializeFilterUrlParams(state: Omit<FilterUrlState, "present">)
   const idade = formatUrlExactAge(state.exactAge);
   const exactFilled = Boolean(state.exactAge && (state.exactAge.years.trim() || state.exactAge.months.trim()));
   if (idade) params.set("idade", idade);
-  // Idade exata preenchida mas inválida: não escreve nada de idade (nem a faixa),
-  // espelhando a tela, que mostra o erro e não recomenda.
-  else if (state.ageBand && !exactFilled) params.set("faixa", state.ageBand);
+  // Marcador sem dados: preserva o bloqueio até em outra aba/dispositivo,
+  // sem normalizar a idade inválida nem recorrer à faixa anteriormente escolhida.
+  else if (exactFilled) params.set("idade", INVALID_FILTER_URL_AGE);
+  else if (state.ageBand) params.set("faixa", state.ageBand);
   if (state.respondente) params.set("resp", state.respondente);
   if (state.communication) params.set("com", state.communication);
   if (state.literacy) params.set("alf", state.literacy);
@@ -171,8 +175,8 @@ export function serializeFilterUrlParams(state: Omit<FilterUrlState, "present">)
 /**
  * Dois estados são o MESMO link quando serializam igual. Serve para saber se a
  * URL atual é apenas o espelho que esta própria aba escreveu (aí a sessão da
- * aba prevalece — ela guarda até a idade inválida digitada, que a URL nunca
- * carrega) ou um link diferente colado nela (aí o link é estado completo).
+ * aba prevalece — ela guarda a entrada inválida original, enquanto a URL
+ * carrega só um marcador de bloqueio) ou um link diferente (estado completo).
  */
 export function sameFilterUrlState(a: Omit<FilterUrlState, "present">, b: Omit<FilterUrlState, "present">): boolean {
   return serializeFilterUrlParams(a).toString() === serializeFilterUrlParams(b).toString();

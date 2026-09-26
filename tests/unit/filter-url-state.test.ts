@@ -57,7 +57,7 @@ assert.equal(formatUrlExactAge({ years: "", months: "18" }), undefined, "18 mese
 assert.equal(formatUrlExactAge({ years: "5", months: "12" }), undefined);
 assert.equal(formatUrlExactAge({ years: "19", months: "0" }), undefined);
 assert.equal(formatUrlExactAge({ years: "18", months: "0" }), "18a0m");
-assert.equal(serializeFilterUrlParams({ exactAge: { years: "", months: "18" }, ageBand: "2-4a" }).get("idade"), null);
+assert.equal(serializeFilterUrlParams({ exactAge: { years: "", months: "18" }, ageBand: "2-4a" }).get("idade"), "invalid", "marcador mantém o bloqueio sem expor entrada inválida");
 assert.equal(serializeFilterUrlParams({ exactAge: { years: "", months: "18" }, ageBand: "2-4a" }).get("faixa"), null, "idade inválida não cai na faixa por engano");
 assert.equal(parse("").present, false);
 assert.equal(parse("q=" + "x".repeat(400)).search!.length, 300, "busca limitada a 300 caracteres");
@@ -83,9 +83,9 @@ assert.equal(new URL(buildFilterUrl("https://app.test/#/filtro-escalas?mode=flas
 assert.equal(buildFilterUrl("https://app.test/#/filtro?q=a", {}), "https://app.test/#/filtro", "estado vazio limpa a URL");
 assert.ok(FILTER_URL_KEYS.includes("q") && FILTER_URL_KEYS.includes("tempo"));
 
-// Espelho da própria aba × link diferente: a idade inválida (que a URL não
-// carrega) não distingue os dois; um respondente diferente distingue.
-assert.equal(sameFilterUrlState({ queixas: ["tea"], exactAge: { years: "5", months: "12" } }, { present: true, queixas: ["tea"] } as never), true, "URL sem idade espelha sessão com idade inválida");
+// Idade ausente e idade inválida são estados clínicos diferentes, inclusive no link.
+assert.equal(sameFilterUrlState({ queixas: ["tea"], exactAge: { years: "5", months: "12" } }, { queixas: ["tea"] }), false, "idade inválida não equivale a idade omitida");
+assert.equal(sameFilterUrlState({ queixas: ["tea"], exactAge: { years: "5", months: "12" } }, parse("queixas=tea&idade=invalid")), true, "o marcador espelha a sessão bloqueada");
 assert.equal(sameFilterUrlState({ queixas: ["tea"], respondente: "professor" }, { queixas: ["tea"] }), false, "link sem respondente difere da sessão com respondente");
 assert.equal(sameFilterUrlState({ queixas: ["tea", "sono"], signals: ["a"] }, { queixas: ["tea", "sono"], signals: ["a"] }), true);
 
@@ -121,3 +121,26 @@ try {
 }
 
 console.log("✓ deep-link do filtro: filtros estruturados, compatibilidade legada, texto livre ausente e History idempotente");
+
+// P1: sem sessionStorage do remetente, o link ainda deve bloquear idade inválida.
+// Matriz dos limites do formulário: 21 anos × 19 valores de meses adicionais.
+for (let years = 0; years <= 20; years += 1) {
+  for (let months = 0; months <= 18; months += 1) {
+    const fields = { years: String(years), months: String(months) };
+    const encoded = serializeFilterUrlParams({ exactAge: fields, ageBand: "6-12a", queixas: ["tea"] });
+    const restored = parse(encoded.toString());
+    if (months <= 11 && years * 12 + months <= 216) {
+      assert.deepEqual(restored.exactAge, fields);
+    } else {
+      assert.equal(formatUrlExactAge(fields), undefined);
+      assert.equal(encoded.get("idade"), "invalid");
+      assert.deepEqual(restored.exactAge, { years: "?", months: "?" });
+      assert.equal(restored.ageBand, undefined, "faixa não resgata idade inválida");
+    }
+  }
+}
+const invalidTextUrl = serializeFilterUrlParams({ exactAge: { years: syntheticSearch, months: "" } });
+assert.equal(invalidTextUrl.get("idade"), "invalid");
+assert.ok(!decodeURIComponent(invalidTextUrl.toString()).includes(syntheticSearch));
+assert.deepEqual(parse("idade=18m").exactAge, { years: "1", months: "6" }, "meses totais de link legado permanecem compatíveis");
+console.log("✓ 399 combinações de idade; bloqueio preservado entre dispositivos sem texto livre");
