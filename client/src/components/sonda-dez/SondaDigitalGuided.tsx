@@ -60,6 +60,7 @@ import {
 import { playSondaTone } from "@/lib/sondaDezAudio";
 import SondaDigitalActivity from "./SondaDigitalActivity";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
+import { useAuth } from "@/contexts/AuthContext";
 import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
 import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
 import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
@@ -134,6 +135,7 @@ export default function SondaDigitalGuided({
 }: {
   onLegacy: () => void;
 }) {
+  const { isAuthenticated } = useAuth();
   const [phase, setPhase] = useState<Phase>("prepare");
   const [track, setTrack] = useState<Track>("guided");
   const direct = track === "direct";
@@ -200,7 +202,10 @@ export default function SondaDigitalGuided({
     band?.missions.map((m) => recordProblems(m, records[m.id]).length === 0) ?? [];
   const completedCount = missionDone.filter(Boolean).length;
   const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(code || operator || school) || easyProgress > 0;
-  useSondaExitGuard(dirty);
+  // Um Voltar do navegador que pouse em /login enquanto a sessão continua válida
+  // não é a sessão forçando a saída: aquela página devolve o profissional
+  // autenticado sozinha, e sem o prompt aqui o registro em curso se perde.
+  useSondaExitGuard(dirty, !isAuthenticated);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [phase]);
