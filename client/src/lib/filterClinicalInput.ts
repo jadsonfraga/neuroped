@@ -134,3 +134,56 @@ export function filterComplaintOptions<T extends Complaint>(complaints: readonly
     return tokens.every((token) => words.some((word) => token.length < 3 ? word === token : word.startsWith(token)));
   });
 }
+
+// ─────────────────────── Intenção de busca (texto livre) ───────────────────────
+// A pessoa escreve como fala: "menino 5 anos não fala, pais, 10 min". A idade
+// e a queixa já são lidas acima; aqui se reconhecem respondente, tempo
+// disponível, finalidade, comunicação e alfabetização. NADA é aplicado
+// automaticamente: a UI mostra o que entendeu e a pessoa confirma com um
+// toque — respondente é vínculo clínico obrigatório, nunca um palpite.
+export type FilterQueryRespondent = "pais" | "professor" | "autoaplicavel" | "teste_direto_crianca" | "clinico";
+export interface FilterQueryIntent {
+  respondent: FilterQueryRespondent | null;
+  timeBudgetMinutes: number | null;
+  assessmentType: "diagnostic" | "monitoring" | null;
+  communication: "verbal" | "nonverbal" | null;
+  literacy: "literate" | "preliterate" | null;
+}
+const EMPTY_INTENT: FilterQueryIntent = {
+  respondent: null, timeBudgetMinutes: null, assessmentType: null, communication: null, literacy: null,
+};
+const RESPONDENT_PATTERNS: Array<[FilterQueryRespondent, RegExp]> = [
+  ["teste_direto_crianca", /\b(teste direto|testes diretos|direto com a crianca|aplicar na crianca|com a crianca)\b/],
+  ["autoaplicavel", /\b(autoaplicavel|autoaplicavei|autorrelato|auto relato|autoquestionario|ele mesmo|ela mesma|o proprio|a propria|adolescente responde|responde sozinh[oa])\b/],
+  ["professor", /\b(professor|professora|professores|escola|creche|educador|educadora|coordenacao pedagogica)\b/],
+  ["pais", /\b(pais|mae|pai|cuidador|cuidadora|cuidadores|familia|responsavel|responsaveis|avo|avos)\b/],
+  ["clinico", /\b(observacao clinica|entrevista clinica|clinico|medico|no consultorio|em consulta)\b/],
+];
+export function parseFilterQueryIntent(query: string): FilterQueryIntent {
+  const text = ` ${normalizedWords(query)} `;
+  if (text.trim().length < 2) return { ...EMPTY_INTENT };
+  const intent: FilterQueryIntent = { ...EMPTY_INTENT };
+  for (const [respondent, pattern] of RESPONDENT_PATTERNS) {
+    if (pattern.test(text)) { intent.respondent = respondent; break; }
+  }
+  // Tempo: "10 min", "10 minutos", "até 15 min", "em 5 minutos". Ignora
+  // números que fazem parte de idade ("5 anos"/"18 meses") por exigir a
+  // unidade "min". "rápido/rápida/breve" sugere 5 min.
+  const time = text.match(/(?<![\d])(\d{1,3})\s*(?:min|mins|minutos|minuto)\b/);
+  if (time) {
+    const minutes = Number(time[1]);
+    if (minutes >= 1 && minutes <= 180) intent.timeBudgetMinutes = minutes;
+  } else if (/\b(rapid[oa]|breve|curt[oa]|rapidinho)\b/.test(text)) {
+    intent.timeBudgetMinutes = 5;
+  }
+  if (/\b(monitor\w*|acompanhamento|seguimento|evolucao|evolutivo|reavaliacao|retorno|resposta ao tratamento|follow up)\b/.test(text)) {
+    intent.assessmentType = "monitoring";
+  } else if (/\b(diagnostic[oa]|confirmar|confirmacao|avaliacao completa|padrao ouro)\b/.test(text)) {
+    intent.assessmentType = "diagnostic";
+  }
+  if (/\b(nao verbal|nao fala|sem fala|nao falante|nao vocaliza|ainda nao fala)\b/.test(text)) intent.communication = "nonverbal";
+  else if (/\b(verbal|fala bem|ja fala)\b/.test(text) && !/\bnao verbal\b/.test(text)) intent.communication = "verbal";
+  if (/\b(nao alfabetizad[oa]|pre alfabetizad[oa]|nao le|nao sabe ler|ainda nao le)\b/.test(text)) intent.literacy = "preliterate";
+  else if (/\b(alfabetizad[oa]|ja le|le bem|sabe ler)\b/.test(text)) intent.literacy = "literate";
+  return intent;
+}
