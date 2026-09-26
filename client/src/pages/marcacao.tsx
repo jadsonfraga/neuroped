@@ -7,7 +7,14 @@ import AgendarPage from "@/pages/agendar";
  * Operational Suite do próprio NeuroPad, com disponibilidade, bloqueio de
  * conflitos, remarcação, cancelamento, lista de espera e evidência de aceite
  * de privacidade persistidos no backend.
+ *
+ * A rota é montada fora do Layout clínico (App.tsx), então o landmark <main>
+ * precisa vir daqui; em /agendar, dentro do Layout, o shell já o fornece.
  */
 export default function MarcacaoPage() {
-  return <AgendarPage />;
+  return (
+    <main id="conteudo" className="min-h-screen bg-background px-4 py-6 sm:px-6">
+      <AgendarPage />
+    </main>
+  );
 }
