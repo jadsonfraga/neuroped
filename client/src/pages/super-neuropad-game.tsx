@@ -76,7 +76,7 @@ const PHASE_TONE: Record<PhaseId, string> = {
   corpo: "snp-panel--berry",
 };
 
-const OPTION_TINTS = ["bg-[#ffd0dd]", "bg-[#cdefff]", "bg-[#fff1a8]", "bg-[#d5ffd8]"];
+const OPTION_TINTS = ["bg-[var(--snp-berry-tint)]", "bg-[var(--snp-sky-tint)]", "bg-[var(--snp-sun-tint)]", "bg-[var(--snp-grass-tint)]"];
 
 const LEVEL_PANEL: Record<Level, string> = { esperado: "snp-panel--grass", observar: "snp-panel--sun", alerta: "snp-panel--berry" };
 const LEVEL_ICON: Record<Level, string> = { esperado: "🟢", observar: "🟡", alerta: "🔴" };
@@ -148,12 +148,12 @@ function CharacterCard({ character, selected, onPick }: { character: Character; 
       type="button"
       aria-pressed={selected}
       onClick={() => { softTap(); onPick(); }}
-      className={`snp-option flex min-h-32 flex-col items-center justify-center gap-1 p-3 text-center ${selected ? "bg-[#fff1a8] ring-4 ring-[#5fd3f3]" : "bg-[#fffaf0] hover:bg-[#fff1c9]"}`}
+      className={`snp-option flex min-h-32 flex-col items-center justify-center gap-1 p-3 text-center ${selected ? "bg-[var(--snp-sun-tint)] ring-4 ring-[var(--snp-sky)]" : "bg-[var(--snp-paper-fixed)] hover:bg-[var(--snp-paper-2-fixed)]"}`}
     >
       <span className={`snp-sprite text-5xl ${selected ? "snp-bounce" : ""}`} aria-hidden="true">{character.emoji}</span>
       <span className="snp-pixel text-xs">{character.name} {character.role}</span>
       <span className="text-[11px] font-bold opacity-80">{character.power}</span>
-      {selected && <span className="snp-chip mt-1 bg-[#1b1340] text-[#ffd23f]">1P</span>}
+      {selected && <span className="snp-chip mt-1 bg-[var(--snp-ink-fixed)] text-[var(--snp-sun)]">1P</span>}
     </button>
   );
 }
@@ -168,12 +168,12 @@ function PhaseTrail({ current, done, character }: { current: number; done: boole
           <li key={phase.id} className="flex items-center gap-1.5">
             <span
               title={`Mundo ${phase.order} · ${phase.name}`}
-              className={`flex items-center justify-center rounded-full border-[3px] border-[#1b1340] font-black transition ${isNow ? "snp-bounce h-11 w-11 bg-[#ffd23f] text-2xl" : isDone ? "h-8 w-8 bg-[#7ee081] text-sm" : "h-8 w-8 bg-[#d9d4f2] text-xs"}`}
+              className={`flex items-center justify-center rounded-full border-[3px] border-[var(--snp-ink-fixed)] font-black transition ${isNow ? "snp-bounce h-11 w-11 bg-[var(--snp-sun)] text-2xl" : isDone ? "h-8 w-8 bg-[var(--snp-grass)] text-sm" : "h-8 w-8 bg-[var(--snp-slate-fixed)] text-xs"}`}
             >
-              <span aria-hidden="true" className="text-[#1b1340]">{isNow ? character.emoji : isDone ? "★" : phase.order}</span>
+              <span aria-hidden="true" className="text-[var(--snp-ink-fixed)]">{isNow ? character.emoji : isDone ? "★" : phase.order}</span>
               <span className="sr-only">Mundo {phase.order}, {phase.name}: {isDone ? "concluído" : isNow ? "atual" : "a caminho"}</span>
             </span>
-            {index < PHASES.length - 1 && <span aria-hidden="true" className={`h-1.5 w-3 rounded-full sm:w-5 ${isDone ? "bg-[#7ee081]" : "bg-[#1b1340]/30"}`} />}
+            {index < PHASES.length - 1 && <span aria-hidden="true" className={`h-1.5 w-3 rounded-full sm:w-5 ${isDone ? "bg-[var(--snp-grass)]" : "bg-[var(--snp-ink-30)]"}`} />}
           </li>
         );
       })}
@@ -189,7 +189,7 @@ function Hud({ character, answered, phaseIndex, done, musicOn, paused, canUndo, 
     <div className="snp-panel space-y-2 px-3 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="snp-sprite flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] border-[#1b1340] bg-[#fff1a8] text-3xl" aria-hidden="true">{character.emoji}</span>
+          <span className="snp-sprite flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun-tint)] text-3xl" aria-hidden="true">{character.emoji}</span>
           <div>
             <div className="snp-pixel text-xs">{character.name} {character.role}</div>
             <div className="text-[11px] font-bold opacity-80">Mundo {phaseIndex + 1} · <span aria-live="polite">{answered * XP_PER_ITEM} XP</span> · 🪙 {answered}</div>
@@ -228,7 +228,7 @@ function RepeatToggle({ repeated, onToggle }: { repeated: boolean; onToggle: () 
       type="button"
       aria-pressed={repeated}
       onClick={() => { softTap(); onToggle(); }}
-      className={`snp-chip ${repeated ? "bg-[#ffd23f]" : ""}`}
+      className={`snp-chip ${repeated ? "bg-[var(--snp-sun)]" : ""}`}
       title="Marque se precisou repetir o comando (permitido uma vez). Fica no registro."
     >
       <Repeat className="h-3.5 w-3.5" /> {repeated ? "Comando repetido 1x" : "Repeti o comando"}
@@ -239,7 +239,7 @@ function RepeatToggle({ repeated, onToggle }: { repeated: boolean; onToggle: () 
 function TurnCue({ who }: { who: "crianca" | "aplicadora" }) {
   const child = who === "crianca";
   return (
-    <span className={`snp-chip ${child ? "bg-[#d5ffd8]" : "bg-[#fff1a8]"}`}>
+    <span className={`snp-chip ${child ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-sun-tint)]"}`}>
       <Smartphone className="h-3.5 w-3.5" /> {child ? "Tela para a criança" : "Tela para você"}
     </span>
   );
@@ -249,9 +249,9 @@ function SpeechBubble({ character, text }: { character: Character; text: string 
   return (
     <div className="mx-auto flex max-w-md items-end justify-center gap-2">
       <span className="snp-sprite snp-bounce text-5xl" aria-hidden="true">{character.emoji}</span>
-      <p className="relative rounded-2xl border-[3px] border-[#1b1340] bg-[#fffaf0] px-4 py-2 text-sm font-black text-[#1b1340] shadow-[3px_3px_0_#1b1340]">
+      <p className="relative rounded-2xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-paper-fixed)] px-4 py-2 text-sm font-black text-[var(--snp-ink-fixed)] shadow-[3px_3px_0_var(--snp-ink-fixed)]">
         <span className="sr-only">{character.name} diz: </span>{text}
-        <span aria-hidden="true" className="absolute -left-2 bottom-3 h-4 w-4 rotate-45 border-b-[3px] border-l-[3px] border-[#1b1340] bg-[#fffaf0]" />
+        <span aria-hidden="true" className="absolute -left-2 bottom-3 h-4 w-4 rotate-45 border-b-[3px] border-l-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-paper-fixed)]" />
       </p>
     </div>
   );
@@ -262,7 +262,7 @@ function BadgeShelf({ done }: { done: boolean[] }) {
   if (earned.length === 0) return null;
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label={`Conquistas: ${earned.length} de ${PHASES.length}`}>
-      {earned.map((phase) => <li key={phase.id} className="snp-chip bg-[#fff1a8]" title={phase.badge}>🏅 {phase.badge}</li>)}
+      {earned.map((phase) => <li key={phase.id} className="snp-chip bg-[var(--snp-sun-tint)]" title={phase.badge}>🏅 {phase.badge}</li>)}
     </ul>
   );
 }
@@ -276,7 +276,7 @@ function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; h
   return (
     <ol className="flex flex-wrap items-center gap-2" aria-label="Passos da preparação">
       {steps.map((step, index) => (
-        <li key={step.label} className={`snp-chip ${step.ok ? "bg-[#d5ffd8]" : step.optional ? "opacity-70" : "bg-[#fff1a8]"}`}>
+        <li key={step.label} className={`snp-chip ${step.ok ? "bg-[var(--snp-grass-tint)]" : step.optional ? "opacity-70" : "bg-[var(--snp-sun-tint)]"}`}>
           {step.ok ? <Check className="h-3.5 w-3.5" /> : <span aria-hidden="true">{index + 1}</span>} {step.label}{step.optional && !step.ok ? " (opcional)" : ""}
           <span className="sr-only">{step.ok ? ", concluído" : step.optional ? ", opcional" : ", pendente"}</span>
         </li>
@@ -301,7 +301,7 @@ function TouchStage({ item, seed, onAnswer }: { item: TouchItem; seed: number; o
       <div className="flex flex-col items-center gap-6 py-6">
         <p className="snp-pixel text-center text-sm opacity-80">Olhe bem para as figuras…</p>
         <div className="snp-float text-7xl sm:text-8xl" aria-label={`Figuras mostradas: ${item.preview}`}>{item.preview}</div>
-        <div className="snp-pixel flex h-14 w-14 items-center justify-center rounded-full border-[4px] border-[#1b1340] bg-[#ffd23f] text-2xl text-[#1b1340]" role="timer" aria-label={`Esconde em ${left} segundos`}>{left}</div>
+        <div className="snp-pixel flex h-14 w-14 items-center justify-center rounded-full border-[4px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun)] text-2xl text-[var(--snp-ink-fixed)]" role="timer" aria-label={`Esconde em ${left} segundos`}>{left}</div>
         <ArcadeButton tone="sky" className="px-6 py-3 text-base" onClick={() => { softTap(); setRevealed(true); }}>
           <Check className="h-5 w-5" /> Já olhou · esconder
         </ArcadeButton>
@@ -590,8 +590,8 @@ export default function SuperNeuroPadGamePage() {
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
         {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">
-          <div className={`snp-sprite flex shrink-0 items-center justify-center rounded-2xl border-[3px] border-[#1b1340] bg-[#ffd23f] ${compact ? "h-10 w-10 text-xl" : "h-14 w-14 text-3xl"}`} aria-hidden="true">🎮</div>
-          <div className="min-w-0 flex-1 text-[#1b1340] dark:text-[#f4f0ff]">
+          <div className={`snp-sprite flex shrink-0 items-center justify-center rounded-2xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun)] ${compact ? "h-10 w-10 text-xl" : "h-14 w-14 text-3xl"}`} aria-hidden="true">🎮</div>
+          <div className="min-w-0 flex-1 text-[var(--snp-stage-text)]">
             {!compact && (
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="snp-chip">pré-consulta · secretária · {MIN_AGE_YEARS}–{MAX_AGE_YEARS} anos</span>
@@ -600,7 +600,7 @@ export default function SuperNeuroPadGamePage() {
                 <span className="snp-chip">sem câmera</span>
               </div>
             )}
-            <h1 className={`snp-pixel snp-title text-[#fffaf0] ${compact ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{SUPER_NEUROPAD_TITLE}</h1>
+            <h1 className={`snp-pixel snp-title text-[var(--snp-paper-fixed)] ${compact ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}`}>{SUPER_NEUROPAD_TITLE}</h1>
             {!compact && (
               <p className="mt-2 max-w-3xl text-sm font-semibold leading-relaxed">
                 Cinco mundos que reúnem Sonda 10, OBS-10, Reconhecimento Visual e Testes Cognitivos por Faixa Etária. Cada desafio tem certo e errado; a criança só vê XP, moedas e conquistas. Ao final, resultado objetivo, leitura para a consulta e PDF detalhado. Triagem autoral de déficits grosseiros; a conclusão é do médico.
@@ -622,7 +622,7 @@ export default function SuperNeuroPadGamePage() {
             <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8" role="group" aria-label="Idade em anos">
               {YEARS.map((year) => (
                 <button key={year} type="button" aria-pressed={ageYears === year} onClick={() => { softTap(); setAgeYears(year); setKitChecked({}); }}
-                  className={`snp-option min-h-12 text-lg font-black ${ageYears === year ? "bg-[#ffd23f]" : "bg-[#fffaf0] hover:bg-[#fff1c9]"}`}>
+                  className={`snp-option min-h-12 text-lg font-black ${ageYears === year ? "bg-[var(--snp-sun)]" : "bg-[var(--snp-paper-fixed)] hover:bg-[var(--snp-paper-2-fixed)]"}`}>
                   {year}
                 </button>
               ))}
@@ -653,8 +653,8 @@ export default function SuperNeuroPadGamePage() {
                   const checked = Boolean(kitChecked[entry]);
                   return (
                     <button key={entry} type="button" aria-pressed={checked} onClick={() => { softTap(); setKitChecked((current) => ({ ...current, [entry]: !checked })); }}
-                      className={`snp-option flex min-h-11 items-center gap-3 px-3 py-2 text-left text-sm font-bold ${checked ? "bg-[#d5ffd8]" : "bg-[#fffaf0] hover:bg-[#fff1c9]"}`}>
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 border-[#1b1340] ${checked ? "bg-[#4fc76a] text-white" : "bg-white"}`}>{checked ? <Check className="h-4 w-4" /> : ""}</span>
+                      className={`snp-option flex min-h-11 items-center gap-3 px-3 py-2 text-left text-sm font-bold ${checked ? "bg-[var(--snp-grass-tint)]" : "bg-[var(--snp-paper-fixed)] hover:bg-[var(--snp-paper-2-fixed)]"}`}>
+                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 border-[var(--snp-ink-fixed)] ${checked ? "bg-[var(--snp-grass-deep)] text-white" : "bg-white"}`}>{checked ? <Check className="h-4 w-4" /> : ""}</span>
                       {entry}
                     </button>
                   );
@@ -748,7 +748,7 @@ export default function SuperNeuroPadGamePage() {
               <ArcadeButton tone="grass" className="px-6 py-3 text-base" onClick={togglePause}><Play className="h-5 w-5" /> Continuar</ArcadeButton>
             </div>
           ) : (
-            <div className="rounded-2xl bg-[#fffaf0]/80 p-3 text-[#1b1340] sm:p-4 dark:bg-[#211c45]/85 dark:text-[#f4f0ff]">
+            <div className="rounded-2xl bg-[var(--snp-stage)] p-3 text-[var(--snp-stage-text)] sm:p-4">
               {item.kind === "toque" ? (
                 <div className="space-y-4">
                   <TouchStage key={item.id} item={item} seed={seed + itemIndex * 17 + phaseIndex * 101} onAnswer={(chosen) => pushAnswer(recordTouch(item, phaseId, chosen, elapsedSeconds(), repeated))} />
@@ -769,7 +769,7 @@ export default function SuperNeuroPadGamePage() {
           )}
           {cheer && (
             <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center" aria-live="polite">
-              <span className="snp-pop snp-pixel rounded-full border-[3px] border-[#1b1340] bg-[#ffd23f] px-4 py-1.5 text-xs text-[#1b1340] shadow-[3px_3px_0_#1b1340]">⭐ {cheer}</span>
+              <span className="snp-pop snp-pixel rounded-full border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-sun)] px-4 py-1.5 text-xs text-[var(--snp-ink-fixed)] shadow-[3px_3px_0_var(--snp-ink-fixed)]">⭐ {cheer}</span>
             </div>
           )}
         </section>
@@ -830,9 +830,9 @@ export default function SuperNeuroPadGamePage() {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Sinais de confiabilidade do registro">
-              <span className={`snp-chip ${reading.fastMisses.length >= 2 ? "bg-[#fff1a8]" : ""}`}>⚡ {reading.fastMisses.length} toque(s) errado(s) em menos de 1 s</span>
-              <span className={`snp-chip ${reading.halves.drop ? "bg-[#fff1a8]" : ""}`}>🔋 {reading.halves.drop ? "queda na segunda metade" : "sem queda no fim"}</span>
-              <span className={`snp-chip ${reading.pace.slowdown ? "bg-[#fff1a8]" : ""}`}>⏱ {reading.pace.slowdown ? "ritmo desacelerou" : "ritmo estável"}</span>
+              <span className={`snp-chip ${reading.fastMisses.length >= 2 ? "bg-[var(--snp-sun-tint)]" : ""}`}>⚡ {reading.fastMisses.length} toque(s) errado(s) em menos de 1 s</span>
+              <span className={`snp-chip ${reading.halves.drop ? "bg-[var(--snp-sun-tint)]" : ""}`}>🔋 {reading.halves.drop ? "queda na segunda metade" : "sem queda no fim"}</span>
+              <span className={`snp-chip ${reading.pace.slowdown ? "bg-[var(--snp-sun-tint)]" : ""}`}>⏱ {reading.pace.slowdown ? "ritmo desacelerou" : "ritmo estável"}</span>
               <span className="snp-chip">⏸ {session.pauseCount ?? 0} pausa(s) · ↩ {session.undoCount ?? 0} desfeito(s)</span>
             </div>
             <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm font-semibold leading-relaxed">
@@ -852,7 +852,7 @@ export default function SuperNeuroPadGamePage() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-xs font-black">Aprofundar agora:</span>
                   {reading.routes.map((route) => (
-                    <Link key={route.href} href={route.href} className="snp-chip bg-[#cdefff] hover:bg-[#5fd3f3]">
+                    <Link key={route.href} href={route.href} className="snp-chip bg-[var(--snp-sky-tint)] hover:bg-[var(--snp-sky)]">
                       {route.label} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   ))}
@@ -895,7 +895,7 @@ export default function SuperNeuroPadGamePage() {
               <div className="snp-pixel text-xs">Itens para checar na consulta · {reading.missed.length}</div>
               <ul className="mt-3 space-y-2">
                 {reading.missed.map((answer) => (
-                  <li key={answer.itemId} className="rounded-xl border-[3px] border-[#1b1340] bg-[#fffaf0] p-3 text-sm text-[#1b1340]">
+                  <li key={answer.itemId} className="rounded-xl border-[3px] border-[var(--snp-ink-fixed)] bg-[var(--snp-paper-fixed)] p-3 text-sm text-[var(--snp-ink-fixed)]">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="font-bold">{phaseById(answer.phaseId).emoji} {answer.prompt}</div>
                       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
@@ -913,7 +913,7 @@ export default function SuperNeuroPadGamePage() {
                 <summary className="snp-pixel cursor-pointer text-xs">{entry.phase.emoji} Fase {entry.phase.order} · {entry.phase.name} · {entry.applied ? `${entry.hits}/${entry.total}` : "não aplicada"}</summary>
                 <ol className="mt-3 space-y-2">
                   {entry.answers.map((answer, index) => (
-                    <li key={answer.itemId} className="rounded-xl border-2 border-[#1b1340]/40 bg-[#fffaf0] p-3 text-sm text-[#1b1340]">
+                    <li key={answer.itemId} className="rounded-xl border-2 border-[var(--snp-ink-40)] bg-[var(--snp-paper-fixed)] p-3 text-sm text-[var(--snp-ink-fixed)]">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="font-bold">{index + 1}. {answer.prompt}</div>
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
