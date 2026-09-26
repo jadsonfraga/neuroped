@@ -51,3 +51,15 @@ backup, decisão de mapeamento, testes de migração e revisão do cliente zero.
 
 Reverter por PR ou desativar o workflow. Nenhuma migração ou mutação de banco
 é feita; nenhum procedimento de restauração de dados é necessário.
+
+## Unidade das contagens
+
+`patientOwnership` conta registros de pacientes por situação do owner; não conta
+pessoas. `patientOwnerPresence` informa linhas com/sem owner. `distinctOwners`
+conta IDs de owner distintos, incluindo referências a contas ausentes/inativas,
+separados por 0, 1 ou 2+ vínculos ativos com clínicas ativas. Nenhum ID sai do D1.
+Essa separação atende ao pré-requisito de dimensionar quantos casos de ownership
+precisam de resolução, sem multiplicá-los pelo número de pacientes. Conta
+inativa/ausente continua sendo bloqueio na classificação dos pacientes, mesmo
+que existam memberships. Teste específico acrescenta pacientes repetindo owners
+e prova que o número de casos distintos não muda.

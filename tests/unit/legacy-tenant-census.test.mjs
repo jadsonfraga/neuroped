@@ -43,6 +43,10 @@ test("read-only census classifies ambiguous owners without returning identities 
       no_owner: 1, missing_owner: 1, inactive_owner: 1, no_active_clinic: 2,
       one_active_clinic: 2, multiple_active_clinics: 1,
     });
+    assert.deepEqual(report.patientOwnerPresence, { assigned: 7, unassigned: 1 });
+    assert.deepEqual(report.distinctOwners, {
+      total: 6, no_active_clinic: 3, one_active_clinic: 2, multiple_active_clinics: 1,
+    });
     assert.equal(report.legacySeedIdsPresent, 1);
     assert.equal(report.bootstrapAdmin.accounts, 1);
     assert.equal(report.bootstrapAdmin.activeOwnerMemberships, 1);
@@ -88,4 +92,22 @@ test("workflow grants production credentials only to trusted main, and output ex
   assert.doesNotMatch(workflow, /pull_request_target|contents: write/);
   const script = readFileSync("scripts/audits/legacy-tenant-census.mjs", "utf8");
   assert.doesNotMatch(script, /console\.(log|error)\((error|response|data|token|account)/);
+});
+
+
+test("additional patients do not multiply distinct owner migration cases", async () => {
+  const f = fixture();
+  try {
+    f.db.exec("PRAGMA query_only = OFF");
+    for (const [id, owner] of [["extra-one", "unique"], ["extra-two", "unique"], ["extra-three", "multiple"]]) {
+      f.db.prepare("INSERT INTO patients_demo (id, owner_user_id, name) VALUES (?, ?, 'SENSITIVE-EXTRA')").run(id, owner);
+    }
+    f.db.exec("PRAGMA query_only = ON");
+    const report = await collectLegacyTenantCensus(f.query);
+    assert.equal(report.patientOwnership.one_active_clinic, 4);
+    assert.equal(report.patientOwnership.multiple_active_clinics, 2);
+    assert.deepEqual(report.distinctOwners, {
+      total: 6, no_active_clinic: 3, one_active_clinic: 2, multiple_active_clinics: 1,
+    });
+  } finally { f.db.close(); }
 });

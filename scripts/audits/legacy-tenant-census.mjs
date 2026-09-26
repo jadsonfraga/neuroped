@@ -49,6 +49,35 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
   }
   if (Object.values(patientOwnership).reduce((a, b) => a + b, 0) !== tables.patients_demo.rows) throw new Error("CENSUS_CHANGED_DURING_READ");
 
+  const patientOwnerPresence = {
+    assigned: tables.patients_demo.rows - patientOwnership.no_owner,
+    unassigned: patientOwnership.no_owner,
+  };
+  // Separate patient volume from the number of ownership decisions. Include
+  // every non-null owner ID, even if its account is absent/inactive; the patient
+  // classification above keeps those unsafe cases explicit.
+  const distinctOwners = {
+    total: await scalar("SELECT COUNT(DISTINCT owner_user_id) AS total FROM patients_demo"),
+    no_active_clinic: 0, one_active_clinic: 0, multiple_active_clinics: 0,
+  };
+  const distinctRows = await query(`SELECT membership_class, COUNT(*) AS total FROM (
+    SELECT DISTINCT p.owner_user_id, CASE
+      WHEN COALESCE(m.total, 0) = 0 THEN 'no_active_clinic'
+      WHEN m.total = 1 THEN 'one_active_clinic'
+      ELSE 'multiple_active_clinics' END AS membership_class
+    FROM patients_demo p LEFT JOIN (
+      SELECT cm.user_id, COUNT(DISTINCT cm.clinic_id) AS total
+      FROM clinic_memberships cm JOIN clinics c ON c.id = cm.clinic_id
+      WHERE cm.active = 1 AND c.status = 'active' GROUP BY cm.user_id
+    ) m ON m.user_id = p.owner_user_id
+    WHERE p.owner_user_id IS NOT NULL
+  ) GROUP BY membership_class`);
+  for (const row of distinctRows) {
+    if (!["no_active_clinic", "one_active_clinic", "multiple_active_clinics"].includes(row.membership_class)) throw new Error("CENSUS_INVALID_CLASS");
+    distinctOwners[row.membership_class] = count(row.total);
+  }
+  if (distinctOwners.no_active_clinic + distinctOwners.one_active_clinic + distinctOwners.multiple_active_clinics !== distinctOwners.total) throw new Error("CENSUS_CHANGED_DURING_READ");
+
   const legacySeedIdsPresent = await scalar("SELECT COUNT(*) AS total FROM patients_demo WHERE id IN ('demo-001', 'demo-002', 'demo-003')");
   const bootstrapAdmin = { configured: Boolean(bootstrapEmail.trim()) };
   if (bootstrapAdmin.configured) {
@@ -63,7 +92,7 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
   }
   return {
     version: 1, scope: "aggregate-only", mutations: false, clinicalContentRead: false,
-    tables, patientOwnership, legacySeedIdsPresent, bootstrapAdmin,
+    tables, patientOwnership, patientOwnerPresence, distinctOwners, legacySeedIdsPresent, bootstrapAdmin,
     unambiguousOwnerMapping: patientOwnership.one_active_clinic === tables.patients_demo.rows,
     migrationAuthorized: false,
   };
