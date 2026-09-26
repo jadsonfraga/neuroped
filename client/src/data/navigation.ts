@@ -149,7 +149,7 @@ export const featuredNavigation: NavItem[] = [
     label: "Secretaria IA",
     icon: Calendar,
     tone: "connection",
-    description: "Pré-agendamento pelo BoaConsulta",
+    description: "Agendamento próprio NeuroPad · 1 hora por paciente",
   },
   // prettier-ignore — formato preservado pelo guard de integração do Conecta.
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection", description: "Portais e conexões" },
