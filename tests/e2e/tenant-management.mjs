@@ -38,7 +38,19 @@ try {
           await page.goto(`${server.origin}/#/configuracoes`, { waitUntil: "domcontentloaded" });
           await page.getByRole("heading", { name: "Sua conta e sua clínica", exact: true }).waitFor();
           await page.getByRole("tab", { name: "Clínica", exact: true }).click();
-          await page.getByLabel("Nome", { exact: true }).waitFor();
+          const clinicName = page.getByLabel("Nome", { exact: true });
+          await clinicName.waitFor();
+          assert.equal(await clinicName.isEnabled(), true);
+          const newName = `Clínica Sintética ${userRole} ${width}`;
+          await clinicName.fill(newName);
+          const savedResponse = page.waitForResponse((response) => response.request().method() === "PATCH" && response.url().includes("/api/tenants/"));
+          await page.getByRole("button", { name: "Salvar clínica", exact: true }).click();
+          assert.equal((await savedResponse).status(), 200);
+          await page.getByText("Clínica atualizada ✓", { exact: true }).waitFor();
+          await page.reload({ waitUntil: "domcontentloaded" });
+          await page.getByRole("tab", { name: "Clínica", exact: true }).click();
+          await clinicName.waitFor();
+          assert.equal(await clinicName.inputValue(), newName);
           assert.equal(await page.getByTestId("login-form").count(), 0);
           assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
           assert.deepEqual(errors, []);
@@ -46,7 +58,7 @@ try {
           await page.goto(`${server.origin}/#/prontuario`, { waitUntil: "domcontentloaded" });
           await page.getByRole("heading", { name: "Acesso não autorizado", exact: true }).waitFor();
           assert.deepEqual(errors, []);
-          results.push({ userRole, width, settings: "allowed", medicalRecord: "denied" });
+          results.push({ userRole, width, settings: "edited-and-reloaded", medicalRecord: "denied" });
         } finally { await context.close(); }
       }
     } finally { await server.close(); }

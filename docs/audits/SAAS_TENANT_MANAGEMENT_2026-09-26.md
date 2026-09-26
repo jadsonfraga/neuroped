@@ -73,3 +73,13 @@ está disponível localmente; execução e capturas exigidas no CI da PR.
 - Sem migração, exclusão, alteração de chave, preço ou dado clínico.
 - Rollback por PR de revert. Preservar as configurações já persistidas;
   não desfazer permissões por UPDATE manual em contas globais.
+
+## Refinamento da prova visual
+
+A primeira execução remota em `043fb60` passou, mas a inspeção das capturas
+mostrou a fixture de detalhe sem `canManage`: só provava abertura em leitura.
+A fixture foi alinhada ao contrato real de detalhe e o E2E agora exige campo
+habilitado, PATCH, confirmação e valor preservado após reload em 390/1440 px
+para reader/operator com ownership sintético. Esse estado persiste só na memória
+do servidor de teste; a prova D1 continua sendo o teste de handlers e SQL reais.
+Não usar a primeira captura como prova de edição.
