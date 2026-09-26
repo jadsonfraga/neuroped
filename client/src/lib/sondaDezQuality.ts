@@ -32,12 +32,18 @@ export function legacyCoverage(band: BandDef, records: Record<string, LegacyMiss
     return { id: mission.id, missing: missing.length, needsContext, complete: missing.length === 0 && !needsContext };
   });
 }
-/** Never block mandatory authentication/consent redirects. Protect all other departures. */
-export function leavesSondaRoute(href: string, currentHref: string): boolean {
+/**
+ * Never block a departure the session itself forces (session actually invalid).
+ * Protect all other departures — including a browser Back that lands on /login
+ * while the session is still valid: that page's own effect then bounces an
+ * authenticated visitor away immediately, so without the prompt the Sonda
+ * unmounts and its record is lost with no chance to copy or download it.
+ */
+export function leavesSondaRoute(href: string, currentHref: string, sessionInvalid = true): boolean {
   try {
     const target = new URL(href, currentHref), current = new URL(currentHref);
     const route = (url: URL) => (url.hash.startsWith("#/") ? url.hash.slice(1) : url.pathname).split("?")[0].replace(/\/$/, "");
-    if (target.origin === current.origin && ["/login", "/sessao-expirada", "/consentimento-lgpd"].includes(route(target))) return false;
+    if (sessionInvalid && target.origin === current.origin && ["/login", "/sessao-expirada", "/consentimento-lgpd"].includes(route(target))) return false;
     return target.origin !== current.origin || route(target) !== route(current);
   } catch { return false; }
 }
