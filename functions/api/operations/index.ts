@@ -1,4 +1,5 @@
 import { getContextUser } from "../auth/_authorization";
+import { resolveBillingClinicId } from "../billing/_guard";
 import {
   appointmentToApi,
   assertLocalDateTime,
@@ -70,25 +71,21 @@ function addDaysLocalMinute(value: string, days: number): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}T${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-async function patientBelongsToProvider(
+async function patientBelongsToClinic(
   db: D1Database,
   patientId: string,
-  providerUserId: string,
+  clinicId: string,
 ): Promise<boolean> {
-  const tables = ["patients", "patients_demo"];
-  for (const table of tables) {
-    try {
-      const row = await db
-        .prepare(`SELECT id FROM ${table} WHERE id = ? AND owner_user_id = ? LIMIT 1`)
-        .bind(patientId, providerUserId)
-        .first<{ id: string }>();
-      if (row?.id) return true;
-    } catch {
-      // A tabela pode não existir no ambiente Cloudflare correspondente; a
-      // próxima tabela compatível será tentada sem alterar o contrato da API.
-    }
-  }
-  return false;
+  const row = await db
+    .prepare(
+      `SELECT id
+         FROM live_patients
+        WHERE id = ? AND clinic_id = ? AND status <> 'merged'
+        LIMIT 1`,
+    )
+    .bind(patientId, clinicId)
+    .first<{ id: string }>();
+  return Boolean(row?.id);
 }
 
 async function getDashboard(
@@ -96,6 +93,7 @@ async function getDashboard(
   env: OperationsEnv,
   provider: { id: string; name: string },
   principal: OperationsPrincipal,
+  clinicId: string,
 ) {
   const profile = await ensureProviderProfile(db, provider);
   const nowMinute = localNow(profile.timezone);
@@ -104,23 +102,23 @@ async function getDashboard(
   const prior30 = addDaysLocalMinute(nowMinute, -30);
 
   const servicesResult = await db
-    .prepare(`SELECT * FROM booking_services WHERE provider_user_id = ? ORDER BY active DESC, name`)
-    .bind(provider.id)
+    .prepare(`SELECT * FROM booking_services WHERE provider_user_id = ? AND clinic_id = ? ORDER BY active DESC, name`)
+    .bind(provider.id, clinicId)
     .all<ServiceRow>();
   const rulesResult = await db
-    .prepare(`SELECT * FROM booking_availability_rules WHERE provider_user_id = ? ORDER BY weekday, start_minute`)
-    .bind(provider.id)
+    .prepare(`SELECT * FROM booking_availability_rules WHERE provider_user_id = ? AND clinic_id = ? ORDER BY weekday, start_minute`)
+    .bind(provider.id, clinicId)
     .all<any>();
   const blocksResult = await db
-    .prepare(`SELECT * FROM booking_blocks WHERE provider_user_id = ? ORDER BY starts_at_local DESC LIMIT 100`)
-    .bind(provider.id)
+    .prepare(`SELECT * FROM booking_blocks WHERE provider_user_id = ? AND clinic_id = ? ORDER BY starts_at_local DESC LIMIT 100`)
+    .bind(provider.id, clinicId)
     .all<any>();
   const appointmentsResult = await db
     .prepare(
       `SELECT a.*, s.name AS service_name, s.modality AS service_modality
          FROM appointments a
          JOIN booking_services s ON s.id = a.service_id
-        WHERE a.provider_user_id = ?
+        WHERE a.provider_user_id = ? AND a.clinic_id = ?
         ORDER BY
           CASE
             WHEN a.starts_at_local >= ?
@@ -135,26 +133,26 @@ async function getDashboard(
           a.starts_at_local DESC
         LIMIT 250`,
     )
-    .bind(provider.id, nowMinute, nowMinute)
+    .bind(provider.id, clinicId, nowMinute, nowMinute)
     .all<AppointmentRow>();
   const waitlistResult = await db
     .prepare(
       `SELECT w.*, s.name AS service_name
          FROM waitlist_entries w
          JOIN booking_services s ON s.id = w.service_id
-        WHERE w.provider_user_id = ?
+        WHERE w.provider_user_id = ? AND w.clinic_id = ?
         ORDER BY CASE w.status WHEN 'waiting' THEN 0 WHEN 'offered' THEN 1 ELSE 2 END, w.created_at DESC
         LIMIT 150`,
     )
-    .bind(provider.id)
+    .bind(provider.id, clinicId)
     .all<any>();
   const reviewsResult = await db
-    .prepare(`SELECT * FROM appointment_reviews WHERE provider_user_id = ? ORDER BY created_at DESC LIMIT 100`)
-    .bind(provider.id)
+    .prepare(`SELECT * FROM appointment_reviews WHERE provider_user_id = ? AND clinic_id = ? ORDER BY created_at DESC LIMIT 100`)
+    .bind(provider.id, clinicId)
     .all<any>();
   const notificationsResult = await db
-    .prepare(`SELECT * FROM notification_outbox WHERE provider_user_id = ? ORDER BY created_at DESC LIMIT 120`)
-    .bind(provider.id)
+    .prepare(`SELECT * FROM notification_outbox WHERE provider_user_id = ? AND clinic_id = ? ORDER BY created_at DESC LIMIT 120`)
+    .bind(provider.id, clinicId)
     .all<any>();
 
   const fullServices = (servicesResult.results ?? []).map(serviceToApi);
@@ -224,20 +222,20 @@ async function getDashboard(
          COALESCE(SUM(CASE WHEN starts_at_local >= ? AND starts_at_local <= ? AND status NOT IN ('cancelled','no_show') THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS expected_cents,
          COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN COALESCE(amount_cents, 0) ELSE 0 END), 0) AS paid_cents
        FROM appointments
-      WHERE provider_user_id = ?`,
-    ).bind(today, nowMinute, prior30, nowMinute, nowMinute, next30, provider.id).first<{
+      WHERE provider_user_id = ? AND clinic_id = ?`,
+    ).bind(today, nowMinute, prior30, nowMinute, nowMinute, next30, provider.id, clinicId).first<{
       today_count: number; upcoming_count: number; requested_count: number; no_show_30d: number;
       expected_cents: number; paid_cents: number;
     }>(),
     db.prepare(
-      `SELECT COUNT(*) AS count FROM waitlist_entries WHERE provider_user_id = ? AND status = 'waiting'`,
-    ).bind(provider.id).first<{ count: number }>(),
+      `SELECT COUNT(*) AS count FROM waitlist_entries WHERE provider_user_id = ? AND clinic_id = ? AND status = 'waiting'`,
+    ).bind(provider.id, clinicId).first<{ count: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS count FROM appointment_reviews WHERE provider_user_id = ? AND approved = 0`,
-    ).bind(provider.id).first<{ count: number }>(),
+      `SELECT COUNT(*) AS count FROM appointment_reviews WHERE provider_user_id = ? AND clinic_id = ? AND approved = 0`,
+    ).bind(provider.id, clinicId).first<{ count: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS count FROM notification_outbox WHERE provider_user_id = ? AND status = 'pending_provider'`,
-    ).bind(provider.id).first<{ count: number }>(),
+      `SELECT COUNT(*) AS count FROM notification_outbox WHERE provider_user_id = ? AND clinic_id = ? AND status = 'pending_provider'`,
+    ).bind(provider.id, clinicId).first<{ count: number }>(),
   ]);
 
   const metrics = {
@@ -278,9 +276,9 @@ async function getDashboard(
     reviews: principal.canConfigure ? fullReviews : [],
     notifications,
     metrics,
-    access: principal,
+    access: { ...principal, clinicId },
     staff: principal.canConfigure ? await listOperationsStaff(db, provider.id) : [],
-    audit: await listOperationsAudit(db, provider.id, 40),
+    audit: await listOperationsAudit(db, provider.id, clinicId, 40),
   };
 }
 
@@ -291,9 +289,19 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   await ensureOperationsHardeningSchema(context.env.DB);
   const principal = await resolveOperationsPrincipal(context.env.DB, user);
   if (!principal) return null;
+  // A recepção/operator é delegada ao profissional e não recebe membership
+  // clínico só para operar a agenda. A fronteira tenant da agenda, portanto,
+  // é a clínica do provider responsável — nunca uma elevação clínica da secretária.
+  const clinicId = await resolveBillingClinicId(
+    context.env.DB,
+    principal.providerUserId,
+    context.request,
+  );
+  if (!clinicId) return null;
   return {
     authUser: user,
     principal,
+    clinicId,
     provider: { id: principal.providerUserId, name: principal.providerName },
   };
 }
@@ -314,7 +322,7 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
         403,
       );
     }
-    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal));
+    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId));
   } catch (error) {
     console.error("[operations.GET]", error);
     return errorResponse("Não foi possível carregar a gestão operacional.", "OPERATIONS_LOAD_FAILED", 500);
@@ -340,7 +348,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         403,
       );
     }
-    const { authUser, principal, provider } = prepared;
+    const { authUser, principal, provider, clinicId } = prepared;
     const user = { ...authUser, id: provider.id, name: provider.name };
     const profile = await ensureProviderProfile(env.DB, provider);
     const now = new Date().toISOString();
@@ -359,6 +367,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       "review_moderate",
       "staff_link",
       "staff_active",
+      "appointment_link_patient",
     ];
     if (configureActions.includes(action) && !principal.canConfigure) {
       return errorResponse("Ação restrita ao profissional responsável.", "FORBIDDEN", 403);
@@ -369,14 +378,27 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!email.includes("@")) return errorResponse("E-mail da recepção inválido.", "VALIDATION_ERROR", 400);
       const result = await linkOperationsOperator(env.DB, principal, email);
       if (!result.ok) {
-        const messages: Record<string, string> = {
-          STAFF_NOT_FOUND: "Usuário da recepção não encontrado.",
-          STAFF_ROLE_INVALID: "O usuário precisa ter perfil operator ativo.",
-          SELF_LINK_INVALID: "O profissional não pode vincular a si próprio como recepção.",
-          STAFF_ALREADY_LINKED: "Este usuário da recepção já está vinculado a outro profissional.",
-          FORBIDDEN: "Ação não autorizada.",
-        };
-        return errorResponse(messages[result.code] ?? "Não foi possível vincular a recepção.", result.code, result.code === "STAFF_NOT_FOUND" ? 404 : 409);
+        if (result.code === "SELF_LINK_INVALID") {
+          return errorResponse(
+            "O profissional não pode vincular a si próprio como recepção.",
+            "SELF_LINK_INVALID",
+            409,
+          );
+        }
+        if (result.code === "FORBIDDEN") {
+          return errorResponse("Ação não autorizada.", "FORBIDDEN", 403);
+        }
+        // AUTHZ-P1-06 (ciclo 4, 2026-09-26 —
+        // docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): e-mail inexistente,
+        // conta sem papel operator ativo e conta já vinculada a outro
+        // profissional respondiam com código/status distintos — um oráculo
+        // de enumeração de contas alheias na plataforma. As três respondem
+        // agora exatamente igual.
+        return errorResponse(
+          "Este e-mail não corresponde a um usuário de recepção disponível para vínculo.",
+          "STAFF_NOT_AVAILABLE",
+          404,
+        );
       }
       auditTargetType = "staff_link";
       auditTargetId = result.staffUserId;
@@ -424,15 +446,15 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = `svc-${crypto.randomUUID()}`;
       await env.DB.prepare(
         `INSERT INTO booking_services
-          (id, provider_user_id, name, duration_minutes, price_cents, modality, active, public_visible, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
-      ).bind(id, user.id, name, duration, moneyCents(body.priceCents), modality, now, now).run();
+          (id, provider_user_id, clinic_id, name, duration_minutes, price_cents, modality, active, public_visible, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
+      ).bind(id, user.id, clinicId, name, duration, moneyCents(body.priceCents), modality, now, now).run();
       auditTargetType = "service";
       auditTargetId = id;
       auditMetadata = { modality };
     } else if (action === "update_service") {
       const id = cleanText(body.id, 80);
-      const existing = await getService(env.DB, user.id, id, false);
+      const existing = await getService(env.DB, user.id, id, false, clinicId);
       if (!existing) return errorResponse("Serviço não encontrado.", "NOT_FOUND", 404);
       const name = cleanText(body.name, 100) || existing.name;
       const duration = integerBetween(body.durationMinutes, 10, 480) ?? existing.duration_minutes;
@@ -443,8 +465,8 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const update = await env.DB.prepare(
         `UPDATE booking_services
             SET name = ?, duration_minutes = ?, price_cents = ?, modality = ?, active = ?, public_visible = ?, updated_at = ?
-          WHERE id = ? AND provider_user_id = ?`,
-      ).bind(name, duration, priceCents, modality, active, publicVisible, now, id, user.id).run();
+          WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`,
+      ).bind(name, duration, priceCents, modality, active, publicVisible, now, id, user.id, clinicId).run();
       if ((update.meta?.changes ?? 0) !== 1) return errorResponse("Serviço não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "service";
       auditTargetId = id;
@@ -458,15 +480,15 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = `rule-${crypto.randomUUID()}`;
       await env.DB.prepare(
         `INSERT INTO booking_availability_rules
-          (id, provider_user_id, weekday, start_minute, end_minute, slot_minutes, active, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
-      ).bind(id, user.id, weekday, startMinute, endMinute, slotMinutes, now).run();
+          (id, provider_user_id, clinic_id, weekday, start_minute, end_minute, slot_minutes, active, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+      ).bind(id, user.id, clinicId, weekday, startMinute, endMinute, slotMinutes, now).run();
       auditTargetType = "availability_rule";
       auditTargetId = id;
     } else if (action === "delete_rule") {
       const id = cleanText(body.id, 80);
       if (!id) return errorResponse("Regra inválida.", "VALIDATION_ERROR", 400);
-      const result = await env.DB.prepare(`DELETE FROM booking_availability_rules WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      const result = await env.DB.prepare(`DELETE FROM booking_availability_rules WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Regra não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "availability_rule";
       auditTargetId = id;
@@ -477,22 +499,22 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!starts || !ends || ends <= starts) return errorResponse("Bloqueio inválido.", "VALIDATION_ERROR", 400);
       const id = `blk-${crypto.randomUUID()}`;
       await env.DB.prepare(
-        `INSERT INTO booking_blocks (id, provider_user_id, starts_at_local, ends_at_local, reason, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      ).bind(id, user.id, starts, ends, cleanOptionalText(body.reason, 160), now).run();
+        `INSERT INTO booking_blocks (id, provider_user_id, clinic_id, starts_at_local, ends_at_local, reason, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(id, user.id, clinicId, starts, ends, cleanOptionalText(body.reason, 160), now).run();
       auditTargetType = "availability_block";
       auditTargetId = id;
     } else if (action === "delete_block") {
       const id = cleanText(body.id, 80);
       if (!id) return errorResponse("Bloqueio inválido.", "VALIDATION_ERROR", 400);
-      const result = await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ?`).bind(id, user.id).run();
+      const result = await env.DB.prepare(`DELETE FROM booking_blocks WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Bloqueio não encontrado.", "NOT_FOUND", 404);
       auditTargetType = "availability_block";
       auditTargetId = id;
       auditMetadata = { status: "deleted" };
     } else if (action === "create_appointment") {
       const serviceId = cleanText(body.serviceId, 80);
-      const service = await getService(env.DB, user.id, serviceId, false);
+      const service = await getService(env.DB, user.id, serviceId, false, clinicId);
       const starts = assertLocalDateTime(body.startsAtLocal);
       if (!service || !starts) return errorResponse("Agendamento inválido.", "VALIDATION_ERROR", 400);
       const token = randomAccessToken();
@@ -501,17 +523,17 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const endsAtLocal = ends.toISOString().slice(0, 16);
       const appointmentId = `apt-${crypto.randomUUID()}`;
       const patientId = principal.delegated ? null : cleanOptionalText(body.patientId, 100);
-      if (patientId && !(await patientBelongsToProvider(env.DB, patientId, user.id))) {
+      if (patientId && !(await patientBelongsToClinic(env.DB, patientId, clinicId))) {
         return errorResponse("Paciente não encontrado ou sem vínculo com este profissional.", "PATIENT_NOT_FOUND", 404);
       }
       const insertAppointment = env.DB.prepare(
         `INSERT INTO appointments
-          (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
+          (id, provider_user_id, clinic_id, service_id, patient_id, starts_at_local, ends_at_local, timezone,
            status, source, booking_token_hash, guardian_name_encrypted, guardian_email_encrypted,
            guardian_phone_encrypted, patient_name_encrypted, amount_cents, payment_status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', 'professional', ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       ).bind(
-        appointmentId, user.id, service.id, patientId, starts, endsAtLocal,
+        appointmentId, user.id, clinicId, service.id, patientId, starts, endsAtLocal,
         profile.timezone, await sha256(token), await encryptText(env, cleanOptionalText(body.guardianName, 120), "guardian_name"),
         await encryptText(env, cleanOptionalText(body.guardianEmail, 180), "guardian_email"), await encryptText(env, cleanOptionalText(body.guardianPhone, 40), "guardian_phone"),
         await encryptText(env, cleanOptionalText(body.patientName, 120), "patient_name"), service.price_cents, now, now,
@@ -520,11 +542,31 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetType = "appointment";
       auditTargetId = appointmentId;
       auditMetadata = { source: principal.delegated ? "operator" : "professional", serviceId };
+    } else if (action === "appointment_link_patient") {
+      const id = cleanText(body.id, 80);
+      const patientId = cleanText(body.patientId, 120);
+      if (!id || !patientId) {
+        return errorResponse("Consulta e paciente são obrigatórios.", "VALIDATION_ERROR", 400);
+      }
+      if (!(await patientBelongsToClinic(env.DB, patientId, clinicId))) {
+        return errorResponse("Paciente LIVE não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
+      }
+      const result = await env.DB.prepare(
+        `UPDATE appointments
+            SET patient_id = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`,
+      ).bind(patientId, now, id, user.id, clinicId).run();
+      if ((result.meta?.changes ?? 0) !== 1) {
+        return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
+      }
+      auditTargetType = "appointment";
+      auditTargetId = id;
+      auditMetadata = { status: "patient_linked" };
     } else if (action === "appointment_status") {
       const id = cleanText(body.id, 80);
       const status = parseStatus(body.status);
       if (!id || !status) return errorResponse("Status inválido.", "VALIDATION_ERROR", 400);
-      const current = await env.DB.prepare(`SELECT * FROM appointments WHERE id = ? AND provider_user_id = ? LIMIT 1`).bind(id, user.id).first<AppointmentRow>();
+      const current = await env.DB.prepare(`SELECT * FROM appointments WHERE id = ? AND provider_user_id = ? AND clinic_id = ? LIMIT 1`).bind(id, user.id, clinicId).first<AppointmentRow>();
       if (!current) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
       const allowed: Record<AppointmentStatus, AppointmentStatus[]> = {
         requested: ["confirmed", "cancelled", "no_show"],
@@ -540,7 +582,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const updateStatus = env.DB.prepare(
         `UPDATE appointments
             SET status = ?, checked_in_at = ?, completed_at = ?, cancelled_at = ?, updated_at = ?
-          WHERE id = ? AND provider_user_id = ? AND status = ?
+          WHERE id = ? AND provider_user_id = ? AND clinic_id = ? AND status = ?
             AND starts_at_local = ? AND ends_at_local = ?`,
       ).bind(
         status,
@@ -550,6 +592,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         now,
         id,
         user.id,
+        clinicId,
         current.status,
         current.starts_at_local,
         current.ends_at_local,
@@ -566,6 +609,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       await enqueueNotification(env.DB, env, {
         appointmentId: id,
         providerUserId: user.id,
+        clinicId,
         template: `appointment_${status}`,
         recipient: await decryptText(env, current.guardian_phone_encrypted, "guardian_phone") || await decryptText(env, current.guardian_email_encrypted, "guardian_email"),
         message: `Atualização da consulta: status ${status}. Horário ${current.starts_at_local}.`,
@@ -580,8 +624,8 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!id || !status) return errorResponse("Pagamento inválido.", "VALIDATION_ERROR", 400);
       const result = await env.DB.prepare(
         `UPDATE appointments SET amount_cents = COALESCE(?, amount_cents), payment_status = ?, payment_method = ?, updated_at = ?
-          WHERE id = ? AND provider_user_id = ?`,
-      ).bind(moneyCents(body.amountCents), status, cleanOptionalText(body.paymentMethod, 60), now, id, user.id).run();
+          WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`,
+      ).bind(moneyCents(body.amountCents), status, cleanOptionalText(body.paymentMethod, 60), now, id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "appointment_payment";
       auditTargetId = id;
@@ -590,7 +634,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 20);
       if (!id || !["waiting", "offered", "booked", "closed"].includes(status)) return errorResponse("Status da lista de espera inválido.", "VALIDATION_ERROR", 400);
-      const result = await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE waitlist_entries SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(status, now, id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Entrada da lista de espera não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "waitlist";
       auditTargetId = id;
@@ -599,7 +643,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       if (!id) return errorResponse("Avaliação inválida.", "VALIDATION_ERROR", 400);
       const approved = body.approved === true ? 1 : 0;
-      const result = await env.DB.prepare(`UPDATE appointment_reviews SET approved = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(approved, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE appointment_reviews SET approved = ?, updated_at = ? WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(approved, now, id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Avaliação não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "review";
       auditTargetId = id;
@@ -608,7 +652,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const id = cleanText(body.id, 80);
       const status = cleanText(body.status, 30);
       if (!id || !["manual_sent", "failed"].includes(status)) return errorResponse("Status de notificação inválido.", "VALIDATION_ERROR", 400);
-      const result = await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ?`).bind(status, now, id, user.id).run();
+      const result = await env.DB.prepare(`UPDATE notification_outbox SET status = ?, updated_at = ? WHERE id = ? AND provider_user_id = ? AND clinic_id = ?`).bind(status, now, id, user.id, clinicId).run();
       if ((result.meta?.changes ?? 0) !== 1) return errorResponse("Notificação não encontrada.", "NOT_FOUND", 404);
       auditTargetType = "notification";
       auditTargetId = id;
@@ -617,13 +661,13 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       return errorResponse("Ação operacional desconhecida.", "UNKNOWN_ACTION", 400);
     }
 
-    await logOperationsAudit(env.DB, principal, {
+    await logOperationsAudit(env.DB, principal, clinicId, {
       action,
       targetType: auditTargetType,
       targetId: auditTargetId,
       metadata: auditMetadata,
     });
-    return jsonResponse(await getDashboard(env.DB, env, provider, principal));
+    return jsonResponse(await getDashboard(env.DB, env, provider, principal, clinicId));
   } catch (error) {
     console.error(`[operations.POST:${action}]`, error);
     if (String(error).includes("SCHEDULE_CONFLICT")) {

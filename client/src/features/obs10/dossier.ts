@@ -83,6 +83,7 @@ export function makeDossier(record: SessionRecord): string {
     `- Condições do dia (sono, fome, dor, doença, medicação e horário): ${orMissing(c.conditions)}.`,
     `- Posição de bruços: ${c.proneAllowed ? "autorizada pelo médico, somente acordado e tolerado" : "não autorizada; propostas em prono omitidas"}.`,
     `- Materiais declarados ausentes: ${c.missingMaterials?.length ? c.missingMaterials.join(", ") : "nenhum"}.`,
+    ...(c.preparation === "direct" ? ["- Preparação: modo direto; guia, kit item a item, checklist de segurança e ensaio dispensados pela aplicadora experiente."] : []),
     `- Duração da observação: ${clock(record.durationSeconds)} de até 10:00. Encerramento: ${sentence(record.endReason || "em andamento")}`,
     `- Captação: ${sentence(record.recording)}`,
     ...(record.importedForReview ? [`- Registro reaberto de arquivo exportado; captação de origem declarada, não verificada: ${record.sourceRecording || "não informada"}.`] : []),

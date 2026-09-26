@@ -14,7 +14,7 @@ export const BANDS = [
   {id:"60-83",min:60,max:83,label:"5–6 anos",note:"Amplie repertório e conceitos contextualizados. Familiaridade cultural e exposição à figura precisam ser registradas."},
   {id:"84-119",min:84,max:119,label:"7–9 anos",note:"Apresentação sóbria. Os itens básicos são amostras dirigidas, não uma avaliação cognitiva global desta idade."},
   {id:"120-155",min:120,max:155,label:"10–12 anos",note:"Seleção conforme questão clínica, linguagem e necessidade de apoio, sem infantilização nem idade equivalente."},
-  {id:"156-215",min:156,max:215,label:"13–17 anos",note:"Use apenas quando pertinente ao repertório e à questão clínica; desconhecimento de uma figura não define déficit."},
+  {id:"156-239",min:156,max:239,label:"13–19 anos",note:"Use apenas quando pertinente ao repertório e à questão clínica; desconhecimento de uma figura não define déficit."},
 ] as const;
 export const COLORS = [
   ["vermelho","Vermelho","var(--rv-color-red)"],["azul","Azul","var(--rv-color-blue)"],["amarelo","Amarelo","var(--rv-color-yellow)"],["verde","Verde","var(--rv-color-green)"],
@@ -53,7 +53,7 @@ export const ITEM_MAP=new Map(ITEMS.map(item=>[item.id,item]));
 export function itemFor(id:string):Item{const item=ITEM_MAP.get(id);if(!item)throw new Error(`Figura não cadastrada: ${id}`);return item;}
 export function ageInMonths(years:string,months:string):number|null{
   if(!/^\d{1,2}$/.test(years)||!/^\d{1,2}$/.test(months))return null;
-  const y=Number(years),m=Number(months),total=y*12+m;return m<=11&&total>=12&&total<=215?total:null;
+  const y=Number(years),m=Number(months),total=y*12+m;return m<=11&&total>=12&&total<=239?total:null;
 }
 export function bandFor(age:number){return Number.isInteger(age)?BANDS.find(b=>age>=b.min&&age<=b.max):undefined;}
 export function eligibleItems(age:number,mode:Mode):Item[]{
@@ -65,6 +65,24 @@ export function shuffle<T>(values:readonly T[],seed:number):T[]{
   const random=()=>{state+=0x6d2b79f5;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};
   for(let i=out.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;
 }
+/**
+ * Modo Fácil (joguinho): configuração graduada pela idade, sem decisão do
+ * aplicador. Mais novo = menos figuras e duas alternativas bem diferentes;
+ * mais velho = quatro alternativas da mesma categoria, sem infantilizar.
+ */
+export function easyPlanSettings(age:number):{choices:2|3|4;count:number;distractors:Config["distractors"];categories:Category[]}{
+  if(age<24)return{choices:2,count:8,distractors:"distantes",categories:["animais","frutas","objetos","transportes"]};
+  if(age<48)return{choices:2,count:10,distractors:"distantes",categories:Object.keys(CATEGORIES) as Category[]};
+  if(age<84)return{choices:3,count:12,distractors:"distantes",categories:Object.keys(CATEGORIES) as Category[]};
+  return{choices:4,count:12,distractors:"categoria",categories:Object.keys(CATEGORIES) as Category[]};
+}
+/** Figuras do Modo Fácil: receptivas, sem contexto e nas categorias da faixa. */
+export function easyPlanSelection(age:number):string[]{
+  const settings=easyPlanSettings(age);
+  return eligibleItems(age,"receptivo").filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
+}
+/** Quantidade prometida ao adulto = quantidade que o jogo realmente tem (12–23 meses: 7, não 8). */
+export function easyPlanCount(age:number):number{return Math.min(easyPlanSettings(age).count,easyPlanSelection(age).length);}
 export interface Config{ageMonths:number;mode:Mode;choices:2|3|4;count:number;selectedIds:string[];seed:number;distractors:"distantes"|"categoria";contextAcknowledged:boolean;conditions:string[];}
 export interface Trial{id:string;targetId:string;optionIds:string[];mode:Mode;question:string;context?:string;assetVersion:string;adaptedFrom?:string;}
 export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,seed:number,index:number):Trial{
@@ -73,8 +91,12 @@ export function makeTrial(targetId:string,mode:Mode,pool:Item[],choices:number,s
   let others=pool.filter(item=>item.id!==target.id&&(target.pair?item.pair===target.pair:item.art===target.art));
   if(!target.pair&&target.category==="cores")others=others.filter(item=>item.category==="cores");
   const need=target.pair?Math.min(1,others.length):Math.min(choices-1,others.length);
-  if((mode!=="nomeacao"||target.pair)&&need<1)throw new Error("Selecione ao menos duas figuras compatíveis. Conceitos precisam dos dois estados do mesmo par.");
-  const foils=shuffle(others,seed+index*37).slice(0,need).map(item=>item.id);
+  if((mode!=="nomeacao"||target.pair)&&need<1)throw new Error(target.pair?"Conceitos precisam dos dois estados do mesmo par: selecione as duas figuras.":"Selecione ao menos duas figuras compatíveis para montar as alternativas.");
+  // "Alternativas bem diferentes": quando o pool mistura categorias, as de outra
+  // categoria vêm antes (ordenação estável sobre o embaralhamento determinístico).
+  const ranked=shuffle(others,seed+index*37);
+  if(!target.pair&&target.category!=="cores")ranked.sort((a,b)=>Number(a.category===target.category)-Number(b.category===target.category));
+  const foils=ranked.slice(0,need).map(item=>item.id);
   const optionIds=mode==="nomeacao"&&!target.pair?[target.id]:foils;
   if(mode!=="nomeacao"||target.pair){
     const size=foils.length+1;
@@ -97,7 +119,13 @@ export function buildPlan(config:Config):Trial[]{
   const groups=shuffle(Object.keys(CATEGORIES) as Category[],config.seed).map(category=>shuffle(selected.filter(item=>item.category===category),config.seed+category.length));
   const targets:Item[]=[];
   while(groups.some(group=>group.length)){for(const group of groups){const item=group.shift();if(item)targets.push(item);}}
-  return targets.slice(0,config.count).map((target,index)=>{const pool=selected.filter(item=>target.pair?item.pair===target.pair:target.category==="cores"||config.distractors==="categoria"?item.category===target.category:item.art===target.art);return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index);});
+  return targets.slice(0,config.count).map((target,index)=>{
+    const byCategory=selected.filter(item=>target.pair?item.pair===target.pair:target.category==="cores"||config.distractors==="categoria"?item.category===target.category:item.art===target.art);
+    // "Mesma categoria" sem outra figura da categoria (ex.: só uma fruta aos 12–23 meses)
+    // cai para categoria distinta em vez de travar o roteiro com mensagem sobre pares.
+    const pool=!target.pair&&target.category!=="cores"&&!byCategory.some(item=>item.id!==target.id)?selected.filter(item=>item.art===target.art):byCategory;
+    return makeTrial(target.id,config.mode,pool,config.choices,config.seed,index);
+  });
 }
 export const OUTCOMES={correspondente:"Resposta correspondente",diferente:"Resposta diferente",sem_resposta:"Não respondeu",recusa:"Recusou",nao_aplicado:"Não aplicado",ambiguo:"Figura ambígua / não reconhecível",tecnico:"Problema técnico"} as const;
 export type Outcome=keyof typeof OUTCOMES;

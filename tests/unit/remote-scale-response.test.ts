@@ -399,5 +399,50 @@ const reviewAgain = await patchInvitation(
 );
 assert.equal(reviewAgain.status, 409);
 
+// ── 15) LTB-14 (ciclo 4, 2026-09-26): clínica suspensa/encerrada bloqueia o
+// link público, mesmo com convite pendente e válido ────────────────────────
+{
+  const invite = await createInvitation(
+    staffContext("POST", "https://x/api/live/scale-invitations", {
+      clinicId: CLINIC_A,
+      patientId: PATIENT_A,
+      respondentKind: "family",
+      scaleId: "ari",
+      expiresInHours: 168,
+    }),
+  );
+  assert.equal(invite.status, 201);
+  const inviteBody = await json(invite);
+  const token = inviteBody.token as string;
+
+  // Premissa: com a clínica ativa, o convite pendente é alcançável.
+  const antes = await publicGetScale(publicContext("GET", token));
+  assert.equal(antes.status, 200);
+  const antesBody = await json(antes);
+  const itemCount = (antesBody.scale as { items: unknown[] }).items.length;
+
+  sqlite.prepare("UPDATE clinics SET status = 'suspended' WHERE id = ?").run(CLINIC_A);
+  try {
+    const bloqueado = await publicGetScale(publicContext("GET", token));
+    assert.equal(bloqueado.status, 410, "clínica suspensa não pode servir o formulário público");
+    assert.equal((await json(bloqueado)).code, "SCALE_INVITATION_UNAVAILABLE");
+
+    const envioBloqueado = await publicPostScale(
+      publicContext("POST", token, {
+        consentAccepted: true,
+        answers: new Array(itemCount).fill(0),
+      }),
+    );
+    assert.equal(envioBloqueado.status, 410, "envio para clínica suspensa não pode ser aceito");
+
+    const semLinha = sqlite
+      .prepare("SELECT COUNT(*) AS n FROM live_scale_responses WHERE invitation_id = ?")
+      .get(inviteBody.id as string) as { n: number };
+    assert.equal(semLinha.n, 0, "nenhuma resposta pode ser gravada enquanto a clínica está suspensa");
+  } finally {
+    sqlite.prepare("UPDATE clinics SET status = 'active' WHERE id = ?").run(CLINIC_A);
+  }
+}
+
 sqlite.close();
-console.log("✓ remote-scale-response: allowlist enforcement, RBAC, token hash-only, validação por item, cifra em repouso e ciclo de revisão provados contra o SQL real da 0021");
+console.log("✓ remote-scale-response: allowlist enforcement, RBAC, token hash-only, validação por item, cifra em repouso, ciclo de revisão e bloqueio por clínica suspensa provados contra o SQL real da 0021");

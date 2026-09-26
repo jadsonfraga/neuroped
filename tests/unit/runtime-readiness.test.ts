@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { onRequestGet } from "../../functions/api/health";
+import { onRequestGet as clinicalCryptoDiagnostic } from "../../functions/api/admin/clinical-crypto-readiness";
+import { clinicalCryptoStatus } from "../../functions/api/tenant/_crypto";
 import { resolvePrivateArtifactStore } from "../../functions/api/live/governance/_artifactStore";
 // Ephemeral test-only key; never a committed application secret.
 const secret = crypto.randomUUID() + crypto.randomUUID();
@@ -231,4 +233,126 @@ test("export readiness requires one job per request", async () => {
   assert.equal(body.readiness.lgpdSchemaReady, false);
   assert.equal(body.readiness.lgpdExport.configured, false);
   assert.ok(body.readiness.blockers.includes("LGPD_SCHEMA_NOT_READY"));
+});
+
+
+test("clinical keyring status returns only allowlisted failure codes", () => {
+  const dataKey = crypto.randomUUID() + crypto.randomUUID();
+  const indexKey = crypto.randomUUID() + crypto.randomUUID();
+  const previousKey = crypto.randomUUID() + crypto.randomUUID();
+  const cases: Array<[Record<string, unknown>, string]> = [
+    [{}, "CLINICAL_CRYPTO_NOT_CONFIGURED"],
+    [{ CLINICAL_DATA_KEY: dataKey }, "CLINICAL_INDEX_KEY_NOT_CONFIGURED"],
+    [{
+      CLINICAL_DATA_KEY: dataKey,
+      CLINICAL_DATA_KEY_ID: "id invalido",
+      CLINICAL_INDEX_KEY: indexKey,
+    }, "CLINICAL_KEY_ID_INVALID"],
+    [{
+      CLINICAL_DATA_KEY: dataKey,
+      CLINICAL_DATA_KEY_ID: "k1",
+      CLINICAL_DATA_KEY_PREVIOUS: previousKey,
+      CLINICAL_DATA_KEY_PREVIOUS_ID: "k1",
+      CLINICAL_INDEX_KEY: indexKey,
+    }, "CLINICAL_KEY_ID_COLLISION"],
+    [{
+      CLINICAL_DATA_KEY: dataKey,
+      CLINICAL_DATA_KEY_ID: "k1",
+      CLINICAL_INDEX_KEY: dataKey,
+    }, "CLINICAL_KEY_SEPARATION_REQUIRED"],
+  ];
+
+  for (const [env, expectedCode] of cases) {
+    const status = clinicalCryptoStatus(env as never);
+    assert.equal(status.configured, false);
+    assert.equal(status.configured ? null : status.code, expectedCode);
+    const serialized = JSON.stringify(status);
+    for (const secretValue of [dataKey, indexKey, previousKey]) {
+      assert.equal(serialized.includes(secretValue), false);
+      assert.equal(serialized.includes(secretValue.slice(0, 12)), false);
+      assert.equal(serialized.includes(secretValue.slice(-12)), false);
+    }
+  }
+
+  assert.deepEqual(
+    clinicalCryptoStatus({
+      CLINICAL_DATA_KEY: dataKey,
+      CLINICAL_DATA_KEY_ID: "k-current",
+      CLINICAL_INDEX_KEY: indexKey,
+    } as never),
+    { configured: true },
+  );
+});
+
+test("clinical crypto diagnostic is restricted to admin or reserved technical sentinel", async () => {
+  const dataKey = crypto.randomUUID() + crypto.randomUUID();
+  const indexKey = crypto.randomUUID() + crypto.randomUUID();
+  const env = {
+    CLINICAL_DATA_KEY: dataKey,
+    CLINICAL_DATA_KEY_ID: "k-current",
+    CLINICAL_INDEX_KEY: indexKey,
+    NEUROPED_E2E_EMAIL: "sentinela@example.test",
+  };
+  const user = (email: string, role: string) => ({
+    id: "u-test",
+    name: "Teste",
+    email,
+    role,
+    mustChangePassword: false,
+  });
+
+  const unauthenticated = await clinicalCryptoDiagnostic({ env, data: {} } as never);
+  assert.equal(unauthenticated.status, 401);
+
+  const professional = await clinicalCryptoDiagnostic({
+    env,
+    data: { authUser: user("medico@example.test", "professional") },
+  } as never);
+  assert.equal(professional.status, 403);
+
+  const unrelatedReader = await clinicalCryptoDiagnostic({
+    env,
+    data: { authUser: user("reader@example.test", "reader") },
+  } as never);
+  assert.equal(unrelatedReader.status, 403);
+
+  const sentinel = await clinicalCryptoDiagnostic({
+    env,
+    data: { authUser: user("sentinela@example.test", "reader") },
+  } as never);
+  assert.equal(sentinel.status, 200);
+  assert.deepEqual(await sentinel.json(), { configured: true });
+
+  const admin = await clinicalCryptoDiagnostic({
+    env,
+    data: { authUser: user("admin@example.test", "admin") },
+  } as never);
+  assert.equal(admin.status, 200);
+});
+
+test("clinical crypto diagnostic never returns key material on failure", async () => {
+  const sharedSecret = crypto.randomUUID() + crypto.randomUUID();
+  const response = await clinicalCryptoDiagnostic({
+    env: {
+      CLINICAL_DATA_KEY: sharedSecret,
+      CLINICAL_DATA_KEY_ID: "k-current",
+      CLINICAL_INDEX_KEY: sharedSecret,
+      NEUROPED_E2E_EMAIL: "sentinela@example.test",
+    },
+    data: {
+      authUser: {
+        id: "e2e",
+        name: "Sentinela",
+        email: "sentinela@example.test",
+        role: "reader",
+        mustChangePassword: false,
+      },
+    },
+  } as never);
+  assert.equal(response.status, 200);
+  const body = await response.text();
+  assert.match(body, /CLINICAL_KEY_SEPARATION_REQUIRED/);
+  assert.equal(body.includes(sharedSecret), false);
+  assert.equal(body.includes(sharedSecret.slice(0, 12)), false);
+  assert.equal(body.includes(sharedSecret.slice(-12)), false);
 });

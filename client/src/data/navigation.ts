@@ -3,6 +3,7 @@ import { LEGACY_DIRECT_TEST_REDIRECTS } from "@/data/legacyInstrumentRoutes";
 import {
   Activity,
   Baby,
+  Gamepad2,
   BookOpen,
   Brain,
   BrainCog,
@@ -53,6 +54,14 @@ export interface NavigationMatch {
   item: NavItem;
 }
 
+const superNeuroPadNavigation: NavItem = {
+  href: "/super-neuropad-game",
+  label: "Super NeuroPad Game",
+  icon: Gamepad2,
+  tone: "priority",
+  description: "Aventura em 5 fases · secretária na pré-consulta · resultado em PDF",
+};
+
 const obs10Navigation: NavItem = {
   href: "/avaliacao-pre-consulta-faixa-etaria",
   label: "OBS-10 · Pré-Consulta",
@@ -66,6 +75,7 @@ const obs10Navigation: NavItem = {
  * seguir. Conexões usam um grupo compacto separado, independente da cor.
  */
 export const featuredNavigation: NavItem[] = [
+  superNeuroPadNavigation,
   {
     href: "/testes-diretos",
     label: "Sonda Dez · Avaliação Direta",
@@ -80,6 +90,13 @@ export const featuredNavigation: NavItem[] = [
     icon: Images,
     tone: "priority",
     description: "Figuras por idade · reconhecer, nomear e parear",
+  },
+  {
+    href: "/testes-cognitivos",
+    label: "Testes cognitivos por faixa etária",
+    icon: Brain,
+    tone: "priority",
+    description: "Aventura em 4 mundos · visual, leitura, escrita e aritmética",
   },
   {
     href: "/pacientes",
@@ -142,7 +159,7 @@ export const featuredNavigation: NavItem[] = [
     label: "Secretaria IA",
     icon: Calendar,
     tone: "connection",
-    description: "Pré-agendamento pelo BoaConsulta",
+    description: "Agendamento próprio NeuroPad · 1 hora por paciente",
   },
   // prettier-ignore — formato preservado pelo guard de integração do Conecta.
   { href: "/conecta", label: "NeuroPed Conecta", icon: Activity, tone: "connection", description: "Portais e conexões" },
@@ -163,7 +180,7 @@ export const featuredNavigation: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
-  { title: "PRÉ-CONSULTA GUIADA", items: [obs10Navigation] },
+  { title: "PRÉ-CONSULTA GUIADA", items: [superNeuroPadNavigation, obs10Navigation] },
   {
     title: "",
     items: [{ href: "/", label: "Início", icon: Home }],
@@ -206,7 +223,7 @@ export const navSections: NavSection[] = [
         label: "Testes cognitivos por faixa etária",
         icon: Brain,
         tone: "priority",
-        description: "Visual, leitura, escrita e aritmética · 2–19 anos",
+        description: "Visual, fala/leitura, letras/escrita e números · 1–19 anos",
       },
       {
         href: "/testes-diretos",

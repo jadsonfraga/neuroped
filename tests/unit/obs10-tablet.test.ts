@@ -194,3 +194,11 @@ const tabletSources = sources + "\n" + stations;
 assert.ok(!/atividade/i.test(tabletSources), "the tablet route is counted in estações: applicator text must not call a station an atividade");
 assert.ok(stationStyle.includes("prefers-reduced-motion") && stationStyle.includes("ot-station-enter"), "station transitions must respect reduced motion");
 console.log("OBS-10 Tablet: 13 age bands, state transitions, timer, no-equivalence, raw events, bounded imports and no hidden upload passed.");
+// Vocabulário reconciliado também no texto exportado: nenhuma "tarefa", e estação nunca
+// proposta é distinguida de estação proposta e não registrada.
+assert.ok(!/\btarefa\b/i.test(tabletText(all.record!)), "tablet summary never calls a station a tarefa");
+assert.match(tabletText(interrupted.record!), /Estação não alcançada: a coleta foi encerrada antes de ela ser proposta/, "stations after the last proposed one are reported as not reached");
+assert.ok(!/Não houve observação registrada desta estação/.test(tabletText(interrupted.record!)), "an early end leaves no station falsely 'not registered'");
+assert.ok(workspace.includes("const [skipReason, setSkipReason]") && workspace.includes("reason: skipReason"), "omission reason draft is separate from the response description");
+assert.ok(workspace.includes('setNote(""); setOutcome(""); apply({ type: "show" });'), "opening a station starts with an empty description draft");
+assert.ok(workspace.includes('currentObservation?.outcome === "NA" ? "não aplicada" : "concluída"'), "an omitted station is not announced as concluída");
