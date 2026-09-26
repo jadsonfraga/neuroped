@@ -18,6 +18,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
+import { awaitsPsychometricValidation } from "./lib/catalog-validation.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
@@ -38,7 +39,7 @@ const current = {
   ).length,
   catalogRunnablePendingProvenance: allScales.filter((s) => !hasFonte(s)).length,
   catalogRunnablePendingPsychometricValidation: allScales.filter(
-    (s) => s.pendente_validacao_clinica === true,
+    awaitsPsychometricValidation,
   ).length,
   catalogDocumentedInstruments: allScalesComFichas.length,
   catalogDocumentedWithFonte: allScalesComFichas.filter(hasFonte).length,

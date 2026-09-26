@@ -209,7 +209,7 @@ const membersApi = readFileSync(
   "utf8",
 );
 assert.match(membersApi, /LAST_OWNER_PROTECTED/);
-assert.match(membersApi, /membershipCanManage/);
+assert.match(membersApi, /membershipHas\(membership, "team\.manage"\)/);
 assert.match(membersApi, /Somente owner pode conceder papel owner/);
 assert.match(
   membersApi,

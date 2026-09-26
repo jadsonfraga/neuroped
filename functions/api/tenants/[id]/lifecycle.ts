@@ -1,4 +1,5 @@
 import { getContextUser } from "../../auth/_authorization";
+import { roleHasPermission } from "../../../../shared/permissions";
 import {
   getClinicMembership,
   tenantError,
@@ -166,7 +167,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const clinicId = clinicIdFrom(context.params as Record<string, string | string[]>);
   if (!clinicId) return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !["owner", "clinic_admin"].includes(membership.role)) {
+  if (!membership || !roleHasPermission(membership.role, "organization.lifecycle.read")) {
     return tenantError("Acesso ao ciclo de vida negado.", "TENANT_FORBIDDEN", 403);
   }
 
@@ -191,7 +192,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const clinicId = clinicIdFrom(context.params as Record<string, string | string[]>);
   if (!clinicId) return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || membership.role !== "owner") {
+  if (!membership || !roleHasPermission(membership.role, "organization.lifecycle.manage")) {
     return tenantError("Somente o titular da clínica pode alterar o encerramento.", "TENANT_OWNER_REQUIRED", 403);
   }
 

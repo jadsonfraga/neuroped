@@ -1,111 +1,141 @@
-/**
- * GET /api/tenants/:id/audit — lista a própria trilha de auditoria SaaS
- * (saas_audit_log) da clínica.
- *
- * AUTHZ-P1-10 (ciclo 4, 2026-09-26 —
- * docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): nenhuma rota expunha a
- * trilha de auditoria SaaS para owner/clinic_admin — só o admin global lia
- * `audit_logs` (legado, sem tenant), e `metrics.ts` só expõe contagens
- * agregadas, nunca os eventos em si. Uma clínica não tinha como responder
- * "quem fez o quê" sobre a própria operação.
- *
- * Guard idêntico ao já usado em metrics.ts/export.ts: membership ativa com
- * papel de gestor (owner/clinic_admin) numa clínica ativa — mesma consulta,
- * mesmo 404 genérico ("Recurso indisponível") para clínica inexistente,
- * usuário sem membership, papel insuficiente ou clínica suspensa/encerrada,
- * sem distinguir qual caso é (anti-enumeração).
- */
 import { getContextUser } from "../../auth/_authorization";
-import { tenantError, tenantJson } from "../../tenant/_core";
+import { nextAuditIsoDay, parseAuditLogQuery } from "../../audit-log";
+import {
+  getClinicMembership,
+  membershipHas,
+  tenantError,
+  tenantJson,
+  type TenantEnv,
+} from "../../tenant/_core";
 
-interface Env {
-  DB?: D1Database;
-}
+/**
+ * GET /api/tenants/:id/audit — trilha de auditoria DA CLÍNICA (`saas_audit_log`
+ * filtrada por `clinic_id`), legível por quem detém `audit.read`.
+ *
+ * Diferença para `GET /api/audit-log`: aquela é a trilha de plataforma
+ * (`audit_logs`), restrita ao admin global. Esta é a visão do tenant sobre
+ * si mesmo: quem convidou, quem alterou papel, quem criou convite remoto —
+ * metadados apenas. O predicado `clinic_id = ?` está no SQL final (contagem
+ * e página), não só na autorização; linhas sem clínica (`clinic_id IS NULL`)
+ * nunca aparecem, e clínica alheia ou inexistente responde o mesmo 404.
+ *
+ * Parâmetros (mesmo parser da trilha de plataforma):
+ *  ?page=1&limit=50&resource=<target_type>&action=<trecho>&from=AAAA-MM-DD&to=AAAA-MM-DD
+ */
 
 interface AuditRow {
   id: string;
-  actor_user_id: string;
-  actor_name: string | null;
   action: string;
   target_type: string;
   target_id: string | null;
+  actor_user_id: string;
+  actor_name: string | null;
   metadata_json: string | null;
   created_at: string;
 }
 
-function positiveInteger(value: string | null, fallback: number, maximum: number): number {
-  if (value === null || !/^\d+$/.test(value)) return fallback;
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < 1) return fallback;
-  return Math.min(parsed, maximum);
+export interface TenantAuditEntry {
+  id: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  actorUserId: string;
+  actorName: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
 }
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+export function parseAuditMetadata(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const user = getContextUser(context);
   if (!user) return tenantError("Não autenticado.", "UNAUTHENTICATED", 401);
-
-  const id = context.params.id;
-  if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(id)) {
+  const clinicId = context.params.id;
+  if (typeof clinicId !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(clinicId)) {
     return tenantError("Recurso indisponível.", "NOT_FOUND", 404);
   }
-  if (!context.env.DB) {
-    return tenantError("Auditoria indisponível sem banco persistente.", "DB_REQUIRED", 503);
-  }
-
-  const url = new URL(context.request.url);
-  const page = positiveInteger(url.searchParams.get("page"), 1, 1_000_000);
-  const limit = positiveInteger(url.searchParams.get("limit"), 50, 100);
+  const db = context.env.DB;
+  if (!db) return tenantError("Auditoria indisponível sem banco persistente.", "DB_REQUIRED", 503);
 
   try {
-    const authorized = await context.env.DB.prepare(
-      `SELECT 1 FROM clinic_memberships m
-         JOIN clinics c ON c.id = m.clinic_id
-        WHERE m.clinic_id = ? AND m.user_id = ? AND m.active = 1
-          AND m.role IN ('owner', 'clinic_admin') AND c.status = 'active'
-        LIMIT 1`,
-    )
-      .bind(id, user.id)
-      .first();
-    if (!authorized) return tenantError("Recurso indisponível.", "NOT_FOUND", 404);
+    const membership = await getClinicMembership(db, clinicId, user);
+    if (!membership || !membershipHas(membership, "audit.read")) {
+      return tenantError("Recurso indisponível.", "NOT_FOUND", 404);
+    }
+    const query = parseAuditLogQuery(new URL(context.request.url));
+    if (!query.ok) return tenantError(query.message, "VALIDATION_ERROR", 400);
 
-    const countRow = await context.env.DB.prepare(
-      `SELECT COUNT(*) AS total FROM saas_audit_log WHERE clinic_id = ?`,
-    )
-      .bind(id)
+    let where = " WHERE a.clinic_id = ?";
+    const binds: unknown[] = [clinicId];
+    if (query.resource) {
+      where += " AND a.target_type = ?";
+      binds.push(query.resource);
+    }
+    if (query.action) {
+      where += " AND a.action LIKE ? ESCAPE '\\'";
+      binds.push(`%${escapeLike(query.action)}%`);
+    }
+    if (query.from) {
+      where += " AND a.created_at >= ?";
+      binds.push(query.from);
+    }
+    if (query.to) {
+      const toExclusive = nextAuditIsoDay(query.to);
+      if (!toExclusive) return tenantError("Data final inválida.", "VALIDATION_ERROR", 400);
+      where += " AND a.created_at < ?";
+      binds.push(toExclusive);
+    }
+
+    const count = await db
+      .prepare(`SELECT COUNT(*) AS total FROM saas_audit_log a${where}`)
+      .bind(...binds)
       .first<{ total: number }>();
-
-    const rows = await context.env.DB.prepare(
-      `SELECT a.id, a.actor_user_id, u.name AS actor_name, a.action, a.target_type,
-              a.target_id, a.metadata_json, a.created_at
-         FROM saas_audit_log a
-         LEFT JOIN users u ON u.id = a.actor_user_id
-        WHERE a.clinic_id = ?
-        ORDER BY a.created_at DESC
-        LIMIT ? OFFSET ?`,
-    )
-      .bind(id, limit, (page - 1) * limit)
+    const rows = await db
+      .prepare(
+        `SELECT a.id, a.action, a.target_type, a.target_id, a.actor_user_id,
+                u.name AS actor_name, a.metadata_json, a.created_at
+           FROM saas_audit_log a
+           LEFT JOIN users u ON u.id = a.actor_user_id${where}
+          ORDER BY a.created_at DESC, a.id DESC
+          LIMIT ? OFFSET ?`,
+      )
+      .bind(...binds, query.limit, (query.page - 1) * query.limit)
       .all<AuditRow>();
 
-    const data = (rows.results ?? []).map((row) => ({
+    const data: TenantAuditEntry[] = (rows.results ?? []).map((row) => ({
       id: row.id,
-      actorUserId: row.actor_user_id,
-      actorName: row.actor_name ?? "Usuário",
       action: row.action,
       targetType: row.target_type,
       targetId: row.target_id,
-      metadata: (() => {
-        try {
-          return row.metadata_json ? JSON.parse(row.metadata_json) : null;
-        } catch {
-          return null;
-        }
-      })(),
+      actorUserId: row.actor_user_id,
+      actorName: row.actor_name ?? "Usuário",
+      metadata: parseAuditMetadata(row.metadata_json),
       createdAt: row.created_at,
     }));
 
-    return tenantJson({ data, total: countRow?.total ?? 0, page, limit });
+    return tenantJson({
+      clinicId,
+      data,
+      total: count?.total ?? 0,
+      page: query.page,
+      limit: query.limit,
+    });
   } catch (error) {
-    console.error("[tenants/:id/audit.GET]", error);
-    return tenantError("Não foi possível carregar a auditoria agora.", "AUDIT_LOAD_FAILED", 500);
+    console.error("[tenants/:id/audit.GET] DB error", error);
+    return tenantError("Não foi possível ler a auditoria da clínica.", "DB_ERROR", 500);
   }
 };

@@ -15,6 +15,7 @@ import {
   verifyRemoteIntakeSecret,
 } from "./intake/_shared";
 import { tenantError, tenantJson, type TenantEnv } from "./tenant/_core";
+import { isClinicFeatureEnabled } from "./tenant/_features";
 import {
   currentClinicalEncryptionVersion,
   encryptClinicalJson,
@@ -107,6 +108,9 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   }
   const stateFailure = invitationStateFailure(resolved.row);
   if (stateFailure) return stateFailure;
+  if (!(await isClinicFeatureEnabled(db, resolved.row.clinic_id, "remote_intake"))) {
+    return tenantError("Pré-consulta remota desativada nesta clínica.", "FEATURE_DISABLED", 410);
+  }
 
   const template = getRemoteIntakeTemplate(resolved.row.form_kind);
   return tenantJson({
@@ -138,6 +142,9 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
   const stateFailure = invitationStateFailure(resolved.row);
   if (stateFailure) return stateFailure;
+  if (!(await isClinicFeatureEnabled(db, resolved.row.clinic_id, "remote_intake"))) {
+    return tenantError("Pré-consulta remota desativada nesta clínica.", "FEATURE_DISABLED", 410);
+  }
 
   const body = await readJson(context.request);
   if (!body) return tenantError("Corpo JSON inválido.", "INVALID_JSON", 400);

@@ -112,7 +112,7 @@ async function chamar(clinicId: string, userId: string, query = "") {
   const body = await response.json() as { data: Array<{ action: string }>; total: number };
   assert.equal(body.total, 2, "clínica A tem exatamente 2 eventos");
   assert.equal(body.data.length, 2);
-  assert.ok(body.data.every((e) => e.action !== "member_role_changed" || true));
+  assert.deepEqual(body.data.map((e) => e.action).sort(), ["invitation_created", "member_role_changed"]);
   assert.ok(
     !JSON.stringify(body).includes("clinica-b-owner"),
     "nenhum ator de outra clínica pode vazar",

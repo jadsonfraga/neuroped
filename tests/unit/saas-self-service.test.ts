@@ -162,6 +162,15 @@ function jsonRequest(url: string, method: string, body?: unknown): Request {
 
 const STRONG_PASSWORD = "Senha-Fort3-Unica!";
 
+// No external network in this unit suite. Keep the real mail adapter and
+// capture its request locally; real provider delivery has a separate gate.
+const originalFetch = globalThis.fetch;
+const capturedMail: Request[] = [];
+globalThis.fetch = async (input, init) => {
+  capturedMail.push(new Request(input, init));
+  return new Response(JSON.stringify({ id: "synthetic-email" }), { status: 202 });
+};
+
 // ── 1. Signup ───────────────────────────────────────────────────────────────
 {
   const raw = freshDb();
@@ -278,6 +287,14 @@ const STRONG_PASSWORD = "Senha-Fort3-Unica!";
     1,
     "tentativas rejeitadas não criam contas",
   );
+  assert.equal(capturedMail.length, 1, "only successful signup attempts mail delivery");
+  const mail = capturedMail[0];
+  assert.equal(mail.url, "https://api.resend.com/emails");
+  assert.equal(mail.method, "POST");
+  assert.equal(mail.headers.get("Authorization"), "Bearer re_synthetic_key");
+  const payload = await mail.json() as { to: string[]; text: string };
+  assert.deepEqual(payload.to, ["nova@example.com"]);
+  assert.match(payload.text, /https:\/\/app\.neuroped\.example/);
 }
 
 // ── 2. Tenant settings: gestão, RBAC e anti-IDOR ────────────────────────────
@@ -513,6 +530,7 @@ const STRONG_PASSWORD = "Senha-Fort3-Unica!";
   );
 }
 
+globalThis.fetch = originalFetch;
 console.log(
   "✓ self-service SaaS: signup fechado-por-padrão, settings por tenant com RBAC/anti-IDOR, perfil próprio e aceite de convite alcançável",
 );

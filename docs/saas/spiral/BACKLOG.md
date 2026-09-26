@@ -334,7 +334,15 @@ autoatendimento (incluindo `paymentStatus`). Visto falhando pelo motivo
 certo contra o código anterior via `git stash`. Evidência em
 EVIDENCE.md#S22.
 
-## S9 · P0 · bloqueado externamente (censo de produção necessário)
+## S9 · P0 · aberto — censo observado, associação legítima pendente
+Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo
+de produção com sucesso após a PR #994. Três pacientes não têm owner; um
+tem owner sem clínica ativa. Nenhum vínculo de tenant é inequívoco.
+Estabelecer a destinação autorizada e comprovar a associação do cliente zero
+antes do backfill; não atribuir registros ao admin por inferência.
+Evidência em `docs/audits/LEGACY_TENANT_CENSUS_OBSERVED_2026-09-26.md`.
+
+Contexto e bloqueio original, preservados para rastreabilidade:
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/
 memória de QUALQUER usuário/clínica. Remover o bypass sem antes fazer
