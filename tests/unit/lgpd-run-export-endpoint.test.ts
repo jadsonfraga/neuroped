@@ -29,6 +29,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
 import { onRequestPost as runExport } from "../../functions/api/live/governance/run-export";
 import { encryptClinicalJson } from "../../functions/api/tenant/_crypto";
+import { countExportUncoveredRows } from "../../functions/api/tenant/_exportPayload";
 
 class D1StatementMock {
   constructor(
@@ -498,6 +499,50 @@ function ledger(requestId: string) {
     /ticket 7734/,
     "a metadata precisa carregar a razão declarada",
   );
+}
+
+// Uma lacuna conhecida não pode virar ledger completed nem artefato oficial.
+{
+  sqlite.prepare(`INSERT INTO live_documents
+    (id, clinic_id, patient_id, author_user_id, document_type, origin)
+    VALUES ('doc-synthetic-uncovered', ?, ?, ?, 'report', 'system')`)
+    .run(RED, RED_PATIENT, RED_OWNER.id);
+  criarRequest("req-exp-incomplete", RED, "clinic", null, "approved", RED_OWNER.id);
+  const beforeObjects = bucket.objects.size;
+  const response = await runExport(contexto(RED_OWNER, { clinicId: RED, requestId: "req-exp-incomplete" }));
+  assert.equal(response.status, 409);
+  assert.equal(((await response.json()) as { code: string }).code, "TENANT_EXPORT_INCOMPLETE");
+  assert.equal(ledger("req-exp-incomplete")?.status, "failed");
+  assert.equal(ledger("req-exp-incomplete")?.artifact_key, null);
+  assert.equal(bucket.objects.size, beforeObjects, "sem escrita no bucket para export incompleto");
+  sqlite.prepare("DELETE FROM live_documents WHERE id = 'doc-synthetic-uncovered'").run();
+}
+
+// Só ausência real de tabela é compatível com schema antigo. Falha de consulta
+// não significa ausência de dados e precisa chegar ao ledger como falha.
+{
+  const bare = new Database(":memory:");
+  const absent = await countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED);
+  assert.ok(Object.values(absent).every((count) => count === 0));
+  bare.exec("CREATE TABLE live_documents (id TEXT PRIMARY KEY)");
+  await assert.rejects(() => countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED), /no such column/);
+  bare.close();
+
+  const unavailableDb = {
+    prepare(sql: string) {
+      if (sql.includes("SELECT COUNT(*) AS n FROM live_documents")) throw new Error("D1_ERROR: synthetic temporary failure");
+      return db.prepare(sql);
+    },
+    batch: db.batch.bind(db),
+  } as D1Database;
+  criarRequest("req-exp-coverage-failure", RED, "clinic", null, "approved", RED_OWNER.id);
+  const beforeObjects = bucket.objects.size;
+  const response = await runExport(contexto(RED_OWNER, { clinicId: RED, requestId: "req-exp-coverage-failure" }, { ...env, DB: unavailableDb }));
+  assert.equal(response.status, 503);
+  assert.equal(((await response.json()) as { code: string }).code, "TENANT_EXPORT_COVERAGE_FAILED");
+  assert.equal(ledger("req-exp-coverage-failure")?.status, "failed");
+  assert.equal(ledger("req-exp-coverage-failure")?.artifact_key, null);
+  assert.equal(bucket.objects.size, beforeObjects);
 }
 
 sqlite.close();

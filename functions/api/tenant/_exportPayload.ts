@@ -50,6 +50,20 @@ export const EXPORT_UNCOVERED_CLINIC_TABLES: ReadonlyArray<string> = [
   "live_scale_responses",
 ];
 
+/** Só a ausência da tabela consultada representa schema anterior à migração. */
+export function isMissingExportTable(error: unknown, table: string): boolean {
+  if (!/^[a-z_]+$/.test(table)) return false;
+  const message = error instanceof Error ? error.message : String(error);
+  return new RegExp(`\\bno such table: ${table}\\b`, "i").test(message);
+}
+
+export function validExportRowCount(row: { n: number } | null): number {
+  if (!row || !Number.isSafeInteger(row.n) || row.n < 0) {
+    throw new Error("EXPORT_COUNT_INVALID");
+  }
+  return row.n;
+}
+
 /**
  * Conta, por tabela, quantas linhas da clínica ficam FORA do payload
  * exportado hoje. Tabela ausente neste banco conta como zero — o objetivo é
@@ -66,9 +80,10 @@ export async function countExportUncoveredRows(
           .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
           .bind(clinicId)
           .first<{ n: number }>();
-        return [table, Number(row?.n ?? 0)] as const;
-      } catch {
-        return [table, 0] as const;
+        return [table, validExportRowCount(row)] as const;
+      } catch (error) {
+        if (isMissingExportTable(error, table)) return [table, 0] as const;
+        throw error;
       }
     }),
   );
@@ -81,7 +96,8 @@ export type TenantExportFailureCode =
   | "TENANT_EXPORT_TOO_LARGE"
   | "CLINICAL_CRYPTO_NOT_CONFIGURED"
   | "TENANT_NOT_FOUND"
-  | "TENANT_EXPORT_DECRYPT_FAILED";
+  | "TENANT_EXPORT_DECRYPT_FAILED"
+  | "TENANT_EXPORT_COVERAGE_FAILED";
 
 export type TenantExportPayloadResult =
   | {
@@ -386,7 +402,17 @@ export async function collectTenantExportPayload(
     legalHold: lifecycle.legal_hold === 1,
   });
 
-  const uncoveredCounts = await countExportUncoveredRows(db, clinicId);
+  let uncoveredCounts: Record<string, number>;
+  try {
+    uncoveredCounts = await countExportUncoveredRows(db, clinicId);
+  } catch {
+    return {
+      ok: false,
+      code: "TENANT_EXPORT_COVERAGE_FAILED",
+      message: "Não foi possível verificar a cobertura da exportação; nenhum arquivo foi entregue.",
+      status: 503,
+    };
+  }
   const complete = Object.values(uncoveredCounts).every((count) => count === 0);
 
   return {
