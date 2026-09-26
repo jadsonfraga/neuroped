@@ -311,7 +311,7 @@ export default function PreConsultaObs10Page() {
   if (easy) {
     // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
     // tela. Sem câmera, kit, checklist ou tarefa com objeto: a criança toca,
-    // o aplicativo julga certo/errado e passa. Nada entra no dossiê guiado.
+    // o aplicativo registra certo/errado e só libera o item seguinte após Próximo. Nada entra no dossiê guiado.
     const easyYears = /^\d+$/.test(years) ? Number(years) : NaN;
     const easyBand = objectiveBandForYears(easyYears);
     const easySteps: EasyStep[] = easyBand ? buildObjectiveSteps("obs10", easyYears, "obs10-easy") : [];
