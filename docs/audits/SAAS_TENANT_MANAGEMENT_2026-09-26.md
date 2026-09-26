@@ -83,3 +83,17 @@ habilitado, PATCH, confirmação e valor preservado após reload em 390/1440 px
 para reader/operator com ownership sintético. Esse estado persiste só na memória
 do servidor de teste; a prova D1 continua sendo o teste de handlers e SQL reais.
 Não usar a primeira captura como prova de edição.
+
+## Contrato de troca obrigatória de senha
+
+O gate de CI ainda exigia a expressão anterior `passwordChangeFailure ?? roleFailure`.
+O middleware atual retorna o erro de senha antes de consultar permissões. O contrato
+foi atualizado para exigir esse retorno antecipado e o fallback de RBAC preservado.
+Uma prova real adicional renomeia a tabela de memberships após marcar a conta como
+pendente de troca: cadastro, membros, checkout e API clínica continuam respondendo
+PASSWORD_CHANGE_REQUIRED (403), sem depender da autorização ou realizar mutações.
+A assertiva antiga falhou antes da atualização; os 12 casos do handler passam.
+
+A validação D1 passa a usar grupo de concorrência por ref: PRs diferentes não
+cancelam a única vaga pendente umas das outras. Main mantém a serialização e o
+job de migração continua inacessível a PRs. Achado observado no run 36269468745.

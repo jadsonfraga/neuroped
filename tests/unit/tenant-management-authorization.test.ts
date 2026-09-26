@@ -253,3 +253,20 @@ test("settings route admits authenticated account roles while clinical routes st
     assert.equal(decideRouteAccess({ ...input, path: "/prontuario" }), "forbidden");
   }
 });
+
+
+test("mandatory password rotation blocks before any tenant permission lookup", async () => {
+  const f = await fixture();
+  try {
+    const before = f.snapshot(ALFA);
+    f.raw.prepare("UPDATE users SET must_change_password = 1 WHERE id = 'reader-owner'").run();
+    // A premature authorization lookup would now fail with TENANT_AUTH_UNAVAILABLE.
+    f.raw.exec("ALTER TABLE clinic_memberships RENAME TO synthetic_unavailable_memberships");
+    for (const [path, method] of [[`/api/tenants/${ALFA}`, "PATCH"], [`/api/tenants/${ALFA}/members`, "POST"], ["/api/billing/checkout", "POST"], ["/api/patients", "POST"]]) {
+      const response = await f.call("reader-owner", path, method, { clinicId: ALFA });
+      assert.equal(response.status, 403);
+      assert.equal((await response.json() as { code: string }).code, "PASSWORD_CHANGE_REQUIRED", path);
+    }
+    assert.deepEqual(f.snapshot(ALFA), before, "no clinical, settings or audit mutation before rotation");
+  } finally { f.raw.close(); }
+});
