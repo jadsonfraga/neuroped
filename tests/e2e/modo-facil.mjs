@@ -18,7 +18,8 @@ await context.addInitScript((storage) => { for (const [key, value] of Object.ent
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
-page.on("dialog", (dialog) => dialog.accept());
+const acceptDialog = (dialog) => dialog.accept();
+page.on("dialog", acceptDialog);
 const button = (name) => page.getByRole("button", { name, exact: true });
 // Cadência humana: o motor ignora um segundo toque em menos de 300 ms (toque duplo,
 // do adulto ou da criança) e o primeiro toque na tela da criança só conta 300 ms
@@ -296,6 +297,26 @@ try {
   const report8 = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(report8, /Escreva a palavra ditada: ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");
 
+  // Uma troca de idade é atômica: cancelar preserva idade e registro, aceitar confirma só uma vez.
+  page.off("dialog", acceptDialog);
+  let dialogs = 0;
+  const rejectAgeChange = async (dialog) => { dialogs += 1; await dialog.dismiss(); };
+  page.on("dialog", rejectAgeChange);
+  await page.getByLabel("Idade da criança (anos)").fill("9");
+  assert.equal(dialogs, 1);
+  assert.equal(await page.getByLabel("Idade da criança (anos)").inputValue(), "8");
+  assert.equal(await page.getByLabel("Resultado do jogo").inputValue(), report8);
+  page.off("dialog", rejectAgeChange);
+  dialogs = 0;
+  const acceptAgeChange = async (dialog) => { dialogs += 1; await dialog.accept(); };
+  page.on("dialog", acceptAgeChange);
+  await page.getByLabel("Idade da criança (anos)").fill("9");
+  assert.equal(dialogs, 1, "não pergunta duas vezes depois de já alterar a idade");
+  assert.equal(await page.getByLabel("Idade da criança (anos)").inputValue(), "9");
+  assert.equal(await page.getByTestId("cognitive-easy-results").count(), 0);
+  assert.equal(await button("Começar o jogo").isEnabled(), true);
+  page.off("dialog", acceptAgeChange);
+  page.on("dialog", acceptDialog);
   assert.deepEqual(errors, [], "sem erros de página");
   console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda ${sonda.steps} passos, OBS-10 ${obs.steps} passos, Reconhecimento com toque automático, Cognitivo 16 passos com toque e montagem automáticos).`);
 } finally {

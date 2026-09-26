@@ -755,12 +755,13 @@ export default function TestesCognitivosFaixaEtariaPage() {
   );
 
   function resetAdventure() {
-    if (easyProgress > 0 && !window.confirm(EASY_EXIT_PROMPT)) return;
+    if (easyProgress > 0 && !window.confirm(EASY_EXIT_PROMPT)) return false;
     setEasyProgress(0);
     setConfirmed(false);
     setResults({});
     setStars(0);
     setScreen("hero");
+    return true;
   }
 
   const easySteps = easy && confirmed && validAge ? easyStepsFor(age) : [];
@@ -795,10 +796,9 @@ export default function TestesCognitivosFaixaEtariaPage() {
               inputMode="numeric"
               value={ageStr}
               onChange={(e) => {
-                if (easyProgress > 0 && !window.confirm(EASY_EXIT_PROMPT)) return;
+                if (!resetAdventure()) return;
                 // Só os dígitos iniciais: "1.5", "1,5" ou "-3" não viram 15 nem 3.
                 setAgeStr(e.target.value.match(/^\d{0,2}/)?.[0] ?? "");
-                resetAdventure();
               }}
               placeholder="ex.: 7"
               className="h-9 w-24"

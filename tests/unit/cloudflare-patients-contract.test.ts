@@ -289,7 +289,10 @@ const forbiddenDelete = await deletePatient(
     { id: "patient-1" },
   ),
 );
-assert.equal(forbiddenDelete.status, 403);
+// AUTHZ-P2-11/LEG-10 (ciclo 4, 2026-09-26): paciente de outro owner responde
+// 404, igual a paciente inexistente — 403 revelaria que o id pertence a
+// alguém, só não a quem perguntou.
+assert.equal(forbiddenDelete.status, 404);
 assert.equal(forbiddenDeleteDb.batchStatements.length, 0);
 
 const deleteDb = new FakeDatabase({

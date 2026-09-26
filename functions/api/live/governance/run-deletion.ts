@@ -59,6 +59,16 @@ function cleanId(value: unknown): string {
   return OPAQUE_ID.test(text) ? text : "";
 }
 
+// AUTHZ-P1-08/LTB-19 (ciclo 4, 2026-09-26 —
+// docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): "Admin global não é
+// fallback de rota clínica comum; ações de plataforma exigem escopo,
+// razão e auditoria" (AGENTS.md). Uma razão declarada, com tamanho mínimo
+// para não ser um caractere qualquer.
+function cleanReason(value: unknown): string {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text.length >= 10 && text.length <= 500 ? text : "";
+}
+
 export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const db = context.env.DB;
   if (!db)
@@ -105,6 +115,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   // Autorização (ver nota no topo): admin de plataforma sempre; gestor de
   // clínica ativa também. Um leitor/profissional comum nunca.
   const platformAdmin = isAdmin(user);
+  let adminReason = "";
   if (!platformAdmin) {
     const membership = await getClinicMembership(db, clinicId, user);
     if (!membership || !membershipCanManage(membership)) {
@@ -121,6 +132,17 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       "clinical",
     );
     if (billingFailure) return billingFailure;
+  } else {
+    // AUTHZ-P1-08/LTB-19: o bypass de admin de plataforma nunca é implícito —
+    // exige razão declarada antes de sequer olhar o ledger da requisição.
+    adminReason = cleanReason(body.reason);
+    if (!adminReason) {
+      return tenantError(
+        "Ação de administrador de plataforma exige razão declarada (reason).",
+        "REASON_REQUIRED",
+        400,
+      );
+    }
   }
 
   // A requisição precisa ser DESTA clínica: o requestId sozinho nunca decide o
@@ -162,6 +184,31 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
       "PLATFORM_ADMIN_REQUIRED",
       403,
     );
+  }
+
+  if (platformAdmin) {
+    // AUTHZ-P1-08/LTB-19: trilha ANTES da execução física, não depois — se a
+    // gravação falhar, a eliminação não é sequer reivindicada.
+    try {
+      await prepareSaasAudit(db, {
+        clinicId,
+        actorUserId: user.id,
+        action: "platform_admin_run_deletion_initiated",
+        targetType: "deletion_request",
+        targetId: requestId,
+        metadata: { reason: adminReason, scope: request.scope },
+      }).run();
+    } catch (error) {
+      console.error(
+        "[governance/run-deletion] auditoria prévia de admin de plataforma falhou",
+        error,
+      );
+      return tenantError(
+        "Não foi possível registrar a auditoria prévia da ação administrativa.",
+        "AUDIT_WRITE_FAILED",
+        500,
+      );
+    }
   }
 
   const workerRunId = crypto.randomUUID();

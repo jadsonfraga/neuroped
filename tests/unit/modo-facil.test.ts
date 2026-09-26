@@ -169,7 +169,7 @@ test("Testes Cognitivos, modo guiado: a resposta esperada de itens de fala fica 
 
 test("Testes Cognitivos: Modo Fácil informa progresso e guarda a saída, o reinício e a troca de idade", () => {
   assert.match(cognitive, /useSondaExitGuard\(easyProgress > 0, !isAuthenticated, EASY_EXIT_PROMPT\);/, "guarda reconhece sessão real, como a Sonda (#980), além do prompt próprio");
-  assert.match(cognitive, /if \(easyProgress > 0 && !window\.confirm\(EASY_EXIT_PROMPT\)\) return;\s*setEasyProgress\(0\);\s*setConfirmed\(false\);/, "Reiniciar jogo confirma antes de apagar");
-  assert.match(cognitive, /onChange=\{\(e\) => \{\s*if \(easyProgress > 0 && !window\.confirm\(EASY_EXIT_PROMPT\)\) return;/, "trocar a idade confirma antes de apagar");
+  assert.match(cognitive, /if \(easyProgress > 0 && !window\.confirm\(EASY_EXIT_PROMPT\)\) return false;\s*setEasyProgress\(0\);\s*setConfirmed\(false\);/, "Reiniciar jogo confirma antes de apagar");
+  assert.match(cognitive, /onChange=\{\(e\) => \{\s*if \(!resetAdventure\(\)\) return;/, "trocar a idade confirma antes de apagar");
   assert.match(cognitive, /steps=\{easySteps\}\s*onProgress=\{setEasyProgress\}/);
 });
