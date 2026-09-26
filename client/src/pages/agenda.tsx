@@ -107,6 +107,7 @@ function auditActionLabel(value: string): string {
     review_moderate: "avaliação moderada",
     staff_link: "recepção vinculada",
     staff_active: "vínculo da recepção alterado",
+    appointment_link_patient: "consulta vinculada ao prontuário",
   };
   return labels[value] ?? value;
 }
@@ -117,21 +118,20 @@ export default function AgendaPage() {
   const data = dashboard.data;
   const [patientSearch, setPatientSearch] = useState("");
   const clinicId = data?.access.clinicId ?? "";
-  const patientsQuery = useQuery<{ data: Array<{ id: string; profile?: { name?: string; birthDate?: string | null } }> }>({
-    queryKey: [`/api/live/patients?clinicId=${encodeURIComponent(clinicId)}`],
+  const patientSearchParam = encodeURIComponent(patientSearch.trim());
+  const patientsQuery = useQuery<{ data: Array<{ id: string; profile?: { name?: string; birthDate?: string | null } }>; total?: number }>({
+    queryKey: [`/api/live/patients?clinicId=${encodeURIComponent(clinicId)}&q=${patientSearchParam}`],
     enabled: Boolean(data?.access.canConfigure && clinicId),
     staleTime: 30_000,
   });
-  const patientOptions = useMemo(() => {
-    const normalized = patientSearch.trim().toLocaleLowerCase("pt-BR");
-    return (patientsQuery.data?.data ?? [])
-      .map((patient) => ({
-        id: patient.id,
-        name: patient.profile?.name?.trim() || "Paciente",
-        birthDate: patient.profile?.birthDate ?? null,
-      }))
-      .filter((patient) => !normalized || patient.name.toLocaleLowerCase("pt-BR").includes(normalized));
-  }, [patientSearch, patientsQuery.data?.data]);
+  const patientOptions = useMemo(
+    () => (patientsQuery.data?.data ?? []).map((patient) => ({
+      id: patient.id,
+      name: patient.profile?.name?.trim() || "Paciente",
+      birthDate: patient.profile?.birthDate ?? null,
+    })),
+    [patientsQuery.data?.data],
+  );
   const [busy, setBusy] = useState(false);
   const [staffEmail, setStaffEmail] = useState("");
   const [agendaDate, setAgendaDate] = useState(localDateInput);
@@ -296,7 +296,7 @@ export default function AgendaPage() {
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <Field label="Serviço"><select className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.serviceId} onChange={(e) => setManual((p) => ({ ...p, serviceId: e.target.value }))}><option value="">Selecione</option>{data.services.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
               <Field label="Data e horário"><Input type="datetime-local" value={manual.startsAtLocal} onChange={(e) => setManual((p) => ({ ...p, startsAtLocal: e.target.value }))} /></Field>
-              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar por nome ou identificador" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientOptions.length} paciente(s) LIVE encontrado(s) nesta clínica.</p></div></Field>}
+              {canConfigure && <Field label="Vincular paciente ao prontuário"><div className="space-y-2"><Input value={patientSearch} onChange={(e) => setPatientSearch(e.target.value)} placeholder="Buscar paciente por nome" aria-label="Buscar paciente para vínculo clínico" /><select aria-label="Selecionar paciente para vínculo clínico" className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" value={manual.patientId} onChange={(e) => { const patientId = e.target.value; const selected = patientOptions.find((item) => item.id === patientId); setManual((p) => ({ ...p, patientId, patientName: selected?.name ?? p.patientName })); }}><option value="">Sem vínculo clínico</option>{patientsQuery.isFetching && <option disabled>Buscando pacientes…</option>}{patientOptions.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><p className="text-[11px] text-muted-foreground">{patientOptions.length} paciente(s) LIVE encontrado(s) nesta clínica.</p></div></Field>}
               <Field label="Criança"><Input value={manual.patientName} onChange={(e) => setManual((p) => ({ ...p, patientName: e.target.value }))} placeholder="Nome" /></Field>
               <Field label="Responsável"><Input value={manual.guardianName} onChange={(e) => setManual((p) => ({ ...p, guardianName: e.target.value }))} /></Field>
               <Field label="Telefone"><Input value={manual.phone} onChange={(e) => setManual((p) => ({ ...p, phone: e.target.value }))} /></Field>
