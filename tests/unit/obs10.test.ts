@@ -61,7 +61,7 @@ check(decideRouteAccess({ ...base, isAuthenticated: false }) === "login", "anony
 check(isRouteSensitive(OBS10_ROUTE), "sensitive clinical route");
 check(featuredNavigation.some((entry) => entry.href === OBS10_ROUTE), "highlighted navigation");
 check(navigablePages.filter((entry) => entry.href === OBS10_ROUTE).length === 1, "one canonical destination");
-check(featuredNavigation[0].href === "/testes-diretos", "existing Sonda priority preserved");
+check(featuredNavigation[0].href === "/super-neuropad-game" && featuredNavigation[1].href === "/testes-diretos", "Super NeuroPad Game abre o destaque e a Sonda segue logo atrás");
 const app = readFileSync("client/src/App.tsx", "utf8");
 check(app.includes('path="/avaliacao-pre-consulta-faixa-etaria"'), "real App route");
 const page = readFileSync("client/src/pages/pre-consulta-obs10.tsx", "utf8");

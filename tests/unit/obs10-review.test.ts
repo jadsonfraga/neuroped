@@ -88,3 +88,11 @@ assert.ok(pending.ok, "partial records remain recoverable; import is not clinica
 assert.match(makeReport(base), /não autenticado/);
 assert.match(makeReport(base), /Não comprova recebimento/);
 console.log(`OBS-10 v1.2: ${assertions + 25} review/import checks; all 145 guided IDs roundtrip; no restored camera or inherited acceptance.`);
+// Nome de estação guiada tem uma fonte de verdade: uma cópia editada no arquivo volta ao título canônico.
+const renamed = parseRecordJSON(JSON.stringify({ ...base, observations: [{ ...original, id: `guided-${model.id}`, phase: model.phase, task: "Caminhar, virar e voltar (cópia editada)" }] }));
+assert.ok(renamed.ok); if (renamed.ok) assert.equal(renamed.record.observations[0].task, model.title);
+// Autorização de prono só existe nas fichas < 9 meses: fora delas o importador não a afirma.
+const proneOutside = parseRecordJSON(JSON.stringify({ ...base, context: { ...base.context, proneAllowed: true } }));
+assert.ok(proneOutside.ok); if (proneOutside.ok) assert.equal(proneOutside.record.context.proneAllowed, false);
+const proneInside = parseRecordJSON(JSON.stringify({ ...base, context: { ...base.context, chronologicalMonths: 4, bandId: "m03", proneAllowed: true }, observations: [{ ...original, id: `guided-${prone.id}`, phase: prone.phase }] }));
+assert.ok(proneInside.ok); if (proneInside.ok) assert.equal(proneInside.record.context.proneAllowed, true);

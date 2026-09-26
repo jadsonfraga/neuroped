@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { leavesSondaRoute } from "@/lib/sondaDezQuality";
 
 /** Only this memory-only workspace is guarded; the shared router and auth stay untouched. */
-export function useSondaExitGuard(dirty: boolean) {
+export function useSondaExitGuard(dirty: boolean, sessionInvalid = true) {
   useEffect(() => {
     if (!dirty) return;
     const heldUrl = window.location.href;
@@ -13,16 +13,17 @@ export function useSondaExitGuard(dirty: boolean) {
       if (leaving) return;
       event.preventDefault(); event.returnValue = "";
     };
+    const invalid = sessionInvalid;
     const click = (event: MouseEvent) => {
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !(event.target instanceof Element)) return;
       const anchor = event.target.closest("a[href]");
       if (!(anchor instanceof HTMLAnchorElement) || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) return;
-      if (!leavesSondaRoute(anchor.href, heldUrl)) return;
+      if (!leavesSondaRoute(anchor.href, heldUrl, invalid)) return;
       if (window.confirm(prompt)) { leaving = true; return; }
       event.preventDefault(); event.stopPropagation();
     };
     const change = (event: Event) => {
-      if (leaving || !leavesSondaRoute(window.location.href, heldUrl)) return;
+      if (leaving || !leavesSondaRoute(window.location.href, heldUrl, invalid)) return;
       if (window.confirm(prompt)) { leaving = true; return; }
       event.stopImmediatePropagation();
       window.history.replaceState(heldState, "", heldUrl);
@@ -37,5 +38,5 @@ export function useSondaExitGuard(dirty: boolean) {
       window.removeEventListener("popstate", change, true);
       window.removeEventListener("beforeunload", warn);
     };
-  }, [dirty]);
+  }, [dirty, sessionInvalid]);
 }
