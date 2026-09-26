@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   Activity,
@@ -8,10 +8,13 @@ import {
   BookOpen,
   Brain,
   ClipboardCheck,
+  Clock,
+  History,
   FileDown,
   Filter,
   GraduationCap,
   HeartPulse,
+  Lightbulb,
   Medal,
   MessageCircle,
   Moon,
@@ -32,7 +35,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FilterAgeInputs } from "@/components/FilterAgeInputs";
-import { resolveFilterAge, inferComplaintIds, expandComplaintSearch, filterComplaintOptions, type ExactFilterAge } from "@/lib/filterClinicalInput";
+import { resolveFilterAge, inferComplaintIds, filterComplaintOptions, parseFilterQueryIntent, type ExactFilterAge, type FilterQueryRespondent } from "@/lib/filterClinicalInput";
+import {
+  searchScaleCatalog,
+  suggestSearchCorrections,
+  describeSearchHit,
+  highlightSegments,
+  highlightTermsOf,
+  type ScaleSearchHit,
+} from "@/lib/scaleSearch";
+import { computeFilterFacetCounts, diagnoseEmptyResult, withinTimeBudget, TIME_BUCKETS } from "@/lib/filterDiagnostics";
+import { readFilterUrlState, writeFilterUrlState } from "@/lib/filterUrlState";
+import { buildAutocomplete, moveActiveIndex, type AutocompleteItem } from "@/lib/filterAutocomplete";
+import { clearFilterRecents, loadFilterRecents, recordFilterRecent, type FilterRecentItem } from "@/lib/filterRecents";
+import { loadFilterFavorites, toggleFilterFavorite } from "@/lib/filterFavorites";
+import { inferSignalIds } from "@/lib/filterSignalInference";
+import { formatScaleAgeRange } from "@/lib/scaleAgeRange";
+import { parseScaleMinutes } from "@/lib/scaleTime";
 import { classifyRecommendationAgeFit, formatRecommendationAgeRange } from "@/data/recommendationAgeFit";
 import { DirectTestsRecommender } from "@/components/DirectTestsRecommender";
 import { ParentTestsRecommender } from "@/components/ParentTestsRecommender";
@@ -60,6 +79,7 @@ import { getClinicalTiers } from "@/data/clinicalRanking";
 import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
+import { getValidFilterSignalIds } from "@/data/filterSignalState";
 import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
 import {
   filterScalesWithClinicalRescue,
@@ -258,20 +278,11 @@ function rowToScale(row: Row): ScaleEntry {
   } as ScaleEntry;
 }
 
-// Realce textual leve para a busca livre. NÃO decide pertinência clínica —
-// apenas reordena, dentro dos candidatos já validados pelo motor, os que casam
-// com o termo digitado. (A segurança/score clínico vem do advancedFilterLogic.)
-function searchBoost(scale: ScaleEntry, query: string) {
-  const tokens = norm(expandComplaintSearch(query, queixas)).split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return 0;
-  const text = norm(
-    `${scale.name} ${scale.fullName} ${scale.description} ${scale.queixas.join(" ")} ${scale.respondente.join(" ")} ${scale.fonte ?? ""}`,
-  );
-  let value = 0;
-  for (const token of tokens)
-    if (text.includes(token)) value += norm(scale.name).includes(token) ? 7 : 2;
-  return value;
-}
+// Busca livre v2 (lib/scaleSearch): siglas sem pontuação, numerais romanos,
+// tolerância a erro de digitação, sinônimos leigos/clínicos e explicação do
+// acerto. NÃO decide pertinência clínica — só reordena/filtra, dentro dos
+// candidatos já validados pelo motor, os que casam com o que foi digitado.
+type SearchHitMap = Map<string, ScaleSearchHit<ScaleEntry>>;
 
 // Primeira frase de uma descrição (corta em quebra de linha ou ponto).
 function firstSentence(text?: string): string {
@@ -354,33 +365,111 @@ function rankSafely(
   catalog: ScaleEntry[],
   ctx: FilterContext,
   query: string,
-): { matches: RefinedScaleMatch[]; searchUnmatched: boolean } {
+  timeBudget: number | null = null,
+): { matches: RefinedScaleMatch[]; searchUnmatched: boolean; searchKnown: boolean; searchHits: SearchHitMap } {
   const uniq = unique(catalog);
   let matches = filterScalesWithClinicalRescue(uniq, ctx);
   let searchUnmatched = false;
+  // O termo existe no catálogo, mas nenhum instrumento que casa passou nos
+  // filtros clínicos (ex.: "mchat" para uma criança de 5 anos).
+  let searchKnown = false;
+  const searchHits: SearchHitMap = new Map();
   if (query.trim()) {
     // Busca FILTRA de verdade: entre os candidatos seguros, mantém só os que casam
-    // com o termo digitado. Se nada casar (ex.: erro de digitação), não esvazia —
+    // com o termo digitado. Se nada casar (ex.: termo inexistente), não esvazia —
     // cai para o conjunto seguro completo, reordenado por relevância, e a UI
     // DIZ isso (auditoria semanal, P3: fallback silencioso parecia resultado
     // da busca).
-    const scored = matches.map((m) => ({ m, b: searchBoost(m.scale, query) }));
-    const anyMatch = scored.some((x) => x.b > 0);
+    const hits = searchScaleCatalog(matches.map((m) => m.scale), query);
+    for (const hit of hits) searchHits.set(hit.scale.id, hit);
+    const anyMatch = hits.length > 0;
     searchUnmatched = !anyMatch;
-    const kept = anyMatch ? scored.filter((x) => x.b > 0) : scored;
+    if (!anyMatch) searchKnown = searchScaleCatalog(uniq, query, { limit: 1 }).length > 0;
+    const kept = anyMatch ? matches.filter((m) => searchHits.has(m.scale.id)) : matches;
     matches = kept
+      .map((m) => ({ m, b: searchHits.get(m.scale.id)?.boost ?? 0 }))
       .sort((a, b) => b.m.relevanceScore + b.b - (a.m.relevanceScore + a.b))
       .map((x) => x.m);
   }
+  // Orçamento de tempo: subconjunto dos candidatos seguros (tempo ilegível
+  // permanece — fail-open visível; ver lib/filterDiagnostics.withinTimeBudget).
+  if (timeBudget) matches = matches.filter((m) => withinTimeBudget(m.scale, timeBudget));
   // Nunca dar vazio para uma queixa+idade real: se não há instrumento específico
   // seguro, oferece rastreio AMPLO apropriado à idade (escalas reais), rotulado.
   if (
     matches.length === 0 &&
     (ctx.queixas.length > 0 || ctx.ageBand != null || ctx.ageMonths != null)
   ) {
-    matches = getBroadbandFallback(uniq, ctx);
+    matches = getBroadbandFallback(uniq, ctx).filter((m) => withinTimeBudget(m.scale, timeBudget));
   }
-  return { matches, searchUnmatched };
+  return { matches, searchUnmatched, searchKnown, searchHits };
+}
+
+type SortMode = "relevancia" | "favoritos" | "rapidas" | "nome" | "idade";
+const SORT_LABEL: Record<SortMode, string> = {
+  relevancia: "Relevância clínica",
+  favoritos: "Favoritos primeiro",
+  rapidas: "Mais rápidas",
+  nome: "Nome A–Z",
+  idade: "Faixa mais justa",
+};
+
+const FILTER_RESPONDENT_OPTIONS: ScaleEntry["respondente"][number][] = [
+  "teste_direto_crianca",
+  "pais",
+  "professor",
+  "clinico",
+];
+
+const RESPONDENT_SHORT: Record<string, string> = {
+  pais: "pais/cuidador",
+  professor: "professor/escola",
+  clinico: "clínico",
+  autoaplicavel: "o próprio adolescente",
+  teste_direto_crianca: "criança (teste direto)",
+  crianca: "criança",
+};
+
+const INTENT_LABEL: Record<FilterQueryRespondent, string> = {
+  pais: "Pais/cuidador respondem",
+  professor: "Professor/escola responde",
+  autoaplicavel: "O próprio adolescente responde",
+  teste_direto_crianca: "Teste direto com a criança",
+  clinico: "Observação do clínico",
+};
+
+// Contador discreto dentro dos botões de faceta ("quantos resultados se eu
+// escolher isto?"). Padrão Baymard: contagem viva por opção, opção zerada
+// continua clicável mas avisa visualmente.
+function CountBadge({ n }: { n: number | undefined }) {
+  if (n === undefined) return null;
+  return (
+    <span
+      aria-label={`${n} ${n === 1 ? "escala" : "escalas"}`}
+      className={`ml-1 inline-flex min-w-[1.35rem] items-center justify-center rounded-full px-1 text-[9px] font-black tabular-nums ${n === 0 ? "bg-muted text-muted-foreground/60" : "bg-primary/10 text-primary"}`}
+    >
+      {n}
+    </span>
+  );
+}
+
+// Realce de termos da busca no nome do instrumento (sem alterar o texto).
+function HighlightedText({ text, terms }: { text: string; terms: readonly string[] }) {
+  const segments = highlightSegments(text, terms);
+  if (segments.length === 1 && !segments[0].hit) return <>{text}</>;
+  return (
+    <>
+      {segments.map((segment, index) =>
+        segment.hit ? (
+          <mark key={index} className="rounded-sm bg-primary/15 px-0.5 text-inherit">
+            {segment.text}
+          </mark>
+        ) : (
+          <span key={index}>{segment.text}</span>
+        ),
+      )}
+    </>
+  );
 }
 
 function tierFromSlot(slot: Slot): Tier | null {
@@ -1026,11 +1115,8 @@ export default function FiltroPage() {
   const sessionQueixas = (sessionFilters?.selectedQueixas ?? []).filter((id) =>
     validQueixaIds.has(id),
   );
-  const validSessionSignalIds = new Set(
-    sessionQueixas.flatMap((queixaId) =>
-      getAllSignalsForQueixa(queixaId).map((signal) => signal.id),
-    ),
-  );
+  // Fonte única de validade de sinal (detalhados + populares): data/filterSignalState.
+  const validSessionSignalIds = getValidFilterSignalIds(sessionQueixas);
   const sessionSignalIds = (sessionFilters?.selectedSignalIds ?? []).filter(
     (id) => validSessionSignalIds.has(id),
   );
@@ -1093,6 +1179,36 @@ export default function FiltroPage() {
   );
   const [copiedRec, setCopiedRec] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  // Deep-link: `#/filtro?idade=5a6m&queixas=tea&resp=pais` reproduz a busca.
+  // Lido uma vez na montagem; aplicado abaixo (prefill de navegação prevalece).
+  const [urlState] = useState(() =>
+    readFilterUrlState({
+      queixaIds: validQueixaIds,
+      ageBandIds: new Set(faixasEtarias.map((item) => item.id)),
+    }),
+  );
+  const applyUrlState = urlState.present && !useNavigationPrefill;
+  const [timeBudget, setTimeBudget] = useState<number | null>(applyUrlState ? (urlState.timeBudget ?? null) : null);
+  const [sortMode, setSortMode] = useState<SortMode>("relevancia");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Autocompletar (combobox APG): aberto só com foco + ≥ 2 caracteres.
+  const [acOpen, setAcOpen] = useState(false);
+  const [acIndex, setAcIndex] = useState(-1);
+  const acBlurTimer = useRef<number | null>(null);
+  // Recentes: só ids/nomes/rotas de instrumentos; nunca em modo efêmero.
+  const [recents, setRecents] = useState<FilterRecentItem[]>(() => (flashMode ? [] : loadFilterRecents()));
+  const rememberOpened = (scale: Pick<ScaleEntry, "id" | "name">, route: string) => {
+    if (flashMode) return;
+    setRecents(recordFilterRecent({ id: scale.id, name: scale.name, route }));
+  };
+  // Favoritos (estrela): só ids de instrumento; nunca em modo efêmero.
+  const [favorites, setFavorites] = useState<string[]>(() => (flashMode ? [] : loadFilterFavorites()));
+  const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+  const toggleFavorite = (id: string) => {
+    if (flashMode) return;
+    softTick();
+    setFavorites(toggleFilterFavorite(id));
+  };
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -1100,6 +1216,44 @@ export default function FiltroPage() {
     if (flashMode || !navigationPrefill.present) return;
     clearFilterNavigationPrefill();
   }, [flashMode, navigationPrefill.present]);
+
+  // Aplica o deep-link uma única vez. Cada campo é validado no leitor
+  // (lib/filterUrlState); sinais são conferidos contra as queixas do link.
+  useEffect(() => {
+    if (!applyUrlState) return;
+    if (urlState.search !== undefined) setSearch(urlState.search);
+    if (urlState.queixas) setSelectedQueixas(urlState.queixas);
+    if (urlState.exactAge) {
+      setExactAge(urlState.exactAge);
+      setSelectedAge(null);
+    } else if (urlState.ageBand) {
+      setExactAge({ years: "", months: "" });
+      setSelectedAge(urlState.ageBand);
+    }
+    if (urlState.respondente) setSelectedRespondente(urlState.respondente);
+    if (urlState.communication) setSelectedCommunication(urlState.communication);
+    if (urlState.literacy) setSelectedLiteracy(urlState.literacy);
+    if (urlState.assessmentType) setSelectedAssessmentType(urlState.assessmentType);
+    if (urlState.signals && urlState.queixas) {
+      const valid = getValidFilterSignalIds(urlState.queixas);
+      setSelectedSignalIds(urlState.signals.filter((id) => valid.has(id)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- montagem única
+  }, []);
+
+  // Atalhos: "/" foca a busca (fora de campos de texto); Esc limpa a busca.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable) return;
+      event.preventDefault();
+      searchInputRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!flashMode) return;
@@ -1187,6 +1341,37 @@ export default function FiltroPage() {
     selectedLiteracy,
     selectedAssessmentType,
     selectedSignalIds,
+  ]);
+
+  // Deep-link vivo: a URL espelha o estado (replaceState, sem empilhar
+  // histórico). Modo efêmero não escreve nada na URL.
+  useEffect(() => {
+    if (flashMode) return;
+    writeFilterUrlState({
+      search,
+      queixas: selectedQueixas,
+      ageBand: selectedAge ?? undefined,
+      exactAge,
+      respondente:
+        selectedRespondente && selectedRespondente !== "crianca" ? selectedRespondente : undefined,
+      communication: selectedCommunication ?? undefined,
+      literacy: selectedLiteracy ?? undefined,
+      assessmentType: selectedAssessmentType ?? undefined,
+      signals: selectedSignalIds,
+      timeBudget: timeBudget ?? undefined,
+    });
+  }, [
+    flashMode,
+    exactAge,
+    search,
+    selectedAge,
+    selectedQueixas,
+    selectedRespondente,
+    selectedCommunication,
+    selectedLiteracy,
+    selectedAssessmentType,
+    selectedSignalIds,
+    timeBudget,
   ]);
 
   useEffect(() => {
@@ -1318,17 +1503,104 @@ export default function FiltroPage() {
   // Candidatos seguros, já ordenados por pertinência clínica. PODE SER VAZIO.
   const safeRanking = useMemo(
     () => {
-      if (!hasSearch) return { matches: [], searchUnmatched: false };
-      return rankSafely(catalog, filterContext, search);
+      if (!hasSearch) return { matches: [], searchUnmatched: false, searchKnown: false, searchHits: new Map() as SearchHitMap };
+      return rankSafely(catalog, filterContext, search, timeBudget);
     },
-    [catalog, filterContext, search, hasSearch],
+    [catalog, filterContext, search, hasSearch, timeBudget],
   );
   const refinedMatches = safeRanking.matches;
   const searchUnmatched = safeRanking.searchUnmatched;
+  const searchKnown = safeRanking.searchKnown;
+  const searchHits = safeRanking.searchHits;
+
+  // Intenção lida do texto livre (respondente, tempo, finalidade, comunicação,
+  // alfabetização). Só vira filtro com um toque da pessoa.
+  const queryIntent = useMemo(() => parseFilterQueryIntent(search), [search]);
+  const pendingIntents = useMemo(() => {
+    const items: Array<{ id: string; label: string; apply: () => void }> = [];
+    if (queryIntent.respondent && selectedRespondente !== queryIntent.respondent) {
+      const respondent = queryIntent.respondent;
+      items.push({ id: `resp-${respondent}`, label: INTENT_LABEL[respondent], apply: () => setSelectedRespondente(respondent) });
+    }
+    if (queryIntent.timeBudgetMinutes && timeBudget !== queryIntent.timeBudgetMinutes) {
+      const minutes = queryIntent.timeBudgetMinutes;
+      items.push({ id: `tempo-${minutes}`, label: `Até ${minutes} min`, apply: () => setTimeBudget(minutes) });
+    }
+    if (queryIntent.assessmentType && selectedAssessmentType !== queryIntent.assessmentType) {
+      const type = queryIntent.assessmentType;
+      items.push({ id: `tipo-${type}`, label: type === "monitoring" ? "Monitorização/seguimento" : "Avaliação diagnóstica", apply: () => setSelectedAssessmentType(type) });
+    }
+    if (queryIntent.communication && selectedCommunication !== queryIntent.communication) {
+      const value = queryIntent.communication;
+      items.push({ id: `com-${value}`, label: value === "nonverbal" ? "Criança não-verbal" : "Criança verbal", apply: () => setSelectedCommunication(value) });
+    }
+    if (queryIntent.literacy && selectedLiteracy !== queryIntent.literacy) {
+      const value = queryIntent.literacy;
+      items.push({ id: `alf-${value}`, label: value === "preliterate" ? "Pré-alfabetizada" : "Alfabetizada", apply: () => setSelectedLiteracy(value) });
+    }
+    // Sinais lidos do texto para as queixas ativas (selecionadas ou inferidas).
+    // Aplicar marca a queixa-mãe junto — sinal órfão não existe no filtro.
+    for (const signal of inferSignalIds(search, filterContext.queixas)) {
+      if (selectedSignalIds.includes(signal.id)) continue;
+      items.push({
+        id: `sinal-${signal.id}`,
+        label: `Sinal: ${signal.label}`,
+        apply: () => {
+          setSelectedQueixas((prev) => (prev.includes(signal.queixaId) ? prev : [...prev, signal.queixaId]));
+          setSelectedSignalIds((prev) => (prev.includes(signal.id) ? prev : [...prev, signal.id]));
+        },
+      });
+    }
+    return items;
+  }, [queryIntent, selectedRespondente, timeBudget, selectedAssessmentType, selectedCommunication, selectedLiteracy, search, filterContext.queixas, selectedSignalIds]);
+
+  // Candidatos seguros SEM a busca livre: base do autocompletar (o que a
+  // pessoa pode encontrar sem sair do perfil clínico atual).
+  const safeCandidates = useMemo(
+    () => filterScalesWithClinicalRescue(unique(catalog), filterContext).filter((m) => !m.isBroadbandFallback).map((m) => m.scale),
+    [catalog, filterContext],
+  );
+  const autocompleteItems = useMemo<AutocompleteItem<ScaleEntry>[]>(
+    () =>
+      buildAutocomplete(search, safeCandidates, catalog, queixas.map((q) => ({ id: q.id, label: q.label, terms: q.parentHint ? [q.parentHint] : [] })), {
+        limit: 8,
+        formatAge: (scale) => formatScaleAgeRange(scale.ageMin, scale.ageMax),
+      }),
+    [search, safeCandidates, catalog],
+  );
+  const acVisible = acOpen && autocompleteItems.length > 0 && search.trim().length >= 2;
+  const selectAutocomplete = (item: AutocompleteItem<ScaleEntry>) => {
+    softTick();
+    setAcOpen(false);
+    setAcIndex(-1);
+    if (item.kind === "queixa" && item.complaintId) {
+      const id = item.complaintId;
+      setSelectedQueixas((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setSearch("");
+      return;
+    }
+    setSearch(item.label);
+  };
+
+  // "Você quis dizer": só quando a busca não reconheceu o termo.
+  const searchSuggestions = useMemo(() => {
+    if (!search.trim() || !searchUnmatched || searchKnown) return [];
+    return suggestSearchCorrections(catalog, search, queixas.map((q) => ({ id: q.id, label: q.label })));
+  }, [catalog, search, searchUnmatched, searchKnown]);
   const refinedById = useMemo(
     () => new Map(refinedMatches.map((m) => [m.scale.id, m])),
     [refinedMatches],
   );
+
+  // Contagens vivas por faceta ("e se eu escolher isto?"), pelo MESMO motor.
+  const facetCounts = useMemo(() => {
+    if (!hasSearch) return null;
+    return computeFilterFacetCounts(catalog, filterContext, {
+      respondentes: FILTER_RESPONDENT_OPTIONS,
+      faixas: faixasEtarias,
+      timeBudget,
+    });
+  }, [catalog, filterContext, hasSearch, timeBudget]);
   // A curadoria usa a mesma idade resolvida pelo motor.
   const curatedAgeMonths = filterContext.ageMonths;
   const activeQueixas = filterContext.queixas;
@@ -1336,8 +1608,30 @@ export default function FiltroPage() {
     () => refinedMatches.map((m) => m.scale),
     [refinedMatches],
   );
+  const sortedPool = useMemo(() => {
+    if (sortMode === "relevancia") return rankedPool;
+    const pool = [...rankedPool];
+    if (sortMode === "favoritos") return [...pool.filter((s) => favoriteSet.has(s.id)), ...pool.filter((s) => !favoriteSet.has(s.id))];
+    if (sortMode === "nome") return pool.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    if (sortMode === "rapidas") {
+      const minutes = (s: ScaleEntry) => parseScaleMinutes(s.tempo)?.max ?? Number.POSITIVE_INFINITY;
+      return pool.sort((a, b) => minutes(a) - minutes(b) || a.name.localeCompare(b.name, "pt-BR"));
+    }
+    // "idade": faixa mais justa = menor amplitude entre as que cobrem a idade.
+    return pool.sort((a, b) => a.ageMax - a.ageMin - (b.ageMax - b.ageMin) || a.name.localeCompare(b.name, "pt-BR"));
+  }, [rankedPool, sortMode, favoriteSet]);
   const hasSafeResults = refinedMatches.length > 0;
   const acuteRiskContext = isAcuteRiskContext(filterContext);
+  const queixaLabelOf = (id: string) => queixas.find((q) => q.id === id)?.label ?? id;
+  // Diagnóstico do vazio: qual restrição elimina mais e quantos voltariam.
+  const emptyDiagnosis = useMemo(() => {
+    if (!hasSearch || hasSafeResults) return null;
+    return diagnoseEmptyResult(catalog, filterContext, {
+      timeBudget,
+      queixaLabel: queixaLabelOf,
+      respondentLabel: (id) => RESPONDENT_SHORT[id] ?? id,
+    });
+  }, [catalog, filterContext, hasSearch, hasSafeResults, timeBudget]);
   // Resultado veio do fallback de triagem ampla (sem instrumento específico).
   const usingBroadbandFallback =
     refinedMatches.length > 0 &&
@@ -1641,7 +1935,43 @@ export default function FiltroPage() {
     setSelectedAssessmentType(null);
     setSelectedSignalIds([]);
     setAvailabilityMode("complete");
+    setTimeBudget(null);
+    setSortMode("relevancia");
+    setCompareIds([]);
   };
+
+  // Resumo dos filtros aplicados (visão única + remoção individual).
+  const appliedFilters: Array<{ id: string; label: string; remove: () => void }> = [];
+  if (search.trim()) appliedFilters.push({ id: "busca", label: `“${search.trim()}”`, remove: () => setSearch("") });
+  if (resolvedAge.status === "exact" || resolvedAge.status === "band") {
+    appliedFilters.push({
+      id: "idade",
+      label: `Idade: ${resolvedAge.label}`,
+      remove: () => {
+        setExactAge({ years: "", months: "" });
+        setSelectedAge(null);
+      },
+    });
+  }
+  for (const queixaId of selectedQueixas) {
+    appliedFilters.push({ id: `queixa-${queixaId}`, label: queixaLabelOf(queixaId), remove: () => toggleQueixa(queixaId) });
+  }
+  if (selectedRespondente) {
+    appliedFilters.push({ id: "resp", label: `Responde: ${RESPONDENT_SHORT[selectedRespondente] ?? selectedRespondente}`, remove: () => setSelectedRespondente(null) });
+  }
+  if (selectedCommunication) {
+    appliedFilters.push({ id: "com", label: selectedCommunication === "verbal" ? "Verbal" : "Não-verbal", remove: () => setSelectedCommunication(null) });
+  }
+  if (selectedLiteracy) {
+    appliedFilters.push({ id: "alf", label: selectedLiteracy === "literate" ? "Alfabetizada" : "Pré-alfabetizada", remove: () => setSelectedLiteracy(null) });
+  }
+  if (selectedAssessmentType) {
+    appliedFilters.push({ id: "tipo", label: selectedAssessmentType === "diagnostic" ? "Diagnóstico" : "Monitorização", remove: () => setSelectedAssessmentType(null) });
+  }
+  if (selectedSignalIds.length) {
+    appliedFilters.push({ id: "sinais", label: `${selectedSignalIds.length} ${selectedSignalIds.length === 1 ? "sinal" : "sinais"}`, remove: () => setSelectedSignalIds([]) });
+  }
+  if (timeBudget) appliedFilters.push({ id: "tempo", label: `Até ${timeBudget} min`, remove: () => setTimeBudget(null) });
 
   return (
     <div className="page-enter container-filtro filter-260-shell pb-4 sm:pb-8">
@@ -1729,8 +2059,49 @@ export default function FiltroPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                ref={searchInputRef}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setAcOpen(true);
+                  setAcIndex(-1);
+                }}
+                onFocus={() => setAcOpen(true)}
+                onBlur={() => {
+                  // Espera o clique numa opção (mousedown já selecionou) antes de fechar.
+                  if (acBlurTimer.current) window.clearTimeout(acBlurTimer.current);
+                  acBlurTimer.current = window.setTimeout(() => setAcOpen(false), 120);
+                }}
+                onKeyDown={(e) => {
+                  if (acVisible && (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Home" || e.key === "End")) {
+                    e.preventDefault();
+                    setAcIndex((current) => moveActiveIndex(current, autocompleteItems.length, e.key as "ArrowDown" | "ArrowUp" | "Home" | "End"));
+                    return;
+                  }
+                  if (e.key === "Enter" && acVisible && acIndex >= 0 && autocompleteItems[acIndex]) {
+                    e.preventDefault();
+                    selectAutocomplete(autocompleteItems[acIndex]);
+                    return;
+                  }
+                  if (e.key === "Escape") {
+                    if (acVisible) {
+                      e.preventDefault();
+                      setAcOpen(false);
+                      setAcIndex(-1);
+                      return;
+                    }
+                    if (search) {
+                      e.preventDefault();
+                      setSearch("");
+                    }
+                  }
+                }}
+                role="combobox"
+                aria-expanded={acVisible}
+                aria-controls="filter-autocomplete-listbox"
+                aria-autocomplete="list"
+                aria-activedescendant={acVisible && acIndex >= 0 ? `filter-ac-option-${acIndex}` : undefined}
+                autoComplete="off"
                 aria-label={
                   flashMode
                     ? "Idade e queixa para triagem sem cadastro"
@@ -1739,7 +2110,7 @@ export default function FiltroPage() {
                 placeholder={
                   flashMode
                     ? "Ex.: 7 anos, não dorme, crise, desatenção..."
-                    : "Medicação, autismo, TDAH, ansiedade..."
+                    : "Ex.: mchat, snap, 5 anos não fala, pais, 10 min…"
                 }
                 className="h-9 sm:h-11 rounded-2xl pl-10 pr-10 text-sm"
                 data-testid="input-search"
@@ -1754,7 +2125,119 @@ export default function FiltroPage() {
                   <X className="h-4 w-4" />
                 </button>
               )}
+              {acVisible && (
+                <ul
+                  id="filter-autocomplete-listbox"
+                  role="listbox"
+                  aria-label="Sugestões de busca"
+                  data-testid="filter-autocomplete"
+                  className="absolute left-0 right-0 top-full z-30 mt-1 max-h-80 overflow-y-auto rounded-2xl border border-border bg-popover p-1 shadow-lg"
+                >
+                  {autocompleteItems.map((item, index) => {
+                    const active = index === acIndex;
+                    const tone =
+                      item.kind === "queixa"
+                        ? "text-primary"
+                        : item.kind === "fora_do_perfil"
+                          ? "text-muted-foreground"
+                          : item.kind === "correcao"
+                            ? "text-amber-700 dark:text-amber-300"
+                            : "text-foreground";
+                    return (
+                      <li
+                        key={item.id}
+                        id={`filter-ac-option-${index}`}
+                        role="option"
+                        aria-selected={active}
+                        data-testid="filter-autocomplete-option"
+                        data-kind={item.kind}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          selectAutocomplete(item);
+                        }}
+                        onMouseEnter={() => setAcIndex(index)}
+                        className={`cursor-pointer rounded-xl px-3 py-2 text-left ${active ? "bg-primary/10" : "hover:bg-muted/60"}`}
+                      >
+                        <p className={`text-sm font-bold ${tone}`}>
+                          {item.kind === "queixa" ? "Marcar queixa: " : item.kind === "correcao" ? "Você quis dizer: " : ""}
+                          <HighlightedText text={item.label} terms={item.highlight} />
+                        </p>
+                        {item.detail && <p className="text-[11px] text-muted-foreground line-clamp-1">{item.detail}</p>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
+
+            {pendingIntents.length > 0 && (
+              <div
+                className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-primary/20 bg-primary/5 px-2.5 py-2"
+                data-testid="filter-query-intents"
+                role="group"
+                aria-label="Entendido da busca; toque para aplicar"
+              >
+                <Lightbulb className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Entendi da busca
+                </span>
+                {pendingIntents.map((intent) => (
+                  <button
+                    key={intent.id}
+                    type="button"
+                    onClick={() => {
+                      softTick();
+                      intent.apply();
+                    }}
+                    className="rounded-full border border-primary/40 bg-background px-2.5 py-1 text-[11px] font-bold text-primary transition hover:bg-primary hover:text-primary-foreground"
+                  >
+                    + {intent.label}
+                  </button>
+                ))}
+                {pendingIntents.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      softTap();
+                      pendingIntents.forEach((intent) => intent.apply());
+                    }}
+                    className="ml-auto text-[11px] font-black text-primary underline-offset-2 hover:underline"
+                  >
+                    Aplicar tudo
+                  </button>
+                )}
+              </div>
+            )}
+
+            {searchSuggestions.length > 0 && (
+              <div
+                className="flex flex-wrap items-center gap-1.5 text-[11px]"
+                data-testid="filter-search-suggestions"
+                role="group"
+                aria-label="Sugestões de correção da busca"
+              >
+                <span className="font-semibold text-muted-foreground">Você quis dizer</span>
+                {searchSuggestions.map((suggestion) => (
+                  <button
+                    key={`${suggestion.kind}-${suggestion.label}`}
+                    type="button"
+                    onClick={() => {
+                      softTick();
+                      if (suggestion.kind === "queixa" && suggestion.id) {
+                        setSearch("");
+                        setSelectedQueixas((prev) => (prev.includes(suggestion.id!) ? prev : [...prev, suggestion.id!]));
+                      } else {
+                        setSearch(suggestion.label);
+                      }
+                    }}
+                    className="rounded-full border border-border bg-background px-2.5 py-1 font-bold text-foreground transition hover:border-primary/50"
+                  >
+                    {suggestion.label}
+                    {suggestion.kind === "queixa" ? " (queixa)" : ""}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {!hasSearch && (
               <div className="space-y-1.5 sm:space-y-2">
@@ -1818,6 +2301,7 @@ export default function FiltroPage() {
                     className={`shrink-0 rounded-2xl border px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs font-bold transition ${selectedAge === age.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
                   >
                     {age.label}
+                    <CountBadge n={facetCounts?.faixa[age.id]} />
                   </button>
                 ))}
               </div>
@@ -1950,6 +2434,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">🧒</span>{" "}
                   <span className="hidden sm:inline">Direto</span>
+                  <CountBadge n={facetCounts?.respondente.teste_direto_crianca} />
                 </button>
                 <button
                   key="pais"
@@ -1966,6 +2451,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">👨‍👩‍👧</span>{" "}
                   <span className="hidden sm:inline">Pais</span>
+                  <CountBadge n={facetCounts?.respondente.pais} />
                 </button>
                 <button
                   key="professor"
@@ -1982,6 +2468,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">👨‍🏫</span>{" "}
                   <span className="hidden sm:inline">Escola</span>
+                  <CountBadge n={facetCounts?.respondente.professor} />
                 </button>
                 <button
                   key="clinico"
@@ -1998,6 +2485,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">👨‍⚕️</span>{" "}
                   <span className="hidden sm:inline">Clínico</span>
+                  <CountBadge n={facetCounts?.respondente.clinico} />
                 </button>
               </div>
             </div>
@@ -2022,6 +2510,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">🗣️</span>{" "}
                   <span className="hidden sm:inline">Fala</span>
+                  <CountBadge n={facetCounts?.comunicacao.verbal} />
                 </button>
                 <button
                   key="nonverbal"
@@ -2038,6 +2527,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">🤐</span>{" "}
                   <span className="hidden sm:inline">Não-Verbal</span>
+                  <CountBadge n={facetCounts?.comunicacao.nonverbal} />
                 </button>
               </div>
             </div>
@@ -2062,6 +2552,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">📖</span>{" "}
                   <span className="hidden sm:inline">Alfabetizada</span>
+                  <CountBadge n={facetCounts?.alfabetizacao.literate} />
                 </button>
                 <button
                   key="preliterate"
@@ -2078,6 +2569,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">👶</span>{" "}
                   <span className="hidden sm:inline">Pré-Alfab.</span>
+                  <CountBadge n={facetCounts?.alfabetizacao.preliterate} />
                 </button>
               </div>
             </div>
@@ -2102,6 +2594,7 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">🔍</span>{" "}
                   <span className="hidden sm:inline">Diagnóstico</span>
+                  <CountBadge n={facetCounts?.finalidade.diagnostic} />
                 </button>
                 <button
                   key="monitoring"
@@ -2118,8 +2611,43 @@ export default function FiltroPage() {
                 >
                   <span aria-hidden="true">📊</span>{" "}
                   <span className="hidden sm:inline">Monitorização</span>
+                  <CountBadge n={facetCounts?.finalidade.monitoring} />
                 </button>
               </div>
+            </div>
+
+            <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
+              <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Tempo disponível
+              </p>
+              <div
+                className="flex gap-1 sm:gap-2 overflow-x-auto pb-1"
+                role="group"
+                aria-label="Tempo disponível para aplicar"
+                data-testid="filter-time-budget"
+              >
+                {TIME_BUCKETS.map((bucket) => (
+                  <button
+                    key={bucket.id}
+                    type="button"
+                    aria-pressed={timeBudget === bucket.minutes}
+                    aria-label={`Tempo disponível: ${bucket.label}`}
+                    onMouseEnter={() => softHover()}
+                    onClick={() => {
+                      softTick();
+                      setTimeBudget((v) => (v === bucket.minutes ? null : bucket.minutes));
+                    }}
+                    className={`shrink-0 rounded-xl sm:rounded-2xl border px-2 sm:px-3 py-1 sm:py-2 text-xs font-bold transition min-h-8 sm:min-h-10 flex items-center gap-1 whitespace-nowrap ${timeBudget === bucket.minutes ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"}`}
+                  >
+                    <Clock className="h-3 w-3" aria-hidden="true" />
+                    {bucket.label}
+                    <CountBadge n={facetCounts?.tempo[bucket.id]} />
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Instrumentos sem tempo aferido continuam visíveis, sinalizados.
+              </p>
             </div>
 
             <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/50">
@@ -2287,6 +2815,31 @@ export default function FiltroPage() {
                 : "Nenhuma escala segura para este perfil. Refine idade, queixa ou respondente."}
             </p>
 
+            {appliedFilters.length > 0 && (
+              <div
+                className="flex flex-wrap items-center gap-1.5"
+                data-testid="filter-applied-chips"
+                role="group"
+                aria-label="Filtros aplicados"
+              >
+                {appliedFilters.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => {
+                      softTick();
+                      chip.remove();
+                    }}
+                    aria-label={`Remover filtro ${chip.label}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-foreground transition hover:border-destructive/50 hover:text-destructive"
+                  >
+                    {chip.label}
+                    <X className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Termo de busca sem correspondência: os resultados vêm dos
             filtros estruturados — dizer isso evita que um erro de digitação
             pareça ter produzido resultados "da busca". */}
@@ -2296,9 +2849,9 @@ export default function FiltroPage() {
                 data-testid="filter-search-unmatched"
                 className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-900 dark:text-amber-100"
               >
-                Termo “{search.trim()}” não reconhecido no catálogo — o ranking
-                abaixo vem dos filtros estruturados (idade, queixa,
-                respondente), não da busca.
+                {searchKnown
+                  ? <>Termo “{search.trim()}” existe no catálogo, mas os instrumentos que casam não são seguros para este perfil (idade, queixa, respondente). O ranking abaixo vem dos filtros estruturados, não da busca.</>
+                  : <>Termo “{search.trim()}” não reconhecido no catálogo — o ranking abaixo vem dos filtros estruturados (idade, queixa, respondente), não da busca.</>}
               </p>
             )}
 
@@ -2426,9 +2979,75 @@ export default function FiltroPage() {
 
             {!hasSafeResults ? (
               <Card className="border-2 border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
-                <CardContent className="flex items-start gap-3 p-5 text-sm font-bold text-amber-900 dark:text-amber-100">
-                  <ShieldAlert className="h-5 w-5 shrink-0" />
-                  <span>{resolvedAge.status === "invalid" ? resolvedAge.message : SAFE_EMPTY_MESSAGE}</span>
+                <CardContent className="space-y-3 p-5 text-sm text-amber-900 dark:text-amber-100">
+                  <div className="flex items-start gap-3 font-bold">
+                    <ShieldAlert className="h-5 w-5 shrink-0" />
+                    <span>{resolvedAge.status === "invalid" ? resolvedAge.message : SAFE_EMPTY_MESSAGE}</span>
+                  </div>
+                  {emptyDiagnosis && emptyDiagnosis.acuteRisk && (
+                    <p className="text-xs font-semibold" data-testid="filter-empty-acute">
+                      Contexto de risco agudo: o filtro não completa com instrumentos de outro domínio. Conduza avaliação de segurança presencial.
+                    </p>
+                  )}
+                  {emptyDiagnosis && !emptyDiagnosis.acuteRisk && !emptyDiagnosis.invalidAge && emptyDiagnosis.hints.length > 0 && (
+                    <div className="space-y-1.5" data-testid="filter-empty-diagnosis">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em]">
+                        O que mais restringe — toque para ajustar
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {emptyDiagnosis.hints.slice(0, 5).map((hint) => {
+                          const apply = () => {
+                            softTick();
+                            switch (hint.dimension) {
+                              case "respondente":
+                                setSelectedRespondente(null);
+                                break;
+                              case "sinais":
+                                setSelectedSignalIds([]);
+                                break;
+                              case "finalidade":
+                                setSelectedAssessmentType(null);
+                                break;
+                              case "comunicacao":
+                                setSelectedCommunication(null);
+                                break;
+                              case "alfabetizacao":
+                                setSelectedLiteracy(null);
+                                break;
+                              case "tempo":
+                                setTimeBudget(null);
+                                break;
+                              case "queixa":
+                                if (hint.keepQueixa) setSelectedQueixas([hint.keepQueixa]);
+                                break;
+                              case "idade":
+                                document.getElementById("filter-age-years")?.focus();
+                                break;
+                            }
+                          };
+                          return (
+                            <button
+                              key={`${hint.dimension}-${hint.keepQueixa ?? ""}`}
+                              type="button"
+                              onClick={apply}
+                              className="inline-flex items-center gap-1 rounded-full border border-amber-400/70 bg-background/80 px-2.5 py-1 text-[11px] font-bold text-amber-900 transition hover:border-amber-600 dark:text-amber-100"
+                            >
+                              {hint.label}
+                              <span className="rounded-full bg-amber-200/70 px-1.5 text-[10px] font-black tabular-nums text-amber-950 dark:bg-amber-800/60 dark:text-amber-50">
+                                +{hint.countIfRelaxed}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {emptyDiagnosis && emptyDiagnosis.safetyBlocked.length > 0 && (
+                    <p className="text-xs" data-testid="filter-empty-safety">
+                      Bloqueados por segurança (não relaxáveis):{" "}
+                      {emptyDiagnosis.safetyBlocked.map((b) => `${b.reason} (${b.count})`).join(" · ")}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -2609,9 +3228,22 @@ export default function FiltroPage() {
                           ) : null;
                         })()}
                         <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary">
+                          {item.hasScale && item.scale && !flashMode && (
+                            <button
+                              type="button"
+                              onClick={() => toggleFavorite(item.scale!.id)}
+                              aria-pressed={favoriteSet.has(item.scale.id)}
+                              aria-label={`${favoriteSet.has(item.scale.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}: ${item.scale.name}`}
+                              data-testid="filter-favorite-toggle"
+                              className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                            >
+                              <Star className={`h-4 w-4 ${favoriteSet.has(item.scale.id) ? "fill-amber-400 text-amber-500" : ""}`} aria-hidden="true" />
+                            </button>
+                          )}
                           {item.hasScale ? (
                             <Link
                               href={item.route}
+                              onClick={() => item.scale && rememberOpened(item.scale, item.route)}
                               className="inline-flex min-h-6 items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                             >
                               <span>{ctaLabel}</span>
@@ -2773,6 +3405,68 @@ export default function FiltroPage() {
 
         {!hasSearch && (
           <section className="lg:col-span-2 space-y-5">
+            {!flashMode && favorites.length > 0 && (
+              <div
+                className="rounded-2xl border border-amber-300/60 bg-amber-50/40 p-3 dark:border-amber-800/60 dark:bg-amber-950/20"
+                data-testid="filter-favorites"
+              >
+                <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" aria-hidden="true" />
+                  Favoritos
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {favorites.map((id) => {
+                    const scale = catalog.find((s) => s.id === id);
+                    if (!scale) return null;
+                    return (
+                      <Link
+                        key={id}
+                        href={resolveAppRoute(scale) ?? `/generic-scale/${scale.id}`}
+                        onClick={() => rememberOpened(scale, resolveAppRoute(scale) ?? `/generic-scale/${scale.id}`)}
+                        className="rounded-full border border-amber-300/70 bg-background px-2.5 py-1 text-[11px] font-bold text-foreground transition hover:border-amber-500"
+                      >
+                        {scale.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {!flashMode && recents.length > 0 && (
+              <div
+                className="rounded-2xl border border-border/70 bg-card/70 p-3"
+                data-testid="filter-recents"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    <History className="h-3.5 w-3.5" aria-hidden="true" />
+                    Abertos recentemente
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearFilterRecents();
+                      setRecents([]);
+                    }}
+                    className="text-[11px] font-bold text-muted-foreground underline-offset-2 hover:underline"
+                    aria-label="Limpar instrumentos recentes"
+                  >
+                    limpar
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {recents.map((recent) => (
+                    <Link
+                      key={recent.id}
+                      href={recent.route}
+                      className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-foreground transition hover:border-primary/50"
+                    >
+                      {recent.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid gap-3 md:grid-cols-3">
               <Card className="border-dashed">
                 <CardContent className="space-y-2 p-4">
@@ -2934,24 +3628,61 @@ export default function FiltroPage() {
               prévia do catálogo filtrado
             </p>
             <h2 className="text-sm font-black text-foreground">
-              {rankedPool.slice(0, 24).length} principais resultados
+              {sortedPool.slice(0, 24).length} principais resultados
+              {rankedPool.length > 24 ? ` de ${rankedPool.length}` : ""}
             </h2>
           </div>
-          <Link
-            href="/escalas-neuropsiquiatria"
-            className="text-xs font-bold text-primary"
-          >
-            Ver catálogo mundial
-          </Link>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <span className="hidden sm:inline">Ordenar</span>
+              <select
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value as SortMode)}
+                aria-label="Ordenar resultados"
+                data-testid="filter-sort-mode"
+                className="h-8 rounded-xl border border-border bg-background px-2 text-xs font-bold text-foreground"
+              >
+                {(Object.keys(SORT_LABEL) as SortMode[]).map((mode) => (
+                  <option key={mode} value={mode}>
+                    {SORT_LABEL[mode]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Link
+              href="/escalas-neuropsiquiatria"
+              className="text-xs font-bold text-primary"
+            >
+              Ver catálogo mundial
+            </Link>
+          </div>
         </div>
         <div className="filter-260-grid compact">
-          {rankedPool.slice(0, 24).map((s) => {
+          {sortedPool.slice(0, 24).map((s) => {
             const visual = getScaleVisual(s);
             const Icon = visual.Icon;
+            const hit = searchHits.get(s.id);
+            const highlightTerms = hit ? highlightTermsOf(hit) : [];
+            const minutes = parseScaleMinutes(s.tempo);
+            const compactReasons = getRecommendationReasons(s, activeQueixas, effectiveAgeRange).slice(0, 2);
+            const isFavorite = favoriteSet.has(s.id);
             return (
+              <div key={s.id} className="relative">
+              {!flashMode && (
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(s.id)}
+                  aria-pressed={isFavorite}
+                  aria-label={`${isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}: ${s.name}`}
+                  data-testid="filter-favorite-toggle"
+                  className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground transition hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
+                  <Star className={`h-4 w-4 ${isFavorite ? "fill-amber-400 text-amber-500" : ""}`} aria-hidden="true" />
+                </button>
+              )}
               <Link
-                key={s.id}
                 href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`}
+                onClick={() => rememberOpened(s, resolveAppRoute(s) ?? `/generic-scale/${s.id}`)}
                 className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:bg-background hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
               >
                 <div className="filter-260-card-content compact">
@@ -2964,9 +3695,11 @@ export default function FiltroPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="filter-260-title small">{s.name}</p>
+                          <p className="filter-260-title small">
+                            <HighlightedText text={s.name} terms={highlightTerms} />
+                          </p>
                           <p className="filter-260-subtitle line-clamp-2">
-                            {s.fullName}
+                            <HighlightedText text={s.fullName} terms={highlightTerms} />
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
@@ -3002,11 +3735,27 @@ export default function FiltroPage() {
                         {s.respondente.join(" · ")} ·{" "}
                         {Math.round(s.ageMin / 12)}–{Math.round(s.ageMax / 12)}{" "}
                         anos
+                        {minutes ? ` · ${minutes.min === minutes.max ? minutes.min : `${minutes.min}–${minutes.max}`} min` : " · tempo não aferido"}
                       </p>
+                      {compactReasons.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1" data-testid="filter-compact-reasons">
+                          {compactReasons.map((reason) => (
+                            <span key={reason} className="rounded-full border border-border/70 bg-muted/40 px-1.5 py-0.5 text-[9.5px] font-semibold text-muted-foreground">
+                              {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {hit && hit.details.length > 0 && (
+                        <p className="mt-1 text-[10.5px] italic text-primary/80" data-testid="filter-match-reason">
+                          {describeSearchHit(hit)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
               </Link>
+              </div>
             );
           })}
         </div>

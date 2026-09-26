@@ -106,9 +106,11 @@ async function assertFilterUi(page) {
     page.getByRole("button", { name: "Faixa etária 2–4 anos" }),
     "idade 2–4 anos",
   );
+  // Escopado ao grid de queixas: a linha de "filtros aplicados" também tem um
+  // botão nomeado "Remover filtro Autismo / TEA" (chip removível).
   await assertPressed(
     page,
-    page.getByRole("button", { name: /Autismo \/ TEA/ }),
+    page.getByTestId("filter-complaint-options").getByRole("button", { name: /Autismo \/ TEA/ }),
     "queixa TEA",
   );
   await assertPressed(
