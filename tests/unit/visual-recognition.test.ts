@@ -24,8 +24,8 @@ test("banco completo, IDs únicos, licença e hashes de cada figura local",()=>{
  }
 });
 test("idade exata sem inventar valor ausente; transições inclusive 29/30 meses",()=>{
- for(const [years,months] of [["","0"],["a","0"],["3","12"],["3.5","0"],["0","11"],["18","0"],["-1","0"],["3"," "]])assert.equal(ageInMonths(years,months),null);
- for(const value of [12,23,24,29,30,35,36,47,48,59,60,83,84,119,120,155,156,215]){
+ for(const [years,months] of [["","0"],["a","0"],["3","12"],["3.5","0"],["0","11"],["20","0"],["-1","0"],["3"," "]])assert.equal(ageInMonths(years,months),null);
+ for(const value of [12,23,24,29,30,35,36,47,48,59,60,83,84,119,120,155,156,215,216,239]){
   assert.equal(ageInMonths(String(Math.floor(value/12)),String(value%12)),value);
   const band=bandFor(value);assert.ok(band);assert.ok(value>=band.min&&value<=band.max);
  }

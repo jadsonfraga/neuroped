@@ -60,8 +60,31 @@ import {
 import { playSondaTone } from "@/lib/sondaDezAudio";
 import SondaDigitalActivity from "./SondaDigitalActivity";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
+import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
+import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
 
 type Phase = "prepare" | "learn" | "run" | "report";
+type Track = "easy" | "guided" | "direct";
+export const DIRECT_TRACK_NOTE =
+  "Modo direto: guia de primeira aplicação, conferência de preparo e ensaio dispensados pela aplicadora experiente";
+const TRACKS: { id: Track; label: string; hint: string }[] = [
+  {
+    id: "easy",
+    label: "🎮 Modo Fácil · joguinho",
+    hint: "Tudo na tela, de 1 a 19 anos: a criança toca, o jogo julga e passa sozinho. Certo/errado no fim.",
+  },
+  {
+    id: "guided",
+    label: "Guia de primeira aplicação",
+    hint: "Preparar, ensaiar, aplicar e revisar, do acolhimento à entrega.",
+  },
+  {
+    id: "direct",
+    label: "Direto ao teste",
+    hint: "Aplicadora experiente: informe a idade e inicie a aplicação.",
+  },
+];
 const FLAGS = [
   "Perda de habilidade referida pela família",
   "Evento paroxístico observado",
@@ -112,6 +135,10 @@ export default function SondaDigitalGuided({
   onLegacy: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("prepare");
+  const [track, setTrack] = useState<Track>("guided");
+  const direct = track === "direct";
+  const easy = track === "easy";
+  const [easyProgress, setEasyProgress] = useState(0);
   const [years, setYears] = useState("");
   const [months, setMonths] = useState("0");
   const [code, setCode] = useState("");
@@ -162,16 +189,17 @@ export default function SondaDigitalGuided({
   const trained =
     TRAINING_CASES.every((q, i) => quiz[i] === q.answer) &&
     PRACTICES.every((_, i) => practiced[i]);
-  const ready =
-    Boolean(band) &&
-    PREPARATION.every((_, i) => checks[i]) &&
-    sound !== "unchecked";
+  const ready = direct
+    ? Boolean(band)
+    : Boolean(band) &&
+      PREPARATION.every((_, i) => checks[i]) &&
+      sound !== "unchecked";
   const problems = mission ? recordProblems(mission, current) : [];
   const counts = mission ? derivedCounts(mission, current) : {};
   const missionDone =
     band?.missions.map((m) => recordProblems(m, records[m.id]).length === 0) ?? [];
   const completedCount = missionDone.filter(Boolean).length;
-  const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(code || operator || school);
+  const dirty = phase === "run" || phase === "report" || Object.keys(records).length > 0 || Boolean(code || operator || school) || easyProgress > 0;
   useSondaExitGuard(dirty);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -300,7 +328,9 @@ export default function SondaDigitalGuided({
   }
   const reportContext = {
     code, operator, ageMonths, school,
-    confounders: confounders.concat(sound === "visual" ? ["Aplicação sem som eletrônico"] : []),
+    confounders: confounders
+      .concat(sound === "visual" ? ["Aplicação sem som eletrônico"] : [])
+      .concat(direct ? [DIRECT_TRACK_NOTE] : []),
     flags, elapsedSeconds: elapsed, familiarizations, startedAt,
   };
   const handoff = phase === "report" && band ? buildDigitalHandoff(band, records, reportContext) : "";
@@ -359,6 +389,101 @@ export default function SondaDigitalGuided({
     setCheer(null);
   }
   const panel = "rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7";
+  const trackTabs = (
+    <div
+      role="tablist"
+      aria-label="Modo de aplicação"
+      data-testid="sonda-track-tabs"
+      className="mt-6 grid gap-2 sm:grid-cols-3"
+    >
+      {TRACKS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={track === item.id}
+          disabled={phase !== "prepare" || easyProgress > 0}
+          data-testid={item.id === "easy" ? "sonda-easy-tab" : undefined}
+          onClick={() => {
+            setTrack(item.id);
+            setMessage(
+              item.id === "direct"
+                ? "Modo direto: sem guia, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."
+                : item.id === "easy"
+                  ? "Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo julga certo ou errado, passa sozinho e mostra o resultado no fim."
+                  : "",
+            );
+          }}
+          className={`rounded-xl border px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${track === item.id ? "border-primary bg-primary text-primary-foreground" : item.id === "easy" ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30" : "bg-background/80"}`}
+        >
+          <span className="block text-sm font-semibold">{item.label}</span>
+          <span className="mt-1 block text-xs opacity-90">{item.hint}</span>
+        </button>
+      ))}
+    </div>
+  );
+  if (easy) {
+    // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
+    // tela. A criança toca, o aplicativo julga certo/errado e o jogo avança.
+    // Nada da trilha clínica guiada entra aqui; nada pede objeto fora do app.
+    const easyYears = /^\d+$/.test(years) ? Number(years) : NaN;
+    const easyBand = objectiveBandForYears(easyYears);
+    const easySteps: EasyStep[] = easyBand ? buildObjectiveSteps("sonda", easyYears, "sonda-easy") : [];
+    return (
+      <div className="mx-auto w-full max-w-6xl space-y-5 pb-16" data-testid="sonda-digital">
+        <header className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-cyan-50 p-6 dark:to-cyan-950/20 sm:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>Sonda 10</Badge>
+            <Badge variant="outline">Modo Fácil · joguinho</Badge>
+            <Badge variant="outline">v{DIGITAL_VERSION}</Badge>
+          </div>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            Leia, a criança toca, o jogo passa sozinho.
+          </h1>
+          {trackTabs}
+        </header>
+        {message && (
+          <p role="status" className="rounded-xl border bg-muted p-4 text-sm">
+            {message}
+          </p>
+        )}
+        {easyProgress === 0 && (
+          <section className={panel} data-testid="sonda-easy-start">
+            <h2 className="text-xl font-bold">Idade da criança</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <label className="space-y-2 text-sm font-semibold">
+                Idade em anos
+                <Input type="number" min={OBJECTIVE_MIN_YEARS} max={OBJECTIVE_MAX_YEARS} value={years} onChange={(e) => setYears(e.target.value)} placeholder="Ex.: 4" />
+              </label>
+              <label className="space-y-2 text-sm font-semibold">
+                Meses adicionais
+                <Input type="number" min="0" max="11" value={months} onChange={(e) => setMonths(e.target.value)} />
+              </label>
+            </div>
+            <p className="mt-3 text-sm" role="status">
+              {easyBand ? `Faixa ${easyBand.label} · ${easySteps.length} itens na tela` : `Informe a idade em anos completos, de ${OBJECTIVE_MIN_YEARS} a ${OBJECTIVE_MAX_YEARS}.`}
+            </p>
+          </section>
+        )}
+        {easyBand && (
+          <EasyGame
+            key={`${easyBand.id}-${easySteps.length}`}
+            testid="sonda-easy"
+            title="Sonda 10"
+            ageLabel={`${easyYears} anos · faixa ${easyBand.label}`}
+            nature={objectiveNature("sonda")}
+            footer={DIGITAL_LIMIT}
+            steps={easySteps}
+            objective
+            onProgress={setEasyProgress}
+          />
+        )}
+        <footer className="rounded-2xl border p-4 text-xs leading-relaxed text-muted-foreground">
+          <p className="flex gap-2"><ShieldCheck className="h-4 w-4 shrink-0" />{DIGITAL_NATURE}</p>
+        </footer>
+      </div>
+    );
+  }
   return (
     <div
       className="mx-auto w-full max-w-6xl space-y-5 pb-16"
@@ -378,17 +503,30 @@ export default function SondaDigitalGuided({
           Objetos, cenas, cartões e som estão no aplicativo. A interação com a
           criança continua sendo conduzida por você.
         </p>
+        {trackTabs}
         <nav
           aria-label="Etapas da Sonda"
-          className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4"
+          className={`mt-4 grid grid-cols-2 gap-2 ${direct ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}
         >
-          {(["prepare", "learn", "run", "report"] as Phase[]).map((p, i) => (
+          {(direct
+            ? ([
+                ["prepare", "Idade"],
+                ["run", "Aplicar"],
+                ["report", "Revisar"],
+              ] as [Phase, string][])
+            : ([
+                ["prepare", "Preparar"],
+                ["learn", "Ensaiar"],
+                ["run", "Aplicar"],
+                ["report", "Revisar"],
+              ] as [Phase, string][])
+          ).map(([p, label], i) => (
             <div
               key={p}
               aria-current={phase === p ? "step" : undefined}
               className={`rounded-xl border px-3 py-3 text-sm font-semibold ${phase === p ? "border-primary bg-primary text-primary-foreground" : "bg-background/80"}`}
             >
-              {i + 1}. {["Preparar", "Ensaiar", "Aplicar", "Revisar"][i]}
+              {i + 1}. {label}
             </div>
           ))}
         </nav>
@@ -398,7 +536,7 @@ export default function SondaDigitalGuided({
           {message}
         </p>
       )}
-      {(phase === "prepare" || phase === "learn" || phase === "run") && (
+      {!direct && (phase === "prepare" || phase === "learn" || phase === "run") && (
         <details
           className={panel}
           open={phase === "prepare" ? true : undefined}
@@ -419,13 +557,15 @@ export default function SondaDigitalGuided({
         </details>
       )}
       {phase === "prepare" && (
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-          <section className={panel}>
-            <h2 className="text-xl font-bold">1. Preparar a aplicação</h2>
+        <div className={`grid gap-5 ${direct ? "" : "lg:grid-cols-[1.1fr_1fr]"}`}>
+          <section className={panel} data-testid={direct ? "sonda-direct-start" : undefined}>
+            <h2 className="text-xl font-bold">
+              {direct ? "1. Idade e início" : "1. Preparar a aplicação"}
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Idade cronológica escolhe a trilha. O roteiro é observacional e
-              sua referência de aplicação é de 10 minutos; preparação e treino
-              vêm antes.
+              {direct
+                ? "Idade cronológica escolhe a trilha. Sem checklist nem ensaio: a aplicadora experiente responde pelo preparo do ambiente, da tela e do som."
+                : "Idade cronológica escolhe a trilha. O roteiro é observacional e sua referência de aplicação é de 10 minutos; preparação e treino vêm antes."}
             </p>
             <div className="mt-5 grid grid-cols-2 gap-4">
               <label className="space-y-2 text-sm font-semibold">
@@ -518,8 +658,55 @@ export default function SondaDigitalGuided({
                 ))}
               </div>
             </fieldset>
+            {direct && (
+              <>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Button
+                    variant={sound !== "visual" ? "default" : "outline"}
+                    aria-pressed={sound !== "visual"}
+                    onClick={() => setSound("heard")}
+                  >
+                    <Volume2 className="mr-2 h-4 w-4" />
+                    Com som eletrônico
+                  </Button>
+                  <Button
+                    variant={sound === "visual" ? "default" : "outline"}
+                    aria-pressed={sound === "visual"}
+                    onClick={() => setSound("visual")}
+                  >
+                    Sem som eletrônico
+                  </Button>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  {DIGITAL_LIMIT}
+                </p>
+                <Button
+                  className="mt-5 w-full"
+                  disabled={!ready}
+                  onClick={() => {
+                    setPhase("run");
+                    setStartedAt(new Date().toISOString());
+                    setPaused(false);
+                    setMessage(
+                      "Modo direto iniciado. Agora começam os registros da aplicação.",
+                    );
+                  }}
+                >
+                  Iniciar aplicação
+                  <Play className="ml-2 h-4 w-4" />
+                </Button>
+                {!ready && (
+                  <p className="mt-3 text-sm" role="status">
+                    Para iniciar: informe uma idade válida.
+                  </p>
+                )}
+                <Button variant="ghost" className="mt-2 w-full" onClick={() => { if (!dirty || window.confirm("Mudar para o presencial apaga esta preparação. Deseja continuar?")) onLegacy(); }}>
+                  Consultar o roteiro presencial original
+                </Button>
+              </>
+            )}
           </section>
-          <section className={panel}>
+          {!direct && <section className={panel}>
             <h2 className="text-xl font-bold">Conferir antes de começar</h2>
             <div className="mt-4 space-y-3">
               {PREPARATION.map((text, i) => (
@@ -609,10 +796,10 @@ export default function SondaDigitalGuided({
             <Button variant="ghost" className="mt-2 w-full" onClick={() => { if (!dirty || window.confirm("Mudar para o presencial apaga esta preparação. Deseja continuar?")) onLegacy(); }}>
               Consultar o roteiro presencial original
             </Button>
-          </section>
+          </section>}
         </div>
       )}
-      {phase === "learn" && (
+      {phase === "learn" && !direct && (
         <>
           <section className={panel}>
             <div className="flex items-center gap-3">
@@ -1545,7 +1732,7 @@ export default function SondaDigitalGuided({
           spec={active.spec}
           initialPlan={active.initialPlan}
           practice={active.practiceIndex !== undefined}
-          soundEnabled={sound === "heard"}
+          soundEnabled={direct ? sound !== "visual" : sound === "heard"}
           waitSeconds={
             active.practiceIndex === undefined
               ? currentStep?.waitSeconds

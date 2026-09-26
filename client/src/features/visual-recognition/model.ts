@@ -14,7 +14,7 @@ export const BANDS = [
   {id:"60-83",min:60,max:83,label:"5–6 anos",note:"Amplie repertório e conceitos contextualizados. Familiaridade cultural e exposição à figura precisam ser registradas."},
   {id:"84-119",min:84,max:119,label:"7–9 anos",note:"Apresentação sóbria. Os itens básicos são amostras dirigidas, não uma avaliação cognitiva global desta idade."},
   {id:"120-155",min:120,max:155,label:"10–12 anos",note:"Seleção conforme questão clínica, linguagem e necessidade de apoio, sem infantilização nem idade equivalente."},
-  {id:"156-215",min:156,max:215,label:"13–17 anos",note:"Use apenas quando pertinente ao repertório e à questão clínica; desconhecimento de uma figura não define déficit."},
+  {id:"156-239",min:156,max:239,label:"13–19 anos",note:"Use apenas quando pertinente ao repertório e à questão clínica; desconhecimento de uma figura não define déficit."},
 ] as const;
 export const COLORS = [
   ["vermelho","Vermelho","var(--rv-color-red)"],["azul","Azul","var(--rv-color-blue)"],["amarelo","Amarelo","var(--rv-color-yellow)"],["verde","Verde","var(--rv-color-green)"],
@@ -53,7 +53,7 @@ export const ITEM_MAP=new Map(ITEMS.map(item=>[item.id,item]));
 export function itemFor(id:string):Item{const item=ITEM_MAP.get(id);if(!item)throw new Error(`Figura não cadastrada: ${id}`);return item;}
 export function ageInMonths(years:string,months:string):number|null{
   if(!/^\d{1,2}$/.test(years)||!/^\d{1,2}$/.test(months))return null;
-  const y=Number(years),m=Number(months),total=y*12+m;return m<=11&&total>=12&&total<=215?total:null;
+  const y=Number(years),m=Number(months),total=y*12+m;return m<=11&&total>=12&&total<=239?total:null;
 }
 export function bandFor(age:number){return Number.isInteger(age)?BANDS.find(b=>age>=b.min&&age<=b.max):undefined;}
 export function eligibleItems(age:number,mode:Mode):Item[]{
@@ -64,6 +64,17 @@ export function shuffle<T>(values:readonly T[],seed:number):T[]{
   const out=[...values];let state=seed>>>0;
   const random=()=>{state+=0x6d2b79f5;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};
   for(let i=out.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;
+}
+/**
+ * Modo Fácil (joguinho): configuração graduada pela idade, sem decisão do
+ * aplicador. Mais novo = menos figuras e duas alternativas bem diferentes;
+ * mais velho = quatro alternativas da mesma categoria, sem infantilizar.
+ */
+export function easyPlanSettings(age:number):{choices:2|3|4;count:number;distractors:Config["distractors"];categories:Category[]}{
+  if(age<24)return{choices:2,count:8,distractors:"distantes",categories:["animais","frutas","objetos","transportes"]};
+  if(age<48)return{choices:2,count:10,distractors:"distantes",categories:Object.keys(CATEGORIES) as Category[]};
+  if(age<84)return{choices:3,count:12,distractors:"distantes",categories:Object.keys(CATEGORIES) as Category[]};
+  return{choices:4,count:12,distractors:"categoria",categories:Object.keys(CATEGORIES) as Category[]};
 }
 export interface Config{ageMonths:number;mode:Mode;choices:2|3|4;count:number;selectedIds:string[];seed:number;distractors:"distantes"|"categoria";contextAcknowledged:boolean;conditions:string[];}
 export interface Trial{id:string;targetId:string;optionIds:string[];mode:Mode;question:string;context?:string;assetVersion:string;adaptedFrom?:string;}

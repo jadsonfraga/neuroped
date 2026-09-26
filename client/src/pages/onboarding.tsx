@@ -27,6 +27,7 @@ export default function OnboardingPage() {
   const [specialty, setSpecialty] = useState("Neuropediatria");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -58,6 +59,7 @@ export default function OnboardingPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setNeedsVerification(false);
     setSubmitting(true);
     try {
       const created = await authFetch("/api/tenants", {
@@ -66,6 +68,9 @@ export default function OnboardingPage() {
       });
       const clinic = await created.json().catch(() => ({}));
       if (!created.ok) {
+        // A recusa por posse de e-mail não confirmada tem um próximo passo
+        // conhecido; a mensagem sozinha descreveria o lugar sem levar até ele.
+        if ((clinic as { code?: string }).code === "EMAIL_VERIFICATION_REQUIRED") setNeedsVerification(true);
         throw new Error((clinic as { error?: string }).error || `Não foi possível criar a clínica (${created.status}).`);
       }
       // Identidade profissional para os documentos — melhor esforço: o perfil
@@ -162,7 +167,7 @@ export default function OnboardingPage() {
           </div>
         </fieldset>
 
-        {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs leading-relaxed text-destructive">{error}</p>}
+        {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-3 text-xs leading-relaxed text-destructive">{error}{needsVerification && <> <a href="#/verificar-email" className="font-semibold underline underline-offset-2">Reenviar link de verificação</a></>}</p>}
         <Button type="submit" disabled={submitting} className="w-full gap-2 rounded-xl bg-gradient-to-r from-primary to-chart-2">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
           {submitting ? "Criando clínica…" : "Criar clínica e entrar"}

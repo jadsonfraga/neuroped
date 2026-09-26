@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { onRequestPost } from "../../functions/api/auth/refresh";
+import { onRequestGet as authMe } from "../../functions/api/auth/me";
 import { createSessionTokens } from "../../functions/api/auth/_sessions";
 import type { UserRow } from "../../functions/api/auth/_shared";
 
@@ -54,6 +55,21 @@ function createFakeD1() {
         }
         if (sql.includes("FROM auth_refresh_sessions") && sql.includes("WHERE id = ?")) {
           return (sessions.get(String(values[0])) ?? null) as T | null;
+        }
+        if (sql.includes("FROM auth_refresh_sessions") && sql.includes("family_id = ? AND user_id = ?")) {
+          // Espelha isSessionFamilyActive: família com sessão viva e não expirada.
+          const [familyId, userId, nowIso] = values.map(String);
+          for (const session of sessions.values()) {
+            if (
+              session.family_id === familyId &&
+              session.user_id === userId &&
+              !session.revoked_at &&
+              session.expires_at > nowIso
+            ) {
+              return { active: 1 } as T;
+            }
+          }
+          return null;
         }
         throw new Error(`SELECT não suportado no fake: ${sql}`);
       },
@@ -302,3 +318,60 @@ async function callRefresh(
 console.log(
   "✓ refresh fecha a reserva de identidade E2E também para famílias de sessão pré-existentes",
 );
+
+
+// ————— Contrato de GET /api/auth/me (o bootstrap de identidade do cliente) —————
+// Único handler do domínio Acesso que não tinha import direto em teste algum
+// (inventário da espiral, ciclo 3). Ele decide quem o app acredita ser: cada
+// caminho de recusa precisa devolver 401 sem vazar nada, e o caminho feliz não
+// pode ecoar material de credencial.
+function meRequest(token?: string): Request {
+  return new Request("https://x.invalid/api/auth/me", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+{
+  const db = createFakeD1();
+  const user = userRow({ id: "me-1", email: "me@example.com" });
+  db.users.set(user.id, user);
+  const tokens = await createSessionTokens(db as never, user, secret);
+  const env = { DB: db as never, NEUROPED_JWT_SECRET: secret };
+
+  // 1) Access token válido: 200 com a identidade pública, sem hash de senha.
+  const ok = await authMe({ request: meRequest(tokens.accessToken), env } as never);
+  assert.equal(ok.status, 200, "access token válido precisa restaurar a identidade");
+  const okText = await ok.text();
+  assert.ok(!okText.includes("password_hash") && !okText.includes("hash"), "a resposta não pode ecoar material de credencial");
+  assert.equal((JSON.parse(okText) as { id: string }).id, "me-1");
+
+  // 2) Refresh token no lugar do access: recusado — os dois tipos não se equivalem.
+  const wrongType = await authMe({ request: meRequest(tokens.refreshToken), env } as never);
+  assert.equal(wrongType.status, 401, "refresh token não pode passar por access token");
+
+  // 3) Sem Authorization e com token lixo: o mesmo 401.
+  assert.equal((await authMe({ request: meRequest(), env } as never)).status, 401);
+  assert.equal((await authMe({ request: meRequest("nao-e-um-jwt"), env } as never)).status, 401);
+
+  // 4) Família revogada (logout/troca de senha): o access ainda não expirou,
+  //    mas a identidade não pode mais ser restaurada por ele.
+  for (const session of db.sessions.values()) session.revoked_at = new Date().toISOString();
+  const revoked = await authMe({ request: meRequest(tokens.accessToken), env } as never);
+  assert.equal(revoked.status, 401, "família revogada invalida o access token restante");
+}
+
+{
+  // 5) Usuário desativado depois da emissão: o token sobrevive, o acesso não.
+  const db = createFakeD1();
+  const user = userRow({ id: "me-2", email: "inativo@example.com" });
+  db.users.set(user.id, user);
+  const tokens = await createSessionTokens(db as never, user, secret);
+  user.is_active = 0;
+  const response = await authMe({
+    request: meRequest(tokens.accessToken),
+    env: { DB: db as never, NEUROPED_JWT_SECRET: secret },
+  } as never);
+  assert.equal(response.status, 401, "conta desativada não restaura identidade");
+}
+
+console.log("✅ auth/me: identidade restaurada só com access token vivo, de família ativa e conta ativa; nenhum material de credencial na resposta.");

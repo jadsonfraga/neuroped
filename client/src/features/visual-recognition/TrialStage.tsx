@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Stimulus } from "./Stimulus";
 import { itemFor, type StageEvent, type Trial } from "./model";
 
-export default function TrialStage({trial,urls,onEvent,onFinish}:{trial:Trial;urls:Record<string,string>;onEvent:(event:StageEvent)=>void;onFinish:()=>void}){
+export default function TrialStage({trial,urls,onEvent,onFinish,autoFinishOnTap=false}:{trial:Trial;urls:Record<string,string>;onEvent:(event:StageEvent)=>void;onFinish:()=>void;autoFinishOnTap?:boolean}){
   const ref=useRef<HTMLDialogElement>(null);
   const handlers=useRef({onEvent,onFinish});handlers.current={onEvent,onFinish};
   const closed=useRef(false),failed=useRef(new Set<string>()),presented=useRef<string|null>(null);
@@ -39,7 +39,7 @@ export default function TrialStage({trial,urls,onEvent,onFinish}:{trial:Trial;ur
       <div className={`rv-child-grid rv-options-${trial.optionIds.length}`}>
         {trial.optionIds.map((id,index)=>{
           const nameTarget=trial.mode==="nomeacao" && target.art==="opposite" && id===trial.targetId;
-          return trial.mode==="nomeacao"?<div key={id} className={`rv-picture ${nameTarget?"rv-naming-target":""}`} aria-label={`Figura ${index+1}${nameTarget?", destacada":""}`}><Stimulus id={id} urls={urls} child onError={error}/></div>:<button key={id} type="button" aria-label={`Selecionar figura ${index+1}`} aria-pressed={selected===id} className={`rv-picture ${selected===id?"rv-chosen":""}`} onClick={()=>{if(broken)return;setSelected(id);event("toque",id);}}><Stimulus id={id} urls={urls} child onError={error}/></button>;
+          return trial.mode==="nomeacao"?<div key={id} className={`rv-picture ${nameTarget?"rv-naming-target":""}`} aria-label={`Figura ${index+1}${nameTarget?", destacada":""}`}><Stimulus id={id} urls={urls} child onError={error}/></div>:<button key={id} type="button" aria-label={`Selecionar figura ${index+1}`} aria-pressed={selected===id} className={`rv-picture ${selected===id?"rv-chosen":""}`} onClick={()=>{if(broken)return;setSelected(id);event("toque",id);if(autoFinishOnTap)finish();}}><Stimulus id={id} urls={urls} child onError={error}/></button>;
         })}
       </div>
     </div>}

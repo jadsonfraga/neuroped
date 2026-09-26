@@ -9,11 +9,28 @@ import {
 
 const OBS_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
 const VISUAL_ROUTE = "/testes-reconhecimento";
+const COGNITIVE_ROUTE = "/testes-cognitivos";
 
-test("Sonda, OBS e reconhecimento visual precedem os atalhos da rotina clínica", () => {
-  assert.deepEqual(featuredNavigation.slice(0, 7).map((item) => item.href), [
-    "/testes-diretos", OBS_ROUTE, VISUAL_ROUTE, "/pacientes", "/agenda", "/laudo-neuroped", "/receita-c1",
+test("Sonda, OBS, reconhecimento visual e testes cognitivos precedem os atalhos da rotina clínica", () => {
+  assert.deepEqual(featuredNavigation.slice(0, 8).map((item) => item.href), [
+    "/testes-diretos", OBS_ROUTE, VISUAL_ROUTE, COGNITIVE_ROUTE, "/pacientes", "/agenda", "/laudo-neuroped", "/receita-c1",
   ]);
+});
+
+test("testes cognitivos por faixa etária têm acesso prioritário e o mesmo nome no destaque", () => {
+  const sections = navSections.filter((section) =>
+    section.items.some((item) => item.href === COGNITIVE_ROUTE),
+  );
+  assert.deepEqual(sections.map((section) => section.title), ["TRIAGEM E FERRAMENTAS"]);
+  const sectionItems = navSections.flatMap((section) => section.items)
+    .filter((item) => item.href === COGNITIVE_ROUTE);
+  const featuredItems = featuredNavigation.filter((item) => item.href === COGNITIVE_ROUTE);
+  assert.equal(sectionItems.length, 1);
+  assert.equal(featuredItems.length, 1);
+  assert.equal(sectionItems[0].label, "Testes cognitivos por faixa etária");
+  assert.equal(featuredItems[0].label, sectionItems[0].label);
+  assert.equal(featuredItems[0].tone, "priority");
+  assert.equal(navigablePages.filter((item) => item.href === COGNITIVE_ROUTE).length, 1);
 });
 
 test("reconhecimento visual tem acesso prioritário e uma única entrada por superfície", () => {
