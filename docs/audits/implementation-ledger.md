@@ -137,6 +137,56 @@ o cliente zero exige migração própria com prova de preservação); cliente
 consumir `permissions` em vez de `canManage`/papel; auditoria de tenant
 (`audit.read`) sem rota tenant-scoped; feature flags por tenant inexistentes.
 
+### Camadas 2, 3 e 4 — fechadas na mesma branch, um commit por frente
+
+Base: os dois commits do catálogo (acima) reaplicados sobre `main@8ee31b2`.
+Cada frente tem escopo único, teste próprio (em `test:quick-wins` e no
+workflow `saas-phase1-foundation`) e rollback por reversão do commit.
+
+| Camada | Entrega | Evidência | Rollback |
+| ------ | ------- | --------- | -------- |
+| 2. Tela por permissão | `configuracoes.tsx` lê `GET /api/tenants/:id` uma vez e a lista `permissions` decide as abas (Equipe = `team.manage`, Plano = `billing.manage`, Atividade = `organization.metrics.read`) e a edição da clínica (`organization.manage`). Resposta sem lista = sem permissão; link profundo para aba invisível cai em Perfil. | Trava estática em `tenant-permissions.test.ts`: sem `canManage`, sem comparação de papel, toda permissão declarada existe no catálogo | reverter; sem migração |
+| 3. Auditoria da clínica | Permissão nova `audit.read` (owner, clinic_admin). `GET /api/tenants/:id/audit` lê `saas_audit_log` com `clinic_id = ?` na contagem e na página, nunca lista linha sem clínica, 403 uniforme para papel sem permissão, clínica alheia, inexistente ou inativa; filtros do parser da trilha de plataforma com curinga de LIKE escapado. Aba Auditoria na tela. | `tenant-audit-log.test.ts` com D1 sintético: isolamento, 403 uniforme, filtros, paginação, metadata malformado | reverter; sem migração (tabela e índice desde a 0009) |
+| 4. Feature flags por clínica | Catálogo `shared/clinicFeatures.ts` (`remote_intake`, `remote_scales`; padrão LIGADO porque são recursos que já operavam; chave desconhecida = off). Migração 0026 `clinic_feature_flags` + bootstrap de runtime (política da 0019) + preservada no purge LGPD. `GET/PATCH /api/tenants/:id/features` (leitura por membro, escrita por `organization.manage`, tudo-ou-nada, auditoria `clinic_feature_update` no mesmo batch). Portas: criação de convite remoto → 403 `FEATURE_DISABLED`; superfície pública → 410, só depois do token válido. Aba Recursos na tela. Workflow `clinic-feature-flags-d1` aplica a 0026 em main com preflight idempotente. | `clinic-feature-flags.test.ts` ponta a ponta contra o SQL real das 0021/0023/0026: catálogo, rota, auditoria, porta na criação e na superfície pública, vizinha intacta, tabela ausente = padrões | reverter; `DROP TABLE clinic_feature_flags` devolve os padrões (tudo ligado) |
+
+Decisões que não são óbvias:
+
+- **Flag opt-out, padrão ligado, tabela ausente = padrões.** Cada flag existente representa um recurso que já operava; a única semântica que preserva produção entre o deploy do código e a aplicação da 0026 é "ninguém desligou nada ainda". Só o erro `no such table` cai nesse caminho; qualquer outro erro propaga. Flag nova que nasça desligada precisa de decisão explícita no catálogo e na matriz do teste.
+- **Superfície pública consulta a flag depois do token válido.** Antes, um 410 por flag responderia diferente de um 404 por token inválido e viraria oráculo de existência de convite. O teste trava a ordem.
+- **Recusa de PATCH é inteira.** Uma chave fora do catálogo ou um valor não booleano derruba o pedido todo; não se grava metade.
+- **`audit.read` é metadado, não conteúdo.** A trilha devolve ator, ação, alvo e metadados já gravados; nunca lê tabela clínica. Nome do ator vem de `users.name` (equipe), não de titular.
+
+### Camada 1 — migração do legado (NÃO executada; PR própria)
+
+Inventário: `patients_demo` e dependentes (`*_demo`) por `owner_user_id`
+(0002); suíte operacional inteira por `provider_user_id` (0007: providers,
+serviços, disponibilidade, `appointments`, bloqueios; 0008 hardening; 0013
+billing provider). Tudo isso serve o cliente zero hoje, fora do modelo de
+clínicas, e o purge LGPD já declara `appointments` inalcançável (#783).
+
+Plano registrado para a PR própria, na ordem em que precisa acontecer:
+
+1. **Prova de preservação antes de qualquer escrita.** Script read-only que
+   conta, por `owner_user_id`/`provider_user_id`, linhas e digest por tabela,
+   e o mapeamento usuário → clínica (membership ativa única; ambiguidade
+   bloqueia). Saída determinística, comparável antes/depois.
+2. **Migração aditiva.** `clinic_id` NULL nas tabelas legadas + índice;
+   backfill por `UPDATE ... SET clinic_id = (membership única) WHERE clinic_id
+   IS NULL`, contando linhas afetadas e falhando fechado se sobrar NULL.
+   Nenhum DROP, nenhuma renomeação.
+3. **Predicado duplo por um ciclo.** Rotas legadas passam a exigir
+   `owner_user_id = ? AND clinic_id = ?` (tenant no predicado final, como a
+   regra do AGENTS.md); só depois de um ciclo verde o predicado de dono deixa
+   de ser autoridade.
+4. **Purge LGPD.** `appointments` sai de `UNREACHABLE_PATIENT_TABLES` quando
+   passar a ter `clinic_id` e vínculo verificável com `live_patients`.
+5. **Rollback declarado.** A coluna aditiva pode ficar; o predicado volta
+   a ser só por dono revertendo o commit de rotas.
+
+Bloqueio para executar: precisa de leitura do D1 de produção (contagens e
+mapeamento usuário → clínica) e de janela com o dono — não é ação desta
+sessão.
+
 ## Rodada 2026-09-14 — métricas de produto ausentes (base `main@efad2006`)
 
 Gatilho: relatório estratégico externo (14/09/2026), produzido SEM acesso ao
