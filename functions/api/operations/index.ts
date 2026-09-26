@@ -1,4 +1,5 @@
 import { getContextUser } from "../auth/_authorization";
+import { resolveBillingClinicId } from "../billing/_guard";
 import {
   appointmentToApi,
   assertLocalDateTime,
@@ -70,25 +71,21 @@ function addDaysLocalMinute(value: string, days: number): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}T${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-async function patientBelongsToProvider(
+async function patientBelongsToClinic(
   db: D1Database,
   patientId: string,
-  providerUserId: string,
+  clinicId: string,
 ): Promise<boolean> {
-  const tables = ["patients", "patients_demo"];
-  for (const table of tables) {
-    try {
-      const row = await db
-        .prepare(`SELECT id FROM ${table} WHERE id = ? AND owner_user_id = ? LIMIT 1`)
-        .bind(patientId, providerUserId)
-        .first<{ id: string }>();
-      if (row?.id) return true;
-    } catch {
-      // A tabela pode não existir no ambiente Cloudflare correspondente; a
-      // próxima tabela compatível será tentada sem alterar o contrato da API.
-    }
-  }
-  return false;
+  const row = await db
+    .prepare(
+      `SELECT id
+         FROM live_patients
+        WHERE id = ? AND clinic_id = ? AND status <> 'merged'
+        LIMIT 1`,
+    )
+    .bind(patientId, clinicId)
+    .first<{ id: string }>();
+  return Boolean(row?.id);
 }
 
 async function getDashboard(
@@ -96,6 +93,7 @@ async function getDashboard(
   env: OperationsEnv,
   provider: { id: string; name: string },
   principal: OperationsPrincipal,
+  clinicId: string,
 ) {
   const profile = await ensureProviderProfile(db, provider);
   const nowMinute = localNow(profile.timezone);
@@ -278,7 +276,7 @@ async function getDashboard(
     reviews: principal.canConfigure ? fullReviews : [],
     notifications,
     metrics,
-    access: principal,
+    access: { ...principal, clinicId },
     staff: principal.canConfigure ? await listOperationsStaff(db, provider.id) : [],
     audit: await listOperationsAudit(db, provider.id, 40),
   };
@@ -291,9 +289,12 @@ async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>
   await ensureOperationsHardeningSchema(context.env.DB);
   const principal = await resolveOperationsPrincipal(context.env.DB, user);
   if (!principal) return null;
+  const clinicId = await resolveBillingClinicId(context.env.DB, user.id, context.request);
+  if (!clinicId) return null;
   return {
     authUser: user,
     principal,
+    clinicId,
     provider: { id: principal.providerUserId, name: principal.providerName },
   };
 }
@@ -314,7 +315,7 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
         403,
       );
     }
-    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal));
+    return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId));
   } catch (error) {
     console.error("[operations.GET]", error);
     return errorResponse("Não foi possível carregar a gestão operacional.", "OPERATIONS_LOAD_FAILED", 500);
@@ -340,7 +341,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         403,
       );
     }
-    const { authUser, principal, provider } = prepared;
+    const { authUser, principal, provider, clinicId } = prepared;
     const user = { ...authUser, id: provider.id, name: provider.name };
     const profile = await ensureProviderProfile(env.DB, provider);
     const now = new Date().toISOString();
@@ -359,6 +360,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       "review_moderate",
       "staff_link",
       "staff_active",
+      "appointment_link_patient",
     ];
     if (configureActions.includes(action) && !principal.canConfigure) {
       return errorResponse("Ação restrita ao profissional responsável.", "FORBIDDEN", 403);
@@ -501,7 +503,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       const endsAtLocal = ends.toISOString().slice(0, 16);
       const appointmentId = `apt-${crypto.randomUUID()}`;
       const patientId = principal.delegated ? null : cleanOptionalText(body.patientId, 100);
-      if (patientId && !(await patientBelongsToProvider(env.DB, patientId, user.id))) {
+      if (patientId && !(await patientBelongsToClinic(env.DB, patientId, clinicId))) {
         return errorResponse("Paciente não encontrado ou sem vínculo com este profissional.", "PATIENT_NOT_FOUND", 404);
       }
       const insertAppointment = env.DB.prepare(
@@ -520,6 +522,26 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       auditTargetType = "appointment";
       auditTargetId = appointmentId;
       auditMetadata = { source: principal.delegated ? "operator" : "professional", serviceId };
+    } else if (action === "appointment_link_patient") {
+      const id = cleanText(body.id, 80);
+      const patientId = cleanText(body.patientId, 120);
+      if (!id || !patientId) {
+        return errorResponse("Consulta e paciente são obrigatórios.", "VALIDATION_ERROR", 400);
+      }
+      if (!(await patientBelongsToClinic(env.DB, patientId, clinicId))) {
+        return errorResponse("Paciente LIVE não encontrado nesta clínica.", "PATIENT_NOT_FOUND", 404);
+      }
+      const result = await env.DB.prepare(
+        `UPDATE appointments
+            SET patient_id = ?, updated_at = ?
+          WHERE id = ? AND provider_user_id = ?`,
+      ).bind(patientId, now, id, user.id).run();
+      if ((result.meta?.changes ?? 0) !== 1) {
+        return errorResponse("Consulta não encontrada.", "NOT_FOUND", 404);
+      }
+      auditTargetType = "appointment";
+      auditTargetId = id;
+      auditMetadata = { status: "patient_linked" };
     } else if (action === "appointment_status") {
       const id = cleanText(body.id, 80);
       const status = parseStatus(body.status);
@@ -623,7 +645,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       targetId: auditTargetId,
       metadata: auditMetadata,
     });
-    return jsonResponse(await getDashboard(env.DB, env, provider, principal));
+    return jsonResponse(await getDashboard(env.DB, env, provider, principal, clinicId));
   } catch (error) {
     console.error(`[operations.POST:${action}]`, error);
     if (String(error).includes("SCHEDULE_CONFLICT")) {
