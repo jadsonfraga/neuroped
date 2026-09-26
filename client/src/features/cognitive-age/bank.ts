@@ -115,8 +115,10 @@ const build = (word: string, extra = "", show = false): Draft => {
   const target = Array.from(word);
   return {
     kind: "build",
-    prompt: show ? `Copie a palavra ${word}` : `Escreva a palavra ${word}`,
-    say: show ? `Olhe a palavra ${word} e monte igual, tocando nas letras na ordem.` : `Escreva a palavra ${word}. Toque nas letras na ordem.`,
+    // Ditado: a palavra fica só no rótulo do aplicador/registro (prompt); a fala
+    // dita à criança (say) e a tela dela nunca a mostram, senão vira cópia.
+    prompt: show ? `Copie a palavra ${word}` : `Escreva a palavra ditada: ${word}`,
+    say: show ? `Olhe a palavra ${word} e monte igual, tocando nas letras na ordem.` : "Escute a palavra e monte com as letras, tocando na ordem.",
     stimulus: show ? word : undefined,
     target,
     tiles: scramble([...target, ...Array.from(extra)], word),
@@ -289,7 +291,8 @@ const DRAFTS: Record<number, Record<CognitiveDomain, Draft[]>> = {
       build("CASA", "", true),
       build("BOLA", "", true),
       tap("Qual está escrita certa?", ["caza", "casa", "kasa", "cassa"], "casa"),
-      tap("Que letra falta em GA_O?", ["T", "D", "P", "L"], "T", { stimulus: "GA_O" }),
+      // Distratores não podem formar palavra (GADO e GALO eram respostas válidas).
+      tap("Que letra falta em GA_O?", ["T", "R", "S", "N"], "T", { stimulus: "GA_O" }),
     ],
     aritmetica: [
       tap("3 + 2 = ?", ["4", "5", "6", "3"], "5"),

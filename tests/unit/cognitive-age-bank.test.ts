@@ -65,6 +65,30 @@ test("cada item declara a fala do adulto e o registro, e tem uma única resposta
       assert.equal(buildMatches(item, [...item.target].reverse()), item.target.join("") === [...item.target].reverse().join(""));
       assert.equal(buildMatches(item, item.target.slice(1)), false);
       assert.equal(item.show, Boolean(item.stimulus));
+      const word = item.target.join("");
+      if (item.show) {
+        assert.ok(item.say.includes(word), `${item.id}: cópia mostra a palavra`);
+      } else {
+        // Ditado: a fala à criança e a tela dela não trazem a palavra; só o rótulo do aplicador/registro.
+        assert.ok(!item.say.includes(word), `${item.id}: ditado não pode falar a palavra escrita à criança`);
+        assert.ok(item.prompt.includes(word), `${item.id}: registro identifica a palavra ditada`);
+      }
+    }
+  }
+});
+
+test("letra que falta: nenhum distrator forma outra palavra válida (GA_O só aceita T)", () => {
+  const OTHER_WORDS = new Set(["GADO", "GALO", "GAGO", "GAIO", "GASO", "GARO", "GANO"]);
+  const fillIns = all.filter(({ item }) => item.kind === "tap" && /^[A-ZÇ]+_[A-ZÇ]+$/.test(item.stimulus ?? ""));
+  assert.ok(fillIns.length >= 1);
+  for (const { item } of fillIns) {
+    if (item.kind !== "tap") continue;
+    const stimulus = item.stimulus ?? "";
+    const completed = (letter: string) => stimulus.replace("_", letter);
+    for (const option of item.options) {
+      if (option === item.answer) continue;
+      assert.ok(!["GADO", "GALO", "GAGO", "GAIO"].includes(completed(option)), `${item.id}: distrator ${option} forma ${completed(option)}`);
+      assert.ok(!OTHER_WORDS.has(completed(option)) || !["GADO", "GALO", "GAGO", "GAIO"].includes(completed(option)), item.id);
     }
   }
 });
