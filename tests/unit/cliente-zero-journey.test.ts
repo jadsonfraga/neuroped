@@ -5,8 +5,8 @@
  *
  * Por que este teste existe separado da jornada de aceite: aquela prova que o
  * produto ACEITA um cliente (cadastro, clínica, convite, isolamento). Esta
- * prova que ele o ATENDE do começo ao fim — descobrir preço, pagar de verdade
- * pelo webhook do provedor, operar clinicamente, exercer direitos LGPD,
+ * prova que ele o ATENDE do começo ao fim — descobrir preço, confirmar no
+ * servidor um webhook sintético do provedor, operar clinicamente, exercer direitos LGPD,
  * trocar senha, cancelar e encerrar. É a diferença entre "arquitetura existe"
  * e "vendável".
  *
@@ -37,13 +37,19 @@ import { onRequestPost as webhookPost } from "../../functions/api/billing/webhoo
 import { onRequestGet as exportGet } from "../../functions/api/tenants/[id]/export";
 import { onRequestPost as lifecyclePost } from "../../functions/api/tenants/[id]/lifecycle";
 import { onRequestPost as patientsPost } from "../../functions/api/live/patients/index";
+import { onRequestPost as eventsPost } from "../../functions/api/live/events/index";
+import { onRequestPost as documentsPost } from "../../functions/api/live/documents/index";
+import { onRequestPost as assessmentsPost } from "../../functions/api/live/assessments/index";
 import { onRequestPost as governancePost } from "../../functions/api/live/governance/index";
+import { onRequestGet as auditGet } from "../../functions/api/tenants/[id]/audit";
+import { readTenantOnboarding } from "../../functions/api/tenants/[id]/onboarding";
 import { billingMe } from "../../functions/api/billing/me";
 import { CANONICAL_PRICE_CENTS } from "../../shared/billing";
 
 const SECRET = "cliente-zero-jwt-secret-com-32-chars!";
 const APP_BASE_URL = "https://app.neuroped.test";
 const SENHA = "Senha-Cliente-Zero1!";
+const EXTERNAL_EVIDENCE_MODE = "MOCKED_EXTERNAL" as const;
 
 // ── Banco: bootstrap real ───────────────────────────────────────────────────
 const raw = new DatabaseSync(":memory:");
@@ -264,7 +270,8 @@ async function entregarWebhook(evento: unknown, token = env.ASAAS_WEBHOOK_TOKEN)
   assert.equal(forjado.status, 401, "webhook sem token válido é recusado");
 }
 
-// Pagamento real.
+// Prova local do contrato: o handler recebe um webhook autenticado sintético.
+// Não há transação no Asaas e a evidência externa permanece MOCKED_EXTERNAL.
 {
   const pago = await entregarWebhook({
     id: "evt-pagamento-azul",
@@ -510,7 +517,7 @@ raw.prepare(
   assert.notEqual(promocao.status, 200, "VERMELHA não se promove dentro de AZUL");
 }
 
-// ═══ 16-18. Operação clínica sintética + trilha de auditoria ════════════════
+// ═══ 16-21. Operação clínica sintética + trilha de auditoria ════════════════
 const pacienteSintetico = await (async () => {
   const resposta = await patientsPost(
     ctx(
@@ -527,6 +534,99 @@ const pacienteSintetico = await (async () => {
   assert.equal(resposta.status, 201, "clínica paga cria paciente");
   return ((await resposta.json()) as { id: string }).id;
 })();
+
+const encontroSintetico = await (async () => {
+  const resposta = await eventsPost(
+    ctx(
+      req("https://x.test/api/live/events", "POST", {
+        clinicId: CLINICA_AZUL,
+        patientId: pacienteSintetico,
+        eventType: "encounter",
+        occurredAt: "2026-09-05T15:00:00.000Z",
+        encounterId: "consulta-cliente-zero-1",
+        provenanceKind: "observed",
+        provenanceSource: "clinician",
+        payload: {
+          encounterType: "initial",
+          setting: "clinic",
+          reason: "Consulta sintética para validação automatizada.",
+          subjective: "Relato inteiramente sintético.",
+          objective: "Observação inteiramente sintética.",
+        },
+      }),
+      azul,
+    ),
+  );
+  assert.equal(resposta.status, 201, "clínica paga registra a primeira consulta");
+  const corpo = (await resposta.json()) as { id: string; eventType: string };
+  assert.equal(corpo.eventType, "encounter");
+  return corpo.id;
+})();
+
+const documentoSintetico = await (async () => {
+  const resposta = await documentsPost(
+    ctx(
+      req("https://x.test/api/live/documents", "POST", {
+        clinicId: CLINICA_AZUL,
+        patientId: pacienteSintetico,
+        documentType: "clinical_note",
+        origin: "clinician",
+        status: "draft",
+        familyVisibility: false,
+        issuedAt: "2026-09-05T15:30:00.000Z",
+        content: {
+          title: "Rascunho sintético cliente-zero",
+          body: "Documento sintético; requer revisão profissional antes de publicação.",
+        },
+      }),
+      azul,
+    ),
+  );
+  assert.equal(resposta.status, 201, "clínica paga cria documento clínico em rascunho");
+  const corpo = (await resposta.json()) as { id: string; status: string };
+  assert.equal(corpo.status, "draft", "o documento não é finalizado automaticamente");
+  return corpo.id;
+})();
+
+const avaliacaoSintetica = await (async () => {
+  const resposta = await assessmentsPost(
+    ctx(
+      req("https://x.test/api/live/assessments", "POST", {
+        clinicId: CLINICA_AZUL,
+        patientId: pacienteSintetico,
+        instrumentId: "instrumento-sintetico-cliente-zero",
+        instrumentVersion: "1.0.0-test",
+        appliedAt: "2026-09-05T16:00:00.000Z",
+        provenanceSource: "instrument",
+        payload: {
+          synthetic: true,
+          notice: "Resultado de teste sem interpretação diagnóstica.",
+        },
+        responses: [{ itemId: "item-sintetico-1", itemPosition: 0, value: 1 }],
+      }),
+      azul,
+    ),
+  );
+  assert.equal(resposta.status, 201, "clínica paga registra a primeira avaliação");
+  const corpo = (await resposta.json()) as { id: string; interpretationNotice: string };
+  assert.match(corpo.interpretationNotice, /não constitui diagnóstico automático/i);
+  return corpo.id;
+})();
+
+assert.ok(encontroSintetico && documentoSintetico && avaliacaoSintetica);
+
+// O checklist é calculado no servidor a partir dos fatos persistidos. O
+// redirect de checkout nunca participa da decisão de billing.
+{
+  const onboarding = await readTenantOnboarding(db, CLINICA_AZUL, env);
+  assert.ok(onboarding, "o tenant possui projeção persistente de onboarding");
+  assert.equal(onboarding.progress.total, 10);
+  assert.equal(onboarding.progress.completed, 10, "os dez marcos zero-to-value foram materializados");
+  assert.equal(onboarding.progress.percent, 100);
+  assert.equal(onboarding.billingEvidence.status, "SERVER_CONFIRMED");
+  assert.equal(onboarding.billingEvidence.source, "billing_invoice_events.charge_paid");
+  assert.equal(EXTERNAL_EVIDENCE_MODE, "MOCKED_EXTERNAL", "o teste não promove mock a cobrança real");
+}
 
 // O conteúdo clínico não pode estar legível no banco.
 {
@@ -558,6 +658,28 @@ const pacienteSintetico = await (async () => {
   );
 }
 
+// A visão self-service de auditoria devolve os fatos do tenant, não só uma
+// consulta direta de teste ao banco.
+{
+  const resposta = await auditGet(
+    ctx(new Request(`https://x.test/api/tenants/${CLINICA_AZUL}/audit?limit=100`), azul, {
+      id: CLINICA_AZUL,
+    }),
+  );
+  assert.equal(resposta.status, 200, "owner consulta a auditoria da própria clínica");
+  const corpo = (await resposta.json()) as { data: Array<{ action: string; targetId: string | null }> };
+  assert.ok(corpo.data.some((entrada) => entrada.action === "live_clinical_event_create"));
+  assert.ok(corpo.data.some((entrada) => entrada.targetId === documentoSintetico));
+  assert.ok(corpo.data.some((entrada) => entrada.targetId === avaliacaoSintetica));
+
+  const alheia = await auditGet(
+    ctx(new Request(`https://x.test/api/tenants/${CLINICA_AZUL}/audit`), vermelha, {
+      id: CLINICA_AZUL,
+    }),
+  );
+  assert.equal(alheia.status, 404, "tenant alheio não infere nem lê a auditoria de AZUL");
+}
+
 // VERMELHA não escreve nem enxerga paciente na AZUL.
 {
   const escrita = await patientsPost(
@@ -573,7 +695,7 @@ const pacienteSintetico = await (async () => {
   assert.equal(escrita.status, 403, "VERMELHA não escreve dado clínico em AZUL");
 }
 
-// ═══ 19-20. Direitos LGPD: exportação e pedido de eliminação ════════════════
+// ═══ 22-23. Direitos LGPD: exportação e pedido de eliminação ════════════════
 {
   const resposta = await exportGet(
     ctx(new Request(`https://x.test/api/tenants/${CLINICA_AZUL}/export`), azul, { id: CLINICA_AZUL }),
@@ -585,7 +707,11 @@ const pacienteSintetico = await (async () => {
     manifest?: { complete?: boolean; digestSha256?: string; counts?: { patients?: number } };
     data?: { patients?: unknown[] };
   };
-  assert.equal(corpo.manifest?.complete, true, "a exportação se declara completa");
+  assert.equal(
+    corpo.manifest?.complete,
+    false,
+    "o manifesto não esconde que documentos e avaliações ainda não entram no payload",
+  );
   assert.equal(corpo.manifest?.digestSha256, digest, "o digest do cabeçalho bate com o do manifesto");
   assert.equal(corpo.manifest?.counts?.patients, 1, "o manifesto conta o paciente da clínica");
   assert.equal(corpo.data?.patients?.length, 1, "a exportação inclui o paciente da clínica");
@@ -752,5 +878,5 @@ const pedidoEliminacao = await (async () => {
 globalThis.fetch = realFetch;
 
 console.log(
-  "✅ CLIENTE ZERO: conta confirmada → clínica → checkout → pagamento real por webhook → entitlement → equipe por e-mail → papel → paciente cifrado → auditoria metadata-only → exportação com digest → pedido de eliminação → troca de senha revogando sessões → encerramento com retenção → webhook tardio sem reabrir acesso. CLINICA_VERMELHA intacta em todas as superfícies.",
+  "✅ CLIENTE ZERO: conta confirmada → clínica → checkout → webhook MOCKED_EXTERNAL autenticado no handler real → entitlement → equipe por e-mail → papel → paciente → consulta/evento → documento draft → avaliação → onboarding 10/10 server-computed → auditoria metadata-only → exportação com digest e incompletude explícita → pedido de eliminação → troca de senha revogando sessões → encerramento com retenção → webhook tardio sem reabrir acesso. CLINICA_VERMELHA intacta em todas as superfícies.",
 );
