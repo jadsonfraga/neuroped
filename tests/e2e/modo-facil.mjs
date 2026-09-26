@@ -281,16 +281,20 @@ try {
   await button("Reiniciar jogo").click();
   await page.getByLabel("Idade da criança (anos)").fill("8");
   await button("Começar o jogo").click();
-  while (!/Escreva a palavra ESCOLA/.test(await page.getByTestId("cognitive-easy-step").innerText())) await manualTap("cognitive-easy-pular");
+  while (!/palavra ditada: ESCOLA/.test(await page.getByTestId("cognitive-easy-step").innerText())) await manualTap("cognitive-easy-pular");
   await manualTap("cognitive-easy-show");
   await child.waitFor();
+  // Ditado: com a tela da criança aberta, a palavra não está em nenhum texto visível.
+  const visibleEscola = await page.getByTestId("cognitive-easy-step").evaluate((el) =>
+    Array.from(el.querySelectorAll("*")).filter((n) => n.children.length === 0 && !n.closest(".sr-only") && (n.textContent || "").includes("ESCOLA")).length);
+  assert.equal(visibleEscola, 0, "ditado: a criança não vê a palavra escrita");
   await pace();
   for (const letter of "ESCOLA") await child.getByRole("button", { name: `Letra ${letter}`, exact: true }).first().click();
   await child.waitFor({ state: "detached" });
   await manualTap("cognitive-easy-next");
   await playEasy("cognitive-easy");
   const report8 = await page.getByLabel("Resultado do jogo").inputValue();
-  assert.match(report8, /Escreva a palavra ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");
+  assert.match(report8, /Escreva a palavra ditada: ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");
 
   assert.deepEqual(errors, [], "sem erros de página");
   console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda ${sonda.steps} passos, OBS-10 ${obs.steps} passos, Reconhecimento com toque automático, Cognitivo 16 passos com toque e montagem automáticos).`);

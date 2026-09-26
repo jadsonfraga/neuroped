@@ -465,6 +465,14 @@ function QuestStage({
 
           {q.kind === "tap" && <TapBody item={q} selected={selected} onPick={(option) => register(option, option === q.answer)} />}
           {q.kind === "build" && <BuildBody key={q.id} item={q} onDone={(placed) => register(placed.join(""), buildMatches(q, placed))} />}
+          {q.kind === "build" && !q.show && (
+            <details className="text-sm text-muted-foreground" data-testid="cognitive-dictation-word">
+              <summary className="cursor-pointer font-semibold">Palavra ditada (só o aplicador lê)</summary>
+              <p className="mt-1">
+                Fale a palavra <strong>{q.target.join("")}</strong> e deixe a criança montar. A tela confere sozinha.
+              </p>
+            </details>
+          )}
           {q.kind === "say" && (
             <div className="space-y-3">
               <SayBody item={q} />
@@ -664,12 +672,18 @@ function WorldScreen({
 
 // ─────────────────────────────── Modo Fácil ───────────────────────────────
 /** Os 16 itens da idade viram passos lineares do motor compartilhado (EasyGame). */
+function stimulusTag(stimulus: string): string {
+  const words = stimulus.trim().split(/\s+/);
+  return words.length <= 4 ? words.join(" ") : `${words.slice(0, 4).join(" ")}…`;
+}
 function easyStepsFor(age: number): EasyStep[] {
   return WORLD_ORDER.flatMap((domain) =>
     itemsFor(age, domain).map((item): EasyStep => ({
       id: item.id,
       group: `${WORLDS[domain].emoji} ${WORLDS[domain].name} · ${domainLabel(domain, age)}`,
-      title: item.prompt,
+      // Itens de fala compartilham o enunciado ("O que é isto?"): o título leva o
+      // estímulo para o registro identificar qual figura/letra/palavra foi.
+      title: item.kind === "say" ? `${item.prompt} · ${stimulusTag(item.stimulus)}` : item.prompt,
       say: item.say,
       hint: adultHint(item),
       visual:
@@ -780,7 +794,8 @@ export default function TestesCognitivosFaixaEtariaPage() {
               value={ageStr}
               onChange={(e) => {
                 if (easyProgress > 0 && !window.confirm(EASY_EXIT_PROMPT)) return;
-                setAgeStr(e.target.value.replace(/\D/g, "").slice(0, 2));
+                // Só os dígitos iniciais: "1.5", "1,5" ou "-3" não viram 15 nem 3.
+                setAgeStr(e.target.value.match(/^\d{0,2}/)?.[0] ?? "");
                 resetAdventure();
               }}
               placeholder="ex.: 7"
