@@ -8,6 +8,8 @@ import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { escapeHtml as esc } from "@/lib/htmlEscape";
 import {
   issuerCityLine,
@@ -448,6 +450,9 @@ html,body{background:var(--white);font-family:'Carlito',Arial,sans-serif;font-si
 
 export default function ReceitaC1Page() {
   const { issuer } = useIssuer();
+  const { accessMode, isAuthenticated } = useAuth();
+  const { activeClinicId } = useClinic();
+  const isRemoteClinical = accessMode === "remote" && isAuthenticated;
   const [f, setF] = useState<ReceitaFields>({ ...EMPTY, data: todayBR() });
   const [showPreview, setShowPreview] = useState(false);
   const [patientLoading, setPatientLoading] = useState(false);
@@ -455,14 +460,19 @@ export default function ReceitaC1Page() {
   const filename = `receita-c1-${dateStamp()}`;
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || (isRemoteClinical && !activeClinicId)) return;
     let cancelled = false;
     setPatientLoading(true);
-    apiRequest("GET", `/api/patients/${encodeURIComponent(patientId)}`)
+    const patientUrl = isRemoteClinical
+      ? `/api/live/patients/${encodeURIComponent(patientId)}?clinicId=${encodeURIComponent(activeClinicId ?? "")}`
+      : `/api/patients/${encodeURIComponent(patientId)}`;
+    apiRequest("GET", patientUrl)
       .then((response) => response.json())
       .then((payload) => {
         if (cancelled) return;
-        const patient = payload?.patient ?? payload?.data ?? payload;
+        const patient = isRemoteClinical
+          ? payload?.profile ?? {}
+          : payload?.patient ?? payload?.data ?? payload;
         setF((current) => ({
           ...current,
           pac: current.pac || patient?.name || "",
@@ -475,7 +485,7 @@ export default function ReceitaC1Page() {
         if (!cancelled) setPatientLoading(false);
       });
     return () => { cancelled = true; };
-  }, [patientId]);
+  }, [activeClinicId, isRemoteClinical, patientId]);
 
   function set(k: keyof ReceitaFields) {
     return ({ target }: { target: { value: string } }) =>
@@ -583,7 +593,7 @@ export default function ReceitaC1Page() {
       <section className="rounded-2xl border border-border/70 bg-card/80 p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-bold text-foreground">Dados da receita</h2>
-          <span className="text-xs text-muted-foreground">{patientLoading ? "Carregando paciente…" : patientId ? "Paciente vinculado ao prontuário" : "Abra esta tela por Pacientes"}</span>
+          <span className="text-xs text-muted-foreground">{patientLoading ? "Carregando paciente…" : patientId ? (isRemoteClinical ? "Paciente LIVE vinculado ao prontuário" : "Paciente vinculado ao prontuário") : "Abra esta tela por Pacientes"}</span>
         </div>
 
         <div>
