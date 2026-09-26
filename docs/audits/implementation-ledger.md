@@ -106,6 +106,37 @@ link manual); trial expira sem aviso prévio (job de dunning = rodada
 própria); operator não abre /configuracoes no client (RBAC de rota
 uniforme; perfil dele é editável via API).
 
+## Rodada 2026-09-26 — RBAC do tenant por permissão (base `main@9b3a300`)
+
+Mandato: "transformação cirúrgica em SaaS comercializável". Auditoria de
+partida confirmou que tenancy, memberships, convites, onboarding, billing,
+entitlements, lifecycle e LGPD já existem (0009–0025); a lacuna estrutural
+mais barata de fechar sem risco era a CAMADA 4: autorização do tenant era
+comparação de nome de papel (`role === "owner"`, `["owner","clinic_admin"].includes`,
+`m.role IN (...)` em SQL) espalhada por 6 rotas.
+
+| Item | Status | Evidência |
+| ---- | ------ | --------- |
+| Catálogo central papel → permissão (`shared/permissions.ts`, 11 permissões, fail-closed) | DONE | `tests/unit/tenant-permissions.test.ts`: matriz literal 5×11, papéis globais/desconhecidos sem permissão, equivalência com a semântica anterior de cada porta |
+| Rotas perguntam permissão (`membershipHas`/`roleHasPermission`), não papel: checkout, convites, membros, lifecycle, export, métricas | DONE | Trava estática no mesmo teste: comparação literal de papel do ator em `functions/api/{tenants,billing,live,tenant}` reprova |
+| `GET /api/tenants/:id` devolve `permissions` efetivas (vazio com clínica inativa) | DONE | Asserção no teste; `canManage` preservado para o cliente atual |
+
+Comportamento de acesso inalterado (provado pela equivalência). Rollback:
+reverter o commit; nenhuma migração envolvida.
+
+Decisão registrada, não tomada: `clinic_admin` mantém `billing.manage` (é o
+comportamento atual). Tirar cobrança do admin é mudança comercial: uma linha
+em `GRANTS` + a linha correspondente da matriz do teste.
+
+Achado lateral, não corrigido (fora do escopo): `tests/unit/saas-membership-owner-regression.test.mjs`
+falha já na base (`9b3a300`) e não é chamado por nenhum script nem workflow.
+
+Próximas camadas por ordem de dependência (lacunas reais, não refeitas):
+tabelas legadas `patients_demo`/agenda ainda por `owner_user_id` (tenantizar
+o cliente zero exige migração própria com prova de preservação); cliente
+consumir `permissions` em vez de `canManage`/papel; auditoria de tenant
+(`audit.read`) sem rota tenant-scoped; feature flags por tenant inexistentes.
+
 ## Rodada 2026-09-14 — métricas de produto ausentes (base `main@efad2006`)
 
 Gatilho: relatório estratégico externo (14/09/2026), produzido SEM acesso ao

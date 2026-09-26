@@ -1,13 +1,17 @@
 import { getContextUser } from "../../auth/_authorization";
 import { tenantError, tenantJson } from "../../tenant/_core";
+import { rolesWithPermission } from "../../../../shared/permissions";
 import type { ApiMetricsEnv } from "../../_observability";
 
 interface Env extends ApiMetricsEnv { DB?: D1Database; }
 interface MetricsRow { dau: number; wau: number; mau: number; events: number; daily_json: string; }
+// Papéis vêm do catálogo congelado (identificadores fixos, nunca entrada do
+// usuário); a allowlist é o que torna a interpolação segura.
+const METRICS_ROLES_SQL = rolesWithPermission("organization.metrics.read").map((role) => `'${role}'`).join(", ");
 const SQL = `WITH authorized AS (
   SELECT 1 AS allowed FROM clinic_memberships m JOIN clinics c ON c.id = m.clinic_id
   WHERE m.clinic_id = ? AND m.user_id = ? AND m.active = 1
-    AND m.role IN ('owner', 'clinic_admin') AND c.status = 'active'
+    AND m.role IN (${METRICS_ROLES_SQL}) AND c.status = 'active'
 ), scoped AS (
   SELECT actor_user_id, substr(created_at, 1, 10) AS day FROM saas_audit_log
   WHERE clinic_id = ? AND created_at >= ? AND created_at < ?

@@ -1,4 +1,5 @@
 import { getContextUser } from "../../auth/_authorization";
+import { roleHasPermission } from "../../../../shared/permissions";
 import {
   isClinicMembershipRole,
   type ClinicMembershipRole,
@@ -6,7 +7,7 @@ import {
 import {
   getClinicMembership,
   isReservedTechnicalEmail,
-  membershipCanManage,
+  membershipHas,
   prepareSaasAudit,
   tenantError,
   tenantJson,
@@ -48,7 +49,7 @@ async function managerContext(context: ManagerContextInput) {
   if (!user) return { error: tenantError("Não autenticado.", "UNAUTHENTICATED", 401) } as const;
   if (!clinicId) return { error: tenantError("Clínica inválida.", "VALIDATION_ERROR", 400) } as const;
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !membershipCanManage(membership)) {
+  if (!membership || !membershipHas(membership, "team.manage")) {
     return { error: tenantError("Apenas gestores da clínica podem administrar a equipe.", "TENANT_FORBIDDEN", 403) } as const;
   }
   return { db, user, clinicId, membership, env: context.env } as const;
@@ -149,7 +150,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const role: ClinicMembershipRole = roleRaw;
-  if (role === "owner" && auth.membership.role !== "owner") {
+  if (role === "owner" && !roleHasPermission(auth.membership.role, "team.manage_owners")) {
     return tenantError("Somente owner pode conceder papel owner.", "TENANT_FORBIDDEN", 403);
   }
 
@@ -198,7 +199,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   if (
     currentMembership?.active === 1 &&
     currentMembership.role === "owner" &&
-    auth.membership.role !== "owner"
+    !roleHasPermission(auth.membership.role, "team.manage_owners")
   ) {
     return tenantError("Somente owner pode alterar o papel de outro owner.", "TENANT_FORBIDDEN", 403);
   }
@@ -300,7 +301,7 @@ export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
     return tenantError("Membership ativa não encontrada.", "MEMBERSHIP_NOT_FOUND", 404);
   }
   if (targetMembership.role === "owner") {
-    if (auth.membership.role !== "owner") {
+    if (!roleHasPermission(auth.membership.role, "team.manage_owners")) {
       return tenantError("Somente owner pode remover outro owner.", "TENANT_FORBIDDEN", 403);
     }
     if ((await otherActiveOwnerCount(auth.db, auth.clinicId, targetUserId)) === 0) {
