@@ -35,9 +35,11 @@ assert.match(middleware, /"\/api\/auth\/change-password"/);
 assert.match(middleware, /PASSWORD_CHANGE_REQUIRED/);
 assert.match(
   middleware,
-  /passwordChangeFailure\(request, user\) \?\? roleFailure\(request, user\)/,
+  /const passwordFailure = passwordChangeFailure\(request, user\);\s*if \(passwordFailure\) return \{ failure: passwordFailure, user \};\s*const tenantAuthorization = await tenantManagementAuthorization\(env\.DB, request, user\);/,
   "must_change_password deve bloquear APIs clínicas antes do RBAC comum",
 );
+
+assert.match(middleware, /failure: tenantAuthorization\.handled \? tenantAuthorization\.failure : roleFailure\(request, user\)/);
 
 assert.match(authClient, /export async function changePasswordRequest/);
 assert.match(authClient, /"\/api\/auth\/change-password"/);

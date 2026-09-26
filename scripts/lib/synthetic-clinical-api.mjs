@@ -290,6 +290,7 @@ function operationsDashboard() {
  * @property {Set<string>|string[]} [failing] Prefixos de rota que devolvem 500 (erro recuperável).
  * @property {Set<string>|string[]} [hanging] Prefixos de rota que nunca respondem (estado de carregamento).
  * @property {boolean} [expiredSession] Faz `/api/auth/me` e as rotas clínicas responderem 401.
+ * @property {"admin"|"professional"|"reader"|"operator"} [userRole] Papel global sintético, independente da membership.
  */
 
 /**
@@ -313,11 +314,20 @@ export function createSyntheticClinicalApi(scenario = {}) {
     ? [CLINIC_PRIMARY, CLINIC_SECONDARY]
     : [CLINIC_PRIMARY];
 
+  const clinicDetails = new Map(clinics.map((clinic) => [clinic.id, {
+    ...clinic,
+    canManage: clinic.role === "owner" || clinic.role === "clinic_admin",
+    settings: {
+      displayName: clinic.name, addressLine1: "", addressLine2: "", phone: "",
+      publicEmail: "", companyLine: "", motto: "",
+    },
+  }]));
+
   const user = {
     id: "usuario-sintetico-e2e",
     email: SYNTHETIC_EMAIL,
     name: "Profissional Sintético E2E",
-    role: "admin",
+    role: scenario.userRole ?? "admin",
     mustChangePassword: false,
   };
 
@@ -433,11 +443,20 @@ export function createSyntheticClinicalApi(scenario = {}) {
         send(response, 404, { error: "Clínica não encontrada." });
         return true;
       }
-      send(response, 200, {
-        id: clinic.id,
-        name: clinic.name,
-        settings: { displayName: clinic.name },
-      });
+      const detail = clinicDetails.get(id);
+      if (!detail) throw new Error("Missing synthetic clinic detail");
+      if (request.method === "PATCH") {
+        if (!detail.canManage) {
+          send(response, 403, { error: "Gestão não permitida." });
+          return true;
+        }
+        const body = await readBody(request);
+        detail.name = body.name ?? detail.name;
+        detail.legalName = body.legalName ?? detail.legalName;
+        detail.timezone = body.timezone ?? detail.timezone;
+        detail.settings = { ...detail.settings, ...body.settings };
+      }
+      send(response, 200, detail);
       return true;
     }
 

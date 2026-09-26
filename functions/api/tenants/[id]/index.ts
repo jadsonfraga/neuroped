@@ -13,7 +13,7 @@ import {
   ensureSelfServiceSchema,
   getClinicSettings,
   parseClinicSettingsInput,
-  upsertClinicSettings,
+  prepareClinicSettingsUpsert,
 } from "../../tenant/_settings";
 
 /**
@@ -87,20 +87,25 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const now = new Date().toISOString();
-  const statements = [];
-  if (name || legalName || timezone) {
-    statements.push(
-      db
-        .prepare(
+  const statements = [
+    db
+      .prepare(
           `UPDATE clinics
               SET name = COALESCE(NULLIF(?, ''), name),
                   legal_name = COALESCE(NULLIF(?, ''), legal_name),
                   timezone = COALESCE(NULLIF(?, ''), timezone),
                   updated_at = ?
-            WHERE id = ? AND status = 'active'`,
-        )
-        .bind(name, legalName, timezone, now, clinicId),
-    );
+            WHERE id = ? AND status = 'active'
+              AND EXISTS (
+                SELECT 1 FROM clinic_memberships m
+                 WHERE m.clinic_id = clinics.id AND m.user_id = ?
+                   AND m.active = 1 AND m.role IN ('owner', 'clinic_admin')
+              )`,
+      )
+      .bind(name, legalName, timezone, now, clinicId, user.id),
+  ];
+  if (isPlainObject(body.settings)) {
+    statements.push(prepareClinicSettingsUpsert(db, clinicId, user.id, parseClinicSettingsInput(body.settings)));
   }
   statements.push(
     prepareSaasAudit(db, {
@@ -110,15 +115,15 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
       targetType: "clinic",
       targetId: clinicId,
       metadata: { fields: ["name", "legalName", "timezone", "settings"].filter((field) => field in body) },
-    }),
+    }, true),
   );
 
-  await ensureSelfServiceSchema(db);
-  if (isPlainObject(body.settings)) {
-    await upsertClinicSettings(db, clinicId, user.id, parseClinicSettingsInput(body.settings));
-  }
   try {
-    await db.batch(statements);
+    await ensureSelfServiceSchema(db);
+    const results = await db.batch(statements);
+    if ((results[0]?.meta?.changes ?? 0) !== 1) {
+      return tenantError("Gestão não autorizada para esta clínica.", "TENANT_FORBIDDEN", 403);
+    }
   } catch (error) {
     console.error("[tenants/:id.PATCH] DB error", error);
     return tenantError("Não foi possível atualizar a clínica.", "DB_ERROR", 500);
