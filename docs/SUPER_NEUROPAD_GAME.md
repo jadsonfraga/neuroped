@@ -110,3 +110,20 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
 
 Reverter o commit desta entrega remove a rota, o item de navegação, a entrada em
 `SENSITIVE_ROUTES` e os arquivos acima. Nenhuma migração, nenhum dado persistido.
+
+
+## Revisão da consolidação — 26/09/2026
+
+Partidas incompletas não recebem classificação global, por fase ou interpretação.
+Os registros individuais continuam disponíveis na tela, no resumo e no PDF; a
+completude exige cada item previsto exatamente uma vez, não apenas 20 respostas.
+A pausa mantém a contagem e o estado do estímulo de memória; retomar não expõe
+novamente figuras já escondidas. O tempo informado soma somente os intervalos
+ativos do desafio. Links de aprofundamento abrem em outra aba e conservam o
+resultado na aba original. O aviso de fechar a aba também cobre resultados.
+
+Regressões: `test:super-neuropad` cobre interrupções em 0/1/4/7/19 itens,
+duplicação de registros e os três formatos de saída; `test:e2e:super-neuropad`
+cobre pausa antes/depois de esconder memória, aprofundamento com preservação
+de resultado, encerramento após um item e download do PDF parcial.
+Rollback: reverter o commit da revisão; não há migração ou dado persistido.

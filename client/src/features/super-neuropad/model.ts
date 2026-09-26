@@ -585,7 +585,7 @@ export interface PhaseSummary {
   errors: number;
   noResponse: number;
   total: number;
-  level: Level;
+  level: Level | null;
   /** Falso quando nenhum item da fase foi registrado (partida interrompida). */
   applied: boolean;
   /** Tempo somado dos itens registrados na fase, em segundos. */
@@ -599,7 +599,7 @@ export interface GameSummary {
   phases: PhaseSummary[];
   hits: number;
   total: number;
-  level: Level;
+  level: Level | null;
   durationSeconds: number;
   complete: boolean;
 }
@@ -607,6 +607,10 @@ export interface GameSummary {
 export function summarize(session: GameSession): GameSummary {
   const band = bandForYears(session.ageYears) ?? AGE_BANDS[0];
   const character = CHARACTERS.find((entry) => entry.id === session.characterId) ?? CHARACTERS[0];
+  const expected = PHASE_ORDER.flatMap((phaseId) => itemsFor(band.id, phaseId).map((item) => ({ item, phaseId })));
+  const complete = bandForYears(session.ageYears)?.id === session.bandId
+    && session.answers.length === expected.length
+    && expected.every(({ item, phaseId }) => session.answers.filter((answer) => answer.itemId === item.id && answer.phaseId === phaseId).length === 1);
   const phases: PhaseSummary[] = PHASE_ORDER.map((phaseId) => {
     const phase = phaseById(phaseId);
     const answers = session.answers.filter((answer) => answer.phaseId === phaseId);
@@ -615,13 +619,12 @@ export function summarize(session: GameSession): GameSummary {
     const errors = answers.filter((answer) => answer.status === "erro").length;
     const noResponse = answers.filter((answer) => answer.status === "sem_resposta").length;
     const seconds = Math.round(answers.reduce((sum, answer) => sum + answer.seconds, 0));
-    return { phase, hits, errors, noResponse, total, level: phaseLevel(hits, total), applied: answers.length > 0, seconds, answers };
+    return { phase, hits, errors, noResponse, total, level: complete ? phaseLevel(hits, total) : null, applied: answers.length > 0, seconds, answers };
   });
   const hits = phases.reduce((sum, phase) => sum + phase.hits, 0);
   const total = phases.reduce((sum, phase) => sum + phase.total, 0);
-  const answered = session.answers.length;
   const durationSeconds = session.answers.reduce((sum, answer) => sum + answer.seconds, 0);
-  return { band, character, phases, hits, total, level: overallLevel(hits, total), durationSeconds: Math.round(durationSeconds), complete: answered === total };
+  return { band, character, phases, hits, total, level: complete ? overallLevel(hits, total) : null, durationSeconds: Math.round(durationSeconds), complete };
 }
 
 export function formatDuration(seconds: number): string {
@@ -712,12 +715,14 @@ function shortPhase(phase: PhaseSummary): string {
   return `${phase.phase.name} ${phase.hits}/${phase.total}`;
 }
 
-export function interpret(session: GameSession): GameReading {
+export function interpret(session: GameSession): GameReading | null {
   const summary = summarize(session);
+  // Uma partida parcial conserva os registros, mas nunca produz classificação ou interpretação.
+  if (!summary.complete || summary.level === null) return null;
   const applied = summary.phases.filter((phase) => phase.applied);
   const notApplied = summary.phases.filter((phase) => !phase.applied);
   const priorities = applied
-    .filter((phase) => phase.level !== "esperado")
+    .filter((phase): phase is PhaseSummary & { level: Level } => phase.level !== null && phase.level !== "esperado")
     .sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level] || a.hits - b.hits || a.phase.order - b.phase.order);
   const missed = session.answers.filter((answer) => answer.status !== "acerto");
   const errors = missed.filter((answer) => answer.status === "erro").length;
@@ -831,6 +836,10 @@ export function buildGameBrief(session: GameSession, date = new Date()): string 
   const summary = summarize(session);
   const reading = interpret(session);
   const day = date.toISOString().slice(0, 10).split("-").reverse().join("/");
+  if (!reading || summary.level === null) {
+    return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, faixa ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação. `
+      + session.answers.map((answer) => `${answer.prompt}: ${answer.given} (${STATUS_LABELS[answer.status].toLowerCase()}; ${answer.seconds} s).`).join(" ");
+  }
   const parts: string[] = [
     `Triagem lúdica de pré-consulta (${SUPER_NEUROPAD_TITLE}, faixa ${summary.band.label}) aplicada pela recepção em ${day}: ${summary.complete ? `${summary.hits} de ${summary.total} acertos, ${LEVEL_LABELS[summary.level].toLowerCase()}` : `partida incompleta, ${summary.hits} acertos em ${session.answers.length} itens registrados`}.`,
     `Por fase: ${summary.phases.map((phase) => `${phase.phase.name} ${phase.applied ? `${phase.hits}/${phase.total}` : "não aplicada"}`).join(", ")}.`,
@@ -853,11 +862,10 @@ export function buildGameReport(session: GameSession, date = new Date()): string
     `Data: ${date.toISOString().slice(0, 10)} · Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} · ${summary.complete ? "Jogo completo" : "Jogo incompleto"}`,
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
-    `Total: ${summary.hits} de ${summary.total} acertos · ${LEVEL_LABELS[summary.level]}`,
-    ...summary.phases.map((phase) => `Fase ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.applied ? `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}` : "não aplicada"}`),
+    summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos · ${LEVEL_LABELS[summary.level]}`,
+    ...summary.phases.map((phase) => `Fase ${phase.phase.order} · ${phase.phase.name} (${phase.phase.domain}): ${phase.level === null ? `${phase.answers.length} de ${phase.total} itens registrados` : `${phase.hits}/${phase.total} acertos, ${phase.errors} erros, ${phase.noResponse} sem resposta · ${LEVEL_LABELS[phase.level]} · ${formatDuration(phase.seconds)}`}`),
     "",
-    "LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)",
-    ...reading.notes.map((note) => `- ${note}`),
+    ...(reading ? ["LEITURA PARA A CONSULTA (DESCRITIVA, AUTORAL, NÃO NORMATIVA)", ...reading.notes.map((note) => `- ${note}`)] : []),
     "",
     "DETALHAMENTO ITEM A ITEM",
   ];

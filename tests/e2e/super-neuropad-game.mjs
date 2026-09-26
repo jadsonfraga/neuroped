@@ -77,8 +77,21 @@ try {
         pausedOnce = true;
       }
       if (await page.getByRole("button", { name: "Já olhou · esconder", exact: true }).count()) {
-        await page.getByRole("timer").waitFor(); // contagem visível: exposição padronizada
+        await page.getByRole("timer").waitFor();
+        // O mesmo componente deve sobreviver à pausa: não reapresentar estímulo nem reiniciar contagem.
+        const preview = root.locator('[aria-label^="Figuras mostradas:"]');
+        const before = await page.getByRole("timer").textContent();
+        await button("Pausa").click();
+        assert.equal(await preview.isVisible(), false);
+        await page.waitForTimeout(1200); // ultrapassa um tick para provar que a pausa congela a exposição
+        await page.getByRole("button", { name: "Continuar", exact: true }).first().click();
+        assert.equal(await page.getByRole("timer").textContent(), before);
         await button("Já olhou · esconder").click();
+        await page.getByRole("group", { name: "Opções" }).waitFor();
+        await button("Pausa").click();
+        await page.getByRole("button", { name: "Continuar", exact: true }).first().click();
+        assert.equal(await preview.count(), 0, "retomar não reapresenta figuras já ocultadas");
+        await page.getByRole("group", { name: "Opções" }).waitFor();
       }
       if (phase === 1 && item === 2) await button("Repeti o comando").click(); // fica no registro como "comando repetido 1x"
       const options = page.getByRole("group", { name: "Opções" }).getByRole("button");
@@ -126,6 +139,13 @@ try {
   assert.ok((await plan.getByRole("link").count()) >= 1, "links diretos para as abas de origem");
   const firstLink = await plan.getByRole("link").first().getAttribute("href");
   assert.match(firstLink ?? "", /^#?\/(testes-diretos|testes-reconhecimento|testes-cognitivos|avaliacao-pre-consulta-faixa-etaria)$/, `rota interna válida: ${firstLink}`);
+  const drilldown = plan.getByRole("link").first();
+  assert.equal(await drilldown.getAttribute("target"), "_blank");
+  const [deeper] = await Promise.all([context.waitForEvent("page"), drilldown.click()]);
+  await deeper.waitForLoadState("domcontentloaded");
+  await deeper.close();
+  await waitScreen("results");
+  assert.equal(await root.locator("details li").count(), 20, "aprofundar preserva os vinte registros");
   await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
   await screen("06-results");
 
@@ -140,6 +160,22 @@ try {
   const bytes = await readFile(pdfPath);
   assert.equal(bytes.subarray(0, 5).toString(), "%PDF-", "PDF válido");
   assert.ok(bytes.length > 5000, "PDF com conteúdo");
+
+  // Encerramento antecipado precisa entregar observações, nunca classificar uma bateria parcial.
+  await button("Nova partida").click();
+  await waitScreen("setup");
+  await button("Começar a aventura").click();
+  await page.getByRole("button", { name: /Entrar na fase/ }).click();
+  await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
+  await button("Encerrar").click();
+  await waitScreen("results");
+  await page.getByTestId("super-neuropad-incomplete").getByText(/1 de 20 itens registrados/).waitFor();
+  assert.equal(await page.getByTestId("super-neuropad-reading").count(), 0);
+  assert.equal(await root.locator("details li").count(), 1);
+  assert.doesNotMatch(await root.innerText(), /sinal de alerta|dentro do esperado|ritmo estável|ritmo regular|\d+ de 20 acertos/i);
+  await screen("07-incomplete");
+  const [partialPdf] = await Promise.all([page.waitForEvent("download"), button("Baixar PDF detalhado").click()]);
+  await partialPdf.saveAs(`${dir}/partial.pdf`);
 
   const storage = await page.evaluate(() => Object.keys(localStorage).filter((key) => /neuropad|super/i.test(key)));
   assert.deepEqual(storage, [], "nada do jogo persistido no navegador");
