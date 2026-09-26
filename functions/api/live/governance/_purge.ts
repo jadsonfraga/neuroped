@@ -136,12 +136,11 @@ function isoNow(value: Date | string | undefined): string {
  * Relê clinics + tenant_lifecycle no momento do purge. Um legal hold aposto
  * depois do enfileiramento precisa bloquear.
  */
-export async function readFreshDeletionEligibility(
+async function readFreshPolicySnapshot(
   db: D1Database,
   targets: PurgeTargets,
-  now: string,
-): Promise<DeletionEligibility> {
-  const row = await db
+): Promise<FreshPolicyRow | null> {
+  return db
     .prepare(
       `SELECT c.status AS clinic_status,
               l.status AS lifecycle_status,
@@ -154,7 +153,13 @@ export async function readFreshDeletionEligibility(
     )
     .bind(targets.clinicId)
     .first<FreshPolicyRow>();
+}
 
+function evaluateFreshPolicySnapshot(
+  row: FreshPolicyRow | null,
+  targets: PurgeTargets,
+  now: string,
+): DeletionEligibility {
   // Clínica inexistente não é "pode apagar": é estado inesperado.
   if (!row) return { allowed: false, code: "ACTIVE_TENANT" };
 
@@ -169,6 +174,19 @@ export async function readFreshDeletionEligibility(
     retentionUntil: row.retention_until,
     now,
   });
+}
+
+/** Mantém a API usada pelos chamadores; o executor também conserva o snapshot. */
+export async function readFreshDeletionEligibility(
+  db: D1Database,
+  targets: PurgeTargets,
+  now: string,
+): Promise<DeletionEligibility> {
+  return evaluateFreshPolicySnapshot(
+    await readFreshPolicySnapshot(db, targets),
+    targets,
+    now,
+  );
 }
 
 /**
@@ -206,19 +224,41 @@ export async function executeTenantScopedPurge(
     return null;
   }
 
+  let approvedPolicy: FreshPolicyRow | null;
   let eligibility: DeletionEligibility;
   try {
-    eligibility = await readFreshDeletionEligibility(db, targets, now);
+    approvedPolicy = await readFreshPolicySnapshot(db, targets);
+    eligibility = evaluateFreshPolicySnapshot(approvedPolicy, targets, now);
   } catch {
     await params.fail("PURGE_POLICY_READ_FAILED");
     return null;
   }
-  if (!eligibility.allowed) {
+  if (!eligibility.allowed || !approvedPolicy) {
     // O código do bloqueio vira failure_code: quem opera precisa saber que foi
     // legal hold, retenção pendente ou tenant ativo — não um erro genérico.
     await params.fail(eligibility.code ?? "PURGE_BLOCKED");
     return null;
   }
+
+  // A política que aprovou a operação deve continuar exatamente igual na
+  // transação. IS é igualdade NULL-safe no SQLite: não confundir ausência de
+  // lifecycle com uma linha ativa nem mascarar uma retenção recém-alterada.
+  // Os nomes de tabelas abaixo vêm somente de catálogos internos constantes.
+  const atomicPredicates = [
+    `EXISTS (
+       SELECT 1 FROM clinics c
+       LEFT JOIN tenant_lifecycle l ON l.clinic_id = c.id
+       WHERE c.id = ? AND c.status IS ? AND l.status IS ?
+         AND l.legal_hold IS ? AND l.retention_until IS ?
+     )`,
+  ];
+  const atomicBindings: Array<string | number | null> = [
+    targets.clinicId,
+    approvedPolicy.clinic_status,
+    approvedPolicy.lifecycle_status,
+    approvedPolicy.legal_hold,
+    approvedPolicy.retention_until,
+  ];
 
   // LTB-02 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
   // o export do tenant declarava `complete: true` sem levar documentos,
@@ -248,6 +288,10 @@ export async function executeTenantScopedPurge(
         await params.fail(`EXPORT_MANIFEST_INCOMPLETE:${table}`);
         return null;
       }
+      atomicPredicates.push(
+        `NOT EXISTS (SELECT 1 FROM ${table} WHERE clinic_id = ?)`,
+      );
+      atomicBindings.push(targets.clinicId);
     }
   }
 
@@ -282,6 +326,15 @@ export async function executeTenantScopedPurge(
       await params.fail(`PURGE_UNREACHABLE_DATA:${table}`);
       return null;
     }
+    atomicPredicates.push(
+      targets.scope === "patient"
+        ? `NOT EXISTS (SELECT 1 FROM ${table} WHERE patient_id = ?)`
+        : `NOT EXISTS (SELECT 1 FROM ${table}
+             WHERE patient_id IN (SELECT id FROM live_patients WHERE clinic_id = ?))`,
+    );
+    atomicBindings.push(
+      targets.scope === "patient" ? targets.patientId : targets.clinicId,
+    );
   }
 
   const deleteFor = ({
@@ -325,7 +378,19 @@ export async function executeTenantScopedPurge(
   const patientsEntry = PURGE_ORDER.find(
     ({ table }) => table === "live_patients",
   )!;
+  // D1 batch é transacional. A cerca é a PRIMEIRA instrução, antes de
+  // qualquer DELETE ou detach. CASE usa avaliação lazy; abs(INT64_MIN) lança
+  // integer overflow somente se alguma pré-condição tiver mudado, abortando
+  // TODO o batch. RAISE() fora de trigger não é permitido no SQLite. Este
+  // sentinela não grava dado/tabela auxiliar nem depende de migração.
+  const atomicFence = db
+    .prepare(
+      `SELECT CASE WHEN ${atomicPredicates.join(" AND ")}
+         THEN 1 ELSE abs(-9223372036854775808) END AS purge_precondition_fence`,
+    )
+    .bind(...atomicBindings);
   const statements = [
+    atomicFence,
     ...children.map(deleteFor),
     ...detachStatements,
     deleteFor(patientsEntry),
@@ -334,16 +399,29 @@ export async function executeTenantScopedPurge(
   let deletedCounts: Record<string, number>;
   try {
     const results = await db.batch(statements);
+    // Resposta ausente/malformada não prova efeito: jamais converter em zero.
+    if (
+      results.length !== statements.length ||
+      results.some((result) => !result.success)
+    ) {
+      throw new Error("PURGE_BATCH_RESULT_INVALID");
+    }
+    const changedRows = (index: number): number => {
+      const changes = results[index]?.meta?.changes;
+      if (!Number.isSafeInteger(changes) || changes < 0) {
+        throw new Error("PURGE_BATCH_RESULT_INVALID");
+      }
+      return changes;
+    };
     deletedCounts = {};
     children.forEach(({ table }, index) => {
-      deletedCounts[table] = Number(results[index]?.meta?.changes ?? 0);
+      deletedCounts[table] = changedRows(index + 1);
     });
-    deletedCounts[patientsEntry.table] = Number(
-      results[statements.length - 1]?.meta?.changes ?? 0,
-    );
+    deletedCounts[patientsEntry.table] = changedRows(statements.length - 1);
   } catch {
-    // Batch é atômico: ou tudo apagou, ou nada. Uma ordem errada (órfão de FK)
-    // cai aqui em vez de deixar o tenant meio apagado.
+    // Falha SQL (incluindo a cerca) reverte o batch. Resposta inválida não
+    // permite atestar conclusão, mesmo se a escrita tiver ocorrido: o replay
+    // continua idempotente e nenhuma contagem é inventada.
     await params.fail("PURGE_EXECUTION_FAILED");
     return null;
   }

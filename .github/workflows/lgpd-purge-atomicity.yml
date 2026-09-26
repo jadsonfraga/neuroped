@@ -1,0 +1,76 @@
+name: LGPD purge atomicity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'functions/api/live/governance/**'
+      - 'functions/api/tenant/**'
+      - 'tests/unit/lgpd-*.test.ts'
+      - 'db/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/lgpd-purge-atomicity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/api/live/governance/**'
+      - 'functions/api/tenant/**'
+      - 'tests/unit/lgpd-*.test.ts'
+      - 'db/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/lgpd-purge-atomicity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lgpd-purge-atomicity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  atomicity:
+    name: LGPD atomic preconditions and regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install deterministic dependencies
+        run: npm ci
+      - name: Reproduce concurrent changes with real schema and handler
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/lgpd-atomicity
+          git rev-parse HEAD > artifacts/lgpd-atomicity/commit.txt
+          node --import tsx --test tests/unit/lgpd-purge-atomicity.test.ts 2>&1 | tee artifacts/lgpd-atomicity/atomicity.log
+      - name: Existing deletion and export contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            node --import tsx tests/unit/lgpd-purge-executor.test.ts
+            node --import tsx tests/unit/lgpd-run-deletion-endpoint.test.ts
+            node --import tsx tests/unit/lgpd-run-export-endpoint.test.ts
+            npm run test:saas-self-service
+          } 2>&1 | tee artifacts/lgpd-atomicity/regression.log
+      - name: Typecheck and lint
+        run: npm run check && npm run lint
+      - name: Quick wins and workflow governance
+        run: npm run test:quick-wins
+      - name: Preserve synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lgpd-atomicity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/lgpd-atomicity/
+          if-no-files-found: warn
+          retention-days: 7
