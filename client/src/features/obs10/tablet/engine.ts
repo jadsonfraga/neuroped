@@ -155,8 +155,14 @@ export function drawingStrokes(events: TabletEvent[], taskId: string): Point[][]
   return strokes;
 }
 /** Observations whose category exists but whose factual description is still missing. Never auto-filled. */
+/**
+ * Estações com categoria marcada e descrição ainda não escrita. Uma estação aberta e
+ * encerrada antes de qualquer categoria (outcome === null) é registro parcial, não
+ * pendência: contá-la aqui fazia o export dizer "categoria marcada" de uma estação
+ * sem categoria nenhuma.
+ */
 export function pendingDescriptions(r: TabletRecord): string[] {
-  return r.observations.filter((o) => !o.note.trim()).map((o) => o.taskId);
+  return r.observations.filter((o) => o.outcome !== null && !o.note.trim()).map((o) => o.taskId);
 }
 export function tabletText(r: TabletRecord): string {
   const plan = tabletPlan(r.context.months)!;
