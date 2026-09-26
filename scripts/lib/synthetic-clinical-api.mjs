@@ -24,6 +24,30 @@
 const SYNTHETIC_EMAIL = "e2e.visual@neuroped.invalid";
 const SYNTHETIC_PASSWORD = "Auditoria-Visual-2026!";
 
+/**
+ * Permissões efetivas que `GET /api/tenants/:id` devolve para cada papel
+ * (fonte: shared/permissions.ts). A tela de Configurações decide as abas por
+ * esta lista, então a fixture precisa espelhar o contrato real; a matriz é
+ * travada contra o catálogo em tests/unit/tenant-permissions.test.ts.
+ */
+const SYNTHETIC_PERMISSIONS_BY_ROLE = {
+  owner: [
+    "organization.manage",
+    "organization.lifecycle.read",
+    "organization.lifecycle.manage",
+    "organization.export",
+    "organization.metrics.read",
+    "audit.read",
+    "team.manage",
+    "team.manage_owners",
+    "billing.manage",
+    "finance.read",
+    "clinical.read",
+    "clinical.write",
+  ],
+  professional: ["clinical.read", "clinical.write"],
+};
+
 const CLINIC_PRIMARY = {
   id: "clinic-sintetica-alfa",
   slug: "clinica-sintetica-alfa",
@@ -317,6 +341,7 @@ export function createSyntheticClinicalApi(scenario = {}) {
   const clinicDetails = new Map(clinics.map((clinic) => [clinic.id, {
     ...clinic,
     canManage: clinic.role === "owner" || clinic.role === "clinic_admin",
+    permissions: SYNTHETIC_PERMISSIONS_BY_ROLE[clinic.role] ?? [],
     settings: {
       displayName: clinic.name, addressLine1: "", addressLine2: "", phone: "",
       publicEmail: "", companyLine: "", motto: "",

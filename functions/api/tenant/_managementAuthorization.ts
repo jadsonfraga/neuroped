@@ -1,3 +1,4 @@
+import { roleHasPermission } from "../../../shared/permissions";
 import type { PublicUser } from "../auth/_shared";
 import { boundedText, isPlainObject } from "../_request";
 import { getClinicMembership, membershipCanManage, tenantError } from "./_core";
@@ -16,11 +17,12 @@ export async function tenantManagementAuthorization(
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "");
   const method = request.method.toUpperCase();
-  const route = /^\/api\/tenants\/([^/]+)(?:\/(members|lifecycle))?$/.exec(path);
+  const route = /^\/api\/tenants\/([^/]+)(?:\/(members|lifecycle|features))?$/.exec(path);
   const tenantRoute = route && (
     (!route[2] && method === "PATCH") ||
     (route[2] === "members" && ["POST", "DELETE"].includes(method)) ||
-    (route[2] === "lifecycle" && method === "POST")
+    (route[2] === "lifecycle" && method === "POST") ||
+    (route[2] === "features" && method === "PATCH")
   );
   const invitationRoute = path === "/api/billing/invitations" && ["POST", "DELETE"].includes(method);
   const checkoutRoute = path === "/api/billing/checkout" && method === "POST";
@@ -48,7 +50,7 @@ export async function tenantManagementAuthorization(
     // Lifecycle must remain reachable by the owner while suspended, so the
     // canonical handler can validate retention/cancellation and reopening.
     const allowed = route?.[2] === "lifecycle"
-      ? membership.role === "owner"
+      ? roleHasPermission(membership.role, "organization.lifecycle.manage")
       : membershipCanManage(membership);
     return allowed ? { handled: true, failure: null } : forbidden();
   } catch {

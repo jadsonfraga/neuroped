@@ -74,6 +74,17 @@ está disponível localmente; execução e capturas exigidas no CI da PR.
 - Rollback por PR de revert. Preservar as configurações já persistidas;
   não desfazer permissões por UPDATE manual em contas globais.
 
+## Reconciliação de recursos por clínica (#986)
+
+Integrada a autorização de PATCH /tenants/:id/features ao mesmo guard persistido.
+Prova encadeando middleware global, sessão e handler real reproduziu 403 para
+reader-owner (esperado 200). A escrita final das flags agora repete membership,
+papel gestor e clínica ativa dentro do batch; revogação entre checagem e escrita
+foi reproduzida como 200 e passou a retornar 403 sem flag nem auditoria enganosa.
+Os 14 casos passam, incluindo as 11 provas originais e o gate de senha, sem elevar papel global.
+A migração de flags permanece 0030. Preservados todos os testes e caminhos de UI
+das PRs #877, #986 e #993. Merge de #986 depende de #877 e #993 já integradas.
+
 ## Refinamento da prova visual
 
 A primeira execução remota em `043fb60` passou, mas a inspeção das capturas

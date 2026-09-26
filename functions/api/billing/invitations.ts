@@ -1,6 +1,7 @@
 import { getContextUser } from "../auth/_authorization";
 import { isClinicMembershipRole, type ClinicMembershipRole } from "../../../shared/tenant";
-import { getClinicMembership, membershipCanManage, tenantError, tenantJson } from "../tenant/_core";
+import { roleHasPermission } from "../../../shared/permissions";
+import { getClinicMembership, membershipHas, tenantError, tenantJson } from "../tenant/_core";
 import {
   buildInvitationUrl,
   generateInvitationToken,
@@ -81,7 +82,7 @@ async function managerBase(context: Parameters<PagesFunction<Env>>[0], clinicId:
   if (!db) return { error: tenantError("Billing indisponível.", "DB_REQUIRED", 503) } as const;
   if (!user) return { error: tenantError("Não autenticado.", "UNAUTHENTICATED", 401) } as const;
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !membershipCanManage(membership)) {
+  if (!membership || !membershipHas(membership, "team.manage")) {
     return { error: tenantError("Apenas gestores podem administrar convites.", "TENANT_FORBIDDEN", 403) } as const;
   }
   return { db, user, membership } as const;
@@ -236,7 +237,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return tenantError("email e role válidos são obrigatórios.", "VALIDATION_ERROR", 400);
   }
   const role = roleRaw as ClinicMembershipRole;
-  if (role === "owner" && auth.membership.role !== "owner") {
+  if (role === "owner" && !roleHasPermission(auth.membership.role, "team.manage_owners")) {
     return tenantError("Somente owner pode convidar outro owner.", "TENANT_FORBIDDEN", 403);
   }
   if (!(await assertSeatAvailable(auth.db, clinicId))) {

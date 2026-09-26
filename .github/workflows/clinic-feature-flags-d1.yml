@@ -1,0 +1,134 @@
+name: Clinic feature flags D1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "db/migrations/0030_clinic_feature_flags.sql"
+      - "shared/clinicFeatures.ts"
+      - "shared/permissions.ts"
+      - "client/src/pages/configuracoes.tsx"
+      - "tests/e2e/tenant-settings.mjs"
+      - "functions/api/tenant/_features.ts"
+      - "functions/api/tenants/[id]/features.ts"
+      - "tests/unit/clinic-feature-flags.test.ts"
+      - ".github/workflows/clinic-feature-flags-d1.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/0030_clinic_feature_flags.sql"
+      - "shared/clinicFeatures.ts"
+      - "shared/permissions.ts"
+      - "client/src/pages/configuracoes.tsx"
+      - "tests/e2e/tenant-settings.mjs"
+      - "functions/api/tenant/_features.ts"
+      - "functions/api/tenants/[id]/features.ts"
+      - "tests/unit/clinic-feature-flags.test.ts"
+      - ".github/workflows/clinic-feature-flags-d1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: d1-clinic-feature-flags
+  cancel-in-progress: false
+
+jobs:
+  validate-feature-flags:
+    name: Validate clinic feature flags
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          npm_config_ignore_scripts: false
+      - name: Feature flags por clínica — catálogo, 0030, rota e portas
+        run: node --import tsx tests/unit/clinic-feature-flags.test.ts
+      - name: Bootstrap do schema com todas as migrações
+        run: node tests/unit/schema-bootstrap-contract.test.mjs
+      - name: TypeScript
+        run: npm run check
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser proof of settings permissions and error recovery
+        run: node tests/e2e/tenant-settings.mjs
+      - name: Upload synthetic settings proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-settings-proof
+          path: artifacts/tenant-settings
+          if-no-files-found: error
+
+  migrate-feature-flags:
+    name: Apply clinic feature flags to D1
+    needs: validate-feature-flags
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Validate Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
+          [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+      - name: Preflight — verificar se a 0030 já está aplicada
+        id: preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS ja_aplicada FROM sqlite_master WHERE type = 'table' AND name = 'clinic_feature_flags';" \
+            > /tmp/feature-flags-preflight.txt 2>&1
+          cat /tmp/feature-flags-preflight.txt
+          if grep -qE '(ja_aplicada[^0-9]*1[^0-9]|"ja_aplicada":\s*1)' /tmp/feature-flags-preflight.txt; then
+            echo "aplicada=true" >> "$GITHUB_OUTPUT"
+            echo "0030 já aplicada."
+          else
+            echo "aplicada=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Apply migration 0030
+        if: steps.preflight.outputs.aplicada == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote --yes \
+            --file=./db/migrations/0030_clinic_feature_flags.sql
+      - name: Verify table shape without reading clinic data
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler@4 d1 execute neuroped-db --remote \
+            --command "SELECT COUNT(*) AS colunas FROM pragma_table_info('clinic_feature_flags') WHERE name IN ('clinic_id', 'flag_key', 'enabled', 'updated_by_user_id', 'updated_at');" \
+            > /tmp/feature-flags-verify.txt 2>&1
+          cat /tmp/feature-flags-verify.txt
+          if ! grep -qE '(colunas[^0-9]*5[^0-9]|"colunas":\s*5)' /tmp/feature-flags-verify.txt; then
+            echo "::error::clinic_feature_flags sem as cinco colunas esperadas após a 0030."
+            exit 1
+          fi
+          echo "0030 verificada: clinic_feature_flags presente com o shape esperado."

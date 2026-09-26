@@ -1,4 +1,5 @@
 import { getContextUser } from "../../auth/_authorization";
+import { roleHasPermission } from "../../../../shared/permissions";
 import {
   getClinicMembership,
   tenantError,
@@ -35,7 +36,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   if (!clinicId)
     return tenantError("Clínica inválida.", "VALIDATION_ERROR", 400);
   const membership = await getClinicMembership(db, clinicId, user);
-  if (!membership || !["owner", "clinic_admin"].includes(membership.role)) {
+  if (!membership || !roleHasPermission(membership.role, "organization.export")) {
     return tenantError(
       "Apenas gestores podem exportar o tenant completo.",
       "TENANT_EXPORT_FORBIDDEN",

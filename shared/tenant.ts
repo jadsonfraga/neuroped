@@ -1,3 +1,5 @@
+import { roleHasPermission } from "./permissions";
+
 export const clinicMembershipRoles = [
   "owner",
   "clinic_admin",
@@ -14,20 +16,22 @@ export function isClinicMembershipRole(value: unknown): value is ClinicMembershi
   return typeof value === "string" && ROLE_SET.has(value);
 }
 
+// Os predicados abaixo são atalhos estáveis sobre o catálogo central de
+// permissões (`shared/permissions.ts`); a tabela papel → permissão mora lá.
 export function canManageClinic(role: ClinicMembershipRole): boolean {
-  return role === "owner" || role === "clinic_admin";
+  return roleHasPermission(role, "organization.manage");
 }
 
 export function canReadClinicClinicalData(role: ClinicMembershipRole): boolean {
-  return role === "owner" || role === "clinic_admin" || role === "professional";
+  return roleHasPermission(role, "clinical.read");
 }
 
 export function canWriteClinicClinicalData(role: ClinicMembershipRole): boolean {
-  return role === "owner" || role === "clinic_admin" || role === "professional";
+  return roleHasPermission(role, "clinical.write");
 }
 
 export function canAccessClinicFinance(role: ClinicMembershipRole): boolean {
-  return role === "owner" || role === "clinic_admin" || role === "financial";
+  return roleHasPermission(role, "finance.read");
 }
 
 export function normalizeClinicSlug(value: string): string {

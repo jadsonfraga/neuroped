@@ -106,6 +106,87 @@ link manual); trial expira sem aviso prévio (job de dunning = rodada
 própria); operator não abre /configuracoes no client (RBAC de rota
 uniforme; perfil dele é editável via API).
 
+## Rodada 2026-09-26 — RBAC do tenant por permissão (base `main@9b3a300`)
+
+Mandato: "transformação cirúrgica em SaaS comercializável". Auditoria de
+partida confirmou que tenancy, memberships, convites, onboarding, billing,
+entitlements, lifecycle e LGPD já existem (0009–0025); a lacuna estrutural
+mais barata de fechar sem risco era a CAMADA 4: autorização do tenant era
+comparação de nome de papel (`role === "owner"`, `["owner","clinic_admin"].includes`,
+`m.role IN (...)` em SQL) espalhada por 6 rotas.
+
+| Item | Status | Evidência |
+| ---- | ------ | --------- |
+| Catálogo central papel → permissão (`shared/permissions.ts`, 11 permissões, fail-closed) | DONE | `tests/unit/tenant-permissions.test.ts`: matriz literal 5×11, papéis globais/desconhecidos sem permissão, equivalência com a semântica anterior de cada porta |
+| Rotas perguntam permissão (`membershipHas`/`roleHasPermission`), não papel: checkout, convites, membros, lifecycle, export, métricas | DONE | Trava estática no mesmo teste: comparação literal de papel do ator em `functions/api/{tenants,billing,live,tenant}` reprova |
+| `GET /api/tenants/:id` devolve `permissions` efetivas (vazio com clínica inativa) | DONE | Asserção no teste; `canManage` preservado para o cliente atual |
+
+Comportamento de acesso inalterado (provado pela equivalência). Rollback:
+reverter o commit; nenhuma migração envolvida.
+
+Decisão registrada, não tomada: `clinic_admin` mantém `billing.manage` (é o
+comportamento atual). Tirar cobrança do admin é mudança comercial: uma linha
+em `GRANTS` + a linha correspondente da matriz do teste.
+
+Achado lateral, não corrigido (fora do escopo): `tests/unit/saas-membership-owner-regression.test.mjs`
+falha já na base (`9b3a300`) e não é chamado por nenhum script nem workflow.
+
+Próximas camadas por ordem de dependência (lacunas reais, não refeitas):
+tabelas legadas `patients_demo`/agenda ainda por `owner_user_id` (tenantizar
+o cliente zero exige migração própria com prova de preservação); cliente
+consumir `permissions` em vez de `canManage`/papel; auditoria de tenant
+(`audit.read`) sem rota tenant-scoped; feature flags por tenant inexistentes.
+
+### Camadas 2, 3 e 4 — fechadas na mesma branch, um commit por frente
+
+Base: os dois commits do catálogo (acima) reaplicados sobre `main@8ee31b2`.
+Cada frente tem escopo único, teste próprio (em `test:quick-wins` e no
+workflow `saas-phase1-foundation`) e rollback por reversão do commit.
+
+| Camada | Entrega | Evidência | Rollback |
+| ------ | ------- | --------- | -------- |
+| 2. Tela por permissão | `configuracoes.tsx` lê `GET /api/tenants/:id` uma vez e a lista `permissions` decide as abas (Equipe = `team.manage`, Plano = `billing.manage`, Atividade = `organization.metrics.read`) e a edição da clínica (`organization.manage`). Resposta sem lista = sem permissão; link profundo para aba invisível cai em Perfil. | Trava estática em `tenant-permissions.test.ts`: sem `canManage`, sem comparação de papel, toda permissão declarada existe no catálogo | reverter; sem migração |
+| 3. Auditoria da clínica | Permissão nova `audit.read` (owner, clinic_admin). `GET /api/tenants/:id/audit` lê `saas_audit_log` com `clinic_id = ?` na contagem e na página, nunca lista linha sem clínica, 404 uniforme para papel sem permissão, clínica alheia, inexistente ou inativa; filtros do parser da trilha de plataforma com curinga de LIKE escapado. Aba Auditoria na tela. | `tenant-audit-log.test.ts` com D1 sintético: isolamento, 404 uniforme, filtros, paginação, metadata malformado | reverter; sem migração (tabela e índice desde a 0009) |
+| 4. Feature flags por clínica | Catálogo `shared/clinicFeatures.ts` (`remote_intake`, `remote_scales`; padrão LIGADO porque são recursos que já operavam; chave desconhecida = off). Migração 0030 `clinic_feature_flags` + bootstrap de runtime (política da 0019) + preservada no purge LGPD. `GET/PATCH /api/tenants/:id/features` (leitura por membro, escrita por `organization.manage`, tudo-ou-nada, auditoria `clinic_feature_update` no mesmo batch). Portas: criação de convite remoto → 403 `FEATURE_DISABLED`; superfície pública → 410, só depois do token válido. Aba Recursos na tela. Workflow `clinic-feature-flags-d1` aplica a 0030 em main com preflight idempotente. | `clinic-feature-flags.test.ts` ponta a ponta contra o SQL real das 0021/0023/0030: catálogo, rota, auditoria, porta na criação e na superfície pública, vizinha intacta, tabela ausente = padrões | reverter o código, preservando a tabela aditiva e as decisões auditadas |
+
+Decisões que não são óbvias:
+
+- **Flag opt-out, padrão ligado, tabela ausente = padrões.** Cada flag existente representa um recurso que já operava; a única semântica que preserva produção entre o deploy do código e a aplicação da 0030 é "ninguém desligou nada ainda". Só o erro `no such table` cai nesse caminho; qualquer outro erro propaga. Flag nova que nasça desligada precisa de decisão explícita no catálogo e na matriz do teste.
+- **Superfície pública consulta a flag depois do token válido.** Antes, um 410 por flag responderia diferente de um 404 por token inválido e viraria oráculo de existência de convite. O teste trava a ordem.
+- **Recusa de PATCH é inteira.** Uma chave fora do catálogo ou um valor não booleano derruba o pedido todo; não se grava metade.
+- **`audit.read` é metadado, não conteúdo.** A trilha devolve ator, ação, alvo e metadados já gravados; nunca lê tabela clínica. Nome do ator vem de `users.name` (equipe), não de titular.
+
+### Camada 1 — migração do legado (NÃO executada; PR própria)
+
+Inventário: `patients_demo` e dependentes (`*_demo`) por `owner_user_id`
+(0002); suíte operacional inteira por `provider_user_id` (0007: providers,
+serviços, disponibilidade, `appointments`, bloqueios; 0008 hardening; 0013
+billing provider). Tudo isso serve o cliente zero hoje, fora do modelo de
+clínicas, e o purge LGPD já declara `appointments` inalcançável (#783).
+
+Plano registrado para a PR própria, na ordem em que precisa acontecer:
+
+1. **Prova de preservação antes de qualquer escrita.** Script read-only que
+   conta, por `owner_user_id`/`provider_user_id`, linhas e digest por tabela,
+   e o mapeamento usuário → clínica (membership ativa única; ambiguidade
+   bloqueia). Saída determinística, comparável antes/depois.
+2. **Migração aditiva.** `clinic_id` NULL nas tabelas legadas + índice;
+   backfill por `UPDATE ... SET clinic_id = (membership única) WHERE clinic_id
+   IS NULL`, contando linhas afetadas e falhando fechado se sobrar NULL.
+   Nenhum DROP, nenhuma renomeação.
+3. **Predicado duplo por um ciclo.** Rotas legadas passam a exigir
+   `owner_user_id = ? AND clinic_id = ?` (tenant no predicado final, como a
+   regra do AGENTS.md); só depois de um ciclo verde o predicado de dono deixa
+   de ser autoridade.
+4. **Purge LGPD.** `appointments` sai de `UNREACHABLE_PATIENT_TABLES` quando
+   passar a ter `clinic_id` e vínculo verificável com `live_patients`.
+5. **Rollback declarado.** A coluna aditiva pode ficar; o predicado volta
+   a ser só por dono revertendo o commit de rotas.
+
+Bloqueio para executar: precisa de leitura do D1 de produção (contagens e
+mapeamento usuário → clínica) e de janela com o dono — não é ação desta
+sessão.
+
 ## Rodada 2026-09-14 — métricas de produto ausentes (base `main@efad2006`)
 
 Gatilho: relatório estratégico externo (14/09/2026), produzido SEM acesso ao
@@ -222,3 +303,22 @@ defeito reintroduzido — não apenas passando.
 | --------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Merge de #745/#746/#704                       | RESOLVIDO em 2026-09-01                                              | Dono aprovou e mesclou: #746 (156d00fc), #745 (3eab25db), #704 via #749 (39327b00); Chromium instalado nas catracas de CI (#748/#750). Deploys de main disparados pelos merges. |
 | Automação de monitoramento de PR nesta sessão | Classificador de permissões negou subscribe_pr_activity e send_later | Reexecutar verificação manualmente ou conceder permissão.                                                                                                                       |
+
+## Consolidação SaaS — 2026-09-26
+
+- Base reconciliada: `427b010f` (inclui os controles da PR #988). A auditoria
+  mantém a resposta 404 uniforme, o isolamento SQL e agora oferece filtros e
+  paginação estável; as duas suítes de auditoria existentes são preservadas.
+- A migração desta PR ainda não aplicada foi renumerada de 0026 para **0030**,
+  após as migrações já integradas. Nenhuma migração histórica foi editada.
+- Reproduzida uma gravação parcial ao falhar o segundo recurso. O PATCH agora
+  usa um único batch para todas as flags e auditorias. Triggers SQLite reais
+  demonstram rollback integral tanto por falha no segundo upsert quanto na
+  segunda auditoria. Pedido bem-sucedido audita ambas; a clínica vizinha fica intacta.
+- A tela descarta estado ao mudar de clínica e permite repetir a leitura de
+  auditoria após indisponibilidade. Novas permissões não removem os controles
+  de convite consentido, billing, clínica ativa ou purge introduzidos na main.
+- Validação local: permissões, ambas as trilhas de auditoria, flags e prefixos
+  de migração passaram. CI e prova de navegador do HEAD são pré-requisitos de merge.
+- Rollback: PR de revert do código, mantendo a tabela aditiva e as decisões
+  auditadas. Não executar DROP TABLE como rotina de rollback.

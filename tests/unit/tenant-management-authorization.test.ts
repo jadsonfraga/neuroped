@@ -10,6 +10,7 @@ import { onRequestPost as updateMember, onRequestDelete as deleteMember } from "
 import { onRequestDelete as revokeInvitation, onRequestPost as inviteMember } from "../../functions/api/billing/invitations";
 import { onRequestPost as startCheckout } from "../../functions/api/billing/checkout";
 import { onRequestPost as changeLifecycle } from "../../functions/api/tenants/[id]/lifecycle";
+import { onRequestPatch as patchFeatures } from "../../functions/api/tenants/[id]/features";
 import { createSessionTokens } from "../../functions/api/auth/_sessions";
 import { getUserById } from "../../functions/api/auth/_shared";
 import { decideRouteAccess } from "../../client/src/security/routeGuardPolicy";
@@ -45,7 +46,7 @@ async function fixture() {
   const db = {
     prepare,
     async batch(statements: Array<{ run(): Promise<unknown>; sql: string }>) {
-      if (statements.some((statement) => statement.sql.includes("UPDATE clinics"))) beforeBatch?.();
+      if (statements.some((statement) => /UPDATE clinics|INSERT INTO clinic_feature_flags/.test(statement.sql))) beforeBatch?.();
       raw.exec("BEGIN");
       try {
         const results = [];
@@ -104,6 +105,7 @@ async function fixture() {
         }
         if (url.pathname === "/api/billing/invitations") return (method === "DELETE" ? revokeInvitation : inviteMember)(context as never);
         if (url.pathname === "/api/billing/checkout") return startCheckout(context as never);
+        if (/\/features$/.test(url.pathname)) return patchFeatures(context as never);
         if (/\/lifecycle$/.test(url.pathname)) return changeLifecycle(context as never);
         if (match && method === "PATCH") return patchClinic(context as never);
         return new Response(JSON.stringify({ reached: true }), { status: 200 });
@@ -252,6 +254,34 @@ test("settings route admits authenticated account roles while clinical routes st
     assert.equal(decideRouteAccess({ ...input, path: "/configuracoes", isAuthenticated: false }), "login");
     assert.equal(decideRouteAccess({ ...input, path: "/prontuario" }), "forbidden");
   }
+});
+
+
+test("feature flags honor tenant management across global roles and deny foreign targets", async () => {
+  const f = await fixture();
+  try {
+    for (const user of ["owner-a", "reader-owner", "operator-manager"]) {
+      const response = await f.call(user, `/api/tenants/${ALFA}/features`, "PATCH", { features: { remote_intake: false } });
+      assert.equal(response.status, 200, `${user}: feature management follows membership`);
+    }
+    for (const [user, clinic] of [["owner-a", BETA], ["staff-a", ALFA], ["platform-admin", ALFA]]) {
+      assert.equal((await f.call(user, `/api/tenants/${clinic}/features`, "PATCH", { features: { remote_intake: true } })).status, 403);
+    }
+    assert.equal(f.raw.prepare("SELECT COUNT(*) AS n FROM clinic_feature_flags WHERE clinic_id = ?").get(BETA)?.n, 0);
+  } finally { f.raw.close(); }
+});
+
+
+test("feature management revalidates persisted membership before its final batch", async () => {
+  const f = await fixture();
+  try {
+    const before = f.snapshot(ALFA);
+    f.setBeforeBatch(() => f.raw.prepare("UPDATE clinic_memberships SET active = 0 WHERE clinic_id = ? AND user_id = 'reader-owner'").run(ALFA));
+    const response = await f.call("reader-owner", `/api/tenants/${ALFA}/features`, "PATCH", { features: { remote_intake: false, remote_scales: false } });
+    assert.equal(response.status, 403);
+    assert.equal(f.raw.prepare("SELECT COUNT(*) AS n FROM clinic_feature_flags WHERE clinic_id = ?").get(ALFA)?.n, 0);
+    assert.deepEqual(f.snapshot(ALFA), before, "no feature mutation or misleading audit after revocation");
+  } finally { f.raw.close(); }
 });
 
 

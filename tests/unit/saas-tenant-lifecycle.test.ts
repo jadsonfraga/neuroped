@@ -210,7 +210,7 @@ assert.doesNotMatch(
   "Phase 3 não pode introduzir purge automático",
 );
 
-assert.match(lifecycle, /membership\.role !== "owner"/);
+assert.match(lifecycle, /!roleHasPermission\(membership\.role, "organization\.lifecycle\.manage"\)/);
 assert.match(lifecycle, /confirmSlug !== membership\.clinicSlug/);
 assert.match(lifecycle, /cancelAsaasSubscription/);
 assert.match(lifecycle, /cancelAsaasCheckout/);

@@ -1,9 +1,11 @@
+import { rolesWithPermission } from "../../../../shared/permissions";
 import { getContextUser } from "../../auth/_authorization";
 import { isPlainObject, boundedText } from "../../_request";
 import { isValidTimeZone } from "../../../../shared/operations";
 import {
   getClinicMembership,
   membershipCanManage,
+  membershipPermissions,
   prepareSaasAudit,
   tenantError,
   tenantJson,
@@ -52,6 +54,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
     status: clinic.status,
     role: membership.role,
     canManage: membershipCanManage(membership),
+    permissions: membershipPermissions(membership),
     settings,
   });
 };
@@ -87,6 +90,7 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   }
 
   const now = new Date().toISOString();
+  const manageRoles = rolesWithPermission("organization.manage");
   const statements = [
     db
       .prepare(
@@ -99,10 +103,10 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
               AND EXISTS (
                 SELECT 1 FROM clinic_memberships m
                  WHERE m.clinic_id = clinics.id AND m.user_id = ?
-                   AND m.active = 1 AND m.role IN ('owner', 'clinic_admin')
+                   AND m.active = 1 AND m.role IN (${manageRoles.map(() => "?").join(", ")})
               )`,
       )
-      .bind(name, legalName, timezone, now, clinicId, user.id),
+      .bind(name, legalName, timezone, now, clinicId, user.id, ...manageRoles),
   ];
   if (isPlainObject(body.settings)) {
     statements.push(prepareClinicSettingsUpsert(db, clinicId, user.id, parseClinicSettingsInput(body.settings)));
