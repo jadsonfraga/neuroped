@@ -282,6 +282,21 @@ for (const gate of [
 // Lista ausente (resposta antiga) nunca vira acesso.
 assert.match(settingsPage, /Array\.isArray\(detail\.permissions\) \? detail\.permissions : \[\]/);
 
+// 7) A fixture sintética do e2e devolve as mesmas permissões que a API real:
+//    a tela decide as abas por essa lista, então fixture desatualizada é o
+//    mesmo que testar uma tela que não existe.
+const syntheticApi = readFileSync(
+  join(root, "scripts/lib/synthetic-clinical-api.mjs"),
+  "utf8",
+);
+const fixtureMatrix = /SYNTHETIC_PERMISSIONS_BY_ROLE = \{([\s\S]*?)\n\};/.exec(syntheticApi);
+assert.ok(fixtureMatrix, "fixture sintética declara permissões por papel");
+for (const [, role, body] of fixtureMatrix[1].matchAll(/(\w+): \[([^\]]*)\]/g)) {
+  const declared = [...body.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(declared, permissionsForRole(role), `fixture sintética divergente do catálogo para ${role}`);
+}
+assert.match(syntheticApi, /permissions: SYNTHETIC_PERMISSIONS_BY_ROLE\[clinic\.role\] \?\? \[\]/);
+
 console.log(
-  "tenant-permissions: matriz, fail-closed, equivalência, trava estática e tela por permissão OK",
+  "tenant-permissions: matriz, fail-closed, equivalência, trava estática, tela por permissão e fixture e2e OK",
 );
