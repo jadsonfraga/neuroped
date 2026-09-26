@@ -139,7 +139,7 @@ a.np-primary-cta:active {
   }
 
   :where(#main-content) button:where(:not([data-size="icon"])),
-  :where(#main-content) :where([role="tab"]) {
+  #main-content [role="tab"] {
     min-height: 44px;
   }
 }

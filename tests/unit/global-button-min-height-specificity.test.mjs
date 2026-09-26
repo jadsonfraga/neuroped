@@ -13,6 +13,13 @@ import fs from "node:fs";
 // o mesmo padrão já validado em obs10.css/visual-recognition.css (PR #981), até
 // sobrar apenas a especificidade do seletor de tipo `button` — que perde para
 // qualquer classe utilitária, preservando o piso apenas quando nada mais o disputa.
+//
+// `[role="tab"]` NÃO leva o mesmo :where() no `#main-content`: `TabsTrigger`
+// (client/src/components/ui/tabs.tsx) usa `min-h-8` (32px) e depende do piso do
+// app-shell para chegar a 44px em abas compactas (agenda, prontuário do
+// paciente, inventário). Zerar essa especificidade também — erro cometido e
+// corrigido nesta mesma PR após revisão automatizada — devolveria essas abas a
+// 32px reais. Este teste prova as duas invariantes ao mesmo tempo.
 const FILES = [
   "client/src/styles/premium-app-shell-v12.css",
   "client/src/styles/premium-polish-10.css",
@@ -53,26 +60,43 @@ function beatsUtilityClass([ids, classes, types]) {
   return false;
 }
 
-for (const file of FILES) {
-  const css = fs.readFileSync(file, "utf8");
-  const match = css.match(/([^\n{}]*#main-content[^\n{}]*\{\s*min-height:\s*44px[^}]*\})/);
-  assert.ok(match, `${file}: regra do piso de 44px de #main-content não encontrada`);
-  const ruleText = match[1];
-  const selectorList = ruleText.slice(0, ruleText.indexOf("{"));
-
-  assert.match(selectorList, /:where\(#main-content\)/,
-    `${file}: #main-content precisa estar neutralizado com :where() para não bater classe utilitária`);
-  assert.doesNotMatch(selectorList, /(?<!:where\()#main-content\s+button/,
-    `${file}: não pode sobrar um #main-content button fora de :where()`);
-
-  for (const selector of selectorList.split(",")) {
-    const spec = specificity(selector.trim());
-    assert.equal(
-      beatsUtilityClass(spec),
-      false,
-      `${file}: seletor "${selector.trim()}" com especificidade ${JSON.stringify(spec)} ainda bate uma classe utilitária isolada (${JSON.stringify(UTILITY_CLASS_SPECIFICITY)}) — o botão "gigante" do Modo Fácil voltaria a ficar preso em 44px`,
-    );
-  }
+// Extrai o prelúdio completo de seletores (pode ter várias linhas, separadas por
+// vírgula) que antecede a declaração `min-height: 44px;` de #main-content — sem
+// depender de fronteira de linha, para não parar num `#main-content` errado
+// quando o seletor real está espalhado por mais de uma linha.
+function extractMainContentFloorSelectors(css) {
+  const declaration = css.indexOf("min-height: 44px;");
+  assert.ok(declaration >= 0, "declaração min-height: 44px; não encontrada");
+  const openBrace = css.lastIndexOf("{", declaration);
+  assert.ok(openBrace >= 0, "abertura de bloco não encontrada antes da declaração");
+  const previousClose = css.lastIndexOf("}", openBrace);
+  const selectorList = css.slice(previousClose + 1, openBrace);
+  assert.match(selectorList, /#main-content/, "prelúdio capturado não contém #main-content — âncora errada");
+  return selectorList.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-console.log(`✓ Piso de 44px de #main-content neutralizado (${FILES.length} arquivo(s)): não bate mais classe utilitária Tailwind isolada.`);
+for (const file of FILES) {
+  const css = fs.readFileSync(file, "utf8");
+  const selectors = extractMainContentFloorSelectors(css);
+
+  const buttonSelector = selectors.find((s) => s.includes("button"));
+  const tabSelector = selectors.find((s) => s.includes('[role="tab"]'));
+  assert.ok(buttonSelector, `${file}: seletor de button não encontrado no prelúdio capturado (${JSON.stringify(selectors)})`);
+  assert.ok(tabSelector, `${file}: seletor de [role="tab"] não encontrado no prelúdio capturado (${JSON.stringify(selectors)})`);
+
+  const buttonSpec = specificity(buttonSelector);
+  assert.equal(
+    beatsUtilityClass(buttonSpec),
+    false,
+    `${file}: "${buttonSelector}" (especificidade ${JSON.stringify(buttonSpec)}) ainda bate uma classe utilitária isolada — o botão "gigante" do Modo Fácil voltaria a ficar preso em 44px`,
+  );
+
+  const tabSpec = specificity(tabSelector);
+  assert.equal(
+    beatsUtilityClass(tabSpec),
+    true,
+    `${file}: "${tabSelector}" (especificidade ${JSON.stringify(tabSpec)}) não bate mais uma classe utilitária isolada — abas compactas com min-h-8 (TabsTrigger) voltariam a renderizar em 32px em vez do piso de 44px`,
+  );
+}
+
+console.log(`✓ Piso de 44px de #main-content: button não bate classe utilitária (fix aplicado), [role="tab"] continua batendo (sem regressão em abas compactas) — ${FILES.length} arquivo(s).`);
