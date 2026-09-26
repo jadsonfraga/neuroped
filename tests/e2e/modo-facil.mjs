@@ -20,6 +20,13 @@ const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
 page.on("dialog", (dialog) => dialog.accept());
 const button = (name) => page.getByRole("button", { name, exact: true });
+// Cadência humana: o motor ignora um segundo toque em menos de 300 ms (toque duplo,
+// do adulto ou da criança) e o primeiro toque na tela da criança só conta 300 ms
+// depois de ela abrir. Cada toque deliberado do teste respeita esse intervalo.
+// Não mascara corrida: modela o contrato.
+const MANUAL_TAP_GAP_MS = 320;
+const pace = () => page.waitForTimeout(MANUAL_TAP_GAP_MS);
+const manualTap = async (testId) => { await pace(); await page.getByTestId(testId).click(); };
 const tab = (name) => page.getByRole("tab", { name: new RegExp(name) });
 async function screen(name, scope) {
   const axe = await new AxeBuilder({ page }).include(scope).analyze();
@@ -46,14 +53,16 @@ async function playEasy(prefix, { maxSteps = 60 } = {}) {
     assert.ok(i < maxSteps, "o jogo termina");
     const show = page.getByTestId(`${prefix}-show`);
     if (await show.count()) {
+      await pace();
       await show.click();
       await page.getByTestId(`${prefix}-child`).waitFor({ state: "attached" });
       // Tela da criança: fecha pelo botão de voltar do próprio estímulo.
       const back = page.getByRole("button", { name: /Voltar ao aplicador|Concluir observação|Voltar ao registro|Concluir e voltar|Pausar e voltar/ }).first();
+      await pace();
       await back.click();
       await page.getByTestId(`${prefix}-child`).waitFor({ state: "detached" });
     }
-    await page.getByTestId(`${prefix}-${outcomes[i % 3]}`).click();
+    await manualTap(`${prefix}-${outcomes[i % 3]}`);
     i += 1;
   }
   await page.getByTestId(`${prefix}-results`).waitFor();
@@ -67,20 +76,22 @@ async function playObjective(prefix, { maxSteps = 20 } = {}) {
   while (await page.getByTestId(`${prefix}-step`).count()) {
     assert.ok(i < maxSteps, "o jogo termina");
     if (i === 1) {
-      await page.getByTestId(`${prefix}-pular`).click();
-      await page.locator(`[data-testid="${prefix}-next"], [data-testid="${prefix}-results"]`).first().waitFor();
-      const next = page.getByTestId(`${prefix}-next`);
-      if (await next.count()) await next.click();
+      await manualTap(`${prefix}-pular`);
+      await page.getByTestId(`${prefix}-next`).waitFor();
+      await manualTap(`${prefix}-next`);
     } else {
       const options = page.getByTestId(`${prefix}-option`);
       assert.ok((await options.count()) >= 2, "ao menos duas opções na tela");
+      await pace();
       await options.first().click();
-      await page.locator(`[data-testid="${prefix}-next"], [data-testid="${prefix}-results"]`).first().waitFor();
-      const next = page.getByTestId(`${prefix}-next`);
-      if (await next.count()) {
-        assert.equal(await page.getByTestId(`${prefix}-option`).count(), 0, "toque duplo não responde o item seguinte");
-        await next.click();
+      await page.getByTestId(`${prefix}-next`).waitFor();
+      assert.equal(await page.getByTestId(`${prefix}-option`).count(), 0, "toque duplo não responde o item seguinte");
+      if (!(await page.getByTestId(`${prefix}-step`).count())) {
+        // Último toque foi da criança: entrega neutra, sem contagem, antes do resultado.
+        assert.equal(await page.getByTestId(`${prefix}-results`).count(), 0, "resultado não aparece sob o dedo da criança");
+        assert.doesNotMatch(await page.getByTestId(`${prefix}-handover`).innerText(), /Certo|Errado|Acertou|Não acertou|\d+ de \d+/, "tela de entrega sem contagem");
       }
+      await manualTap(`${prefix}-next`);
     }
     i += 1;
   }
@@ -111,8 +122,12 @@ try {
   assert.doesNotMatch(await page.getByTestId("sonda-easy-step").innerText(), /Toque no círculo\./, "item seguinte não aparece antes de Próximo");
   assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^1 \//, "progresso não antecipa o próximo item");
   assert.equal(await page.getByTestId("sonda-easy-tab").isDisabled(), true, "aba trava depois do primeiro item");
-  await page.getByTestId("sonda-easy-next").click();
-  assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^2 \//);
+  // Toque duplo em Próximo: o 1º abre o item 2, o 2º cai dentro da tela da criança e é descartado.
+  await pace();
+  await page.getByTestId("sonda-easy-next").dblclick();
+  assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^2 \//, "toque duplo em Próximo não responde pelo item seguinte");
+  assert.equal(await page.getByTestId("sonda-easy-option").count(), 4, "item 2 aberto e sem resposta");
+  await pace();
   await page.getByRole("button", { name: "Voltar um passo" }).click();
   assert.match(await page.getByTestId("sonda-easy-progress").innerText(), /^1 \//, "voltar um item funciona");
   assert.equal(await page.getByTestId("sonda-easy-option").count(), 4, "item reaberto para a criança");
@@ -173,23 +188,33 @@ try {
   assert.ok(previewSvg >= 0);
   const choices = await dialog.getByRole("button", { name: /Selecionar figura/ }).all();
   assert.ok(choices.length >= 2);
+  await pace();
   await choices[0].click();
   await dialog.waitFor({ state: "detached", timeout: 5000 });
+  assert.equal(await page.getByTestId("rv-easy-show").count() + await page.getByTestId("rv-easy-acertou").count(), 0, "nada do item seguinte nasce sob o dedo da criança");
+  await manualTap("rv-easy-next");
   assert.match(await page.getByTestId("rv-easy-progress").innerText(), /^2 \//, "toque da criança avançou sozinho");
   // Passo 2: mostrar e voltar sem toque → o adulto marca.
-  await page.getByTestId("rv-easy-show").click();
+  await manualTap("rv-easy-show");
   await dialog.waitFor();
+  await pace();
   await dialog.getByRole("button", { name: "← Voltar ao aplicador", exact: true }).click();
   await dialog.waitFor({ state: "detached" });
-  await page.getByTestId("rv-easy-pular").click();
+  await manualTap("rv-easy-pular");
   assert.match(await page.getByTestId("rv-easy-progress").innerText(), /^3 \//);
   // Restante: toques na primeira figura até o fim.
   while (await page.getByTestId("rv-easy-step").count()) {
-    await page.getByTestId("rv-easy-show").click();
+    await manualTap("rv-easy-show");
     await dialog.waitFor();
+    await pace();
     await dialog.getByRole("button", { name: /Selecionar figura/ }).first().click();
     await dialog.waitFor({ state: "detached", timeout: 5000 });
+    if (await page.getByTestId("rv-easy-step").count()) await manualTap("rv-easy-next");
   }
+  // Último toque foi da criança: entrega neutra antes do resultado com contagem.
+  assert.equal(await page.getByTestId("rv-easy-results").count(), 0, "resultado não aparece sob o dedo da criança");
+  await page.getByTestId("rv-easy-handover").waitFor();
+  await manualTap("rv-easy-next");
   await page.getByTestId("rv-easy-results").waitFor();
   const rvReport = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(rvReport, /Reconhecimento Visual · Modo Fácil/);
@@ -221,9 +246,23 @@ try {
   const child = page.getByTestId("cognitive-easy-child");
   await child.waitFor();
   assert.doesNotMatch(await child.innerText(), /Acertou|Esperado|estrela|herói/i, "tela da criança pura");
-  await child.getByRole("button", { name: expected1, exact: true }).click();
+  assert.doesNotMatch(await page.getByTestId("cognitive-easy-step").innerText(), /Esperado:|Na tela da criança/, "com a tela da criança aberta, o gabarito do aplicador some do mesmo viewport");
+  // Toque duplo da criança na opção: o 2º toque não pode registrar o item seguinte.
+  await pace();
+  await child.getByRole("button", { name: expected1, exact: true }).dblclick();
   await child.waitFor({ state: "detached" });
-  assert.match(await page.getByTestId("cognitive-easy-progress").innerText(), /^2 \//, "toque da criança avançou sozinho");
+  assert.equal(await page.getByTestId("cognitive-easy-acertou").count() + await page.getByTestId("cognitive-easy-show").count(), 0, "nada do item seguinte nasce sob o dedo da criança");
+  await manualTap("cognitive-easy-next");
+  assert.match(await page.getByTestId("cognitive-easy-progress").innerText(), /^2 \//, "toque da criança avançou sozinho, uma única vez");
+  assert.equal(await page.getByTestId("cognitive-easy-show").count(), 1, "Próximo devolve o passo ao aplicador");
+  // Toque duplo do adulto em Pular (dois toques em sequência imediata) registra um único passo.
+  await pace();
+  await page.getByTestId("cognitive-easy-pular").click();
+  await page.getByTestId("cognitive-easy-pular").click();
+  assert.match(await page.getByTestId("cognitive-easy-progress").innerText(), /^3 \//, "toque duplo do adulto não pula dois itens");
+  await pace();
+  await button("Voltar um passo").click();
+  assert.match(await page.getByTestId("cognitive-easy-progress").innerText(), /^2 \//, "voltar um passo desfaz o Pular");
   // Restante: mostra, volta e alterna os três botões (cobre fala, montagem e toque sem resposta).
   const cog = await playEasy("cognitive-easy");
   assert.equal(cog.steps, 15, `15 passos restantes de 16 (${cog.steps})`);
@@ -242,11 +281,13 @@ try {
   await button("Reiniciar jogo").click();
   await page.getByLabel("Idade da criança (anos)").fill("8");
   await button("Começar o jogo").click();
-  while (!/Escreva a palavra ESCOLA/.test(await page.getByTestId("cognitive-easy-step").innerText())) await page.getByTestId("cognitive-easy-pular").click();
-  await page.getByTestId("cognitive-easy-show").click();
+  while (!/Escreva a palavra ESCOLA/.test(await page.getByTestId("cognitive-easy-step").innerText())) await manualTap("cognitive-easy-pular");
+  await manualTap("cognitive-easy-show");
   await child.waitFor();
+  await pace();
   for (const letter of "ESCOLA") await child.getByRole("button", { name: `Letra ${letter}`, exact: true }).first().click();
   await child.waitFor({ state: "detached" });
+  await manualTap("cognitive-easy-next");
   await playEasy("cognitive-easy");
   const report8 = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(report8, /Escreva a palavra ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");

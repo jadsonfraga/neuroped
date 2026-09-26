@@ -19,6 +19,18 @@ export interface EasyRecord extends Partial<EasyAnswerDetail> {
   /** true quando a tela da criança decidiu sozinha (toque na figura). */
   auto: boolean;
 }
+/**
+ * Intervalo mínimo entre dois toques aceitos pelo motor (Acertou, Não acertou,
+ * Pular, Próximo, Mostrar, Voltar e o primeiro toque na tela da criança). Um
+ * toque duplo, comum em tablet, chega em ~100–250 ms; um toque deliberado
+ * seguinte exige ler a tela nova. Compara o carimbo do próprio evento
+ * (event.timeStamp), não relógio JS, para conviver com o relógio falso dos e2e.
+ */
+export const MANUAL_TAP_MIN_GAP_MS = 300;
+export function acceptManualTap(lastAt: number, at: number, minGap = MANUAL_TAP_MIN_GAP_MS): boolean {
+  if (!Number.isFinite(at)) return true;
+  return !(at - lastAt < minGap);
+}
 export function easyCounts(records: EasyRecord[]) {
   return {
     total: records.length,

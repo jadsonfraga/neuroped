@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { EASY_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
+import { EASY_OUTCOME_LABEL, MANUAL_TAP_MIN_GAP_MS, acceptManualTap, buildEasyReport, easyCounts, type EasyRecord } from "../../client/src/components/jogo-facil/easyReport";
 
 const read = (path: string) => readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 const engine = read("client/src/components/jogo-facil/EasyGame.tsx");
@@ -48,10 +48,10 @@ test("motor: três botões gigantes, avanço automático, sem timers JS, herói 
   assert.match(engine, /data-testid=\{`\$\{testid\}-next`\}/, "modo objetivo: Próximo entre itens contra toque duplo");
   assert.match(engine, /const transitionLock = useRef\(false\)/, "motor bloqueia corrida entre resposta e pulo");
   assert.match(engine, /if \(!step \|\| transitionLock\.current\) return;/, "uma única transição por item");
-  assert.match(engine, /setAwaitNext\(objective\)/, "acerto, erro e pulo usam a mesma transição segura");
+  assert.match(engine, /setAwaitNext\(objective \|\| auto\)/, "acerto, erro e pulo (objetivo) e todo toque da criança usam a mesma transição segura");
   assert.match(engine, /Resposta registrada/, "interstício neutro não antecipa o próximo estímulo");
   assert.match(engine, /O próximo item ainda está oculto/, "próximo item não vaza durante a transição");
-  assert.match(engine, /\{!childOpen && !objective && \(/, "modo objetivo esconde Acertou/Não acertou");
+  assert.match(engine, /\{!childOpen && !objective && !awaitNext && \(/, "modo objetivo e transição escondem Acertou/Não acertou");
 });
 
 test("Sonda 10: aba Modo Fácil usa o banco objetivo (1 a 19 anos), sem a trilha clínica nem objeto externo", () => {
@@ -116,4 +116,37 @@ test("Testes Cognitivos: toque duplo em Próxima fase não pula fase nem estoura
   const registered = cognitive.slice(cognitive.indexOf('{phase === "registered" && ('), cognitive.indexOf("function WorldScreen("));
   assert.doesNotMatch(registered, /AnimatePresence|motion\.div|exit=/, "painel de avanço sem animação de saída: nenhum nó fantasma recebe o toque seguinte");
   assert.match(registered, /motion-safe:animate-in/);
+});
+
+test("motor: toque duplo do adulto em Acertou/Não acertou/Pular/Próximo/Voltar registra uma única ação (bug corrigido)", () => {
+  // Regra pura: segundo toque dentro do intervalo é ignorado; o carimbo é o do
+  // evento (event.timeStamp), nunca Date.now/performance.now (relógio falso dos e2e).
+  assert.equal(MANUAL_TAP_MIN_GAP_MS, 300);
+  assert.equal(acceptManualTap(Number.NEGATIVE_INFINITY, 1000), true, "primeiro toque sempre entra");
+  assert.equal(acceptManualTap(1000, 1120), false, "toque duplo (120 ms) não registra o item seguinte");
+  assert.equal(acceptManualTap(1000, 1299), false, "limite: 299 ms ainda é toque duplo");
+  assert.equal(acceptManualTap(1000, 1300), true, "300 ms já é um toque deliberado");
+  assert.equal(acceptManualTap(1000, Number.NaN), true, "evento sem carimbo não trava o jogo");
+  for (const outcome of ["acertou", "nao", "pulou"]) assert.match(engine, new RegExp(`onClick=\\{\\(event\\) => manual\\("${outcome}", event\\)\\}`), outcome);
+  assert.equal((engine.match(/manual\("pulou", event\)/g) ?? []).length, 2, "Pular guardado nos dois modos (manual e objetivo)");
+  assert.doesNotMatch(engine, /onClick=\{\(\) => record\(/, "nenhum botão manual chama record sem a trava");
+  assert.match(engine, /if \(!acceptManualTap\(lastActivationAt\.current, event\.timeStamp\)\) return false;/);
+  assert.match(engine, /onClick=\{next\}/, "Próximo e Ver resultado passam pela trava");
+  assert.match(engine, /onClick=\{openChild\}/, "Mostrar passa pela trava e carimba a abertura da tela da criança");
+  assert.match(engine, /onClick=\{\(event\) => undo\(event\)\}/, "Voltar um passo passa pela trava");
+  assert.match(engine, /if \(auto\) record\(auto, true, detail\)/, "toque da criança continua direto, sem trava de tempo própria");
+  assert.doesNotMatch(engine, /Date\.now\(\)|performance\.now\(\)/, "sem relógio JS no motor");
+});
+
+test("motor: nada nasce sob o dedo da criança — transição após todo toque automático, entrega neutra no fim, dica do aplicador some (bugs corrigidos)", () => {
+  assert.match(engine, /\{step\.child && !childOpen && !objective && !awaitNext && \(/, "Mostrar não aparece durante a transição");
+  assert.match(engine, /onClickCapture=\{\(event\) => \{\s*if \(!acceptManualTap\(childOpenedAt\.current, event\.timeStamp\)\)/, "primeiro toque dentro da tela da criança respeita o intervalo desde a abertura (toque duplo em Próximo/Mostrar)");
+  assert.match(engine, /className=\{childOpen \? "sr-only" : /, "título do passo (rótulo do aplicador, pode trazer a palavra ditada) some com a tela da criança aberta; a fala à criança permanece");
+  assert.match(engine, /\{step\.hint && !childOpen && /, "dica do aplicador (traz o esperado) some com a tela da criança aberta");
+  assert.match(engine, /\{step\.visual && !childOpen && /, "ilustração do aplicador some com a tela da criança aberta");
+  assert.match(engine, /\{finished && awaitNext && \(/, "último toque da criança leva a uma tela neutra de entrega");
+  assert.match(engine, /data-testid=\{`\$\{testid\}-handover`\}/);
+  assert.match(engine, /\{finished && !awaitNext && \(/, "resultado com contagem só depois que o adulto toca em Ver resultado");
+  const handover = engine.slice(engine.indexOf("{finished && awaitNext && ("), engine.indexOf("{finished && !awaitNext && ("));
+  assert.doesNotMatch(handover, /counts\.|records\.map|Acertou|Errado|Não acertou|label\[/, "tela de entrega sem contagem nem certo/errado");
 });

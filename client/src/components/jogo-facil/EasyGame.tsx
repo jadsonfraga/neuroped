@@ -15,7 +15,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronRight, Copy, Download, Play, RotateCcw, SkipForward, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
-import { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyAnswerDetail, type EasyOutcome, type EasyRecord } from "./easyReport";
+import { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, acceptManualTap, buildEasyReport, easyCounts, type EasyAnswerDetail, type EasyOutcome, type EasyRecord } from "./easyReport";
 export { EASY_OUTCOME_LABEL, OBJECTIVE_OUTCOME_LABEL, buildEasyReport, easyCounts, type EasyAnswerDetail, type EasyOutcome, type EasyRecord } from "./easyReport";
 
 export interface EasyStep {
@@ -66,6 +66,12 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   const [childOpen, setChildOpen] = useState(objective);
   const [awaitNext, setAwaitNext] = useState(false);
   const transitionLock = useRef(false);
+  // Trava de toque duplo por carimbo do evento (sem relógio JS): último toque
+  // aceito pelo motor (adulto ou criança) e instante em que a tela da criança
+  // abriu. Cobre Acertou/Não/Pular, Próximo, Mostrar, Voltar e o primeiro toque
+  // dentro da tela da criança (o 2º toque de um toque duplo nunca vira registro).
+  const lastActivationAt = useRef(Number.NEGATIVE_INFINITY);
+  const childOpenedAt = useRef(Number.NEGATIVE_INFINITY);
   const [shown, setShown] = useState(false);
   const label = objective ? OBJECTIVE_OUTCOME_LABEL : EASY_OUTCOME_LABEL;
   // Camada de aventura: herói e frase neutra. Não é dado clínico.
@@ -80,9 +86,10 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
     transitionLock.current = true;
     const next = [...records, { id: step.id, group: step.group, title: step.title, outcome, auto, ...(detail ?? {}) }];
     setRecords(next);
-    // No modo objetivo, todo desfecho passa por uma tela neutra de transição.
-    // Isso evita click-through, dupla marcação e exposição antecipada do item seguinte.
-    setAwaitNext(objective);
+    // No modo objetivo todo desfecho, e em qualquer modo o toque da criança,
+    // passa por uma tela neutra de transição: nada do item seguinte (nem o
+    // resultado) nasce sob o dedo; evita click-through e dupla marcação.
+    setAwaitNext(objective || auto);
     setChildOpen(false);
     setShown(false);
     setIndex(index + 1);
@@ -95,8 +102,34 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
     // evento/tap. No objetivo, ele permanece até o botão Próximo liberar o item.
     if (!objective) transitionLock.current = false;
   }, [index, objective]);
-  function undo() {
+  function accept(event: { timeStamp: number }): boolean {
+    if (!acceptManualTap(lastActivationAt.current, event.timeStamp)) return false;
+    lastActivationAt.current = event.timeStamp;
+    return true;
+  }
+  function manual(outcome: EasyOutcome, event: { timeStamp: number }) {
+    if (!accept(event)) return;
+    record(outcome);
+  }
+  function openChild(event: { timeStamp: number }) {
+    if (!accept(event)) return;
+    childOpenedAt.current = event.timeStamp;
+    setAwaitNext(false);
+    setChildOpen(true);
+  }
+  function next(event: { timeStamp: number }) {
+    if (!accept(event)) return;
+    transitionLock.current = false;
+    setAwaitNext(false);
+    if (objective) {
+      childOpenedAt.current = event.timeStamp;
+      setChildOpen(true);
+    }
+  }
+  function undo(event: { timeStamp: number }) {
     if (!records.length || (childOpen && !objective)) return;
+    if (!accept(event)) return;
+    childOpenedAt.current = event.timeStamp;
     const next = records.slice(0, -1);
     transitionLock.current = false;
     setRecords(next);
@@ -109,6 +142,8 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
   }
   function restart() {
     transitionLock.current = false;
+    lastActivationAt.current = Number.NEGATIVE_INFINITY;
+    childOpenedAt.current = Number.NEGATIVE_INFINITY;
     setRecords([]);
     setIndex(0);
     setAwaitNext(false);
@@ -140,10 +175,10 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
 
   const big = "flex min-h-24 w-full flex-col items-center justify-center gap-1 rounded-3xl border-4 text-2xl font-black shadow-md transition motion-safe:active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring";
   const counts = easyCounts(records);
-  const objectiveIntermission = objective && awaitNext;
+  const intermission = awaitNext;
   const currentPosition = finished
     ? steps.length
-    : objectiveIntermission
+    : intermission
       ? records.length
       : Math.min(index + 1, steps.length);
 
@@ -173,7 +208,7 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           className="rounded-3xl border bg-card p-5 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 sm:p-7"
           aria-labelledby={`${testid}-step-title`}
         >
-          {objectiveIntermission ? (
+          {intermission ? (
             <>
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Transição segura</p>
               <h2 id={`${testid}-step-title`} className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Resposta registrada</h2>
@@ -184,15 +219,16 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
           ) : (
             <>
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{step.group}</p>
-              <h2 id={`${testid}-step-title`} className={objective && childOpen ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
+              <h2 id={`${testid}-step-title`} className={childOpen ? "sr-only" : "mt-1 text-2xl font-black tracking-tight sm:text-3xl"}>{step.title}</h2>
               {!(objective && childOpen) && (
                 <p className="mt-4 rounded-2xl bg-primary/10 p-4 text-xl font-semibold leading-relaxed sm:text-2xl">
                   <span className="mr-2" aria-hidden="true">🗣️</span>
                   {step.say}
                 </p>
               )}
-              {step.hint && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
-              {step.visual && <div className="mt-4">{step.visual}</div>}
+              {/* Dica e ilustração são do aplicador (trazem o esperado): somem enquanto a tela da criança está aberta. */}
+              {step.hint && !childOpen && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{step.hint}</p>}
+              {step.visual && !childOpen && <div className="mt-4">{step.visual}</div>}
             </>
           )}
 
@@ -201,29 +237,38 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
               size="lg"
               data-testid={`${testid}-next`}
               className="mt-5 min-h-24 w-full rounded-3xl text-2xl font-black"
-              onClick={() => {
-                transitionLock.current = false;
-                setAwaitNext(false);
-                setChildOpen(objective);
-              }}
+              onClick={next}
             >
               Próximo
               <ChevronRight className="ml-2 h-8 w-8" />
             </Button>
           )}
-          {step.child && !childOpen && !objective && (
+          {step.child && !childOpen && !objective && !awaitNext && (
             <Button
               size="lg"
               data-testid={`${testid}-show`}
               className="mt-5 min-h-20 w-full rounded-3xl text-xl font-black"
-              onClick={() => setChildOpen(true)}
+              onClick={openChild}
             >
               <Play className="mr-2 h-6 w-6" />
               {shown ? "Mostrar de novo" : (step.childLabel ?? "Mostrar para a criança")}
             </Button>
           )}
           {step.child && childOpen && (
-            <div data-testid={`${testid}-child`}>
+            <div
+              data-testid={`${testid}-child`}
+              // Captura: o 2º toque de um toque duplo em "Próximo"/"Mostrar" cai aqui
+              // dentro antes de a criança ver a tela; é descartado. Depois disso, cada
+              // toque aceito carimba o motor (o "Próximo" seguinte espera o intervalo).
+              onClickCapture={(event) => {
+                if (!acceptManualTap(childOpenedAt.current, event.timeStamp)) {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  return;
+                }
+                lastActivationAt.current = event.timeStamp;
+              }}
+            >
               {step.child({
                 onDone: (auto, detail) => {
                   setChildOpen(false);
@@ -234,21 +279,21 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
             </div>
           )}
 
-          {!childOpen && !objective && (
+          {!childOpen && !objective && !awaitNext && (
             <>
               <p className="mt-6 text-center text-sm font-semibold text-muted-foreground">
                 {step.child && !shown ? "Depois de mostrar, marque o que viu:" : "Marque o que viu:"}
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <button type="button" data-testid={`${testid}-acertou`} onClick={() => record("acertou")} className={`${big} border-emerald-400 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-100`}>
+                <button type="button" data-testid={`${testid}-acertou`} onClick={(event) => manual("acertou", event)} className={`${big} border-emerald-400 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-100`}>
                   <Check className="h-8 w-8" aria-hidden="true" />
                   Acertou
                 </button>
-                <button type="button" data-testid={`${testid}-nao`} onClick={() => record("nao")} className={`${big} border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-100`}>
+                <button type="button" data-testid={`${testid}-nao`} onClick={(event) => manual("nao", event)} className={`${big} border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-100`}>
                   <X className="h-8 w-8" aria-hidden="true" />
                   Não acertou
                 </button>
-                <button type="button" data-testid={`${testid}-pular`} onClick={() => record("pulou")} className={`${big} border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-900/60 dark:text-slate-100`}>
+                <button type="button" data-testid={`${testid}-pular`} onClick={(event) => manual("pulou", event)} className={`${big} border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-900/60 dark:text-slate-100`}>
                   <SkipForward className="h-8 w-8" aria-hidden="true" />
                   Pular
                 </button>
@@ -256,13 +301,13 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
             </>
           )}
           {objective && !awaitNext && (
-            <button type="button" data-testid={`${testid}-pular`} onClick={() => record("pulou")} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-slate-50 text-base font-bold text-slate-700 hover:bg-slate-100 dark:bg-slate-900/60 dark:text-slate-100">
+            <button type="button" data-testid={`${testid}-pular`} onClick={(event) => manual("pulou", event)} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-slate-50 text-base font-bold text-slate-700 hover:bg-slate-100 dark:bg-slate-900/60 dark:text-slate-100">
               <SkipForward className="h-5 w-5" aria-hidden="true" />
               Pular · a criança não respondeu
             </button>
           )}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-            <Button variant="ghost" size="sm" disabled={!records.length || (childOpen && !objective)} onClick={undo}>
+            <Button variant="ghost" size="sm" disabled={!records.length || (childOpen && !objective)} onClick={(event) => undo(event)}>
               <Undo2 className="mr-1 h-4 w-4" /> Voltar um passo
             </Button>
             <details className="text-sm">
@@ -273,7 +318,19 @@ export default function EasyGame({ title, ageLabel, nature, steps, testid = "jog
         </section>
       )}
 
-      {finished && (
+      {finished && awaitNext && (
+        <section data-testid={`${testid}-handover`} className="rounded-3xl border bg-card p-5 text-center shadow-sm motion-safe:animate-in motion-safe:fade-in sm:p-7" aria-labelledby={`${testid}-handover-title`}>
+          {/* Último toque foi da criança: tela neutra, sem contagem, até o adulto pegar o aparelho. */}
+          <div className="text-6xl" aria-hidden="true">🏆</div>
+          <h2 id={`${testid}-handover-title`} className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Jogo concluído!</h2>
+          <p className="mt-1 text-lg font-semibold">Muito bem, {hero.name}! Agora entregue o aparelho para o adulto.</p>
+          <Button size="lg" data-testid={`${testid}-next`} className="mt-5 min-h-20 w-full rounded-3xl text-xl font-black sm:w-auto sm:px-10" onClick={next}>
+            Ver resultado (adulto)
+            <ChevronRight className="ml-2 h-6 w-6" />
+          </Button>
+        </section>
+      )}
+      {finished && !awaitNext && (
         <section data-testid={`${testid}-results`} className="rounded-3xl border bg-card p-5 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 sm:p-7" aria-labelledby={`${testid}-results-title`}>
           <div className="text-center">
             <div className="text-6xl" aria-hidden="true">🏆</div>
