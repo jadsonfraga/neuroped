@@ -123,6 +123,7 @@ const NeuropsicologiaPage = lazy(() => import("@/pages/neuropsicologia"));
 const PacPage = lazy(() => import("@/pages/pac"));
 const AhsdTeaPage = lazy(() => import("@/pages/ahsd-tea"));
 const Tde2Page = lazy(() => import("@/pages/tde2"));
+const SuperNeuroPadGamePage = lazy(() => import("@/pages/super-neuropad-game"));
 const TestesDiretosPage = lazy(() => import("@/pages/sonda-dez-daily"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/teste-reconhecimento-visual"));
 const TestesCognitivosPage = lazy(() => import("@/pages/testes-cognitivos-faixa-etaria"));
@@ -373,6 +374,7 @@ function AppRouter() {
             <Route path="/pac" component={PacPage} />
             <Route path="/ahsd-tea" component={AhsdTeaPage} />
             <Route path="/tde2" component={Tde2Page} />
+            <Route path="/super-neuropad-game" component={SuperNeuroPadGamePage} />
             <Route path="/testes-diretos" component={TestesDiretosPage} />
             <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
             <Route path="/testes-cognitivos" component={TestesCognitivosPage} />
