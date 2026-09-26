@@ -248,6 +248,37 @@ assert.match(
   "UI recebe permissões efetivas",
 );
 
+// 6) Cliente: a tela de configurações decide o que mostrar pela lista
+//    `permissions` devolvida pelo servidor — nunca por `canManage` nem por
+//    comparação de nome de papel. Cada seção restrita declara a permissão
+//    que a torna visível, com nome que precisa existir no catálogo.
+const settingsPage = readFileSync(
+  join(root, "client/src/pages/configuracoes.tsx"),
+  "utf8",
+);
+assert.doesNotMatch(settingsPage, /canManage/, "configuracoes não pode depender de canManage");
+assert.doesNotMatch(
+  settingsPage,
+  /\.role\s*[!=]==\s*["']|\.includes\(\s*[a-zA-Z.]*role\s*\)/,
+  "configuracoes não pode autorizar por nome de papel",
+);
+assert.match(settingsPage, /permissions: TenantPermission\[\]/, "TenantDetail carrega permissions tipadas");
+const declaredRequirements = [...settingsPage.matchAll(/requires: "([^"]+)"/g)].map((match) => match[1]);
+assert.ok(declaredRequirements.length >= 3, "seções restritas declaram a permissão exigida");
+for (const requirement of declaredRequirements) {
+  assert.ok(isTenantPermission(requirement), `seção exige permissão fora do catálogo: ${requirement}`);
+}
+for (const gate of [
+  /hasPermission\(permissions, "team\.manage"\) && <EquipeSection/,
+  /hasPermission\(permissions, "billing\.manage"\) && <PlanoSection/,
+  /hasPermission\(permissions, "organization\.metrics\.read"\) && <TenantMetricsPanel/,
+  /readOnly = !hasPermission\(detail\.permissions, "organization\.manage"\)/,
+]) {
+  assert.match(settingsPage, gate, `porta da tela ausente: ${gate}`);
+}
+// Lista ausente (resposta antiga) nunca vira acesso.
+assert.match(settingsPage, /Array\.isArray\(detail\.permissions\) \? detail\.permissions : \[\]/);
+
 console.log(
-  "tenant-permissions: matriz, fail-closed, equivalência e trava estática OK",
+  "tenant-permissions: matriz, fail-closed, equivalência, trava estática e tela por permissão OK",
 );

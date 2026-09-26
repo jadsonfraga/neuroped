@@ -20,16 +20,28 @@ import { authFetch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
 import { useToast } from "@/hooks/use-toast";
 import TenantMetricsPanel from "@/components/TenantMetricsPanel";
+import type { TenantPermission } from "../../../shared/permissions";
 
 type SectionId = "perfil" | "clinica" | "equipe" | "plano" | "atividade";
 
-const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2 }> = [
+/**
+ * Cada seção declara a permissão do catálogo (`shared/permissions.ts`) que a
+ * torna visível. A lista efetiva vem do servidor em `GET /api/tenants/:id`
+ * (`permissions`), já com o status da clínica aplicado — a tela nunca compara
+ * nome de papel nem confia em um booleano derivado. Seção sem `requires` é
+ * visível a qualquer membro ativo.
+ */
+const SECTIONS: Array<{ id: SectionId; label: string; icon: typeof Building2; requires?: TenantPermission }> = [
   { id: "perfil", label: "Perfil", icon: Stethoscope },
   { id: "clinica", label: "Clínica", icon: Building2 },
-  { id: "equipe", label: "Equipe", icon: UsersRound },
-  { id: "plano", label: "Plano", icon: CreditCard },
-  { id: "atividade", label: "Atividade", icon: ShieldCheck },
+  { id: "equipe", label: "Equipe", icon: UsersRound, requires: "team.manage" },
+  { id: "plano", label: "Plano", icon: CreditCard, requires: "billing.manage" },
+  { id: "atividade", label: "Atividade", icon: ShieldCheck, requires: "organization.metrics.read" },
 ];
+
+function hasPermission(permissions: readonly TenantPermission[] | null, permission: TenantPermission): boolean {
+  return permissions !== null && permissions.includes(permission);
+}
 
 /**
  * Seção inicial a partir do link (`#/configuracoes?secao=plano`).
@@ -67,7 +79,8 @@ interface TenantDetail {
   timezone: string;
   status: string;
   role: string;
-  canManage: boolean;
+  /** Permissões efetivas calculadas no servidor (vazio com clínica inativa). */
+  permissions: TenantPermission[];
   settings: {
     displayName: string;
     addressLine1: string;
@@ -114,6 +127,41 @@ async function readJson<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as T & { error?: string };
   if (!response.ok) throw new Error(body.error || `Falha (${response.status})`);
   return body;
+}
+
+function normalizeTenantDetail(detail: TenantDetail): TenantDetail {
+  // Resposta antiga (sem `permissions`) ou malformada vira "sem permissão":
+  // a ausência da lista nunca pode ser lida como acesso.
+  return { ...detail, permissions: Array.isArray(detail.permissions) ? detail.permissions : [] };
+}
+
+function useTenantDetail(clinicId: string | null) {
+  const [detail, setDetail] = useState<TenantDetail | null>(null);
+  const [loading, setLoading] = useState(Boolean(clinicId));
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    if (!clinicId) {
+      setDetail(null);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    void authFetch(`/api/tenants/${clinicId}`)
+      .then((response) => readJson<TenantDetail>(response))
+      .then((body) => !cancelled && setDetail(normalizeTenantDetail(body)))
+      .catch((loadError: Error) => !cancelled && setError(loadError.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [clinicId]);
+  useEffect(load, [load]);
+
+  const apply = useCallback((next: TenantDetail) => setDetail(normalizeTenantDetail(next)), []);
+  return { detail, loading, error, reload: load, apply };
 }
 
 function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -212,22 +260,25 @@ function PerfilSection() {
   );
 }
 
-function ClinicaSection({ clinicId }: { clinicId: string }) {
+function ClinicaSection({
+  clinicId,
+  detail: loaded,
+  loading,
+  loadError,
+  onSaved,
+}: {
+  clinicId: string;
+  detail: TenantDetail | null;
+  loading: boolean;
+  loadError: string | null;
+  onSaved: (next: TenantDetail) => void;
+}) {
   const { toast } = useToast();
-  const [detail, setDetail] = useState<TenantDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState<TenantDetail | null>(loaded);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    void authFetch(`/api/tenants/${clinicId}`)
-      .then((response) => readJson<TenantDetail>(response))
-      .then(setDetail)
-      .catch((loadError: Error) => setError(loadError.message))
-      .finally(() => setLoading(false));
-  }, [clinicId]);
-  useEffect(load, [load]);
+  useEffect(() => setDraft(loaded), [loaded]);
+  const detail = draft;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -246,7 +297,9 @@ function ClinicaSection({ clinicId }: { clinicId: string }) {
           }),
         }),
       );
-      setDetail(updated);
+      // PATCH devolve o detalhe sem `permissions`; a lista efetiva continua a
+      // do GET, para a tela não perder ou ganhar abas ao salvar.
+      onSaved({ ...updated, permissions: loaded?.permissions ?? [] });
       invalidateIssuerCache();
       toast({ title: "Clínica atualizada ✓" });
     } catch (saveError) {
@@ -256,12 +309,12 @@ function ClinicaSection({ clinicId }: { clinicId: string }) {
     }
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground" role="status">Carregando clínica…</p>;
-  if (!detail) return <p role="alert" className="text-sm text-destructive">{error ?? "Clínica indisponível."}</p>;
+  if (loading && !detail) return <p className="text-sm text-muted-foreground" role="status">Carregando clínica…</p>;
+  if (!detail) return <p role="alert" className="text-sm text-destructive">{loadError ?? "Clínica indisponível."}</p>;
 
-  const readOnly = !detail.canManage;
-  const set = (patch: Partial<TenantDetail>) => setDetail({ ...detail, ...patch });
-  const setSettings = (patch: Partial<TenantDetail["settings"]>) => setDetail({ ...detail, settings: { ...detail.settings, ...patch } });
+  const readOnly = !hasPermission(detail.permissions, "organization.manage");
+  const set = (patch: Partial<TenantDetail>) => setDraft({ ...detail, ...patch });
+  const setSettings = (patch: Partial<TenantDetail["settings"]>) => setDraft({ ...detail, settings: { ...detail.settings, ...patch } });
 
   return (
     <SectionCard
@@ -580,11 +633,27 @@ export default function ConfiguracoesPage() {
   const { user } = useAuth();
   const { activeClinicId, clinics } = useClinic();
   const [section, setSection] = useState<SectionId>(initialSectionFromLocation);
+  const tenant = useTenantDetail(activeClinicId);
 
   const activeClinic = useMemo(
     () => clinics.find((clinic) => clinic.id === activeClinicId) ?? null,
     [clinics, activeClinicId],
   );
+
+  // Enquanto a lista não chegou, só as seções sem exigência aparecem; uma
+  // seção restrita nunca é mostrada "por enquanto" à espera da resposta.
+  const permissions: TenantPermission[] | null = tenant.detail?.permissions ?? null;
+  const visibleSections = useMemo(
+    () => SECTIONS.filter((entry) => !entry.requires || hasPermission(permissions, entry.requires)),
+    [permissions],
+  );
+
+  // Link profundo (`?secao=plano`) para uma seção que este membro não tem
+  // permissão de ver cai em "Perfil" assim que a lista chega.
+  useEffect(() => {
+    if (tenant.loading) return;
+    if (!visibleSections.some((entry) => entry.id === section)) setSection("perfil");
+  }, [section, tenant.loading, visibleSections]);
 
   if (!user) return null;
 
@@ -599,7 +668,7 @@ export default function ConfiguracoesPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 rounded-2xl border bg-card p-2" role="tablist" aria-label="Seções de configurações">
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
+        {visibleSections.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
@@ -622,10 +691,18 @@ export default function ConfiguracoesPage() {
           </a>
         </SectionCard>
       )}
-      {section === "clinica" && activeClinicId && <ClinicaSection clinicId={activeClinicId} />}
-      {section === "equipe" && activeClinicId && <EquipeSection clinicId={activeClinicId} />}
-      {section === "plano" && activeClinicId && <PlanoSection clinicId={activeClinicId} />}
-      {section === "atividade" && activeClinicId && <TenantMetricsPanel key={activeClinicId} />}
+      {section === "clinica" && activeClinicId && (
+        <ClinicaSection
+          clinicId={activeClinicId}
+          detail={tenant.detail}
+          loading={tenant.loading}
+          loadError={tenant.error}
+          onSaved={tenant.apply}
+        />
+      )}
+      {section === "equipe" && activeClinicId && hasPermission(permissions, "team.manage") && <EquipeSection clinicId={activeClinicId} />}
+      {section === "plano" && activeClinicId && hasPermission(permissions, "billing.manage") && <PlanoSection clinicId={activeClinicId} />}
+      {section === "atividade" && activeClinicId && hasPermission(permissions, "organization.metrics.read") && <TenantMetricsPanel key={activeClinicId} />}
     </div>
   );
 }
