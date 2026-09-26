@@ -103,6 +103,7 @@ const RED = "clinic-red-synthetic";
 const BLUE = "clinic-blue-synthetic";
 const RED_PATIENT = "patient-red-synthetic";
 const RED_PATIENT_2 = "patient-red-2-synthetic";
+const RED_PATIENT_3 = "patient-red-3-synthetic";
 const BLUE_PATIENT = "patient-blue-synthetic";
 const ACTOR = "user-actor-synthetic";
 const CIPHER = "cipher-sintetico";
@@ -513,10 +514,27 @@ async function rodarPurge(
   );
 }
 
-// ── 8) Purge por clínica: RED zerado, BLUE intocado ───────────────────────
+// LTB-02 (ciclo 4, 2026-09-26 — docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+// o export do tenant não cobre documentos, avaliações, intake nem respostas
+// de escala. O purge por CLÍNICA precisa recusar enquanto sobrar linha de
+// RED nessas tabelas — nunca apagar o que o export nunca levou.
+const EXPORT_UNCOVERED_TABLES_TESTE = [
+  "live_documents",
+  "live_document_versions",
+  "live_assessments",
+  "live_assessment_responses",
+  "live_intake_invitations",
+  "live_intake_submissions",
+  "live_scale_invitations",
+  "live_scale_responses",
+];
+
+// ── 8a) Purge por clínica recusa com dado fora do alcance do export ───────
+// RED_PATIENT e RED_PATIENT_2 já foram apagados individualmente pelas
+// corridas 6/7/10 acima — um paciente novo garante dado fresco nas tabelas
+// fora do export no momento desta prova.
+criarPaciente(RED, RED_PATIENT_3);
 {
-  // Tenant encerrado e retenção vencida — o que a política exige para o escopo
-  // de clínica.
   sqlite.prepare(`UPDATE clinics SET status = 'closed' WHERE id = ?`).run(RED);
   sqlite
     .prepare(
@@ -526,6 +544,37 @@ async function rodarPurge(
     )
     .run(PAST, PAST, PAST, RED);
 
+  const antesRed = contarClinica(RED);
+  const temDadoForaDoExport = EXPORT_UNCOVERED_TABLES_TESTE.some(
+    (table) => antesRed[table] > 0,
+  );
+  assert.ok(
+    temDadoForaDoExport,
+    "premissa: RED tem dado em ao menos uma tabela fora do export",
+  );
+
+  const corrida = await rodarPurge("req-clinica", "clinic", null);
+  assert.equal(corrida.falhas.length, 1);
+  assert.match(
+    corrida.falhas[0],
+    /^EXPORT_MANIFEST_INCOMPLETE:/,
+    "purge por clínica com dado não exportado precisa recusar nomeando a tabela",
+  );
+  assert.deepEqual(
+    contarClinica(RED),
+    antesRed,
+    "recusa não pode apagar nada, nem parcialmente",
+  );
+}
+
+// Simula o dado tendo sido coberto pelo export (S12b, backlog): limpa só as
+// tabelas fora do alcance de hoje, deixando o resto intocado.
+for (const table of EXPORT_UNCOVERED_TABLES_TESTE) {
+  sqlite.prepare(`DELETE FROM ${table} WHERE clinic_id = ?`).run(RED);
+}
+
+// ── 8b) Purge por clínica: RED zerado, BLUE intocado ──────────────────────
+{
   const antesBlue = contarClinica(BLUE);
   const corrida = await rodarPurge("req-clinica", "clinic", null);
   assert.deepEqual(

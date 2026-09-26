@@ -99,12 +99,20 @@ convite — exige membership ativa prévia, com resposta uniforme (404
 MEMBER_NOT_FOUND) que fecha o oráculo de enumeração por e-mail/papel
 global. Evidência em EVIDENCE.md#S11.
 
+S12: o purge de encerramento (escopo `clinic`) agora recusa
+(`EXPORT_MANIFEST_INCOMPLETE`) enquanto a clínica tiver documentos,
+avaliações, intake ou escala respondida — domínios que o export do tenant
+ainda não leva. O manifesto de export parou de afirmar `complete: true`
+sempre; agora é computado. Efeito colateral deliberado: nenhuma clínica com
+esses dados consegue concluir o purge físico hoje, até S12B (expandir o
+export) ser feito. Evidência em EVIDENCE.md#S12.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
 censo, os próximos itens executáveis sem depender de estado de produção
-desconhecido são S10 (papel duplo global×membership), S12 (export/purge de
-tenant incompleto) e S13 (link público de agendamento por clínica) — ver
-BACKLOG.md para os três. Retomada: `git fetch origin main && git log -1
-origin/main` e reler este arquivo.
+desconhecido são S10 (papel duplo global×membership), S12B (expandir o
+export para cobrir documentos/avaliações/intake/escala) e S13 (link público
+de agendamento por clínica) — ver BACKLOG.md para os três. Retomada: `git
+fetch origin main && git log -1 origin/main` e reler este arquivo.

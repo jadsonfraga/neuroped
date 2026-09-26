@@ -151,3 +151,54 @@
   (suíte completa).
 - Rollback: reverter `functions/api/tenants/[id]/members.ts` a `18799d7`
   restaura o comportamento anterior; nenhuma migração envolvida.
+
+## S12 (ciclo 4, 2026-09-26) — export incompleto e purge inseguro (LTB-02)
+- Escopo: `functions/api/tenant/_exportPayload.ts` (nova
+  `EXPORT_UNCOVERED_CLINIC_TABLES` — as 8 tabelas com `clinic_id` que o
+  payload ainda não leva — e `countExportUncoveredRows`; o resultado `ok`
+  ganha `complete`/`uncoveredCounts` computados, não mais implícitos);
+  `functions/api/tenants/[id]/export.ts` (`complete: collected.complete` no
+  manifesto síncrono, com `uncoveredNotExported` nomeando o que falta);
+  `functions/api/live/governance/run-export.ts` (auditoria do worker ganha
+  `exportComplete`/`uncoveredDomainCount`, metadata-only); `functions/api/
+  live/governance/_purge.ts` (purge de escopo `clinic` recusa com
+  `EXPORT_MANIFEST_INCOMPLETE:<tabela>` — mesma disciplina fail-closed já
+  usada para `UNREACHABLE_PATIENT_TABLES` — enquanto sobrar linha da clínica
+  nas 8 tabelas). Nenhuma migração: tudo calculado por COUNT fresco no
+  momento do export/purge, nunca de um flag armazenado que pudesse ficar
+  velho.
+- Ambiente: container da sessão, Node do repo, HEAD `9d4c67d` (S11) + S12.
+- Teste em `tests/unit/lgpd-purge-executor.test.ts` (schema real + todas as
+  migrações, RED/BLUE sintéticos): novo paciente RED_PATIENT_3 com a cadeia
+  clínica inteira (documento, avaliação, intake, escala) prova que o purge
+  por CLÍNICA recusa (`EXPORT_MANIFEST_INCOMPLETE:`) sem apagar nada
+  enquanto esses dados existirem; só depois de removidos (simulando a
+  cobertura futura do export, S12B) o purge por clínica volta a limpar RED
+  por completo, com BLUE intocado — cenário 8 original preservado como 8b.
+  Visto FALHANDO pelo motivo certo contra o código anterior via `git stash`
+  isolado (`corrida.falhas.length` 0 em vez de 1: o purge apagava tudo sem
+  checar); verde com a correção. Ajuste de contrato em
+  `tests/unit/saas-tenant-lifecycle.test.ts`: a asserção estática
+  `complete: true` (fixo) vira `complete: collected.complete` (computado),
+  com `doesNotMatch` explícito contra o valor fixo antigo.
+- Comandos exit 0: `node --import tsx tests/unit/lgpd-purge-executor.test.ts`,
+  `node --import tsx tests/unit/lgpd-run-export-endpoint.test.ts`,
+  `node --import tsx tests/unit/lgpd-worker-executor-core.test.ts`,
+  `node --import tsx tests/unit/lgpd-worker-foundation.test.ts`,
+  `node --import tsx tests/unit/lgpd-run-deletion-endpoint.test.ts`,
+  `node --import tsx tests/unit/lgpd-worker-race-regressions.test.ts`,
+  `node --import tsx tests/unit/operations-consent-evidence-runtime.test.ts`,
+  `node --import tsx tests/unit/saas-tenant-lifecycle.test.ts`,
+  `node --import tsx tests/unit/cliente-zero-journey.test.ts`,
+  `node --import tsx tests/unit/saas-acceptance-journey.test.ts`,
+  `npm run check`, `npx eslint` nos arquivos tocados, `npm run test:quick-wins`
+  (suíte completa).
+- Efeito colateral deliberado, documentado no backlog (S12B): nenhuma
+  clínica com documentos, avaliações, intake ou escala respondida hoje
+  consegue concluir purge físico de encerramento — fail-closed até o export
+  cobrir esses domínios. Nenhum teste existente exercitava essa combinação
+  como sucesso esperado antes desta sessão (o cenário 8 original só provava
+  limpeza com os pacientes já purgados individualmente, ou seja, com essas
+  tabelas já vazias).
+- Rollback: reverter os quatro arquivos de produção a `9d4c67d` restaura o
+  comportamento anterior; nenhuma migração de banco envolvida.

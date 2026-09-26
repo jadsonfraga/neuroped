@@ -244,6 +244,11 @@ export const onRequestPost: PagesFunction<
         byteLength: evidence.byteLength,
         patientCount: collected.counts.patients,
         eventCount: collected.counts.events,
+        // LTB-02: registra se este export cobriu 100% dos domínios com
+        // clinic_id (ver functions/api/tenant/_exportPayload.ts). Metadata
+        // agregada, sem nomear tabela nem conteúdo clínico.
+        exportComplete: collected.complete,
+        uncoveredDomainCount: Object.values(collected.uncoveredCounts).filter((n) => n > 0).length,
       },
     }).run();
   } catch (error) {

@@ -122,10 +122,32 @@ sem membership aqui, ou membership desativada. Entrada de gente nova
 continua exclusiva de `POST /api/billing/invitations` + `accept`. Evidência
 em EVIDENCE.md#S11.
 
-## S12 · P1 · aberto
-Export/purge de tenant se declaram completos mas cobrem só `clinics`,
+## S12 · P0 · FECHADO parcialmente (ciclo 4) — purge seguro; export ainda incompleto
+Export do tenant se declarava `complete: true` sempre, cobrindo só `clinics`,
 `clinic_memberships`, `live_patients`, `live_clinical_events`,
 `billing_customers/subscriptions`. Documentos (PDFs arquivados),
-avaliações, intake, respostas de escala, `clinic_settings` e auditoria
-ficam fora — e o purge de encerramento apaga o que o export nunca levou.
-(LTB-02)
+avaliações, intake e respostas de escala remota ficavam fora — e o purge de
+encerramento (`_purge.ts`, escopo `clinic`) apagava exatamente o que o
+export nunca tinha levado, sem checagem nenhuma. (LTB-02)
+
+Fechado nesta sessão o lado que evita PERDA IRREVERSÍVEL: `_purge.ts` agora
+recusa (`EXPORT_MANIFEST_INCOMPLETE:<tabela>`) qualquer purge de escopo
+`clinic` enquanto sobrar linha da clínica em `live_documents`,
+`live_document_versions`, `live_assessments`, `live_assessment_responses`,
+`live_intake_invitations`, `live_intake_submissions`,
+`live_scale_invitations` ou `live_scale_responses` — a mesma lista
+(`EXPORT_UNCOVERED_CLINIC_TABLES`, em `_exportPayload.ts`) usada para
+calcular `complete` honestamente no manifesto de export. Isso significa que
+HOJE nenhuma clínica com PDFs, avaliações, intake ou escala respondida
+consegue completar o encerramento com purge físico — comportamento
+deliberado (fail-closed) até o export cobrir esses domínios.
+
+## S12B · P1 · aberto
+Expandir `collectTenantExportPayload` para incluir de fato documentos
+(com conteúdo decifrado ou referência ao artefato), avaliações e respostas,
+intake e respostas de escala, `clinic_settings` e `live_retention_policies`
+no payload exportado — o que fecha `complete` para `true` nessas clínicas e
+libera o purge de encerramento sem depender de o admin de plataforma
+esvaziar as tabelas manualmente. Cuidado: volume (documentos podem ter até
+~250 KB em base64 cada) pode exigir ajustar `exportWithinSyncLimits` e
+priorizar o caminho assíncrono (worker) para tenants médios/grandes.

@@ -241,7 +241,11 @@ assert.doesNotMatch(exportPayload, /payloadEncrypted:/);
 assert.match(exportRoute, /tenant_export_events/);
 assert.match(exportRoute, /tenant_export_created/);
 assert.match(exportRoute, /digestAlgorithm: "SHA-256"/);
-assert.match(exportRoute, /complete: true/);
+// LTB-02 (ciclo 4, 2026-09-26): `complete` deixou de ser fixo em `true` — só
+// é verdadeiro quando nenhuma tabela de EXPORT_UNCOVERED_CLINIC_TABLES tem
+// linha da clínica (functions/api/tenant/_exportPayload.ts).
+assert.match(exportRoute, /complete: collected\.complete/);
+assert.doesNotMatch(exportRoute, /complete: true/);
 assert.doesNotMatch(exportRoute, /profileEncrypted:/);
 assert.doesNotMatch(exportRoute, /payloadEncrypted:/);
 
