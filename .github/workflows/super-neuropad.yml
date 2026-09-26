@@ -1,0 +1,43 @@
+name: Super NeuroPad game proof
+on:
+  pull_request:
+    paths:
+      - client/src/features/super-neuropad/**
+      - client/src/pages/super-neuropad-game.tsx
+      - client/src/styles/super-neuropad-arcade.css
+      - client/src/styles/tokens.css
+      - tests/unit/super-neuropad-game.test.ts
+      - tests/e2e/super-neuropad-game.mjs
+      - .github/workflows/super-neuropad.yml
+permissions:
+  contents: read
+concurrency:
+  group: super-neuropad-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  game-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:super-neuropad
+      - run: npm run build:client
+        env:
+          VITE_AUTH_MODE: remote
+          VITE_OPEN_ACCESS: 'false'
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:super-neuropad
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: super-neuropad-proof
+          path: /tmp/super-neuropad-game
+          if-no-files-found: error
+          retention-days: 7
