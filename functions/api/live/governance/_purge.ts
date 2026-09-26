@@ -26,7 +26,7 @@
 import type { LgpdWorkerClaim } from "./_worker-core";
 import type { DeletionEligibility, LgpdScope } from "./_worker-executor";
 import { evaluateDeletionEligibility } from "./_worker-executor";
-import { EXPORT_UNCOVERED_CLINIC_TABLES } from "../../tenant/_exportPayload";
+import { EXPORT_UNCOVERED_CLINIC_TABLES, isMissingExportTable, validExportRowCount } from "../../tenant/_exportPayload";
 
 /**
  * Tabelas clínicas do Clinical LIVE, em ordem de dependência (filhas antes das
@@ -238,9 +238,11 @@ export async function executeTenantScopedPurge(
           .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE clinic_id = ?`)
           .bind(targets.clinicId)
           .first<{ n: number }>();
-      } catch {
-        // Tabela ausente neste banco não é motivo para bloquear a eliminação.
-        continue;
+        validExportRowCount(remaining);
+      } catch (error) {
+        if (isMissingExportTable(error, table)) continue;
+        await params.fail(`PURGE_PREFLIGHT_FAILED:${table}`);
+        return null;
       }
       if (Number(remaining?.n ?? 0) > 0) {
         await params.fail(`EXPORT_MANIFEST_INCOMPLETE:${table}`);
@@ -270,9 +272,11 @@ export async function executeTenantScopedPurge(
               )
               .bind(targets.clinicId)
               .first<{ n: number }>();
-    } catch {
-      // Tabela ausente neste banco não é motivo para bloquear a eliminação.
-      continue;
+      validExportRowCount(remaining);
+    } catch (error) {
+      if (isMissingExportTable(error, table)) continue;
+      await params.fail(`PURGE_PREFLIGHT_FAILED:${table}`);
+      return null;
     }
     if (Number(remaining?.n ?? 0) > 0) {
       await params.fail(`PURGE_UNREACHABLE_DATA:${table}`);

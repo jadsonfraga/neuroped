@@ -29,6 +29,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
 import { onRequestPost as runExport } from "../../functions/api/live/governance/run-export";
 import { encryptClinicalJson } from "../../functions/api/tenant/_crypto";
+import { collectTenantExportPayload, countExportUncoveredRows } from "../../functions/api/tenant/_exportPayload";
 
 class D1StatementMock {
   constructor(
@@ -70,7 +71,9 @@ class D1DatabaseMock {
           sql: string;
           values: unknown[];
         };
-        const result = raw.db.prepare(raw.sql).run(...raw.values);
+        const prepared = raw.db.prepare(raw.sql);
+        if (prepared.reader) return { success: true, results: prepared.all(...raw.values), meta: {} };
+        const result = prepared.run(...raw.values);
         return { success: true, meta: { changes: result.changes } };
       }),
     )();
@@ -498,6 +501,93 @@ function ledger(requestId: string) {
     /ticket 7734/,
     "a metadata precisa carregar a razão declarada",
   );
+}
+
+// Uma lacuna conhecida não pode virar ledger completed nem artefato oficial.
+{
+  sqlite.prepare(`INSERT INTO live_documents
+    (id, clinic_id, patient_id, author_user_id, document_type, origin)
+    VALUES ('doc-synthetic-uncovered', ?, ?, ?, 'report', 'system')`)
+    .run(RED, RED_PATIENT, RED_OWNER.id);
+  criarRequest("req-exp-incomplete", RED, "clinic", null, "approved", RED_OWNER.id);
+  const beforeObjects = bucket.objects.size;
+  const response = await runExport(contexto(RED_OWNER, { clinicId: RED, requestId: "req-exp-incomplete" }));
+  assert.equal(response.status, 409);
+  assert.equal(((await response.json()) as { code: string }).code, "TENANT_EXPORT_INCOMPLETE");
+  assert.equal(ledger("req-exp-incomplete")?.status, "failed");
+  assert.equal(ledger("req-exp-incomplete")?.artifact_key, null);
+  assert.equal(bucket.objects.size, beforeObjects, "sem escrita no bucket para export incompleto");
+  sqlite.prepare("DELETE FROM live_documents WHERE id = 'doc-synthetic-uncovered'").run();
+}
+
+// Só ausência real de tabela é compatível com schema antigo. Falha de consulta
+// não significa ausência de dados e precisa chegar ao ledger como falha.
+{
+  const bare = new Database(":memory:");
+  const absent = await countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED);
+  assert.ok(Object.values(absent).every((count) => count === 0));
+  bare.exec("CREATE TABLE live_documents (id TEXT PRIMARY KEY)");
+  await assert.rejects(() => countExportUncoveredRows(new D1DatabaseMock(bare) as unknown as D1Database, RED), /no such column/);
+  bare.close();
+
+  const unavailableDb = {
+    prepare(sql: string) {
+      if (sql.includes("SELECT COUNT(*) AS n FROM live_documents")) throw new Error("D1_ERROR: synthetic temporary failure");
+      return db.prepare(sql);
+    },
+    batch: db.batch.bind(db),
+  } as D1Database;
+  criarRequest("req-exp-coverage-failure", RED, "clinic", null, "approved", RED_OWNER.id);
+  const beforeObjects = bucket.objects.size;
+  const response = await runExport(contexto(RED_OWNER, { clinicId: RED, requestId: "req-exp-coverage-failure" }, { ...env, DB: unavailableDb }));
+  assert.equal(response.status, 503);
+  assert.equal(((await response.json()) as { code: string }).code, "TENANT_EXPORT_COVERAGE_FAILED");
+  assert.equal(ledger("req-exp-coverage-failure")?.status, "failed");
+  assert.equal(ledger("req-exp-coverage-failure")?.artifact_key, null);
+  assert.equal(bucket.objects.size, beforeObjects);
+}
+
+// Uma gravação entre consultas independentes não pode separar contagem e payload.
+for (const enforceSyncLimits of [true, false]) {
+  const id = "patient-red-during-export";
+  const encrypted = await encryptClinicalJson(baseEnv as never, RED, `patient-profile:${id}`, { nome: "Concorrência sintética" });
+  let written = false;
+  const writeOnce = () => {
+    if (written) return;
+    written = true;
+    sqlite.prepare(`INSERT INTO live_patients (id, clinic_id, created_by_user_id, profile_encrypted, encryption_version)
+      VALUES (?, ?, ?, ?, 'k1')`).run(id, RED, RED_OWNER.id, encrypted);
+  };
+  const concurrentDb = {
+    prepare(sql: string) {
+      const wrap = (statement: D1PreparedStatement): D1PreparedStatement => new Proxy(statement, {
+        get(target, key) {
+          if (key === "bind") return (...values: unknown[]) => wrap(target.bind(...values));
+          if (key === "first" && sql.includes("AS encrypted_bytes")) return async () => {
+            const result = await target.first();
+            writeOnce();
+            return result;
+          };
+          const value = Reflect.get(target, key);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      return wrap(db.prepare(sql));
+    },
+    async batch(statements: D1PreparedStatement[]) {
+      const result = await db.batch(statements);
+      writeOnce();
+      return result;
+    },
+  } as D1Database;
+  const result = await collectTenantExportPayload(concurrentDb, baseEnv as never, RED, { enforceSyncLimits });
+  assert.ok(result.ok);
+  if (!result.ok) throw new Error("snapshot export failed");
+  assert.equal(written, true, "a gravação concorrente precisa ocorrer");
+  assert.equal(result.counts.patients, (result.data.patients as unknown[]).length, "manifesto e pacientes pertencem ao mesmo snapshot");
+  assert.equal(result.complete, true);
+  assert.ok(Number.isFinite(Date.parse(String(result.data.snapshotAt))));
+  sqlite.prepare("DELETE FROM live_patients WHERE id = ?").run(id);
 }
 
 sqlite.close();

@@ -247,6 +247,14 @@ export const onRequestPost: PagesFunction<
     await failLgpdJob(db, claim, collected.code);
     return tenantError(collected.message, collected.code, collected.status);
   }
+  if (!collected.complete) {
+    await failLgpdJob(db, claim, "TENANT_EXPORT_INCOMPLETE");
+    return tenantError(
+      "A exportação ainda não cobre todos os dados desta clínica; nenhum artefato foi publicado.",
+      "TENANT_EXPORT_INCOMPLETE",
+      409,
+    );
+  }
 
   const failures: string[] = [];
   const evidence = await executeEncryptedExport({
