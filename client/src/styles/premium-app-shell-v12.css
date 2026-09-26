@@ -340,7 +340,7 @@ a[class*="inline-flex"] {
   touch-action: manipulation;
 }
 
-#main-content button:not([data-size="icon"]),
+:where(#main-content) button:where(:not([data-size="icon"])),
 #main-content [role="tab"] {
   min-height: 44px;
 }

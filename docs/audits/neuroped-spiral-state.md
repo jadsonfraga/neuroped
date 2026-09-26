@@ -52,15 +52,27 @@ reaplicados por cherry-pick e re-verificados antes do próximo push.
 
 Fila local esvaziada; nenhum commit pendente sem PR neste ponto da espiral.
 
-## RISCOS CONHECIDOS (não corrigidos nesta espiral, por prudência de escopo)
+## RESOLVIDO EM SESSÃO POSTERIOR (PR #999)
 
 - `#main-content button:not([data-size="icon"]) {min-height:44px}`
-  (`premium-app-shell-v12.css` e duplicata em `premium-polish-10.css`,
-  especificidade 1,1,1) anula todo `min-h-*` de botão no app inteiro,
-  incluindo os alvos "gigantes" do Modo Fácil (96/80/56/128px medidos como
-  44px reais). Corrigir exige tocar um seletor global fora do escopo das
-  quatro aplicações auditadas; requer prova visual nos quatro viewports em
-  toda a superfície do app antes de mudar.
+  (`premium-app-shell-v12.css` e duplicata em `premium-polish-10.css`) —
+  **corrigido**. Reanálise por profundidade de chaves no CSS buildado mostrou
+  que a regra é incondicional (não está dentro do `@media (hover:hover)` que a
+  cerca visualmente na leitura da fonte), então o bug afetava todo
+  dispositivo/viewport, não só desktop com mouse. Especificidade real
+  (1,1,1) — ID + atributo dentro de `:not()` — vencia qualquer `min-h-*`
+  isolado (0,1,0). Corrigido com o mesmo padrão `:where()` da PR #981,
+  neutralizando `#main-content` e o atributo de `:not()`, preservando a
+  especificidade do seletor de tipo `button` (perde para qualquer classe
+  utilitária, mas ainda aplica o piso de 44px quando nada mais o disputa).
+  Medido em build real, 4 viewports, antes (44px preso) e depois (80/96px
+  corretos); botão sem classe e aba sem classe seguem em 44px, sem
+  regressão. Prova negativa em
+  `tests/unit/global-button-min-height-specificity.test.mjs`, wired em
+  `test:quick-wins`.
+
+## RISCOS CONHECIDOS (não corrigidos nesta espiral, por prudência de escopo)
+
 - `visual-reset.css`/`premium-polish-10.css` têm vários seletores globais com
   `!important` sobre `button`/`input`/`select`/`textarea`/`[role=tab]`; não
   auditados individualmente nesta espiral.
@@ -97,10 +109,12 @@ na bateria final de checkpoints.
 
 ## PRÓXIMA FRONTEIRA
 
-- Escopo de CSS, parte 2: `#main-content button` global e os `!important` de
-  `visual-reset.css`/`premium-polish-10.css`, com prova visual completa (4
-  viewports, luz/escuro) antes de qualquer remoção — maior risco de regressão
-  visual ampla se feito sem essa prova.
+- Escopo de CSS, parte 3: os `!important` de
+  `visual-reset.css`/`premium-polish-10.css` sobre
+  `button`/`input`/`select`/`textarea`/`[role=tab]` (item `#main-content
+  button` global já resolvido na PR #999, ver seção acima), com prova visual
+  completa (4 viewports, luz/escuro) antes de qualquer remoção — maior risco
+  de regressão visual ampla se feito sem essa prova.
 - Smoke de produção contra o deploy do commit `9b3a300` (ou posterior):
   **bloqueado nesta sessão** por política de rede do ambiente (proxy nega
   saída HTTPS para `neuroped.pages.dev`/`vercel.app`/`github.io`, 403 em
