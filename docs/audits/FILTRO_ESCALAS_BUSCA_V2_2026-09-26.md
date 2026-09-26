@@ -122,8 +122,44 @@ Testes: `tests/unit/filter-autocomplete.test.ts` (ordem seguro > queixa > fora d
 teclado, recentes sem PHI) e contrato estático ampliado; smoke Playwright em 390 px e 1280 px (abrir,
 teclado, Esc duplo, queixa por sugestão, blur, recentes após abrir/voltar, modo efêmero, sem overflow).
 
+## Rodada 3 (mesma data)
+
+Medição inicial: de 47 frases em linguagem de família ("meu filho não para quieto", "xixi na cama aos 8
+anos", "pisca muito e faz caretas"), só **20** inferiam a queixa certa. A inferência usava um vocabulário
+pequeno e separado do da busca; sem queixa inferida, o motor clínico não tinha por onde ranquear.
+
+13. **Vocabulário único** (`inferComplaintIds` v2 em `lib/filterClinicalInput.ts`): a inferência passa a
+    usar id, rótulo, termos de navegação **e** os grupos de sinônimos leigos/clínicos da busca
+    (`scaleSearchAliases.searchSynonymGroups`, ampliados com ~150 expressões de família). Casamento por
+    expressão inteira, da mais longa para a mais curta, consumindo o trecho: "dor de barriga" (ansiedade)
+    não deixa "dor" (cefaleia) casar por cima. Resultado: **47/47** (teste `filter-lay-language`), com os
+    686 checks antigos de idade/queixa intactos (nada de substring: "cuidador", "risco" continuam vazios;
+    "social" não vira TEA).
+14. **Sinais a partir do texto** (`lib/filterSignalInference.ts`): "não aponta" → chip "Sinal: Não aponta
+    pra mostrar" usando os mesmos ids do seletor de sintomas e dos sinais detalhados por queixa. Regra:
+    metade dos termos do rótulo com ao menos um termo distintivo; rótulo negado exige "não" no texto;
+    rótulo cujo casamento é subconjunto de outro melhor sai ("demora pra andar" não sugere "demora pra
+    falar"). Aplicar marca a queixa-mãe junto (sinal órfão não existe no filtro) e o sinal entra no
+    deep-link (`sinais=`).
+15. **Favoritos** (`lib/filterFavorites.ts`, padrão MDCalc): estrela nos cards do pódio e da prévia, seção
+    "Favoritos" na tela inicial e ordenação "Favoritos primeiro". Só ids de instrumento, em `localStorage`
+    fora dos namespaces clínicos; modo efêmero não lê, não grava e não mostra estrela.
+16. **Bug pré-existente corrigido — sintomas populares descartados.** `getValidFilterSignalIds` só
+    conhecia os sinais detalhados por idade; 186 dos 190 sintomas populares do seletor (linguagem de
+    pais) eram classificados como órfãos e removidos logo após serem marcados, e o motor (que resolve
+    `popularSymptomById`) nunca os recebia. A validade passa a incluir os populares da queixa ativa, e a
+    página usa essa fonte única também na restauração da sessão e no deep-link. Teste cobre todas as
+    queixas (populares válidos com a queixa, órfãos sem ela).
+17. **Motivos nos cards compactos**: os dois primeiros motivos de recomendação (idade, queixa) já usados no
+    pódio aparecem também na prévia — cada card explica por que está ali.
+
+Verificação: `test:filter` (13 arquivos), pódio exaustivo, ideal-choice 100%, practical-100, contratos
+estáticos, guards do filtro, lint, check, build, e2e existentes e smoke Playwright (390/1280 px:
+frase de família → queixa inferida + M-CHAT no pódio aos 2 anos, chip de sinal marca queixa e sinal,
+motivos nos cards, favorito persistido só com ids, seção e ordenação, modo efêmero sem favoritos).
+
 ## Fora de escopo (próximas rodadas, se desejado)
 
-Favoritos por usuário (tenant, servidor); baterias salvas com entrega por link; vocabulário de apelidos
-alimentado por consultas sem resultado (contador anônimo, sem PHI); rubrica de recomendação por
-instrumento × finalidade (estilo RehabMeasures) como dado curado.
+Favoritos sincronizados por usuário (tenant, servidor); baterias salvas com entrega por link;
+vocabulário alimentado por consultas sem resultado (contador anônimo, sem PHI); rubrica de recomendação
+por instrumento × finalidade (estilo RehabMeasures) como dado curado.

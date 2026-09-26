@@ -1,4 +1,5 @@
 ﻿/** Entrada de navegação; não define normas nem diagnósticos. */
+import { searchSynonymGroups } from "@/data/scaleSearchAliases";
 export interface ExactFilterAge { years: string; months: string }
 export interface FilterAgeBand { id: string; label: string; min: number; max: number }
 export interface ResolvedFilterAge {
@@ -109,18 +110,45 @@ function normalizedWords(value: string): string {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 }
-function hasPhrase(text: string, phrase: string): boolean {
-  const term = normalizedWords(phrase);
-  return !!term && ` ${text} `.includes(` ${term} `);
-}
+/**
+ * Vocabulário ÚNICO de navegação por queixa: id, rótulo, termos de navegação e
+ * os grupos de sinônimos leigos/clínicos da busca (scaleSearchAliases), para
+ * que "não para quieto" leve ao mesmo lugar na busca e na inferência.
+ */
 function complaintTerms(complaint: Complaint): readonly string[] {
-  return [complaint.id, complaint.label, ...(COMPLAINT_SEARCH_TERMS[complaint.id] ?? [])];
+  return [complaint.id, complaint.label, ...(COMPLAINT_SEARCH_TERMS[complaint.id] ?? []), ...(searchSynonymGroups[complaint.id] ?? [])];
 }
+/**
+ * Infere queixas do texto livre por expressão INTEIRA (nunca substring), da
+ * expressão mais longa para a mais curta, consumindo o trecho casado: "dor de
+ * barriga" (ansiedade) não deixa "dor" (cefaleia) casar por cima. A ordem de
+ * saída segue a lista de queixas, não a ordem do texto.
+ */
 export function inferComplaintIds(query: string, complaints: readonly Complaint[]): string[] {
   const text = normalizedWords(query);
   if (text.length < 2) return [];
-  return complaints.filter((complaint) => complaintTerms(complaint).some((term) => hasPhrase(text, term)))
-    .map((complaint) => complaint.id);
+  const candidates: Array<{ id: string; term: string }> = [];
+  for (const complaint of complaints) {
+    for (const raw of complaintTerms(complaint)) {
+      const term = normalizedWords(raw);
+      if (term) candidates.push({ id: complaint.id, term });
+    }
+  }
+  candidates.sort((a, b) => b.term.length - a.term.length || a.term.localeCompare(b.term));
+  let masked = ` ${text} `;
+  const matched = new Set<string>();
+  for (const { id, term } of candidates) {
+    const needle = ` ${term} `;
+    let at = masked.indexOf(needle);
+    if (at === -1) continue;
+    matched.add(id);
+    while (at !== -1) {
+      // Mantém as bordas de palavra: o trecho vira espaços do mesmo tamanho.
+      masked = `${masked.slice(0, at + 1)}${" ".repeat(term.length)}${masked.slice(at + 1 + term.length)}`;
+      at = masked.indexOf(needle);
+    }
+  }
+  return complaints.filter((complaint) => matched.has(complaint.id)).map((complaint) => complaint.id);
 }
 export function expandComplaintSearch(query: string, complaints: readonly Complaint[]): string {
   return [query, ...inferComplaintIds(query, complaints).flatMap((id) => [id, ...(COMPLAINT_SEARCH_TERMS[id] ?? [])])].join(" ");

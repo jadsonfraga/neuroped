@@ -37,6 +37,15 @@ const must = [
   'data-testid="filter-recents"',
   "loadFilterRecents()",
   "if (flashMode) return;\n    setRecents(recordFilterRecent(",
+  // Rodada 3: sinais do texto, favoritos, motivos nos cards compactos.
+  "inferSignalIds(search, filterContext.queixas)",
+  "setSelectedQueixas((prev) => (prev.includes(signal.queixaId) ? prev : [...prev, signal.queixaId]));",
+  'data-testid="filter-favorite-toggle"',
+  'data-testid="filter-favorites"',
+  'data-testid="filter-compact-reasons"',
+  "useState<string[]>(() => (flashMode ? [] : loadFilterFavorites()))",
+  '{!flashMode && favorites.length > 0 && (',
+  'favoritos: "Favoritos primeiro",',
 ];
 for (const needle of must) assert.ok(engine.includes(needle), `filtro-engine deve conter: ${needle}`);
 
@@ -63,13 +72,13 @@ assert.ok(engine.includes("useState<FilterRecentItem[]>(() => (flashMode ? [] : 
 assert.ok(engine.includes("{!flashMode && recents.length > 0 && ("), "modo efêmero não mostra recentes");
 
 // Módulos puros existem e não importam React.
-for (const file of ["client/src/lib/scaleSearch.ts", "client/src/lib/filterDiagnostics.ts", "client/src/lib/filterUrlState.ts", "client/src/data/scaleSearchAliases.ts", "client/src/lib/filterAutocomplete.ts", "client/src/lib/filterRecents.ts"]) {
+for (const file of ["client/src/lib/scaleSearch.ts", "client/src/lib/filterDiagnostics.ts", "client/src/lib/filterUrlState.ts", "client/src/data/scaleSearchAliases.ts", "client/src/lib/filterAutocomplete.ts", "client/src/lib/filterRecents.ts", "client/src/lib/filterFavorites.ts", "client/src/lib/filterSignalInference.ts"]) {
   const src = readFileSync(file, "utf8");
   assert.ok(!/from "react"/.test(src), `${file} é puro (sem React)`);
 }
 // A suíte de filtro executa os testes novos.
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
-for (const needle of ["tests/clinical/test-filter-search-quality.mjs", "tests/unit/filter-query-intent.test.ts", "tests/unit/filter-diagnostics.test.ts", "tests/unit/filter-url-state.test.ts", "tests/unit/filter-autocomplete.test.ts", "tests/unit/filter-search-v2-static.test.mjs"]) {
+for (const needle of ["tests/clinical/test-filter-search-quality.mjs", "tests/unit/filter-query-intent.test.ts", "tests/unit/filter-diagnostics.test.ts", "tests/unit/filter-url-state.test.ts", "tests/unit/filter-autocomplete.test.ts", "tests/unit/filter-lay-language.test.ts", "tests/unit/filter-search-v2-static.test.mjs"]) {
   assert.ok(pkg.scripts["test:filter"].includes(needle), `test:filter deve rodar ${needle}`);
 }
 console.log("✓ contrato estático da busca v2 / diagnóstico / deep-link no filtro");

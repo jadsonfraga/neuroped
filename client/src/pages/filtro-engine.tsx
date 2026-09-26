@@ -48,6 +48,8 @@ import { computeFilterFacetCounts, diagnoseEmptyResult, withinTimeBudget, TIME_B
 import { readFilterUrlState, writeFilterUrlState } from "@/lib/filterUrlState";
 import { buildAutocomplete, moveActiveIndex, type AutocompleteItem } from "@/lib/filterAutocomplete";
 import { clearFilterRecents, loadFilterRecents, recordFilterRecent, type FilterRecentItem } from "@/lib/filterRecents";
+import { loadFilterFavorites, toggleFilterFavorite } from "@/lib/filterFavorites";
+import { inferSignalIds } from "@/lib/filterSignalInference";
 import { formatScaleAgeRange } from "@/lib/scaleAgeRange";
 import { parseScaleMinutes } from "@/lib/scaleTime";
 import { classifyRecommendationAgeFit, formatRecommendationAgeRange } from "@/data/recommendationAgeFit";
@@ -77,6 +79,7 @@ import { getClinicalTiers } from "@/data/clinicalRanking";
 import { selectCuratedTiers, selectPodium } from "@/data/filterPodium";
 import { opbParentCopy } from "@/data/opbParentCopy";
 import { PopularSymptomPicker } from "@/components/PopularSymptomPicker";
+import { getValidFilterSignalIds } from "@/data/filterSignalState";
 import { getAllSignalsForQueixa } from "@/data/signalsAndSymptoms";
 import {
   filterScalesWithClinicalRescue,
@@ -402,9 +405,10 @@ function rankSafely(
   return { matches, searchUnmatched, searchKnown, searchHits };
 }
 
-type SortMode = "relevancia" | "rapidas" | "nome" | "idade";
+type SortMode = "relevancia" | "favoritos" | "rapidas" | "nome" | "idade";
 const SORT_LABEL: Record<SortMode, string> = {
   relevancia: "Relevância clínica",
+  favoritos: "Favoritos primeiro",
   rapidas: "Mais rápidas",
   nome: "Nome A–Z",
   idade: "Faixa mais justa",
@@ -1111,11 +1115,8 @@ export default function FiltroPage() {
   const sessionQueixas = (sessionFilters?.selectedQueixas ?? []).filter((id) =>
     validQueixaIds.has(id),
   );
-  const validSessionSignalIds = new Set(
-    sessionQueixas.flatMap((queixaId) =>
-      getAllSignalsForQueixa(queixaId).map((signal) => signal.id),
-    ),
-  );
+  // Fonte única de validade de sinal (detalhados + populares): data/filterSignalState.
+  const validSessionSignalIds = getValidFilterSignalIds(sessionQueixas);
   const sessionSignalIds = (sessionFilters?.selectedSignalIds ?? []).filter(
     (id) => validSessionSignalIds.has(id),
   );
@@ -1200,6 +1201,14 @@ export default function FiltroPage() {
     if (flashMode) return;
     setRecents(recordFilterRecent({ id: scale.id, name: scale.name, route }));
   };
+  // Favoritos (estrela): só ids de instrumento; nunca em modo efêmero.
+  const [favorites, setFavorites] = useState<string[]>(() => (flashMode ? [] : loadFilterFavorites()));
+  const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+  const toggleFavorite = (id: string) => {
+    if (flashMode) return;
+    softTick();
+    setFavorites(toggleFilterFavorite(id));
+  };
   const [world, setWorld] = useState<ScaleEntry[]>(noCostWorldScales);
   const [, setStatus] = useState<"loading" | "ok" | "fallback">("loading");
 
@@ -1226,7 +1235,7 @@ export default function FiltroPage() {
     if (urlState.literacy) setSelectedLiteracy(urlState.literacy);
     if (urlState.assessmentType) setSelectedAssessmentType(urlState.assessmentType);
     if (urlState.signals && urlState.queixas) {
-      const valid = new Set(urlState.queixas.flatMap((q) => getAllSignalsForQueixa(q).map((signal) => signal.id)));
+      const valid = getValidFilterSignalIds(urlState.queixas);
       setSelectedSignalIds(urlState.signals.filter((id) => valid.has(id)));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- montagem única
@@ -1529,8 +1538,21 @@ export default function FiltroPage() {
       const value = queryIntent.literacy;
       items.push({ id: `alf-${value}`, label: value === "preliterate" ? "Pré-alfabetizada" : "Alfabetizada", apply: () => setSelectedLiteracy(value) });
     }
+    // Sinais lidos do texto para as queixas ativas (selecionadas ou inferidas).
+    // Aplicar marca a queixa-mãe junto — sinal órfão não existe no filtro.
+    for (const signal of inferSignalIds(search, filterContext.queixas)) {
+      if (selectedSignalIds.includes(signal.id)) continue;
+      items.push({
+        id: `sinal-${signal.id}`,
+        label: `Sinal: ${signal.label}`,
+        apply: () => {
+          setSelectedQueixas((prev) => (prev.includes(signal.queixaId) ? prev : [...prev, signal.queixaId]));
+          setSelectedSignalIds((prev) => (prev.includes(signal.id) ? prev : [...prev, signal.id]));
+        },
+      });
+    }
     return items;
-  }, [queryIntent, selectedRespondente, timeBudget, selectedAssessmentType, selectedCommunication, selectedLiteracy]);
+  }, [queryIntent, selectedRespondente, timeBudget, selectedAssessmentType, selectedCommunication, selectedLiteracy, search, filterContext.queixas, selectedSignalIds]);
 
   // Candidatos seguros SEM a busca livre: base do autocompletar (o que a
   // pessoa pode encontrar sem sair do perfil clínico atual).
@@ -1589,6 +1611,7 @@ export default function FiltroPage() {
   const sortedPool = useMemo(() => {
     if (sortMode === "relevancia") return rankedPool;
     const pool = [...rankedPool];
+    if (sortMode === "favoritos") return [...pool.filter((s) => favoriteSet.has(s.id)), ...pool.filter((s) => !favoriteSet.has(s.id))];
     if (sortMode === "nome") return pool.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     if (sortMode === "rapidas") {
       const minutes = (s: ScaleEntry) => parseScaleMinutes(s.tempo)?.max ?? Number.POSITIVE_INFINITY;
@@ -1596,7 +1619,7 @@ export default function FiltroPage() {
     }
     // "idade": faixa mais justa = menor amplitude entre as que cobrem a idade.
     return pool.sort((a, b) => a.ageMax - a.ageMin - (b.ageMax - b.ageMin) || a.name.localeCompare(b.name, "pt-BR"));
-  }, [rankedPool, sortMode]);
+  }, [rankedPool, sortMode, favoriteSet]);
   const hasSafeResults = refinedMatches.length > 0;
   const acuteRiskContext = isAcuteRiskContext(filterContext);
   const queixaLabelOf = (id: string) => queixas.find((q) => q.id === id)?.label ?? id;
@@ -3205,6 +3228,18 @@ export default function FiltroPage() {
                           ) : null;
                         })()}
                         <div className="mt-auto flex items-center justify-between text-xs font-bold text-primary">
+                          {item.hasScale && item.scale && !flashMode && (
+                            <button
+                              type="button"
+                              onClick={() => toggleFavorite(item.scale!.id)}
+                              aria-pressed={favoriteSet.has(item.scale.id)}
+                              aria-label={`${favoriteSet.has(item.scale.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}: ${item.scale.name}`}
+                              data-testid="filter-favorite-toggle"
+                              className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                            >
+                              <Star className={`h-4 w-4 ${favoriteSet.has(item.scale.id) ? "fill-amber-400 text-amber-500" : ""}`} aria-hidden="true" />
+                            </button>
+                          )}
                           {item.hasScale ? (
                             <Link
                               href={item.route}
@@ -3370,6 +3405,33 @@ export default function FiltroPage() {
 
         {!hasSearch && (
           <section className="lg:col-span-2 space-y-5">
+            {!flashMode && favorites.length > 0 && (
+              <div
+                className="rounded-2xl border border-amber-300/60 bg-amber-50/40 p-3 dark:border-amber-800/60 dark:bg-amber-950/20"
+                data-testid="filter-favorites"
+              >
+                <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" aria-hidden="true" />
+                  Favoritos
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {favorites.map((id) => {
+                    const scale = catalog.find((s) => s.id === id);
+                    if (!scale) return null;
+                    return (
+                      <Link
+                        key={id}
+                        href={resolveAppRoute(scale) ?? `/generic-scale/${scale.id}`}
+                        onClick={() => rememberOpened(scale, resolveAppRoute(scale) ?? `/generic-scale/${scale.id}`)}
+                        className="rounded-full border border-amber-300/70 bg-background px-2.5 py-1 text-[11px] font-bold text-foreground transition hover:border-amber-500"
+                      >
+                        {scale.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {!flashMode && recents.length > 0 && (
               <div
                 className="rounded-2xl border border-border/70 bg-card/70 p-3"
@@ -3602,9 +3664,23 @@ export default function FiltroPage() {
             const hit = searchHits.get(s.id);
             const highlightTerms = hit ? highlightTermsOf(hit) : [];
             const minutes = parseScaleMinutes(s.tempo);
+            const compactReasons = getRecommendationReasons(s, activeQueixas, effectiveAgeRange).slice(0, 2);
+            const isFavorite = favoriteSet.has(s.id);
             return (
+              <div key={s.id} className="relative">
+              {!flashMode && (
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(s.id)}
+                  aria-pressed={isFavorite}
+                  aria-label={`${isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}: ${s.name}`}
+                  data-testid="filter-favorite-toggle"
+                  className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground transition hover:text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
+                  <Star className={`h-4 w-4 ${isFavorite ? "fill-amber-400 text-amber-500" : ""}`} aria-hidden="true" />
+                </button>
+              )}
               <Link
-                key={s.id}
                 href={resolveAppRoute(s) ?? `/generic-scale/${s.id}`}
                 onClick={() => rememberOpened(s, resolveAppRoute(s) ?? `/generic-scale/${s.id}`)}
                 className="filter-260-card compact block rounded-2xl border border-border/70 bg-background/70 transition-all duration-200 cursor-pointer hover:border-primary/30 hover:bg-background hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
@@ -3661,6 +3737,15 @@ export default function FiltroPage() {
                         anos
                         {minutes ? ` · ${minutes.min === minutes.max ? minutes.min : `${minutes.min}–${minutes.max}`} min` : " · tempo não aferido"}
                       </p>
+                      {compactReasons.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1" data-testid="filter-compact-reasons">
+                          {compactReasons.map((reason) => (
+                            <span key={reason} className="rounded-full border border-border/70 bg-muted/40 px-1.5 py-0.5 text-[9.5px] font-semibold text-muted-foreground">
+                              {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {hit && hit.details.length > 0 && (
                         <p className="mt-1 text-[10.5px] italic text-primary/80" data-testid="filter-match-reason">
                           {describeSearchHit(hit)}
@@ -3670,6 +3755,7 @@ export default function FiltroPage() {
                   </div>
                 </div>
               </Link>
+              </div>
             );
           })}
         </div>
