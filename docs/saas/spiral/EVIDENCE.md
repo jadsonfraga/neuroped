@@ -206,6 +206,78 @@
 - Rollback: reverter os quatro arquivos de produção a `9d4c67d` restaura o
   comportamento anterior; nenhuma migração de banco envolvida.
 
+## S12B (ciclo 5, 2026-09-26) — export deixa de ser incompleto (LTB-02, fechamento)
+- Escopo: `functions/api/tenant/_exportPayload.ts` apenas. As oito tabelas de
+  `EXPORT_UNCOVERED_CLINIC_TABLES` (S12) agora saem no `data` do payload —
+  `assessments`/`assessmentResponses` (contexto `assessment:<id>`/
+  `assessment-response:<id>`), `documents` (metadata, sem cifrado) /
+  `documentVersions` (contexto `document-version:<id>`), `intakeInvitations`
+  (metadata, sem `token_hash`) / `intakeSubmissions` (contexto
+  `remote-intake-submission:<id>`), `scaleInvitations` (metadata, sem
+  `token_hash`) / `scaleResponses` (contexto `remote-scale-response:<id>`).
+  Todos os contextos de decriptação conferidos contra o ponto de escrita real
+  (`functions/api/live/{assessments,documents,intake}/index.ts`,
+  `functions/api/public-{intake,scale}.ts`) — nenhum contexto inventado.
+  `EXPORT_UNCOVERED_CLINIC_TABLES` fica `[]` (ponto de extensão para um
+  futuro 9º domínio, comentário atualizado); `countExportUncoveredRows` ganha
+  parâmetro opcional `tables` só para o teste continuar exercitando as duas
+  ramificações de erro (tabela ausente vs. coluna ausente) sem depender da
+  lista de produção ter membros. A pré-checagem de `encryptedBytes` (guarda
+  do caminho síncrono) passou a somar os cinco novos campos cifrados, não só
+  patients/events — sem isso um tenant com poucos pacientes mas documentos
+  grandes passaria pela pré-checagem e só travaria depois, já com tudo
+  carregado em memória. Nenhuma migração: os oito domínios já existiam desde
+  0014/0018/0021.
+- Ambiente: container da sessão, Node do repo, HEAD `0b4f74f` (main no início
+  do ciclo) + S12B.
+- Efeito: `EXPORT_UNCOVERED_CLINIC_TABLES` vazia ⇒ `complete` computado passa
+  a ser sempre `true` (nada mais fica de fora) ⇒ o purge de encerramento por
+  clínica (`_purge.ts`) para de recusar com `EXPORT_MANIFEST_INCOMPLETE` só
+  por essas oito tabelas terem linha — o efeito colateral deliberado do S12
+  original está revertido para as clínicas que só têm dado nesses domínios.
+- Testes: `tests/unit/lgpd-run-export-endpoint.test.ts` ganha um cenário
+  RED/BLUE que semeia os oito domínios nas duas clínicas sintéticas e prova,
+  num único export de RED: `complete === true`, `uncoveredCounts` vazio, cada
+  domínio decifrado corretamente (`assert.deepEqual` contra o plaintext
+  original), nenhum dado de BLUE em `JSON.stringify(collected.data)`, e
+  `token_hash`/os hashes de convite nunca aparecem no payload. O cenário
+  anterior ("um documento novo bloqueia o export com 409") foi substituído —
+  não é mais o comportamento correto, então deixou de ser testado como tal.
+  `tests/unit/lgpd-purge-executor.test.ts`: o cenário 8a antigo (purge por
+  clínica recusa com dado nos oito domínios) foi substituído por uma prova de
+  que uma FALHA REAL de leitura (não uma lacuna de export) continua
+  bloqueando o preflight (`PURGE_PREFLIGHT_FAILED:appointments`); o cenário
+  8b passou a ser o único caminho de sucesso e agora zera as oito tabelas
+  junto com o resto, sem a limpeza manual que antes simulava "S12B pronto".
+  Ambos os ajustes vistos FALHANDO pelo motivo certo contra o código anterior
+  (200 em vez de 409 no primeiro; a asserção `EXPORT_MANIFEST_INCOMPLETE`
+  nunca dispara no segundo porque a lista ficou vazia) antes de eu reescrever
+  as asserções — não apenas "corrigidos para passar".
+- Comandos exit 0: `npm run check`, `npx eslint functions/api/tenant/_exportPayload.ts
+  tests/unit/lgpd-run-export-endpoint.test.ts tests/unit/lgpd-purge-executor.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-run-export-endpoint.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-purge-executor.test.ts`,
+  `node --import tsx --test tests/unit/saas-tenant-lifecycle.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-worker-executor-core.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-worker-foundation.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-run-deletion-endpoint.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-worker-race-regressions.test.ts`,
+  `node --import tsx --test tests/unit/operations-consent-evidence-runtime.test.ts`,
+  `node --import tsx --test tests/unit/runtime-readiness.test.ts`,
+  `node --import tsx --test tests/unit/cliente-zero-journey.test.ts`,
+  `node --import tsx --test tests/unit/saas-acceptance-journey.test.ts`,
+  `npm run test:quick-wins` (suíte completa, 0 `not ok`).
+- Limitação conhecida: o worker assíncrono (`run-export.ts`) ainda materializa
+  o payload inteiro em memória antes de gravar no storage privado — para um
+  tenant com muitos documentos grandes isso pode ser lento/custoso mesmo sem
+  o teto síncrono. Não é uma regressão desta mudança (o caminho já fazia isso
+  para patients/events) e não bloqueia o fechamento de S12B; fica registrado
+  para uma futura camada de streaming/paginação se o volume real justificar.
+- Rollback: reverter `functions/api/tenant/_exportPayload.ts` e os dois
+  arquivos de teste a `0b4f74f` restaura o comportamento do S12 original
+  (export incompleto, purge recusando nos oito domínios); nenhuma migração
+  de banco envolvida.
+
 ## S14 (ciclo 4, 2026-09-26) — links públicos ignoravam status da clínica
 - Escopo: `functions/api/public-intake.ts` e `functions/api/public-scale.ts`
   (`PublicInvitationRow`/`PublicScaleInvitationRow` ganham `clinic_status`

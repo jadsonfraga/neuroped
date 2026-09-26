@@ -406,15 +406,22 @@ HOJE nenhuma clínica com PDFs, avaliações, intake ou escala respondida
 consegue completar o encerramento com purge físico — comportamento
 deliberado (fail-closed) até o export cobrir esses domínios.
 
-## S12B · P1 · aberto
-Expandir `collectTenantExportPayload` para incluir de fato documentos
-(com conteúdo decifrado ou referência ao artefato), avaliações e respostas,
-intake e respostas de escala, `clinic_settings` e `live_retention_policies`
-no payload exportado — o que fecha `complete` para `true` nessas clínicas e
-libera o purge de encerramento sem depender de o admin de plataforma
-esvaziar as tabelas manualmente. Cuidado: volume (documentos podem ter até
-~250 KB em base64 cada) pode exigir ajustar `exportWithinSyncLimits` e
-priorizar o caminho assíncrono (worker) para tenants médios/grandes.
+## S12B · P1 · FECHADO (ciclo 5, 2026-09-26)
+`collectTenantExportPayload` passou a incluir de fato os oito domínios que
+faltavam — avaliações e respostas, documentos e versões (conteúdo decifrado),
+convites/submissões de intake e de escala remota (token_hash nunca sai) —
+fechando `complete` para `true` sempre que só esses domínios restavam fora, e
+liberando o purge de encerramento sem depender de o admin de plataforma
+esvaziar as tabelas manualmente. `exportWithinSyncLimits` passou a somar os
+cinco novos campos cifrados na pré-checagem síncrona, então um tenant com
+documentos grandes cai no caminho assíncrono (worker) em vez de travar no
+caminho síncrono. Evidência em EVIDENCE.md#S12B.
+
+Ainda fora deste fechamento, de propósito (não fazia parte de LTB-02 nem
+bloqueava purge): `clinic_settings` e `live_retention_policies` no payload
+exportado — nenhum dos dois é dado do titular (são configuração da clínica),
+e nenhum purge recusa por eles. Candidato a uma melhoria de completude
+separada, não a uma reabertura de S12B.
 
 
 ## S1-R1 · P1 · corrigido, integração em validação (#951)
