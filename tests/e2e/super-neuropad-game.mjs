@@ -18,7 +18,12 @@ await context.addInitScript((storage) => { for (const [key, value] of Object.ent
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
-page.on("dialog", (dialog) => dialog.accept());
+let acceptDialogs = true;
+const dialogs = [];
+page.on("dialog", (dialog) => {
+  dialogs.push(dialog.message());
+  return acceptDialogs ? dialog.accept() : dialog.dismiss();
+});
 const root = page.getByTestId("super-neuropad-game");
 const button = (name) => page.getByRole("button", { name, exact: true });
 async function screen(name) {
@@ -146,6 +151,20 @@ try {
   await deeper.close();
   await waitScreen("results");
   assert.equal(await root.locator("details li").count(), 20, "aprofundar preserva os vinte registros");
+  // Navegação interna não dispara beforeunload. Recusá-la precisa manter
+  // a mesma partida em memória, inclusive via alteração do hash/voltar.
+  acceptDialogs = false;
+  const heldUrl = page.url();
+  const beforeDialogs = dialogs.length;
+  const warning = page.waitForEvent("dialog");
+  await page.evaluate(() => { window.location.hash = "#/filtro"; });
+  await warning;
+  await page.waitForURL(heldUrl);
+  await waitScreen("results");
+  assert.equal(dialogs.length, beforeDialogs + 1, "uma confirmação por tentativa de sair");
+  assert.match(dialogs.at(-1), /registros desta partida/);
+  assert.equal(await root.locator("details li").count(), 20, "cancelar saída mantém todos os registros");
+  acceptDialogs = true;
   await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
   await screen("06-results");
 
@@ -180,6 +199,11 @@ try {
   const storage = await page.evaluate(() => Object.keys(localStorage).filter((key) => /neuropad|super/i.test(key)));
   assert.deepEqual(storage, [], "nada do jogo persistido no navegador");
   assert.deepEqual(errors, [], "sem erros de página");
+  const leaving = page.waitForEvent("dialog");
+  await page.evaluate(() => { window.location.hash = "#/filtro"; });
+  await leaving;
+  await page.waitForURL(/#\/filtro$/);
+  await root.waitFor({ state: "detached" });
   console.log(`[super-neuropad-game] ✓ jornada completa, 20 desafios, resultado e PDF (${bytes.length} bytes) · artefatos em ${dir}`);
 } finally {
   await browser.close();

@@ -127,3 +127,12 @@ duplicação de registros e os três formatos de saída; `test:e2e:super-neuropa
 cobre pausa antes/depois de esconder memória, aprofundamento com preservação
 de resultado, encerramento após um item e download do PDF parcial.
 Rollback: reverter o commit da revisão; não há migração ou dado persistido.
+
+### Navegação interna e registro em memória
+
+A proteção também cobre navegação dentro do aplicativo: o `beforeunload` sozinho
+não é disparado por mudanças de rota. A guarda compartilhada com os Cognitivos
+pede confirmação antes de descartar a partida; cancelar mantém os 20 registros e
+a tela de resultados. Aceitar permite sair. Redirecionamentos obrigatórios por
+sessão inválida continuam liberados. A prova de navegador cobre recusa e aceite.
+O aviso de PDF parcial descreve apenas as observações, sem prometer interpretação.
