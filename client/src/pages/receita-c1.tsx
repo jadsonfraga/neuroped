@@ -5,6 +5,7 @@ import { PageHero } from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AssinaturaIcpPanel } from "@/components/AssinaturaIcpPanel";
+import { SncrIntegrationPanel } from "@/components/SncrIntegrationPanel";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { archiveClinicalPdf } from "@/lib/clinicalDocumentsClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -541,6 +542,8 @@ export default function ReceitaC1Page() {
       <div className="rounded-2xl border border-amber-400/60 bg-amber-50/80 p-4 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
         <strong>Revisão obrigatória:</strong> este módulo usa o modelo Anvisa {RECEITA_TEMPLATE_VERSION.replace("Versão 2 — ", "")}. A tela não decide se uma substância é C1 nem substitui conferência da lista vigente, do prescritor, do estabelecimento ou da assinatura qualificada. Sem paciente vinculado, a impressão fica bloqueada.
       </div>
+
+      <SncrIntegrationPanel />
 
       {/* ── Assinatura ICP-Brasil — bloco em destaque ─────────── */}
       <section
