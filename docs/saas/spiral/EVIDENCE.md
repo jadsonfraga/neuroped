@@ -493,3 +493,52 @@
 - Rollback: reverter os 3 arquivos de produção a `1e983cf` restaura o
   comportamento anterior (bypass de admin sem razão nem trilha prévia);
   nenhuma migração envolvida.
+
+## S20 (ciclo 4, 2026-09-26) — oráculo de enumeração no vínculo de recepção (AUTHZ-P1-06 residual)
+- Escopo: 1 arquivo de produção (`functions/api/operations/index.ts`, só o
+  branch de falha de `action=staff_link`); `functions/api/operations/_access.ts`
+  NÃO foi tocado — os códigos internos `STAFF_NOT_FOUND`/`STAFF_ROLE_INVALID`/
+  `STAFF_ALREADY_LINKED` continuam existindo ali como razões internas de
+  `linkOperationsOperator`, só deixam de virar respostas HTTP distinguíveis.
+  Nenhuma mudança de schema.
+- Ambiente: container da sessão, Node do repo, HEAD `63016a6` (S19) + S20.
+- Achado: confirmado por leitura direta do código atual (`functions/api/
+  operations/index.ts:379-389` antes da correção) — `messages[result.code]`
+  mapeava os três códigos para mensagens distintas e o status variava
+  (`result.code === "STAFF_NOT_FOUND" ? 404 : 409`), então qualquer
+  profissional/admin com `canConfigure` podia POSTar `action=staff_link`
+  com um e-mail arbitrário e aprender, pela resposta, se aquele e-mail tem
+  conta na plataforma, se o papel é `operator` ativo, e se já está vinculado
+  a outro profissional — sem nenhuma relação de clínica com o alvo.
+- Testes: novo `tests/unit/operations-staff-link-anti-enumeration.test.ts`
+  (schema real + todas as migrações + handler real de `POST /api/operations`)
+  prova três chamadas — e-mail sem conta, conta `professional` (papel
+  errado), e uma conta `operator` já vinculada a OUTRO profissional —
+  respondendo `status` E corpo (`response.clone().json()`) IDÊNTICOS
+  (404, `STAFF_NOT_AVAILABLE`). Um controle de não regressão prova que
+  vincular um operador genuinamente disponível continua respondendo 200 e
+  criando a linha em `booking_staff_links`. Visto falhando pelo motivo
+  certo contra o código anterior via `git stash push -- functions/api/
+  operations/index.ts` (409 em vez de 404 para "papel inválido"). Guard
+  estático `tests/unit/operations-integration-static.test.mjs` atualizado:
+  a asserção antiga (`assert.match(professional, /STAFF_ALREADY_LINKED/,
+  "API deve expor erro explícito...")`, que exigia literalmente o
+  comportamento vulnerável) foi substituída por uma que exige o código
+  único `STAFF_NOT_AVAILABLE` e uma nova `assert.doesNotMatch` que reprova
+  se `STAFF_ALREADY_LINKED` reaparecer como mensagem/código exposto ao
+  cliente em `index.ts`.
+- Comandos exit 0: `node --import tsx tests/unit/operations-staff-link-anti-enumeration.test.ts`,
+  `node tests/unit/operations-integration-static.test.mjs`,
+  `npm run check`, `npx eslint functions/api/operations/index.ts
+  tests/unit/operations-staff-link-anti-enumeration.test.ts
+  tests/unit/operations-integration-static.test.mjs --max-warnings=0`,
+  `node --import tsx tests/unit/operations-tenant-isolation.test.ts`,
+  `npm run test:operations` (suíte completa, com o teste novo já
+  cadastrado nela), `npm run test:quick-wins` (suíte completa),
+  `node tests/unit/workflow-governance.test.mjs`.
+- CI: `tests/unit/operations-staff-link-anti-enumeration.test.ts` cadastrado
+  em `test:operations`, já executado sem filtro de `paths` por
+  `.github/workflows/pr-check.yml` em todo PR para `main`.
+- Rollback: reverter `functions/api/operations/index.ts` ao commit anterior
+  restaura o comportamento anterior (os três códigos voltam a ser
+  distinguíveis); nenhuma migração envolvida.

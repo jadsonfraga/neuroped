@@ -158,17 +158,22 @@ inclusive sob corrida de claim (a trilha sobrevive mesmo quando a execução
 falha depois). `audit-log.ts` audita a própria leitura (best-effort,
 cross-tenant). Evidência em EVIDENCE.md#S19.
 
+S20: `POST /api/operations` `action=staff_link` distinguia por status/código
+e-mail sem conta, papel inválido e operador já vinculado a outro
+profissional — oráculo de enumeração de contas alheias na plataforma. As
+três respondem agora 404 `STAFF_NOT_AVAILABLE` idêntico; caminho normal
+(operador disponível) intacto. Evidência em EVIDENCE.md#S20.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
 censo, os achados pequenos e seguros mapeados pela varredura de auditoria
-desta sessão (S18 e S19) já foram fechados; os candidatos "small" restantes
-do mesmo mapeamento — AUTHZ-P1-06 residual (vínculo de secretária sem
-checar mesma clínica, oráculo de enumeração em `operations/_access.ts`) e
-AUTHZ-P1-10 (falta rota para a clínica ler a própria `saas_audit_log`) —
-seguem abertos e ainda não numerados; ver BACKLOG.md. S10 (papel duplo
-global×membership), S12B (expandir o export) e S13 (link público de
-agendamento por clínica) seguem deliberadamente grandes/abertos.
+desta sessão (S18, S19 e S20) já foram fechados; o único candidato "small"
+ainda não numerado do mesmo mapeamento é AUTHZ-P1-10 (falta rota para a
+clínica ler a própria `saas_audit_log` — hoje só o admin de plataforma lê
+`audit_logs`, e `tenants/[id]/metrics.ts` só expõe contagens agregadas).
+S10 (papel duplo global×membership), S12B (expandir o export) e S13 (link
+público de agendamento por clínica) seguem deliberadamente grandes/abertos.
 Retomada: `git fetch origin main && git log -1 origin/main` e reler este
 arquivo.

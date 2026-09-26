@@ -378,14 +378,27 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
       if (!email.includes("@")) return errorResponse("E-mail da recepção inválido.", "VALIDATION_ERROR", 400);
       const result = await linkOperationsOperator(env.DB, principal, email);
       if (!result.ok) {
-        const messages: Record<string, string> = {
-          STAFF_NOT_FOUND: "Usuário da recepção não encontrado.",
-          STAFF_ROLE_INVALID: "O usuário precisa ter perfil operator ativo.",
-          SELF_LINK_INVALID: "O profissional não pode vincular a si próprio como recepção.",
-          STAFF_ALREADY_LINKED: "Este usuário da recepção já está vinculado a outro profissional.",
-          FORBIDDEN: "Ação não autorizada.",
-        };
-        return errorResponse(messages[result.code] ?? "Não foi possível vincular a recepção.", result.code, result.code === "STAFF_NOT_FOUND" ? 404 : 409);
+        if (result.code === "SELF_LINK_INVALID") {
+          return errorResponse(
+            "O profissional não pode vincular a si próprio como recepção.",
+            "SELF_LINK_INVALID",
+            409,
+          );
+        }
+        if (result.code === "FORBIDDEN") {
+          return errorResponse("Ação não autorizada.", "FORBIDDEN", 403);
+        }
+        // AUTHZ-P1-06 (ciclo 4, 2026-09-26 —
+        // docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): e-mail inexistente,
+        // conta sem papel operator ativo e conta já vinculada a outro
+        // profissional respondiam com código/status distintos — um oráculo
+        // de enumeração de contas alheias na plataforma. As três respondem
+        // agora exatamente igual.
+        return errorResponse(
+          "Este e-mail não corresponde a um usuário de recepção disponível para vínculo.",
+          "STAFF_NOT_AVAILABLE",
+          404,
+        );
       }
       auditTargetType = "staff_link";
       auditTargetId = result.staffUserId;

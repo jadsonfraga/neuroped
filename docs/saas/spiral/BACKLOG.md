@@ -240,6 +240,39 @@ trilha própria, cross-tenant, sem PHI. Todas as quatro asserções novas
 vistas falhando pelo motivo certo contra o código anterior via `git stash`
 isolado por arquivo. Evidência em EVIDENCE.md#S19.
 
+## S20 · P2 · FECHADO (ciclo 4)
+`POST /api/operations` `action=staff_link` (vínculo de recepção por e-mail)
+respondia com status/código DISTINTOS para três situações: e-mail sem conta
+na plataforma (404 `STAFF_NOT_FOUND`), conta existente sem papel `operator`
+ativo (409 `STAFF_ROLE_INVALID`) e conta `operator` válida mas já vinculada
+a outro profissional (409 `STAFF_ALREADY_LINKED`) — um oráculo que deixava
+qualquer profissional/admin da plataforma sondar e-mails alheios e aprender
+se existem, qual o papel e se já estão comprometidos com outro profissional.
+(AUTHZ-P1-06 residual, achado ao reler a auditoria depois de S8 já ter
+fechado o isolamento de dados do domínio — o vínculo em si continuava sem
+escopo de clínica)
+
+Corrigido em `functions/api/operations/index.ts`: as três situações passam
+a responder exatamente igual — 404 `STAFF_NOT_AVAILABLE`, mesma mensagem.
+`SELF_LINK_INVALID` (409, informação só sobre o próprio e-mail do chamador)
+e `FORBIDDEN` (403, sobre a permissão do próprio chamador) continuam
+distintos — nenhum dos dois revela nada sobre a conta de terceiros. Nenhuma
+mudança em `functions/api/operations/_access.ts` (os códigos internos
+continuam existindo ali; o que mudou é só o que `index.ts` expõe ao
+cliente).
+
+Teste novo `tests/unit/operations-staff-link-anti-enumeration.test.ts`
+(schema real + handler real de `POST /api/operations`) prova que as três
+situações respondem status E corpo idênticos, e um controle prova que o
+vínculo de um operador genuinamente disponível continua funcionando
+normalmente. Visto falhando pelo motivo certo contra o código anterior via
+`git stash` (409 em vez de 404 para "papel inválido"). Guard estático em
+`tests/unit/operations-integration-static.test.mjs` atualizado: a asserção
+que exigia `STAFF_ALREADY_LINKED` como mensagem explícita do cliente foi
+substituída por uma que exige o código único `STAFF_NOT_AVAILABLE` e proíbe
+`STAFF_ALREADY_LINKED` reaparecer como branch de resposta separado.
+Evidência em EVIDENCE.md#S20.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/
