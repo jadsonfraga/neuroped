@@ -12,6 +12,11 @@ on:
       - "db/migrations/0010_saas_phase1_hardening.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
+      - "tests/unit/tenant-management-authorization.test.ts"
+      - "tests/e2e/tenant-management.mjs"
+      - "client/src/security/routeGuardPolicy.ts"
+      - "scripts/lib/synthetic-clinical-api.mjs"
+      - "functions/api/_middleware.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
   push:
     branches: [main]
@@ -25,6 +30,11 @@ on:
       - "db/migrations/0010_saas_phase1_hardening.sql"
       - "tests/unit/saas-phase1-foundation.test.ts"
       - "tests/unit/saas-phase1-hardening.test.ts"
+      - "tests/unit/tenant-management-authorization.test.ts"
+      - "tests/e2e/tenant-management.mjs"
+      - "client/src/security/routeGuardPolicy.ts"
+      - "scripts/lib/synthetic-clinical-api.mjs"
+      - "functions/api/_middleware.ts"
       - ".github/workflows/saas-phase1-foundation.yml"
 
 permissions:
@@ -51,5 +61,16 @@ jobs:
         run: node --import tsx tests/unit/saas-phase1-foundation.test.ts
       - name: Testar hardening de owner, provenance e supersessão
         run: node --import tsx tests/unit/saas-phase1-hardening.test.ts
+      - name: Provar gestão por membership e transação entre clínicas
+        run: node --import tsx --test tests/unit/tenant-management-authorization.test.ts
+      - name: Provar configurações e bloqueio clínico em mobile e desktop
+        run: node tests/e2e/tenant-management.mjs
+      - name: Preservar evidência visual sintética de gestão
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tenant-management-browser
+          path: artifacts/tenant-management/
+          if-no-files-found: error
       - name: Hard release gate
         run: npm run verify

@@ -4,6 +4,7 @@
  */
 
 import { writeApiMetric, type ApiMetricsEnv } from "./_observability";
+import { tenantManagementAuthorization } from "./tenant/_managementAuthorization";
 
 interface Env extends ApiMetricsEnv {
   DB?: D1Database;
@@ -214,8 +215,11 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   }
 
   const user = publicUser(row);
+  const passwordFailure = passwordChangeFailure(request, user);
+  if (passwordFailure) return { failure: passwordFailure, user };
+  const tenantAuthorization = await tenantManagementAuthorization(env.DB, request, user);
   return {
-    failure: passwordChangeFailure(request, user) ?? roleFailure(request, user),
+    failure: tenantAuthorization.handled ? tenantAuthorization.failure : roleFailure(request, user),
     user,
   };
 }
