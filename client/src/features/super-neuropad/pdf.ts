@@ -51,6 +51,7 @@ export function buildGameDocSpec(session: GameSession, issuer: IssuerLines, appl
     `Aplicação: recepção/secretária na pré-consulta, sem câmera, resposta direta da criança`,
     `Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)}`,
     `Situação: ${summary.complete ? "jogo completo (5 fases)" : `jogo incompleto (${session.answers.length} de ${summary.total} itens registrados)`}`,
+    `Proveniência do registro: ${session.pauseCount ?? 0} pausa(s), ${session.undoCount ?? 0} registro(s) desfeito(s) e refeito(s), ${session.answers.filter((answer) => answer.repeated).length} comando(s) repetido(s)`,
   ].join("\n");
 
   const objective = [

@@ -89,6 +89,10 @@ export interface Phase {
   badge: string;
   operator: string;
   source: string;
+  /** O que conferir na consulta quando a fase fica fora do esperado (roteiro autoral, não diagnóstico). */
+  consult: string;
+  /** Abas de origem que aprofundam a fase, com rota interna. */
+  routes: readonly { label: string; href: string }[];
 }
 
 export const PHASES: readonly Phase[] = [
@@ -97,30 +101,40 @@ export const PHASES: readonly Phase[] = [
     tagline: "Encontre a figura certa entre as folhas.", badge: "Explorador da Floresta",
     operator: "Leia a pergunta em voz alta e deixe a criança tocar na tela. Se ela apontar sem tocar, toque na figura que ela apontou. Não dê pistas.",
     source: "Teste de Reconhecimento Visual · Testes Cognitivos (visual)",
+    consult: "Conferir visão (óculos, consulta oftalmológica recente), nomeação e pareamento de figuras com mais itens, atenção visual durante a tarefa e se a criança entendeu o formato de tocar na tela.",
+    routes: [{ label: "Reconhecimento Visual", href: "/testes-reconhecimento" }, { label: "Testes Cognitivos", href: "/testes-cognitivos" }],
   },
   {
     id: "palavras", order: 2, name: "Ilha das Palavras", emoji: "🏝️", domain: "Linguagem e leitura",
     tagline: "Sons, nomes e frases escondidos na areia.", badge: "Navegante das Palavras",
     operator: "Fale devagar, uma vez; pode repetir uma única vez. Nas tarefas de fala, marque acerto só quando a resposta bater com o critério.",
     source: "Sonda 10 (linguagem) · Testes Cognitivos (leitura e escrita)",
+    consult: "Conferir história de linguagem e audição, compreensão de ordens em conversa livre, vocabulário e, na idade escolar, leitura e escrita conforme a série; separar timidez de dificuldade real.",
+    routes: [{ label: "Sonda 10", href: "/testes-diretos" }, { label: "Testes Cognitivos", href: "/testes-cognitivos" }],
   },
   {
     id: "numeros", order: 3, name: "Montanha dos Números", emoji: "⛰️", domain: "Quantidade e aritmética",
     tagline: "Cada conta é um degrau até o topo.", badge: "Alpinista dos Números",
     operator: "Leia a pergunta; a criança responde tocando. Sem contar junto, sem dica com os dedos.",
     source: "Testes Cognitivos (aritmética) · Sonda 10 (conceitos)",
+    consult: "Conferir contagem, comparação de quantidades e cálculo conforme a série, escolaridade e apoio pedagógico; checar se a dificuldade é só numérica ou acompanha leitura e atenção.",
+    routes: [{ label: "Testes Cognitivos", href: "/testes-cognitivos" }, { label: "Sonda 10", href: "/testes-diretos" }],
   },
   {
     id: "memoria", order: 4, name: "Caverna da Memória", emoji: "🔦", domain: "Memória e atenção",
     tagline: "Guarde o que viu e ouviu para atravessar a caverna.", badge: "Guardião da Caverna",
     operator: "Diga a sequência uma vez, em ritmo de um item por segundo. Acerto só quando a repetição for exata conforme o critério.",
     source: "Sonda 10 (memória operacional e regra) · OBS-10 (regra SOL/LUA)",
+    consult: "Conferir atenção sustentada e memória operacional com mais itens, sono, rotina e distratibilidade na consulta; repetir a regra com demonstração para separar não entender de não sustentar.",
+    routes: [{ label: "Sonda 10", href: "/testes-diretos" }, { label: "OBS-10", href: "/avaliacao-pre-consulta-faixa-etaria" }],
   },
   {
     id: "corpo", order: 5, name: "Torre do Corpo", emoji: "🏰", domain: "Coordenação motora e grafismo",
     tagline: "Equilíbrio, mãos e traços para subir a torre.", badge: "Mestre da Torre",
     operator: "Demonstre uma vez quando o comando disser. Fique ao lado nas tarefas de equilíbrio. Marque acerto só quando o critério for cumprido inteiro.",
     source: "OBS-10 (núcleo motor) · Sonda 10 (visuoconstrução) · Testes Cognitivos (escrita)",
+    consult: "Exame motor dirigido na consulta: tônus, equilíbrio, marcha, coordenação fina, preensão do lápis, grafismo e lateralidade; conferir se o kit estava disponível e se a demonstração foi feita.",
+    routes: [{ label: "OBS-10", href: "/avaliacao-pre-consulta-faixa-etaria" }, { label: "Sonda 10", href: "/testes-diretos" }],
   },
 ] as const;
 
@@ -493,6 +507,10 @@ export interface GameSession {
   startedAt: string;
   finishedAt: string | null;
   answers: AnswerRecord[];
+  /** Pausas feitas pela aplicadora durante a partida (proveniência do registro). */
+  pauseCount?: number;
+  /** Registros desfeitos e refeitos durante a partida (proveniência do registro). */
+  undoCount?: number;
 }
 
 export function itemExpected(item: Item): string {
@@ -655,11 +673,28 @@ export interface GameReading {
   touch: KindProfile;
   judged: KindProfile;
   repeated: number;
+  /** Toques em menos de 1 s que não acertaram: impulsividade ou toque acidental a considerar. */
+  fastMisses: AnswerRecord[];
+  /** Não respostas por tipo de tarefa. */
+  noResponseByKind: Record<Item["kind"], number>;
+  /** Acertos na primeira e na segunda metade da partida (ordem de aplicação). */
+  halves: { first: KindProfile; second: KindProfile; drop: boolean };
+  /** Mediana de tempo nos cinco primeiros e nos cinco últimos itens; slowdown quando o fim leva 2x mais. */
+  pace: { start: number; end: number; slowdown: boolean };
+  /** Posição da idade dentro da faixa etária. */
+  bandPosition: "inferior" | "meio" | "superior";
+  /** Roteiro autoral para a consulta, uma entrada por fase priorizada. */
+  plan: { phase: Phase; text: string }[];
   /** Abas de origem que aprofundam as fases priorizadas. */
   deepen: string[];
+  /** Rotas internas das abas de origem das fases priorizadas, sem repetição. */
+  routes: { label: string; href: string }[];
   /** Frases descritivas prontas para leitura rápida. */
   notes: string[];
 }
+
+export const FAST_TAP_SECONDS = 1;
+export const PACE_WINDOW = 5;
 
 export const SLOW_MIN_SECONDS = 12;
 export const SLOW_FACTOR = 2;
@@ -702,6 +737,21 @@ export function interpret(session: GameSession): GameReading {
   const judged = profile(["fala", "fazer"]);
   const repeated = session.answers.filter((answer) => answer.repeated).length;
   const deepen = [...new Set(priorities.map((phase) => phase.phase.source))];
+  const routes: { label: string; href: string }[] = [];
+  for (const phase of priorities) for (const route of phase.phase.routes) if (!routes.some((entry) => entry.href === route.href)) routes.push(route);
+  const plan = priorities.map((phase) => ({ phase: phase.phase, text: phase.phase.consult }));
+  const fastMisses = session.answers.filter((answer) => answer.kind === "toque" && answer.status !== "acerto" && answer.status !== "sem_resposta" && answer.seconds > 0 && answer.seconds < FAST_TAP_SECONDS);
+  const noResponseByKind: Record<Item["kind"], number> = { toque: 0, fala: 0, fazer: 0 };
+  for (const answer of session.answers) if (answer.status === "sem_resposta") noResponseByKind[answer.kind] += 1;
+  const halfAt = Math.ceil(session.answers.length / 2);
+  const halfProfile = (subset: AnswerRecord[]): KindProfile => ({ hits: subset.filter((answer) => answer.status === "acerto").length, total: subset.length });
+  const first = halfProfile(session.answers.slice(0, halfAt));
+  const second = halfProfile(session.answers.slice(halfAt));
+  const drop = summary.complete && first.total > 0 && second.total > 0 && first.hits / first.total >= 0.75 && second.hits / second.total <= 0.5;
+  const paceStart = timed.length >= PACE_WINDOW * 2 ? Math.round(median(timed.slice(0, PACE_WINDOW).map((answer) => answer.seconds)) * 10) / 10 : 0;
+  const paceEnd = timed.length >= PACE_WINDOW * 2 ? Math.round(median(timed.slice(-PACE_WINDOW).map((answer) => answer.seconds)) * 10) / 10 : 0;
+  const slowdown = paceStart > 0 && paceEnd >= 4 && paceEnd >= paceStart * 2;
+  const bandPosition: GameReading["bandPosition"] = summary.band.min === summary.band.max ? "meio" : session.ageYears <= summary.band.min ? "inferior" : session.ageYears >= summary.band.max ? "superior" : "meio";
 
   const notes: string[] = [];
   if (!summary.complete) {
@@ -737,6 +787,31 @@ export function interpret(session: GameSession): GameReading {
   if (repeated > 0) {
     notes.push(`Comando repetido em ${repeated} item(ns): considerar atenção auditiva e compreensão de instrução.`);
   }
+  if (fastMisses.length >= 2) {
+    notes.push(`${fastMisses.length} toques errados em menos de 1 s: considerar impulsividade ou toque acidental; reapresentar esses itens antes de ler como lacuna.`);
+  }
+  if (noResponse >= 2) {
+    const dominant = (Object.keys(noResponseByKind) as Item["kind"][]).find((kind) => noResponseByKind[kind] === noResponse);
+    if (dominant === "fala") notes.push("Não resposta concentrada nas tarefas de fala: considerar timidez, ansiedade com estranhos ou linguagem expressiva; checar em conversa livre com a família presente.");
+    else if (dominant === "fazer") notes.push("Não resposta concentrada nas tarefas de ação: considerar recusa a comandos motores, timidez corporal ou kit indisponível; refazer com demonstração.");
+    else if (dominant === "toque") notes.push("Não resposta concentrada nas tarefas de toque: considerar desinteresse pela tela ou não compreensão do formato; testar com objetos concretos.");
+  }
+  if (drop) {
+    notes.push(`Queda na segunda metade da partida (${first.hits}/${first.total} acertos no início, ${second.hits}/${second.total} no fim): considerar fadiga ou desatenção crescente; a ordem das fases é fixa, então as últimas fases podem estar subestimadas.`);
+  }
+  if (slowdown) {
+    notes.push(`Ritmo desacelerou ao longo da partida (mediana ${paceStart} s nos primeiros itens, ${paceEnd} s nos últimos): sinal de cansaço ou de dificuldade crescente nas fases finais.`);
+  }
+  if (bandPosition === "inferior" && priorities.length > 0) {
+    notes.push(`Idade no limite inferior da faixa (${session.ageYears} anos em ${summary.band.label}): os itens são calibrados para a faixa inteira, então erro isolado pesa menos; alerta em fase inteira continua valendo.`);
+  } else if (bandPosition === "superior" && priorities.length > 0) {
+    notes.push(`Idade no limite superior da faixa (${session.ageYears} anos em ${summary.band.label}): os itens ficam bem abaixo do esperado, então cada fase fora do esperado pesa mais.`);
+  }
+  const events = [session.pauseCount ? `${session.pauseCount} pausa(s)` : "", session.undoCount ? `${session.undoCount} registro(s) desfeito(s) e refeito(s)` : ""].filter(Boolean);
+  if (events.length > 0) notes.push(`Proveniência do registro: ${events.join(", ")} durante a partida.`);
+  if (plan.length > 0) {
+    for (const entry of plan) notes.push(`Roteiro para ${entry.phase.name}: ${entry.text}`);
+  }
   if (deepen.length > 0) {
     notes.push(`Aprofundar com as abas de origem: ${deepen.join(" · ")}.`);
   }
@@ -745,7 +820,10 @@ export function interpret(session: GameSession): GameReading {
     ? `${LEVEL_LABELS[summary.level]} · ${summary.hits} de ${summary.total} acertos`
     : `Partida incompleta · ${summary.hits} acertos em ${session.answers.length} itens registrados`;
 
-  return { headline, complete: summary.complete, priorities, notApplied, missed, errors, noResponse, pattern, medianSeconds, slow, touch, judged, repeated, deepen, notes };
+  return {
+    headline, complete: summary.complete, priorities, notApplied, missed, errors, noResponse, pattern, medianSeconds, slow, touch, judged, repeated,
+    fastMisses, noResponseByKind, halves: { first, second, drop }, pace: { start: paceStart, end: paceEnd, slowdown }, bandPosition, plan, deepen, routes, notes,
+  };
 }
 
 /** Resumo curto, em prosa, para colar na evolução ou no prontuário. */
@@ -760,7 +838,7 @@ export function buildGameBrief(session: GameSession, date = new Date()): string 
   if (reading.missed.length > 0) {
     parts.push(`Itens perdidos: ${reading.missed.map((answer) => `${answer.prompt} (${STATUS_LABELS[answer.status].toLowerCase()})`).join("; ")}.`);
   }
-  parts.push(...reading.notes.filter((note) => !note.startsWith("Aprofundar")));
+  parts.push(...reading.notes.filter((note) => !note.startsWith("Aprofundar") && !note.startsWith("Roteiro para") && !note.startsWith("Proveniência")));
   parts.push("Contagem autoral, não normativa; a leitura e a conclusão são do médico.");
   return parts.join(" ");
 }

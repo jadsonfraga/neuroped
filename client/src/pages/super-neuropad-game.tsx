@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ClipboardList, Copy, Download, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Sparkles, Undo2, X } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { celebrate } from "@/lib/confetti";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
@@ -53,6 +54,16 @@ import "@/styles/super-neuropad-arcade.css";
 const XP_PER_ITEM = 10;
 const TOTAL_ITEMS = PHASES.length * ITEMS_PER_PHASE;
 const CHEERS = ["+10 XP!", "Anotado, próxima!", "Boa, vamos em frente!", "Mais um passo!", "Moeda coletada!"] as const;
+const PREVIEW_SECONDS = 5;
+/** Falas do herói: só ânimo, nunca certo/errado. */
+const HERO_LINES: Record<string, { intro: string; done: string }> = {
+  raposa: { intro: "Olhos abertos, vamos farejar!", done: "Rápida como o vento!" },
+  dragao: { intro: "Fogo nas palavras, vamos!", done: "Rugido de vitória!" },
+  unicornio: { intro: "Cavalgar até o topo!", done: "Brilho de conquista!" },
+  robo: { intro: "Sistemas prontos. Iniciar!", done: "Missão registrada!" },
+  fada: { intro: "Asas abertas, lá vamos nós!", done: "Voo perfeito!" },
+  panda: { intro: "Com calma a gente chega.", done: "Mais um passo tranquilo!" },
+};
 const YEARS = Array.from({ length: MAX_AGE_YEARS - MIN_AGE_YEARS + 1 }, (_, index) => MIN_AGE_YEARS + index);
 
 type Screen = "setup" | "intro" | "play" | "phase-done" | "results";
@@ -206,6 +217,7 @@ function Hud({ character, answered, phaseIndex, done, musicOn, paused, canUndo, 
         </div>
       </div>
       <XpBar answered={answered} />
+      <BadgeShelf done={done} />
     </div>
   );
 }
@@ -224,23 +236,85 @@ function RepeatToggle({ repeated, onToggle }: { repeated: boolean; onToggle: () 
   );
 }
 
+function TurnCue({ who }: { who: "crianca" | "aplicadora" }) {
+  const child = who === "crianca";
+  return (
+    <span className={`snp-chip ${child ? "bg-[#d5ffd8]" : "bg-[#fff1a8]"}`}>
+      <Smartphone className="h-3.5 w-3.5" /> {child ? "Tela para a criança" : "Tela para você"}
+    </span>
+  );
+}
+
+function SpeechBubble({ character, text }: { character: Character; text: string }) {
+  return (
+    <div className="mx-auto flex max-w-md items-end justify-center gap-2">
+      <span className="snp-sprite snp-bounce text-5xl" aria-hidden="true">{character.emoji}</span>
+      <p className="relative rounded-2xl border-[3px] border-[#1b1340] bg-[#fffaf0] px-4 py-2 text-sm font-black text-[#1b1340] shadow-[3px_3px_0_#1b1340]">
+        <span className="sr-only">{character.name} diz: </span>{text}
+        <span aria-hidden="true" className="absolute -left-2 bottom-3 h-4 w-4 rotate-45 border-b-[3px] border-l-[3px] border-[#1b1340] bg-[#fffaf0]" />
+      </p>
+    </div>
+  );
+}
+
+function BadgeShelf({ done }: { done: boolean[] }) {
+  const earned = PHASES.filter((_, index) => done[index]);
+  if (earned.length === 0) return null;
+  return (
+    <ul className="flex flex-wrap gap-1.5" aria-label={`Conquistas: ${earned.length} de ${PHASES.length}`}>
+      {earned.map((phase) => <li key={phase.id} className="snp-chip bg-[#fff1a8]" title={phase.badge}>🏅 {phase.badge}</li>)}
+    </ul>
+  );
+}
+
+function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; hasHero: boolean; kitDone: number; kitTotal: number }) {
+  const steps = [
+    { label: "Idade", ok: hasAge },
+    { label: "Herói", ok: hasHero },
+    { label: kitTotal > 0 ? `Inventário ${kitDone}/${kitTotal}` : "Inventário", ok: kitTotal > 0 && kitDone === kitTotal, optional: true },
+  ];
+  return (
+    <ol className="flex flex-wrap items-center gap-2" aria-label="Passos da preparação">
+      {steps.map((step, index) => (
+        <li key={step.label} className={`snp-chip ${step.ok ? "bg-[#d5ffd8]" : step.optional ? "opacity-70" : "bg-[#fff1a8]"}`}>
+          {step.ok ? <Check className="h-3.5 w-3.5" /> : <span aria-hidden="true">{index + 1}</span>} {step.label}{step.optional && !step.ok ? " (opcional)" : ""}
+          <span className="sr-only">{step.ok ? ", concluído" : step.optional ? ", opcional" : ", pendente"}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function TouchStage({ item, seed, onAnswer }: { item: TouchItem; seed: number; onAnswer: (chosen: Option | null) => void }) {
   const [revealed, setRevealed] = useState(!item.preview);
+  const [left, setLeft] = useState(PREVIEW_SECONDS);
   const options = useMemo(() => shuffle(item.options, seed), [item, seed]);
+  useEffect(() => {
+    if (revealed || !item.preview) return;
+    // Exposição padronizada: esconde sozinho ao fim da contagem; a aplicadora pode esconder antes.
+    const timer = window.setInterval(() => setLeft((current) => current - 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [revealed, item.preview]);
+  useEffect(() => { if (left <= 0) setRevealed(true); }, [left]);
   if (!revealed && item.preview) {
     return (
       <div className="flex flex-col items-center gap-6 py-6">
         <p className="snp-pixel text-center text-sm opacity-80">Olhe bem para as figuras…</p>
         <div className="snp-float text-7xl sm:text-8xl" aria-label={`Figuras mostradas: ${item.preview}`}>{item.preview}</div>
+        <div className="snp-pixel flex h-14 w-14 items-center justify-center rounded-full border-[4px] border-[#1b1340] bg-[#ffd23f] text-2xl text-[#1b1340]" role="timer" aria-label={`Esconde em ${left} segundos`}>{left}</div>
         <ArcadeButton tone="sky" className="px-6 py-3 text-base" onClick={() => { softTap(); setRevealed(true); }}>
           <Check className="h-5 w-5" /> Já olhou · esconder
         </ArcadeButton>
-        <p className="text-xs font-bold opacity-70">Aplicadora: deixe cerca de 5 segundos e toque em esconder.</p>
+        <p className="text-xs font-bold opacity-70">Aplicadora: as figuras somem sozinhas em {PREVIEW_SECONDS} segundos; pode esconder antes.</p>
       </div>
     );
   }
   return (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="snp-chip"><Volume2 className="h-3.5 w-3.5" /> Leia em voz alta</span>
+        <TurnCue who="crianca" />
+      </div>
       <p className="text-center text-2xl font-black leading-snug sm:text-3xl">{item.prompt}</p>
       <div className={`grid gap-4 ${options.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`} role="group" aria-label="Opções">
         {options.map((option, index) => (
@@ -266,7 +340,10 @@ function JudgeStage({ item, onJudge }: { item: Exclude<Item, TouchItem>; onJudge
         <StimulusView item={item} />
       </div>
       <div className="snp-panel snp-panel--soft p-4">
-        <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {KIND_LABELS[item.kind]}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {KIND_LABELS[item.kind]}</div>
+          <TurnCue who="aplicadora" />
+        </div>
         <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
         <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -316,6 +393,9 @@ export default function SuperNeuroPadGamePage() {
   const itemStart = useRef<number>(0);
   const cheerTimer = useRef<number | null>(null);
   const music = useRef<Chiptune | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const pauseCount = useRef(0);
+  const undoCount = useRef(0);
 
   const band = ageYears === null ? undefined : bandForYears(ageYears);
   const phaseId = PHASE_ORDER[phaseIndex];
@@ -334,6 +414,8 @@ export default function SuperNeuroPadGamePage() {
     startedAt: startedAt.current,
     finishedAt: finishedAt.current,
     answers,
+    pauseCount: pauseCount.current,
+    undoCount: undoCount.current,
   } : null;
 
   const getMusic = useCallback(() => {
@@ -353,6 +435,8 @@ export default function SuperNeuroPadGamePage() {
   useEffect(() => {
     if (screen === "play") itemStart.current = performance.now();
     setRepeated(false);
+    // Cada tela nova começa no topo: o desafio precisa aparecer inteiro no tablet sem rolar.
+    if (screen !== "setup") rootRef.current?.scrollIntoView({ block: "start" });
   }, [screen, phaseIndex, itemIndex]);
 
   const toggleMusic = useCallback(() => {
@@ -371,6 +455,8 @@ export default function SuperNeuroPadGamePage() {
     setPhaseIndex(0);
     setItemIndex(0);
     setPaused(false);
+    pauseCount.current = 0;
+    undoCount.current = 0;
     setScreen("intro");
     if (musicOn) getMusic().start();
   }
@@ -425,6 +511,7 @@ export default function SuperNeuroPadGamePage() {
     const previous = undoLastAnswer(answers);
     if (!previous) return;
     softTap();
+    undoCount.current += 1;
     setAnswers(previous.answers);
     setPhaseIndex(PHASE_ORDER.indexOf(previous.phaseId));
     setItemIndex(previous.itemIndex);
@@ -435,7 +522,7 @@ export default function SuperNeuroPadGamePage() {
 
   function togglePause() {
     softTap();
-    if (paused) itemStart.current = performance.now();
+    if (paused) itemStart.current = performance.now(); else pauseCount.current += 1;
     setPaused(!paused);
   }
 
@@ -499,9 +586,9 @@ export default function SuperNeuroPadGamePage() {
   const compact = screen !== "setup";
 
   return (
-    <div className="snp space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen}>
+    <div ref={rootRef} className="snp scroll-mt-4 space-y-5 pb-8" data-testid="super-neuropad-game" data-screen={screen}>
       <header className={`snp-panel snp-scanlines snp-sky-bg relative overflow-hidden ${compact ? "px-4 py-3" : "p-5 sm:p-6"}`}>
-        <Clouds />
+        {!compact && <Clouds />}
         <div className="relative flex items-center gap-3">
           <div className={`snp-sprite flex shrink-0 items-center justify-center rounded-2xl border-[3px] border-[#1b1340] bg-[#ffd23f] ${compact ? "h-10 w-10 text-xl" : "h-14 w-14 text-3xl"}`} aria-hidden="true">🎮</div>
           <div className="min-w-0 flex-1 text-[#1b1340] dark:text-[#f4f0ff]">
@@ -525,6 +612,10 @@ export default function SuperNeuroPadGamePage() {
 
       {screen === "setup" && (
         <section className="space-y-5">
+          <div className="snp-panel snp-panel--soft flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <SetupSteps hasAge={Boolean(band)} hasHero={Boolean(character)} kitDone={band ? band.kit.filter((entry) => kitChecked[entry]).length : 0} kitTotal={band?.kit.length ?? 0} />
+            <span className="text-xs font-bold opacity-70">Três toques e começa: idade, herói e, se der, o inventário.</span>
+          </div>
           <div className="snp-panel p-5">
             <h2 className="snp-pixel text-base">1 · Idade da criança (anos)</h2>
             <p className="text-xs font-bold opacity-70">Somente anos completos. A faixa define os desafios.</p>
@@ -628,9 +719,14 @@ export default function SuperNeuroPadGamePage() {
           <div className="snp-pixel mt-2 text-xs opacity-80">Fase {phase.order} de {PHASES.length}</div>
           <h2 className="snp-pixel text-2xl sm:text-3xl">{phase.name}</h2>
           <p className="mt-1 text-base font-bold opacity-90">{phase.tagline}</p>
+          <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.intro ?? "Vamos lá!"} /></div>
           <div className="snp-panel mx-auto mt-5 max-w-2xl p-4 text-left text-sm">
-            <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {phase.domain}</div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="snp-pixel text-[11px] opacity-80">Aplicadora · {phase.domain}</div>
+              <TurnCue who="aplicadora" />
+            </div>
             <p className="mt-1 font-semibold leading-relaxed">{phase.operator}</p>
+            <p className="mt-2 text-xs font-bold opacity-70"><Eye className="mr-1 inline h-3.5 w-3.5" /> Leia, depois toque em entrar e vire o tablet para a criança.</p>
           </div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={enterPhase}>
             <span aria-hidden="true">{character.emoji}</span> Entrar na fase
@@ -684,7 +780,8 @@ export default function SuperNeuroPadGamePage() {
           <div className="snp-bounce text-7xl" aria-hidden="true">🏅</div>
           <div className="snp-pixel mt-2 text-xs opacity-80">Mundo {phase.order} completo</div>
           <h2 className="snp-pixel text-2xl sm:text-3xl">Conquista: {phase.badge}!</h2>
-          <p className="mt-1 text-base font-bold opacity-90">{character.emoji} {character.name} {character.role} subiu para o nível {phaseIndex + 2}.</p>
+          <p className="mt-1 text-base font-bold opacity-90">{character.name} {character.role} subiu para o nível {phaseIndex + 2}.</p>
+          <div className="mt-4"><SpeechBubble character={character} text={HERO_LINES[character.id]?.done ?? "Conquista no bolso!"} /></div>
           <ArcadeButton tone="sun" className="mt-5 px-6 py-3 text-base" onClick={nextPhase}>
             Próxima fase: {phaseById(PHASE_ORDER[phaseIndex + 1]).emoji} {phaseById(PHASE_ORDER[phaseIndex + 1]).name}
           </ArcadeButton>
@@ -697,6 +794,7 @@ export default function SuperNeuroPadGamePage() {
             <div className="snp-bounce text-6xl" aria-hidden="true">{summary.complete ? "🏆" : "🚩"}</div>
             <h2 className="snp-pixel mt-2 text-2xl sm:text-3xl">{summary.complete ? "Aventura concluída!" : "Aventura encerrada antes do fim"}</h2>
             <p className="text-base font-bold">{summary.character.emoji} {summary.character.name} {summary.character.role} · {answers.length * XP_PER_ITEM} XP · {done.filter(Boolean).length} conquistas</p>
+            <div className="mt-3 flex justify-center"><BadgeShelf done={done} /></div>
             <p className="mt-3 text-xs font-black opacity-80">Aplicadora: vire a tela para você. O que vem abaixo é o registro objetivo.</p>
           </div>
 
@@ -731,9 +829,36 @@ export default function SuperNeuroPadGamePage() {
                 <div className="text-[11px] font-semibold opacity-70">{reading.slow.length} item(ns) bem acima do próprio ritmo</div>
               </div>
             </div>
+            <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Sinais de confiabilidade do registro">
+              <span className={`snp-chip ${reading.fastMisses.length >= 2 ? "bg-[#fff1a8]" : ""}`}>⚡ {reading.fastMisses.length} toque(s) errado(s) em menos de 1 s</span>
+              <span className={`snp-chip ${reading.halves.drop ? "bg-[#fff1a8]" : ""}`}>🔋 {reading.halves.drop ? "queda na segunda metade" : "sem queda no fim"}</span>
+              <span className={`snp-chip ${reading.pace.slowdown ? "bg-[#fff1a8]" : ""}`}>⏱ {reading.pace.slowdown ? "ritmo desacelerou" : "ritmo estável"}</span>
+              <span className="snp-chip">⏸ {session.pauseCount ?? 0} pausa(s) · ↩ {session.undoCount ?? 0} desfeito(s)</span>
+            </div>
             <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm font-semibold leading-relaxed">
-              {reading.notes.map((note) => <li key={note}>{note}</li>)}
+              {reading.notes.filter((note) => !note.startsWith("Roteiro para") && !note.startsWith("Aprofundar")).map((note) => <li key={note}>{note}</li>)}
             </ul>
+            {reading.plan.length > 0 && (
+              <div className="mt-4 snp-panel snp-panel--soft p-4" data-testid="super-neuropad-plan">
+                <div className="snp-pixel text-[11px]">Roteiro sugerido para a consulta</div>
+                <ol className="mt-2 space-y-2 text-sm font-semibold leading-relaxed">
+                  {reading.plan.map((entry) => (
+                    <li key={entry.phase.id} className="flex gap-2">
+                      <span aria-hidden="true">{entry.phase.emoji}</span>
+                      <span><span className="font-black">{entry.phase.name}:</span> {entry.text}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-black">Aprofundar agora:</span>
+                  {reading.routes.map((route) => (
+                    <Link key={route.href} href={route.href} className="snp-chip bg-[#cdefff] hover:bg-[#5fd3f3]">
+                      {route.label} <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

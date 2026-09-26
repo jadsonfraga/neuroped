@@ -36,6 +36,16 @@ aplicar, sem câmera, um jogo de triagem de déficits grosseiros diretamente com
   fases sem item registrado aparecem como "não aplicada", nunca como alerta.
 - **Repeti o comando**: marca no registro que a instrução foi repetida uma vez (campo
   `repeated`); sai no detalhamento, no PDF e na leitura.
+- **Preparação em três toques**: passos com check (idade, herói, inventário opcional).
+- **Dicas de tela**: "Tela para a criança" nos itens de toque, "Tela para você" nos itens
+  julgados e na introdução de cada fase; "Leia em voz alta" sobre a pergunta.
+- **Exposição padronizada na memória visual**: contagem de 5 s visível e as figuras somem
+  sozinhas; a aplicadora pode esconder antes.
+- **Rolagem automática**: cada tela nova começa no topo, para caber no tablet sem rolar.
+- **Proveniência do registro**: pausas e registros desfeitos ficam na sessão
+  (`pauseCount`, `undoCount`) e saem na identificação do PDF e na leitura.
+- Diversão sem revelar acerto: balões de fala do herói na introdução e na conquista,
+  prateleira de conquistas no HUD e na tela final.
 
 ## Leitura para a consulta
 
@@ -52,7 +62,18 @@ equivalente ou diagnóstico, exibida na tela de resultado, no relatório em text
   (mínimo 12 s), comparação interna, nunca tempo normativo;
 - toque × aplicadora: acertos nos itens conferidos pelo jogo contra os conferidos pela
   aplicadora, com diferença de 40 pontos percentuais ou mais anotada;
-- comandos repetidos; abas de origem que aprofundam cada fase priorizada;
+- comandos repetidos; abas de origem que aprofundam cada fase priorizada, com link direto
+  (`Phase.routes`) na tela de resultado;
+- toques impulsivos: dois ou mais toques errados em menos de 1 s;
+- não resposta concentrada por tipo de tarefa (fala, ação ou toque), com hipóteses a separar;
+- fadiga: 75 % ou mais de acertos na primeira metade e 50 % ou menos na segunda (partida
+  completa); ritmo desacelerado quando a mediana dos cinco últimos itens é o dobro da dos
+  cinco primeiros (mínimo 4 s);
+- posição da idade na faixa (limite inferior ou superior), só quando há fase priorizada;
+- roteiro autoral por fase priorizada (`Phase.consult`): o que conferir na consulta, sem
+  diagnóstico;
+- sinais de confiabilidade do registro em chips (toques rápidos, queda, ritmo, pausas e
+  desfazer);
 - lista "Itens para checar na consulta" com enunciado, esperado, registrado, tempo e
   repetição.
 

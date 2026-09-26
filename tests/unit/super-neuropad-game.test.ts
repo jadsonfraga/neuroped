@@ -348,6 +348,83 @@ test("leitura para a consulta: prioridades, padrão de resposta, ritmo interno, 
   for (const note of text.split("\n")) assert.equal(pdfSafe(note), note.replace(/[–—]/g, "-").replace(/×/g, "x"), `nota perde conteúdo no PDF: ${note}`);
 });
 
+test("leitura inteligente: toques impulsivos, não resposta por tipo, fadiga, ritmo, posição na faixa, roteiro e rotas de origem", () => {
+  // Toques errados em menos de 1 s: só conta erro ativo rápido em item de toque.
+  const fast = play("6-7", (index) => (index % 2 === 0 ? "erro" : "acerto"));
+  fast.answers = fast.answers.map((answer) => (answer.kind === "toque" ? { ...answer, seconds: 0.4 } : answer));
+  const fastReading = interpret(fast);
+  assert.ok(fastReading.fastMisses.length >= 2);
+  assert.ok(fastReading.fastMisses.every((answer) => answer.kind === "toque" && answer.status === "erro"));
+  assert.ok(fastReading.notes.some((note) => /toques errados em menos de 1 s: considerar impulsividade ou toque acidental/.test(note)));
+  const calm = interpret(play("6-7", (index) => (index % 2 === 0 ? "erro" : "acerto")));
+  assert.deepEqual(calm.fastMisses, [], "3 s por item não é toque impulsivo");
+
+  // Não resposta concentrada nas tarefas de fala.
+  const shy = play("8-9", () => "acerto");
+  shy.answers = shy.answers.map((answer) => (answer.kind === "fala" ? { ...answer, status: "sem_resposta", given: "—" } : answer));
+  const shyReading = interpret(shy);
+  assert.ok(shyReading.noResponseByKind.fala >= 2);
+  assert.equal(shyReading.noResponseByKind.toque, 0);
+  assert.ok(shyReading.notes.some((note) => /Não resposta concentrada nas tarefas de fala/.test(note)));
+
+  // Fadiga: primeira metade certa, segunda metade errada.
+  const tired = play("10-12", (index) => (index < 10 ? "acerto" : "erro"));
+  const tiredReading = interpret(tired);
+  assert.deepEqual([tiredReading.halves.first.hits, tiredReading.halves.second.hits], [10, 0]);
+  assert.equal(tiredReading.halves.drop, true);
+  assert.ok(tiredReading.notes.some((note) => /Queda na segunda metade da partida \(10\/10 acertos no início, 0\/10 no fim\)/.test(note)));
+  assert.equal(interpret(play("10-12", () => "acerto")).halves.drop, false);
+
+  // Ritmo desacelerou: cinco primeiros em 2 s, cinco últimos em 10 s.
+  const slowing = play("13-17", () => "acerto");
+  slowing.answers = slowing.answers.map((answer, index) => ({ ...answer, seconds: index < 5 ? 2 : index >= 15 ? 10 : 3 }));
+  const slowingReading = interpret(slowing);
+  assert.deepEqual(slowingReading.pace, { start: 2, end: 10, slowdown: true });
+  assert.ok(slowingReading.notes.some((note) => /Ritmo desacelerou ao longo da partida \(mediana 2 s nos primeiros itens, 10 s nos últimos\)/.test(note)));
+  assert.equal(interpret(play("13-17", () => "acerto")).pace.slowdown, false);
+
+  // Posição na faixa: só vira nota quando há fase fora do esperado.
+  const lower = play("4-5", (index) => (index < 3 ? "erro" : "acerto"));
+  lower.ageYears = 4;
+  const lowerReading = interpret(lower);
+  assert.equal(lowerReading.bandPosition, "inferior");
+  assert.ok(lowerReading.notes.some((note) => /Idade no limite inferior da faixa \(4 anos em 4 a 5 anos\)/.test(note)));
+  const upper = { ...lower, ageYears: 5 };
+  assert.equal(interpret(upper).bandPosition, "superior");
+  assert.ok(interpret(upper).notes.some((note) => /Idade no limite superior da faixa \(5 anos em 4 a 5 anos\)/.test(note)));
+  const middle = play("10-12", (index) => (index < 3 ? "erro" : "acerto"));
+  middle.ageYears = 11;
+  assert.equal(interpret(middle).bandPosition, "meio");
+  assert.equal(interpret(middle).notes.some((note) => /limite (inferior|superior) da faixa/.test(note)), false);
+  const perfectLower = play("4-5", () => "acerto");
+  perfectLower.ageYears = 4;
+  assert.equal(interpret(perfectLower).notes.some((note) => /limite inferior/.test(note)), false, "sem fase priorizada não há nota de faixa");
+
+  // Roteiro e rotas: uma entrada por fase priorizada, rotas sem repetição, todas existentes no App.
+  assert.deepEqual(lowerReading.plan.map((entry) => entry.phase.id), ["olhos"]);
+  assert.equal(lowerReading.plan[0].text, PHASES[0].consult);
+  assert.deepEqual(lowerReading.routes.map((route) => route.href), ["/testes-reconhecimento", "/testes-cognitivos"]);
+  assert.ok(lowerReading.notes.some((note) => note.startsWith("Roteiro para Floresta dos Olhos: ")));
+  const twoPhases = interpret(play("6-7", (index) => (index < 3 || (index >= 4 && index < 7) ? "erro" : "acerto")));
+  assert.deepEqual(twoPhases.routes.map((route) => route.href), ["/testes-reconhecimento", "/testes-cognitivos", "/testes-diretos"], "rota repetida entra uma vez");
+  const app = readFileSync("client/src/App.tsx", "utf8");
+  for (const phase of PHASES) {
+    assert.ok(phase.consult.length > 60, `${phase.id}: roteiro de consulta`);
+    assert.doesNotMatch(phase.consult, /diagn[oó]stico|percentil|escore|QI/i);
+    assert.ok(phase.routes.length >= 1);
+    for (const route of phase.routes) assert.ok(app.includes(`path="${route.href}"`), `${route.href} existe no App`);
+  }
+
+  // Proveniência do registro (pausas e desfazer) entra na leitura e no PDF, e não no resumo do prontuário.
+  const withEvents = { ...play("6-7", () => "acerto"), pauseCount: 2, undoCount: 1 };
+  assert.ok(interpret(withEvents).notes.some((note) => note === "Proveniência do registro: 2 pausa(s), 1 registro(s) desfeito(s) e refeito(s) durante a partida."));
+  assert.equal(interpret(play("6-7", () => "acerto")).notes.some((note) => /Proveniência/.test(note)), false);
+  const spec = buildGameDocSpec(withEvents, { doctorName: "P", specialty: "", credentials: "", clinicName: "", motto: "" }, "26/09/2026 09:00");
+  assert.match(spec.sections[0].body, /Proveniência do registro: 2 pausa\(s\), 1 registro\(s\) desfeito\(s\) e refeito\(s\), 0 comando\(s\) repetido\(s\)/);
+  const brief = buildGameBrief({ ...lower, pauseCount: 1 });
+  assert.doesNotMatch(brief, /Roteiro para|Proveniência|Aprofundar/);
+});
+
 test("resumo para o prontuário é prosa curta com faixa, contagem, fases, itens perdidos e ressalva autoral", () => {
   const session = play("6-7", (index) => (index === 1 ? "erro" : index === 13 ? "sem_resposta" : "acerto"));
   const brief = buildGameBrief(session, new Date("2026-09-26T12:00:00Z"));

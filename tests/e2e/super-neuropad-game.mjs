@@ -46,6 +46,9 @@ try {
   await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "6", exact: true }).click();
   await page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
   await button("Música ligada").click(); // silencia no headless
+  const steps = page.getByRole("list", { name: "Passos da preparação" });
+  await steps.getByText(/Idade, concluído/).waitFor(); // idade 6 já escolhida
+  await steps.getByText(/Herói, concluído/).waitFor();
   await screen("01-setup");
   await button("Começar a aventura").click();
 
@@ -74,6 +77,7 @@ try {
         pausedOnce = true;
       }
       if (await page.getByRole("button", { name: "Já olhou · esconder", exact: true }).count()) {
+        await page.getByRole("timer").waitFor(); // contagem visível: exposição padronizada
         await button("Já olhou · esconder").click();
       }
       if (phase === 1 && item === 2) await button("Repeti o comando").click(); // fica no registro como "comando repetido 1x"
@@ -117,6 +121,12 @@ try {
   await root.getByText("comando repetido 1x").first().waitFor();
   await root.getByText(/Itens para checar na consulta · \d+/).waitFor();
   await button("Copiar resumo para o prontuário").waitFor();
+  const plan = page.getByTestId("super-neuropad-plan");
+  await plan.getByText("Roteiro sugerido para a consulta").waitFor();
+  assert.ok((await plan.getByRole("link").count()) >= 1, "links diretos para as abas de origem");
+  const firstLink = await plan.getByRole("link").first().getAttribute("href");
+  assert.match(firstLink ?? "", /^#?\/(testes-diretos|testes-reconhecimento|testes-cognitivos|avaliacao-pre-consulta-faixa-etaria)$/, `rota interna válida: ${firstLink}`);
+  await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
   await screen("06-results");
 
   const [download] = await Promise.all([
