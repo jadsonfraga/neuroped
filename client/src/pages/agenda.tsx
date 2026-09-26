@@ -383,7 +383,7 @@ export default function AgendaPage() {
                       <p className="mt-1 text-xs text-muted-foreground">{apt.guardianName || "Responsável não informado"}{apt.guardianPhone ? ` · ${apt.guardianPhone}` : ""}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {apt.patientId && <Button size="sm" variant="outline" asChild><Link href={`/prontuario?patientId=${encodeURIComponent(apt.patientId)}`}><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Prontuário</Link></Button>}
+                      {apt.patientId && <Button size="sm" variant="outline" asChild><Link href={`/prontuario?patientId=${encodeURIComponent(apt.patientId)}&appointmentId=${encodeURIComponent(apt.id)}`}><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Prontuário</Link></Button>}
                       {canConfigure && !apt.patientId && (
                         <select
                           aria-label={`Vincular ${apt.patientName || "paciente"} ao prontuário LIVE`}
