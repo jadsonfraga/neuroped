@@ -107,37 +107,44 @@ export async function readTenantOnboarding(
          u.created_at AS account_created_at,
          u.email_verified_at,
          c.created_at AS clinic_created_at,
-         (SELECT MIN(bs.created_at)
+         (SELECT bs.created_at
             FROM billing_customers bc
             JOIN billing_subscriptions bs ON bs.customer_id = bc.id
-           WHERE bc.clinic_id = c.id AND bs.plan_id IS NOT NULL)
+           WHERE bc.clinic_id = c.id AND bs.plan_id IS NOT NULL
+           ORDER BY julianday(bs.created_at) LIMIT 1)
            AS plan_selected_at,
-         (SELECT MIN(COALESCE(bie.occurred_at, bie.created_at))
+         (SELECT COALESCE(bie.occurred_at, bie.created_at)
             FROM billing_customers bc
             JOIN billing_subscriptions bs ON bs.customer_id = bc.id
             JOIN billing_invoice_events bie ON bie.subscription_id = bs.id
            WHERE bc.clinic_id = c.id
              AND bc.provider <> 'none'
              AND bie.kind = 'charge_paid'
-             AND bie.status = 'done')
+             AND bie.status = 'done'
+           ORDER BY julianday(COALESCE(bie.occurred_at, bie.created_at)) LIMIT 1)
            AS billing_configured_at,
-         (SELECT MIN(cm.created_at)
+         (SELECT cm.created_at
             FROM clinic_memberships cm
-           WHERE cm.clinic_id = c.id AND cm.user_id <> c.created_by_user_id)
+           WHERE cm.clinic_id = c.id AND cm.user_id <> c.created_by_user_id
+           ORDER BY julianday(cm.created_at) LIMIT 1)
            AS first_member_at,
-         (SELECT MIN(a.created_at) FROM saas_audit_log a
-           WHERE a.clinic_id = c.id AND a.action = 'live_patient_create')
+         (SELECT a.created_at FROM saas_audit_log a
+           WHERE a.clinic_id = c.id AND a.action = 'live_patient_create'
+           ORDER BY julianday(a.created_at) LIMIT 1)
            AS first_patient_at,
-         (SELECT MIN(a.created_at) FROM saas_audit_log a
+         (SELECT a.created_at FROM saas_audit_log a
            WHERE a.clinic_id = c.id
              AND a.action = 'live_clinical_event_create'
-             AND a.metadata_json LIKE '%"eventType":"encounter"%')
+             AND a.metadata_json LIKE '%"eventType":"encounter"%'
+           ORDER BY julianday(a.created_at) LIMIT 1)
            AS first_consultation_at,
-         (SELECT MIN(a.created_at) FROM saas_audit_log a
-           WHERE a.clinic_id = c.id AND a.action = 'live_document_create')
+         (SELECT a.created_at FROM saas_audit_log a
+           WHERE a.clinic_id = c.id AND a.action = 'live_document_create'
+           ORDER BY julianday(a.created_at) LIMIT 1)
            AS first_document_at,
-         (SELECT MIN(a.created_at) FROM saas_audit_log a
-           WHERE a.clinic_id = c.id AND a.action = 'live_assessment_create')
+         (SELECT a.created_at FROM saas_audit_log a
+           WHERE a.clinic_id = c.id AND a.action = 'live_assessment_create'
+           ORDER BY julianday(a.created_at) LIMIT 1)
            AS first_assessment_at
        FROM authorized c
        JOIN users u ON u.id = c.created_by_user_id
