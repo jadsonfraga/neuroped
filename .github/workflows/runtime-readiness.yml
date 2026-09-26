@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "functions/api/health.ts"
+      - "functions/api/admin/clinical-crypto-readiness.ts"
       - "functions/api/auth/_sessions.ts"
       - "functions/api/tenant/_core.ts"
       - "functions/api/tenant/_crypto.ts"
@@ -23,6 +24,7 @@ on:
     branches: [main]
     paths:
       - "functions/api/health.ts"
+      - "functions/api/admin/clinical-crypto-readiness.ts"
       - "functions/api/auth/_sessions.ts"
       - "functions/api/tenant/_core.ts"
       - "functions/api/tenant/_crypto.ts"

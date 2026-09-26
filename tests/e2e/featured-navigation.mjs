@@ -39,9 +39,12 @@ page.on("request", (request) => {
   }
 });
 const sidebar = page.locator(".np-app-sidebar");
-const game = () => sidebar.locator('a[href="/super-neuropad-game"]:visible');
-const sonda = () => sidebar.locator('a[href="/testes-diretos"]:visible');
-const obs = () => sidebar.locator('a[href="/avaliacao-pre-consulta-faixa-etaria"]:visible');
+// Só o bloco de destaque: Sonda e OBS também existem nas seções do menu
+// (TRIAGEM E FERRAMENTAS, PRÉ-CONSULTA GUIADA), então um seletor por href
+// contaria o item da seção quando ela estiver aberta.
+const game = () => sidebar.getByTestId("featured-Super NeuroPad Game").locator("visible=true");
+const sonda = () => sidebar.getByTestId("featured-Sonda Dez · Avaliação Direta").locator("visible=true");
+const obs = () => sidebar.getByTestId("featured-OBS-10 · Pré-Consulta").locator("visible=true");
 const preSection = () => sidebar.getByRole("button", { name: "PRÉ-CONSULTA GUIADA", exact: true });
 const hrefs = (locator) => locator.evaluateAll((nodes) =>
   nodes.map((node) => node.closest("a")?.getAttribute("href")));
