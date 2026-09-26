@@ -124,6 +124,16 @@ assert.equal(skipped.record!.observations[0].attempted, false); assert.equal(ski
 const partial = reduce(reduce(reduce(started(), { type: "show" }), { type: "response" }), { type: "save", outcome: "V", note: "" });
 assert.equal(pendingDescriptions(partial.record!).length, 1);
 assert.match(tabletText(reduce(partial, { type: "end", second: 30, reason: "Fim sintético" }).record!), /PENDÊNCIA: 1 estação/);
+// Bug corrigido: uma estação aberta e encerrada antes de qualquer categoria (outcome
+// null) é registro parcial, não pendência de descrição; o export não pode dizer
+// "categoria marcada" de uma estação sem categoria nenhuma.
+const openedOnly = reduce(reduce(started(), { type: "show" }), { type: "end", second: 20, reason: "Interrupção sintética" });
+assert.equal(openedOnly.record!.observations[0].outcome, null);
+assert.deepEqual(pendingDescriptions(openedOnly.record!), []);
+assert.doesNotMatch(tabletText(openedOnly.record!), /PENDÊNCIA/);
+assert.match(tabletText(openedOnly.record!), /Categoria não registrada/);
+assert.match(tabletText(openedOnly.record!), /Há registros parciais sem categoria e sem descrição/);
+assert.doesNotMatch(tabletText(openedOnly.record!), /Todas as estações registradas possuem descrição/);
 assert.match(tabletText(all.record!), /Todas as estações registradas possuem descrição/);
 // Saturating the event log must never mint an observation whose opening cannot be traced: the module
 // would otherwise export a record its own validator rejects.

@@ -155,8 +155,14 @@ export function drawingStrokes(events: TabletEvent[], taskId: string): Point[][]
   return strokes;
 }
 /** Observations whose category exists but whose factual description is still missing. Never auto-filled. */
+/**
+ * Estações com categoria marcada e descrição ainda não escrita. Uma estação aberta e
+ * encerrada antes de qualquer categoria (outcome === null) é registro parcial, não
+ * pendência: contá-la aqui fazia o export dizer "categoria marcada" de uma estação
+ * sem categoria nenhuma.
+ */
 export function pendingDescriptions(r: TabletRecord): string[] {
-  return r.observations.filter((o) => !o.note.trim()).map((o) => o.taskId);
+  return r.observations.filter((o) => o.outcome !== null && !o.note.trim()).map((o) => o.taskId);
 }
 export function tabletText(r: TabletRecord): string {
   const plan = tabletPlan(r.context.months)!;
@@ -171,7 +177,7 @@ export function tabletText(r: TabletRecord): string {
   }
   const pending = pendingDescriptions(r);
   lines.push("", "COBERTURA QUE ESTE MODO NÃO EXAMINA", ...plan.limitations, "",
-    pending.length ? `PENDÊNCIA: ${pending.length} ${pending.length === 1 ? "estação" : "estações"} com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : "Todas as estações registradas possuem descrição escrita pela aplicadora.",
+    pending.length ? `PENDÊNCIA: ${pending.length} ${pending.length === 1 ? "estação" : "estações"} com categoria marcada e descrição ainda não escrita. A ausência de descrição não é achado e não foi preenchida automaticamente.` : r.observations.some((o) => !o.note.trim()) ? "Há registros parciais sem categoria e sem descrição; conferir os registros individuais. Não inferir achado." : "Todas as estações registradas possuem descrição escrita pela aplicadora.",
     `Conferência humana: ${r.reviewed ? "declarada pela aplicadora" : "não declarada"}. Não é assinatura médica nem recibo de envio.`, `Eventos operacionais: ${r.events.length}; ${r.eventLimitReached ? "LIMITE ATINGIDO, registros de interação podem estar incompletos" : "sem truncamento sinalizado"}. Não são escores ou tempos de reação calibrados.`, "O JSON contém registro e traçados, não o vídeo. Arquivos exigem armazenamento institucional autorizado.");
   return lines.join("\n");
 }
