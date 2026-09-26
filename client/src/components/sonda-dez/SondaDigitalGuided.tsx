@@ -61,6 +61,8 @@ import { playSondaTone } from "@/lib/sondaDezAudio";
 import SondaDigitalActivity from "./SondaDigitalActivity";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import { buildObjectiveSteps, objectiveNature } from "@/components/jogo-facil/ObjectiveStep";
+import { OBJECTIVE_MAX_YEARS, OBJECTIVE_MIN_YEARS, objectiveBandForYears } from "@/components/jogo-facil/objectiveBank";
 
 type Phase = "prepare" | "learn" | "run" | "report";
 type Track = "easy" | "guided" | "direct";
@@ -70,7 +72,7 @@ const TRACKS: { id: Track; label: string; hint: string }[] = [
   {
     id: "easy",
     label: "🎮 Modo Fácil · joguinho",
-    hint: "Um passo por vez. Mostra, marca Acertou ou Não, passa sozinho. Resultado no fim.",
+    hint: "Tudo na tela, de 1 a 19 anos: a criança toca, o jogo julga e passa sozinho. Certo/errado no fim.",
   },
   {
     id: "guided",
@@ -408,7 +410,7 @@ export default function SondaDigitalGuided({
               item.id === "direct"
                 ? "Modo direto: sem guia, checklist ou ensaio. Informe a idade e inicie. O registro declara que o preparo guiado foi dispensado."
                 : item.id === "easy"
-                  ? "Modo Fácil: informe a idade e toque em Começar. Leia a fala, mostre à criança e marque Acertou, Não acertou ou Pular. O jogo passa sozinho."
+                  ? "Modo Fácil: informe a idade em anos, leia o enunciado e deixe a criança tocar na tela. O aplicativo julga certo ou errado, passa sozinho e mostra o resultado no fim."
                   : "",
             );
           }}
@@ -421,42 +423,22 @@ export default function SondaDigitalGuided({
     </div>
   );
   if (easy) {
-    // Modo Fácil: uma sequência fixa com todos os passos da trilha. A tela da
-    // criança continua sendo a SondaDigitalActivity original (estímulo puro);
-    // o adulto marca Acertou / Não acertou / Pular e o jogo avança sozinho.
-    const easySteps: EasyStep[] = band
-      ? band.missions.flatMap((mission) =>
-          mission.steps.map((s, i) => ({
-            id: `${mission.id}-${i}`,
-            group: mission.title,
-            title: s.title,
-            say: s.silent ? s.say : `“${s.say}”`,
-            hint: `${s.do} ${s.observe}`,
-            childLabel: "Mostrar para a criança",
-            child:
-              s.activity.prompt === "operator-only" || s.activity.kind === "blank"
-                ? undefined
-                : ({ onDone }) => (
-                    <SondaDigitalActivity
-                      spec={s.activity}
-                      soundEnabled={sound !== "visual"}
-                      waitSeconds={s.waitSeconds}
-                      onComplete={() => onDone()}
-                    />
-                  ),
-          })),
-        )
-      : [];
+    // Modo Fácil objetivo: dez itens do banco graduado (1 a 19 anos), todos na
+    // tela. A criança toca, o aplicativo julga certo/errado e o jogo avança.
+    // Nada da trilha clínica guiada entra aqui; nada pede objeto fora do app.
+    const easyYears = /^\d+$/.test(years) ? Number(years) : NaN;
+    const easyBand = objectiveBandForYears(easyYears);
+    const easySteps: EasyStep[] = easyBand ? buildObjectiveSteps("sonda", easyYears, "sonda-easy") : [];
     return (
       <div className="mx-auto w-full max-w-6xl space-y-5 pb-16" data-testid="sonda-digital">
         <header className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-cyan-50 p-6 dark:to-cyan-950/20 sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge>Sonda Dez</Badge>
+            <Badge>Sonda 10</Badge>
             <Badge variant="outline">Modo Fácil · joguinho</Badge>
             <Badge variant="outline">v{DIGITAL_VERSION}</Badge>
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            Leia, mostre, marque. O jogo passa sozinho.
+            Leia, a criança toca, o jogo passa sozinho.
           </h1>
           {trackTabs}
         </header>
@@ -471,7 +453,7 @@ export default function SondaDigitalGuided({
             <div className="mt-4 grid grid-cols-2 gap-4">
               <label className="space-y-2 text-sm font-semibold">
                 Idade em anos
-                <Input type="number" min="0" max="17" value={years} onChange={(e) => setYears(e.target.value)} placeholder="Ex.: 4" />
+                <Input type="number" min={OBJECTIVE_MIN_YEARS} max={OBJECTIVE_MAX_YEARS} value={years} onChange={(e) => setYears(e.target.value)} placeholder="Ex.: 4" />
               </label>
               <label className="space-y-2 text-sm font-semibold">
                 Meses adicionais
@@ -479,23 +461,20 @@ export default function SondaDigitalGuided({
               </label>
             </div>
             <p className="mt-3 text-sm" role="status">
-              {band ? `Trilha ${band.label} · ${easySteps.length} passos` : "Informe uma idade de 12 meses a 17 anos e 11 meses."}
+              {easyBand ? `Faixa ${easyBand.label} · ${easySteps.length} itens na tela` : `Informe a idade em anos completos, de ${OBJECTIVE_MIN_YEARS} a ${OBJECTIVE_MAX_YEARS}.`}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant={sound !== "visual" ? "default" : "outline"} aria-pressed={sound !== "visual"} onClick={() => setSound("heard")}>Com som</Button>
-              <Button variant={sound === "visual" ? "default" : "outline"} aria-pressed={sound === "visual"} onClick={() => setSound("visual")}>Sem som</Button>
-            </div>
           </section>
         )}
-        {band && (
+        {easyBand && (
           <EasyGame
-            key={`${band.label}-${easySteps.length}`}
+            key={`${easyBand.id}-${easySteps.length}`}
             testid="sonda-easy"
-            title="Sonda Dez"
-            ageLabel={`${ageMonths} meses · trilha ${band.label}`}
-            nature={DIGITAL_NATURE}
+            title="Sonda 10"
+            ageLabel={`${easyYears} anos · faixa ${easyBand.label}`}
+            nature={objectiveNature("sonda")}
             footer={DIGITAL_LIMIT}
             steps={easySteps}
+            objective
             onProgress={setEasyProgress}
           />
         )}
