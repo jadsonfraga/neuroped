@@ -22,7 +22,7 @@ test("Secretaria pública usa somente o agendamento nativo NeuroPad", async () =
   assert.match(navigation, /Agendamento próprio NeuroPad · 1 hora por paciente/);
 
   assert.match(page, /import AgendarPage from "@\/pages\/agendar"/);
-  assert.match(page, /return <AgendarPage \/>/);
+  assert.match(page, /<main id="conteudo"[^>]*>\s*<AgendarPage \/>\s*<\/main>/, "rota montada fora do Layout traz o próprio landmark <main>");
   assert.doesNotMatch(page, /BoaConsulta|boaconsulta|BOACONSULTA_PROFILE_URL/);
 
   assert.match(booking, /\/api\/public-booking\?action=providers/);
