@@ -542,3 +542,54 @@
 - Rollback: reverter `functions/api/operations/index.ts` ao commit anterior
   restaura o comportamento anterior (os três códigos voltam a ser
   distinguíveis); nenhuma migração envolvida.
+
+## S21 (ciclo 4, 2026-09-26) — clínica sem rota para ler a própria auditoria (AUTHZ-P1-10)
+- Escopo: 1 arquivo novo (`functions/api/tenants/[id]/audit.ts`, GET
+  somente-leitura). Nenhuma mudança de schema — `saas_audit_log` (migração
+  0009) já tem tudo que o endpoint precisa. Nenhum outro arquivo de
+  produção tocado.
+- Ambiente: container da sessão, Node do repo, HEAD `36df237` (S20) + S21.
+- Achado: confirmado por leitura direta — `functions/api/tenants/[id]/
+  metrics.ts` só agrega contagens (DAU/WAU/MAU) via `saas_audit_log`, nunca
+  devolve os eventos; `functions/api/audit-log.ts` (a única leitura
+  detalhada) exige `canReadAuditLog` (role global `admin`) e não filtra por
+  clínica. Uma clínica não tinha NENHUMA forma de ver "quem fez o quê" na
+  própria operação — diferente dos outros achados desta sessão, aqui não
+  havia vazamento cross-tenant nenhum (nada existia para vazar); é uma
+  lacuna de funcionalidade da "plataforma autogerenciável", não uma falha
+  de isolamento.
+- Implementação: `GET /api/tenants/:id/audit?page=&limit=` usa o MESMO
+  guard já em produção em `metrics.ts`/`export.ts` — `clinic_memberships`
+  ativa com `role IN ('owner','clinic_admin')` numa `clinics.status =
+  'active'` — com 404 genérico (`NOT_FOUND`, "Recurso indisponível") para
+  QUALQUER falha (clínica inexistente, sem membership, papel insuficiente,
+  clínica suspensa/encerrada), sem distinguir qual caso é. Resposta
+  paginada com `actorName` (join em `users`) e `metadata` (já era
+  metadata-only, sem PHI, por disciplina de todas as camadas anteriores
+  desta sessão que escrevem em `saas_audit_log`).
+- Testes: novo `tests/unit/tenant-audit-trail.test.ts` (schema real + todas
+  as migrações + handler real): duas clínicas sintéticas com eventos
+  próprios provam isolamento (owner de uma nunca vê os eventos da outra,
+  nem o ator de outra clínica aparece na resposta); um `professional` comum
+  (sem papel de gestor) recebe 404; clínica inexistente e papel
+  insuficiente respondem status E corpo IDÊNTICOS
+  (`assert.deepEqual(body, body)`); clínica `suspended` recusa com o mesmo
+  guard; paginação (`page`/`limit`) respeitada. Visto falhando pelo motivo
+  certo contra o código anterior via `git stash push -u -- functions/api/
+  tenants/\[id\]/audit.ts` (module not found — o endpoint simplesmente não
+  existia).
+- Comandos exit 0: `node --import tsx tests/unit/tenant-audit-trail.test.ts`,
+  `npm run check`, `npx eslint "functions/api/tenants/[id]/audit.ts"
+  tests/unit/tenant-audit-trail.test.ts --max-warnings=0`,
+  `node --import tsx tests/unit/cliente-zero-journey.test.ts`,
+  `node --import tsx tests/unit/saas-self-service.test.ts`,
+  `npm run test:quick-wins` (suíte completa),
+  `node tests/unit/workflow-governance.test.mjs`, validação de sintaxe
+  YAML do workflow editado.
+- CI: `tests/unit/tenant-audit-trail.test.ts` cadastrado em
+  `saas-self-service-guard.yml`, que já observa `functions/api/tenants/**`
+  (cobre o endpoint novo automaticamente) e já roda `cliente-zero-journey.test.ts`
+  e `tenant-members-billing-gate.test.ts`.
+- Rollback: apagar `functions/api/tenants/[id]/audit.ts` restaura o
+  comportamento anterior (nenhuma rota expõe a auditoria da clínica);
+  nenhuma migração envolvida, nenhum outro arquivo de produção tocado.

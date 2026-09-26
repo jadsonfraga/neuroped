@@ -273,6 +273,34 @@ substituída por uma que exige o código único `STAFF_NOT_AVAILABLE` e proíbe
 `STAFF_ALREADY_LINKED` reaparecer como branch de resposta separado.
 Evidência em EVIDENCE.md#S20.
 
+## S21 · P2 · FECHADO (ciclo 4)
+Nenhuma rota expunha a trilha de auditoria SaaS (`saas_audit_log`) para o
+owner/clinic_admin da própria clínica: só o admin global lia `audit_logs`
+(tabela legada, sem `clinic_id`), e `tenants/[id]/metrics.ts` só expõe
+contagens agregadas (DAU/WAU/MAU), nunca os eventos em si. Uma clínica não
+tinha como responder "quem fez o quê" sobre a própria operação — nenhuma
+lacuna de isolamento (o que já existia era seguro), mas uma lacuna de
+funcionalidade que a auditoria apontou como parte do pacote "plataforma
+autogerenciável". (AUTHZ-P1-10)
+
+Fechado com um endpoint novo, só leitura: `GET /api/tenants/:id/audit`
+(`functions/api/tenants/[id]/audit.ts`), paginado, reaproveitando
+`saas_audit_log` (já existente, `clinic_id`/`actor_user_id`/`action`/
+`target_type`/`metadata_json`, sempre metadata-only) e o MESMO guard já
+usado em `metrics.ts`/`export.ts`: membership ativa com papel de gestor
+(`owner`/`clinic_admin`) numa clínica `active`, com 404 genérico e
+IDÊNTICO para clínica inexistente, sem membership, papel insuficiente ou
+clínica suspensa/encerrada (anti-enumeração). Nenhuma migração, nenhum
+middleware global tocado, nenhuma mudança de rota de frontend.
+
+Teste novo `tests/unit/tenant-audit-trail.test.ts` (schema real + handler
+real) prova isolamento entre duas clínicas sintéticas, o guard de papel
+(professional comum não lê), a resposta idêntica para clínica alheia vs.
+inexistente vs. papel insuficiente, a recusa de clínica suspensa, e
+paginação básica. Visto falhando pelo motivo certo contra o código anterior
+(o arquivo simplesmente não existia — `git stash push -u`, module not
+found). Evidência em EVIDENCE.md#S21.
+
 ## S9 · P0 · bloqueado externamente (censo de produção necessário)
 Papel global `admin` é bypass clínico em todas as rotas legadas
 (`patients_demo` e filhas): lê, altera e apaga pacientes/consultas/escalas/

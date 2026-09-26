@@ -164,16 +164,25 @@ profissional — oráculo de enumeração de contas alheias na plataforma. As
 três respondem agora 404 `STAFF_NOT_AVAILABLE` idêntico; caminho normal
 (operador disponível) intacto. Evidência em EVIDENCE.md#S20.
 
+S21: nenhuma rota expunha a trilha de auditoria SaaS (`saas_audit_log`)
+para o owner/clinic_admin da própria clínica — só o admin global lia
+`audit_logs` (legado, sem tenant), e `metrics.ts` só agrega contagens.
+Novo `GET /api/tenants/:id/audit`, mesmo guard de `metrics.ts`/`export.ts`,
+sem migração. Não era vazamento cross-tenant (nada existia para vazar) —
+era lacuna de funcionalidade da "plataforma autogerenciável". Evidência em
+EVIDENCE.md#S21.
+
 ## Próximo passo executável
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
-`docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Sem esse
-censo, os achados pequenos e seguros mapeados pela varredura de auditoria
-desta sessão (S18, S19 e S20) já foram fechados; o único candidato "small"
-ainda não numerado do mesmo mapeamento é AUTHZ-P1-10 (falta rota para a
-clínica ler a própria `saas_audit_log` — hoje só o admin de plataforma lê
-`audit_logs`, e `tenants/[id]/metrics.ts` só expõe contagens agregadas).
-S10 (papel duplo global×membership), S12B (expandir o export) e S13 (link
-público de agendamento por clínica) seguem deliberadamente grandes/abertos.
-Retomada: `git fetch origin main && git log -1 origin/main` e reler este
-arquivo.
+`docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Todos os
+candidatos "small" mapeados pela varredura de auditoria desta sessão (S18,
+S19, S20 e S21) foram fechados. Não há mais candidato pequeno e seguro
+identificado sem revisitar a auditoria original (docs/audits/
+SAAS_TENANCY_AUDIT_2026-09-26.md) em busca de itens ainda não avaliados, ou
+sem abrir uma das frentes deliberadamente grandes: S10 (papel duplo
+global×membership, toca middleware de billing usado por toda rota clínica),
+S12B (expandir o export para cobrir documentos/avaliações/intake/escala,
+cripto-pesado) e S13 (link público de agendamento por clínica, redesenho de
+rota no frontend). Retomada: `git fetch origin main && git log -1
+origin/main` e reler este arquivo.
