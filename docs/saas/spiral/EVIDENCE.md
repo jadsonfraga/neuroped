@@ -690,3 +690,48 @@
 ### Reconciliação em 26/09/2026
 O histórico acima descreve a execução original em 24/09. A revisão atual
 reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
+
+## S13 (ciclo 5, 2026-09-26) — link público de agendamento desambiguado por clínica
+- Escopo: `functions/api/operations/_core.ts` (nova `resolveProviderClinicBySlug`,
+  ao lado de `resolveProviderSoleClinicId`); `functions/api/public-booking.ts`
+  (novo `resolveClinicId` que escolhe entre as duas conforme `?clinic=`/`body.clinic`
+  estar presente; `publicProfile`, `publicProviders`, GET `slots` e POST
+  `book`/`waitlist` passam a aceitar o parâmetro); `client/src/pages/agendar.tsx`
+  (lê `clinic` da querystring e repassa nas quatro chamadas); `client/src/pages/agenda.tsx`
+  (o link público copiável pela clínica já sai com `&clinic=<slug da clínica
+  ativa>`, via `useClinic().activeClinic.slug`). Nenhuma migração: `clinics.slug`
+  já existe e é única desde `0009_saas_phase1_foundation.sql`.
+- Ambiente: container da sessão, Node do repo, base `main` em
+  `574236b350181651664313f72afcf26297940003` (pós #1002 e #1004).
+- Teste: bloco 6 (novo) de `tests/unit/operations-tenant-isolation.test.ts`,
+  reaproveitando o cenário já existente do bloco 5 (prof-p com DUAS
+  memberships ativas, cenário que antes só provava fail-closed). Prova que
+  `?clinic=clinica-a`/`clinica-b` resolve exatamente a clínica pedida sem
+  misturar serviços (`profileA.services` só tem "Consulta A", `profileB.services`
+  só tem "Consulta B"), que o diretório com `?clinic=` lista o profissional
+  mesmo com membership ambígua no total, e que a recusa fail-closed se
+  mantém para: clínica existente onde o profissional não é membro
+  (`clinic-c`), slug inexistente (`nao-existe`), clínica suspensa com
+  membership ativa (`clinic-d`) e ausência do parâmetro (compatibilidade com
+  links antigos, cenário do bloco 5 preservado).
+- RED confirmado antes do fix: `git stash push -- functions/api/operations/_core.ts
+  functions/api/public-booking.ts && node --import tsx
+  tests/unit/operations-tenant-isolation.test.ts` — `TypeError: Cannot read
+  properties of null (reading 'services')`, porque o código antigo ignora
+  `clinic` e usa só `resolveProviderSoleClinicId` (retorna `null` com
+  membership ambígua, exatamente como antes). `git stash pop` restaura o fix;
+  mesmo comando fica verde.
+- Comandos exit 0 depois do fix: `npm run check`, `npm run lint`
+  (`--max-warnings=0`), `npm run test:operations` (inclui o teste acima,
+  `operations-contract`, `operations-integration-static`,
+  `secretaria-marcacao-navigation`, `operations-staff-link-anti-enumeration`,
+  `public-booking-manage-redaction`, `clinical-lgpd-provisioning-static`),
+  `npm run test:quick-wins` (suíte completa, zero `not ok`).
+- Limites documentados no BACKLOG.md#S13: isto NÃO é o redesenho de rota
+  (`/c/:clinicSlug/agendar`) nem a troca de PK de `booking_provider_profiles`/
+  `booking_staff_links` (OPS-05/OPS-03) — permanecem abertos, exigem
+  migração e período de compatibilidade, fora do escopo de um incremento
+  único e seguro.
+- Rollback: reverter os cinco arquivos de código/teste ao SHA base acima
+  restaura o comportamento anterior (só `resolveProviderSoleClinicId`,
+  ignorando `clinic`); nenhuma migração de schema envolvida.

@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useClinic } from "@/contexts/ClinicContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   formatMoneyBRL,
@@ -114,6 +115,7 @@ function auditActionLabel(value: string): string {
 
 export default function AgendaPage() {
   const { toast } = useToast();
+  const { activeClinic } = useClinic();
   const dashboard = useQuery<OperationsDashboard>({ queryKey: [DASHBOARD_KEY] });
   const data = dashboard.data;
   const [patientSearch, setPatientSearch] = useState("");
@@ -230,7 +232,13 @@ export default function AgendaPage() {
   }
 
   const canConfigure = data.access.canConfigure;
-  const publicHref = `/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
+  // S13: o link compartilhado pela clínica já sai com `clinic=<slug da
+  // clínica>`, então um profissional em mais de uma clínica nunca cai na
+  // ambiguidade que faz o backend recusar o agendamento público (ver
+  // resolveProviderClinicBySlug em functions/api/operations/_core.ts).
+  const publicHref = activeClinic
+    ? `/agendar?provider=${encodeURIComponent(data.profile.slug)}&clinic=${encodeURIComponent(activeClinic.slug)}`
+    : `/agendar?provider=${encodeURIComponent(data.profile.slug)}`;
 
   return (
     <div className="space-y-6 pb-16" data-testid="agenda-shell">

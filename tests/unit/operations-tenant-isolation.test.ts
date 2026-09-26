@@ -271,5 +271,104 @@ const asB = contextFor("clinic-b");
   assert.equal(bookAttempt.status, 409, "OPS-02: agendamento público recusado sem clínica única resolvida");
 }
 
+// ── 6. S13: `?clinic=<slug>` desambigua sem inferir clínica ─────────────────
+// prof-p segue com DUAS memberships ativas (mesmo cenário do item 5). Antes
+// (item 5), qualquer link público para ele falhava fechado por ambiguidade.
+// Agora, um link que já declara `clinic=<slug da clínica>` deve CONFIRMAR a
+// membership exatamente naquela clínica (resolveProviderClinicBySlug), nunca
+// inferir pela contagem total de memberships — e continuar recusando quando
+// a clínica pedida não tem o profissional como membro ativo, não existe, ou
+// está suspensa.
+{
+  const profileRow = raw.prepare(`SELECT slug FROM booking_provider_profiles WHERE user_id = 'prof-p'`).get() as { slug: string };
+  await opsPost(asB({ action: "create_service", name: "Consulta B", durationMinutes: 45 }) as never);
+
+  const profileA = await (await publicGet({
+    request: new Request(`https://neuroped.test/api/public-booking?provider=${profileRow.slug}&clinic=clinica-a`),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never)).json() as any;
+  assert.deepEqual(
+    profileA.services.map((s: any) => s.name),
+    ["Consulta A"],
+    "S13: ?clinic=clinica-a deve mostrar só os serviços de A, mesmo com membership ambígua",
+  );
+
+  const profileB = await (await publicGet({
+    request: new Request(`https://neuroped.test/api/public-booking?provider=${profileRow.slug}&clinic=clinica-b`),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never)).json() as any;
+  assert.deepEqual(
+    profileB.services.map((s: any) => s.name),
+    ["Consulta B"],
+    "S13: ?clinic=clinica-b deve mostrar só os serviços de B — nunca misturar com A",
+  );
+
+  const slotsB = await (await publicGet({
+    request: new Request(
+      `https://neuroped.test/api/public-booking?action=slots&provider=${profileRow.slug}&clinic=clinica-b&service=${(raw.prepare(`SELECT id FROM booking_services WHERE clinic_id = 'clinic-b' LIMIT 1`).get() as { id: string }).id}&date=2026-10-07`,
+    ),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never)).json() as any;
+  assert.equal(slotsB.bookingEnabled, true, "S13: clínica confirmada por slug deve habilitar horários públicos");
+
+  const directoryA = await (await publicGet({
+    request: new Request("https://neuroped.test/api/public-booking?action=providers&clinic=clinica-a"),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never)).json() as any;
+  assert.deepEqual(
+    directoryA.providers.map((p: any) => p.slug),
+    [profileRow.slug],
+    "S13: diretório com ?clinic= deve listar o profissional mesmo com membership ambígua no total",
+  );
+
+  // Clínica existente e ativa, mas onde prof-p NÃO é membro: falha fechado,
+  // nunca cai de volta para tentar inferir pela única membership global
+  // (que nem existe aqui — é isso que faz este caso valer a pena).
+  insertClinic("clinic-c", "clinica-c", "prof-p");
+  const profileForeignClinic = await publicGet({
+    request: new Request(`https://neuroped.test/api/public-booking?provider=${profileRow.slug}&clinic=clinica-c`),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never);
+  assert.equal(
+    await profileForeignClinic.json(),
+    null,
+    "S13: clínica sem membership ativa do profissional deve recusar, nunca inferir outra",
+  );
+
+  // Slug de clínica inexistente: mesma recusa.
+  const profileGhostClinic = await publicGet({
+    request: new Request(`https://neuroped.test/api/public-booking?provider=${profileRow.slug}&clinic=nao-existe`),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never);
+  assert.equal(await profileGhostClinic.json(), null, "S13: slug de clínica inexistente deve recusar");
+
+  // Clínica onde o profissional é membro ativo, mas a clínica está suspensa:
+  // mesma recusa (mesma disciplina de S14 para links públicos).
+  insertClinic("clinic-d", "clinica-d", "prof-p");
+  raw.prepare(`UPDATE clinics SET status = 'suspended' WHERE id = 'clinic-d'`).run();
+  insertMembership("clinic-d", "prof-p", "professional");
+  const profileSuspendedClinic = await publicGet({
+    request: new Request(`https://neuroped.test/api/public-booking?provider=${profileRow.slug}&clinic=clinica-d`),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never);
+  assert.equal(
+    await profileSuspendedClinic.json(),
+    null,
+    "S13: clínica suspensa deve recusar mesmo com membership ativa do profissional",
+  );
+
+  // Sem `clinic`, o comportamento antigo (item 5) continua intacto: ambiguidade
+  // total ainda falha fechado, mesmo agora com 4 memberships ativas.
+  const profileNoClinicParam = await publicGet({
+    request: new Request(`https://neuroped.test/api/public-booking?provider=${profileRow.slug}`),
+    env: { DB: db, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+  } as never);
+  assert.equal(
+    await profileNoClinicParam.json(),
+    null,
+    "S13: sem ?clinic=, ambiguidade total continua falhando fechado (compatibilidade com links antigos)",
+  );
+}
+
 raw.close();
-console.log("✓ operações: agenda, PHI de consultas, auditoria e diretório público isolados por clínica (OPS-01/OPS-02)");
+console.log("✓ operações: agenda, PHI de consultas, auditoria e diretório público isolados por clínica (OPS-01/OPS-02); link público desambiguado por clínica sem inferência (S13)");
