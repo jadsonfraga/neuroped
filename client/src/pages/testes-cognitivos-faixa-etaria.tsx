@@ -25,6 +25,7 @@ import { celebrate } from "@/lib/confetti";
 import { softSuccess, softWhoosh } from "@/lib/softSounds";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, type Hero } from "@/components/aventura";
 import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
+import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import {
   COGNITIVE_MAX_AGE,
   COGNITIVE_MIN_AGE,
@@ -67,6 +68,7 @@ interface DomainResult {
   answers: AnswerRecord[]; // registro item-a-item de todas as perguntas e respostas
 }
 
+const EASY_EXIT_PROMPT = "Sair ou reiniciar apaga os passos do Modo Fácil registrados nesta tela. Copie ou baixe o resultado antes. Deseja continuar mesmo assim?";
 const NATURE =
   "REGISTRO DESCRITIVO — NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO. Questionário interno autoral; não substitui avaliação psicométrica formal. Leitura e conclusão pertencem ao médico.";
 
@@ -466,9 +468,12 @@ function QuestStage({
           {q.kind === "say" && (
             <div className="space-y-3">
               <SayBody item={q} />
-              <p className="text-center text-sm text-muted-foreground">
-                Esperado: <strong>{q.expected}</strong>
-              </p>
+              <details className="text-sm text-muted-foreground" data-testid="cognitive-say-expected">
+                <summary className="cursor-pointer font-semibold">Resposta esperada (só o aplicador lê)</summary>
+                <p className="mt-1">
+                  <strong>{q.expected}</strong>
+                </p>
+              </details>
               <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Registro da resposta falada">
                 <button
                   type="button"
@@ -697,6 +702,9 @@ export default function TestesCognitivosFaixaEtariaPage() {
   const [stars, setStars] = useState(0);
   const [proOpen, setProOpen] = useState(false);
   const celebratedRef = useRef(false);
+  // Modo Fácil: passos já registrados só existem na memória desta tela.
+  const [easyProgress, setEasyProgress] = useState(0);
+  useSondaExitGuard(easyProgress > 0, EASY_EXIT_PROMPT);
 
   const age = parseInt(ageStr, 10);
   const validAge = isCognitiveAge(age);
@@ -731,6 +739,8 @@ export default function TestesCognitivosFaixaEtariaPage() {
   );
 
   function resetAdventure() {
+    if (easyProgress > 0 && !window.confirm(EASY_EXIT_PROMPT)) return;
+    setEasyProgress(0);
     setConfirmed(false);
     setResults({});
     setStars(0);
@@ -769,6 +779,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
               inputMode="numeric"
               value={ageStr}
               onChange={(e) => {
+                if (easyProgress > 0 && !window.confirm(EASY_EXIT_PROMPT)) return;
                 setAgeStr(e.target.value.replace(/\D/g, "").slice(0, 2));
                 resetAdventure();
               }}
@@ -854,6 +865,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
           nature={NATURE}
           footer="Modo Fácil: toque e montagem de letras conferidos pela tela; fala comparada pelo adulto com a resposta esperada. Sem mapa, herói escolhido ou medalhas por mundo."
           steps={easySteps}
+          onProgress={setEasyProgress}
         />
       )}
 
