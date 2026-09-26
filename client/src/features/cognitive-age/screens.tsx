@@ -11,6 +11,7 @@
  */
 import { useMemo, useState } from "react";
 import { Delete } from "lucide-react";
+import type { EasyAnswerDetail } from "@/components/jogo-facil/easyReport";
 import { softTap } from "@/lib/softSounds";
 import { buildMatches, type BuildItem, type CognitiveItem, type SayItem, type TapItem } from "./bank";
 
@@ -167,7 +168,7 @@ export function adultHint(item: CognitiveItem): string {
  * alternativa ou última letra encerra sozinho com o desfecho; no item de fala,
  * só o adulto encerra e marca.
  */
-export function ChildScreen({ item, onDone, testid = "cognitive-child" }: { item: CognitiveItem; onDone: (auto?: "acertou" | "nao") => void; testid?: string }) {
+export function ChildScreen({ item, onDone, testid = "cognitive-child" }: { item: CognitiveItem; onDone: (auto?: "acertou" | "nao", detail?: EasyAnswerDetail) => void; testid?: string }) {
   return (
     <div data-testid={testid} className="rounded-3xl border-4 border-primary/40 bg-gradient-to-b from-primary/5 to-background p-4 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-2">
@@ -176,8 +177,8 @@ export function ChildScreen({ item, onDone, testid = "cognitive-child" }: { item
         </button>
         <span className="text-xs font-semibold text-muted-foreground">Tela da criança</span>
       </div>
-      {item.kind === "tap" && <TapBody item={item} onPick={(option) => onDone(option === item.answer ? "acertou" : "nao")} />}
-      {item.kind === "build" && <BuildBody item={item} onDone={(placed) => onDone(buildMatches(item, placed) ? "acertou" : "nao")} />}
+      {item.kind === "tap" && <TapBody item={item} onPick={(option) => onDone(option === item.answer ? "acertou" : "nao", { chosen: option, correct: item.answer })} />}
+      {item.kind === "build" && <BuildBody item={item} onDone={(placed) => onDone(buildMatches(item, placed) ? "acertou" : "nao", { chosen: placed.join(""), correct: item.target.join("") })} />}
       {item.kind === "say" && <SayBody item={item} />}
     </div>
   );

@@ -187,7 +187,7 @@ try {
   await page.getByTestId("rv-easy-results").waitFor();
   const rvReport = await page.getByLabel("Resultado do jogo").inputValue();
   assert.match(rvReport, /Reconhecimento Visual · Modo Fácil/);
-  assert.match(rvReport, /\(toque da criança na tela\)/, "desfecho automático fica declarado no resultado");
+  assert.match(rvReport, /\(tocou: /, "reconhecimento preserva a escolha automática no resultado");
   assert.match(rvReport, /Pulou: 1/);
   await screen("rv-facil-resultado", ".rv-workspace");
 
@@ -226,7 +226,7 @@ try {
   assert.match(cogReport, /Testes Cognitivos por Faixa Etária · Modo Fácil/);
   assert.match(cogReport, /Itens previstos: 16 · Registrados: 16/);
   assert.match(cogReport, /NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO/);
-  assert.match(cogReport, /\(toque da criança na tela\)/);
+  assert.match(cogReport, /\(tocou: /, "cognitivo preserva a resposta automática no resultado");
   assert.match(cogReport, /Castelo da Escrita/);
   await screen("cognitivo-facil-resultado", "main");
 
@@ -243,7 +243,7 @@ try {
   await child.waitFor({ state: "detached" });
   await playEasy("cognitive-easy");
   const report8 = await page.getByLabel("Resultado do jogo").inputValue();
-  assert.match(report8, /Escreva a palavra ESCOLA — Acertou \(toque da criança na tela\)/, "montagem certa registrada como toque da criança");
+  assert.match(report8, /Escreva a palavra ESCOLA — Acertou \(tocou: ESCOLA\)/, "montagem certa preserva a palavra montada");
 
   assert.deepEqual(errors, [], "sem erros de página");
   console.log(`Modo Fácil: quatro joguinhos jogados até o resultado (Sonda ${sonda.steps} passos, OBS-10 ${obs.steps} passos, Reconhecimento com toque automático, Cognitivo 16 passos com toque e montagem automáticos).`);

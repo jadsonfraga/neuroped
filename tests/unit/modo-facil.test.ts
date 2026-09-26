@@ -29,6 +29,7 @@ test("contagem por desfecho e resultado descritivo com aviso, sem escore", () =>
   const report = buildEasyReport({ title: "Sonda Dez", ageLabel: "48 meses", nature: "Natureza.", records, totalSteps: 5, footer: "Limite.", date: "2026-09-24" });
   assert.match(report, /^Sonda Dez · Modo Fácil \(joguinho\)/);
   assert.match(report, /NÃO É ESCORE, PERCENTIL NEM DIAGNÓSTICO/);
+  assert.match(report, /podem ser registrados pelo adulto ou, quando o item permite, calculados pela interação da criança na tela/);
   assert.match(report, /Itens previstos: 5 · Registrados: 4 · Acertou: 2 · Não acertou: 1 · Pulou: 1/);
   assert.match(report, /2\. \[Missão 1\] Ache o gato — Acertou \(toque da criança na tela\)/);
   assert.match(report, /4\. \[Missão 2\] Marcha — Pulou/);
@@ -81,7 +82,7 @@ test("Reconhecimento Visual: aba Modo Fácil decide pelo toque da criança e a t
   assert.match(visual, /data-testid="rv-easy-tab"/);
   assert.match(visual, /mode:"receptivo"/);
   assert.match(visual, /autoFinishOnTap/);
-  assert.match(visual, /onDone\(tap\?\(tap===trial\.targetId\?"acertou":"nao"\):undefined\)/);
+  assert.match(visual, /chosen:itemFor\(tap\)\.label,correct:item\.label/, "reconhecimento preserva resposta e gabarito");
   assert.match(visual, /Modo Fácil \(joguinho\): reconhecimento por toque na tela/);
   assert.match(trialStage, /autoFinishOnTap=false/);
   assert.doesNotMatch(trialStage, /jogo-facil|EasyGame|Acertou|estrela|her[oó]i/i);
@@ -96,8 +97,8 @@ test("Testes Cognitivos: Modo Fácil usa o motor compartilhado com os 16 itens d
   assert.match(cognitive, /NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO/);
   assert.doesNotMatch(cognitive, /VISUAL_BANK|LEITURA_BANK|ESCRITA_BANK|ARITMETICA_BANK|COGNITIVE_AGE_BANKS|ObsBlock|l[áa]pis\/caneta/, "bancos antigos (com observação de lápis e papel) extintos");
   const screens = read("client/src/features/cognitive-age/screens.tsx");
-  assert.match(screens, /onDone\(option === item\.answer \? "acertou" : "nao"\)/, "toque da criança decide sozinho");
-  assert.match(screens, /onDone\(buildMatches\(item, placed\) \? "acertou" : "nao"\)/, "montagem de letras decide sozinha");
+  assert.match(screens, /chosen: option, correct: item\.answer/, "toque da criança decide e preserva resposta");
+  assert.match(screens, /chosen: placed\.join\(""\), correct: item\.target\.join\(""\)/, "montagem preserva resposta e gabarito");
   assert.match(screens, /← Voltar ao aplicador/);
   assert.doesNotMatch(screens, /setTimeout|setInterval|requestAnimationFrame|framer-motion/, "tela da criança sem timers JS");
   assert.doesNotMatch(screens, /Acertou|acertou!|certo!|errado!|Errou/, "a criança não vê certo/errado");

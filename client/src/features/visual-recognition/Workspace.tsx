@@ -92,7 +92,7 @@ export default function VisualRecognitionWorkspace(){
   };
   const easySteps:EasyStep[]=easyPlan.map(trial=>{const item=itemFor(trial.targetId);return{
     id:trial.id,group:`${CATEGORIES[item.category]}`,title:item.label,say:`“${trial.question}”`,hint:`Leia em voz alta e toque em Mostrar. A criança toca na figura; se acertar ou errar, o jogo passa sozinho. Se ela apontar fora da tela ou não responder, marque você. Esperado: ${item.label.toLocaleLowerCase("pt-BR")}`,childLabel:"Mostrar as figuras",
-    child:({onDone})=><TrialStage trial={trial} urls={urls} autoFinishOnTap onEvent={event=>{if(event.kind==="apresentado")easyTap.current=null;if(event.kind==="toque"&&event.itemId)easyTap.current=event.itemId;}} onFinish={()=>{const tap=easyTap.current;easyTap.current=null;onDone(tap?(tap===trial.targetId?"acertou":"nao"):undefined);}}/>,
+    child:({onDone})=><TrialStage trial={trial} urls={urls} autoFinishOnTap onEvent={event=>{if(event.kind==="apresentado")easyTap.current=null;if(event.kind==="toque"&&event.itemId)easyTap.current=event.itemId;}} onFinish={()=>{const tap=easyTap.current;easyTap.current=null;onDone(tap?(tap===trial.targetId?"acertou":"nao"):undefined,tap?{chosen:itemFor(tap).label,correct:item.label}:undefined);}}/>,
   };});
   const save=(complement=false)=>{
     if(!trial||!config||committing.current)return;
