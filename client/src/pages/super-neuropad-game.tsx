@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
-import { useAuth } from "@/contexts/AuthContext";
 import { celebrate } from "@/lib/confetti";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { issuerCredentials, useIssuer } from "@/lib/issuer";
@@ -375,7 +374,6 @@ function Clouds() {
 
 export default function SuperNeuroPadGamePage() {
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
   const { issuer } = useIssuer();
   const [screen, setScreen] = useState<Screen>("setup");
   const [ageYears, setAgeYears] = useState<number | null>(null);
@@ -407,7 +405,7 @@ export default function SuperNeuroPadGamePage() {
   const item = items[itemIndex];
   const done = PHASE_ORDER.map((id) => band ? answers.filter((answer) => answer.phaseId === id).length >= itemsFor(band.id, id).length : false);
   const dirty = answers.length > 0;
-  useSondaExitGuard(dirty, !isAuthenticated, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
+  useSondaExitGuard(dirty, "Sair apaga os registros desta partida. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?");
   const ready = Boolean(band && character);
 
   const session: GameSession | null = ageYears !== null && band && character ? {

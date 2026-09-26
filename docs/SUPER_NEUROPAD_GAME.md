@@ -136,3 +136,11 @@ pede confirmação antes de descartar a partida; cancelar mantém os 20 registro
 a tela de resultados. Aceitar permite sair. Redirecionamentos obrigatórios por
 sessão inválida continuam liberados. A prova de navegador cobre recusa e aceite.
 O aviso de PDF parcial descreve apenas as observações, sem prometer interpretação.
+
+
+A guarda agora resolve o modo de acesso dentro do próprio hook. A ausência de
+usuário remoto não torna uma sessão local inválida. A limpeza usa layout effect
+para remover listeners antes de um redirecionamento obrigatório desmontar a tela.
+O CI executa a jornada nos builds remoto e local; o remoto também simula o evento
+real de expiração após uma partida e exige login visível sem confirmação obsoleta.
+Testes Diretos, Sonda guiada e Cognitivos compartilham a mesma decisão de sessão.

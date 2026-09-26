@@ -1,11 +1,16 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { leavesSondaRoute } from "@/lib/sondaDezQuality";
 
 export const SONDA_EXIT_PROMPT = "Sair apaga os registros desta Sonda. Copie ou baixe o resultado antes de sair. Deseja sair mesmo assim?";
 
 /** Only this memory-only workspace is guarded; the shared router and auth stay untouched. */
-export function useSondaExitGuard(dirty: boolean, sessionInvalid = true, prompt: string = SONDA_EXIT_PROMPT) {
-  useEffect(() => {
+export function useSondaExitGuard(dirty: boolean, prompt: string = SONDA_EXIT_PROMPT) {
+  const { accessMode, isAuthenticated } = useAuth();
+  const sessionInvalid = accessMode === "remote" && !isAuthenticated;
+  // Remove listeners during unmount, before a forced auth Redirect runs its
+  // layout effect. A passive cleanup can confirm after the workspace is gone.
+  useLayoutEffect(() => {
     if (!dirty) return;
     const heldUrl = window.location.href;
     const heldState = window.history.state;

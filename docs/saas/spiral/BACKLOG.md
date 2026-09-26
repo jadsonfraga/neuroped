@@ -393,3 +393,9 @@ libera o purge de encerramento sem depender de o admin de plataforma
 esvaziar as tabelas manualmente. Cuidado: volume (documentos podem ter até
 ~250 KB em base64 cada) pode exigir ajustar `exportWithinSyncLimits` e
 priorizar o caminho assíncrono (worker) para tenants médios/grandes.
+
+
+## S1-R1 · P1 · corrigido, integração em validação (#951)
+O diagnóstico não atesta configuração presente quando incompleta. Regressão
+cobre nove requisitos, env vazio, sete ambientes, acesso, no-store e segredo.
+Preservados S2–S22; a revisão antiga não reabre funcionalidades já entregues.

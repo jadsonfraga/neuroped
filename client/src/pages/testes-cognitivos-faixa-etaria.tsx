@@ -26,7 +26,6 @@ import { softSuccess, softWhoosh } from "@/lib/softSounds";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, type Hero } from "@/components/aventura";
 import EasyGame, { type EasyStep } from "@/components/jogo-facil/EasyGame";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   COGNITIVE_MAX_AGE,
   COGNITIVE_MIN_AGE,
@@ -719,8 +718,7 @@ export default function TestesCognitivosFaixaEtariaPage() {
   const celebratedRef = useRef(false);
   // Modo Fácil: passos já registrados só existem na memória desta tela.
   const [easyProgress, setEasyProgress] = useState(0);
-  const { isAuthenticated } = useAuth();
-  useSondaExitGuard(easyProgress > 0, !isAuthenticated, EASY_EXIT_PROMPT);
+  useSondaExitGuard(easyProgress > 0, EASY_EXIT_PROMPT);
 
   const age = parseInt(ageStr, 10);
   const validAge = isCognitiveAge(age);

@@ -10,6 +10,7 @@ import { startStaticServer, auditBrowserLaunchOptions, ACCEPTED_FIRST_VISIT_STOR
 import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
 
 const dir = process.env.SUPER_NEUROPAD_ARTIFACT_DIR || "/tmp/super-neuropad-game";
+const localMode = process.env.SUPER_NEUROPAD_TEST_MODE === "local";
 await mkdir(dir, { recursive: true });
 const server = await startStaticServer("dist/public", { port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }) });
 const browser = await chromium.launch(auditBrowserLaunchOptions());
@@ -164,6 +165,12 @@ try {
   assert.equal(dialogs.length, beforeDialogs + 1, "uma confirmação por tentativa de sair");
   assert.match(dialogs.at(-1), /registros desta partida/);
   assert.equal(await root.locator("details li").count(), 20, "cancelar saída mantém todos os registros");
+  const loginWarning = page.waitForEvent("dialog");
+  await page.evaluate(() => { window.location.hash = "#/login"; });
+  await loginWarning;
+  await page.waitForURL(heldUrl);
+  await waitScreen("results");
+  assert.equal(await root.locator("details li").count(), 20, "login voluntário também protege sessão local ou remota válida");
   acceptDialogs = true;
   await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
   await screen("06-results");
@@ -204,6 +211,28 @@ try {
   await leaving;
   await page.waitForURL(/#\/filtro$/);
   await root.waitFor({ state: "detached" });
+  if (!localMode) {
+    await page.goto(`${server.origin}/#/super-neuropad-game`);
+    await waitScreen("setup");
+    await page.getByRole("group", { name: "Idade em anos" }).getByRole("button", { name: "6", exact: true }).click();
+    await page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
+    await button("Começar a aventura").click();
+    await page.getByRole("button", { name: /Entrar na fase/ }).click();
+    await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
+    await button("Encerrar").click();
+    await waitScreen("results");
+    const beforeForcedRedirect = dialogs.length;
+    acceptDialogs = false; // uma guarda obsoleta restauraria a rota sem conteúdo
+    await page.evaluate(() => {
+      for (const key of ["neuroped:access", "neuroped:refresh", "neuroped:user"]) sessionStorage.removeItem(key);
+      window.dispatchEvent(new CustomEvent("auth:expired"));
+    });
+    await page.locator("#login-email").waitFor({ timeout: 15000 });
+    assert.equal(dialogs.length, beforeForcedRedirect, "sessão expirada redireciona sem prompt obsoleto");
+    assert.equal(await root.count(), 0);
+    await page.screenshot({ path: `${dir}/08-session-expired.png`, fullPage: true });
+  }
+  assert.deepEqual(errors, [], "nenhum erro após navegação e expiração");
   console.log(`[super-neuropad-game] ✓ jornada completa, 20 desafios, resultado e PDF (${bytes.length} bytes) · artefatos em ${dir}`);
 } finally {
   await browser.close();
