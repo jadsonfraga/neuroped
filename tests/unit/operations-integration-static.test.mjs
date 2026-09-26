@@ -180,7 +180,7 @@ assert.match(publicBooking, /findAppointmentByToken/);
 assert.match(publicBooking, /status !== "completed"/);
 assert.doesNotMatch(publicBooking, /diagn[oó]stico|medica[cç][aã]o.*body/i, "booking público não deve pedir dado clínico livre");
 
-assert.match(routeGuard, /route: "\/agenda",[\s\S]{0,100}operator/, "operator deve acessar somente a agenda administrativa por override explícito");
+assert.match(routeGuard, /path !== "\/agenda"/, "RouteGuard deve manter a exceção operacional estrita da agenda");
 assert.match(routeGuard, /roles\.includes\("operator"\)/);
 assert.match(routeGuard, /\.\.\.roles, "operator"/);
 assert.match(agenda, /data\.access\.canConfigure/);
