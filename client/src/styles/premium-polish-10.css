@@ -138,8 +138,8 @@ a.np-primary-cta:active {
     padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)) !important;
   }
 
-  #main-content button:not([data-size="icon"]),
-  #main-content [role="tab"] {
+  :where(#main-content) button:where(:not([data-size="icon"])),
+  :where(#main-content) :where([role="tab"]) {
     min-height: 44px;
   }
 }
