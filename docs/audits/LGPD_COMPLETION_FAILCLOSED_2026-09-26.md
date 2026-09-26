@@ -16,8 +16,9 @@ Sem migração e sem acesso a dados reais.
 
 ## Correção e evidência
 
-- Apenas `no such table` para a própria tabela consultada representa schema antigo.
-  Outros erros e contagens inválidas interrompem a operação.
+- Na pré-verificação do purge, apenas `no such table` para a própria tabela representa
+  schema antigo. O coletor exige todas as tabelas atuais: qualquer falha no snapshot
+  interrompe a exportação. Outros erros e contagens inválidas nunca viram zero.
 - Erro de cobertura retorna `TENANT_EXPORT_COVERAGE_FAILED` (503) e registra o job
   como falho. Purge retorna `PURGE_PREFLIGHT_FAILED:<tabela>` antes de qualquer DELETE.
 - Exportação incompleta retorna `TENANT_EXPORT_INCOMPLETE` (409), com ledger falho,
@@ -41,3 +42,20 @@ cobertura integral.
 Rollback por PR de revert, passando pelos mesmos gates. Não apagar artefatos,
 alterar ledgers ou liberar purge manualmente para contornar a recusa. Reverter
 reintroduz os três riscos acima e requer decisão explícita do responsável.
+
+## Revisão: snapshot consistente da clínica ativa
+
+A leitura independente permitia inserir um paciente entre contagem e payload:
+regressão reproduzida com manifesto de 1 paciente e payload com 2 (assertiva falha).
+O coletor agora usa um único `D1Database.batch` para lifecycle, dados, contagens,
+billing e cobertura. O arquivo informa `snapshotAt`, obtido na mesma transação.
+Contagens são conferidas contra as linhas efetivamente retornadas. A pré-checagem
+síncrona de tamanho continua como proteção, mas a autoridade é a contagem relida
+na transação; ambos os modos (síncrono e executor) têm prova concorrente.
+Uma escrita posterior pertence ao próximo snapshot, sem misturar versões.
+
+Contrato oficial: https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
+A prova usa SQLite real dentro de uma transação, retorna linhas SELECT no batch e
+mantém as verificações de isolamento, cifra real e ledger. A jornada cliente-zero
+foi executada novamente com o mesmo comportamento D1. Falha em preparar/executar
+qualquer consulta do snapshot retorna 503, sem storage e sem completed.

@@ -5,51 +5,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE — Clínico profissional / Neuropediatria
-   Paleta índigo profunda + neutros frios + cards brancos puros.
-   O gradiente de marca vai de índigo (--primary) a violeta (--chart-2),
-   substituindo o antigo par violeta→rosa por algo mais sóbrio. */
+/* Primitivos compartilhados do tema.
+   A paleta semântica vigente pertence a styles/visual-reset.css, carregado
+   depois deste arquivo em main.tsx. Permanecem aqui os estados de erro,
+   fontes, sombras, geometria e fallbacks que essa folha não substitui. */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 220 20% 97.5%;
-  --foreground: 226 30% 12%;
-  --border: 220 14% 88%;
-  --card: 0 0% 100%;
-  --card-foreground: 226 30% 12%;
-  --card-border: 220 14% 90%;
-  --sidebar: 224 25% 97%;
-  --sidebar-foreground: 226 30% 12%;
-  --sidebar-border: 222 16% 89%;
-  --sidebar-primary: 243 52% 47%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 226 22% 93%;
-  --sidebar-accent-foreground: 226 30% 12%;
-  --sidebar-ring: 243 52% 47%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 226 30% 12%;
-  --popover-border: 220 14% 88%;
-  --primary: 243 52% 47%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 172 40% 93%;
-  --secondary-foreground: 174 55% 18%;
-  --muted: 220 16% 93%;
-  /* Escurecido (42%→40%) preservando o ajuste de contraste vindo da main. */
-  --muted-foreground: 226 12% 40%;
-  --accent: 224 22% 94%;
-  --accent-foreground: 226 30% 12%;
   --destructive: 0 65% 45%;
   --destructive-foreground: 0 0% 100%;
-  --input: 222 14% 80%;
-  --ring: 243 52% 47%;
-  --chart-1: 243 52% 50%;
-  --chart-2: 262 45% 55%;
-  --chart-3: 172 48% 38%;
-  --chart-4: 40 75% 48%;
-  --chart-5: 350 55% 48%;
   --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
   --font-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
@@ -89,40 +56,8 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  --background: 228 24% 8%;
-  --foreground: 220 20% 96%;
-  --border: 226 16% 18%;
-  --card: 228 20% 11%;
-  --card-foreground: 220 20% 96%;
-  --card-border: 226 16% 15%;
-  --sidebar: 228 22% 9.5%;
-  --sidebar-foreground: 220 20% 96%;
-  --sidebar-border: 226 16% 16%;
-  --sidebar-primary: 240 58% 70%;
-  --sidebar-primary-foreground: 234 40% 12%;
-  --sidebar-accent: 226 16% 18%;
-  --sidebar-accent-foreground: 220 20% 96%;
-  --sidebar-ring: 240 58% 70%;
-  --popover: 228 20% 13%;
-  --popover-foreground: 220 20% 96%;
-  --popover-border: 226 16% 18%;
-  --primary: 240 58% 70%;
-  --primary-foreground: 234 40% 12%;
-  --secondary: 172 30% 16%;
-  --secondary-foreground: 172 35% 82%;
-  --muted: 226 14% 18%;
-  --muted-foreground: 222 12% 64%;
-  --accent: 226 16% 17%;
-  --accent-foreground: 220 20% 96%;
   --destructive: 0 62% 52%;
   --destructive-foreground: 0 0% 100%;
-  --input: 226 12% 26%;
-  --ring: 240 58% 70%;
-  --chart-1: 240 58% 72%;
-  --chart-2: 262 55% 70%;
-  --chart-3: 172 45% 55%;
-  --chart-4: 42 70% 60%;
-  --chart-5: 350 60% 66%;
   --shadow-2xs: 0px 1px 0px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.10);
   --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.12), 0px 1px 2px -1px hsl(0 0% 0% / 0.08);
@@ -392,11 +327,10 @@
     box-shadow: 0 18px 35px -14px hsl(var(--primary) / .8), inset 0 1px 0 rgba(255,255,255,.24);
   }
 
-  /* Skip-link de acessibilidade (SkipNav.tsx). Sua regra canônica vive em
-     styles/tokens.css, mas esse @import está após os @tailwind e é descartado
-     pelo bundler — sem a regra, o link vira um bloco estático visível (~222px)
-     no início da flex-row e ESMAGA a coluna do conteúdo (sobretudo no mobile).
-     Reposicionamos aqui, fora do fluxo, visível só ao foco de teclado. */
+  /* Skip-link de acessibilidade (SkipNav.tsx). tokens.css já é importado
+     antes dos @tailwind. Este reforço no layer components é preservado
+     para manter o link fora do fluxo e visível somente ao foco de teclado;
+     a consolidação da paleta não altera seu comportamento. */
   .skip-nav {
     position: absolute;
     left: -9999px;

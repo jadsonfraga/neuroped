@@ -29,7 +29,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
 import { onRequestPost as runExport } from "../../functions/api/live/governance/run-export";
 import { encryptClinicalJson } from "../../functions/api/tenant/_crypto";
-import { countExportUncoveredRows } from "../../functions/api/tenant/_exportPayload";
+import { collectTenantExportPayload, countExportUncoveredRows } from "../../functions/api/tenant/_exportPayload";
 
 class D1StatementMock {
   constructor(
@@ -71,7 +71,9 @@ class D1DatabaseMock {
           sql: string;
           values: unknown[];
         };
-        const result = raw.db.prepare(raw.sql).run(...raw.values);
+        const prepared = raw.db.prepare(raw.sql);
+        if (prepared.reader) return { success: true, results: prepared.all(...raw.values), meta: {} };
+        const result = prepared.run(...raw.values);
         return { success: true, meta: { changes: result.changes } };
       }),
     )();
@@ -543,6 +545,49 @@ function ledger(requestId: string) {
   assert.equal(ledger("req-exp-coverage-failure")?.status, "failed");
   assert.equal(ledger("req-exp-coverage-failure")?.artifact_key, null);
   assert.equal(bucket.objects.size, beforeObjects);
+}
+
+// Uma gravação entre consultas independentes não pode separar contagem e payload.
+for (const enforceSyncLimits of [true, false]) {
+  const id = "patient-red-during-export";
+  const encrypted = await encryptClinicalJson(baseEnv as never, RED, `patient-profile:${id}`, { nome: "Concorrência sintética" });
+  let written = false;
+  const writeOnce = () => {
+    if (written) return;
+    written = true;
+    sqlite.prepare(`INSERT INTO live_patients (id, clinic_id, created_by_user_id, profile_encrypted, encryption_version)
+      VALUES (?, ?, ?, ?, 'k1')`).run(id, RED, RED_OWNER.id, encrypted);
+  };
+  const concurrentDb = {
+    prepare(sql: string) {
+      const wrap = (statement: D1PreparedStatement): D1PreparedStatement => new Proxy(statement, {
+        get(target, key) {
+          if (key === "bind") return (...values: unknown[]) => wrap(target.bind(...values));
+          if (key === "first" && sql.includes("AS encrypted_bytes")) return async () => {
+            const result = await target.first();
+            writeOnce();
+            return result;
+          };
+          const value = Reflect.get(target, key);
+          return typeof value === "function" ? value.bind(target) : value;
+        },
+      });
+      return wrap(db.prepare(sql));
+    },
+    async batch(statements: D1PreparedStatement[]) {
+      const result = await db.batch(statements);
+      writeOnce();
+      return result;
+    },
+  } as D1Database;
+  const result = await collectTenantExportPayload(concurrentDb, baseEnv as never, RED, { enforceSyncLimits });
+  assert.ok(result.ok);
+  if (!result.ok) throw new Error("snapshot export failed");
+  assert.equal(written, true, "a gravação concorrente precisa ocorrer");
+  assert.equal(result.counts.patients, (result.data.patients as unknown[]).length, "manifesto e pacientes pertencem ao mesmo snapshot");
+  assert.equal(result.complete, true);
+  assert.ok(Number.isFinite(Date.parse(String(result.data.snapshotAt))));
+  sqlite.prepare("DELETE FROM live_patients WHERE id = ?").run(id);
 }
 
 sqlite.close();
