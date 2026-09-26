@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Apple, Bus, Check, ChevronRight, ClipboardCheck, Download, Eye, Images, Layers, Palette, PawPrint, Search, ShieldCheck, SlidersHorizontal } from "lucide-react";
-import { ITEMS, CATEGORIES, MODES, BANDS, VERSION, NATURE, OUTCOMES, SUPPORTS, CHANNELS, itemFor, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, activeObservations, reportText, easyPlanSettings, type Category, type Mode, type Config, type Trial, type StageEvent, type Draft, type Observation } from "./model";
+import { ITEMS, CATEGORIES, MODES, BANDS, VERSION, NATURE, OUTCOMES, SUPPORTS, CHANNELS, itemFor, ageInMonths, bandFor, eligibleItems, buildPlan, makeTrial, emptyDraft, observe, activeObservations, reportText, easyPlanSettings, easyPlanSelection, easyPlanCount, type Category, type Mode, type Config, type Trial, type StageEvent, type Draft, type Observation } from "./model";
 import { Stimulus, preloadSymbols } from "./Stimulus";
 import TrialStage from "./TrialStage";
 import { DEFAULT_HERO, HeroGrid, NEUTRAL_CHEERS, StarCounter, type Hero } from "@/components/aventura";
@@ -81,7 +81,7 @@ export default function VisualRecognitionWorkspace(){
     setMessage("");
     if(age===null){setMessage("Informe a idade exata: anos completos e meses adicionais, entre 12 meses e 19 anos e 11 meses.");return;}
     const settings=easyPlanSettings(age);
-    const ids=eligibleItems(age,"receptivo").filter(item=>!item.context&&settings.categories.includes(item.category)).map(item=>item.id);
+    const ids=easyPlanSelection(age);
     const next:Config={ageMonths:age,mode:"receptivo",choices:settings.choices,count:settings.count,selectedIds:ids,seed:crypto.getRandomValues(new Uint32Array(1))[0],distractors:settings.distractors,contextAcknowledged:false,conditions:[`Modo Fácil (joguinho): reconhecimento por toque na tela, ${settings.choices} alternativas, sem conferências de preparo`]};
     try{
       const plan=buildPlan(next);setLoading(true);abort.current?.abort();const controller=new AbortController();abort.current=controller;
@@ -137,7 +137,7 @@ export default function VisualRecognitionWorkspace(){
         <label>Anos completos<input inputMode="numeric" pattern="[0-9]*" aria-label="Anos completos" value={years} maxLength={2} onChange={event=>setYears(event.target.value)} placeholder="Ex.: 4"/></label>
         <label>Meses adicionais<input inputMode="numeric" pattern="[0-9]*" aria-label="Meses adicionais" value={months} maxLength={2} onChange={event=>setMonths(event.target.value)}/></label>
       </div>
-      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para montar o jogo":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>{age===null?"Modo Fácil: a idade define quantas figuras e quantas alternativas. A criança toca; o jogo passa sozinho.":`Modo Fácil: ${easyPlanSettings(age).count} figuras para reconhecer (“Mostre…”), ${easyPlanSettings(age).choices} alternativas por vez. A criança toca; o jogo passa sozinho.`}</p></div>
+      <div className="rv-age-note"><strong>{age===null?"Informe a idade exata para montar o jogo":`Idade informada: ${age} meses · ${band?.label}`}</strong><p>{age===null?"Modo Fácil: a idade define quantas figuras e quantas alternativas. A criança toca; o jogo passa sozinho.":`Modo Fácil: ${easyPlanCount(age)} figuras para reconhecer (“Mostre…”), ${easyPlanSettings(age).choices} alternativas por vez. A criança toca; o jogo passa sozinho.`}</p></div>
       <div className="rv-actions"><button type="button" className="rv-primary" disabled={loading||age===null} onClick={()=>void startEasy()}>{loading?"Carregando as figuras…":"Começar o jogo"}<ChevronRight size={19}/></button></div></section>}
       {easyPlan.length>0&&<EasyGame key={easyPlan[0]?.id} testid="rv-easy" title="Reconhecimento Visual" ageLabel={`${age} meses · ${band?.label??""}`} nature={NATURE} footer="Modo Fácil: reconhecimento por toque na tela (“Mostre…”), até 12 figuras; sem conferências de preparo, nomeação ou pareamento." steps={easySteps} onProgress={setEasyProgress} onRestart={()=>{setEasyPlan([]);}}/>}
     </>}

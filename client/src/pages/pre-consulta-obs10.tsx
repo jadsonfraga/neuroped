@@ -181,7 +181,9 @@ export default function PreConsultaObs10Page() {
     if (!permitted) return;
     if (document.hidden) { media.cancel(); return; }
     workClock.stop("início da coleta");
-    setContext((current) => ({ ...current, chronologicalMonths: chrono, correctedMonths: useCorrected ? Number(corrected) : null, bandId: selectedBand.id,
+    // Autorização de prono só existe nas fichas < 9 meses: trocar de faixa não pode
+    // carregar uma autorização marcada antes para o TXT e o dossiê.
+    setContext((current) => ({ ...current, proneAllowed: selectedBand.min < 9 && current.proneAllowed, chronologicalMonths: chrono, correctedMonths: useCorrected ? Number(corrected) : null, bandId: selectedBand.id,
       missingMaterials: KITS[selectedBand.id].filter((item) => (kits[selectedBand.id] ?? {})[item.id] === "missing").map((item) => MATERIALS[item.id].label),
       ...(direct ? { preparation: "direct" as const } : {}) }));
     const suffix = typeof crypto.randomUUID === "function" ? crypto.randomUUID().slice(0, 8) : String(Math.floor(performance.now()));
@@ -508,7 +510,8 @@ export default function PreConsultaObs10Page() {
             {!stepObservations.length && <div className="obs10-empty"><span aria-hidden="true">🌱</span><p>Nenhuma tarefa registrada neste bloco.<br />Isso não significa habilidade ausente ou preservada.</p></div>}
             {stepObservations.map((entry, index) => <details className="obs10-record-details" key={entry.id} open={!running || !entry.id.startsWith("guided-")}><summary>{entry.task || `Tarefa observada ${index + 1}`} · {entry.response ? "descrição registrada" : "detalhar depois"}</summary><fieldset className="obs10-observation"><legend>Tarefa observada {index + 1}</legend>
               {entry.editedAfterEnd && <p className="obs10-muted">Descrição complementada após a coleta; horário original preservado.</p>}
-              <label>Qual tarefa?<input value={entry.task} maxLength={180} placeholder="Ex.: seguir comando de dois passos" onChange={(e) => updateObservation(entry.id, { task: e.target.value })} /></label>
+              {/* Observação guiada: o nome da estação vem da fonte única (PRACTICAL_TASKS) e não é editável; TXT, dossiê e importador precisam concordar. */}
+              <label>Qual tarefa?<input value={entry.task} maxLength={180} placeholder="Ex.: seguir comando de dois passos" readOnly={entry.id.startsWith("guided-")} aria-readonly={entry.id.startsWith("guided-") || undefined} onChange={(e) => { if (!entry.id.startsWith("guided-")) updateObservation(entry.id, { task: e.target.value }); }} /></label>
               <label>O que fez ou falou? Descreva literalmente<textarea aria-label="O que fez ou falou? Descreva literalmente" value={entry.response} maxLength={2000} placeholder="Ex.: realizou a primeira ação; concluiu a segunda após repetição." onChange={(e) => updateObservation(entry.id, { response: e.target.value })} /></label>
               <label>Como respondeu?<select aria-label="Como respondeu?" value={entry.outcome} onChange={(e) => updateObservation(entry.id, { outcome: e.target.value as Observation["outcome"] })}><option value="">Escolha sem presumir resultado</option>{OUTCOMES.map((option) => <option value={option.id} key={option.id}>{option.label}</option>)}</select></label>
               {entry.outcome && <p className="obs10-category-help">{OUTCOMES.find((o) => o.id === entry.outcome)?.description}</p>}
