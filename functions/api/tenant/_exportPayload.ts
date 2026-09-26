@@ -26,6 +26,8 @@ export interface TenantExportCounts {
   events: number;
   memberships: number;
   encryptedBytes: number;
+  /** Linhas combinadas dos oito domínios de S12B (ver TENANT_SYNC_EXPORT_LIMITS.otherRows). */
+  otherRows: number;
 }
 
 /**
@@ -129,6 +131,7 @@ interface CountRow {
   events: number;
   memberships: number;
   encrypted_bytes: number;
+  other_rows: number;
 }
 
 interface PatientRow {
@@ -370,6 +373,9 @@ export async function collectTenantExportPayload(
     encryptedBytes: validExportRowCount(
       counts ? { n: counts.encrypted_bytes } : null,
     ),
+    otherRows: validExportRowCount(
+      counts ? { n: counts.other_rows } : null,
+    ),
   });
   const tooLarge = (): TenantExportPayloadResult => ({
     ok: false,
@@ -395,6 +401,24 @@ export async function collectTenantExportPayload(
            AS encrypted_bytes`;
   const ENCRYPTED_BYTES_BINDS = Array<string>(7).fill(clinicId);
 
+  // Codex (revisão da PR #1004): a pré-checagem só somava bytes cifrados —
+  // live_documents, live_intake_invitations e live_scale_invitations não têm
+  // campo cifrado (são metadata), então um tenant com muitas linhas nelas
+  // passava pela pré-checagem e só carregava tudo depois, no caminho
+  // síncrono. `other_rows` soma a CONTAGEM (não bytes) das oito tabelas de
+  // S12B, validada contra TENANT_SYNC_EXPORT_LIMITS.otherRows.
+  const OTHER_ROWS_SQL = `
+         (SELECT COUNT(*) FROM live_assessments WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_assessment_responses WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_documents WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_document_versions WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_intake_invitations WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_intake_submissions WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_scale_invitations WHERE clinic_id = ?)
+         + (SELECT COUNT(*) FROM live_scale_responses WHERE clinic_id = ?)
+           AS other_rows`;
+  const OTHER_ROWS_BINDS = Array<string>(8).fill(clinicId);
+
   // Pré-checagem evita carregar um tenant já grande. Não é a autoridade do
   // manifesto: a contagem é relida e validada dentro do snapshot abaixo.
   if (options.enforceSyncLimits) {
@@ -405,9 +429,10 @@ export async function collectTenantExportPayload(
          (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
          (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
          (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
-         ${ENCRYPTED_BYTES_SQL}`,
+         ${ENCRYPTED_BYTES_SQL},
+         ${OTHER_ROWS_SQL}`,
         )
-        .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS)
+        .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS, ...OTHER_ROWS_BINDS)
         .first<CountRow>();
       if (!exportWithinSyncLimits(normalizeCounts(counts))) return tooLarge();
     } catch {
@@ -433,9 +458,10 @@ export async function collectTenantExportPayload(
          (SELECT COUNT(*) FROM live_patients WHERE clinic_id = ?) AS patients,
          (SELECT COUNT(*) FROM live_clinical_events WHERE clinic_id = ?) AS events,
          (SELECT COUNT(*) FROM clinic_memberships WHERE clinic_id = ?) AS memberships,
-         ${ENCRYPTED_BYTES_SQL}`,
+         ${ENCRYPTED_BYTES_SQL},
+         ${OTHER_ROWS_SQL}`,
         )
-        .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS),
+        .bind(clinicId, clinicId, clinicId, ...ENCRYPTED_BYTES_BINDS, ...OTHER_ROWS_BINDS),
       db
         .prepare(
           `SELECT id, slug, name, legal_name, timezone, status, created_at, updated_at
