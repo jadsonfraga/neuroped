@@ -7,7 +7,7 @@
  * uma clínica no contexto da outra.
  *
  * Este teste roda sobre o schema real (db/schema.d1.sql + todas as
- * migrações, incluindo 0026_operations_clinic_scope.sql) e os handlers reais
+ * migrações, incluindo 0029_operations_clinic_scope.sql) e os handlers reais
  * de functions/api/operations e functions/api/public-booking — sem mocks de
  * SQL. Duas clínicas o tempo todo: CLINICA_A e CLINICA_B, um único
  * profissional membro de ambas, para provar que uma nunca alcança a outra.

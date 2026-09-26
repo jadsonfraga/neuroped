@@ -60,7 +60,10 @@ membro de duas clínicas via, no contexto B, a agenda inteira (com PHI
 decifrada) da clínica A — inclusive a secretária vinculada a ele em B.
 (OPS-01 — FECHADO.)
 
-Migração aditiva `0026_operations_clinic_scope.sql`: `clinic_id` (nullable)
+Migração aditiva `0029_operations_clinic_scope.sql` (renumerada de 0026 para
+0029 na abertura da PR #988: os prefixos 0026-0028 já estavam reservados por
+outras PRs abertas concorrentemente — #986 e #840 — segundo a governança de
+migrations entre PRs abertos): `clinic_id` (nullable)
 em 8 tabelas, backfill determinístico pela única membership ativa do
 provider (0/2+ memberships fica NULL, nunca adivinhado). Todo filtro
 autenticado em `functions/api/operations/{index,_core,_access}.ts` passou a

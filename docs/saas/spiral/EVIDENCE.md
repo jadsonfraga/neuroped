@@ -75,7 +75,10 @@
   para não exigir migração — ver comentário no código).
 
 ## S8 (ciclo 4, 2026-09-26) — agenda/operações sem clinic_id (OPS-01/OPS-02)
-- Escopo: `db/migrations/0026_operations_clinic_scope.sql` (aditiva,
+- Escopo: `db/migrations/0029_operations_clinic_scope.sql` (renumerada de
+  0026 para 0029 na abertura da PR #988 — colisão de prefixo com as PRs
+  abertas #986 e #840, que já reservavam 0026-0028; nenhuma mudança de
+  conteúdo, só o número do arquivo) (aditiva,
   `clinic_id` nullable + backfill determinístico + índices em 8 tabelas);
   `functions/api/operations/_core.ts` (SCHEMA_STATEMENTS com clinic_id,
   `resolveProviderSoleClinicId`, `getService`/`listAvailableSlots`/
@@ -116,7 +119,7 @@
   segue por profissional (OPS-03, não tocado).
 - Rollback: reverter os 4 arquivos de `functions/api/{operations/**,
   public-booking.ts}` a `f8037bd` restaura o código anterior; a coluna
-  `clinic_id` (migração 0026) é aditiva e pode permanecer no banco sem
+  `clinic_id` (migração 0029, renumerada de 0026) é aditiva e pode permanecer no banco sem
   quebrar o código antigo (ele simplesmente a ignora).
 
 ## S11 (ciclo 4, 2026-09-26) — conscrição direta de membro sem convite

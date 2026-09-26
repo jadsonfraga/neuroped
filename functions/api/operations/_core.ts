@@ -784,7 +784,7 @@ export async function getProviderBySlug(db: D1Database, slug: string): Promise<P
  * A clínica de um profissional para fins de agenda, quando não há uma já
  * resolvida por sessão (fluxo público, sem X-Tenant-Id): a ÚNICA membership
  * ativa dele. Mesmo critério do backfill em
- * db/migrations/0026_operations_clinic_scope.sql e de
+ * db/migrations/0029_operations_clinic_scope.sql e de
  * functions/api/billing/_guard.ts resolveBillingClinicId sem header — nunca
  * escolhe entre duas clínicas às cegas. `null` com 0 ou 2+ memberships faz o
  * chamador falhar fechado (agendamento indisponível), nunca misturar clínicas.

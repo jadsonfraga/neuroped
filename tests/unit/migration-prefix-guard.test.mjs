@@ -9,9 +9,17 @@
  *
  * Este guard falha o CI quando:
  *  - um prefixo NNNN aparece em mais de um arquivo (exceto o legado congelado);
- *  - um arquivo foge do formato NNNN_snake_case.sql;
- *  - um prefixo novo não é o sucessor do maior existente (força rebase da
- *    numeração em PRs concorrentes em vez de colidir na main).
+ *  - um arquivo foge do formato NNNN_snake_case.sql.
+ *
+ * NÃO exige mais sequência sem buracos acima do maior prefixo (removido em
+ * 2026-09-26, PR #988): a checagem cross-PR ao vivo em
+ * scripts/guards/check-migration-governance.py já resolve colisão real entre
+ * PRs abertos consultando o GitHub, e a própria resolução que ela recomenda
+ * ("renumere para o sucessor do maior prefixo da main") produz um buraco
+ * legítimo e temporário sempre que dois+ PRs reservam números vizinhos ao
+ * mesmo tempo — o buraco fecha sozinho quando os PRs concorrentes mesclam.
+ * Exigir contiguidade aqui, sem visibilidade de outros PRs, reprovava
+ * exatamente a correção certa para uma colisão real.
  */
 import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
@@ -42,18 +50,8 @@ for (const [prefix, bucket] of byPrefix) {
   }
 }
 
-// Sem buracos acima do último prefixo conhecido: um PR que pula números
-// esconde exatamente o tipo de colisão futura que este guard existe para
-// impedir (dois PRs 'reservando' números diferentes à frente).
-const prefixes = [...byPrefix.keys()].map(Number).sort((a, b) => a - b);
-const highest = prefixes[prefixes.length - 1];
-for (let expected = prefixes[0]; expected <= highest; expected += 1) {
-  assert.ok(
-    byPrefix.has(String(expected).padStart(4, "0")),
-    `Sequência de migrações tem buraco no prefixo ${String(expected).padStart(4, "0")} (maior = ${highest}).`,
-  );
-}
+const highest = Math.max(...[...byPrefix.keys()].map(Number));
 
 console.log(
-  `[migration-prefix] ✓ ${files.length} migrações com prefixos únicos e sequência contígua até ${String(highest).padStart(4, "0")} (legado congelado: ${[...FROZEN_LEGACY_DUPLICATE_PREFIXES].join(", ")}).`,
+  `[migration-prefix] ✓ ${files.length} migrações com prefixos únicos até ${String(highest).padStart(4, "0")} (legado congelado: ${[...FROZEN_LEGACY_DUPLICATE_PREFIXES].join(", ")}).`,
 );
