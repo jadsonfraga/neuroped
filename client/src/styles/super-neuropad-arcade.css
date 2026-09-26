@@ -1,0 +1,58 @@
+/* Super NeuroPad Game: acabamento arcade anos 90 (bordas grossas, sombra dura,
+   barra de XP em blocos, brilho de scanline). Toda cor vem dos tokens --snp-*
+   em styles/tokens.css; nenhuma regra clínica vive aqui. */
+.snp { color: var(--snp-text); }
+.snp-pixel { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 900; }
+.snp-panel { position: relative; border: 4px solid var(--snp-ink); border-radius: 18px; background: var(--snp-paper); box-shadow: 6px 6px 0 var(--snp-shadow); }
+.snp-panel--soft { background: var(--snp-paper-2); }
+.snp-panel--sun { background: var(--snp-sun); color: var(--snp-ink-fixed); }
+.snp-panel--sky { background: var(--snp-sky); color: var(--snp-ink-fixed); }
+.snp-panel--grass { background: var(--snp-grass); color: var(--snp-ink-fixed); }
+.snp-panel--berry { background: var(--snp-berry); color: var(--snp-ink-fixed); }
+.snp-panel--lilac { background: var(--snp-lilac); color: var(--snp-ink-fixed); }
+.snp-scanlines::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: repeating-linear-gradient(0deg, var(--snp-scanline) 0 2px, transparent 2px 4px); }
+.snp-title { text-shadow: 3px 3px 0 var(--snp-title-shadow-1), 6px 6px 0 var(--snp-title-shadow-2); }
+.snp-btn { position: relative; border: 4px solid var(--snp-ink-fixed); border-radius: 14px; color: var(--snp-ink-fixed); font-family: var(--font-mono); font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; box-shadow: 0 6px 0 var(--snp-ink-fixed); transition: transform 70ms ease-out, box-shadow 70ms ease-out, filter 120ms; }
+.snp-btn:hover { filter: brightness(1.04); }
+.snp-btn:active, .snp-btn[aria-pressed="true"] { transform: translateY(5px); box-shadow: 0 1px 0 var(--snp-ink-fixed); }
+.snp-btn:disabled { opacity: 0.55; filter: grayscale(0.4); box-shadow: 0 6px 0 var(--snp-ink-fixed); transform: none; cursor: not-allowed; }
+.snp-btn:focus-visible { outline: 4px solid var(--snp-sky); outline-offset: 3px; }
+.snp-btn--sun { background: var(--snp-sun); }
+.snp-btn--sky { background: var(--snp-sky); }
+.snp-btn--grass { background: var(--snp-grass); }
+.snp-btn--berry { background: var(--snp-berry); }
+.snp-btn--lilac { background: var(--snp-lilac); }
+.snp-btn--paper { background: var(--snp-paper-fixed); }
+.snp-btn--slate { background: var(--snp-slate-fixed); }
+.snp-chip { display: inline-flex; align-items: center; gap: 0.35rem; border: 3px solid var(--snp-ink); border-radius: 999px; padding: 0.15rem 0.7rem; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; background: var(--snp-paper); color: var(--snp-text); }
+.snp-xp { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 3px; border: 3px solid var(--snp-ink); border-radius: 8px; background: var(--snp-ink); }
+.snp-xp > i { display: block; height: 12px; border-radius: 2px; background: var(--snp-slate); }
+.snp-xp > i.on { background: linear-gradient(180deg, var(--snp-sun-soft) 0 45%, var(--snp-sun) 45%); }
+.snp-xp > i.hot { background: linear-gradient(180deg, var(--snp-grass-tint) 0 45%, var(--snp-grass) 45%); }
+.snp-meter { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; padding: 3px; border: 3px solid var(--snp-ink-fixed); border-radius: 8px; background: var(--snp-ink-fixed); }
+.snp-meter > i { display: block; height: 14px; border-radius: 2px; background: var(--snp-slate-deep); }
+.snp-meter > i.hit { background: linear-gradient(180deg, var(--snp-grass-tint) 0 45%, var(--snp-grass-deep) 45%); }
+.snp-meter > i.err { background: linear-gradient(180deg, var(--snp-berry-tint) 0 45%, var(--snp-berry-deep) 45%); }
+.snp-meter > i.none { background: repeating-linear-gradient(45deg, var(--snp-slate-stripe-a) 0 3px, var(--snp-slate-stripe-b) 3px 6px); }
+.snp-hearts { display: inline-flex; gap: 0.25rem; font-size: 1rem; line-height: 1; }
+.snp-sprite { display: inline-block; filter: drop-shadow(3px 3px 0 var(--snp-sprite-shadow)); }
+.snp-sky-bg { background: linear-gradient(180deg, var(--snp-sky-bg-top) 0 62%, var(--snp-sky-bg-grass) 62% 70%, var(--snp-sky-bg-soil) 70% 74%, var(--snp-sky-bg-grass) 74%); }
+.snp-cloud { position: absolute; border-radius: 999px; background: var(--snp-cloud); }
+.snp-option { border: 4px solid var(--snp-ink-fixed); border-radius: 22px; box-shadow: 0 8px 0 var(--snp-ink-fixed); transition: transform 70ms ease-out, box-shadow 70ms ease-out; color: var(--snp-ink-fixed); }
+.snp-option:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--snp-ink-fixed); }
+.snp-option:focus-visible { outline: 4px solid var(--snp-sky); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  .snp-blink { animation: snp-blink 1s steps(2, start) infinite; }
+  .snp-bounce { animation: snp-bounce 0.9s steps(4) infinite; }
+  .snp-float { animation: snp-float 3s ease-in-out infinite; }
+  .snp-pop { animation: snp-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+  .snp-cloud { animation: snp-drift 18s linear infinite; }
+}
+@keyframes snp-blink { 50% { opacity: 0; } }
+@keyframes snp-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes snp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes snp-pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes snp-drift { from { transform: translateX(0); } to { transform: translateX(40px); } }
+@media (max-width: 640px) {
+  .snp-panel { box-shadow: 4px 4px 0 var(--snp-shadow); }
+}

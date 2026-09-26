@@ -1,10 +1,10 @@
 /**
- * GET /api/admin/go-live — prontidão comercial desta instalação.
+ * GET /api/admin/go-live — diagnóstico de configuração desta instalação.
  *
- * Por que existe: os gates que separam "software pronto" de "SaaS vendável"
- * não vivem no código — vivem em variáveis do Cloudflare Pages. Sem esta
- * rota, quem provisiona descobre se acertou tentando vender: cria conta,
- * espera um e-mail que não chega, e não sabe qual das três variáveis faltou.
+ * Inspeciona os pré-requisitos configurados no Cloudflare Pages, sem testar
+ * credenciais, entrega de e-mail, banco ou cobrança. Configuração presente
+ * não comprova operação externa nem autoriza venda. Os campos legados são
+ * preservados; nivelAtestado e naoComprova explicitam o alcance da resposta.
  *
  * INVARIANTE DE SEGREDO: esta rota responde apenas BOOLEANOS e códigos. Ela
  * nunca devolve, ecoa ou registra o valor de segredo algum — nem prefixo, nem
@@ -98,8 +98,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
    * configuração presente. Os degraus seguintes exigem efeitos que um GET de
    * configuração não observa — chamada real ao provedor, e-mail recebido,
    * webhook sandbox exercitado, produção verificada e um humano aceitando
-   * vender. Nomeá-los aqui impede que pronto=true seja lido como o degrau
-   * errado, e três sessões independentes já quase fizeram essa leitura.
+   * vender. A resposta distingue configuração incompleta de presente e
+   * explicita que nenhum desses efeitos externos foi comprovado aqui.
    */
   const ambienteCobranca = (() => {
     const rotulo = (env.ASAAS_ENVIRONMENT ?? "").trim().toLowerCase();
@@ -118,7 +118,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   return json(
     {
       pronto: pendencias.length === 0,
-      nivelAtestado: "CONFIGURACAO_PRESENTE",
+      nivelAtestado: pendencias.length === 0
+        ? "CONFIGURACAO_PRESENTE"
+        : "CONFIGURACAO_INCOMPLETA",
       ambienteCobranca,
       naoComprova: [
         "CREDENCIAL_VALIDADA_NO_PROVEDOR",

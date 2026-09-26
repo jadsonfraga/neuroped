@@ -638,3 +638,55 @@
 - Rollback: reverter `functions/api/public-booking.ts` ao commit anterior
   restaura o comportamento anterior (DTO completo volta a ser exposto);
   nenhuma migração envolvida.
+
+
+## S1-R1 — revisão adversarial executada em 2026-09-24
+- Escopo: handler real e autorização real; nove requisitos removidos um a um,
+  configuração vazia, sete ambientes de cobrança, seis negativas de acesso,
+  no-store, ausência de segredos/prefixos e ausência de chamadas a DB/provedor.
+- Base exata: `6d38d98f70c22ef1571a01423bc028c681f052bd`.
+- Fontes recebidas pelo conector GitHub e conferidas pelo SHA Git do blob:
+  handler original `8f93c165fc341f5f58cb11c55f524ea20301b44b`;
+  teste original `f62ed64a33cb5d9ce5d40233ab4daafdc01b0000`;
+  autorização inalterada `9a1336205906f2a94911a6f702accf7a08cb2101`.
+- Ambiente: Linux da sessão, Node 22.16.0, transpilador TypeScript 5.8.3
+  já instalado. O package.json fixa TypeScript 5.6.3; esta execução auxiliar
+  não substitui instalação pelo lockfile, typecheck ou a CI canônica.
+- Comando realmente executado: `node --loader ./local-ts-loader.mjs
+  tests/unit/go-live-readiness.test.ts`. O loader só transpila os arquivos
+  originais; nenhuma regra de negócio foi copiada para um mock.
+- Baseline PR sem novos testes: exit 0.
+- Novo bloco 8 contra handler original: exit 1, mensagem
+  `DB ausente não pode atestar configuração presente`.
+- Handler corrigido + blocos 1 a 11: exit 0.
+- Três mutações, cada uma exit 1: nível sempre presente; retirada da ressalva
+  PRODUCAO_VERIFICADA ao escolher production; eco de ambiente arbitrário.
+- Restaurado o candidato depois das mutações: exit 0.
+- Uma colisão inicial na fixture (prefixo literal ambiente, igual ao nome do
+  campo) foi corrigida usando cfg + bytes aleatórios. A assertiva permaneceu.
+
+### Bytes efetivamente testados
+- Handler Git blob: `3b3343d77a05253cdf26006c9e1e4f198c915dd3`.
+- Handler SHA-256: `7711214b7e32f778dec54c8c8722375b5dc1c60a414b4c133ff2c262e98411fb`.
+- Teste Git blob: `8413729829981a1fa347923f8cc87c36ed9f6288`.
+- Teste SHA-256: `3eaba4e74a64c427b5dd57939478c6b2a5c599c8da77a4273e8a9ec8de100f62`.
+- Artefatos locais: manifesto, fontes originais/candidatas, loader, runner
+  de mutações e logs RED/GREEN. Anexo da sessão: neuroped-pr949-review.zip.
+  A PR identifica o commit completo que contém esses blobs.
+
+### Limites e gate de integração
+- Sem checkout integral: clone bloqueado por DNS e terminal remoto por cota.
+  Não foram executados npm ci, npm check/lint, verify/build completos nesta
+  revisão local. Não confundir transpilação com verificação de tipos.
+- Sem banco D1, envio de e-mail, cobrança, sessão real ou navegador autenticado.
+  O teste injeta authUser no contrato interno; o middleware não foi contornado
+  em produção. As sentinelas de fronteira demonstram ausência de efeitos.
+- O package.json já inclui go-live-readiness em test:quick-wins e este em
+  verify:release. Nenhum pipeline ou dependência foi adicionado.
+- Exigir CI do novo HEAD e a revisão aplicável antes de merge/publicação.
+  Resultados de ancestral não substituem os do candidato atual.
+
+
+### Reconciliação em 26/09/2026
+O histórico acima descreve a execução original em 24/09. A revisão atual
+reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
