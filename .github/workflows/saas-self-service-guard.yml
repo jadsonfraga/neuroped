@@ -13,12 +13,19 @@ on:
       - "functions/api/billing/**"
       - "shared/entitlements.ts"
       - "shared/billing.ts"
+      - "shared/onboarding.ts"
+      - "client/src/components/OnboardingProgressCard.tsx"
+      - "client/src/pages/home.tsx"
       - "db/migrations/**"
       - "tests/unit/saas-self-service.test.ts"
       - "tests/unit/saas-acceptance-journey.test.ts"
       - "tests/unit/cliente-zero-journey.test.ts"
       - "tests/unit/tenant-members-billing-gate.test.ts"
       - "tests/unit/tenant-audit-trail.test.ts"
+      - "tests/unit/saas-membership-owner-regression.test.mjs"
+      - "tests/unit/tenant-management-authorization.test.ts"
+      - "tests/unit/saas-onboarding-progress.test.ts"
+      - "tests/unit/onboarding-progress-ui.test.tsx"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - ".github/workflows/saas-self-service-guard.yml"
   push:
@@ -33,12 +40,19 @@ on:
       - "functions/api/billing/**"
       - "shared/entitlements.ts"
       - "shared/billing.ts"
+      - "shared/onboarding.ts"
+      - "client/src/components/OnboardingProgressCard.tsx"
+      - "client/src/pages/home.tsx"
       - "db/migrations/**"
       - "tests/unit/saas-self-service.test.ts"
       - "tests/unit/saas-acceptance-journey.test.ts"
       - "tests/unit/cliente-zero-journey.test.ts"
       - "tests/unit/tenant-members-billing-gate.test.ts"
       - "tests/unit/tenant-audit-trail.test.ts"
+      - "tests/unit/saas-membership-owner-regression.test.mjs"
+      - "tests/unit/tenant-management-authorization.test.ts"
+      - "tests/unit/saas-onboarding-progress.test.ts"
+      - "tests/unit/onboarding-progress-ui.test.tsx"
       - "tests/unit/migration-prefix-guard.test.mjs"
       - ".github/workflows/saas-self-service-guard.yml"
 
@@ -75,6 +89,18 @@ jobs:
 
       - name: Self-service regressions (signup, settings, RBAC, anti-IDOR)
         run: node --import tsx tests/unit/saas-self-service.test.ts
+
+      - name: Owner role mutation remains authorized in final SQL predicate
+        run: node tests/unit/saas-membership-owner-regression.test.mjs
+
+      - name: Owner race behavior and tenant management authorization
+        run: node --import tsx --test tests/unit/tenant-management-authorization.test.ts
+
+      - name: Persistent zero-to-value onboarding projection
+        run: node --import tsx tests/unit/saas-onboarding-progress.test.ts
+
+      - name: Server-backed onboarding UI contract
+        run: node --import tsx --test tests/unit/onboarding-progress-ui.test.tsx
 
       - name: Acceptance journey + adversarial multitenant (real migrations)
         run: node --import tsx tests/unit/saas-acceptance-journey.test.ts

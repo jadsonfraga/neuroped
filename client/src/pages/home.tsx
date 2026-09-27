@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { SafeAssetImage, brandAssets } from "@/components/BrandAssets";
 import { FavoritesRecents } from "@/components/FavoritesRecents";
 import { ClinicalCockpit } from "@/components/clinical/ClinicalCockpit";
+import { OnboardingProgressCard } from "@/components/OnboardingProgressCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { appMetrics } from "@/data/appMetrics";
 import { navigablePages } from "@/data/navigation";
@@ -292,6 +293,7 @@ export default function HomePage() {
           )}
         </div>
       </div>
+      <OnboardingProgressCard />
       <ClinicalCockpit />
     </motion.section>
   );
