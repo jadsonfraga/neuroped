@@ -11,6 +11,7 @@ const OBS_ROUTE = "/avaliacao-pre-consulta-faixa-etaria";
 const VISUAL_ROUTE = "/testes-reconhecimento";
 const COGNITIVE_ROUTE = "/testes-cognitivos";
 const GAME_ROUTE = "/super-neuropad-game";
+const READING_DICTATION_ROUTE = "/por-faixa-etaria";
 
 test("Super NeuroPad Game, Sonda, OBS, reconhecimento visual e testes cognitivos precedem os atalhos da rotina clínica", () => {
   assert.deepEqual(featuredNavigation.slice(0, 9).map((item) => item.href), [
@@ -46,6 +47,25 @@ test("testes cognitivos por faixa etária têm acesso prioritário e o mesmo nom
   assert.equal(featuredItems[0].label, sectionItems[0].label);
   assert.equal(featuredItems[0].tone, "priority");
   assert.equal(navigablePages.filter((item) => item.href === COGNITIVE_ROUTE).length, 1);
+});
+
+test("por faixa etária (ditado e leitura) tem acesso prioritário e o mesmo nome no destaque, fora do topo fixo", () => {
+  const sections = navSections.filter((section) =>
+    section.items.some((item) => item.href === READING_DICTATION_ROUTE),
+  );
+  assert.deepEqual(sections.map((section) => section.title), ["TRIAGEM E FERRAMENTAS"]);
+  const sectionItems = navSections.flatMap((section) => section.items)
+    .filter((item) => item.href === READING_DICTATION_ROUTE);
+  const featuredItems = featuredNavigation.filter((item) => item.href === READING_DICTATION_ROUTE);
+  assert.equal(sectionItems.length, 1);
+  assert.equal(featuredItems.length, 1);
+  assert.equal(sectionItems[0].label, "Por faixa etária");
+  assert.equal(featuredItems[0].label, sectionItems[0].label);
+  assert.equal(featuredItems[0].tone, "priority");
+  assert.equal(navigablePages.filter((item) => item.href === READING_DICTATION_ROUTE).length, 1);
+  // Fora do topo fixo (slice(0, 9)) travado no teste acima: não pode empurrar
+  // nenhum daqueles nove itens para fora da faixa de destaque principal.
+  assert.equal(featuredNavigation.slice(0, 9).some((item) => item.href === READING_DICTATION_ROUTE), false);
 });
 
 test("reconhecimento visual tem acesso prioritário e uma única entrada por superfície", () => {

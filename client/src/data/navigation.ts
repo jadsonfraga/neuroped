@@ -22,6 +22,7 @@ import {
   ListChecks,
   MessageCircle,
   Moon,
+  PenLine,
   Pill,
   Ruler,
   Scale,
@@ -127,6 +128,13 @@ export const featuredNavigation: NavItem[] = [
     description: "Prescrição clínica",
   },
   {
+    href: "/por-faixa-etaria",
+    label: "Por faixa etária",
+    icon: PenLine,
+    tone: "priority",
+    description: "Ditado e leitura · 5–19 anos · acertos e erros em detalhe",
+  },
+  {
     href: "/filtro",
     label: "Filtro de Escalas",
     icon: Filter,
@@ -224,6 +232,13 @@ export const navSections: NavSection[] = [
         icon: Brain,
         tone: "priority",
         description: "Visual, fala/leitura, letras/escrita e números · 1–19 anos",
+      },
+      {
+        href: "/por-faixa-etaria",
+        label: "Por faixa etária",
+        icon: PenLine,
+        tone: "priority",
+        description: "Ditado e leitura por faixa etária · 5–19 anos · acertos e erros em detalhe",
       },
       {
         href: "/testes-diretos",
