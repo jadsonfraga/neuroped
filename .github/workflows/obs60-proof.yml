@@ -1,0 +1,83 @@
+name: OBS60 evidence contract
+on:
+  pull_request:
+    paths:
+      - 'shared/obs60.ts'
+      - 'client/src/features/obs60/**'
+      - 'client/src/features/obs10/Orientation.tsx'
+      - 'functions/api/integrations/obs60/**'
+      - 'functions/api/integrations/_middleware.ts'
+      - 'functions/api/billing/_guard.ts'
+      - 'functions/api/auth/_authorization.ts'
+      - 'functions/api/tenant/_core.ts'
+      - 'tests/unit/obs60*.test.mjs'
+      - 'tests/unit/obs60-tenant-gate.test.ts'
+      - 'tests/e2e/obs60-guide.mjs'
+      - 'tests/fixtures/obs60-gray.mp4.base64'
+      - '.github/workflows/obs60-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'shared/obs60.ts'
+      - 'client/src/features/obs60/**'
+      - 'client/src/features/obs10/Orientation.tsx'
+      - 'functions/api/integrations/obs60/**'
+      - 'functions/api/integrations/_middleware.ts'
+      - 'functions/api/billing/_guard.ts'
+      - 'functions/api/auth/_authorization.ts'
+      - 'functions/api/tenant/_core.ts'
+      - 'tests/unit/obs60*.test.mjs'
+      - 'tests/unit/obs60-tenant-gate.test.ts'
+      - 'tests/e2e/obs60-guide.mjs'
+      - 'tests/fixtures/obs60-gray.mp4.base64'
+      - '.github/workflows/obs60-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: obs60-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Run synthetic evidence and video transport tests
+        run: node --experimental-strip-types --test tests/unit/obs60.test.mjs tests/unit/obs60-mount-static.test.mjs tests/unit/obs60-input-shape.test.mjs
+  tenant-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Real handlers and real schema with isolated synthetic clinics
+        run: node --import tsx --test tests/unit/obs60-tenant-gate.test.ts tests/unit/obs60-tenant-integration.test.mjs
+      - name: Production client with authorization preserved
+        env:
+          VITE_OPEN_ACCESS: 'false'
+        run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Built route, real browser media, consent, discard and disabled provider
+        env:
+          OBS60_ARTIFACT_DIR: /tmp/obs60-proof
+        run: node tests/e2e/obs60-guide.mjs
+      - name: Preserve synthetic browser proof
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: obs60-browser-proof
+          path: /tmp/obs60-proof
+          if-no-files-found: ignore
+          retention-days: 7
