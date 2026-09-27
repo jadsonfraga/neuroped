@@ -931,7 +931,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       initial={false}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.32, ease: [0.32, 0.72, 0.22, 1] }}
+                      transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
                     >
                       {section.items.map((item) => {
                         const active =
