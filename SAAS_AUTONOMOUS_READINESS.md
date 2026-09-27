@@ -1,8 +1,10 @@
 # NeuroPed Autonomous SaaS — readiness verificável
 
-Data da validação local: 2026-09-26  
+Data da validação local: 2026-09-26 (reconciliado 2026-09-27)  
 Branch de trabalho: `value/autonomous-saas`  
-Base observada antes das alterações: `0b4f74fb49214d00944fc2a366d3b4454363601a`
+Base observada antes das alterações: `0b4f74fb49214d00944fc2a366d3b4454363601a`  
+Head verificado nesta reconciliação: `0d7f3cdd6cf07020ce370e919e032a44de6c3da2` (CI 27/27 verde)  
+Base atual observada (main): `1252021` (inclui #1004, #1010; #1007 ainda aberta) — o documento abaixo não foi revalidado contra este main mais recente
 
 ## Escopo da evidência
 
@@ -43,8 +45,10 @@ Classificações:
 
 Resultado: a jornada local está automatizada de ponta a ponta, mas a
 transformação **não pode ser classificada como operacionalmente concluída** até
-que billing/e-mail externos e o ambiente publicado sejam validados e a lacuna de
-exportação seja fechada.
+que billing/e-mail externos e o ambiente publicado sejam validados. A lacuna de
+exportação (item 12) já foi fechada localmente (S12B, `complete: true` verificado
+pelo teste do cliente-zero) — o que resta é a validação externa/publicada, não
+mais a completude do export em si.
 
 ## Contrato de onboarding zero-to-value
 
@@ -108,9 +112,13 @@ evidência externa como `MOCKED_EXTERNAL` em seu próprio output.
 ## Riscos e trabalho remanescente
 
 - O export do tenant agora inclui documentos, versões, avaliações/respostas,
-  intake e escala remota (S12B, mesclado na main via #1004/#1007 durante
-  esta transformação). O manifesto declara `complete: true` honestamente
-  e o purge de encerramento deixou de ficar bloqueado por essa lacuna.
+  intake e escala remota (S12B, mesclado na main via #1004 — commit `574236b`).
+  A PR #1007, que reconcilia esse mesmo S12B com a corrida de atomicidade de
+  #1002, permanece **aberta** no momento desta observação; a correção que ela
+  propõe já foi portada para esta branch (commit `0d7f3cd`) e para a main via
+  outro commit (`6e34189`), independentemente do merge de #1007. O manifesto
+  declara `complete: true` honestamente e o purge de encerramento deixou de
+  ficar bloqueado por essa lacuna.
 - O cliente-zero é um teste funcional de handlers, não um browser E2E em
   aplicação publicada. Um smoke autenticado no ambiente alvo continua
   necessário.
@@ -123,6 +131,9 @@ evidência externa como `MOCKED_EXTERNAL` em seu próprio output.
 
 ## Evidência negativa
 
-Não houve commit, PR, merge, push ou deploy durante esta implementação. Não há
-alegação de cobrança real, receita, cliente, uso clínico, conformidade LGPD ou
-operação em produção.
+Esta PR (`value/autonomous-saas` → main) foi publicada e recebeu commits e
+pushes de reconciliação após a primeira versão deste documento — isso não é
+mais um estado "sem commit/PR/push". O que continua sem evidência: merge
+desta PR na main, deploy de qualquer alteração deste branch, e qualquer
+alegação de cobrança real, receita, cliente, uso clínico, conformidade LGPD
+ou operação em produção.
