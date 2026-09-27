@@ -502,7 +502,13 @@ raw.prepare(
       vermelha,
     ),
   );
-  assert.notEqual(convite.status, 201, "VERMELHA não injeta convite em AZUL");
+  assert.equal(convite.status, 403, "VERMELHA não injeta convite em AZUL");
+  const conviteCorpo = (await convite.json()) as { code?: string };
+  assert.equal(conviteCorpo.code, "TENANT_FORBIDDEN");
+  const conviteLinha = raw
+    .prepare("SELECT id FROM clinic_invitations WHERE clinic_id = ? AND lower(email) = ?")
+    .get(CLINICA_AZUL, "intrusa@vermelha.test");
+  assert.equal(conviteLinha, undefined, "nenhum convite foi persistido para AZUL");
 
   const promocao = await membersPost(
     ctx(
@@ -514,7 +520,17 @@ raw.prepare(
       { id: CLINICA_AZUL },
     ),
   );
-  assert.notEqual(promocao.status, 200, "VERMELHA não se promove dentro de AZUL");
+  assert.equal(promocao.status, 403, "VERMELHA não se promove dentro de AZUL");
+  const promocaoCorpo = (await promocao.json()) as { code?: string };
+  assert.equal(promocaoCorpo.code, "TENANT_FORBIDDEN");
+  const membershipLinha = raw
+    .prepare(
+      `SELECT cm.role FROM clinic_memberships cm
+         JOIN users u ON u.id = cm.user_id
+        WHERE cm.clinic_id = ? AND lower(u.email) = ?`,
+    )
+    .get(CLINICA_AZUL, "rui@vermelha.test");
+  assert.equal(membershipLinha, undefined, "VERMELHA não ganhou membership em AZUL");
 }
 
 // ═══ 16-21. Operação clínica sintética + trilha de auditoria ════════════════
