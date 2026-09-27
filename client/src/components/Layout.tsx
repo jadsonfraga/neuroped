@@ -1122,8 +1122,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               data-testid="button-sound-toggle"
               aria-label={
                 soundOn
-                  ? "Desativar sons da interface"
-                  : "Ativar sons da interface"
+                  ? "Sons — desativar sons da interface"
+                  : "Sem som — ativar sons da interface"
               }
               aria-pressed={soundOn}
             >

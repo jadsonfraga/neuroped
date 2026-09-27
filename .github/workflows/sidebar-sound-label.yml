@@ -1,0 +1,56 @@
+name: Sidebar sound accessible name
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client/src/components/Layout.tsx'
+      - 'client/src/hooks/useUiPreferences.ts'
+      - 'client/src/lib/softSounds.ts'
+      - 'tests/e2e/sidebar-sound-label.mjs'
+      - '.github/workflows/sidebar-sound-label.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/components/Layout.tsx'
+      - 'client/src/hooks/useUiPreferences.ts'
+      - 'client/src/lib/softSounds.ts'
+      - 'tests/e2e/sidebar-sound-label.mjs'
+      - '.github/workflows/sidebar-sound-label.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sidebar-sound-label-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser-and-lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: node tests/unit/sound-ux-static.test.mjs
+      - run: npm run build:client
+      - run: npx playwright install --with-deps chromium
+      - name: Actual preference states and old-label negative control
+        env:
+          SOUND_LABEL_ARTIFACT_DIR: /tmp/sidebar-sound-label
+        run: node tests/e2e/sidebar-sound-label.mjs
+      - name: Unchanged twelve-route Lighthouse gate
+        run: npm run audit:lighthouse
+      - name: Preserve synthetic browser and Lighthouse evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sidebar-sound-label-proof
+          path: |
+            /tmp/sidebar-sound-label
+            scripts/guards/lighthouse-report.json
+          if-no-files-found: error
+          retention-days: 7
