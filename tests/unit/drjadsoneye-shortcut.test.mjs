@@ -91,10 +91,27 @@ for (const collapsed of [false, true]) {
     const link = getLink(collapsed);
     const textContainer = link.props.children.find((child) => isValidElement(child) && child.type === "span");
     assert.ok(textContainer, "the visible label container remains present");
-    const visibleText = textContainer.props.children.map((child) => child.props.children).join(" ").replace(/\s+/g, " ").trim();
+    const labelSpans = textContainer.props.children.filter(
+      (child) => isValidElement(child) && child.type === "span",
+    );
+    assert.equal(labelSpans.length, 2, "label and subtitle must remain two separate spans");
+    const visibleText = labelSpans.map((child) => child.props.children).join(" ").replace(/\s+/g, " ").trim();
     assert.equal(visibleText, "DrJadsoneye Aplicativo externo · pesquisa");
     assert.ok(link.props["aria-label"].includes(visibleText), "label-content-name-mismatch must not return when the mobile or expanded label is shown");
     assert.match(link.props["aria-label"], /abre em nova aba/);
+
+    // The mismatch actually shipped to production came from here: JSX drops
+    // whitespace-only text nodes between sibling tags on their own line, so
+    // "DrJadsoneye" and "Aplicativo..." rendered glued together with no
+    // separator in the real DOM, even though this test's own `.join(" ")`
+    // above made it look fine. Assert the literal markup carries a real
+    // space between the two spans, matching what Lighthouse/axe read.
+    const html = renderToStaticMarkup(createElement(DrJadsoneyeShortcut, { collapsed }));
+    assert.match(
+      html,
+      /DrJadsoneye<\/span> <span/,
+      "a real whitespace text node must separate the label and subtitle spans in the rendered DOM",
+    );
   });
 }
 

@@ -35,7 +35,7 @@ export function DrJadsoneyeShortcut({
         <span className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
           <span className="np-nav-item__label block truncate text-xs">
             DrJadsoneye
-          </span>
+          </span>{" "}
           <span className="block text-[10px] text-muted-foreground">
             Aplicativo externo · pesquisa
           </span>
