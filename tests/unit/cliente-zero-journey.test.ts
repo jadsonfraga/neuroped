@@ -709,8 +709,8 @@ assert.ok(encontroSintetico && documentoSintetico && avaliacaoSintetica);
   };
   assert.equal(
     corpo.manifest?.complete,
-    false,
-    "o manifesto não esconde que documentos e avaliações ainda não entram no payload",
+    true,
+    "S12B (main) já cobre documentos e avaliações no payload; nada resta em EXPORT_UNCOVERED_CLINIC_TABLES",
   );
   assert.equal(corpo.manifest?.digestSha256, digest, "o digest do cabeçalho bate com o do manifesto");
   assert.equal(corpo.manifest?.counts?.patients, 1, "o manifesto conta o paciente da clínica");
@@ -878,5 +878,5 @@ const pedidoEliminacao = await (async () => {
 globalThis.fetch = realFetch;
 
 console.log(
-  "✅ CLIENTE ZERO: conta confirmada → clínica → checkout → webhook MOCKED_EXTERNAL autenticado no handler real → entitlement → equipe por e-mail → papel → paciente → consulta/evento → documento draft → avaliação → onboarding 10/10 server-computed → auditoria metadata-only → exportação com digest e incompletude explícita → pedido de eliminação → troca de senha revogando sessões → encerramento com retenção → webhook tardio sem reabrir acesso. CLINICA_VERMELHA intacta em todas as superfícies.",
+  "✅ CLIENTE ZERO: conta confirmada → clínica → checkout → webhook MOCKED_EXTERNAL autenticado no handler real → entitlement → equipe por e-mail → papel → paciente → consulta/evento → documento draft → avaliação → onboarding 10/10 server-computed → auditoria metadata-only → exportação com digest e cobertura completa (S12B) → pedido de eliminação → troca de senha revogando sessões → encerramento com retenção → webhook tardio sem reabrir acesso. CLINICA_VERMELHA intacta em todas as superfícies.",
 );
