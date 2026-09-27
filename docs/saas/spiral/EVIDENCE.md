@@ -228,21 +228,63 @@
   grandes passaria pela pré-checagem e só travaria depois, já com tudo
   carregado em memória. Nenhuma migração: os oito domínios já existiam desde
   0014/0018/0021.
+- **Correção de escopo pedida em revisão** (PR #1004, revisor `jadsonfraga`,
+  review `5328051311`): a entrega original desta seção deixava
+  `clinic_settings` e `live_retention_policies` fora do payload e afirmava
+  (em `BACKLOG.md` e na descrição da PR) que nunca fizeram parte do escopo
+  de S12B — o revisor apontou que o texto original de S12B pedia
+  explicitamente os dois. Correto sobre o mecanismo (nenhum dos dois bloqueia
+  purge — estão em `PURGE_PRESERVED_TABLES`), incorreto sobre o escopo
+  declarado. Corrigido em `functions/api/tenant/_exportPayload.ts`: duas
+  consultas adicionais (`clinic_settings WHERE clinic_id = ? LIMIT 1`,
+  `live_retention_policies WHERE clinic_id = ? LIMIT 1`; ambas 0-1 linha por
+  clínica, sem campo cifrado) entram no batch e saem em `data.clinicSettings`/
+  `data.retentionPolicy` (`null` quando a clínica nunca configurou). Não
+  afeta `EXPORT_UNCOVERED_CLINIC_TABLES`, `complete` nem o purge — é
+  completude de export, não desbloqueio de purge.
+- **PR #1004 mesclou só o commit `c2f5aee`** (os oito domínios, sem a
+  correção acima) enquanto esta correção ainda estava em desenvolvimento —
+  `jadsonfraga` mesclou a PR entre a revisão e o push do commit seguinte.
+  A correção segue em PR separada, rebaseada sobre o `main` pós-merge.
+  Nesse rebase, `main` já trazia PR #1002 (`89c62c4`, "cercar purge com
+  política e cobertura na mesma transação"), que adicionou
+  `tests/unit/lgpd-purge-atomicity.test.ts` com uma corrida
+  ("documento fora do export chega depois da contagem") que injeta uma
+  linha tardia em `live_documents` para provar que a cerca atômica do purge
+  (`_purge.ts`) recusa sem apagar nada — só que essa cerca é construída
+  iterando `EXPORT_UNCOVERED_CLINIC_TABLES`, e com a lista vazia (S12B) o
+  loop não gera predicado nenhum para `live_documents`, e o teste passou a
+  falhar de verdade (o purge deletava tudo em vez de recusar): as duas PRs,
+  corretas isoladamente, quebravam uma à outra depois de mescladas. Migrei
+  a corrida para `appointments` (a única tabela que sobra em
+  `UNREACHABLE_PATIENT_TABLES`, com a MESMA cerca atômica, e que S12B não
+  toca) — mesmo mecanismo, tabela que continua genuinamente sujeita a ele
+  hoje. Exigiu popular `booking_services` na fixture (FK obrigatória de
+  `appointments`) e marcar `source = 'professional'` no INSERT sintético
+  para não disparar `trg_public_appointment_billing_guard` (guard de billing
+  de agendamento público, irrelevante para esta corrida). Visto FALHANDO
+  pelo motivo certo (`injected` nunca chegava a `true`: a asserção interna
+  do teste, não uma reformulação por fora) antes do ajuste da fixture; verde
+  depois, junto com os outros 8 cenários do arquivo, inalterados.
 - Ambiente: container da sessão, Node do repo, HEAD `0b4f74f` (main no início
-  do ciclo) + S12B.
+  do ciclo) → `574236b` (main pós-merge de #1004, já com #1002) + a correção
+  de escopo e o ajuste de integração acima.
 - Efeito: `EXPORT_UNCOVERED_CLINIC_TABLES` vazia ⇒ `complete` computado passa
   a ser sempre `true` (nada mais fica de fora) ⇒ o purge de encerramento por
   clínica (`_purge.ts`) para de recusar com `EXPORT_MANIFEST_INCOMPLETE` só
   por essas oito tabelas terem linha — o efeito colateral deliberado do S12
   original está revertido para as clínicas que só têm dado nesses domínios.
 - Testes: `tests/unit/lgpd-run-export-endpoint.test.ts` ganha um cenário
-  RED/BLUE que semeia os oito domínios nas duas clínicas sintéticas e prova,
-  num único export de RED: `complete === true`, `uncoveredCounts` vazio, cada
-  domínio decifrado corretamente (`assert.deepEqual` contra o plaintext
-  original), nenhum dado de BLUE em `JSON.stringify(collected.data)`, e
-  `token_hash`/os hashes de convite nunca aparecem no payload. O cenário
-  anterior ("um documento novo bloqueia o export com 409") foi substituído —
-  não é mais o comportamento correto, então deixou de ser testado como tal.
+  RED/BLUE que semeia os oito domínios MAIS `clinic_settings`/
+  `live_retention_policies` nas duas clínicas sintéticas e prova, num único
+  export de RED: `complete === true`, `uncoveredCounts` vazio, cada domínio
+  decifrado corretamente (`assert.deepEqual` contra o plaintext original),
+  o timbre e a política de retenção de RED presentes com os valores exatos
+  configurados, nenhum dado de BLUE em `JSON.stringify(collected.data)`
+  (inclusive o timbre de BLUE), e `token_hash`/os hashes de convite nunca
+  aparecem no payload. O cenário anterior ("um documento novo bloqueia o
+  export com 409") foi substituído — não é mais o comportamento correto,
+  então deixou de ser testado como tal.
   `tests/unit/lgpd-purge-executor.test.ts`: o cenário 8a antigo (purge por
   clínica recusa com dado nos oito domínios) foi substituído por uma prova de
   que uma FALHA REAL de leitura (não uma lacuna de export) continua
@@ -253,10 +295,13 @@
   (200 em vez de 409 no primeiro; a asserção `EXPORT_MANIFEST_INCOMPLETE`
   nunca dispara no segundo porque a lista ficou vazia) antes de eu reescrever
   as asserções — não apenas "corrigidos para passar".
-- Comandos exit 0: `npm run check`, `npx eslint functions/api/tenant/_exportPayload.ts
-  tests/unit/lgpd-run-export-endpoint.test.ts tests/unit/lgpd-purge-executor.test.ts`,
+- Comandos exit 0 (rodados após o rebase sobre `main` pós-#1004/#1002):
+  `npm run check`, `npx eslint functions/api/tenant/_exportPayload.ts
+  tests/unit/lgpd-run-export-endpoint.test.ts tests/unit/lgpd-purge-executor.test.ts
+  tests/unit/lgpd-purge-atomicity.test.ts`,
   `node --import tsx --test tests/unit/lgpd-run-export-endpoint.test.ts`,
   `node --import tsx --test tests/unit/lgpd-purge-executor.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-purge-atomicity.test.ts`,
   `node --import tsx --test tests/unit/saas-tenant-lifecycle.test.ts`,
   `node --import tsx --test tests/unit/lgpd-worker-executor-core.test.ts`,
   `node --import tsx --test tests/unit/lgpd-worker-foundation.test.ts`,
@@ -762,3 +807,127 @@
 ### Reconciliação em 26/09/2026
 O histórico acima descreve a execução original em 24/09. A revisão atual
 reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
+
+## S13 (ciclo 5, 2026-09-26) — link público de agendamento desambiguado por clínica
+- Escopo: `functions/api/operations/_core.ts` (nova `resolveProviderClinicBySlug`,
+  ao lado de `resolveProviderSoleClinicId`); `functions/api/public-booking.ts`
+  (novo `resolveClinicId` que escolhe entre as duas conforme `?clinic=`/`body.clinic`
+  estar presente; `publicProfile`, `publicProviders`, GET `slots` e POST
+  `book`/`waitlist` passam a aceitar o parâmetro); `client/src/pages/agendar.tsx`
+  (lê `clinic` da querystring e repassa nas quatro chamadas); `client/src/pages/agenda.tsx`
+  (o link público copiável pela clínica já sai com `&clinic=<slug da clínica
+  ativa>`, via `useClinic().activeClinic.slug`). Nenhuma migração: `clinics.slug`
+  já existe e é única desde `0009_saas_phase1_foundation.sql`.
+- Ambiente: container da sessão, Node do repo, base `main` em
+  `574236b350181651664313f72afcf26297940003` (pós #1002 e #1004).
+- Teste: bloco 6 (novo) de `tests/unit/operations-tenant-isolation.test.ts`,
+  reaproveitando o cenário já existente do bloco 5 (prof-p com DUAS
+  memberships ativas, cenário que antes só provava fail-closed). Prova que
+  `?clinic=clinica-a`/`clinica-b` resolve exatamente a clínica pedida sem
+  misturar serviços (`profileA.services` só tem "Consulta A", `profileB.services`
+  só tem "Consulta B"), que o diretório com `?clinic=` lista o profissional
+  mesmo com membership ambígua no total, e que a recusa fail-closed se
+  mantém para: clínica existente onde o profissional não é membro
+  (`clinic-c`), slug inexistente (`nao-existe`), clínica suspensa com
+  membership ativa (`clinic-d`) e ausência do parâmetro (compatibilidade com
+  links antigos, cenário do bloco 5 preservado).
+- RED confirmado antes do fix: `git stash push -- functions/api/operations/_core.ts
+  functions/api/public-booking.ts && node --import tsx
+  tests/unit/operations-tenant-isolation.test.ts` — `TypeError: Cannot read
+  properties of null (reading 'services')`, porque o código antigo ignora
+  `clinic` e usa só `resolveProviderSoleClinicId` (retorna `null` com
+  membership ambígua, exatamente como antes). `git stash pop` restaura o fix;
+  mesmo comando fica verde.
+- Comandos exit 0 depois do fix: `npm run check`, `npm run lint`
+  (`--max-warnings=0`), `npm run test:operations` (inclui o teste acima,
+  `operations-contract`, `operations-integration-static`,
+  `secretaria-marcacao-navigation`, `operations-staff-link-anti-enumeration`,
+  `public-booking-manage-redaction`, `clinical-lgpd-provisioning-static`),
+  `npm run test:quick-wins` (suíte completa, zero `not ok`).
+- Limites documentados no BACKLOG.md#S13: isto NÃO é o redesenho de rota
+  (`/c/:clinicSlug/agendar`) nem a troca de PK de `booking_provider_profiles`/
+  `booking_staff_links` (OPS-05/OPS-03) — permanecem abertos, exigem
+  migração e período de compatibilidade, fora do escopo de um incremento
+  único e seguro.
+- Rollback: reverter os cinco arquivos de código/teste ao SHA base acima
+  restaura o comportamento anterior (só `resolveProviderSoleClinicId`,
+  ignorando `clinic`); nenhuma migração de schema envolvida.
+## S23 (ciclo 6, 2026-09-27) — recepção delegada barrada no gate da agenda (AUTHZ-P1-04)
+- Escopo: 1 arquivo de produção (`functions/api/operations/_middleware.ts`),
+  1 teste novo, 1 linha em `package.json` (`test:operations`).
+- Base: `574236b` (main após #1004).
+- RED contra o middleware anterior:
+  `node --import tsx tests/unit/operations-delegated-staff-gate.test.ts` →
+  exit 1, `secretária vinculada deve ler a agenda: 409
+  {"code":"BILLING_CLINIC_CONTEXT_REQUIRED"}`.
+- GREEN com a correção: o mesmo comando → exit 0. Cobre: leitura redigida
+  (`amountCents`/`paymentMethod` nulos, `staff` vazio, `canConfigure=false`),
+  check-in operacional 200, configuração recusada 403, sem vínculo 403
+  `STAFF_LINK_REQUIRED` sem rodar o handler, header para clínica alheia 409,
+  trial vencido 402, clínica suspensa 423, vínculo revogado 403. Também há
+  controle do profissional.
+- Regressão: `npm run test:operations` exit 0; `npm run test:quick-wins`
+  exit 0; `npm run check` exit 0; `npm run lint` exit 0.
+- Fixtures 100% sintéticas (`example.test`), sem PHI.
+- Rollback: reverter o commit; o comportamento volta a ser o 409 anterior
+  para `operator`, sem efeito em dados, porque não houve migração.
+
+### S23b — vínculo de recepção amarrado à membership da clínica
+- Escopo: `functions/api/operations/_access.ts` (`linkOperationsOperator`
+  recebe `clinicId` e exige membership `assistant` ativa na checagem e no
+  predicado da escrita), `functions/api/operations/index.ts` (passa
+  `clinicId`) e o texto de orientação em `client/src/pages/agenda.tsx`.
+- Teste reforçado: `tests/unit/operations-staff-link-anti-enumeration.test.ts`
+  ganhou dois casos: `operator` sem membership na clínica e membro
+  `financial`. Os dois respondem corpo idêntico aos outros três e nenhum
+  vínculo é criado. O controle passou a usar o caminho legítimo (membro
+  `assistant`). Nenhuma assertiva removida.
+- RED contra o código anterior (`git stash` de `_access.ts`/`index.ts`):
+  `operator sem membership nesta clínica: precisa responder 404`.
+- GREEN: `npm run test:operations`, `npm run test:quick-wins`,
+  `npm run check`, `npm run lint` e `npm run build:client`, todos com exit 0.
+- Rollback: reverter o commit; sem migração.
+
+## S10 (ciclo 7, 2026-09-27) — escrita LIVE barrada por papel global desatualizado (AUTHZ-P1-07)
+- Escopo: 1 arquivo de produção (`functions/api/_middleware.ts`), 1 teste
+  novo (`tests/unit/live-clinical-write-membership-authorization.test.ts`),
+  1 linha em `package.json` (`test:quick-wins`). Sem migração.
+- Base: `d3e3b98` (main após #1007).
+- Defeito provado: uma conta com membership `professional` numa clínica
+  (nascida por `functions/api/billing/accept.ts`, que só define o papel
+  GLOBAL na primeira conta criada por convite — convites seguintes para
+  outra clínica com papel de clínica mais alto nunca revisitam o papel
+  global) tinha `clinical.write` concedido pela própria membership
+  (`shared/permissions.ts`) e entitlement de clínica ativo, mas era barrada
+  por `roleFailure` (`_middleware.ts`) antes de a requisição alcançar o
+  Clinical Core LIVE, cujas checagens (`requireBillingEntitlement` escopo
+  "clinical", `membershipCanWriteClinical`) já a autorizariam.
+- RED contra o código anterior:
+  `node --import tsx --test tests/unit/live-clinical-write-membership-authorization.test.ts`
+  → 1 falha: `esperado 200 ... recebido 403
+  {"error":"Perfil sem permissão para alterar dados clínicos.","code":"FORBIDDEN"}`.
+- Fix: nova `liveClinicalWriteAuthorization` em `_middleware.ts` reautoriza
+  escrita em `/api/live/**` pela mesma fonte de verdade que o Clinical Core
+  já usa (`getClinicMembership` + `membershipCanWriteClinical` de
+  `functions/api/tenant/_core.ts`, resolvendo a clínica via a mesma
+  `resolveBillingClinicId` de `functions/api/billing/_guard.ts`). Quando a
+  clínica não é resolvível ou a membership não concede `clinical.write`,
+  cai no `roleFailure` de sempre — `/api/patients` e demais rotas legadas
+  (fora de `/api/live/`) nunca passam por esta função e ficam com o
+  comportamento anterior, intocado.
+- GREEN: o mesmo teste → exit 0 (2/2, incluindo o controle: membership
+  `financial` com papel global `professional` continua barrada).
+- Regressão completa, todas exit 0: `npm run check`, `npm run lint`,
+  `npm run test:quick-wins` (0 `not ok` na cadeia inteira, inclusive
+  `tenant-management-authorization.test.ts`, 14/14, que já cobre
+  `reader-owner`/`operator-manager` em `/api/patients` continuando 403),
+  `npm run test:operations`, `npm run test:saas-self-service`,
+  `npm run build:client`.
+- Fixtures 100% sintéticas (`example.test`), sem PHI.
+- Rollback: reverter o commit; sem migração, sem efeito em dado persistido.
+- Risco remanescente (deliberadamente fora deste incremento, registrado em
+  BACKLOG.md#S10): escopo operacional próprio de `assistant`/`financial`
+  fora do clínico, e o bypass do papel global `professional` sobre paciente
+  LEGADO (`patients_demo`, sem `clinic_id` — depende da decisão de negócio
+  de S9).
+

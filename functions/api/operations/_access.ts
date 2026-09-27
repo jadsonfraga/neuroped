@@ -248,10 +248,22 @@ async function getExistingStaffOwner(
     .first<ExistingStaffOwner>();
 }
 
+// O vínculo de recepção só vale para quem já é membro `assistant` ATIVO da
+// mesma clínica — isto é, quem aceitou um convite dela (consentimento do
+// titular). Antes, qualquer conta `operator` da plataforma, de qualquer
+// clínica, podia ser vinculada sem aceite (AUTHZ-P1-06). A condição é
+// repetida no predicado da escrita para não abrir janela entre a checagem e
+// o INSERT/UPDATE.
+const STAFF_MEMBERSHIP_PREDICATE = `EXISTS (
+  SELECT 1 FROM clinic_memberships m
+   WHERE m.clinic_id = ? AND m.user_id = ? AND m.role = 'assistant' AND m.active = 1
+)`;
+
 export async function linkOperationsOperator(
   db: D1Database,
   principal: OperationsPrincipal,
   email: string,
+  clinicId: string,
 ): Promise<{ ok: true; staffUserId: string } | { ok: false; code: string }> {
   if (!principal.canConfigure) return { ok: false, code: "FORBIDDEN" };
   const normalized = email.trim().toLowerCase();
@@ -264,6 +276,11 @@ export async function linkOperationsOperator(
     return { ok: false, code: "STAFF_ROLE_INVALID" };
   }
   if (staff.id === principal.providerUserId) return { ok: false, code: "SELF_LINK_INVALID" };
+  const member = await db
+    .prepare(`SELECT 1 AS ok WHERE ${STAFF_MEMBERSHIP_PREDICATE}`)
+    .bind(clinicId, staff.id)
+    .first<{ ok: number }>();
+  if (!member) return { ok: false, code: "STAFF_NOT_CLINIC_MEMBER" };
 
   const existing = await getExistingStaffOwner(db, staff.id);
   if (existing && existing.provider_user_id !== principal.providerUserId) {
@@ -276,9 +293,10 @@ export async function linkOperationsOperator(
       .prepare(
         `UPDATE booking_staff_links
             SET active = 1, created_by_user_id = ?, updated_at = ?
-          WHERE provider_user_id = ? AND staff_user_id = ?`,
+          WHERE provider_user_id = ? AND staff_user_id = ?
+            AND ${STAFF_MEMBERSHIP_PREDICATE}`,
       )
-      .bind(principal.actorUserId, now, principal.providerUserId, staff.id)
+      .bind(principal.actorUserId, now, principal.providerUserId, staff.id, clinicId, staff.id)
       .run();
     if ((update.meta?.changes ?? 0) === 1) {
       return { ok: true, staffUserId: staff.id };
@@ -288,14 +306,18 @@ export async function linkOperationsOperator(
   }
 
   try {
-    await db
+    const inserted = await db
       .prepare(
         `INSERT INTO booking_staff_links
           (provider_user_id, staff_user_id, active, created_by_user_id, created_at, updated_at)
-         VALUES (?, ?, 1, ?, ?, ?)`,
+         SELECT ?, ?, 1, ?, ?, ?
+          WHERE ${STAFF_MEMBERSHIP_PREDICATE}`,
       )
-      .bind(principal.providerUserId, staff.id, principal.actorUserId, now, now)
+      .bind(principal.providerUserId, staff.id, principal.actorUserId, now, now, clinicId, staff.id)
       .run();
+    if ((inserted.meta?.changes ?? 0) !== 1) {
+      return { ok: false, code: "STAFF_NOT_CLINIC_MEMBER" };
+    }
   } catch (cause) {
     const winner = await getExistingStaffOwner(db, staff.id);
     if (winner && winner.provider_user_id !== principal.providerUserId) {
