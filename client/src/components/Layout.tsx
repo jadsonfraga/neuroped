@@ -48,6 +48,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { canRenderNavigationItem } from "@/security/routeGuardPolicy";
 import { ClinicSwitcher } from "@/components/ClinicSwitcher";
+import { DrJadsoneyeShortcut } from "@/components/DrJadsoneyeShortcut";
 import { useUiPreferences } from "@/hooks/useUiPreferences";
 
 const NESPLORA_SITE_URL = "/nesplora/";
@@ -859,6 +860,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Contexto SaaS: o servidor continua sendo a autoridade de autorização. */}
         <ClinicSwitcher collapsed={collapsed} />
+
+        {/* Aplicativo externo: mesma política das conexões, sem dados na URL. */}
+        {!isLoading && !IS_PUBLIC_ZONE && canRenderNavItem("/conecta") && (
+          <DrJadsoneyeShortcut
+            collapsed={collapsed}
+            onNavigate={() => setMobileOpen(false)}
+          />
+        )}
 
         {/* Atalhos em destaque */}
         {/* A hierarquia depende da sessão resolvida. Mostrar só as conexões
