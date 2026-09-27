@@ -73,6 +73,11 @@ function fixture(scope: "patient" | "clinic") {
   }
   sqlite.prepare("INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, 'admin')")
     .run(ACTOR, "Ator Sintético", "atomicity@example.test");
+  // Usado só pela corrida "appointment órfão chega depois da contagem":
+  // appointments não tem clinic_id (é a única tabela em
+  // UNREACHABLE_PATIENT_TABLES, ver _purge.ts) mas exige service_id.
+  sqlite.prepare(`INSERT INTO booking_services (id, provider_user_id, name, duration_minutes)
+    VALUES ('atomicity-service', ?, 'Serviço sintético', 30)`).run(ACTOR);
   for (const [clinic, patient] of [[RED, RED_PATIENT], [BLUE, BLUE_PATIENT]]) {
     sqlite.prepare(`INSERT INTO clinics (id, slug, name, timezone, status, created_by_user_id)
       VALUES (?, ?, ?, 'America/Recife', 'active', ?)`)
@@ -148,9 +153,23 @@ const races: Array<{ name: string; scope: "patient" | "clinic"; mutate: (db: Dat
   { name: "lifecycle removido antes do batch", scope: "clinic", mutate: (db) => {
     db.prepare("DELETE FROM tenant_lifecycle WHERE clinic_id = ?").run(RED);
   } },
-  { name: "documento fora do export chega depois da contagem", scope: "clinic", mutate: (db) => {
-    db.prepare(`INSERT INTO live_documents (id, clinic_id, patient_id, author_user_id, document_type, origin)
-      VALUES ('atomicity-late-document', ?, ?, ?, 'report', 'system')`).run(RED, RED_PATIENT, ACTOR);
+  // S12B (2026-09-26): documentos passaram a ser cobertos pelo export
+  // (EXPORT_UNCOVERED_CLINIC_TABLES ficou vazia em
+  // functions/api/tenant/_exportPayload.ts), então um live_documents tardio
+  // não é mais um cenário real — o loop que gerava a cerca atômica para essa
+  // lista não tem mais nenhuma tabela para proteger. appointments continua
+  // em UNREACHABLE_PATIENT_TABLES (não tem clinic_id, não é coberto por
+  // purge nenhum) e passa pela MESMA cerca — este cenário migrou para lá em
+  // vez de testar um caminho hoje inatingível.
+  { name: "appointment órfão chega depois da contagem", scope: "clinic", mutate: (db) => {
+    // source='professional' evita o guard de billing de agendamento público
+    // (trg_public_appointment_billing_guard, só dispara para source='public')
+    // — irrelevante para esta corrida, que testa a cerca atômica do purge,
+    // não billing.
+    db.prepare(`INSERT INTO appointments
+      (id, provider_user_id, service_id, patient_id, starts_at_local, ends_at_local, timezone, source, booking_token_hash)
+      VALUES ('atomicity-late-appointment', ?, 'atomicity-service', ?, '2026-10-01T10:00', '2026-10-01T10:30', 'America/Recife', 'professional', 'atomicity-late-token-hash')`)
+      .run(ACTOR, RED_PATIENT);
   } },
 ];
 

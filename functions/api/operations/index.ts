@@ -376,7 +376,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
     if (action === "staff_link") {
       const email = cleanText(body.email, 180).toLowerCase();
       if (!email.includes("@")) return errorResponse("E-mail da recepção inválido.", "VALIDATION_ERROR", 400);
-      const result = await linkOperationsOperator(env.DB, principal, email);
+      const result = await linkOperationsOperator(env.DB, principal, email, clinicId);
       if (!result.ok) {
         if (result.code === "SELF_LINK_INVALID") {
           return errorResponse(
@@ -393,7 +393,8 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
         // conta sem papel operator ativo e conta já vinculada a outro
         // profissional respondiam com código/status distintos — um oráculo
         // de enumeração de contas alheias na plataforma. As três respondem
-        // agora exatamente igual.
+        // agora exatamente igual — e conta sem membership `assistant` ativa
+        // nesta clínica (STAFF_NOT_CLINIC_MEMBER) também.
         return errorResponse(
           "Este e-mail não corresponde a um usuário de recepção disponível para vínculo.",
           "STAFF_NOT_AVAILABLE",

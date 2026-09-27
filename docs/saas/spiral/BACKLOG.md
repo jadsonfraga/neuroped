@@ -348,6 +348,46 @@ autoatendimento (incluindo `paymentStatus`). Visto falhando pelo motivo
 certo contra o código anterior via `git stash`. Evidência em
 EVIDENCE.md#S22.
 
+## S23 · P1 · FECHADO (ciclo 6, 2026-09-27)
+A recepção delegada (papel global `operator`, vinculada a um profissional em
+`booking_staff_links`) nunca alcançava a agenda: `functions/api/operations/
+_middleware.ts` resolvia clínica e entitlement pelo ATOR, e a secretária não
+tem membership clínica. Toda chamada morria em 409
+`BILLING_CLINIC_CONTEXT_REQUIRED` antes do handler, embora o handler
+(`preparePrincipal`) e o middleware global já tivessem sido desenhados para
+a delegação. O papel "secretária" vendido não funcionava. (AUTHZ-P1-04,
+metade `operator`)
+
+Corrigido só no middleware: para `operator`, resolve o vínculo ativo
+persistido (`resolveOperationsPrincipal`, o mesmo usado pelo handler) e
+aplica clínica + billing + status da clínica do PROFISSIONAL responsável.
+Sem vínculo ativo → 403 `STAFF_LINK_REQUIRED` no próprio gate (fail-closed).
+O header `X-Tenant-Id` continua sendo alvo, nunca autoridade: só vale se o
+profissional responsável for membro ativo daquela clínica. Nenhuma migração
+e nenhuma mudança de handler. A redação da recepção (sem valores, forma de
+pagamento, equipe ou configuração) já existia e agora é exercitada.
+
+Teste novo: `tests/unit/operations-delegated-staff-gate.test.ts`, com schema
+real, middleware real encadeado ao handler real e clínicas Alfa/Beta
+sintéticas, incluído em `test:operations`. Evidência em EVIDENCE.md#S23.
+
+Complemento no mesmo ciclo (S23b, AUTHZ-P1-06 residual): `staff_link`
+aceitava QUALQUER conta `operator` da plataforma, de qualquer clínica, sem
+aceite. Agora só é possível vincular quem é membro `assistant` ativo da
+MESMA clínica, ou seja, quem aceitou convite dela. A condição é repetida no
+predicado do INSERT/UPDATE (sem janela de corrida), e a recusa responde o
+mesmo 404 `STAFF_NOT_AVAILABLE` dos demais casos (anti-enumeração). A tela
+da agenda passou a orientar o fluxo: convidar como Assistente em
+Configurações › Equipe e, após o aceite, vincular. Vínculos já existentes
+não foram alterados (sem migração e sem corte do cliente zero). A exigência
+de membership em tempo de uso para vínculos antigos depende de censo de
+produção.
+
+Continua aberto em S10: membership `assistant`/`financial` sem escopo próprio
+(o escopo `clinical` exige owner/clinic_admin/professional), ou seja, a
+secretária modelada como membro da clínica em vez de delegação por
+profissional. É uma mudança de modelo de papéis e fica em PR separada.
+
 ## S9 · P0 · aberto — censo observado, associação legítima pendente
 Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo
 de produção com sucesso após a PR #994. Três pacientes não têm owner; um
@@ -406,22 +446,32 @@ HOJE nenhuma clínica com PDFs, avaliações, intake ou escala respondida
 consegue completar o encerramento com purge físico — comportamento
 deliberado (fail-closed) até o export cobrir esses domínios.
 
-## S12B · P1 · FECHADO (ciclo 5, 2026-09-26)
+## S12B · P1 · FECHADO (ciclo 5, 2026-09-26, correção de escopo na revisão)
 `collectTenantExportPayload` passou a incluir de fato os oito domínios que
-faltavam — avaliações e respostas, documentos e versões (conteúdo decifrado),
-convites/submissões de intake e de escala remota (token_hash nunca sai) —
-fechando `complete` para `true` sempre que só esses domínios restavam fora, e
-liberando o purge de encerramento sem depender de o admin de plataforma
-esvaziar as tabelas manualmente. `exportWithinSyncLimits` passou a somar os
-cinco novos campos cifrados na pré-checagem síncrona, então um tenant com
-documentos grandes cai no caminho assíncrono (worker) em vez de travar no
-caminho síncrono. Evidência em EVIDENCE.md#S12B.
+bloqueavam o purge — avaliações e respostas, documentos e versões (conteúdo
+decifrado), convites/submissões de intake e de escala remota (token_hash
+nunca sai) — fechando `complete` para `true` sempre que só esses domínios
+restavam fora, e liberando o purge de encerramento sem depender de o admin
+de plataforma esvaziar as tabelas manualmente. `exportWithinSyncLimits`
+passou a somar os cinco novos campos cifrados na pré-checagem síncrona,
+então um tenant com documentos grandes cai no caminho assíncrono (worker)
+em vez de travar no caminho síncrono.
 
-Ainda fora deste fechamento, de propósito (não fazia parte de LTB-02 nem
-bloqueava purge): `clinic_settings` e `live_retention_policies` no payload
-exportado — nenhum dos dois é dado do titular (são configuração da clínica),
-e nenhum purge recusa por eles. Candidato a uma melhoria de completude
-separada, não a uma reabertura de S12B.
+Correção pedida em revisão (PR #1004, revisor `jadsonfraga`): a primeira
+entrega desta PR deixou `clinic_settings` e `live_retention_policies` fora
+do payload e descreveu isso como "nunca fez parte do escopo de S12B" — o
+que contradizia o texto original deste item, que pedia explicitamente os
+dois. Nenhum dos dois é dado do titular (são configuração da clínica) nem
+bloqueia purge (`PURGE_PRESERVED_TABLES` em `_purge.ts`), mas uma clínica
+pedindo "todos os meus dados" espera ver a própria configuração/timbre
+institucional também. Corrigido em PR separada (a #1004 mesclou antes do
+push da correção): os dois agora saem no payload (`clinicSettings`/
+`retentionPolicy`, `null` quando a clínica nunca configurou). A mesma PR
+migra um cenário de `tests/unit/lgpd-purge-atomicity.test.ts` (PR #1002,
+mesclada em paralelo) que dependia de `EXPORT_UNCOVERED_CLINIC_TABLES` ter
+`live_documents` — S12B esvaziou a lista, então a corrida migrou para
+`appointments` (mesma cerca atômica, tabela que segue genuinamente fora do
+export). Evidência em EVIDENCE.md#S12B.
 
 
 ## S1-R1 · P1 · corrigido, integração em validação (#951)
