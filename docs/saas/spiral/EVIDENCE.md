@@ -228,21 +228,63 @@
   grandes passaria pela pré-checagem e só travaria depois, já com tudo
   carregado em memória. Nenhuma migração: os oito domínios já existiam desde
   0014/0018/0021.
+- **Correção de escopo pedida em revisão** (PR #1004, revisor `jadsonfraga`,
+  review `5328051311`): a entrega original desta seção deixava
+  `clinic_settings` e `live_retention_policies` fora do payload e afirmava
+  (em `BACKLOG.md` e na descrição da PR) que nunca fizeram parte do escopo
+  de S12B — o revisor apontou que o texto original de S12B pedia
+  explicitamente os dois. Correto sobre o mecanismo (nenhum dos dois bloqueia
+  purge — estão em `PURGE_PRESERVED_TABLES`), incorreto sobre o escopo
+  declarado. Corrigido em `functions/api/tenant/_exportPayload.ts`: duas
+  consultas adicionais (`clinic_settings WHERE clinic_id = ? LIMIT 1`,
+  `live_retention_policies WHERE clinic_id = ? LIMIT 1`; ambas 0-1 linha por
+  clínica, sem campo cifrado) entram no batch e saem em `data.clinicSettings`/
+  `data.retentionPolicy` (`null` quando a clínica nunca configurou). Não
+  afeta `EXPORT_UNCOVERED_CLINIC_TABLES`, `complete` nem o purge — é
+  completude de export, não desbloqueio de purge.
+- **PR #1004 mesclou só o commit `c2f5aee`** (os oito domínios, sem a
+  correção acima) enquanto esta correção ainda estava em desenvolvimento —
+  `jadsonfraga` mesclou a PR entre a revisão e o push do commit seguinte.
+  A correção segue em PR separada, rebaseada sobre o `main` pós-merge.
+  Nesse rebase, `main` já trazia PR #1002 (`89c62c4`, "cercar purge com
+  política e cobertura na mesma transação"), que adicionou
+  `tests/unit/lgpd-purge-atomicity.test.ts` com uma corrida
+  ("documento fora do export chega depois da contagem") que injeta uma
+  linha tardia em `live_documents` para provar que a cerca atômica do purge
+  (`_purge.ts`) recusa sem apagar nada — só que essa cerca é construída
+  iterando `EXPORT_UNCOVERED_CLINIC_TABLES`, e com a lista vazia (S12B) o
+  loop não gera predicado nenhum para `live_documents`, e o teste passou a
+  falhar de verdade (o purge deletava tudo em vez de recusar): as duas PRs,
+  corretas isoladamente, quebravam uma à outra depois de mescladas. Migrei
+  a corrida para `appointments` (a única tabela que sobra em
+  `UNREACHABLE_PATIENT_TABLES`, com a MESMA cerca atômica, e que S12B não
+  toca) — mesmo mecanismo, tabela que continua genuinamente sujeita a ele
+  hoje. Exigiu popular `booking_services` na fixture (FK obrigatória de
+  `appointments`) e marcar `source = 'professional'` no INSERT sintético
+  para não disparar `trg_public_appointment_billing_guard` (guard de billing
+  de agendamento público, irrelevante para esta corrida). Visto FALHANDO
+  pelo motivo certo (`injected` nunca chegava a `true`: a asserção interna
+  do teste, não uma reformulação por fora) antes do ajuste da fixture; verde
+  depois, junto com os outros 8 cenários do arquivo, inalterados.
 - Ambiente: container da sessão, Node do repo, HEAD `0b4f74f` (main no início
-  do ciclo) + S12B.
+  do ciclo) → `574236b` (main pós-merge de #1004, já com #1002) + a correção
+  de escopo e o ajuste de integração acima.
 - Efeito: `EXPORT_UNCOVERED_CLINIC_TABLES` vazia ⇒ `complete` computado passa
   a ser sempre `true` (nada mais fica de fora) ⇒ o purge de encerramento por
   clínica (`_purge.ts`) para de recusar com `EXPORT_MANIFEST_INCOMPLETE` só
   por essas oito tabelas terem linha — o efeito colateral deliberado do S12
   original está revertido para as clínicas que só têm dado nesses domínios.
 - Testes: `tests/unit/lgpd-run-export-endpoint.test.ts` ganha um cenário
-  RED/BLUE que semeia os oito domínios nas duas clínicas sintéticas e prova,
-  num único export de RED: `complete === true`, `uncoveredCounts` vazio, cada
-  domínio decifrado corretamente (`assert.deepEqual` contra o plaintext
-  original), nenhum dado de BLUE em `JSON.stringify(collected.data)`, e
-  `token_hash`/os hashes de convite nunca aparecem no payload. O cenário
-  anterior ("um documento novo bloqueia o export com 409") foi substituído —
-  não é mais o comportamento correto, então deixou de ser testado como tal.
+  RED/BLUE que semeia os oito domínios MAIS `clinic_settings`/
+  `live_retention_policies` nas duas clínicas sintéticas e prova, num único
+  export de RED: `complete === true`, `uncoveredCounts` vazio, cada domínio
+  decifrado corretamente (`assert.deepEqual` contra o plaintext original),
+  o timbre e a política de retenção de RED presentes com os valores exatos
+  configurados, nenhum dado de BLUE em `JSON.stringify(collected.data)`
+  (inclusive o timbre de BLUE), e `token_hash`/os hashes de convite nunca
+  aparecem no payload. O cenário anterior ("um documento novo bloqueia o
+  export com 409") foi substituído — não é mais o comportamento correto,
+  então deixou de ser testado como tal.
   `tests/unit/lgpd-purge-executor.test.ts`: o cenário 8a antigo (purge por
   clínica recusa com dado nos oito domínios) foi substituído por uma prova de
   que uma FALHA REAL de leitura (não uma lacuna de export) continua
@@ -253,10 +295,13 @@
   (200 em vez de 409 no primeiro; a asserção `EXPORT_MANIFEST_INCOMPLETE`
   nunca dispara no segundo porque a lista ficou vazia) antes de eu reescrever
   as asserções — não apenas "corrigidos para passar".
-- Comandos exit 0: `npm run check`, `npx eslint functions/api/tenant/_exportPayload.ts
-  tests/unit/lgpd-run-export-endpoint.test.ts tests/unit/lgpd-purge-executor.test.ts`,
+- Comandos exit 0 (rodados após o rebase sobre `main` pós-#1004/#1002):
+  `npm run check`, `npx eslint functions/api/tenant/_exportPayload.ts
+  tests/unit/lgpd-run-export-endpoint.test.ts tests/unit/lgpd-purge-executor.test.ts
+  tests/unit/lgpd-purge-atomicity.test.ts`,
   `node --import tsx --test tests/unit/lgpd-run-export-endpoint.test.ts`,
   `node --import tsx --test tests/unit/lgpd-purge-executor.test.ts`,
+  `node --import tsx --test tests/unit/lgpd-purge-atomicity.test.ts`,
   `node --import tsx --test tests/unit/saas-tenant-lifecycle.test.ts`,
   `node --import tsx --test tests/unit/lgpd-worker-executor-core.test.ts`,
   `node --import tsx --test tests/unit/lgpd-worker-foundation.test.ts`,

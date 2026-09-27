@@ -432,22 +432,32 @@ HOJE nenhuma clínica com PDFs, avaliações, intake ou escala respondida
 consegue completar o encerramento com purge físico — comportamento
 deliberado (fail-closed) até o export cobrir esses domínios.
 
-## S12B · P1 · FECHADO (ciclo 5, 2026-09-26)
+## S12B · P1 · FECHADO (ciclo 5, 2026-09-26, correção de escopo na revisão)
 `collectTenantExportPayload` passou a incluir de fato os oito domínios que
-faltavam — avaliações e respostas, documentos e versões (conteúdo decifrado),
-convites/submissões de intake e de escala remota (token_hash nunca sai) —
-fechando `complete` para `true` sempre que só esses domínios restavam fora, e
-liberando o purge de encerramento sem depender de o admin de plataforma
-esvaziar as tabelas manualmente. `exportWithinSyncLimits` passou a somar os
-cinco novos campos cifrados na pré-checagem síncrona, então um tenant com
-documentos grandes cai no caminho assíncrono (worker) em vez de travar no
-caminho síncrono. Evidência em EVIDENCE.md#S12B.
+bloqueavam o purge — avaliações e respostas, documentos e versões (conteúdo
+decifrado), convites/submissões de intake e de escala remota (token_hash
+nunca sai) — fechando `complete` para `true` sempre que só esses domínios
+restavam fora, e liberando o purge de encerramento sem depender de o admin
+de plataforma esvaziar as tabelas manualmente. `exportWithinSyncLimits`
+passou a somar os cinco novos campos cifrados na pré-checagem síncrona,
+então um tenant com documentos grandes cai no caminho assíncrono (worker)
+em vez de travar no caminho síncrono.
 
-Ainda fora deste fechamento, de propósito (não fazia parte de LTB-02 nem
-bloqueava purge): `clinic_settings` e `live_retention_policies` no payload
-exportado — nenhum dos dois é dado do titular (são configuração da clínica),
-e nenhum purge recusa por eles. Candidato a uma melhoria de completude
-separada, não a uma reabertura de S12B.
+Correção pedida em revisão (PR #1004, revisor `jadsonfraga`): a primeira
+entrega desta PR deixou `clinic_settings` e `live_retention_policies` fora
+do payload e descreveu isso como "nunca fez parte do escopo de S12B" — o
+que contradizia o texto original deste item, que pedia explicitamente os
+dois. Nenhum dos dois é dado do titular (são configuração da clínica) nem
+bloqueia purge (`PURGE_PRESERVED_TABLES` em `_purge.ts`), mas uma clínica
+pedindo "todos os meus dados" espera ver a própria configuração/timbre
+institucional também. Corrigido em PR separada (a #1004 mesclou antes do
+push da correção): os dois agora saem no payload (`clinicSettings`/
+`retentionPolicy`, `null` quando a clínica nunca configurou). A mesma PR
+migra um cenário de `tests/unit/lgpd-purge-atomicity.test.ts` (PR #1002,
+mesclada em paralelo) que dependia de `EXPORT_UNCOVERED_CLINIC_TABLES` ter
+`live_documents` — S12B esvaziou a lista, então a corrida migrou para
+`appointments` (mesma cerca atômica, tabela que segue genuinamente fora do
+export). Evidência em EVIDENCE.md#S12B.
 
 
 ## S1-R1 · P1 · corrigido, integração em validação (#951)
