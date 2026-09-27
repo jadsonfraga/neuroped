@@ -233,6 +233,7 @@ function FeaturedShortcuts({
       )}
     </>
   );
+
   return (
     <div className="px-2 pt-3">
       {!collapsed ? (
@@ -425,7 +426,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // depois liberar a árvore falha silenciosamente em navegadores modernos.
     setInert(sidebarRef.current, false);
     setInert(mobileHeaderRef.current, true);
-    setInert(mainContentRef.current, false);
+    setInert(mainContentRef.current, true);
     mobileMenuWasOpen.current = true;
     mobileCloseButtonRef.current?.focus();
     const sidebar = sidebarRef.current;
