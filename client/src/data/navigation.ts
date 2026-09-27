@@ -100,13 +100,6 @@ export const featuredNavigation: NavItem[] = [
     description: "Aventura em 4 mundos · visual, leitura, escrita e aritmética",
   },
   {
-    href: "/por-faixa-etaria",
-    label: "Por faixa etária",
-    icon: PenLine,
-    tone: "priority",
-    description: "Ditado e leitura · 5–19 anos · acertos e erros em detalhe",
-  },
-  {
     href: "/pacientes",
     label: "Pacientes / Prontuário",
     icon: Users,
@@ -133,6 +126,13 @@ export const featuredNavigation: NavItem[] = [
     icon: Pill,
     tone: "priority",
     description: "Prescrição clínica",
+  },
+  {
+    href: "/por-faixa-etaria",
+    label: "Por faixa etária",
+    icon: PenLine,
+    tone: "priority",
+    description: "Ditado e leitura · 5–19 anos · acertos e erros em detalhe",
   },
   {
     href: "/filtro",
