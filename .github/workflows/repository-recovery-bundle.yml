@@ -1,0 +1,102 @@
+name: Repository recovery bundle
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/repository-recovery-bundle.yml'
+      - 'docs/REPOSITORY_RECOVERY.md'
+      - 'CLAUDE.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repository-recovery-bundle.yml'
+      - 'docs/REPOSITORY_RECOVERY.md'
+      - 'CLAUDE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  export-and-restore:
+    if: github.repository == 'jadsonfraga/neuroped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout the exact source commit without stored credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export canonical refs and prove an offline reconstruction
+        env:
+          RECOVERY_OUT: ${{ runner.temp }}/neuroped-recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RECOVERY_OUT"
+          source_sha="$(git rev-parse HEAD)"
+          git update-ref refs/heads/recovery/source "$source_sha"
+          # Public repository; no token, private key or credential is copied.
+          # Fetch updates local recovery refs only. Nothing is pushed remotely.
+          git fetch --no-tags https://github.com/jadsonfraga/neuroped.git \
+            +refs/heads/main:refs/heads/recovery/main \
+            +refs/heads/claude/obs-60-neuroped-module-28nyqy:refs/heads/recovery/claude-obs60 \
+            +refs/pull/1023/head:refs/heads/recovery/obs60-pr1023
+          test "$(git rev-parse --is-shallow-repository)" = false
+          git for-each-ref --format='%(objectname) %(refname)' refs/heads/recovery/ > "$RECOVERY_OUT/refs.txt"
+          test "$(wc -l < "$RECOVERY_OUT/refs.txt")" -eq 4
+          git bundle create "$RECOVERY_OUT/neuroped.bundle" \
+            refs/heads/recovery/source refs/heads/recovery/main \
+            refs/heads/recovery/claude-obs60 refs/heads/recovery/obs60-pr1023
+          git bundle verify "$RECOVERY_OUT/neuroped.bundle"
+          git archive --format=tar.gz --prefix=neuroped/ "$source_sha" > "$RECOVERY_OUT/neuroped-source.tar.gz"
+          restore_dir="$(mktemp -d)"
+          trap 'rm -rf "$restore_dir"' EXIT
+          git clone --branch recovery/source "$RECOVERY_OUT/neuroped.bundle" "$restore_dir/neuroped"
+          git -C "$restore_dir/neuroped" fsck --full
+          test "$(git -C "$restore_dir/neuroped" rev-parse HEAD)" = "$source_sha"
+          while read -r sha ref; do
+            git -C "$restore_dir/neuroped" cat-file -e "$sha^{commit}"
+            test "$(git -C "$restore_dir/neuroped" rev-parse "refs/remotes/origin/${ref#refs/heads/}")" = "$sha"
+          done < "$RECOVERY_OUT/refs.txt"
+          test -f "$restore_dir/neuroped/AGENTS.md"
+          test -f "$restore_dir/neuroped/CLAUDE.md"
+          test -f "$restore_dir/neuroped/shared/obs60.ts"
+          test -f "$restore_dir/neuroped/tests/unit/obs60-tenant-gate.test.ts"
+          test -f "$restore_dir/neuroped/docs/audits/OBS60_RECOVERY_2026-09-27.md"
+          git -C "$restore_dir/neuroped" diff --exit-code
+          export RECOVERY_SOURCE_SHA="$source_sha"
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          out = pathlib.Path(os.environ['RECOVERY_OUT'])
+          refs = {ref: sha for sha, ref in (line.split() for line in (out / 'refs.txt').read_text().splitlines())}
+          manifest = {
+              'repository': 'jadsonfraga/neuroped',
+              'sourceCommit': os.environ['RECOVERY_SOURCE_SHA'],
+              'refs': refs,
+              'gitBundleRoundTripVerified': True,
+              'runId': os.environ['GITHUB_RUN_ID'],
+              'runAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'sourceCommitDate': subprocess.check_output(['git', 'show', '-s', '--format=%cI', os.environ['RECOVERY_SOURCE_SHA']], text=True).strip(),
+              'scope': 'Versioned source and reachable Git history only; no database, secrets, unpushed work, running processes or deployment.',
+          }
+          (out / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+          PY
+          (cd "$RECOVERY_OUT" && sha256sum neuroped.bundle neuroped-source.tar.gz refs.txt manifest.json > SHA256SUMS)
+          echo "Offline clone and all four recovery refs verified: $source_sha"
+      - name: Preserve verified source and Git history
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: neuroped-recovery-${{ github.run_id }}
+          path: ${{ runner.temp }}/neuroped-recovery
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
