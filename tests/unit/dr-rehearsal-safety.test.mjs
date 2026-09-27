@@ -218,6 +218,10 @@ assert.doesNotMatch(
 
   const first = invoke([{ results: [row], success: true, meta: { duration: 1 } }]);
   const second = invoke([{ results: [row], success: true, meta: { duration: 999 } }]);
+  const withWranglerPreamble = spawnSync(process.execPath, [fingerprintScript], {
+    encoding: "utf8",
+    input: `npm warn exec pacote temporário\n\u001b[36mwrangler remoto\u001b[0m\n${JSON.stringify([{ results: [row], success: true, meta: { duration: 5 } }])}\n`,
+  });
   assert.equal(first.status, 0, first.stderr);
   assert.equal(second.status, 0, second.stderr);
   assert.match(first.stdout, /^[0-9a-f]{64}\n$/);
@@ -225,6 +229,12 @@ assert.doesNotMatch(
     first.stdout,
     second.stdout,
     "metadata volátil do Wrangler não pode alterar o fingerprint",
+  );
+  assert.equal(withWranglerPreamble.status, 0, withWranglerPreamble.stderr);
+  assert.equal(
+    withWranglerPreamble.stdout,
+    first.stdout,
+    "avisos e códigos ANSI do Wrangler antes do JSON não podem quebrar o fingerprint",
   );
 
   const unexpected = invoke([{ results: [{ ...row, patient_name: "não deveria existir" }], success: true }]);

@@ -5,11 +5,25 @@ import { createHash } from "node:crypto";
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
 
+const raw = Buffer.concat(chunks)
+  .toString("utf8")
+  .replace(/\u001b\[[0-9;]*m/g, "");
+const arrayStart = raw.indexOf("[");
+const arrayEnd = raw.lastIndexOf("]");
+const objectStart = raw.indexOf("{");
+const objectEnd = raw.lastIndexOf("}");
+const jsonText =
+  arrayStart >= 0 && arrayEnd > arrayStart
+    ? raw.slice(arrayStart, arrayEnd + 1)
+    : objectStart >= 0 && objectEnd > objectStart
+      ? raw.slice(objectStart, objectEnd + 1)
+      : "";
+
 let payload;
 try {
-  payload = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  payload = JSON.parse(jsonText);
 } catch {
-  console.error("Saída do Wrangler não é JSON válido; fingerprint recusado.");
+  console.error("Saída do Wrangler não contém um envelope JSON válido; fingerprint recusado.");
   process.exit(1);
 }
 
