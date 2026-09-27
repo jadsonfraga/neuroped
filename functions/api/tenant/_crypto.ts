@@ -71,6 +71,16 @@ function requireIndexSecret(env: TenantEnv): Uint8Array {
 function validateKeyring(env: TenantEnv): void {
   const current = currentDataKey(env);
   const previous = previousDataKey(env);
+  // An optional key is absent only when BOTH optional fields are empty.
+  // A declared but unusable previous key must not make readiness green while
+  // records encrypted before rotation have no usable decryption descriptor.
+  // Preserve legacy default IDs and leave ciphertext/key derivation unchanged.
+  const previousDeclared = Boolean(
+    env.CLINICAL_DATA_KEY_PREVIOUS?.trim() || env.CLINICAL_DATA_KEY_PREVIOUS_ID?.trim(),
+  );
+  if (previousDeclared && !previous) {
+    throw new Error("CLINICAL_PREVIOUS_KEY_NOT_CONFIGURED");
+  }
   const indexSecret = requireIndexSecretText(env);
   if (previous && previous.id === current.id) {
     throw new Error("CLINICAL_KEY_ID_COLLISION");
@@ -83,6 +93,7 @@ function validateKeyring(env: TenantEnv): void {
 export type ClinicalCryptoStatusCode =
   | "CLINICAL_CRYPTO_NOT_CONFIGURED"
   | "CLINICAL_INDEX_KEY_NOT_CONFIGURED"
+  | "CLINICAL_PREVIOUS_KEY_NOT_CONFIGURED"
   | "CLINICAL_KEY_ID_INVALID"
   | "CLINICAL_KEY_ID_COLLISION"
   | "CLINICAL_KEY_SEPARATION_REQUIRED"
@@ -95,6 +106,7 @@ export type ClinicalCryptoStatus =
 const SAFE_CLINICAL_CRYPTO_STATUS_CODES = new Set<ClinicalCryptoStatusCode>([
   "CLINICAL_CRYPTO_NOT_CONFIGURED",
   "CLINICAL_INDEX_KEY_NOT_CONFIGURED",
+  "CLINICAL_PREVIOUS_KEY_NOT_CONFIGURED",
   "CLINICAL_KEY_ID_INVALID",
   "CLINICAL_KEY_ID_COLLISION",
   "CLINICAL_KEY_SEPARATION_REQUIRED",
