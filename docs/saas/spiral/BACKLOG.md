@@ -499,3 +499,51 @@ export). Evidência em EVIDENCE.md#S12B.
 O diagnóstico não atesta configuração presente quando incompleta. Regressão
 cobre nove requisitos, env vazio, sete ambientes, acesso, no-store e segredo.
 Preservados S2–S22; a revisão antiga não reabre funcionalidades já entregues.
+
+## LTB-10 · P1 · FECHADO parcialmente (ciclo 8, 2026-09-27) — quatro olhos na eliminação
+`docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md#LTB-10` registrou dois defeitos
+na eliminação física de prontuário: (a) `evaluateDeletionEligibility` ignora
+o piso legal de retenção para escopo `patient`; (b) um único gestor cria E
+aprova sozinho o próprio pedido — sem segundo par de olhos.
+
+Fechada nesta sessão só a fatia (b), sem tocar em (a). `POST` (criar) e
+`PATCH` (aprovar) de `/api/live/governance` exigiam apenas
+`membershipCanManage`, sem comparar `requested_by_user_id` com quem aprova.
+`functions/api/live/governance/index.ts` (`onRequestPatch`) agora recusa
+`409 FOUR_EYES_REQUIRED` quando `requestType === 'delete'`, o próximo status
+é `approved` e o aprovador é a mesma pessoa que criou o pedido — antes de
+checar a transição de workflow. `export`/`policy` não são afetados: export
+não apaga nada e não pode exigir segundo gestor para a titular exportar os
+próprios dados.
+
+RED contra o código anterior (`git stash` de `governance/index.ts`):
+autoaprovação de um pedido `delete` respondia `200`. GREEN com a trava:
+`409 FOUR_EYES_REQUIRED`, status permanece `requested`; uma segunda gestora
+aprova normalmente (`200` → `approved`). Teste novo:
+`tests/unit/lgpd-deletion-four-eyes.test.ts`. Evidência em EVIDENCE.md#LTB-10.
+
+Regressão completa, todas exit 0: `npm run check`, `npx eslint` nos dois
+arquivos tocados, `tests/unit/cliente-zero-journey.test.ts`,
+`tests/unit/lgpd-purge-executor.test.ts`,
+`tests/unit/lgpd-purge-atomicity.test.ts`,
+`tests/unit/lgpd-run-deletion-endpoint.test.ts`,
+`tests/unit/lgpd-worker-executor-core.test.ts`,
+`tests/unit/lgpd-worker-foundation.test.ts`,
+`tests/unit/lgpd-worker-race-regressions.test.ts`,
+`tests/unit/saas-live-clinical-domains.test.ts`,
+`tests/unit/live-governance-failclosed.test.ts`,
+`tests/unit/live-tenant-isolation-adversarial.test.ts`,
+`tests/unit/live-read-audit-policy.test.ts`,
+`tests/unit/tenant-management-authorization.test.ts` e
+`npm run test:quick-wins` completo (0 `not ok`).
+
+Continua aberto (a): o piso legal de retenção do prontuário para eliminação
+de escopo `patient` numa clínica ATIVA. Não implementado nesta sessão porque
+`tests/unit/cliente-zero-journey.test.ts` exercita deliberadamente um pedido
+de eliminação como exercício do direito do titular (LGPD art. 18) numa
+clínica ativa, sem retenção — mudar essa semântica é decisão jurídico-
+regulatória (Lei 13.787/2018 e a retenção obrigatória de prontuário vs. LGPD
+art. 16, que autoriza reter dado por cumprimento de obrigação legal mesmo
+contra pedido de eliminação), não uma correção puramente técnica. Registrado
+como `LEGAL_REVIEW_REQUIRED` em
+`docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.

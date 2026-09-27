@@ -279,3 +279,41 @@ retorna `CONFIGURACAO_INCOMPLETA` quando falta qualquer requisito, mantendo
 provedor é feita pelo diagnóstico; os cinco limites de `naoComprova` permanecem.
 Reconciliação de código e documentação concluída; testes e CI do candidato
 reconciliado exigidos antes de merge. Não equivale a autorização de venda.
+
+## Ciclo 8 (2026-09-27) — auditoria de prontidão comercial + LTB-10 (quatro olhos)
+Revalidação obrigatória: `main` = HEAD `96d254a` (PR #1029 mesclada),
+worktree limpa. Deploy Cloudflare do mesmo SHA (run 36350629017, 21:31 UTC /
+18:31 America/Recife) confirmado verde nos gates de release, com dois
+bloqueios externos reconfirmados no health publicado:
+`clinicalCryptoConfigured: false` (`CLINICAL_CRYPTO_NOT_READY`) e
+`lgpdExport.storageBindingPresent: false` (`LGPD_BUCKET_NOT_CONFIGURED`,
+`BLOCKED_EXTERNAL_R2_TOKEN_PERMISSION` no log do job
+`deploy-cloudflare`). Ambos já documentados e inalterados desde
+`docs/audits/BLOCKED_EXTERNAL_CLINICAL_LGPD_PROVISIONING_2026-09-26.md`:
+exigem custódia humana do keyring clínico e permissão R2 no token do
+Cloudflare, nenhum dos dois executável a partir deste ambiente.
+
+Escolhido LTB-10 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md#LTB-10) entre
+os itens executáveis sem bloqueio externo: eliminação física de prontuário
+sem segundo gestor. Fechada só a metade de autorização (quatro olhos);
+a metade de piso de retenção legal para escopo `patient` numa clínica ativa
+foi deliberadamente NÃO alterada — `tests/unit/cliente-zero-journey.test.ts`
+já exercita esse caminho como exercício do direito do titular (LGPD art. 18)
+sem retenção, e mudar isso é decisão jurídico-regulatória (Lei 13.787/2018 x
+LGPD art. 16), registrada como `LEGAL_REVIEW_REQUIRED` em
+`docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.
+Evidência completa em EVIDENCE.md#LTB-10; BACKLOG.md#LTB-10 fechado
+parcialmente.
+
+Comandos exit 0 depois desta sessão: `npm run check`, `npx eslint` nos
+arquivos tocados, `npm run test:quick-wins` (cadeia completa, 0 `not ok`) e
+os 13 testes de LGPD/governança/tenant listados em EVIDENCE.md#LTB-10,
+incluindo `cliente-zero-journey.test.ts` (jornada comercial completa
+inalterada) e `lgpd-purge-executor.test.ts` (purge físico RED/BLUE
+inalterado).
+
+Instrumentos autorais (item de classificação A/B/C/D do mandato de
+prontidão comercial): já implementado por `npm run audit:instruments` e
+pelo pipeline de `implementationStatus` — instrumento de licença restritiva
+sem aplicação real exige status explícito não-"complete", revisado, nunca
+heurística. Nenhuma lacuna nova encontrada; não alterado nesta sessão.

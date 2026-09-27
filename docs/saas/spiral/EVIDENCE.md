@@ -931,3 +931,48 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
   LEGADO (`patients_demo`, sem `clinic_id` — depende da decisão de negócio
   de S9).
 
+
+### LTB-10 — quatro olhos na aprovação de eliminação física (ciclo 8, 2026-09-27)
+- Achado original: `docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md#LTB-10`
+  (`functions/api/live/governance/_worker-executor.ts:102-124`,
+  `functions/api/live/governance/index.ts:148-206,222-234`,
+  `functions/api/live/governance/run-deletion.ts:107-121`).
+- Escopo desta correção: só `functions/api/live/governance/index.ts`
+  (`onRequestPatch`) e o teste novo
+  `tests/unit/lgpd-deletion-four-eyes.test.ts`. Sem migração.
+- Defeito provado (RED, `git stash` do arquivo de produção): gestora A cria
+  um pedido `delete` de escopo `patient`; a MESMA gestora A aprova o próprio
+  pedido (`PATCH .../governance` com `status: "approved"`) → `200`, pedido
+  avança para `approved` sozinho.
+- Fix: o `SELECT` que lê o pedido antes da transição passou a trazer
+  `requested_by_user_id`; quando `requestType === 'delete'` e o próximo
+  status é `approved`, se `requested_by_user_id === user.id` a resposta é
+  `409 FOUR_EYES_REQUIRED`, antes mesmo de checar `ALLOWED_TRANSITIONS`.
+  `export`/`policy` inalterados.
+- GREEN: mesmo teste → autoaprovação `409 FOUR_EYES_REQUIRED`, status
+  permanece `requested`; gestora B (segunda membership `clinic_admin` da
+  mesma clínica) aprova o mesmo pedido → `200` → `approved`; um pedido de
+  `export` criado e aprovado pela própria gestora A continua `200` (a trava
+  é exclusiva de `delete`).
+- Regressão completa (todas exit 0): `npm run check`; `npx eslint
+  functions/api/live/governance/index.ts
+  tests/unit/lgpd-deletion-four-eyes.test.ts --max-warnings=0`;
+  `tests/unit/cliente-zero-journey.test.ts`;
+  `tests/unit/lgpd-purge-executor.test.ts`;
+  `tests/unit/lgpd-purge-atomicity.test.ts`;
+  `tests/unit/lgpd-run-deletion-endpoint.test.ts`;
+  `tests/unit/lgpd-worker-executor-core.test.ts`;
+  `tests/unit/lgpd-worker-foundation.test.ts`;
+  `tests/unit/lgpd-worker-race-regressions.test.ts`;
+  `tests/unit/saas-live-clinical-domains.test.ts`;
+  `tests/unit/live-governance-failclosed.test.ts`;
+  `tests/unit/live-tenant-isolation-adversarial.test.ts`;
+  `tests/unit/live-read-audit-policy.test.ts`;
+  `tests/unit/tenant-management-authorization.test.ts`;
+  `npm run test:quick-wins` (cadeia completa, 0 `not ok`).
+- Fixtures 100% sintéticas (`example.test`), sem PHI.
+- Rollback: reverter o commit; sem migração, sem efeito em dado persistido.
+- Risco remanescente, deliberadamente fora deste incremento: piso legal de
+  retenção do prontuário para eliminação de escopo `patient` numa clínica
+  ativa — ver
+  `docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.
