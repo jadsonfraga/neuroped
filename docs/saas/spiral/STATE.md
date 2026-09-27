@@ -181,31 +181,57 @@ Resposta agora lista explicitamente só o que a família precisa para o
 autoatendimento. Evidência em EVIDENCE.md#S22.
 
 ## Próximo passo executável
-Atualização em 26/09/2026 às 21:07 UTC: o censo S9 foi executado com sucesso
-após a PR #994. Foram observados três pacientes sem owner e um com owner
-sem clínica ativa, sem vínculo inequívoco para backfill. A próxima ação
-depende de estabelecer a destinação autorizada desses registros e comprovar
-o cliente zero; não depende mais de obter acesso ao censo. Evidência:
-`docs/audits/LEGACY_TENANT_CENSUS_OBSERVED_2026-09-26.md`.
+Atualização ciclo 5 (2026-09-26): S12B fechado (ver acima) — não é mais um
+dos "deliberadamente grandes" pendentes. Restam abertos e executáveis sem
+bloqueio externo: S10 (papel duplo global×membership, toca middleware de
+billing usado por toda rota clínica — maior raio de explosão dos dois) e
+S13 (link público de agendamento por clínica, redesenho de rota no
+frontend). S9 continua bloqueado por decisão de negócio (destinação
+autorizada dos registros legados órfãos), não por acesso técnico — ver
+BLOCKED_EXTERNAL abaixo. LEG-17 (LIKE sem escapar em memory/index.ts, baixa
+severidade, sem impacto de isolamento) e LTB-22(e) (SEAT_LIMIT_REACHED
+devolvendo 500 em vez de 409 em members.ts) permanecem citados como
+"aquecimento" e ainda não avaliados.
 
 Contexto histórico anterior ao censo:
 S9 (bypass do admin global no legado clínico, o achado mais severo restante)
 está bloqueado por censo de produção — ver
 `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`. Todos os
 candidatos "small" mapeados pela varredura de auditoria desta sessão (S18
-a S22) foram fechados. Não há mais candidato pequeno e seguro identificado
-sem revisitar a auditoria original (docs/audits/
-SAAS_TENANCY_AUDIT_2026-09-26.md) em busca de itens ainda não avaliados —
-por exemplo LEG-17 (LIKE sem escapar em memory/index.ts, baixa severidade,
-sem impacto de isolamento) e LTB-22(e) (SEAT_LIMIT_REACHED devolvendo 500
-em vez de 409 em members.ts) foram citados como "aquecimento" mas ainda não
-avaliados nesta sessão — ou sem abrir uma das frentes deliberadamente
-grandes: S10 (papel duplo global×membership, toca middleware de billing
-usado por toda rota clínica), S12B (expandir o export para cobrir
-documentos/avaliações/intake/escala, cripto-pesado) e S13 (link público de
-agendamento por clínica, redesenho de rota no frontend). Retomada:
-`git fetch origin main && git log -1 origin/main` e reler este arquivo.
+a S22) foram fechados. Retomada: `git fetch origin main && git log -1
+origin/main` e reler este arquivo.
 
+
+## Ciclo 5 (2026-09-26) — S12B fechado
+Revalidação obrigatória contra `origin/main` no início do ciclo: `main` =
+HEAD `0b4f74f`, worktree limpa, sem PR aberta no repositório no momento da
+checagem. S9 permanece exatamente como o registro anterior descreve
+(censo observado, destinação autorizada ainda pendente — decisão de negócio,
+não técnica; ver `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`).
+Dos itens executáveis sem bloqueio externo (S10, S12B, S13), escolhi S12B:
+menor raio de explosão (um único arquivo, `functions/api/tenant/
+_exportPayload.ts`, sem tocar middleware global usado por toda rota
+clínica como S10 tocaria, sem mudança de rota de frontend como S13 exigiria)
+e impacto direto em LGPD (nenhuma clínica com documentos/avaliações/intake/
+escala respondida conseguia concluir o purge de encerramento até agora).
+
+`collectTenantExportPayload` agora leva os oito domínios que faltavam —
+avaliações e respostas, documentos e versões, intake e escala remota — com o
+mesmo contexto de decriptação usado em cada ponto de escrita real (conferido
+arquivo a arquivo, nenhum contexto inventado) e sem incluir `token_hash`
+(segredo de posse do convite, não dado do titular). `EXPORT_UNCOVERED_CLINIC_
+TABLES` fica vazia, mantida como ponto de extensão para um futuro 9º domínio.
+A pré-checagem de tamanho do caminho síncrono (`exportWithinSyncLimits`)
+passou a somar os cinco novos campos cifrados, não só patients/events —
+evita que um tenant com documentos grandes só descubra o limite depois de já
+ter carregado tudo em memória. `S12` (o efeito colateral fail-closed que
+bloqueava o purge nesses domínios) some para as clínicas cujo único dado
+fora do export era exatamente esse — S10 e S13 continuam abertos e grandes,
+como já registrado. Evidência em EVIDENCE.md#S12B; BACKLOG.md#S12B fechado.
+
+Comandos exit 0 depois de S12B: `npm run check`, `npx eslint` nos três
+arquivos tocados, os testes específicos de LGPD/export/purge listados em
+EVIDENCE.md#S12B, e `npm run test:quick-wins` completo (0 `not ok`).
 
 ## S1-R1 — reconciliação de 26/09/2026 (PR #951)
 Preservados os ciclos S2–S22 do main. O diagnóstico `admin/go-live` agora
