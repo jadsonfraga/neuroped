@@ -44,6 +44,8 @@ const EXPECTED: Record<ClinicMembershipRole, TenantPermission[]> = {
     "finance.read",
     "clinical.read",
     "clinical.write",
+    "operations.read",
+    "operations.write",
   ],
   clinic_admin: [
     "organization.manage",
@@ -56,9 +58,11 @@ const EXPECTED: Record<ClinicMembershipRole, TenantPermission[]> = {
     "finance.read",
     "clinical.read",
     "clinical.write",
+    "operations.read",
+    "operations.write",
   ],
-  professional: ["clinical.read", "clinical.write"],
-  assistant: [],
+  professional: ["clinical.read", "clinical.write", "operations.read", "operations.write"],
+  assistant: ["operations.read", "operations.write"],
   financial: ["finance.read"],
 };
 

@@ -3,6 +3,7 @@
  * O frontend apenas reflete; decisões são recalculadas com estado live.
  */
 import type { EntitlementSnapshot, SubscriptionStatus } from "../../shared/billing";
+import { rolesWithPermission } from "../../shared/permissions";
 
 interface EntitlementRow {
   user_id: string;
@@ -23,12 +24,21 @@ export interface EntitlementResult extends EntitlementSnapshot {
   deniedReason: string | null;
 }
 
-export type BillingScope = "clinical" | "finance" | "admin" | "export";
+export type BillingScope = "clinical" | "operations" | "finance" | "admin" | "export";
 
-const SCOPE_TO_ROLES: Record<BillingScope, string[]> = {
-  clinical: ["owner", "clinic_admin", "professional"],
-  finance: ["owner", "clinic_admin", "financial"],
-  admin: ["owner", "clinic_admin"],
+/**
+ * Escopo de billing → papéis de membership, derivado do catálogo central de
+ * RBAC (`shared/permissions.ts`). Não repetir a lista aqui: quem muda o que
+ * um papel pode fazer edita a tabela de permissões (coberta por
+ * `tests/unit/tenant-permissions.test.ts`) e este mapa acompanha.
+ * `export` é deliberadamente amplo: portabilidade dos próprios dados não
+ * depende de papel nem de cobrança vigente.
+ */
+const SCOPE_TO_ROLES: Record<BillingScope, readonly string[]> = {
+  clinical: rolesWithPermission("clinical.write"),
+  operations: rolesWithPermission("operations.write"),
+  finance: rolesWithPermission("finance.read"),
+  admin: rolesWithPermission("organization.manage"),
   export: ["owner", "clinic_admin", "professional", "assistant", "financial"],
 };
 

@@ -18,7 +18,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }), { status: 409, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
   }
 
-  const denial = await requireBillingEntitlement(context.env.DB, user.id, clinicId, "clinical");
+  // S10 / AUTHZ-P1-04: a agenda é o escopo "operations" (owner, clinic_admin,
+  // professional e assistant) — a secretária opera sem herdar escrita clínica.
+  const denial = await requireBillingEntitlement(context.env.DB, user.id, clinicId, "operations");
   if (denial) return denial;
   return context.next();
 };

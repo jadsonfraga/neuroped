@@ -640,6 +640,46 @@
   nenhuma migração envolvida.
 
 
+## S10 (ciclo 5, 2026-09-27) — membership é a autoridade de escrita nas famílias multi-tenant
+- Escopo: `shared/permissions.ts`, `server/lib/billingEntitlement.ts`,
+  `functions/api/_middleware.ts`, `functions/api/tenant/_managementAuthorization.ts`,
+  `functions/api/operations/{_middleware,_access,index}.ts`,
+  `functions/api/live/escuta/index.ts`, `functions/api/tenants/[id]/members.ts`,
+  copy da aba Equipe em `client/src/pages/agenda.tsx`, fixture sintética
+  `scripts/lib/synthetic-clinical-api.mjs`. Sem migração, sem mudança de rota.
+- Ambiente: container da sessão, Node 22, `npm ci` limpo, branch
+  `claude/neuroped-saas-transformation-dnf8v0` sobre `0b4f74f` (main).
+- Achado confirmado por execução (não só leitura): com o código anterior, o
+  teste novo falha logo no cenário 1 — `POST /api/live/patients` por um
+  usuário com papel global `operator` e membership `professional` responde
+  `403 {"code":"FORBIDDEN","error":"Perfil sem permissão para alterar dados
+  clínicos."}` do middleware global, antes de a membership ser consultada
+  (visto via `git stash` das mudanças de produção).
+- Testes: `tests/unit/tenant-rbac-membership-authority.test.ts` prova, na
+  cadeia real, (1) global operator + membership professional cria paciente
+  LIVE (201, linha persistida); (2) assistant recebe 403
+  `ENTITLEMENT_ROLE_NOT_ALLOWED` em clínica LIVE, 403 `STAFF_LINK_REQUIRED`
+  na agenda sem vínculo, e depois do `staff_link` pela dona lê a agenda
+  (`access.delegated=true`, `canConfigure=false`, `actorRole="assistant"`),
+  marca consulta e é vetada em `create_service`; (3) global professional +
+  membership financial: 403 em LIVE e na agenda, nenhuma linha escrita; (4)
+  conta sem membership: 409 `BILLING_CLINIC_CONTEXT_REQUIRED` apesar do
+  header; (5) legado `/api/consultations` continua 403 para papel global
+  operator e passa para professional (sem regressão do gate legado).
+  Testes existentes ajustados à nova semântica (não enfraquecidos):
+  `operations-staff-link-anti-enumeration` (vinculável = membro assistant;
+  novo caso "operator global sem membership" responde idêntico aos demais
+  indisponíveis), `tenant-management-authorization` (`POST /api/tenants`
+  roteado ao handler real; rota desconhecida sob `/api/tenants/:id` 403 para
+  não-membro e alcança handler para membro), `tenant-permissions` (matriz),
+  `operations-integration-static` e `saas-phase1-hardening` (guards
+  estáticos invertidos: papel global não pode voltar a decidir).
+- Comandos exit 0: `npm run check`, `npm run lint`, `npm run test:operations`,
+  `npm run test:saas-self-service`, `npm run test:quick-wins` (inclui o teste
+  novo), `node --import tsx --test tests/unit/tenant-management-authorization.test.ts`
+  (14/14).
+- Rollback: reverter o commit; nenhum dado é alterado por esta camada.
+
 ## S1-R1 — revisão adversarial executada em 2026-09-24
 - Escopo: handler real e autorização real; nove requisitos removidos um a um,
   configuração vazia, sete ambientes de cobrança, seis negativas de acesso,

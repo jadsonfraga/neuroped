@@ -99,8 +99,15 @@ raw.prepare(
    VALUES ('pro-c', 'op-linked', 1, 'pro-c', ?, ?)`,
 ).run(now, now);
 
-// candidato genuinamente disponível (controle de não regressão)
+// candidato genuinamente disponível (controle de não regressão). S10: a
+// recepção vinculável é membro ATIVO da clínica com papel `assistant` (entrou
+// pelo convite); o papel global (`operator`) não decide mais nada aqui.
 criarUsuario("op-livre", "operator");
+raw.prepare(`INSERT INTO clinic_memberships (clinic_id, user_id, role, active, created_at, updated_at) VALUES ('clinica-a', 'op-livre', 'assistant', 1, ?, ?)`).run(now, now);
+
+// S10: conta `operator` global SEM membership nesta clínica não é vinculável —
+// e responde igual às demais indisponíveis (não revela que existe).
+criarUsuario("op-sem-membership", "operator");
 
 function proA() {
   return { id: "pro-a", email: "pro-a@example.test", name: "Pro A", role: "professional", mustChangePassword: false };
@@ -122,20 +129,23 @@ async function staffLink(email: string) {
 const inexistente = await staffLink("naoexiste@example.test");
 const papelInvalido = await staffLink("prof-b@example.test");
 const jaVinculado = await staffLink("op-linked@example.test");
+const semMembership = await staffLink("op-sem-membership@example.test");
 
 for (const [nome, resp] of [
   ["e-mail inexistente", inexistente],
   ["conta sem papel operator", papelInvalido],
   ["operator já vinculado a outro profissional", jaVinculado],
+  ["operator global sem membership nesta clínica (S10)", semMembership],
 ] as const) {
   assert.equal(resp.status, 404, `${nome}: precisa responder 404 (AUTHZ-P1-06)`);
 }
 
 const bodies = await Promise.all(
-  [inexistente, papelInvalido, jaVinculado].map((r) => r.clone().json()),
+  [inexistente, papelInvalido, jaVinculado, semMembership].map((r) => r.clone().json()),
 );
 assert.deepEqual(bodies[0], bodies[1], "e-mail inexistente e papel inválido precisam responder corpo idêntico");
 assert.deepEqual(bodies[1], bodies[2], "papel inválido e já vinculado a outro precisam responder corpo idêntico");
+assert.deepEqual(bodies[2], bodies[3], "já vinculado e sem membership precisam responder corpo idêntico");
 assert.equal((bodies[0] as { code?: string }).code, "STAFF_NOT_AVAILABLE");
 
 console.log("✓ POST /api/operations staff_link: e-mail inexistente, papel inválido e já vinculado a outro respondem exatamente igual (AUTHZ-P1-06)");

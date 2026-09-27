@@ -6,6 +6,7 @@ import test from "node:test";
 import { onRequest as globalMiddleware } from "../../functions/api/_middleware";
 import { onRequest as membersMiddleware } from "../../functions/api/tenants/[id]/_middleware";
 import { onRequestPatch as patchClinic } from "../../functions/api/tenants/[id]/index";
+import { onRequestPost as createClinic } from "../../functions/api/tenants/index";
 import { onRequestPost as updateMember, onRequestDelete as deleteMember } from "../../functions/api/tenants/[id]/members";
 import { onRequestDelete as revokeInvitation, onRequestPost as inviteMember } from "../../functions/api/billing/invitations";
 import { onRequestPost as startCheckout } from "../../functions/api/billing/checkout";
@@ -108,6 +109,7 @@ async function fixture() {
         if (/\/features$/.test(url.pathname)) return patchFeatures(context as never);
         if (/\/lifecycle$/.test(url.pathname)) return changeLifecycle(context as never);
         if (match && method === "PATCH") return patchClinic(context as never);
+        if (url.pathname === "/api/tenants" && method === "POST") return createClinic(context as never);
         return new Response(JSON.stringify({ reached: true }), { status: 200 });
       },
     };
@@ -211,9 +213,18 @@ test("lifecycle keeps owner-only authorization while suspended, and settings rem
 test("membership removal and revoked sessions fail closed; clinical and platform guards remain", async () => {
   const f = await fixture();
   try {
-    for (const path of ["/api/patients", "/api/results", "/api/consultations", "/api/admin/go-live", "/api/tenants", `/api/tenants/${ALFA}/future-endpoint`]) {
+    // Rotas legadas single-tenant e de plataforma continuam vetadas pelo
+    // papel global `reader` no middleware; criar clínica segue o guard do
+    // próprio handler (tenants/index.ts).
+    for (const path of ["/api/patients", "/api/results", "/api/consultations", "/api/admin/go-live", "/api/tenants"]) {
       assert.equal((await f.call("reader-owner", path, "POST", {})).status, 403, path);
     }
+    // S10: sob /api/tenants/:id/** a autoridade é a membership. Uma rota de
+    // escrita ainda desconhecida falha fechada para quem NÃO é membro da
+    // clínica alvo (owner-b em ALFA), mas não é mais vetada pelo papel global
+    // do membro (reader-owner é owner de ALFA e chega ao handler).
+    assert.equal((await f.call("owner-b", `/api/tenants/${ALFA}/future-endpoint`, "POST", {})).status, 403, "não membro");
+    assert.equal((await f.call("reader-owner", `/api/tenants/${ALFA}/future-endpoint`, "POST", {})).status, 200, "membro chega ao handler");
     f.raw.prepare("UPDATE clinic_memberships SET active = 0 WHERE clinic_id = ? AND user_id = 'operator-manager'").run(ALFA);
     assert.equal((await f.call("operator-manager", `/api/tenants/${ALFA}`)).status, 403);
     f.raw.prepare("UPDATE auth_refresh_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = 'reader-owner'").run();

@@ -26,12 +26,30 @@ export async function tenantManagementAuthorization(
   );
   const invitationRoute = path === "/api/billing/invitations" && ["POST", "DELETE"].includes(method);
   const checkoutRoute = path === "/api/billing/checkout" && method === "POST";
-  if (!tenantRoute && !invitationRoute && !checkoutRoute) return { handled: false };
+  const isWrite = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
+  // S10: com a membership como autoridade (o papel global deixou de vetar
+  // escrita em /api/tenants/**), uma rota de escrita AINDA desconhecida sob
+  // /api/tenants/:id/... falha fechada para quem não é membro ativo da
+  // clínica alvo — defesa em profundidade para um handler futuro que
+  // esqueça o próprio guard. Membros ativos seguem até o handler, que
+  // repete a autorização pelo papel.
+  const unknownTenantWrite = !tenantRoute && isWrite && /^\/api\/tenants\/[^/]+(?:\/.+)?$/.test(path);
+  if (!tenantRoute && !invitationRoute && !checkoutRoute && !unknownTenantWrite) return { handled: false };
 
   const forbidden = () => ({
     handled: true as const,
     failure: tenantError("Gestão não autorizada para esta clínica.", "TENANT_FORBIDDEN", 403),
   });
+  if (unknownTenantWrite) {
+    const clinicId = boundedText(decodeURIComponent(path.split("/")[3] ?? ""), 80);
+    if (!clinicId) return forbidden();
+    try {
+      const membership = await getClinicMembership(db, clinicId, user);
+      return membership ? { handled: false } : forbidden();
+    } catch {
+      return { handled: true, failure: tenantError("Autorização da clínica temporariamente indisponível.", "TENANT_AUTH_UNAVAILABLE", 503) };
+    }
+  }
   let clinicId: string;
   try {
     if (tenantRoute) clinicId = boundedText(decodeURIComponent(route[1]), 80);

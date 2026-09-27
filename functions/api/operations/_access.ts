@@ -1,13 +1,25 @@
 import type { PublicUser } from "../auth/_shared";
+import { getClinicMembership, membershipHas, type ClinicMembership } from "../tenant/_core";
 
 export interface OperationsPrincipal {
   actorUserId: string;
-  actorRole: string;
+  /** Papel de MEMBERSHIP na clínica resolvida — nunca o papel global `users.role`. */
+  actorRole: ClinicMembership["role"];
+  clinicId: string;
   providerUserId: string;
   providerName: string;
   delegated: boolean;
   canConfigure: boolean;
 }
+
+export type OperationsAccessDenial =
+  | "NO_MEMBERSHIP"
+  | "STAFF_LINK_REQUIRED"
+  | "FORBIDDEN";
+
+export type OperationsAccess =
+  | { ok: true; principal: OperationsPrincipal }
+  | { ok: false; code: OperationsAccessDenial };
 
 export interface OperationsStaffLink {
   staffUserId: string;
@@ -151,51 +163,82 @@ export async function ensureOperationsHardeningSchema(db: D1Database): Promise<v
   await db.batch(HARDENING_SCHEMA.map((sql) => db.prepare(sql)));
 }
 
-export async function resolveOperationsPrincipal(
+/**
+ * S10 / OPS-04 / AUTHZ-P1-04 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+ * o principal da agenda deriva da MEMBERSHIP (usuário, clínica, papel), nunca
+ * do papel global `users.role`. Matriz:
+ *   - `clinical.write` (owner/clinic_admin/professional): configura e opera a
+ *     própria agenda (provider = si mesmo).
+ *   - `operations.write` sem `clinical.write` (assistant): opera, sem
+ *     configurar, a agenda do profissional ao qual está vinculada por
+ *     `booking_staff_links` — e esse profissional precisa ser membro clínico
+ *     ATIVO da MESMA clínica, senão o vínculo não vale neste tenant.
+ *   - demais (financial) ou sem membership: negado.
+ * Admin global nunca vira provider por fallback.
+ */
+export async function resolveOperationsAccess(
   db: D1Database,
   user: PublicUser,
-): Promise<OperationsPrincipal | null> {
-  if (user.role === "admin" || user.role === "professional") {
+  clinicId: string,
+): Promise<OperationsAccess> {
+  const membership = await getClinicMembership(db, clinicId, user);
+  if (!membership) return { ok: false, code: "NO_MEMBERSHIP" };
+
+  if (membershipHas(membership, "clinical.write")) {
     return {
-      actorUserId: user.id,
-      actorRole: user.role,
-      providerUserId: user.id,
-      providerName: user.name,
-      delegated: false,
-      canConfigure: true,
+      ok: true,
+      principal: {
+        actorUserId: user.id,
+        actorRole: membership.role,
+        clinicId,
+        providerUserId: user.id,
+        providerName: user.name,
+        delegated: false,
+        canConfigure: true,
+      },
     };
   }
 
-  if (user.role !== "operator") return null;
+  if (!membershipHas(membership, "operations.write")) return { ok: false, code: "FORBIDDEN" };
 
   const row = await db
     .prepare(
-      `SELECT l.provider_user_id, p.name AS provider_name, p.role AS provider_role, p.is_active
+      `SELECT l.provider_user_id, p.name AS provider_name, pm.role AS provider_role
          FROM booking_staff_links l
-         JOIN users p ON p.id = l.provider_user_id
+         JOIN users p ON p.id = l.provider_user_id AND p.is_active = 1
+         JOIN clinic_memberships pm
+           ON pm.clinic_id = ? AND pm.user_id = l.provider_user_id AND pm.active = 1
         WHERE l.staff_user_id = ? AND l.active = 1
         LIMIT 1`,
     )
-    .bind(user.id)
-    .first<{
-      provider_user_id: string;
-      provider_name: string;
-      provider_role: string;
-      is_active: number;
-    }>();
+    .bind(clinicId, user.id)
+    .first<{ provider_user_id: string; provider_name: string; provider_role: string }>();
 
-  if (!row || !row.is_active || !["admin", "professional"].includes(row.provider_role)) {
-    return null;
-  }
+  if (!row) return { ok: false, code: "STAFF_LINK_REQUIRED" };
+  const providerMembership: ClinicMembership = { ...membership, userId: row.provider_user_id, role: row.provider_role as ClinicMembership["role"] };
+  if (!membershipHas(providerMembership, "clinical.write")) return { ok: false, code: "STAFF_LINK_REQUIRED" };
 
   return {
-    actorUserId: user.id,
-    actorRole: user.role,
-    providerUserId: row.provider_user_id,
-    providerName: row.provider_name,
-    delegated: true,
-    canConfigure: false,
+    ok: true,
+    principal: {
+      actorUserId: user.id,
+      actorRole: membership.role,
+      clinicId,
+      providerUserId: row.provider_user_id,
+      providerName: row.provider_name,
+      delegated: true,
+      canConfigure: false,
+    },
   };
+}
+
+export async function resolveOperationsPrincipal(
+  db: D1Database,
+  user: PublicUser,
+  clinicId: string,
+): Promise<OperationsPrincipal | null> {
+  const access = await resolveOperationsAccess(db, user, clinicId);
+  return access.ok ? access.principal : null;
 }
 
 export async function listOperationsStaff(
@@ -255,12 +298,32 @@ export async function linkOperationsOperator(
 ): Promise<{ ok: true; staffUserId: string } | { ok: false; code: string }> {
   if (!principal.canConfigure) return { ok: false, code: "FORBIDDEN" };
   const normalized = email.trim().toLowerCase();
+  // S10: a recepção vinculável é quem já é membro ATIVO desta clínica com
+  // papel de operação sem escrita clínica (assistant) — a entrada dela na
+  // clínica passa pelo convite (billing/invitations + accept), nunca por aqui.
   const staff = await db
-    .prepare(`SELECT id, role, is_active FROM users WHERE lower(email) = ? LIMIT 1`)
-    .bind(normalized)
-    .first<{ id: string; role: string; is_active: number }>();
+    .prepare(
+      `SELECT u.id, u.is_active, m.role AS membership_role
+         FROM users u
+         LEFT JOIN clinic_memberships m
+           ON m.user_id = u.id AND m.clinic_id = ? AND m.active = 1
+        WHERE lower(u.email) = ?
+        LIMIT 1`,
+    )
+    .bind(principal.clinicId, normalized)
+    .first<{ id: string; is_active: number; membership_role: string | null }>();
   if (!staff) return { ok: false, code: "STAFF_NOT_FOUND" };
-  if (!staff.is_active || staff.role !== "operator") {
+  const staffMembership: ClinicMembership = {
+    clinicId: principal.clinicId,
+    userId: staff.id,
+    role: staff.membership_role as ClinicMembership["role"],
+    clinicName: "",
+    clinicSlug: "",
+    clinicStatus: "active",
+  };
+  const staffOperatesOnly =
+    membershipHas(staffMembership, "operations.write") && !membershipHas(staffMembership, "clinical.write");
+  if (!staff.is_active || !staffOperatesOnly) {
     return { ok: false, code: "STAFF_ROLE_INVALID" };
   }
   if (staff.id === principal.providerUserId) return { ok: false, code: "SELF_LINK_INVALID" };

@@ -353,13 +353,51 @@ Bloqueio: exige um censo read-only de produção (contagem por tabela e por
 status de owner) que este ambiente não pode fazer sem acesso ao D1 real.
 Ver `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`.
 
-## S10 · P1 · aberto
-Modelo de papel duplo e incoerente: o middleware global decide TODA escrita
+## S10 · P1 · FECHADO (ciclo 5, 2026-09-27) — membership é a autoridade
+Modelo de papel duplo e incoerente: o middleware global decidia TODA escrita
 pelo papel GLOBAL do usuário (admin/professional escrevem; reader/operator
-não), enquanto os handlers SaaS decidem pela membership da clínica. Um
-`assistant`/`financial` legítimo de uma clínica não consegue operar; um
-`professional` global com paciente legado próprio escreve mesmo sendo só
-`financial` na clínica. (AUTHZ-P1-07, LTB-05, LEG-13, OPS-04)
+não), enquanto os handlers SaaS decidiam pela membership da clínica. Um
+`assistant`/`financial` legítimo de uma clínica não conseguia operar; um
+`professional` global configurava a agenda mesmo sendo só `financial` na
+clínica; um `reader`/`operator` promovido a `professional` por convite
+continuava sem escrever. (AUTHZ-P1-07, LTB-05, LEG-13, OPS-04, AUTHZ-P1-04)
+
+Fechado sem migração e sem tocar o legado:
+- `shared/permissions.ts` ganha `operations.read`/`operations.write`
+  (owner, clinic_admin, professional, assistant); `server/lib/
+  billingEntitlement.ts` passa a DERIVAR os escopos `clinical`/`operations`/
+  `finance`/`admin` do catálogo (`rolesWithPermission`), fim da segunda
+  tabela de papéis.
+- `functions/api/_middleware.ts`: `MEMBERSHIP_AUTHORITY_PREFIXES`
+  (`/api/live/`, `/api/operations`, `/api/tenants`, `/api/billing/`,
+  `/api/me/`) — nessas famílias o papel global não veta escrita; cada
+  família já tem guard de membership + entitlement. Rotas legadas
+  (patients_demo e filhas) continuam decididas pelo papel global.
+  `tenant/_managementAuthorization.ts` fecha (403) escrita em rota ainda
+  desconhecida sob `/api/tenants/:id/**` para quem não é membro ativo —
+  defesa em profundidade para handler futuro sem guard.
+- Agenda: `operations/_middleware.ts` usa o escopo `operations`;
+  `resolveOperationsAccess` deriva o principal de (usuário, clínica,
+  membership): `clinical.write` configura/opera a própria agenda;
+  `operations.write` sem `clinical.write` (assistant) opera a agenda do
+  profissional ao qual está vinculada por `booking_staff_links` — e esse
+  profissional precisa ser membro clínico ativo da MESMA clínica; `financial`
+  e não-membros são negados. `staff_link` só vincula quem já é membro
+  `assistant` ativo da clínica (entrada continua exclusiva do convite).
+  Admin global nunca vira provider por fallback. Papel exposto em
+  `access.actorRole` é o de membership.
+- `tenants/[id]/members.ts` deixa de exigir papel global admin/professional
+  para conceder papel clínico (409 `GLOBAL_ROLE_INCOMPATIBLE` removido: era
+  oráculo do papel global alheio). `live/escuta` deixa de olhar papel global.
+- Ainda existe (P2, próxima camada): reduzir `users.role` a
+  `user`/`platform_admin` com migração; `POST /api/tenants` (criar clínica)
+  ainda exige papel global admin/professional no próprio handler.
+
+Teste novo `tests/unit/tenant-rbac-membership-authority.test.ts` (schema
+real + JWT real + cadeia real middleware global → middleware da família →
+handler), em `test:quick-wins`. Visto falhando pelo motivo certo contra o
+código anterior (403 FORBIDDEN do middleware global). Evidência em
+EVIDENCE.md#S10.
 
 ## S11 · P1 · FECHADO (ciclo 4)
 `POST /api/tenants/:id/members` inseria direto qualquer conta existente da

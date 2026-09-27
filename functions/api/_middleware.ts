@@ -93,6 +93,38 @@ const OPTIONAL_AUTH_API_PATHS = new Set([
   "/api/billing/accept",
 ]);
 
+/**
+ * S10 / AUTHZ-P1-07 / LTB-05 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md):
+ * nas famílias multi-tenant a autoridade de escrita é a MEMBERSHIP da clínica
+ * (papel owner/clinic_admin/professional/assistant/financial, avaliado por
+ * `requireBillingEntitlement`/`getClinicMembership` em cada guard por
+ * família), nunca o papel global `users.role`. Antes, o papel global
+ * (`admin`/`professional` escrevem; `reader`/`operator` não) vetava TODA
+ * escrita antes de a membership ser sequer consultada: uma secretária
+ * convidada como `assistant` (papel global `operator`) não conseguia operar
+ * a agenda, e um `financial`/`reader` promovido a `professional` em outra
+ * clínica continuava sem escrever. O papel global segue decidindo apenas as
+ * rotas legadas single-tenant (patients_demo e filhas), que não têm
+ * clinic_id nem guard de membership.
+ *
+ * Toda família listada aqui TEM guard próprio de membership + entitlement na
+ * escrita (live/_middleware, operations/_middleware, tenants/[id]/_middleware
+ * + handlers, billing/*, me/profile). Não adicionar prefixo sem esse guard.
+ */
+const MEMBERSHIP_AUTHORITY_PREFIXES: readonly string[] = [
+  "/api/live/",
+  "/api/operations",
+  "/api/tenants",
+  "/api/billing/",
+  "/api/me/",
+];
+
+export function isMembershipAuthorityPath(path: string): boolean {
+  return MEMBERSHIP_AUTHORITY_PREFIXES.some(
+    (prefix) => path === prefix.replace(/\/$/, "") || path.startsWith(prefix.endsWith("/") ? prefix : `${prefix}/`),
+  );
+}
+
 const PASSWORD_CHANGE_ALLOWED_PATHS = new Set([
   "/api/auth/me",
   "/api/auth/change-password",
@@ -139,11 +171,6 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
   // Perfil profissional próprio (emissor de documentos) é dado da conta, não
   // dado clínico de paciente.
   const isOwnProfileWrite = path === "/api/me/profile" && method === "PUT";
-  // `operator` pode escrever somente no endpoint operacional. A própria função
-  // /api/operations resolve o vínculo com o profissional e filtra as ações;
-  // nenhuma rota clínica herda esta exceção.
-  const isDelegatedOperationalWrite =
-    user.role === "operator" && path === "/api/operations" && method === "POST";
 
   if (
     isWrite &&
@@ -151,7 +178,7 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
     !isOwnPasswordChange &&
     !isOwnInvitationAccept &&
     !isOwnProfileWrite &&
-    !isDelegatedOperationalWrite &&
+    !isMembershipAuthorityPath(path) &&
     !canWriteClinicalData(user)
   ) {
     return apiError("Perfil sem permissão para alterar dados clínicos.", "FORBIDDEN", 403);

@@ -1,4 +1,4 @@
-import { canWriteClinicalData, getContextUser } from "../../auth/_authorization";
+import { getContextUser } from "../../auth/_authorization";
 import { requireBillingEntitlement } from "../../billing/_guard";
 import { clinicalLiveEnabled, getClinicMembership, isReservedTechnicalEmail, membershipCanWriteClinical, tenantJson, tenantError, type TenantEnv } from "../../tenant/_core";
 import { clinicalCryptoReady } from "../../tenant/_crypto";
@@ -22,7 +22,8 @@ async function authorize(context: { env: Env; data?: unknown }, clinicId: string
   const user = getContextUser(context);
   if (!user) return tenantError("Não autenticado.", "UNAUTHENTICATED", 401);
   if (!context.env.DB) return tenantError("Banco clínico indisponível.", "DB_REQUIRED", 503);
-  if (isReservedTechnicalEmail(context.env, user.email) || !canWriteClinicalData(user)) return tenantError("Acesso clínico não autorizado.", "TENANT_FORBIDDEN", 403);
+  // S10: a autoridade clínica é a membership (abaixo), não o papel global.
+  if (isReservedTechnicalEmail(context.env, user.email)) return tenantError("Acesso clínico não autorizado.", "TENANT_FORBIDDEN", 403);
   if (!/^[A-Za-z0-9_-]{1,80}$/.test(clinicId)) return tenantError("Selecione uma clínica válida.", "CLINIC_REQUIRED", 400);
   const membership = await getClinicMembership(context.env.DB, clinicId, user);
   if (!membership || !membershipCanWriteClinical(membership)) return tenantError("Acesso negado para esta clínica.", "TENANT_FORBIDDEN", 403);

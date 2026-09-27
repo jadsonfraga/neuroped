@@ -44,8 +44,10 @@ const SYNTHETIC_PERMISSIONS_BY_ROLE = {
     "finance.read",
     "clinical.read",
     "clinical.write",
+    "operations.read",
+    "operations.write",
   ],
-  professional: ["clinical.read", "clinical.write"],
+  professional: ["clinical.read", "clinical.write", "operations.read", "operations.write"],
 };
 
 const CLINIC_PRIMARY = {

@@ -488,7 +488,7 @@ export default function AgendaPage() {
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4 text-primary" />Recepção vinculada</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-xs leading-relaxed text-muted-foreground">Vincule uma conta existente cujo perfil seja <code>operator</code>. O vínculo concede acesso somente à agenda operacional; não concede prontuário, prescrição, Clinical Core, configuração de serviços ou financeiro.</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">Vincule alguém que já entrou nesta clínica pelo convite com o papel <strong>Assistente</strong> (Configurações → Equipe). O vínculo concede acesso somente à agenda operacional; não concede prontuário, prescrição, Clinical Core, configuração de serviços ou financeiro.</p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input type="email" value={staffEmail} onChange={(event) => setStaffEmail(event.target.value)} placeholder="email.da.recepcao@exemplo.com" />
                   <Button className="gap-2" disabled={busy || !staffEmail.includes("@") } onClick={async () => {

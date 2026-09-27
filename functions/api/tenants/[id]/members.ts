@@ -14,13 +14,6 @@ import {
   type TenantEnv,
 } from "../../tenant/_core";
 
-const GLOBAL_CLINICAL_ROLES = new Set(["admin", "professional"]);
-const TENANT_CLINICAL_ROLES = new Set<ClinicMembershipRole>([
-  "owner",
-  "clinic_admin",
-  "professional",
-]);
-
 function clinicIdFrom(params: Record<string, string | string[]>): string {
   const raw = params.id;
   return String(Array.isArray(raw) ? raw[0] : (raw ?? "")).trim().slice(0, 80);
@@ -156,13 +149,13 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
   const target = await auth.db
     .prepare(
-      `SELECT id, name, email, role AS global_role
+      `SELECT id, name, email
          FROM users
         WHERE lower(email) = ? AND is_active = 1
         LIMIT 1`,
     )
     .bind(email)
-    .first<{ id: string; name: string; email: string; global_role: string }>();
+    .first<{ id: string; name: string; email: string }>();
 
   const currentMembership = target
     ? await auth.db
@@ -202,13 +195,12 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
     );
   }
 
-  if (TENANT_CLINICAL_ROLES.has(role) && !GLOBAL_CLINICAL_ROLES.has(target.global_role)) {
-    return tenantError(
-      "O papel tenant solicitado exige conta global admin ou professional.",
-      "GLOBAL_ROLE_INCOMPATIBLE",
-      409,
-    );
-  }
+  // S10 (AUTHZ-P1-07/LTB-05): o papel global (`users.role`) deixou de ser
+  // teto do papel de membership. A autoridade nas rotas SaaS é a membership
+  // (functions/api/_middleware.ts, MEMBERSHIP_AUTHORITY_PREFIXES); exigir
+  // conta global admin/professional aqui impedia promover uma secretária
+  // (global `operator`) a profissional e vazava o papel global do alvo
+  // para o gestor por um 409 específico.
 
   if (
     currentMembership?.active === 1 &&

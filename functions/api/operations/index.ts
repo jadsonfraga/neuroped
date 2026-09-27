@@ -1,4 +1,5 @@
 import { getContextUser } from "../auth/_authorization";
+import type { PublicUser } from "../auth/_shared";
 import { resolveBillingClinicId } from "../billing/_guard";
 import {
   appointmentToApi,
@@ -34,20 +35,13 @@ import {
   listOperationsAudit,
   listOperationsStaff,
   logOperationsAudit,
-  resolveOperationsPrincipal,
+  resolveOperationsAccess,
   setOperationsStaffActive,
+  type OperationsAccessDenial,
   type OperationsPrincipal,
 } from "./_access";
 import { isValidTimeZone, type AppointmentStatus } from "../../../shared/operations";
 import { readJsonBody as readBody, nowInProviderTimezone as localNow } from "./_core";
-
-function canConfigure(role: string): boolean {
-  return role === "admin" || role === "professional";
-}
-
-function canOperate(role: string): boolean {
-  return canConfigure(role) || role === "operator";
-}
 
 function moneyCents(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
@@ -282,28 +276,50 @@ async function getDashboard(
   };
 }
 
-async function preparePrincipal(context: Parameters<PagesFunction<OperationsEnv>>[0]) {
+type PreparedPrincipal = {
+  authUser: PublicUser;
+  principal: OperationsPrincipal;
+  clinicId: string;
+  provider: { id: string; name: string };
+};
+
+/**
+ * S10 / OPS-04: a fronteira tenant da agenda é a clínica resolvida para o
+ * ATOR (header X-Tenant-Id validado contra a membership dele, ou a membership
+ * única), e a capacidade vem do papel de membership nessa clínica
+ * (`resolveOperationsAccess`). O papel global `users.role` não decide nada.
+ */
+async function preparePrincipal(
+  context: Parameters<PagesFunction<OperationsEnv>>[0],
+): Promise<{ ok: true; prepared: PreparedPrincipal } | { ok: false; code: OperationsAccessDenial }> {
   const user = getContextUser(context);
-  if (!user || !canOperate(user.role) || !context.env.DB) return null;
+  if (!user || !context.env.DB) return { ok: false, code: "FORBIDDEN" };
   await ensureOperationsSchema(context.env.DB);
   await ensureOperationsHardeningSchema(context.env.DB);
-  const principal = await resolveOperationsPrincipal(context.env.DB, user);
-  if (!principal) return null;
-  // A recepção/operator é delegada ao profissional e não recebe membership
-  // clínico só para operar a agenda. A fronteira tenant da agenda, portanto,
-  // é a clínica do provider responsável — nunca uma elevação clínica da secretária.
-  const clinicId = await resolveBillingClinicId(
-    context.env.DB,
-    principal.providerUserId,
-    context.request,
-  );
-  if (!clinicId) return null;
+  const clinicId = await resolveBillingClinicId(context.env.DB, user.id, context.request);
+  if (!clinicId) return { ok: false, code: "NO_MEMBERSHIP" };
+  const access = await resolveOperationsAccess(context.env.DB, user, clinicId);
+  if (!access.ok) return access;
+  const { principal } = access;
   return {
-    authUser: user,
-    principal,
-    clinicId,
-    provider: { id: principal.providerUserId, name: principal.providerName },
+    ok: true,
+    prepared: {
+      authUser: user,
+      principal,
+      clinicId,
+      provider: { id: principal.providerUserId, name: principal.providerName },
+    },
   };
+}
+
+function accessDenied(code: OperationsAccessDenial): Response {
+  if (code === "STAFF_LINK_REQUIRED") {
+    return errorResponse("Recepção ainda não vinculada a um profissional.", "STAFF_LINK_REQUIRED", 403);
+  }
+  if (code === "NO_MEMBERSHIP") {
+    return errorResponse("Contexto de clínica obrigatório para agenda.", "BILLING_CLINIC_CONTEXT_REQUIRED", 409);
+  }
+  return errorResponse("Acesso não autorizado.", "FORBIDDEN", 403);
 }
 
 export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
@@ -311,17 +327,9 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async (context) => {
   if (!env.DB) return errorResponse("Agenda exige banco persistente.", "DB_REQUIRED", 503);
 
   try {
-    const prepared = await preparePrincipal(context);
-    if (!prepared) {
-      const user = getContextUser(context);
-      return errorResponse(
-        user?.role === "operator"
-          ? "Recepção ainda não vinculada a um profissional."
-          : "Acesso não autorizado.",
-        user?.role === "operator" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
-        403,
-      );
-    }
+    const access = await preparePrincipal(context);
+    if (!access.ok) return accessDenied(access.code);
+    const { prepared } = access;
     return jsonResponse(await getDashboard(env.DB, env, prepared.provider, prepared.principal, prepared.clinicId));
   } catch (error) {
     console.error("[operations.GET]", error);
@@ -337,18 +345,9 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async (context) => {
   const action = cleanText(body.action, 60);
 
   try {
-    const prepared = await preparePrincipal(context);
-    if (!prepared) {
-      const user = getContextUser(context);
-      return errorResponse(
-        user?.role === "operator"
-          ? "Recepção ainda não vinculada a um profissional."
-          : "Acesso não autorizado.",
-        user?.role === "operator" ? "STAFF_LINK_REQUIRED" : "FORBIDDEN",
-        403,
-      );
-    }
-    const { authUser, principal, provider, clinicId } = prepared;
+    const access = await preparePrincipal(context);
+    if (!access.ok) return accessDenied(access.code);
+    const { authUser, principal, provider, clinicId } = access.prepared;
     const user = { ...authUser, id: provider.id, name: provider.name };
     const profile = await ensureProviderProfile(env.DB, provider);
     const now = new Date().toISOString();

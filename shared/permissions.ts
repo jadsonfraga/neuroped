@@ -33,6 +33,11 @@ export const tenantPermissions = [
   "finance.read",
   "clinical.read",
   "clinical.write",
+  // Agenda/recepção: operar a agenda (marcar, confirmar, lista de espera,
+  // notificações) SEM conteúdo clínico — é o "mínimo necessário" da
+  // secretária. Quem tem clinical.* também opera a própria agenda.
+  "operations.read",
+  "operations.write",
 ] as const;
 
 export type TenantPermission = (typeof tenantPermissions)[number];
@@ -42,6 +47,12 @@ const CLINICAL: readonly ClinicMembershipRole[] = [
   "owner",
   "clinic_admin",
   "professional",
+];
+const OPERATIONS: readonly ClinicMembershipRole[] = [
+  "owner",
+  "clinic_admin",
+  "professional",
+  "assistant",
 ];
 
 const GRANTS: Readonly<
@@ -61,6 +72,8 @@ const GRANTS: Readonly<
   "finance.read": ["owner", "clinic_admin", "financial"],
   "clinical.read": CLINICAL,
   "clinical.write": CLINICAL,
+  "operations.read": OPERATIONS,
+  "operations.write": OPERATIONS,
 });
 
 const PERMISSION_SET = new Set<string>(tenantPermissions);

@@ -26,12 +26,10 @@ assert.match(membersApi, /isLastOwnerConstraintError/);
 assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
 assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
 
-// O papel global é teto de privilégio: uma membership clínica não pode elevar
-// reader/operator para owner, clinic_admin ou professional.
-assert.match(membersApi, /GLOBAL_CLINICAL_ROLES/);
-assert.match(membersApi, /TENANT_CLINICAL_ROLES/);
-assert.match(membersApi, /GLOBAL_ROLE_INCOMPATIBLE/);
-assert.match(membersApi, /role AS global_role/);
+// S10: a membership é a autoridade nas rotas SaaS; o papel global não é mais
+// teto de privilégio nem pode vazar pelo 409 GLOBAL_ROLE_INCOMPATIBLE.
+assert.doesNotMatch(membersApi, /GLOBAL_ROLE_INCOMPATIBLE/);
+assert.doesNotMatch(membersApi, /role AS global_role/);
 
 // Timezone da clínica precisa ser um identificador operacional real.
 assert.match(tenantsApi, /isValidTimeZone/);

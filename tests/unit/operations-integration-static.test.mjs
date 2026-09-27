@@ -27,19 +27,19 @@ assert.match(app, /path="\/agendar"/);
 assert.match(nav, /href: "\/agenda", label: "Agenda & Gestão"/);
 
 assert.match(middleware, /"\/api\/public-booking"/);
-assert.match(
-  middleware,
-  /user\.role === "operator" && path === "\/api\/operations" && method === "POST"/,
-  "operator deve ter exceção somente no endpoint operacional raiz",
-);
+// S10: a escrita em /api/operations (e demais famílias tenant-scoped) é
+// decidida pela membership da clínica, nunca pelo papel global `operator`.
 assert.doesNotMatch(
   middleware,
-  /user\.role === "operator"[\s\S]{0,180}path\.startsWith/,
-  "operator não pode ganhar wildcard de escrita",
+  /user\.role === "operator"/,
+  "papel global operator não pode voltar a decidir escrita no middleware global",
 );
-assert.match(professional, /role === "operator"/);
+assert.match(middleware, /MEMBERSHIP_AUTHORITY_PREFIXES[\s\S]{0,400}"\/api\/operations"/);
+assert.match(middleware, /!isMembershipAuthorityPath\(path\) &&[\s\S]{0,40}!canWriteClinicalData\(user\)/, "legado continua decidido pelo papel global");
+assert.doesNotMatch(professional, /user\.role ===|user\?\.role ===/, "handler da agenda não decide por papel global");
 assert.match(professional, /STAFF_LINK_REQUIRED/);
-assert.match(professional, /resolveOperationsPrincipal/);
+assert.match(professional, /resolveOperationsAccess\(context\.env\.DB, user, clinicId\)/);
+assert.match(professional, /requireBillingEntitlement|resolveBillingClinicId\(context\.env\.DB, user\.id, context\.request\)/, "tenant da agenda é a clínica resolvida para o ator");
 assert.match(professional, /principal\.canConfigure/);
 assert.match(professional, /appointment_status/);
 assert.match(professional, /INVALID_TRANSITION/);
@@ -79,15 +79,17 @@ assert.doesNotMatch(
 );
 assert.match(professional, /SCHEDULE_CONFLICT/, "API privada deve converter conflito físico de agenda em 409");
 assert.match(
-  professional,
-  /resolveBillingClinicId\([\s\S]{0,120}principal\.providerUserId/,
-  "operator deve herdar o tenant operacional do profissional sem ganhar membership clínico",
+  access,
+  /JOIN clinic_memberships pm[\s\S]{0,200}pm\.user_id = l\.provider_user_id AND pm\.active = 1/,
+  "vínculo de recepção só vale se o profissional for membro ativo da MESMA clínica (S10)",
 );
+assert.match(access, /membershipHas\(membership, "operations\.write"\)/, "assistant opera pela permissão de membership");
+assert.match(access, /membershipHas\(membership, "clinical\.write"\)/, "quem escreve clínica configura a própria agenda");
 assert.match(professional, /reviews: principal\.canConfigure \? fullReviews : \[\]/, "recepção não deve receber reviews privados");
 
 assert.match(access, /booking_staff_links/);
 assert.match(access, /staff_user_id TEXT NOT NULL UNIQUE/);
-assert.match(access, /user\.role !== "operator"/);
+assert.doesNotMatch(access, /user\.role ===|user\.role !==/, "principal da agenda não deriva do papel global (S10/OPS-04)");
 assert.match(
   access,
   /l\.staff_user_id = \? AND l\.active = 1/,
@@ -108,7 +110,7 @@ assert.doesNotMatch(
 assert.match(access, /trg_appointments_respect_blocks_insert/);
 assert.match(access, /trg_blocks_respect_appointments_insert/);
 assert.match(access, /RAISE\(ABORT, 'SCHEDULE_CONFLICT'\)/);
-assert.match(access, /role !== "operator"/);
+assert.match(access, /staffOperatesOnly/, "recepção vinculável = membership de operação sem escrita clínica");
 assert.match(access, /safeAuditMetadata/);
 assert.doesNotMatch(access, /guardianName|patientName|phone|email.*metadata/i, "auditoria não deve copiar PII operacional");
 
