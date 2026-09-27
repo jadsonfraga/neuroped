@@ -1,3 +1,71 @@
+# S13 — smoke genérico RESOLVIDO; prova A/B de produção ainda pendente
+
+## Atualização verificada em 27 de setembro de 2026
+
+O bloqueio de saída do ambiente original não foi contornado nem removido.
+A chamada pública foi executada em um runner autorizado do GitHub Actions,
+pela implementação da PR #1024 (`fix/s13-production-directory-smoke`).
+
+Evidência remota: [run 36340052955](https://github.com/jadsonfraga/neuroped/actions/runs/36340052955),
+job `108678243782`, concluído com sucesso. Os 25 contratos offline passaram
+antes das quatro chamadas HTTP reais; contratos offline não são a prova de
+produção. O resultado remoto foi registrado às `2026-09-27T18:16:57.264Z`:
+
+```json
+{
+  "status": "PASSED",
+  "origin": "https://neuroped.pages.dev",
+  "deployedSha": "b9a2b5f583659eca1ba4644554b343a4cd49efa2",
+  "deploymentRunId": "36338552010",
+  "knownClinicHttp": 200,
+  "knownClinicProviders": 0,
+  "unknownClinicHttp": 200,
+  "unknownClinicProviders": 0,
+  "abProof": "NOT_RUN_NO_AUTHORIZED_FIXTURE",
+  "evidenceKind": "remote-http"
+}
+```
+
+O SHA e o run acima vieram de `/deploy-check.json`, lido antes e depois
+do diretório, sem alteração durante o smoke. A consulta da clínica
+`4126d150` retornou JSON válido com `providers: []`; uma clínica inexistente
+aleatória também retornou uma lista vazia. Nenhum corpo contendo nomes,
+identificadores de pacientes, token ou dado clínico foi gravado.
+Artifact metadata-only: `s13-directory-smoke-36340052955-1`, ID
+`10938198396`, SHA-256 do ZIP
+`94be24963e68118ffb6098762c872cd8dcc0afd5041c4e9aabfb051a00b5e182`.
+
+### Limites que permanecem
+
+- A lista vazia satisfaz apenas o smoke genérico solicitado na #1020.
+  Não demonstra a existência de um profissional elegível, não prova que o
+  slug histórico ainda corresponde a uma clínica ativa e não é prova A/B.
+- O A/B requer estado conhecido e autorizado: o mesmo profissional com
+  membership ativa em A e B, serviço público ativo somente em B, ausência
+  em A e presença em B. Não foram inventadas memberships, alterados serviços
+  reais ou criadas reservas/waitlists para fabricar essa condição.
+- A nova rotina faz somente GETs públicos, sem credenciais ou comandos D1;
+  não afirma testar escritas de reserva/waitlist ou restaurar dados.
+- O run acima testa a produção já publicada em `b9a2b5f`, não o deploy da
+  PR #1024. A recorrência automática pós-deploy depende do merge dessa PR.
+- A PR #1014 trata de S5 (backup/restore), não do mapeamento legado S9.
+
+### Verificação reproduzível e rollback
+
+`node --test tests/unit/s13-directory-smoke.test.mjs` verifica o contrato
+local; `node scripts/smoke-s13-directory.mjs` executa o smoke real. O workflow
+`.github/workflows/s13-directory-smoke.yml` executa na PR, manualmente e após
+`Deploy Cloudflare Pages` de `main`; na execução pós-deploy exige o SHA do
+run disparador. HTTP inesperado, HTML, JSON inválido, mudança de deploy,
+origem não canônica e fallback da clínica inexistente falham fechado.
+
+Reverter a PR #1024 remove apenas o workflow, script, testes e esta
+atualização documental; não exige rollback de banco ou aplicação.
+
+---
+
+## Registro histórico da #1020 — preservado, anterior à prova acima
+
 # BLOCKED_EXTERNAL — smoke funcional do S13 em produção (commit 2dd01b2)
 
 ## Sistema
