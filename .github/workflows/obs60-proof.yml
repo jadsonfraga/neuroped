@@ -6,7 +6,11 @@ on:
       - 'client/src/features/obs60/**'
       - 'client/src/features/obs10/Orientation.tsx'
       - 'functions/api/integrations/obs60/**'
+      - 'functions/api/integrations/_middleware.ts'
       - 'tests/unit/obs60.test.mjs'
+      - 'tests/unit/obs60-tenant-gate.test.ts'
+      - 'db/schema.d1.sql'
+      - 'db/migrations/**'
       - '.github/workflows/obs60-proof.yml'
   workflow_dispatch:
 permissions:
@@ -20,5 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm ci
       - name: Run synthetic evidence and video transport tests
         run: node --experimental-strip-types --test tests/unit/obs60.test.mjs
+      - name: Run real endpoint tenant/authz/billing/audit gate tests
+        run: node --import tsx --test tests/unit/obs60-tenant-gate.test.ts
