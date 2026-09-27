@@ -10,6 +10,9 @@ on:
       - "client/src/data/legacyInstrumentRoutes.ts"
       - "tests/unit/drjadsoneye-shortcut.test.mjs"
       - "tests/unit/route-guard-policy.test.ts"
+      - "tests/e2e/drjadsoneye-navigation.mjs"
+      - "scripts/lib/browser-audit-runtime.mjs"
+      - "scripts/lib/synthetic-clinical-api.mjs"
       - ".github/workflows/drjadsoneye-navigation.yml"
       - "package.json"
       - "package-lock.json"
@@ -22,6 +25,9 @@ on:
       - "client/src/data/legacyInstrumentRoutes.ts"
       - "tests/unit/drjadsoneye-shortcut.test.mjs"
       - "tests/unit/route-guard-policy.test.ts"
+      - "tests/e2e/drjadsoneye-navigation.mjs"
+      - "scripts/lib/browser-audit-runtime.mjs"
+      - "scripts/lib/synthetic-clinical-api.mjs"
       - ".github/workflows/drjadsoneye-navigation.yml"
       - "package.json"
       - "package-lock.json"
@@ -79,3 +85,9 @@ jobs:
           assert.ok((await response.text()).trim().length > 0, 'The response must not be empty');
           // HTTP availability only: this does not validate camera use or clinical accuracy.
           NODE
+      - name: Install Chromium for the real navigation proof
+        run: npx playwright install --with-deps chromium
+      - name: Build the actual NeuroPed client
+        run: npm run build:client
+      - name: Open DrJadsoneye from desktop collapsed and mobile navigation
+        run: node tests/e2e/drjadsoneye-navigation.mjs
