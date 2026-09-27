@@ -720,7 +720,7 @@ assert.ok(encontroSintetico && documentoSintetico && avaliacaoSintetica);
   assert.equal(
     corpo.manifest?.complete,
     true,
-    "o manifesto declara completude agora que documentos e avaliações entram no payload",
+    "o manifesto declara completude agora que documentos e avaliações entram no payload (S12B, EXPORT_UNCOVERED_CLINIC_TABLES vazia)",
   );
   assert.equal(corpo.manifest?.digestSha256, digest, "o digest do cabeçalho bate com o do manifesto");
   assert.equal(corpo.manifest?.counts?.patients, 1, "o manifesto conta o paciente da clínica");

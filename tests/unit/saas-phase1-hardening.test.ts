@@ -23,10 +23,10 @@ assert.match(
 // Mensagem reconciliada em value/autonomous-saas: o guard cobre qualquer
 // mutação de um non-owner sobre um owner ativo (não só rebaixamento), mas
 // o texto foi alinhado ao contrato final em
-// tests/unit/saas-membership-owner-regression.test.mjs.
+// tests/unit/saas-membership-owner-regression.test.mjs. O helper
+// otherActiveOwnerCount virou hasOtherActiveOwner na mesma reconciliação.
 assert.match(membersApi, /Somente owner pode rebaixar outro owner/);
-// otherActiveOwnerCount virou hasOtherActiveOwner (mesma reconciliação acima).
-assert.match(membersApi, /hasOtherActiveOwner/);
+assert.match(membersApi, /async function hasOtherActiveOwner\(/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
 assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
 assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);
