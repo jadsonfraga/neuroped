@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, ClipboardList, Copy, Download, Eye, Flag, Music, Music2, Pause, Play, Repeat, RotateCcw, ShieldCheck, Smartphone, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
+import { acceptManualTap } from "@/components/jogo-facil/easyReport";
 import { celebrate } from "@/lib/confetti";
 import { formatClinicalDateTime } from "@/lib/clinicalDate";
 import { issuerCredentials, useIssuer } from "@/lib/issuer";
@@ -285,7 +286,7 @@ function SetupSteps({ hasAge, hasHero, kitDone, kitTotal }: { hasAge: boolean; h
   );
 }
 
-function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: number; paused: boolean; onAnswer: (chosen: Option | null) => void }) {
+function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: number; paused: boolean; onAnswer: (chosen: Option | null, event: React.MouseEvent) => void }) {
   const [revealed, setRevealed] = useState(!item.preview);
   const [left, setLeft] = useState(PREVIEW_SECONDS);
   const options = useMemo(() => shuffle(item.options, seed), [item, seed]);
@@ -321,7 +322,7 @@ function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: n
           <button
             key={`${option.label}-${index}`}
             type="button"
-            onClick={() => onAnswer(option)}
+            onClick={(event) => onAnswer(option, event)}
             className={`snp-option flex min-h-32 items-center justify-center p-3 text-center font-black ${OPTION_TINTS[index % OPTION_TINTS.length]} ${item.big ? (option.size === "lg" ? "text-8xl" : option.size === "sm" ? "text-4xl" : "text-6xl") : "text-xl sm:text-2xl"}`}
             aria-label={option.label}
           >
@@ -333,7 +334,7 @@ function TouchStage({ item, seed, paused, onAnswer }: { item: TouchItem; seed: n
   );
 }
 
-function JudgeStage({ item, onJudge }: { item: Exclude<Item, TouchItem>; onJudge: (status: AnswerStatus) => void }) {
+function JudgeStage({ item, onJudge }: { item: Exclude<Item, TouchItem>; onJudge: (status: AnswerStatus, event: React.MouseEvent) => void }) {
   return (
     <div className="space-y-5">
       <div className="snp-panel flex min-h-40 items-center justify-center p-6">
@@ -347,13 +348,13 @@ function JudgeStage({ item, onJudge }: { item: Exclude<Item, TouchItem>; onJudge
         <p className="mt-1 text-lg font-black leading-snug">{item.prompt}</p>
         <p className="mt-2 text-sm"><span className="font-black">Conta como acerto:</span> {item.expected}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <ArcadeButton tone="grass" className="min-h-14 text-base" onClick={() => onJudge("acerto")}>
+          <ArcadeButton tone="grass" className="min-h-14 text-base" onClick={(event) => onJudge("acerto", event)}>
             <Check className="h-5 w-5" /> Acertou
           </ArcadeButton>
-          <ArcadeButton tone="berry" className="min-h-14 text-base" onClick={() => onJudge("erro")}>
+          <ArcadeButton tone="berry" className="min-h-14 text-base" onClick={(event) => onJudge("erro", event)}>
             <X className="h-5 w-5" /> Errou
           </ArcadeButton>
-          <ArcadeButton tone="slate" className="min-h-14 text-base" onClick={() => onJudge("sem_resposta")}>
+          <ArcadeButton tone="slate" className="min-h-14 text-base" onClick={(event) => onJudge("sem_resposta", event)}>
             Não respondeu
           </ArcadeButton>
         </div>
@@ -397,6 +398,8 @@ export default function SuperNeuroPadGamePage() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pauseCount = useRef(0);
   const undoCount = useRef(0);
+  /** Carimbo do último registro aceito: trava toque duplo (mesma guarda do motor compartilhado EasyGame). */
+  const lastAnswerAt = useRef(Number.NEGATIVE_INFINITY);
 
   const band = ageYears === null ? undefined : bandForYears(ageYears);
   const phaseId = PHASE_ORDER[phaseIndex];
@@ -452,6 +455,7 @@ export default function SuperNeuroPadGamePage() {
     setPaused(false);
     pauseCount.current = 0;
     undoCount.current = 0;
+    lastAnswerAt.current = Number.NEGATIVE_INFINITY;
     setScreen("intro");
     if (musicOn) getMusic().start();
   }
@@ -466,6 +470,7 @@ export default function SuperNeuroPadGamePage() {
     setKitChecked({});
     setPaused(false);
     finishedAt.current = null;
+    lastAnswerAt.current = Number.NEGATIVE_INFINITY;
     setScreen("setup");
   }
 
@@ -482,6 +487,13 @@ export default function SuperNeuroPadGamePage() {
     music.current?.stop();
     setPaused(false);
     setScreen("results");
+  }
+
+  /** Toque duplo é comum em tablet (~100–250 ms): sem esta guarda, um segundo toque no mesmo botão, antes do próximo desafio montar, registra o item corrente duas vezes e pula o seguinte sem resposta. */
+  function submitAnswer(record: AnswerRecord, event: { timeStamp: number }) {
+    if (!acceptManualTap(lastAnswerAt.current, event.timeStamp)) return;
+    lastAnswerAt.current = event.timeStamp;
+    pushAnswer(record);
   }
 
   function pushAnswer(record: AnswerRecord) {
@@ -752,17 +764,17 @@ export default function SuperNeuroPadGamePage() {
             <div hidden={paused} className="rounded-2xl bg-[var(--snp-stage)] p-3 text-[var(--snp-stage-text)] sm:p-4">
               {item.kind === "toque" ? (
                 <div className="space-y-4">
-                  <TouchStage key={item.id} item={item} paused={paused} seed={seed + itemIndex * 17 + phaseIndex * 101} onAnswer={(chosen) => pushAnswer(recordTouch(item, phaseId, chosen, elapsedSeconds(), repeated))} />
+                  <TouchStage key={item.id} item={item} paused={paused} seed={seed + itemIndex * 17 + phaseIndex * 101} onAnswer={(chosen, event) => submitAnswer(recordTouch(item, phaseId, chosen, elapsedSeconds(), repeated), event)} />
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <RepeatToggle repeated={repeated} onToggle={() => setRepeated((current) => !current)} />
-                    <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={() => pushAnswer(recordTouch(item, phaseId, null, elapsedSeconds(), repeated))}>
+                    <button type="button" className="snp-chip opacity-80 hover:opacity-100" onClick={(event) => submitAnswer(recordTouch(item, phaseId, null, elapsedSeconds(), repeated), event)}>
                       Aplicadora: não respondeu · pular
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <JudgeStage key={item.id} item={item} onJudge={(status) => pushAnswer(recordJudged(item, phaseId, status, elapsedSeconds(), repeated))} />
+                  <JudgeStage key={item.id} item={item} onJudge={(status, event) => submitAnswer(recordJudged(item, phaseId, status, elapsedSeconds(), repeated), event)} />
                   <RepeatToggle repeated={repeated} onToggle={() => setRepeated((current) => !current)} />
                 </div>
               )}

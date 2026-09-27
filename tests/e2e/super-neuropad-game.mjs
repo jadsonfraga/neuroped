@@ -11,6 +11,12 @@ import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts
 
 const dir = process.env.SUPER_NEUROPAD_ARTIFACT_DIR || "/tmp/super-neuropad-game";
 const localMode = process.env.SUPER_NEUROPAD_TEST_MODE === "local";
+// O motor agora trava um segundo registro em < 300 ms do último aceito (mesma
+// guarda do EasyGame, por event.timeStamp). Toque deliberado do teste respeita
+// o intervalo antes de cada registro (opção de toque, Acertou/Errou/Não
+// respondeu e o pular da aplicadora); margem de 20 ms sobre o limite real.
+const MANUAL_TAP_GAP_MS = 320;
+const pace = () => page.waitForTimeout(MANUAL_TAP_GAP_MS);
 await mkdir(dir, { recursive: true });
 const server = await startStaticServer("dist/public", { port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }) });
 const browser = await chromium.launch(auditBrowserLaunchOptions());
@@ -101,6 +107,7 @@ try {
       }
       if (phase === 1 && item === 2) await button("Repeti o comando").click(); // fica no registro como "comando repetido 1x"
       const options = page.getByRole("group", { name: "Opções" }).getByRole("button");
+      await pace();
       if (await options.count()) {
         // Alterna acerto/erro de forma determinística pelo índice: o jogo confere sozinho.
         await options.nth(registered % 2).click();
@@ -192,6 +199,7 @@ try {
   await waitScreen("setup");
   await button("Começar a aventura").click();
   await page.getByRole("button", { name: /Entrar na fase/ }).click();
+  await pace();
   await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
   await button("Encerrar").click();
   await waitScreen("results");
@@ -218,6 +226,7 @@ try {
     await page.getByRole("group", { name: "Personagens" }).getByRole("button", { name: /Robô Guerreiro/ }).click();
     await button("Começar a aventura").click();
     await page.getByRole("button", { name: /Entrar na fase/ }).click();
+    await pace();
     await page.getByRole("group", { name: "Opções" }).getByRole("button").first().click();
     await button("Encerrar").click();
     await waitScreen("results");
