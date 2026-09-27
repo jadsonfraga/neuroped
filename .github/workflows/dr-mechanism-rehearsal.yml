@@ -1,37 +1,31 @@
-name: DR mechanism rehearsal (D1)
+name: DR backup and restore rehearsal (D1)
 
-# Fase 9 (backup e recuperação) — automatiza o ensaio descrito em
-# docs/D1_DISASTER_RECOVERY_RUNBOOK.md, na variante que o próprio runbook
-# chama de **mechanism rehearsal**: schema real, dados 100% sintéticos,
-# nenhuma cópia de PHI de produção.
+# Fase 9 (backup e recuperação) — ensaio controlado descrito em
+# docs/D1_DISASTER_RECOVERY_RUNBOOK.md. Usa schema real, dois D1 temporários e
+# dados 100% sintéticos. Produção não é lida nem escrita.
 #
-# Por que essa variante, e não o restore integral: a Etapa C do runbook exige
-# aprovação explícita de governança para copiar PHI de produção para um D1
-# temporário. Sem essa aprovação, o runbook manda usar snapshot sintético e
-# rotular o resultado como mechanism rehearsal — que é exatamente o que este
-# workflow faz. Ele NÃO prova o RTO de um restore de produção com volume real;
-# prova que o mecanismo de Time Travel funciona, mede quanto ele demora sobre
-# um banco recém-criado e valida o pós-restore. O runbook continua sendo a
-# referência para o ensaio completo.
+# O ensaio separa três estados que não podem ser confundidos:
+#   1. mecanismo disponível: D1 export e Time Travel respondem;
+#   2. backup executado: um SQL efêmero é exportado do D1 sintético de origem;
+#   3. restauração exercitada: o SQL é importado em outro D1 e o Time Travel
+#      reverte uma mutação destrutiva, com fingerprints reconciliados.
 #
-# Estado antes deste workflow: RPO "NÃO VERIFICADO" e RTO "DESCONHECIDO" no
-# runbook, nenhum ensaio jamais executado. Backup sem restore testado não é
-# backup — é esperança com nome técnico.
+# Ele NÃO mede o RTO de um restore de produção. O volume é sintético e nenhum
+# dado de produção é copiado sem a aprovação de governança prevista no runbook.
 #
-# SEGURANÇA — três travas, todas fail-closed:
-#   1. só `workflow_dispatch`, com confirmação digitada (nunca em agenda, nunca
-#      em push);
-#   2. o alvo é criado pelo próprio job, com nome contendo `dr-rehearsal`, e um
-#      guard aborta se o nome resolvido não bater com esse padrão ou colidir
-#      com o banco de produção;
-#   3. produção não é lida nem escrita em passo algum — nem metadata. Este
-#      ensaio não precisa dela.
+# SEGURANÇA — travas fail-closed:
+#   1. somente workflow_dispatch com confirmação digitada;
+#   2. origem e destino são criados pelo job e contêm `dr-rehearsal`;
+#   3. nenhum comando de banco nomeia produção;
+#   4. o backup fica em /tmp, chmod 600, nunca vira artifact e é removido no
+#      cleanup incondicional;
+#   5. fingerprints contêm somente contagens/invariantes, nunca PHI.
 
 on:
   workflow_dispatch:
     inputs:
       confirmar:
-        description: 'Digite ENSAIAR para confirmar a criação e destruição de um D1 temporário'
+        description: 'Digite ENSAIAR para confirmar a criação e destruição de dois D1 temporários'
         required: true
         default: ''
 
@@ -43,14 +37,16 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Nome de produção, aqui apenas para o guard poder recusá-lo explicitamente.
+  # Nome de produção, usado apenas para os guards recusarem explicitamente
+  # qualquer colisão. Nenhum comando wrangler recebe este valor.
   PRODUCTION_D1: neuroped-db
+  BACKUP: /tmp/neuroped-dr-rehearsal-${{ github.run_id }}.sql
 
 jobs:
   rehearsal:
-    name: Time Travel rehearsal em D1 isolado
+    name: Backup, restore e Time Travel em D1 isolado
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Confirmação explícita
         run: |
@@ -77,178 +73,245 @@ jobs:
           [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
           [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
 
-      # GUARD: o alvo é derivado aqui e conferido antes de qualquer comando de
-      # mutação. Se o nome não contiver `dr-rehearsal`, ou coincidir com
-      # produção, o job morre sem ter tocado em nada.
-      - name: Resolver e travar o alvo isolado
+      - name: Resolver e travar os alvos isolados
         id: target
         run: |
           set -euo pipefail
-          TARGET="neuroped-dr-rehearsal-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}"
-          case "$TARGET" in
-            *dr-rehearsal*) ;;
-            *) echo "::error::Alvo sem marca dr-rehearsal: $TARGET"; exit 1 ;;
-          esac
-          if [ "$TARGET" = "$PRODUCTION_D1" ]; then
-            echo "::error::Alvo coincide com produção. Abortado."
-            exit 1
-          fi
-          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
-          echo "🎯 Alvo isolado: $TARGET (produção $PRODUCTION_D1 não é tocada)"
+          SOURCE="neuroped-dr-rehearsal-source-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}"
+          RESTORE="neuroped-dr-rehearsal-restore-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}"
+          for TARGET in "$SOURCE" "$RESTORE"; do
+            case "$TARGET" in
+              *dr-rehearsal*) ;;
+              *) echo "::error::Alvo sem marca dr-rehearsal: $TARGET"; exit 1 ;;
+            esac
+            if [ "$TARGET" = "$PRODUCTION_D1" ]; then
+              echo "::error::Alvo coincide com produção. Abortado."
+              exit 1
+            fi
+          done
+          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
+          echo "restore=$RESTORE" >> "$GITHUB_OUTPUT"
+          echo "Origem e destino isolados definidos; produção não será tocada."
 
-      # Etapa B do runbook.
-      - name: Etapa B — criar o D1 temporário
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler@4 d1 create "${{ steps.target.outputs.target }}"
-
-      # Etapa C, variante sintética: schema real, zero dado de produção.
-      - name: Etapa C — schema real, dados sintéticos
+      - name: Etapa B — criar dois D1 temporários
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          TARGET="${{ steps.target.outputs.target }}"
+          SOURCE="${{ steps.target.outputs.source }}"
+          RESTORE="${{ steps.target.outputs.restore }}"
+          npx wrangler@4 d1 create "$SOURCE"
+          npx wrangler@4 d1 create "$RESTORE"
 
-          # `db/schema.d1.sql` é a BASE, não o consolidado: ela já traz as
-          # colunas que 0001 e 0002 adicionam, mas NÃO traz as tabelas das
-          # migrações posteriores. Portanto o bootstrap correto é base +
-          # migrações, tolerando exclusivamente "duplicate column name" — que
-          # significa "o base já provê isto", e não "a migração quebrou".
-          # Qualquer outro erro derruba o ensaio.
-          # A política está travada em tests/unit/schema-bootstrap-contract.test.mjs.
-          npx wrangler@4 d1 execute "$TARGET" --remote --yes --file=./db/schema.d1.sql
+      - name: Etapa C — schema real e fixtures sintéticos na origem
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          SOURCE="${{ steps.target.outputs.source }}"
+          npx wrangler@4 d1 execute "$SOURCE" --remote --yes --file=./db/schema.d1.sql
 
           for migration in db/migrations/*.sql; do
-            echo "→ $migration"
-            if npx wrangler@4 d1 execute "$TARGET" --remote --yes \
+            echo "Aplicando $(basename "$migration")"
+            if npx wrangler@4 d1 execute "$SOURCE" --remote --yes \
                  --file="$migration" > /tmp/migration.log 2>&1; then
               continue
             fi
             if grep -qi "duplicate column name" /tmp/migration.log; then
-              echo "   (já provida pelo schema base — seguindo)"
+              echo "Coluna já provida pelo schema-base; seguindo."
               continue
             fi
-            echo "::error::Migração $migration falhou por motivo que não é sobreposição com o schema base:"
+            echo "::error::Migração falhou por motivo não permitido: $(basename "$migration")"
             cat /tmp/migration.log
             exit 1
           done
 
-      # Etapa D — baseline metadata-only. Contagens, nunca conteúdo.
-      - name: Etapa D — baseline metadata-only
+          npx wrangler@4 d1 execute "$SOURCE" --remote --yes \
+            --file=./scripts/dr/synthetic-fixture.sql
+
+      - name: Etapa D — fingerprint e backup executado
+        id: backup
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          npx wrangler@4 d1 execute "${{ steps.target.outputs.target }}" --remote \
-            --command "SELECT COUNT(*) AS tabelas FROM sqlite_master WHERE type='table';"
+          SOURCE="${{ steps.target.outputs.source }}"
+          umask 077
+          : > "$BACKUP"
+          chmod 600 "$BACKUP"
 
-      # Etapa E — sentinela sintética, bookmark, destruição controlada.
-      - name: Etapa E — sentinela e ponto de restauração
-        id: sentinel
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          TARGET="${{ steps.target.outputs.target }}"
-          # Sentinela sintética: identidade inventada, sem qualquer relação com
-          # pessoa real. É a única linha que este ensaio cria.
-          npx wrangler@4 d1 execute "$TARGET" --remote --yes --command \
-            "INSERT INTO users (id, name, email, password_hash, role, is_active, created_at, updated_at)
-             VALUES ('dr-rehearsal-sentinel', 'Sentinela DR', 'sentinela@dr-rehearsal.invalid',
-                     'nao-e-hash-real', 'professional', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);"
+          npx wrangler@4 d1 execute "$SOURCE" --remote \
+            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/source.sha256
+          test "$(wc -c < /tmp/source.sha256)" -eq 65
 
-          # B1: estado COM a sentinela — é para cá que o restore precisa voltar.
-          npx wrangler@4 d1 time-travel info "$TARGET" > /tmp/b1.txt 2>&1
-          cat /tmp/b1.txt
-          # O bookmark é lido do texto que o wrangler imprime entre aspas
-          # simples, e não por formato adivinhado. O ensaio de 05/09 falhou
-          # exatamente aqui: a regex anterior exigia >=16 hex no PRIMEIRO
-          # grupo, mas o formato real é 00000002-000000a0-000050dd-<32 hex>,
-          # cujo primeiro grupo tem 8. Ancorar na frase do wrangler não depende
-          # de quantos grupos ou de que largura a Cloudflare venha a usar.
-          BOOKMARK=$(sed -n "s/.*current bookmark is '\([0-9a-f][0-9a-f-]*\)'.*/\1/p" /tmp/b1.txt | head -1 || true)
-          [ -n "$BOOKMARK" ] || { echo "::error::não consegui ler o bookmark do Time Travel"; exit 1; }
-          echo "bookmark=$BOOKMARK" >> "$GITHUB_OUTPUT"
-
-          # Mutação destrutiva controlada — só sobre a sentinela sintética.
-          npx wrangler@4 d1 execute "$TARGET" --remote --yes --command \
-            "DELETE FROM users WHERE id = 'dr-rehearsal-sentinel';"
-          npx wrangler@4 d1 execute "$TARGET" --remote --command \
-            "SELECT COUNT(*) AS sentinelas FROM users WHERE id = 'dr-rehearsal-sentinel';"
-
-      # Etapa F — restore APENAS no alvo isolado, com duração medida.
-      - name: Etapa F — restore com RTO medido
-        id: restore
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
           START=$(date +%s)
-          npx wrangler@4 d1 time-travel restore "${{ steps.target.outputs.target }}" \
-            --bookmark="${{ steps.sentinel.outputs.bookmark }}"
+          npx wrangler@4 d1 export "$SOURCE" --remote --output="$BACKUP" \
+            > /tmp/dr-export.log 2>&1
           END=$(date +%s)
-          echo "duracao_s=$((END-START))" >> "$GITHUB_OUTPUT"
-          echo "⏱️ restore do mecanismo: $((END-START))s"
+          test -s "$BACKUP"
+          test "$(stat -c '%a' "$BACKUP")" = "600"
 
-      # Etapa G — o critério que transforma "comando rodou" em "restore funcionou".
-      - name: Etapa G — validação pós-restore
+          BACKUP_SHA=$(sha256sum "$BACKUP" | cut -d' ' -f1)
+          echo "duration_s=$((END-START))" >> "$GITHUB_OUTPUT"
+          echo "bytes=$(wc -c < "$BACKUP")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$BACKUP_SHA" >> "$GITHUB_OUTPUT"
+          echo "source_fingerprint=$(cat /tmp/source.sha256)" >> "$GITHUB_OUTPUT"
+          echo "Backup SQL executado em arquivo efêmero; conteúdo não foi impresso."
+
+      - name: Etapa E — restaurar backup em alvo distinto
+        id: import
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          npx wrangler@4 d1 execute "${{ steps.target.outputs.target }}" --remote \
-            --command "SELECT COUNT(*) AS sentinelas FROM users WHERE id = 'dr-rehearsal-sentinel';" \
-            > /tmp/pos.txt 2>&1
-          cat /tmp/pos.txt
-          if ! grep -qE '(sentinelas[^0-9]*1[^0-9]|"sentinelas":\s*1)' /tmp/pos.txt; then
-            echo "::error::A sentinela NÃO voltou. O restore não recuperou o estado — isto é uma falha real de DR."
+          RESTORE="${{ steps.target.outputs.restore }}"
+          START=$(date +%s)
+          npx wrangler@4 d1 execute "$RESTORE" --remote --yes --file="$BACKUP" \
+            > /tmp/dr-import.log 2>&1
+          END=$(date +%s)
+
+          npx wrangler@4 d1 execute "$RESTORE" --remote \
+            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/restored.sha256
+          if ! cmp -s /tmp/source.sha256 /tmp/restored.sha256; then
+            echo "::error::Fingerprint após import diverge da origem."
             exit 1
           fi
-          echo "✅ Sentinela recuperada: o mecanismo de Time Travel restaura estado neste D1."
+          echo "duration_s=$((END-START))" >> "$GITHUB_OUTPUT"
+          echo "restore_fingerprint=$(cat /tmp/restored.sha256)" >> "$GITHUB_OUTPUT"
+          echo "Backup restaurado em D1 distinto com fingerprint idêntico."
 
-      # Etapa I — sempre, inclusive quando algo acima falhou: um alvo órfão
-      # custa dinheiro e vira ruído. O nome é reconferido antes do destroy.
-      - name: Etapa I — destruir o alvo isolado
+      - name: Etapa F — mutação destrutiva e bookmark
+        id: damage
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          RESTORE="${{ steps.target.outputs.restore }}"
+          npx wrangler@4 d1 time-travel info "$RESTORE" > /tmp/b1.txt 2>&1
+          cat /tmp/b1.txt
+          BOOKMARK=$(sed -n "s/.*current bookmark is '\([0-9a-f][0-9a-f-]*\)'.*/\1/p" /tmp/b1.txt | head -1 || true)
+          [ -n "$BOOKMARK" ] || { echo "::error::Não consegui ler o bookmark do Time Travel"; exit 1; }
+          echo "bookmark=$BOOKMARK" >> "$GITHUB_OUTPUT"
+
+          npx wrangler@4 d1 execute "$RESTORE" --remote --yes --command \
+            "DELETE FROM live_patients WHERE id = 'dr-rehearsal-patient-alpha';"
+          npx wrangler@4 d1 execute "$RESTORE" --remote \
+            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/damaged.sha256
+          if cmp -s /tmp/source.sha256 /tmp/damaged.sha256; then
+            echo "::error::A mutação destrutiva não alterou o fingerprint."
+            exit 1
+          fi
+          echo "damaged_fingerprint=$(cat /tmp/damaged.sha256)" >> "$GITHUB_OUTPUT"
+          echo "Mutação destrutiva sintética confirmada por fingerprint divergente."
+
+      - name: Etapa G — Time Travel e reconciliação pós-restore
+        id: time_travel
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          RESTORE="${{ steps.target.outputs.restore }}"
+          START=$(date +%s)
+          npx wrangler@4 d1 time-travel restore "$RESTORE" \
+            --bookmark="${{ steps.damage.outputs.bookmark }}" \
+            > /tmp/dr-time-travel.log 2>&1
+          END=$(date +%s)
+          cat /tmp/dr-time-travel.log
+          PREVIOUS_BOOKMARK=$(sed -n 's/.*previous bookmark: \([0-9a-f][0-9a-f-]*\).*/\1/p' /tmp/dr-time-travel.log | head -1 || true)
+          [ -n "$PREVIOUS_BOOKMARK" ] || { echo "::error::Restore não retornou previous bookmark:"; exit 1; }
+          echo "previous_bookmark=$PREVIOUS_BOOKMARK" >> "$GITHUB_OUTPUT"
+          echo "duration_s=$((END-START))" >> "$GITHUB_OUTPUT"
+
+          npx wrangler@4 d1 execute "$RESTORE" --remote \
+            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/post-time-travel.sha256
+          if ! cmp -s /tmp/source.sha256 /tmp/post-time-travel.sha256; then
+            echo "::error::Fingerprint após Time Travel diverge do backup válido."
+            exit 1
+          fi
+          echo "post_fingerprint=$(cat /tmp/post-time-travel.sha256)" >> "$GITHUB_OUTPUT"
+          echo "Time Travel reconciliou todas as invariantes metadata-only."
+
+      - name: Etapa H — provar undo do próprio restore
+        id: undo
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          RESTORE="${{ steps.target.outputs.restore }}"
+          PREVIOUS_BOOKMARK="${{ steps.time_travel.outputs.previous_bookmark }}"
+          npx wrangler@4 d1 time-travel restore "$RESTORE" --bookmark="$PREVIOUS_BOOKMARK" \
+            > /tmp/dr-undo.log 2>&1
+          cat /tmp/dr-undo.log
+
+          npx wrangler@4 d1 execute "$RESTORE" --remote \
+            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/post-undo.sha256
+          if ! cmp -s /tmp/damaged.sha256 /tmp/post-undo.sha256; then
+            echo "::error::Undo não retornou ao estado imediatamente anterior ao restore."
+            exit 1
+          fi
+          echo "undo_fingerprint=$(cat /tmp/post-undo.sha256)" >> "$GITHUB_OUTPUT"
+          echo "Undo do restore comprovado; alvo voltou ao estado danificado esperado."
+
+      - name: Etapa I — destruir alvos e apagar backup
         if: always()
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          set -euo pipefail
-          TARGET="${{ steps.target.outputs.target }}"
-          if [ -z "$TARGET" ]; then
-            echo "Nenhum alvo foi criado — nada a destruir."
-            exit 0
-          fi
-          case "$TARGET" in
-            *dr-rehearsal*) ;;
-            *) echo "::error::Recusando destruir alvo sem marca dr-rehearsal: $TARGET"; exit 1 ;;
-          esac
-          if [ "$TARGET" = "$PRODUCTION_D1" ]; then
-            echo "::error::Recusando destruir produção."
-            exit 1
-          fi
-          npx wrangler@4 d1 delete "$TARGET" --skip-confirmation
+          set -uo pipefail
+          SOURCE="${{ steps.target.outputs.source }}"
+          RESTORE="${{ steps.target.outputs.restore }}"
+          STATUS=0
+
+          cleanup_database() {
+            TARGET="$1"
+            [ -n "$TARGET" ] || return 0
+            case "$TARGET" in
+              *dr-rehearsal*) ;;
+              *) echo "::error::Recusando destruir alvo sem marca dr-rehearsal: $TARGET"; return 1 ;;
+            esac
+            if [ "$TARGET" = "$PRODUCTION_D1" ]; then
+              echo "::error::Recusando destruir produção."
+              return 1
+            fi
+            npx wrangler@4 d1 delete "$TARGET" --skip-confirmation || return 1
+          }
+
+          cleanup_database "$SOURCE" || STATUS=1
+          cleanup_database "$RESTORE" || STATUS=1
+          rm -f "$BACKUP" /tmp/source.sha256 /tmp/restored.sha256 \
+            /tmp/damaged.sha256 /tmp/post-time-travel.sha256 /tmp/post-undo.sha256 \
+            /tmp/dr-export.log /tmp/dr-import.log /tmp/dr-time-travel.log \
+            /tmp/dr-undo.log /tmp/b1.txt /tmp/migration.log
+          exit "$STATUS"
 
       - name: Relatório metadata-only
         if: always()
         run: |
           {
-            echo "## DR mechanism rehearsal"
+            echo "## DR backup and restore rehearsal"
             echo ""
-            echo "- Alvo isolado: \`${{ steps.target.outputs.target }}\`"
             echo "- Produção (\`$PRODUCTION_D1\`): **não lida, não escrita**"
-            echo "- Duração do restore: \`${{ steps.restore.outputs.duracao_s }}\`s"
+            echo "- Backup executado: \`${{ steps.backup.outputs.bytes }}\` bytes; SHA-256 \`${{ steps.backup.outputs.sha256 }}\`"
+            echo "- Export do backup: \`${{ steps.backup.outputs.duration_s }}\`s"
+            echo "- Import em alvo distinto: \`${{ steps.import.outputs.duration_s }}\`s"
+            echo "- Time Travel: \`${{ steps.time_travel.outputs.duration_s }}\`s"
+            echo "- Fingerprint origem/import/Time Travel: \`${{ steps.backup.outputs.source_fingerprint }}\`"
+            echo "- Fingerprint após dano e após undo: \`${{ steps.damage.outputs.damaged_fingerprint }}\`"
             echo ""
-            echo "Escopo: mechanism rehearsal com dados sintéticos, conforme a"
-            echo "Etapa C do runbook. NÃO mede o RTO de um restore de produção"
-            echo "com volume real — para isso é preciso a aprovação de"
-            echo "governança para cópia de PHI descrita no runbook."
+            echo "Escopo: backup exportado e restaurado, seguido de Time Travel e undo,"
+            echo "com dados sintéticos. NÃO mede o RTO de um restore de produção nem"
+            echo "autoriza copiar PHI para ambiente temporário."
           } >> "$GITHUB_STEP_SUMMARY"
