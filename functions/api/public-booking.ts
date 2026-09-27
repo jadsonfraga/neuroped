@@ -102,15 +102,14 @@ async function publicProfile(db: D1Database, env: OperationsEnv, slug: string, c
 // (S13), o diretório passa a listar só quem tem membership ativa NAQUELA
 // clínica, mesmo que o profissional também atenda em outra.
 async function publicProviders(db: D1Database, clinicSlug: string | null) {
+  // Serviço público, membership e clínica precisam coincidir no SELECT final.
+  // Um serviço de B (ou sem clinic_id) nunca habilita o diretório de A.
+  // Sem slug, mantém a recusa de múltiplas memberships, mesmo em clínica suspensa.
   const clinicFilter = clinicSlug
-    ? `AND EXISTS (
-         SELECT 1 FROM clinic_memberships cm
-           JOIN clinics c ON c.id = cm.clinic_id
-          WHERE cm.user_id = p.user_id AND cm.active = 1 AND c.status = 'active' AND c.slug = ?
-       )`
+    ? `AND c.slug = ?`
     : `AND (
-         SELECT COUNT(*) FROM clinic_memberships cm
-          WHERE cm.user_id = p.user_id AND cm.active = 1
+         SELECT COUNT(*) FROM clinic_memberships sole
+          WHERE sole.user_id = p.user_id AND sole.active = 1
        ) = 1`;
   const result = await db
     .prepare(
@@ -120,11 +119,15 @@ async function publicProviders(db: D1Database, clinicSlug: string | null) {
           AND EXISTS (
             SELECT 1
               FROM booking_services s
+              JOIN clinic_memberships cm
+                ON cm.clinic_id = s.clinic_id
+               AND cm.user_id = s.provider_user_id AND cm.active = 1
+              JOIN clinics c ON c.id = cm.clinic_id AND c.status = 'active'
              WHERE s.provider_user_id = p.user_id
                AND s.active = 1
                AND s.public_visible = 1
+               ${clinicFilter}
           )
-          ${clinicFilter}
         ORDER BY p.display_name COLLATE NOCASE`,
     )
     .bind(...(clinicSlug ? [clinicSlug] : []))
