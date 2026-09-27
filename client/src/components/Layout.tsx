@@ -931,7 +931,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       initial={false}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+                      transition={{ duration: 0.32, ease: [0.32, 0.72, 0.22, 1] }}
                     >
                       {section.items.map((item) => {
                         const active =
@@ -1122,8 +1122,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               data-testid="button-sound-toggle"
               aria-label={
                 soundOn
-                  ? "Desativar sons da interface"
-                  : "Ativar sons da interface"
+                  ? "Sons — desativar sons da interface"
+                  : "Sem som — ativar sons da interface"
               }
               aria-pressed={soundOn}
             >
