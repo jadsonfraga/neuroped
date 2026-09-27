@@ -11,8 +11,7 @@ const MP4 = await readFile(new URL("../fixtures/obs60-gray.mp4.base64", import.m
 const dir = process.env.OBS60_ARTIFACT_DIR || "/tmp/obs60-proof";
 await mkdir(dir, { recursive: true });
 const server = await startStaticServer("dist/public", { port: 0, apiHandler: createSyntheticClinicalApi({ patients: "empty" }) });
-const options = auditBrowserLaunchOptions();
-const browser = await chromium.launch({ ...options, args: [...(options.args || []), "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] });
+const browser = await chromium.launch(auditBrowserLaunchOptions({ args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] }));
 const context = await browser.newContext({ viewport: { width: 1280, height: 1000 }, acceptDownloads: true });
 await context.grantPermissions(["camera", "microphone"], { origin: server.origin });
 await context.addInitScript(storage => { for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value); }, ACCEPTED_FIRST_VISIT_STORAGE);
