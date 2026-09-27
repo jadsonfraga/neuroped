@@ -127,6 +127,7 @@ const SuperNeuroPadGamePage = lazy(() => import("@/pages/super-neuropad-game"));
 const TestesDiretosPage = lazy(() => import("@/pages/sonda-dez-daily"));
 const TestesReconhecimentoPage = lazy(() => import("@/pages/teste-reconhecimento-visual"));
 const TestesCognitivosPage = lazy(() => import("@/pages/testes-cognitivos-faixa-etaria"));
+const PorFaixaEtariaPage = lazy(() => import("@/pages/por-faixa-etaria"));
 const InventariosAutoPage = lazy(() => import("@/pages/inventarios-auto"));
 const AjudaPage = lazy(() => import("@/pages/ajuda"));
 const CurvasCrescimentoPage = lazy(() => import("@/pages/curvas-crescimento"));
@@ -378,6 +379,7 @@ function AppRouter() {
             <Route path="/testes-diretos" component={TestesDiretosPage} />
             <Route path="/testes-reconhecimento" component={TestesReconhecimentoPage} />
             <Route path="/testes-cognitivos" component={TestesCognitivosPage} />
+            <Route path="/por-faixa-etaria" component={PorFaixaEtariaPage} />
             <Route path="/memoria-clinica" component={MemoriaClinicaPage} />
             <Route path="/inventarios-auto" component={InventariosAutoPage} />
             <Route path="/ajuda" component={AjudaPage} />
