@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, CalendarDays, HelpCircle, ListChecks, Users } from "lucide-react";
 import { OUTCOMES } from "./protocol";
 import { monthsBetween } from "./session";
-import { Obs60Launcher } from "../obs60/Obs60Launcher";
+import { Obs60Launcher } from "@/features/obs60/Obs60Launcher";
 
 /** End-to-end orientation for an adult applying the sheet for the first time. Screen and room side by side; no clinical judgement. */
 export const FIRST_TIME_STEPS = [
