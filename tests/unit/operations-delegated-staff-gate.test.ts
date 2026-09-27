@@ -118,6 +118,7 @@ insertClinic("clinic-alfa", "clinica-alfa", "prof-a");
 insertClinic("clinic-beta", "clinica-beta", "prof-b");
 insertMembership("clinic-alfa", "prof-a", "owner");
 insertMembership("clinic-beta", "prof-b", "owner");
+insertMembership("clinic-alfa", "sec-a", "assistant");
 linkStaff("prof-a", "sec-a");
 
 function authUser(id: string, role: string) {

@@ -357,6 +357,18 @@ Teste novo: `tests/unit/operations-delegated-staff-gate.test.ts`, com schema
 real, middleware real encadeado ao handler real e clínicas Alfa/Beta
 sintéticas, incluído em `test:operations`. Evidência em EVIDENCE.md#S23.
 
+Complemento no mesmo ciclo (S23b, AUTHZ-P1-06 residual): `staff_link`
+aceitava QUALQUER conta `operator` da plataforma, de qualquer clínica, sem
+aceite. Agora só é possível vincular quem é membro `assistant` ativo da
+MESMA clínica, ou seja, quem aceitou convite dela. A condição é repetida no
+predicado do INSERT/UPDATE (sem janela de corrida), e a recusa responde o
+mesmo 404 `STAFF_NOT_AVAILABLE` dos demais casos (anti-enumeração). A tela
+da agenda passou a orientar o fluxo: convidar como Assistente em
+Configurações › Equipe e, após o aceite, vincular. Vínculos já existentes
+não foram alterados (sem migração e sem corte do cliente zero). A exigência
+de membership em tempo de uso para vínculos antigos depende de censo de
+produção.
+
 Continua aberto em S10: membership `assistant`/`financial` sem escopo próprio
 (o escopo `clinical` exige owner/clinic_admin/professional), ou seja, a
 secretária modelada como membro da clínica em vez de delegação por

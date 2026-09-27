@@ -783,3 +783,19 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
 - Rollback: reverter o commit; o comportamento volta a ser o 409 anterior
   para `operator`, sem efeito em dados, porque não houve migração.
 
+### S23b — vínculo de recepção amarrado à membership da clínica
+- Escopo: `functions/api/operations/_access.ts` (`linkOperationsOperator`
+  recebe `clinicId` e exige membership `assistant` ativa na checagem e no
+  predicado da escrita), `functions/api/operations/index.ts` (passa
+  `clinicId`) e o texto de orientação em `client/src/pages/agenda.tsx`.
+- Teste reforçado: `tests/unit/operations-staff-link-anti-enumeration.test.ts`
+  ganhou dois casos: `operator` sem membership na clínica e membro
+  `financial`. Os dois respondem corpo idêntico aos outros três e nenhum
+  vínculo é criado. O controle passou a usar o caminho legítimo (membro
+  `assistant`). Nenhuma assertiva removida.
+- RED contra o código anterior (`git stash` de `_access.ts`/`index.ts`):
+  `operator sem membership nesta clínica: precisa responder 404`.
+- GREEN: `npm run test:operations`, `npm run test:quick-wins`,
+  `npm run check`, `npm run lint` e `npm run build:client`, todos com exit 0.
+- Rollback: reverter o commit; sem migração.
+
