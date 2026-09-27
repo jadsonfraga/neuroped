@@ -1,26 +1,78 @@
 # Bloqueios externos — OBS-60 / análise por vídeo
 
-Data: 27/09/2026. Estado: implementação em PR draft; não ativada por esta mudança.
+Data: 27/09/2026. A análise automática é fechada por padrão. Publicar o guia
+local não ativa a IA nem comprova sua operação ou validade clínica. O estado
+atual de merge/deploy deve ser consultado na PR #1023 e nos runs do GitHub.
 
-## Configuração necessária no backend canônico Cloudflare
+## Sistema e permissões necessárias
 
-- `OBS60_VIDEO_AI_ENABLED=true`: habilitação explícita do módulo.
-- `OBS60_PRIVACY_APPROVED=true`: declaração operacional de aprovação institucional do fluxo e do provedor. Não é certificação nem substitui documentos e avaliação de privacidade.
-- `OBS60_GEMINI_API_KEY`: segredo exclusivo do servidor; inserir via gestão de segredos, nunca no chat, GitHub, log ou variável VITE.
-- `OBS60_GEMINI_MODEL`: identificador de modelo Gemini com vídeo/áudio e resposta estruturada compatíveis. Não há modelo substituto silencioso. Escolher e testar o modelo contratado antes de liberar.
+Backend canônico: projeto Cloudflare Pages `neuroped`. É necessário um
+administrador autorizado a gerir os segredos/variáveis de produção desse
+projeto, além de acesso autorizado ao projeto Google contratado e aprovação
+institucional documentada do tratamento de vídeo/voz. Não se exige que
+credenciais sejam copiadas para chat, PR ou código.
 
-Não foram lidas credenciais nem comprovadas estas configurações na instalação atual. Ausência de qualquer requisito deixa a análise indisponível com mensagem explícita; nunca mostra seis resultados fabricados. Também exige DB, sessão autenticada, membership clínica ativa, permissão clínica e entitlement persistidos.
+- `OBS60_VIDEO_AI_ENABLED=true`: habilitação explícita, somente após liberação.
+- `OBS60_PRIVACY_APPROVED=true`: declaração operacional de aprovação
+  institucional do fluxo e do provedor. Não é certificação nem substitui
+  documentos e avaliação de privacidade. Não marcar para contornar o gate.
+- `OBS60_GEMINI_API_KEY`: segredo exclusivo do servidor, inserido via gestão
+  de segredos; nunca em GitHub, logs ou variável VITE.
+- `OBS60_GEMINI_MODEL`: identificador de modelo com vídeo/áudio e resposta
+  estruturada compatíveis. Não há substituto silencioso. Testar o modelo
+  contratado antes de liberar.
 
-## Provas ainda necessárias
+Não foram lidas credenciais nem comprovadas essas configurações na
+instalação atual por esta retomada. Ausência de qualquer requisito deixa a
+análise indisponível; nenhum resultado é fabricado. Também são exigidos DB,
+sessão autenticada, membership clínica ativa, permissão e entitlement.
 
-1. Build/check/lint e gates existentes no head final da PR; testes do workflow dedicado.
-2. Navegador real: entrar pelo Guia da assistente, escolher cada faixa, preparar câmera, gravar/encerrar, interromper ao sair da aba, anexar arquivo, confirmar exportação, cancelar, trocar sessão/clínica sem reaproveitar resposta anterior. Não usar crianças reais nestes testes técnicos.
-3. Endpoint integrado: não autenticado, leitor, clínica suspensa, tenant A/B, billing negado, ausência de consentimento/credencial, payload inválido, timeout. Os guardas canônicos são reutilizados; teste de unidade do transporte não comprova estes cenários E2E.
-4. Provedor real autorizado: vídeo sintético claramente identificado como teste, áudio e quadro ausentes, ações fora da ordem, tarefa não aplicada, fala somente do adulto, instrução maliciosa inserida no vídeo. Conferir bytes/hash, timestamps e ausência de inferências não permitidas. Registrar modelo/versão e evidências sem segredos.
-5. Revisão médica de discordâncias perceptuais e apreciação institucional de retenção, segurança, base legal/consentimento e adequação contratual. Não declarar taxa de acerto, diagnóstico, dispositivo validado ou conformidade presumida.
+## Provas técnicas versionadas, não presumidas
 
-## Risco e proteção vigente
+`.github/workflows/obs60-proof.yml` executa contrato/transporte sintéticos,
+regressão do import/inventário, handlers reais com SQL/migrações reais em
+SQLite e frontend compilado com câmera sintética via MediaRecorder real.
+A prova de navegador cobre faixas etárias, acessibilidade, consentimento,
+encerramento antecipado, proteção de descarte, MP4, download e nenhum envio
+com provedor indisponível. Verificar conclusão e SHA de cada execução;
+existência de teste não é prova verde. Autenticação/capability do navegador
+são fixtures; isso não comprova sessão remota, provedor ou precisão clínica.
 
-O modelo pode errar mesmo com JSON válido; os códigos fechados limitam extrapolação, não garantem percepção. Vídeo/voz identificam pessoas. O envio é explícito, falha fechado, não persiste conteúdo no módulo e não gera conduta/diagnóstico. Conteúdo importado é dado não confiável; não pode instruir ferramentas, acessar URLs ou modificar o protocolo.
+## Ações ainda necessárias antes de ativar IA externa
 
-Rollback: desligar `OBS60_VIDEO_AI_ENABLED`; para remover o código, reverter somente a PR do OBS-60. Sem migrations nem mudanças no protocolo OBS-10 de dez minutos.
+1. Confirmar gates do head final e deploy canônico. Com conta técnica
+   autorizada, verificar endpoint integrado na instalação real, tenant A/B,
+   leitor, clínica/billing suspensos, ausência de consentimento/credencial,
+   payload inválido, timeout e ausência de resposta reaproveitada após troca
+   de sessão/clínica. Não usar pacientes reais.
+2. Exercitar interrupção automática aos 60 segundos, saída da aba, perda de
+   conexão e cancelamento no fluxo completo, incluindo os dispositivos e
+   navegadores usados pela clínica. Um cancelamento não comprova que o
+   provedor interrompeu processamento já recebido.
+3. Executar provedor real autorizado com vídeos sintéticos: áudio ausente,
+   quadro incompleto, ações fora da ordem, tarefa não aplicada, voz somente
+   do adulto e instrução maliciosa no vídeo. Conferir bytes/hash, timestamps,
+   contrato e ausência de inferências não permitidas. Registrar modelo,
+   versão e evidências sem credenciais.
+4. Revisão médica das discordâncias perceptuais e apreciação institucional
+   de retenção, segurança, base legal/consentimento e contrato. Não declarar
+   taxa de acerto, diagnóstico, dispositivo validado ou conformidade presumida.
+
+## Como verificar conclusão e riscos
+
+Configuração presente pode tornar o GET autenticado `configured=true`, mas
+isso sozinho não confirma processamento. A conclusão exige POST real
+bem-sucedido com vídeo sintético autorizado, resposta vinculada ao hash,
+revisão das condições adversas acima e registro da aprovação institucional.
+Até lá, preservar a flag de habilitação desligada.
+
+O modelo pode errar mesmo com JSON válido; códigos fechados limitam
+extrapolação, não garantem percepção. Vídeo e voz podem identificar pessoas.
+O envio é explícito e falha fechado; não persistir conteúdo no módulo não
+garante retenção zero no provedor. Não são gerados diagnóstico ou conduta.
+O conteúdo do vídeo é dado não confiável, não instrução para ferramentas.
+
+Rollback: desligar `OBS60_VIDEO_AI_ENABLED`; para remover código, reverter
+somente a PR #1023 e republicar após os gates. Sem migrations próprias nem
+alteração do protocolo OBS-10 de dez minutos. Retomada operacional em
+`docs/audits/OBS60_RECOVERY_2026-09-27.md`.
