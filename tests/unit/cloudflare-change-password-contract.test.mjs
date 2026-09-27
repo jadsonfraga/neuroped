@@ -39,7 +39,8 @@ assert.match(
   "must_change_password deve bloquear APIs clínicas antes do RBAC comum",
 );
 
-assert.match(middleware, /failure: tenantAuthorization\.handled \? tenantAuthorization\.failure : roleFailure\(request, user\)/);
+assert.match(middleware, /if \(tenantAuthorization\.handled\) \{\s*return \{ failure: tenantAuthorization\.failure, user \};\s*\}/);
+assert.match(middleware, /return \{ failure: roleFailure\(request, user\), user \};/);
 
 assert.match(authClient, /export async function changePasswordRequest/);
 assert.match(authClient, /"\/api\/auth\/change-password"/);

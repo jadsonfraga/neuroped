@@ -888,3 +888,46 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
   `npm run check`, `npm run lint` e `npm run build:client`, todos com exit 0.
 - Rollback: reverter o commit; sem migração.
 
+## S10 (ciclo 7, 2026-09-27) — escrita LIVE barrada por papel global desatualizado (AUTHZ-P1-07)
+- Escopo: 1 arquivo de produção (`functions/api/_middleware.ts`), 1 teste
+  novo (`tests/unit/live-clinical-write-membership-authorization.test.ts`),
+  1 linha em `package.json` (`test:quick-wins`). Sem migração.
+- Base: `d3e3b98` (main após #1007).
+- Defeito provado: uma conta com membership `professional` numa clínica
+  (nascida por `functions/api/billing/accept.ts`, que só define o papel
+  GLOBAL na primeira conta criada por convite — convites seguintes para
+  outra clínica com papel de clínica mais alto nunca revisitam o papel
+  global) tinha `clinical.write` concedido pela própria membership
+  (`shared/permissions.ts`) e entitlement de clínica ativo, mas era barrada
+  por `roleFailure` (`_middleware.ts`) antes de a requisição alcançar o
+  Clinical Core LIVE, cujas checagens (`requireBillingEntitlement` escopo
+  "clinical", `membershipCanWriteClinical`) já a autorizariam.
+- RED contra o código anterior:
+  `node --import tsx --test tests/unit/live-clinical-write-membership-authorization.test.ts`
+  → 1 falha: `esperado 200 ... recebido 403
+  {"error":"Perfil sem permissão para alterar dados clínicos.","code":"FORBIDDEN"}`.
+- Fix: nova `liveClinicalWriteAuthorization` em `_middleware.ts` reautoriza
+  escrita em `/api/live/**` pela mesma fonte de verdade que o Clinical Core
+  já usa (`getClinicMembership` + `membershipCanWriteClinical` de
+  `functions/api/tenant/_core.ts`, resolvendo a clínica via a mesma
+  `resolveBillingClinicId` de `functions/api/billing/_guard.ts`). Quando a
+  clínica não é resolvível ou a membership não concede `clinical.write`,
+  cai no `roleFailure` de sempre — `/api/patients` e demais rotas legadas
+  (fora de `/api/live/`) nunca passam por esta função e ficam com o
+  comportamento anterior, intocado.
+- GREEN: o mesmo teste → exit 0 (2/2, incluindo o controle: membership
+  `financial` com papel global `professional` continua barrada).
+- Regressão completa, todas exit 0: `npm run check`, `npm run lint`,
+  `npm run test:quick-wins` (0 `not ok` na cadeia inteira, inclusive
+  `tenant-management-authorization.test.ts`, 14/14, que já cobre
+  `reader-owner`/`operator-manager` em `/api/patients` continuando 403),
+  `npm run test:operations`, `npm run test:saas-self-service`,
+  `npm run build:client`.
+- Fixtures 100% sintéticas (`example.test`), sem PHI.
+- Rollback: reverter o commit; sem migração, sem efeito em dado persistido.
+- Risco remanescente (deliberadamente fora deste incremento, registrado em
+  BACKLOG.md#S10): escopo operacional próprio de `assistant`/`financial`
+  fora do clínico, e o bypass do papel global `professional` sobre paciente
+  LEGADO (`patients_demo`, sem `clinic_id` — depende da decisão de negócio
+  de S9).
+

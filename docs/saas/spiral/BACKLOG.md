@@ -407,13 +407,34 @@ Bloqueio: exige um censo read-only de produção (contagem por tabela e por
 status de owner) que este ambiente não pode fazer sem acesso ao D1 real.
 Ver `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`.
 
-## S10 · P1 · aberto
-Modelo de papel duplo e incoerente: o middleware global decide TODA escrita
+## S10 · P1 · FECHADO parcialmente (ciclo 7, 2026-09-27)
+Modelo de papel duplo e incoerente: o middleware global decidia TODA escrita
 pelo papel GLOBAL do usuário (admin/professional escrevem; reader/operator
-não), enquanto os handlers SaaS decidem pela membership da clínica. Um
-`assistant`/`financial` legítimo de uma clínica não consegue operar; um
-`professional` global com paciente legado próprio escreve mesmo sendo só
-`financial` na clínica. (AUTHZ-P1-07, LTB-05, LEG-13, OPS-04)
+não), enquanto os handlers SaaS decidem pela membership da clínica.
+(AUTHZ-P1-07, LTB-05, LEG-13, OPS-04)
+
+Fechada nesta sessão a fatia concretamente provável e sem redesenho: uma
+conta com membership `owner`/`clinic_admin`/`professional` numa clínica
+(portanto com `clinical.write` concedido e entitlement de clínica ativo) era
+barrada com 403 pelo gate global sempre que o papel GLOBAL da conta ficasse
+desatualizado — caso real de `functions/api/billing/accept.ts`: o papel
+global só é definido na PRIMEIRA conta criada por convite; convites
+seguintes para OUTRA clínica com papel mais alto nunca revisitam o papel
+global. `liveClinicalWriteAuthorization` (`functions/api/_middleware.ts`)
+agora reautoriza escrita em `/api/live/**` pela MESMA fonte de verdade que o
+próprio Clinical Core já usa (`getClinicMembership` +
+`membershipCanWriteClinical`); sem isso, cai no gate global de sempre —
+`/api/patients` e demais rotas legadas continuam com o comportamento
+anterior, intocadas. Evidência em EVIDENCE.md#S10.
+
+Continua aberto, deliberadamente fora deste incremento (exige mudança de
+modelo de papéis, não uma reautorização pontual): `assistant`/`financial`
+sem escopo operacional próprio fora do clínico (ex.: `/api/operations`
+delegado depende hoje do papel global `operator`, não da membership); e um
+`professional` GLOBAL com paciente LEGADO próprio (`patients_demo`,
+`owner_user_id`, sem conceito de clínica) escreve nele independentemente do
+papel que tenha em qualquer clínica — sem migração de S9, papel de clínica
+não tem como se aplicar a um registro que nunca teve `clinic_id`.
 
 ## S11 · P1 · FECHADO (ciclo 4)
 `POST /api/tenants/:id/members` inseria direto qualquer conta existente da
