@@ -233,6 +233,45 @@ Comandos exit 0 depois de S12B: `npm run check`, `npx eslint` nos três
 arquivos tocados, os testes específicos de LGPD/export/purge listados em
 EVIDENCE.md#S12B, e `npm run test:quick-wins` completo (0 `not ok`).
 
+## Ciclo 7 (2026-09-27) — S10 fechado parcialmente
+Revalidação obrigatória: `main` = HEAD `d3e3b98` (após #1007, LGPD export/
+purge), worktree limpa. PR #1008 (S13, link público por clínica) reconciliada
+com este HEAD e aguardando CI antes de merge — não tocada neste ciclo além
+disso. PRs #1005/#1003 mostravam edição concorrente recente de outra sessão;
+não tocadas.
+
+Escolhido S10 (único item P1 aberto, executável sem bloqueio externo, sem
+redesenho de rota): o gate global de escrita (`roleFailure`,
+`_middleware.ts`) decidia por `users.role` GLOBAL, desalinhado da membership
+real da clínica. Provado com RED real (não hipotético): uma conta cujo
+papel global nasceu "reader" (primeiro convite aceito como "financial", por
+`billing/accept.ts`) e que depois ganha membership `professional` numa
+segunda clínica continua barrada nela — a própria membership já concede
+`clinical.write` e o Clinical Core LIVE já a autorizaria. Fechada a fatia de
+`/api/live/**`: nova `liveClinicalWriteAuthorization` reautoriza pela mesma
+fonte de verdade do Clinical Core (`getClinicMembership` +
+`membershipCanWriteClinical`), caindo no gate global de sempre quando a
+clínica não é resolvível ou a membership não concede escrita — `/api/patients`
+e demais rotas legadas inalteradas. Evidência em EVIDENCE.md#S10;
+BACKLOG.md#S10 fechado parcialmente (o que resta — escopo operacional de
+assistant/financial fora do clínico, e o bypass do papel global sobre
+paciente legado — depende de S9/mudança de modelo, registrado como aberto).
+
+Comandos exit 0: `npm run check`, `npm run lint`, `npm run test:quick-wins`
+(cadeia completa, 0 `not ok`, incluindo o teste novo e
+`tenant-management-authorization.test.ts` 14/14 sem alteração de
+expectativa), `npm run test:operations`, `npm run test:saas-self-service`,
+`npm run build:client`.
+
+### Próximo gargalo
+S13 (link público de agendamento por clínica): a desambiguação por
+`?clinic=<slug>` já está pronta em PR #1008 (aguardando CI/merge); o
+redesenho de rota (`/c/:clinicSlug/agendar`) e a troca de PK de
+`booking_provider_profiles`/`booking_staff_links` continuam abertos e
+exigem migração — maior escopo, não cabe neste ciclo. S9 segue bloqueado
+por decisão de negócio (destinação dos registros legados órfãos), não por
+acesso técnico.
+
 ## S1-R1 — reconciliação de 26/09/2026 (PR #951)
 Preservados os ciclos S2–S22 do main. O diagnóstico `admin/go-live` agora
 retorna `CONFIGURACAO_INCOMPLETA` quando falta qualquer requisito, mantendo

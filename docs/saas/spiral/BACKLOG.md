@@ -86,14 +86,28 @@ incluído em `npm run test:operations`. Visto falhando pelo motivo certo
 contra o código anterior (serviço da clínica A aparecia no dashboard de B).
 Evidência em EVIDENCE.md#S8.
 
-## S13 · P1 · aberto
-Redesenho do link público de agendamento por clínica
-(`/agendar?clinic=<slug>&provider=<slug>` ou `/c/:clinicSlug/agendar`),
-substituindo o slug global de `booking_provider_profiles` (PK `user_id`,
-`slug UNIQUE` global — OPS-05) e o diretório cross-clínica de
-`action=providers`. Depende de mudança de rota no frontend
-(`client/src/pages/agendar.tsx`, `marcacao.tsx`, `navigation.ts`), fora do
-escopo de S8 (isolamento de dados no backend autenticado).
+## S13 · P1 · FECHADO parcialmente (ciclo 5) — desambiguação por slug; redesenho de rota ainda aberto
+Menor incremento seguro: o link público de agendamento pode declarar a
+clínica via `?clinic=<slug da clínica>` (perfil, horários, reserva, lista de
+espera e diretório em `functions/api/public-booking.ts`), resolvida por
+`resolveProviderClinicBySlug` (`functions/api/operations/_core.ts`) — que
+CONFIRMA a membership ativa do profissional exatamente naquela clínica
+(`clinics.slug`, já única, sem migração nova), em vez de inferir pela
+contagem total de memberships. Um profissional em duas clínicas deixa de
+cair na ambiguidade de `resolveProviderSoleClinicId` quando o link já
+declara qual das duas é a certa. Sem o parâmetro, o comportamento antigo
+(exige exatamente uma clínica ativa) é preservado — links já
+compartilhados/salvos continuam funcionando. O botão "copiar link público"
+em `client/src/pages/agenda.tsx` já gera o link com `&clinic=<slug>` a
+partir da clínica ativa da sessão (`useClinic().activeClinic.slug`).
+
+Continua aberto, deliberadamente fora deste incremento: o redesenho de rota
+(`/c/:clinicSlug/agendar`), a troca de PK de `booking_provider_profiles`
+(hoje `user_id`, `slug UNIQUE` global — OPS-05) e de `booking_staff_links`
+(OPS-03), e qualquer geração automática de link a partir de convite/
+notificação. Isso exigiria migração, backfill e período de compatibilidade
+para links antigos — não é um incremento seguro de escopo único. Evidência
+em EVIDENCE.md#S13.
 
 ## S14 · P2 · FECHADO (ciclo 4)
 Links públicos de intake (pré-consulta) e de escala remota ignoravam o
@@ -334,6 +348,46 @@ autoatendimento (incluindo `paymentStatus`). Visto falhando pelo motivo
 certo contra o código anterior via `git stash`. Evidência em
 EVIDENCE.md#S22.
 
+## S23 · P1 · FECHADO (ciclo 6, 2026-09-27)
+A recepção delegada (papel global `operator`, vinculada a um profissional em
+`booking_staff_links`) nunca alcançava a agenda: `functions/api/operations/
+_middleware.ts` resolvia clínica e entitlement pelo ATOR, e a secretária não
+tem membership clínica. Toda chamada morria em 409
+`BILLING_CLINIC_CONTEXT_REQUIRED` antes do handler, embora o handler
+(`preparePrincipal`) e o middleware global já tivessem sido desenhados para
+a delegação. O papel "secretária" vendido não funcionava. (AUTHZ-P1-04,
+metade `operator`)
+
+Corrigido só no middleware: para `operator`, resolve o vínculo ativo
+persistido (`resolveOperationsPrincipal`, o mesmo usado pelo handler) e
+aplica clínica + billing + status da clínica do PROFISSIONAL responsável.
+Sem vínculo ativo → 403 `STAFF_LINK_REQUIRED` no próprio gate (fail-closed).
+O header `X-Tenant-Id` continua sendo alvo, nunca autoridade: só vale se o
+profissional responsável for membro ativo daquela clínica. Nenhuma migração
+e nenhuma mudança de handler. A redação da recepção (sem valores, forma de
+pagamento, equipe ou configuração) já existia e agora é exercitada.
+
+Teste novo: `tests/unit/operations-delegated-staff-gate.test.ts`, com schema
+real, middleware real encadeado ao handler real e clínicas Alfa/Beta
+sintéticas, incluído em `test:operations`. Evidência em EVIDENCE.md#S23.
+
+Complemento no mesmo ciclo (S23b, AUTHZ-P1-06 residual): `staff_link`
+aceitava QUALQUER conta `operator` da plataforma, de qualquer clínica, sem
+aceite. Agora só é possível vincular quem é membro `assistant` ativo da
+MESMA clínica, ou seja, quem aceitou convite dela. A condição é repetida no
+predicado do INSERT/UPDATE (sem janela de corrida), e a recusa responde o
+mesmo 404 `STAFF_NOT_AVAILABLE` dos demais casos (anti-enumeração). A tela
+da agenda passou a orientar o fluxo: convidar como Assistente em
+Configurações › Equipe e, após o aceite, vincular. Vínculos já existentes
+não foram alterados (sem migração e sem corte do cliente zero). A exigência
+de membership em tempo de uso para vínculos antigos depende de censo de
+produção.
+
+Continua aberto em S10: membership `assistant`/`financial` sem escopo próprio
+(o escopo `clinical` exige owner/clinic_admin/professional), ou seja, a
+secretária modelada como membro da clínica em vez de delegação por
+profissional. É uma mudança de modelo de papéis e fica em PR separada.
+
 ## S9 · P0 · aberto — censo observado, associação legítima pendente
 Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo
 de produção com sucesso após a PR #994. Três pacientes não têm owner; um
@@ -353,13 +407,34 @@ Bloqueio: exige um censo read-only de produção (contagem por tabela e por
 status de owner) que este ambiente não pode fazer sem acesso ao D1 real.
 Ver `docs/audits/BLOCKED_EXTERNAL_LEGACY_TENANT_CENSUS_2026-09-26.md`.
 
-## S10 · P1 · aberto
-Modelo de papel duplo e incoerente: o middleware global decide TODA escrita
+## S10 · P1 · FECHADO parcialmente (ciclo 7, 2026-09-27)
+Modelo de papel duplo e incoerente: o middleware global decidia TODA escrita
 pelo papel GLOBAL do usuário (admin/professional escrevem; reader/operator
-não), enquanto os handlers SaaS decidem pela membership da clínica. Um
-`assistant`/`financial` legítimo de uma clínica não consegue operar; um
-`professional` global com paciente legado próprio escreve mesmo sendo só
-`financial` na clínica. (AUTHZ-P1-07, LTB-05, LEG-13, OPS-04)
+não), enquanto os handlers SaaS decidem pela membership da clínica.
+(AUTHZ-P1-07, LTB-05, LEG-13, OPS-04)
+
+Fechada nesta sessão a fatia concretamente provável e sem redesenho: uma
+conta com membership `owner`/`clinic_admin`/`professional` numa clínica
+(portanto com `clinical.write` concedido e entitlement de clínica ativo) era
+barrada com 403 pelo gate global sempre que o papel GLOBAL da conta ficasse
+desatualizado — caso real de `functions/api/billing/accept.ts`: o papel
+global só é definido na PRIMEIRA conta criada por convite; convites
+seguintes para OUTRA clínica com papel mais alto nunca revisitam o papel
+global. `liveClinicalWriteAuthorization` (`functions/api/_middleware.ts`)
+agora reautoriza escrita em `/api/live/**` pela MESMA fonte de verdade que o
+próprio Clinical Core já usa (`getClinicMembership` +
+`membershipCanWriteClinical`); sem isso, cai no gate global de sempre —
+`/api/patients` e demais rotas legadas continuam com o comportamento
+anterior, intocadas. Evidência em EVIDENCE.md#S10.
+
+Continua aberto, deliberadamente fora deste incremento (exige mudança de
+modelo de papéis, não uma reautorização pontual): `assistant`/`financial`
+sem escopo operacional próprio fora do clínico (ex.: `/api/operations`
+delegado depende hoje do papel global `operator`, não da membership); e um
+`professional` GLOBAL com paciente LEGADO próprio (`patients_demo`,
+`owner_user_id`, sem conceito de clínica) escreve nele independentemente do
+papel que tenha em qualquer clínica — sem migração de S9, papel de clínica
+não tem como se aplicar a um registro que nunca teve `clinic_id`.
 
 ## S11 · P1 · FECHADO (ciclo 4)
 `POST /api/tenants/:id/members` inseria direto qualquer conta existente da
@@ -392,22 +467,32 @@ HOJE nenhuma clínica com PDFs, avaliações, intake ou escala respondida
 consegue completar o encerramento com purge físico — comportamento
 deliberado (fail-closed) até o export cobrir esses domínios.
 
-## S12B · P1 · FECHADO (ciclo 5, 2026-09-26)
+## S12B · P1 · FECHADO (ciclo 5, 2026-09-26, correção de escopo na revisão)
 `collectTenantExportPayload` passou a incluir de fato os oito domínios que
-faltavam — avaliações e respostas, documentos e versões (conteúdo decifrado),
-convites/submissões de intake e de escala remota (token_hash nunca sai) —
-fechando `complete` para `true` sempre que só esses domínios restavam fora, e
-liberando o purge de encerramento sem depender de o admin de plataforma
-esvaziar as tabelas manualmente. `exportWithinSyncLimits` passou a somar os
-cinco novos campos cifrados na pré-checagem síncrona, então um tenant com
-documentos grandes cai no caminho assíncrono (worker) em vez de travar no
-caminho síncrono. Evidência em EVIDENCE.md#S12B.
+bloqueavam o purge — avaliações e respostas, documentos e versões (conteúdo
+decifrado), convites/submissões de intake e de escala remota (token_hash
+nunca sai) — fechando `complete` para `true` sempre que só esses domínios
+restavam fora, e liberando o purge de encerramento sem depender de o admin
+de plataforma esvaziar as tabelas manualmente. `exportWithinSyncLimits`
+passou a somar os cinco novos campos cifrados na pré-checagem síncrona,
+então um tenant com documentos grandes cai no caminho assíncrono (worker)
+em vez de travar no caminho síncrono.
 
-Ainda fora deste fechamento, de propósito (não fazia parte de LTB-02 nem
-bloqueava purge): `clinic_settings` e `live_retention_policies` no payload
-exportado — nenhum dos dois é dado do titular (são configuração da clínica),
-e nenhum purge recusa por eles. Candidato a uma melhoria de completude
-separada, não a uma reabertura de S12B.
+Correção pedida em revisão (PR #1004, revisor `jadsonfraga`): a primeira
+entrega desta PR deixou `clinic_settings` e `live_retention_policies` fora
+do payload e descreveu isso como "nunca fez parte do escopo de S12B" — o
+que contradizia o texto original deste item, que pedia explicitamente os
+dois. Nenhum dos dois é dado do titular (são configuração da clínica) nem
+bloqueia purge (`PURGE_PRESERVED_TABLES` em `_purge.ts`), mas uma clínica
+pedindo "todos os meus dados" espera ver a própria configuração/timbre
+institucional também. Corrigido em PR separada (a #1004 mesclou antes do
+push da correção): os dois agora saem no payload (`clinicSettings`/
+`retentionPolicy`, `null` quando a clínica nunca configurou). A mesma PR
+migra um cenário de `tests/unit/lgpd-purge-atomicity.test.ts` (PR #1002,
+mesclada em paralelo) que dependia de `EXPORT_UNCOVERED_CLINIC_TABLES` ter
+`live_documents` — S12B esvaziou a lista, então a corrida migrou para
+`appointments` (mesma cerca atômica, tabela que segue genuinamente fora do
+export). Evidência em EVIDENCE.md#S12B.
 
 
 ## S1-R1 · P1 · corrigido, integração em validação (#951)

@@ -124,6 +124,7 @@ assert.equal(
     events: 2,
     memberships: 3,
     encryptedBytes: 1_000,
+    otherRows: 4,
   }),
   true,
 );
@@ -133,6 +134,7 @@ assert.equal(
     events: TENANT_SYNC_EXPORT_LIMITS.events + 1,
     memberships: 3,
     encryptedBytes: 1_000,
+    otherRows: 4,
   }),
   false,
 );
@@ -142,6 +144,20 @@ assert.equal(
     events: 2,
     memberships: 3,
     encryptedBytes: TENANT_SYNC_EXPORT_LIMITS.encryptedBytes + 1,
+    otherRows: 4,
+  }),
+  false,
+);
+// Codex (revisão da PR #1004): documentos/convites de intake e escala não
+// têm campo cifrado — sem este teto, um tenant com muitas linhas nessas
+// tabelas passava pela checagem de encryptedBytes sozinha.
+assert.equal(
+  exportWithinSyncLimits({
+    patients: 1,
+    events: 2,
+    memberships: 3,
+    encryptedBytes: 1_000,
+    otherRows: TENANT_SYNC_EXPORT_LIMITS.otherRows + 1,
   }),
   false,
 );

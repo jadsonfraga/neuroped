@@ -90,9 +90,60 @@ export async function collectLegacyTenantCensus(query, { bootstrapEmail = "" } =
     bootstrapAdmin.ownedLegacyPatients = await scalar(`SELECT COUNT(*) AS total FROM patients_demo p JOIN users u ON u.id = p.owner_user_id
       WHERE lower(u.email) = ? AND u.role = 'admin' AND u.is_active = 1`, [email]);
   }
+  // S9: a uniquely attributable patient does not prove its dependent records
+  // are reachable. Only fixed, patient-linked legacy tables belong here;
+  // external_import_batches has a different ownership model and is excluded.
+  // Each GROUP BY projects classes/counts only, never identities or payloads.
+  // These separate SELECTs are an observation, NOT a snapshot lock or permit.
+  const dependencyClasses = ["no_patient", "missing_patient", ...CLASSES];
+  const patientDependencies = {
+    scope: "six-patient-linked-legacy-tables", snapshotAtomic: false,
+    coverageComplete: true, tables: {},
+  };
+  for (const table of LEGACY_TABLES.filter((name) => name !== "patients_demo" && name !== "external_import_batches")) {
+    if (!tables[table].available) {
+      patientDependencies.coverageComplete = false;
+      patientDependencies.tables[table] = {
+        available: false, rows: null, requiresMappingReview: null, byPatientOwnership: null,
+      };
+      continue;
+    }
+    const rows = await query(`SELECT ownership_class, COUNT(*) AS total FROM (
+      SELECT CASE
+        WHEN d.patient_id IS NULL THEN 'no_patient'
+        WHEN p.id IS NULL THEN 'missing_patient'
+        WHEN p.owner_user_id IS NULL THEN 'no_owner'
+        WHEN u.id IS NULL THEN 'missing_owner'
+        WHEN u.is_active <> 1 THEN 'inactive_owner'
+        WHEN COALESCE(m.total, 0) = 0 THEN 'no_active_clinic'
+        WHEN m.total = 1 THEN 'one_active_clinic'
+        ELSE 'multiple_active_clinics' END AS ownership_class
+      FROM ${table} d LEFT JOIN patients_demo p ON p.id = d.patient_id
+      LEFT JOIN users u ON u.id = p.owner_user_id
+      LEFT JOIN (
+        SELECT cm.user_id, COUNT(DISTINCT cm.clinic_id) AS total
+        FROM clinic_memberships cm JOIN clinics c ON c.id = cm.clinic_id
+        WHERE cm.active = 1 AND c.status = 'active' GROUP BY cm.user_id
+      ) m ON m.user_id = p.owner_user_id
+    ) GROUP BY ownership_class`);
+    const byPatientOwnership = Object.fromEntries(dependencyClasses.map((key) => [key, 0]));
+    const seen = new Set();
+    for (const row of rows) {
+      if (!dependencyClasses.includes(row.ownership_class) || seen.has(row.ownership_class)) throw new Error("CENSUS_INVALID_CLASS");
+      seen.add(row.ownership_class);
+      byPatientOwnership[row.ownership_class] = count(row.total);
+    }
+    if (Object.values(byPatientOwnership).reduce((a, b) => a + b, 0) !== tables[table].rows) throw new Error("CENSUS_CHANGED_DURING_READ");
+    patientDependencies.tables[table] = {
+      available: true, rows: tables[table].rows,
+      requiresMappingReview: tables[table].rows - byPatientOwnership.one_active_clinic,
+      byPatientOwnership,
+    };
+  }
   return {
     version: 1, scope: "aggregate-only", mutations: false, clinicalContentRead: false,
     tables, patientOwnership, patientOwnerPresence, distinctOwners, legacySeedIdsPresent, bootstrapAdmin,
+    patientDependencies,
     unambiguousOwnerMapping: patientOwnership.one_active_clinic === tables.patients_demo.rows,
     migrationAuthorized: false,
   };
