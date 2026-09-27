@@ -20,8 +20,13 @@ assert.match(
   membersApi,
   /currentMembership\?\.active === 1[\s\S]{0,160}currentMembership\.role === "owner"[\s\S]{0,180}!roleHasPermission\(auth\.membership\.role, "team\.manage_owners"\)/,
 );
-assert.match(membersApi, /Somente owner pode alterar o papel de outro owner/);
-assert.match(membersApi, /otherActiveOwnerCount/);
+// Mensagem reconciliada em value/autonomous-saas: o guard cobre qualquer
+// mutação de um non-owner sobre um owner ativo (não só rebaixamento), mas
+// o texto foi alinhado ao contrato final em
+// tests/unit/saas-membership-owner-regression.test.mjs.
+assert.match(membersApi, /Somente owner pode rebaixar outro owner/);
+// otherActiveOwnerCount virou hasOtherActiveOwner (mesma reconciliação acima).
+assert.match(membersApi, /hasOtherActiveOwner/);
 assert.match(membersApi, /isLastOwnerConstraintError/);
 assert.match(membersApi, /results\[0\]\?\.meta\?\.changes/);
 assert.match(membersApi, /results\[1\]\?\.meta\?\.changes/);

@@ -39,7 +39,7 @@ Classificações:
 | 9 | Documento | `VERIFIED` | documento clínico sintético criado como `draft`; teste confirma que não é finalizado automaticamente | Não comprova emissão de documento em produção |
 | 10 | Billing | `BLOCKED_EXTERNAL` | checkout, webhook autenticado, idempotência, entitlement e `billing_invoice_events.charge_paid` são exercitados | Asaas é `MOCKED_EXTERNAL`; nenhuma cobrança, pagamento, fatura, MRR ou receita foi comprovada |
 | 11 | Auditoria | `VERIFIED` | endpoint self-service `/audit` lê somente Azul; Vermelha recebe 404; conteúdo clínico não aparece nos metadados | Validação local, sem observação de logs publicados |
-| 12 | Cancelamento / exportação | `PARTIAL` | encerramento com confirmação, retenção, cancelamento no boundary e export JSON com digest são exercitados | Cancelamento Asaas é mockado; export marca `complete: false` porque documentos/avaliações ainda não entram no payload |
+| 12 | Cancelamento / exportação | `PARTIAL` | encerramento com confirmação, retenção, cancelamento no boundary e export JSON com digest são exercitados; export marca `complete: true` desde S12B (documentos e avaliações confirmados no payload pelo teste do cliente-zero) | Cancelamento Asaas é mockado |
 
 Resultado: a jornada local está automatizada de ponta a ponta, mas a
 transformação **não pode ser classificada como operacionalmente concluída** até
@@ -107,10 +107,10 @@ evidência externa como `MOCKED_EXTERNAL` em seu próprio output.
 
 ## Riscos e trabalho remanescente
 
-- O export do tenant inclui pacientes e eventos, mas ainda exclui documentos,
-  versões, avaliações/respostas, intake e escala remota. O manifesto é
-  fail-honest (`complete: false`) e o purge permanece bloqueado; fechar a
-  cobertura é necessário para exportação LGPD integral.
+- O export do tenant agora inclui documentos, versões, avaliações/respostas,
+  intake e escala remota (S12B, mesclado na main via #1004/#1007 durante
+  esta transformação). O manifesto declara `complete: true` honestamente
+  e o purge de encerramento deixou de ficar bloqueado por essa lacuna.
 - O cliente-zero é um teste funcional de handlers, não um browser E2E em
   aplicação publicada. Um smoke autenticado no ambiente alvo continua
   necessário.

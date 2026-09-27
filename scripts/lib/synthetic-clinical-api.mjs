@@ -461,6 +461,58 @@ export function createSyntheticClinicalApi(scenario = {}) {
       return true;
     }
 
+    // OnboardingProgressCard (client/src/components/OnboardingProgressCard.tsx)
+    // busca isso na home autenticada. Sem este handler específico, a rota cai
+    // no prefixo genérico /api/tenants/ abaixo — que trata "onboarding" como
+    // parte do id da clínica e devolve 404, quebrando a home inteira.
+    const onboardingMatch = /^\/api\/tenants\/([^/]+)\/onboarding$/.exec(pathname);
+    if (onboardingMatch && request.method === "GET") {
+      const id = onboardingMatch[1];
+      const clinic = clinics.find((candidate) => candidate.id === id);
+      if (!clinic) {
+        send(response, 404, { error: "Clínica não encontrada." });
+        return true;
+      }
+      const now = "2026-09-01T12:00:00.000Z";
+      const milestoneDefinitions = [
+        { key: "account_created", label: "Conta criada", source: "users.created_at" },
+        { key: "email_verified", label: "E-mail verificado", source: "users.email_verified_at" },
+        { key: "clinic_created", label: "Clínica criada", source: "clinics.created_at" },
+        { key: "plan_selected", label: "Plano selecionado", source: "billing_subscriptions.created_at" },
+        { key: "billing_configured", label: "Billing confirmado", source: "billing_invoice_events.charge_paid" },
+        { key: "first_member", label: "Primeiro membro da equipe", source: "clinic_memberships.created_at" },
+        { key: "first_patient", label: "Primeiro paciente", source: "saas_audit_log.live_patient_create" },
+        {
+          key: "first_consultation",
+          label: "Primeira consulta",
+          source: "saas_audit_log.live_clinical_event_create.encounter",
+        },
+        { key: "first_document", label: "Primeiro documento", source: "saas_audit_log.live_document_create" },
+        { key: "first_assessment", label: "Primeira avaliação", source: "saas_audit_log.live_assessment_create" },
+      ];
+      const milestones = milestoneDefinitions.map((definition) => ({
+        ...definition,
+        status: "completed",
+        completedAt: now,
+      }));
+      send(response, 200, {
+        clinicId: id,
+        generatedAt: now,
+        progress: { completed: milestones.length, total: milestones.length, percent: 100 },
+        billingEvidence: {
+          status: "SERVER_CONFIRMED",
+          provider: "asaas",
+          environment: "sandbox",
+          confirmedAt: now,
+          source: "billing_invoice_events.charge_paid",
+          limitation:
+            "Concluído por evento autenticado e persistido no servidor; redirect do checkout não concede este marco.",
+        },
+        milestones,
+      });
+      return true;
+    }
+
     if (pathname.startsWith("/api/tenants/")) {
       const id = pathname.slice("/api/tenants/".length);
       const clinic = clinics.find((candidate) => candidate.id === id);

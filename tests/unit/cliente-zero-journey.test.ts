@@ -705,16 +705,34 @@ assert.ok(encontroSintetico && documentoSintetico && avaliacaoSintetica);
   assert.match(String(digest), /^[a-f0-9]{64}$/, "a exportação vem com digest verificável");
   const corpo = (await resposta.json()) as {
     manifest?: { complete?: boolean; digestSha256?: string; counts?: { patients?: number } };
-    data?: { patients?: unknown[] };
+    data?: {
+      patients?: unknown[];
+      documents?: Array<{ id: string }>;
+      assessments?: Array<{ id: string }>;
+    };
   };
+  // S12B (2026-09-26, PR #1004/#1007 na main): documentos e avaliações
+  // passaram a ser cobertos pelo export (EXPORT_UNCOVERED_CLINIC_TABLES
+  // ficou vazia em functions/api/tenant/_exportPayload.ts), então o
+  // manifesto agora pode declarar `complete: true` honestamente — mas só
+  // porque os dois domínios realmente aparecem no payload abaixo, não só
+  // porque a flag mudou.
   assert.equal(
     corpo.manifest?.complete,
-    false,
-    "o manifesto não esconde que documentos e avaliações ainda não entram no payload",
+    true,
+    "o manifesto declara completude agora que documentos e avaliações entram no payload",
   );
   assert.equal(corpo.manifest?.digestSha256, digest, "o digest do cabeçalho bate com o do manifesto");
   assert.equal(corpo.manifest?.counts?.patients, 1, "o manifesto conta o paciente da clínica");
   assert.equal(corpo.data?.patients?.length, 1, "a exportação inclui o paciente da clínica");
+  assert.ok(
+    corpo.data?.documents?.some((doc) => doc.id === documentoSintetico),
+    "a exportação agora inclui de fato o documento clínico do cliente-zero",
+  );
+  assert.ok(
+    corpo.data?.assessments?.some((item) => item.id === avaliacaoSintetica),
+    "a exportação agora inclui de fato a avaliação do cliente-zero",
+  );
 
   const alheia = await exportGet(
     ctx(new Request(`https://x.test/api/tenants/${CLINICA_AZUL}/export`), vermelha, { id: CLINICA_AZUL }),
@@ -878,5 +896,5 @@ const pedidoEliminacao = await (async () => {
 globalThis.fetch = realFetch;
 
 console.log(
-  "✅ CLIENTE ZERO: conta confirmada → clínica → checkout → webhook MOCKED_EXTERNAL autenticado no handler real → entitlement → equipe por e-mail → papel → paciente → consulta/evento → documento draft → avaliação → onboarding 10/10 server-computed → auditoria metadata-only → exportação com digest e incompletude explícita → pedido de eliminação → troca de senha revogando sessões → encerramento com retenção → webhook tardio sem reabrir acesso. CLINICA_VERMELHA intacta em todas as superfícies.",
+  "✅ CLIENTE ZERO: conta confirmada → clínica → checkout → webhook MOCKED_EXTERNAL autenticado no handler real → entitlement → equipe por e-mail → papel → paciente → consulta/evento → documento draft → avaliação → onboarding 10/10 server-computed → auditoria metadata-only → exportação completa com digest (documentos e avaliações inclusos, S12B) → pedido de eliminação → troca de senha revogando sessões → encerramento com retenção → webhook tardio sem reabrir acesso. CLINICA_VERMELHA intacta em todas as superfícies.",
 );
