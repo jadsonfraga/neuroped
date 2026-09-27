@@ -370,5 +370,93 @@ const asB = contextFor("clinic-b");
   );
 }
 
+// ── 7. S13-R1: diretório exige serviço público NA MESMA clínica ────────────
+// Fixture independente; nenhuma associação do legado ou dado real é alterado.
+{
+  insertUser("directory-prof", "Profissional Sintético do Diretório", "professional");
+  insertClinic("directory-a", "directory-alpha", "directory-prof");
+  insertClinic("directory-b", "directory-beta", "directory-prof");
+  insertMembership("directory-a", "directory-prof", "professional");
+  insertMembership("directory-b", "directory-prof", "professional");
+  raw.prepare(
+    `INSERT INTO booking_provider_profiles
+      (user_id, slug, display_name, specialty, booking_enabled)
+     VALUES ('directory-prof', 'directory-synthetic', 'Profissional Sintético', 'Teste', 1)`,
+  ).run();
+  raw.prepare(
+    `INSERT INTO booking_services
+      (id, provider_user_id, clinic_id, name, duration_minutes, active, public_visible)
+     VALUES ('directory-sa', 'directory-prof', 'directory-a', 'Serviço A', 60, 1, 1),
+            ('directory-sb', 'directory-prof', 'directory-b', 'Serviço B', 60, 1, 1)`,
+  ).run();
+
+  const directory = async (clinicSlug: string | null, database = db) => {
+    const url = new URL("https://neuroped.test/api/public-booking?action=providers");
+    if (clinicSlug !== null) url.searchParams.set("clinic", clinicSlug);
+    const response = await publicGet({
+      request: new Request(url),
+      env: { DB: database, OPERATIONAL_DATA_KEY: OPERATIONAL_KEY },
+    } as never);
+    assert.equal(response.status, 200, "S13-R1: diretório responde normalmente, sem ocultar erro SQL como sucesso");
+    const body = await response.json() as { providers: Array<{ slug: string }> };
+    // O diretório sem slug pode listar outros profissionais elegíveis da fixture.
+    return body.providers.filter((provider) => provider.slug === "directory-synthetic");
+  };
+  const scenarios: Array<{ name: string; sql: string; expected: Array<[string | null, number]> }> = [
+    { name: "duas clínicas válidas exigem slug", sql: "", expected: [["directory-alpha", 1], ["directory-beta", 1], [null, 0]] },
+    { name: "serviço somente em B não habilita A", sql: "DELETE FROM booking_services WHERE id = 'directory-sa'", expected: [["directory-alpha", 0], ["directory-beta", 1]] },
+    { name: "serviço somente em A não habilita B", sql: "DELETE FROM booking_services WHERE id = 'directory-sb'", expected: [["directory-beta", 0], ["directory-alpha", 1]] },
+    { name: "serviço privado em A não empresta B", sql: "UPDATE booking_services SET public_visible = 0 WHERE id = 'directory-sa'", expected: [["directory-alpha", 0], ["directory-beta", 1]] },
+    { name: "serviço inativo em A não empresta B", sql: "UPDATE booking_services SET active = 0 WHERE id = 'directory-sa'", expected: [["directory-alpha", 0], ["directory-beta", 1]] },
+    { name: "membership revogada impede clínica explícita", sql: "UPDATE clinic_memberships SET active = 0 WHERE clinic_id = 'directory-a'", expected: [["directory-alpha", 0], ["directory-beta", 1], [null, 1]] },
+    { name: "link antigo não empresta serviço de vínculo revogado", sql: "UPDATE clinic_memberships SET active = 0 WHERE clinic_id = 'directory-b'; DELETE FROM booking_services WHERE id = 'directory-sa'", expected: [[null, 0], ["directory-alpha", 0], ["directory-beta", 0]] },
+    { name: "serviço sem clínica não é fallback", sql: "UPDATE clinic_memberships SET active = 0 WHERE clinic_id = 'directory-b'; UPDATE booking_services SET clinic_id = NULL WHERE provider_user_id = 'directory-prof'", expected: [[null, 0], ["directory-alpha", 0], ["directory-beta", 0]] },
+    { name: "clínica única suspensa não aparece no link antigo", sql: "UPDATE clinic_memberships SET active = 0 WHERE clinic_id = 'directory-b'; UPDATE clinics SET status = 'suspended' WHERE id = 'directory-a'", expected: [[null, 0], ["directory-alpha", 0]] },
+    { name: "clínica única encerrada não aparece no link antigo", sql: "UPDATE clinic_memberships SET active = 0 WHERE clinic_id = 'directory-b'; UPDATE clinics SET status = 'closed' WHERE id = 'directory-a'", expected: [[null, 0], ["directory-alpha", 0]] },
+    { name: "slug desconhecido ou parecido com SQL não amplia escopo", sql: "", expected: [["directory-ghost", 0], ["directory-alpha' OR 1=1 --", 0]] },
+    { name: "dois serviços não duplicam profissional", sql: "INSERT INTO booking_services (id, provider_user_id, clinic_id, name, duration_minutes) VALUES ('directory-sa2', 'directory-prof', 'directory-a', 'Outro serviço A', 30)", expected: [["directory-alpha", 1]] },
+    { name: "sem membership não há fallback", sql: "UPDATE clinic_memberships SET active = 0 WHERE user_id = 'directory-prof'", expected: [[null, 0], ["directory-alpha", 0]] },
+    { name: "agendamento desligado continua oculto", sql: "UPDATE booking_provider_profiles SET booking_enabled = 0 WHERE user_id = 'directory-prof'", expected: [["directory-alpha", 0], ["directory-beta", 0], [null, 0]] },
+  ];
+  for (const scenario of scenarios) {
+    raw.exec("SAVEPOINT directory_case");
+    try {
+      if (scenario.sql) raw.exec(scenario.sql);
+      for (const [clinicSlug, count] of scenario.expected) {
+        const before = raw.prepare("SELECT total_changes() AS n").get() as { n: number };
+        const providers = await directory(clinicSlug);
+        assert.equal(providers.length, count, `S13-R1: ${scenario.name}; clínica=${clinicSlug}`);
+        const after = raw.prepare("SELECT total_changes() AS n").get() as { n: number };
+        assert.equal(after.n, before.n, "S13-R1: consulta do diretório não altera dados");
+      }
+    } finally {
+      raw.exec("ROLLBACK TO directory_case; RELEASE directory_case");
+    }
+  }
+
+  // Revogar depois de entrar no handler, imediatamente antes do SELECT final,
+  // não pode reaproveitar uma decisão de membership anterior à consulta.
+  raw.exec("SAVEPOINT directory_race");
+  try {
+    let injected = false;
+    const racingDb = {
+      ...db,
+      prepare(sql: string) {
+        if (sql.includes("FROM booking_provider_profiles p")) {
+          injected = true;
+          raw.prepare("UPDATE clinic_memberships SET active = 0 WHERE clinic_id = 'directory-a'").run();
+        }
+        return db.prepare(sql);
+      },
+    } as D1Database;
+    assert.equal((await directory("directory-alpha", racingDb)).length, 0, "S13-R1: revogação antes do SQL final recusa");
+    assert.equal(injected, true, "S13-R1: a corrida foi realmente injetada no SELECT do diretório");
+    assert.equal((await directory("directory-beta")).length, 1, "S13-R1: revogação em A não interfere em B");
+  } finally {
+    raw.exec("ROLLBACK TO directory_race; RELEASE directory_race");
+  }
+  console.log("✓ S13-R1: 15 cenários de diretório/clínica, incluindo revogação no SELECT final e links legados");
+}
+
 raw.close();
 console.log("✓ operações: agenda, PHI de consultas, auditoria e diretório público isolados por clínica (OPS-01/OPS-02); link público desambiguado por clínica sem inferência (S13)");
