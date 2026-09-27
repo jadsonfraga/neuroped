@@ -808,6 +808,32 @@ export async function resolveProviderSoleClinicId(
   return memberships.length === 1 ? memberships[0].clinic_id : null;
 }
 
+/**
+ * Variante de resolveProviderSoleClinicId para quando o link público já
+ * declara a clínica (S13, `?clinic=<slug>`): a clínica não precisa mais ser
+ * inferida pela contagem de memberships, só confirmada. Clínica inexistente/
+ * inativa ou profissional sem membership ativa NESSA clínica falha fechado
+ * (null) — nunca cai de volta para inferir a única clínica do profissional,
+ * porque isso reabriria a ambiguidade que o slug explícito veio resolver.
+ */
+export async function resolveProviderClinicBySlug(
+  db: D1Database,
+  providerUserId: string,
+  clinicSlug: string,
+): Promise<string | null> {
+  const row = await db
+    .prepare(
+      `SELECT cm.clinic_id
+         FROM clinic_memberships cm
+         JOIN clinics c ON c.id = cm.clinic_id
+        WHERE cm.user_id = ? AND cm.active = 1 AND c.status = 'active' AND c.slug = ?
+        LIMIT 1`,
+    )
+    .bind(providerUserId, clinicSlug)
+    .first<{ clinic_id: string }>();
+  return row?.clinic_id ?? null;
+}
+
 export async function getService(
   db: D1Database,
   providerUserId: string,
