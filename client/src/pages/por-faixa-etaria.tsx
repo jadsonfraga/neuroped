@@ -27,10 +27,8 @@ import {
   type CognitiveDomain,
 } from "@/features/cognitive-age/bank";
 import { BuildBody, SayBody, TapBody, expectedText } from "@/features/cognitive-age/screens";
+import { BLOCK_DOMAINS, MAX_AGE, MIN_AGE, isValidAge } from "@/features/reading-dictation-age/config";
 import { Check, ChevronRight, Play, RotateCcw, ShieldCheck, X } from "lucide-react";
-
-const MIN_AGE = 5;
-const MAX_AGE = 19;
 
 interface BlockMeta {
   domain: CognitiveDomain;
@@ -43,7 +41,7 @@ interface BlockMeta {
 
 const BLOCKS: BlockMeta[] = [
   {
-    domain: "leitura",
+    domain: BLOCK_DOMAINS[0],
     title: "Leitura",
     emoji: "📖",
     blurb: "A criança lê em voz alta ou fala; você compara com a resposta esperada.",
@@ -51,7 +49,7 @@ const BLOCKS: BlockMeta[] = [
     accent: "text-sky-700 dark:text-sky-300",
   },
   {
-    domain: "escrita",
+    domain: BLOCK_DOMAINS[1],
     title: "Ditado e escrita",
     emoji: "✏️",
     blurb: "A criança escreve a palavra ditada e revisa ortografia; a tela confere sozinha.",
@@ -62,10 +60,6 @@ const BLOCKS: BlockMeta[] = [
 
 const NATURE =
   "REGISTRO DESCRITIVO — NÃO É ESCORE, PERCENTIL, IDADE EQUIVALENTE NEM DIAGNÓSTICO. Questionário interno autoral (mesmo banco dos Testes Cognitivos por Faixa Etária); não substitui avaliação psicométrica formal. Leitura e conclusão pertencem ao médico.";
-
-function isValidAge(age: number): boolean {
-  return Number.isInteger(age) && age >= MIN_AGE && age <= MAX_AGE;
-}
 
 interface AnswerRecord {
   prompt: string;
@@ -476,5 +470,3 @@ export default function PorFaixaEtariaPage() {
     </div>
   );
 }
-
-export { MIN_AGE as PFE_MIN_AGE, MAX_AGE as PFE_MAX_AGE, isValidAge as isPorFaixaEtariaAge };
