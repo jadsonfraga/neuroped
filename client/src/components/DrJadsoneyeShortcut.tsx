@@ -23,7 +23,7 @@ export function DrJadsoneyeShortcut({
         onClick={onNavigate}
         data-testid="nav-DrJadsoneye"
         data-tone="connection"
-        aria-label="DrJadsoneye (abre em nova aba)"
+        aria-label="DrJadsoneye Aplicativo externo · pesquisa (abre em nova aba)"
         title="DrJadsoneye — aplicativo externo de pesquisa (abre em nova aba)"
         className={`np-nav-item relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${collapsed ? "lg:justify-center" : ""}`}
       >

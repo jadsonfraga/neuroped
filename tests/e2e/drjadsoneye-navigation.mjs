@@ -72,8 +72,14 @@ try {
       assert.equal(await link.getAttribute("target"), "_blank");
       assert.equal(await link.getAttribute("rel"), "noopener noreferrer");
       assert.equal(await link.getAttribute("referrerpolicy"), "no-referrer");
-      assert.equal(await link.getAttribute("aria-label"), "DrJadsoneye (abre em nova aba)");
+      const accessibleName = await link.getAttribute("aria-label");
+      assert.equal(accessibleName, "DrJadsoneye Aplicativo externo · pesquisa (abre em nova aba)");
       assert.equal(await link.locator(".np-nav-item__label").isVisible(), scenario.mobile || !scenario.collapsed);
+      if (scenario.mobile || !scenario.collapsed) {
+        const visibleText = (await link.innerText()).replace(/\s+/g, " ").trim();
+        assert.ok(visibleText.length > 0, "the visible label is not hidden to bypass its accessibility contract");
+        assert.ok(accessibleName.includes(visibleText), "accessible name contains the entire visible label, including the research subtitle");
+      }
       await link.scrollIntoViewIfNeeded();
       const box = await link.boundingBox();
       assert.ok(box && box.height >= 44, "minimum touch target remains available");

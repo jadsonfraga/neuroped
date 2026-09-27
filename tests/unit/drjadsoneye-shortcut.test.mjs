@@ -70,7 +70,7 @@ for (const collapsed of [false, true]) {
     assert.equal(link.props.target, "_blank");
     assert.deepEqual(new Set(link.props.rel.split(/\s+/)), new Set(["noopener", "noreferrer"]));
     assert.equal(link.props.referrerPolicy, "no-referrer");
-    assert.equal(link.props["aria-label"], "DrJadsoneye (abre em nova aba)");
+    assert.equal(link.props["aria-label"], "DrJadsoneye Aplicativo externo · pesquisa (abre em nova aba)");
     assert.match(link.props.title, /pesquisa.*nova aba/);
     assert.match(link.props.className, /min-h-\[44px\]/);
     assert.match(link.props.className, /focus-visible:ring-2/);
@@ -85,6 +85,16 @@ for (const collapsed of [false, true]) {
       assert.match(html, /class="min-w-0 lg:hidden"/);
       assert.doesNotMatch(html, /class="min-w-0 hidden"/);
     }
+  });
+
+  test(`accessible name includes the entire rendered label and subtitle (collapsed=${collapsed})`, () => {
+    const link = getLink(collapsed);
+    const textContainer = link.props.children.find((child) => isValidElement(child) && child.type === "span");
+    assert.ok(textContainer, "the visible label container remains present");
+    const visibleText = textContainer.props.children.map((child) => child.props.children).join(" ").replace(/\s+/g, " ").trim();
+    assert.equal(visibleText, "DrJadsoneye Aplicativo externo · pesquisa");
+    assert.ok(link.props["aria-label"].includes(visibleText), "label-content-name-mismatch must not return when the mobile or expanded label is shown");
+    assert.match(link.props["aria-label"], /abre em nova aba/);
   });
 }
 
