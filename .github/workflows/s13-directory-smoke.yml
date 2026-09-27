@@ -1,0 +1,64 @@
+name: S13 public directory smoke
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/s13-directory-smoke.yml"
+      - ".github/workflows/deploy-cloudflare.yml"
+      - "scripts/smoke-s13-directory.mjs"
+      - "tests/unit/s13-directory-smoke.test.mjs"
+      - "functions/api/public-booking.ts"
+      - "functions/api/operations/**"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s13-directory-smoke-${{ github.event.pull_request.number || github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  public-directory:
+    name: S13 read-only production proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require a successful canonical deployment for post-deploy events
+        env:
+          EVENT: ${{ github.event_name }}
+          DEPLOY_RESULT: ${{ github.event.workflow_run.conclusion }}
+          DEPLOY_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_run" ]; then
+            [ "$DEPLOY_RESULT" = "success" ] || { echo "::error::Upstream deploy did not succeed"; exit 1; }
+            [ "$DEPLOY_REPO" = "$REPOSITORY" ] || { echo "::error::Non-canonical repository"; exit 1; }
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Offline contract tests (not production evidence)
+        run: node --test tests/unit/s13-directory-smoke.test.mjs
+      - name: Real public GETs against canonical production
+        id: live
+        env:
+          EXPECTED_DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || '' }}
+        run: node scripts/smoke-s13-directory.mjs
+      - name: Preserve metadata-only evidence
+        if: ${{ always() && steps.live.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: s13-directory-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/s13-directory-smoke.json
+          if-no-files-found: error
+          retention-days: 30
