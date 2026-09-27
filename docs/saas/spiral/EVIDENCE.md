@@ -762,3 +762,24 @@
 ### Reconciliação em 26/09/2026
 O histórico acima descreve a execução original em 24/09. A revisão atual
 reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
+
+## S23 (ciclo 6, 2026-09-27) — recepção delegada barrada no gate da agenda (AUTHZ-P1-04)
+- Escopo: 1 arquivo de produção (`functions/api/operations/_middleware.ts`),
+  1 teste novo, 1 linha em `package.json` (`test:operations`).
+- Base: `574236b` (main após #1004).
+- RED contra o middleware anterior:
+  `node --import tsx tests/unit/operations-delegated-staff-gate.test.ts` →
+  exit 1, `secretária vinculada deve ler a agenda: 409
+  {"code":"BILLING_CLINIC_CONTEXT_REQUIRED"}`.
+- GREEN com a correção: o mesmo comando → exit 0. Cobre: leitura redigida
+  (`amountCents`/`paymentMethod` nulos, `staff` vazio, `canConfigure=false`),
+  check-in operacional 200, configuração recusada 403, sem vínculo 403
+  `STAFF_LINK_REQUIRED` sem rodar o handler, header para clínica alheia 409,
+  trial vencido 402, clínica suspensa 423, vínculo revogado 403. Também há
+  controle do profissional.
+- Regressão: `npm run test:operations` exit 0; `npm run test:quick-wins`
+  exit 0; `npm run check` exit 0; `npm run lint` exit 0.
+- Fixtures 100% sintéticas (`example.test`), sem PHI.
+- Rollback: reverter o commit; o comportamento volta a ser o 409 anterior
+  para `operator`, sem efeito em dados, porque não houve migração.
+

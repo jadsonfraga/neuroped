@@ -334,6 +334,34 @@ autoatendimento (incluindo `paymentStatus`). Visto falhando pelo motivo
 certo contra o código anterior via `git stash`. Evidência em
 EVIDENCE.md#S22.
 
+## S23 · P1 · FECHADO (ciclo 6, 2026-09-27)
+A recepção delegada (papel global `operator`, vinculada a um profissional em
+`booking_staff_links`) nunca alcançava a agenda: `functions/api/operations/
+_middleware.ts` resolvia clínica e entitlement pelo ATOR, e a secretária não
+tem membership clínica. Toda chamada morria em 409
+`BILLING_CLINIC_CONTEXT_REQUIRED` antes do handler, embora o handler
+(`preparePrincipal`) e o middleware global já tivessem sido desenhados para
+a delegação. O papel "secretária" vendido não funcionava. (AUTHZ-P1-04,
+metade `operator`)
+
+Corrigido só no middleware: para `operator`, resolve o vínculo ativo
+persistido (`resolveOperationsPrincipal`, o mesmo usado pelo handler) e
+aplica clínica + billing + status da clínica do PROFISSIONAL responsável.
+Sem vínculo ativo → 403 `STAFF_LINK_REQUIRED` no próprio gate (fail-closed).
+O header `X-Tenant-Id` continua sendo alvo, nunca autoridade: só vale se o
+profissional responsável for membro ativo daquela clínica. Nenhuma migração
+e nenhuma mudança de handler. A redação da recepção (sem valores, forma de
+pagamento, equipe ou configuração) já existia e agora é exercitada.
+
+Teste novo: `tests/unit/operations-delegated-staff-gate.test.ts`, com schema
+real, middleware real encadeado ao handler real e clínicas Alfa/Beta
+sintéticas, incluído em `test:operations`. Evidência em EVIDENCE.md#S23.
+
+Continua aberto em S10: membership `assistant`/`financial` sem escopo próprio
+(o escopo `clinical` exige owner/clinic_admin/professional), ou seja, a
+secretária modelada como membro da clínica em vez de delegação por
+profissional. É uma mudança de modelo de papéis e fica em PR separada.
+
 ## S9 · P0 · aberto — censo observado, associação legítima pendente
 Atualização 26/09/2026, 21:07 UTC: o workflow 36271735655 executou o censo
 de produção com sucesso após a PR #994. Três pacientes não têm owner; um
