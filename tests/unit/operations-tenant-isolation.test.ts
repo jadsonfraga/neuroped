@@ -17,6 +17,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
+import { assertPublicBookingClinicIsolation } from "./public-booking-clinic-regressions";
 
 import { onRequestGet as opsGet, onRequestPost as opsPost } from "../../functions/api/operations/index";
 import {
@@ -488,6 +489,8 @@ const asB = contextFor("clinic-b");
   }
   console.log("✓ S13-R1: 15 cenários de diretório/clínica, incluindo revogação no SELECT final e links legados");
 }
+
+await assertPublicBookingClinicIsolation(raw, db, OPERATIONAL_KEY);
 
 raw.close();
 console.log("✓ operações: agenda, PHI de consultas, auditoria e diretório público isolados por clínica (OPS-01/OPS-02); link público desambiguado por clínica sem inferência (S13)");
