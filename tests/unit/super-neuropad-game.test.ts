@@ -472,6 +472,24 @@ test("página: rota real, sensível, sem persistência local, sem rede e sem câ
   assert.doesNotMatch(page, /Acertou!|Errou!|Resposta certa|Resposta errada/, "a criança não recebe certo/errado como feedback de jogo");
 });
 
+test("toque duplo em tablet não registra o mesmo desafio duas vezes: os três caminhos de resposta passam pela guarda por carimbo de evento", () => {
+  const strip = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  const page = strip(readFileSync("client/src/pages/super-neuropad-game.tsx", "utf8"));
+  assert.match(page, /import \{ acceptManualTap \} from "@\/components\/jogo-facil\/easyReport";/, "reaproveita a guarda de toque duplo já testada no motor compartilhado (EasyGame), sem duplicar a lógica");
+  assert.match(page, /if \(!acceptManualTap\(lastAnswerAt\.current, event\.timeStamp\)\) return;\s*\n\s*lastAnswerAt\.current = event\.timeStamp;\s*\n\s*pushAnswer\(record\);/, "submitAnswer só chama pushAnswer quando o toque respeita o intervalo mínimo");
+  assert.doesNotMatch(page, /onAnswer=\{\(chosen\) => pushAnswer/, "TouchStage não chama pushAnswer direto, sem passar pela guarda");
+  assert.doesNotMatch(page, /onJudge=\{\(status\) => pushAnswer/, "JudgeStage não chama pushAnswer direto, sem passar pela guarda");
+  const submissionSites = [
+    /onAnswer=\{\(chosen, event\) => submitAnswer\(recordTouch\(item, phaseId, chosen, elapsedSeconds\(\), repeated\), event\)\}/,
+    /onClick=\{\(event\) => submitAnswer\(recordTouch\(item, phaseId, null, elapsedSeconds\(\), repeated\), event\)\}/,
+    /onJudge=\{\(status, event\) => submitAnswer\(recordJudged\(item, phaseId, status, elapsedSeconds\(\), repeated\), event\)\}/,
+  ];
+  for (const pattern of submissionSites) assert.match(page, pattern, `caminho de resposta sem guarda: ${pattern}`);
+  // Reiniciar zera a guarda: sem isto, uma partida nova herdaria o carimbo da anterior e travaria o primeiro toque legítimo.
+  assert.match(page, /lastAnswerAt\.current = Number\.NEGATIVE_INFINITY;\s*\n\s*setScreen\("intro"\)/, "startGame zera a guarda");
+  assert.match(page, /lastAnswerAt\.current = Number\.NEGATIVE_INFINITY;\s*\n\s*setScreen\("setup"\)/, "restart zera a guarda");
+});
+
 
 test("partidas interrompidas ou com itens duplicados não pontuam nem interpretam em texto, resumo ou PDF", () => {
   const full = play("6-7", (index) => index % 2 ? "erro" : "acerto");
