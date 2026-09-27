@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BookOpen, CalendarDays, HelpCircle, ListChecks, Users } from "lucide-react";
 import { OUTCOMES } from "./protocol";
 import { monthsBetween } from "./session";
+import { Obs60Launcher } from "../obs60/Obs60Launcher";
 
 /** End-to-end orientation for an adult applying the sheet for the first time. Screen and room side by side; no clinical judgement. */
 export const FIRST_TIME_STEPS = [
@@ -19,13 +20,13 @@ export const TROUBLE = [
   ["O celular ficou sem espaço ou a câmera falhou", "Continue anotando na tela. Registre na exportação que o vídeo não existe; nunca refaça tarefas para filmar de novo."],
 ] as const;
 export function FirstTimeGuide() {
-  return <details className="obs10-first-time obs10-no-print" data-testid="obs10-first-time" open>
+  return <><Obs60Launcher /><details className="obs10-first-time obs10-no-print" data-testid="obs10-first-time" open>
     <summary><BookOpen size={18} aria-hidden="true" /> Primeira vez aplicando? Leia isto antes de começar · três minutos</summary>
     <p>Você vai propor brincadeiras e pequenos movimentos a uma criança por até dez minutos, filmar e anotar o que ela fez. Você não avalia nem conclui nada: o médico interpreta. Tudo o que precisa está nesta página, de cima para baixo.</p>
     <ol className="obs10-first-steps">{FIRST_TIME_STEPS.map((step, index) => <li key={step.title}><strong>{index + 1}. {step.title}</strong><p><span>Na tela</span>{step.screen}</p><p><span>Na sala</span>{step.room}</p></li>)}</ol>
     <h2 className="obs10-subtitle"><HelpCircle size={16} aria-hidden="true" /> Se algo der errado</h2>
     <dl className="obs10-trouble">{TROUBLE.map(([problem, action]) => <div key={problem}><dt>{problem}</dt><dd>{action}</dd></div>)}</dl>
-  </details>;
+  </details></>;
 }
 
 export const CHILD_PHRASE = "Vamos fazer algumas brincadeiras e movimentos para o médico conhecer seu jeito de fazer as coisas. Você pode pedir ajuda ou parar.";

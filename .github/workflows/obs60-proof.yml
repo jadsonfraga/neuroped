@@ -1,0 +1,24 @@
+name: OBS60 evidence contract
+on:
+  pull_request:
+    paths:
+      - 'shared/obs60.ts'
+      - 'client/src/features/obs60/**'
+      - 'client/src/features/obs10/Orientation.tsx'
+      - 'functions/api/integrations/obs60/**'
+      - 'tests/unit/obs60.test.mjs'
+      - '.github/workflows/obs60-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run synthetic evidence and video transport tests
+        run: node --experimental-strip-types --test tests/unit/obs60.test.mjs
