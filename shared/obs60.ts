@@ -89,7 +89,7 @@ export function validateAnalysis(raw: unknown, ageMonths: number, windowSeconds:
     const r = object(input); exactKeys(r, FIELDS);
     if (typeof r.id !== "string" || !ITEM_IDS.includes(r.id as ItemId) || seen.has(r.id)) throw new Error("Registro ausente, duplicado ou desconhecido.");
     const id = r.id as ItemId; seen.add(id);
-    if (!ALLOWED[id].includes(r.event as EventCode) || !OPPORTUNITIES.includes(r.opportunity as typeof OPPORTUNITIES[number]) || !Object.hasOwn(HELP_LABELS, String(r.help)) || !REASONS.includes(r.reason as Reason)) throw new Error("Categoria da IA fora do contrato.");
+    if (!ALLOWED[id].includes(r.event as EventCode) || !OPPORTUNITIES.includes(r.opportunity as typeof OPPORTUNITIES[number]) || typeof r.help !== "string" || !Object.hasOwn(HELP_LABELS, r.help) || !REASONS.includes(r.reason as Reason)) throw new Error("Categoria da IA fora do contrato.");
     for (const k of ["audioClear", "viewClear", "sequenceClear", "childSpeakerClear", "initiallyFacingAdult"]) if (typeof r[k] !== "boolean") throw new Error("Qualidade da evidência inválida.");
     if (typeof r.transcript !== "string" || r.transcript.length > 240 || hasUnsafeTranscriptCharacters(r.transcript)) throw new Error("Transcrição fora do contrato.");
     if (id !== "speech" && r.transcript !== "") throw new Error("Transcrição permitida somente no registro de fala.");

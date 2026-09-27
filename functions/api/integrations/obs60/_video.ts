@@ -43,7 +43,7 @@ export function parseInput(raw: unknown): VideoInput {
   if (r.consent !== true) throw new VideoError("Autorização explícita de envio à IA obrigatória.", "CONSENT_REQUIRED", 403);
   if (typeof r.ageMonths !== "number" || !ageBand(r.ageMonths)) throw new VideoError("Idade fora da faixa de 24 a 59 meses.", "INVALID_AGE");
   if (typeof r.windowSeconds !== "number" || !Number.isFinite(r.windowSeconds) || r.windowSeconds <= 0 || r.windowSeconds > MAX_SECONDS) throw new VideoError("Duração da janela inválida.", "INVALID_DURATION");
-  if (!["video/mp4", "video/webm"].includes(String(r.mime))) throw new VideoError("Use vídeo MP4 ou WebM.", "INVALID_MEDIA", 415);
+  if (typeof r.mime !== "string" || !["video/mp4", "video/webm"].includes(r.mime)) throw new VideoError("Use vídeo MP4 ou WebM.", "INVALID_MEDIA", 415);
   if (typeof r.data !== "string" || !r.data || r.data.length > Math.ceil(MAX_BYTES / 3) * 4 || r.data.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(r.data)) throw new VideoError("Bytes de vídeo ausentes ou inválidos; limite de 12 MB.", "INVALID_MEDIA", 415);
   let prefix: string;
   try { prefix = atob(r.data.slice(0, 32)); } catch { throw new VideoError("Codificação de vídeo inválida.", "INVALID_MEDIA", 415); }
