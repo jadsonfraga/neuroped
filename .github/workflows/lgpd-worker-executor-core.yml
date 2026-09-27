@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - "functions/api/live/governance/index.ts"
       - "functions/api/live/governance/_worker-core.ts"
       - "functions/api/live/governance/_worker-executor.ts"
       - "functions/api/live/governance/_purge.ts"
@@ -18,11 +19,13 @@ on:
       - "tests/unit/lgpd-purge-executor.test.ts"
       - "tests/unit/lgpd-run-deletion-endpoint.test.ts"
       - "tests/unit/lgpd-run-export-endpoint.test.ts"
+      - "tests/unit/lgpd-deletion-four-eyes.test.ts"
       - ".github/workflows/lgpd-worker-executor-core.yml"
   push:
     branches:
       - main
     paths:
+      - "functions/api/live/governance/index.ts"
       - "functions/api/live/governance/_worker-core.ts"
       - "functions/api/live/governance/_worker-executor.ts"
       - "functions/api/live/governance/_purge.ts"
@@ -36,6 +39,7 @@ on:
       - "tests/unit/lgpd-purge-executor.test.ts"
       - "tests/unit/lgpd-run-deletion-endpoint.test.ts"
       - "tests/unit/lgpd-run-export-endpoint.test.ts"
+      - "tests/unit/lgpd-deletion-four-eyes.test.ts"
       - ".github/workflows/lgpd-worker-executor-core.yml"
 
 permissions:
@@ -80,6 +84,9 @@ jobs:
 
       - name: Export orchestrator, artifact integrity and tenant boundary
         run: node --import tsx tests/unit/lgpd-run-export-endpoint.test.ts
+
+      - name: Deletion approval requires a second, different manager (LTB-10)
+        run: node --import tsx tests/unit/lgpd-deletion-four-eyes.test.ts
 
       - name: TypeScript
         run: npm run check

@@ -349,10 +349,26 @@ export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
 
   const table = requestType === "export" ? "live_export_requests" : "live_deletion_requests";
   const current = await db
-    .prepare(`SELECT id, status FROM ${table} WHERE id = ? AND clinic_id = ? LIMIT 1`)
+    .prepare(`SELECT id, status, requested_by_user_id FROM ${table} WHERE id = ? AND clinic_id = ? LIMIT 1`)
     .bind(requestId, clinicId)
-    .first<{ id: string; status: string }>();
+    .first<{ id: string; status: string; requested_by_user_id: string | null }>();
   if (!current) return tenantError("Solicitação não encontrada nesta clínica.", "REQUEST_NOT_FOUND", 404);
+  // LTB-10 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): eliminação física de
+  // prontuário nunca pode ser criada e aprovada pela mesma pessoa. Só a
+  // aprovação de escopo 'delete' exige o segundo par de olhos — export não
+  // apaga nada e policy é configuração, não execução.
+  if (
+    requestType === "delete" &&
+    nextStatus === "approved" &&
+    current.requested_by_user_id &&
+    current.requested_by_user_id === user.id
+  ) {
+    return tenantError(
+      "A aprovação de eliminação exige um segundo gestor, diferente de quem solicitou.",
+      "FOUR_EYES_REQUIRED",
+      409,
+    );
+  }
   if (!ALLOWED_TRANSITIONS[current.status]?.has(nextStatus)) {
     return tenantError("Transição de workflow inválida.", "INVALID_WORKFLOW_TRANSITION", 409);
   }
