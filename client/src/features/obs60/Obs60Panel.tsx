@@ -20,7 +20,11 @@ async function readDuration(file: File): Promise<number> {
     return await new Promise((resolve, reject) => {
       const fail = () => { clearTimeout(timer); reject(new Error("Não foi possível ler a duração. Use MP4/WebM reproduzível ou a câmera integrada.")); };
       const timer = setTimeout(fail, 8000);
-      video.onloadedmetadata = () => { clearTimeout(timer); Number.isFinite(video.duration) && video.duration > 0 ? resolve(video.duration) : fail(); };
+      video.onloadedmetadata = () => {
+        clearTimeout(timer);
+        if (Number.isFinite(video.duration) && video.duration > 0) resolve(video.duration);
+        else fail();
+      };
       video.onerror = fail; video.src = url;
     });
   } finally { video.onloadedmetadata = null; video.onerror = null; video.removeAttribute("src"); video.load(); URL.revokeObjectURL(url); }
@@ -40,6 +44,7 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null); const preview = useRef<HTMLVideoElement>(null); const playback = useRef<HTMLVideoElement>(null);
   const { activeClinicId } = useClinic(); const { user } = useAuth();
   const recorder = useLocalRecorder();
+  const { reset: resetRecorder, stop: stopRecorder } = recorder;
   const [age, setAge] = useState(""); const months = parseAge(age);
   const [captureConsent, setCaptureConsent] = useState(false); const [sendConsent, setSendConsent] = useState(false);
   const [clip, setClip] = useState<Clip | null>(null); const [output, setOutput] = useState<Envelope | null>(null);
@@ -52,8 +57,8 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
   useExitGuard(dirty);
   const clear = useCallback(() => {
     generation.current++; request.current?.abort(); request.current = null;
-    recorder.reset(); setClip(null); setOutput(null); setBusy(false); setStarting(false); setSendConsent(false); setElapsed(0); startedAt.current = null; recordedSeconds.current = 0; setError(""); setNotice("");
-  }, [recorder.reset]);
+    resetRecorder(); setClip(null); setOutput(null); setBusy(false); setStarting(false); setSendConsent(false); setElapsed(0); startedAt.current = null; recordedSeconds.current = 0; setError(""); setNotice("");
+  }, [resetRecorder]);
   useEffect(() => { dialog.current?.showModal(); }, []);
   useEffect(() => () => { generation.current++; request.current?.abort(); }, []);
   useEffect(() => { if (preview.current) preview.current.srcObject = recorder.stream; }, [recorder.stream]);
@@ -72,8 +77,8 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
   }, [activeClinicId, user?.id, clear]);
   const stop = useCallback(() => {
     if (startedAt.current !== null) recordedSeconds.current = Math.max(0.1, Math.min(MAX_SECONDS, (performance.now() - startedAt.current) / 1000));
-    recorder.stop();
-  }, [recorder.stop]);
+    stopRecorder();
+  }, [stopRecorder]);
   useEffect(() => {
     if (!recording) return;
     const tick = () => { const now = Math.min(MAX_SECONDS, (performance.now() - (startedAt.current ?? performance.now())) / 1000); setElapsed(now); if (now >= MAX_SECONDS) stop(); };

@@ -72,6 +72,12 @@ function object(value: unknown): Record<string, unknown> {
 function exactKeys(record: Record<string, unknown>, keys: readonly string[]) {
   if (Object.keys(record).length !== keys.length || keys.some(k => !Object.hasOwn(record, k))) throw new Error("Contrato de resposta da IA divergente.");
 }
+function hasUnsafeTranscriptCharacters(text: string): boolean {
+  return /[<>]/.test(text) || [...text].some(character => {
+    const code = character.charCodeAt(0);
+    return code < 32 && code !== 9 && code !== 10 && code !== 13;
+  });
+}
 export const FIELDS = ["id", "event", "start", "end", "opportunity", "audioClear", "viewClear", "sequenceClear", "childSpeakerClear", "initiallyFacingAdult", "help", "transcript", "reason"];
 /** Schema integrity is NOT proof of perceptual accuracy. */
 export function validateAnalysis(raw: unknown, ageMonths: number, windowSeconds: number): Result {
@@ -85,7 +91,7 @@ export function validateAnalysis(raw: unknown, ageMonths: number, windowSeconds:
     const id = r.id as ItemId; seen.add(id);
     if (!ALLOWED[id].includes(r.event as EventCode) || !OPPORTUNITIES.includes(r.opportunity as typeof OPPORTUNITIES[number]) || !Object.hasOwn(HELP_LABELS, String(r.help)) || !REASONS.includes(r.reason as Reason)) throw new Error("Categoria da IA fora do contrato.");
     for (const k of ["audioClear", "viewClear", "sequenceClear", "childSpeakerClear", "initiallyFacingAdult"]) if (typeof r[k] !== "boolean") throw new Error("Qualidade da evidência inválida.");
-    if (typeof r.transcript !== "string" || r.transcript.length > 240 || /[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(r.transcript)) throw new Error("Transcrição fora do contrato.");
+    if (typeof r.transcript !== "string" || r.transcript.length > 240 || hasUnsafeTranscriptCharacters(r.transcript)) throw new Error("Transcrição fora do contrato.");
     if (id !== "speech" && r.transcript !== "") throw new Error("Transcrição permitida somente no registro de fala.");
     const hasTimes = typeof r.start === "number" && typeof r.end === "number" && Number.isFinite(r.start) && Number.isFinite(r.end) && r.start >= 0 && r.end > r.start && r.end <= windowSeconds;
     if (!(r.start === null && r.end === null) && !hasTimes) throw new Error("Evidência temporal fora do vídeo informado.");
