@@ -15,6 +15,7 @@ import {
   profileToApi,
   randomAccessToken,
   releaseSlotLocksAfterSuccessfulMutationStatement,
+  resolveProviderClinicBySlug,
   resolveProviderSoleClinicId,
   serviceToApi,
   sha256,
@@ -38,15 +39,29 @@ function phoneValid(value: string): boolean {
   return digits.length >= 10 && digits.length <= 13;
 }
 
-async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
+// S13 (docs/saas/spiral/BACKLOG.md): o link público continua identificando o
+// profissional por slug global (OPS-05, redesenho de rota maior, não feito
+// aqui), mas agora pode declarar a clínica explicitamente via `?clinic=<slug
+// da clínica>`. Com o parâmetro presente, a clínica é CONFIRMADA (membership
+// ativa do profissional exatamente nela), nunca inferida — mesmo profissional
+// em duas clínicas deixa de precisar de exatamente uma membership ativa no
+// total, só de uma membership ativa NA clínica pedida. Sem o parâmetro,
+// mantém o comportamento anterior (só funciona com exatamente uma clínica
+// ativa), preservando links já compartilhados/salvos.
+async function resolveClinicId(
+  db: D1Database,
+  providerUserId: string,
+  clinicSlug: string | null,
+): Promise<string | null> {
+  return clinicSlug
+    ? resolveProviderClinicBySlug(db, providerUserId, clinicSlug)
+    : resolveProviderSoleClinicId(db, providerUserId);
+}
+
+async function publicProfile(db: D1Database, env: OperationsEnv, slug: string, clinicSlug: string | null) {
   const provider = await getProviderBySlug(db, slug);
   if (!provider) return null;
-  // O perfil público ainda é encontrado por um slug global (redesenho de
-  // chave por clínica pendente — OPS-05 no backlog), mas os dados que ele
-  // expõe (serviços, avaliações) já são só os da clínica do profissional.
-  // Profissional sem exatamente uma clínica ativa não pode operar
-  // agendamento público: melhor recusar do que misturar ou adivinhar.
-  const clinicId = await resolveProviderSoleClinicId(db, provider.user_id);
+  const clinicId = await resolveClinicId(db, provider.user_id, clinicSlug);
   if (!clinicId) return null;
   const services = await db
     .prepare(
@@ -79,17 +94,24 @@ async function publicProfile(db: D1Database, env: OperationsEnv, slug: string) {
   };
 }
 
-// OPS-02 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md) permanece aberto: este
-// diretório ainda lista profissionais de TODAS as clínicas com agendamento
-// ativo — o redesenho para um link público por clínica
-// (`/agendar?clinic=<slug>`) é mudança de rota/frontend, fora do escopo desta
-// camada (isolamento de dados no backend autenticado). A mitigação aqui é
-// não incluir profissional cuja clínica seja ambígua (0 ou 2+ memberships
-// ativas), porque `booking_services` filtrado por clinic_id (ver
-// publicProfile) já não teria como saber qual clínica mostrar para ele —
-// hoje esse profissional simplesmente não aparece, em vez de misturar
-// serviços de mais de uma clínica.
-async function publicProviders(db: D1Database) {
+// OPS-02 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): sem `?clinic=<slug>`,
+// este diretório lista profissionais de TODAS as clínicas com agendamento
+// ativo, mitigado só por excluir profissional com clínica ambígua (0 ou 2+
+// memberships ativas) — hoje esse profissional simplesmente não aparece, em
+// vez de misturar serviços de mais de uma clínica. Com `clinic` presente
+// (S13), o diretório passa a listar só quem tem membership ativa NAQUELA
+// clínica, mesmo que o profissional também atenda em outra.
+async function publicProviders(db: D1Database, clinicSlug: string | null) {
+  const clinicFilter = clinicSlug
+    ? `AND EXISTS (
+         SELECT 1 FROM clinic_memberships cm
+           JOIN clinics c ON c.id = cm.clinic_id
+          WHERE cm.user_id = p.user_id AND cm.active = 1 AND c.status = 'active' AND c.slug = ?
+       )`
+    : `AND (
+         SELECT COUNT(*) FROM clinic_memberships cm
+          WHERE cm.user_id = p.user_id AND cm.active = 1
+       ) = 1`;
   const result = await db
     .prepare(
       `SELECT p.slug, p.display_name, p.specialty, p.location_label
@@ -102,12 +124,10 @@ async function publicProviders(db: D1Database) {
                AND s.active = 1
                AND s.public_visible = 1
           )
-          AND (
-            SELECT COUNT(*) FROM clinic_memberships cm
-             WHERE cm.user_id = p.user_id AND cm.active = 1
-          ) = 1
+          ${clinicFilter}
         ORDER BY p.display_name COLLATE NOCASE`,
     )
+    .bind(...(clinicSlug ? [clinicSlug] : []))
     .all<Pick<ProviderRow, "slug" | "display_name" | "specialty" | "location_label">>();
   return (result.results ?? []).map((provider) => ({
     slug: provider.slug,
@@ -122,13 +142,14 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
   const url = new URL(request.url);
   const action = cleanText(url.searchParams.get("action"), 30) || "profile";
   const slug = cleanText(url.searchParams.get("provider"), 60);
+  const clinicSlug = cleanOptionalText(url.searchParams.get("clinic"), 80);
 
   try {
     await ensureOperationsSchema(env.DB);
     await ensureOperationsHardeningSchema(env.DB);
 
     if (action === "providers") {
-      return jsonResponse({ providers: await publicProviders(env.DB) });
+      return jsonResponse({ providers: await publicProviders(env.DB, clinicSlug) });
     }
 
     if (!slug) return errorResponse("Profissional não informado.", "VALIDATION_ERROR", 400);
@@ -139,7 +160,7 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
       if (!provider.booking_enabled) {
         return jsonResponse({ slots: [], bookingEnabled: false });
       }
-      const clinicId = await resolveProviderSoleClinicId(env.DB, provider.user_id);
+      const clinicId = await resolveClinicId(env.DB, provider.user_id, clinicSlug);
       if (!clinicId) return jsonResponse({ slots: [], bookingEnabled: false });
       const serviceId = cleanText(url.searchParams.get("service"), 80);
       const date = cleanText(url.searchParams.get("date"), 10);
@@ -156,7 +177,7 @@ export const onRequestGet: PagesFunction<OperationsEnv> = async ({ env, request 
       return jsonResponse({ slots, bookingEnabled: true, timezone: provider.timezone });
     }
 
-    return jsonResponse(await publicProfile(env.DB, env, slug));
+    return jsonResponse(await publicProfile(env.DB, env, slug, clinicSlug));
   } catch (error) {
     console.error("[public-booking.GET]", error);
     return errorResponse("Não foi possível carregar o agendamento.", "BOOKING_LOAD_FAILED", 500);
@@ -217,11 +238,12 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
         return errorResponse("É necessário aceitar o aviso de privacidade do agendamento.", "CONSENT_REQUIRED", 400);
       }
       const slug = cleanText(body.provider, 60);
+      const clinicSlug = cleanOptionalText(body.clinic, 80);
       const provider = await getProviderBySlug(env.DB, slug);
       if (!provider || !provider.booking_enabled) {
         return errorResponse("Agendamento online não está ativo.", "BOOKING_DISABLED", 409);
       }
-      const clinicId = await resolveProviderSoleClinicId(env.DB, provider.user_id);
+      const clinicId = await resolveClinicId(env.DB, provider.user_id, clinicSlug);
       if (!clinicId) return errorResponse("Agendamento online não está ativo.", "BOOKING_DISABLED", 409);
       const serviceId = cleanText(body.serviceId, 80);
       const service = await getService(env.DB, provider.user_id, serviceId, true, clinicId);
@@ -426,7 +448,7 @@ export const onRequestPost: PagesFunction<OperationsEnv> = async ({ env, request
       if (!provider || !provider.booking_enabled) {
         return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
       }
-      const clinicId = await resolveProviderSoleClinicId(env.DB, provider.user_id);
+      const clinicId = await resolveClinicId(env.DB, provider.user_id, cleanOptionalText(body.clinic, 80));
       if (!clinicId) return errorResponse("Lista de espera indisponível.", "BOOKING_DISABLED", 409);
       const service = await getService(env.DB, provider.user_id, cleanText(body.serviceId, 80), true, clinicId);
       if (!service) return errorResponse("Serviço inválido.", "VALIDATION_ERROR", 400);

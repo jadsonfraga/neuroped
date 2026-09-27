@@ -23,6 +23,8 @@ import {
   canWriteClinicalData,
   type AuthContextData,
 } from "./auth/_authorization";
+import { resolveBillingClinicId } from "./billing/_guard";
+import { getClinicMembership, membershipCanWriteClinical } from "./tenant/_core";
 
 const inMemoryRateMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -159,6 +161,43 @@ function roleFailure(request: Request, user: PublicUser): Response | null {
   return null;
 }
 
+/**
+ * S10 (docs/saas/spiral/BACKLOG.md): `roleFailure` decide escrita pelo papel
+ * GLOBAL do usuário, mas o Clinical Core LIVE (functions/api/live/**) já
+ * decide por MEMBERSHIP da clínica (requireBillingEntitlement escopo
+ * "clinical", membershipCanWriteClinical nos próprios handlers). Uma conta
+ * pode ter membership `owner`/`clinic_admin`/`professional` numa clínica —
+ * com `clinical.write` concedido e entitlement ativo — e ainda assim carregar
+ * um papel global desatualizado (ex.: `billing/accept.ts` só define o papel
+ * global na PRIMEIRA conta criada; convites seguintes para papéis de
+ * clínica mais altos não o revisitam). Esta função reautoriza a escrita LIVE
+ * pela mesma fonte de verdade que o próprio Clinical Core usa, sem enfraquecer
+ * nada: quando a clínica não é resolvível ou a membership não concede
+ * `clinical.write`, cai no gate global de sempre (`roleFailure`), preservando
+ * o fail-closed de `/api/patients` e demais rotas legadas, que esta função
+ * nunca toca.
+ */
+async function liveClinicalWriteAuthorization(
+  db: D1Database,
+  request: Request,
+  user: PublicUser,
+): Promise<{ handled: false } | { handled: true; failure: Response | null }> {
+  const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const method = request.method.toUpperCase();
+  if (!path.startsWith("/api/live/") || !["POST", "PATCH", "PUT", "DELETE"].includes(method)) {
+    return { handled: false };
+  }
+  try {
+    const clinicId = await resolveBillingClinicId(db, user.id, request);
+    if (!clinicId) return { handled: false };
+    const membership = await getClinicMembership(db, clinicId, user);
+    if (!membership || !membershipCanWriteClinical(membership)) return { handled: false };
+    return { handled: true, failure: null };
+  } catch {
+    return { handled: false };
+  }
+}
+
 async function authorizeClinicalApi(request: Request, env: Env): Promise<AuthorizationResult> {
   if (!env.DB) return { failure: null, user: null };
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
@@ -218,10 +257,14 @@ async function authorizeClinicalApi(request: Request, env: Env): Promise<Authori
   const passwordFailure = passwordChangeFailure(request, user);
   if (passwordFailure) return { failure: passwordFailure, user };
   const tenantAuthorization = await tenantManagementAuthorization(env.DB, request, user);
-  return {
-    failure: tenantAuthorization.handled ? tenantAuthorization.failure : roleFailure(request, user),
-    user,
-  };
+  if (tenantAuthorization.handled) {
+    return { failure: tenantAuthorization.failure, user };
+  }
+  const liveAuthorization = await liveClinicalWriteAuthorization(env.DB, request, user);
+  if (liveAuthorization.handled) {
+    return { failure: liveAuthorization.failure, user };
+  }
+  return { failure: roleFailure(request, user), user };
 }
 
 function getRateLimitKey(request: Request): string {

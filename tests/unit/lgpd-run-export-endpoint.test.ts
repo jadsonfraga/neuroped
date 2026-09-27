@@ -28,6 +28,8 @@
  *     escala remota com convite e resposta) agora saem decifrados no
  *     payload, `complete` permanece true, BLUE nunca aparece no export de
  *     RED, e token_hash nunca é exportado (nem cifrado nem em claro).
+ *     clinic_settings e live_retention_policies (pedidos no backlog
+ *     original de S12B, corrigido em revisão) também saem no payload.
  */
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -551,6 +553,15 @@ async function semearDominiosS12b(clinicId: string, patientId: string, ownerId: 
     VALUES (?, ?, ?, ?, 'family', 'mchat', ?, 'v1', 'consent-v1', ?, ?)`)
     .run(id("scale-resp"), id("scale-inv"), clinicId, patientId,
       await encryptClinicalJson(baseEnv as never, clinicId, `remote-scale-response:${id("scale-resp")}`, { marcador }), NOW, NOW);
+  // Correção de escopo pedida em revisão: clinic_settings/live_retention_policies
+  // (plaintext, não bloqueiam purge) também precisam sair no export.
+  sqlite.prepare(`INSERT INTO clinic_settings
+    (clinic_id, display_name, updated_by_user_id) VALUES (?, ?, ?)`)
+    .run(clinicId, `Timbre ${marcador}`, ownerId);
+  sqlite.prepare(`INSERT INTO live_retention_policies
+    (id, clinic_id, retention_days, auto_delete_enabled, configured_by_user_id)
+    VALUES (?, ?, 90, 1, ?)`)
+    .run(id("retention"), clinicId, ownerId);
 }
 
 {
@@ -590,9 +601,17 @@ async function semearDominiosS12b(clinicId: string, patientId: string, ownerId: 
   const scaleResponses = collected.data.scaleResponses as Array<{ id: string; answers: unknown }>;
   assert.deepEqual(scaleResponses.find((r) => r.id === "scale-resp-vermelho-s12b")?.answers, { marcador: "vermelho-s12b" });
 
+  const clinicSettings = collected.data.clinicSettings as { displayName: string } | null;
+  assert.equal(clinicSettings?.displayName, "Timbre vermelho-s12b", "o timbre de RED precisa sair no export de RED");
+  const retentionPolicy = collected.data.retentionPolicy as { retentionDays: number; autoDeleteEnabled: boolean; configuredByUserId: string } | null;
+  assert.equal(retentionPolicy?.retentionDays, 90);
+  assert.equal(retentionPolicy?.autoDeleteEnabled, true);
+  assert.equal(retentionPolicy?.configuredByUserId, RED_OWNER.id);
+
   for (const table of [
     "live_scale_responses", "live_scale_invitations", "live_intake_submissions", "live_intake_invitations",
     "live_document_versions", "live_documents", "live_assessment_responses", "live_assessments",
+    "clinic_settings", "live_retention_policies",
   ]) {
     sqlite.prepare(`DELETE FROM ${table} WHERE clinic_id IN (?, ?)`).run(RED, BLUE);
   }

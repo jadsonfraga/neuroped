@@ -56,6 +56,9 @@ function displayLocal(value: string): string {
 
 export default function AgendarPage() {
   const { toast } = useToast();
+  // S13: link público pode declarar a clínica (`?clinic=<slug da clínica>`),
+  // fixo pela vida da página — não muda com a seleção de profissional/serviço.
+  const [clinicSlug] = useState(() => queryParam("clinic") || null);
   const [providerSlug, setProviderSlug] = useState(() => queryParam("provider"));
   const [providerOptions, setProviderOptions] = useState<Array<{ slug: string; displayName: string; specialty: string; locationLabel: string | null }>>([]);
   const [profile, setProfile] = useState<PublicProviderProfile | null>(null);
@@ -73,13 +76,14 @@ export default function AgendarPage() {
   const [manageToken, setManageToken] = useState(bookingToken);
   const [review, setReview] = useState({ rating: "5", comment: "" });
   const [busy, setBusy] = useState(false);
+  const clinicQuery = clinicSlug ? `&clinic=${encodeURIComponent(clinicSlug)}` : "";
 
   useEffect(() => {
     let active = true;
     async function load() {
       try {
         if (!providerSlug) {
-          const providersResponse = await apiRequest("GET", "/api/public-booking?action=providers");
+          const providersResponse = await apiRequest("GET", `/api/public-booking?action=providers${clinicQuery}`);
           const providersPayload = await providersResponse.json() as { providers?: Array<{ slug: string; displayName: string; specialty: string; locationLabel: string | null }> };
           const providers = providersPayload.providers ?? [];
           if (!active) return;
@@ -96,7 +100,7 @@ export default function AgendarPage() {
           setLoading(false);
           return;
         }
-        const response = await apiRequest("GET", `/api/public-booking?action=profile&provider=${encodeURIComponent(providerSlug)}`);
+        const response = await apiRequest("GET", `/api/public-booking?action=profile&provider=${encodeURIComponent(providerSlug)}${clinicQuery}`);
         const data = await response.json() as PublicProviderProfile;
         if (!active) return;
         setProfile(data);
@@ -112,7 +116,7 @@ export default function AgendarPage() {
     }
     void load();
     return () => { active = false; };
-  }, [providerSlug]);
+  }, [providerSlug, clinicQuery]);
 
   const selectedService = useMemo(() => profile?.services.find((item) => item.id === serviceId) ?? null, [profile, serviceId]);
   const averageRating = useMemo(() => {
@@ -126,7 +130,7 @@ export default function AgendarPage() {
     setBusy(true);
     setSlot(null);
     try {
-      const response = await apiRequest("GET", `/api/public-booking?action=slots&provider=${encodeURIComponent(providerSlug)}&service=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(date)}`);
+      const response = await apiRequest("GET", `/api/public-booking?action=slots&provider=${encodeURIComponent(providerSlug)}&service=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(date)}${clinicQuery}`);
       const data = await response.json() as { slots: PublicSlot[] };
       setSlots(data.slots ?? []);
     } catch (err) {
@@ -144,6 +148,7 @@ export default function AgendarPage() {
       const response = await apiRequest("POST", "/api/public-booking", {
         action: "book",
         provider: providerSlug,
+        clinic: clinicSlug,
         serviceId: selectedService.id,
         startsAtLocal: slot.startsAtLocal,
         guardianName: booking.guardianName,
@@ -220,6 +225,7 @@ export default function AgendarPage() {
       await apiRequest("POST", "/api/public-booking", {
         action: "waitlist",
         provider: providerSlug,
+        clinic: clinicSlug,
         serviceId: selectedService.id,
         preferredDate: date,
         guardianName: booking.guardianName,
