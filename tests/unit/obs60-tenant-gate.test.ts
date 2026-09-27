@@ -41,13 +41,18 @@ for (const nome of readdirSync("db/migrations").filter((f) => f.endsWith(".sql")
 assert.deepEqual(superadas, ["0001_users_auth.sql", "0002_patient_ownership.sql"]);
 raw.exec("PRAGMA foreign_keys = ON;");
 
-function makeDb(database: DatabaseSync): D1Database {
+// `failRun`, when set, intercepts a bound `.run()` call before it ever touches the real
+// database — used to prove that a transient audit-write failure never masks the real outcome
+// (AUDIT-P1: functions/api/integrations/obs60/index.ts wraps the completed/failed audit writes
+// in .catch(() => undefined) precisely so this scenario can't replace a real result/error).
+function makeDb(database: DatabaseSync, failRun?: (sql: string, args: unknown[]) => boolean): D1Database {
   const prepare = (sql: string) => {
     const make = (args: unknown[]) => ({
       async first<T>() {
         return (database.prepare(sql).get(...(args as never[])) as T | undefined) ?? null;
       },
       async run() {
+        if (failRun?.(sql, args)) throw new Error("simulated transient D1 write failure");
         const info = database.prepare(sql).run(...(args as never[]));
         return { meta: { changes: Number(info.changes) } };
       },
@@ -68,7 +73,7 @@ function user(id: string, role: "admin" | "professional" | "reader" | "operator"
 async function invoke(
   method: "GET" | "POST" | "DELETE",
   actor: ReturnType<typeof user> | null,
-  options: { env?: Record<string, string>; headers?: Record<string, string>; body?: unknown; withDb?: boolean } = {},
+  options: { env?: Record<string, string>; headers?: Record<string, string>; body?: unknown; withDb?: boolean; dbOverride?: D1Database } = {},
 ) {
   const headers = { ...(options.headers ?? {}) };
   const request = new Request("https://neuroped.test/api/integrations/obs60", {
@@ -78,7 +83,7 @@ async function invoke(
   });
   const context = {
     request,
-    env: { DB: options.withDb === false ? undefined : db, ...(options.env ?? {}) },
+    env: { DB: options.withDb === false ? undefined : (options.dbOverride ?? db), ...(options.env ?? {}) },
     params: {},
     data: actor ? { authUser: actor } : {},
     waitUntil: () => undefined,
@@ -221,6 +226,42 @@ test("POST sem consentimento explícito é rejeitado antes da auditoria (parseIn
   assert.equal(response.status, 403);
   assert.equal((await response.json() as { code?: string }).code, "CONSENT_REQUIRED");
   assert.equal(auditRows("clinica-a").length, antes, "nenhuma auditoria antes do consentimento validado");
+});
+
+test("corpo ausente no POST vira BODY_REQUIRED, não um TypeError não tratado", async () => {
+  const response = await invoke("POST", user("clinica-a"), { env: VIDEO_ENV, headers: { "x-tenant-id": "clinica-a", "Content-Type": "application/json" } });
+  assert.equal(response.status, 400);
+  assert.equal((await response.json() as { code?: string }).code, "BODY_REQUIRED");
+});
+
+test("falha transitória ao gravar 'completed' não derruba um resultado já correto (auditoria é best-effort)", async () => {
+  const originalFetch = globalThis.fetch;
+  const flakyDb = makeDb(raw, (sql, args) => sql.includes("INSERT INTO saas_audit_log") && (args as unknown[])[3] === "obs60.video_ai.completed");
+  try {
+    globalThis.fetch = (async () => geminiResponse()) as typeof fetch;
+    const response = await invoke("POST", user("clinica-a"), { env: VIDEO_ENV, headers: { "x-tenant-id": "clinica-a", "Content-Type": "application/json" }, body: videoBody(), dbOverride: flakyDb });
+    assert.equal(response.status, 200, "a análise já concluída não pode virar erro só porque a auditoria falhou");
+    const body = await response.json() as { requestId: string; result: { observations: unknown[] } };
+    assert.equal(body.result.observations.length, 6);
+
+    const rows = auditRows("clinica-a", body.requestId);
+    assert.deepEqual(rows.map((r) => r.action), ["obs60.video_ai.requested"], "requested foi gravado; completed falhou e foi engolido, sem linha órfã incorreta");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("falha transitória ao gravar 'failed' não mascara o erro real do provedor", async () => {
+  const originalFetch = globalThis.fetch;
+  const flakyDb = makeDb(raw, (sql, args) => sql.includes("INSERT INTO saas_audit_log") && (args as unknown[])[3] === "obs60.video_ai.failed");
+  try {
+    globalThis.fetch = (async () => new Response("erro", { status: 500 })) as typeof fetch;
+    const response = await invoke("POST", user("clinica-a"), { env: VIDEO_ENV, headers: { "x-tenant-id": "clinica-a", "Content-Type": "application/json" }, body: videoBody(), dbOverride: flakyDb });
+    assert.equal(response.status, 502, "o código real do provedor precisa chegar ao cliente mesmo com a auditoria de falha indisponível");
+    assert.equal((await response.json() as { code?: string }).code, "VIDEO_PROVIDER_FAILURE");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("caminho feliz: 200, resultado fechado em 6 registros, e auditoria requested→completed sem PHI", async () => {

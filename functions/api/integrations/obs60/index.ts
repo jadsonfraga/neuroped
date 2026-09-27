@@ -36,11 +36,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       output = await analyseVideo(input, context.env, fetch, context.request.signal);
     } catch (error) {
       // A "requested" event without a paired "completed"/"failed" event would read as
-      // stuck-in-progress; record the outcome so the audit trail always closes.
-      await audit("obs60.video_ai.failed", { code: error instanceof VideoError ? error.code : "OBS60_FAILED" });
+      // stuck-in-progress; record the outcome so the audit trail always closes. Best-effort:
+      // a transient audit-write failure here must never replace the real error the client sees.
+      await audit("obs60.video_ai.failed", { code: error instanceof VideoError ? error.code : "OBS60_FAILED" }).catch(() => undefined);
       throw error;
     }
-    await audit("obs60.video_ai.completed");
+    // Same best-effort guarantee for the success path: a successful analysis must reach the
+    // client even if this bookkeeping write itself fails.
+    await audit("obs60.video_ai.completed").catch(() => undefined);
     return json({ ...output, requestId });
   } catch (error) {
     if (error instanceof VideoError) return json({ error: error.message, code: error.code }, error.status);

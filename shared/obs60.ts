@@ -78,6 +78,13 @@ function hasUnsafeTranscriptCharacters(text: string): boolean {
     return code < 32 && code !== 9 && code !== 10 && code !== 13;
   });
 }
+// The one free-text channel (literal child speech) must never carry the diagnostic/scoring
+// vocabulary this contract otherwise forbids; a hallucinating or manipulated model output
+// is rejected here the same as an unknown category, not silently rendered to the clinician.
+const CLINICAL_LEAK_PATTERN = /\b(TEA|TDAH|autis\w*|transtorno\w*|diagn[oó]stic\w*|percentil\w*|escores?|scores?|QI|CID-?10|hiperativ\w*|defici[eê]nci\w*)\b/i;
+function hasClinicalLeakage(text: string): boolean {
+  return CLINICAL_LEAK_PATTERN.test(text) || /\d+\s*%/.test(text);
+}
 export const FIELDS = ["id", "event", "start", "end", "opportunity", "audioClear", "viewClear", "sequenceClear", "childSpeakerClear", "initiallyFacingAdult", "help", "transcript", "reason"];
 /** Schema integrity is NOT proof of perceptual accuracy. */
 export function validateAnalysis(raw: unknown, ageMonths: number, windowSeconds: number): Result {
@@ -91,7 +98,7 @@ export function validateAnalysis(raw: unknown, ageMonths: number, windowSeconds:
     const id = r.id as ItemId; seen.add(id);
     if (!ALLOWED[id].includes(r.event as EventCode) || !OPPORTUNITIES.includes(r.opportunity as typeof OPPORTUNITIES[number]) || !Object.hasOwn(HELP_LABELS, String(r.help)) || !REASONS.includes(r.reason as Reason)) throw new Error("Categoria da IA fora do contrato.");
     for (const k of ["audioClear", "viewClear", "sequenceClear", "childSpeakerClear", "initiallyFacingAdult"]) if (typeof r[k] !== "boolean") throw new Error("Qualidade da evidência inválida.");
-    if (typeof r.transcript !== "string" || r.transcript.length > 240 || hasUnsafeTranscriptCharacters(r.transcript)) throw new Error("Transcrição fora do contrato.");
+    if (typeof r.transcript !== "string" || r.transcript.length > 240 || hasUnsafeTranscriptCharacters(r.transcript) || hasClinicalLeakage(r.transcript)) throw new Error("Transcrição fora do contrato.");
     if (id !== "speech" && r.transcript !== "") throw new Error("Transcrição permitida somente no registro de fala.");
     const hasTimes = typeof r.start === "number" && typeof r.end === "number" && Number.isFinite(r.start) && Number.isFinite(r.end) && r.start >= 0 && r.end > r.start && r.end <= windowSeconds;
     if (!(r.start === null && r.end === null) && !hasTimes) throw new Error("Evidência temporal fora do vídeo informado.");
