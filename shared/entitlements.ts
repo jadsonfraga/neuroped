@@ -46,7 +46,7 @@ const PLAN_CAPABILITIES: Record<string, PlanCapabilities> = {
 };
 
 export function planCapabilities(planId: string | null | undefined): PlanCapabilities {
-  if (!planId) return NO_CAPABILITIES;
+  if (typeof planId !== "string" || !Object.hasOwn(PLAN_CAPABILITIES, planId)) return NO_CAPABILITIES;
   return PLAN_CAPABILITIES[planId] ?? NO_CAPABILITIES;
 }
 

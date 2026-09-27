@@ -1,0 +1,49 @@
+name: Value Enterprise Trust Contracts
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'shared/product-evidence.ts'
+      - 'shared/entitlements.ts'
+      - 'shared/permissions.ts'
+      - 'functions/api/tenant/_productEvidence.ts'
+      - 'functions/api/tenants/**'
+      - 'functions/api/health.ts'
+      - 'client/src/components/ProductEvidencePanel.tsx'
+      - 'client/src/components/TenantMetricsPanel.tsx'
+      - 'scripts/value_restore_verifier.py'
+      - 'tests/unit/value-product-evidence.test.mjs'
+      - 'tests/unit/value-entitlement-prototype.test.mjs'
+      - 'tests/unit/value-restore.test.py'
+      - 'tests/integration/value-product-evidence-sql.test.py'
+      - 'docs/dataroom/**'
+      - '.github/workflows/value-enterprise-trust.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: value-trust-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  trust-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run lint
+      - name: Evidence truthfulness and entitlement regression
+        run: node --experimental-strip-types --test tests/unit/value-product-evidence.test.mjs tests/unit/value-entitlement-prototype.test.mjs
+      - name: Actual scoped SQLite query on synthetic projections
+        run: python3 tests/integration/value-product-evidence-sql.test.py
+      - name: Restore integrity and corruption contracts
+        run: python3 tests/unit/value-restore.test.py
+      - name: Isolated synthetic restore evidence (not production or D1)
+        run: python3 scripts/value_restore_verifier.py > synthetic-restore-evidence.json
+      - name: Print sanitized mechanism evidence
+        run: cat synthetic-restore-evidence.json
