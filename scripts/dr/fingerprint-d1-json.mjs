@@ -27,13 +27,6 @@ try {
   process.exit(1);
 }
 
-const envelope = Array.isArray(payload) ? payload[0] : payload;
-const row = envelope?.results?.[0];
-if (!envelope?.success || !row || typeof row !== "object" || Array.isArray(row)) {
-  console.error("Saída do Wrangler não contém exatamente uma linha de resultado válida.");
-  process.exit(1);
-}
-
 const expectedKeys = [
   "encrypted_event_envelopes",
   "encrypted_patient_envelopes",
@@ -50,9 +43,22 @@ const expectedKeys = [
   "synthetic_users",
   "tenant_scoped_patients",
 ];
-const actualKeys = Object.keys(row).sort();
-if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
-  console.error("A consulta de fingerprint não retornou o conjunto exato de invariantes esperado.");
+const envelopes = Array.isArray(payload) ? payload : [payload];
+const successfulRows = envelopes.flatMap((envelope) =>
+  envelope?.success && Array.isArray(envelope.results) ? envelope.results : [],
+);
+const row = successfulRows.find((candidate) => {
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return false;
+  return JSON.stringify(Object.keys(candidate).sort()) === JSON.stringify(expectedKeys);
+});
+if (!row) {
+  const receivedShapes = successfulRows
+    .filter((candidate) => candidate && typeof candidate === "object" && !Array.isArray(candidate))
+    .map((candidate) => Object.keys(candidate).sort().join(",") || "nenhuma")
+    .join(" | ");
+  console.error(
+    `A consulta de fingerprint não retornou a linha exata de invariantes esperada; shapes recebidos: ${receivedShapes || "nenhum"}.`,
+  );
   process.exit(1);
 }
 

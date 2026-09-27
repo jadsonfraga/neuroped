@@ -220,7 +220,7 @@ assert.doesNotMatch(
   const second = invoke([{ results: [row], success: true, meta: { duration: 999 } }]);
   const withWranglerPreamble = spawnSync(process.execPath, [fingerprintScript], {
     encoding: "utf8",
-    input: `npm warn exec pacote temporário\n\u001b[36mwrangler remoto\u001b[0m\n${JSON.stringify([{ results: [row], success: true, meta: { duration: 5 } }])}\n`,
+    input: `npm warn exec pacote temporário\n\u001b[36mwrangler remoto\u001b[0m\n${JSON.stringify([{ results: [], success: true, meta: { duration: 0 } }, { results: [row], success: true, meta: { duration: 5 } }])}\n`,
   });
   assert.equal(first.status, 0, first.stderr);
   assert.equal(second.status, 0, second.stderr);
