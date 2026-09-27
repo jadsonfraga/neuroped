@@ -17,6 +17,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
+import { assertPublicBookingClinicIsolation } from "./public-booking-clinic-regressions";
 
 import { onRequestGet as opsGet, onRequestPost as opsPost } from "../../functions/api/operations/index";
 import {
@@ -207,7 +208,6 @@ const asB = contextFor("clinic-b");
   // A trilha de B é vazia porque nenhuma ação foi tomada nela até aqui.
   assert.deepEqual(dashboardB.audit, []);
 }
-
 // ── 5. Diretório público não pode misturar profissional com clínica ambígua ─
 // prof-p tem DUAS memberships ativas: nem o perfil público nem os horários
 // podem ser servidos sem saber a qual clínica pertencem (fail-closed, nunca
@@ -370,5 +370,6 @@ const asB = contextFor("clinic-b");
   );
 }
 
+await assertPublicBookingClinicIsolation(raw, db, OPERATIONAL_KEY);
 raw.close();
 console.log("✓ operações: agenda, PHI de consultas, auditoria e diretório público isolados por clínica (OPS-01/OPS-02); link público desambiguado por clínica sem inferência (S13)");
