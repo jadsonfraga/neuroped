@@ -4,7 +4,7 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { authFetch } from "@/lib/authClient";
 import { Button } from "@/components/ui/button";
 import { tenantMetricsSchema, type TenantMetrics } from "../../../shared/tenantMetrics";
-import { roleHasPermission } from "../../../shared/permissions";
+import { isTenantPermission, type TenantPermission } from "../../../shared/permissions";
 
 export function TenantMetricsSummary({ metrics }: { metrics: TenantMetrics }) {
   const stats = [
@@ -38,8 +38,21 @@ export function TenantMetricsSummary({ metrics }: { metrics: TenantMetrics }) {
 export default function TenantMetricsPanel() {
   const { user, isAuthenticated, isLoading, accessMode } = useAuth();
   const { activeClinicId, activeClinic } = useClinic();
-  const permitted = !isLoading && accessMode === "remote" && isAuthenticated && !user?.mustChangePassword
-    && activeClinic?.status === "active" && roleHasPermission(activeClinic.role, "organization.metrics.read");
+  const eligible = !isLoading && accessMode === "remote" && isAuthenticated && !user?.mustChangePassword
+    && activeClinic?.status === "active";
+  const access = useQuery({
+    queryKey: ["tenant-metrics-permissions", user?.id, activeClinicId],
+    enabled: Boolean(eligible && activeClinicId), retry: false, staleTime: 30_000, gcTime: 0,
+    queryFn: async ({ signal }): Promise<TenantPermission[]> => {
+      if (!activeClinicId) throw new Error("PERMISSIONS_UNAVAILABLE");
+      const response = await authFetch(`/api/tenants/${encodeURIComponent(activeClinicId)}`, { signal });
+      if (!response.ok) throw new Error("PERMISSIONS_UNAVAILABLE");
+      const data = await response.json() as { permissions?: unknown };
+      if (!Array.isArray(data.permissions) || !data.permissions.every(isTenantPermission)) throw new Error("PERMISSIONS_UNAVAILABLE");
+      return data.permissions as TenantPermission[];
+    },
+  });
+  const permitted = eligible && Boolean(access.data?.includes("organization.metrics.read"));
   const query = useQuery({
     queryKey: ["tenant-activity-metrics", user?.id, activeClinicId],
     enabled: Boolean(permitted && activeClinicId),
@@ -53,6 +66,8 @@ export default function TenantMetricsPanel() {
       return tenantMetricsSchema.parse(await response.json());
     },
   });
+  if (eligible && access.isPending) return <p role="status">Consultando permissões da clínica…</p>;
+  if (eligible && access.isError) return <p role="alert">Permissões indisponíveis. Nenhum acesso foi presumido.</p>;
   if (!permitted) return <p className="text-sm text-muted-foreground">Atividade disponível somente para proprietário(a) ou administrador(a) da clínica ativa.</p>;
   return <section className="rounded-3xl border border-primary/15 bg-card p-5 shadow-sm sm:p-6" aria-labelledby="tenant-metrics-title">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

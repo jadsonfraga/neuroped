@@ -80,6 +80,11 @@ Fila local esvaziada; nenhum commit pendente sem PR neste ponto da espiral.
   sensível a tempo real (flake conhecido, observado uma vez, não corrigido).
 - Cadência: o motor ignora um segundo toque em < 300 ms (`event.timeStamp`);
   qualquer novo E2E que toque em sequência imediata precisa espaçar toques.
+- SuperNeuroPad Game: "Desfazer último" (undo) não tem a mesma guarda de
+  toque duplo aplicada ao registro de resposta nesta rodada (2026-09-27) —
+  um clique duplo no botão desfaz dois itens em vez de um. Risco menor
+  (ação corretiva da aplicadora, não registro automático da criança) e fora
+  do escopo desta correção pontual; considerar se houver relato real.
 
 ## BATERIA FINAL DE CONVERGÊNCIA (verificada nesta sessão, HEAD `9b3a300`)
 
@@ -102,10 +107,47 @@ Fila local esvaziada; nenhum commit pendente sem PR neste ponto da espiral.
   `scripts/guards/lighthouse-report.json`) descartados após a execução —
   não representam mudança funcional.
 
+## RODADA 2026-09-27 — SuperNeuroPad Game: guarda de toque duplo (base `main@574236b`)
+
+Mandato do usuário: "evolução total sem regressões" do SuperNeuroPad Game.
+Mapeamento (`client/src/pages/super-neuropad-game.tsx` +
+`client/src/features/super-neuropad/{model,music,pdf}.ts`, 883+167+129 linhas,
+18 testes unitários, 1 E2E de jornada completa) mostrou um motor já maduro
+(oito PRs anteriores: #969/#974/#975/#977/#979/#980/#981/#984/#999) — sem
+regressões estruturais óbvias, sem dead code, sem feature incompleta. A
+fragilidade real encontrada: o motor compartilhado `EasyGame` (usado por
+Sonda 10, OBS-10, Reconhecimento Visual e Testes Cognitivos) trava toque
+duplo por `event.timeStamp` desde a PR #974 (`acceptManualTap`,
+`client/src/components/jogo-facil/easyReport.ts`, 300 ms), mas o SuperNeuroPad
+Game — motor bespoke que **reúne** esses quatro módulos numa jornada única —
+nunca herdou essa trava: `TouchStage`/`JudgeStage` chamavam `pushAnswer`
+direto do `onClick`. Toque duplo (~100–250 ms, comum em tablet) registrava o
+mesmo desafio duas vezes com o `itemIndex` da renderização anterior e pulava
+o desafio seguinte sem nenhum registro — sessão terminaria "incompleta" sem
+explicação visível para a aplicadora.
+
+| Item | Status | Evidência |
+| ---- | ------ | --------- |
+| Guarda de toque duplo no SuperNeuroPad Game | DONE | Reaproveita `acceptManualTap`/`MANUAL_TAP_MIN_GAP_MS` (já testado em `modo-facil.test.ts`) via novo `submitAnswer` na página; os três caminhos de registro (opção de toque, "não respondeu · pular", Acertou/Errou/Não respondeu) passam pela guarda; `lastAnswerAt` reseta em `startGame`/`restart`. |
+| Teste antirregressão | DONE | `tests/unit/super-neuropad-game.test.ts`: nova asserção estática (mesmo padrão já usado em `modo-facil.test.ts` para o `EasyGame`) prova que os três call sites chamam `submitAnswer`, não `pushAnswer` direto, e que a guarda reseta no início/reinício. 18/18 testes verdes. |
+| `tests/e2e/super-neuropad-game.mjs` atualizado | DONE | `pace()` (320 ms, mesmo padrão de `modo-facil.mjs`) antes de cada toque de resposta real, para o teste continuar determinístico sob a guarda nova — sem isso a jornada de 20 itens ficaria sujeita a perder registros por clique-em-sequência rápido do Playwright. |
+
+Evidência local, réplica exata do workflow dedicado `super-neuropad.yml`:
+`npm run check` (limpo), `npm run lint` (limpo — `--max-warnings=0`),
+`npm run test:cognitive` (cognitive-lab + `test:sonda` + `test:direct-track`,
+que inclui `test:super-neuropad` com os 18 casos), `npm run build:client` com
+`VITE_AUTH_MODE=remote` e depois `VITE_AUTH_MODE=local`, `node
+tests/e2e/super-neuropad-game.mjs` em ambos os modos (20/20 desafios, PDF
+válido, zero violações `axe` em cada tela, zero erros de página) — todos
+exit 0, executados individualmente nesta sessão (dependências reinstaladas
+via `npm ci`, pois o container chegou sem `node_modules`).
+
+Rollback: reverter o commit único (sem migração, sem mudança de schema/API).
+
 ## EM EXECUÇÃO
 
-Nenhuma frente aberta neste momento; espiral convergiu nas oito PRs acima e
-na bateria final de checkpoints.
+Nenhuma frente aberta neste momento; espiral SuperNeuroPad convergiu no
+achado e correção acima.
 
 ## PRÓXIMA FRONTEIRA
 

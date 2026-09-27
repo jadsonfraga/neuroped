@@ -211,12 +211,24 @@ const membersApi = readFileSync(
 assert.match(membersApi, /LAST_OWNER_PROTECTED/);
 assert.match(membersApi, /membershipHas\(membership, "team\.manage"\)/);
 assert.match(membersApi, /Somente owner pode conceder papel owner/);
+// Preserve the authorization predicate rather than requiring obsolete error copy.
+// Behavioral ownership/race coverage remains in tenant-management-authorization.test.ts.
 assert.match(
   membersApi,
-  /Somente owner pode alterar o papel de outro owner/,
+  /currentMembership\.role === "owner" &&\s+!roleHasPermission\(auth\.membership\.role, "team\.manage_owners"\)/,
   "clinic_admin não pode demover owner por upsert",
 );
-assert.match(membersApi, /otherActiveOwnerCount/);
+assert.match(membersApi, /async function hasOtherActiveOwner\(/);
+assert.match(
+  membersApi,
+  /actor\.clinic_id = clinic_memberships\.clinic_id\s+AND actor\.user_id = \? AND actor\.role = 'owner' AND actor\.active = 1/,
+  "autorização de owner precisa ser revalidada no predicado SQL final",
+);
+assert.match(
+  membersApi,
+  /other\.user_id <> clinic_memberships\.user_id\s+AND other\.role = 'owner' AND other\.active = 1/,
+  "o predicado final precisa preservar outro owner ativo",
+);
 assert.match(
   membersApi,
   /isLastOwnerConstraintError/,
