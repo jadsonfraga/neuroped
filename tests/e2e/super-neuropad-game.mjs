@@ -109,7 +109,7 @@ try {
       const options = page.getByRole("group", { name: "Opções" }).getByRole("button");
       await pace();
       if (await options.count()) {
-        // Alterna acerto/erro de forma determinística pelo índice: o jogo confere sozinho.
+        // Alterna índices, não acerto/erro: as opções são embaralhadas pelo jogo.
         await options.nth(registered % 2).click();
       } else {
         if (phase === 5 && item === 3) await screen("04-play-fazer");
@@ -144,7 +144,24 @@ try {
   await reading.getByText("Leitura para a consulta").waitFor();
   assert.ok((await reading.locator("ul li").count()) >= 2, "leitura traz frases descritivas para a consulta");
   await reading.getByText(/Mediana \d+(\.\d)? s por item/).waitFor();
-  await root.getByText("comando repetido 1x").first().waitFor();
+  // A fase "esperado" nasce recolhida; as opções embaralhadas podem fazê-la
+  // alternar entre aberta/fechada. O texto também pode aparecer na lista de
+  // erros. Prove o registro exato (fase 1, item 2), abrindo pela UI, não por
+  // .first(), alteração do DOM, espera fixa ou presença de texto oculto.
+  const repeatedPhase = root.locator("details").filter({ has: page.locator("summary", { hasText: /Fase 1 ·/ }) });
+  assert.equal(await repeatedPhase.count(), 1, "fase do comando repetido identificada sem ambiguidade");
+  const repeatedRecord = repeatedPhase.locator("ol > li").nth(1).getByText("comando repetido 1x");
+  assert.equal(await repeatedPhase.getByText("comando repetido 1x").count(), 1, "uma repetição na fase correta");
+  // Exercita o caso recolhido em TODA execução, mesmo quando a pontuação
+  // desta partida abriu a fase automaticamente. Só cliques reais no summary.
+  if (await repeatedPhase.evaluate((details) => details.open)) await repeatedPhase.locator("summary").click();
+  assert.equal(await repeatedPhase.evaluate((details) => details.open), false, "fase recolhida antes de consultar o registro");
+  assert.equal(await repeatedRecord.count(), 1, "o segundo registro existe mesmo recolhido");
+  await repeatedRecord.waitFor({ state: "hidden" });
+  await repeatedPhase.locator("summary").click();
+  await repeatedRecord.waitFor({ state: "visible" });
+  assert.equal(await repeatedPhase.evaluate((details) => details.open), true, "summary abre o registro para a aplicadora");
+  const unsavedRecords = await root.locator("details li").allTextContents();
   await root.getByText(/Itens para checar na consulta · \d+/).waitFor();
   await button("Copiar resumo para o prontuário").waitFor();
   const plan = page.getByTestId("super-neuropad-plan");
@@ -159,6 +176,7 @@ try {
   await deeper.close();
   await waitScreen("results");
   assert.equal(await root.locator("details li").count(), 20, "aprofundar preserva os vinte registros");
+  assert.deepEqual(await root.locator("details li").allTextContents(), unsavedRecords, "aprofundar não altera conteúdo, ordem ou repetição dos registros");
   // Navegação interna não dispara beforeunload. Recusá-la precisa manter
   // a mesma partida em memória, inclusive via alteração do hash/voltar.
   acceptDialogs = false;
@@ -172,12 +190,17 @@ try {
   assert.equal(dialogs.length, beforeDialogs + 1, "uma confirmação por tentativa de sair");
   assert.match(dialogs.at(-1), /registros desta partida/);
   assert.equal(await root.locator("details li").count(), 20, "cancelar saída mantém todos os registros");
+  assert.deepEqual(await root.locator("details li").allTextContents(), unsavedRecords, "cancelar saída mantém cada registro, não apenas a contagem");
   const loginWarning = page.waitForEvent("dialog");
   await page.evaluate(() => { window.location.hash = "#/login"; });
   await loginWarning;
   await page.waitForURL(heldUrl);
   await waitScreen("results");
   assert.equal(await root.locator("details li").count(), 20, "login voluntário também protege sessão local ou remota válida");
+  assert.equal(dialogs.length, beforeDialogs + 2, "login voluntário também exige uma única confirmação");
+  assert.match(dialogs.at(-1), /registros desta partida/);
+  assert.deepEqual(await root.locator("details li").allTextContents(), unsavedRecords, "cancelar login mantém conteúdo, ordem e comando repetido");
+  console.log(`[super-neuropad-game] ✓ ${localMode ? "local" : "remote"}: fase recolhida aberta pela UI; 20 registros idênticos após aprofundar e cancelar filtro/login`);
   acceptDialogs = true;
   await root.getByText(/pausa\(s\) · ↩ 1 desfeito\(s\)/).waitFor(); // proveniência: 1 pausa e 1 desfazer nesta jornada
   await screen("06-results");
