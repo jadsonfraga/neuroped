@@ -6,11 +6,13 @@ on:
     paths:
       - '.github/workflows/repository-recovery-bundle.yml'
       - 'docs/REPOSITORY_RECOVERY.md'
+      - 'CLAUDE.md'
   push:
     branches: [main]
     paths:
       - '.github/workflows/repository-recovery-bundle.yml'
       - 'docs/REPOSITORY_RECOVERY.md'
+      - 'CLAUDE.md'
   workflow_dispatch:
 
 permissions:
@@ -66,6 +68,7 @@ jobs:
             test "$(git -C "$restore_dir/neuroped" rev-parse "refs/remotes/origin/${ref#refs/heads/}")" = "$sha"
           done < "$RECOVERY_OUT/refs.txt"
           test -f "$restore_dir/neuroped/AGENTS.md"
+          test -f "$restore_dir/neuroped/CLAUDE.md"
           test -f "$restore_dir/neuroped/shared/obs60.ts"
           test -f "$restore_dir/neuroped/tests/unit/obs60-tenant-gate.test.ts"
           test -f "$restore_dir/neuroped/docs/audits/OBS60_RECOVERY_2026-09-27.md"
