@@ -64,10 +64,14 @@ export async function analyseVideo(input: VideoInput, env: VideoEnv, fetcher: ty
   const checked = parseInput(input);
   const sha256 = await sourceHash(checked.data);
   const controller = new AbortController();
-  const abort = () => controller.abort();
+  // Distinguish "the client left" from "the provider took too long": both abort the same
+  // fetch, but only a real 90s timeout should be reported/audited as VIDEO_TIMEOUT.
+  let timedOut = false;
+  const onTimeout = () => { timedOut = true; controller.abort(); };
+  const onClientAbort = () => controller.abort();
   if (clientSignal?.aborted) throw new VideoError("Envio cancelado.", "REQUEST_ABORTED", 499);
-  clientSignal?.addEventListener("abort", abort, { once: true });
-  const timer = setTimeout(abort, 90_000);
+  clientSignal?.addEventListener("abort", onClientAbort, { once: true });
+  const timer = setTimeout(onTimeout, 90_000);
   try {
     const response = await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${env.OBS60_GEMINI_MODEL}:generateContent`, {
       method: "POST", redirect: "error", signal: controller.signal,
@@ -90,7 +94,8 @@ export async function analyseVideo(input: VideoInput, env: VideoEnv, fetcher: ty
     return { result, sourceSha256: sha256, provider: "Google Gemini", model: typeof payload.modelVersion === "string" ? payload.modelVersion.slice(0, 100) : env.OBS60_GEMINI_MODEL, sampleFpsRequested: SAMPLE_FPS, analysedAt: new Date().toISOString(), reviewRequired: true };
   } catch (error) {
     if (error instanceof VideoError) throw error;
-    if (controller.signal.aborted) throw new VideoError("Análise interrompida ou tempo de processamento excedido; não houve conclusão.", "VIDEO_TIMEOUT", 504);
+    if (timedOut) throw new VideoError("Tempo de processamento excedido; não houve conclusão.", "VIDEO_TIMEOUT", 504);
+    if (controller.signal.aborted) throw new VideoError("Envio cancelado.", "REQUEST_ABORTED", 499);
     throw new VideoError("A resposta da IA não passou pelo contrato de evidência. Não foi produzido resultado clínico.", "MODEL_CONTRACT_REJECTED", 502);
-  } finally { clearTimeout(timer); clientSignal?.removeEventListener("abort", abort); }
+  } finally { clearTimeout(timer); clientSignal?.removeEventListener("abort", onClientAbort); }
 }

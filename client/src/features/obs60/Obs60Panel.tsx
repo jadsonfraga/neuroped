@@ -48,16 +48,16 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
   const [age, setAge] = useState(""); const months = parseAge(age);
   const [captureConsent, setCaptureConsent] = useState(false); const [sendConsent, setSendConsent] = useState(false);
   const [clip, setClip] = useState<Clip | null>(null); const [output, setOutput] = useState<Envelope | null>(null);
-  const [busy, setBusy] = useState(false); const [starting, setStarting] = useState(false);
+  const [busy, setBusy] = useState(false); const [starting, setStarting] = useState(false); const [converting, setConverting] = useState(false);
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [elapsed, setElapsed] = useState(0);
   const [capability, setCapability] = useState<Capability>({ configured: false, message: "Verificando disponibilidade do serviço autenticado…" });
   const generation = useRef(0); const request = useRef<AbortController | null>(null); const startedAt = useRef<number | null>(null); const recordedSeconds = useRef(0);
-  const recording = recorder.status === "recording"; const locked = busy || starting || recorder.pending || recording || recorder.status === "finalizing";
+  const recording = recorder.status === "recording"; const locked = busy || starting || converting || recorder.pending || recording || recorder.status === "finalizing";
   const dirty = Boolean(clip || output || locked);
   useExitGuard(dirty);
   const clear = useCallback(() => {
     generation.current++; request.current?.abort(); request.current = null;
-    resetRecorder(); setClip(null); setOutput(null); setBusy(false); setStarting(false); setSendConsent(false); setElapsed(0); startedAt.current = null; recordedSeconds.current = 0; setError(""); setNotice("");
+    resetRecorder(); setClip(null); setOutput(null); setBusy(false); setStarting(false); setConverting(false); setSendConsent(false); setElapsed(0); startedAt.current = null; recordedSeconds.current = 0; setError(""); setNotice("");
   }, [resetRecorder]);
   useEffect(() => { dialog.current?.showModal(); }, []);
   useEffect(() => () => { generation.current++; request.current?.abort(); }, []);
@@ -89,6 +89,9 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (recorder.status !== "ready" || !recorder.url) return;
     const ticket = generation.current;
+    // Covers the gap between the recorder finishing and this async blob read landing: without
+    // it, "Gravar 60 segundos" stays enabled and a second recording can start mid-conversion.
+    setConverting(true);
     void fetch(recorder.url).then(r => r.blob()).then(blob => {
       if (ticket !== generation.current) return;
       if (blob.size > MAX_BYTES) throw new Error("Vídeo maior que 12 MB. Preserve o arquivo local; não houve envio à IA.");
@@ -97,7 +100,8 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
       if (seconds <= 0) throw new Error("Duração de gravação não confirmada.");
       const file = new File([blob], `obs60.${mime === "video/mp4" ? "mp4" : "webm"}`, { type: mime });
       setClip({ file, url: URL.createObjectURL(file), seconds }); setOutput(null); setSendConsent(false);
-    }).catch(() => { if (ticket === generation.current) setError("Não foi possível preparar o vídeo para análise. Preserve a gravação abaixo; nenhum resultado foi gerado."); });
+    }).catch(() => { if (ticket === generation.current) setError("Não foi possível preparar o vídeo para análise. Preserve a gravação abaixo; nenhum resultado foi gerado."); })
+      .finally(() => { if (ticket === generation.current) setConverting(false); });
   }, [recorder.status, recorder.url]);
   async function start() {
     if (months === null || !captureConsent || locked || clip) return;
@@ -186,7 +190,7 @@ export default function Obs60Panel({ onClose }: { onClose: () => void }) {
         <p className="obs60-muted">Vídeo ausente, serviço indisponível ou resposta inválida não geram análise simulada. A IA usa amostragem; eventos rápidos e intervalos entre quadros podem não ser caracterizáveis.</p>
       </section>
       {error && <p role="alert" className="obs60-message">{error}</p>}{notice && <p role="status" className="obs60-message">{notice}</p>}
-      {output && <section className="obs60-card" data-testid="obs60-results"><h3>5. Registros extraídos pela IA · revisão pendente</h3><p>{output.result.limitation}</p>
+      {output && <section className="obs60-card" data-testid="obs60-results"><p role="status" className="sr-only">Análise concluída: seis registros disponíveis para revisão.</p><h3>5. Registros extraídos pela IA · revisão pendente</h3><p>{output.result.limitation}</p>
         <div className="obs60-results">{output.result.observations.map(row => <article key={row.id}><h4>{ITEM_LABELS[row.id]}</h4><strong>{STATUS_LABELS[row.status]}</strong><p>{row.fact}</p>{row.transcript && <blockquote>Fala atribuída à criança: “{row.transcript}”</blockquote>}<p>{row.status !== "not_assessable" ? HELP_LABELS[row.help] : row.limitation}</p>{row.start !== null && row.end !== null && <button type="button" onClick={() => { if (playback.current && row.start !== null) { playback.current.currentTime = row.start; playback.current.focus(); playback.current.scrollIntoView({ block: "center" }); } }}>Rever trecho apontado pela IA · ~{row.start.toFixed(1)}–{row.end.toFixed(1)} s</button>}</article>)}</div>
         <h4>Síntese limitada às tarefas</h4>{output.result.synthesis.length ? output.result.synthesis.map(text => <p key={text}>{text}</p>) : <p>Evidência insuficiente para síntese adicional. Não completar por suposição.</p>}
         <h4>Próxima observação prioritária</h4><p>{output.result.nextStep}</p><p className="obs60-muted">Modelo informado: {output.model}. Trechos e transcrições são propostos pela IA, não confirmados por revisão humana.</p>
