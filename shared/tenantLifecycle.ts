@@ -7,6 +7,13 @@ export const TENANT_SYNC_EXPORT_LIMITS = {
   events: 2_000,
   memberships: 500,
   encryptedBytes: 20_000_000,
+  // Teto combinado de linhas nos oito domínios de S12B (avaliações e
+  // respostas, documentos e versões, intake e escala remota com convite e
+  // resposta). Metade deles não tem campo cifrado (documentos e convites são
+  // metadata), então sem este teto um tenant com muitas linhas nessas
+  // tabelas passaria pela pré-checagem de encryptedBytes mesmo carregando um
+  // número grande de linhas no caminho síncrono.
+  otherRows: 5_000,
   outputBytes: 25_000_000,
 } as const;
 
@@ -86,19 +93,23 @@ export function exportWithinSyncLimits(counts: {
   events: number;
   memberships: number;
   encryptedBytes: number;
+  otherRows: number;
 }): boolean {
   return (
     Number.isInteger(counts.patients)
     && Number.isInteger(counts.events)
     && Number.isInteger(counts.memberships)
     && Number.isInteger(counts.encryptedBytes)
+    && Number.isInteger(counts.otherRows)
     && counts.patients >= 0
     && counts.events >= 0
     && counts.memberships >= 0
     && counts.encryptedBytes >= 0
+    && counts.otherRows >= 0
     && counts.patients <= TENANT_SYNC_EXPORT_LIMITS.patients
     && counts.events <= TENANT_SYNC_EXPORT_LIMITS.events
     && counts.memberships <= TENANT_SYNC_EXPORT_LIMITS.memberships
     && counts.encryptedBytes <= TENANT_SYNC_EXPORT_LIMITS.encryptedBytes
+    && counts.otherRows <= TENANT_SYNC_EXPORT_LIMITS.otherRows
   );
 }

@@ -99,8 +99,24 @@ raw.prepare(
    VALUES ('pro-c', 'op-linked', 1, 'pro-c', ?, ?)`,
 ).run(now, now);
 
-// candidato genuinamente disponível (controle de não regressão)
+// A clínica A precisa de assentos para a recepção além do profissional
+// (o trial automático traz 2).
+raw.prepare(
+  `UPDATE billing_subscriptions SET seats = 5
+    WHERE customer_id IN (SELECT id FROM billing_customers WHERE clinic_id = 'clinica-a')`,
+).run();
+
+// operator livre, mas SEM membership na clínica A (outra clínica ou nenhuma):
+// vincular sem convite aceito é vínculo cross-tenant sem consentimento.
+criarUsuario("op-fora", "operator");
+
+// candidato genuinamente disponível: aceitou convite da clínica A como assistant
 criarUsuario("op-livre", "operator");
+raw.prepare(`INSERT INTO clinic_memberships (clinic_id, user_id, role, active, created_at, updated_at) VALUES ('clinica-a', 'op-livre', 'assistant', 1, ?, ?)`).run(now, now);
+
+// membro da clínica A, mas com papel financeiro (não é recepção)
+criarUsuario("op-financeiro", "operator");
+raw.prepare(`INSERT INTO clinic_memberships (clinic_id, user_id, role, active, created_at, updated_at) VALUES ('clinica-a', 'op-financeiro', 'financial', 1, ?, ?)`).run(now, now);
 
 function proA() {
   return { id: "pro-a", email: "pro-a@example.test", name: "Pro A", role: "professional", mustChangePassword: false };
@@ -122,20 +138,30 @@ async function staffLink(email: string) {
 const inexistente = await staffLink("naoexiste@example.test");
 const papelInvalido = await staffLink("prof-b@example.test");
 const jaVinculado = await staffLink("op-linked@example.test");
+const foraDaClinica = await staffLink("op-fora@example.test");
+const papelNaClinicaErrado = await staffLink("op-financeiro@example.test");
 
 for (const [nome, resp] of [
   ["e-mail inexistente", inexistente],
   ["conta sem papel operator", papelInvalido],
   ["operator já vinculado a outro profissional", jaVinculado],
+  ["operator sem membership nesta clínica", foraDaClinica],
+  ["operator membro com papel diferente de assistant", papelNaClinicaErrado],
 ] as const) {
   assert.equal(resp.status, 404, `${nome}: precisa responder 404 (AUTHZ-P1-06)`);
 }
 
 const bodies = await Promise.all(
-  [inexistente, papelInvalido, jaVinculado].map((r) => r.clone().json()),
+  [inexistente, papelInvalido, jaVinculado, foraDaClinica, papelNaClinicaErrado].map((r) => r.clone().json()),
 );
 assert.deepEqual(bodies[0], bodies[1], "e-mail inexistente e papel inválido precisam responder corpo idêntico");
 assert.deepEqual(bodies[1], bodies[2], "papel inválido e já vinculado a outro precisam responder corpo idêntico");
+assert.deepEqual(bodies[2], bodies[3], "operator fora da clínica precisa responder corpo idêntico");
+assert.deepEqual(bodies[3], bodies[4], "membro não-assistant precisa responder corpo idêntico");
+const vinculosIndevidos = raw.prepare(
+  `SELECT COUNT(*) AS n FROM booking_staff_links WHERE staff_user_id IN ('op-fora', 'op-financeiro')`,
+).get() as { n: number };
+assert.equal(vinculosIndevidos.n, 0, "nenhum vínculo pode ser criado sem membership assistant ativa na clínica");
 assert.equal((bodies[0] as { code?: string }).code, "STAFF_NOT_AVAILABLE");
 
 console.log("✓ POST /api/operations staff_link: e-mail inexistente, papel inválido e já vinculado a outro respondem exatamente igual (AUTHZ-P1-06)");
