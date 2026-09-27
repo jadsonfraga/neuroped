@@ -14,38 +14,18 @@ interface Env {
   DB?: D1Database;
 }
 
-export const REQUIRED_CONSENT_TYPES = [
-  "termo_uso",
-  "politica_privacidade",
-  "tratamento_dados_saude",
-] as const;
+import {
+  CANONICAL_CONSENTS,
+  CURRENT_CONSENT_VERSION,
+  REQUIRED_CONSENT_TYPES,
+  type RequiredConsentType,
+} from "../../shared/consentContract";
 
-type ConsentType = (typeof REQUIRED_CONSENT_TYPES)[number];
+// Fonte única do contrato: shared/consentContract.ts (S23/LEG-06). Reexportado
+// para preservar os consumidores existentes (Express, testes).
+export { CANONICAL_CONSENTS, CURRENT_CONSENT_VERSION, REQUIRED_CONSENT_TYPES };
 
-export const CURRENT_CONSENT_VERSION = "2026-05-08-v1";
-export const CANONICAL_CONSENTS: Record<
-  ConsentType,
-  { consentText: string; legalBasis: string; purpose: string }
-> = {
-  termo_uso: {
-    consentText:
-      "O NeuroPed EDJ é ferramenta clínica do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756), destinada ao apoio de profissionais de saúde habilitados e pacientes em acompanhamento.",
-    legalBasis: "Art. 7º, V — execução de contrato",
-    purpose: "Disponibilização da plataforma para uso profissional",
-  },
-  politica_privacidade: {
-    consentText:
-      "Dados clínicos e respostas de escalas devem ser tratados com sigilo, controle de acesso e finalidade definida. Quando houver backend disponível, os registros seguem o fluxo seguro da plataforma.",
-    legalBasis: "Art. 7º, II — obrigação legal / Art. 7º, V",
-    purpose: "Operação do serviço e direitos do titular",
-  },
-  tratamento_dados_saude: {
-    consentText:
-      "O tratamento de dados de saúde deve ocorrer apenas para avaliação, acompanhamento, prescrição, documentação clínica e suporte assistencial, sob responsabilidade profissional.",
-    legalBasis: "Art. 11, II, f — proteção da saúde por profissional habilitado",
-    purpose: "Cuidado clínico individualizado",
-  },
-};
+type ConsentType = RequiredConsentType;
 
 interface ConsentInput {
   consentType: ConsentType;

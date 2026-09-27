@@ -19,8 +19,12 @@ import {
 import { softTap, softSuccess, softError, softTick } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
 import { fadeIn, slideUpFadeIn } from "@/lib/motion";
+import { CANONICAL_CONSENTS, CURRENT_CONSENT_VERSION } from "@shared/consentContract";
 
-const CONSENT_VERSION = "2026-05-08-v1";
+// Texto, versão, base legal e finalidade vêm da fonte única compartilhada
+// com o servidor (shared/consentContract.ts): o backend recusa qualquer lote
+// que divirja byte a byte. Aqui só ficam ícone, título e resumo da UI.
+const CONSENT_VERSION = CURRENT_CONSENT_VERSION;
 const LOCAL_CONSENT_KEY = "neuroped:lgpd-consent";
 const LOCAL_POSTPONE_KEY = "neuroped:lgpd-postponed";
 
@@ -29,28 +33,28 @@ const CONSENT_BLOCKS = [
     type: "termo_uso" as const,
     icon: FileText,
     title: "Termo de uso",
-    short: "O NeuroPed é ferramenta clínica de apoio; não substitui julgamento médico.",
-    text: "O NeuroPed EDJ é ferramenta clínica do Dr. Jadson Fraga (CRM-PE 25227, RQE 17756), destinada ao apoio de profissionais de saúde habilitados e pacientes em acompanhamento.",
-    legalBasis: "Art. 7º, V — execução de contrato",
-    purpose: "Disponibilização da plataforma para uso profissional",
+    short: "O NeuroPed é plataforma clínica de apoio; não substitui julgamento médico.",
+    text: CANONICAL_CONSENTS.termo_uso.consentText,
+    legalBasis: CANONICAL_CONSENTS.termo_uso.legalBasis,
+    purpose: CANONICAL_CONSENTS.termo_uso.purpose,
   },
   {
     type: "politica_privacidade" as const,
     icon: Lock,
     title: "Privacidade",
     short: "Dados informados devem ser usados apenas para finalidade clínica e operacional.",
-    text: "Dados clínicos e respostas de escalas devem ser tratados com sigilo, controle de acesso e finalidade definida. Quando houver backend disponível, os registros seguem o fluxo seguro da plataforma.",
-    legalBasis: "Art. 7º, II — obrigação legal / Art. 7º, V",
-    purpose: "Operação do serviço e direitos do titular",
+    text: CANONICAL_CONSENTS.politica_privacidade.consentText,
+    legalBasis: CANONICAL_CONSENTS.politica_privacidade.legalBasis,
+    purpose: CANONICAL_CONSENTS.politica_privacidade.purpose,
   },
   {
     type: "tratamento_dados_saude" as const,
     icon: Heart,
     title: "Dados de saúde",
     short: "Dados de saúde são sensíveis e exigem cuidado adicional.",
-    text: "O tratamento de dados de saúde deve ocorrer apenas para avaliação, acompanhamento, prescrição, documentação clínica e suporte assistencial, sob responsabilidade profissional.",
-    legalBasis: "Art. 11, II, f — proteção da saúde por profissional habilitado",
-    purpose: "Cuidado clínico individualizado",
+    text: CANONICAL_CONSENTS.tratamento_dados_saude.consentText,
+    legalBasis: CANONICAL_CONSENTS.tratamento_dados_saude.legalBasis,
+    purpose: CANONICAL_CONSENTS.tratamento_dados_saude.purpose,
   },
 ];
 

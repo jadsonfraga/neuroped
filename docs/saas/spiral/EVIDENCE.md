@@ -680,6 +680,31 @@
   (14/14).
 - Rollback: reverter o commit; nenhum dado é alterado por esta camada.
 
+## S23 (ciclo 5, 2026-09-27) — termo de uso da plataforma neutro e em fonte única (LEG-06)
+- Escopo: novo `shared/consentContract.ts`; `functions/api/consents.ts`,
+  `server/lib/consentContract.ts` e `client/src/pages/lgpd-consent.tsx`
+  passam a importar dele (nenhum literal legal próprio). Nova versão
+  `2026-09-27-v2`. Sem migração: `consents.consent_version/consent_text`
+  já guardam o que cada usuário aceitou.
+- Achado confirmado por leitura direta e por grep: `functions/api/consents.ts:32`,
+  `server/lib/consentContract.ts:24` e `lgpd-consent.tsx:33` carregavam
+  "O NeuroPed EDJ é ferramenta clínica do Dr. Jadson Fraga (CRM-PE 25227,
+  RQE 17756)". Nenhum gate do cliente lê a versão (grep de
+  `neuroped:lgpd-consent`: só a própria página grava), logo a troca de
+  versão não bloqueia ninguém.
+- Testes: `tests/unit/platform-term-neutral-static.test.mjs` (varredura de
+  `functions/**`, `server/**`, `shared/**` por "Jadson", "CRM-PE 25227",
+  "25227", "RQE 17756"; três consumidores importam a fonte única; versão
+  vigente é a v2). `cloudflare-consents-contract` e
+  `express-consents-contract` (que já exigem igualdade byte a byte entre
+  Express e Functions) continuam verdes sem alteração.
+- Comandos exit 0: `node tests/unit/platform-term-neutral-static.test.mjs`,
+  `node --import tsx tests/unit/cloudflare-consents-contract.test.ts`,
+  `node --import tsx tests/unit/express-consents-contract.test.ts`,
+  `node tests/unit/quick-wins-static.test.mjs`, `npm run check`, eslint dos
+  quatro arquivos, `npm run build:client`.
+- Rollback: reverter o commit. Lotes já aceitos na v2 ficam no histórico.
+
 ## S1-R1 — revisão adversarial executada em 2026-09-24
 - Escopo: handler real e autorização real; nove requisitos removidos um a um,
   configuração vazia, sete ambientes de cobrança, seis negativas de acesso,

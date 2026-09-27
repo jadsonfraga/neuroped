@@ -445,3 +445,28 @@ priorizar o caminho assíncrono (worker) para tenants médios/grandes.
 O diagnóstico não atesta configuração presente quando incompleta. Regressão
 cobre nove requisitos, env vazio, sete ambientes, acesso, no-store e segredo.
 Preservados S2–S22; a revisão antiga não reabre funcionalidades já entregues.
+
+## S23 · P1 · FECHADO (ciclo 5, 2026-09-27) — termo da plataforma nomeava o cliente zero
+O termo de uso obrigatório, validado byte a byte pelo servidor e aceito por
+todo usuário de toda clínica, declarava que a ferramenta era "do Dr. Jadson
+Fraga (CRM-PE 25227, RQE 17756)": todo profissional de uma segunda clínica
+era obrigado a aceitar um texto que nomeava outra pessoa como responsável.
+O texto estava triplicado (API canônica, espelho Express e UI). (LEG-06,
+AUTHZ-P2-19 parcial)
+
+Fechado: fonte única `shared/consentContract.ts` com a versão nova
+`2026-09-27-v2` e termo neutro (a clínica é responsável pelos dados que
+registra e pelos profissionais que autoriza; a plataforma não substitui o
+julgamento clínico). `functions/api/consents.ts` e
+`server/lib/consentContract.ts` reexportam da fonte única; a UI
+(`lgpd-consent.tsx`) lê texto/versão/base legal de lá. Lotes antigos
+(`2026-05-08-v1`) permanecem no histórico como foram aceitos; nenhum gate do
+app depende da versão, então nenhum usuário é bloqueado — quem abrir a
+página aceita a versão vigente. Trava estática
+`tests/unit/platform-term-neutral-static.test.mjs` (em `test:quick-wins`)
+proíbe identidade pessoal do cliente zero em `functions/**`, `server/**` e
+`shared/**` e exige que os três consumidores leiam a fonte única.
+Fora do escopo (LTB-17, próxima camada): marca fixa no `Layout.tsx`
+(selo/rodapé do cliente zero), CORS fixo em `superneuroped.vercel.app`,
+defaults `America/Recife`/`Neuropediatria`. Evidência em EVIDENCE.md#S23.
+
