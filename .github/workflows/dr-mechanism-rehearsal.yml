@@ -144,7 +144,7 @@ jobs:
           chmod 600 "$BACKUP"
 
           npx wrangler@4 d1 execute "$SOURCE" --remote \
-            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            --command "$(cat ./scripts/dr/metadata-fingerprint.sql)" --json \
             | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/source.sha256
           test "$(wc -c < /tmp/source.sha256)" -eq 65
 
@@ -176,7 +176,7 @@ jobs:
           END=$(date +%s)
 
           npx wrangler@4 d1 execute "$RESTORE" --remote \
-            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            --command "$(cat ./scripts/dr/metadata-fingerprint.sql)" --json \
             | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/restored.sha256
           if ! cmp -s /tmp/source.sha256 /tmp/restored.sha256; then
             echo "::error::Fingerprint após import diverge da origem."
@@ -203,7 +203,7 @@ jobs:
           npx wrangler@4 d1 execute "$RESTORE" --remote --yes --command \
             "DELETE FROM live_patients WHERE id = 'dr-rehearsal-patient-alpha';"
           npx wrangler@4 d1 execute "$RESTORE" --remote \
-            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            --command "$(cat ./scripts/dr/metadata-fingerprint.sql)" --json \
             | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/damaged.sha256
           if cmp -s /tmp/source.sha256 /tmp/damaged.sha256; then
             echo "::error::A mutação destrutiva não alterou o fingerprint."
@@ -232,7 +232,7 @@ jobs:
           echo "duration_s=$((END-START))" >> "$GITHUB_OUTPUT"
 
           npx wrangler@4 d1 execute "$RESTORE" --remote \
-            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            --command "$(cat ./scripts/dr/metadata-fingerprint.sql)" --json \
             | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/post-time-travel.sha256
           if ! cmp -s /tmp/source.sha256 /tmp/post-time-travel.sha256; then
             echo "::error::Fingerprint após Time Travel diverge do backup válido."
@@ -255,7 +255,7 @@ jobs:
           cat /tmp/dr-undo.log
 
           npx wrangler@4 d1 execute "$RESTORE" --remote \
-            --file=./scripts/dr/metadata-fingerprint.sql --json \
+            --command "$(cat ./scripts/dr/metadata-fingerprint.sql)" --json \
             | node ./scripts/dr/fingerprint-d1-json.mjs > /tmp/post-undo.sha256
           if ! cmp -s /tmp/damaged.sha256 /tmp/post-undo.sha256; then
             echo "::error::Undo não retornou ao estado imediatamente anterior ao restore."

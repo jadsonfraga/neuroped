@@ -158,6 +158,16 @@ assert.match(
   /cmp -s \/tmp\/source\.sha256 \/tmp\/restored\.sha256/,
   "o restore por importação precisa reconciliar o fingerprint com a origem",
 );
+assert.doesNotMatch(
+  workflow,
+  /--file=\.\/scripts\/dr\/metadata-fingerprint\.sql --json/,
+  "consulta remota via --file devolve apenas métricas do batch, não o SELECT",
+);
+assert.match(
+  workflow,
+  /--command "\$\(cat \.\/scripts\/dr\/metadata-fingerprint\.sql\)" --json/,
+  "o fingerprint remoto precisa usar --command para receber a linha do SELECT",
+);
 assert.match(
   workflow,
   /cmp -s \/tmp\/source\.sha256 \/tmp\/post-time-travel\.sha256/,
