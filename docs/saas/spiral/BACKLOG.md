@@ -86,14 +86,28 @@ incluído em `npm run test:operations`. Visto falhando pelo motivo certo
 contra o código anterior (serviço da clínica A aparecia no dashboard de B).
 Evidência em EVIDENCE.md#S8.
 
-## S13 · P1 · aberto
-Redesenho do link público de agendamento por clínica
-(`/agendar?clinic=<slug>&provider=<slug>` ou `/c/:clinicSlug/agendar`),
-substituindo o slug global de `booking_provider_profiles` (PK `user_id`,
-`slug UNIQUE` global — OPS-05) e o diretório cross-clínica de
-`action=providers`. Depende de mudança de rota no frontend
-(`client/src/pages/agendar.tsx`, `marcacao.tsx`, `navigation.ts`), fora do
-escopo de S8 (isolamento de dados no backend autenticado).
+## S13 · P1 · FECHADO parcialmente (ciclo 5) — desambiguação por slug; redesenho de rota ainda aberto
+Menor incremento seguro: o link público de agendamento pode declarar a
+clínica via `?clinic=<slug da clínica>` (perfil, horários, reserva, lista de
+espera e diretório em `functions/api/public-booking.ts`), resolvida por
+`resolveProviderClinicBySlug` (`functions/api/operations/_core.ts`) — que
+CONFIRMA a membership ativa do profissional exatamente naquela clínica
+(`clinics.slug`, já única, sem migração nova), em vez de inferir pela
+contagem total de memberships. Um profissional em duas clínicas deixa de
+cair na ambiguidade de `resolveProviderSoleClinicId` quando o link já
+declara qual das duas é a certa. Sem o parâmetro, o comportamento antigo
+(exige exatamente uma clínica ativa) é preservado — links já
+compartilhados/salvos continuam funcionando. O botão "copiar link público"
+em `client/src/pages/agenda.tsx` já gera o link com `&clinic=<slug>` a
+partir da clínica ativa da sessão (`useClinic().activeClinic.slug`).
+
+Continua aberto, deliberadamente fora deste incremento: o redesenho de rota
+(`/c/:clinicSlug/agendar`), a troca de PK de `booking_provider_profiles`
+(hoje `user_id`, `slug UNIQUE` global — OPS-05) e de `booking_staff_links`
+(OPS-03), e qualquer geração automática de link a partir de convite/
+notificação. Isso exigiria migração, backfill e período de compatibilidade
+para links antigos — não é um incremento seguro de escopo único. Evidência
+em EVIDENCE.md#S13.
 
 ## S14 · P2 · FECHADO (ciclo 4)
 Links públicos de intake (pré-consulta) e de escala remota ignoravam o
@@ -453,22 +467,32 @@ HOJE nenhuma clínica com PDFs, avaliações, intake ou escala respondida
 consegue completar o encerramento com purge físico — comportamento
 deliberado (fail-closed) até o export cobrir esses domínios.
 
-## S12B · P1 · FECHADO (ciclo 5, 2026-09-26)
+## S12B · P1 · FECHADO (ciclo 5, 2026-09-26, correção de escopo na revisão)
 `collectTenantExportPayload` passou a incluir de fato os oito domínios que
-faltavam — avaliações e respostas, documentos e versões (conteúdo decifrado),
-convites/submissões de intake e de escala remota (token_hash nunca sai) —
-fechando `complete` para `true` sempre que só esses domínios restavam fora, e
-liberando o purge de encerramento sem depender de o admin de plataforma
-esvaziar as tabelas manualmente. `exportWithinSyncLimits` passou a somar os
-cinco novos campos cifrados na pré-checagem síncrona, então um tenant com
-documentos grandes cai no caminho assíncrono (worker) em vez de travar no
-caminho síncrono. Evidência em EVIDENCE.md#S12B.
+bloqueavam o purge — avaliações e respostas, documentos e versões (conteúdo
+decifrado), convites/submissões de intake e de escala remota (token_hash
+nunca sai) — fechando `complete` para `true` sempre que só esses domínios
+restavam fora, e liberando o purge de encerramento sem depender de o admin
+de plataforma esvaziar as tabelas manualmente. `exportWithinSyncLimits`
+passou a somar os cinco novos campos cifrados na pré-checagem síncrona,
+então um tenant com documentos grandes cai no caminho assíncrono (worker)
+em vez de travar no caminho síncrono.
 
-Ainda fora deste fechamento, de propósito (não fazia parte de LTB-02 nem
-bloqueava purge): `clinic_settings` e `live_retention_policies` no payload
-exportado — nenhum dos dois é dado do titular (são configuração da clínica),
-e nenhum purge recusa por eles. Candidato a uma melhoria de completude
-separada, não a uma reabertura de S12B.
+Correção pedida em revisão (PR #1004, revisor `jadsonfraga`): a primeira
+entrega desta PR deixou `clinic_settings` e `live_retention_policies` fora
+do payload e descreveu isso como "nunca fez parte do escopo de S12B" — o
+que contradizia o texto original deste item, que pedia explicitamente os
+dois. Nenhum dos dois é dado do titular (são configuração da clínica) nem
+bloqueia purge (`PURGE_PRESERVED_TABLES` em `_purge.ts`), mas uma clínica
+pedindo "todos os meus dados" espera ver a própria configuração/timbre
+institucional também. Corrigido em PR separada (a #1004 mesclou antes do
+push da correção): os dois agora saem no payload (`clinicSettings`/
+`retentionPolicy`, `null` quando a clínica nunca configurou). A mesma PR
+migra um cenário de `tests/unit/lgpd-purge-atomicity.test.ts` (PR #1002,
+mesclada em paralelo) que dependia de `EXPORT_UNCOVERED_CLINIC_TABLES` ter
+`live_documents` — S12B esvaziou a lista, então a corrida migrou para
+`appointments` (mesma cerca atômica, tabela que segue genuinamente fora do
+export). Evidência em EVIDENCE.md#S12B.
 
 
 ## S1-R1 · P1 · corrigido, integração em validação (#951)
