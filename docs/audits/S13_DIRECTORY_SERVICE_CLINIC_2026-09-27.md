@@ -34,7 +34,7 @@ O mesmo SELECT passa a correlacionar serviço -> clinic_memberships -> clinics.
 Exige `s.clinic_id = cm.clinic_id`, o mesmo profissional, membership ativa,
 clínica ativa e serviço ativo/público. Slug continua parametrizado. Sem slug,
 permanece a exigência anterior de exatamente uma membership ativa (inclusive
-a contagem de memberships em clínicas suspensas), sem inferência alternativa.
+	a contagem de memberships em clínicas suspensas), sem inferência alternativa.
 EXISTS preserva uma única linha por profissional mesmo com vários serviços.
 
 Não altera schema, preços, payload público, UI, reservas, locks de horário,
@@ -89,3 +89,32 @@ não recebem promoção de estado por esta mudança.
 PR de reversão deste incremento. Nenhuma migration ou dado a desfazer.
 Reverter a query reintroduz o falso vínculo público; reavaliar esse risco.
 Nunca remover a regressão para obter CI verde. Preservar evidências do ciclo.
+
+## Reconciliação posterior — main avançou durante a CI
+
+O candidato `a65efc566db7c201cee288907274250303ec4a8f` concluiu os onze
+workflows com sucesso, inclusive Verify NeuroPed `36327976823`, Test, Lint
+& Build `36327976857` e PR Check `36327976820`. A referência testada
+`e63457cd61eabd8fae8c4ec0d5087bc2f0fb55fd` tem como parent de main `9f0930fd`.
+
+O primeiro candidato (`c8d0385`) havia falhado na fixture: SAVEPOINT externo
+combinado com BEGIN no wrapper de batch causava transação aninhada durante
+o bootstrap de schema. O commit a65efc substituiu apenas o wrapper por
+SAVEPOINT/RELEASE com rollback real e acrescentou um controle executável de
+atomicidade. Não removeu nenhum dos seis blocos antigos ou dos quinze novos
+cenários de diretório. Falha e correção constam no comentário 5856995236.
+
+Antes do merge, main foi observado em
+`8c24de888158c35d4e111a8352c6c2b9643fa24a`, já incorporando #1003, #1006 e
+#1009 em trabalho concorrente. Não atribuir esses merges a esta revisão.
+Os blobs de AGENTS.md, public-booking.ts e operations-tenant-isolation.test.ts
+nessa nova base são idênticos aos da base anterior; a alteração continua
+restrita ao mesmo domínio. O novo onboarding, protocolo e SuperNeuroPad devem
+ser preservados, não reaplicados nem sobrescritos.
+
+Este acréscimo documental provoca uma nova CI do candidato combinado com a
+base atual. Onze workflows verdes contra a base anterior NÃO comprovam essa
+nova combinação. Antes de integrar, verificar os parents do merge sintético,
+resultados correspondentes e main atualizado, sem override de proteção.
+Nenhum merge, deploy ou ensaio produtivo A/B da #1015 é atestado por este
+registro. S9 e S5 permanecem abertos com os limites já descritos.
