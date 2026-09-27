@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { startStaticServer, auditBrowserLaunchOptions, ACCEPTED_FIRST_VISIT_STORAGE } from "../../scripts/lib/browser-audit-runtime.mjs";
-import { createSyntheticClinicalApi } from "../../scripts/lib/synthetic-clinical-api.mjs";
+import { createSyntheticClinicalApi, SYNTHETIC_CREDENTIALS } from "../../scripts/lib/synthetic-clinical-api.mjs";
 
 // Production-built UI and its real preference handlers. Authentication/data
 // are synthetic; no production session, patient, upstream AI or deployment.
@@ -21,7 +21,9 @@ const errors = [];
 const checks = [];
 page.on("pageerror", error => errors.push(error.message));
 const toggle = () => page.getByTestId("button-sound-toggle");
-const audit = () => new AxeBuilder({ page }).withRules(["label-content-name-mismatch"]).analyze();
+// This regression targets the sound control; the workflow also runs the
+// unchanged full twelve-route Lighthouse gate for all other components.
+const audit = () => new AxeBuilder({ page }).include('[data-testid="button-sound-toggle"]').withRules(["label-content-name-mismatch"]).analyze();
 async function state(enabled, label) {
   await page.waitForFunction(expected => document.querySelector('[data-testid="button-sound-toggle"]')?.getAttribute("aria-pressed") === String(expected), enabled);
   const name = await toggle().getAttribute("aria-label");
@@ -36,7 +38,10 @@ async function check(name) {
   checks.push(name);
 }
 try {
-  await page.goto(`${server.origin}/#/login`);
+  await page.goto(`${server.origin}/#/filtro`);
+  await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
+  await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
+  await page.locator('[data-testid="login-form"] button[type="submit"]').click();
   await toggle().waitFor({ state: "visible", timeout: 20000 });
   await state(false, "Sem som");
   await check("01-desktop-muted");
@@ -77,7 +82,7 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-testid="button-sound-toggle-mobile"]')?.getAttribute("aria-pressed") === "false");
   assert.equal(await page.evaluate(() => localStorage.getItem("neuroped:sounds")), "off");
   assert.deepEqual(errors, []);
-  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, checks, oldAttributeReproducesFailure: true, preferenceHandlersPreserved: true, pageErrors: errors, scope: "Built UI, synthetic API, unchanged axe rule; no clinical or production proof." }, null, 2));
+  await writeFile(`${dir}/result.json`, JSON.stringify({ passed: true, checks, oldAttributeReproducesFailure: true, preferenceHandlersPreserved: true, pageErrors: errors, scope: "Built UI sound control, synthetic API, unchanged axe rule; full Lighthouse runs separately; no clinical or production proof." }, null, 2));
   console.log("Sound label: six actual browser states pass; the old attribute fails the same axe rule; real preference toggling/persistence preserved.");
 } catch (error) {
   await page.screenshot({ path: `${dir}/failure.png`, fullPage: true });
