@@ -28,9 +28,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const input = parseInput(raw);
     const requestId = crypto.randomUUID();
     // No age, name, filename, transcript, video/hash or provider payload in the audit log.
-    const audit = (action: string) => prepareSaasAudit(db, { clinicId, actorUserId: user.id, action, targetType: "obs60", targetId: requestId, metadata: { protocol: VERSION, consent: true } }).run();
+    const audit = (action: string, extra: Record<string, string | number | boolean | null> = {}) =>
+      prepareSaasAudit(db, { clinicId, actorUserId: user.id, action, targetType: "obs60", targetId: requestId, metadata: { protocol: VERSION, consent: true, ...extra } }).run();
     await audit("obs60.video_ai.requested");
-    const output = await analyseVideo(input, context.env, fetch, context.request.signal);
+    let output: Awaited<ReturnType<typeof analyseVideo>>;
+    try {
+      output = await analyseVideo(input, context.env, fetch, context.request.signal);
+    } catch (error) {
+      // A "requested" event without a paired "completed"/"failed" event would read as
+      // stuck-in-progress; record the outcome so the audit trail always closes.
+      await audit("obs60.video_ai.failed", { code: error instanceof VideoError ? error.code : "OBS60_FAILED" });
+      throw error;
+    }
     await audit("obs60.video_ai.completed");
     return json({ ...output, requestId });
   } catch (error) {

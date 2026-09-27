@@ -11,6 +11,7 @@ on:
       - 'functions/api/auth/_authorization.ts'
       - 'functions/api/tenant/_core.ts'
       - 'tests/unit/obs60*.test.mjs'
+      - 'tests/unit/obs60-tenant-gate.test.ts'
       - 'tests/e2e/obs60-guide.mjs'
       - 'tests/fixtures/obs60-gray.mp4.base64'
       - '.github/workflows/obs60-proof.yml'
@@ -26,6 +27,7 @@ on:
       - 'functions/api/auth/_authorization.ts'
       - 'functions/api/tenant/_core.ts'
       - 'tests/unit/obs60*.test.mjs'
+      - 'tests/unit/obs60-tenant-gate.test.ts'
       - 'tests/e2e/obs60-guide.mjs'
       - 'tests/fixtures/obs60-gray.mp4.base64'
       - '.github/workflows/obs60-proof.yml'
@@ -61,7 +63,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Real handlers and real schema with isolated synthetic clinics
-        run: node --import tsx --test tests/unit/obs60-tenant-integration.test.mjs
+        run: node --import tsx --test tests/unit/obs60-tenant-gate.test.ts tests/unit/obs60-tenant-integration.test.mjs
       - name: Production client with authorization preserved
         env:
           VITE_OPEN_ACCESS: 'false'
