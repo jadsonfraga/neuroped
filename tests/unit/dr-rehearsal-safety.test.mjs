@@ -30,6 +30,10 @@ const workflow = readFileSync(
   "utf8",
 );
 const fingerprintScript = join(repoRoot, "scripts", "dr", "fingerprint-d1-json.mjs");
+const metadataFingerprintSql = readFileSync(
+  join(repoRoot, "scripts", "dr", "metadata-fingerprint.sql"),
+  "utf8",
+);
 
 const triggerBlock = workflow.split(/^jobs:/m)[0] ?? "";
 
@@ -167,6 +171,11 @@ assert.match(
   workflow,
   /--command "\$\(cat \.\/scripts\/dr\/metadata-fingerprint\.sql\)" --json/,
   "o fingerprint remoto precisa usar --command para receber a linha do SELECT",
+);
+assert.match(
+  metadataFingerprintSql.trimStart(),
+  /^SELECT\b/,
+  "o valor enviado a --command precisa começar por SELECT; comentário -- vira argumento do Wrangler",
 );
 assert.match(
   workflow,

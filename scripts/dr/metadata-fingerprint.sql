@@ -1,7 +1,3 @@
--- Fingerprint metadata-only para o ensaio de disaster recovery.
--- Não seleciona nomes, e-mails, payloads clínicos ou qualquer conteúdo de PHI.
--- A saída é uma única linha de contagens/invariantes determinísticas, que o
--- workflow transforma em SHA-256 antes de registrar ou comparar.
 SELECT
   (SELECT COUNT(*)
      FROM sqlite_master
