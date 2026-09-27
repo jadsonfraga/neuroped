@@ -61,14 +61,15 @@ function makeDb(database: DatabaseSync): D1Database {
   return {
     prepare,
     async batch(statements: Array<{ run(): Promise<unknown> }>) {
-      database.exec("BEGIN");
+      // SAVEPOINT mantém o batch atômico e permite checkpoints externos da fixture.
+      database.exec("SAVEPOINT d1_test_batch");
       try {
         const results = [];
         for (const statement of statements) results.push(await statement.run());
-        database.exec("COMMIT");
+        database.exec("RELEASE d1_test_batch");
         return results;
       } catch (error) {
-        database.exec("ROLLBACK");
+        database.exec("ROLLBACK TO d1_test_batch; RELEASE d1_test_batch");
         throw error;
       }
     },
@@ -368,6 +369,36 @@ const asB = contextFor("clinic-b");
     null,
     "S13: sem ?clinic=, ambiguidade total continua falhando fechado (compatibilidade com links antigos)",
   );
+}
+
+// O wrapper de batch não pode perder a atomicidade ao aceitar checkpoints da fixture.
+{
+  const probe = new DatabaseSync(":memory:");
+  try {
+    probe.exec("CREATE TABLE fixture_atomicity (id TEXT PRIMARY KEY)");
+    const probeDb = makeDb(probe);
+    await probeDb.batch([probeDb.prepare("INSERT INTO fixture_atomicity VALUES ('stable')")]);
+    probe.exec("SAVEPOINT outer_fixture");
+    await probeDb.batch([probeDb.prepare("INSERT INTO fixture_atomicity VALUES ('nested')")]);
+    await assert.rejects(
+      probeDb.batch([
+        probeDb.prepare("INSERT INTO fixture_atomicity VALUES ('rollback-required')"),
+        probeDb.prepare("INSERT INTO fixture_atomicity VALUES ('stable')"),
+      ]),
+      /UNIQUE constraint failed/,
+    );
+    assert.deepEqual(
+      probe.prepare("SELECT id FROM fixture_atomicity ORDER BY id").all().map((row) => row.id),
+      ["nested", "stable"],
+      "batch falho reverte sua escrita e preserva as anteriores",
+    );
+    probe.exec("ROLLBACK TO outer_fixture; RELEASE outer_fixture");
+    assert.deepEqual(
+      probe.prepare("SELECT id FROM fixture_atomicity ORDER BY id").all().map((row) => row.id),
+      ["stable"],
+      "checkpoint externo desfaz a fixture sem perder o commit prévio",
+    );
+  } finally { probe.close(); }
 }
 
 // ── 7. S13-R1: diretório exige serviço público NA MESMA clínica ────────────
