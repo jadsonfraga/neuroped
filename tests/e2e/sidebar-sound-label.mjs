@@ -38,10 +38,13 @@ async function check(name) {
   checks.push(name);
 }
 try {
-  await page.goto(`${server.origin}/#/filtro`);
+  // The filter is public; it must not be expected to redirect to login.
+  await page.goto(`${server.origin}/#/login`);
   await page.locator("#login-email").fill(SYNTHETIC_CREDENTIALS.email);
   await page.locator("#login-password").fill(SYNTHETIC_CREDENTIALS.password);
   await page.locator('[data-testid="login-form"] button[type="submit"]').click();
+  await page.locator("#login-email").waitFor({ state: "hidden" });
+  await page.goto(`${server.origin}/#/filtro`);
   await toggle().waitFor({ state: "visible", timeout: 20000 });
   await state(false, "Sem som");
   await check("01-desktop-muted");
