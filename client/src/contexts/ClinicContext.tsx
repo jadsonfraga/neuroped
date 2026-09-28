@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { authFetch } from "@/lib/authClient";
+import { authFetch, getAuthSessionEpoch } from "@/lib/authClient";
 import { invalidateIssuerCache } from "@/lib/issuer";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -63,9 +63,15 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   const { accessMode, isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [clinics, setClinics] = useState<ClinicMembership[]>([]);
   const [activeClinicId, setActiveClinicIdState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const switchGeneration = useRef(0);
+  const requestGeneration = useRef(0);
+  const requestController = useRef<AbortController | null>(null);
+  const authScope = JSON.stringify([accessMode, isAuthenticated, isAuthLoading, user?.id, user?.mustChangePassword]);
+  const currentAuthScope = useRef(authScope);
+  currentAuthScope.current = authScope;
+  const [loadedScope, setLoadedScope] = useState<string | null>(null);
 
   const reloadClinics = useCallback(async () => {
     // Durante o bootstrap remoto, AuthProvider ainda está descobrindo capacidade
@@ -75,44 +81,80 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
     // nunca pode mutar a fronteira tenant persistida.
     if (accessMode === "checking" || isAuthLoading) return;
 
+    const generation = ++requestGeneration.current;
+    requestController.current?.abort();
     if (accessMode !== "remote" || !isAuthenticated || user?.mustChangePassword) {
+      setIsLoading(false);
+      setLoadedScope(authScope);
+      setError(null);
       setClinics([]);
       setActiveClinicIdState(null);
       persistClinicId(null);
       return;
     }
 
+    const epoch = getAuthSessionEpoch();
+    const controller = new AbortController();
+    requestController.current = controller;
+    const isCurrent = () => generation === requestGeneration.current
+      && currentAuthScope.current === authScope && getAuthSessionEpoch() === epoch;
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authFetch("/api/tenants");
+      const response = await authFetch("/api/tenants", { signal: controller.signal, cache: "no-store" });
+      if (!isCurrent()) return;
       if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(typeof body?.error === "string" ? body.error : "Não foi possível carregar as clínicas.");
+        throw new Error(response.status === 401
+          ? "Sua sessão expirou. Entre novamente."
+          : "Não foi possível carregar as clínicas. Tente atualizar o vínculo.");
       }
       const body = await response.json() as { data?: ClinicMembership[] };
-      const nextClinics = (body.data ?? []).filter((clinic) => clinic.status === "active");
-      setClinics(nextClinics);
+      if (!isCurrent()) return;
+      if (!Array.isArray(body?.data) || !body.data.every((clinic) => clinic
+        && typeof clinic.id === "string" && typeof clinic.name === "string"
+        && typeof clinic.slug === "string" && typeof clinic.status === "string")) {
+        throw new Error("Resposta inválida ao carregar as clínicas. Tente novamente.");
+      }
+      const nextClinics = body.data.filter((clinic) => clinic.status === "active");
       const stored = readStoredClinicId();
       const nextActive = nextClinics.some((clinic) => clinic.id === stored)
         ? stored
         : (nextClinics[0]?.id ?? null);
+      // Uma associação revogada não pode reciclar o cache de outra clínica.
+      if (stored && stored !== nextActive) {
+        await clearClinicalClientCaches();
+        if (!isCurrent()) return;
+      }
+      setClinics(nextClinics);
       setActiveClinicIdState(nextActive);
       persistClinicId(nextActive);
+      if (stored && nextActive && stored !== nextActive) window.location.reload();
     } catch (cause) {
+      if (!isCurrent()) return;
       setClinics([]);
       setActiveClinicIdState(null);
       setError(cause instanceof Error ? cause.message : "Não foi possível carregar as clínicas.");
     } finally {
-      setIsLoading(false);
+      window.clearTimeout(timeout);
+      if (isCurrent()) {
+        setLoadedScope(authScope);
+        setIsLoading(false);
+      }
     }
-  }, [accessMode, isAuthenticated, isAuthLoading, user?.mustChangePassword]);
+  }, [accessMode, isAuthenticated, isAuthLoading, user?.mustChangePassword, authScope]);
 
   useEffect(() => {
     void reloadClinics();
+    return () => {
+      ++requestGeneration.current;
+      requestController.current?.abort();
+    };
   }, [reloadClinics]);
 
   const setActiveClinicId = useCallback((clinicId: string) => {
+    if (loadedScope !== authScope || isLoading) return;
+    const epoch = getAuthSessionEpoch();
     if (!clinics.some((clinic) => clinic.id === clinicId && clinic.status === "active")) return;
     if (clinicId === activeClinicId) return;
 
@@ -120,12 +162,15 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
     // de UI. Primeiro removemos o contexto antigo para que nenhuma nova query
     // possa sair com o tenant anterior enquanto os caches são descartados.
     const generation = ++switchGeneration.current;
+    ++requestGeneration.current;
+    requestController.current?.abort();
     setActiveClinicIdState(null);
     persistClinicId(null);
 
     void (async () => {
       await clearClinicalClientCaches();
       if (generation !== switchGeneration.current) return;
+      if (currentAuthScope.current !== authScope || getAuthSessionEpoch() !== epoch) return;
 
       // O clinic_id não contém PHI e serve somente para reidratar o contexto.
       // Recarregar o shell descarta memória React, observers e closures do tenant
@@ -137,20 +182,29 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
       }
       setActiveClinicIdState(clinicId);
     })();
-  }, [activeClinicId, clinics]);
+  }, [activeClinicId, clinics, loadedScope, authScope, isLoading]);
 
-  const activeClinic = clinics.find((clinic) => clinic.id === activeClinicId) ?? null;
+  // Nenhum consumidor recebe contexto da identidade anterior nem um falso
+  // "sem clínica" no primeiro render, antes de o efeito de bootstrap começar.
+  const contextCurrent = loadedScope === authScope;
+  const contextLoading = accessMode === "checking" || isAuthLoading || (
+    accessMode === "remote" && isAuthenticated && !user?.mustChangePassword
+    && (!contextCurrent || isLoading)
+  );
+  const activeClinic = contextCurrent && !contextLoading
+    ? clinics.find((clinic) => clinic.id === activeClinicId) ?? null
+    : null;
   const value = useMemo(
     () => ({
-      clinics,
-      activeClinicId,
+      clinics: contextCurrent ? clinics : [],
+      activeClinicId: activeClinic?.id ?? null,
       activeClinic,
-      isLoading,
-      error,
+      isLoading: contextLoading,
+      error: contextCurrent ? error : null,
       setActiveClinicId,
       reloadClinics,
     }),
-    [clinics, activeClinicId, activeClinic, isLoading, error, setActiveClinicId, reloadClinics],
+    [clinics, activeClinic, contextCurrent, contextLoading, error, setActiveClinicId, reloadClinics],
   );
 
   return <ClinicContext.Provider value={value}>{children}</ClinicContext.Provider>;
