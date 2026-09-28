@@ -10,7 +10,7 @@
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Frontend | React 18 + Vite 7 + Tailwind + Radix UI + wouter |
+| Frontend | React 18 + Vite 8 + Tailwind + Radix UI + wouter |
 | Backend canônico | Cloudflare Pages Functions + D1 |
 | Backend local | Express 5 + TypeScript via tsx |
 | ORM | Drizzle |
