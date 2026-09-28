@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, invalidateApiQueries, queryClient } from "@/lib/queryClient";
 import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { loadAllPatientResults } from "@/lib/patientResultsPagination";
@@ -174,7 +174,8 @@ export default function PacienteDetalhePage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      // A edição também precisa refletir na lista e no seletor de pacientes.
+      invalidateApiQueries(isRemoteClinical ? "/api/live/patients" : "/api/patients");
       setEditOpen(false);
       toast({ title: "Paciente atualizado!" });
     },
