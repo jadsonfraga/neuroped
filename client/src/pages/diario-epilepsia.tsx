@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { localIsoDate } from "@/lib/clinicalDate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +74,7 @@ const duracoes = [
 
 function emptyCrise(): Omit<Crise, "id"> {
   return {
-    data: new Date().toISOString().slice(0, 10),
+    data: localIsoDate(),
     hora: new Date().toTimeString().slice(0, 5),
     tipo: tiposCrise[0],
     duracao: duracoes[0],

@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { localIsoDate } from "@/lib/clinicalDate";
 import { Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,7 @@ function AshworthTab() {
   const [patient, setPatient] = useState<PatientInfo>({
     nome: "",
     nascimento: "",
-    data: new Date().toISOString().slice(0, 10),
+    data: localIsoDate(),
     examinador: "",
   });
   const [rows, setRows] = useState<Record<string, AshworthRow>>(
@@ -264,7 +265,7 @@ function TardieuTab() {
   const [patient, setPatient] = useState<PatientInfo>({
     nome: "",
     nascimento: "",
-    data: new Date().toISOString().slice(0, 10),
+    data: localIsoDate(),
     examinador: "",
   });
   const [rows, setRows] = useState<Record<string, TardieuRow>>(
