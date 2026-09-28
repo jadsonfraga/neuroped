@@ -13,6 +13,10 @@ on:
       - "client/src/lib/secureStorage.ts"
       - "client/src/lib/previsitLocalPersistence.ts"
       - "client/src/components/RouteGuard.tsx"
+      - "client/src/components/ClinicRouteBoundary.tsx"
+      - "client/src/lib/clinicRoutePolicy.ts"
+      - "tests/unit/clinic-context-readiness.test.mjs"
+      - "tests/e2e/clinic-context-readiness.mjs"
       - "client/src/contexts/AuthContext.tsx"
       - "client/src/contexts/ClinicContext.tsx"
       - "client/src/components/ClinicSwitcher.tsx"
@@ -100,3 +104,8 @@ jobs:
 
       - name: Prove clinic switch and logout login session boundaries
         run: node tests/e2e/live-tenant-session-boundary.mjs
+      - name: Prove clinic context bootstrap and recovery contracts
+        run: node --experimental-strip-types tests/unit/clinic-context-readiness.test.mjs
+
+      - name: Prove delayed context and recovery across clinical routes
+        run: node tests/e2e/clinic-context-readiness.mjs
