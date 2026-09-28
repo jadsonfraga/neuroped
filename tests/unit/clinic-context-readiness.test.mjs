@@ -12,14 +12,15 @@ for (const path of ["/", "/caa", "/familia", "/agendar", "/login", "/onboarding"
 }
 const provider = readFileSync("client/src/contexts/ClinicContext.tsx", "utf8");
 assert.match(provider, /useState\(true\)/);
-assert.match(provider, /JSON\.stringify\(\[accessMode, isAuthenticated, isAuthLoading, user\?\.id, user\?\.mustChangePassword\]\)/);
+assert.match(provider, /JSON\.stringify\(\[accessMode, isAuthenticated, isAuthLoading, user\?\.id, user\?\.mustChangePassword, getAuthSessionEpoch\(\)\]\)/);
 assert.match(provider, /getAuthSessionEpoch\(\) === epoch/);
 assert.match(provider, /generation === requestGeneration\.current/);
 assert.match(provider, /currentAuthScope\.current === authScope/);
 assert.match(provider, /loadedScope === authScope/);
 assert.match(provider, /if \(!isCurrent\(\)\) return;/);
 assert.match(provider, /signal: controller\.signal, cache: "no-store"/);
-assert.match(provider, /return \(\) => \{\s*\+\+requestGeneration\.current;\s*requestController\.current\?\.abort\(\);/);
+assert.match(provider, /const cancelClinicRequest = useCallback\(\(\) => \{\s*\+\+requestGeneration\.current;\s*requestController\.current\?\.abort\(\);/);
+assert.match(provider, /return cancelClinicRequest;\s*\}, \[reloadClinics, cancelClinicRequest\]\);/);
 assert.match(provider, /Array\.isArray\(body\?\.data\)/);
 assert.match(provider, /activeClinicId: activeClinic\?\.id \?\? null/);
 const boundary = readFileSync("client/src/components/ClinicRouteBoundary.tsx", "utf8");
