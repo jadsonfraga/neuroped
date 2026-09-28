@@ -1,0 +1,187 @@
+name: CAA public production proof (2026-09-28)
+
+# One-off verification branch for #1038 / merged PR #1037. No deploy,
+# secrets, schedule, production mutation or change to the application's code.
+on:
+  push:
+    branches: [verify/caa-public-production-20260928]
+    paths: [.github/workflows/caa-public-proof-20260928.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  public-caa:
+    name: Public CAA - real origin, anonymous session, no clinical persistence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify exact public release and exercise the real CAA
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const origin = 'https://neuroped.pages.dev';
+          const expectedCommit = '7859e3af4453fe4ae2134b46dffbd2bf359f2dd3';
+          const expectedDeployRun = '36426987984';
+          const out = 'artifacts/caa-public-proof';
+          mkdirSync(out, { recursive: true });
+          let sentinel;
+          // Bounded observation of the deployment already started by the merge.
+          // A stale origin never counts as success and no deploy is triggered.
+          for (let attempt = 1; attempt <= 30; attempt++) {
+            try {
+              const response = await fetch(`${origin}/deploy-check.json?caaProof=${Date.now()}`, {
+                cache: 'no-store', signal: AbortSignal.timeout(10000),
+              });
+              if (response.ok) {
+                const candidate = await response.json();
+                if (candidate.commit === expectedCommit && String(candidate.run_id) === expectedDeployRun) {
+                  sentinel = candidate;
+                  break;
+                }
+              }
+            } catch {
+              // Transient fetch errors are retried, never treated as proof.
+            }
+            if (attempt < 30) await new Promise(resolve => setTimeout(resolve, 15000));
+          }
+          assert.ok(sentinel, 'Public origin did not serve the expected release within the bounded observation');
+          assert.equal(sentinel.provider, 'cloudflare-pages');
+          assert.equal(sentinel.branch, 'main');
+
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ viewport: { width: 1280, height: 1000 }, serviceWorkers: 'block' });
+          const page = await context.newPage();
+          page.setDefaultTimeout(20000);
+          const prohibitedRequests = [];
+          // Production HTML/JS and permitted read requests are real. No mocked
+          // backend responses. Prevent, then fail on, unexpected clinical access.
+          await context.route(`${origin}/api/**`, async route => {
+            const request = route.request();
+            const path = new URL(request.url()).pathname;
+            if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()) || /\/patients(?:\/|$)/.test(path)) {
+              prohibitedRequests.push({ method: request.method(), path });
+              await route.abort();
+              return;
+            }
+            await route.continue();
+          });
+          await page.addInitScript(() => {
+            for (const [key, value] of Object.entries({
+              'neuroped:aviso-educativo-aceito-v1': 'synthetic-public-proof',
+              'neuroped:onboarding-seen': '1',
+              'np_tour_intro_v2': 'done',
+              'np_tour_v2_done': '1',
+            })) localStorage.setItem(key, value);
+            window.__caaTouches = [];
+            const clinicalCaaKey = raw => [
+              'caa:workspace:v3', 'neuroped:secure:caa:workspace:v3',
+              'neuroped:caa:board:v1', 'neuroped:caa:favs:v1', 'neuroped:caa:hist:v1',
+            ].includes(String(raw));
+            for (const method of ['getItem', 'setItem', 'removeItem']) {
+              const descriptor = Object.getOwnPropertyDescriptor(Storage.prototype, method);
+              let implementation = descriptor.value;
+              Object.defineProperty(Storage.prototype, method, {
+                configurable: true, enumerable: descriptor.enumerable,
+                get() {
+                  const captured = implementation;
+                  return function (...args) {
+                    if (clinicalCaaKey(args[0])) window.__caaTouches.push({ surface: 'Storage', method, key: String(args[0]) });
+                    return captured.apply(this, args);
+                  };
+                },
+                set(next) { if (typeof next === 'function') implementation = next; },
+              });
+            }
+            const open = indexedDB.open.bind(indexedDB);
+            indexedDB.open = function (name, version) {
+              if (name === 'neuroped-persistent-secure-v1') window.__caaTouches.push({ surface: 'IndexedDB', method: 'open' });
+              return version === undefined ? open(name) : open(name, version);
+            };
+          });
+          const assertNoPersistence = async () => {
+            assert.deepEqual(await page.evaluate(() => window.__caaTouches), [], 'CAA must never touch persistent clinical storage in the public remote session');
+            assert.deepEqual(prohibitedRequests, [], 'Anonymous CAA must not write APIs or request patient data');
+          };
+          try {
+            await page.goto(`${origin}/#/caa`, { waitUntil: 'domcontentloaded' });
+            await page.getByRole('heading', { name: 'Vou Falar!', exact: true }).waitFor();
+            await page.getByTestId('caa-session-only').waitFor();
+            assert.equal(await page.getByTestId('live-browser-local-clinical-route-blocked').count(), 0);
+            assert.equal(await page.evaluate(() => sessionStorage.getItem('neuroped:access')), null);
+            await assertNoPersistence();
+            await page.screenshot({ path: `${out}/public-caa.png` });
+
+            // Inspect actual utterances from actual production handlers; this
+            // does not establish audible sound on the user's physical device.
+            await page.evaluate(() => {
+              assertSpeechAvailable: {
+                if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) throw new Error('Speech API unavailable');
+              }
+              window.__caaSpeech = [];
+              window.speechSynthesis.speak = utterance => window.__caaSpeech.push({ text: utterance.text, lang: utterance.lang });
+              window.speechSynthesis.cancel = () => {};
+            });
+            const speakPhrase = page.getByRole('button', { name: 'Falar frase', exact: true });
+            assert.equal(await speakPhrase.isDisabled(), true);
+            await page.locator('section[aria-label="Palavras essenciais"] button').first().click();
+            await speakPhrase.click();
+            await page.getByRole('button', { name: 'Repetir último', exact: true }).click();
+            const speech = await page.evaluate(() => window.__caaSpeech);
+            assert.ok(speech.length >= 3 && speech.every(item => item.text && item.lang === 'pt-BR'));
+            await page.getByRole('button', { name: 'Limpar', exact: true }).click();
+            assert.equal(await speakPhrase.isDisabled(), true);
+
+            const synthetic = 'Cartão sintético de prova pública';
+            await page.getByLabel('Cartão personalizado', { exact: true }).fill(synthetic);
+            await page.getByRole('button', { name: 'Adicionar à categoria', exact: true }).click();
+            await page.getByLabel('Buscar palavra ou situação', { exact: true }).fill(synthetic);
+            await page.locator('.np-scale-item').filter({ hasText: synthetic }).waitFor();
+            await assertNoPersistence();
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.getByTestId('caa-session-only').waitFor();
+            await page.getByLabel('Buscar palavra ou situação', { exact: true }).fill(synthetic);
+            await page.getByText('Nenhum cartão encontrado neste filtro.', { exact: true }).waitFor();
+            assert.equal(await page.locator('.np-scale-item').filter({ hasText: synthetic }).count(), 0);
+            assert.equal(await speakPhrase.isDisabled(), true);
+            await assertNoPersistence();
+
+            const proof = {
+              status: 'passed', origin, route: '/#/caa',
+              commit: sentinel.commit, deployRun: String(sentinel.run_id), proofRun: process.env.GITHUB_RUN_ID,
+              checkedAtUtc: new Date().toISOString(),
+              anonymous: true, actualProductionJavaScript: true, backendResponsesMocked: false,
+              initialBoardVisible: true, utteranceRequestsVerified: speech.length,
+              audiblePhysicalSoundVerified: false, syntheticCustomizationVerified: true,
+              reloadDiscardsCustomization: true, caaPersistentStorageTouches: 0, prohibitedApiRequests: 0,
+            };
+            writeFileSync(`${out}/proof.json`, JSON.stringify(proof, null, 2));
+            console.log(JSON.stringify(proof));
+          } finally {
+            await browser.close();
+          }
+          JS
+      - name: Preserve public-only synthetic proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: caa-public-production-proof-${{ github.run_id }}
+          path: artifacts/caa-public-proof/
+          retention-days: 14
+          if-no-files-found: warn
