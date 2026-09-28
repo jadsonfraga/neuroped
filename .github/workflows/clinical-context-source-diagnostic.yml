@@ -1,0 +1,28 @@
+name: Clinical context source audit (read-only)
+on:
+  push:
+    branches: [diagnose/clinical-context-20260928]
+    paths: [.github/workflows/clinical-context-source-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: b97ebcfcada5e68caa256a912a52822bb6e4b1c3
+          persist-credentials: false
+      - name: Archive tracked source only (no secrets, sessions or database)
+        run: |
+          mkdir -p artifacts/clinical-context-source
+          git rev-parse HEAD > artifacts/clinical-context-source/commit.txt
+          git archive --format=tar.gz --output=artifacts/clinical-context-source/source.tar.gz HEAD client/src functions shared tests scripts .github db server AGENTS.md package.json package-lock.json tsconfig.json vite.config.ts wrangler.toml
+          sha256sum artifacts/clinical-context-source/source.tar.gz > artifacts/clinical-context-source/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clinical-context-source-${{ github.run_id }}
+          path: artifacts/clinical-context-source/
+          retention-days: 3
+          if-no-files-found: error
