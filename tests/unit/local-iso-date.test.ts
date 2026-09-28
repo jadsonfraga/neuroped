@@ -23,10 +23,12 @@ describe("localIsoDate", () => {
       "client/src/pages/diario-epilepsia.tsx",
       "client/src/pages/espasticidade.tsx",
       "client/src/pages/fichas-registro.tsx",
+      "client/src/pages/epilepsy-diary.tsx",
+      "client/src/pages/headache-calendar.tsx",
     ]) {
       const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
-      assert.doesNotMatch(source, /(data|f\[field\.key\])\s*[:=]\s*new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/, path);
-      assert.match(source, /localIsoDate\(\)/, path);
+      assert.doesNotMatch(source, /(data|date|f\[field\.key\])\s*[:=]\s*(new Date\(\)|now)\.toISOString\(\)\.slice\(0, 10\)/, path);
+      assert.match(source, /localIsoDate\((now)?\)/, path);
     }
   });
 });
