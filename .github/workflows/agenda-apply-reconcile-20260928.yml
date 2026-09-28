@@ -1,0 +1,75 @@
+name: Agenda provisioning reconciliation (read-only)
+on:
+  push:
+    branches: [diagnose/agenda-live-20260928]
+    paths: [.github/workflows/agenda-apply-reconcile-20260928.yml]
+permissions:
+  contents: read
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Read persisted setup and test SELECT-only batch transport
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OWNER_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          node --input-type=module <<'JS'
+          import {createHash} from 'node:crypto';
+          import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+          const db=/database_id\s*=\s*"([a-f0-9-]+)"/.exec(readFileSync('wrangler.toml','utf8'))?.[1];
+          if(!db || !process.env.OWNER_EMAIL) throw new Error('CONFIGURATION_REQUIRED');
+          const url=`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/d1/database/${db}/query`;
+          const report={run:process.env.GITHUB_RUN_ID,checkedAt:new Date().toISOString(),readOnly:true};
+          async function send(body) {
+            const statements=body.batch??[body];
+            if(!statements.every(x=>/^SELECT\s/i.test(x.sql)&&!x.sql.includes(';'))) throw new Error('READ_ONLY_REQUIRED');
+            const r=await fetch(url,{method:'POST',headers:{Authorization:`Bearer ${process.env.CF_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
+            const b=await r.json().catch(()=>({}));
+            return {status:r.status,body:b};
+          }
+          function safe(r) {
+            const errors=(r.body.errors||[]).map(e=>({code:e.code,sqlRequired:/sql.*required|required.*sql/i.test(e.message||''),permissionDenied:/permission|not authorized|unauthorized/i.test(e.message||''),constraint:/constraint/i.test(e.message||'')}));
+            return {httpStatus:r.status,success:r.body.success,resultCount:Array.isArray(r.body.result)?r.body.result.length:null,errors};
+          }
+          async function q(sql,params=[]) {
+            const r=await send({sql,params});
+            if(!r.body.success) return [];
+            return (r.body.result||[]).flatMap(x=>x.results||[]);
+          }
+          report.singleSelect=safe(await send({sql:'SELECT 1 AS ok',params:[]}));
+          report.batchSelect=safe(await send({batch:[{sql:'SELECT 1 AS ok',params:[]},{sql:'SELECT 2 AS ok',params:[]}]}));
+          const users=await q('SELECT id, role, is_active FROM users WHERE lower(email)=?', [process.env.OWNER_EMAIL.trim().toLowerCase()]);
+          report.owner={matches:users.length,active:users[0]?.is_active,role:users[0]?.role};
+          if(users.length===1) {
+            const uid=users[0].id;
+            const suffix=createHash('sha256').update(`neuroped:institutional:${uid}`).digest('hex').slice(0,24);
+            const cid=`institutional-${suffix}`,bid=`internal-${suffix}`,aid=`institutional-agenda-v1-${suffix}`;
+            report.persisted=(await q(`SELECT
+              (SELECT COUNT(*) FROM clinics WHERE id=?) AS target_clinics,
+              (SELECT COUNT(*) FROM clinics WHERE created_by_user_id=?) AS owned_clinics,
+              (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=?) AS all_memberships,
+              (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=? AND clinic_id=? AND role='owner' AND active=1) AS target_owner_memberships,
+              (SELECT COUNT(*) FROM billing_customers WHERE id=? AND clinic_id=?) AS target_customers,
+              (SELECT COUNT(*) FROM saas_audit_log WHERE id=? AND clinic_id=?) AS target_audits`,[cid,uid,uid,uid,cid,bid,cid,aid,cid]))[0];
+          }
+          report.schema={};
+          for(const table of ['clinics','clinic_memberships','billing_customers','saas_audit_log']) {
+            report.schema[table]=(await q('SELECT sql FROM sqlite_master WHERE type=? AND name=?',['table',table]))[0]?.sql;
+          }
+          mkdirSync('artifacts/agenda-reconcile',{recursive:true});
+          writeFileSync('artifacts/agenda-reconcile/receipt.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agenda-reconcile-${{ github.run_id }}
+          path: artifacts/agenda-reconcile/receipt.json
+          retention-days: 7
+          if-no-files-found: error
