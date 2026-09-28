@@ -52,6 +52,9 @@ function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
   try {
     const years = differenceInYears(new Date(), parseISO(birthDate));
+    // parseISO não lança: data inválida (ex.: backup importado) vira NaN e
+    // data futura vira idade negativa — nunca exibir "NaN anos" no relatório.
+    if (!Number.isFinite(years) || years < 0) return null;
     return `${years} ano${years !== 1 ? "s" : ""}`;
   } catch {
     return null;
