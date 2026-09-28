@@ -43,7 +43,7 @@ export interface SaasAuditParams {
   action: string;
   targetType: string;
   targetId?: string | null;
-  metadata?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null | string[]>;
 }
 
 export function tenantJson(data: unknown, status = 200): Response {

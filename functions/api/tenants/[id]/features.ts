@@ -31,7 +31,7 @@ function baseContext(context: Parameters<PagesFunction<TenantEnv>>[0]) {
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const base = baseContext(context);
-  if ("error" in base) return base.error;
+  if (base.error) return base.error;
   const { db, user, clinicId } = base;
 
   const membership = await getClinicMembership(db, clinicId, user);
@@ -52,7 +52,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
 export const onRequestPatch: PagesFunction<TenantEnv> = async (context) => {
   const base = baseContext(context);
-  if ("error" in base) return base.error;
+  if (base.error) return base.error;
   const { db, user, clinicId } = base;
 
   const membership = await getClinicMembership(db, clinicId, user);

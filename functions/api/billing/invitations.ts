@@ -127,7 +127,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const clinicId = clean(new URL(context.request.url).searchParams.get("clinicId"), 80);
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
   const auth = await managerBase(context, clinicId);
-  if ("error" in auth) return auth.error;
+  if (auth.error) return auth.error;
 
   const rows = await auth.db.prepare(
     `SELECT id, email, role, status, expires_at, accepted_at, created_at, last_sent_at, resend_count
@@ -152,7 +152,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const action = clean(body.action, 20) || "create";
   if (!clinicId) return tenantError("clinicId é obrigatório.", "VALIDATION_ERROR", 400);
   const auth = await manager(context, clinicId);
-  if ("error" in auth) return auth.error;
+  if (auth.error) return auth.error;
   if (action !== "create" && action !== "resend") {
     return tenantError("Ação de convite inválida.", "VALIDATION_ERROR", 400);
   }
@@ -316,7 +316,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
     return tenantError("clinicId e invitationId são obrigatórios.", "VALIDATION_ERROR", 400);
   }
   const auth = await managerBase(context, clinicId);
-  if ("error" in auth) return auth.error;
+  if (auth.error) return auth.error;
   const result = await auth.db.prepare(
     `UPDATE clinic_invitations SET status = 'revoked'
       WHERE id = ? AND clinic_id = ? AND status = 'pending'`,
