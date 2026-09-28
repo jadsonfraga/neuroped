@@ -28,8 +28,8 @@ export async function provisionInstitutionalAgenda({ query, batch }, { ownerEmai
       (SELECT COUNT(*) FROM saas_audit_log WHERE id = ? AND clinic_id = c.id AND actor_user_id = cm.user_id AND action = 'institutional_internal_access_granted') AS audit_count,
       (SELECT COUNT(*) FROM clinic_memberships WHERE user_id = ? AND active = 1) AS active_memberships
       FROM clinics c JOIN clinic_memberships cm ON cm.clinic_id = c.id AND cm.user_id = ?
-      JOIN billing_customers bc ON bc.clinic_id = c.id AND bc.id = ? WHERE c.id = ?`,
-      [auditId, userId, userId, customerId, clinicId]);
+      JOIN billing_customers bc ON bc.clinic_id = c.id WHERE c.id = ?`,
+      [auditId, userId, userId, clinicId]);
     const r = rows[0];
     return rows.length === 1 && r.clinic_status === 'active' && r.created_by_user_id === userId && r.user_id === userId
       && r.role === 'owner' && r.active === 1 && r.provider === 'none' && r.customer_status === 'active'
@@ -38,7 +38,7 @@ export async function provisionInstitutionalAgenda({ query, batch }, { ownerEmai
   const existing = await query('SELECT id FROM saas_audit_log WHERE id = ?', [auditId]);
   if (existing.length) {
     if (!await invariant()) fail('EXISTING_SETUP_CHANGED_REVIEW_REQUIRED');
-    return { status: 'already_configured', scope: 'institutional_owner_only', internalNonBillable: true, subscriptionsCreated: 0, clinicalRowsChanged: 0, writes: 0 };
+    return { status: 'already_configured', scope: 'institutional_owner_only', internalNonBillable: true, subscriptionsRetained: 0, clinicalRowsChanged: 0, writes: 0 };
   }
   const counts = (await query(`SELECT
     (SELECT COUNT(*) FROM clinic_memberships WHERE user_id = ?) AS memberships,
@@ -54,30 +54,47 @@ export async function provisionInstitutionalAgenda({ query, batch }, { ownerEmai
     AND (SELECT COUNT(*) FROM clinic_memberships WHERE user_id = ?) = 0
     AND (SELECT COUNT(*) FROM clinics WHERE created_by_user_id = ? OR id = ? OR slug = ?) = 0
     THEN 1 ELSE json('AGENDA_SETUP_PRECONDITION_FAILED') END AS ok`;
-  const metadata = JSON.stringify({ version: 1, issue: 1039, reason: 'owner_requested_internal_use', source: marker, runId,
-    billingProvider: 'none', paidSubscription: false, clinicalDataMigrated: false });
+  const metadata = JSON.stringify({ version: 2, issue: 1039, reason: 'owner_requested_internal_use', source: marker, runId,
+    billingProvider: 'none', paidSubscription: false, clinicalDataMigrated: false, autoTrialReconciliation: 'new_transaction_only' });
   await batch([
     { sql: guard, params: [userId, email, userId, userId, clinicId, slug] },
     { sql: `INSERT INTO clinics (id, slug, name, legal_name, timezone, status, created_by_user_id)
       VALUES (?, ?, 'NeuroPed SDG', 'Fraga Serviços Médicos LTDA', 'America/Recife', 'active', ?)`, params: [clinicId, slug, userId] },
     { sql: `INSERT INTO clinic_memberships (clinic_id, user_id, role, active, invited_by_user_id)
       VALUES (?, ?, 'owner', 1, ?)`, params: [clinicId, userId, userId] },
-    // provider=none is the existing domain's internal/non-billable account.
-    // No invoice, payment, external customer or paid subscription is fabricated.
+    // A production trigger already creates a customer and trial subscription.
+    // Reconcile only rows created inside THIS new-clinic transaction, never an
+    // existing commercial account. No trigger, seat check or auth guard is disabled.
+    { sql: `SELECT CASE WHEN
+      NOT EXISTS (SELECT 1 FROM billing_customers WHERE clinic_id = ?
+        AND (provider <> 'asaas' OR status <> 'trial' OR provider_customer_id IS NOT NULL))
+      AND NOT EXISTS (SELECT 1 FROM billing_subscriptions bs JOIN billing_customers bc ON bc.id = bs.customer_id
+        WHERE bc.clinic_id = ? AND (bs.status <> 'trial' OR bs.provider_subscription_id IS NOT NULL))
+      THEN 1 ELSE json('AGENDA_SETUP_AUTO_BILLING_CONFLICT') END AS ok`, params: [clinicId, clinicId] },
+    { sql: `DELETE FROM billing_subscriptions WHERE status = 'trial' AND provider_subscription_id IS NULL
+      AND customer_id IN (SELECT id FROM billing_customers WHERE clinic_id = ?
+        AND provider = 'asaas' AND status = 'trial' AND provider_customer_id IS NULL)`, params: [clinicId] },
+    { sql: `UPDATE billing_customers SET provider = 'none', status = 'active', trial_ends_at = NULL,
+      updated_at = CURRENT_TIMESTAMP WHERE clinic_id = ? AND provider = 'asaas'
+      AND status = 'trial' AND provider_customer_id IS NULL`, params: [clinicId] },
+    // Compatibility with an installation without the automatic trial trigger.
+    // No second customer is inserted when the trigger-created row already exists.
     { sql: `INSERT INTO billing_customers (id, clinic_id, provider, status, provider_customer_id, trial_ends_at)
-      VALUES (?, ?, 'none', 'active', NULL, NULL)`, params: [customerId, clinicId] },
+      SELECT ?, ?, 'none', 'active', NULL, NULL
+      WHERE NOT EXISTS (SELECT 1 FROM billing_customers WHERE clinic_id = ?)`, params: [customerId, clinicId, clinicId] },
     { sql: `INSERT INTO saas_audit_log (id, clinic_id, actor_user_id, action, target_type, target_id, metadata_json)
       VALUES (?, ?, ?, 'institutional_internal_access_granted', 'clinic', ?, ?)`, params: [auditId, clinicId, userId, clinicId, metadata] },
   ]);
   if (!await invariant()) fail('POSTCONDITION_NOT_PROVEN');
-  return {status: 'configured', scope: 'institutional_owner_only', internalNonBillable: true, subscriptionsCreated: 0,
-    clinicalRowsChanged: 0, ownerMembershipVerified: true, writes: 4};
+  return {status: 'configured', scope: 'institutional_owner_only', internalNonBillable: true, subscriptionsRetained: 0,
+    clinicalRowsChanged: 0, ownerMembershipVerified: true, explicitConfigurationRecords: 4};
 }
 
 async function main() {
   const output = 'artifacts/agenda-setup/result.json';
   mkdirSync('artifacts/agenda-setup', {recursive:true});
   let mutationAttempted = false;
+  let providerFailure;
   const save = data => writeFileSync(output, JSON.stringify({checkedAt:new Date().toISOString(), commit:process.env.GITHUB_SHA, run:process.env.GITHUB_RUN_ID, ...data},null,2));
   try {
     if (process.env.GITHUB_REPOSITORY !== 'jadsonfraga/neuroped' || process.env.GITHUB_REF !== 'refs/heads/main') fail('TRUSTED_MAIN_REQUIRED');
@@ -93,7 +110,11 @@ async function main() {
         body:body?JSON.stringify(body):undefined, signal:AbortSignal.timeout(30000),
       });
       const data=await response.json().catch(()=>null);
-      if (!response.ok || data?.success !== true) fail('PROVIDER_REQUEST_FAILED');
+      if (!response.ok || data?.success !== true) {
+        providerFailure = { httpStatus: response.status,
+          codes: Array.isArray(data?.errors) ? data.errors.map(item => item.code).filter(Number.isInteger).slice(0, 5) : [] };
+        fail('PROVIDER_REQUEST_FAILED');
+      }
       return data.result;
     }
     const project=await cf('/pages/projects/neuroped');
@@ -116,7 +137,7 @@ async function main() {
     save(result); console.log(JSON.stringify(result));
   } catch(error) {
     const code=/^AGENDA_SETUP_[A-Z_]+$/.test(error?.message||'')?error.message:'AGENDA_SETUP_FAILED';
-    save({status:'blocked',code,mutationAttempted}); console.error(code); process.exitCode=1;
+    save({status:'blocked',code,mutationAttempted,providerFailure}); console.error(code); process.exitCode=1;
   }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await main();
