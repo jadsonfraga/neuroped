@@ -57,8 +57,9 @@ test("documentação vigente distingue nome de secret presente de keyring runtim
   assert.match(doc, /36370524799/);
   assert.match(doc, /secret_text/);
   assert.match(doc, /CLINICAL_CRYPTO_NOT_CONFIGURED/);
-  assert.match(doc, /presença do nome de um secret no metadata \*\*não prova valor utilizável no runtime\*\*/);
+  assert.match(doc, /presença do nome de um secret no metadata \*\*não prova valor utilizável no\s+runtime\*\*/);
   assert.match(doc, /não gerar\/substituir cegamente uma chave existente/);
   assert.match(doc, /Workers R2 Storage: Edit/);
+  assert.match(doc, /Criar \*\*somente\*\* o bucket pelo painel[\s\S]*não desbloqueia o pipeline atual/);
   assert.match(doc, /NO-GO/);
 });
