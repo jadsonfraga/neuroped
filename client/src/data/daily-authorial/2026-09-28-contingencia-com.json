@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "NEUROPED-DIARIO-20260928-008",
   "slug": "contingencia-com-2026-09-28",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "generatedOn": "2026-09-28",
   "generatedAt": "2026-09-28T00:00:00.000Z",
   "author": "NeuroPed SDG — Dr. Jadson Fraga",
@@ -15,8 +15,8 @@
   "topic": "Comunicação funcional e participação social",
   "category": "Neurodesenvolvimento",
   "subcategory": "Comunicação e interação",
-  "rationale": "A continuidade documental reduz lacunas no acompanhamento longitudinal quando o gerador principal está temporariamente indisponível. Este registro conservador organiza observações sem produzir classificação diagnóstica.",
-  "purpose": "Registrar de forma estruturada iniciativa, resposta, compreensão, reparo comunicativo e participação, preservando a continuidade do catálogo diário até que o conteúdo possa ser revisto ou promovido pelo fluxo clínico habitual.",
+  "rationale": "Organizar exemplos de comunicação no cotidiano, oportunidades de participação e barreiras de acesso. A preservação do catálogo diário e a aprovação em verificações automatizadas não demonstram validade ou utilidade clínica deste rascunho.",
+  "purpose": "Descrever iniciativa, resposta, compreensão, reparo comunicativo e participação por diferentes meios de comunicação, sem classificar desenvolvimento, formular diagnóstico ou autorizar promoção clínica.",
   "ageMinMonths": 12,
   "ageMaxMonths": 215,
   "respondent": "multiplo",
@@ -28,229 +28,234 @@
   ],
   "assessmentUse": "observacao_clinica",
   "riskClass": "baixo",
-  "timeframe": "Considerar os últimos sete dias e registrar separadamente ocorrências com características diferentes.",
+  "timeframe": "Usar os últimos sete dias como janela descritiva, registrando datas e oportunidades reais. Comparar com habilidades previamente documentadas quando houver suspeita de perda, mesmo fora dessa janela. Não aguardar sete dias nem concluir o formulário para buscar assistência diante de sinais de alerta.",
   "durationMinutes": 10,
-  "instructions": "Responder apenas com base no que foi diretamente observado ou relatado por fonte identificada. Usar exemplos concretos, registrar o contexto e marcar desconhecido quando não houver informação suficiente. Este registro não substitui avaliação clínica.",
+  "instructions": "Rascunho para revisão, não liberado para aplicação clínica. Em eventual avaliação autorizada, separar observação direta, relato com fonte identificada e interpretação. Registrar por item exemplo, data, contexto, interlocutor, meio de comunicação e apoio oferecido; não combinar informantes em uma resposta média. Considerar fala, vocalizações, gestos, Libras, escrita e comunicação aumentativa e alternativa (CAA), conforme o repertório e o acesso da pessoa. Presente significa que o enunciado foi observado ou relatado com exemplo; ausente exige oportunidade acessível de observação e vale apenas para aquela situação. Usar desconhecido quando faltar informação, oportunidade ou aplicabilidade, explicando o motivo. Não provocar frustração, retirar CAA, exigir contato visual ou confundir recusa com incompreensão. Este registro não substitui avaliação clínica.",
   "responseOptions": [
     {
-      "code": "N",
-      "label": "Não observado",
-      "value": 0
+      "code": "P",
+      "label": "Presente",
+      "value": null
     },
     {
-      "code": "O",
-      "label": "Ocasional",
-      "value": 1
-    },
-    {
-      "code": "F",
-      "label": "Frequente",
-      "value": 2
-    },
-    {
-      "code": "I",
-      "label": "Intenso ou com grande impacto",
-      "value": 3
+      "code": "A",
+      "label": "Ausente — houve oportunidade de observar",
+      "value": null
     },
     {
       "code": "D",
-      "label": "Desconhecido",
+      "label": "Desconhecido — informação insuficiente",
       "value": null
     }
   ],
   "domains": [
     {
-      "id": "padrao",
-      "label": "Padrão e mudança basal",
-      "description": "Frequência, repetição e mudança em relação ao funcionamento habitual."
+      "id": "iniciativa",
+      "label": "Iniciativa e expressão de necessidades",
+      "description": "Pedidos, recusas e compartilhamento de interesse por meios acessíveis."
     },
     {
-      "id": "contexto",
-      "label": "Contexto e antecedentes",
-      "description": "Situações associadas, ambientes e fatores que modificam a ocorrência."
+      "id": "compreensao",
+      "label": "Resposta e compreensão em contexto",
+      "description": "Respostas observáveis a mensagens familiares, sem equiparar compreensão a obediência."
     },
     {
-      "id": "impacto",
-      "label": "Impacto funcional",
-      "description": "Participação, autonomia e necessidade de apoio."
+      "id": "reparo",
+      "label": "Reparo e entendimento entre interlocutores",
+      "description": "O que cada interlocutor faz quando uma mensagem não é compreendida."
     },
     {
-      "id": "estrategias",
-      "label": "Estratégias e recuperação",
-      "description": "Respostas de apoio, retorno ao basal e fatores que ajudam ou agravam."
+      "id": "participacao",
+      "label": "Participação, apoios e barreiras",
+      "description": "Trocas em atividades significativas e condições que permitem ou limitam o acesso à comunicação."
     },
     {
       "id": "seguranca",
-      "label": "Segurança",
-      "description": "Sinais críticos analisados separadamente de qualquer perfil qualitativo."
+      "label": "Perda de habilidades e segurança",
+      "description": "Distinguir regressão, alteração súbita, necessidades essenciais não atendidas e emergência atual."
     }
   ],
   "items": [
     {
-      "id": "CT01",
-      "domainId": "padrao",
-      "text": "As manifestações relacionadas a comunicação funcional e participação social foram observadas em mais de uma ocasião no período de referência.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM01",
+      "domainId": "iniciativa",
+      "text": "A criança ou o adolescente iniciou uma comunicação dirigida a outra pessoa para pedir algo ou solicitar ajuda.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Registrar exemplos concretos, datas e frequência aproximada."
+      "clinicalNote": "Registrar a mensagem e o meio usado, inclusive gesto, vocalização ou CAA, e se houve iniciativa espontânea ou apoio. Não exigir fala ou contato visual."
     },
     {
-      "id": "CT02",
-      "domainId": "padrao",
-      "text": "Houve mudança perceptível em relação ao funcionamento habitual da criança ou do adolescente.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM02",
+      "domainId": "iniciativa",
+      "text": "A criança ou o adolescente comunicou recusa, desconforto ou necessidade de pausa por um meio disponível.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Descrever o funcionamento anterior e o momento aproximado da mudança."
+      "clinicalNote": "Descrever o sinal e a resposta do interlocutor. Recusar uma proposta pode ser comunicação funcional; não rotular como desobediência nem atribuir significado não confirmado."
     },
     {
-      "id": "CT03",
-      "domainId": "padrao",
-      "text": "O padrão observado mantém características semelhantes entre diferentes ocorrências.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM03",
+      "domainId": "iniciativa",
+      "text": "A criança ou o adolescente dirigiu a outra pessoa uma comunicação para compartilhar interesse em um objeto, atividade ou acontecimento.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Separar padrões distintos em registros diferentes."
+      "clinicalNote": "Registrar, por exemplo, mostrar, apontar, vocalizar, sinalizar, comentar ou usar símbolos. O exemplo deve ser compatível com o repertório individual, sem exigir forma única de interação."
     },
     {
-      "id": "CT04",
-      "domainId": "contexto",
-      "text": "É possível identificar o que aconteceu imediatamente antes do comportamento, sintoma ou dificuldade observada.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM04",
+      "domainId": "compreensao",
+      "text": "A criança ou o adolescente respondeu a uma comunicação familiar dirigida a ela por um meio que podia perceber e utilizar.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Registrar antecedentes sem presumir causalidade."
+      "clinicalNote": "Descrever mensagem e resposta. Registrar audição, visão, idioma, acesso motor, atenção e tempo de resposta disponíveis, sem inferir a causa de uma ausência de resposta."
     },
     {
-      "id": "CT05",
-      "domainId": "contexto",
-      "text": "A manifestação ocorre em mais de um ambiente, atividade ou relação interpessoal relevante.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM05",
+      "domainId": "compreensao",
+      "text": "Após uma mensagem familiar e acessível, a criança ou o adolescente mostrou compreensão por uma resposta relacionada ao conteúdo.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Comparar casa, escola, clínica e situações comunitárias quando disponíveis."
+      "clinicalNote": "Registrar a mensagem exata e a resposta, como escolha, gesto, ação, fala ou CAA. Uma recusa pertinente também pode demonstrar compreensão. Falta de execução motora não comprova incompreensão."
     },
     {
-      "id": "CT06",
-      "domainId": "contexto",
-      "text": "Sono, dor, fome, transições, exigências, ruído ou outros fatores ambientais parecem modificar o padrão observado.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM06",
+      "domainId": "compreensao",
+      "text": "A criança ou o adolescente sinalizou que não entendeu uma mensagem ou solicitou esclarecimento.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Distinguir associação temporal de explicação definitiva."
+      "clinicalNote": "Descrever como pediu repetição, demonstração ou ajuda, quando isso fizer parte de seu repertório. Sem situação pertinente ou aplicabilidade, registrar desconhecido e justificar; não tratar como falha esperada para a idade."
     },
     {
-      "id": "CT07",
-      "domainId": "impacto",
-      "text": "O padrão interfere na participação em atividades esperadas para a idade e para o contexto.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM07",
+      "domainId": "reparo",
+      "text": "Quando o interlocutor indicou não ter entendido, a criança ou o adolescente tentou tornar sua mensagem compreensível.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Descrever qual atividade foi limitada e em que grau."
+      "clinicalNote": "Descrever a tentativa, como repetir, mostrar, apontar ou mudar de meio, e o apoio recebido. Usar apenas situações naturais; não simular incompreensão para provocar reação."
     },
     {
-      "id": "CT08",
-      "domainId": "impacto",
-      "text": "A criança ou o adolescente passou a necessitar de ajuda maior do que a habitual para iniciar, manter ou concluir atividades.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM08",
+      "domainId": "reparo",
+      "text": "O interlocutor esclareceu o significado de uma mensagem da criança ou do adolescente e recebeu uma confirmação ou correção por meio acessível.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Registrar tipo e intensidade do apoio necessário."
+      "clinicalNote": "Registrar a mensagem, a forma de esclarecimento e a confirmação ou correção observável. Distinguir comunicação da pessoa de uma interpretação feita apenas pelo adulto."
     },
     {
-      "id": "CT09",
-      "domainId": "impacto",
-      "text": "Há evitação, afastamento, perda de oportunidades ou interrupção de atividades por causa do padrão observado.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM09",
+      "domainId": "participacao",
+      "text": "A criança ou o adolescente participou de uma troca comunicativa durante brincadeira, conversa ou atividade compartilhada de seu interesse.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Considerar participação social, escolar, familiar e autocuidado."
+      "clinicalNote": "Descrever contribuições de cada participante, meios usados e apoio. Não exigir duração fixa, número de turnos, contato visual ou preferência por interação em grupo."
     },
     {
-      "id": "CT10",
-      "domainId": "estrategias",
-      "text": "Estratégias de antecipação, comunicação, pausa, organização do ambiente ou apoio visual reduzem a dificuldade observada.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM10",
+      "domainId": "participacao",
+      "text": "Uma dificuldade de entendimento entre interlocutores limitou a participação em uma atividade desejada ou necessária.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Anotar exatamente o que foi feito e qual resposta ocorreu."
+      "clinicalNote": "Identificar a atividade e o que foi observado, separando barreira comunicativa, escolha de não participar e outros fatores. Não presumir intenção, ansiedade ou causalidade exclusiva."
     },
     {
-      "id": "CT11",
-      "domainId": "estrategias",
-      "text": "O retorno ao funcionamento habitual ocorre em intervalo relativamente previsível.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM11",
+      "domainId": "participacao",
+      "text": "Durante o uso de um apoio comunicativo, foi observada uma troca que permitiu expressar uma escolha, compreender uma mensagem ou participar da atividade.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Cronometrar quando possível e registrar o estado após a ocorrência."
+      "clinicalNote": "Descrever o apoio, como tempo de resposta, gesto, apoio visual, CAA ou mediação do interlocutor, e o resultado observado. Associação em uma situação não demonstra eficácia terapêutica."
     },
     {
-      "id": "CT12",
-      "domainId": "estrategias",
-      "text": "Existem diferenças consistentes entre estratégias que ajudam e estratégias que intensificam a dificuldade.",
-      "responseMode": "frequencia_0_3",
+      "id": "COM12",
+      "domainId": "participacao",
+      "text": "Um recurso ou apoio necessário à comunicação ficou indisponível ou inacessível em uma situação cotidiana.",
+      "responseMode": "presente_ausente",
       "redFlag": false,
-      "clinicalNote": "Usar descrição funcional, sem atribuir intenção moral."
+      "clinicalNote": "Registrar, por exemplo, CAA fora de alcance, vocabulário indisponível, barreira linguística, sensorial ou motora e falta de interlocutor acessível. Não atribuir a barreira a incapacidade da criança. Havendo necessidade essencial não atendida, analisar COM15."
     },
     {
-      "id": "CT13",
+      "id": "COM13",
       "domainId": "seguranca",
-      "text": "Há risco imediato de lesão, fuga, perda de consciência, dificuldade respiratória ou incapacidade de manter a segurança.",
+      "text": "Foi observada ou relatada perda de uma habilidade comunicativa previamente utilizada, como compreender mensagens, usar palavras, gestos, sinais ou símbolos.",
       "responseMode": "presente_ausente",
       "redFlag": true,
-      "clinicalNote": "Sinal crítico independente de qualquer perfil ou soma."
+      "clinicalNote": "Registrar habilidade anterior, exemplos atuais, início e fontes. Distinguir suspeita de regressão de habilidade nunca adquirida, variação entre contextos ou falta de acesso ao recurso; não presumir etiologia. Se o início foi súbito, seguir também COM14."
     },
     {
-      "id": "CT14",
+      "id": "COM14",
       "domainId": "seguranca",
-      "text": "O padrão é novo, surgiu de forma abrupta ou mudou de maneira importante em relação às ocorrências anteriores.",
+      "text": "Surgiu subitamente uma nova dificuldade para falar, compreender mensagens ou utilizar uma forma de comunicação que estava disponível anteriormente.",
       "responseMode": "presente_ausente",
       "redFlag": true,
-      "clinicalNote": "Registrar data, circunstâncias e natureza da mudança."
+      "clinicalNote": "Registrar o último funcionamento habitual conhecido e sinais associados sem atrasar assistência. Nova habilidade, preferência comunicativa diferente ou equipamento indisponível, isoladamente, não caracterizam alteração neurológica súbita."
     },
     {
-      "id": "CT15",
+      "id": "COM15",
       "domainId": "seguranca",
-      "text": "Após a ocorrência, não há retorno ao estado de responsividade ou funcionamento habitual.",
+      "text": "Em uma situação com barreira de comunicação, uma necessidade essencial, como ajuda diante de dor, hidratação ou proteção, ficou sem atendimento.",
       "responseMode": "presente_ausente",
       "redFlag": true,
-      "clinicalNote": "Situação que pode exigir avaliação urgente conforme o estado clínico."
+      "clinicalNote": "Descrever a necessidade e a barreira concreta, os apoios disponíveis e o estado atual. Não classificar ausência de fala ou dependência esperada de um cuidador como risco por si só."
+    },
+    {
+      "id": "COM16",
+      "domainId": "seguranca",
+      "text": "Há agora dificuldade respiratória importante, redução de responsividade em relação ao habitual, fraqueza súbita ou outra ameaça imediata à integridade física.",
+      "responseMode": "presente_ausente",
+      "redFlag": true,
+      "clinicalNote": "A urgência depende do estado atual, não da frequência dos itens de comunicação. Não esperar que a perda de responsividade seja prolongada nem insistir no preenchimento."
     }
   ],
   "scoring": {
     "mode": "perfil_qualitativo_sem_total",
     "totalScoreEnabled": false,
-    "instructions": "Não somar os itens. Organizar as respostas por domínio, descrever exemplos e comparar a evolução ao longo do tempo.",
-    "domainInterpretation": "A interpretação depende da idade, do desenvolvimento, do contexto, da mudança em relação ao basal e da convergência entre diferentes informantes.",
-    "redFlagRule": "Qualquer red flag exige análise independente e pode demandar ação imediata, mesmo quando os demais itens forem pouco frequentes."
+    "instructions": "Todas as respostas são qualitativas e sem valor numérico. Não somar, calcular médias, percentuais de desempenho ou classificar gravidade. Presente indica somente ocorrência do enunciado: há itens sobre habilidades, apoios e barreiras, sem direção única de melhora ou piora. Descrever cada item e contexto separadamente.",
+    "domainInterpretation": "Considerar idade, repertório previamente documentado, idiomas, cultura, preferências, acessibilidade e oportunidades reais. Ausente não significa incapacidade e desconhecido não equivale a ausência. Divergências entre informantes devem ser descritas, não apagadas por consenso artificial. Comparações longitudinais exigem contextos e apoios comparáveis.",
+    "redFlagRule": "Analisar cada sinal de alerta separadamente e seguir a ação correspondente. Os demais itens não reduzem sua importância. Desconhecido não exclui risco; diante de preocupação atual, esclarecer prontamente com avaliação apropriada. Ausência de alertas neste registro não atesta segurança."
   },
   "redFlags": [
     {
-      "itemId": "CT13",
-      "action": "Interromper a exposição ao risco e garantir segurança. Acionar o SAMU 192 diante de dificuldade respiratória, perda prolongada de responsividade, trauma importante ou ameaça imediata à vida."
+      "itemId": "COM13",
+      "action": "Solicitar avaliação clínica prioritária da suspeita de perda de habilidades, com pediatria ou neuropediatria e avaliação de comunicação e audição conforme os achados. Não aguardar o próximo inventário nem atribuir automaticamente a TEA. Se início súbito ou risco atual, seguir COM14 ou COM16."
     },
     {
-      "itemId": "CT14",
-      "action": "Mudança abrupta, primeira ocorrência relevante ou agravamento importante exige avaliação clínica oportuna; buscar urgência quando houver instabilidade ou risco atual."
+      "itemId": "COM14",
+      "action": "Buscar atendimento de urgência para alteração súbita da fala, compreensão ou comunicação previamente estabelecida, mesmo que tenha melhorado. Se houver redução de responsividade, fraqueza súbita, dificuldade respiratória importante ou ameaça imediata à vida, acionar o SAMU 192. Não aguardar repetição ou terminar o formulário."
     },
     {
-      "itemId": "CT15",
-      "action": "Ausência de recuperação do estado habitual exige avaliação urgente conforme responsividade, respiração, trauma e condição clínica geral."
+      "itemId": "COM15",
+      "action": "Garantir apoio de um adulto e uma forma acessível de comunicar a necessidade; verificar e atender a necessidade atual com segurança. Se persistir necessidade essencial não atendida ou sofrimento importante, buscar avaliação no mesmo dia. Diante de perigo imediato, seguir COM16. Planejar com a equipe alternativas de comunicação e acesso para evitar recorrência."
+    },
+    {
+      "itemId": "COM16",
+      "action": "Interromper o registro e buscar assistência imediata. Acionar o SAMU 192 diante de dificuldade respiratória importante, redução de responsividade, fraqueza súbita ou ameaça imediata à vida, seguindo as orientações da regulação. Não aguardar recuperação espontânea ou duração mínima do sinal."
     }
   ],
   "differentialConsiderations": [
-    "Variações do desenvolvimento e do funcionamento basal.",
-    "Fatores ambientais, comunicativos, sensoriais, familiares ou escolares.",
-    "Sono insuficiente, dor, doença intercorrente ou outras condições clínicas.",
-    "Diferenças entre observadores, contextos e oportunidades de participação."
+    "Considerar repertório e trajetória de desenvolvimento; este registro não diferencia nem confirma TEA, TDAH, transtornos de linguagem ou deficiência intelectual.",
+    "Verificar audição, visão, possibilidades motoras e acesso à CAA quando pertinente; ausência de resposta isolada não determina qual fator está envolvido.",
+    "Considerar os idiomas e modalidades utilizados, familiaridade do interlocutor, contexto cultural e oportunidades. Bilinguismo, uso de Libras ou CAA e contato visual diferente não constituem déficit por si sós.",
+    "Sono, dor, doença intercorrente, ansiedade, sobrecarga sensorial e mudanças de ambiente podem coexistir com dificuldades comunicativas; não estabelecer causa com base neste registro."
   ],
   "clinicalIntegration": [
-    "Comparar família, escola, profissionais e autorrelato quando apropriado para a idade.",
-    "Relacionar os achados à anamnese, ao exame clínico e ao funcionamento adaptativo.",
-    "Rever registros longitudinais e exemplos concretos antes de qualquer conclusão.",
-    "Substituir ou complementar o registro de contingência após revisão clínica do instrumento principal."
+    "Separar relatos da família, escola, profissionais e da própria criança ou adolescente, quando acessíveis, de observações diretas e hipóteses clínicas.",
+    "Relacionar os exemplos à anamnese, à trajetória de desenvolvimento e às avaliações de linguagem, audição e funcionamento adaptativo disponíveis. Não registrar como examinado o que não foi avaliado.",
+    "Adaptar oportunidades ao repertório: gestos e escolhas em rotinas familiares quando pertinentes; esclarecimento de mensagens e negociação de atividades quando acessíveis. Esses exemplos não são marcos etários nem tarefas obrigatórias.",
+    "Manter como rascunho de contingência até revisão explícita do responsável clínico, análise de aplicabilidade e decisão de curadoria documentada. A correção editorial, a abertura de PR e testes técnicos verdes não constituem essa aprovação."
   ],
   "limitations": [
-    "Registro autoral de contingência sem validação psicométrica ou normas populacionais.",
-    "Estrutura deliberadamente ampla, com menor especificidade temática que o gerador principal.",
-    "Relatos retrospectivos podem omitir contexto, duração e mudança basal.",
-    "Nenhum item isolado confirma ou exclui condição clínica."
+    "Registro autoral de contingência sem validação psicométrica, normas populacionais ou acurácia diagnóstica estabelecida; não substitui instrumentos apropriados nem avaliação individual.",
+    "A faixa de 12 a 215 meses indica apenas escopo administrativo amplo, não validação por idade ou expectativas uniformes. Adequação etária e acessibilidade ainda exigem revisão clínica.",
+    "A janela de sete dias e a duração de dez minutos são sugestões operacionais não estudadas, não parâmetros de desempenho ou prazos de encaminhamento. riskClass é classificação temática do catálogo, não estimativa de risco da pessoa.",
+    "Respostas dependem de oportunidades, apoio e fonte; presença isolada não demonstra domínio consistente e ausência em uma situação não prova incapacidade. Os sinais de alerta não formam uma lista exaustiva.",
+    "A versão 1.1.0 substitui os itens genéricos CT por itens COM. Respostas da versão anterior não são equivalentes nem devem ser migradas ou comparadas automaticamente.",
+    "Metadados originais de geração foram preservados para rastreabilidade. fallback-deterministic-v1 identifica contingência; pro e high são configurações do pipeline, não prova de raciocínio executado, revisão humana ou validade. generatedAt foi herdado e não representa o horário desta revisão."
   ],
-  "safetyNote": "Este registro não substitui avaliação clínica, atendimento de urgência ou plano individual de segurança. Diante de risco atual, priorizar proteção e assistência apropriada.",
+  "safetyNote": "Rascunho não liberado para uso clínico. Não usar respostas para diagnóstico, prognóstico, decisão terapêutica automática ou estimativa de segurança. O registro não substitui avaliação clínica, atendimento de urgência ou plano individual de comunicação e proteção. Risco atual tem prioridade sobre qualquer preenchimento; não retirar meios de comunicação ou provocar situações de risco para observar respostas.",
   "tags": [
     "contingência",
-    "continuidade diária",
-    "monitoramento funcional",
+    "comunicação funcional",
+    "participação social",
+    "acessibilidade comunicativa",
     "segurança",
     "neurodesenvolvimento"
   ],
