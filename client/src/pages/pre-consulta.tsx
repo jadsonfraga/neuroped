@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { copyText } from "@/lib/shareText";
 import { Link } from "wouter";
 import { ArrowRight, ClipboardCheck, Copy, Printer, Save, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -101,7 +102,7 @@ export default function PreConsultaPage() {
 
   async function copiar() {
     if (!ageValidation.isValid) return;
-    await navigator.clipboard?.writeText(summary);
+    await copyText(summary);
   }
 
   function imprimir() {

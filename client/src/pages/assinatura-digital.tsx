@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { copyText } from "@/lib/shareText";
 import QRCode from "qrcode";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -207,8 +208,9 @@ export default function AssinaturaDigitalPage() {
     toast({ title: "Registro gerado", description: "Salvando temporariamente nesta sessão…" });
   }
 
-  function copiarHash(hash: string) {
-    navigator.clipboard.writeText(hash).then(() => toast({ title: "Hash copiado" }));
+  async function copiarHash(hash: string) {
+    if (await copyText(hash)) toast({ title: "Hash copiado" });
+    else toast({ title: "Não foi possível copiar o hash", description: "Selecione e copie o hash manualmente.", variant: "destructive" });
   }
 
   function baixarRegistro(r: Registro) {

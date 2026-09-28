@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { copyText } from "@/lib/shareText";
 import { BookOpen, Search, ShieldAlert, Lock, Copy, Check, Quote, X, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,8 +51,9 @@ function InstrumentCard({ inst }: { inst: StandardizedInstrument }) {
   const [showCitation, setShowCitation] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const copyCitation = () => {
-    navigator.clipboard?.writeText(inst.citation);
+  const copyCitation = async () => {
+    // Só confirma "Copiado" quando a cópia de fato ocorreu.
+    if (!(await copyText(inst.citation))) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

@@ -1,4 +1,5 @@
 import { useParams, useLocation, Link } from "wouter";
+import { copyText } from "@/lib/shareText";
 import { useState } from "react";
 import { ArrowLeft, Copy, Download, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -481,8 +482,10 @@ export default function GenericScalePage() {
     );
   }
 
-  const handleCopyDescription = () => {
-    navigator.clipboard.writeText(scale.description);
+  const handleCopyDescription = async () => {
+    // Só confirma "Copiado!" quando a cópia de fato ocorreu (clipboard pode ser
+    // negado ou inexistente fora de contexto seguro).
+    if (!(await copyText(scale.description))) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
