@@ -13,67 +13,94 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Read persisted setup and test SELECT-only batch transport
+      - name: Verify actual persisted configuration without API impersonation or clinical rows
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           OWNER_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          RESERVED_E2E_EMAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
         run: |
           node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
           import {createHash} from 'node:crypto';
           import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
-          const db=/database_id\s*=\s*"([a-f0-9-]+)"/.exec(readFileSync('wrangler.toml','utf8'))?.[1];
-          if(!db || !process.env.OWNER_EMAIL) throw new Error('CONFIGURATION_REQUIRED');
-          const url=`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/d1/database/${db}/query`;
-          const report={run:process.env.GITHUB_RUN_ID,checkedAt:new Date().toISOString(),readOnly:true};
-          async function send(body) {
-            const statements=body.batch??[body];
-            if(!statements.every(x=>/^SELECT\s/i.test(x.sql)&&!x.sql.includes(';'))) throw new Error('READ_ONLY_REQUIRED');
-            const r=await fetch(url,{method:'POST',headers:{Authorization:`Bearer ${process.env.CF_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
-            const b=await r.json().catch(()=>({}));
-            return {status:r.status,body:b};
-          }
-          function safe(r) {
-            const errors=(r.body.errors||[]).map(e=>({code:e.code,sqlRequired:/sql.*required|required.*sql/i.test(e.message||''),permissionDenied:/permission|not authorized|unauthorized/i.test(e.message||''),constraint:/constraint/i.test(e.message||''),malformedJson:/malformed JSON/i.test(e.message||''),syntax:/syntax/i.test(e.message||''),foreignKey:/foreign key/i.test(e.message||'')}));
-            return {httpStatus:r.status,success:r.body.success,resultCount:Array.isArray(r.body.result)?r.body.result.length:null,errors};
+          const report={run:process.env.GITHUB_RUN_ID,checkedAt:new Date().toISOString(),readOnly:true,
+            provisioningCommit:'b97ebcfcada5e68caa256a912a52822bb6e4b1c3',provisioningRun:'36452196137',
+            authenticatedAgendaRoundtripVerified:false};
+          const database=/database_id\s*=\s*"([a-f0-9-]+)"/.exec(readFileSync('wrangler.toml','utf8'))?.[1];
+          const account=process.env.CF_ACCOUNT, token=process.env.CF_TOKEN;
+          let stage='configuration';
+          async function cf(path,body) {
+            const r=await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}${path}`,{
+              method:body?'POST':'GET',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
+              body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(25000)});
+            const data=await r.json().catch(()=>null);
+            assert.ok(r.ok && data?.success===true,'PROVIDER_READ_FAILED');
+            return data.result;
           }
           async function q(sql,params=[]) {
-            const r=await send({sql,params});
-            if(!r.body.success) return [];
-            return (r.body.result||[]).flatMap(x=>x.results||[]);
+            assert.ok(/^SELECT\s/i.test(sql)&&!sql.includes(';'),'READ_ONLY_REQUIRED');
+            const result=await cf(`/d1/database/${database}/query`,{sql,params});
+            assert.ok(result?.length===1 && result[0].success===true,'READ_RESULT_INVALID');
+            return result[0].results;
           }
-          report.singleSelect=safe(await send({sql:'SELECT 1 AS ok',params:[]}));
-          report.batchSelect=safe(await send({batch:[{sql:'SELECT 1 AS ok',params:[]},{sql:'SELECT 2 AS ok',params:[]}]}));
-          const email=process.env.OWNER_EMAIL.trim().toLowerCase();
-          const users=await q('SELECT id, role, is_active FROM users WHERE lower(email)=?', [email]);
-          report.owner={matches:users.length,active:users[0]?.is_active,role:users[0]?.role};
-          if(users.length===1) {
+          try {
+            assert.equal(process.env.GITHUB_REPOSITORY,'jadsonfraga/neuroped');
+            assert.ok(database&&account&&token&&process.env.OWNER_EMAIL&&process.env.RESERVED_E2E_EMAIL);
+            const project=await cf('/pages/projects/neuroped');
+            assert.equal(project.deployment_configs.production.d1_databases.DB.id,database,'BINDING_MISMATCH');
+            report.canonicalBindingVerified=true;
+            stage='owner_lookup';
+            const ownerEmail=process.env.OWNER_EMAIL.trim().toLowerCase();
+            const e2eEmail=process.env.RESERVED_E2E_EMAIL.trim().toLowerCase();
+            assert.notEqual(ownerEmail,e2eEmail);
+            const users=await q('SELECT id,role,is_active FROM users WHERE lower(email)=?',[ownerEmail]);
+            assert.equal(users.length,1);assert.equal(users[0].role,'admin');assert.equal(users[0].is_active,1);
             const uid=users[0].id;
             const suffix=createHash('sha256').update(`neuroped:institutional:${uid}`).digest('hex').slice(0,24);
-            const cid=`institutional-${suffix}`,bid=`internal-${suffix}`,aid=`institutional-agenda-v1-${suffix}`,slug=`neuroped-sdg-${suffix.slice(0,12)}`;
-            report.persisted=(await q(`SELECT
-              (SELECT COUNT(*) FROM clinics WHERE id=?) AS target_clinics,
-              (SELECT COUNT(*) FROM clinics WHERE created_by_user_id=?) AS owned_clinics,
-              (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=?) AS all_memberships,
-              (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=? AND clinic_id=? AND role='owner' AND active=1) AS target_owner_memberships,
-              (SELECT COUNT(*) FROM billing_customers WHERE id=? AND clinic_id=?) AS target_customers,
-              (SELECT COUNT(*) FROM saas_audit_log WHERE id=? AND clinic_id=?) AS target_audits`,[cid,uid,uid,uid,cid,bid,cid,aid,cid]))[0];
-            const guard={sql:`SELECT CASE WHEN
-              (SELECT COUNT(*) FROM users WHERE id = ? AND lower(email) = ? AND role = 'admin' AND is_active = 1) = 1
-              AND (SELECT COUNT(*) FROM clinic_memberships WHERE user_id = ?) = 0
-              AND (SELECT COUNT(*) FROM clinics WHERE created_by_user_id = ? OR id = ? OR slug = ?) = 0
-              THEN 1 ELSE json('AGENDA_SETUP_PRECONDITION_FAILED') END AS ok`,params:[uid,email,uid,uid,cid,slug]};
-            const guardReply=await send({batch:[guard]});
-            report.atomicPrecondition={...safe(guardReply),ok:guardReply.body.result?.[0]?.results?.[0]?.ok===1};
+            const cid=`institutional-${suffix}`,aid=`institutional-agenda-v1-${suffix}`;
+            stage='persisted_postconditions';
+            const counts=(await q(`SELECT
+              (SELECT COUNT(*) FROM clinics WHERE id=? AND created_by_user_id=? AND status='active' AND name='NeuroPed SDG' AND timezone='America/Recife') AS institutional_clinics,
+              (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=? AND active=1) AS active_owner_memberships,
+              (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=? AND clinic_id=? AND role='owner' AND active=1) AS exact_owner_memberships,
+              (SELECT COUNT(*) FROM billing_customers WHERE clinic_id=?) AS clinic_customers,
+              (SELECT COUNT(*) FROM billing_customers WHERE clinic_id=? AND provider='none' AND status='active' AND provider_customer_id IS NULL AND trial_ends_at IS NULL) AS internal_nonbillable_customers,
+              (SELECT COUNT(*) FROM billing_subscriptions bs JOIN billing_customers bc ON bc.id=bs.customer_id WHERE bc.clinic_id=?) AS retained_subscriptions,
+              (SELECT COUNT(*) FROM saas_audit_log WHERE id=? AND clinic_id=? AND actor_user_id=? AND action='institutional_internal_access_granted' AND json_extract(metadata_json,'$.version')=2) AS exact_setup_receipts,
+              (SELECT COUNT(*) FROM tenant_lifecycle WHERE clinic_id=?) AS lifecycle_records`,
+              [cid,uid,uid,uid,cid,cid,cid,cid,aid,cid,uid,cid]))[0];
+            const expected={institutional_clinics:1,active_owner_memberships:1,exact_owner_memberships:1,
+              clinic_customers:1,internal_nonbillable_customers:1,retained_subscriptions:0,exact_setup_receipts:1,lifecycle_records:1};
+            assert.deepEqual(counts,expected,'PERSISTED_CONFIGURATION_NOT_PROVEN');
+            report.persisted=counts;
+            stage='reserved_account';
+            const reserved=await q(`SELECT u.role,u.is_active,
+              (SELECT COUNT(*) FROM clinic_memberships cm WHERE cm.user_id=u.id AND cm.active=1) AS active_memberships
+              FROM users u WHERE lower(u.email)=?`,[e2eEmail]);
+            assert.equal(reserved.length,1);assert.equal(reserved[0].role,'reader');assert.equal(reserved[0].active_memberships,0);
+            report.reservedE2ERemainsReaderWithoutMembership=true;
+            report.status='persisted_configuration_verified';
+            stage='public_release_metadata';
+            report.published={};
+            for(const [label,origin] of [['cloudflare','https://neuroped.pages.dev'],['vercel','https://superneuroped.vercel.app']]) {
+              try {
+                const r=await fetch(`${origin}/deploy-check.json?agenda-readback=${process.env.GITHUB_RUN_ID}`,{cache:'no-store',signal:AbortSignal.timeout(15000)});
+                const value=await r.json();
+                report.published[label]={httpStatus:r.status,commit:/^[a-f0-9]{40}$/.test(value.commit||'')?value.commit:null,
+                  runId:/^\d+$/.test(String(value.run_id||''))?String(value.run_id):null};
+              } catch {report.published[label]={readSucceeded:false};}
+            }
+          } catch(error) {
+            report.status='blocked';report.failedStage=stage;
+            report.code=/^[A-Z0-9_]{1,90}$/.test(error?.message||'')?error.message:'POSTCONDITION_ASSERTION_FAILED';
+            process.exitCode=1;
+          } finally {
+            report.finishedAt=new Date().toISOString();
+            mkdirSync('artifacts/agenda-reconcile',{recursive:true});
+            writeFileSync('artifacts/agenda-reconcile/receipt.json',JSON.stringify(report,null,2));
+            console.log(JSON.stringify(report,null,2));
           }
-          report.schema={};
-          for(const table of ['users','clinics','clinic_memberships','billing_customers','saas_audit_log']) {
-            report.schema[table]=(await q('SELECT sql FROM sqlite_master WHERE type=? AND name=?',['table',table]))[0]?.sql;
-          }
-          report.schemaTriggers=await q("SELECT name, sql FROM sqlite_master WHERE type='trigger' AND tbl_name IN ('users','clinics','clinic_memberships','billing_customers','saas_audit_log')");
-          mkdirSync('artifacts/agenda-reconcile',{recursive:true});
-          writeFileSync('artifacts/agenda-reconcile/receipt.json',JSON.stringify(report,null,2));
-          console.log(JSON.stringify(report,null,2));
           JS
       - uses: actions/upload-artifact@v4
         if: always()
