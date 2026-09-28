@@ -31,6 +31,8 @@ import {
 } from "@/data/caaExpandedBoard";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { secureGet, secureSet } from "@/lib/secureStorage";
 import { mergeCaaBoardWithCurrentDefaults } from "@/lib/caaWorkspaceMerge";
 
@@ -156,15 +158,36 @@ function tokenFromSymbol(item: CaaSymbol): Token {
 }
 
 export default function CaaPage() {
-  const { speak, supported } = useSpeech();
+  const { accessMode, isAuthenticated, isLoading, user } = useAuth();
+  const { activeClinicId } = useClinic();
+
+  if (accessMode === "checking" || isLoading) {
+    return <div role="status" className="p-6 text-sm text-muted-foreground">Preparando prancha…</div>;
+  }
+
+  // Comunicar não exige persistir dados. No remoto, inclusive sem login, a
+  // prancha só usa memória React; nunca restaura/migra o workspace do aparelho.
+  // A chave descarta toda a memória ao mudar usuário, clínica ou modo de acesso.
+  return (
+    <CaaWorkspace
+      key={JSON.stringify([accessMode, isAuthenticated, user?.id ?? null, activeClinicId])}
+      persistWorkspace={accessMode === "local"}
+    />
+  );
+}
+
+function CaaWorkspace({ persistWorkspace }: { persistWorkspace: boolean }) {
+  const { speak, supported, cancel } = useSpeech();
   const { toast } = useToast();
 
   const [board, setBoard] = useState<Board>(() => clone(CAA_FULL_CATEGORIES));
   const [favs, setFavs] = useState<string[]>([]);
   const [hist, setHist] = useState<string[]>([]);
   const [messageHist, setMessageHist] = useState<string[]>([]);
-  const [storageReady, setStorageReady] = useState(false);
-  const [storageStatus, setStorageStatus] = useState<"saving" | "saved" | "error">("saving");
+  const [storageReady, setStorageReady] = useState(!persistWorkspace);
+  const [storageStatus, setStorageStatus] = useState<"saving" | "saved" | "error" | "session">(
+    persistWorkspace ? "saving" : "session",
+  );
   const storageQueue = useRef<Promise<unknown>>(Promise.resolve());
   const storageRevision = useRef(0);
 
@@ -182,10 +205,16 @@ export default function CaaPage() {
   const [customIcon, setCustomIcon] = useState("🔹");
   const importRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => () => cancel(), [cancel]);
+
   useEffect(() => {
+    // Não chamar sequer os adaptadores de storage no LIVE. A fronteira global
+    // continua intacta como defesa adicional, não como fallback desta página.
+    if (!persistWorkspace) return;
     let active = true;
     void (async () => {
       const protectedWorkspace = await secureGet<StoredWorkspace>(SECURE_CAA_KEY);
+      if (!active) return;
       let restoredBoard = clone(CAA_FULL_CATEGORIES);
       let restoredFavs: string[] = [];
       let restoredHist: string[] = [];
@@ -218,6 +247,7 @@ export default function CaaPage() {
             hist: restoredHist,
             messages: [],
           });
+          if (!active) return;
           if (migrated) {
             if (localStorage.getItem(LS_BOARD) === rawBoard) localStorage.removeItem(LS_BOARD);
             if (localStorage.getItem(LS_FAVS) === rawFavs) localStorage.removeItem(LS_FAVS);
@@ -240,10 +270,11 @@ export default function CaaPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [persistWorkspace]);
 
   useEffect(() => {
-    if (!storageReady) return;
+    if (!persistWorkspace || !storageReady) return;
+    let active = true;
     const snapshot = {
       board: sanitizeBoardOnly(board),
       favs: sanitizeKeys(favs, 700),
@@ -254,15 +285,18 @@ export default function CaaPage() {
     setStorageStatus("saving");
     const operation = storageQueue.current
       .catch(() => undefined)
-      .then(() => secureSet(SECURE_CAA_KEY, snapshot))
+      .then(() => active ? secureSet(SECURE_CAA_KEY, snapshot) : false)
       .catch(() => false);
     storageQueue.current = operation;
     void operation.then((stored) => {
-      if (revision === storageRevision.current) {
+      if (active && revision === storageRevision.current) {
         setStorageStatus(stored === true ? "saved" : "error");
       }
     });
-  }, [board, favs, hist, messageHist, storageReady]);
+    return () => {
+      active = false;
+    };
+  }, [board, favs, hist, messageHist, storageReady, persistWorkspace]);
 
   const activeUsage = usageModes[usageMode];
 
@@ -483,6 +517,17 @@ export default function CaaPage() {
 
   return (
     <div className="space-y-6 pb-14">
+      {!persistWorkspace && (
+        <div
+          className="rounded-2xl border border-primary/25 bg-primary/5 p-3 text-xs text-foreground"
+          role="status"
+          data-testid="caa-session-only"
+        >
+          Uso livre nesta sessão. Cartões personalizados, favoritos e histórico não são salvos automaticamente.
+          Ao sair desta tela, recarregar ou trocar de usuário/clínica, as personalizações são descartadas.
+          Para guardar uma prancha, use Exportar e proteja o arquivo; para recuperá-la, use Importar.
+        </div>
+      )}
       {storageStatus === "error" && (
         <div
           className="rounded-2xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive"
@@ -549,10 +594,12 @@ export default function CaaPage() {
             <div className="col-span-2 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
               <p className="flex items-center gap-2 text-xs font-semibold text-white/90">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" aria-hidden="true" />
-                Voz e personalizações locais
+                {persistWorkspace ? "Voz e personalizações locais" : "Personalizações só nesta sessão"}
               </p>
               <p className="mt-1 text-[11px] leading-relaxed text-white/60">
-                Sem biblioteca proprietária de pictogramas; emojis nativos e armazenamento protegido no dispositivo.
+                {persistWorkspace
+                  ? "Sem biblioteca proprietária de pictogramas; emojis nativos e armazenamento protegido no dispositivo."
+                  : "Emojis nativos e síntese de voz do navegador, sem salvamento automático da prancha."}
               </p>
             </div>
           </div>
@@ -865,11 +912,16 @@ export default function CaaPage() {
                 onClick={() =>
                   toast({
                     title:
-                      storageStatus === "saved"
-                        ? "Prancha protegida e salva"
-                        : storageStatus === "saving"
-                          ? "Salvamento em andamento"
-                          : "Prancha não salva",
+                      storageStatus === "session"
+                        ? "Prancha disponível nesta sessão"
+                        : storageStatus === "saved"
+                          ? "Prancha protegida e salva"
+                          : storageStatus === "saving"
+                            ? "Salvamento em andamento"
+                            : "Prancha não salva",
+                    description: storageStatus === "session"
+                      ? "Sem salvamento automático. Use Exportar para guardar uma cópia e proteja o arquivo."
+                      : undefined,
                     variant: storageStatus === "error" ? "destructive" : "default",
                   })
                 }

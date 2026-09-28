@@ -88,7 +88,7 @@ for (const namespace of [
 
 assert.deepEqual(
   [...LIVE_BROWSER_LOCAL_CLINICAL_ROUTES],
-  ["/caa", "/assinatura-digital"],
+  ["/assinatura-digital"],
   "a lista fail-closed deve ser explícita e revisável",
 );
 // /cognitive-lab virou redirect legado puro para /testes-diretos: negar
@@ -102,7 +102,6 @@ for (const route of ["/cognitive-lab", "/cognitive-lab/go-no-go"]) {
   );
 }
 for (const route of [
-  "/caa",
   "/assinatura-digital",
 ]) {
   assert.equal(
@@ -129,4 +128,35 @@ for (const route of ["/agenda", "/conecta", "/pre-consulta", "/diario-sono"] ) {
   );
 }
 
-console.log("✓ clinical browser persistence policy: LIVE remoto nega PHI, bloqueia superfícies locais antes do mount e preserva UI/auth/local explícito");
+// Liberar comunicação em memória não libera o workspace persistente legado.
+for (const route of ["/caa", "/caa/", "/caa?mode=crianca"]) {
+  for (const accessMode of ["remote", "local"] as const) {
+    for (const authenticated of [true, false]) {
+      assert.equal(
+        isLiveBrowserLocalClinicalRouteDenied(route, accessMode, authenticated),
+        false,
+        "CAA deve montar; a página só persiste em modo local explícito",
+      );
+    }
+  }
+}
+for (const namespace of [
+  "caa:workspace:v3",
+  "neuroped:secure:caa:workspace:v3",
+  "neuroped:caa:board:v1",
+  "neuroped:caa:favs:v1",
+  "neuroped:caa:hist:v1",
+]) {
+  const dataType = classifyClinicalBrowserNamespace(namespace);
+  assert.equal(dataType, "CLINICAL_LONGITUDINAL");
+  assert.ok(dataType);
+  for (const purpose of ["read", "write", "remove", "restore", "migrate"] as const) {
+    assert.equal(
+      clinicalBrowserPersistencePolicy({ ...base, namespace, dataType, purpose }),
+      "DENY",
+      `${namespace}/${purpose}: a liberação da CAA não pode relaxar a fronteira LIVE`,
+    );
+  }
+}
+
+console.log("✓ clinical browser persistence policy: CAA em memória, PHI LIVE negado e demais bloqueios preservados");

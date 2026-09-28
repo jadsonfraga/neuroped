@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
@@ -279,6 +280,117 @@ async function installAudit(page) {
   }, { dbName: PERSISTENT_DB });
 }
 
+async function assertNoTouches(page, label) {
+  const touches = await page.evaluate(() => window.__neuropedGlobalPersistenceTouches);
+  assert.ok(Array.isArray(touches), `${label}: auditor de persistência precisa estar instalado`);
+  assert.equal(touches.length, 0,
+    `${label}: persistência clínica browser-side tocada em LIVE: ${JSON.stringify(touches)}`);
+}
+
+async function exerciseCaa(page, base) {
+  const customText = "Mensagem sintética CAA E2E";
+  await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ timeout: 15000 });
+  await page.waitForFunction(() => sessionStorage.getItem("neuroped:active-clinic-id") === "tenant-red-synthetic");
+  await page.getByTestId("caa-session-only").waitFor();
+  assert.equal(await page.getByTestId("live-browser-local-clinical-route-blocked").count(), 0);
+  await assertNoTouches(page, "CAA: mount sem restauração de sentinelas legadas");
+
+  // Instrumenta somente a saída para o sistema de voz; usa os handlers reais
+  // da prancha e o SpeechSynthesisUtterance real. Não comprova áudio audível.
+  await page.evaluate(() => {
+    window.__caaSpeechRequests = [];
+    window.speechSynthesis.speak = (utterance) => {
+      window.__caaSpeechRequests.push({ text: utterance.text, lang: utterance.lang });
+    };
+    window.speechSynthesis.cancel = () => {};
+  });
+  const core = page.locator('section[aria-label="Palavras essenciais"] button');
+  const speakPhrase = page.getByRole("button", { name: "Falar frase", exact: true });
+  assert.equal(await speakPhrase.isDisabled(), true);
+  await core.first().click();
+  await speakPhrase.click();
+  await page.getByRole("button", { name: "Repetir último", exact: true }).click();
+  const speech = await page.evaluate(() => window.__caaSpeechRequests);
+  assert.ok(speech.length >= 3, "cartão, frase e repetir precisam acionar síntese de voz");
+  assert.ok(speech.every((item) => item.text && item.lang === "pt-BR"));
+  await page.getByRole("button", { name: "Apagar último", exact: true }).click();
+  assert.equal(await speakPhrase.isDisabled(), true);
+  await page.getByRole("button", { name: "Desfazer", exact: true }).click();
+  await speakPhrase.click();
+  await page.getByRole("button", { name: "Limpar", exact: true }).click();
+  assert.equal(await speakPhrase.isDisabled(), true);
+
+  for (const mode of ["Criança", "Família", "Terapeuta"]) {
+    const button = page.getByRole("group", { name: "Selecionar modo de uso da CAA" })
+      .getByRole("button", { name: mode, exact: true });
+    await button.click();
+    assert.equal(await button.getAttribute("aria-pressed"), "true");
+  }
+  await page.getByLabel("Cartão personalizado", { exact: true }).fill(customText);
+  await page.getByRole("button", { name: "Adicionar à categoria", exact: true }).click();
+  const search = page.getByLabel("Buscar palavra ou situação", { exact: true });
+  await search.fill(customText);
+  const customCard = page.locator(".np-scale-item").filter({ hasText: customText });
+  await customCard.waitFor();
+  await customCard.getByRole("button", { name: `Adicionar ${customText} aos favoritos`, exact: true }).click();
+  await page.getByRole("button", { name: "Favoritos", exact: true }).click();
+  await customCard.waitFor();
+  await customCard.getByRole("button").first().click();
+  await speakPhrase.click();
+  await page.getByRole("heading", { name: "Mensagens recentes", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Usados", exact: true }).click();
+  await customCard.waitFor();
+
+  await page.getByRole("button", { name: "Primeiro → Depois", exact: true }).click();
+  await core.nth(0).click();
+  await core.nth(1).click();
+  await page.getByRole("button", { name: "Falar sequência", exact: true }).click();
+  await page.getByRole("button", { name: "Ver status de salvamento da prancha", exact: true }).click();
+  await page.getByText("Prancha disponível nesta sessão", { exact: true }).waitFor();
+  assert.equal(await page.getByText("Prancha protegida e salva", { exact: true }).count(), 0);
+  await assertNoTouches(page, "CAA: interações reais sem salvamento automático");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Exportar prancha", exact: true }).click();
+  const download = await downloadPromise;
+  const stream = await download.createReadStream();
+  assert.ok(stream, "exportação explícita precisa entregar bytes");
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  const exportedBytes = Buffer.concat(chunks);
+  const exported = JSON.parse(exportedBytes.toString("utf8"));
+  assert.ok(Object.values(exported.board).some((category) => category.items.some((item) => item[1] === customText)));
+  assert.ok(exported.favs.length && exported.hist.length && exported.messages.length);
+  await assertNoTouches(page, "CAA: exportação explícita não usa storage clínico");
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.getByTestId("caa-session-only").waitFor({ timeout: 15000 });
+  await page.waitForFunction(() => sessionStorage.getItem("neuroped:active-clinic-id") === "tenant-red-synthetic");
+  assert.equal(await speakPhrase.isDisabled(), true);
+  await search.fill(customText);
+  await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor();
+  assert.equal(await customCard.count(), 0, "reload não pode restaurar a personalização LIVE");
+  await assertNoTouches(page, "CAA: reload sem leitura/gravação legada");
+
+  await page.getByLabel("Importar prancha de um arquivo JSON", { exact: true }).setInputFiles({
+    name: "caa-synthetic.json",
+    mimeType: "application/json",
+    buffer: exportedBytes,
+  });
+  await customCard.waitFor();
+  await assertNoTouches(page, "CAA: importação explícita somente em memória");
+
+  await page.goto(`${base}/#/familia`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "hidden" });
+  await page.goto(`${base}/#/caa`, { waitUntil: "domcontentloaded" });
+  await page.getByTestId("caa-session-only").waitFor();
+  assert.equal(await speakPhrase.isDisabled(), true);
+  await search.fill(customText);
+  await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor();
+  assert.equal(await customCard.count(), 0, "sair da rota precisa descartar o workspace LIVE");
+  await assertNoTouches(page, "CAA: retorno à rota inicia nova prancha em memória");
+}
+
 async function main() {
   if (!existsSync(join(DIST, "index.html"))) {
     console.error("[live-browser-persistence] build ausente; gere build remote antes do E2E");
@@ -301,14 +413,38 @@ async function main() {
       await page.waitForTimeout(250);
       const loginVisible = await page.getByRole("heading", { name: /entrar|login/i }).isVisible().catch(() => false);
       if (loginVisible) throw new Error(`sessão E2E não foi reconhecida em ${route}`);
+      if (route === "/caa") await exerciseCaa(page, base);
+      if (route === "/assinatura-digital") {
+        await page.getByTestId("live-browser-local-clinical-route-blocked").waitFor({ timeout: 15000 });
+      }
+      await assertNoTouches(page, route);
     }
 
-    const touches = await page.evaluate(() => window.__neuropedGlobalPersistenceTouches || []);
-    if (touches.length > 0) {
-      throw new Error(`persistência clínica browser-side tocada em LIVE: ${JSON.stringify(touches)}`);
-    }
+    await assertNoTouches(page, "matriz LIVE completa");
 
-    console.log(`[live-browser-persistence] ✓ ${ROUTES.length} jornadas LIVE sem Storage/IndexedDB/Cache clínico proibido`);
+    // Nova aba sem sessionStorage de autenticação: a rota pública deve continuar
+    // utilizável sem PIN/assinatura e sem herdar dados da sessão profissional.
+    const guest = await context.newPage();
+    await installAudit(guest);
+    await guest.goto(`${base}/#/caa`, { waitUntil: "domcontentloaded" });
+    await guest.getByTestId("caa-session-only").waitFor({ timeout: 15000 });
+    assert.equal(await guest.evaluate(() => sessionStorage.getItem("neuroped:access")), null);
+    await guest.locator('section[aria-label="Palavras essenciais"] button').first().click();
+    await guest.getByRole("button", { name: "Falar frase", exact: true }).click();
+    const guestTouches = await guest.evaluate(() => window.__neuropedGlobalPersistenceTouches);
+    assert.ok(Array.isArray(guestTouches), "auditor da CAA pública deve estar instalado");
+    // Sem sessão, o shell pode REMOVER o estado legado do filtro (observado no
+    // CI 36424834616). Isso não é leitura/persistência da CAA. Não mudar o app
+    // nem impedir uma limpeza legítima para satisfazer um teste sobre o LIVE
+    // autenticado. A exceção é exata: nenhum get/set, outra chave, IDB ou Cache.
+    // A matriz autenticada acima permanece estritamente zero, inclusive remove.
+    for (const touch of guestTouches) {
+      assert.deepEqual(touch, { surface: "Storage", op: "remove", key: "np_filtro_state_v1" },
+        "CAA pública não pode ler/gravar/remover workspace nem tocar IndexedDB/Cache clínico");
+    }
+    await guest.close();
+
+    console.log(`[live-browser-persistence] ✓ ${ROUTES.length} jornadas LIVE + CAA pública; fala/interações/exportação/importação/reset sem Storage/IndexedDB/Cache clínico proibido`);
   } finally {
     await browser.close();
     server.close();
