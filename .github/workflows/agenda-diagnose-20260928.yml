@@ -1,0 +1,103 @@
+name: Agenda incident diagnosis (2026-09-28)
+on:
+  push:
+    branches: [diagnose/agenda-live-20260928]
+    paths: [.github/workflows/agenda-diagnose-20260928.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Inspect published endpoint and schema without clinical output
+        env:
+          E2E_EMAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, urllib.request, urllib.error, pathlib
+          from datetime import datetime, timezone
+          out = pathlib.Path('artifacts/agenda-diagnosis'); out.mkdir(parents=True, exist_ok=True)
+          report = {'checkedAt': datetime.now(timezone.utc).isoformat(), 'run': os.environ['GITHUB_RUN_ID']}
+          def request(url, payload=None, headers=None):
+              data = None if payload is None else json.dumps(payload).encode()
+              h = {'Content-Type':'application/json', **(headers or {})}
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url,data=data,headers=h),timeout=25) as r:
+                      return r.status, json.loads(r.read())
+              except urllib.error.HTTPError as e:
+                  try: body = json.loads(e.read())
+                  except Exception: body = {}
+                  return e.code, body
+              except Exception:
+                  return 0, {}
+          def summary(status, body):
+              code = body.get('code','') if isinstance(body,dict) else ''
+              return {'status':status, 'code':code if isinstance(code,str) and re.fullmatch('[A-Z0-9_]{1,100}',code) else None}
+          base='https://neuroped.pages.dev'
+          s,b=request(base+'/deploy-check.json?agenda-diagnosis='+os.environ['GITHUB_RUN_ID'])
+          report['release']={k:b.get(k) for k in ['commit','run_id','provider']} if isinstance(b,dict) else {'status':s}
+          s,b=request(base+'/api/health')
+          report['health']={'status':s, 'database':b.get('database'), 'authentication':b.get('authentication')} if isinstance(b,dict) else {'status':s}
+          token=refresh=None
+          if os.environ.get('E2E_EMAIL') and os.environ.get('E2E_PASSWORD'):
+              s,b=request(base+'/api/auth/login',{'email':os.environ['E2E_EMAIL'],'password':os.environ['E2E_PASSWORD']})
+              report['login']=summary(s,b)
+              if s==200:
+                  token,refresh=b.get('accessToken'),b.get('refreshToken')
+                  role=b.get('user',{}).get('role')
+                  report['e2eRole']=role if role in ['admin','professional','operator','reader'] else 'unknown'
+          else: report['login']={'configured':False}
+          if token:
+              try:
+                  headers={'Authorization':'Bearer '+token}
+                  s,b=request(base+'/api/operations?resource=dashboard',headers=headers)
+                  report['dashboardDefault']=summary(s,b)
+                  s,tenants=request(base+'/api/tenants',headers=headers)
+                  report['tenants']={'status':s,'count':len(tenants.get('data',[]))}
+                  report['dashboardScoped']=[]
+                  for clinic in tenants.get('data',[])[:5]:
+                      s,b=request(base+'/api/operations?resource=dashboard',headers={**headers,'X-Clinic-Id':clinic['id']})
+                      report['dashboardScoped'].append(summary(s,b))
+              finally:
+                  if refresh:
+                      s,b=request(base+'/api/auth/logout',{'refreshToken':refresh})
+                      report['logout']=summary(s,b)
+          if os.environ.get('CF_TOKEN') and os.environ.get('CF_ACCOUNT'):
+              cf='https://api.cloudflare.com/client/v4/accounts/'+os.environ['CF_ACCOUNT']
+              headers={'Authorization':'Bearer '+os.environ['CF_TOKEN']}
+              s,b=request(cf+'/pages/projects/neuroped',headers=headers)
+              report['cloudflareMetadataStatus']=s
+              production=b.get('result',{}).get('deployment_configs',{}).get('production',{})
+              env=production.get('env_vars',{})
+              report['runtimeVariableNamesPresent']={k:k in env for k in ['OPERATIONAL_DATA_KEY','OPERATIONAL_DATA_KEY_ID','OPERATIONAL_DATA_KEY_PREVIOUS','NEUROPED_JWT_SECRET']}
+              db=production.get('d1_databases',{}).get('DB',{}).get('id')
+              report['d1BindingPresent']=bool(db)
+              if db:
+                  report['schema']={}
+                  for table in ['booking_provider_profiles','booking_services','booking_availability_rules','booking_blocks','appointments','appointment_slot_locks','waitlist_entries','appointment_reviews','notification_outbox','booking_staff_links','operations_audit_log','clinics','clinic_memberships']:
+                      s,b=request(cf+'/d1/database/'+db+'/query',{'sql':"SELECT name FROM pragma_table_info('"+table+"')",'params':[]},headers=headers)
+                      results=b.get('result',[])
+                      report['schema'][table]={'status':s,'success':b.get('success'), 'columns':[r['name'] for q in results for r in q.get('results',[])]}
+          else: report['cloudflareMetadataStatus']='not_configured'
+          # Metadata only. Never print API error messages, credentials, identities,
+          # appointment payloads, clinical rows, or raw Cloudflare responses.
+          (out/'diagnosis.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Preserve repository source for isolated static review
+        run: |
+          git archive --format=tar.gz --output=artifacts/agenda-diagnosis/source.tar.gz HEAD functions server shared scripts tests db client/src/lib client/src/contexts client/src/pages/agenda.tsx client/src/components/RouteGuard.tsx .github package.json package-lock.json tsconfig.json vite.config.ts wrangler.toml AGENTS.md docs/PROMPT_DEPLOY_COACH.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agenda-diagnosis-${{ github.run_id }}
+          path: artifacts/agenda-diagnosis/
+          retention-days: 7
+          if-no-files-found: error
