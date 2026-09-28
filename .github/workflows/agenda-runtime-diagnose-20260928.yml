@@ -1,0 +1,89 @@
+name: Agenda runtime diagnosis (2026-09-28)
+on:
+  push:
+    branches: [diagnose/agenda-live-20260928]
+    paths: [.github/workflows/agenda-runtime-diagnose-20260928.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect access state without patient rows or credential disclosure
+        env:
+          E2E_EMAIL: ${{ secrets.NEUROPED_E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.NEUROPED_E2E_PASSWORD }}
+          OWNER_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node --input-type=module <<'JS'
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          const report = {run:process.env.GITHUB_RUN_ID, checkedAt:new Date().toISOString()};
+          async function req(url, data, headers={}) {
+            try {
+              const res=await fetch(url,{method:data===undefined?'GET':'POST',headers:{Accept:'application/json','User-Agent':'NeuroPed-Operations-Diagnostic/1.0',...(data===undefined?{}:{'Content-Type':'application/json'}),...headers},body:data===undefined?undefined:JSON.stringify(data),signal:AbortSignal.timeout(20000)});
+              const text=await res.text(); let body; try {body=JSON.parse(text);} catch {body={};}
+              return {status:res.status,body,contentType:res.headers.get('content-type'),challenge:res.headers.get('cf-mitigated')==='challenge',edgeCode:!res.ok && /error code: (\d{4})/i.test(text)?text.match(/error code: (\d{4})/i)[1]:null};
+            } catch { return {status:0,body:{},networkError:true}; }
+          }
+          const safe=x=>({status:x.status,code:/^[A-Z0-9_]{1,100}$/.test(x.body?.code||'')?x.body.code:null,contentType:x.contentType,challenge:x.challenge,edgeCode:x.edgeCode});
+          const base='https://neuroped.pages.dev';
+          report.release=safe(await req(base+'/deploy-check.json?diag='+process.env.GITHUB_RUN_ID));
+          report.health=safe(await req(base+'/api/health'));
+          const login=await req(base+'/api/auth/login',{email:process.env.E2E_EMAIL,password:process.env.E2E_PASSWORD});
+          report.e2eLogin=safe(login);
+          if(login.status===200 && login.body.accessToken) {
+            const h={Authorization:'Bearer '+login.body.accessToken};
+            report.e2eRole=login.body.user?.role;
+            report.e2eDashboard=safe(await req(base+'/api/operations?resource=dashboard',undefined,h));
+            report.logout=safe(await req(base+'/api/auth/logout',{refreshToken:login.body.refreshToken}));
+          }
+          const cf='https://api.cloudflare.com/client/v4/accounts/'+process.env.CF_ACCOUNT;
+          const auth={Authorization:'Bearer '+process.env.CF_TOKEN};
+          const project=await req(cf+'/pages/projects/neuroped',undefined,auth);
+          const production=project.body.result?.deployment_configs?.production;
+          const db=production?.d1_databases?.DB?.id;
+          report.cfStatus=project.status;
+          async function sql(query,params=[]) {
+            const r=await req(cf+'/d1/database/'+db+'/query',{sql:query,params},auth);
+            if(r.status!==200 || !r.body.success) return {ok:false,status:r.status};
+            return {ok:true,rows:(r.body.result||[]).flatMap(x=>x.results||[])};
+          }
+          if(db) {
+            report.accessMetadata={};
+            for(const [label,email] of [['owner',process.env.OWNER_EMAIL],['e2e',process.env.E2E_EMAIL]]) {
+              if(!email) {report.accessMetadata[label]={configured:false};continue;}
+              const users=await sql('SELECT id, role, is_active, must_change_password FROM users WHERE lower(email)=?', [email.trim().toLowerCase()]);
+              const u=users.rows?.length===1?users.rows[0]:null;
+              const item=report.accessMetadata[label]={lookupOk:users.ok,matchCount:users.rows?.length,role:u?.role,active:u?.is_active,mustChangePassword:u?.must_change_password};
+              if(!u) continue;
+              const ent=await sql(`SELECT cm.role AS membership_role, cm.active AS membership_active, c.status AS clinic_status, bc.status AS customer_status, bs.status AS subscription_status,
+                CASE WHEN bc.trial_ends_at IS NOT NULL AND julianday(bc.trial_ends_at)>julianday('now') THEN 1 ELSE 0 END AS trial_valid,
+                CASE WHEN bc.grace_ends_at IS NOT NULL AND julianday(bc.grace_ends_at)>julianday('now') THEN 1 ELSE 0 END AS grace_valid
+                FROM clinic_memberships cm JOIN clinics c ON c.id=cm.clinic_id
+                LEFT JOIN billing_customers bc ON bc.clinic_id=cm.clinic_id LEFT JOIN billing_subscriptions bs ON bs.customer_id=bc.id
+                WHERE cm.user_id=?`, [u.id]);
+              item.entitlementQueryOk=ent.ok; item.memberships=ent.rows;
+              const links=await sql('SELECT COUNT(*) AS active_links FROM booking_staff_links WHERE staff_user_id=? AND active=1',[u.id]);
+              item.staffLinks=links.rows?.[0]?.active_links;
+              const counts=await sql(`SELECT COUNT(*) AS appointments, SUM(CASE WHEN clinic_id IS NULL THEN 1 ELSE 0 END) AS unscoped FROM appointments WHERE provider_user_id=?`,[u.id]);
+              item.operationsCounts=counts.rows?.[0];
+            }
+            for(const table of ['billing_customers','billing_subscriptions']) {
+              const q=await sql(`SELECT name FROM pragma_table_info('${table}')`);
+              report[table]={ok:q.ok,columns:q.rows?.map(r=>r.name)};
+            }
+          }
+          mkdirSync('artifacts/agenda-runtime',{recursive:true});
+          writeFileSync('artifacts/agenda-runtime/metadata.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agenda-runtime-${{ github.run_id }}
+          path: artifacts/agenda-runtime/
+          retention-days: 7
+          if-no-files-found: error
