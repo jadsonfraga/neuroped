@@ -321,9 +321,10 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
           `UPDATE live_document_versions
               SET status = CASE WHEN status = 'published' THEN 'superseded' ELSE status END,
                   superseded_at = CASE WHEN status = 'published' THEN ? ELSE superseded_at END
-            WHERE document_id = ? AND version = ? AND status IN ('draft', 'published')`,
+            WHERE document_id = ? AND version = ? AND clinic_id = ? AND patient_id = ?
+              AND status IN ('draft', 'published')`,
         )
-        .bind(now, id, existing.current_version),
+        .bind(now, id, existing.current_version, clinicId, patientId),
     );
     statements.push(
       db

@@ -405,6 +405,22 @@ export function registerFileRoutes(app: Express): void {
         await deleteObject(deleted.storageKey);
       } catch (e) {
         console.error("[files.delete] bucket delete failed:", e);
+        // A linha já está marcada isDeleted (inacessível via API), mas os
+        // bytes seguem no bucket. Sem este registro, essa órfã só existe no
+        // stdout e nunca é reconciliada — audita com success:false para que
+        // a falha física fique rastreável.
+        await logAudit({
+          eventType: "file.delete",
+          context: ctx,
+          targetType: "file",
+          targetId: deleted.id,
+          metadata: {
+            filename: deleted.filename,
+            storageKey: deleted.storageKey,
+            reason: "bucket_delete_failed",
+          },
+          success: false,
+        });
       }
 
       await logAudit({
