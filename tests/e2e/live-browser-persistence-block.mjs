@@ -431,7 +431,17 @@ async function main() {
     assert.equal(await guest.evaluate(() => sessionStorage.getItem("neuroped:access")), null);
     await guest.locator('section[aria-label="Palavras essenciais"] button').first().click();
     await guest.getByRole("button", { name: "Falar frase", exact: true }).click();
-    await assertNoTouches(guest, "CAA pública sem autenticação");
+    const guestTouches = await guest.evaluate(() => window.__neuropedGlobalPersistenceTouches);
+    assert.ok(Array.isArray(guestTouches), "auditor da CAA pública deve estar instalado");
+    // Sem sessão, o shell pode REMOVER o estado legado do filtro (observado no
+    // CI 36424834616). Isso não é leitura/persistência da CAA. Não mudar o app
+    // nem impedir uma limpeza legítima para satisfazer um teste sobre o LIVE
+    // autenticado. A exceção é exata: nenhum get/set, outra chave, IDB ou Cache.
+    // A matriz autenticada acima permanece estritamente zero, inclusive remove.
+    for (const touch of guestTouches) {
+      assert.deepEqual(touch, { surface: "Storage", op: "remove", key: "np_filtro_state_v1" },
+        "CAA pública não pode ler/gravar/remover workspace nem tocar IndexedDB/Cache clínico");
+    }
     await guest.close();
 
     console.log(`[live-browser-persistence] ✓ ${ROUTES.length} jornadas LIVE + CAA pública; fala/interações/exportação/importação/reset sem Storage/IndexedDB/Cache clínico proibido`);
