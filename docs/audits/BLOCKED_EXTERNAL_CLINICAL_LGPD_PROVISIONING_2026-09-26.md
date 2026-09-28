@@ -76,17 +76,21 @@ em que o bucket foi previamente comprovado. Isso evita apontar produção para
 um recurso inexistente.
 
 Dependência externa comprovada: o `CLOUDFLARE_API_TOKEN` recebeu HTTP 403 ao
-consultar R2. Falta uma destas ações:
+consultar R2. Há dois caminhos válidos, mas eles não são equivalentes:
 
-1. adicionar ao token da automação a permissão de conta
-   `Workers R2 Storage: Edit`; ou
-2. criar manualmente o bucket privado `neuroped-lgpd-exports` e garantir que
-   o deploy possa confirmar/aplicar o binding.
+1. **caminho automatizado (preferido):** adicionar ao token da automação a
+   permissão de conta `Workers R2 Storage: Edit`. O workflow
+   `.github/workflows/deploy-cloudflare.yml` então confere o bucket, cria
+   `neuroped-lgpd-exports` apenas no 404, injeta o binding
+   `LGPD_EXPORT_BUCKET` somente se o recurso existir, faz o deploy e verifica
+   nos metadados do Pages tanto o R2 quanto o D1 `DB`;
+2. **caminho manual:** criar o bucket privado `neuroped-lgpd-exports` e
+   configurar explicitamente no Cloudflare Pages de produção o binding
+   `LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports`.
 
-Com permissão R2, o workflow `.github/workflows/deploy-cloudflare.yml` já é
-idempotente: confere o bucket, cria apenas no 404, injeta o binding apenas se o
-recurso existir, faz o deploy e verifica nos metadados do Pages tanto o
-`LGPD_EXPORT_BUCKET` quanto o D1 `DB`.
+Criar **somente** o bucket pelo painel, mantendo o token com HTTP 403, não
+desbloqueia o pipeline atual: a etapa de deploy não consegue comprovar o
+recurso, mantém `available=0` e não injeta o binding.
 
 Risco de não executar: `LGPD_EXPORT_NOT_CONFIGURED` permanece; exportações
 LGPD não têm armazenamento privado verificável e o worker continua
