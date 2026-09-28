@@ -317,3 +317,33 @@ prontidão comercial): já implementado por `npm run audit:instruments` e
 pelo pipeline de `implementationStatus` — instrumento de licença restritiva
 sem aplicação real exige status explícito não-"complete", revisado, nunca
 heurística. Nenhuma lacuna nova encontrada; não alterado nesta sessão.
+
+## Ciclo 8b (2026-09-28) — LEG-17 fechado + S5 reconciliado
+Revalidação obrigatória: `main` = HEAD `db12eea` (após #1031, fix de rotação
+de chave clínica), worktree limpa. Auditoria paralela (4 investigadores + 4
+verificadores adversariais) sobre os itens ainda não avaliados do backlog
+confirmou: LEG-17 real e pequeno (fechado nesta sessão); LTB-22(e) refutado
+duas vezes de forma independente — a migração 0025 já fechou o único caminho
+alcançável antes mesmo da auditoria original, `members.ts` não tem handler
+PATCH, e `cliente-zero-journey.test.ts` já prova 201 (não 500) numa clínica
+sem assentos livres; nenhum outro estado de aprovação única do tipo LTB-10
+foi encontrado em `functions/api/**`; e S5 estava de fato fechado desde a PR
+#1014 (2026-09-27), só nunca escrito de volta nestes três arquivos.
+
+LEG-17: `functions/api/memory/index.ts` construía o LIKE de busca com
+`%${query}%` sem escapar `_`/`%`, então um termo com underscore literal
+casava também títulos que trocavam esse underscore por qualquer caractere —
+sem impacto de isolamento (paciente já vem restrito por `patient_id`).
+Reusado o `escapeLike()` já em produção em `patients/_contract.ts`. Evidência
+em EVIDENCE.md#LEG-17; BACKLOG.md não tinha entrada própria para este item,
+só a menção em "aquecimento" — removida implicitamente ao ficar resolvido.
+
+S5: ver BACKLOG.md#S5 e EVIDENCE.md#S5 para o reconhecimento completo, com o
+limite explícito de que o ensaio prova o mecanismo de backup/restore/Time
+Travel contra D1 real, não a decifragem de um payload clínico real pós-restore
+(isso continua atrás do bloqueio `CLINICAL_CRYPTO_NOT_READY`).
+
+Comandos exit 0 depois desta sessão: `npm run check`, `npx eslint` nos
+arquivos tocados, os seis testes de memória/paciente listados em
+EVIDENCE.md#LEG-17, e `npm run test:quick-wins` completo (0 `not ok`,
+incluindo o teste novo).

@@ -24,9 +24,36 @@ Bloqueio: exige credencial sandbox autorizada pelo proprietário; testes
 atuais interceptam o provedor. Comprovação esperada: webhook sandbox
 autenticado processado num ambiente publicado.
 
-## S5 · P2 · aberto
+## S5 · P2 · FECHADO (mecanismo; reconciliação de docs, ciclo 8, 2026-09-28)
 Restauração demonstrada (§12): diferenciar backup configurado/executado/
 restauração exercitada, com prova em ambiente isolado.
+
+Fechamento não registrado quando entregue: a PR #1014
+(`fix/s5-dr-restoration-evidence`, mesclada em `1a37947`, 2026-09-27 16:00
+-03:00) já havia adicionado `.github/workflows/dr-mechanism-rehearsal.yml` e
+executado com sucesso o run `36316874897` (`workflow_dispatch`, commit
+`8b861da`, 2026-09-27T11:47:32Z–11:49:46Z, 15/15 etapas verdes) — mas
+`STATE.md`/`BACKLOG.md`/`EVIDENCE.md` nunca foram atualizados para refletir
+isso. `docs/audits/S13_DIRECTORY_SERVICE_CLINIC_2026-09-27.md` (escrito às
+11h54, antes da mesclagem das 16h) ainda listava S5 como aberto — essa
+observação precede a evidência e não a invalida. Reconciliado nesta sessão
+depois de reler o workflow e confirmar o run diretamente pela API do GitHub
+(`get_workflow_run`/`list_workflow_jobs`), não apenas pelo relato da PR.
+Evidência em EVIDENCE.md#S5.
+
+Escopo do que ficou provado, e o que não: backup real via `wrangler d1
+export`/`d1 execute --file` contra dois D1 remotos temporários (nunca
+produção), com schema+migrações reais e fixtures sintéticas, restauração em
+alvo distinto, Time Travel e undo do próprio restore, tudo reconciliado por
+fingerprint SHA-256 de contagens/tamanhos (nunca conteúdo). Os campos
+`profile_encrypted`/`payload_encrypted` da fixture são strings literais
+(`'enc:v1:synthetic-...'`), não ciphertext real do `_crypto.ts` — então isto
+prova o mecanismo de backup/restore/Time Travel em infraestrutura real, não
+que um payload clínico cifrado de verdade sobrevive e decifra depois de um
+restore. Essa segunda prova continua bloqueada pelos mesmos dois itens P0 já
+documentados (`CLINICAL_CRYPTO_NOT_READY`, keyring inexistente em produção) e
+deveria ser um ensaio futuro que reusa este mesmo workflow com
+`encryptClinicalJson` real assim que o keyring existir.
 
 ## Ciclo 4 (2026-09-26) — auditoria completa de tenancy
 Auditoria de 79 lacunas em 4 domínios (auth/authz, clínico legado, agenda,

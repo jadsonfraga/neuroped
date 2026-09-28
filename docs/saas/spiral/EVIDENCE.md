@@ -976,3 +976,71 @@ reaplica código e teste sobre main, preserva S2–S22 e requer nova CI.
   retenção do prontuário para eliminação de escopo `patient` numa clínica
   ativa — ver
   `docs/audits/LEGAL_REVIEW_REQUIRED_CLINICAL_RETENTION_FLOOR_2026-09-27.md`.
+
+### S5 — mecanismo de backup/restore D1 provado (reconciliação de docs, ciclo 8, 2026-09-28)
+- O código e a prova já existiam desde 2026-09-27; esta entrada só registra o
+  que faltava escrever. Nenhum arquivo de produção alterado.
+- PR: #1014, branch `fix/s5-dr-restoration-evidence`, mesclada em `1a37947`
+  (2026-09-27 16:00:02 -03:00). Arquivos: `.github/workflows/dr-mechanism-rehearsal.yml`,
+  `scripts/dr/fingerprint-d1-json.mjs`, `scripts/dr/metadata-fingerprint.sql`,
+  `scripts/dr/synthetic-fixture.sql`, `tests/unit/dr-rehearsal-safety.test.mjs`.
+- Execução real, verificada nesta sessão diretamente pela API do GitHub (não
+  apenas pelo texto da PR): `actions_get get_workflow_run` para o run
+  `36316874897` retorna `event: workflow_dispatch`, `head_sha: 8b861dad...`,
+  `status: completed`, `conclusion: success`,
+  `created_at/updated_at: 2026-09-27T11:47:32Z`–`11:49:46Z`.
+  `actions_list list_workflow_jobs` para o mesmo run mostra as 15 etapas
+  (confirmação digitada → checkout → criar 2 D1 remotos → schema real +
+  todas as migrações → fixture sintética → fingerprint + `d1 export` →
+  `d1 execute --file` num D1 distinto → mutação destrutiva sintética →
+  `d1 time-travel restore` → undo do próprio restore → destruir os dois D1
+  temporários) todas com `conclusion: success`.
+- `tests/unit/dr-rehearsal-safety.test.mjs` (já existente, roda em
+  `test:quick-wins`) trava, por leitura estática do workflow, que: só
+  `workflow_dispatch` com confirmação digitada aciona o ensaio; nenhum
+  comando `wrangler d1` nomeia `neuroped-db`; o passo de destruição reconfere
+  a marca `dr-rehearsal` e roda mesmo se uma etapa anterior falhar; o backup
+  fica em `/tmp` com `chmod 600` e nunca vira artifact; o relatório final
+  declara explicitamente que não mede RTO de produção.
+- Limite explícito, não coberto por este item: os campos cifrados da fixture
+  (`profile_encrypted`/`payload_encrypted`) são strings literais no formato
+  `enc:v1:synthetic-...`, não ciphertext real de `encryptClinicalJson`
+  (`functions/api/tenant/_crypto.ts`) — o ensaio prova o mecanismo de
+  backup/export/import/Time Travel/undo contra D1 remoto real, não que um
+  payload clínico cifrado de verdade sobrevive e decifra após restore. Essa
+  prova adicional depende do keyring clínico existir em produção
+  (`CLINICAL_CRYPTO_NOT_READY`, ainda `BLOCKED_EXTERNAL`).
+- Rollback: nenhum — reconciliação de documentação apenas.
+
+### LEG-17 — busca de memória clínica escapa % e _ (ciclo 8, 2026-09-28)
+- Achado original: `docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md`
+  (referenciado como "aquecimento" não avaliado em `STATE.md`).
+- Escopo: `functions/api/memory/index.ts` (`onRequestGet`), teste novo
+  `tests/unit/memory-search-like-escape.test.mjs`, uma linha em
+  `package.json` (`test:quick-wins`). Sem migração.
+- Defeito provado (RED, `git stash` do arquivo de produção): duas notas
+  sintéticas, `"underscore_test"` e `"underscoreXtest"`, da mesma paciente;
+  buscar por `q=underscore_test` devolvia as DUAS — o `_` não escapado em
+  `%${query}%` era lido como curinga de um caractere pelo SQLite, então
+  `underscoreXtest` também casava. Sem impacto de isolamento: o predicado
+  `patient_id = ?` já restringe a busca à paciente autorizada
+  (`getPatientAccess`, anti-enumeração inalterada); o defeito só distorcia
+  precisão dentro desse escopo.
+- Fix: reuso do helper já existente e usado em produção em outro lugar do
+  mesmo domínio (`escapeLike`, `functions/api/patients/_contract.ts:214`,
+  já usado por `functions/api/patients/index.ts` e
+  `functions/api/tenants/[id]/audit.ts`) — `%${escapeLike(query)}%` com
+  `LIKE ? ESCAPE '\'` nas três colunas buscadas (`title`, `content`, `tags`).
+- GREEN: mesmo teste → busca por `"underscore_test"` casa só a nota literal;
+  controle sem `_` no termo (`q=underscore`) continua casando as duas notas
+  (substring normal preservado).
+- Regressão completa, todas exit 0: `npm run check`; `npx eslint
+  functions/api/memory/index.ts tests/unit/memory-search-like-escape.test.mjs
+  --max-warnings=0`; `tests/unit/no-fake-clinical-write.test.ts`;
+  `tests/unit/memory-search-ownership.test.ts`;
+  `tests/unit/patient-access-anti-enumeration.test.ts`;
+  `tests/unit/patient-access-anti-enumeration-static.test.mjs`;
+  `tests/unit/quick-wins-static.test.mjs`; `npm run test:quick-wins`
+  completo (0 `not ok`).
+- Fixtures 100% sintéticas (nomes de teste, sem PHI).
+- Rollback: reverter o commit; sem migração, sem efeito em dado persistido.
