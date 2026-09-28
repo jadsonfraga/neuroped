@@ -396,6 +396,11 @@ async function exerciseCaa(page, base) {
 
   await page.goto(`${base}/#/familia`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "hidden" });
+  // Suspense can hide the old CAA while the lazy family route is still loading.
+  // Prove that navigation actually committed, not merely that CAA was hidden,
+  // before returning and asserting disposal of the previous workspace.
+  await page.getByRole("heading", { name: "Bem-vindo(a) ao NeuroPed", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "detached" });
   await page.goto(`${base}/#/caa`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("caa-session-only").waitFor();
   await waitForCaaContext(page);
