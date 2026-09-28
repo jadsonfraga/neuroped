@@ -4,7 +4,19 @@ import {
   gerarEValidarSuper,
   laudoSuperParaTexto,
   type SuperEntrada,
+  type SuperMedico,
 } from "../../client/src/lib/laudo/modeloSuper";
+
+// Emissor 100% sintético: desde a parametrização por tenant (9c79488d) o motor
+// exige a identidade do médico do call site e não embute nenhuma credencial.
+const medico: SuperMedico = {
+  nome: "Dra. Emissora Sintética",
+  titulos: "Neurologia Infantil",
+  registro: "CRM-XX 00000 · RQE 00000",
+  endereco: "Endereço sintético de teste",
+  motto: "Lema sintético",
+  empresa: "Clínica Sintética LTDA",
+};
 
 let ok = 0;
 let falhas = 0;
@@ -97,7 +109,7 @@ const caso: SuperEntrada = {
 
 console.log("\n=== Motor SuperNeuroPed — perfil do laudo modelo ===\n");
 
-const r = gerarEValidarSuper(caso);
+const r = gerarEValidarSuper(caso, medico);
 console.log(`\nQA: ${r.qa}\n`);
 assert(r.qa.startsWith("APROVADO"), "QA de perfil aprova o caso completo");
 
@@ -133,12 +145,21 @@ assert(t.includes("13  Acompanhamento e retorno"), "Seção 13");
 assert(t.includes("✦ Ideação suicida ou autolesão"), "sinal de alerta com ✦");
 assert(t.includes("14  Síntese e encaminhamento"), "Seção 14");
 assert(t.includes("Luiza, este documento não fecha o que ainda está em aberto"), "síntese em 2ª pessoa");
-assert(t.includes("Soli Deo Gloria"), "motto na assinatura");
-assert(t.includes("Fraga Serviços Médicos LTDA · CNPJ 33.158.207/0001-48"), "assinatura institucional");
+assert(t.includes("Dra. Emissora Sintética"), "nome do emissor na assinatura");
+assert(t.includes("CRM-XX 00000 · RQE 00000"), "registro do emissor na assinatura");
+assert(t.includes("Lema sintético"), "motto na assinatura");
+assert(t.includes("Clínica Sintética LTDA"), "assinatura institucional");
+
+// Linhas opcionais não configuradas não aparecem nem são inventadas.
+const semOpcionais = laudoSuperParaTexto(
+  gerarEValidarSuper(caso, { nome: medico.nome, registro: medico.registro, endereco: medico.endereco }).laudo,
+);
+assert(!semOpcionais.includes("Lema sintético") && !semOpcionais.includes("Clínica Sintética LTDA"), "assinatura omite linhas opcionais ausentes");
+assert(!/Jadson|CRM-PE 25/.test(semOpcionais), "nenhuma identidade hardcoded de terceiro");
 
 // QA reprovado em caso mínimo
 const minimo: SuperEntrada = { ...caso, historiaSubsecoes: [], hipoteses: [], cids: [], planoMulti: [], cenarioFavoravel: [], cenarioEsperado: [], cenarioReservado: [], sinaisAlerta: [], funcionando: [], pedeAtencao: [] };
-const rm = gerarEValidarSuper(minimo);
+const rm = gerarEValidarSuper(minimo, medico);
 assert(rm.qa.startsWith("REPROVADO"), "QA reprova caso mínimo sem as caixas obrigatórias");
 
 console.log(`\nResultado: ${ok} aprovadas, ${falhas} falhas\n`);
