@@ -65,7 +65,9 @@ const clinicalNamespacePrefixes: Array<[string, ClinicalBrowserDataType]> = [
  * depender apenas do guard de Storage para neutralizar tentativas legadas.
  */
 export const LIVE_BROWSER_LOCAL_CLINICAL_ROUTES = [
-  "/caa",
+  // /caa usa apenas memória React em modo remoto, inclusive sem login.
+  // Seu workspace persistente só é montado no modo local explícito; as chaves
+  // CAA continuam classificadas e proibidas em LIVE na política de storage.
   "/assinatura-digital",
   // "/cognitive-lab" saiu da lista quando a rota virou redirect legado puro
   // para /testes-diretos (extinção dos shims, 09/2026): não existe mais
