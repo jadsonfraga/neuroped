@@ -27,33 +27,45 @@ jobs:
           NODE_ENV: production
           VITE_AUTH_MODE: remote
           VITE_API_URL: ''
-      - name: Preserve assertions and add local-loopback-only failure diagnostics
+      - name: Compare pending-route and committed-route tests using only localhost synthetic fixtures
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import subprocess,json
+          out=Path('artifacts/local-caa-diagnostic');out.mkdir(parents=True,exist_ok=True)
           p=Path('tests/e2e/live-browser-persistence-block.mjs')
           s=p.read_text()
           s=s.replace('import assert from "node:assert/strict";', 'import assert from "node:assert/strict";\nimport { mkdirSync, writeFileSync } from "node:fs";')
+          # Simulate latency of the lazy family route in the existing local HTTP
+          # fixture, never in production or a user's browser. All asserts stay.
+          s=s.replace('        res.end(body);', '        if (/\\/assets\\/familia-/.test(pathname)) setTimeout(() => res.end(body), 1200);\n        else res.end(body);')
           target='await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor();'
           assert s.count(target)==2
           for label in ['after_reload','after_route_exit']:
-              replacement='''console.log("CAA_DIAG_LABEL", JSON.stringify(await page.evaluate(() => ({ hash:location.hash, input:document.querySelector('#caa-search')?.value, syntheticCards:[...document.querySelectorAll('.np-scale-item')].filter(x=>x.textContent.includes('Mensagem sintética CAA E2E')).length, empty:document.body.textContent.includes('Nenhum cartão encontrado neste filtro.') }))));
+              replacement='''console.log("CAA_STAGE_LABEL");
           await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor().catch(async error => {
             mkdirSync('artifacts/local-caa-diagnostic', {recursive:true});
-            writeFileSync('artifacts/local-caa-diagnostic/LABEL.html', await page.content());
-            await page.screenshot({path:'artifacts/local-caa-diagnostic/LABEL.png'});
+            writeFileSync('artifacts/local-caa-diagnostic/LABEL.json', JSON.stringify(await page.evaluate(() => ({hash:location.hash,input:document.querySelector('#caa-search')?.value,syntheticCards:[...document.querySelectorAll('.np-scale-item')].filter(x=>x.textContent.includes('Mensagem sintética CAA E2E')).length,headings:[...document.querySelectorAll('h1')].map(x=>x.textContent)}))));
             throw error;
           });'''.replace('LABEL',label)
               s=s.replace(target,replacement,1)
           s=s.replace('error.message);','error.stack);')
           p.write_text(s)
+          original=subprocess.run(['node',str(p)],capture_output=True,text=True,timeout=100)
+          (out/'original.log').write_text(original.stdout+original.stderr)
+          anchor='await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "hidden" });'
+          assert s.count(anchor)==1
+          s=s.replace(anchor, anchor+'\n  await page.getByRole("heading", { name: "Bem-vindo(a) ao NeuroPed", exact: true }).waitFor();\n  await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "detached" });')
+          p.write_text(s)
+          outcomes=[]
+          for n in range(2):
+              fixed=subprocess.run(['node',str(p)],capture_output=True,text=True,timeout=100)
+              (out/f'committed-route-{n}.log').write_text(fixed.stdout+fixed.stderr)
+              outcomes.append(fixed.returncode)
+          report={'sourceCommit':'998cc774043bb90002755bf47a9e973a2dfce67a','syntheticLocalServerOnly':True,'familyChunkDelayMs':1200,'originalExitCode':original.returncode,'committedRouteExitCodes':outcomes,'applicationCodeChanged':False,'assertionsRemoved':False}
+          (out/'comparison.json').write_text(json.dumps(report,indent=2)); print(json.dumps(report))
+          if any(outcomes): raise SystemExit(1)
           PY
-          node tests/e2e/live-browser-persistence-block.mjs
-      - name: Archive built code for offline reproduction
-        if: always()
-        run: |
-          mkdir -p artifacts/local-caa-diagnostic
-          tar -czf artifacts/local-caa-diagnostic/build.tar.gz dist/public tests/e2e/live-browser-persistence-block.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
