@@ -1,0 +1,63 @@
+name: Agenda CI browser diagnosis (local fixtures only)
+on:
+  push:
+    branches: [diagnose/agenda-live-20260928]
+    paths: [.github/workflows/agenda-ci-diagnostic-20260928.yml]
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: '998cc774043bb90002755bf47a9e973a2dfce67a'
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:client
+        env:
+          NODE_ENV: production
+          VITE_AUTH_MODE: remote
+          VITE_API_URL: ''
+      - name: Preserve assertions and add local-loopback-only failure diagnostics
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/e2e/live-browser-persistence-block.mjs')
+          s=p.read_text()
+          s=s.replace('import assert from "node:assert/strict";', 'import assert from "node:assert/strict";\nimport { mkdirSync, writeFileSync } from "node:fs";')
+          target='await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor();'
+          assert s.count(target)==2
+          for label in ['after_reload','after_route_exit']:
+              replacement='''console.log("CAA_DIAG_LABEL", JSON.stringify(await page.evaluate(() => ({ hash:location.hash, input:document.querySelector('#caa-search')?.value, syntheticCards:[...document.querySelectorAll('.np-scale-item')].filter(x=>x.textContent.includes('Mensagem sintética CAA E2E')).length, empty:document.body.textContent.includes('Nenhum cartão encontrado neste filtro.') }))));
+          await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor().catch(async error => {
+            mkdirSync('artifacts/local-caa-diagnostic', {recursive:true});
+            writeFileSync('artifacts/local-caa-diagnostic/LABEL.html', await page.content());
+            await page.screenshot({path:'artifacts/local-caa-diagnostic/LABEL.png'});
+            throw error;
+          });'''.replace('LABEL',label)
+              s=s.replace(target,replacement,1)
+          s=s.replace('error.message);','error.stack);')
+          p.write_text(s)
+          PY
+          node tests/e2e/live-browser-persistence-block.mjs
+      - name: Archive built code for offline reproduction
+        if: always()
+        run: |
+          mkdir -p artifacts/local-caa-diagnostic
+          tar -czf artifacts/local-caa-diagnostic/build.tar.gz dist/public tests/e2e/live-browser-persistence-block.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: local-caa-diagnostic-${{ github.run_id }}
+          path: artifacts/local-caa-diagnostic/
+          retention-days: 3
+          if-no-files-found: error
