@@ -287,10 +287,23 @@ async function assertNoTouches(page, label) {
     `${label}: persistência clínica browser-side tocada em LIVE: ${JSON.stringify(touches)}`);
 }
 
+async function waitForCaaContext(page) {
+  // sessionStorage survives reload: its old tenant id does not prove React
+  // finished restoring ClinicContext. Wait for the rendered context before
+  // typing into a workspace that is intentionally remounted on tenant changes.
+  await page.waitForFunction(() => {
+    const selected = document.querySelector('[data-testid="select-active-clinic"]');
+    return selected?.value === "tenant-red-synthetic"
+      && !document.querySelector('[aria-label="Carregando clínicas"]');
+  }, null, { timeout: 15000 });
+  await page.getByTestId("caa-session-only").waitFor({ timeout: 15000 });
+}
+
 async function exerciseCaa(page, base) {
   const customText = "Mensagem sintética CAA E2E";
   await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ timeout: 15000 });
   await page.waitForFunction(() => sessionStorage.getItem("neuroped:active-clinic-id") === "tenant-red-synthetic");
+  await waitForCaaContext(page);
   await page.getByTestId("caa-session-only").waitFor();
   assert.equal(await page.getByTestId("live-browser-local-clinical-route-blocked").count(), 0);
   await assertNoTouches(page, "CAA: mount sem restauração de sentinelas legadas");
@@ -366,6 +379,7 @@ async function exerciseCaa(page, base) {
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.getByTestId("caa-session-only").waitFor({ timeout: 15000 });
   await page.waitForFunction(() => sessionStorage.getItem("neuroped:active-clinic-id") === "tenant-red-synthetic");
+  await waitForCaaContext(page);
   assert.equal(await speakPhrase.isDisabled(), true);
   await search.fill(customText);
   await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor();
@@ -382,8 +396,14 @@ async function exerciseCaa(page, base) {
 
   await page.goto(`${base}/#/familia`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "hidden" });
+  // Suspense can hide the old CAA while the lazy family route is still loading.
+  // Prove that navigation actually committed, not merely that CAA was hidden,
+  // before returning and asserting disposal of the previous workspace.
+  await page.getByRole("heading", { name: "Bem-vindo(a) ao NeuroPed", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Vou Falar!", exact: true }).waitFor({ state: "detached" });
   await page.goto(`${base}/#/caa`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("caa-session-only").waitFor();
+  await waitForCaaContext(page);
   assert.equal(await speakPhrase.isDisabled(), true);
   await search.fill(customText);
   await page.getByText("Nenhum cartão encontrado neste filtro.", { exact: true }).waitFor();
