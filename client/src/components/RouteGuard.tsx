@@ -12,6 +12,8 @@ import {
 } from "@/lib/masterPin";
 import { isLiveBrowserLocalClinicalRouteDenied } from "@/lib/clinicalBrowserPersistencePolicy";
 
+import { ClinicRouteBoundary } from "@/components/ClinicRouteBoundary";
+
 export { isRouteSensitive, SENSITIVE_ROUTES };
 
 type RouteRole = "admin" | "professional" | "reader" | "operator";
@@ -116,7 +118,7 @@ export function RouteGuard({ children, roles }: { children: ReactNode; roles?: R
     );
   }
 
-  return <>{children}</>;
+  return <ClinicRouteBoundary path={location}>{children}</ClinicRouteBoundary>;
 }
 
 export { operationalRolesForPath };

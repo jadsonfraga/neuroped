@@ -48,10 +48,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function ClinicSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { accessMode, isAuthenticated } = useAuth();
-  const { clinics, activeClinicId, activeClinic, isLoading, error, setActiveClinicId } = useClinic();
+  const { clinics, activeClinicId, activeClinic, isLoading, error, setActiveClinicId, reloadClinics } = useClinic();
   const billingBadge = useBillingBadge(accessMode === "remote" && isAuthenticated ? activeClinicId : null);
 
-  if (accessMode !== "remote" || !isAuthenticated || (!isLoading && clinics.length === 0 && !error)) return null;
+  if (accessMode !== "remote" || !isAuthenticated) return null;
 
   if (collapsed) {
     return (
@@ -115,7 +115,12 @@ export function ClinicSwitcher({ collapsed = false }: { collapsed?: boolean }) {
             )}
           </>
         ) : (
-          <p className="px-1 text-[11px] text-muted-foreground">Nenhuma clínica ativa disponível.</p>
+          <p className="px-1 text-[11px] text-muted-foreground">{isLoading ? "Carregando clínicas…" : "Nenhuma clínica ativa disponível."}</p>
+        )}
+        {!isLoading && (error || clinics.length === 0) && (
+          <button type="button" className="mt-2 rounded-lg border px-2 py-1 text-xs font-semibold" onClick={() => void reloadClinics()}>
+            Atualizar vínculo da clínica
+          </button>
         )}
       </div>
     </div>
