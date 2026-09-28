@@ -34,7 +34,7 @@ jobs:
             return {status:r.status,body:b};
           }
           function safe(r) {
-            const errors=(r.body.errors||[]).map(e=>({code:e.code,sqlRequired:/sql.*required|required.*sql/i.test(e.message||''),permissionDenied:/permission|not authorized|unauthorized/i.test(e.message||''),constraint:/constraint/i.test(e.message||'')}));
+            const errors=(r.body.errors||[]).map(e=>({code:e.code,sqlRequired:/sql.*required|required.*sql/i.test(e.message||''),permissionDenied:/permission|not authorized|unauthorized/i.test(e.message||''),constraint:/constraint/i.test(e.message||''),malformedJson:/malformed JSON/i.test(e.message||''),syntax:/syntax/i.test(e.message||''),foreignKey:/foreign key/i.test(e.message||'')}));
             return {httpStatus:r.status,success:r.body.success,resultCount:Array.isArray(r.body.result)?r.body.result.length:null,errors};
           }
           async function q(sql,params=[]) {
@@ -44,12 +44,13 @@ jobs:
           }
           report.singleSelect=safe(await send({sql:'SELECT 1 AS ok',params:[]}));
           report.batchSelect=safe(await send({batch:[{sql:'SELECT 1 AS ok',params:[]},{sql:'SELECT 2 AS ok',params:[]}]}));
-          const users=await q('SELECT id, role, is_active FROM users WHERE lower(email)=?', [process.env.OWNER_EMAIL.trim().toLowerCase()]);
+          const email=process.env.OWNER_EMAIL.trim().toLowerCase();
+          const users=await q('SELECT id, role, is_active FROM users WHERE lower(email)=?', [email]);
           report.owner={matches:users.length,active:users[0]?.is_active,role:users[0]?.role};
           if(users.length===1) {
             const uid=users[0].id;
             const suffix=createHash('sha256').update(`neuroped:institutional:${uid}`).digest('hex').slice(0,24);
-            const cid=`institutional-${suffix}`,bid=`internal-${suffix}`,aid=`institutional-agenda-v1-${suffix}`;
+            const cid=`institutional-${suffix}`,bid=`internal-${suffix}`,aid=`institutional-agenda-v1-${suffix}`,slug=`neuroped-sdg-${suffix.slice(0,12)}`;
             report.persisted=(await q(`SELECT
               (SELECT COUNT(*) FROM clinics WHERE id=?) AS target_clinics,
               (SELECT COUNT(*) FROM clinics WHERE created_by_user_id=?) AS owned_clinics,
@@ -57,11 +58,19 @@ jobs:
               (SELECT COUNT(*) FROM clinic_memberships WHERE user_id=? AND clinic_id=? AND role='owner' AND active=1) AS target_owner_memberships,
               (SELECT COUNT(*) FROM billing_customers WHERE id=? AND clinic_id=?) AS target_customers,
               (SELECT COUNT(*) FROM saas_audit_log WHERE id=? AND clinic_id=?) AS target_audits`,[cid,uid,uid,uid,cid,bid,cid,aid,cid]))[0];
+            const guard={sql:`SELECT CASE WHEN
+              (SELECT COUNT(*) FROM users WHERE id = ? AND lower(email) = ? AND role = 'admin' AND is_active = 1) = 1
+              AND (SELECT COUNT(*) FROM clinic_memberships WHERE user_id = ?) = 0
+              AND (SELECT COUNT(*) FROM clinics WHERE created_by_user_id = ? OR id = ? OR slug = ?) = 0
+              THEN 1 ELSE json('AGENDA_SETUP_PRECONDITION_FAILED') END AS ok`,params:[uid,email,uid,uid,cid,slug]};
+            const guardReply=await send({batch:[guard]});
+            report.atomicPrecondition={...safe(guardReply),ok:guardReply.body.result?.[0]?.results?.[0]?.ok===1};
           }
           report.schema={};
-          for(const table of ['clinics','clinic_memberships','billing_customers','saas_audit_log']) {
+          for(const table of ['users','clinics','clinic_memberships','billing_customers','saas_audit_log']) {
             report.schema[table]=(await q('SELECT sql FROM sqlite_master WHERE type=? AND name=?',['table',table]))[0]?.sql;
           }
+          report.schemaTriggers=await q("SELECT name, sql FROM sqlite_master WHERE type='trigger' AND tbl_name IN ('users','clinics','clinic_memberships','billing_customers','saas_audit_log')");
           mkdirSync('artifacts/agenda-reconcile',{recursive:true});
           writeFileSync('artifacts/agenda-reconcile/receipt.json',JSON.stringify(report,null,2));
           console.log(JSON.stringify(report,null,2));
