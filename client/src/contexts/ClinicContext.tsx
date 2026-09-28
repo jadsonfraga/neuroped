@@ -68,10 +68,14 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
   const switchGeneration = useRef(0);
   const requestGeneration = useRef(0);
   const requestController = useRef<AbortController | null>(null);
-  const authScope = JSON.stringify([accessMode, isAuthenticated, isAuthLoading, user?.id, user?.mustChangePassword]);
+  const authScope = JSON.stringify([accessMode, isAuthenticated, isAuthLoading, user?.id, user?.mustChangePassword, getAuthSessionEpoch()]);
   const currentAuthScope = useRef(authScope);
   currentAuthScope.current = authScope;
   const [loadedScope, setLoadedScope] = useState<string | null>(null);
+  const cancelClinicRequest = useCallback(() => {
+    ++requestGeneration.current;
+    requestController.current?.abort();
+  }, []);
 
   const reloadClinics = useCallback(async () => {
     // Durante o bootstrap remoto, AuthProvider ainda está descobrindo capacidade
@@ -146,11 +150,8 @@ export function ClinicProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void reloadClinics();
-    return () => {
-      ++requestGeneration.current;
-      requestController.current?.abort();
-    };
-  }, [reloadClinics]);
+    return cancelClinicRequest;
+  }, [reloadClinics, cancelClinicRequest]);
 
   const setActiveClinicId = useCallback((clinicId: string) => {
     if (loadedScope !== authScope || isLoading) return;
