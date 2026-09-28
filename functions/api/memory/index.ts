@@ -1,5 +1,6 @@
 import { memoryNoteInputSchema } from "../../../shared/memory";
 import { canWriteClinicalData, getContextUser, getPatientAccess, isAdmin } from "../auth/_authorization";
+import { escapeLike } from "../patients/_contract";
 
 interface Env { DB?: D1Database }
 
@@ -46,11 +47,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return error("Selecione um paciente para consultar a memória.", "PATIENT_REQUIRED", 400);
   }
   await ensureSchema(context.env.DB);
+  // LEG-17 (docs/audits/SAAS_TENANCY_AUDIT_2026-09-26.md): sem escapar % e _,
+  // um termo de busca com esses caracteres é lido como curinga em vez de
+  // texto literal, distorcendo o resultado dentro do próprio paciente
+  // autorizado (sem impacto de isolamento — o predicado de patient_id acima
+  // já restringe o escopo).
+  const likeTerm = `%${escapeLike(query)}%`;
   const result = await context.env.DB.prepare(`SELECT id, patient_id, title, content, category, source, tags, author_user_id, created_at, updated_at
     FROM clinical_memory_notes_demo WHERE is_demo = 1 AND (? = '' OR patient_id = ?)
-      AND (? = '' OR title LIKE ? OR content LIKE ? OR tags LIKE ?)
+      AND (? = '' OR title LIKE ? ESCAPE '\\' OR content LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\')
     ORDER BY updated_at DESC LIMIT 100`)
-    .bind(patientId, patientId, query, `%${query}%`, `%${query}%`, `%${query}%`).all<Row>();
+    .bind(patientId, patientId, query, likeTerm, likeTerm, likeTerm).all<Row>();
   const data = (result.results ?? []).map(present);
   return json({ data, total: data.length, mode: "demo-db" });
 };
