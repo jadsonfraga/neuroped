@@ -1,31 +1,113 @@
 # Criptografia clínica e armazenamento LGPD — bloqueios externos verificados
 
-Verificação em 26/09/2026, sobre a auditoria read-only do PR #964 (run 36210615059) e o health publicado. O código já criptografa corretamente e já tem o adapter R2; o que falta é provisionamento na conta Cloudflare, que nenhuma execução daqui pode criar.
+Reverificação em 28/09/2026 sobre o HEAD `966debf88065862e8f446688322e435a678b5cba`, após o deploy Cloudflare
+run `36369651852` e o audit read-only `36370524799` (job `108765713935`).
+O código continua fail-closed e as regressões de provisionamento passaram; a
+produção clínica/LGPD permanece **NO-GO** até a prova remota ficar verde.
+
+## Evidência vigente em 28/09/2026
+
+O artefato metadata-only `clinical-lgpd-readiness-36370524799` mostrou, sem
+ler valores de secret nem dados clínicos:
+
+- `CLINICAL_LIVE_ENABLED=true`, D1 `DB` operacional e schema LGPD pronto.
+- `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID` e `CLINICAL_INDEX_KEY`
+  existem no metadata do Pages com tipo `secret_text`.
+- A presença do nome de um secret no metadata **não prova valor utilizável no
+  runtime**. O endpoint restrito de diagnóstico respondeu
+  `configured=false`, código `CLINICAL_CRYPTO_NOT_CONFIGURED`.
+- Pelo contrato de `functions/api/tenant/_crypto.ts`, esse código é emitido
+  quando a chave clínica corrente `CLINICAL_DATA_KEY` chega ausente, vazia,
+  apenas whitespace ou com menos de 32 caracteres. O audit não lê nem deve
+  ler o valor, portanto não é possível distinguir entre essas alternativas
+  sem atuação do custodiante da chave.
+- R2: `bindingPresent=false` e `apiPermission=denied`.
+- Runtime: `lgpdExport.storageBindingPresent=false` e
+  `lgpdExport.configured=false`.
+- Blockers finais: `CLINICAL_CRYPTO_NOT_READY`,
+  `LGPD_BUCKET_NOT_CONFIGURED` e `LGPD_EXPORT_NOT_CONFIGURED`.
+
+Esta atualização substitui a interpretação histórica de 26/09 de que os
+**nomes** dos secrets estavam ausentes. Hoje os nomes existem; o keyring
+corrente continua inválido no runtime.
 
 ## Bloqueio 1 — keyring clínico (CLINICAL_CRYPTO_NOT_READY)
 
-Sistema: projeto Cloudflare Pages `neuroped`, secrets de produção. Ausentes: `CLINICAL_DATA_KEY`, `CLINICAL_DATA_KEY_ID`, `CLINICAL_INDEX_KEY`.
+Sistema: projeto Cloudflare Pages `neuroped`, secrets de produção.
 
-Permissão exata: token com `Cloudflare Pages: Edit` (o token de deploy já tem) e custódia humana das chaves. Não é gerado em CI de propósito: uma chave que só existe dentro do Pages não tem cópia de guarda, e perdê-la torna irrecuperável todo dado clínico cifrado.
+Código/configuração versionável: nenhuma falha demonstrada. O keyring é
+validado por `clinicalCryptoStatus()`; o runtime falha fechado e não grava
+prontuário LIVE em claro.
 
-Ação que falta: rodar localmente `node scripts/ops/generate-clinical-keyring.mjs`, guardar os três valores no cofre de senhas e aplicar com os três comandos `wrangler pages secret put` que o script imprime.
+Dependência externa: recuperar da custódia humana um `CLINICAL_DATA_KEY`
+válido (mínimo 32 caracteres) e confirmar também que
+`CLINICAL_DATA_KEY_ID` respeita `^[A-Za-z0-9_-]{1,32}$` e que
+`CLINICAL_INDEX_KEY` tem ao menos 32 caracteres e é diferente das chaves de
+dados. O script `node scripts/ops/generate-clinical-keyring.mjs` gera um
+novo conjunto válido e imprime os comandos `wrangler pages secret put`,
+mas **não gerar/substituir cegamente uma chave existente**: se houver
+ciphertext histórico, uma chave nova não recupera o conteúdo cifrado com uma
+chave perdida. Nesse cenário, restaurar a chave original de sua custódia ou
+executar antes um inventário operacional metadata-only das versões de chave.
 
-Risco de não executar: prontuário LIVE e Escuta continuam fail-closed; nenhum dado clínico é gravado em claro, mas os módulos não abrem.
+Permissão/ação externa: custódia humana das chaves e acesso de edição aos
+secrets do Cloudflare Pages. Nenhuma chave deve ser inventada, impressa em CI,
+commitada ou registrada em artefato.
 
-Verificação de conclusão: `GET https://neuroped.pages.dev/api/health` sem `CLINICAL_CRYPTO_NOT_READY` em `readiness.blockers`; workflow "Clinical and LGPD production readiness audit" com `clinicalCryptoConfigured: true`.
+Risco de não executar: prontuário LIVE e Escuta continuam fail-closed; os
+módulos clínicos não ficam aptos para produção.
+
+Verificação de conclusão: o diagnóstico restrito
+`/api/admin/clinical-crypto-readiness` precisa retornar
+`{"configured":true}`, e `/api/health` não pode conter
+`CLINICAL_CRYPTO_NOT_READY`.
 
 ## Bloqueio 2 — bucket privado de exportação LGPD (LGPD_BUCKET_NOT_CONFIGURED)
 
-Sistema: conta Cloudflare, R2. A auditoria devolveu `r2.apiPermission: denied`: o `CLOUDFLARE_API_TOKEN` do GitHub não tem permissão R2, então o bucket não pode ser conferido nem criado pelo pipeline.
+Sistema: conta Cloudflare, R2.
 
-Permissão exata: adicionar ao token `Workers R2 Storage: Edit` (escopo da conta), ou criar manualmente no painel o bucket `neuroped-lgpd-exports`.
+Código/configuração versionável: o `wrangler.toml` do HEAD contém
+`CLINICAL_LIVE_ENABLED=true` e o D1 `DB`, mas **deliberadamente não contém
+binding R2 versionado**. A regressão
+`tests/unit/clinical-lgpd-provisioning-static.test.mjs` exige esse
+comportamento: o deploy só acrescenta
+`[[r2_buckets]] / LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports` na execução
+em que o bucket foi previamente comprovado. Isso evita apontar produção para
+um recurso inexistente.
 
-O que já está construído: o workflow `deploy-cloudflare.yml` passou a conferir o bucket a cada deploy; com permissão, cria o bucket se faltar, adiciona o binding `LGPD_EXPORT_BUCKET` ao `wrangler.toml` daquela execução e, depois do deploy, verifica nos metadados do projeto que o binding entrou e que o binding D1 `DB` continua presente (fail-closed). Sem permissão, declara `BLOCKED_EXTERNAL_R2_TOKEN_PERMISSION` e segue sem o binding.
+Dependência externa comprovada: o `CLOUDFLARE_API_TOKEN` recebeu HTTP 403 ao
+consultar R2. Há dois caminhos válidos, mas eles não são equivalentes:
 
-Risco de não executar: `LGPD_EXPORT_NOT_CONFIGURED` permanece; exportação e eliminação LGPD não podem ser marcadas `completed` porque não há efeito físico verificável.
+1. **caminho automatizado (preferido):** adicionar ao token da automação a
+   permissão de conta `Workers R2 Storage: Edit`. O workflow
+   `.github/workflows/deploy-cloudflare.yml` então confere o bucket, cria
+   `neuroped-lgpd-exports` apenas no 404, injeta o binding
+   `LGPD_EXPORT_BUCKET` somente se o recurso existir, faz o deploy e verifica
+   nos metadados do Pages tanto o R2 quanto o D1 `DB`;
+2. **caminho manual:** criar o bucket privado `neuroped-lgpd-exports` e
+   configurar explicitamente no Cloudflare Pages de produção o binding
+   `LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports`.
 
-Verificação de conclusão: passo "Verificar efeito do provisionamento LGPD" com ✅ no deploy; health com `lgpdExport.storageBindingPresent: true`.
+Criar **somente** o bucket pelo painel, mantendo o token com HTTP 403, não
+desbloqueia o pipeline atual: a etapa de deploy não consegue comprovar o
+recurso, mantém `available=0` e não injeta o binding.
 
-## Estado e reversão
+Risco de não executar: `LGPD_EXPORT_NOT_CONFIGURED` permanece; exportações
+LGPD não têm armazenamento privado verificável e o worker continua
+fail-closed.
 
-Nenhum segredo criado, lido ou exposto. Nenhum deploy alterado até o merge deste PR. Rollback: reverter o commit; o `wrangler.toml` versionado não muda.
+Verificação de conclusão: deploy precisa registrar o binding
+`LGPD_EXPORT_BUCKET -> neuroped-lgpd-exports`; `/api/health` deve mostrar
+`lgpdExport.storageBindingPresent=true` e `lgpdExport.configured=true`.
+
+## Critério de GO
+
+Não declarar prontidão clínica/LGPD apenas porque build, deploy ou health
+básico passaram. O único GO aceitável para este bloqueio é nova execução do
+workflow **Clinical and LGPD production readiness audit** com
+`ready=true`, sem blockers. Até lá: **NO-GO**.
+
+## Reversão
+
+Esta documentação não altera secrets, chaves, bucket, dados nem o deploy.
+Rollback: reverter apenas o commit documental/regressão correspondente.
