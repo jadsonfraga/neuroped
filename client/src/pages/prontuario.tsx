@@ -1511,6 +1511,7 @@ export default function ProntuarioPage() {
                         size="icon"
                         className="w-7 h-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 ml-auto"
                         onClick={() => removeMed(med.id)}
+                        aria-label={`Remover medicação ${med.nome || ""}`.trim()}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
@@ -1644,6 +1645,7 @@ export default function ProntuarioPage() {
                       size="icon"
                       className="w-7 h-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 ml-auto"
                       onClick={() => removeTer(ter.id)}
+                      aria-label={`Remover terapia ${ter.tipo || ""}`.trim()}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -1775,6 +1777,7 @@ export default function ProntuarioPage() {
                       size="icon"
                       className={`w-7 h-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 ${ex.status ? "" : "ml-auto"}`}
                       onClick={() => removeExame(ex.id)}
+                      aria-label={`Remover exame ${ex.tipo || ""}`.trim()}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>

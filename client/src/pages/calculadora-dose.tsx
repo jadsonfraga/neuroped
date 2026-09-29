@@ -143,6 +143,7 @@ export default function CalculadoraDosePage() {
                 min={1}
                 max={150}
                 data-testid="input-weight"
+                aria-label="Peso da criança (kg)"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">kg</span>
             </div>
@@ -156,6 +157,7 @@ export default function CalculadoraDosePage() {
             <div className="relative">
               <Input
                 placeholder="Digite o nome ou indicação..."
+                aria-label="Medicamento"
                 value={search}
                 onChange={e => {
                   setSearch(e.target.value);

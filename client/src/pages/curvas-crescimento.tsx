@@ -300,6 +300,7 @@ export default function CurvasCrescimentoPage() {
                   className="pr-10"
                   min={0} max={18}
                   data-testid="input-age-years"
+                  aria-label="Idade (anos)"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">anos</span>
               </div>
@@ -312,6 +313,7 @@ export default function CurvasCrescimentoPage() {
                   className="pr-12"
                   min={0} max={11}
                   data-testid="input-age-months"
+                  aria-label="Idade (meses)"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">meses</span>
               </div>
@@ -328,6 +330,7 @@ export default function CurvasCrescimentoPage() {
                 value={weight}
                 onChange={e => setWeight(e.target.value)}
                 data-testid="input-weight-growth"
+                aria-label="Peso (kg)"
               />
             </div>
             <div className="space-y-1">
@@ -338,6 +341,7 @@ export default function CurvasCrescimentoPage() {
                 value={height}
                 onChange={e => setHeight(e.target.value)}
                 data-testid="input-height"
+                aria-label="Altura (cm)"
               />
             </div>
             <div className="space-y-1">
@@ -348,6 +352,7 @@ export default function CurvasCrescimentoPage() {
                 value={hc}
                 onChange={e => setHc(e.target.value)}
                 data-testid="input-hc"
+                aria-label="Perímetro cefálico (cm)"
               />
             </div>
           </div>
