@@ -22,6 +22,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   provision-test-deploy:
@@ -73,6 +74,14 @@ jobs:
           set -euo pipefail
           [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
           [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (deploy)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: deploy
+          TIMEOUT_MINUTES: "60"
+        run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Aplicar cofre e staging D1 do bridge
         env:

@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 # Main serializa a migração; cada PR valida seu próprio candidato sem disputar
 # a única vaga pendente com outro PR. O job de migração continua exclusivo de main.
@@ -59,7 +60,7 @@ jobs:
     needs: validate-identity-settings
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 40 # inclui até 30 min de espera na fila D1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -77,6 +78,13 @@ jobs:
           set -euo pipefail
           [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
           [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
+
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (migration)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: migration
+        run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Apply migration 0019
         env:

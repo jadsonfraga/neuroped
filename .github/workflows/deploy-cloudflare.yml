@@ -47,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
 
     steps:
       - name: Checkout do repositório
@@ -161,6 +162,14 @@ jobs:
             echo "::error::Falha inesperada ao consultar/criar o projeto Cloudflare Pages."
             exit 1
           fi
+
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (deploy)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: deploy
+          TIMEOUT_MINUTES: "60"
+        run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Migrar D1 — auth, ownership e sessões (idempotente)
         env:
