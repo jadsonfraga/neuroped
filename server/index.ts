@@ -109,7 +109,23 @@ app.use((req, res, next) => {
   const port = boundedIntegerEnv("PORT", 5000, 1, 65535);
   const host = process.env.HOST || "0.0.0.0";
   // reusePort não é suportado no Windows (EINVAL) — desliga fora de plataformas POSIX.
+  // Erros de bind (porta ocupada, sem permissão) chegam como evento, não exceção.
+  httpServer.on("error", (error: NodeJS.ErrnoException) => {
+    const hint =
+      error.code === "EADDRINUSE"
+        ? ` — a porta ${port} já está em uso; encerre o outro processo ou defina PORT.`
+        : error.code === "EACCES"
+          ? ` — sem permissão para usar a porta ${port}; use uma porta acima de 1024.`
+          : "";
+    console.error(`[startup] falha ao escutar em ${host}:${port}${hint}`, error);
+    process.exit(1);
+  });
   httpServer.listen({ port, host, reusePort: process.platform !== "win32" }, () => {
     log(`NeuroPed EDJ rodando em http://${host}:${port}`);
   });
-})();
+})().catch((error: unknown) => {
+  // Sem este catch, uma falha em registerRoutes/setupVite virava rejeição não
+  // tratada e o processo podia ficar vivo sem servir nada.
+  console.error("[startup] o servidor não conseguiu iniciar:", error);
+  process.exit(1);
+});
