@@ -8,6 +8,7 @@ import {
   authorizationError,
   getContextUser,
   getPatientAccess,
+  patientOwnerPredicate,
 } from "../../auth/_authorization";
 import { isValidPatientId, parsePositiveInteger } from "../_contract";
 import { json } from "../../_request";
@@ -96,14 +97,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
     }
 
+    const owner = patientOwnerPredicate(user);
     let total: number | null = null;
     if (paginationRequested) {
       const countResult = await env.DB.prepare(
         `SELECT COUNT(*) AS total
            FROM scale_results_demo
-          WHERE patient_id = ? AND is_demo = 1`,
+          WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}`,
       )
-        .bind(patientId)
+        .bind(patientId, ...owner.binds)
         .first<{ total: number }>();
       total = Number(countResult?.total ?? 0);
       if (!Number.isSafeInteger(total) || total < 0) {
@@ -114,12 +116,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const rows = await env.DB.prepare(
       `SELECT id, patient_id, scale_id, scale_name, details, applied_at, is_demo
            FROM scale_results_demo
-          WHERE patient_id = ? AND is_demo = 1
+          WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}
           ORDER BY applied_at DESC, id DESC
           LIMIT ? OFFSET ?`,
     )
       .bind(
         patientId,
+        ...owner.binds,
         paginationRequested ? limit : MAX_RESULTS_PAGE_SIZE,
         paginationRequested ? offset : 0,
       )

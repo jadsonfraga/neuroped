@@ -9,7 +9,7 @@ import {
   canWriteClinicalData,
   getContextUser,
   getPatientAccess,
-  isAdmin,
+  patientOwnerPredicate,
 } from "../auth/_authorization";
 import {
   isValidPatientId,
@@ -131,14 +131,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
     }
 
+    // AGENTS.md: o owner se repete no predicado SQL final de cada leitura —
+    // se o paciente mudar de dono depois de getPatientAccess, nada vaza.
+    const owner = patientOwnerPredicate(user);
     const patient = await env.DB.prepare(
       `SELECT id, name, birth_date, guardian_name, guardian_phone,
                 diagnosis_code, notes, is_demo, created_at, updated_at
            FROM patients_demo
-          WHERE id = ? AND is_demo = 1
+          WHERE id = ? AND is_demo = 1 ${owner.patientClause}
           LIMIT 1`,
     )
-      .bind(id)
+      .bind(id, ...owner.binds)
       .first<PatientDatabaseRow>();
 
     if (!patient) {
@@ -148,21 +151,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const consultations = await env.DB.prepare(
       `SELECT id, date, subjective, objective, assessment, plan, created_at
            FROM consultations_demo
-          WHERE patient_id = ? AND is_demo = 1
+          WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}
           ORDER BY date DESC
           LIMIT 10`,
     )
-      .bind(id)
+      .bind(id, ...owner.binds)
       .all();
 
     const scales = await env.DB.prepare(
       `SELECT id, scale_id, scale_name, details, applied_at
            FROM scale_results_demo
-          WHERE patient_id = ? AND is_demo = 1
+          WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}
           ORDER BY applied_at DESC
           LIMIT 20`,
     )
-      .bind(id)
+      .bind(id, ...owner.binds)
       .all();
 
     return jsonResponse({
@@ -265,15 +268,14 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
     const setClauses = entries.map(([field]) => `${field} = ?`);
     setClauses.push("updated_at = ?");
     const values = entries.map(([, value]) => value);
-    const ownerClause = isAdmin(user!) ? "" : "AND owner_user_id = ?";
-    const ownerBinds = isAdmin(user!) ? [] : [user!.id];
+    const owner = patientOwnerPredicate(user!);
 
     const result = await env.DB.prepare(
       `UPDATE patients_demo
             SET ${setClauses.join(", ")}
-          WHERE id = ? AND is_demo = 1 ${ownerClause}`,
+          WHERE id = ? AND is_demo = 1 ${owner.patientClause}`,
     )
-      .bind(...values, now, id, ...ownerBinds)
+      .bind(...values, now, id, ...owner.binds)
       .run();
 
     if (!result.meta.changes) {
@@ -284,10 +286,10 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
       `SELECT id, name, birth_date, guardian_name, guardian_phone,
                 diagnosis_code, notes, is_demo, created_at, updated_at
            FROM patients_demo
-          WHERE id = ? AND is_demo = 1
+          WHERE id = ? AND is_demo = 1 ${owner.patientClause}
           LIMIT 1`,
     )
-      .bind(id)
+      .bind(id, ...owner.binds)
       .first<PatientDatabaseRow>();
 
     if (!patient) {
@@ -335,12 +337,15 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
     }
 
-    const ownerClause = isAdmin(user) ? "" : "AND owner_user_id = ?";
-    const ownerBinds = isAdmin(user) ? [] : [user.id];
+    // Os DELETEs das tabelas filhas também repetem o owner: sem isso, se o
+    // paciente mudasse de dono entre getPatientAccess e o batch, o DELETE do
+    // paciente não afetava nada (404), mas as consultas, escalas, documentos
+    // e notas do NOVO dono já tinham sido apagados no mesmo batch.
+    const owner = patientOwnerPredicate(user);
     const deletePatient = env.DB.prepare(
       `DELETE FROM patients_demo
-          WHERE id = ? AND is_demo = 1 ${ownerClause}`,
-    ).bind(id, ...ownerBinds);
+          WHERE id = ? AND is_demo = 1 ${owner.patientClause}`,
+    ).bind(id, ...owner.binds);
     const auditId = crypto.randomUUID();
     const ip =
       request.headers.get("CF-Connecting-IP") ??
@@ -349,14 +354,14 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
 
     const statements = [
       env.DB.prepare(
-        "DELETE FROM consultations_demo WHERE patient_id = ? AND is_demo = 1",
-      ).bind(id),
+        `DELETE FROM consultations_demo WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}`,
+      ).bind(id, ...owner.binds),
       env.DB.prepare(
-        "DELETE FROM scale_results_demo WHERE patient_id = ? AND is_demo = 1",
-      ).bind(id),
+        `DELETE FROM scale_results_demo WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}`,
+      ).bind(id, ...owner.binds),
       env.DB.prepare(
-        "DELETE FROM documents_demo WHERE patient_id = ? AND is_demo = 1",
-      ).bind(id),
+        `DELETE FROM documents_demo WHERE patient_id = ? AND is_demo = 1 ${owner.childClause}`,
+      ).bind(id, ...owner.binds),
       // Apagava de `memory_notes`, a tabela legada de db/schema.d1.sql, e não
       // de onde as notas realmente são gravadas — o log de auditoria declarava
       // memoryNotes entre os recursos cascateados enquanto as notas do paciente
@@ -364,13 +369,16 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
       // CASCADE, então este DELETE é redundante quando as foreign keys estão
       // ativas; mantido explícito para a exclusão não depender desse pragma.
       env.DB.prepare(
-        "DELETE FROM clinical_memory_notes_demo WHERE patient_id = ?",
-      ).bind(id),
+        `DELETE FROM clinical_memory_notes_demo WHERE patient_id = ? ${owner.childClause}`,
+      ).bind(id, ...owner.binds),
       deletePatient,
+      // Auditoria só quando o DELETE do paciente imediatamente anterior
+      // realmente removeu a linha — nunca registrar exclusão que não houve.
       env.DB.prepare(
         `INSERT INTO audit_logs
             (id, action, resource, resource_id, user_id, ip, details, created_at)
-           VALUES (?, 'patient.delete', 'patient', ?, ?, ?, ?, ?)`,
+           SELECT ?, 'patient.delete', 'patient', ?, ?, ?, ?, ?
+            WHERE changes() = 1`,
       ).bind(
         auditId,
         id,

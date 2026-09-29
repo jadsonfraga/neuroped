@@ -36,6 +36,14 @@ import {
   onRequestDelete as deleteMemoryNote,
 } from "../../functions/api/memory/[id]";
 import { onRequestDelete as deleteScaleResult } from "../../functions/api/results/[id]";
+import {
+  onRequestGet as getPatient,
+  onRequestDelete as deletePatient,
+} from "../../functions/api/patients/[id]";
+import { onRequestGet as listPatientResults } from "../../functions/api/patients/[id]/results";
+import { onRequestPost as createUiResult } from "../../functions/api/results";
+import { onRequestPost as createScaleResult } from "../../functions/api/scales/results";
+import { onRequestPost as createConsultation } from "../../functions/api/consultations/index";
 
 // ── Banco: bootstrap real (mesma política de operations-tenant-isolation.test.ts) ──
 const raw = new DatabaseSync(":memory:");
@@ -129,7 +137,10 @@ function withOwnerRaceOnAccessCheck(
       },
     };
   };
-  return { prepare } as unknown as D1Database;
+  return {
+    prepare,
+    batch: (statements: Array<{ run(): Promise<unknown> }>) => base.batch(statements as never),
+  } as unknown as D1Database;
 }
 
 const now = new Date().toISOString();
@@ -295,3 +306,115 @@ console.log("✓ memory/[id].ts DELETE: repete owner no predicado final e verifi
   assert.equal(raw.prepare(`SELECT id FROM scale_results_demo WHERE id = ?`).get(resultId), undefined);
 }
 console.log("✓ results/[id].ts DELETE: repete owner no predicado final, verifica changes() e não afirma deleted:true sem efeito (LEG-09/AUTHZ-P2-12)");
+
+// ── Cenário 5: patients/[id].ts — DELETE com tabelas filhas ──
+// Antes, só o DELETE do paciente repetia o owner: na corrida ele não afetava
+// nada (404), mas o mesmo batch já tinha apagado consultas e escalas que
+// passaram a pertencer ao novo dono, e ainda gravava auditoria de exclusão.
+{
+  const patientId = "pac-delete-cascade";
+  criarPaciente(patientId);
+  raw.prepare(`INSERT INTO consultations_demo (id, patient_id, date, is_demo) VALUES ('cons-cascade', ?, '2026-09-01', 1)`).run(patientId);
+  raw.prepare(`INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, is_demo) VALUES ('res-cascade', ?, 'escala-teste', 'Escala de teste', 1)`).run(patientId);
+  const auditCount = () =>
+    (raw.prepare(`SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'patient.delete' AND resource_id = ?`).get(patientId) as { n: number }).n;
+
+  const racedDb = withOwnerRaceOnAccessCheck(db, patientId, 1, "owner-b");
+  const response = await deletePatient({
+    env: { DB: racedDb },
+    params: { id: patientId },
+    request: new Request("https://neuroped.invalid/api/patients/" + patientId, { method: "DELETE" }),
+    data: { authUser: ownerA() },
+  } as never);
+  assert.equal(response.status, 404, "patients DELETE: corrida de dono precisa ser barrada com 404");
+  assert.ok(raw.prepare(`SELECT id FROM patients_demo WHERE id = ?`).get(patientId), "paciente do novo dono permanece");
+  assert.ok(raw.prepare(`SELECT id FROM consultations_demo WHERE id = 'cons-cascade'`).get(), "consulta do novo dono não pode ser apagada");
+  assert.ok(raw.prepare(`SELECT id FROM scale_results_demo WHERE id = 'res-cascade'`).get(), "escala do novo dono não pode ser apagada");
+  assert.equal(auditCount(), 0, "sem exclusão efetiva, nenhuma auditoria de exclusão");
+
+  raw.prepare(`UPDATE patients_demo SET owner_user_id = 'owner-a' WHERE id = ?`).run(patientId);
+  const normalResponse = await deletePatient({
+    env: { DB: db },
+    params: { id: patientId },
+    request: new Request("https://neuroped.invalid/api/patients/" + patientId, { method: "DELETE" }),
+    data: { authUser: ownerA() },
+  } as never);
+  assert.equal(normalResponse.status, 200, "patients DELETE: caminho normal do dono legítimo não pode regredir");
+  assert.equal(raw.prepare(`SELECT id FROM consultations_demo WHERE id = 'cons-cascade'`).get(), undefined);
+  assert.equal(raw.prepare(`SELECT id FROM scale_results_demo WHERE id = 'res-cascade'`).get(), undefined);
+  assert.equal(raw.prepare(`SELECT id FROM patients_demo WHERE id = ?`).get(patientId), undefined);
+  assert.equal(auditCount(), 1, "exclusão efetiva gera exatamente uma auditoria");
+}
+console.log("✓ patients/[id].ts DELETE: tabelas filhas e auditoria respeitam o owner no predicado final");
+
+// ── Cenário 6: patients/[id].ts e patients/[id]/results.ts — leituras ──
+{
+  const patientId = "pac-read";
+  criarPaciente(patientId);
+  raw.prepare(`INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, is_demo) VALUES ('res-read', ?, 'escala-teste', 'Escala de teste', 1)`).run(patientId);
+
+  const racedGet = await getPatient({
+    env: { DB: withOwnerRaceOnAccessCheck(db, patientId, 1, "owner-b") },
+    params: { id: patientId },
+    data: { authUser: ownerA() },
+  } as never);
+  assert.equal(racedGet.status, 404, "patients GET: dado do novo dono não pode vazar após a checagem");
+  raw.prepare(`UPDATE patients_demo SET owner_user_id = 'owner-a' WHERE id = ?`).run(patientId);
+
+  const racedList = await listPatientResults({
+    env: { DB: withOwnerRaceOnAccessCheck(db, patientId, 1, "owner-b") },
+    params: { id: patientId },
+    request: new Request(`https://neuroped.invalid/api/patients/${patientId}/results`),
+    data: { authUser: ownerA() },
+  } as never);
+  assert.deepEqual(await racedList.json(), [], "patients/:id/results: resultados do novo dono não podem vazar");
+  raw.prepare(`UPDATE patients_demo SET owner_user_id = 'owner-a' WHERE id = ?`).run(patientId);
+
+  const normalGet = await getPatient({ env: { DB: db }, params: { id: patientId }, data: { authUser: ownerA() } } as never);
+  assert.equal(normalGet.status, 200);
+  const normalList = await listPatientResults({
+    env: { DB: db },
+    params: { id: patientId },
+    request: new Request(`https://neuroped.invalid/api/patients/${patientId}/results`),
+    data: { authUser: ownerA() },
+  } as never);
+  assert.equal((await normalList.json() as unknown[]).length, 1, "dono legítimo continua lendo os próprios resultados");
+}
+console.log("✓ patients/[id].ts GET e patients/[id]/results.ts: leituras repetem o owner no predicado final");
+
+// ── Cenário 7: inserções legadas (resultados, escalas, consultas) ──
+{
+  const patientId = "pac-insert";
+  criarPaciente(patientId);
+  const responses = [{ question: "Pergunta sintética", answer: "Resposta sintética" }];
+  const cases: Array<[string, PagesFunction<never>, Record<string, unknown>, string]> = [
+    ["results POST", createUiResult as never, { patientId, scaleName: "Escala sintética", responses }, "scale_results_demo"],
+    ["scales/results POST", createScaleResult as never, { patient_id: patientId, scale_id: "escala-sintetica", scale_name: "Escala sintética", responses }, "scale_results_demo"],
+    ["consultations POST", createConsultation as never, { patient_id: patientId, date: "2026-09-01", subjective: "Relato sintético." }, "consultations_demo"],
+  ];
+  for (const [label, handler, body, table] of cases) {
+    const count = () => (raw.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE patient_id = ?`).get(patientId) as { n: number }).n;
+    const before = count();
+    const post = (database: D1Database) =>
+      handler({
+        env: { DB: database },
+        params: {},
+        request: new Request("https://neuroped.invalid/api/legacy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }),
+        data: { authUser: ownerA() },
+      } as never);
+
+    const raced = await post(withOwnerRaceOnAccessCheck(db, patientId, 1, "owner-b"));
+    assert.equal(raced.status, 404, `${label}: corrida de dono precisa responder 404, nunca 201`);
+    assert.equal(count(), before, `${label}: nada é gravado no paciente do novo dono`);
+    raw.prepare(`UPDATE patients_demo SET owner_user_id = 'owner-a' WHERE id = ?`).run(patientId);
+
+    const normal = await post(db);
+    assert.equal(normal.status, 201, `${label}: caminho normal do dono legítimo não pode regredir`);
+    assert.equal(count(), before + 1, `${label}: registro gravado exatamente uma vez`);
+  }
+}
+console.log("✓ results, scales/results e consultations POST: INSERT final condicionado ao owner do paciente");

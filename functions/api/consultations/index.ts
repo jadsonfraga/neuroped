@@ -12,6 +12,7 @@ import {
   getContextUser,
   getPatientAccess,
   isAdmin,
+  patientOwnerPredicate,
 } from "../auth/_authorization";
 import {
   CLINICAL_INPUT_LIMITS,
@@ -202,13 +203,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const access = await getPatientAccess(env.DB, patient_id, user);
     if (!access.exists || !access.allowed) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
 
-    await env.DB
+    // O owner se repete no INSERT final: se o paciente mudar de dono depois
+    // de getPatientAccess, nada é gravado e a resposta é 404, nunca 201.
+    const owner = patientOwnerPredicate(user);
+    const inserted = await env.DB
       .prepare(
         `INSERT INTO consultations_demo (id, patient_id, date, subjective, objective, assessment, plan, is_demo, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`
+         SELECT ?, ?, ?, ?, ?, ?, ?, 1, ?
+          WHERE ${owner.existsClause}`
       )
-      .bind(id, patient_id, date, payload.subjective, payload.objective, payload.assessment, payload.plan, now)
+      .bind(id, patient_id, date, payload.subjective, payload.objective, payload.assessment, payload.plan, now, patient_id, ...owner.binds)
       .run();
+    if (!inserted.meta.changes) return errorResponse("Paciente não encontrado.", "NOT_FOUND", 404);
 
     return jsonResponse(payload, 201);
   } catch (err) {
