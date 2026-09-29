@@ -380,8 +380,12 @@ const paginatedResultsDb = new FakeDatabase({
     return null;
   },
   all: (statement) => {
-    const limit = Number(statement.bindings[1]);
-    const offset = Number(statement.bindings[2]);
+    // O owner se repete no predicado final (AGENTS.md): LIMIT/OFFSET são
+    // sempre os dois últimos binds, depois do paciente e do owner.
+    assert.match(statement.sql, /owner_user_id = \?/);
+    assert.deepEqual(statement.bindings.slice(0, 2), ["patient-1", professional.id]);
+    const limit = Number(statement.bindings.at(-2));
+    const offset = Number(statement.bindings.at(-1));
     return { results: resultRows.slice(offset, offset + limit) };
   },
 });

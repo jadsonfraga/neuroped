@@ -17,6 +17,7 @@ import {
   canWriteClinicalData,
   getContextUser,
   getPatientAccess,
+  patientOwnerPredicate,
 } from "./auth/_authorization";
 import {
   CLINICAL_INPUT_LIMITS,
@@ -186,9 +187,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return json({ error: "Paciente não encontrado.", code: "NOT_FOUND" }, 404);
     }
 
-    await env.DB.prepare(
+    // O owner se repete no INSERT final: se o paciente mudar de dono depois
+    // de getPatientAccess, nada é gravado e a resposta é 404, nunca 201.
+    const owner = patientOwnerPredicate(user);
+    const inserted = await env.DB.prepare(
       `INSERT INTO scale_results_demo (id, patient_id, scale_id, scale_name, score, interpretation, details, is_demo, applied_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+         SELECT ?, ?, ?, ?, ?, ?, ?, 1, ?
+          WHERE ${owner.existsClause}`,
     )
       .bind(
         id,
@@ -199,8 +204,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         null,
         details,
         applied_at,
+        patient_id,
+        ...owner.binds,
       )
       .run();
+    if (!inserted.meta.changes) {
+      return json({ error: "Paciente não encontrado.", code: "NOT_FOUND" }, 404);
+    }
     return json({ ...payload, mode: "db" }, 201);
   } catch (err) {
     console.error("[results.POST] DB error:", err);

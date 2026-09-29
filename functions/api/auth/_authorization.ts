@@ -47,6 +47,40 @@ export function canAccessOwnedPatient(
 }
 
 /**
+ * Predicado de owner a repetir no SQL FINAL de toda leitura/mutação clínica
+ * legada (AGENTS.md, regras de tenant): autorizar com getPatientAccess e
+ * depois ler/escrever só por id deixa uma janela em que o paciente muda de
+ * dono. Admin global segue sem filtro, como no restante das rotas legadas.
+ * - `patientClause`: para `patients_demo` (após `WHERE id = ?`).
+ * - `childClause`: para tabelas filhas por `patient_id`.
+ * - `existsClause`: para `INSERT ... SELECT ... WHERE <existsClause>`; seus
+ *   binds são `[patientId, ...binds]`.
+ */
+export function patientOwnerPredicate(user: PublicUser): {
+  patientClause: string;
+  childClause: string;
+  existsClause: string;
+  binds: string[];
+} {
+  if (isAdmin(user)) {
+    return {
+      patientClause: "",
+      childClause: "",
+      existsClause: "EXISTS (SELECT 1 FROM patients_demo WHERE id = ? AND is_demo = 1)",
+      binds: [],
+    };
+  }
+  return {
+    patientClause: "AND owner_user_id = ?",
+    childClause:
+      "AND patient_id IN (SELECT id FROM patients_demo WHERE owner_user_id = ? AND is_demo = 1)",
+    existsClause:
+      "EXISTS (SELECT 1 FROM patients_demo WHERE id = ? AND is_demo = 1 AND owner_user_id = ?)",
+    binds: [user.id],
+  };
+}
+
+/**
  * Consulta central de ownership para todas as tabelas clínicas relacionadas.
  * Registros legados sem owner permanecem acessíveis somente ao administrador.
  */
