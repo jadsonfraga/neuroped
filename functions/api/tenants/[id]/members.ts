@@ -84,7 +84,7 @@ async function hasOtherActiveOwner(
 
 export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
   const auth = await managerContext(contextForManager(context));
-  if ("error" in auth) return auth.error;
+  if (auth.error) return auth.error;
 
   const rows = await auth.db
     .prepare(
@@ -123,7 +123,7 @@ export const onRequestGet: PagesFunction<TenantEnv> = async (context) => {
 
 export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
   const auth = await managerContext(contextForManager(context));
-  if ("error" in auth) return auth.error;
+  if (auth.error) return auth.error;
 
   let body: Record<string, unknown>;
   try {
@@ -349,7 +349,7 @@ export const onRequestPost: PagesFunction<TenantEnv> = async (context) => {
 
 export const onRequestDelete: PagesFunction<TenantEnv> = async (context) => {
   const auth = await managerContext(contextForManager(context));
-  if ("error" in auth) return auth.error;
+  if (auth.error) return auth.error;
 
   const url = new URL(context.request.url);
   const targetUserId = cleanText(url.searchParams.get("userId"), 80);

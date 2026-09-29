@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { localIsoDate } from "@/lib/clinicalDate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +51,7 @@ function sanitizeEntries(value: unknown): EpilepsyEntry[] {
 function newEntry(): EpilepsyEntry {
   const now = new Date();
   return {
-    date: now.toISOString().slice(0, 10),
+    date: localIsoDate(now),
     time: now.toTimeString().slice(0, 5),
     type: "",
     duration: "",

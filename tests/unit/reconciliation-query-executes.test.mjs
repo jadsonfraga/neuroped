@@ -143,6 +143,24 @@ const assinaturaViva = (db, customerId) =>
   db.close();
 }
 
+// 3b) Cadastro institucional interno não faturável (provider 'none', criado e
+//     auditado por provision-institutional-agenda.mjs) é 'active' sem
+//     assinatura por desenho — não é divergência. O mesmo estado num customer
+//     faturável continua alarmando.
+{
+  const db = bancoLimpo();
+  db.prepare(
+    `INSERT INTO billing_customers (id, clinic_id, provider, status)
+     VALUES ('internal-1', 'institutional-1', 'none', 'active')`,
+  ).run();
+  let row = reconciliar(db);
+  assert.equal(row.customer_ativo_sem_assinatura, 0, "customer interno não faturável não é divergência");
+  cliente(db, "c3", "active");
+  row = reconciliar(db);
+  assert.equal(row.customer_ativo_sem_assinatura, 1, "customer faturável ativo sem assinatura continua detectado");
+  db.close();
+}
+
 // 4) Job LGPD com lease expirado — direito do titular parado, prazo correndo.
 {
   const db = bancoLimpo();

@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { authFetch } from "@/lib/authClient";
+import { apiQueryKeyMatches } from "@/lib/apiQueryKey";
 
 // Origem da API. Vazio = mesma origem (padrão; funciona no Cloudflare Pages, que
 // serve frontend + Functions juntos). Para que os mirrors estáticos (GitHub Pages
@@ -64,3 +65,13 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * Invalida todas as queries de um endpoint da API (qualquer página, busca,
+ * filtro ou sub-recurso). Ver `apiQueryKeyMatches`.
+ */
+export function invalidateApiQueries(endpoint: string) {
+  return queryClient.invalidateQueries({
+    predicate: (query) => apiQueryKeyMatches(query.queryKey, endpoint),
+  });
+}

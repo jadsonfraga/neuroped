@@ -37,7 +37,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
   const secret = env.NEUROPED_JWT_SECRET;
   if (!rawToken) return json({ ok: true }, 200);
-  if (!env.DB || (secret?.trim().length ?? 0) < 32) {
+  if (!env.DB || !secret || secret.trim().length < 32) {
     return json({ error: "Auth indisponível.", code: "AUTH_UNAVAILABLE" }, 503);
   }
   try {

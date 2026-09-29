@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { localIsoDate } from "@/lib/clinicalDate";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -103,7 +104,7 @@ function sanitizeEntries(value: unknown, fields: DiarioField[]): DiarioEntry[] {
 function emptyForm(fields: DiarioField[]): Record<string, string> {
   const f: Record<string, string> = {};
   for (const field of fields) {
-    if (field.type === "date") f[field.key] = new Date().toISOString().slice(0, 10);
+    if (field.type === "date") f[field.key] = localIsoDate();
     else f[field.key] = "";
   }
   return f;

@@ -1,7 +1,7 @@
 import { useState, useId } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, invalidateApiQueries, queryClient } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,7 +110,8 @@ export function SaveToPatient(rawProps: SaveToPatientProps) {
     },
     onSuccess: () => {
       setErrorMessage(null);
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      // Atualiza este seletor e também a lista paginada de /pacientes.
+      invalidateApiQueries(isRemoteClinical ? "/api/live/patients" : "/api/patients");
     },
     onError: () => {
       setErrorMessage(

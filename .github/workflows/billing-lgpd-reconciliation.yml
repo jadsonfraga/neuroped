@@ -59,6 +59,11 @@ jobs:
           [ -n "$CF_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN ausente"; exit 1; }
           [ -n "$CF_ACCOUNT" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID ausente"; exit 1; }
 
+      # provider = 'none' é o cadastro interno NÃO faturável criado de propósito
+      # e auditado por scripts/operations/provision-institutional-agenda.mjs
+      # (#1039/#1041): customer 'active' sem assinatura por desenho. Nenhum
+      # outro caminho grava provider 'none' (trigger/backfill usam 'asaas'),
+      # então a exclusão não esconde divergência de cliente faturável.
       - name: Consultar divergências (somente contagens)
         id: query
         env:
@@ -77,6 +82,7 @@ jobs:
                 AS checkout_pago_sem_assinatura,
               (SELECT COUNT(*) FROM billing_customers bc
                 WHERE bc.status = 'active'
+                  AND bc.provider <> 'none'
                   AND NOT EXISTS (
                     SELECT 1 FROM billing_subscriptions s
                      WHERE s.customer_id = bc.id

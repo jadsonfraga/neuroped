@@ -322,9 +322,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
          LIMIT 100`
       )
       .bind(...catBinds)
-      .all();
+      .all<MemoryNote>();
 
-    const notes = (likeRows.results ?? []) as MemoryNote[];
+    const notes = likeRows.results ?? [];
     const scored = notes
       .map((n) => ({ ...n, score: scoreNote(query, n) }))
       .filter((n) => n.score >= minScore)

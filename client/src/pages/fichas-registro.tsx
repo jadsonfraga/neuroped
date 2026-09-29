@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { localIsoDate } from "@/lib/clinicalDate";
 import { ClipboardList, Printer, Mail, Loader2 } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { Card, CardContent } from "@/components/ui/card";
@@ -342,7 +343,7 @@ function ScaleTab({ scaleKey }: { scaleKey: string }) {
   const [patient, setPatient] = useState<PatientHeader>({
     nome: "",
     nascimento: "",
-    data: new Date().toISOString().slice(0, 10),
+    data: localIsoDate(),
     examinador: "",
   });
   const [scores, setScores] = useState<Record<string, ScoreRow>>({});

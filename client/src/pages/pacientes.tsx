@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, invalidateApiQueries } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,9 @@ function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
   try {
     const years = differenceInYears(new Date(), parseISO(birthDate));
+    // parseISO não lança: data inválida (ex.: backup importado) vira NaN e
+    // data futura vira idade negativa — nunca exibir "NaN anos" no relatório.
+    if (!Number.isFinite(years) || years < 0) return null;
     return `${years} ano${years !== 1 ? "s" : ""}`;
   } catch {
     return null;
@@ -269,7 +272,7 @@ export default function PacientesPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      invalidateApiQueries(isRemoteClinical ? "/api/live/patients" : "/api/patients");
       setPatientPage(1);
       resetForm();
       softSuccess();
@@ -293,7 +296,7 @@ export default function PacientesPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      invalidateApiQueries(isRemoteClinical ? "/api/live/patients" : "/api/patients");
       resetForm();
       softSuccess();
       haptic.success();
@@ -314,7 +317,7 @@ export default function PacientesPage() {
       await apiRequest("DELETE", url);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      invalidateApiQueries(isRemoteClinical ? "/api/live/patients" : "/api/patients");
       setPatientPage((current) => (current > 1 && patients.length === 1 ? current - 1 : current));
       softSuccess();
       haptic.success();
@@ -499,7 +502,7 @@ export default function PacientesPage() {
           skipped++;
         }
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      invalidateApiQueries("/api/patients");
       if (partial > 0 || skipped > 0 || failedResults > 0) {
         softError();
         haptic.error();

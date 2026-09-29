@@ -35,3 +35,14 @@ export function formatClinicalDateTime(date = new Date()): string {
     hourCycle: "h23",
   }).format(validDate(date));
 }
+
+/**
+ * Data de calendário local do dispositivo (AAAA-MM-DD), no mesmo referencial
+ * de `<input type="date">` e de `toTimeString()`. Não usar
+ * `toISOString().slice(0, 10)` como "hoje": isso é a data em UTC e, no Brasil
+ * (UTC-3), a partir das 21h já devolve o dia seguinte.
+ */
+export function localIsoDate(date = new Date()): string {
+  const d = validDate(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}

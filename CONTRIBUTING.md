@@ -94,7 +94,9 @@ Cobertura minima:
 - 90% em codigo de cripto, auth, audit
 - 70% global
 
-Rode `npm run test` antes de abrir PR.
+Não existe script `npm run test`. Antes de abrir PR rode, no mínimo,
+`npm run lint`, `npm run check` e `npm run test:quick-wins`; a suíte completa
+de release é `npm run verify:release` (ver `AGENTS.md`).
 
 ## Deploy
 

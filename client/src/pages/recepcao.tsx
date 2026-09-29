@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { copyText } from "@/lib/shareText";
 import { Link } from "wouter";
 import { CalendarClock, ClipboardCheck, Copy, PlayCircle, Printer, RefreshCw, ShieldAlert, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -77,7 +78,7 @@ export default function RecepcaoPage() {
   }
 
   async function copiarResumo() {
-    await navigator.clipboard?.writeText(resumo);
+    await copyText(resumo);
   }
 
   return (

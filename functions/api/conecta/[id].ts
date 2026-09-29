@@ -23,7 +23,8 @@ export const onRequestDelete: PagesFunction<Env, "id"> = async (context) => {
   if (!canWriteClinicalData(user)) {
     return error("Perfil sem permissão para excluir registros.", "FORBIDDEN", 403);
   }
-  const id = context.params.id?.trim() ?? "";
+  const rawId = context.params.id;
+  const id = typeof rawId === "string" ? rawId.trim() : "";
   if (!id || id.length > 160) return error("Identificador inválido.", "VALIDATION_ERROR", 400);
 
   try {

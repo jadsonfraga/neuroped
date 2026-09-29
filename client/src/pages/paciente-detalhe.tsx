@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, invalidateApiQueries, queryClient } from "@/lib/queryClient";
 import { PatientCockpit } from "@/components/clinical/PatientCockpit";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { loadAllPatientResults } from "@/lib/patientResultsPagination";
@@ -56,6 +56,9 @@ function calcAge(birthDate: string | null | undefined): string | null {
   if (!birthDate) return null;
   try {
     const years = differenceInYears(new Date(), parseISO(birthDate));
+    // parseISO não lança: data inválida (ex.: backup importado) vira NaN e
+    // data futura vira idade negativa — nunca exibir "NaN anos" no relatório.
+    if (!Number.isFinite(years) || years < 0) return null;
     return `${years} ano${years !== 1 ? "s" : ""}`;
   } catch {
     return null;
@@ -174,7 +177,8 @@ export default function PacienteDetalhePage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [patientQueryKey] });
+      // A edição também precisa refletir na lista e no seletor de pacientes.
+      invalidateApiQueries(isRemoteClinical ? "/api/live/patients" : "/api/patients");
       setEditOpen(false);
       toast({ title: "Paciente atualizado!" });
     },
