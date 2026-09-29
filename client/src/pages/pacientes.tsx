@@ -36,6 +36,7 @@ import {
 import { differenceInYears, parseISO } from "date-fns";
 import { softTap, softTick, softSuccess, softError } from "@/lib/softSounds";
 import { haptic } from "@/lib/haptic";
+import { localIsoDate } from "@/lib/clinicalDate";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   EmptyState,
@@ -399,7 +400,7 @@ export default function PacientesPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `neuroped-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `neuroped-backup-${localIsoDate()}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2_000);
       softSuccess();

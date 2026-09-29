@@ -17,6 +17,8 @@
  *     PDF detalhado gerado localmente.
  */
 
+import { formatClinicalDate } from "../../lib/clinicalDate";
+
 export const SUPER_NEUROPAD_VERSION = "2026-09-26.1";
 export const SUPER_NEUROPAD_TITLE = "Super NeuroPad Game";
 export const SUPER_NEUROPAD_ROUTE = "/super-neuropad-game";
@@ -831,11 +833,22 @@ export function interpret(session: GameSession): GameReading | null {
   };
 }
 
+/**
+ * Data da própria partida (fim, ou início se incompleta), não o relógio do
+ * momento em que o texto é copiado. Sem instante válido, usa agora.
+ */
+function sessionDate(session: GameSession): Date {
+  const stamp = new Date(session.finishedAt ?? session.startedAt);
+  return Number.isNaN(stamp.getTime()) ? new Date() : stamp;
+}
+
 /** Resumo curto, em prosa, para colar na evolução ou no prontuário. */
-export function buildGameBrief(session: GameSession, date = new Date()): string {
+export function buildGameBrief(session: GameSession, date = sessionDate(session)): string {
   const summary = summarize(session);
   const reading = interpret(session);
-  const day = date.toISOString().slice(0, 10).split("-").reverse().join("/");
+  // Dia no fuso clínico. `toISOString()` é UTC: no Brasil, a partir das 21h,
+  // o registro de pré-consulta saía datado do dia seguinte.
+  const day = formatClinicalDate(date);
   if (!reading || summary.level === null) {
     return `Registro lúdico de pré-consulta (${SUPER_NEUROPAD_TITLE}, faixa ${summary.band.label}) em ${day}: partida incompleta, ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação. `
       + session.answers.map((answer) => `${answer.prompt}: ${answer.given} (${STATUS_LABELS[answer.status].toLowerCase()}; ${answer.seconds} s).`).join(" ");
@@ -853,13 +866,13 @@ export function buildGameBrief(session: GameSession, date = new Date()): string 
 }
 
 // ─────────────────────────────── relatório em texto ───────────────────────────────
-export function buildGameReport(session: GameSession, date = new Date()): string {
+export function buildGameReport(session: GameSession, date = sessionDate(session)): string {
   const summary = summarize(session);
   const reading = interpret(session);
   const lines: string[] = [
     `${SUPER_NEUROPAD_TITLE} · versão ${SUPER_NEUROPAD_VERSION}`,
     `Idade informada: ${session.ageYears} anos · Faixa: ${summary.band.label} · Personagem: ${summary.character.emoji} ${summary.character.name} ${summary.character.role}`,
-    `Data: ${date.toISOString().slice(0, 10)} · Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} · ${summary.complete ? "Jogo completo" : "Jogo incompleto"}`,
+    `Data: ${formatClinicalDate(date)} · Tempo somado nas tarefas: ${formatDuration(summary.durationSeconds)} · ${summary.complete ? "Jogo completo" : "Jogo incompleto"}`,
     "",
     "RESULTADO OBJETIVO — CONTAGEM DE ACERTOS (NÃO É ESCORE NORMATIVO, PERCENTIL NEM DIAGNÓSTICO)",
     summary.level === null ? `Partida incompleta: ${session.answers.length} de ${summary.total} itens registrados. Sem classificação ou interpretação.` : `Total: ${summary.hits} de ${summary.total} acertos · ${LEVEL_LABELS[summary.level]}`,
