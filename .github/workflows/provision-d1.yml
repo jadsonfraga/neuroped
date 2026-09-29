@@ -21,6 +21,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 env:
   WRANGLER: "npx --yes wrangler@3"
@@ -101,6 +102,14 @@ jobs:
           fi
           echo "id=$ID" >> "$GITHUB_OUTPUT"
           echo "D1 $D1_NAME -> $ID"
+
+      # Fila das escritas D1 sem pending slot: ver scripts/ci/wait-d1-writers.mjs.
+      - name: Aguardar fila de escritas D1 (deploy)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MODE: deploy
+          TIMEOUT_MINUTES: "60"
+        run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Aplicar schema idempotente no D1
         run: $WRANGLER d1 execute "$D1_NAME" --remote --file=./db/schema.d1.sql --yes

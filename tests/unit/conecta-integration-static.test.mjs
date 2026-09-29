@@ -41,7 +41,8 @@ assert.match(d1Schema, /CHECK \(is_demo = 1\)/, "auto-provisionamento deve prese
 assert.match(migration, /CHECK \(is_demo = 1\)/, "schema demo versionado deve possuir trava física");
 
 assert.match(migrationWorkflow, /branches:\s*\n\s*- main/, "migração D1 só deve promover a partir de main");
-assert.match(migrationWorkflow, /group: cloudflare-pages/, "migração D1 deve compartilhar o lock do deploy Cloudflare");
+assert.doesNotMatch(migrationWorkflow, /group: cloudflare-pages/, "migração D1 não pode disputar o slot pendente do deploy Cloudflare");
+assert.match(migrationWorkflow, /MODE: migration\n\s*run: node scripts\/ci\/wait-d1-writers\.mjs/, "migração D1 deve entrar na fila de escritas D1");
 assert.doesNotMatch(migrationWorkflow, /workflow_dispatch:/, "migração não pode executar YAML/secrets a partir de ref manual");
 assert.match(migrationWorkflow, /--file=\.\/db\/migrations\/0005_conecta_events\.sql/, "produção deve aplicar a migração versionada 0005");
 assert.match(migrationWorkflow, /conecta_events_demo/, "workflow deve verificar a tabela do Conecta após migrar");

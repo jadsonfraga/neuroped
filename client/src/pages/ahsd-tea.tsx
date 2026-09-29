@@ -551,10 +551,11 @@ export default function AhsdTeaPage() {
           <h2 className="text-sm font-bold text-foreground">Identificação</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
+              <Label htmlFor="ahsd-childName" className="text-xs text-muted-foreground">
                 Nome da criança
               </Label>
               <Input
+                id="ahsd-childName"
                 value={childName}
                 onChange={(e) => setChildName(e.target.value)}
                 placeholder="Nome completo"
@@ -562,8 +563,9 @@ export default function AhsdTeaPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Idade</Label>
+              <Label htmlFor="ahsd-childAge" className="text-xs text-muted-foreground">Idade</Label>
               <Input
+                id="ahsd-childAge"
                 value={childAge}
                 onChange={(e) => setChildAge(e.target.value)}
                 placeholder="Ex: 5 anos"
@@ -571,10 +573,11 @@ export default function AhsdTeaPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
+              <Label htmlFor="ahsd-teacherName" className="text-xs text-muted-foreground">
                 Professora
               </Label>
               <Input
+                id="ahsd-teacherName"
                 value={teacherName}
                 onChange={(e) => setTeacherName(e.target.value)}
                 placeholder="Nome da professora"
@@ -582,8 +585,9 @@ export default function AhsdTeaPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Escola</Label>
+              <Label htmlFor="ahsd-school" className="text-xs text-muted-foreground">Escola</Label>
               <Input
+                id="ahsd-school"
                 value={school}
                 onChange={(e) => setSchool(e.target.value)}
                 placeholder="Nome da escola"
@@ -591,8 +595,9 @@ export default function AhsdTeaPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Turma</Label>
+              <Label htmlFor="ahsd-turma" className="text-xs text-muted-foreground">Turma</Label>
               <Input
+                id="ahsd-turma"
                 value={turma}
                 onChange={(e) => setTurma(e.target.value)}
                 placeholder="Ex: Jardim II"
@@ -600,10 +605,11 @@ export default function AhsdTeaPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
+              <Label htmlFor="ahsd-tempoConhece" className="text-xs text-muted-foreground">
                 Tempo que conhece o aluno
               </Label>
               <Input
+                id="ahsd-tempoConhece"
                 value={tempoConhece}
                 onChange={(e) => setTempoConhece(e.target.value)}
                 placeholder="Ex: 1 ano"

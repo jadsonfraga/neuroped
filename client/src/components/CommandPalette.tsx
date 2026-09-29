@@ -139,6 +139,9 @@ export function CommandPalette() {
         });
       }
       setNavigableScales(list);
+    }).catch((error: unknown) => {
+      // Chunk indisponível (ex.: deploy novo): segue sem atalhos de escalas, sem rejeição não tratada.
+      console.warn("[command-palette] catálogo de escalas indisponível", error);
     });
     return () => {
       cancelled = true;

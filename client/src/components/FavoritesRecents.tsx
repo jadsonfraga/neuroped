@@ -35,6 +35,9 @@ export function FavoritesRecents() {
           .filter((s) => typeof s.appRoute === "string" && s.appRoute.length > 0)
           .map((s) => ({ id: s.id, name: s.name, fullName: s.fullName, appRoute: s.appRoute })),
       );
+    }).catch((error: unknown) => {
+      // Chunk indisponível (ex.: deploy novo): segue sem atalhos de escalas, sem rejeição não tratada.
+      console.warn("[favoritos] catálogo de escalas indisponível", error);
     });
     return () => {
       cancelled = true;
