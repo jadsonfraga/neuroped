@@ -19,6 +19,7 @@ const statusLabels: Record<PreConsultaStatus, string> = {
 };
 
 const nextStatus: PreConsultaStatus[] = ["aguardando", "respondendo", "concluido", "precisa-ajuda", "pronto-medico"];
+const LOAD_ERROR = "Não foi possível abrir as pré-consultas salvas neste dispositivo. Verifique as permissões de armazenamento e tente atualizar.";
 
 function idade(record: PreConsultaRecord) {
   return record.idadeMeses < 24 ? `${record.idadeMeses} meses` : `${Math.floor(record.idadeMeses / 12)}a ${record.idadeMeses % 12}m`;
@@ -47,6 +48,10 @@ export default function RecepcaoPage() {
       setItems(loaded);
       setSelected(loaded[0] || null);
       setIsLoading(false);
+    }).catch(() => {
+      if (!active) return;
+      setStorageError(LOAD_ERROR);
+      setIsLoading(false);
     });
     return () => {
       active = false;
@@ -58,10 +63,16 @@ export default function RecepcaoPage() {
   async function refresh() {
     if (!localPersistenceEnabled) return;
     setIsLoading(true);
-    const loaded = await loadPreConsultas();
-    setItems(loaded);
-    setSelected(loaded[0] || null);
-    setIsLoading(false);
+    setStorageError("");
+    try {
+      const loaded = await loadPreConsultas();
+      setItems(loaded);
+      setSelected(loaded[0] || null);
+    } catch {
+      setStorageError(LOAD_ERROR);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function updateStatus(record: PreConsultaRecord, status: PreConsultaStatus) {
@@ -162,17 +173,19 @@ export default function RecepcaoPage() {
               ) : (
                 <div className="space-y-2">
                   {items.map((record) => (
-                    <button key={record.id} type="button" onClick={() => setSelected(record)} className={`w-full rounded-2xl border p-3 text-left transition ${selected?.id === record.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-                      <div className="flex items-start justify-between gap-2">
+                    // Seleção e troca de status são botões irmãos: antes os status eram
+                    // <span onClick> dentro do <button>, inalcançáveis por teclado/leitor de tela.
+                    <div key={record.id} className={`rounded-2xl border p-3 transition ${selected?.id === record.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
+                      <button type="button" onClick={() => setSelected(record)} aria-pressed={selected?.id === record.id} className="flex w-full items-start justify-between gap-2 text-left">
                         <div><p className="text-sm font-semibold text-foreground">{record.paciente || "Paciente sem nome"}</p><p className="text-xs text-muted-foreground">{idade(record)} · {record.queixa} · {record.respondente}</p></div>
                         <Badge variant="outline">{statusLabels[record.status]}</Badge>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      </button>
+                      <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={`Alterar status de ${record.paciente || "paciente sem nome"}`}>
                         {nextStatus.map((status) => (
-                          <span key={status} onClick={(event) => { event.stopPropagation(); updateStatus(record, status); }} className="rounded-full border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground hover:border-primary hover:text-primary">{statusLabels[status]}</span>
+                          <button key={status} type="button" onClick={() => void updateStatus(record, status)} aria-pressed={record.status === status} className="rounded-full border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground hover:border-primary hover:text-primary">{statusLabels[status]}</button>
                         ))}
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
