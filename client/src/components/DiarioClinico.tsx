@@ -113,14 +113,14 @@ function emptyForm(fields: DiarioField[]): Record<string, string> {
 function fmtDate(entry: DiarioEntry): string {
   const raw = String(entry.date || entry.datetime || "");
   if (raw) {
-    try {
-      const d = new Date(raw.length <= 10 ? raw + "T00:00:00" : raw);
-      return d.toLocaleDateString("pt-BR");
-    } catch {
-      return raw;
-    }
+    // new Date() não lança com texto inválido: devolve "Invalid Date", que
+    // aparecia literalmente na lista do diário. Sem data válida, mostra o
+    // texto original registrado.
+    const d = new Date(raw.length <= 10 ? raw + "T00:00:00" : raw);
+    return Number.isNaN(d.getTime()) ? raw : d.toLocaleDateString("pt-BR");
   }
-  return new Date(entry.createdAt).toLocaleDateString("pt-BR");
+  const created = new Date(entry.createdAt);
+  return Number.isNaN(created.getTime()) ? "Data não informada" : created.toLocaleDateString("pt-BR");
 }
 
 export function DiarioClinico({ config }: { config: DiarioConfig }) {
@@ -257,7 +257,7 @@ export function DiarioClinico({ config }: { config: DiarioConfig }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${config.id}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `${config.id}-${localIsoDate()}.csv`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2_000);
   }

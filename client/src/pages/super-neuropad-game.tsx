@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSondaExitGuard } from "@/hooks/useSondaExitGuard";
 import { acceptManualTap } from "@/components/jogo-facil/easyReport";
 import { celebrate } from "@/lib/confetti";
-import { formatClinicalDateTime } from "@/lib/clinicalDate";
+import { formatClinicalDateTime, localIsoDate } from "@/lib/clinicalDate";
 import { issuerCredentials, useIssuer } from "@/lib/issuer";
 import { softTap } from "@/lib/softSounds";
 import { play1Up, playCoin, playFlagPole, playJump, playPowerUp } from "@/lib/sounds";
@@ -568,7 +568,7 @@ export default function SuperNeuroPadGamePage() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${safeTextFilename(`super-neuropad-game-${session.bandId}-${session.startedAt.slice(0, 10)}`)}.pdf`;
+      anchor.download = `${safeTextFilename(`super-neuropad-game-${session.bandId}-${localIsoDate(new Date(session.startedAt))}`)}.pdf`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();

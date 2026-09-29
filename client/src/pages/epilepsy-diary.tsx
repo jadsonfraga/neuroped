@@ -131,7 +131,7 @@ export default function EpilepsyDiaryPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `diario-epilepsia-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `diario-epilepsia-${localIsoDate()}.csv`;
     a.rel = "noopener";
     a.style.display = "none";
     document.body.appendChild(a);

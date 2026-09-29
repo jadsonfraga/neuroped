@@ -5,6 +5,7 @@ import { ClinicalPattern, getBatteryForPattern } from "@/data/smartRecommendatio
 import { allScales } from "@/data/scaleFilter";
 import { printPlainTextDocument } from "@/lib/printDocument";
 import { downloadTextDocument, safeTextFilename, shareTextDocument } from "@/lib/shareText";
+import { localIsoDate } from "@/lib/clinicalDate";
 
 interface BatteryReportCardProps {
   pattern: ClinicalPattern;
@@ -87,7 +88,7 @@ Relatório gerado automaticamente pelo Sistema NeuroPed
     const report = generateReport();
     downloadTextDocument(
       report,
-      `bateria-${safeTextFilename(patientName)}-${new Date().toISOString().split("T")[0]}.txt`,
+      `bateria-${safeTextFilename(patientName)}-${localIsoDate()}.txt`,
     );
   };
 

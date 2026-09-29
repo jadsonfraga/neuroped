@@ -440,6 +440,18 @@ test("resumo para o prontuário é prosa curta com faixa, contagem, fases, itens
   assert.equal(brief.length < 1200, true);
 });
 
+test("resumo e relatório datam a partida no fuso clínico, não em UTC nem no momento da cópia", () => {
+  // 22h30 em Petrolina = 01h30 UTC do dia seguinte.
+  const lateSession = { ...play("6-7", () => "acerto"), startedAt: "2026-09-27T01:20:00.000Z", finishedAt: "2026-09-27T01:30:00.000Z" };
+  assert.match(buildGameBrief(lateSession), /aplicada pela recepção em 26\/09\/2026:/);
+  assert.match(buildGameReport(lateSession), /Data: 26\/09\/2026 · /);
+  assert.doesNotMatch(buildGameReport(lateSession), /2026-09-27|27\/09\/2026/);
+  // Partida incompleta usa o início; instante inválido não gera "Invalid Date".
+  const partial = { ...lateSession, finishedAt: null };
+  assert.match(buildGameBrief(partial), / em 26\/09\/2026/);
+  assert.doesNotMatch(buildGameReport({ ...partial, startedAt: "" }), /Invalid Date|NaN/);
+});
+
 test("página: rota real, sensível, sem persistência local, sem rede e sem câmera; abas de origem preservadas", () => {
   const app = readFileSync("client/src/App.tsx", "utf8");
   assert.match(app, /import\("@\/pages\/super-neuropad-game"\)/);

@@ -11,7 +11,7 @@ import {
   savedScaleResponses as storedResponses,
 } from "@/lib/savedScaleResult";
 import { safeTextFilename } from "@/lib/shareText";
-import { formatClinicalDateTime } from "@/lib/clinicalDate";
+import { formatClinicalDateTime, localIsoDate } from "@/lib/clinicalDate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,7 +239,7 @@ export default function PacienteDetalhePage() {
         backgroundColor: "#ffffff",
       });
       const link = document.createElement("a");
-      link.download = `relatorio-${patient?.name || "paciente"}-${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `relatorio-${patient?.name || "paciente"}-${localIsoDate()}.png`;
       link.href = canvas.toDataURL();
       link.click();
       toast({ title: "Imagem exportada!" });

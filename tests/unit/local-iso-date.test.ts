@@ -31,4 +31,21 @@ describe("localIsoDate", () => {
       assert.match(source, /localIsoDate\((now)?\)/, path);
     }
   });
+
+  it("arquivos exportados e registros lúdicos não datam o dia em UTC", () => {
+    for (const path of [
+      "client/src/components/BatteryReportCard.tsx",
+      "client/src/components/DiarioClinico.tsx",
+      "client/src/pages/paciente-detalhe.tsx",
+      "client/src/pages/headache-calendar.tsx",
+      "client/src/pages/epilepsy-diary.tsx",
+      "client/src/pages/pacientes.tsx",
+      "client/src/pages/super-neuropad-game.tsx",
+      "client/src/features/super-neuropad/model.ts",
+    ]) {
+      const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+      assert.doesNotMatch(source, /toISOString\(\)\.(slice\(0, 10\)|split\("T"\)\[0\])/, path);
+      assert.doesNotMatch(source, /startedAt\.slice\(0, 10\)/, path);
+    }
+  });
 });
