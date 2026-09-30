@@ -23,8 +23,25 @@ subir esse cluster quebra a build (vite 8 → rolldown) ou a migração de banco
 | `elliptic`, `crypto-browserify`, `create-ecdh`, `browserify-sign`, `node-stdlib-browser`, `vite-plugin-node-polyfills` | low | Cadeia de **polyfills de cripto** do build do browser. | Severidade baixa; uso restrito ao processo de build. |
 
 Já resolvidos sem quebrar (histórico recente):
-`bcrypt` 5→6, `nodemailer` 6→8, `drizzle-orm` 0.39→0.45, `js-yaml` (patch), e o
+`nodemailer` 9.1.1→10.0.13 e `brace-expansion` 5.0.9→5.0.12 (30/09/2026, ver
+abaixo), `bcrypt` 5→6, `nodemailer` 6→8, `drizzle-orm` 0.39→0.45, `js-yaml` (patch), e o
 cluster vite/esbuild de produção via vite 8.
+
+## 30/09/2026 — `npm audit --audit-level=high` volta a zero
+
+Advisories novos (high) derrubaram o passo `npm audit --audit-level=high` do CI:
+
+- `brace-expansion` 5.0.9 (transitiva de `eslint` → `minimatch`, dev):
+  GHSA-q2hr-2g5m-vwhr, GHSA-qhr7-859c-m2p7, GHSA-6j4f-fj2g-mc7p → **5.0.12**
+  via `npm audit fix` (sem `--force`).
+- `nodemailer` ≤10.0.8 (runtime do servidor Express, `server/lib/email.ts`):
+  GHSA-6vj9-mwq6-2f5v, GHSA-8vvx-rff5-p5rq, GHSA-g57g-f23g-4646,
+  GHSA-v53p-9fqp-m79j → **10.0.13**. O único breaking change da 10.0.0 é exigir
+  Node ≥ 20 (o projeto já declara `engines.node >=20`). A 10.x traz tipos
+  próprios, então `@types/nodemailer` foi removido. A API usada
+  (`createTransport`/`sendMail`/`verify`) não mudou;
+  `tests/unit/smtp-email-transport.test.ts` exercita o transporte contra um
+  servidor SMTP local e passa igual em 9.1.1 e 10.0.13.
 
 ## Gatilho de revisão
 
