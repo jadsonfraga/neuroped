@@ -371,6 +371,24 @@ let sentApptId: string;
   assert.equal(recovered.status, 200);
   const recoveredRow = raw.prepare(`SELECT status, channel, attempts, last_error FROM notification_outbox WHERE id = ?`).get(recoverId) as Row;
   assert.deepEqual({ ...recoveredRow }, { status: "delivered", channel: "email", attempts: 2, last_error: null });
+
+  // Estados terminais não regridem: mensagem já entregue por e-mail (ou já
+  // marcada manualmente) não volta a `manual_sent`/`failed` por aba desatualizada.
+  const regress = await sec({ action: "notification_status", id: recoverId, status: "manual_sent" });
+  assert.equal(regress.status, 409);
+  assert.equal(regress.body.code, "INVALID_TRANSITION");
+  const failDelivered = await sec({ action: "notification_status", id: recoverId, status: "failed" });
+  assert.equal(failDelivered.status, 409);
+  assert.deepEqual(
+    { ...(raw.prepare(`SELECT status, channel, attempts, last_error FROM notification_outbox WHERE id = ?`).get(recoverId) as Row) },
+    { status: "delivered", channel: "email", attempts: 2, last_error: null },
+    "linha entregue permanece intacta",
+  );
+  const again = await sec({ action: "notification_status", id, status: "failed" });
+  assert.equal(again.status, 409, "manual_sent é terminal");
+  assert.equal(state().status, "manual_sent");
+  const unknown = await sec({ action: "notification_status", id: "ntf-inexistente", status: "manual_sent" });
+  assert.equal(unknown.status, 404, "id inexistente continua 404");
 }
 
 // ── 6. Isolamento: outra clínica não reenvia mensagem alheia ──────────────
