@@ -57,6 +57,40 @@ test("reproduces false PIN detection and exempts only verified image fields", ()
   } finally { rmSync(f.root, { recursive: true }); }
 });
 
+test("chunk estaticamente importado pelo módulo canônico (banco visual compartilhado) é verificado do mesmo jeito; fora do fecho, não", () => {
+  const f = fixture();
+  try {
+    const shared = "assets/model-shared.js";
+    const deeper = "assets/deeper.js";
+    writeFileSync(join(f.root, shared), f.js);
+    writeFileSync(join(f.root, deeper), f.js);
+    writeFileSync(join(f.root, "assets/game.js"), f.js);
+    writeFileSync(join(f.root, ".vite/manifest.json"), JSON.stringify({
+      "src/pages/teste-reconhecimento-visual.tsx": { file: bundlePath, src: "src/pages/teste-reconhecimento-visual.tsx", isDynamicEntry: true, imports: ["_model-shared.js"] },
+      "_model-shared.js": { file: shared, imports: ["_deeper.js"] },
+      "_deeper.js": { file: deeper },
+      "src/pages/super-neuropad-game.tsx": { file: "assets/game.js", src: "src/pages/super-neuropad-game.tsx", isDynamicEntry: true, imports: ["_model-shared.js"] },
+    }));
+    const inspect = createBuiltVisualDigestInspector(f.root);
+    assert.equal(pin.test(inspect(shared, f.js)), false, "registro verificado no chunk compartilhado");
+    assert.equal(pin.test(inspect(deeper, f.js)), false, "fecho transitivo de imports estáticos");
+    assert.equal(inspect("assets/game.js", f.js), f.js, "módulo que só importa o chunk continua inspecionado por inteiro");
+    assert.equal(pin.test(inspect("assets/game.js", f.js)), true);
+    assert.equal(pin.test(inspect(shared, f.js + `const PIN="${f.digest}";`)), true, "valor fora do registro verificado segue sinalizado no chunk compartilhado");
+    assert.equal(pin.test(inspect(shared, `const bad={id:"bola",sourcePath:"EN/ball.svg",sha256:"${"c".repeat(64)}"};`)), true);
+  } finally { rmSync(f.root, { recursive: true }); }
+  for (const imported of [{ file: "../outside.js" }, { file: "assets/missing.js" }]) {
+    const g = fixture();
+    try {
+      writeFileSync(join(g.root, ".vite/manifest.json"), JSON.stringify({
+        "src/pages/teste-reconhecimento-visual.tsx": { file: bundlePath, src: "src/pages/teste-reconhecimento-visual.tsx", isDynamicEntry: true, imports: ["_x.js"] },
+        "_x.js": imported,
+      }));
+      assert.throws(() => createBuiltVisualDigestInspector(g.root), "chunk importado fora de assets/ ou ausente falha fechado");
+    } finally { rmSync(g.root, { recursive: true }); }
+  }
+});
+
 test("modified bytes, missing assets, duplicates, traversal and symlinks fail closed", () => {
   for (const mutation of [
     f => writeFileSync(join(f.root, "recognition-v2/bola.svg"), "<svg/>"),
