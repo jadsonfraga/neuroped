@@ -9,6 +9,7 @@ on:
       - "functions/api/operations/**"
       - "functions/api/public-booking.ts"
       - "tests/unit/operations-tenant-isolation.test.ts"
+      - "tests/unit/operations-clinic-scope-rerunnable.test.mjs"
       - ".github/workflows/operations-clinic-scope-d1-migration.yml"
 
 # Grupo próprio por workflow: migração D1 não disputa o único slot pendente
@@ -55,6 +56,9 @@ jobs:
       - name: Validar isolamento de tenant da agenda antes da migração
         run: node --import tsx tests/unit/operations-tenant-isolation.test.ts
 
+      - name: Validar que a 0029 é reexecutável antes de tocar o D1
+        run: node tests/unit/operations-clinic-scope-rerunnable.test.mjs
+
       - name: Validar credenciais Cloudflare
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -71,14 +75,61 @@ jobs:
           MODE: migration
         run: node scripts/ci/wait-d1-writers.mjs
 
-      - name: Aplicar migração 0029 (clinic_id na agenda/operações)
+      # SQLite/D1 não tem ADD COLUMN IF NOT EXISTS: aplicar o arquivo inteiro de
+      # novo falhava com "duplicate column name: clinic_id" (produção já tem a
+      # coluna desde 26/09). Mesmo padrão reexecutável do hardening 0013 em
+      # saas-billing-d1-migration.yml: cada ALTER só roda se pragma_table_info
+      # não mostrar a coluna; o restante do arquivo (backfill guardado por
+      # WHERE clinic_id IS NULL + CREATE INDEX IF NOT EXISTS) é aplicado a partir
+      # do marcador "-- Backfill: clinic_id". Banco novo termina com o mesmo schema.
+      - name: Aplicar migração 0029 de forma reexecutável (clinic_id na agenda/operações)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          npx wrangler@4 d1 execute neuroped-db --remote --yes \
-            --file=./db/migrations/0029_operations_clinic_scope.sql
+
+          column_exists() {
+            table="$1"
+            column="$2"
+            npx wrangler@4 d1 execute neuroped-db --remote \
+              --command "SELECT name FROM pragma_table_info('$table') WHERE name='$column';" \
+              2>&1 | grep -q "$column"
+          }
+
+          add_column() {
+            table="$1"
+            column="$2"
+            definition="$3"
+            if column_exists "$table" "$column"; then
+              echo "✓ $table.$column já existe"
+            else
+              npx wrangler@4 d1 execute neuroped-db --remote --yes \
+                --command "ALTER TABLE $table ADD COLUMN $column $definition;"
+            fi
+            column_exists "$table" "$column" || {
+              echo "::error::Falha ao garantir $table.$column"
+              exit 1
+            }
+          }
+
+          add_column booking_services clinic_id "TEXT"
+          add_column booking_availability_rules clinic_id "TEXT"
+          add_column booking_blocks clinic_id "TEXT"
+          add_column appointments clinic_id "TEXT"
+          add_column waitlist_entries clinic_id "TEXT"
+          add_column appointment_reviews clinic_id "TEXT"
+          add_column notification_outbox clinic_id "TEXT"
+          add_column operations_audit_log clinic_id "TEXT"
+
+          awk 'BEGIN {emit=0} /^-- Backfill: clinic_id/ {emit=1} emit {print}' \
+            db/migrations/0029_operations_clinic_scope.sql > /tmp/0029-post-alter.sql
+          test -s /tmp/0029-post-alter.sql
+          if grep -qi "ALTER TABLE" /tmp/0029-post-alter.sql; then
+            echo "::error::0029 pós-ALTER contém ALTER TABLE; não é reexecutável"
+            exit 1
+          fi
+          npx wrangler@4 d1 execute neuroped-db --remote --yes --file=/tmp/0029-post-alter.sql
 
       - name: Verificar coluna clinic_id e reportar backfill pendente
         env:

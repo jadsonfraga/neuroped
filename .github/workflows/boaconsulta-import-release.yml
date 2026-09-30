@@ -16,8 +16,12 @@ on:
       - "wrangler.toml"
       - ".github/workflows/boaconsulta-import-release.yml"
 
+# Grupo próprio por ref: fora da única vaga pendente de `cloudflare-pages`, onde
+# um segundo push rápido cancelava este release ou o deploy canônico. Escritas
+# D1 e a publicação do Pages são serializadas por scripts/ci/wait-d1-writers.mjs
+# (MODE=deploy: espera migrações e publicações do Pages mais antigas).
 concurrency:
-  group: cloudflare-pages
+  group: pages-publisher-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -80,7 +84,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           MODE: deploy
-          TIMEOUT_MINUTES: "60"
+          # Migrações (até 45 min cada na fila) + publicações do Pages mais antigas.
+          TIMEOUT_MINUTES: "90"
         run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Aplicar cofre e staging D1 do bridge
@@ -121,6 +126,12 @@ jobs:
             echo "Chave dedicada criada no Cloudflare; valor nunca foi registrado em log."
           fi
 
+      # Este release republica o Pages de produção: sem a sentinela, o
+      # deploy-check.json commitado ("pending-deploy-workflow") substituía o do
+      # deploy canônico. Mesmo script e campos do deploy-cloudflare.yml.
+      - name: Criar sentinela de deploy
+        run: node scripts/ci/write-deploy-check.mjs
+
       - name: Compilar frontend
         env:
           NODE_ENV: production
@@ -133,6 +144,7 @@ jobs:
       - name: Confirmar console BoaConsulta no artefato
         run: |
           test -f dist/public/integracoes/boaconsulta/index.html
+          grep -Fq "\"commit\": \"${GITHUB_SHA}\"" dist/public/deploy-check.json
           grep -Fq "Bridge BoaConsulta" dist/public/integracoes/boaconsulta/index.html
 
       - name: Publicar Pages com cofre D1 e secret já provisionados
@@ -155,4 +167,10 @@ jobs:
             sleep 10
           done
           [ "$ok" -eq 1 ] || { echo "::error::Console BoaConsulta não apareceu no deploy."; exit 1; }
+          curl -fsSL "https://neuroped.pages.dev/deploy-check.json?run=${GITHUB_RUN_ID}" -o /tmp/boaconsulta-deploy-check.json
+          cat /tmp/boaconsulta-deploy-check.json
+          if grep -q "pending-deploy-workflow" /tmp/boaconsulta-deploy-check.json; then
+            echo "::error::deploy-check.json público voltou ao sentinela sem commit."
+            exit 1
+          fi
           echo "✅ BoaConsulta Bridge publicado com cofre D1 cifrado, staging e chave dedicada."

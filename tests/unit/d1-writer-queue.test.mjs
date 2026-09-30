@@ -4,7 +4,8 @@
 // do último commit eram cancelados antes de começar.
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { blockingRuns, D1_MIGRATION_WORKFLOWS } from "../../scripts/ci/wait-d1-writers.mjs";
+import { blockingRuns, D1_MIGRATION_WORKFLOWS, PAGES_PUBLISHER_WORKFLOWS } from "../../scripts/ci/wait-d1-writers.mjs";
+import { deployCheck } from "../../scripts/ci/write-deploy-check.mjs";
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 const conecta = ".github/workflows/conecta-d1-migration.yml";
@@ -34,6 +35,27 @@ const run = (id, path, extra = {}) => ({ id, path, event: "push", head_branch: "
   assert.deepEqual(blockingRuns(runs, { mode: "deploy", ownRunId: 12 }), []);
   assert.equal(blockingRuns([run(9, conecta, { event: "workflow_dispatch" })], { mode: "migration", ownRunId: 12 }).length, 1);
 }
+// 3b) Publicações do Pages: FIFO entre publicadores, migração nunca espera publicador.
+{
+  const deploy = ".github/workflows/deploy-cloudflare.yml";
+  const boa = ".github/workflows/boaconsulta-import-release.yml";
+  const provision = ".github/workflows/provision-d1.yml";
+  const runs = [run(10, deploy), run(20, boa), run(30, provision, { event: "workflow_dispatch" }), run(40, deploy, { status: "queued" })];
+  assert.deepEqual(blockingRuns(runs, { mode: "deploy", ownRunId: 25 }).map((r) => r.id), [10, 20].filter((id) => id !== 25));
+  assert.deepEqual(blockingRuns(runs, { mode: "deploy", ownRunId: 20 }).map((r) => r.id), [10], "publicador espera só publicadores mais antigos");
+  assert.deepEqual(blockingRuns(runs, { mode: "deploy", ownRunId: 5 }), [], "publicador mais antigo não espera o mais novo (sem deadlock)");
+  assert.deepEqual(blockingRuns(runs, { mode: "migration", ownRunId: 99 }), [], "migração nunca espera publicação do Pages");
+  assert.deepEqual(blockingRuns([run(10, boa, { head_branch: "feature" }), run(11, deploy, { event: "pull_request" })], { mode: "deploy", ownRunId: 50 }), []);
+  for (const path of PAGES_PUBLISHER_WORKFLOWS) assert.ok(!D1_MIGRATION_WORKFLOWS.includes(path));
+}
+// 3c) Sentinela de deploy: mesmos campos para todo publicador; falha fechado sem commit.
+{
+  const env = { GITHUB_REF_NAME: "main", GITHUB_SHA: "a".repeat(40), GITHUB_RUN_ID: "123", GITHUB_RUN_NUMBER: "7" };
+  const sentinel = deployCheck(env, new Date("2026-09-30T00:00:00.123Z"));
+  assert.deepEqual(sentinel, { app: "NeuroPed", provider: "cloudflare-pages", branch: "main", commit: "a".repeat(40), run_id: "123", run_number: "7", deployed_at_utc: "2026-09-30T00:00:00Z" });
+  assert.throws(() => deployCheck({ ...env, GITHUB_SHA: "" }), /GITHUB_SHA/);
+  assert.throws(() => deployCheck({ ...env, GITHUB_SHA: "pending-deploy-workflow" }), /inválido/);
+}
 
 // 4) Contrato dos workflows.
 const workflows = readdirSync(new URL("../../.github/workflows/", import.meta.url)).map((f) => `.github/workflows/${f}`);
@@ -47,13 +69,25 @@ for (const path of D1_MIGRATION_WORKFLOWS) {
   const firstWrite = yml.search(/d1 execute neuroped-db --remote --yes/);
   assert.ok(lock > 0 && lock < firstWrite, `${path}: a fila precisa vir antes da primeira escrita D1`);
 }
-for (const path of [".github/workflows/deploy-cloudflare.yml", ".github/workflows/boaconsulta-import-release.yml", ".github/workflows/provision-d1.yml"]) {
+const publishers = [".github/workflows/deploy-cloudflare.yml", ".github/workflows/boaconsulta-import-release.yml", ".github/workflows/provision-d1.yml"];
+for (const path of publishers) {
+  assert.ok(PAGES_PUBLISHER_WORKFLOWS.includes(path), `${path} deve estar na fila de publicadores do Pages`);
   const yml = read(path);
-  assert.match(yml, /group: cloudflare-pages/, `${path}: publicações do Pages seguem serializadas entre si`);
   const lock = yml.indexOf("MODE: deploy");
   const firstWrite = yml.search(/d1 execute[^\n]*--remote[^\n]*--yes|d1 execute[^\n]*--yes[^\n]*--remote|--remote --file=/);
   assert.ok(lock > 0 && lock < firstWrite, `${path}: o deploy precisa esperar as migrações antes de escrever no D1`);
   assert.ok(lock < yml.search(/pages deploy/), `${path}: e antes de publicar`);
+  const stamp = yml.indexOf("node scripts/ci/write-deploy-check.mjs");
+  assert.ok(stamp > 0 && stamp < yml.search(/npm run build:client/), `${path}: sentinela de deploy antes do build`);
+  assert.doesNotMatch(yml, /cat > client\/public\/deploy-check\.json/, `${path}: sentinela vem do script compartilhado`);
+}
+// Deploy canônico segue no grupo cloudflare-pages (com a sincronização diária);
+// BoaConsulta e provisionamento saem da vaga pendente única, com grupo por ref.
+assert.match(read(publishers[0]), /^concurrency:\n\s*group: cloudflare-pages$/m);
+for (const path of publishers.slice(1)) {
+  const yml = read(path);
+  assert.doesNotMatch(yml, /group: cloudflare-pages\s*$/m, `${path}: não pode disputar a vaga pendente do deploy canônico`);
+  assert.match(yml, /group: pages-publisher-\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\n\s*cancel-in-progress: false/);
 }
 // Nenhum outro workflow disparado por push/PR aplica arquivo de migração fora da fila.
 for (const path of workflows) {

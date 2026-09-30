@@ -71,7 +71,7 @@ jobs:
     needs: validate-email-verification
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 40 # inclui até 30 min de espera na fila D1
+    timeout-minutes: 55 # inclui até 45 min de espera na fila D1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7

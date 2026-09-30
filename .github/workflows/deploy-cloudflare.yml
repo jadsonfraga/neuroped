@@ -111,21 +111,9 @@ jobs:
       - name: Catraca técnica completa de release
         run: npm run verify
 
+      # Mesmo script usado por todo workflow que republica o Pages.
       - name: Criar sentinela de deploy
-        run: |
-          mkdir -p client/public
-          cat > client/public/deploy-check.json <<EOF
-          {
-            "app": "NeuroPed",
-            "provider": "cloudflare-pages",
-            "branch": "${GITHUB_REF_NAME}",
-            "commit": "${GITHUB_SHA}",
-            "run_id": "${GITHUB_RUN_ID}",
-            "run_number": "${GITHUB_RUN_NUMBER}",
-            "deployed_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          }
-          EOF
-          cat client/public/deploy-check.json
+        run: node scripts/ci/write-deploy-check.mjs
 
       - name: Compilar frontend para Cloudflare Pages
         env:
@@ -168,7 +156,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           MODE: deploy
-          TIMEOUT_MINUTES: "60"
+          # Migrações (até 45 min cada na fila) + publicações do Pages mais antigas.
+          TIMEOUT_MINUTES: "90"
         run: node scripts/ci/wait-d1-writers.mjs
 
       - name: Migrar D1 — auth, ownership e sessões (idempotente)
