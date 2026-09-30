@@ -27,6 +27,7 @@ import {
   RESPONSE_PATTERN_LABELS,
   SKIP_REASONS,
   STATUS_LABELS,
+  ANSWER_TONE,
   SUPER_NEUROPAD_NATURE,
   SUPER_NEUROPAD_SOURCES,
   SUPER_NEUROPAD_TITLE,
@@ -1280,7 +1281,7 @@ export default function SuperNeuroPadGamePage() {
                       <div className="font-bold">{phaseById(answer.phaseId).emoji} {answer.prompt}</div>
                       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
                     </div>
-                    <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> {answer.given} · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""} · {ORIGIN_LABELS[answer.origin]}</div>
+                    <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> <span className={`snp-answer snp-answer--${ANSWER_TONE[answer.status]}`} data-answer-tone={ANSWER_TONE[answer.status]}>{answer.given}</span> · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""} · {ORIGIN_LABELS[answer.origin]}</div>
                   </li>
                 ))}
               </ul>
@@ -1299,7 +1300,7 @@ export default function SuperNeuroPadGamePage() {
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${STATUS_TONE[answer.status]}`}>{STATUS_LABELS[answer.status]}</span>
                       </div>
                       <div className="mt-1 text-xs opacity-80">{ORIGIN_LABELS[answer.origin]} · {KIND_LABELS[answer.kind]} · {answer.seconds} s{answer.repeated ? " · comando repetido 1x" : ""}{answer.via === "gesto" ? " · por gesto/apontar" : ""}</div>
-                      <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> {answer.given}</div>
+                      <div className="mt-1 text-xs"><span className="font-black">Esperado:</span> {answer.expected} · <span className="font-black">Registrado:</span> <span className={`snp-answer snp-answer--${ANSWER_TONE[answer.status]}`} data-answer-tone={ANSWER_TONE[answer.status]}>{answer.given}</span></div>
                     </li>
                   ))}
                 </ol>

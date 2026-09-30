@@ -16,9 +16,19 @@ import QRCode from "qrcode";
 import { buildAppHashUrl } from "@/lib/appUrl";
 import { wrapPdfText } from "@/lib/pdfTextWrap";
 
+/** Linha com destaque opcional: negrito e/ou tom de resposta (azul = certo, vermelho = errado, cinza = neutro). */
+export interface DocLine {
+  text: string;
+  bold?: boolean;
+  tone?: "correct" | "wrong" | "neutral";
+}
+
 export interface DocSection {
   heading: string;
+  /** Texto corrido da seção (sempre preenchido; é o que outros consumidores e testes leem). */
   body: string;
+  /** Quando presente, o PDF desenha estas linhas no lugar de `body`, com negrito/cor por linha. */
+  rich?: DocLine[];
 }
 
 export interface DocSpec {
@@ -59,6 +69,10 @@ const C = {
   ink: rgb(0.2, 0.255, 0.333),
   muted: rgb(0.39, 0.43, 0.49),
   soft: rgb(0.94, 0.945, 0.95),
+  // Tons de resposta (legíveis impressos e com contraste AA sobre o fundo quente):
+  // azul (6,2:1) e vermelho (6,0:1), os mesmos tons dos tokens --snp-answer-*; neutro reutiliza `muted`.
+  answerCorrect: rgb(0.114, 0.306, 0.847),
+  answerWrong: rgb(0.725, 0.11, 0.11),
 };
 
 // pdf-lib desenha com Helvetica/WinAnsi (Windows-1252) e lança em qualquer
@@ -135,6 +149,7 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
     sections: rawSpec.sections.map((section) => ({
       heading: pdfSafe(section.heading),
       body: pdfSafe(section.body),
+      ...(section.rich ? { rich: section.rich.map((line) => ({ ...line, text: pdfSafe(line.text) })) } : {}),
     })),
     footer: rawSpec.footer ? pdfSafe(rawSpec.footer) : undefined,
   };
@@ -252,6 +267,26 @@ export async function buildDocumentPdf(rawSpec: DocSpec): Promise<Uint8Array> {
       opacity: 0.7,
     });
     y -= 7;
+
+    if (section.rich?.length) {
+      const toneColor = { correct: C.answerCorrect, wrong: C.answerWrong, neutral: C.muted } as const;
+      for (const entry of section.rich) {
+        const lineFont = entry.bold ? bold : font;
+        const color = entry.tone ? toneColor[entry.tone] : C.ink;
+        const lines = entry.text ? wrap(entry.text, lineFont, 10, maxW - 24) : [""];
+        for (const line of lines) {
+          ensure(LINE);
+          if (!line) {
+            y -= LINE * 0.7;
+            continue;
+          }
+          page.drawText(line, { x: M + 12, y, size: 10, font: lineFont, color });
+          y -= LINE;
+        }
+      }
+      y -= 12;
+      continue;
+    }
 
     const bodyLines = wrap(section.body, font, 10, maxW - 24);
     for (const line of bodyLines) {

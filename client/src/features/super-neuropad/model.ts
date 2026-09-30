@@ -380,6 +380,19 @@ export const STATUS_LABELS: Record<AnswerStatus, string> = {
   recusa: "Recusou",
 };
 
+/**
+ * Cor da resposta da criança no resultado e no PDF: azul = acertou, vermelho = errou,
+ * cinza neutro = não respondeu / recusou (ausência de resposta não é erro ativo; não
+ * pinta de vermelho). A cor nunca é o único sinal: o rótulo (Acertou/Errou/…) segue ao lado.
+ */
+export type AnswerTone = "correct" | "wrong" | "neutral";
+export const ANSWER_TONE: Record<AnswerStatus, AnswerTone> = {
+  acerto: "correct",
+  erro: "wrong",
+  sem_resposta: "neutral",
+  recusa: "neutral",
+};
+
 /** Via de resposta aceita num acerto: padrão (fala/ação/toque) ou alternativa não verbal prevista no item. */
 export type AnswerVia = "gesto";
 
